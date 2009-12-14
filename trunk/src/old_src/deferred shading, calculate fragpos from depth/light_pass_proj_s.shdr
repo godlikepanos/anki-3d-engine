@@ -1,0 +1,18 @@
+VERTEX_SHADER "shaders/light_pass_generic.vert"
+FRAGMENT_SHADER "shaders/light_pass_generic.frag"
+
+PREPROCESSOR_DEFINES
+{
+	"#define _PROJECTED_TXTR_LIGHT_"
+	"#define _PROJECTED_TXTR_LIGHT_SHADOW_"
+}
+
+UNIFORM_VARS
+{
+	// puth the uniform vars with this order ONLY (or prepere to make changes in the cpp)
+	"normal_rt"
+	"diffuse_rt"
+	"specular_rt"
+	"depth_rt"
+}
+
