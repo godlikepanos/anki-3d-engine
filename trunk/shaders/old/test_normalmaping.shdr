@@ -1,0 +1,12 @@
+VERTEX_SHADER "shaders/old/test_normalmaping.vert"
+FRAGMENT_SHADER "shaders/old/test_normalmaping.frag"
+
+PREPROCESSOR_DEFINES
+{
+}
+
+UNIFORM_VARS
+{
+
+}
+

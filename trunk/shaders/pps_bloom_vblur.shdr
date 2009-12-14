@@ -1,0 +1,13 @@
+VERTEX_SHADER "shaders/simple.vert"
+FRAGMENT_SHADER "shaders/pps_bloom_generic.frag"
+
+PREPROCESSOR_DEFINES
+{
+	"#define _BLOOM_VBLUR_"
+}
+
+UNIFORMS
+{
+	is_fai = 0
+}
+

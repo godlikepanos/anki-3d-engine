@@ -1,0 +1,13 @@
+VERTEX_SHADER "shaders/dp_generic.vert"
+FRAGMENT_SHADER "shaders/dp_generic.frag"
+
+PREPROCESSOR_DEFINES
+{
+	"#define _GRASS_LIKE_"
+}
+
+UNIFORMS
+{
+	diffuse_map = 0
+}
+

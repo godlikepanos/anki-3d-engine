@@ -1,0 +1,12 @@
+VERTEX_SHADER "shaders/simple.vert"
+FRAGMENT_SHADER "shaders/pps.frag"
+
+PREPROCESSOR_DEFINES
+{
+}
+
+FRAGMENT_SHADER_INCLUDES
+{
+	"shaders/photoshop_filters.glsl"
+}
+

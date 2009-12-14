@@ -1,0 +1,16 @@
+VERTEX_SHADER "shaders/dfrd_post.vert"
+FRAGMENT_SHADER "shaders/dfrd_post.frag"
+
+PREPROCESSOR_DEFINES
+{
+}
+
+UNIFORM_VARS
+{
+	"depth_buf"
+	"normal_buf"
+	"diffuse_buf"
+	"specular_buf"
+	"light_pos_eyespace"
+}
+
