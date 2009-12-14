@@ -81,20 +81,19 @@ extern string        FloatToStr( float );
 #define GENERAL_ERR( x, y, col ) \
     cout << col << "-->" << x << " (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
 
-// ERROR
-// in ERROR you can write something like this: ERROR( "tralala" << 10 << ' ' )
+/// in ERROR you can write something like this: ERROR( "tralala" << 10 << ' ' )
 #define ERROR( x ) GENERAL_ERR( "ERROR", x, COL_ERROR )
 
-// WARNING
+/// WARNING
 #define WARNING( x ) GENERAL_ERR( "WARNING", x, COL_WARNING );
 
-// FATAL ERROR
+/// FATAL ERROR
 #define FATAL( x ) { GENERAL_ERR( "FATAL", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); };
 
-// INFO
+/// INFO
 #define INFO( x ) GENERAL_ERR( "INFO", x, COL_INFO );
 
-// DEBUG_ERR
+/// DEBUG_ERR
 #ifdef _DEBUG_
 	#define DEBUG_ERR( x ) \
 		if( x ) \
@@ -104,7 +103,7 @@ extern string        FloatToStr( float );
 #endif
 
 
-// code that executes on debug
+/// code that executes on debug
 #ifdef _DEBUG_
 	#define DEBUG_CODE( x ) {x}
 #else
@@ -112,11 +111,11 @@ extern string        FloatToStr( float );
 #endif
 
 
-// a line so I dont have to write the same crap all the time
+/// a line so I dont have to write the same crap all the time
 #define FOREACH( x ) for( int i=0; i<x; i++ )
 
 
-// useful property macros
+/// useful property macros
 #define PROPERTY_RW( __type_t__, __var_name__, __set_func__, __get_func__ ) \
 	private: \
 		__type_t__ __var_name__; \
@@ -137,11 +136,11 @@ extern string        FloatToStr( float );
 		}
 
 
-// PRINT
+/// PRINT
 #define PRINT( x ) cout << x << endl;
 
 
-// BUFFER_OFFSET
+/// BUFFER_OFFSET
 #define BUFFER_OFFSET( i ) ((char *)NULL + (i))
 
 
@@ -188,7 +187,7 @@ template<typename type_t> class vec_t: public vector<type_t>
 //====================================================================================================================================
 // Memory allocation information for Linux                                                                                           =
 //====================================================================================================================================
-#if !defined( _PLATFORM_LINUX_ )
+#if defined( _PLATFORM_LINUX_ )
 
 #include <malloc.h>
 

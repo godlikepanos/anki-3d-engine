@@ -111,8 +111,8 @@ void scanner_t::InitAsciiMap()
 //=====================================================================================================================================
 // scanner_t                                                                                                                          =
 //=====================================================================================================================================
-scanner_t::scanner_t( bool newlines_as_whitespace_ )
-	: newlines_as_whitespace(newlines_as_whitespace_), commented_lines(0), in_stream(NULL)
+scanner_t::scanner_t( bool newlines_as_whitespace_ ):
+	newlines_as_whitespace(newlines_as_whitespace_), commented_lines(0), in_stream(NULL)
 {
 	if( ascii_lookup_table['a'] != AC_LETTER )
 		InitAsciiMap();
