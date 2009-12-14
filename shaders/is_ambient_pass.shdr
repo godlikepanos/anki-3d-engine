@@ -1,0 +1,13 @@
+VERTEX_SHADER "shaders/simple.vert"
+FRAGMENT_SHADER "shaders/is_ambient_pass.frag"
+
+PREPROCESSOR_DEFINES
+{
+}
+
+UNIFORMS
+{
+	ambient_color = 0
+	ms_diffuse_fai = 1
+}
+

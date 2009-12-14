@@ -1,0 +1,14 @@
+VERTEX_SHADER "shaders/ms_mp_generic.vert"
+FRAGMENT_SHADER "shaders/ms_mp_generic.frag"
+
+PREPROCESSOR_DEFINES
+{
+	"#define _HAS_DIFFUSE_MAP_"
+	"#define _HAS_NORMAL_MAP_"
+	"#define _HAS_HEIGHT_MAP_"
+}
+
+UNIFORM_VARS
+{
+}
+

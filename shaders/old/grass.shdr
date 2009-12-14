@@ -1,0 +1,2 @@
+VERTEX_SHADER "shaders/grass.vert"
+FRAGMENT_SHADER "shaders/grass.frag"

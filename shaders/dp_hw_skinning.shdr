@@ -1,0 +1,25 @@
+VERTEX_SHADER "shaders/dp_generic.vert"
+FRAGMENT_SHADER "shaders/dp_generic.frag"
+
+PREPROCESSOR_DEFINES
+{
+	"#define _HW_SKINNING_"
+}
+
+VERTEX_SHADER_INCLUDES
+{
+	"shaders/hw_skinning.glsl"
+}
+
+UNIFORMS
+{
+	skinning_rotations = 0
+	skinning_translations = 1
+}
+
+ATTRIBUTES
+{
+	vert_weight_bones_num = 0
+	vert_weight_bone_ids = 1
+	vert_weight_weights = 2
+}

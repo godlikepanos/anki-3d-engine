@@ -1,0 +1,2 @@
+VERTEX_SHADER "shaders/old/parallax.vert"
+FRAGMENT_SHADER "shaders/old/parallax.frag"

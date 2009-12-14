@@ -1,0 +1,18 @@
+//
+VERTEX_SHADER "shaders/simple.vert"
+FRAGMENT_SHADER "shaders/pps_lscatt.frag"
+
+PREPROCESSOR_DEFINES
+{
+}
+
+FRAGMENT_SHADER_INCLUDES
+{
+}
+
+UNIFORM_VARS
+{
+	ms_depth_fai = 0
+	is_fai = 1
+}
+

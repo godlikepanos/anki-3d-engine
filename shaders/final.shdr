@@ -1,0 +1,8 @@
+VERTEX_SHADER "shaders/simple.vert"
+FRAGMENT_SHADER "shaders/final.frag"
+
+UNIFORMS
+{
+	raster_image = 0
+}
+
