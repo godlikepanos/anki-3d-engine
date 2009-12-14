@@ -30,7 +30,6 @@
 
 camera_t main_cam;
 
-
 mesh_t imp, mcube, floor__, sarge;
 
 smodel_t mdl;
