@@ -1,7 +1,0 @@
-VERTEX_SHADER "shaders/txt.vert"
-FRAGMENT_SHADER "shaders/txt.frag"
-
-UNIFORMS
-{
-	font_map = 0
-}

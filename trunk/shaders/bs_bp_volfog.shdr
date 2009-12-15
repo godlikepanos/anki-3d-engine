@@ -1,8 +1,0 @@
-//
-VERTEX_SHADER "shaders/bs_bp_volfog.vert"
-FRAGMENT_SHADER "shaders/bs_bp_volfog.frag"
-
-FRAGMENT_SHADER_INCLUDES
-{
-	"shaders/linear_depth.glsl"
-}

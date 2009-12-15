@@ -1,7 +1,0 @@
-VERTEX_SHADER "shaders/dp_generic.vert"
-FRAGMENT_SHADER "shaders/dp_generic.frag"
-
-PREPROCESSOR_DEFINES
-{
-}
-
