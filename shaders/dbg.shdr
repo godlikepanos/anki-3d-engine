@@ -1,3 +1,0 @@
-VERTEX_SHADER "shaders/dbg.vert"
-FRAGMENT_SHADER "shaders/dbg.frag"
-

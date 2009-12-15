@@ -1,2 +1,0 @@
-VERTEX_SHADER "shaders/simple_texturing.vert"
-FRAGMENT_SHADER "shaders/simple_texturing.frag"

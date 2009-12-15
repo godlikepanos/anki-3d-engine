@@ -1,9 +1,0 @@
-VERTEX_SHADER "shaders/ms_mp_generic.vert"
-FRAGMENT_SHADER "shaders/ms_mp_generic.frag"
-
-PREPROCESSOR_DEFINES
-{
-	"#define _HAS_DIFFUSE_MAP_"
-}
-
-
