@@ -1,6 +1,6 @@
 #pragma anki vert_shader_begins
 
-#pragma anki inlcude "shaders/simple_vert.glsl"
+#pragma anki include "shaders/simple_vert.glsl"
 
 #pragma anki frag_shader_begins
 
