@@ -55,7 +55,7 @@ void Init()
 	fbo.Unbind();
 
 	// shader
-	shdr = rsrc::shaders.Load( "shaders/dbg.shdr" );
+	shdr = rsrc::shaders.Load( "shaders/dbg.glsl" );
 }
 
 

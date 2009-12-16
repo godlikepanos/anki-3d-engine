@@ -4,7 +4,7 @@
 #include "scanner.h"
 #include "parser.h"
 #include "texture.h"
-#include "shaders.h"
+#include "shader_prog.h"
 #include "renderer.h"
 
 /*

@@ -62,7 +62,7 @@ void Init()
 
 
 	// init the shader and it's vars
-	shdr_post_proc_stage = rsrc::shaders.Load( "shaders/pps.shdr" );
+	shdr_post_proc_stage = rsrc::shaders.Load( "shaders/pps.glsl" );
 	shdr_post_proc_stage->Bind();
 
 	shdr_vars::is_fai = shdr_post_proc_stage->GetUniformLocation( "is_fai" );

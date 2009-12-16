@@ -40,7 +40,7 @@ bool skybox_t::Load( const char* filenames[6] )
 	noise->TexParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
 	noise->TexParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
 
-	shader = rsrc::shaders.Load( "shaders/ms_mp_skybox.shdr" );
+	shader = rsrc::shaders.Load( "shaders/ms_mp_skybox.glsl" );
 
 	return true;
 }

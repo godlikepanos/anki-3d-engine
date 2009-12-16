@@ -14,7 +14,6 @@
 #include "primitives.h"
 #include "texture.h"
 #include "mesh.h"
-#include "shaders.h"
 #include "lights.h"
 #include "collision.h"
 #include "smodel.h"

@@ -63,7 +63,7 @@ int main( int argc, char* argv[] )
 	normal_map = ass::LoadTxtr( "textures/stone.001.norm.tga" );
 	height_map = ass::LoadTxtr( "textures/stone.001.height.tga" );
 
-	shdr_parallax = ass::LoadShdr( "shaders/old/parallax.shdr" );
+	shdr_parallax = ass::LoadShdr( "shaders/old/parallax.glsl" );
 
 
 	scene::Register( &floor__ );

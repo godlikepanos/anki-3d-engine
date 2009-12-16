@@ -143,7 +143,7 @@ void Init()
 	BuildStdShaderPreProcStr();
 
 	// misc
-	shdr_final = rsrc::shaders.Load( "shaders/final.shdr" );
+	shdr_final = rsrc::shaders.Load( "shaders/final.glsl" );
 
 	// init deffered stages
 	// WARNING: the order of the inits is crucial!!!!!

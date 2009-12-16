@@ -1,5 +1,7 @@
 #include "shader_prog.h"
+#include "renderer.h"
 #include "shader_parser.h"
+#include "texture.h"
 
 
 #define SHADER_ERROR( x ) ERROR( "Shader prog \"" << GetName() << "\": " << x )
@@ -18,8 +20,8 @@ uint shader_prog_t::CreateAndCompileShader( const char* source_code, int type ) 
 	gl_id = glCreateShader( type );
 
 	// attach the source
-	source_strs[0] = source_code;
-	source_strs[1] = r::GetStdShaderPreprocDefines().c_str();
+	source_strs[1] = source_code;
+	source_strs[0] = r::GetStdShaderPreprocDefines();
 
 	// compile
 	glShaderSource( gl_id, 2, source_strs, NULL );
@@ -117,7 +119,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 			continue;
 		}
 
-		attrib_name_to_loc[ name_ ] = i
+		attrib_name_to_loc[ name_ ] = i;
 	}
 
 
@@ -135,7 +137,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 			continue;
 		}
 
-		uni_name_to_loc[ name_ ] = i
+		uni_name_to_loc[ name_ ] = i;
 	}
 }
 
@@ -145,7 +147,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 //=====================================================================================================================================
 bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 {
-	int max = 0;
+	uint max = 0;
 
 	// uniforms
 	for( uint i=0; i<pars.uniforms.size(); ++i )
@@ -180,11 +182,11 @@ bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 		if( pars.attributes[i].custom_loc > max ) 
 			max = pars.attributes[i].custom_loc;
 	}
-	custom_attr_loc_to_real_loc.assign( max + 1, -1 );
+	custom_attrib_loc_to_real_loc.assign( max + 1, -1 );
 
 	for( uint i=0; i<pars.attributes.size(); ++i )
 	{
-		if( custom_attr_loc_to_real_loc[ pars.attributes[i].custom_loc ] != -1 )
+		if( custom_attrib_loc_to_real_loc[ pars.attributes[i].custom_loc ] != -1 )
 		{
 			SHADER_ERROR( "The attribute \"" << pars.attributes[i].name << "\" has the same value with another one" );
 			return false;
@@ -195,7 +197,7 @@ bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 			SHADER_ERROR( "Check the previous error" );
 			return false;
 		}
-		custom_attr_loc_to_real_loc[pars.attributes[i].custom_loc] = loc;
+		custom_attrib_loc_to_real_loc[pars.attributes[i].custom_loc] = loc;
 	}
 
 	return true;
@@ -209,8 +211,9 @@ bool shader_prog_t::Load( const char* filename )
 {
 	shader_parser_t pars;
 
-	if( !pars.LoadFile( filename ) ) return false;
+	if( !pars.ParseFile( filename ) ) return false;
 
+	PRINT( pars.frag_shader_source )
 
 	// create, compile, attach and link
 	uint vert_gl_id = CreateAndCompileShader( pars.vert_shader_source.c_str(), GL_VERTEX_SHADER );

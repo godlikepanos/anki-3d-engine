@@ -1,7 +1,7 @@
 #include "resource.h"
 #include "texture.h"
 #include "material.h"
-#include "shaders.h"
+#include "shader_prog.h"
 #include "mesh.h"
 #include "smodel.h"
 #include "model.h"
