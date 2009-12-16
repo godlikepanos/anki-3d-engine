@@ -68,7 +68,7 @@ void Init()
 
 
 	// init shaders
-	shdr_ppp_ssao = rsrc::shaders.Load( "shaders/pps_ssao.shdr" );
+	shdr_ppp_ssao = rsrc::shaders.Load( "shaders/pps_ssao.glsl" );
 
 	// load noise map and disable temporaly the texture compression and enable mipmaping
 	bool tex_compr = r::texture_compression;

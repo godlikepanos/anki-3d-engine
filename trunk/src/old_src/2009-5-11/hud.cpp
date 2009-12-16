@@ -162,7 +162,7 @@ void Init()
 	font_map = ass::LoadTxtr( "gfx/fontmapa.tga" );
 	font_map->TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	font_map->TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	shader = ass::LoadShdr( "shaders/txt.shdr" );
+	shader = ass::LoadShdr( "shaders/txt.glsl" );
 	SetPos( 0.0f, 0.0f );
 	SetFontWidth( 0.05f );
 	SetColor( vec4_t(1.0f, 1.0f, 1.0f, 1.0f) );

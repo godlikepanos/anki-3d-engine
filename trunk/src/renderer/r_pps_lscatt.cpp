@@ -62,7 +62,7 @@ void Init()
 
 
 	// init shaders
-	shdr = rsrc::shaders.Load( "shaders/pps_lscatt.shdr" );
+	shdr = rsrc::shaders.Load( "shaders/pps_lscatt.glsl" );
 	ms_depth_fai_uni_loc = shdr->GetUniformLocation( "ms_depth_fai" );
 	is_fai_uni_loc = shdr->GetUniformLocation( "is_fai" );
 }

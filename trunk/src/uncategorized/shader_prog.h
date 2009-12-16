@@ -2,6 +2,7 @@
 #define _SHADER_PROG_H_
 
 #include <GL/glew.h>
+#include <map>
 #include "common.h"
 #include "resource.h"
 
@@ -37,8 +38,8 @@ class shader_prog_t: public resource_t
 		bool Load( const char* filename );
 		void Unload() { /* ToDo: add code */ }
 
-		int GetUniformLocation( const char* name ) const; ///< Returnes -1 if fail and throws error
-		int GetAttributeLocation( const char* name ) const; ///< Returnes -1 if fail and throws error
+		int GetUniformLocation( const char* name ) const; ///< Returns -1 if fail and throws error
+		int GetAttributeLocation( const char* name ) const; ///< Returns -1 if fail and throws error
 		int GetUniformLocationSilently( const char* name ) const;
 		int GetAttributeLocationSilently( const char* name ) const;
 

@@ -163,10 +163,10 @@ Init                                                                            
 void Init()
 {
 	// load the shaders
-	shdr_is_ambient = rsrc::shaders.Load( "shaders/is_ambient_pass.shdr" );
-	shdr_is_lp_point_light = rsrc::shaders.Load( "shaders/is_lp_point.shdr" );
-	shdr_is_lp_spot_light_nos = rsrc::shaders.Load( "shaders/is_lp_spot.shdr" );
-	shdr_is_lp_spot_light_s = rsrc::shaders.Load( "shaders/is_lp_spot_shad.shdr" );
+	shdr_is_ambient = rsrc::shaders.Load( "shaders/is_ambient_pass.glsl" );
+	shdr_is_lp_point_light = rsrc::shaders.Load( "shaders/is_lp_point.glsl" );
+	shdr_is_lp_spot_light_nos = rsrc::shaders.Load( "shaders/is_lp_spot.glsl" );
+	shdr_is_lp_spot_light_s = rsrc::shaders.Load( "shaders/is_lp_spot_shad.glsl" );
 
 
 	// init the rest

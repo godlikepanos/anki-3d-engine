@@ -162,7 +162,7 @@ void Init()
 	font_map = rsrc::textures.Load( "gfx/fontmapa.tga" );
 	font_map->TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	//font_map->TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	shader = rsrc::shaders.Load( "shaders/txt.shdr" );
+	shader = rsrc::shaders.Load( "shaders/txt.glsl" );
 	SetPos( 0.0f, 0.0f );
 	SetFontWidth( 0.05f );
 	SetColor( vec4_t(1.0f, 1.0f, 1.0f, 1.0f) );

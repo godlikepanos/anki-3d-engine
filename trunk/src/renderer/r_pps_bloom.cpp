@@ -81,8 +81,8 @@ void Init()
 	InitFBOs( final_fbo, final_fai );
 
 	// init shaders
-	shdr_pps_bloom_vblur = rsrc::shaders.Load( "shaders/pps_bloom_vblur.shdr" );
-	shdr_pps_bloom_final = rsrc::shaders.Load( "shaders/pps_bloom_final.shdr" );
+	shdr_pps_bloom_vblur = rsrc::shaders.Load( "shaders/pps_bloom_vblur.glsl" );
+	shdr_pps_bloom_final = rsrc::shaders.Load( "shaders/pps_bloom_final.glsl" );
 }
 
 

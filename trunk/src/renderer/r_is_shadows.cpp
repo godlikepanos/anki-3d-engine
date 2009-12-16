@@ -62,9 +62,9 @@ void Init()
 	fbo.Unbind();
 
 	// shaders
-	shdr_depth = rsrc::shaders.Load( "shaders/dp.shdr" );
-	shdr_depth_grass = rsrc::shaders.Load( "shaders/dp_grass.shdr" );
-	shdr_depth_hw_skinning = rsrc::shaders.Load( "shaders/dp_hw_skinning.shdr" );
+	shdr_depth = rsrc::shaders.Load( "shaders/dp.glsl" );
+	shdr_depth_grass = rsrc::shaders.Load( "shaders/dp_grass.glsl" );
+	shdr_depth_hw_skinning = rsrc::shaders.Load( "shaders/dp_hw_skinning.glsl" );
 }
 
 

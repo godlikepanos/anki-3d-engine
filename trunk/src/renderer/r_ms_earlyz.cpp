@@ -51,8 +51,8 @@ void Init()
 	fbo.Unbind();
 
 	// shaders
-	shdr_dp = rsrc::shaders.Load( "shaders/dp.shdr" );
-	shdr_dp_grass = rsrc::shaders.Load( "shaders/dp_grass.shdr" );
+	shdr_dp = rsrc::shaders.Load( "shaders/dp.glsl" );
+	shdr_dp_grass = rsrc::shaders.Load( "shaders/dp_grass.glsl" );
 }
 
 

@@ -6,7 +6,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include "gmath.h"
-#include "shaders.h"
+#include "shader_prog.h"
 
 
 
