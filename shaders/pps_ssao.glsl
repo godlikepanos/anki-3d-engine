@@ -7,13 +7,14 @@
 #pragma anki include "shaders/linear_depth.glsl"
 #pragma anki include "shaders/pack.glsl"
 
-#pragma anki uniform noise_map 2
-uniform sampler2D noise_map;
-uniform sampler2D ms_normal_fai;
-#pragma anki uniform ms_depth_fai 1
-uniform sampler2D ms_depth_fai;
 #pragma anki uniform camerarange 0
 uniform vec2 camerarange;  // = vec2( znear, zfar )
+#pragma anki uniform ms_depth_fai 1
+uniform sampler2D ms_depth_fai;
+#pragma anki uniform noise_map 2
+uniform sampler2D noise_map;
+#pragma anki uniform ms_normal_fai 3
+uniform sampler2D ms_normal_fai;
 
 varying vec2 tex_coords;
 const float totStrength = 1.0;
