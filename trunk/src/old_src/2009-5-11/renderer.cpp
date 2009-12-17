@@ -144,7 +144,10 @@ void PrintLastError()
 {
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
+	{
+		int x = 10;
 		ERROR( "GL_ERR: " << gluErrorString( errid ) );
+	}
 }
 
 
