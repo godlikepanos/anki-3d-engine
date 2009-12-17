@@ -1,5 +1,7 @@
 #pragma anki vert_shader_begins
 
+#pragma anki include "shaders/hw_skinning.glsl"
+
 varying vec2 tex_coords;
 
 void main()
