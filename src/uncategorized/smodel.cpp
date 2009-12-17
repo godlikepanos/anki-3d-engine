@@ -754,7 +754,6 @@ void smodel_t::Render()
 	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
 	glDisableVertexAttribArray( loc );*/
 
-
 	glUniformMatrix3fv( material->skinning_rotations_uni_loc, model_data->skeleton_data->bones.size(), 1, &(bone_rotations[0])[0] );
 	glUniform3fv( material->skinning_translations_uni_loc, model_data->skeleton_data->bones.size(), &(bone_translations[0])[0] );
 

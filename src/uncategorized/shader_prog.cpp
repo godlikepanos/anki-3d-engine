@@ -41,7 +41,7 @@ uint shader_prog_t::CreateAndCompileShader( const char* source_code, int type ) 
 		info_log = (char*)malloc( (info_len+1)*sizeof(char) );
 		glGetShaderInfoLog( gl_id, info_len, &chars_written, info_log );
 		
-		char* shader_type;
+		const char* shader_type;
 		switch( type )
 		{
 			case GL_VERTEX_SHADER:
@@ -105,6 +105,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 	GLint size;
 	GLenum type;
 
+
 	// attrib locations
 	glGetProgramiv( gl_id, GL_ACTIVE_ATTRIBUTES, &num );
 	for( int i=0; i<num; i++ ) // loop all attributes
@@ -113,7 +114,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 		name_[ length ] = '\0';
 
 		// check if its FFP location
-		if( GetAttributeLocationSilently(name_) == -1 )
+		if( glGetAttribLocation(gl_id, name_) == -1 )
 		{
 			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
 			continue;
@@ -131,7 +132,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 		name_[ length ] = '\0';
 
 		// check if its FFP location
-		if( GetUniformLocationSilently(name_) == -1 )
+		if( glGetUniformLocation(gl_id, name_) == -1 )
 		{
 			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
 			continue;
@@ -147,6 +148,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 //=====================================================================================================================================
 bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 {
+	Bind();
 	uint max = 0;
 
 	// uniforms
@@ -213,7 +215,7 @@ bool shader_prog_t::Load( const char* filename )
 
 	if( !pars.ParseFile( filename ) ) return false;
 
-	PRINT( pars.frag_shader_source )
+	//PRINT( pars.frag_shader_source )
 
 	// create, compile, attach and link
 	uint vert_gl_id = CreateAndCompileShader( pars.vert_shader_source.c_str(), GL_VERTEX_SHADER );

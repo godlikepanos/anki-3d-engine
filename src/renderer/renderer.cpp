@@ -145,7 +145,7 @@ void Init()
 	// misc
 	shdr_final = rsrc::shaders.Load( "shaders/final.glsl" );
 
-	// init deffered stages
+	// init deferred stages
 	// WARNING: the order of the inits is crucial!!!!!
 	r::ms::Init();
 	r::is::Init();

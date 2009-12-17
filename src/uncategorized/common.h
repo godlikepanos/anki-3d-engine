@@ -206,7 +206,7 @@ inline void PrintMallInfo( const mallinfo_t& minfo )
 inline void PrintMallInfoDiff( const mallinfo_t& prev, const mallinfo_t& now )
 {
 	mallinfo_t diff;
-	diff.ordblks = now.uordblks-prev.uordblks;
+	diff.uordblks = now.uordblks-prev.uordblks;
 	diff.fordblks = now.fordblks-prev.fordblks;
 	diff.arena = now.arena-prev.arena;
 	PrintMallInfo( diff );

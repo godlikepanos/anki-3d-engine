@@ -253,8 +253,6 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		r::Render( main_cam );
 
-
-
 		//map.octree.root->bounding_box.Render();
 
 		// print some debug stuff
