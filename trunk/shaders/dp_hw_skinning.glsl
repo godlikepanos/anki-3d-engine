@@ -6,5 +6,4 @@
 #pragma anki attribute vert_weight_bone_ids 1
 #pragma anki attribute vert_weight_weights 2
 
-#pragma anki include "shaders/hw_skinning.glsl"
 #pragma anki include "shaders/dp_generic.glsl"

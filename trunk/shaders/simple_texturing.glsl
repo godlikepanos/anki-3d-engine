@@ -12,7 +12,7 @@ void main()
 
 #pragma anki frag_shader_begins
 
-#pragma anki include "pack.glsl"
+#pragma anki include "shaders/pack.glsl"
 
 uniform sampler2D diffuse_map, noise_map;
 varying vec2 tex_coords;
