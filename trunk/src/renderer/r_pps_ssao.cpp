@@ -105,16 +105,12 @@ void RunPass( const camera_t& cam )
 	glUniform2fv( shdr_ppp_ssao->GetUniformLocation(0), 1, &(vec2_t(cam.GetZNear(), cam.GetZFar()))[0] );
 	shdr_ppp_ssao->LocTexUnit( shdr_ppp_ssao->GetUniformLocation(1), ms::depth_fai, 0 );
 	shdr_ppp_ssao->LocTexUnit( shdr_ppp_ssao->GetUniformLocation(2), *noise_map, 1 );
-	shdr_ppp_ssao->LocTexUnit( "ms_normal_fai", ms::normal_fai, 2 );
+	shdr_ppp_ssao->LocTexUnit( shdr_ppp_ssao->GetUniformLocation(3), ms::normal_fai, 2 );
 
 	// Draw quad
 	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
 	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-
 	glDrawArrays( GL_QUADS, 0, 4 );
-
 	glDisableClientState( GL_VERTEX_ARRAY );
 
 	// end
