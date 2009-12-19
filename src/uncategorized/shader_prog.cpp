@@ -8,6 +8,7 @@
 #define SHADER_WARNING( x ) WARNING( "Shader prog \"" << GetName() << "\": " << x )
 
 
+
 //=====================================================================================================================================
 // CreateAndCompileShader                                                                                                             =
 //=====================================================================================================================================
@@ -21,7 +22,7 @@ uint shader_prog_t::CreateAndCompileShader( const char* source_code, int type ) 
 
 	// attach the source
 	source_strs[1] = source_code;
-	source_strs[0] = r::GetStdShaderPreprocDefines();
+	source_strs[0] = r::GetStdShaderPreprocDefines().c_str();
 
 	// compile
 	glShaderSource( gl_id, 2, source_strs, NULL );
@@ -114,13 +115,14 @@ void shader_prog_t::GetUniAndAttribLocs()
 		name_[ length ] = '\0';
 
 		// check if its FFP location
-		if( glGetAttribLocation(gl_id, name_) == -1 )
+		int loc = glGetAttribLocation(gl_id, name_);
+		if( loc == -1 )
 		{
 			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
 			continue;
 		}
 
-		attrib_name_to_loc[ name_ ] = i;
+		attrib_name_to_loc[ name_ ] = loc;
 	}
 
 
@@ -132,13 +134,14 @@ void shader_prog_t::GetUniAndAttribLocs()
 		name_[ length ] = '\0';
 
 		// check if its FFP location
-		if( glGetUniformLocation(gl_id, name_) == -1 )
+		int loc = glGetUniformLocation(gl_id, name_);
+		if( loc == -1 )
 		{
 			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
 			continue;
 		}
 
-		uni_name_to_loc[ name_ ] = i;
+		uni_name_to_loc[ name_ ] = loc;
 	}
 }
 

@@ -57,7 +57,7 @@ class vec3_t
 		void   Normalize();
 		vec3_t Normalized() const;
 		vec3_t Project( const vec3_t& to_this ) const;
-		vec3_t Rotated( const quat_t& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 21 muls, 12 adds
+		vec3_t Rotated( const quat_t& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		void   Rotate( const quat_t& q );
 		vec3_t Lerp( const vec3_t& v1, float t ) const; // return Lerp( this, v1, t )
 		void   Print() const;
@@ -73,6 +73,13 @@ class vec3_t
 		vec3_t Transformed( const mat4_t& transform ) const;  // 9 muls, 9 adds
 		void   Transform( const mat4_t& transform );
 };
+
+
+// other operators
+extern vec3_t operator +( float f, const vec3_t& v );
+extern vec3_t operator -( float f, const vec3_t& v );
+extern vec3_t operator *( float f, const vec3_t& v );
+extern vec3_t operator /( float f, const vec3_t& v );
 
 
 } // end namespace

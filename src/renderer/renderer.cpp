@@ -35,7 +35,7 @@ float quad_vert_cords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
  * Standard shader preprocessor defines. Used to pass some global params to the shaders. The standard shader preprocessor defines
  * go on top of the shader code and its defines
  */
-char* std_shader_preproc_defines = NULL;
+string std_shader_preproc_defines;
 
 // texture
 bool mipmaping = true;
@@ -52,9 +52,9 @@ I pass all the static vars (vars that do not change at all) with defines so I do
 */
 static void BuildStdShaderPreProcStr()
 {
-	string tmp = "";
+	string& tmp = std_shader_preproc_defines;
 
-	tmp += "#version 120\n";
+	tmp  = "#version 120\n";
 	tmp += "#pragma optimize(on)\n";
 	tmp += "#pragma debug(off)\n";
 	tmp += "#define R_W " + FloatToStr(r::w) + "\n";
@@ -80,9 +80,6 @@ static void BuildStdShaderPreProcStr()
 		tmp += "#define _LSCATT_\n";
 		tmp += "#define LSCATT_RENDERING_QUALITY " + FloatToStr(r::pps::lscatt::rendering_quality) + "\n";
 	}
-
-	std_shader_preproc_defines = new char [tmp.length()+1];
-	strcpy( std_shader_preproc_defines, tmp.c_str() );
 }
 
 

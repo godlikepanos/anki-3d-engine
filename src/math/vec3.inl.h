@@ -137,6 +137,12 @@ M_INLINE vec3_t vec3_t::operator +( float f ) const
 	return ME + vec3_t(f);
 }
 
+// float + vec3
+M_INLINE vec3_t operator +( float f, const vec3_t& v )
+{
+	return v+f;
+}
+
 // vec3 += float
 M_INLINE vec3_t& vec3_t::operator +=( float f )
 {
@@ -148,6 +154,12 @@ M_INLINE vec3_t& vec3_t::operator +=( float f )
 M_INLINE vec3_t vec3_t::operator -( float f ) const
 {
 	return ME - vec3_t(f);
+}
+
+// float - vec3
+M_INLINE vec3_t operator -( float f, const vec3_t& v )
+{
+	return vec3_t(f-v.x, f-v.y, f-v.z);
 }
 
 // vec3 -= float
@@ -163,6 +175,12 @@ M_INLINE vec3_t vec3_t::operator *( float f ) const
 	return ME * vec3_t(f);
 }
 
+// float * vec3
+M_INLINE vec3_t operator *( float f, const vec3_t& v )
+{
+	return v*f;
+}
+
 // vec3 *= float
 M_INLINE vec3_t& vec3_t::operator *=( float f )
 {
@@ -174,6 +192,12 @@ M_INLINE vec3_t& vec3_t::operator *=( float f )
 M_INLINE vec3_t vec3_t::operator /( float f ) const
 {
 	return ME / vec3_t(f);
+}
+
+// float / vec3
+M_INLINE vec3_t operator /( float f, const vec3_t& v )
+{
+	return vec3_t(f/v.x, f/v.y, f/v.z);
 }
 
 // vec3 /= float
@@ -236,13 +260,15 @@ M_INLINE vec3_t vec3_t::Rotated( const quat_t& q ) const
 {
 	DEBUG_ERR( !IsZero(1.0f-q.Length()) ); // Not normalized quat
 
-	float vmult = 2.0f*(q.x*x + q.y*y + q.z*z);
+	/*float vmult = 2.0f*(q.x*x + q.y*y + q.z*z);
 	float crossmult = 2.0*q.w;
 	float pmult = crossmult*q.w - 1.0;
 
 	return vec3_t( pmult*x + vmult*q.x + crossmult*(q.y*z - q.z*y),
 							   pmult*y + vmult*q.y + crossmult*(q.z*x - q.x*z),
-	               pmult*z + vmult*q.z + crossmult*(q.x*y - q.y*x) );
+	               pmult*z + vmult*q.z + crossmult*(q.x*y - q.y*x) );*/
+	vec3_t q_xyz( q );
+	return ME + q_xyz.Cross( q_xyz.Cross(ME) + ME*q.w ) * 2.0;
 }
 
 // Rotate
