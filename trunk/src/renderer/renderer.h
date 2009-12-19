@@ -36,7 +36,7 @@ extern void TakeScreenshot( const char* filename ); ///< Save the colorbuffer as
 extern void Init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::Init" functions among other things
 extern void PrepareNextFrame(); ///< Runs before rendering
 extern void PrintLastError(); ///< Prints last OpenGL error
-inline const char* GetStdShaderPreprocDefines() { extern char* std_shader_preproc_defines; return std_shader_preproc_defines; }
+inline const string& GetStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
 extern void Render( const camera_t& cam ); ///< The spine funciton of the renderer
 
 extern void SetGLState_Wireframe();

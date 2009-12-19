@@ -1,14 +1,3 @@
-#pragma anki vert_shader_begins
-
-/**
- * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write in all the
- * buffers.
- */
-#pragma anki include "shaders/hw_skinning.glsl"
-
-varying vec3 normal;
-
-
 #if defined( _HAS_DIFFUSE_MAP_ ) || defined( _HAS_NORMAL_MAP_ ) || defined( _HAS_SPECULAR_MAP_ )
 	#define NEEDS_TEX_MAPPING 1
 #else
@@ -22,6 +11,16 @@ varying vec3 normal;
 	#define NEEDS_TANGENT 0
 #endif
 
+
+#pragma anki vert_shader_begins
+
+/**
+ * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write in all the
+ * buffers.
+ */
+#pragma anki include "shaders/hw_skinning.glsl"
+
+varying vec3 normal;
 
 varying vec2 tex_coords_v2f;
 uniform vec2 tex_coords;
@@ -121,36 +120,20 @@ calculations in two parts
 VARS                                                                                                                                  =
 =======================================================================================================================================
 */
+
+uniform sampler2D diffuse_map;
+uniform sampler2D normal_map;
+uniform sampler2D specular_map;
+uniform sampler2D height_map;
+uniform sampler2D environment_map;
+
 varying vec3 normal;
+varying vec3 tangent_v2f;
+varying float w_v2f;
+varying vec2 tex_coords_v2f;
+varying vec3 eye;
+varying vec3 vert_pos_eye_space_v2f;
 
-#if defined( _HAS_DIFFUSE_MAP_ )
-	uniform sampler2D diffuse_map;
-#endif
-
-#if defined( _HAS_NORMAL_MAP_ )
-	uniform sampler2D normal_map;
-	varying vec3 tangent_v2f;
-	varying float w_v2f;
-#endif
-
-#if defined( _HAS_SPECULAR_MAP_ )
-	uniform sampler2D specular_map;
-#endif
-
-#if defined( _HAS_DIFFUSE_MAP_ ) || defined( _HAS_NORMAL_MAP_ ) || defined( _HAS_SPECULAR_MAP_ ) || defined( _PARALLAX_MAPPING_ )
-	varying vec2 tex_coords_v2f;
-#endif
-
-#if defined( _PARALLAX_MAPPING_ )
-	uniform sampler2D height_map;
-	varying vec3 eye;
-#endif
-
-
-#if defined( _ENVIRONMENT_MAPPING_ )
-	uniform sampler2D environment_map;
-	varying vec3 vert_pos_eye_space_v2f;
-#endif
 
 
 /*

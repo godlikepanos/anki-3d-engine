@@ -25,7 +25,6 @@
 #include "skybox.h"
 #include "map.h"
 #include "model.h"
-#include "shader_parser.h"
 
 camera_t main_cam;
 
@@ -172,7 +171,7 @@ void Init()
 	scene::lights.Register( &point_lights[1] );
 	scene::lights.Register( &projlights[0] );
 	scene::lights.Register( &projlights[1] );
-	scene::meshes.Register( &sphere );
+	//scene::meshes.Register( &sphere );
 
 	//map.Load( "maps/temple/temple.map" );
 	//map.CreateOctree();
@@ -276,8 +275,8 @@ int main( int /*argc*/, char* /*argv*/[] )
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
 		//if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
-		hndl::WaitForNextFrame();
-		//if( r::frames_num == 5000 ) break;
+		//hndl::WaitForNextFrame();
+		if( r::frames_num == 5000 ) break;
 	}while( true );
 	PRINT( "Exiting main loop (" << hndl::GetTicks()-ticks << ")" );
 

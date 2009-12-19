@@ -36,6 +36,7 @@ class shader_prog_t: public resource_t
 		static uint GetCurrentProgram() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
 
 		bool Load( const char* filename );
+		bool CustomLoad( const char*  );
 		void Unload() { /* ToDo: add code */ }
 
 		int GetUniformLocation( const char* name ) const; ///< Returns -1 if fail and throws error
