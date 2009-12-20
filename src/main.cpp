@@ -274,9 +274,9 @@ int main( int /*argc*/, char* /*argv*/[] )
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
-		//if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
-		//hndl::WaitForNextFrame();
-		if( r::frames_num == 5000 ) break;
+		if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
+		hndl::WaitForNextFrame();
+		//if( r::frames_num == 5000 ) break;
 	}while( true );
 	PRINT( "Exiting main loop (" << hndl::GetTicks()-ticks << ")" );
 

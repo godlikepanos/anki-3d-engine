@@ -9,7 +9,7 @@
 uniform sampler2D is_fai;
 uniform sampler2D pps_ssao_fai;
 uniform sampler2D ms_normal_fai;
-uniform sampler2D pps_boom_fai;
+uniform sampler2D pps_hdr_fai;
 uniform sampler2D pps_lscatt_fai;
 
 varying vec2 tex_coords;
@@ -178,10 +178,9 @@ void main (void)
 		color += lscatt;
 	#endif
 
-	#if defined(_BLOOM_)
-		//float bloom_factor = texture2D( pps_boom_fai, tex_coords ).r; // ORIGINAL BLOOM CODE
-		vec3 bloom = texture2D( pps_boom_fai, tex_coords ).rgb;
-		color += bloom;
+	#if defined(_HDR_)
+		vec3 hdr = texture2D( pps_hdr_fai, tex_coords ).rgb;
+		color += hdr;
 	#endif
 
 	color = BlendHardLight( vec3(0.6, 0.62, 0.4), color );
@@ -197,6 +196,6 @@ void main (void)
 	//gl_FragColor = texture2D( pps_boom_fai, tex_coords );
 	//gl_FragColor = texture2D( is_fai, tex_coords );
 	//gl_FragData[0].rgb = UnpackNormal( texture2D( ms_normal_fai, tex_coords ).rg );
-	//gl_FragData[0] = vec4( bloom*2, 1.0 );
+	//gl_FragData[0] = vec4( hdr, 1.0 );
 }
 

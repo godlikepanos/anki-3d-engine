@@ -17,7 +17,7 @@ uniform sampler2D noise_map;
 uniform sampler2D ms_normal_fai;
 
 varying vec2 tex_coords;
-const float totStrength = 1.0;
+const float totStrength = 1.7;
 const float strength = 0.07;
 const float offset = 18.0;
 const float falloff = 0.000002;

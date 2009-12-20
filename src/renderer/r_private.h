@@ -66,15 +66,17 @@ namespace pps
 		extern void Init();
 		extern void RunPass( const camera_t& cam );
 		extern texture_t fai;
+		extern texture_t blured_fai;
 		extern float rendering_quality;
 	}
 
-	namespace bloom
+	namespace hdr
 	{
 		extern void Init();
 		extern void RunPass( const camera_t& cam );
-		extern texture_t vbrur_fai;
-		extern texture_t final_fai;
+		extern texture_t pass0_fai;
+		extern texture_t pass1_fai;
+		extern texture_t pass2_fai;
 		extern float rendering_quality;
 	}
 

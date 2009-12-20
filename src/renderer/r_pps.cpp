@@ -29,7 +29,7 @@ namespace shdr_vars
 	int is_fai;
 	int pps_ssao_fai;
 	int ms_normal_fai;
-	int bloom_fai;
+	int hdr_fai;
 	int lscatt_fai;
 }
 
@@ -73,10 +73,10 @@ void Init()
 		shdr_vars::pps_ssao_fai = shdr_post_proc_stage->GetUniformLocation( "pps_ssao_fai" );
 	}
 
-	if( r::pps::bloom::enabled )
+	if( r::pps::hdr::enabled )
 	{
-		r::pps::bloom::Init();
-		shdr_vars::bloom_fai = shdr_post_proc_stage->GetUniformLocation( "pps_boom_fai" );
+		r::pps::hdr::Init();
+		shdr_vars::hdr_fai = shdr_post_proc_stage->GetUniformLocation( "pps_hdr_fai" );
 	}
 
 	if( r::pps::edgeaa::enabled )
@@ -101,8 +101,8 @@ void RunStage( const camera_t& cam )
 	if( r::pps::ssao::enabled )
 		r::pps::ssao::RunPass( cam );
 
-	if( r::pps::bloom::enabled )
-		r::pps::bloom::RunPass( cam );
+	if( r::pps::hdr::enabled )
+		r::pps::hdr::RunPass( cam );
 
 	if( r::pps::lscatt::enabled )
 		r::pps::lscatt::RunPass( cam );
@@ -124,7 +124,7 @@ void RunStage( const camera_t& cam )
 
 	if( r::pps::ssao::enabled )
 	{
-		r::pps::ssao::fai.Bind(1);
+		r::pps::ssao::blured_fai.Bind(1);
 		glUniform1i( shdr_vars::pps_ssao_fai, 1 );
 	}
 
@@ -134,10 +134,10 @@ void RunStage( const camera_t& cam )
 		glUniform1i( shdr_vars::ms_normal_fai, 2 );
 	}
 
-	if( r::pps::bloom::enabled )
+	if( r::pps::hdr::enabled )
 	{
-		r::pps::bloom::final_fai.Bind(3);
-		glUniform1i( shdr_vars::bloom_fai, 3 );
+		r::pps::hdr::pass2_fai.Bind(3);
+		glUniform1i( shdr_vars::hdr_fai, 3 );
 	}
 
 	if( r::pps::lscatt::enabled )

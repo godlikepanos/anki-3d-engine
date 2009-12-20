@@ -19,18 +19,47 @@ namespace ssao {
 VARS                                                                                                                                  =
 =======================================================================================================================================
 */
-static fbo_t fbo; // yet another FBO
+static fbo_t fbo, blur_fbo; // yet another FBO
 
 float rendering_quality = 0.25; // the rendering_quality of the SSAO fai. Chose low so it can blend
 bool enabled = true;
 
 static uint wwidth, wheight; // window width and height
 
-texture_t fai; // SSAO factor
+texture_t fai, blured_fai; // SSAO factor
 
-static shader_prog_t* shdr_ppp_ssao;
+static shader_prog_t* shdr_ppp_ssao, * blur_shdr;
 
 static texture_t* noise_map;
+
+
+//=====================================================================================================================================
+// InitBlurFBO                                                                                                                        =
+//=====================================================================================================================================
+static void InitBlurFBO()
+{
+	// create FBO
+	blur_fbo.Create();
+	blur_fbo.Bind();
+
+	// inform in what buffers we draw
+	blur_fbo.SetNumOfColorAttachements(1);
+
+	// create the texes
+	blured_fai.CreateEmpty( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
+	blured_fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	blured_fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+	// attach
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, blured_fai.GetGLID(), 0 );
+
+	// test if success
+	if( !blur_fbo.CheckStatus() )
+		FATAL( "Cannot create deferred shading post-processing stage SSAO blur FBO" );
+
+	// unbind
+	blur_fbo.Unbind();
+}
 
 
 /*
@@ -82,6 +111,10 @@ void Init()
 	//noise_map->TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	r::texture_compression = tex_compr;
 	r::mipmaping = mipmaping;
+
+	// blur FBO
+	InitBlurFBO();
+	blur_shdr = rsrc::shaders.Load( "shaders/pps_ssao_blur.glsl" );
 }
 
 
@@ -113,8 +146,18 @@ void RunPass( const camera_t& cam )
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableClientState( GL_VERTEX_ARRAY );
 
+
+	// second pass. blur
+	blur_fbo.Bind();
+	blur_shdr->Bind();
+	blur_shdr->LocTexUnit( blur_shdr->GetUniformLocation(0), fai, 0 );
+	glEnableClientState( GL_VERTEX_ARRAY );
+	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
+	glDrawArrays( GL_QUADS, 0, 4 );
+	glDisableClientState( GL_VERTEX_ARRAY );
+
 	// end
-	fbo.Unbind();
+	fbo_t::Unbind();
 }
 
 
