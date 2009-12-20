@@ -70,10 +70,10 @@ static void BuildStdShaderPreProcStr()
 	}
 	if( r::pps::edgeaa::enabled )
 		tmp += "#define _EDGEAA_\n";
-	if( r::pps::bloom::enabled )
+	if( r::pps::hdr::enabled )
 	{
-		tmp += "#define _BLOOM_\n";
-		tmp += "#define BLOOM_RENDERING_QUALITY " + FloatToStr(r::pps::bloom::rendering_quality) + "\n";
+		tmp += "#define _HDR_\n";
+		tmp += "#define HDR_RENDERING_QUALITY " + FloatToStr(r::pps::hdr::rendering_quality) + "\n";
 	}
 	if( r::pps::lscatt::enabled )
 	{

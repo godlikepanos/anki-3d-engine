@@ -100,7 +100,7 @@ namespace pps
 	{
 		extern bool enabled; ///< EdgeAA on/of
 	}
-	namespace bloom
+	namespace hdr
 	{
 		extern bool enabled; ///< Bloom on/of
 	}
