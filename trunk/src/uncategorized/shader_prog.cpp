@@ -12,7 +12,7 @@
 //=====================================================================================================================================
 // CreateAndCompileShader                                                                                                             =
 //=====================================================================================================================================
-uint shader_prog_t::CreateAndCompileShader( const char* source_code, int type ) const
+uint shader_prog_t::CreateAndCompileShader( const char* source_code, const char* preproc, int type ) const
 {
 	uint gl_id = 0;
 	const char* source_strs[2] = {NULL, NULL};
@@ -22,7 +22,7 @@ uint shader_prog_t::CreateAndCompileShader( const char* source_code, int type ) 
 
 	// attach the source
 	source_strs[1] = source_code;
-	source_strs[0] = r::GetStdShaderPreprocDefines().c_str();
+	source_strs[0] = preproc;
 
 	// compile
 	glShaderSource( gl_id, 2, source_strs, NULL );
@@ -214,17 +214,28 @@ bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 //=====================================================================================================================================
 bool shader_prog_t::Load( const char* filename )
 {
+	if( !CustomLoad( filename, "" ) return false;
+	return true;
+}
+
+
+//=====================================================================================================================================
+// CustomLoad                                                                                                                         =
+//=====================================================================================================================================
+bool shader_prog_t::CustomLoad( const char* filename, const char* extra_source )
+{
 	shader_parser_t pars;
 
 	if( !pars.ParseFile( filename ) ) return false;
 
-	//PRINT( pars.frag_shader_source )
+	//r::GetStdShaderPreprocDefines().c_str()
 
 	// create, compile, attach and link
-	uint vert_gl_id = CreateAndCompileShader( pars.vert_shader_source.c_str(), GL_VERTEX_SHADER );
+	string preproc_source = r::GetStdShaderPreprocDefines() + extra_source;
+	uint vert_gl_id = CreateAndCompileShader( pars.vert_shader_source.c_str(), preproc_source.c_str(), GL_VERTEX_SHADER );
 	if( vert_gl_id == 0 ) return false;
 
-	uint frag_gl_id = CreateAndCompileShader( pars.frag_shader_source.c_str(), GL_FRAGMENT_SHADER );
+	uint frag_gl_id = CreateAndCompileShader( pars.frag_shader_source.c_str(), preproc_source.c_str(), GL_FRAGMENT_SHADER );
 	if( frag_gl_id == 0 ) return false;
 
 	gl_id = glCreateProgram();
@@ -237,7 +248,7 @@ bool shader_prog_t::Load( const char* filename )
 	// init the rest
 	GetUniAndAttribLocs();
 	if( !FillTheCustomLocationsVectors( pars ) ) return false;
-	
+
 	return true;
 }
 

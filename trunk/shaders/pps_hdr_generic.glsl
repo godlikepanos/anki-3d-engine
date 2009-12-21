@@ -58,7 +58,7 @@ void main()
 		gl_FragData[0].rgb = color / KERNEL_SIZE;
 
 	#else // _PPS_HDR_PASS_2_
-		vec3 color = MedianFilter( tex, tex_coords );
+		vec3 color = MedianFilterRGB( tex, tex_coords );
 		//vec3 color = texture2D( tex, tex_coords ).rgb;
 
 		float Y = dot(vec3(0.30, 0.59, 0.11), color);

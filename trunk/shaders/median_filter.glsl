@@ -13,6 +13,10 @@ http://graphics.cs.williams.edu
 #define mnmx5(a, b, c, d, e)	s2(a, b); s2(c, d); mn3(a, c, e); mx3(b, d, e);           // 6 exchanges
 #define mnmx6(a, b, c, d, e, f) s2(a, d); s2(b, e); s2(c, f); mn3(a, b, c); mx3(d, e, f); // 7 exchanges
 
+
+//=====================================================================================================================================
+// MedianFilterRGB                                                                                                                    =
+//=====================================================================================================================================
 vec3 MedianFilter( in sampler2D tex, in vec2 tex_coords )
 {
 	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
@@ -43,7 +47,10 @@ vec3 MedianFilter( in sampler2D tex, in vec2 tex_coords )
 }
 
 
-float MedianFilterAlpha( in sampler2D tex, in vec2 tex_coords )
+//=====================================================================================================================================
+// MedianFilterA                                                                                                                      =
+//=====================================================================================================================================
+float MedianFilterA( in sampler2D tex, in vec2 tex_coords )
 {
 	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
   float v[9];
