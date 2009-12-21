@@ -24,7 +24,7 @@ class shader_prog_t: public resource_t
 		
 		void GetUniAndAttribLocs();
 		bool FillTheCustomLocationsVectors( const shader_parser_t& pars );
-		uint CreateAndCompileShader( const char* source_code, int type ) const; ///< @return Returns zero on falure
+		uint CreateAndCompileShader( const char* source_code, const char* preproc, int type ) const; ///< @return Returns zero on falure
 		bool Link();
 		
 	public:
@@ -36,7 +36,7 @@ class shader_prog_t: public resource_t
 		static uint GetCurrentProgram() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
 
 		bool Load( const char* filename );
-		bool CustomLoad( const char*  );
+		bool CustomLoad( const char* filename, const char* extra_source );
 		void Unload() { /* ToDo: add code */ }
 
 		int GetUniformLocation( const char* name ) const; ///< Returns -1 if fail and throws error
