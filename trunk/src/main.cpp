@@ -25,6 +25,7 @@
 #include "skybox.h"
 #include "map.h"
 #include "model.h"
+#include "renderer.hpp"
 
 camera_t main_cam;
 
@@ -116,7 +117,7 @@ void Init()
 	projlights[0].texture = rsrc::textures.Load( "gfx/lights/flashlight.tga" );
 	projlights[0].texture->TexParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
 	projlights[0].SetSpecularColor( vec3_t( 1.0, 1.0, 1.0) );
-	projlights[0].SetDiffuseColor( vec3_t( 1.0, 1.0, 1.0)*3.0 );
+	projlights[0].SetDiffuseColor( vec3_t( 1.0, 1.0, 1.0)*4.0 );
 	projlights[0].translation_lspace = vec3_t( 1.3, 4.3, 3.0 );
 	projlights[0].rotation_lspace.RotateYAxis(ToRad(20));
 	projlights[0].rotation_lspace.RotateXAxis(ToRad(-30));
@@ -162,19 +163,23 @@ void Init()
 
 	sphere.material = rsrc::materials.Load( "materials/volfog.mtl" );
 
+
+	// floor
+	floor__.Load( "maps/temple/Cube.019.mesh" );
+	floor__.rotation_lspace.RotateXAxis( ToRad(-90.0) );
+	floor__.translation_lspace.y -= 0.2;
+
+
 	scene::smodels.Register( &mdl );
 	scene::meshes.Register( &sarge );
 	//scene::Register( &imp );
+	scene::meshes.Register( &floor__ );
 	scene::meshes.Register( &mcube );
 	scene::cameras.Register( &main_cam );
 	scene::lights.Register( &point_lights[0] );
 	scene::lights.Register( &point_lights[1] );
 	scene::lights.Register( &projlights[0] );
 	scene::lights.Register( &projlights[1] );
-	//scene::meshes.Register( &sphere );
-
-	//map.Load( "maps/temple/temple.map" );
-	//map.CreateOctree();
 
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
@@ -185,12 +190,12 @@ void Init()
 }
 
 
-
 //=====================================================================================================================================
 // main                                                                                                                               =
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
+
 	Init();
 
 
@@ -201,6 +206,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 	int ticks = hndl::GetTicks();
 	do
 	{
+		int ticks_ = hndl::GetTicks();
 		i::HandleEvents();
 		r::PrepareNextFrame();
 
@@ -258,7 +264,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		hud::SetColor( vec4_t(1.0, 1.0, 1.0, 1.0) );
 		hud::SetPos( -0.98, 0.95 );
 		hud::SetFontWidth( 0.03 );
-		hud::Printf( "frame:%d time:%dms\n", r::frames_num, StopBench() );
+		hud::Printf( "frame:%d time:%dms\n", r::frames_num, hndl::GetTicks()-ticks_ );
 		//hud::Print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		hud::Printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translation_wspace.x, mover->translation_wspace.y, mover->translation_wspace.z,
 								 ToDegrees(euler_t(mover->rotation_wspace).x), ToDegrees(euler_t(mover->rotation_wspace).y), ToDegrees(euler_t(mover->rotation_wspace).z) );

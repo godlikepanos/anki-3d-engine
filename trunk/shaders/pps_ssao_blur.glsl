@@ -13,5 +13,5 @@ uniform sampler2D tex;
 
 void main()
 {
-	gl_FragData[0].a = MedianFilterA( tex, tex_coords );
+	gl_FragData[0].a = MedianAndBlurA( tex, tex_coords );
 }

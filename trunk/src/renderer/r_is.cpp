@@ -639,9 +639,7 @@ void RunStage( const camera_t& cam )
 			case light_t::SPOT:
 			{
 				const spot_light_t& projl = static_cast<const spot_light_t&>(light);
-				r::PrintLastError();
 				SpotLightPass( cam, projl );
-				r::PrintLastError();
 				break;
 			}
 

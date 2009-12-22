@@ -22,7 +22,7 @@ static fbo_t fbo;
 shader_prog_t* shdr_depth, * shdr_depth_grass, * shdr_depth_hw_skinning;
 
 // exportable vars
-int shadow_resolution = 384;
+int shadow_resolution = 256;
 texture_t shadow_map;
 
 

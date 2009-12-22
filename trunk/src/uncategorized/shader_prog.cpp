@@ -214,7 +214,7 @@ bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 //=====================================================================================================================================
 bool shader_prog_t::Load( const char* filename )
 {
-	if( !CustomLoad( filename, "" ) return false;
+	if( !CustomLoad( filename, "" ) ) return false;
 	return true;
 }
 

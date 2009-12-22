@@ -42,8 +42,6 @@ extern vec_t<string> GetFileLines( const char* filename );
 extern char*         GetFileExtension( const char* path );
 extern char*         CutPath( const char* path );
 extern string        GetPath( const char* path );
-extern void          StartBench();      
-extern clock_t       StopBench();
 extern string        IntToStr( int );
 extern string        FloatToStr( float );
 
