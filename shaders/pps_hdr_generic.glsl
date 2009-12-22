@@ -22,7 +22,7 @@ void main()
 	return;*/
 
 	#if defined( _PPS_HDR_PASS_0_ ) || defined( _PPS_HDR_PASS_1_ )
-		const float super_offset = 1.5;
+		const float super_offset = 2.5;
 
 		#if defined( _PPS_HDR_PASS0_ )
 			float offset = 1.0 / float(textureSize(tex,0).x) * super_offset;
