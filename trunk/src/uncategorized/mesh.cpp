@@ -455,58 +455,46 @@ void mesh_t::Render()
 	r::MultMatrix( transformation_wspace );
 
 
-	/*GLuint loc = material->shader->GetAttributeLocation( "tangent" );
+	if( material->attribute_locs.position != -1 )
+	{
+		mesh_data->vbos.vert_coords.Bind();
+		glVertexAttribPointer( material->attribute_locs.position, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.position );
+	}
 
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_NORMAL_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	glEnableVertexAttribArray( loc );
+	if( material->attribute_locs.normal != -1 )
+	{
+		mesh_data->vbos.vert_normals.Bind();
+		glVertexAttribPointer( material->attribute_locs.normal, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.normal );
+	}
 
-	glVertexPointer( 3, GL_FLOAT, 0, &mesh_data->vert_coords[0][0] );
-	glNormalPointer( GL_FLOAT, 0, &mesh_data->vert_normals[0][0] );
-	glTexCoordPointer( 2, GL_FLOAT, 0, &mesh_data->uvs[0] );
-	glVertexAttribPointer( loc, 4, GL_FLOAT, 0, 0, &mesh_data->vert_tangents[0] );
+	if( material->attribute_locs.tex_coords != -1 )
+	{
+		mesh_data->vbos.tex_coords.Bind();
+		glVertexAttribPointer( material->attribute_locs.tex_coords, 2, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.tex_coords );
+	}
 
-	glDrawElements( GL_TRIANGLES, mesh_data->vert_indeces.size(), GL_UNSIGNED_SHORT, &mesh_data->vert_indeces[0] );
-
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableClientState( GL_NORMAL_ARRAY );
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-	glDisableVertexAttribArray( loc );*/
-	const int& loc = material->tangents_attrib_loc;
-
-	mesh_data->vbos.vert_coords.Bind();
-	glVertexPointer( 3, GL_FLOAT, 0, NULL );
-
-	mesh_data->vbos.vert_normals.Bind();
-	glNormalPointer( GL_FLOAT, 0, NULL );
-
-	mesh_data->vbos.tex_coords.Bind();
-	glTexCoordPointer( 2, GL_FLOAT, 0, NULL );
-
-	if( material->needs_tangents )
+	if( material->attribute_locs.tanget != -1 )
 	{
 		mesh_data->vbos.vert_tangents.Bind();
-		glVertexAttribPointer( loc, 4, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( loc );
+		glVertexAttribPointer( material->attribute_locs.tanget, 4, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.tanget );
 	}
 
 	mesh_data->vbos.vert_indeces.Bind();
 
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_NORMAL_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
 	glDrawElements( GL_TRIANGLES, mesh_data->vert_indeces.size(), GL_UNSIGNED_SHORT, 0 );
 
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableClientState( GL_NORMAL_ARRAY );
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-	if( material->needs_tangents ) glDisableVertexAttribArray( loc );
+
+	if( material->attribute_locs.position != -1 ) glDisableVertexAttribArray( material->attribute_locs.position );
+	if( material->attribute_locs.normal != -1 ) glDisableVertexAttribArray( material->attribute_locs.normal );
+	if( material->attribute_locs.tex_coords != -1 ) glDisableVertexAttribArray( material->attribute_locs.tex_coords );
+	if( material->attribute_locs.tanget != -1 ) glDisableVertexAttribArray( material->attribute_locs.tanget );
+
 
 	vbo_t::UnbindAllTargets();
-
-
 	glPopMatrix();
 }
 

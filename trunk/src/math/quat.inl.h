@@ -170,15 +170,15 @@ M_INLINE quat_t quat_t::Conjugated() const
 }
 
 // Normalized
-M_INLINE quat_t quat_t::Normalized() const
+M_INLINE quat_t quat_t::GetNormalized() const
 {
-	return quat_t( vec4_t(ME).Normalized() );
+	return quat_t( vec4_t(ME).GetNormalized() );
 }
 
 // Normalize
 M_INLINE void quat_t::Normalize()
 {
-	ME = Normalized();
+	ME = GetNormalized();
 }
 
 // Length
@@ -223,7 +223,7 @@ M_INLINE void quat_t::CalcFrom2Vec3( const vec3_t& from, const vec3_t& to )
 }
 
 // Rotated
-M_INLINE quat_t quat_t::Rotated( const quat_t& b ) const
+M_INLINE quat_t quat_t::GetRotated( const quat_t& b ) const
 {
 	return ME * b;
 }
@@ -231,7 +231,7 @@ M_INLINE quat_t quat_t::Rotated( const quat_t& b ) const
 // Rotate
 M_INLINE void quat_t::Rotate( const quat_t& b )
 {
-	ME = Rotated( b );
+	ME = GetRotated( b );
 }
 
 // Dot

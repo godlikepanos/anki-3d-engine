@@ -39,11 +39,11 @@ class quat_t
 		void   Conjugate();
 		quat_t Conjugated() const;
 		void   Normalize();
-		quat_t Normalized() const;
+		quat_t GetNormalized() const;
 		void   Print() const;
 		float  Dot( const quat_t& b ) const;
 		quat_t Slerp( const quat_t& q1, float t ) const; // returns Slerp( this, q1, t )
-		quat_t Rotated( const quat_t& b ) const;
+		quat_t GetRotated( const quat_t& b ) const;
 		void   Rotate( const quat_t& b );
 };
 

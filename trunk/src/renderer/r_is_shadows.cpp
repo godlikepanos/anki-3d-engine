@@ -95,8 +95,8 @@ void RunPass( const camera_t& cam )
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	// for artefacts
-	glPolygonOffset( 2.0f, 2.0f ); // keep the values as low as possible!!!!
+	// for artifacts
+	glPolygonOffset( 2.0, 2.0 ); // keep the values as low as possible!!!!
 	glEnable( GL_POLYGON_OFFSET_FILL );
 
 	// render all meshes

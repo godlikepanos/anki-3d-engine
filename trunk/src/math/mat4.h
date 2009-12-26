@@ -68,11 +68,12 @@ class mat4_t
 		void   SetTranslationPart( const vec3_t& v3 );
 		vec3_t GetTranslationPart() const;
 		void   Transpose();
-		mat4_t Transposed() const;
+		mat4_t GetTransposed() const;
 		void   Print() const;
 		float  Det() const;
 		void   Invert();
-		mat4_t Inverted() const;
+		mat4_t GetInverse() const;
+		mat4_t GetInverseTransformation() const;
 		mat4_t Lerp( const mat4_t& b, float t ) const;
 		static mat4_t CombineTransformations( const mat4_t& m0, const mat4_t& m1 );  // 12 muls, 27 adds. Something like m4 = m0 * m1 ...
 		                                                                             // ...but without touching the 4rth row and allot faster

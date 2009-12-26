@@ -78,7 +78,7 @@ LookAtPoint                                                                     
 void camera_t::LookAtPoint( const vec3_t& point )
 {
 	const vec3_t& j = vec3_t( 0.0, 1.0, 0.0 );
-	vec3_t vdir = (point - translation_lspace).Normalized();
+	vec3_t vdir = (point - translation_lspace).GetNormalized();
 	vec3_t vup = j - vdir * j.Dot(vdir);
 	vec3_t vside = vdir.Cross( vup );
 	rotation_lspace.SetColumns( vside, vup, -vdir );
@@ -212,7 +212,7 @@ void camera_t::CalcProjectionMatrix()
 	projection_mat(3,2) = -1.0f;
 	projection_mat(3,3) = 0.0;
 
-	inv_projection_mat = projection_mat.Inverted();
+	inv_projection_mat = projection_mat.GetInverse();
 }
 
 
@@ -231,7 +231,7 @@ void camera_t::UpdateViewMatrix()
 
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
-	mat3_t cam_inverted_rot = rotation_wspace.Transposed();
+	mat3_t cam_inverted_rot = rotation_wspace.GetTransposed();
 	vec3_t cam_inverted_tsl = -( cam_inverted_rot * translation_wspace );
 	view_mat = mat4_t( cam_inverted_tsl, cam_inverted_rot );
 }

@@ -57,17 +57,26 @@ class material_t: public resource_t
 		int  blending_sfactor;
 		int  blending_dfactor;
 
-		// vertex
-		bool needs_tangents; ///< Whether or not to pass tangents in the shader
-		int  tangents_attrib_loc;
-		bool needs_normals;
-		bool needs_tex_coords;
-		bool needs_vert_weights;
-		int  vert_weight_bones_num_attrib_loc;
-		int  vert_weight_bone_ids_attrib_loc;
-		int  vert_weight_weights_attrib_loc;
-		int  skinning_rotations_uni_loc;
-		int  skinning_translations_uni_loc;
+		// vertex attributes
+		struct
+		{
+			int position;
+			int tanget;
+			int normal;
+			int tex_coords;
+
+			// for hw skinning
+			int vert_weight_bones_num;
+			int vert_weight_bone_ids;
+			int vert_weight_weights;
+		} attribute_locs;
+
+		// uniforms
+		struct
+		{
+			int skinning_rotations;
+			int skinning_translations;
+		} uniform_locs;
 
 		bool depth_testing;
 		bool wireframe;

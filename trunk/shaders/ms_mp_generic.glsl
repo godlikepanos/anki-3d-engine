@@ -20,15 +20,22 @@
  */
 #pragma anki include "shaders/hw_skinning.glsl"
 
-varying vec3 normal;
-
-varying vec2 tex_coords_v2f;
-uniform vec2 tex_coords;
-
+// attributes
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 tex_coords;
 attribute vec4 tangent;
+
+// uniforms
+uniform mat4 MVP_mat;
+uniform mat4 MV_mat;
+uniform mat3 N_mat;
+
+// varyings
+varying vec3 normal_v2f;
+varying vec2 tex_coords_v2f;
 varying vec3 tangent_v2f;
 varying float w_v2f;
-
 varying vec3 eye_v2f; ///< In tangent space
 varying vec3 vert_pos_eye_space_v2f;
 
@@ -48,31 +55,31 @@ void main()
 
 		HWSkinning( _rot, _tsl );
 
-		normal = gl_NormalMatrix * ( _rot * gl_Normal );
+		normal_v2f = gl_NormalMatrix * ( _rot * normal );
 
 		#if NEEDS_TANGENT
 			tangent_v2f = gl_NormalMatrix * ( _rot * vec3(tangent) );
 		#endif
 
-		vec3 pos_lspace = ( _rot * gl_Vertex.xyz) + _tsl;
+		vec3 pos_lspace = ( _rot * position) + _tsl;
 		gl_Position =  gl_ModelViewProjectionMatrix * vec4(pos_lspace, 1.0);
 
 	// if DONT have hardware skinning
 	#else
-		normal = gl_NormalMatrix * gl_Normal;
+		normal_v2f = gl_NormalMatrix * normal;
 
 		#if NEEDS_TANGENT
 			tangent_v2f = gl_NormalMatrix * vec3(tangent);
 		#endif
 
-		gl_Position = ftransform();
+		gl_Position = gl_ModelViewProjectionMatrix * vec4(position, 1.0);
 	#endif
 
 
 	// calculate the rest
 
 	#if NEEDS_TEX_MAPPING
-		tex_coords_v2f = gl_MultiTexCoord0.xy;
+		tex_coords_v2f = tex_coords;
 	#endif
 
 
@@ -82,14 +89,14 @@ void main()
 
 
 	#if defined( _ENVIRONMENT_MAPPING_ )
-		vert_pos_eye_space_v2f = vec3( gl_ModelViewMatrix * gl_Vertex );
+		vert_pos_eye_space_v2f = vec3( gl_ModelViewMatrix * vec4(position, 1.0) );
 	#endif
 
 
 	#if defined( _PARALLAX_MAPPING_ )
-		vec3 t = gl_NormalMatrix * tangent.xyz;
+		/*vec3 t = gl_NormalMatrix * tangent.xyz;
 		vec3 n = normal;
-		vec3 b = cross( n, t ) /* tangent.w*/;
+		vec3 b = cross( n, t )  tangent.w;
 
 		vec3 eye_pos = gl_Position.xyz - gl_ModelViewMatrixInverse[3].xyz;
 		eye_pos = eye_pos - ( gl_ModelViewMatrixInverse * gl_Vertex ).xyz;
@@ -97,7 +104,7 @@ void main()
 		mat3 tbn_mat = mat3( t, b, n );
 		eye = tbn_mat * eye_pos;
 		//eye.y = -eye.y;
-		//eye.x = -eye.x;
+		//eye.x = -eye.x;*/
 	#endif
 }
 
@@ -105,13 +112,13 @@ void main()
 #pragma anki frag_shader_begins
 
 /**
-Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens before the
-normal calculation and the other just after it. In the first part we read the texture (or the gl_Color) and we set the _diff_color.
-In case of grass we discard. In the second part we calculate a SEM color and we combine it with the _diff_color. We cannot put
-the second part before normal calculation because SEM needs the _new_normal. Also we cannot put the first part after normal
-calculation because in case of grass we will waste calculations for the normal. For that two reasons we split the diffuse
-calculations in two parts
-*/
+ * Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens before the
+ * normal calculation and the other just after it. In the first part we read the texture (or the gl_Color) and we set the _diff_color.
+ * In case of grass we discard. In the second part we calculate a SEM color and we combine it with the _diff_color. We cannot put
+ * the second part before normal calculation because SEM needs the _new_normal. Also we cannot put the first part after normal
+ * calculation because in case of grass we will waste calculations for the normal. For that two reasons we split the diffuse
+ * calculations in two parts
+ */
 
 #pragma anki include "shaders/pack.glsl"
 
@@ -127,7 +134,7 @@ uniform sampler2D specular_map;
 uniform sampler2D height_map;
 uniform sampler2D environment_map;
 
-varying vec3 normal;
+varying vec3 normal_v2f;
 varying vec3 tangent_v2f;
 varying float w_v2f;
 varying vec2 tex_coords_v2f;
@@ -188,7 +195,7 @@ void main()
 	// Either use a normap map and make some calculations or use the vertex normal                                                      =
 	//===================================================================================================================================
 	#if defined( _HAS_NORMAL_MAP_ )
-		vec3 _n = normalize( normal );
+		vec3 _n = normalize( normal_v2f );
 		vec3 _t = normalize( tangent_v2f );
 		vec3 _b = cross(_n, _t) * w_v2f;
 
@@ -198,7 +205,7 @@ void main()
 
 		vec3 _new_normal = normalize( _tbn_mat * _n_at_tangentspace );
 	#else
-		vec3 _new_normal = normalize(normal);
+		vec3 _new_normal = normalize(normal_v2f);
 	#endif
 
 

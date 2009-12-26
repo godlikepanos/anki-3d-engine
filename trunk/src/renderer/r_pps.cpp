@@ -148,14 +148,7 @@ void RunStage( const camera_t& cam )
 
 
 	// draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-
-	glDrawArrays( GL_QUADS, 0, 4 );
-
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( shdr_post_proc_stage->GetAttributeLocation(0) );
 
 	// unbind FBO
 	fbo.Unbind();

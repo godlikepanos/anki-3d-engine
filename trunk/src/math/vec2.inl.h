@@ -187,7 +187,7 @@ M_INLINE void vec2_t::Normalize()
 }
 
 // Normalized (return the normalized)
-M_INLINE vec2_t vec2_t::Normalized() const
+M_INLINE vec2_t vec2_t::GetNormalized() const
 {
 	return ME * InvSqrt( x*x + y*y );
 }

@@ -274,7 +274,7 @@ Load                                                                            
 bool image_t::Load( const char* filename )
 {
 	// get the extension
-	char* ext = GetFileExtension( filename );
+	char* ext = util::GetFileExtension( filename );
 
 	// load from this extension
 	if( strcmp( ext, "tga" ) == 0 )
@@ -349,11 +349,6 @@ bool texture_t::Load( const char* filename )
 		int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
 	else
 		int_format = (img.bpp==32) ? GL_RGBA : GL_RGB;
-
-	/*if( r::mipmaping )
-		gluBuild2DMipmaps( GL_TEXTURE_2D, int_format, img.width, img.height, format, GL_UNSIGNED_BYTE, img.data );
-	else
-		glTexImage2D( GL_TEXTURE_2D, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );*/
 
 	glTexImage2D( GL_TEXTURE_2D, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
 	if( r::mipmaping ) glGenerateMipmap(GL_TEXTURE_2D);

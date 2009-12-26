@@ -53,7 +53,7 @@ class vec2_t
 		float  Length() const;
 		void   SetZero();
 		void   Normalize();
-		vec2_t Normalized() const;
+		vec2_t GetNormalized() const;
 		float  Dot( const vec2_t& b ) const;
 		void   Print() const;
 };

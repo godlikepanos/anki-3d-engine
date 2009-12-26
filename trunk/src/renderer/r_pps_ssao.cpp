@@ -82,8 +82,8 @@ void Init()
 
 	// create the texes
 	fai.CreateEmpty( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
-	fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
@@ -132,29 +132,20 @@ void RunPass( const camera_t& cam )
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
 
-	// set the shader
+	// fill SSAO FAI
 	shdr_ppp_ssao->Bind();
-
 	glUniform2fv( shdr_ppp_ssao->GetUniformLocation(0), 1, &(vec2_t(cam.GetZNear(), cam.GetZFar()))[0] );
 	shdr_ppp_ssao->LocTexUnit( shdr_ppp_ssao->GetUniformLocation(1), ms::depth_fai, 0 );
 	shdr_ppp_ssao->LocTexUnit( shdr_ppp_ssao->GetUniformLocation(2), *noise_map, 1 );
 	shdr_ppp_ssao->LocTexUnit( shdr_ppp_ssao->GetUniformLocation(3), ms::normal_fai, 2 );
-
-	// Draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( shdr_ppp_ssao->GetAttributeLocation(0) ); // Draw quad
 
 
 	// second pass. blur
 	blur_fbo.Bind();
 	blur_shdr->Bind();
 	blur_shdr->LocTexUnit( blur_shdr->GetUniformLocation(0), fai, 0 );
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( blur_shdr->GetAttributeLocation(0) ); // Draw quad
 
 	// end
 	fbo_t::Unbind();

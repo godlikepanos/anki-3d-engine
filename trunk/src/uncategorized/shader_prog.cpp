@@ -118,7 +118,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 		int loc = glGetAttribLocation(gl_id, name_);
 		if( loc == -1 )
 		{
-			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
+			SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
 			continue;
 		}
 
@@ -137,7 +137,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 		int loc = glGetUniformLocation(gl_id, name_);
 		if( loc == -1 )
 		{
-			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
+			SHADER_WARNING( "You are using FFP uniforms (\"" << name_ << "\")" );
 			continue;
 		}
 
@@ -224,11 +224,15 @@ bool shader_prog_t::Load( const char* filename )
 //=====================================================================================================================================
 bool shader_prog_t::CustomLoad( const char* filename, const char* extra_source )
 {
+	if( GetName().length() == 0 )
+	{
+		name = util::CutPath( filename );
+		path = util::GetPath( filename );
+	}
+
 	shader_parser_t pars;
 
 	if( !pars.ParseFile( filename ) ) return false;
-
-	//r::GetStdShaderPreprocDefines().c_str()
 
 	// create, compile, attach and link
 	string preproc_source = r::GetStdShaderPreprocDefines() + extra_source;

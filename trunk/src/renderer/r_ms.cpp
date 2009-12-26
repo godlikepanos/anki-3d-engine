@@ -1,6 +1,6 @@
 /**
-The file contains functions and vars used for the deferred shading material stage.
-*/
+ * The file contains functions and vars used for the deferred shading material stage.
+ */
 
 #include "renderer.h"
 #include "camera.h"

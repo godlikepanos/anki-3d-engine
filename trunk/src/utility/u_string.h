@@ -1,5 +1,5 @@
-#ifndef _GSTRING_H_
-#define _GSTRING_H_
+#ifndef _U_STRING_H_
+#define _U_STRING_H_
 
 #include <iostream>
 #include <cstdlib>
@@ -30,17 +30,19 @@ class string_t
 		bool const_data; ///< false means that we have allocated memory
 		uint length;
 		
-		// private stuff
-		void Init( float d )
+		// private funcs
+		template<typename type_t> string_t ConvertT( type_t t, const char* format )
 		{
-			char pc [256];
-			sprintf( pc, "%f", d );
-			length = strlen( pc );
-			const_data = false;
-			data = (char*) malloc( (length+1)*sizeof(char) );
-			memcpy( data, pc, length+1 );
+			string_t out;
+			char tmps [1024];
+			int n = sprintf( tmps, format, t );
+			out.length = n;
+			out.const_data = false;
+			out.data = malloc( (length+1)*sizeof(char) );
+			memcpy( out.data, tmps, length+1 );
+			return out;
 		}
-		
+
 	public:
 		static const uint npos = UINT_MAX;  // ToDo: change it when C++0x becomes standard
 		
@@ -223,60 +225,27 @@ class string_t
 		//================================================================================================================================
 		
 		// Convert
-		static string_t Convert( int i )
+		static string_t Convert( int i, const char* format = "%d" )
 		{
-			string_t out;
-			if( i == 0 )
-			{
-				out.data = "0";
-				out.const_data = true;
-				out.length = 1;
-			}
-			else
-			{
-				char cv [256];
-				const size_t cv_size = sizeof(cv)/sizeof(char); 
-				char* pc = &cv[ cv_size ];
-				int ii = (i<0) ? -i : i;
-				while( ii != 0 )
-				{
-					int mod = ii%10;
-					ii /= 10;
-					--pc;
-					*pc = ('0' + mod);
-				}
-				if( i < 0 )
-				{
-					--pc;
-					*pc = '-';
-				}
-				out.length = cv + cv_size - pc;
-				DEBUG_ERR( out.length >= sizeof(cv)/sizeof(char) );
-				out.const_data = false;
-				out.data = (char*) malloc( (out.length+1)*sizeof(char) );
-				memcpy( out.data, pc, out.length );
-				out.data[out.length] = '\0';
-			}
-			return out;
+			return ConvertT( i, format );
 		}
 		
-		// Convert [float]
-		static string_t Convert( float f )
+		// Convert [uint]
+		static string_t Convert( uint u, const char* format = "%u"  )
 		{
-			string_t out;
-			char pc [256];
-			sprintf( pc, "%f", f );
-			out.length = strlen( pc );
-			out.const_data = false;
-			out.data = (char*) malloc( (out.length+1)*sizeof(char) );
-			memcpy( out.data, pc, out.length+1 );
-			return out;
+			return ConvertT( u, format );
+		}
+
+		// Convert [float]
+		static string_t Convert( float f, const char* format = "%f"  )
+		{
+			return ConvertT( f, format );
 		}
 		
 		// Convert [double]
-		static string_t Convert( double d )
+		static string_t Convert( double d, const char* format = "%f"  )
 		{
-			return Convert( (float)d );
+			return ConvertT( d, format );
 		}
 		
 		// Clear

@@ -244,7 +244,7 @@ M_INLINE void vec3_t::Normalize()
 }
 
 // Normalized (return the normalized)
-M_INLINE vec3_t vec3_t::Normalized() const
+M_INLINE vec3_t vec3_t::GetNormalized() const
 {
 	return ME * InvSqrt( x*x + y*y + z*z );
 }
@@ -256,7 +256,7 @@ M_INLINE vec3_t vec3_t::Project( const vec3_t& to_this ) const
 }
 
 // Rotated
-M_INLINE vec3_t vec3_t::Rotated( const quat_t& q ) const
+M_INLINE vec3_t vec3_t::GetRotated( const quat_t& q ) const
 {
 	DEBUG_ERR( !IsZero(1.0f-q.Length()) ); // Not normalized quat
 
@@ -274,7 +274,7 @@ M_INLINE vec3_t vec3_t::Rotated( const quat_t& q ) const
 // Rotate
 M_INLINE void vec3_t::Rotate( const quat_t& q )
 {
-	ME = Rotated(q);
+	ME = GetRotated(q);
 }
 
 // Print
@@ -291,8 +291,8 @@ M_INLINE vec3_t vec3_t::Lerp( const vec3_t& v1, float t ) const
 	return (ME*(1.0f-t))+(v1*t);
 }
 
-// Transformed [mat3]
-M_INLINE vec3_t vec3_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
+// GetTransformed [mat3]
+M_INLINE vec3_t vec3_t::GetTransformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
 {
 	return (rotate * (ME * scale)) + translate;
 }
@@ -300,11 +300,11 @@ M_INLINE vec3_t vec3_t::Transformed( const vec3_t& translate, const mat3_t& rota
 // Transform [mat3]
 M_INLINE void vec3_t::Transform( const vec3_t& translate, const mat3_t& rotate, float scale )
 {
-	ME = Transformed( translate, rotate, scale );
+	ME = GetTransformed( translate, rotate, scale );
 }
 
-// Transformed [mat3] no scale
-M_INLINE vec3_t vec3_t::Transformed( const vec3_t& translate, const mat3_t& rotate ) const
+// GetTransformed [mat3] no scale
+M_INLINE vec3_t vec3_t::GetTransformed( const vec3_t& translate, const mat3_t& rotate ) const
 {
 	return (rotate * ME) + translate;
 }
@@ -312,23 +312,23 @@ M_INLINE vec3_t vec3_t::Transformed( const vec3_t& translate, const mat3_t& rota
 // Transform [mat3] no scale
 M_INLINE void vec3_t::Transform( const vec3_t& translate, const mat3_t& rotate )
 {
-	ME = Transformed( translate, rotate );
+	ME = GetTransformed( translate, rotate );
 }
 
-// Transformed [quat]
-M_INLINE vec3_t vec3_t::Transformed( const vec3_t& translate, const quat_t& rotate, float scale ) const
+// GetTransformed [quat]
+M_INLINE vec3_t vec3_t::GetTransformed( const vec3_t& translate, const quat_t& rotate, float scale ) const
 {
-	return (ME * scale).Rotated(rotate) + translate;
+	return (ME * scale).GetRotated(rotate) + translate;
 }
 
 // Transform [quat3] no scale
 M_INLINE void vec3_t::Transform( const vec3_t& translate, const quat_t& rotate, float scale )
 {
-	ME = Transformed( translate, rotate, scale );
+	ME = GetTransformed( translate, rotate, scale );
 }
 
-// Transformed [mat4]
-M_INLINE vec3_t vec3_t::Transformed( const mat4_t& transform ) const
+// GetTransformed [mat4]
+M_INLINE vec3_t vec3_t::GetTransformed( const mat4_t& transform ) const
 {
 	return vec3_t(
 		transform(0,0)*x + transform(0,1)*y + transform(0,2)*z + transform(0,3),
@@ -337,10 +337,10 @@ M_INLINE vec3_t vec3_t::Transformed( const mat4_t& transform ) const
 	);
 }
 
-// Transformed [mat4]
+// GetTransformed [mat4]
 M_INLINE void vec3_t::Transform( const mat4_t& transform )
 {
-	ME = Transformed( transform );
+	ME = GetTransformed( transform );
 }
 
 

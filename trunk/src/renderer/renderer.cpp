@@ -44,6 +44,22 @@ int max_texture_units = -1;
 bool texture_compression = false;
 
 
+//=====================================================================================================================================
+// DrawQuad                                                                                                                           =
+//=====================================================================================================================================
+void DrawQuad( int vert_coords_uni_loc )
+{
+	/*glEnableClientState( GL_VERTEX_ARRAY );
+	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
+	glDrawArrays( GL_QUADS, 0, 4 );
+	glDisableClientState( GL_VERTEX_ARRAY );*/
+	glVertexAttribPointer( vert_coords_uni_loc, 2, GL_FLOAT, false, 0, quad_vert_cords );
+	glEnableVertexAttribArray( vert_coords_uni_loc );
+	glDrawArrays( GL_QUADS, 0, 4 );
+	glDisableVertexAttribArray( vert_coords_uni_loc );
+}
+
+
 /*
 =======================================================================================================================================
 BuildStdShaderPreProcStr                                                                                                              =
@@ -54,7 +70,8 @@ static void BuildStdShaderPreProcStr()
 {
 	string& tmp = std_shader_preproc_defines;
 
-	tmp  = "#version 120\n";
+	tmp  = "#version 150 compatibility\n";
+	tmp += "precision lowp float;\n";
 	tmp += "#pragma optimize(on)\n";
 	tmp += "#pragma debug(off)\n";
 	tmp += "#define R_W " + FloatToStr(r::w) + "\n";
@@ -107,8 +124,8 @@ void Init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
-	glClearDepth( 1.0f );
+	glClearColor( 0.1, 0.1, 0.1, 0.0 );
+	glClearDepth( 1.0 );
 	glClearStencil( 0 );
 	glDepthFunc( GL_LEQUAL );
 
@@ -175,14 +192,7 @@ void Render( const camera_t& cam )
 	shdr_final->Bind();
 	shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::fai, 0 );
 
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-
-	glDrawArrays( GL_QUADS, 0, 4 );
-
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( shdr_final->GetAttributeLocation(0) );
 }
 
 
@@ -402,7 +412,7 @@ TakeScreenshot                                                                  
 */
 void TakeScreenshot( const char* filename )
 {
-	char* ext = GetFileExtension( filename );
+	char* ext = util::GetFileExtension( filename );
 	bool ret;
 
 	// exec from this extension

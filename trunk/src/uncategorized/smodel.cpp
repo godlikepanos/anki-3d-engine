@@ -63,7 +63,7 @@ bool skeleton_data_t::Load( const char* filename )
 		// matrix for real
 		bone.rot_skel_space = m4.GetRotationPart();
 		bone.tsl_skel_space = m4.GetTranslationPart();
-		mat4_t MAi( m4.Inverted() );
+		mat4_t MAi( m4.GetInverse() );
 		bone.rot_skel_space_inv = MAi.GetRotationPart();
 		bone.tsl_skel_space_inv = MAi.GetTranslationPart();
 
@@ -687,8 +687,8 @@ void smodel_t::Deform()
 			const mat3_t& rot = bone_rotations[ i ];
 			const vec3_t& transl = bone_translations[ i ];
 
-			bones[i].head = model_data->skeleton_data->bones[i].head.Transformed( transl, rot );
-			bones[i].tail = model_data->skeleton_data->bones[i].tail.Transformed( transl, rot );
+			bones[i].head = model_data->skeleton_data->bones[i].head.GetTransformed( transl, rot );
+			bones[i].tail = model_data->skeleton_data->bones[i].tail.GetTransformed( transl, rot );
 		}
 	}
 }
@@ -735,93 +735,68 @@ void smodel_t::Render()
 	glPushMatrix();
 	r::MultMatrix( transformation_wspace );
 
-	/*GLuint loc = material->tangents_attrib_loc;
 
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_NORMAL_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	glEnableVertexAttribArray( loc );
-
-	glVertexPointer( 3, GL_FLOAT, 0, &vert_coords[0][0] );
-	glNormalPointer( GL_FLOAT, 0, &vert_normals[0][0] );
-	glTexCoordPointer( 2, GL_FLOAT, 0, &model_data->mesh_data->tex_coords[0] );
-	glVertexAttribPointer( loc, 4, GL_FLOAT, 0, 0, &vert_tangents[0] );
-
-	glDrawElements( GL_TRIANGLES, model_data->mesh_data->vert_indeces.size(), GL_UNSIGNED_SHORT, &model_data->mesh_data->vert_indeces[0] );
-
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableClientState( GL_NORMAL_ARRAY );
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-	glDisableVertexAttribArray( loc );*/
-
-	glUniformMatrix3fv( material->skinning_rotations_uni_loc, model_data->skeleton_data->bones.size(), 1, &(bone_rotations[0])[0] );
-	glUniform3fv( material->skinning_translations_uni_loc, model_data->skeleton_data->bones.size(), &(bone_translations[0])[0] );
+	// first the uniforms
+	glUniformMatrix3fv( material->uniform_locs.skinning_rotations, model_data->skeleton_data->bones.size(), 1, &(bone_rotations[0])[0] );
+	glUniform3fv( material->uniform_locs.skinning_translations, model_data->skeleton_data->bones.size(), &(bone_translations[0])[0] );
 
 
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_NORMAL_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+	if( material->attribute_locs.position != -1 )
+	{
+		model_data->mesh_data->vbos.vert_coords.Bind();
+		glVertexAttribPointer( material->attribute_locs.position, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.position );
+	}
 
+	if( material->attribute_locs.normal != -1 )
+	{
+		model_data->mesh_data->vbos.vert_normals.Bind();
+		glVertexAttribPointer( material->attribute_locs.normal, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.normal );
+	}
 
-	/*glVertexPointer( 3, GL_FLOAT, 0, &model_data->mesh_data->vert_coords[0][0] );
-	glNormalPointer( GL_FLOAT, 0, &model_data->mesh_data->vert_normals[0][0] );
-	glTexCoordPointer( 2, GL_FLOAT, 0, &model_data->mesh_data->tex_coords[0] );
+	if( material->attribute_locs.tex_coords != -1 )
+	{
+		model_data->mesh_data->vbos.tex_coords.Bind();
+		glVertexAttribPointer( material->attribute_locs.tex_coords, 2, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.tex_coords );
+	}
 
-	glEnableVertexAttribArray( material->tangents_attrib_loc );
-	glVertexAttribPointer( material->tangents_attrib_loc, 4, GL_FLOAT, 0, 0, &model_data->mesh_data->vert_tangents[0] );
+	if( material->attribute_locs.tanget != -1 )
+	{
+		model_data->mesh_data->vbos.vert_tangents.Bind();
+		glVertexAttribPointer( material->attribute_locs.tanget, 4, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attribute_locs.tanget );
+	}
 
-	glEnableVertexAttribArray( material->vert_weight_bones_num_attrib_loc );
-	glVertexAttribPointer( material->vert_weight_bones_num_attrib_loc, 1, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), &model_data->mesh_data->vert_weights[0].bones_num );
-	glEnableVertexAttribArray( material->vert_weight_bone_ids_attrib_loc );
-	glVertexAttribPointer( material->vert_weight_bone_ids_attrib_loc, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), &model_data->mesh_data->vert_weights[0].bone_ids[0] );
-	glEnableVertexAttribArray( material->vert_weight_weights_attrib_loc );
-	glVertexAttribPointer( material->vert_weight_weights_attrib_loc, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), &model_data->mesh_data->vert_weights[0].weights[0] );
-
-	glDrawElements( GL_TRIANGLES, model_data->mesh_data->vert_indeces.size(), GL_UNSIGNED_SHORT, &model_data->mesh_data->vert_indeces[0] );*/
-
-
-	/////////////////////////////////////////////////
-	glEnableClientState( GL_VERTEX_ARRAY );
-	model_data->mesh_data->vbos.vert_coords.Bind();
-	glVertexPointer( 3, GL_FLOAT, 0, NULL );
-
-	glEnableClientState( GL_NORMAL_ARRAY );
-	model_data->mesh_data->vbos.vert_normals.Bind();
-	glNormalPointer( GL_FLOAT, 0, NULL );
-
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	model_data->mesh_data->vbos.tex_coords.Bind();
-	glTexCoordPointer( 2, GL_FLOAT, 0, NULL );
-
-	glEnableVertexAttribArray( material->tangents_attrib_loc );
-	model_data->mesh_data->vbos.vert_tangents.Bind();
-	glVertexAttribPointer( material->tangents_attrib_loc, 4, GL_FLOAT, false, 0, NULL );
-
-
-	model_data->mesh_data->vbos.vert_weights.Bind();
-	glEnableVertexAttribArray( material->vert_weight_bones_num_attrib_loc );
-	glVertexAttribPointer( material->vert_weight_bones_num_attrib_loc, 1, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), BUFFER_OFFSET(0) );
-	glEnableVertexAttribArray( material->vert_weight_bone_ids_attrib_loc );
-	glVertexAttribPointer( material->vert_weight_bone_ids_attrib_loc, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), BUFFER_OFFSET(4) );
-	glEnableVertexAttribArray( material->vert_weight_weights_attrib_loc );
-	glVertexAttribPointer( material->vert_weight_weights_attrib_loc, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), BUFFER_OFFSET(20) );
-
+	if( material->attribute_locs.vert_weight_bones_num != -1 )
+	{
+		model_data->mesh_data->vbos.vert_weights.Bind();
+		glEnableVertexAttribArray( material->attribute_locs.vert_weight_bones_num );
+		glVertexAttribPointer( material->attribute_locs.vert_weight_bones_num, 1, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), BUFFER_OFFSET(0) );
+		glEnableVertexAttribArray( material->attribute_locs.vert_weight_bone_ids );
+		glVertexAttribPointer( material->attribute_locs.vert_weight_bone_ids, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), BUFFER_OFFSET(4) );
+		glEnableVertexAttribArray( material->attribute_locs.vert_weight_weights );
+		glVertexAttribPointer( material->attribute_locs.vert_weight_weights, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_data_t::vertex_weight_t), BUFFER_OFFSET(20) );
+	}
 
 	model_data->mesh_data->vbos.vert_indeces.Bind();
+
 	glDrawElements( GL_TRIANGLES, model_data->mesh_data->vert_indeces.size(), GL_UNSIGNED_SHORT, 0 );
 
+
+	if( material->attribute_locs.position != -1 ) glDisableVertexAttribArray( material->attribute_locs.position );
+	if( material->attribute_locs.normal != -1 ) glDisableVertexAttribArray( material->attribute_locs.normal );
+	if( material->attribute_locs.tex_coords != -1 ) glDisableVertexAttribArray( material->attribute_locs.tex_coords );
+	if( material->attribute_locs.tanget != -1 ) glDisableVertexAttribArray( material->attribute_locs.tanget );
+	if( material->attribute_locs.vert_weight_bones_num != -1 )
+	{
+		glDisableVertexAttribArray( material->attribute_locs.vert_weight_bones_num );
+		glDisableVertexAttribArray( material->attribute_locs.vert_weight_bone_ids );
+		glDisableVertexAttribArray( material->attribute_locs.vert_weight_weights );
+	}
+
 	vbo_t::UnbindAllTargets();
-	/////////////////////////////////////////////////
-
-
-
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableClientState( GL_NORMAL_ARRAY );
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-	glDisableVertexAttribArray( material->tangents_attrib_loc );
-	glDisableVertexAttribArray( material->vert_weight_bones_num_attrib_loc );
-
-
 	glPopMatrix();
 }
 

@@ -37,18 +37,21 @@ extern void Init(); ///< Inits the renderer subsystem. Setting OpenGL and execut
 extern void PrepareNextFrame(); ///< Runs before rendering
 extern void PrintLastError(); ///< Prints last OpenGL error
 inline const string& GetStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
-extern void Render( const camera_t& cam ); ///< The spine funciton of the renderer
+extern void Render( const camera_t& cam ); ///< The spine function of the renderer
 
 extern void SetGLState_Wireframe();
 extern void SetGLState_WireframeDotted();
 extern void SetGLState_Solid();
 extern void SetGLState_AlphaSolid();
 
-// ogl and glu wrappers
-inline void   MultMatrix( const mat4_t& m4 ) { glMultMatrixf( &(m4.Transposed())(0,0) ); } ///< OpenGL wrapper
-inline void   LoadMatrix( const mat4_t& m4 ) { glLoadMatrixf( &(m4.Transposed())(0,0) ); } ///< OpenGL wrapper
-inline void   Color3( const vec3_t& v ) { glColor3fv( &((vec3_t&)v)[0] ); } ///< OpenGL wrapper
+// matrices
+//extern
 
+// ogl and glu wrappers
+inline void   MultMatrix( const mat4_t& m4 ) { glMultMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   LoadMatrix( const mat4_t& m4 ) { glLoadMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
+
+inline void   Color3( const vec3_t& v ) { glColor3fv( &((vec3_t&)v)[0] ); } ///< OpenGL wrapper
 inline void   Color4( const vec4_t& v ) { glColor4fv( &((vec4_t&)v)[0] ); } ///< OpenGL wrapper
 inline void   NoShaders() { shader_prog_t::Unbind(); } ///< Unbind shaders
 extern bool   Unproject( float winX, float winY, float winZ, const mat4_t& modelview_mat, const mat4_t& projection_mat, const int* view, float& objX, float& objY, float& objZ ); ///< My version of gluUnproject
@@ -62,7 +65,7 @@ inline void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h);
 
 // externals that have global scope in other namespaces
 
-/// material stage namesapce
+/// material stage namespace
 namespace ms
 {
 	extern texture_t normal_fai;
