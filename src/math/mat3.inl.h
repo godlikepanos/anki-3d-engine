@@ -499,7 +499,7 @@ M_INLINE void mat3_t::Transpose()
 }
 
 // Transposed
-M_INLINE mat3_t mat3_t::Transposed() const
+M_INLINE mat3_t mat3_t::GetTransposed() const
 {
 	mat3_t m3;
 	m3[0] = ME[0];
@@ -565,7 +565,7 @@ M_INLINE float mat3_t::Det() const
 
 // Invert
 // using Gramer's method ( Inv(A) = ( 1/Det(A) ) * Adj(A)  )
-M_INLINE mat3_t mat3_t::Inverted() const
+M_INLINE mat3_t mat3_t::GetInverse() const
 {
 	mat3_t result;
 
@@ -598,7 +598,7 @@ M_INLINE mat3_t mat3_t::Inverted() const
 // see above
 M_INLINE void mat3_t::Invert()
 {
-	ME = Inverted();
+	ME = GetInverse();
 }
 
 // GetZero

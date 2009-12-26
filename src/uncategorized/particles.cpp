@@ -1,5 +1,6 @@
 #include "particles.h"
 #include "renderer.h"
+#include "util.h"
 
 using namespace std;
 
@@ -129,13 +130,13 @@ ReInitParticle @ particle_emitter_t                                             
 void particle_emitter_t::ReInitParticle( particle_t& particle )
 {
 	// life
-	particle.life = RandRange( particle_life[MIN], particle_life[MAX] );
+	particle.life = util::RandRange( particle_life[MIN], particle_life[MAX] );
 
 	// pos
 	particle.translation_lspace = vec3_t(
-		RandRange( particles_translation_lspace[MIN].x, particles_translation_lspace[MAX].x ),
-		RandRange( particles_translation_lspace[MIN].y, particles_translation_lspace[MAX].y ),
-		RandRange( particles_translation_lspace[MIN].z, particles_translation_lspace[MAX].z )
+		util::RandRange( particles_translation_lspace[MIN].x, particles_translation_lspace[MAX].x ),
+		util::RandRange( particles_translation_lspace[MIN].y, particles_translation_lspace[MAX].y ),
+		util::RandRange( particles_translation_lspace[MIN].z, particles_translation_lspace[MAX].z )
 	);
 	particle.rotation_lspace = mat3_t::GetIdentity();
 	particle.scale_lspace = 1.0;
@@ -152,9 +153,9 @@ void particle_emitter_t::ReInitParticle( particle_t& particle )
 	for( int i=0; i<PARTICLE_VELS_NUM; i++ )
 	{
 		euler_t tmp_angs = euler_t(
-			RandRange( velocities[i].angs[MIN].x, velocities[i].angs[MAX].x ),
-			RandRange( velocities[i].angs[MIN].y, velocities[i].angs[MAX].y ),
-			RandRange( velocities[i].angs[MIN].z, velocities[i].angs[MAX].z )
+			util::RandRange( velocities[i].angs[MIN].x, velocities[i].angs[MAX].x ),
+			util::RandRange( velocities[i].angs[MIN].y, velocities[i].angs[MAX].y ),
+			util::RandRange( velocities[i].angs[MIN].z, velocities[i].angs[MAX].z )
 		);
 		mat3_t m3;
 		m3 = mat3_t(tmp_angs);

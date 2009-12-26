@@ -2,13 +2,16 @@
 
 #pragma anki attribute view_vector 0
 attribute vec3 view_vector;
+#pragma anki attribute position 1
+attribute vec2 position;
+
 varying vec2 tex_coords;
 varying vec3 vpos;
 
 void main()
 {
 	vpos = view_vector;
-	vec2 vert_pos = gl_Vertex.xy; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
+	vec2 vert_pos = position; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
 	tex_coords = vert_pos;
 	vec2 vert_pos_ndc = vert_pos*2.0 - 1.0;
 	gl_Position = vec4( vert_pos_ndc, 0.0, 1.0 );
@@ -19,15 +22,16 @@ void main()
 
 #pragma anki include "shaders/pack.glsl"
 
-#pragma anki uniform ms_normal_fai 0
-#pragma anki uniform ms_diffuse_fai 1
-#pragma anki uniform ms_specular_fai 2
-#pragma anki uniform ms_depth_fai 3
+// uniforms
 uniform sampler2D ms_normal_fai, ms_diffuse_fai, ms_specular_fai, ms_depth_fai;
-#pragma anki uniform planes 4
 uniform vec2 planes; // for the calculation of frag pos in view space
 uniform sampler2D light_tex;
 uniform sampler2DShadow shadow_map;
+uniform vec3 light_pos;
+uniform float light_inv_radius;
+uniform vec3 light_diffuse_col;
+uniform vec3 light_specular_col;
+uniform mat4 tex_projection_mat;
 
 varying vec2 tex_coords;
 varying vec3 vpos; // for the calculation of frag pos in view space
@@ -61,8 +65,7 @@ return the attenuation factor fiven the distance from the frag to the light sour
 */
 float Attenuation( in float _frag_light_dist )
 {
-	float _inv_light_radius = gl_LightSource[0].position.w;
-	return clamp(1.0 - _inv_light_radius * sqrt(_frag_light_dist), 0.0, 1.0);
+	return clamp(1.0 - light_inv_radius * sqrt(_frag_light_dist), 0.0, 1.0);
 	//return 1.0 - _frag_light_dist * _inv_light_radius;
 }
 
@@ -179,7 +182,7 @@ Phong                                                                           
 vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 {
 	// get the lambert term
-	vec3 _light_pos_eyespace = gl_LightSource[0].position.xyz;
+	vec3 _light_pos_eyespace = light_pos;
 	vec3 _light_frag_vec = _light_pos_eyespace - _frag_pos_vspace;
 
 	_frag_light_dist = dot( _light_frag_vec, _light_frag_vec ); // instead of using normalize(_frag_light_dist) we brake the operation...
@@ -197,7 +200,7 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 
 	// diffuce lighting
 	vec3 _diffuse = texture2D( ms_diffuse_fai, tex_coords ).rgb;
-	_diffuse = (_diffuse * gl_LightSource[0].diffuse.rgb);
+	_diffuse = (_diffuse * light_diffuse_col);
 	vec3 _color = _diffuse * _lambert_term;
 
 	// specular lighting
@@ -208,7 +211,7 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 	vec3 _eye_vec = normalize( -_frag_pos_vspace );
 	vec3 _h = normalize( _light_dir + _eye_vec );
 	float _spec_intensity = pow(max(0.0, dot(_normal, _h)), _shininess);
-	_color += _specular * vec3(gl_LightSource[0].specular) * (_spec_intensity * _lambert_term);
+	_color += _specular * light_specular_col * (_spec_intensity * _lambert_term);
 
 	return _color;
 }
@@ -239,7 +242,7 @@ void main()
 	// SPOT LIGHT                                                                                                                       =
 	//===================================================================================================================================
 	#elif defined(_SPOT_LIGHT_)
-		vec4 _tex_coord2 = gl_TextureMatrix[0] * vec4(_frag_pos_vspace, 1.0);
+		vec4 _tex_coord2 = tex_projection_mat * vec4(_frag_pos_vspace, 1.0);
 		vec3 _tex_coords3 = _tex_coord2.xyz / _tex_coord2.w;
 
 		if
@@ -249,12 +252,13 @@ void main()
 			_tex_coords3.x < 1.0 &&
 			_tex_coords3.y > 0.0 &&
 			_tex_coords3.y < 1.0 &&
-			_tex_coord2.w < 1.0/gl_LightSource[0].position.w
+			_tex_coord2.w < 1.0/light_inv_radius
 		)
 		{
 			#if defined( _SHADOW_ )
 				#if defined( _SHADOW_MAPPING_PCF_ )
 					float _shadow_color = PCF_Low( _tex_coords3 );
+					//float _shadow_color = MedianFilterPCF( shadow_map, _tex_coords3 );
 				#else
 					float _shadow_color = PCF_Off( _tex_coords3 );
 				#endif

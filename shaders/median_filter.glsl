@@ -114,3 +114,36 @@ float MedianAndBlurA( in sampler2D tex, in vec2 tex_coords )
   mnmx3(v[3], v[4], v[8]);
   return v[4]*0.5 + sum/18.0;
 }
+
+
+//=====================================================================================================================================
+// MedianFilterPCF                                                                                                                    =
+//=====================================================================================================================================
+float MedianFilterPCF( in sampler2DShadow tex, in vec3 tex_coords )
+{
+	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
+  float v[9];
+
+  // Add the pixels which make up our window to the pixel array.
+	for(int dX = -1; dX <= 1; ++dX)
+	{
+		for(int dY = -1; dY <= 1; ++dY)
+		{
+			vec2 offset = vec2(float(dX), float(dY));
+
+			// If a pixel in the window is located at (x+dX, y+dY), put it at index (dX + R)(2R + 1) + (dY + R) of the
+			// pixel array. This will fill the pixel array, with the top left pixel of the window at pixel[0] and the
+			// bottom right pixel of the window at pixel[N-1].
+			v[(dX + 1) * 3 + (dY + 1)] = shadow2D(tex, tex_coords + vec3(offset * tex_inv_size, 0.0)).r;
+		}
+	}
+
+  float temp;
+
+  // Starting with a subset of size 6, remove the min and max each time
+  mnmx6(v[0], v[1], v[2], v[3], v[4], v[5]);
+  mnmx5(v[1], v[2], v[3], v[4], v[6]);
+  mnmx4(v[2], v[3], v[4], v[7]);
+  mnmx3(v[3], v[4], v[8]);
+  return v[4];
+}

@@ -124,10 +124,10 @@ M_INLINE float Min( float a, float b ) { return (a<b) ? a : b; }
 //  CombineTransformations
 //  mat4(t0,r0,s0)*mat4(t1,r1,s1) == mat4(tf,rf,sf)
 M_INLINE void CombineTransformations( const vec3_t& t0, const mat3_t& r0, float s0,
-                             const vec3_t& t1, const mat3_t& r1, float s1,
-                             vec3_t& tf, mat3_t& rf, float& sf )
+                                      const vec3_t& t1, const mat3_t& r1, float s1,
+                                      vec3_t& tf, mat3_t& rf, float& sf )
 {
-	tf = t1.Transformed( t0, r0, s0 );
+	tf = t1.GetTransformed( t0, r0, s0 );
 	rf = r0 * r1;
 	sf = s0 * s1;
 }
@@ -135,7 +135,7 @@ M_INLINE void CombineTransformations( const vec3_t& t0, const mat3_t& r0, float 
 //  CombineTransformations as the above but without scale
 M_INLINE void CombineTransformations( const vec3_t& t0, const mat3_t& r0, const vec3_t& t1, const mat3_t& r1, vec3_t& tf, mat3_t& rf)
 {
-	tf = t1.Transformed( t0, r0 );
+	tf = t1.GetTransformed( t0, r0 );
 	rf = r0 * r1;
 }
 

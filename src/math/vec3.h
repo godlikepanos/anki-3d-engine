@@ -55,22 +55,22 @@ class vec3_t
 		float  LengthSquared() const;
 		float  DistanceSquared( const vec3_t& b ) const;
 		void   Normalize();
-		vec3_t Normalized() const;
+		vec3_t GetNormalized() const;
 		vec3_t Project( const vec3_t& to_this ) const;
-		vec3_t Rotated( const quat_t& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
+		vec3_t GetRotated( const quat_t& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		void   Rotate( const quat_t& q );
 		vec3_t Lerp( const vec3_t& v1, float t ) const; // return Lerp( this, v1, t )
 		void   Print() const;
 		// transformations. The faster way is by far the mat4 * vec3 or the Transformed( vec3_t, mat3_t )
-		vec3_t Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const;
+		vec3_t GetTransformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const;
 		void   Transform( const vec3_t& translate, const mat3_t& rotate, float scale );
-		vec3_t Transformed( const vec3_t& translate, const mat3_t& rotate ) const;
+		vec3_t GetTransformed( const vec3_t& translate, const mat3_t& rotate ) const;
 		void   Transform( const vec3_t& translate, const mat3_t& rotate );
-		vec3_t Transformed( const vec3_t& translate, const quat_t& rotate, float scale ) const;
+		vec3_t GetTransformed( const vec3_t& translate, const quat_t& rotate, float scale ) const;
 		void   Transform( const vec3_t& translate, const quat_t& rotate, float scale );
-		vec3_t Transformed( const vec3_t& translate, const quat_t& rotate ) const;
+		vec3_t GetTransformed( const vec3_t& translate, const quat_t& rotate ) const;
 		void   Transform( const vec3_t& translate, const quat_t& rotate );
-		vec3_t Transformed( const mat4_t& transform ) const;  // 9 muls, 9 adds
+		vec3_t GetTransformed( const mat4_t& transform ) const;  // 9 muls, 9 adds
 		void   Transform( const mat4_t& transform );
 };
 

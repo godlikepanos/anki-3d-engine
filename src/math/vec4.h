@@ -50,7 +50,7 @@ class vec4_t
 		bool operator !=( const vec4_t& b ) const;
 		// other
 		float  Length() const;
-		vec4_t Normalized() const;
+		vec4_t GetNormalized() const;
 		void   Normalize();
 		void   Print() const;
 		float  Dot( const vec4_t& b ) const;

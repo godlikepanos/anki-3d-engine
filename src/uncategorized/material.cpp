@@ -333,23 +333,20 @@ bool material_t::InitTheOther()
 	}
 	shader->Unbind();
 
-	// get the tangents_attrib_loc
-	tangents_attrib_loc = shader->GetAttributeLocationSilently( "tangent" );
-	needs_tangents = ( tangents_attrib_loc == -1 ) ? false : true;
+	// init the attribute locations
+	attribute_locs.tanget = shader->GetAttributeLocationSilently( "tangent" );
+	attribute_locs.position = shader->GetAttributeLocationSilently( "position" );
+	attribute_locs.normal = shader->GetAttributeLocationSilently( "normal" );
+	attribute_locs.tex_coords = shader->GetAttributeLocationSilently( "tex_coords" );
 
 	// vertex weights
-	vert_weight_bones_num_attrib_loc = shader->GetAttributeLocationSilently( "vert_weight_bones_num" );
-	if( vert_weight_bones_num_attrib_loc == -1 )
+	attribute_locs.vert_weight_bones_num = shader->GetAttributeLocationSilently( "vert_weight_bones_num" );
+	if( attribute_locs.vert_weight_bones_num != -1 )
 	{
-		needs_vert_weights = false;
-	}
-	else
-	{
-		vert_weight_bone_ids_attrib_loc = shader->GetAttributeLocation( "vert_weight_bone_ids" );
-		vert_weight_weights_attrib_loc = shader->GetAttributeLocation( "vert_weight_weights" );
-		skinning_rotations_uni_loc = shader->GetUniformLocation( "skinning_rotations" );
-		skinning_translations_uni_loc = shader->GetUniformLocation( "skinning_translations" );
-		needs_vert_weights = true;
+		attribute_locs.vert_weight_bone_ids = shader->GetAttributeLocation( "vert_weight_bone_ids" );
+		attribute_locs.vert_weight_weights = shader->GetAttributeLocation( "vert_weight_weights" );
+		uniform_locs.skinning_rotations = shader->GetUniformLocation( "skinning_rotations" );
+		uniform_locs.skinning_translations = shader->GetUniformLocation( "skinning_translations" );
 	}
 
 	return true;
@@ -395,7 +392,6 @@ void material_t::SetToDefault()
 	shininess = 0.0;
 	grass_map = NULL;
 	casts_shadow = true;
-	needs_tangents = true;
 	refracts = false;
 }
 

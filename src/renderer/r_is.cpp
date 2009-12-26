@@ -101,7 +101,7 @@ static void CalcViewVector( const camera_t& cam )
 		vec.y = (2.0*(pixels[i][1]-viewport[1]))/viewport[3] - 1.0;
 		vec.z = 1.0;
 
-		view_vectors[i] = vec.Transformed( cam.GetInvProjectionMatrix() );
+		view_vectors[i] = vec.GetTransformed( cam.GetInvProjectionMatrix() );
 		// end of optimized code
 	}
 }
@@ -194,14 +194,7 @@ static void AmbientPass( const camera_t& /*cam*/, const vec3_t& color )
 	shdr_is_ambient->LocTexUnit( shdr_is_ambient->GetUniformLocation(1), r::ms::diffuse_fai, 0 );
 
 	// Draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-
-	glDrawArrays( GL_QUADS, 0, 4 );
-
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( shdr_is_ambient->GetAttributeLocation(0) );
 }
 
 
@@ -466,26 +459,23 @@ static void PointLightPass( const camera_t& cam, const point_light_t& light )
 	shader.LocTexUnit( shader.GetUniformLocation(3), r::ms::depth_fai, 3 );
 	glUniform2fv( shader.GetUniformLocation(4), 1, &planes[0] );
 
-
-	vec3_t light_pos_eye_space = light.translation_wspace.Transformed( cam.GetViewMatrix() );
-
-	glLightfv( GL_LIGHT0, GL_POSITION, &vec4_t(light_pos_eye_space, 1/light.radius)[0] );
-	glLightfv( GL_LIGHT0, GL_DIFFUSE,  &(vec4_t( light.GetDiffuseColor(), 1.0 ))[0] );
-	glLightfv( GL_LIGHT0, GL_SPECULAR,  &(vec4_t( light.GetSpecularColor(), 1.0 ))[0] );
+	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
+	glUniform3fv( shader.GetUniformLocation(5), 1, &light_pos_eye_space[0] );
+	glUniform1f( shader.GetUniformLocation(6), 1.0/light.radius );
+	glUniform3fv( shader.GetUniformLocation(7), 1, &vec3_t(light.GetDiffuseColor())[0] );
+	glUniform3fv( shader.GetUniformLocation(8), 1, &vec3_t(light.GetSpecularColor())[0] );
 
 	//** render quad **
-	int loc = shader.GetAttributeLocation(0); // view_vector
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	glEnableVertexAttribArray( loc );
+	glEnableVertexAttribArray( shader.GetAttributeLocation(0) );
+	glEnableVertexAttribArray( shader.GetAttributeLocation(1) );
 
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glVertexAttribPointer( loc, 3, GL_FLOAT, 0, 0, &view_vectors[0] );
+	glVertexAttribPointer( shader.GetAttributeLocation(0), 3, GL_FLOAT, false, 0, &view_vectors[0] );
+	glVertexAttribPointer( shader.GetAttributeLocation(1), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
 
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableVertexAttribArray( loc );
+	glDisableVertexAttribArray( shader.GetAttributeLocation(0) );
+	glDisableVertexAttribArray( shader.GetAttributeLocation(1) );
 
 	//glDisable( GL_SCISSOR_TEST );
 	glDisable( GL_STENCIL_TEST );
@@ -519,17 +509,6 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 		glDisable( GL_DEPTH_TEST );
 	}
 
-	//** set texture matrix for shadowmap projection **
-	// Bias * P_light * V_light * inv( V_cam )
-	const float mBias[] = {0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
-	glActiveTexture( GL_TEXTURE0 );
-	glMatrixMode( GL_TEXTURE );
-	glLoadMatrixf( mBias );
-	r::MultMatrix( light.camera.GetProjectionMatrix() );
-	r::MultMatrix( light.camera.GetViewMatrix() );
-	r::MultMatrix( cam.transformation_wspace );
-	glMatrixMode(GL_MODELVIEW);
-
 	//** set the shader and uniforms **
 	const shader_prog_t* shdr; // because of the huge name
 
@@ -546,44 +525,60 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 
 	DEBUG_ERR( light.texture == NULL ); // No texture attached to the light
 
-	// set the light texture
-	shdr->LocTexUnit( shdr->GetUniformLocation(5), *light.texture, 4 );
-	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
 	// the planes
 	//glUniform2fv( shdr->GetUniformLocation("planes"), 1, &planes[0] );
 	glUniform2fv( shdr->GetUniformLocation(4), 1, &planes[0] );
 
-	// the pos and max influence distance
-	vec3_t light_pos_eye_space = light.translation_wspace.Transformed( cam.GetViewMatrix() );
-	glLightfv( GL_LIGHT0, GL_POSITION, &vec4_t(light_pos_eye_space, 1.0/light.GetDistance())[0] );
+	// the light params
+	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
+	glUniform3fv( shdr->GetUniformLocation(5), 1, &light_pos_eye_space[0] );
+	glUniform1f( shdr->GetUniformLocation(6), 1.0/light.GetDistance() );
+	glUniform3fv( shdr->GetUniformLocation(7), 1, &vec3_t(light.GetDiffuseColor())[0] );
+	glUniform3fv( shdr->GetUniformLocation(8), 1, &vec3_t(light.GetSpecularColor())[0] );
 
-	// the colors
-	glLightfv( GL_LIGHT0, GL_DIFFUSE,  &(vec4_t( light.GetDiffuseColor(), 1.0 ))[0] );
-	glLightfv( GL_LIGHT0, GL_SPECULAR,  &(vec4_t( light.GetSpecularColor(), 1.0 ))[0] );
+	// set the light texture
+	shdr->LocTexUnit( shdr->GetUniformLocation(9), *light.texture, 4 );
+	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+
+	//** set texture matrix for shadowmap projection **
+	// Bias * P_light * V_light * inv( V_cam )
+	//const float mBias[] = {0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
+	static mat4_t bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
+	mat4_t tex_projection_mat;
+	tex_projection_mat = bias_m4 * light.camera.GetProjectionMatrix() * light.camera.GetViewMatrix() * cam.transformation_wspace;
+	glUniformMatrix4fv( shdr->GetUniformLocation(10), 1, true, &tex_projection_mat[0] );
+
+	/*
+	const float mBias[] = {0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
+	glActiveTexture( GL_TEXTURE0 );
+	glMatrixMode( GL_TEXTURE );
+	glLoadMatrixf( mBias );
+	r::MultMatrix( light.camera.GetProjectionMatrix() );
+	r::MultMatrix( light.camera.GetViewMatrix() );
+	r::MultMatrix( cam.transformation_wspace );
+	glMatrixMode(GL_MODELVIEW);*/
 
 	// the shadow stuff
 	// render depth to texture and then bind it
 	if( light.casts_shadow )
 	{
-		shdr->LocTexUnit( shdr->GetUniformLocation(6), r::is::shadows::shadow_map, 5 );
+		shdr->LocTexUnit( shdr->GetUniformLocation(11), r::is::shadows::shadow_map, 5 );
 	}
 
 	//** render quad **
-	int loc = shdr_is_lp_spot_light_nos->GetAttributeLocation(0); // view_vector
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	glEnableVertexAttribArray( loc );
+	glEnableVertexAttribArray( shdr->GetAttributeLocation(0) );
+	glEnableVertexAttribArray( shdr->GetAttributeLocation(1) );
 
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glVertexAttribPointer( loc, 3, GL_FLOAT, 0, 0, &view_vectors[0] );
+	glVertexAttribPointer( shdr->GetAttributeLocation(0), 3, GL_FLOAT, false, 0, &view_vectors[0] );
+	glVertexAttribPointer( shdr->GetAttributeLocation(1), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
 
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableVertexAttribArray( loc );
+	glDisableVertexAttribArray( shdr->GetAttributeLocation(0) );
+	glDisableVertexAttribArray( shdr->GetAttributeLocation(1) );
 
 	// restore texture matrix
 	glMatrixMode( GL_TEXTURE );

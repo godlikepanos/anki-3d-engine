@@ -10,17 +10,14 @@ class camera_t;
 namespace r {
 
 
-extern float quad_vert_cords [4][2]; ///< The vertex coordinates for tha quad used in PPS ans IS
-
-
 /*
 =======================================================================================================================================
 externs                                                                                                                               =
 =======================================================================================================================================
 */
 
-extern void SetMat( const material_t& mat );
-
+extern void DrawQuad( int vert_coords_uni_loc );
+extern float quad_vert_cords [][2];
 
 namespace ms
 {
@@ -135,7 +132,7 @@ void RenderDepth( type_t& t )
 		r::is::shadows::shdr_depth_grass->Bind();
 		r::is::shadows::shdr_depth_grass->LocTexUnit( r::is::shadows::shdr_depth_grass->GetUniformLocation(0), *t.material->grass_map, 0 );
 	}
-	else if( t.material->needs_vert_weights )
+	else if( t.material->attribute_locs.vert_weight_bones_num != -1 )
 	{
 		r::is::shadows::shdr_depth_hw_skinning->Bind();
 	}

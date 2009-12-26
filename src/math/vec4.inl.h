@@ -211,7 +211,7 @@ M_INLINE float vec4_t::Length() const
 }
 
 // Normalized
-M_INLINE vec4_t vec4_t::Normalized() const
+M_INLINE vec4_t vec4_t::GetNormalized() const
 {
 	return ME * InvSqrt( x*x +y*y + z*z + w*w );
 }
@@ -219,7 +219,7 @@ M_INLINE vec4_t vec4_t::Normalized() const
 // Normalize
 M_INLINE void vec4_t::Normalize()
 {
-	ME = Normalized();
+	ME *= InvSqrt( x*x +y*y + z*z + w*w );
 }
 
 // Print

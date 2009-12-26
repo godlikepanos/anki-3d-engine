@@ -107,10 +107,7 @@ void RunPass( const camera_t& /*cam*/ )
 	pass0_shdr->LocTexUnit( pass0_shdr->GetUniformLocation(0), r::is::fai, 0 );
 
 	// Draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( pass0_shdr->GetAttributeLocation(0) );
 
 
 	// pass 1
@@ -121,10 +118,7 @@ void RunPass( const camera_t& /*cam*/ )
 	pass1_shdr->LocTexUnit( pass1_shdr->GetUniformLocation(0), pass0_fai, 0 );
 
 	// Draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( pass1_shdr->GetAttributeLocation(0) );
 
 
 	// pass 2
@@ -135,11 +129,7 @@ void RunPass( const camera_t& /*cam*/ )
 	pass2_shdr->LocTexUnit( pass2_shdr->GetUniformLocation(0), pass1_fai, 0 );
 
 	// Draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableClientState( GL_VERTEX_ARRAY );
-
+	r::DrawQuad( pass2_shdr->GetAttributeLocation(0) );
 
 	// end
 	fbo_t::Unbind();

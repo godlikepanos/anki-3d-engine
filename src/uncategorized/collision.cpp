@@ -505,7 +505,7 @@ lineseg_t lineseg_t::Transformed( const vec3_t& translate, const mat3_t& rotate,
 {
 	lineseg_t seg;
 
-	seg.origin = origin.Transformed( translate, rotate, scale );
+	seg.origin = origin.GetTransformed( translate, rotate, scale );
 	seg.dir = rotate * (dir * scale);
 
 	return seg;
@@ -631,7 +631,7 @@ ray_t ray_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float s
 	return ray;*/
 	ray_t new_ray;
 
-	new_ray.origin = origin.Transformed( translate, rotate, scale );
+	new_ray.origin = origin.GetTransformed( translate, rotate, scale );
 	new_ray.dir = rotate * dir;
 
 	return new_ray;
@@ -798,7 +798,7 @@ plane_t plane_t::Transformed( const vec3_t& translate, const mat3_t& rotate, flo
 	plane.normal = rotate*normal;
 
 	// the offset
-	vec3_t new_trans = rotate.Transposed() * translate;
+	vec3_t new_trans = rotate.GetTransposed() * translate;
 	plane.offset = offset*scale + new_trans.Dot( normal );
 
 	return plane;
@@ -926,7 +926,7 @@ bsphere_t bsphere_t::Transformed( const vec3_t& translate, const mat3_t& rotate,
 {
 	bsphere_t new_sphere;
 
-	new_sphere.center = center.Transformed( translate, rotate, scale );
+	new_sphere.center = center.GetTransformed( translate, rotate, scale );
 	new_sphere.radius = radius * scale;
 	return new_sphere;
 }
@@ -1665,7 +1665,7 @@ obb_t obb_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float s
 	obb_t res;
 
 	res.extends = extends * scale;
-	res.center = center.Transformed( translate, rotate, scale );
+	res.center = center.GetTransformed( translate, rotate, scale );
 	res.rotation = rotate * rotation;
 
 	return res;
@@ -1679,7 +1679,7 @@ PlaneTest                                                                       
 */
 float obb_t::PlaneTest( const plane_t& plane ) const
 {
-	vec3_t x_normal = rotation.Transposed() * plane.normal;
+	vec3_t x_normal = rotation.GetTransposed() * plane.normal;
 	// maximum extent in direction of plane normal
 	float r = fabs(extends.x*x_normal.x)
 					+ fabs(extends.y*x_normal.y)
@@ -1714,7 +1714,7 @@ bool obb_t::Intersects( const obb_t& other ) const
 	bool parallelAxes = false;
 
 	// transpose of rotation of B relative to A, i.e. (R_b^T * R_a)^T
-	mat3_t Rt = rotation.Transposed() * other.rotation;
+	mat3_t Rt = rotation.GetTransposed() * other.rotation;
 
 	// absolute value of relative rotation matrix
 	mat3_t Rabs;
@@ -1733,7 +1733,7 @@ bool obb_t::Intersects( const obb_t& other ) const
 	}
 
 	// relative translation (in A's frame)
-	vec3_t c = rotation.Transposed()*(other.center - center);
+	vec3_t c = rotation.GetTransposed()*(other.center - center);
 
 	// separating axis A0
 	cTest = fabs(c.x);
@@ -1843,7 +1843,7 @@ bool obb_t::Intersects( const ray_t& ray ) const
 {
 	aabb_t aabb_( -extends, extends );
 	ray_t newray;
-	mat3_t rottrans = rotation.Transposed();
+	mat3_t rottrans = rotation.GetTransposed();
 
 	newray.origin = rottrans * ( ray.origin - center );
 	newray.dir = rottrans * ray.dir;
@@ -1922,7 +1922,7 @@ obb - sphere                                                                    
 bool obb_t::Intersects( const bsphere_t& sphere ) const
 {
 	aabb_t aabb_( -extends, extends ); // aabb_ is in "this" frame
-	vec3_t new_center = rotation.Transposed() * (sphere.center - center);
+	vec3_t new_center = rotation.GetTransposed() * (sphere.center - center);
 	bsphere_t sphere_( new_center, sphere.radius ); // sphere1 to "this" fame
 
 	return aabb_.Intersects( sphere_ );
@@ -1954,7 +1954,7 @@ obb - sphere                                                                    
 bool obb_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& impact_point, float& depth ) const
 {
 	aabb_t aabb_( -extends, extends ); // aabb_ is in "this" frame
-	vec3_t new_center = rotation.Transposed() * (sphere.center - center); // sphere's new center
+	vec3_t new_center = rotation.GetTransposed() * (sphere.center - center); // sphere's new center
 	bsphere_t sphere_( new_center, sphere.radius ); // sphere_ to "this" frame
 
 	UNLOCK_RENDER_SEPERATION

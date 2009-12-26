@@ -109,7 +109,7 @@ void Init()
 	point_lights[0].SetDiffuseColor( vec3_t( 1.0, 0.0, 0.0)*1 );
 	point_lights[0].translation_lspace = vec3_t( -1.0, 2.4, 1.0 );
 	point_lights[0].radius = 2.0;
-	point_lights[1].SetSpecularColor( vec3_t( 0.0, 0.0, 1.0)*4 );
+	point_lights[1].SetSpecularColor( vec3_t( 0.0, 1.0, 0.0)*1 );
 	point_lights[1].SetDiffuseColor( vec3_t( 3.0, 0.1, 0.1) );
 	point_lights[1].translation_lspace = vec3_t( 2.5, 1.4, 1.0 );
 	point_lights[1].radius = 3.0;
@@ -172,6 +172,7 @@ void Init()
 
 	scene::smodels.Register( &mdl );
 	scene::meshes.Register( &sarge );
+	//scene::meshes.Register( &sphere );
 	//scene::Register( &imp );
 	scene::meshes.Register( &floor__ );
 	scene::meshes.Register( &mcube );
@@ -280,9 +281,13 @@ int main( int /*argc*/, char* /*argv*/[] )
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
-		if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
-		hndl::WaitForNextFrame();
-		//if( r::frames_num == 5000 ) break;
+		if( 0 )
+		{
+			if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
+			hndl::WaitForNextFrame();
+		}
+		else
+			if( r::frames_num == 5000 ) break;
 	}while( true );
 	PRINT( "Exiting main loop (" << hndl::GetTicks()-ticks << ")" );
 

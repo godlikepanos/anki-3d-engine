@@ -89,10 +89,7 @@ void RunPass( const camera_t& /*cam*/ )
 	shdr->LocTexUnit( is_fai_uni_loc, r::is::fai, 1 );
 
 	// Draw quad
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	r::DrawQuad( shdr->GetAttributeLocation(0) );
 
 	// end
 	fbo.Unbind();

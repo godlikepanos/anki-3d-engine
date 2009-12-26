@@ -72,12 +72,12 @@ class mat3_t
 		void   RotateYAxis( float rad );
 		void   RotateZAxis( float rad );
 		void   Transpose();
-		mat3_t Transposed() const;
+		mat3_t GetTransposed() const;
 		void   Reorthogonalize();
 		void   Print() const;
 		float  Det() const;
 		void   Invert();
-		mat3_t Inverted() const;		
+		mat3_t GetInverse() const;
 		static const mat3_t& GetZero();
 		static const mat3_t& GetIdentity();		
 };

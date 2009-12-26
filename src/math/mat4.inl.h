@@ -394,9 +394,9 @@ M_INLINE void mat4_t::Transpose()
 	ME(3,2) = tmp;
 }
 
-// Transposed
+// GetTransposed
 // return the transposed
-M_INLINE mat4_t mat4_t::Transposed() const
+M_INLINE mat4_t mat4_t::GetTransposed() const
 {
 	mat4_t m4;
 	m4[0] = ME[0];
@@ -524,11 +524,11 @@ M_INLINE float mat4_t::Det() const
 // Invert
 M_INLINE void mat4_t::Invert()
 {
-	ME = Inverted();
+	ME = GetInverse();
 }
 
 // Inverted
-M_INLINE mat4_t mat4_t::Inverted() const
+M_INLINE mat4_t mat4_t::GetInverse() const
 {
 	float tmp[12];
 	float det;
@@ -604,6 +604,16 @@ M_INLINE mat4_t mat4_t::Inverted() const
 	det = 1/det;
 	m4 *= det;
 	return m4;
+}
+
+
+// GetInverseTransformation
+M_INLINE mat4_t mat4_t::GetInverseTransformation() const
+{
+	mat3_t inverted_rot = (GetRotationPart()).GetTransposed();
+	vec3_t inverted_tsl = GetTranslationPart();
+	inverted_tsl = -( inverted_rot * inverted_tsl );
+	return mat4_t( inverted_tsl, inverted_rot );
 }
 
 // Lerp

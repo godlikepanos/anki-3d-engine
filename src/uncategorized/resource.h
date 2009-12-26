@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "engine_class.h"
+#include "util.h"
 
 class texture_t;
 class material_t;
@@ -37,6 +38,7 @@ class resource_t
 	friend class rsrc::container_t<mesh_data_t>;
 	friend class rsrc::container_t<model_data_t>;
 	friend class rsrc::container_t<model_t>;
+	friend class shader_prog_t;
 
 	public:
 		virtual bool Load( const char* ) = 0;
@@ -130,8 +132,8 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 		*/
 		type_t* Load( const char* fname )
 		{
-			char* name = CutPath( fname );
-			string path = GetPath( fname );
+			char* name = util::CutPath( fname );
+			string path = util::GetPath( fname );
 			iterator_t it = FindByNameAndPath( name, path.c_str() );
 
 			// if allready loaded then inc the users and return the pointer

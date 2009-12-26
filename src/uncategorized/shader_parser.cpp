@@ -2,6 +2,7 @@
 #include "shader_parser.h"
 #include "scanner.h"
 #include "parser.h"
+#include "util.h"
 
 
 //=====================================================================================================================================
@@ -53,7 +54,7 @@ vec_t<shader_parser_t::shader_var_t>::iterator shader_parser_t::FindShaderVar( v
 bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 {
 	// load file in lines
-	vec_t<string> lines = GetFileLines( filename.c_str() );
+	vec_t<string> lines = util::GetFileLines( filename.c_str() );
 	if( lines.size() < 1 )
 	{
 		ERROR( "Cannot parse file \"" << filename << "\"" );

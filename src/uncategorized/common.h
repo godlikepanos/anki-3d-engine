@@ -35,13 +35,6 @@ typedef unsigned long int ulong;
 //=====================================================================================================================================
 template<typename type_t> class vec_t;
 
-extern int           RandRange( int min, int max );
-extern float         RandRange( float min, float max );
-extern string        ReadFile( const char* filename );
-extern vec_t<string> GetFileLines( const char* filename );
-extern char*         GetFileExtension( const char* path );
-extern char*         CutPath( const char* path );
-extern string        GetPath( const char* path );
 extern string        IntToStr( int );
 extern string        FloatToStr( float );
 
@@ -50,11 +43,15 @@ extern string        FloatToStr( float );
 // MACROS                                                                                                                             =
 //=====================================================================================================================================
 
-#define __FILENAME__ CutPath( __FILE__ )
+namespace util {
+extern char*  CutPath( const char* path );
+extern string GetFunctionFromPrettyFunction( const char* pretty_function );
+}
+
+#define __FILENAME__ util::CutPath( __FILE__ )
 
 #ifdef __GNUG__
-	extern string GetFunctionFromPrettyFunction( const char* pretty_function );
-	#define __G_FUNCTION__ GetFunctionFromPrettyFunction( __PRETTY_FUNCTION__ )
+	#define __G_FUNCTION__ util::GetFunctionFromPrettyFunction( __PRETTY_FUNCTION__ )
 #else
 	#define __G_FUNCTION__ __func__
 #endif
