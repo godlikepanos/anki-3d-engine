@@ -83,10 +83,10 @@ calc the view vector that we will use inside the shader to calculate the frag po
 */
 static void CalcViewVector( const camera_t& cam )
 {
-	float _w = r::w * r::rendering_quality;
-	float _h = r::h * r::rendering_quality;
-	int pixels[4][2]={ {_w,_h}, {0.0,_h}, { 0.0,0.0 }, {_w,0.0} }; // from righ up and CC wise to right down, Just like we render the quad
-	int viewport[4]={ 0.0, 0.0, _w, _h };
+	int _w = r::w * r::rendering_quality;
+	int _h = r::h * r::rendering_quality;
+	int pixels[4][2]={ {_w,_h}, {0,_h}, { 0,0 }, {_w,0} }; // from righ up and CC wise to right down, Just like we render the quad
+	int viewport[4]={ 0, 0, _w, _h };
 
 	for( int i=0; i<4; i++ )
 	{
@@ -147,7 +147,7 @@ static void InitStageFBO()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
 
 	// test if success
-	if( !fbo.CheckStatus() )
+	if( !fbo.IsGood() )
 		FATAL( "Cannot create deferred shading illumination stage FBO" );
 
 	// unbind

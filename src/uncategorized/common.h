@@ -74,25 +74,22 @@ extern string GetFunctionFromPrettyFunction( const char* pretty_function );
 #endif
 
 #define GENERAL_ERR( x, y, col ) \
-    cout << col << "-->" << x << " (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
+	cerr << col << "**" << x << "** " << __FILENAME__ << "(" << __LINE__ << ") " << __G_FUNCTION__ << ": " << y << COL_DEFAULT << endl;
 
 /// in ERROR you can write something like this: ERROR( "tralala" << 10 << ' ' )
 #define ERROR( x ) GENERAL_ERR( "ERROR", x, COL_ERROR )
 
 /// WARNING
-#define WARNING( x ) GENERAL_ERR( "WARNING", x, COL_WARNING );
+#define WARNING( x ) GENERAL_ERR( "WARNG", x, COL_WARNING );
 
 /// FATAL ERROR
 #define FATAL( x ) { GENERAL_ERR( "FATAL", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); };
-
-/// INFO
-#define INFO( x ) GENERAL_ERR( "INFO", x, COL_INFO );
 
 /// DEBUG_ERR
 #ifdef _DEBUG_
 	#define DEBUG_ERR( x ) \
 		if( x ) \
-			GENERAL_ERR( "DEBUG_ERR", "See file", COL_DEBUG_ERR );
+			GENERAL_ERR( "ASSRT", #x, COL_DEBUG_ERR );
 #else
     #define DEBUG_ERR( x )
 #endif

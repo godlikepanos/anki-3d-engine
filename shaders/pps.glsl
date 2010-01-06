@@ -5,6 +5,7 @@
 #pragma anki frag_shader_begins
 
 #pragma anki include "shaders/photoshop_filters.glsl"
+#pragma anki include "shaders/median_filter.glsl"
 
 uniform sampler2D is_fai;
 uniform sampler2D pps_ssao_fai;
@@ -60,17 +61,8 @@ EdgeAA                                                                          
 
 vec3 EdgeAA()
 {
-	vec2 kernel[8];
-	kernel[0] = vec2(-1,1);
-	kernel[1] = vec2(1,-1);
-	kernel[2] = vec2(-1,-1);
-	kernel[3] = vec2(1,1);
-	kernel[4] = vec2(-1,0);
-	kernel[5] = vec2(1,0);
-	kernel[6] = vec2(0,-1);
-	kernel[7] = vec2(0,1);
-
-	vec2 pixelsize = vec2( 1.0/(R_W*R_Q), 1.0/(R_H*R_Q) );
+	const vec2 pixelsize = vec2( 1.0/(R_W*R_Q), 1.0/(R_H*R_Q) );
+	const vec2 kernel[8] = vec2[]( vec2(-1.0,1.0), vec2(1.0,-1.0), vec2(-1.0,-1.0), vec2(1.0,1.0), vec2(-1.0,0.0), vec2(1.0,0.0), vec2(0.0,-1.0), vec2(0.0,1.0) );
 	const float weight = 1.0;
 
 	vec3 tex = texture2D( ms_normal_fai, tex_coords ).rgb;

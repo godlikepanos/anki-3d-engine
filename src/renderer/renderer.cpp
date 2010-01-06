@@ -430,7 +430,7 @@ void TakeScreenshot( const char* filename )
 		return;
 	}
 	if( !ret ) ERROR( "In taking screenshot" )
-	else INFO( "Screenshot \"" << filename << "\" saved" );
+	else PRINT( "Screenshot \"" << filename << "\" saved" );
 }
 
 
