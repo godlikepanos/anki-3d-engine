@@ -28,14 +28,13 @@ class material_t: public resource_t
 					VEC4
 				};
 
-				class value_t       // unfortunately we cannot use union with vec3_t and vec4_t
+				struct value_t       // unfortunately we cannot use union with vec3_t and vec4_t
 				{
-					public:
-						texture_t* texture;
-						float      float_;
-						vec3_t     vec3;
-						vec4_t     vec4;
-						value_t(): texture(NULL) {}
+					texture_t* texture;
+					float      float_;
+					vec3_t     vec3;
+					vec4_t     vec4;
+					value_t(): texture(NULL) {}
 				};
 
 				type_e type;

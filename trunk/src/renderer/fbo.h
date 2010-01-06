@@ -17,29 +17,29 @@ class fbo_t
 		void Create()
 		{
 			DEBUG_ERR( gl_id != 0 ); // FBO allready initialized
-			glGenFramebuffersEXT( 1, &gl_id );
+			glGenFramebuffers( 1, &gl_id );
 		}
 
 		/// Binds FBO
 		void Bind() const
 		{
 			DEBUG_ERR( gl_id == 0 );  // FBO unitialized
-			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, gl_id );
+			glBindFramebuffer( GL_FRAMEBUFFER, gl_id );
 		}
 
 		/// Unbinds the FBO. Actualy unbinds all FBOs
-		static void Unbind() { glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 ); }
+		static void Unbind() { glBindFramebuffer( GL_FRAMEBUFFER, 0 ); }
 
 		/**
 		 * Checks the status of an initialized FBO
 		 * @return True if FBO is ok and false if not
 		 */
-		bool CheckStatus() const
+		bool IsGood() const
 		{
 			DEBUG_ERR( gl_id == 0 );  // FBO unitialized
 			DEBUG_ERR( GetCurrentFBO() != gl_id ); // another FBO is binded
 
-			return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT;
+			return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 		}
 
 		/// Set the number of color attachements of the FBO
@@ -55,8 +55,8 @@ class fbo_t
 			}
 			else
 			{
-				GLenum color_attachments[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT,
-				                               GL_COLOR_ATTACHMENT4_EXT, GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT };
+				GLenum color_attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3,
+				                               GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7 };
 				glDrawBuffers( num, color_attachments );
 			}
 		}
@@ -68,7 +68,7 @@ class fbo_t
 		static uint GetCurrentFBO()
 		{
 			int fbo_gl_id;
-			glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &fbo_gl_id );
+			glGetIntegerv( GL_FRAMEBUFFER_BINDING, &fbo_gl_id );
 			return (uint)fbo_gl_id;
 		}
 };

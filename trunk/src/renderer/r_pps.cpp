@@ -55,7 +55,7 @@ void Init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
 
 	// test if success
-	if( !fbo.CheckStatus() )
+	if( !fbo.IsGood() )
 		FATAL( "Cannot create post-processing stage FBO" );
 
 	fbo.Unbind();

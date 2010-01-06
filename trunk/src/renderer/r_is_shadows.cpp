@@ -55,7 +55,7 @@ void Init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadow_map.GetGLID(), 0 );
 
 	// test if success
-	if( !fbo.CheckStatus() )
+	if( !fbo.IsGood() )
 		FATAL( "Cannot create shadow FBO" );
 
 	// unbind

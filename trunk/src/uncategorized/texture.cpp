@@ -373,7 +373,7 @@ void texture_t::CreateEmpty( float width_, float height_, int internal_format, i
 		return;
 	}
 
-	// ogl stuff
+	// GL stuff
 	glGenTextures( 1, &gl_id );
 	Bind();
 	TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -382,7 +382,7 @@ void texture_t::CreateEmpty( float width_, float height_, int internal_format, i
 	TexParameter( GL_TEXTURE_WRAP_T, GL_CLAMP );
 
 	// allocate to vram
-	glTexImage2D( GL_TEXTURE_2D, 0, internal_format, width_, height_, 0, format_, GL_UNSIGNED_BYTE, NULL );
+	glTexImage2D( GL_TEXTURE_2D, 0, internal_format, width_, height_, 0, format_, GL_FLOAT, NULL );
 
 	if( r::mipmaping ) glGenerateMipmap(GL_TEXTURE_2D);
 

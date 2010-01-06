@@ -113,6 +113,17 @@ bool material_t::Load( const char* filename )
 			}
 			blends = token->value.int_;
 		}
+		//** REFRACTS **
+		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "REFRACTS" ) )
+		{
+			token = &scanner.GetNextToken();
+			if( token->code != scanner_t::TC_NUMBER )
+			{
+				PARSE_ERR_EXPECTED( "number" );
+				return false;
+			}
+			refracts = token->value.int_;
+		}
 		//** BLENDING_SFACTOR **
 		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_SFACTOR" ) )
 		{

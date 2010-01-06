@@ -33,7 +33,7 @@ void renderer_t::material_stage_t::Init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, fais.depth.GetGLID(), 0 );
 
 	// test if success
-	if( !fbo.CheckStatus() )
+	if( !fbo.IsGood() )
 		FATAL( "Cannot create deferred shading material pass FBO" );
 
 	// unbind

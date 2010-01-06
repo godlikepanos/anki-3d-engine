@@ -31,18 +31,8 @@ void main()
 		#endif
 
 		const int KERNEL_SIZE = 9;
-		float kernel[KERNEL_SIZE];
-		kernel[0] = -3.0 * offset;
-		kernel[1] = -2.0 * offset;
-		kernel[2] = -1.0 * offset;
-		kernel[3] = 0.0 * offset;
-		kernel[4] = 1.0 * offset;
-		kernel[5] = 2.0 * offset;
-		kernel[6] = 3.0 * offset;
-		kernel[7] = -4.0 * offset;
-		kernel[8] = 4.0 * offset;
-		/*kernel[9] = -5.0 * offset;
-		kernel[10] = 5.0 * offset;*/
+		float kernel[KERNEL_SIZE] = float[]( -3.0 * offset, -2.0 * offset, -1.0 * offset, 0.0 * offset, 1.0 * offset, 2.0 * offset,
+				                                  3.0 * offset, -4.0 * offset, 4.0 * offset );
 
 		vec3 color = vec3(0.0);
 

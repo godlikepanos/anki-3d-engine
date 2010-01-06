@@ -16,4 +16,5 @@ void main()
 	//gl_FragColor.rgb = MedianFilter( raster_image, tex_coords );
 	//gl_FragColor.rgb = vec3( gl_FragCoord.xy/tex_size_, 0.0 );
 	//gl_FragColor.rgb = vec3( gl_FragCoord.xy*vec2( 1.0/R_W, 1.0/R_H ), 0.0 );
+	//gl_FragColor.rgb = texture2D( raster_image, gl_FragCoord.xy/textureSize(raster_image,0) ).rgb;
 }

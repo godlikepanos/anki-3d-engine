@@ -8,6 +8,7 @@
 uniform vec3 ambient_color;
 #pragma anki uniform ms_diffuse_fai 1
 uniform sampler2D ms_diffuse_fai;
+
 varying vec2 tex_coords;
 
 void main()

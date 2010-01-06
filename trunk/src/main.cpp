@@ -281,7 +281,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
-		if( 0 )
+		if( 1 )
 		{
 			if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
 			hndl::WaitForNextFrame();

@@ -45,10 +45,10 @@ void renderer_t::illumination_stage_t::point_light_pass_t::DrawSMOUVS( const poi
 /// calc the view vector that we will use inside the shader to calculate the frag pos in view space
 void renderer_t::illumination_stage_t::CalcViewVector()
 {
-	float _w = renderer.width;
-	float _h = renderer.height;
-	int pixels[4][2]={ {_w,_h}, {0.0,_h}, { 0.0,0.0 }, {_w,0.0} }; // from righ up and CC wise to right down, Just like we render the quad
-	int viewport[4]={ 0.0, 0.0, _w, _h };
+	int _w = renderer.width;
+	int _h = renderer.height;
+	int pixels[4][2]={ {_w,_h}, {0,_h}, { 0,0 }, {_w,0} }; // from righ up and CC wise to right down, Just like we render the quad
+	int viewport[4]={ 0, 0, _w, _h };
 
 	for( int i=0; i<4; i++ )
 	{

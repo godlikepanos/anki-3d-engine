@@ -54,7 +54,7 @@ static void InitBlurFBO()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, blured_fai.GetGLID(), 0 );
 
 	// test if success
-	if( !blur_fbo.CheckStatus() )
+	if( !blur_fbo.IsGood() )
 		FATAL( "Cannot create deferred shading post-processing stage SSAO blur FBO" );
 
 	// unbind
@@ -89,7 +89,7 @@ void Init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
 
 	// test if success
-	if( !fbo.CheckStatus() )
+	if( !fbo.IsGood() )
 		FATAL( "Cannot create deferred shading post-processing stage SSAO pass FBO" );
 
 	// unbind
