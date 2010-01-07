@@ -1,11 +1,11 @@
-#if defined( _HAS_DIFFUSE_MAP_ ) || defined( _HAS_NORMAL_MAP_ ) || defined( _HAS_SPECULAR_MAP_ )
+#if defined( _DIFFUSE_MAPPING_ ) || defined( _NORMAL_MAPPING_ ) || defined( _SPECULAR_MAPPING_ )
 	#define NEEDS_TEX_MAPPING 1
 #else
 	#define NEEDS_TEX_MAPPING 0
 #endif
 
 
-#if defined( _HAS_NORMAL_MAP_ ) || defined( _PARALLAX_MAPPING_ )
+#if defined( _NORMAL_MAPPING_ ) || defined( _PARALLAX_MAPPING_ )
 	#define NEEDS_TANGENT 1
 #else
 	#define NEEDS_TANGENT 0
@@ -174,7 +174,7 @@ void main()
 	// Get the color from the diffuse map and discard if grass                                                                          =
 	//===================================================================================================================================
 	vec3 _diff_color;
-	#if defined( _HAS_DIFFUSE_MAP_ )
+	#if defined( _DIFFUSE_MAPPING_ )
 
 		#if defined( _GRASS_LIKE_ )
 			vec4 _diff_color4 = texture2D( diffuse_map, _super_tex_coords );
@@ -194,7 +194,7 @@ void main()
 	// Normal Calculations                                                                                                              =
 	// Either use a normap map and make some calculations or use the vertex normal                                                      =
 	//===================================================================================================================================
-	#if defined( _HAS_NORMAL_MAP_ )
+	#if defined( _NORMAL_MAPPING_ )
 		vec3 _n = normalize( normal_v2f );
 		vec3 _t = normalize( tangent_v2f );
 		vec3 _b = cross(_n, _t) * w_v2f;
@@ -233,7 +233,7 @@ void main()
 	//===================================================================================================================================
 
 	// has specular map
-	#if defined( _HAS_SPECULAR_MAP_ )
+	#if defined( _SPECULAR_MAPPING_ )
 		vec4 _specular = vec4(texture2D( specular_map, _super_tex_coords ).rgb * gl_FrontMaterial.specular.rgb, gl_FrontMaterial.shininess);
 	// no specular map
 	#else

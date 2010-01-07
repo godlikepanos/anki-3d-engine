@@ -6,50 +6,50 @@
 namespace m {
 
 // accessors
-M_INLINE float& vec2_t::operator []( uint i )
+inline float& vec2_t::operator []( uint i )
 {
 	return (&x)[i];
 }
 
-M_INLINE float vec2_t::operator []( uint i ) const
+inline float vec2_t::operator []( uint i ) const
 {
 	return (&x)[i];
 }
 
 // constructor []
-M_INLINE vec2_t::vec2_t()
+inline vec2_t::vec2_t()
 	: x(0.0), y(0.0)
 {}
 
 // constructor [float, float]
-M_INLINE vec2_t::vec2_t( float x_, float y_ )
+inline vec2_t::vec2_t( float x_, float y_ )
 	: x(x_), y(y_)
 {}
 
 // constructor [float]
-M_INLINE vec2_t::vec2_t( float f ): x(f), y(f)
+inline vec2_t::vec2_t( float f ): x(f), y(f)
 {}
 
 // constructor [vec2]
-M_INLINE vec2_t::vec2_t( const vec2_t& b ): x(b.x), y(b.y)
+inline vec2_t::vec2_t( const vec2_t& b ): x(b.x), y(b.y)
 {}
 
 // constructor [vec3]
-M_INLINE vec2_t::vec2_t( const vec3_t& v3 ): x(v3.x), y(v3.y)
+inline vec2_t::vec2_t( const vec3_t& v3 ): x(v3.x), y(v3.y)
 {}
 
 // constructor [vec4]
-M_INLINE vec2_t::vec2_t( const vec4_t& v4 ): x(v4.x), y(v4.y)
+inline vec2_t::vec2_t( const vec4_t& v4 ): x(v4.x), y(v4.y)
 {}
 
 // +
-M_INLINE vec2_t vec2_t::operator +( const vec2_t& b ) const
+inline vec2_t vec2_t::operator +( const vec2_t& b ) const
 {
 	return vec2_t( x+b.x, y+b.y );
 }
 
 // +=
-M_INLINE vec2_t& vec2_t::operator +=( const vec2_t& b )
+inline vec2_t& vec2_t::operator +=( const vec2_t& b )
 {
 	x += b.x;
 	y += b.y;
@@ -57,13 +57,13 @@ M_INLINE vec2_t& vec2_t::operator +=( const vec2_t& b )
 }
 
 // -
-M_INLINE vec2_t vec2_t::operator -( const vec2_t& b ) const
+inline vec2_t vec2_t::operator -( const vec2_t& b ) const
 {
 	return vec2_t( x-b.x, y-b.y );
 }
 
 // -=
-M_INLINE vec2_t& vec2_t::operator -=( const vec2_t& b )
+inline vec2_t& vec2_t::operator -=( const vec2_t& b )
 {
 	x -= b.x;
 	y -= b.y;
@@ -71,13 +71,13 @@ M_INLINE vec2_t& vec2_t::operator -=( const vec2_t& b )
 }
 
 // *
-M_INLINE vec2_t vec2_t::operator *( const vec2_t& b ) const
+inline vec2_t vec2_t::operator *( const vec2_t& b ) const
 {
 	return vec2_t( x*b.x, y*b.y );
 }
 
 // *=
-M_INLINE vec2_t& vec2_t::operator *=( const vec2_t& b )
+inline vec2_t& vec2_t::operator *=( const vec2_t& b )
 {
 	x *= b.x;
 	y *= b.y;
@@ -85,13 +85,13 @@ M_INLINE vec2_t& vec2_t::operator *=( const vec2_t& b )
 }
 
 // /
-M_INLINE vec2_t vec2_t::operator /( const vec2_t& b ) const
+inline vec2_t vec2_t::operator /( const vec2_t& b ) const
 {
 	return vec2_t( x/b.x, y/b.y );
 }
 
 // /=
-M_INLINE vec2_t& vec2_t::operator /=( const vec2_t& b )
+inline vec2_t& vec2_t::operator /=( const vec2_t& b )
 {
 	x /= b.x;
 	y /= b.y;
@@ -99,119 +99,143 @@ M_INLINE vec2_t& vec2_t::operator /=( const vec2_t& b )
 }
 
 // negative
-M_INLINE vec2_t vec2_t::operator -() const
+inline vec2_t vec2_t::operator -() const
 {
 	return vec2_t( -x, -y );
 }
 
 // ==
-M_INLINE bool vec2_t::operator ==( const vec2_t& b ) const
+inline bool vec2_t::operator ==( const vec2_t& b ) const
 {
 	return ( IsZero(x-b.x) && IsZero(y-b.y) ) ? true : false;
 }
 
 // !=
-M_INLINE bool vec2_t::operator !=( const vec2_t& b ) const
+inline bool vec2_t::operator !=( const vec2_t& b ) const
 {
 	return ( IsZero(x-b.x) && IsZero(y-b.y) ) ? false : true;
 }
 
 // vec2 + float
-M_INLINE vec2_t vec2_t::operator +( float f ) const
+inline vec2_t vec2_t::operator +( float f ) const
 {
 	return ME + vec2_t(f);
 }
 
+// float + vec2
+inline vec2_t operator +( float f, const vec2_t& v2 )
+{
+	return v2+f;
+}
+
 // vec2 += float
-M_INLINE vec2_t& vec2_t::operator +=( float f )
+inline vec2_t& vec2_t::operator +=( float f )
 {
 	ME += vec2_t(f);
 	return ME;
 }
 
 // vec2 - float
-M_INLINE vec2_t vec2_t::operator -( float f ) const
+inline vec2_t vec2_t::operator -( float f ) const
 {
 	return ME - vec2_t(f);
 }
 
+// float - vec2
+inline vec2_t operator -( float f, const vec2_t& v2 )
+{
+	return vec2_t( f-v2.x, f-v2.y );
+}
+
 // vec2 -= float
-M_INLINE vec2_t& vec2_t::operator -=( float f )
+inline vec2_t& vec2_t::operator -=( float f )
 {
 	ME -= vec2_t(f);
 	return ME;
 }
 
 // vec2 * float
-M_INLINE vec2_t vec2_t::operator *( float f ) const
+inline vec2_t vec2_t::operator *( float f ) const
 {
 	return ME * vec2_t(f);
 }
 
+// float * vec2
+inline vec2_t operator *( float f, const vec2_t& v2 )
+{
+	return v2*f;
+}
+
 // vec2 *= float
-M_INLINE vec2_t& vec2_t::operator *=( float f )
+inline vec2_t& vec2_t::operator *=( float f )
 {
 	ME *= vec2_t(f);
 	return ME;
 }
 
 // vec2 / float
-M_INLINE vec2_t vec2_t::operator /( float f ) const
+inline vec2_t vec2_t::operator /( float f ) const
 {
 	return ME / vec2_t(f);
 }
 
+// float / vec2
+inline vec2_t operator /( float f, const vec2_t& v2 )
+{
+	return vec2_t( f/v2.x, f/v2.y );
+}
+
 // vec2 /= float
-M_INLINE vec2_t& vec2_t::operator /=( float f )
+inline vec2_t& vec2_t::operator /=( float f )
 {
 	ME /= vec2_t(f);
 	return ME;
 }
 
 // Length
-M_INLINE float vec2_t::Length() const
+inline float vec2_t::Length() const
 {
 	return Sqrt( x*x + y*y );
 }
 
 // set to zero
-M_INLINE void vec2_t::SetZero()
+inline void vec2_t::SetZero()
 {
 	x = y = 0.0;
 }
 
 // Normalize
-M_INLINE void vec2_t::Normalize()
+inline void vec2_t::Normalize()
 {
 	ME *= InvSqrt( x*x + y*y );
 }
 
 // Normalized (return the normalized)
-M_INLINE vec2_t vec2_t::GetNormalized() const
+inline vec2_t vec2_t::GetNormalized() const
 {
 	return ME * InvSqrt( x*x + y*y );
 }
 
 // Dot
-M_INLINE float vec2_t::Dot( const vec2_t& b ) const
+inline float vec2_t::Dot( const vec2_t& b ) const
 {
 	return x*b.x + y*b.y;
 }
 
 // GetZero
-M_INLINE vec2_t vec2_t::GetZero()
+inline vec2_t vec2_t::GetZero()
 {
 	return vec2_t(0.0);
 }
 
 // GetOne
-M_INLINE vec2_t vec2_t::GetOne()
+inline vec2_t vec2_t::GetOne()
 {
 	return vec2_t(1.0);
 }
 
 // Print
-M_INLINE void vec2_t::Print() const
+inline void vec2_t::Print() const
 {
 	for( int i=0; i<2; i++ )
 		cout << fixed << ME[i] << ' ';

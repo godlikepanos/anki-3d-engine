@@ -7,8 +7,3 @@
 #include "mat3.h"
 #include "mat4.h"
 #include "m_misc.h"
-
-
-#ifndef M_INLINE
-	#define M_INLINE inline
-#endif

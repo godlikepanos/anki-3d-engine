@@ -4,22 +4,22 @@ namespace m {
 
 
 // constructor []
-M_INLINE axisang_t::axisang_t()
+inline axisang_t::axisang_t()
 	: ang(0.0), axis()
 {}
 
 // constructor [axisang_t]
-M_INLINE axisang_t::axisang_t( const axisang_t& b )
+inline axisang_t::axisang_t( const axisang_t& b )
 	: ang(b.ang), axis(b.axis)
 {}
 
 // constructor [float, axis]
-M_INLINE axisang_t::axisang_t( float rad, const vec3_t& axis_ )
+inline axisang_t::axisang_t( float rad, const vec3_t& axis_ )
 	: ang(rad), axis(axis_)
 {}
 
 // constructor [quat]
-M_INLINE axisang_t::axisang_t( const quat_t& q )
+inline axisang_t::axisang_t( const quat_t& q )
 {
 	ang = 2.0*acos( q.w );
 	float length = Sqrt( 1.0 - q.w*q.w );
@@ -33,7 +33,7 @@ M_INLINE axisang_t::axisang_t( const quat_t& q )
 }
 
 // constructor [mat3]
-M_INLINE axisang_t::axisang_t( const mat3_t& m3 )
+inline axisang_t::axisang_t( const mat3_t& m3 )
 {
 	if( (fabs(m3(0,1)-m3(1,0))< EPSILON)  && (fabs(m3(0,2)-m3(2,0))< EPSILON)  && (fabs(m3(1,2)-m3(2,1))< EPSILON) )
 	{

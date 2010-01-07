@@ -82,6 +82,13 @@ class mat4_t
 };
 
 
+// other operators
+extern mat4_t operator +( float f, const mat4_t& m4 );
+extern mat4_t operator -( float f, const mat4_t& m4 );
+extern mat4_t operator *( float f, const mat4_t& m4 );
+extern mat4_t operator /( float f, const mat4_t& m4 );
+
+
 } // end namespace
 
 

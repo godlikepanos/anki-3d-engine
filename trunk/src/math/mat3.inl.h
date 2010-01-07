@@ -7,35 +7,35 @@
 namespace m {
 
 // accessors
-M_INLINE float& mat3_t::operator ()( const uint i, const uint j )
+inline float& mat3_t::operator ()( const uint i, const uint j )
 {
 	return arr2[i][j];
 }
 
-M_INLINE const float& mat3_t::operator ()( const uint i, const uint j ) const
+inline const float& mat3_t::operator ()( const uint i, const uint j ) const
 {
 	return arr2[i][j]; 
 }
 
-M_INLINE float& mat3_t::operator []( const uint i)
+inline float& mat3_t::operator []( const uint i)
 {
 	return arr1[i];
 }
 
-M_INLINE const float& mat3_t::operator []( const uint i) const
+inline const float& mat3_t::operator []( const uint i) const
 {
 	return arr1[i];
 }
 
 // constructor [float[]]
-M_INLINE mat3_t::mat3_t( float arr [] )
+inline mat3_t::mat3_t( float arr [] )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] = arr[i];
 }
 
 // constructor [float...........float]
-M_INLINE mat3_t::mat3_t( float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22 )
+inline mat3_t::mat3_t( float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22 )
 {
 	ME(0,0) = m00;
 	ME(0,1) = m01;
@@ -49,14 +49,14 @@ M_INLINE mat3_t::mat3_t( float m00, float m01, float m02, float m10, float m11, 
 }
 
 // constructor [mat3]
-M_INLINE mat3_t::mat3_t( const mat3_t& b )
+inline mat3_t::mat3_t( const mat3_t& b )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] = b[i];
 }
 
 // constructor [quat]
-M_INLINE mat3_t::mat3_t( const quat_t& q )
+inline mat3_t::mat3_t( const quat_t& q )
 {
 	DEBUG_ERR( !IsZero( 1.0f - q.Length()) ); // Not normalized quat
 
@@ -89,7 +89,7 @@ M_INLINE mat3_t::mat3_t( const quat_t& q )
 }
 
 // constructor [euler]
-M_INLINE mat3_t::mat3_t( const euler_t& e )
+inline mat3_t::mat3_t( const euler_t& e )
 {
 	float ch, sh, ca, sa, cb, sb;
   SinCos( e.heading(), sh, ch );
@@ -108,7 +108,7 @@ M_INLINE mat3_t::mat3_t( const euler_t& e )
 }
 
 // constructor [axisang]
-M_INLINE mat3_t::mat3_t( const axisang_t& axisang )
+inline mat3_t::mat3_t( const axisang_t& axisang )
 {
 	DEBUG_ERR( !IsZero( 1.0-axisang.axis.Length() ) ); // Not normalized axis
 
@@ -135,14 +135,14 @@ M_INLINE mat3_t::mat3_t( const axisang_t& axisang )
 }
 
 // constructor [float]
-M_INLINE mat3_t::mat3_t( float f )
+inline mat3_t::mat3_t( float f )
 {
 	for( int i=0; i<9; i++ )
 			ME[i] = f;
 }
 
 // 3x3 + 3x3
-M_INLINE mat3_t mat3_t::operator +( const mat3_t& b ) const
+inline mat3_t mat3_t::operator +( const mat3_t& b ) const
 {
 	mat3_t c;
 	for( int i=0; i<9; i++ )
@@ -151,7 +151,7 @@ M_INLINE mat3_t mat3_t::operator +( const mat3_t& b ) const
 }
 
 // 3x3 + 3x3 (self)
-M_INLINE mat3_t& mat3_t::operator +=( const mat3_t& b )
+inline mat3_t& mat3_t::operator +=( const mat3_t& b )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] += b[i];
@@ -159,7 +159,7 @@ M_INLINE mat3_t& mat3_t::operator +=( const mat3_t& b )
 }
 
 // 3x3 - 3x3
-M_INLINE mat3_t mat3_t::operator -( const mat3_t& b ) const
+inline mat3_t mat3_t::operator -( const mat3_t& b ) const
 {
 	mat3_t c;
 	for( int i=0; i<9; i++ )
@@ -168,7 +168,7 @@ M_INLINE mat3_t mat3_t::operator -( const mat3_t& b ) const
 }
 
 // 3x3 - 3x3 (self)
-M_INLINE mat3_t& mat3_t::operator -=( const mat3_t& b )
+inline mat3_t& mat3_t::operator -=( const mat3_t& b )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] -= b[i];
@@ -176,7 +176,7 @@ M_INLINE mat3_t& mat3_t::operator -=( const mat3_t& b )
 }
 
 // 3x3 * 3x3
-M_INLINE mat3_t mat3_t::operator *( const mat3_t& b ) const
+inline mat3_t mat3_t::operator *( const mat3_t& b ) const
 {
 	mat3_t c;
 	c(0, 0) = ME(0, 0)*b(0, 0) + ME(0, 1)*b(1, 0) + ME(0, 2)*b(2, 0);
@@ -192,14 +192,61 @@ M_INLINE mat3_t mat3_t::operator *( const mat3_t& b ) const
 }
 
 // 3x3 * 3x3 (self)
-M_INLINE mat3_t& mat3_t::operator *=( const mat3_t& b )
+inline mat3_t& mat3_t::operator *=( const mat3_t& b )
 {
 	ME = ME * b;
 	return ME;
 }
 
+// 3x3 + float
+inline mat3_t mat3_t::operator +( float f ) const
+{
+	mat3_t c;
+	for( uint i=0; i<9; i++ )
+		c[i] = ME[i] + f;
+	return c;
+}
+
+// float + 3x3
+inline mat3_t operator +( float f, const mat3_t& m3 )
+{
+	return m3+f;
+}
+
+// 3x3 += float
+inline mat3_t mat3_t::operator +=( float f ) const
+{
+	for( uint i=0; i<9; i++ )
+		ME[i] += f;
+}
+
+// 3x3 - float
+inline mat3_t mat3_t::operator -( float f ) const
+{
+	mat3_t c;
+	for( uint i=0; i<9; i++ )
+		c[i] = ME[i] - f;
+	return c;
+}
+
+// float - 3x3
+inline mat3_t operator -( float f, const mat3_t& m3 )
+{
+	mat3_t out;
+	for( uint i=0; i<9; i++ )
+		out[i] = f - m3[i];
+	return out;
+}
+
+// 3x3 -= float
+inline mat3_t mat3_t::operator -=( float f ) const
+{
+	for( uint i=0; i<9; i++ )
+		ME[i] -= f;
+}
+
 // 3x3 * float
-M_INLINE mat3_t mat3_t::operator *( float f ) const
+inline mat3_t mat3_t::operator *( float f ) const
 {
 	mat3_t c;
 	for( uint i=0; i<9; i++ )
@@ -207,16 +254,51 @@ M_INLINE mat3_t mat3_t::operator *( float f ) const
 	return c;
 }
 
+// float * 3x3
+inline mat3_t operator *( float f, const mat3_t& m3 )
+{
+	mat3_t out;
+	for( uint i=0; i<9; i++ )
+		out[i] = f * m3[i];
+	return out;
+}
+
 // 3x3 * float (self)
-M_INLINE mat3_t& mat3_t::operator *=( float f )
+inline mat3_t& mat3_t::operator *=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] *= f;
 	return ME;
 }
 
+// 3x3 / float
+inline mat3_t mat3_t::operator /( float f ) const
+{
+	mat3_t c;
+	for( uint i=0; i<9; i++ )
+		c[i] = ME[i] / f;
+	return c;
+}
+
+// float / 3x3
+inline mat3_t operator /( float f, const mat3_t& m3 )
+{
+	mat3_t out;
+	for( uint i=0; i<9; i++ )
+		out[i] = f / m3[i];
+	return out;
+}
+
+// 3x3 / float (self)
+inline mat3_t& mat3_t::operator /=( float f )
+{
+	for( uint i=0; i<9; i++ )
+		ME[i] /= f;
+	return ME;
+}
+
 // 3x3 * vec3 (cross products with rows)
-M_INLINE vec3_t mat3_t::operator *( const vec3_t& b ) const
+inline vec3_t mat3_t::operator *( const vec3_t& b ) const
 {
 	return vec3_t(
 		ME(0, 0)*b.x + ME(0, 1)*b.y + ME(0, 2)*b.z,
@@ -226,7 +308,7 @@ M_INLINE vec3_t mat3_t::operator *( const vec3_t& b ) const
 }
 
 // ==
-M_INLINE bool mat3_t::operator ==( const mat3_t& b ) const
+inline bool mat3_t::operator ==( const mat3_t& b ) const
 {
 	for( int i=0; i<9; i++ )
 		if( !IsZero( ME[i]-b[i] ) ) return false;
@@ -234,7 +316,7 @@ M_INLINE bool mat3_t::operator ==( const mat3_t& b ) const
 }
 
 // !=
-M_INLINE bool mat3_t::operator !=( const mat3_t& b ) const
+inline bool mat3_t::operator !=( const mat3_t& b ) const
 {
 	for( int i=0; i<9; i++ )
 		if( !IsZero( ME[i]-b[i] ) ) return true;
@@ -242,7 +324,7 @@ M_INLINE bool mat3_t::operator !=( const mat3_t& b ) const
 }
 
 // SetRows
-M_INLINE void mat3_t::SetRows( const vec3_t& a, const vec3_t& b, const vec3_t& c )
+inline void mat3_t::SetRows( const vec3_t& a, const vec3_t& b, const vec3_t& c )
 {
 	ME(0,0) = a.x;
 	ME(0,1) = a.y;
@@ -256,7 +338,7 @@ M_INLINE void mat3_t::SetRows( const vec3_t& a, const vec3_t& b, const vec3_t& c
 }
 
 // SetColumns
-M_INLINE void mat3_t::SetColumns( const vec3_t& a, const vec3_t& b, const vec3_t& c )
+inline void mat3_t::SetColumns( const vec3_t& a, const vec3_t& b, const vec3_t& c )
 {
 	ME(0,0) = a.x;
 	ME(1,0) = a.y;
@@ -270,7 +352,7 @@ M_INLINE void mat3_t::SetColumns( const vec3_t& a, const vec3_t& b, const vec3_t
 }
 
 // GetRows
-M_INLINE void mat3_t::GetRows( vec3_t& a, vec3_t& b, vec3_t& c ) const
+inline void mat3_t::GetRows( vec3_t& a, vec3_t& b, vec3_t& c ) const
 {
 	a.x = ME(0,0);
 	a.y = ME(0,1);
@@ -284,7 +366,7 @@ M_INLINE void mat3_t::GetRows( vec3_t& a, vec3_t& b, vec3_t& c ) const
 }
 
 // GetColumns
-M_INLINE void mat3_t::GetColumns( vec3_t& a, vec3_t& b, vec3_t& c ) const
+inline void mat3_t::GetColumns( vec3_t& a, vec3_t& b, vec3_t& c ) const
 {
 	a.x = ME(0,0);
 	a.y = ME(1,0);
@@ -298,7 +380,7 @@ M_INLINE void mat3_t::GetColumns( vec3_t& a, vec3_t& b, vec3_t& c ) const
 }
 
 // SetRow
-M_INLINE void mat3_t::SetRow( const uint i, const vec3_t& v )
+inline void mat3_t::SetRow( const uint i, const vec3_t& v )
 {
 	ME(i,0)=v.x;
 	ME(i,1)=v.y;
@@ -306,13 +388,13 @@ M_INLINE void mat3_t::SetRow( const uint i, const vec3_t& v )
 }
 
 // GetRow
-M_INLINE vec3_t mat3_t::GetRow( const uint i ) const
+inline vec3_t mat3_t::GetRow( const uint i ) const
 {
 	return vec3_t( ME(i,0), ME(i,1), ME(i,2) );
 }
 
 // SetColumn
-M_INLINE void mat3_t::SetColumn( const uint i, const vec3_t& v )
+inline void mat3_t::SetColumn( const uint i, const vec3_t& v )
 {
 	ME(0,i)=v.x;
 	ME(1,i)=v.y;
@@ -320,13 +402,13 @@ M_INLINE void mat3_t::SetColumn( const uint i, const vec3_t& v )
 }
 
 // GetColumn
-M_INLINE vec3_t mat3_t::GetColumn( const uint i ) const
+inline vec3_t mat3_t::GetColumn( const uint i ) const
 {
 	return vec3_t( ME(0,i), ME(1,i), ME(2,i) );
 }
 
 // SetRotationX
-M_INLINE void mat3_t::SetRotationX( float rad )
+inline void mat3_t::SetRotationX( float rad )
 {
 	float sintheta, costheta;
 	SinCos( rad, sintheta, costheta );
@@ -343,7 +425,7 @@ M_INLINE void mat3_t::SetRotationX( float rad )
 }
 
 // SetRotationY
-M_INLINE void mat3_t::SetRotationY( float rad )
+inline void mat3_t::SetRotationY( float rad )
 {
 	float sintheta, costheta;
 	SinCos( rad, sintheta, costheta );
@@ -360,7 +442,7 @@ M_INLINE void mat3_t::SetRotationY( float rad )
 }
 
 // LoadRotationZ
-M_INLINE void mat3_t::SetRotationZ( float rad )
+inline void mat3_t::SetRotationZ( float rad )
 {
 	float sintheta, costheta;
 	SinCos( rad, sintheta, costheta );
@@ -381,7 +463,7 @@ M_INLINE void mat3_t::SetRotationZ( float rad )
 If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in mat's colomns.
 This means that: mat3.colomn[0] == i*mat3. RotateXAxis() rotates rad angle not from i vector (aka x axis) but
 from the vector from colomn 0*/
-M_INLINE void mat3_t::RotateXAxis( float rad )
+inline void mat3_t::RotateXAxis( float rad )
 {
 	float sina, cosa;
 	SinCos( rad, sina, cosa );
@@ -416,7 +498,7 @@ M_INLINE void mat3_t::RotateXAxis( float rad )
 }
 
 // RotateYAxis
-M_INLINE void mat3_t::RotateYAxis( float rad )
+inline void mat3_t::RotateYAxis( float rad )
 {
 	float sina, cosa;
 	SinCos( rad, sina, cosa );
@@ -451,7 +533,7 @@ M_INLINE void mat3_t::RotateYAxis( float rad )
 
 
 // RotateZAxis
-M_INLINE void mat3_t::RotateZAxis( float rad )
+inline void mat3_t::RotateZAxis( float rad )
 {
 	float sina, cosa;
 	SinCos( rad, sina, cosa );
@@ -485,7 +567,7 @@ M_INLINE void mat3_t::RotateZAxis( float rad )
 }
 
 // Transpose
-M_INLINE void mat3_t::Transpose()
+inline void mat3_t::Transpose()
 {
 	float temp = ME(0,1);
 	ME(0,1) = ME(1,0);
@@ -499,7 +581,7 @@ M_INLINE void mat3_t::Transpose()
 }
 
 // Transposed
-M_INLINE mat3_t mat3_t::GetTransposed() const
+inline mat3_t mat3_t::GetTransposed() const
 {
 	mat3_t m3;
 	m3[0] = ME[0];
@@ -515,7 +597,7 @@ M_INLINE mat3_t mat3_t::GetTransposed() const
 }
 
 // Reorthogonalize
-M_INLINE void mat3_t::Reorthogonalize()
+inline void mat3_t::Reorthogonalize()
 {
 	// method 1: standard orthogonalization method
 	/*mat3_t correction_m3 =
@@ -541,7 +623,7 @@ M_INLINE void mat3_t::Reorthogonalize()
 }
 
 // Print
-M_INLINE void mat3_t::Print() const
+inline void mat3_t::Print() const
 {
 	for( int i=0; i<3; i++ )
 	{
@@ -553,7 +635,7 @@ M_INLINE void mat3_t::Print() const
 }
 
 // Determinant
-M_INLINE float mat3_t::Det() const
+inline float mat3_t::Det() const
 {
 	/* accurate method:
 	return ME(0, 0)*ME(1, 1)*ME(2, 2) + ME(0, 1)*ME(1, 2)*ME(2, 0) + ME(0, 2)*ME(1, 0)*ME(2, 1)
@@ -563,9 +645,9 @@ M_INLINE float mat3_t::Det() const
 	ME(0, 2)*( ME(0, 1)*ME(2, 1) - ME(1, 1)*ME(2, 0) );
 }
 
-// Invert
+// GetInverse
 // using Gramer's method ( Inv(A) = ( 1/Det(A) ) * Adj(A)  )
-M_INLINE mat3_t mat3_t::GetInverse() const
+inline mat3_t mat3_t::GetInverse() const
 {
 	mat3_t result;
 
@@ -596,20 +678,20 @@ M_INLINE mat3_t mat3_t::GetInverse() const
 
 // Invert
 // see above
-M_INLINE void mat3_t::Invert()
+inline void mat3_t::Invert()
 {
 	ME = GetInverse();
 }
 
 // GetZero
-M_INLINE const mat3_t& mat3_t::GetZero()
+inline const mat3_t& mat3_t::GetZero()
 {
 	static mat3_t zero( 0.0 );
 	return zero;
 }
 
 // GetIdentity
-M_INLINE const mat3_t& mat3_t::GetIdentity()
+inline const mat3_t& mat3_t::GetIdentity()
 {
 	static mat3_t ident( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 );
 	return ident;
