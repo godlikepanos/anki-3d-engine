@@ -6,7 +6,7 @@ namespace m {
 
 // MathSanityChecks
 // test if the compiler keeps the correct sizes for the classes
-M_INLINE void MathSanityChecks()
+inline void MathSanityChecks()
 {
 	const int fs = sizeof(float); // float size
 	if( sizeof(vec2_t)!=fs*2 || sizeof(vec3_t)!=fs*3 || sizeof(vec4_t)!=fs*4 || sizeof(quat_t)!=fs*4 || sizeof(euler_t)!=fs*3 ||
@@ -16,7 +16,7 @@ M_INLINE void MathSanityChecks()
 
 
 // 1/sqrt(f)
-M_INLINE float InvSqrt( float f )
+inline float InvSqrt( float f )
 {
 #if defined( _DEBUG_ )
 	return 1.0/sqrtf(f);
@@ -51,7 +51,7 @@ M_INLINE float InvSqrt( float f )
 // PolynomialSinQuadrant
 // used in SinCos
 #if !defined(_DEBUG_)
-M_INLINE static float PolynomialSinQuadrant(float a)
+inline static float PolynomialSinQuadrant(float a)
 {
 	return a * ( 1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542)));
 }
@@ -59,7 +59,7 @@ M_INLINE static float PolynomialSinQuadrant(float a)
 
 
 // Sine and Cosine
-M_INLINE void SinCos( float a, float& sina, float& cosa )
+inline void SinCos( float a, float& sina, float& cosa )
 {
 #ifdef _DEBUG_
 	sina = sin(a);
@@ -111,19 +111,19 @@ M_INLINE void SinCos( float a, float& sina, float& cosa )
 //=====================================================================================================================================
 // Small funcs                                                                                                                        =
 //=====================================================================================================================================
-M_INLINE float Sqrt( float f ) { return 1/InvSqrt(f); }
-M_INLINE float ToRad( float degrees ) { return degrees*(PI/180.0); }
-M_INLINE float ToDegrees( float rad ) { return rad*(180.0/PI); }
-M_INLINE float Sin( float rad ) { return sin(rad); }
-M_INLINE float Cos( float rad ) { return cos(rad); }
-M_INLINE bool  IsZero( float f ) { return ( fabs(f) < EPSILON ); }
-M_INLINE float Max( float a, float b ) { return (a>b) ? a : b; }
-M_INLINE float Min( float a, float b ) { return (a<b) ? a : b; }
+inline float Sqrt( float f ) { return 1/InvSqrt(f); }
+inline float ToRad( float degrees ) { return degrees*(PI/180.0); }
+inline float ToDegrees( float rad ) { return rad*(180.0/PI); }
+inline float Sin( float rad ) { return sin(rad); }
+inline float Cos( float rad ) { return cos(rad); }
+inline bool  IsZero( float f ) { return ( fabs(f) < EPSILON ); }
+inline float Max( float a, float b ) { return (a>b) ? a : b; }
+inline float Min( float a, float b ) { return (a<b) ? a : b; }
 
 
 //  CombineTransformations
 //  mat4(t0,r0,s0)*mat4(t1,r1,s1) == mat4(tf,rf,sf)
-M_INLINE void CombineTransformations( const vec3_t& t0, const mat3_t& r0, float s0,
+inline void CombineTransformations( const vec3_t& t0, const mat3_t& r0, float s0,
                                       const vec3_t& t1, const mat3_t& r1, float s1,
                                       vec3_t& tf, mat3_t& rf, float& sf )
 {
@@ -133,7 +133,7 @@ M_INLINE void CombineTransformations( const vec3_t& t0, const mat3_t& r0, float 
 }
 
 //  CombineTransformations as the above but without scale
-M_INLINE void CombineTransformations( const vec3_t& t0, const mat3_t& r0, const vec3_t& t1, const mat3_t& r1, vec3_t& tf, mat3_t& rf)
+inline void CombineTransformations( const vec3_t& t0, const mat3_t& r0, const vec3_t& t1, const mat3_t& r1, vec3_t& tf, mat3_t& rf)
 {
 	tf = t1.GetTransformed( t0, r0 );
 	rf = r0 * r1;

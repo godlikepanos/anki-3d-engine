@@ -59,6 +59,13 @@ class vec2_t
 };
 
 
+// other operators
+extern vec2_t operator +( float f, const vec2_t& v2 );
+extern vec2_t operator -( float f, const vec2_t& v2 );
+extern vec2_t operator *( float f, const vec2_t& v2 );
+extern vec2_t operator /( float f, const vec2_t& v2 );
+
+
 } // end namespace
 
 

@@ -83,6 +83,13 @@ class mat3_t
 };
 
 
+// other operators
+extern mat3_t operator +( float f, const mat3_t& m3 );
+extern mat3_t operator -( float f, const mat3_t& m3 );
+extern mat3_t operator *( float f, const mat3_t& m3 );
+extern mat3_t operator /( float f, const mat3_t& m3 );
+
+
 } // end namespace
 
 

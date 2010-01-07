@@ -57,6 +57,13 @@ class vec4_t
 };
 
 
+// other operators
+extern vec4_t operator +( float f, const vec4_t& v4 );
+extern vec4_t operator -( float f, const vec4_t& v4 );
+extern vec4_t operator *( float f, const vec4_t& v4 );
+extern vec4_t operator /( float f, const vec4_t& v4 );
+
+
 } // end namespace
 
 
