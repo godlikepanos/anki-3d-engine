@@ -133,6 +133,9 @@ uniform sampler2D normal_map;
 uniform sampler2D specular_map;
 uniform sampler2D height_map;
 uniform sampler2D environment_map;
+uniform vec3 diffuse_color;
+uniform vec3 specular_color;
+uniform float shininess;
 
 varying vec3 normal_v2f;
 varying vec3 tangent_v2f;
@@ -184,9 +187,9 @@ void main()
 			_diff_color = texture2D( diffuse_map, _super_tex_coords ).rgb;
 		#endif
 
-		_diff_color *= gl_FrontMaterial.diffuse.rgb;
+		_diff_color *= diffuse_color.rgb;
 	#else
-		_diff_color = gl_FrontMaterial.diffuse.rgb;
+		_diff_color = diffuse_color.rgb;
 	#endif
 
 
@@ -234,10 +237,10 @@ void main()
 
 	// has specular map
 	#if defined( _SPECULAR_MAPPING_ )
-		vec4 _specular = vec4(texture2D( specular_map, _super_tex_coords ).rgb * gl_FrontMaterial.specular.rgb, gl_FrontMaterial.shininess);
+		vec4 _specular = vec4(texture2D( specular_map, _super_tex_coords ).rgb * specular_color, shininess);
 	// no specular map
 	#else
-		vec4 _specular = vec4(gl_FrontMaterial.specular.rgb, gl_FrontMaterial.shininess);
+		vec4 _specular = vec4(specular_color, shininess);
 	#endif
 
 
