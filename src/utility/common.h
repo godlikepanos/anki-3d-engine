@@ -74,7 +74,7 @@ extern string GetFunctionFromPrettyFunction( const char* pretty_function );
 #endif
 
 #define GENERAL_ERR( x, y, col ) \
-	cerr << col << "**" << x << "** " << __FILENAME__ << "(" << __LINE__ << ") " << __G_FUNCTION__ << ": " << y << COL_DEFAULT << endl;
+	cerr << col << "**" << x << "** (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
 
 /// in ERROR you can write something like this: ERROR( "tralala" << 10 << ' ' )
 #define ERROR( x ) GENERAL_ERR( "ERROR", x, COL_ERROR )

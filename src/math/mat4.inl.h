@@ -278,7 +278,7 @@ inline mat4_t operator -( float f, const mat4_t& m4 )
 {
 	mat4_t out;
 	for( int i=0; i<16; i++ )
-		out[i] = f- m3[i];
+		out[i] = f- m4[i];
 	return out;
 }
 
@@ -327,7 +327,7 @@ inline mat4_t operator /( float f, const mat4_t& m4 )
 {
 	mat4_t out;
 	for( uint i=0; i<9; i++ )
-		out = f / m4[i];
+		out[i] = f / m4[i];
 	return out;
 }
 

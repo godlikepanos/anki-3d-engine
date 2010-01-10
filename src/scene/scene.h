@@ -2,11 +2,8 @@
 #define _SCENE_H_
 
 #include "common.h"
-#include "primitives.h"
-#include "spatial.h"
-#include "lights.h"
-#include "mesh.h"
-#include "smodel.h"
+#include "light.h"
+#include "mesh_node.h"
 #include "skybox.h"
 
 
@@ -17,8 +14,7 @@ extern skybox_t skybox;
 inline vec3_t GetAmbientColor() { return vec3_t( 0.1, 0.05, 0.05 )*1; }
 
 extern void UpdateAllWorldStuff();
-extern void RenderAllObjs();
-extern void InterpolateAllModels();
+extern void UpdateAllSkeletonNodes();
 
 
 // container_t
@@ -29,12 +25,12 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 		typedef typename vector<type_t*>::iterator iterator_t; ///< Just to save me time from typing
 
 		/**
-		 * Register x in this container only. Throw error if its allready registered
+		 * Register x in this container only. Throw error if its already registered
 		 * @param x pointer to the object we want to register
 		 */
 		void RegisterMe( type_t* x )
 		{
-			DEBUG_ERR( Search( x ) ); // the obj must not be allready loaded
+			DEBUG_ERR( Search( x ) ); // the obj must not be already loaded
 
 			vec_t<type_t*>::push_back( x );
 		}
@@ -112,11 +108,11 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 
 
 // conaiteners
-class container_object_t: public container_t<object_t>
+class container_node_t: public container_t<node_t>
 {
 	public:
-		void Register( object_t* x );
-		void Unregister( object_t* x );
+		void Register( node_t* x );
+		void Unregister( node_t* x );
 };
 
 class container_light_t: public container_t<light_t>
@@ -133,26 +129,26 @@ class container_camera_t: public container_t<camera_t>
 		void Unregister( camera_t* x );
 };
 
-class container_mesh_t: public container_t<mesh_t>
+class container_mesh_node_t: public container_t<mesh_node_t>
 {
 	public:
-		void Register( mesh_t* x );
-		void Unregister( mesh_t* x );
+		void Register( mesh_node_t* x );
+		void Unregister( mesh_node_t* x );
 };
 
-class container_smodel_t: public container_t<smodel_t>
+class container_skel_node_t: public container_t<skel_node_t>
 {
 	public:
-		void Register( smodel_t* x );
-		void Unregister( smodel_t* x );
+		void Register( skel_node_t* x );
+		void Unregister( skel_node_t* x );
 };
 
 
-extern container_object_t objects;
-extern container_light_t  lights;
-extern container_camera_t cameras;
-extern container_mesh_t   meshes;
-extern container_smodel_t smodels;
+extern container_node_t       nodes;
+extern container_light_t      lights;
+extern container_camera_t     cameras;
+extern container_mesh_node_t  mesh_nodes;
+extern container_skel_node_t  skel_nodes;
 
 
 } // end namespace

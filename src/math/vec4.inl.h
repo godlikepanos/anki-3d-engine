@@ -142,7 +142,7 @@ inline vec4_t vec4_t::operator +( float f ) const
 }
 
 // float + vec4
-vec4_t operator +( float f, const vec4_t& v4 )
+inline vec4_t operator +( float f, const vec4_t& v4 )
 {
 	return v4+f;
 }
@@ -161,7 +161,7 @@ inline vec4_t vec4_t::operator -( float f ) const
 }
 
 // float - vec4
-vec4_t operator -( float f, const vec4_t& v4 )
+inline vec4_t operator -( float f, const vec4_t& v4 )
 {
 	return vec4_t( f-v4.x, f-v4.y, f-v4.z, f-v4.w );
 }
@@ -180,7 +180,7 @@ inline vec4_t vec4_t::operator *( float f ) const
 }
 
 // float * vec4
-vec4_t operator *( float f, const vec4_t& v4 )
+inline vec4_t operator *( float f, const vec4_t& v4 )
 {
 	return v4*f;
 }
@@ -199,9 +199,9 @@ inline vec4_t vec4_t::operator /( float f ) const
 }
 
 // float / vec4
-vec4_t operator /( float f, const vec4_t& v4 )
+inline vec4_t operator /( float f, const vec4_t& v4 )
 {
-	return vec4_t( f/vec4.x, f/vec4.y, f/vec4.z, f/vec4.w );
+	return vec4_t( f/v4.x, f/v4.y, f/v4.z, f/v4.w );
 }
 
 // vec4 /= float

@@ -102,7 +102,7 @@ void RunStage( const camera_t& cam )
 
 	// render the meshes
 	for( uint i=0; i<scene::meshes.size(); i++ )
-		Render<mesh_t, false>( scene::meshes[i] );
+		Render<mesh_node_t, false>( scene::meshes[i] );
 
 	// render the smodels
 	for( uint i=0; i<scene::smodels.size(); i++ )

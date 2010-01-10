@@ -1,25 +1,22 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-#include <cstring>
 #include "common.h"
-#include "primitives.h"
 #include "collision.h"
-#include "object.h"
+#include "node.h"
 
-class camera_data_user_class_t: public data_user_class_t {}; // for ambiguity reasons
 
-class camera_t: public object_t, public camera_data_user_class_t
+class camera_t: public node_t
 {
 	public:
-		enum planes_e
+		enum frustrum_planes_e
 		{
-			LEFT_PL = 0,
-			RIGHT_PL,
-			NEAR_PL,
-			TOP_PL,
-			BOTTOM_PL,
-			FAR_PL
+			FP_LEFT = 0,
+			FP_RIGHT,
+			FP_NEAR,
+			FP_TOP,
+			FP_BOTTOM,
+			FP_FAR
 		};
 
 		// Fovx is the angle in the y axis (imagine the cam positioned in the default OGL pos)
@@ -51,14 +48,14 @@ class camera_t: public object_t, public camera_data_user_class_t
 
 	public:
 		// constructors and destuctors
-		camera_t( float fovx_, float fovy_, float znear_, float zfar_ ): object_t(CAMERA), fovx(fovx_), fovy(fovy_), znear(znear_), zfar(zfar_)
+		camera_t( float fovx_, float fovy_, float znear_, float zfar_ ): node_t(NT_CAMERA), fovx(fovx_), fovy(fovy_), znear(znear_), zfar(zfar_)
 		{
 			CalcLSpaceFrustumPlanes();
 			UpdateWSpaceFrustumPlanes();
 			CalcProjectionMatrix();
 		}
-		camera_t( const camera_t& c ): object_t(CAMERA) { memcpy( this, &c, sizeof( camera_t ) ); }
-		camera_t(): object_t(CAMERA) {}
+		camera_t( const camera_t& c ): node_t(NT_CAMERA) { memcpy( this, &c, sizeof( camera_t ) ); }
+		camera_t(): node_t(NT_CAMERA) {}
 		~camera_t() {}
 
 		// Sets & Gets
@@ -78,9 +75,9 @@ class camera_t: public object_t, public camera_data_user_class_t
 		// misc
 		void LookAtPoint( const vec3_t& point );
 		void UpdateWorldStuff();
-		void RenderDebug();
 		void Render();
-		void RenderDepth() { ERROR("You may want to reconsider rendering a camera for depth passes") };
+		void Init( const char* ) {}
+		void Deinit() {}
 
 		// frustum stuff
 		bool InsideFrustum( const bvolume_t& vol ) const;

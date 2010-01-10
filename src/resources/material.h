@@ -8,14 +8,10 @@
 /// The material class
 class material_t: public resource_t
 {
-	protected:
-		void SetToDefault();
-		bool InitTheOther(); ///< The func is for not poluting Load with extra code
-
+	//===================================================================================================================================
+	// User defined variables                                                                                                           =
+	//===================================================================================================================================
 	public:
-		//=================================================================================================================================
-		// user_defined_var_t nested class                                                                                                =
-		//=================================================================================================================================
 		/// class for user defined material variables that will be passes in to the shader
 		class user_defined_var_t
 		{
@@ -45,7 +41,16 @@ class material_t: public resource_t
 
 		vec_t< user_defined_var_t > user_defined_vars;
 
-		shader_prog_t* shader;
+
+	//===================================================================================================================================
+	// Misc                                                                                                                             =
+	//===================================================================================================================================
+	protected:
+		void SetToDefault();
+		bool InitTheOther(); ///< The func is for not poluting Load with extra code
+
+	public:
+		shader_prog_t* shader_prog;
 
 		vec4_t diffuse_color;
 		vec4_t specular_color;

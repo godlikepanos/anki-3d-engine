@@ -8,9 +8,9 @@
 class texture_t;
 class material_t;
 class shader_prog_t;
-class mesh_data_t;
-class model_data_t;
-class model_t;
+class mesh_t;
+class skeleton_t;
+class skel_anim_t;
 
 
 // forward decl
@@ -35,9 +35,9 @@ class resource_t
 	friend class rsrc::container_t<texture_t>;
 	friend class rsrc::container_t<material_t>;
 	friend class rsrc::container_t<shader_prog_t>;
-	friend class rsrc::container_t<mesh_data_t>;
-	friend class rsrc::container_t<model_data_t>;
-	friend class rsrc::container_t<model_t>;
+	friend class rsrc::container_t<skeleton_t>;
+	friend class rsrc::container_t<mesh_t>;
+	friend class rsrc::container_t<skel_anim_t>;
 	friend class shader_prog_t;
 
 	public:
@@ -56,9 +56,9 @@ namespace rsrc { // begin namesapce
 extern container_t<texture_t>     textures;
 extern container_t<shader_prog_t> shaders;
 extern container_t<material_t>    materials;
-extern container_t<mesh_data_t>   mesh_datas;
-extern container_t<model_data_t>  model_datas;
-extern container_t<model_t>       models;
+extern container_t<mesh_t>        meshes;
+extern container_t<skeleton_t>    skeletons;
+extern container_t<skel_anim_t>   skel_anims;
 
 
 /// resource container class
@@ -69,10 +69,10 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 		typedef vec_t<type_t*> base_class_t;
 
 		/**
-		* Search inside the container by name
-		* @param name The name of the resource
-		* @return The iterator of the content end of vector if not found
-		*/
+		 * Search inside the container by name
+		 * @param name The name of the resource
+		 * @return The iterator of the content end of vector if not found
+		 */
 		iterator_t FindByName( const char* name )
 		{
 			iterator_t it = base_class_t::begin();
@@ -88,11 +88,11 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 
 
 		/**
-		* Search inside the container by name and path
-		* @param name The name of the resource
-		* @param path The path of the resource
-		* @return The iterator of the content end of vector if not found
-		*/
+		 * Search inside the container by name and path
+		 * @param name The name of the resource
+		 * @param path The path of the resource
+		 * @return The iterator of the content end of vector if not found
+		 */
 		iterator_t FindByNameAndPath( const char* name, const char* path )
 		{
 			iterator_t it = base_class_t::begin();
@@ -108,10 +108,10 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 
 
 		/**
-		* Search inside the container by pointer
-		* @param name The name of the resource object
-		* @return The iterator of the content end of vector if not found
-		*/
+	   * Search inside the container by pointer
+		 * @param name The name of the resource object
+		 * @return The iterator of the content end of vector if not found
+		 */
 		iterator_t FindByPtr( type_t* ptr )
 		{
 			iterator_t it = base_class_t::begin();
@@ -127,9 +127,9 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 
 		public:
 		/**
-		* Load an object and register it. If its allready loaded return its pointer
-		* @param fname The filename that initializes the object
-		*/
+		 * Load an object and register it. If its allready loaded return its pointer
+		 * @param fname The filename that initializes the object
+		 */
 		type_t* Load( const char* fname )
 		{
 			char* name = util::CutPath( fname );
@@ -162,9 +162,9 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 
 
 		/**
-		* Unload item. If nobody else uses it then delete it completely
-		* @param x Pointer to the instance we want to unload
-		*/
+		 * Unload item. If nobody else uses it then delete it completely
+		 * @param x Pointer to the instance we want to unload
+		 */
 		void Unload( type_t* x )
 		{
 			iterator_t it = FindByPtr( x );

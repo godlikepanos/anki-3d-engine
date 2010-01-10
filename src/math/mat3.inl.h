@@ -150,7 +150,7 @@ inline mat3_t mat3_t::operator +( const mat3_t& b ) const
 	return c;
 }
 
-// 3x3 + 3x3 (self)
+// 3x3 += 3x3
 inline mat3_t& mat3_t::operator +=( const mat3_t& b )
 {
 	for( int i=0; i<9; i++ )
@@ -167,7 +167,7 @@ inline mat3_t mat3_t::operator -( const mat3_t& b ) const
 	return c;
 }
 
-// 3x3 - 3x3 (self)
+// 3x3 -= 3x3
 inline mat3_t& mat3_t::operator -=( const mat3_t& b )
 {
 	for( int i=0; i<9; i++ )
@@ -191,7 +191,7 @@ inline mat3_t mat3_t::operator *( const mat3_t& b ) const
 	return c;
 }
 
-// 3x3 * 3x3 (self)
+// 3x3 *= 3x3
 inline mat3_t& mat3_t::operator *=( const mat3_t& b )
 {
 	ME = ME * b;
@@ -214,10 +214,11 @@ inline mat3_t operator +( float f, const mat3_t& m3 )
 }
 
 // 3x3 += float
-inline mat3_t mat3_t::operator +=( float f ) const
+inline mat3_t& mat3_t::operator +=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] += f;
+	return ME;
 }
 
 // 3x3 - float
@@ -239,10 +240,11 @@ inline mat3_t operator -( float f, const mat3_t& m3 )
 }
 
 // 3x3 -= float
-inline mat3_t mat3_t::operator -=( float f ) const
+inline mat3_t& mat3_t::operator -=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] -= f;
+	return ME;
 }
 
 // 3x3 * float
@@ -263,7 +265,7 @@ inline mat3_t operator *( float f, const mat3_t& m3 )
 	return out;
 }
 
-// 3x3 * float (self)
+// 3x3 *= float
 inline mat3_t& mat3_t::operator *=( float f )
 {
 	for( uint i=0; i<9; i++ )

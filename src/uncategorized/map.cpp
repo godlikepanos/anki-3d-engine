@@ -12,7 +12,7 @@
 CreateRoot                                                                                                                            =
 =======================================================================================================================================
 */
-void octree_t::CreateRoot( const vec_t<mesh_data_t*>& meshes )
+void octree_t::CreateRoot( const vec_t<mesh_t*>& meshes )
 {
 	DEBUG_ERR( root ); // root should be NULL
 
@@ -21,7 +21,7 @@ void octree_t::CreateRoot( const vec_t<mesh_data_t*>& meshes )
 
 	for( uint m=0; m<meshes.size(); m++ )
 	{
-		mesh_data_t* cmesh = meshes[m];
+		mesh_t* cmesh = meshes[m];
 		for( uint v=0; v<cmesh->vert_coords.size(); v++ )
 		{
 			const vec3_t& vert_coords = cmesh->vert_coords[v];
@@ -51,7 +51,7 @@ void octree_t::CreateRoot( const vec_t<mesh_data_t*>& meshes )
 
 	for( uint m=0; m<meshes.size(); m++ )
 	{
-		mesh_data_t* cmesh = meshes[m];
+		mesh_t* cmesh = meshes[m];
 
 		// first set the mesh
 		node->meshes[m] = cmesh;
@@ -127,7 +127,7 @@ void octree_t::SubdivideNode( node_t* node )
 CreateTree                                                                                                                            =
 =======================================================================================================================================
 */
-void octree_t::CreateTree( const vec_t<mesh_data_t*>& meshes )
+void octree_t::CreateTree( const vec_t<mesh_t*>& meshes )
 {
 	CreateRoot( meshes );
 	SubdivideNode( root );
@@ -196,7 +196,7 @@ bool map_t::Load( const char* filename )
 		// strings is what we want in this case... please let it be G-Strings
 		if( token->code == scanner_t::TC_STRING )
 		{
-			mesh_data_t* mesh = rsrc::mesh_datas.Load( token->value.string );
+			mesh_t* mesh = rsrc::meshes.Load( token->value.string );
 			if( !mesh ) return false;
 
 			meshes.push_back( mesh );

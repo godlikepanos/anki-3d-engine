@@ -26,21 +26,23 @@
 #include "map.h"
 #include "model.h"
 #include "renderer.hpp"
+#include "mesh_node.h"
+#include "skel_anim.h"
 
 camera_t main_cam;
 
-mesh_t imp, mcube, floor__, sarge;
+mesh_node_t imp, mcube, floor__, sarge;
 
 smodel_t mdl;
 
-skeleton_anim_t walk_anim;
+skel_anim_t walk_anim;
 
 point_light_t point_lights[10];
 spot_light_t projlights[2];
 
 map_t map;
 
-class sphere_t: public mesh_t
+class sphere_t: public mesh_node_t
 {
 	public:
 		sphere_t()
@@ -154,7 +156,7 @@ void Init()
 	sarge.RotateLocalX(ToRad(-90));
 	sarge.translation_lspace = vec3_t(0, -2.8, 1.0);
 
-	mdl.Init( rsrc::model_datas.Load( "models/imp/imp.smdl" ) );
+	mdl.Init( rsrc::model.Load( "models/imp/imp.smdl" ) );
 	mdl.translation_lspace = vec3_t( 0.0, 2.11, 0.0 );
 	mdl.scale_lspace = 0.7;
 	mdl.rotation_lspace.RotateXAxis( -PI/2 );
@@ -281,7 +283,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
-		if( 1 )
+		if( 0 )
 		{
 			if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
 			hndl::WaitForNextFrame();
