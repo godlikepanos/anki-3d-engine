@@ -90,7 +90,7 @@ void RunStage( const camera_t& cam )
 		}
 		else if( scene::objects[i]->type == object_t::MESH && show_vnormals )
 		{
-			mesh_t* mesh = static_cast<mesh_t*>( scene::objects[i] );
+			mesh_node_t* mesh = static_cast<mesh_node_t*>( scene::objects[i] );
 			mesh->RenderNormals();
 			mesh->RenderTangents();
 		}

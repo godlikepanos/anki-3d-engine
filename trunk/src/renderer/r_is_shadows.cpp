@@ -101,7 +101,7 @@ void RunPass( const camera_t& cam )
 
 	// render all meshes
 	for( uint i=0; i<scene::meshes.size(); i++ )
-		RenderDepth<mesh_t, true>( *scene::meshes[i] );
+		RenderDepth<mesh_node_t, true>( *scene::meshes[i] );
 
 	// render all smodels
 	for( uint i=0; i<scene::smodels.size(); i++ )
