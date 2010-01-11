@@ -24,27 +24,6 @@ extern void UpdateAllSkeletonNodes();
 /// entities container class
 template<typename type_t> class container_t: public vec_t<type_t*>
 {
-	protected:
-		friend void RegisterNode( node_t* node );
-		friend void UnregisterNode( node_t* node );
-	
-		typedef typename vec_t<type_t*>::iterator iterator_t; ///< Just to save me time from typing
-
-		iterator_t Find( type_t* x ) const
-		{
-			return std::find( begin(), end(), x );
-		}
-
-	public:
-		
-		/**
-		 * Check if a type_t is registered in this container
-		 */
-		bool IsRegistered( type_t* x ) const
-		{
-			return Find(x) != end();
-		}
-
 }; // end class container_t
 
 

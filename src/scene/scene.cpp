@@ -1,5 +1,7 @@
+#include <algorithm>
 #include "scene.h"
 #include "skel_node.h"
+#include "camera.h"
 
 namespace scene {
 
@@ -20,15 +22,15 @@ container_skel_node_t  skel_nodes;
 //=====================================================================================================================================
 // RegisterNode                                                                                                                       =
 //=====================================================================================================================================
-template<container_type_t, type_t> static void RegisterNode( container_type_t& container, type_t* x )
+template<typename container_type_t, typename type_t> static void RegisterNode( container_type_t& container, type_t* x )
 {
 	DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
 	container.push_back( x );
 }
 
-template<container_type_t, type_t> static void UbregisterNode( container_type_t& container, type_t* x )
+template<typename container_type_t, typename type_t> static void UnregisterNode( container_type_t& container, type_t* x )
 {
-	container::iterator it = std::find( container.begin(), container.end(), x );
+	typename container_type_t::iterator it = std::find( container.begin(), container.end(), x );
 	DEBUG_ERR( it == container.end() );
 	container.erase( it );
 }
@@ -47,7 +49,7 @@ void RegisterNodeAndChilds( node_t* node )
 			RegisterNode( lights, static_cast<light_t*>(node) );
 			break;
 		case node_t::NT_CAMERA:
-			RegisterNode( cameras, static_cast<light_t*>(camera) );
+			RegisterNode( cameras, static_cast<camera_t*>(node) );
 			break;
 		case node_t::NT_MESH:
 			RegisterNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
@@ -62,7 +64,7 @@ void RegisterNodeAndChilds( node_t* node )
 	
 	// now register the childs
 	for( vec_t<node_t*>::iterator it=node->childs.begin(); it!=node->childs.end(); it++ )
-		RegisterNodeAndChilds( it );
+		RegisterNodeAndChilds( *it );
 }
 
 
@@ -79,7 +81,7 @@ void UnregisterNodeAndChilds( node_t* node )
 			UnregisterNode( lights, static_cast<light_t*>(node) );
 			break;
 		case node_t::NT_CAMERA:
-			UnregisterNode( cameras, static_cast<light_t*>(camera) );
+			UnregisterNode( cameras, static_cast<camera_t*>(node) );
 			break;
 		case node_t::NT_MESH:
 			UnregisterNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
@@ -94,7 +96,7 @@ void UnregisterNodeAndChilds( node_t* node )
 	
 	// now register the childs
 	for( vec_t<node_t*>::iterator it=node->childs.begin(); it!=node->childs.end(); it++ )
-		UnregisterNodeAndChilds( it );
+		UnregisterNodeAndChilds( *it );
 }
 
 
@@ -139,80 +141,6 @@ void UpdateAllSkeletonNodes()
 	{
 		skel_nodes[i]->skel_anim_controller->Update();
 	}
-}
-
-
-//=====================================================================================================================================
-// Nodet                                                                                                                              =
-//=====================================================================================================================================
-void container_node_t::Register( node_t* x )
-{
-	RegisterMe( x );
-}
-
-void container_node_t::Unregister( node_t* x )
-{
-	UnregisterMe( x );
-}
-
-
-//=====================================================================================================================================
-// Camera                                                                                                                             =
-//=====================================================================================================================================
-void container_camera_t::Register( camera_t* x )
-{
-	RegisterMe( x );
-	nodes.Register( x );
-}
-
-void container_camera_t::Unregister( camera_t* x )
-{
-	UnregisterMe( x );
-	nodes.Unregister( x );
-}
-
-
-//=====================================================================================================================================
-// Light                                                                                                                              =
-//=====================================================================================================================================
-void container_light_t::Register( light_t* x )
-{
-	RegisterMe( x );
-	nodes.Register( x );
-
-	if( x->GetType() == light_t::LT_SPOT )
-	{
-		spot_light_t* spot = static_cast<spot_light_t*>(x);
-		cameras.Register( &spot->camera );
-	}
-}
-
-void container_light_t::Unregister( light_t* x )
-{
-	UnregisterMe( x );
-	nodes.Unregister( x );
-
-	if( x->GetType() == light_t::LT_SPOT )
-	{
-		spot_light_t* spot = static_cast<spot_light_t*>(x);
-		cameras.Unregister( &spot->camera );
-	}
-}
-
-
-//=====================================================================================================================================
-// Mesh node                                                                                                                          =
-//=====================================================================================================================================
-void container_mesh_node_t::Register( mesh_node_t* x )
-{
-	RegisterMe( x );
-	nodes.Register( x );
-}
-
-void container_mesh_node_t::Unregister( mesh_node_t* x )
-{
-	UnregisterMe( x );
-	nodes.Unregister( x );
 }
 
 
