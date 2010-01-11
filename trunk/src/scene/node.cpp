@@ -11,6 +11,7 @@ node_t::node_t( type_e type_ )
 {
 	type = type_;
 	parent = NULL;
+	is_group_node = false;
 	translation_lspace = vec3_t( 0.0, 0.0, 0.0 );
 	scale_lspace = 1.0;
 	rotation_lspace = mat3_t::GetIdentity();

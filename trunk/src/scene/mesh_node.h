@@ -18,7 +18,10 @@ class skel_controller_t: public controller_t<mesh_node_t>
 		skel_node_t* skel_node;
 		mesh_node_t* mesh_node;
 
-		skel_controller_t( mesh_node_t* mesh_node_ ): mesh_node(mesh_node_) {}
+		skel_controller_t( skel_node_t* skel_node_, mesh_node_t* mesh_node_ ):
+			skel_node( skel_node_ ),
+			mesh_node( mesh_node_ ) 
+		{}
 		void Update() {}
 };
 
@@ -31,7 +34,7 @@ class mesh_node_t: public node_t
 		material_t* material;
 		skel_controller_t* skel_controller;
 
-		mesh_node_t(): node_t(NT_MESH) {}
+		mesh_node_t(): node_t(NT_MESH), skel_controller(NULL) {}
 
 		void Render();
 		void RenderDepth();

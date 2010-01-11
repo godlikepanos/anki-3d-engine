@@ -10,18 +10,97 @@ DATA                                                                            
 */
 skybox_t skybox;
 
-extern container_node_t       nodes;
-extern container_light_t      lights;
-extern container_camera_t     cameras;
-extern container_mesh_node_t  mesh_nodes;
-extern container_skel_node_t  skel_nodes;
+container_node_t       nodes;
+container_light_t      lights;
+container_camera_t     cameras;
+container_mesh_node_t  mesh_nodes;
+container_skel_node_t  skel_nodes;
 
 
-/*
-=======================================================================================================================================
-UpdateAllWorldStuff                                                                                                                   =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// RegisterNode                                                                                                                       =
+//=====================================================================================================================================
+template<container_type_t, type_t> static void RegisterNode( container_type_t& container, type_t* x )
+{
+	DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
+	container.push_back( x );
+}
+
+template<container_type_t, type_t> static void UbregisterNode( container_type_t& container, type_t* x )
+{
+	container::iterator it = std::find( container.begin(), container.end(), x );
+	DEBUG_ERR( it == container.end() );
+	container.erase( it );
+}
+
+
+//=====================================================================================================================================
+// RegisterNodeAndChilds                                                                                                              =
+//=====================================================================================================================================
+void RegisterNodeAndChilds( node_t* node )
+{
+	RegisterNode( nodes, node );
+	
+	switch( node->type )
+	{
+		case node_t::NT_LIGHT:
+			RegisterNode( lights, static_cast<light_t*>(node) );
+			break;
+		case node_t::NT_CAMERA:
+			RegisterNode( cameras, static_cast<light_t*>(camera) );
+			break;
+		case node_t::NT_MESH:
+			RegisterNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
+			break;
+		case node_t::NT_SKELETON:
+			RegisterNode( skel_nodes, static_cast<skel_node_t*>(node) );
+			break;
+		case node_t::NT_SKEL_MODEL:
+			// ToDo
+			break;
+	};
+	
+	// now register the childs
+	for( vec_t<node_t*>::iterator it=node->childs.begin(); it!=node->childs.end(); it++ )
+		RegisterNodeAndChilds( it );
+}
+
+
+//=====================================================================================================================================
+// UnregisterNodeAndChilds                                                                                                            =
+//=====================================================================================================================================
+void UnregisterNodeAndChilds( node_t* node )
+{
+	UnregisterNode( nodes, node );
+	
+	switch( node->type )
+	{
+		case node_t::NT_LIGHT:
+			UnregisterNode( lights, static_cast<light_t*>(node) );
+			break;
+		case node_t::NT_CAMERA:
+			UnregisterNode( cameras, static_cast<light_t*>(camera) );
+			break;
+		case node_t::NT_MESH:
+			UnregisterNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
+			break;
+		case node_t::NT_SKELETON:
+			UnregisterNode( skel_nodes, static_cast<skel_node_t*>(node) );
+			break;
+		case node_t::NT_SKEL_MODEL:
+			// ToDo
+			break;
+	};
+	
+	// now register the childs
+	for( vec_t<node_t*>::iterator it=node->childs.begin(); it!=node->childs.end(); it++ )
+		UnregisterNodeAndChilds( it );
+}
+
+
+//=====================================================================================================================================
+// UpdateAllWorldStuff                                                                                                                =
+//=====================================================================================================================================
 void UpdateAllWorldStuff()
 {
 	DEBUG_ERR( nodes.size() > 1024 );

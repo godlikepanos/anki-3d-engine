@@ -13,6 +13,9 @@ namespace scene {
 extern skybox_t skybox;
 inline vec3_t GetAmbientColor() { return vec3_t( 0.1, 0.05, 0.05 )*1; }
 
+
+extern void RegisterNodeAndChilds( node_t* node );
+extern void UnregisterNodeAndChilds( node_t* node );
 extern void UpdateAllWorldStuff();
 extern void UpdateAllSkeletonNodes();
 
@@ -22,126 +25,36 @@ extern void UpdateAllSkeletonNodes();
 template<typename type_t> class container_t: public vec_t<type_t*>
 {
 	protected:
-		typedef typename vector<type_t*>::iterator iterator_t; ///< Just to save me time from typing
+		friend void RegisterNode( node_t* node );
+		friend void UnregisterNode( node_t* node );
+	
+		typedef typename vec_t<type_t*>::iterator iterator_t; ///< Just to save me time from typing
 
-		/**
-		 * Register x in this container only. Throw error if its already registered
-		 * @param x pointer to the object we want to register
-		 */
-		void RegisterMe( type_t* x )
+		iterator_t Find( type_t* x ) const
 		{
-			DEBUG_ERR( Search( x ) ); // the obj must not be already loaded
-
-			vec_t<type_t*>::push_back( x );
-		}
-
-
-		/**
-		 * Unregister x from this container only
-		 * @param x pointer to the object we want to unregister
-		 */
-		void UnregisterMe( type_t* x )
-		{
-			uint i;
-			for( i=0; i<vec_t<type_t*>::size(); i++ )
-			{
-				if( (*this)[i] == x )
-					break;
-			}
-
-			if( i==vec_t<type_t*>::size() )
-			{
-				ERROR( "Entity is unregistered" );
-				return;
-			}
-
-			vec_t<type_t*>::erase( vec_t<type_t*>::begin() + i );
+			return std::find( begin(), end(), x );
 		}
 
 	public:
-		container_t() {};
-		virtual ~container_t() {};
-
+		
 		/**
-		 * Search in container by pointer
-		 * @param x pointer to the object
+		 * Check if a type_t is registered in this container
 		 */
-		bool Search( type_t* x )
+		bool IsRegistered( type_t* x ) const
 		{
-			for( iterator_t it=vec_t<type_t*>::begin(); it<vec_t<type_t*>::end(); it++ )
-			{
-				if( x == *it ) return true;
-			}
-			return false;
+			return Find(x) != end();
 		}
-
-
-		/**
-		 * Search in container by name
-		 * @param name The name of the resource object
-		 */
-		type_t* Search( const char* name )
-		{
-			for( iterator_t it=vec_t<type_t*>::begin(); it<vec_t<type_t*>::end(); it++ )
-			{
-				if( strcmp( name, (*it)->GetName() ) == 0 )
-				return *it;
-			}
-			return NULL;
-		}
-
-
-		/**
-		 * Register x in this container and register it to more containers if needed. Thats why its abstract.
-		 * @param: x pointer to an object
-		 */
-		virtual void Register( type_t* x ) = 0;
-
-		/**
-		 * See Register
-		 * @param: x pointer to an object
-		 */
-		virtual void Unregister( type_t* x ) = 0;
 
 }; // end class container_t
 
 
 
 // conaiteners
-class container_node_t: public container_t<node_t>
-{
-	public:
-		void Register( node_t* x );
-		void Unregister( node_t* x );
-};
-
-class container_light_t: public container_t<light_t>
-{
-	public:
-		void Register( light_t* x );
-		void Unregister( light_t* x );
-};
-
-class container_camera_t: public container_t<camera_t>
-{
-	public:
-		void Register( camera_t* x );
-		void Unregister( camera_t* x );
-};
-
-class container_mesh_node_t: public container_t<mesh_node_t>
-{
-	public:
-		void Register( mesh_node_t* x );
-		void Unregister( mesh_node_t* x );
-};
-
-class container_skel_node_t: public container_t<skel_node_t>
-{
-	public:
-		void Register( skel_node_t* x );
-		void Unregister( skel_node_t* x );
-};
+typedef container_t<node_t> container_node_t;
+typedef container_t<light_t> container_light_t;
+typedef container_t<camera_t> container_camera_t;
+typedef container_t<mesh_node_t> container_mesh_node_t;
+typedef container_t<skel_node_t> container_skel_node_t;
 
 
 extern container_node_t       nodes;
