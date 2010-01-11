@@ -20,7 +20,8 @@ class node_t
 			NT_LIGHT,
 			NT_CAMERA,
 			NT_MESH,
-			NT_SKELETON
+			NT_SKELETON,
+			NT_SKEL_MODEL
 		};
 
 		vec3_t translation_lspace;
