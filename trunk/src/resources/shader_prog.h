@@ -32,7 +32,7 @@ class shader_prog_t: public resource_t
 		virtual ~shader_prog_t() {}
 		
 		inline void Bind() const { DEBUG_ERR( gl_id==0 ); glUseProgram(gl_id); }
-		static void Unbind() { glUseProgram(NULL); }
+		static void Unbind() { glUseProgram(0); }
 		static uint GetCurrentProgram() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
 
 		bool Load( const char* filename );

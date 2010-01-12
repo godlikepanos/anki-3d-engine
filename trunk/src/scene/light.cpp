@@ -1,6 +1,25 @@
 #include "light.h"
 #include "collision.h"
 #include "renderer.h"
+#include "light_mtl.h"
+
+
+//=====================================================================================================================================
+// Init                                                                                                                               =
+//=====================================================================================================================================
+void light_t::Init( const char* filename )
+{
+	light_mtl = rsrc::light_mtls.Load( filename );
+}
+
+
+//=====================================================================================================================================
+// Deinit                                                                                                                             =
+//=====================================================================================================================================
+void light_t::Deinit()
+{
+	rsrc::light_mtls.Unload( light_mtl );
+}
 
 
 //=====================================================================================================================================
@@ -23,7 +42,7 @@ static void RenderSphere( const mat4_t& tsl, const vec3_t& col )
 //=====================================================================================================================================
 void point_light_t::Render()
 {
-	RenderSphere( transformation_wspace, diffuse_color );
+	RenderSphere( transformation_wspace, light_mtl->GetDiffuseColor() );
 }
 
 
@@ -32,5 +51,5 @@ void point_light_t::Render()
 //=====================================================================================================================================
 void spot_light_t::Render()
 {
-	RenderSphere( transformation_wspace, diffuse_color );
+	RenderSphere( transformation_wspace, light_mtl->GetDiffuseColor() );
 }

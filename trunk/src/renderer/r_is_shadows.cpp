@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "r_private.h"
 #include "fbo.h"
+#include "material.h"
 
 namespace r {
 namespace is {
@@ -100,13 +101,10 @@ void RunPass( const camera_t& cam )
 	glEnable( GL_POLYGON_OFFSET_FILL );
 
 	// render all meshes
-	for( uint i=0; i<scene::meshes.size(); i++ )
-		RenderDepth<mesh_node_t, true>( *scene::meshes[i] );
-
-	// render all smodels
-	for( uint i=0; i<scene::smodels.size(); i++ )
-		RenderDepth<smodel_t, true>( *scene::smodels[i] );
-
+	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
+	{
+		RenderDepth<mesh_node_t, true>( *scene::mesh_nodes[i] );
+	}
 
 	glDisable( GL_POLYGON_OFFSET_FILL );
 

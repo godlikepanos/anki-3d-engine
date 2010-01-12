@@ -11,6 +11,7 @@ class shader_prog_t;
 class mesh_t;
 class skeleton_t;
 class skel_anim_t;
+class light_mtl_t;
 
 
 // forward decl
@@ -38,6 +39,7 @@ class resource_t
 	friend class rsrc::container_t<skeleton_t>;
 	friend class rsrc::container_t<mesh_t>;
 	friend class rsrc::container_t<skel_anim_t>;
+	friend class rsrc::container_t<light_mtl_t>;
 	friend class shader_prog_t;
 
 	public:
@@ -59,6 +61,7 @@ extern container_t<material_t>    materials;
 extern container_t<mesh_t>        meshes;
 extern container_t<skeleton_t>    skeletons;
 extern container_t<skel_anim_t>   skel_anims;
+extern container_t<light_mtl_t>   light_mtls;
 
 
 /// resource container class
