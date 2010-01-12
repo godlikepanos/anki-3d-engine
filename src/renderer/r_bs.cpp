@@ -111,22 +111,22 @@ void RunStage( const camera_t& cam )
 
 
 	// render the meshes
-	for( uint i=0; i<scene::meshes.size(); i++ )
+	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
 	{
-		mesh_node_t* mesh = scene::meshes[i];
-		if( mesh->material->blends )
+		mesh_node_t* mesh_node = scene::mesh_nodes[i];
+		if( mesh_node->material->blends )
 		{
 			b_fbo.Bind();
-			mesh->material->Setup();
-			mesh->Render();
+			mesh_node->material->Setup();
+			mesh_node->Render();
 		}
 		else if( mesh->material->refracts )
 		{
 			// write to the rFbo
 			r_fbo.Bind();
 			glClear( GL_COLOR_BUFFER_BIT );
-			mesh->material->Setup();
-			mesh->Render();
+			mesh_node->material->Setup();
+			mesh_node->Render();
 
 			b_fbo.Bind();
 		}

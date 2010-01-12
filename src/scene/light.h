@@ -1,11 +1,3 @@
-#ifndef _LIGHT_H_
-#define _LIGHT_H_
-
-#include "common.h"
-#include "texture.h"
-#include "node.h"
-#include "camera.h"
-
 /*
 LIGHTING MODEL
 
@@ -22,6 +14,16 @@ Specular intensity of light:    Sl
 Specular intensity of material: Sm
 */
 
+#ifndef _LIGHT_H_
+#define _LIGHT_H_
+
+#include "common.h"
+#include "texture.h"
+#include "node.h"
+#include "camera.h"
+
+class light_mtl_t;
+
 
 /// light_t (A)
 class light_t: public node_t
@@ -29,17 +31,17 @@ class light_t: public node_t
 	public:
 		enum types_e { LT_POINT, LT_SPOT };
 
-	PROPERTY_RW( vec3_t, diffuse_color, GetDiffuseColor, SetDiffuseColor );
-	PROPERTY_RW( vec3_t, specular_color, GetSpecularColor, SetSpecularColor );
 	PROPERTY_R( types_e, type, GetType );
 
 	friend class point_light_t;
 	friend class spot_light_t;
 
-
-
 	public:
+		light_mtl_t* light_mtl;
+	
 		light_t( types_e type_ ): node_t(NT_LIGHT), type(type_) {}
+		void Init( const char* filename );
+		void Deinit();
 };
 
 
@@ -59,13 +61,12 @@ class spot_light_t: public light_t
 {
 	public:
 		camera_t camera;
-		texture_t* texture;
 		bool casts_shadow;
 
-		spot_light_t(): light_t(LT_SPOT), texture(NULL), casts_shadow(false) { AddChild( &camera ); }
+		spot_light_t(): light_t(LT_SPOT), casts_shadow(false) { AddChild( &camera ); }
 		float GetDistance() const { return camera.GetZFar(); }
 		void  SetDistance( float d ) { camera.SetZFar(d); }
-		void Render();
+		void  Render();
 };
 
 

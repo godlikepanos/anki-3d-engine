@@ -11,6 +11,7 @@ The file contains functions and vars used for the deferred shading illumination 
 #include "scene.h"
 #include "r_private.h"
 #include "fbo.h"
+#include "light_mtl.h"
 
 namespace r {
 namespace is {
@@ -46,7 +47,7 @@ Stencil Masking Opt Uv Sphere                                                   
 =======================================================================================================================================
 */
 static float smo_uvs_coords [] = { -0.000000, 0.000000, -1.000000, 0.500000, 0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.707107, 0.000000, 0.707107, -0.000000, 0.707107, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.000000, 0.707107, -0.707107, 0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.000000, 0.707107, 0.707107, -0.707107, -0.000000, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.707107, -0.000000, -0.707107, -0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, -0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.707107, -0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, -0.500000, -0.500000, -0.707107, -0.000000, 0.000000, -1.000000, 0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.707107, 0.000000, -0.707107, 0.500000, -0.500000, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 1.000000, 0.000000, -0.000000, 0.500000, -0.500000, -0.707107, 1.000000, 0.000000, -0.000000, 0.707107, -0.707107, 0.000000, 0.707107, -0.707107, 0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.000000, 0.707107, 0.707107, -0.707107, 0.000000, 0.707107, 0.000000, 0.707107, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.707107, -0.707107, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, -0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, -0.707107, 0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, 0.707107, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.500000, -0.500000, 0.707107, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, -0.707107, -0.707107, -0.707107, 0.000000, -0.707107, -0.000000, -0.707107, -0.707107, -0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -1.000000, -0.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.707107, -0.000000, 0.707107, -0.707107, 0.707107, 0.000000, -0.707107, -0.000000, 0.707107, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.707107, 0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 0.707107, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 1.000000, 0.000000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.707107, 0.707107, 0.000000, -0.000000, 0.707107, 0.707107, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.000000, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.500000, 0.500000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 1.000000, 0.000000, -0.000000 };
-static uint smo_uvs_vbo_id = NULL; // stencil masking opt uv sphere vertex buffer object id
+static uint smo_uvs_vbo_id = 0; // stencil masking opt uv sphere vertex buffer object id
 
 // init stencil masking optimization UV sphere
 static void InitSMOUVS()
@@ -75,12 +76,10 @@ static void DrawSMOUVS( const point_light_t& light )
 }
 
 
-/*
-=======================================================================================================================================
-CalcViewVector                                                                                                                        =
-calc the view vector that we will use inside the shader to calculate the frag pos in view space                                       =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// CalcViewVector                                                                                                                     =
+//=====================================================================================================================================
+/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 static void CalcViewVector( const camera_t& cam )
 {
 	int _w = r::w * r::rendering_quality;
@@ -107,12 +106,10 @@ static void CalcViewVector( const camera_t& cam )
 }
 
 
-/*
-=======================================================================================================================================
-CalcPlanes                                                                                                                            =
-calc the planes that we will use inside the shader to calculate the frag pos in view space                                            =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// CalcPlanes                                                                                                                         =
+//=====================================================================================================================================
+/// Calc the planes that we will use inside the shader to calculate the frag pos in view space
 static void CalcPlanes( const camera_t& cam )
 {
 	planes.x = -cam.GetZFar() / (cam.GetZFar() - cam.GetZNear());
@@ -198,133 +195,10 @@ static void AmbientPass( const camera_t& /*cam*/, const vec3_t& color )
 }
 
 
-/*
-=======================================================================================================================================
-SetScissors                                                                                                                           =
-the function sets the scissors and returns the pixels that are in rect region                                                         =
-=======================================================================================================================================
-*/
-/*static int SetScissors( const vec3_t& light_pos_vspace, float radius )
-{
-	float _w = r::w * r::rendering_quality;
-	int rect[4]={ 0,0,_w,_w };
-	float d;
-
-	const float& r = radius;
-	float r2 = r*r;
-
-	const vec3_t& l = light_pos_vspace;
-	vec3_t l2 = light_pos_vspace * light_pos_vspace;
-
-	float aspect = r::aspect_ratio;
-
-	float e1 = 1.2f;
-	float e2 = 1.2f * aspect;
-
-	d = r2*l2.x - (l2.x+l2.z)*(r2-l2.z);
-
-	if (d>=0)
-	{
-		d=Sqrt(d);
-
-		float nx1=(r*l.x + d)/(l2.x+l2.z);
-		float nx2=(r*l.x - d)/(l2.x+l2.z);
-
-		float nz1=(r-nx1*l.x)/l.z;
-		float nz2=(r-nx2*l.x)/l.z;
-
-		//float e=1.25f;
-		//float a=aspect;
-
-		float pz1=(l2.x+l2.z-r2)/(l.z-(nz1/nx1)*l.x);
-		float pz2=(l2.x+l2.z-r2)/(l.z-(nz2/nx2)*l.x);
-
-		if (pz1<0)
-		{
-			float fx=nz1*e1/nx1;
-			int ix=(int)((fx+1.0f)*_w*0.5f);
-
-			float px=-pz1*nz1/nx1;
-			if (px<l.x)
-				rect[0]=max(rect[0],ix);
-			else
-				rect[2]=min(rect[2],ix);
-		}
-
-		if (pz2<0)
-		{
-			float fx=nz2*e1/nx2;
-			int ix=(int)((fx+1.0f)*_w*0.5f);
-
-			float px=-pz2*nz2/nx2;
-			if (px<l.x)
-				rect[0]=max(rect[0],ix);
-			else
-				rect[2]=min(rect[2],ix);
-		}
-	}
-
-	d=r2*l2.y - (l2.y+l2.z)*(r2-l2.z);
-	if (d>=0)
-	{
-		d=Sqrt(d);
-
-		float ny1=(r*l.y + d)/(l2.y+l2.z);
-		float ny2=(r*l.y - d)/(l2.y+l2.z);
-
-		float nz1=(r-ny1*l.y)/l.z;
-		float nz2=(r-ny2*l.y)/l.z;
-
-		float pz1=(l2.y+l2.z-r2)/(l.z-(nz1/ny1)*l.y);
-		float pz2=(l2.y+l2.z-r2)/(l.z-(nz2/ny2)*l.y);
-
-		if (pz1<0)
-		{
-			float fy=nz1*e2/ny1;
-			int iy=(int)((fy+1.0f)*r::h*0.5f);
-
-			float py=-pz1*nz1/ny1;
-			if (py<l.y)
-				rect[1]=max(rect[1],iy);
-			else
-				rect[3]=min(rect[3],iy);
-		}
-
-		if (pz2<0)
-		{
-			float fy=nz2*e2/ny2;
-			int iy=(int)((fy+1.0f)*r::h*0.5f);
-
-			float py=-pz2*nz2/ny2;
-			if (py<l.y)
-				rect[1]=max(rect[1],iy);
-			else
-				rect[3]=min(rect[3],iy);
-		}
-	}
-
-	int n = ( rect[2]-rect[0])*(rect[3]-rect[1] );
-	if( n<=0 )
-		return 0;
-	if( (uint)n == _w*r::h )
-	{
-		glDisable(GL_SCISSOR_TEST);
-		return _w*r::h;
-	}
-
-	glScissor(rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]);
-	glEnable(GL_SCISSOR_TEST);
-
-	//INFO( rect[0] << ' ' << rect[1] << ' ' << rect[2]-rect[0] << ' ' << rect[3]-rect[1] );
-	return n;
-}*/
-
-/*
-=======================================================================================================================================
-SetStencilMask [point light]                                                                                                          =
-clears the stencil buffer and draws a shape in the stencil buffer (in this case the shape is a UV shpere)                             =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// SetStencilMask [point light]                                                                                                       =
+//=====================================================================================================================================
+/// Clears the stencil buffer and draws a shape in the stencil buffer (in this case the shape is a UV shpere)
 static void SetStencilMask( const camera_t& cam, const point_light_t& light )
 {
 	glEnable( GL_STENCIL_TEST );
@@ -462,8 +336,8 @@ static void PointLightPass( const camera_t& cam, const point_light_t& light )
 	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
 	glUniform3fv( shader.GetUniformLocation(5), 1, &light_pos_eye_space[0] );
 	glUniform1f( shader.GetUniformLocation(6), 1.0/light.radius );
-	glUniform3fv( shader.GetUniformLocation(7), 1, &vec3_t(light.GetDiffuseColor())[0] );
-	glUniform3fv( shader.GetUniformLocation(8), 1, &vec3_t(light.GetSpecularColor())[0] );
+	glUniform3fv( shader.GetUniformLocation(7), 1, &vec3_t(light.light_mtl->GetDiffuseColor())[0] );
+	glUniform3fv( shader.GetUniformLocation(8), 1, &vec3_t(light.light_mtl->GetSpecularColor())[0] );
 
 	//** render quad **
 	glEnableVertexAttribArray( shader.GetAttributeLocation(0) );
@@ -523,7 +397,8 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	shdr->LocTexUnit( shdr->GetUniformLocation(2), r::ms::specular_fai, 2 );
 	shdr->LocTexUnit( shdr->GetUniformLocation(3), r::ms::depth_fai, 3 );
 
-	DEBUG_ERR( light.texture == NULL ); // No texture attached to the light
+	if( light.light_mtl->GetTexture() == NULL )
+		ERROR( "No texture is attached to the light. light_mtl name: " << light.light_mtl->GetName() );
 
 	// the planes
 	//glUniform2fv( shdr->GetUniformLocation("planes"), 1, &planes[0] );
@@ -533,11 +408,11 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
 	glUniform3fv( shdr->GetUniformLocation(5), 1, &light_pos_eye_space[0] );
 	glUniform1f( shdr->GetUniformLocation(6), 1.0/light.GetDistance() );
-	glUniform3fv( shdr->GetUniformLocation(7), 1, &vec3_t(light.GetDiffuseColor())[0] );
-	glUniform3fv( shdr->GetUniformLocation(8), 1, &vec3_t(light.GetSpecularColor())[0] );
+	glUniform3fv( shdr->GetUniformLocation(7), 1, &vec3_t(light.light_mtl->GetDiffuseColor())[0] );
+	glUniform3fv( shdr->GetUniformLocation(8), 1, &vec3_t(light.light_mtl->GetSpecularColor())[0] );
 
 	// set the light texture
-	shdr->LocTexUnit( shdr->GetUniformLocation(9), *light.texture, 4 );
+	shdr->LocTexUnit( shdr->GetUniformLocation(9), *light.light_mtl->GetTexture(), 4 );
 	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -624,14 +499,14 @@ void RunStage( const camera_t& cam )
 		const light_t& light = *scene::lights[i];
 		switch( light.GetType() )
 		{
-			case light_t::POINT:
+			case light_t::LT_POINT:
 			{
 				const point_light_t& pointl = static_cast<const point_light_t&>(light);
 				PointLightPass( cam, pointl );
 				break;
 			}
 
-			case light_t::SPOT:
+			case light_t::LT_SPOT:
 			{
 				const spot_light_t& projl = static_cast<const spot_light_t&>(light);
 				SpotLightPass( cam, projl );

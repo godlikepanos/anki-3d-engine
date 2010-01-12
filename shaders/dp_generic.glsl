@@ -2,12 +2,12 @@
 
 #pragma anki include "shaders/hw_skinning.glsl"
 
-varying vec2 tex_coords;
+varying vec2 tex_coords_v2f;
 
 void main()
 {
 	#if defined( _GRASS_LIKE_ )
-		tex_coords = gl_MultiTexCoord0.xy;
+		tex_coords_v2f = gl_MultiTexCoord0.xy;
 	#endif
 
 	#if defined( _HW_SKINNING_ )
@@ -26,12 +26,12 @@ void main()
 #pragma anki frag_shader_begins
 
 uniform sampler2D diffuse_map;
-varying vec2 tex_coords;
+varying vec2 tex_coords_v2f;
 
 void main()
 {
 	#if defined( _GRASS_LIKE_ )
-		vec4 _diff = texture2D( diffuse_map, tex_coords );
+		vec4 _diff = texture2D( diffuse_map, tex_coords_v2f );
 		if( _diff.a == 0.0 ) discard;
 	#endif
 }
