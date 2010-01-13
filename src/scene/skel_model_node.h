@@ -9,7 +9,10 @@ class mesh_node_t;
 class skel_node
 
 
-/// Skeleton model scene node
+/** 
+ * Skeleton model scene node
+ * It is just a group node with a derived Init
+ */
 class skel_model_node_t: public node_t
 {
 	public:
