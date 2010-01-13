@@ -13,9 +13,9 @@ namespace scene {
 extern skybox_t skybox;
 inline vec3_t GetAmbientColor() { return vec3_t( 0.1, 0.05, 0.05 )*1; }
 
-
-extern void RegisterNodeAndChilds( node_t* node );
-extern void UnregisterNodeAndChilds( node_t* node );
+// funcs
+extern void RegisterNode( node_t* node );
+extern void UnregisterNode( node_t* node );
 extern void UpdateAllWorldStuff();
 extern void UpdateAllSkeletonNodes();
 
@@ -28,14 +28,14 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 
 
 
-// conaiteners
+// typedefs
 typedef container_t<node_t> container_node_t;
 typedef container_t<light_t> container_light_t;
 typedef container_t<camera_t> container_camera_t;
 typedef container_t<mesh_node_t> container_mesh_node_t;
 typedef container_t<skel_node_t> container_skel_node_t;
 
-
+// containers
 extern container_node_t       nodes;
 extern container_light_t      lights;
 extern container_camera_t     cameras;

@@ -2,23 +2,25 @@
 #include "node.h"
 #include "renderer.h"
 #include "collision.h"
+#include "scene.h"
 
 
 //=====================================================================================================================================
-// Constructor                                                                                                                        =
+// CommonConstructorCode                                                                                                              =
 //=====================================================================================================================================
-node_t::node_t( type_e type_ )
+void node_t::CommonConstructorCode()
 {
-	type = type_;
 	parent = NULL;
 	is_group_node = false;
-	translation_lspace = vec3_t( 0.0, 0.0, 0.0 );
+	translation_lspace = vec3_t( 0.0 );
 	scale_lspace = 1.0;
 	rotation_lspace = mat3_t::GetIdentity();
-	translation_wspace = vec3_t( 0.0, 0.0, 0.0 );
+	translation_wspace = vec3_t( 0.0 );
 	scale_wspace = 1.0;
 	rotation_wspace = mat3_t::GetIdentity();
 	bvolume_lspace = NULL;
+
+	scene::RegisterNode( this );
 }
 
 

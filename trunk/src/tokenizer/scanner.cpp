@@ -158,7 +158,6 @@ void scanner_t::GetLine()
 
 //=====================================================================================================================================
 // GetNextChar                                                                                                                        =
-// get the next char from the line_txt. If line_txt empty then get new line. It returns '\0' if we are in the end of the line         =
 //=====================================================================================================================================
 char scanner_t::GetNextChar()
 {
@@ -253,51 +252,32 @@ void scanner_t::GetAllPrintAll()
 //=====================================================================================================================================
 bool scanner_t::LoadFile( const char* filename_ )
 {
-	DEBUG_ERR( strlen(filename_) > sizeof(script_name)/sizeof(char) - 1 ); // Too big name
-	
-	if( in_stream != NULL )
-	{
-		ERROR( "Tokenizer already initialized" );
-		return false;
-	}
-
-	in_stream = &in_fstream;
-
 	in_fstream.open( filename_, ios::in );
-
 	if( !in_fstream.good() )
 	{
 		ERROR( "Cannot open file \"" << filename_ << '\"' );
 		return false;
 	}
-
-	// init globals
-	crnt_token.code = TC_ERROR;
-	line_nmbr = 0;
-	strcpy( script_name, filename_ );
-
-	GetLine();
-	return true;
+	
+	return LoadIoStream( &in_fstream, filename_ );
 }
 
 
 //=====================================================================================================================================
-// LoadString                                                                                                                         =
+// LoadIoStream                                                                                                                       =
 //=====================================================================================================================================
-bool scanner_t::LoadString( const string& str, const char* script_name_ )
+bool scanner_t::LoadIoStream( iostream* iostream_, const char* script_name_ )
 {
-	DEBUG_ERR( strlen(script_name_) > sizeof(script_name)/sizeof(char) - 1 ) // Too big name
-	
 	if( in_stream != NULL )
 	{
 		ERROR( "Tokenizer already initialized" );
 		return false;
 	}
 
-	in_sstream.str( str );
-	in_stream = &in_sstream;
+	in_stream = iostream_;
 
 	// init globals
+	DEBUG_ERR( strlen(script_name_) > sizeof(script_name)/sizeof(char) - 1 ) // Too big name
 	crnt_token.code = TC_ERROR;
 	line_nmbr = 0;
 	strcpy( script_name, script_name_ );
@@ -318,7 +298,7 @@ void scanner_t::Unload()
 
 
 //=====================================================================================================================================
-// GetNextToken                                                                                                                          =
+// GetNextToken                                                                                                                       =
 //=====================================================================================================================================
 const scanner_t::token_t& scanner_t::GetNextToken()
 {

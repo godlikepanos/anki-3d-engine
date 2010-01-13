@@ -29,52 +29,15 @@
 #include "mesh_node.h"
 #include "skel_anim.h"
 
-camera_t main_cam;
-
-mesh_node_t imp, mcube, floor__, sarge;
-
-smodel_t mdl;
+// map (hard coded)
+camera_t* main_cam;
+mesh_node_t* floor__,* sarge,* horse;
+skel_model_node_t* imp;
+point_light_t* point_lights[10];
+spot_light_t* projlights[2];
 
 skel_anim_t walk_anim;
 
-point_light_t point_lights[10];
-spot_light_t projlights[2];
-
-map_t map;
-
-class sphere_t: public mesh_node_t
-{
-	public:
-		sphere_t()
-		{
-			translation_lspace = vec3_t( 0.0, 0.0, 0.0 );
-			scale_lspace = 2.5;
-		}
-
-		void Render()
-		{
-			glPushMatrix();
-			r::MultMatrix( transformation_wspace );
-
-			//r::dbg::RenderSphere( 1.0, 16.0 );
-			r::dbg::RenderCube( false, 1.0 );
-
-			glPopMatrix();
-		}
-
-		void RenderDepth()
-		{
-			glPushMatrix();
-			r::MultMatrix( transformation_wspace );
-
-			//r::dbg::RenderSphere( 1.0, 16.0 );
-			r::dbg::RenderCube( false, 1.0 );
-
-			glPopMatrix();
-		}
-} sphere;
-
-//lala
 
 /*
 =======================================================================================================================================
@@ -97,92 +60,41 @@ void Init()
 	r::Init();
 	hud::Init();
 
-
-	main_cam = camera_t( r::aspect_ratio*ToRad(60.0), ToRad(60.0), 0.5, 100.0 );
+	// camera
+	main_cam = new camera_t( r::aspect_ratio*ToRad(60.0), ToRad(60.0), 0.5, 100.0 );
 	main_cam.MoveLocalY( 3.0 );
 	main_cam.MoveLocalZ( 5.7 );
 	main_cam.MoveLocalX( -0.3 );
-//	main_cam.translation_lspace = vec3_t(2.0, 2.0, 0.0);
-//	main_cam.RotateLocalY( ToRad(75) );
-//	main_cam.RotateLocalX( ToRad(-30) );
-	main_cam.camera_data_user_class_t::SetName("main_cam");
 
-	point_lights[0].SetSpecularColor( vec3_t( 0.4, 0.4, 0.4) );
-	point_lights[0].SetDiffuseColor( vec3_t( 1.0, 0.0, 0.0)*1 );
-	point_lights[0].translation_lspace = vec3_t( -1.0, 2.4, 1.0 );
-	point_lights[0].radius = 2.0;
-	point_lights[1].SetSpecularColor( vec3_t( 0.0, 1.0, 0.0)*1 );
-	point_lights[1].SetDiffuseColor( vec3_t( 3.0, 0.1, 0.1) );
-	point_lights[1].translation_lspace = vec3_t( 2.5, 1.4, 1.0 );
-	point_lights[1].radius = 3.0;
-	projlights[0].camera.SetAll( ToRad(60), ToRad(60), 0.1, 20.0 );
-	projlights[0].texture = rsrc::textures.Load( "gfx/lights/flashlight.tga" );
-	projlights[0].texture->TexParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
-	projlights[0].SetSpecularColor( vec3_t( 1.0, 1.0, 1.0) );
-	projlights[0].SetDiffuseColor( vec3_t( 1.0, 1.0, 1.0)*4.0 );
-	projlights[0].translation_lspace = vec3_t( 1.3, 4.3, 3.0 );
-	projlights[0].rotation_lspace.RotateYAxis(ToRad(20));
-	projlights[0].rotation_lspace.RotateXAxis(ToRad(-30));
-	projlights[0].casts_shadow = true;
+	// lights
+	point_lights[0] = new point_light_t();
+	point_lights[0]->light_mtl = rsrc::light_mtls.Load( "maps/temple/light0.lmtl" );
+	point_lights[0]->SetLocatTransformation( vec3_t( -1.0, 2.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
+	point_lights[0]->radius = 2.0;
 
-//	projlights[0].translation_lspace = vec3_t( 2.36, 1.14, 9.70 );
-//	projlights[0].rotation_lspace = euler_t( ToRad(-27.13), ToRad(38.13), ToRad(18.28) );
-
-	projlights[1].camera.SetAll( ToRad(60), ToRad(60), 0.1, 20.0 );
-	projlights[1].texture = rsrc::textures.Load( "gfx/lights/impflash.tga" );
-	projlights[1].SetSpecularColor( vec3_t( 1.0, 1.0, 0.0) );
-	projlights[1].SetDiffuseColor( vec3_t( 1.0, 1.0, 1.0) );
-	projlights[1].translation_lspace = vec3_t( -2.3, 6.3, 2.9 );
-	projlights[1].rotation_lspace.RotateYAxis(ToRad(-20));
-	projlights[1].rotation_lspace.RotateXAxis(ToRad(-70));
-	projlights[1].casts_shadow = true;
-
-	/*imp.Load( "models/imp/imp.mesh" );
-	//imp.Load( "maps/temple/column.mesh" );
-	imp.translation_lspace = vec3_t( 0.0, 2.11, 0.0 );
-	imp.scale_lspace = 0.7;
-	imp.rotation_lspace.RotateXAxis( -PI/2 );*/
-
-	mcube.Load( "meshes/horse/horse.mesh" );
-	mcube.translation_lspace = vec3_t( -2, 0, 1 );
-	mcube.scale_lspace = 0.5;
-	mcube.rotation_lspace.RotateXAxis(ToRad(-90));
-
-	/*floor__.Load( "maps/temple/floor.mesh" );
-	floor__.translation_lspace = vec3_t(0.0, -0.2, 0.0);*/
-
-	sarge.Load( "meshes/sarge/sarge.mesh" );
-	sarge.scale_lspace = 0.1;
-	sarge.RotateLocalX(ToRad(-90));
-	sarge.translation_lspace = vec3_t(0, -2.8, 1.0);
-
-	mdl.Init( rsrc::model.Load( "models/imp/imp.smdl" ) );
-	mdl.translation_lspace = vec3_t( 0.0, 2.11, 0.0 );
-	mdl.scale_lspace = 0.7;
-	mdl.rotation_lspace.RotateXAxis( -PI/2 );
-	walk_anim.Load( "models/imp/walk.imp.anim" );
-	mdl.Play( &walk_anim, 0, 0.8, smodel_t::START_IMMEDIATELY );
-
-	sphere.material = rsrc::materials.Load( "materials/volfog.mtl" );
+	// horse
+	horse = new mesh_node_t();
+	horse->Init( "meshes/horse/horse.mesh" );
+	horst->SetLocalTransformation( vec3_t( -2, 0, 1 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.5 );
+	
+	// sarge
+	sarge = new mesh_node_t();
+	sarge->Init( "meshes/sarge/sarge.mesh" );
+	sarge->SetLocalTransformation( vec3_t( 0, -2.8, 1.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.1 );
+	
+	// imp	
+	imp = new skel_model_node_t();
+	imp->Init( "models/imp/imp.smdl" );
+	imp->SetLocalTransformation( vec3_t( 0.0, 2.11, 0.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.7 );
+	imp->mesh_nodes[0]->skel_controller = new mesh_node_t::skel_controller_t();
+	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->skel_anim = rsrc::skel_anims.Load( "models/imp/walk.imp.anim" );
+	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->step = 0.8;
 
 
 	// floor
-	floor__.Load( "maps/temple/Cube.019.mesh" );
-	floor__.rotation_lspace.RotateXAxis( ToRad(-90.0) );
-	floor__.translation_lspace.y -= 0.2;
-
-
-	scene::smodels.Register( &mdl );
-	scene::meshes.Register( &sarge );
-	//scene::meshes.Register( &sphere );
-	//scene::Register( &imp );
-	scene::meshes.Register( &floor__ );
-	scene::meshes.Register( &mcube );
-	scene::cameras.Register( &main_cam );
-	scene::lights.Register( &point_lights[0] );
-	scene::lights.Register( &point_lights[1] );
-	scene::lights.Register( &projlights[0] );
-	scene::lights.Register( &projlights[1] );
+	floor__ = new mesh_node_t();
+	floor__->Init( "maps/temple/Cube.019.mesh" );
+	floor__->SetLocalTransformation( vec3_t(0.0), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.8 );
 
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
@@ -218,7 +130,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		float scale = 0.01;
 
 		// move the camera
-		static object_t* mover = &main_cam;
+		static node_t* mover = &main_cam;
 
 		if( i::keys[ SDLK_1 ] ) mover = &main_cam;
 		if( i::keys[ SDLK_2 ] ) mover = &point_lights[0];
@@ -256,7 +168,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		mover->rotation_lspace.Reorthogonalize();
 
 
-		scene::InterpolateAllModels();
+		scene::UpdateAllSkeletonNodes();
 		scene::UpdateAllWorldStuff();
 
 		r::Render( main_cam );

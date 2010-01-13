@@ -30,7 +30,7 @@ class scanner_t
 		bool CheckSpecial();
 
 		void GetLine(); ///< Reads a line from the script file
-		char GetNextChar(); ///< Gets a char from the current script line
+		char GetNextChar(); ///< Get the next char from the line_txt. If line_txt empty then get new line. It returns '\0' if we are in the end of the line
 		char PutBackChar(); ///< Put the char that scanner_t::GetNextChar got back to the current line
 
 	//===================================================================================================================================
@@ -141,7 +141,7 @@ class scanner_t
 		char    line_txt [MAX_SCRIPT_LINE_LEN]; ///< In contains the current line's text
 		char*   pchar; ///< Points to line_txt
 		int     line_nmbr; ///< The number of the current line
-		bool    newlines_as_whitespace; ///< Treat newlines as whitespace
+		bool    newlines_as_whitespace; ///< Treat newlines as whitespace. This means that we extract new token for every line
 		/*
 		 * Used to keep track of the newlines in multiline comments so we can return the correct number of newlines in case of 
 		 * newlines_as_whitespace is false
@@ -149,9 +149,8 @@ class scanner_t
 		int     commented_lines;  
 
 		// input
-		stringstream in_sstream;
 		fstream      in_fstream;
-		iostream*    in_stream; ///< points to either in_fstream or in_sstream
+		iostream*    in_stream; ///< Points to either in_fstream or an external std::iostream
 		char         script_name[64]; ///< The name of the input stream. Mostly used for error handling
 
 	//===================================================================================================================================
@@ -162,7 +161,7 @@ class scanner_t
 		~scanner_t() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
 
 		bool LoadFile( const char* filename ); ///< Load a file to extract tokens
-		bool LoadString( const string& str, const char* script_name_ = "*string*" );
+		bool LoadIoStream( iostream* iostream_, const char* script_name_ = "unamed-iostream" ); ///< Load a STL iostream to extract tokens
 		void Unload();
 
 		static void   PrintTokenInfo( const token_t& token ); ///< Print info of the given token

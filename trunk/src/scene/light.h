@@ -40,7 +40,7 @@ class light_t: public node_t
 		light_mtl_t* light_mtl;
 	
 		light_t( types_e type_ ): node_t(NT_LIGHT), type(type_) {}
-		void Init( const char* filename );
+		void Init( const char* );
 		void Deinit();
 };
 

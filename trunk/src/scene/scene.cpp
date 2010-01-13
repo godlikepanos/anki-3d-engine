@@ -20,15 +20,15 @@ container_skel_node_t  skel_nodes;
 
 
 //=====================================================================================================================================
-// RegisterNode                                                                                                                       =
+// Static template funcs                                                                                                              =
 //=====================================================================================================================================
-template<typename container_type_t, typename type_t> static void RegisterNode( container_type_t& container, type_t* x )
+template<typename container_type_t, typename type_t> static void PutBackNode( container_type_t& container, type_t* x )
 {
 	DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
 	container.push_back( x );
 }
 
-template<typename container_type_t, typename type_t> static void UnregisterNode( container_type_t& container, type_t* x )
+template<typename container_type_t, typename type_t> static void EraseNode( container_type_t& container, type_t* x )
 {
 	typename container_type_t::iterator it = std::find( container.begin(), container.end(), x );
 	DEBUG_ERR( it == container.end() );
@@ -37,66 +37,58 @@ template<typename container_type_t, typename type_t> static void UnregisterNode(
 
 
 //=====================================================================================================================================
-// RegisterNodeAndChilds                                                                                                              =
+// RegisterNode                                                                                                                       =
 //=====================================================================================================================================
-void RegisterNodeAndChilds( node_t* node )
+void RegisterNode( node_t* node )
 {
-	RegisterNode( nodes, node );
+	PutBackNode( nodes, node );
 	
 	switch( node->type )
 	{
 		case node_t::NT_LIGHT:
-			RegisterNode( lights, static_cast<light_t*>(node) );
+			PutBackNode( lights, static_cast<light_t*>(node) );
 			break;
 		case node_t::NT_CAMERA:
-			RegisterNode( cameras, static_cast<camera_t*>(node) );
+			PutBackNode( cameras, static_cast<camera_t*>(node) );
 			break;
 		case node_t::NT_MESH:
-			RegisterNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
+			PutBackNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
 			break;
 		case node_t::NT_SKELETON:
-			RegisterNode( skel_nodes, static_cast<skel_node_t*>(node) );
+			PutBackNode( skel_nodes, static_cast<skel_node_t*>(node) );
 			break;
 		case node_t::NT_SKEL_MODEL:
 			// ToDo
 			break;
 	};
-	
-	// now register the childs
-	for( vec_t<node_t*>::iterator it=node->childs.begin(); it!=node->childs.end(); it++ )
-		RegisterNodeAndChilds( *it );
 }
 
 
 //=====================================================================================================================================
-// UnregisterNodeAndChilds                                                                                                            =
+// UnregisterNode                                                                                                                     =
 //=====================================================================================================================================
-void UnregisterNodeAndChilds( node_t* node )
+void UnregisterNode( node_t* node )
 {
-	UnregisterNode( nodes, node );
+	EraseNode( nodes, node );
 	
 	switch( node->type )
 	{
 		case node_t::NT_LIGHT:
-			UnregisterNode( lights, static_cast<light_t*>(node) );
+			EraseNode( lights, static_cast<light_t*>(node) );
 			break;
 		case node_t::NT_CAMERA:
-			UnregisterNode( cameras, static_cast<camera_t*>(node) );
+			EraseNode( cameras, static_cast<camera_t*>(node) );
 			break;
 		case node_t::NT_MESH:
-			UnregisterNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
+			EraseNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
 			break;
 		case node_t::NT_SKELETON:
-			UnregisterNode( skel_nodes, static_cast<skel_node_t*>(node) );
+			EraseNode( skel_nodes, static_cast<skel_node_t*>(node) );
 			break;
 		case node_t::NT_SKEL_MODEL:
 			// ToDo
 			break;
 	};
-	
-	// now register the childs
-	for( vec_t<node_t*>::iterator it=node->childs.begin(); it!=node->childs.end(); it++ )
-		UnregisterNodeAndChilds( *it );
 }
 
 
