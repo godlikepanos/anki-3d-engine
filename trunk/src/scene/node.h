@@ -1,8 +1,7 @@
 #ifndef _NODE_H_
 #define _NODE_H_
 
-#include "common.h"
-
+#include <memory>
 #include "common.h"
 #include "gmath.h"
 
@@ -45,8 +44,6 @@ class node_t
 		bvolume_t* bvolume_wspace;
 
 		bool is_group_node;
-		
-		vec_t<controller_t*> controllers;
 
 	// funcs
 	private:
@@ -54,7 +51,8 @@ class node_t
 		
 	public:
 		node_t( type_e type_ ): type(type_) { CommonConstructorCode(); }
-		virtual ~node_t() { /* ToDo */ };
+		node_t( type_e type_, node_t* parent ): type(type_) { CommonConstructorCode(); parent->AddChild(this); }
+		virtual ~node_t();
 		virtual void Render() = 0;
 		virtual void Init( const char* ) = 0; ///< Init using a script
 		virtual void Deinit() = 0;

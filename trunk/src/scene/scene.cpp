@@ -2,6 +2,9 @@
 #include "scene.h"
 #include "skel_node.h"
 #include "camera.h"
+#include "mesh_node.h"
+#include "light.h"
+#include "controller.h"
 
 namespace scene {
 
@@ -17,6 +20,8 @@ container_light_t      lights;
 container_camera_t     cameras;
 container_mesh_node_t  mesh_nodes;
 container_skel_node_t  skel_nodes;
+
+vec_t<controller_t*>   controllers;
 
 
 //=====================================================================================================================================
@@ -93,6 +98,23 @@ void UnregisterNode( node_t* node )
 
 
 //=====================================================================================================================================
+// Register and Unregister controllers                                                                                                =
+//=====================================================================================================================================
+void RegisterController( controller_t* controller )
+{
+	DEBUG_ERR( std::find( controllers.begin(), controllers.end(), controller ) != controllers.end() );
+	controllers.push_back( controller );
+}
+
+void UnregisterController( controller_t* controller )
+{
+	vec_t<controller_t*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
+	DEBUG_ERR( it == controllers.end() );
+	controllers.erase( it );
+}
+
+
+//=====================================================================================================================================
 // UpdateAllWorldStuff                                                                                                                =
 //=====================================================================================================================================
 void UpdateAllWorldStuff()
@@ -125,14 +147,19 @@ void UpdateAllWorldStuff()
 
 
 //=====================================================================================================================================
-// UpdateAllSkeletonNodes                                                                                                             =
+// UpdateAllCotrollers                                                                                                                =
 //=====================================================================================================================================
-void UpdateAllSkeletonNodes()
+void UpdateAllCotrollers()
 {
-	for( uint i=0; i<skel_nodes.size(); i++ )
+	/*for( container_node_t::iterator it=nodes.begin(); it!=nodes.end(); it++ )
 	{
-		skel_nodes[i]->skel_anim_controller->Update();
-	}
+		node_t* node = (*it);
+		for( vec_t<controller_t*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
+			(*it1)->Update( 0.0 );
+	}*/
+	
+	for( vec_t<controller_t*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
+		(*it)->Update( 0.0 );
 }
 
 

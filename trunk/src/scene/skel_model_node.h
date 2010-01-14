@@ -6,7 +6,7 @@
 
 
 class mesh_node_t;
-class skel_node
+class skel_node_t;
 
 
 /** 
@@ -22,7 +22,7 @@ class skel_model_node_t: public node_t
 		skel_model_node_t(): node_t(NT_SKEL_MODEL), skel_node(NULL) { is_group_node = true; }
 		void Init( const char* filename );
 		void Deinit() {} ///< Do nothing because it loads no resources
-		void Render() {}
+		void Render() {} ///< Do nothing
 };
 
 #endif

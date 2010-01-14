@@ -20,8 +20,8 @@ class controller_t
 	PROPERTY_R( type_e, type, GetType ) ///< Once the type is set nothing can change it
 
 	public:
-		controller_t( type_e type_ ): type(type_) {}
-		virtual ~controller_t() {}
+		controller_t( type_e type_ );
+		virtual ~controller_t();
 		virtual void Update( float time ) = 0;
 };
 

@@ -6,15 +6,18 @@
 #include "controller.h"
 #include "gmath.h"
 
+class skeleton_t;
+class skel_anim_controller_t;
+
 
 /// Skeleton node
 class skel_node_t: public node_t
 {
 	public:
-		skeleton_t* skeleton;
-		skel_anim_controller_t* skel_anim_controller;
+		skeleton_t* skeleton; ///< The skeleton resource
+		skel_anim_controller_t* skel_anim_controller; ///< Hold the controller here as well
 
-		skel_node_t(): node_t( NT_SKELETON ) {}
+		skel_node_t();
 		void Render();
 		void Init( const char* filename );
 		void Deinit();

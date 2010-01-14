@@ -3,39 +3,24 @@
 
 #include "common.h"
 #include "node.h"
-#include "controller.h"
 
 
-class mesh_node_t;
-class skel_node_t;
+class skel_controller_t;
 class mesh_t;
-
-
-/// Skeleton controller
-class skel_controller_t: public controller_t<mesh_node_t>
-{
-	public:
-		skel_node_t* skel_node;
-		mesh_node_t* mesh_node;
-
-		skel_controller_t( skel_node_t* skel_node_, mesh_node_t* mesh_node_ ):
-			skel_node( skel_node_ ),
-			mesh_node( mesh_node_ ) 
-		{}
-		void Update() {}
-};
+class material_t;
 
 
 /// Mesh node
 class mesh_node_t: public node_t
 {
 	public:
+		// resources
 		mesh_t* mesh;
 		material_t* material;
+		// controllers
 		skel_controller_t* skel_controller;
-
+		// funcs
 		mesh_node_t(): node_t(NT_MESH), skel_controller(NULL) {}
-
 		void Render();
 		void RenderDepth();
 		void Init( const char* filename );
