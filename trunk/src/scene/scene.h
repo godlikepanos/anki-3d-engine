@@ -26,7 +26,7 @@ extern void RegisterController( controller_t* controller );
 extern void UnregisterController( controller_t* controller );
 
 extern void UpdateAllWorldStuff();
-extern void UpdateAllCotrollers();
+extern void UpdateAllControllers();
 
 
 // container_t

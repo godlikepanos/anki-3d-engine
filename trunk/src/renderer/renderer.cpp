@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "scene.h"
 #include "r_private.h"
+#include "camera.h"
 
 namespace r {
 

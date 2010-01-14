@@ -1,3 +1,4 @@
+/*
 #include "renderer.hpp"
 
 
@@ -48,3 +49,4 @@ void renderer_t::DrawQuad()
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableClientState( GL_VERTEX_ARRAY );
 }
+*/

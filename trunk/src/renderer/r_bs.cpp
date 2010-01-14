@@ -10,6 +10,9 @@
 #include "r_private.h"
 #include "resource.h"
 #include "fbo.h"
+#include "mesh_node.h"
+#include "material.h"
+
 
 namespace r {
 namespace bs {
@@ -120,7 +123,7 @@ void RunStage( const camera_t& cam )
 			mesh_node->material->Setup();
 			mesh_node->Render();
 		}
-		else if( mesh->material->refracts )
+		else if( mesh_node->material->refracts )
 		{
 			// write to the rFbo
 			r_fbo.Bind();

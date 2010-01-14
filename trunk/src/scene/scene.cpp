@@ -147,9 +147,9 @@ void UpdateAllWorldStuff()
 
 
 //=====================================================================================================================================
-// UpdateAllCotrollers                                                                                                                =
+// UpdateAllControllers                                                                                                               =
 //=====================================================================================================================================
-void UpdateAllCotrollers()
+void UpdateAllControllers()
 {
 	/*for( container_node_t::iterator it=nodes.begin(); it!=nodes.end(); it++ )
 	{
