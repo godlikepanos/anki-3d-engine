@@ -5,6 +5,8 @@
 #include "material.h"
 #include "skel_node.h"
 #include "skeleton.h"
+#include "skel_controller.h"
+#include "skel_anim_controller.h"
 
 
 //=====================================================================================================================================

@@ -36,14 +36,10 @@ skel_model_node_t* imp;
 point_light_t* point_lights[10];
 spot_light_t* projlights[2];
 
-skel_anim_t walk_anim;
 
-
-/*
-=======================================================================================================================================
-Init                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// Init                                                                                                                               =
+//=====================================================================================================================================
 void Init()
 {
 	#if defined( _DEBUG_ )
@@ -86,7 +82,6 @@ void Init()
 	imp = new skel_model_node_t();
 	imp->Init( "models/imp/imp.smdl" );
 	imp->SetLocalTransformation( vec3_t( 0.0, 2.11, 0.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.7 );
-	imp->mesh_nodes[0]->skel_controller = new mesh_node_t::skel_controller_t();
 	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->skel_anim = rsrc::skel_anims.Load( "models/imp/walk.imp.anim" );
 	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->step = 0.8;
 
@@ -110,13 +105,8 @@ void Init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
-
 	Init();
 
-
-	//===================================================================================================================================
-	//                                                          MAIN LOOP                                                               =
-	//===================================================================================================================================
 	PRINT( "Entering main loop" );
 	int ticks = hndl::GetTicks();
 	do
@@ -168,7 +158,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		mover->rotation_lspace.Reorthogonalize();
 
 
-		scene::UpdateAllSkeletonNodes();
+		scene::UpdateAllControllers();
 		scene::UpdateAllWorldStuff();
 
 		r::Render( main_cam );

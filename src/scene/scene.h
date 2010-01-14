@@ -2,9 +2,15 @@
 #define _SCENE_H_
 
 #include "common.h"
-#include "light.h"
-#include "mesh_node.h"
 #include "skybox.h"
+
+
+class node_t;
+class light_t;
+class camera_t;
+class mesh_node_t;
+class skel_node_t;
+class controller_t;
 
 
 namespace scene {
@@ -16,8 +22,11 @@ inline vec3_t GetAmbientColor() { return vec3_t( 0.1, 0.05, 0.05 )*1; }
 // funcs
 extern void RegisterNode( node_t* node );
 extern void UnregisterNode( node_t* node );
+extern void RegisterController( controller_t* controller );
+extern void UnregisterController( controller_t* controller );
+
 extern void UpdateAllWorldStuff();
-extern void UpdateAllSkeletonNodes();
+extern void UpdateAllCotrollers();
 
 
 // container_t
@@ -41,6 +50,8 @@ extern container_light_t      lights;
 extern container_camera_t     cameras;
 extern container_mesh_node_t  mesh_nodes;
 extern container_skel_node_t  skel_nodes;
+
+extern vec_t<controller_t*>   controllers;
 
 
 } // end namespace

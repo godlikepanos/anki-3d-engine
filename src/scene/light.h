@@ -29,17 +29,12 @@ class light_mtl_t;
 class light_t: public node_t
 {
 	public:
-		enum types_e { LT_POINT, LT_SPOT };
+		enum type_e { LT_POINT, LT_SPOT };
 
-	PROPERTY_R( types_e, type, GetType );
-
-	friend class point_light_t;
-	friend class spot_light_t;
-
-	public:
-		light_mtl_t* light_mtl;
+		type_e type;
+		light_mtl_t* light_mtl; ///< Later we will add a controller
 	
-		light_t( types_e type_ ): node_t(NT_LIGHT), type(type_) {}
+		light_t( type_e type_ ): node_t(NT_LIGHT), type(type_) {}
 		void Init( const char* );
 		void Deinit();
 };
