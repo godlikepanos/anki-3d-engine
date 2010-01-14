@@ -1,3 +1,4 @@
+/*
 #ifndef _RENDERER_HPP_
 #define _RENDERER_HPP_
 
@@ -255,3 +256,4 @@ struct renderer_t
 };
 
 #endif
+*/

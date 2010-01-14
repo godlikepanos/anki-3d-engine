@@ -7,6 +7,7 @@
 #include <GL/glu.h>
 #include "gmath.h"
 #include "shader_prog.h"
+#include "camera.h"
 
 
 

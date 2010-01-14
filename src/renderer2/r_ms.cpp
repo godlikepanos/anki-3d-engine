@@ -1,3 +1,4 @@
+/*
 #include "renderer.hpp"
 #include "scene.h"
 
@@ -59,15 +60,16 @@ void renderer_t::material_stage_t::Run() const
 
 
 	// render the meshes
-	/*for( uint i=0; i<scene::meshes.size(); i++ )
+	for( uint i=0; i<scene::meshes.size(); i++ )
 		Render<mesh_t, false>( scene::meshes[i] );
 
 	// render the smodels
 	for( uint i=0; i<scene::smodels.size(); i++ )
-		Render<smodel_t, false>( scene::smodels[i] );*/
+		Render<smodel_t, false>( scene::smodels[i] );
 
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode
 
 
 	fbo.Unbind();
 }
+*/

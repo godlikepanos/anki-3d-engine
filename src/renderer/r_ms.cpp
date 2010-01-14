@@ -8,6 +8,8 @@
 #include "mesh.h"
 #include "r_private.h"
 #include "fbo.h"
+#include "material.h"
+#include "mesh_node.h"
 
 
 namespace r {

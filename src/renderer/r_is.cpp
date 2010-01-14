@@ -6,7 +6,7 @@ The file contains functions and vars used for the deferred shading illumination 
 #include "camera.h"
 #include "scene.h"
 #include "mesh.h"
-#include "lights.h"
+#include "light.h"
 #include "resource.h"
 #include "scene.h"
 #include "r_private.h"
@@ -497,7 +497,7 @@ void RunStage( const camera_t& cam )
 	for( uint i=0; i<scene::lights.size(); i++ )
 	{
 		const light_t& light = *scene::lights[i];
-		switch( light.GetType() )
+		switch( light.type )
 		{
 			case light_t::LT_POINT:
 			{

@@ -14,20 +14,23 @@
 #include "primitives.h"
 #include "texture.h"
 #include "mesh.h"
-#include "lights.h"
+#include "light.h"
 #include "collision.h"
-#include "smodel.h"
-#include "spatial.h"
 #include "material.h"
 #include "resource.h"
 #include "scene.h"
 #include "scanner.h"
 #include "skybox.h"
 #include "map.h"
-#include "model.h"
-#include "renderer.hpp"
+#include "mesh_node.h"
+#include "skel_model_node.h"
 #include "mesh_node.h"
 #include "skel_anim.h"
+#include "skel_controller.h"
+#include "skel_anim_controller.h"
+#include "skel_node.h"
+#include "light_mtl.h"
+
 
 // map (hard coded)
 camera_t* main_cam;
@@ -58,20 +61,20 @@ void Init()
 
 	// camera
 	main_cam = new camera_t( r::aspect_ratio*ToRad(60.0), ToRad(60.0), 0.5, 100.0 );
-	main_cam.MoveLocalY( 3.0 );
-	main_cam.MoveLocalZ( 5.7 );
-	main_cam.MoveLocalX( -0.3 );
+	main_cam->MoveLocalY( 3.0 );
+	main_cam->MoveLocalZ( 5.7 );
+	main_cam->MoveLocalX( -0.3 );
 
 	// lights
 	point_lights[0] = new point_light_t();
 	point_lights[0]->light_mtl = rsrc::light_mtls.Load( "maps/temple/light0.lmtl" );
-	point_lights[0]->SetLocatTransformation( vec3_t( -1.0, 2.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
+	point_lights[0]->SetLocalTransformation( vec3_t( -1.0, 2.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
 	point_lights[0]->radius = 2.0;
 
 	// horse
 	horse = new mesh_node_t();
 	horse->Init( "meshes/horse/horse.mesh" );
-	horst->SetLocalTransformation( vec3_t( -2, 0, 1 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.5 );
+	horse->SetLocalTransformation( vec3_t( -2, 0, 1 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.5 );
 	
 	// sarge
 	sarge = new mesh_node_t();
@@ -120,13 +123,13 @@ int main( int /*argc*/, char* /*argv*/[] )
 		float scale = 0.01;
 
 		// move the camera
-		static node_t* mover = &main_cam;
+		static node_t* mover = main_cam;
 
-		if( i::keys[ SDLK_1 ] ) mover = &main_cam;
-		if( i::keys[ SDLK_2 ] ) mover = &point_lights[0];
-		if( i::keys[ SDLK_3 ] ) mover = &projlights[0];
-		if( i::keys[ SDLK_4 ] ) mover = &point_lights[1];
-		if( i::keys[ SDLK_5 ] ) mover = &projlights[1];
+		if( i::keys[ SDLK_1 ] ) mover = main_cam;
+		if( i::keys[ SDLK_2 ] ) mover = point_lights[0];
+		if( i::keys[ SDLK_3 ] ) mover = projlights[0];
+		if( i::keys[ SDLK_4 ] ) mover = point_lights[1];
+		if( i::keys[ SDLK_5 ] ) mover = projlights[1];
 		if( i::keys[ SDLK_m ] == 1 ) i::warp_mouse = !i::warp_mouse;
 
 		if( i::keys[SDLK_a] ) mover->MoveLocalX( -dist );
@@ -153,7 +156,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( i::keys[SDLK_PAGEUP] ) mover->scale_lspace += scale ;
 		if( i::keys[SDLK_PAGEDOWN] ) mover->scale_lspace -= scale ;
 
-		if( i::keys[SDLK_k] ) main_cam.LookAtPoint( point_lights[0].translation_wspace );
+		if( i::keys[SDLK_k] ) main_cam->LookAtPoint( point_lights[0]->translation_wspace );
 
 		mover->rotation_lspace.Reorthogonalize();
 
@@ -161,7 +164,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		scene::UpdateAllControllers();
 		scene::UpdateAllWorldStuff();
 
-		r::Render( main_cam );
+		r::Render( *main_cam );
 
 		//map.octree.root->bounding_box.Render();
 

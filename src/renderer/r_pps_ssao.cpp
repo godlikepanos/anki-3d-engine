@@ -8,6 +8,7 @@ The file contains functions and vars used for the deferred shading/post-processi
 #include "scene.h"
 #include "r_private.h"
 #include "fbo.h"
+#include "camera.h"
 
 namespace r {
 namespace pps {

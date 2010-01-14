@@ -18,12 +18,12 @@ scanner_t scanner;
 		token = &scanner.GetNextToken();
 
 		//** DIFFUSE_COL **
-		if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DIFFUSE_COL" ) )
+		if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DIFFUSE_COLOR" ) )
 		{
 			ParseArrOfNumbers<float>( scanner, true, true, 3, &diffuse_col[0] );
 		}
 		//** SPECULAR_COL **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SPECULAR_COL" ) )
+		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SPECULAR_COLOR" ) )
 		{
 			ParseArrOfNumbers<float>( scanner, true, true, 3, &specular_col[0] );
 		}

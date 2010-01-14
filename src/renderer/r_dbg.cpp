@@ -4,6 +4,8 @@
 #include "scene.h"
 #include "texture.h"
 #include "fbo.h"
+#include "node.h"
+#include "skel_node.h"
 
 
 namespace r {
@@ -78,27 +80,21 @@ void RunStage( const camera_t& cam )
 	glDisable( GL_BLEND );
 
 	//r::RenderGrid();
-	for( uint i=0; i<scene::objects.size(); i++ )
+	for( uint i=0; i<scene::nodes.size(); i++ )
 	{
 		if
 		(
-			(scene::objects[i]->type == object_t::LIGHT && show_lights) ||
-			(scene::objects[i]->type == object_t::CAMERA && show_cameras)
+			(scene::nodes[i]->type == node_t::NT_LIGHT && show_lights) ||
+			(scene::nodes[i]->type == node_t::NT_CAMERA && show_cameras)
 		)
 		{
-			scene::objects[i]->Render();
+			scene::nodes[i]->Render();
 		}
-		else if( scene::objects[i]->type == object_t::MESH && show_vnormals )
+		else if( scene::nodes[i]->type == node_t::NT_SKELETON && show_skeletons )
 		{
-			mesh_node_t* mesh = static_cast<mesh_node_t*>( scene::objects[i] );
-			mesh->RenderNormals();
-			mesh->RenderTangents();
-		}
-		else if( scene::objects[i]->type == object_t::MODEL && show_skeletons )
-		{
-			smodel_t* model = static_cast<smodel_t*>( scene::objects[i] );
+			skel_node_t* skel_node = static_cast<skel_node_t*>( scene::nodes[i] );
 			glDisable( GL_DEPTH_TEST );
-			model->RenderSkeleton();
+			skel_node->Render();
 			glEnable( GL_DEPTH_TEST );
 		}
 	}
