@@ -5,6 +5,8 @@
 #include "engine_class.h"
 #include "util.h"
 
+
+// forward decls
 class texture_t;
 class material_t;
 class shader_prog_t;
@@ -13,8 +15,6 @@ class skeleton_t;
 class skel_anim_t;
 class light_mtl_t;
 
-
-// forward decl
 namespace rsrc {
 template< typename type_t > class container_t;
 }
@@ -52,7 +52,7 @@ class resource_t
 
 
 /// resource namespace
-namespace rsrc { // begin namesapce
+namespace rsrc {
 
 
 extern container_t<texture_t>     textures;
@@ -64,7 +64,7 @@ extern container_t<skel_anim_t>   skel_anims;
 extern container_t<light_mtl_t>   light_mtls;
 
 
-/// resource container class
+/// resource container template class
 template<typename type_t> class container_t: public vec_t<type_t*>
 {
 	private:
