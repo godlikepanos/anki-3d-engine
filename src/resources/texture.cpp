@@ -1,7 +1,6 @@
 #include <fstream>
 #include <SDL/SDL_image.h>
 #include "texture.h"
-#include "resource.h"
 #include "renderer.h"
 
 

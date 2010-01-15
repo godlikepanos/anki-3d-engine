@@ -14,7 +14,8 @@ class controller_t
 			CT_SKEL,
 			CT_MATERIAL,
 			CT_LIGHT_MTL,
-			CT_TRF
+			CT_TRF,
+			CT_LIGHT
 		};
 	
 	PROPERTY_R( type_e, type, GetType ) ///< Once the type is set nothing can change it
