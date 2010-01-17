@@ -3,7 +3,7 @@
 
 #include <SDL/SDL.h>
 #include "common.h"
-#include "handlers.h"
+#include "app.h"
 #include "gmath.h"
 
 /// input namespace

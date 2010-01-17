@@ -86,7 +86,8 @@ class material_t: public resource_t
 		bool wireframe;
 		bool casts_shadow; ///< Used in EarlyZ and in shadowmapping passes
 
-		struct
+		// for depth passing
+		/*struct
 		{
 			shader_prog_t* shader_prog; ///< Depth pass shader program
 			texture_t* alpha_testing_map;
@@ -106,7 +107,7 @@ class material_t: public resource_t
 			{
 				int alpha_testing_map;
 			} uni_locs;
-		} dp;
+		} dp;*/
 
 		/**
 		 * Used mainly in depth passes. If the grass_map pointer is != NULL then the entity is "grass like".

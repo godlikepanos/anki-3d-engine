@@ -1,15 +1,32 @@
 #include "light.h"
 #include "collision.h"
 #include "renderer.h"
-#include "light_mtl.h"
+#include "light_props.h"
 
 
 //=====================================================================================================================================
-// Init                                                                                                                               =
+// Init [point_light_t]                                                                                                               =
 //=====================================================================================================================================
-void light_t::Init( const char* filename )
+void point_light_t::Init( const char* filename )
 {
-	light_mtl = rsrc::light_mtls.Load( filename );
+	light_props = rsrc::light_props.Load( filename );
+	radius = light_props->GetRadius();
+}
+
+
+//=====================================================================================================================================
+// Init [spot_light_t]                                                                                                                =
+//=====================================================================================================================================
+void spot_light_t::Init( const char* filename )
+{
+	light_props = rsrc::light_props.Load( filename );
+	camera.SetAll( light_props->GetFovX(), light_props->GetFovY(), 0.2, light_props->GetDistance() );
+	casts_shadow = light_props->CastsShadow();
+	if( light_props->GetTexture() == NULL )
+	{
+		ERROR( "Light properties \"" << light_props->GetName() << "\" do not have a texture" );
+		return;
+	}
 }
 
 
@@ -18,7 +35,7 @@ void light_t::Init( const char* filename )
 //=====================================================================================================================================
 void light_t::Deinit()
 {
-	rsrc::light_mtls.Unload( light_mtl );
+	rsrc::light_props.Unload( light_props );
 }
 
 
@@ -42,7 +59,7 @@ static void RenderSphere( const mat4_t& tsl, const vec3_t& col )
 //=====================================================================================================================================
 void point_light_t::Render()
 {
-	RenderSphere( transformation_wspace, light_mtl->GetDiffuseColor() );
+	RenderSphere( transformation_wspace, light_props->GetDiffuseColor() );
 }
 
 
@@ -51,5 +68,5 @@ void point_light_t::Render()
 //=====================================================================================================================================
 void spot_light_t::Render()
 {
-	RenderSphere( transformation_wspace, light_mtl->GetDiffuseColor() );
+	RenderSphere( transformation_wspace, light_props->GetDiffuseColor() );
 }

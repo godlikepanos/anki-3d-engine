@@ -9,9 +9,8 @@
 #include "gmath.h"
 #include "renderer.h"
 #include "hud.h"
-#include "handlers.h"
+#include "app.h"
 #include "particles.h"
-#include "primitives.h"
 #include "texture.h"
 #include "mesh.h"
 #include "light.h"
@@ -29,7 +28,7 @@
 #include "skel_controller.h"
 #include "skel_anim_controller.h"
 #include "skel_node.h"
-#include "light_mtl.h"
+#include "light_props.h"
 
 
 // map (hard coded)
@@ -37,7 +36,7 @@ camera_t* main_cam;
 mesh_node_t* floor__,* sarge,* horse;
 skel_model_node_t* imp;
 point_light_t* point_lights[10];
-spot_light_t* projlights[2];
+spot_light_t* spot_lights[2];
 
 
 //=====================================================================================================================================
@@ -53,8 +52,8 @@ void Init()
 	srand( unsigned(time(NULL)) );
 	MathSanityChecks();
 
-	hndl::InitWindow( r::w, r::h, "AnKi Engine" );
-	uint ticks = hndl::GetTicks();
+	app::InitWindow( r::w, r::h, "AnKi Engine" );
+	uint ticks = app::GetTicks();
 
 	r::Init();
 	hud::Init();
@@ -67,9 +66,15 @@ void Init()
 
 	// lights
 	point_lights[0] = new point_light_t();
-	point_lights[0]->light_mtl = rsrc::light_mtls.Load( "maps/temple/light0.lmtl" );
+	point_lights[0]->Init( "maps/temple/light0.light" );
 	point_lights[0]->SetLocalTransformation( vec3_t( -1.0, 2.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
-	point_lights[0]->radius = 2.0;
+	point_lights[1] = new point_light_t();
+	point_lights[1]->Init( "maps/temple/light1.light" );
+	point_lights[1]->SetLocalTransformation( vec3_t( 2.5, 1.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
+
+	spot_lights[0] = new spot_light_t();
+	spot_lights[0]->Init( "maps/temple/light2.light" );
+	spot_lights[0]->SetLocalTransformation( vec3_t( 1.3, 4.3, 3.0 ), mat3_t( euler_t(ToRad(-20), ToRad(20), 0.0) ), 1.0 );
 
 	// horse
 	horse = new mesh_node_t();
@@ -81,6 +86,11 @@ void Init()
 	sarge->Init( "meshes/sarge/sarge.mesh" );
 	sarge->SetLocalTransformation( vec3_t( 0, -2.8, 1.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.1 );
 	
+	// floor
+	floor__ = new mesh_node_t();
+	floor__->Init( "maps/temple/Cube.019.mesh" );
+	floor__->SetLocalTransformation( vec3_t(0.0, -0.19, 0.0), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.8 );
+
 	// imp	
 	imp = new skel_model_node_t();
 	imp->Init( "models/imp/imp.smdl" );
@@ -89,17 +99,15 @@ void Init()
 	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->step = 0.8;
 
 
-	// floor
-	floor__ = new mesh_node_t();
-	floor__->Init( "maps/temple/Cube.019.mesh" );
-	floor__->SetLocalTransformation( vec3_t(0.0), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.8 );
+
 
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
 	scene::skybox.Load( skybox_fnames );
 
-	PRINT( "Engine initialization ends (" << hndl::GetTicks()-ticks << ")" );
+	PRINT( "Engine initialization ends (" << app::GetTicks()-ticks << ")" );
+	cerr.flush();
 }
 
 
@@ -111,10 +119,10 @@ int main( int /*argc*/, char* /*argv*/[] )
 	Init();
 
 	PRINT( "Entering main loop" );
-	int ticks = hndl::GetTicks();
+	int ticks = app::GetTicks();
 	do
 	{
-		int ticks_ = hndl::GetTicks();
+		int ticks_ = app::GetTicks();
 		i::HandleEvents();
 		r::PrepareNextFrame();
 
@@ -127,9 +135,9 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		if( i::keys[ SDLK_1 ] ) mover = main_cam;
 		if( i::keys[ SDLK_2 ] ) mover = point_lights[0];
-		if( i::keys[ SDLK_3 ] ) mover = projlights[0];
+		if( i::keys[ SDLK_3 ] ) mover = spot_lights[0];
 		if( i::keys[ SDLK_4 ] ) mover = point_lights[1];
-		if( i::keys[ SDLK_5 ] ) mover = projlights[1];
+		if( i::keys[ SDLK_5 ] ) mover = spot_lights[1];
 		if( i::keys[ SDLK_m ] == 1 ) i::warp_mouse = !i::warp_mouse;
 
 		if( i::keys[SDLK_a] ) mover->MoveLocalX( -dist );
@@ -172,13 +180,13 @@ int main( int /*argc*/, char* /*argv*/[] )
 		hud::SetColor( vec4_t(1.0, 1.0, 1.0, 1.0) );
 		hud::SetPos( -0.98, 0.95 );
 		hud::SetFontWidth( 0.03 );
-		hud::Printf( "frame:%d time:%dms\n", r::frames_num, hndl::GetTicks()-ticks_ );
+		hud::Printf( "frame:%d time:%dms\n", r::frames_num, app::GetTicks()-ticks_ );
 		//hud::Print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		hud::Printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translation_wspace.x, mover->translation_wspace.y, mover->translation_wspace.z,
 								 ToDegrees(euler_t(mover->rotation_wspace).x), ToDegrees(euler_t(mover->rotation_wspace).y), ToDegrees(euler_t(mover->rotation_wspace).z) );
 
 		if( i::keys[SDLK_ESCAPE] ) break;
-		if( i::keys[SDLK_F11] ) hndl::TogleFullScreen();
+		if( i::keys[SDLK_F11] ) app::TogleFullScreen();
 		if( i::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
@@ -188,18 +196,18 @@ int main( int /*argc*/, char* /*argv*/[] )
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
-		if( 0 )
+		if( 1 )
 		{
 			if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
-			hndl::WaitForNextFrame();
+			app::WaitForNextFrame();
 		}
 		else
 			if( r::frames_num == 5000 ) break;
 	}while( true );
-	PRINT( "Exiting main loop (" << hndl::GetTicks()-ticks << ")" );
+	PRINT( "Exiting main loop (" << app::GetTicks()-ticks << ")" );
 
 
 	PRINT( "Exiting..." );
-	hndl::QuitApp( EXIT_SUCCESS );
+	app::QuitApp( EXIT_SUCCESS );
 	return 0;
 }

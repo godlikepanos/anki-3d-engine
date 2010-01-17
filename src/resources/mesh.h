@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include "gmath.h"
-#include "primitives.h"
 #include "vbo.h"
 #include "resource.h"
 #include "collision.h"
@@ -25,6 +24,13 @@ class mesh_t: public resource_t
 				float weights[MAX_BONES_PER_VERT];
 		};
 
+		class triangle_t
+		{
+			public:
+				uint   vert_ids[3]; // an array with the vertex indexes in the mesh class
+				vec3_t normal;
+		};
+
 		vec_t<vec3_t>          vert_coords;
 		vec_t<vec3_t>          vert_normals;
 		vec_t<vec4_t>          vert_tangents;
@@ -44,6 +50,7 @@ class mesh_t: public resource_t
 		} vbos;
 
 		string material_name;
+		string dp_material_name;
 
 		bsphere_t bsphere;
 

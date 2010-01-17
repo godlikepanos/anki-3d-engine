@@ -3,8 +3,7 @@
 
 #include "common.h"
 #include "gmath.h"
-#include "primitives.h"
-#include "handlers.h"
+#include "app.h"
 #include "object.h"
 
 #define PARTICLE_VELS_NUM 2

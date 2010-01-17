@@ -11,7 +11,7 @@ The file contains functions and vars used for the deferred shading illumination 
 #include "scene.h"
 #include "r_private.h"
 #include "fbo.h"
-#include "light_mtl.h"
+#include "light_props.h"
 
 namespace r {
 namespace is {
@@ -336,8 +336,8 @@ static void PointLightPass( const camera_t& cam, const point_light_t& light )
 	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
 	glUniform3fv( shader.GetUniformLocation(5), 1, &light_pos_eye_space[0] );
 	glUniform1f( shader.GetUniformLocation(6), 1.0/light.radius );
-	glUniform3fv( shader.GetUniformLocation(7), 1, &vec3_t(light.light_mtl->GetDiffuseColor())[0] );
-	glUniform3fv( shader.GetUniformLocation(8), 1, &vec3_t(light.light_mtl->GetSpecularColor())[0] );
+	glUniform3fv( shader.GetUniformLocation(7), 1, &vec3_t(light.light_props->GetDiffuseColor())[0] );
+	glUniform3fv( shader.GetUniformLocation(8), 1, &vec3_t(light.light_props->GetSpecularColor())[0] );
 
 	//** render quad **
 	glEnableVertexAttribArray( shader.GetAttributeLocation(0) );
@@ -397,8 +397,8 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	shdr->LocTexUnit( shdr->GetUniformLocation(2), r::ms::specular_fai, 2 );
 	shdr->LocTexUnit( shdr->GetUniformLocation(3), r::ms::depth_fai, 3 );
 
-	if( light.light_mtl->GetTexture() == NULL )
-		ERROR( "No texture is attached to the light. light_mtl name: " << light.light_mtl->GetName() );
+	if( light.light_props->GetTexture() == NULL )
+		ERROR( "No texture is attached to the light. light_props name: " << light.light_props->GetName() );
 
 	// the planes
 	//glUniform2fv( shdr->GetUniformLocation("planes"), 1, &planes[0] );
@@ -408,11 +408,11 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
 	glUniform3fv( shdr->GetUniformLocation(5), 1, &light_pos_eye_space[0] );
 	glUniform1f( shdr->GetUniformLocation(6), 1.0/light.GetDistance() );
-	glUniform3fv( shdr->GetUniformLocation(7), 1, &vec3_t(light.light_mtl->GetDiffuseColor())[0] );
-	glUniform3fv( shdr->GetUniformLocation(8), 1, &vec3_t(light.light_mtl->GetSpecularColor())[0] );
+	glUniform3fv( shdr->GetUniformLocation(7), 1, &vec3_t(light.light_props->GetDiffuseColor())[0] );
+	glUniform3fv( shdr->GetUniformLocation(8), 1, &vec3_t(light.light_props->GetSpecularColor())[0] );
 
 	// set the light texture
-	shdr->LocTexUnit( shdr->GetUniformLocation(9), *light.light_mtl->GetTexture(), 4 );
+	shdr->LocTexUnit( shdr->GetUniformLocation(9), *light.light_props->GetTexture(), 4 );
 	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );

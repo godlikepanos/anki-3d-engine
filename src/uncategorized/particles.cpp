@@ -21,7 +21,7 @@ void particle_t::Render()
 	--life;
 
 	// calc new pos
-	float dt = ( float(hndl::timer_tick)/1000 );
+	float dt = ( float(app::timer_tick)/1000 );
 	vec3_t s_vel; // sigma velocity
 	s_vel = vec3_t( 0.0, 0.0, 0.0 );
 	for( int i=0; i<PARTICLE_VELS_NUM; i++ )
