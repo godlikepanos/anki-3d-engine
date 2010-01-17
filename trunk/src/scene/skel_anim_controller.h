@@ -28,7 +28,7 @@ class skel_anim_controller_t: public controller_t
 		float step;
 		float frame;
 
-		skel_anim_controller_t( skel_node_t* skel_node_ ): controller_t(CT_SKEL_ANIM), skel_node( skel_node_ ) {}
+		skel_anim_controller_t( skel_node_t* skel_node_ );
 		void Update( float time );
 };
 

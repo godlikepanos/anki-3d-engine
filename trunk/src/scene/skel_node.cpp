@@ -9,9 +9,9 @@
 // skel_node_t                                                                                                                        =
 //=====================================================================================================================================
 skel_node_t::skel_node_t(): 
-	node_t( NT_SKELETON )
+	node_t( NT_SKELETON ),
+	skel_anim_controller( NULL )
 {
-	skel_anim_controller = new skel_anim_controller_t(this); // It allways have a controller
 }
 
 
@@ -21,7 +21,9 @@ skel_node_t::skel_node_t():
 void skel_node_t::Init( const char* filename )
 {
 	skeleton = rsrc::skeletons.Load( filename );
+	skel_anim_controller = new skel_anim_controller_t( this );
 }
+
 
 //=====================================================================================================================================
 // Deinit                                                                                                                             =
@@ -47,13 +49,13 @@ void skel_node_t::Render()
 	{
 		glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
 		glBegin( GL_POINTS );
-			glVertex3fv( &skel_anim_controller->heads[0][0] );
+			glVertex3fv( &skel_anim_controller->heads[i][0] );
 		glEnd();
 
 		glBegin( GL_LINES );
-			glVertex3fv( &skel_anim_controller->heads[0][0] );
+			glVertex3fv( &skel_anim_controller->heads[i][0] );
 			glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
-			glVertex3fv( &skel_anim_controller->tails[0][0] );
+			glVertex3fv( &skel_anim_controller->tails[i][0] );
 		glEnd();
 	}
 

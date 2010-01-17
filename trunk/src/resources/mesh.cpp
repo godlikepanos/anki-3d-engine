@@ -25,6 +25,15 @@ bool mesh_t::Load( const char* filename )
 	}
 	material_name = token->value.string;
 
+	//** DP_MATERIAL **
+	/*token = &scanner.GetNextToken();
+	if( token->code != scanner_t::TC_STRING )
+	{
+		PARSE_ERR_EXPECTED( "string" );
+		return false;
+	}
+	dp_material_name = token->value.string;*/
+
 	//** VERTS **
 	// verts num
 	token = &scanner.GetNextToken();

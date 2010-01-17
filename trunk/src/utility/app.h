@@ -1,10 +1,10 @@
-#ifndef _HANDLERS_H_
-#define _HANDLERS_H_
+#ifndef _APP_H_
+#define _APP_H_
 
 #include <SDL/SDL.h>
 #include "common.h"
 
-namespace hndl {
+namespace app {
 
 
 extern uint timer_tick;

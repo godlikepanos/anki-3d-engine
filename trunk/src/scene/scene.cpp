@@ -5,6 +5,7 @@
 #include "mesh_node.h"
 #include "light.h"
 #include "controller.h"
+#include "material.h"
 
 namespace scene {
 
@@ -157,9 +158,11 @@ void UpdateAllControllers()
 		for( vec_t<controller_t*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
 			(*it1)->Update( 0.0 );
 	}*/
-	
+
 	for( vec_t<controller_t*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
+	{
 		(*it)->Update( 0.0 );
+	}
 }
 
 

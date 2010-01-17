@@ -75,16 +75,16 @@ void Init()
 //=====================================================================================================================================
 void RunStage( const camera_t& cam )
 {
-#if defined( _EARLY_Z_ )
-	// run the early z pass
-	r::ms::earlyz::RunPass( cam );
-#endif
+	#if defined( _EARLY_Z_ )
+		// run the early z pass
+		r::ms::earlyz::RunPass( cam );
+	#endif
 
 	fbo.Bind();
 
-#if !defined( _EARLY_Z_ )
-	glClear( GL_DEPTH_BUFFER_BIT );
-#endif
+	#if !defined( _EARLY_Z_ )
+		glClear( GL_DEPTH_BUFFER_BIT );
+	#endif
 	r::SetProjectionViewMatrices( cam );
 	r::SetViewport( 0, 0, r::w * r::rendering_quality, r::h * r::rendering_quality );
 
@@ -92,15 +92,15 @@ void RunStage( const camera_t& cam )
 	scene::skybox.Render( cam.GetViewMatrix().GetRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
-#if defined( _EARLY_Z_ )
-	glDepthMask( false );
-	glDepthFunc( GL_EQUAL );
-#endif
+	#if defined( _EARLY_Z_ )
+		glDepthMask( false );
+		glDepthFunc( GL_EQUAL );
+	#endif
 
 	// render the meshes
 	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
 	{
-		mesh_node_t* mesh_node = scene::mesh_nodes[0];
+		mesh_node_t* mesh_node = scene::mesh_nodes[i];
 		if( mesh_node->material->blends ) continue;
 		mesh_node->material->Setup();
 		mesh_node->Render();
@@ -109,10 +109,10 @@ void RunStage( const camera_t& cam )
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode
 
 
-#if defined( _EARLY_Z_ )
-	glDepthMask( true );
-	glDepthFunc( GL_LESS );
-#endif
+	#if defined( _EARLY_Z_ )
+		glDepthMask( true );
+		glDepthFunc( GL_LESS );
+	#endif
 
 	fbo.Unbind();
 }

@@ -6,6 +6,20 @@
 
 
 //=====================================================================================================================================
+// skel_anim_controller_t                                                                                                             =
+//=====================================================================================================================================
+skel_anim_controller_t::skel_anim_controller_t( skel_node_t* skel_node_ ):
+	controller_t(CT_SKEL_ANIM),
+	skel_node( skel_node_ )
+{
+	heads.resize( skel_node->skeleton->bones.size() );
+	tails.resize( skel_node->skeleton->bones.size() );
+	bone_rotations.resize( skel_node->skeleton->bones.size() );
+	bone_translations.resize( skel_node->skeleton->bones.size() );
+}
+
+
+//=====================================================================================================================================
 // Interpolate                                                                                                                        =
 //=====================================================================================================================================
 void skel_anim_controller_t::Interpolate( skel_anim_t* animation, float frame )
@@ -36,6 +50,7 @@ void skel_anim_controller_t::Interpolate( skel_anim_t* animation, float frame )
 
 
 	// now for all bones update bone's poses
+	DEBUG_ERR( bone_rotations.size()<1 );
 	for( uint i=0; i<bone_rotations.size(); i++ )
 	{
 		const skel_anim_t::bone_anim_t& banim = skel_anim->bones[i];

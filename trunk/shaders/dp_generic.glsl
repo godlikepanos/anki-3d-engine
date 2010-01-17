@@ -2,6 +2,9 @@
 
 #pragma anki include "shaders/hw_skinning.glsl"
 
+uniform vec3 position;
+uniform vec2 tex_coords;
+
 varying vec2 tex_coords_v2f;
 
 void main()

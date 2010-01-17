@@ -1,6 +1,6 @@
-#include "handlers.h"
+#include "app.h"
 
-namespace hndl { // begin of namespace
+namespace app { // begin of namespace
 
 
 static SDL_Surface* main_surf;
