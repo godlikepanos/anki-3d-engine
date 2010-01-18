@@ -50,7 +50,6 @@ class mesh_t: public resource_t
 		} vbos;
 
 		string material_name;
-		string dp_material_name;
 
 		bsphere_t bsphere;
 

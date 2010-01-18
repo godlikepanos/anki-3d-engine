@@ -107,7 +107,7 @@ class material_t: public resource_t
 	//===================================================================================================================================
 	protected:
 		void SetToDefault();
-		bool InitTheOther(); ///< The func is for not poluting Load with extra code
+		bool InitTheOther(); ///< The func is for not polluting Load with extra code
 		
 	public:
 		material_t() { SetToDefault(); }
