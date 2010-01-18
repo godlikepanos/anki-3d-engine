@@ -11,9 +11,6 @@ reload( sys.modules["mesh"] )
 from skeleton import *
 reload( sys.modules["skeleton"] )
 
-from vweights import *
-reload( sys.modules["vweights"] )
-
 from material import *
 reload( sys.modules["material"] )
 
@@ -28,12 +25,19 @@ if len(objs) < 1:
 	ERROR( "Not selected objs" )
 
 for obj in objs:
-	mesh = GetMesh( obj )
-	mtl = GetMaterial( mesh )
-	skel = GetSkeleton( obj )
+	mi = mesh_init_t()
 	
-	ExportMesh( path, mesh, skel, "models/imp/" + mtl.getName() + ".mtl" , cmnts )
-	ExportSkeleton( path, skel, cmnts )
+	mi.mesh = GetMesh( obj )
+	mi.skeleton = GetSkeleton( obj )
+	mi.save_path = path
+	mi.write_comments = true
+	mtl = GetMaterial( mi.mesh )
+	mi.material_filename = "models/imp/" + mtl.getName() + ".mtl"
+	
+	
+	
+	ExportMesh( mi )
+	#ExportSkeleton( path, skel, cmnts )
 	#ExportVWeights( path, mesh, skel, cmnts )
 	#ExportMaterial( path, epath, mtl, cmnts )
 

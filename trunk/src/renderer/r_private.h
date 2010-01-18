@@ -132,7 +132,7 @@ void RenderDepth( type_t& t )
 		r::is::shadows::shdr_depth_grass->Bind();
 		r::is::shadows::shdr_depth_grass->LocTexUnit( r::is::shadows::shdr_depth_grass->GetUniformLocation(0), *t.material->grass_map, 0 );
 	}
-	else if( t.material->attribute_locs.vert_weight_bones_num != -1 )
+	else if( t.material->attrib_locs.vert_weight_bones_num != -1 )
 	{
 		r::is::shadows::shdr_depth_hw_skinning->Bind();
 	}
@@ -157,11 +157,9 @@ void RenderDepth( type_t& t )
 }
 
 
-/*
-=======================================================================================================================================
-Render                                                                                                                                =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// Render                                                                                                                             =
+//=====================================================================================================================================
 /// The template function renders an entity. Used by r::ms::RunStage and r::bs::RunStage. Used like macro
 template <typename type_t, bool render_transparent> void Render( type_t* t )
 {

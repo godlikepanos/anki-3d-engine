@@ -17,6 +17,7 @@ class mesh_node_t: public node_t
 		// resources
 		mesh_t* mesh;
 		material_t* material;
+		material_t* dp_material; ///< Depth pass material
 		// controllers
 		skel_controller_t* skel_controller;
 		// funcs
