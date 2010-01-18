@@ -78,30 +78,6 @@ bool material_t::Load( const char* filename )
 			}
 			shader_prog = rsrc::shaders.Load( token->value.string );
 		}
-		/*//** DIFFUSE_COL **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DIFFUSE_COL" ) )
-		{
-			ParseArrOfNumbers<float>( scanner, true, true, 4, &diffuse_color[0] );
-		}
-		//** SPECULAR_COL **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SPECULAR_COL" ) )
-		{
-			ParseArrOfNumbers<float>( scanner, true, true, 4, &specular_color[0] );
-		}
-		//** SHININESS **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SHININESS" ) )
-		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER )
-			{
-				PARSE_ERR_EXPECTED( "number" );
-				return false;
-			}
-			if( token->type == scanner_t::DT_FLOAT )
-				shininess = token->value.float_;
-			else
-				shininess = (float)token->value.int_;
-		}*/
 		//** BLENDS **
 		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
 		{
@@ -221,13 +197,13 @@ bool material_t::Load( const char* filename )
 				if( token->code == scanner_t::TC_RBRACKET )
 					break;
 				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "TEXTURE" ) )
-					type = user_defined_var_t::TEXTURE;
+					type = user_defined_var_t::VT_TEXTURE;
 				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "FLOAT" ) )
-					type = user_defined_var_t::FLOAT;
+					type = user_defined_var_t::VT_FLOAT;
 				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "VEC3" ) )
-					type = user_defined_var_t::VEC3;
+					type = user_defined_var_t::VT_VEC3;
 				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "VEC4" ) )
-					type = user_defined_var_t::VEC4;
+					type = user_defined_var_t::VT_VEC4;
 				else
 				{
 					PARSE_ERR_EXPECTED( "TEXTURE or FLOAT or VEC3 or VEC4 or }" );
@@ -252,7 +228,7 @@ bool material_t::Load( const char* filename )
 				switch( type )
 				{
 					// texture
-					case user_defined_var_t::TEXTURE:
+					case user_defined_var_t::VT_TEXTURE:
 						token = &scanner.GetNextToken();
 						if( token->code == scanner_t::TC_STRING )
 						{
@@ -277,7 +253,7 @@ bool material_t::Load( const char* filename )
 						}
 						break;
 					// float
-					case user_defined_var_t::FLOAT:
+					case user_defined_var_t::VT_FLOAT:
 						token = &scanner.GetNextToken();
 						if( token->code == scanner_t::TC_NUMBER && token->type == scanner_t::DT_FLOAT )
 							var.value.float_ = token->value.float_;
@@ -288,11 +264,11 @@ bool material_t::Load( const char* filename )
 						}
 						break;
 					// vec3
-					case user_defined_var_t::VEC3:
+					case user_defined_var_t::VT_VEC3:
 						if( !ParseArrOfNumbers<float>( scanner, true, true, 3, &var.value.vec3[0] ) ) return false;
 						break;
 					// vec4
-					case user_defined_var_t::VEC4:
+					case user_defined_var_t::VT_VEC4:
 						if( !ParseArrOfNumbers<float>( scanner, true, true, 4, &var.value.vec4[0] ) ) return false;
 						break;
 				};
@@ -346,19 +322,19 @@ bool material_t::InitTheOther()
 	shader_prog->Unbind();
 
 	// init the attribute locations
-	attribute_locs.tanget = shader_prog->GetAttributeLocationSilently( "tangent" );
-	attribute_locs.position = shader_prog->GetAttributeLocationSilently( "position" );
-	attribute_locs.normal = shader_prog->GetAttributeLocationSilently( "normal" );
-	attribute_locs.tex_coords = shader_prog->GetAttributeLocationSilently( "tex_coords" );
+	attrib_locs.tanget = shader_prog->GetAttributeLocationSilently( "tangent" );
+	attrib_locs.position = shader_prog->GetAttributeLocationSilently( "position" );
+	attrib_locs.normal = shader_prog->GetAttributeLocationSilently( "normal" );
+	attrib_locs.tex_coords = shader_prog->GetAttributeLocationSilently( "tex_coords" );
 
 	// vertex weights
-	attribute_locs.vert_weight_bones_num = shader_prog->GetAttributeLocationSilently( "vert_weight_bones_num" );
-	if( attribute_locs.vert_weight_bones_num != -1 )
+	attrib_locs.vert_weight_bones_num = shader_prog->GetAttributeLocationSilently( "vert_weight_bones_num" );
+	if( attrib_locs.vert_weight_bones_num != -1 )
 	{
-		attribute_locs.vert_weight_bone_ids = shader_prog->GetAttributeLocation( "vert_weight_bone_ids" );
-		attribute_locs.vert_weight_weights = shader_prog->GetAttributeLocation( "vert_weight_weights" );
-		uniform_locs.skinning_rotations = shader_prog->GetUniformLocation( "skinning_rotations" );
-		uniform_locs.skinning_translations = shader_prog->GetUniformLocation( "skinning_translations" );
+		attrib_locs.vert_weight_bone_ids = shader_prog->GetAttributeLocation( "vert_weight_bone_ids" );
+		attrib_locs.vert_weight_weights = shader_prog->GetAttributeLocation( "vert_weight_weights" );
+		uni_locs.skinning_rotations = shader_prog->GetUniformLocation( "skinning_rotations" );
+		uni_locs.skinning_translations = shader_prog->GetUniformLocation( "skinning_translations" );
 	}
 
 	return true;
@@ -377,7 +353,7 @@ void material_t::Unload()
 	// loop all user defined vars and unload the textures
 	for( uint i=0; i<user_defined_vars.size(); i++ )
 	{
-		if( user_defined_vars[i].type == user_defined_var_t::TEXTURE )
+		if( user_defined_vars[i].type == user_defined_var_t::VT_TEXTURE )
 			rsrc::textures.Unload( user_defined_vars[i].value.texture );
 	}
 
@@ -399,9 +375,6 @@ void material_t::SetToDefault()
 	blending_dfactor = GL_ZERO;
 	depth_testing = true;
 	wireframe = false;
-	specular_color = vec4_t(1.0);
-	diffuse_color = vec4_t(1.0);
-	shininess = 0.0;
 	grass_map = NULL;
 	casts_shadow = true;
 	refracts = false;
@@ -416,11 +389,6 @@ Setup                                                                           
 void material_t::Setup()
 {
 	shader_prog->Bind();
-
-	// first set the standard vars
-	glMaterialfv( GL_FRONT, GL_DIFFUSE, &diffuse_color[0] );
-	glMaterialfv( GL_FRONT, GL_SPECULAR, &specular_color[0] );
-	glMaterialf( GL_FRONT, GL_SHININESS, shininess );
 
 	if( blends )
 	{
@@ -447,19 +415,19 @@ void material_t::Setup()
 		switch( udv->type )
 		{
 			// texture
-			case user_defined_var_t::TEXTURE:
+			case user_defined_var_t::VT_TEXTURE:
 				shader_prog->LocTexUnit( udv->uniform_location, *udv->value.texture, texture_unit++ );
 				break;
 			// float
-			case user_defined_var_t::FLOAT:
+			case user_defined_var_t::VT_FLOAT:
 				glUniform1f( udv->uniform_location, udv->value.float_ );
 				break;
 			// vec3
-			case user_defined_var_t::VEC3:
+			case user_defined_var_t::VT_VEC3:
 				glUniform3fv( udv->uniform_location, 1, &udv->value.vec3[0] );
 				break;
 			// vec4
-			case user_defined_var_t::VEC4:
+			case user_defined_var_t::VT_VEC4:
 				glUniform4fv( udv->uniform_location, 1, &udv->value.vec4[0] );
 				break;
 		}
