@@ -32,6 +32,7 @@ void mesh_node_t::Deinit()
 //=====================================================================================================================================
 // Render                                                                                                                             =
 //=====================================================================================================================================
+/// Called in material or blending stages
 void mesh_node_t::Render()
 {
 	glPushMatrix();
@@ -41,49 +42,49 @@ void mesh_node_t::Render()
 	if( skel_controller )
 	{
 		// first the uniforms
-		glUniformMatrix3fv( material->uniform_locs.skinning_rotations, skel_controller->skel_node->skeleton->bones.size(), 1,
+		glUniformMatrix3fv( material->uni_locs.skinning_rotations, skel_controller->skel_node->skeleton->bones.size(), 1,
 		                    &(skel_controller->skel_node->skel_anim_controller->bone_rotations[0])[0] );
-		glUniform3fv( material->uniform_locs.skinning_translations, skel_controller->skel_node->skeleton->bones.size(),
+		glUniform3fv( material->uni_locs.skinning_translations, skel_controller->skel_node->skeleton->bones.size(),
 		              &(skel_controller->skel_node->skel_anim_controller->bone_translations[0])[0] );
 
 		// then the attributes
-		DEBUG_ERR( material->attribute_locs.vert_weight_bones_num == -1 );
+		DEBUG_ERR( material->attrib_locs.vert_weight_bones_num == -1 );
 
 		mesh->vbos.vert_weights.Bind();
-		glEnableVertexAttribArray( material->attribute_locs.vert_weight_bones_num );
-		glVertexAttribPointer( material->attribute_locs.vert_weight_bones_num, 1, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(0) );
-		glEnableVertexAttribArray( material->attribute_locs.vert_weight_bone_ids );
-		glVertexAttribPointer( material->attribute_locs.vert_weight_bone_ids, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(4) );
-		glEnableVertexAttribArray( material->attribute_locs.vert_weight_weights );
-		glVertexAttribPointer( material->attribute_locs.vert_weight_weights, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(20) );
+		glEnableVertexAttribArray( material->attrib_locs.vert_weight_bones_num );
+		glVertexAttribPointer( material->attrib_locs.vert_weight_bones_num, 1, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(0) );
+		glEnableVertexAttribArray( material->attrib_locs.vert_weight_bone_ids );
+		glVertexAttribPointer( material->attrib_locs.vert_weight_bone_ids, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(4) );
+		glEnableVertexAttribArray( material->attrib_locs.vert_weight_weights );
+		glVertexAttribPointer( material->attrib_locs.vert_weight_weights, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(20) );
 	}
 
-	if( material->attribute_locs.position != -1 )
+	if( material->attrib_locs.position != -1 )
 	{
 		mesh->vbos.vert_coords.Bind();
-		glVertexAttribPointer( material->attribute_locs.position, 3, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( material->attribute_locs.position );
+		glVertexAttribPointer( material->attrib_locs.position, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attrib_locs.position );
 	}
 
-	if( material->attribute_locs.normal != -1 )
+	if( material->attrib_locs.normal != -1 )
 	{
 		mesh->vbos.vert_normals.Bind();
-		glVertexAttribPointer( material->attribute_locs.normal, 3, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( material->attribute_locs.normal );
+		glVertexAttribPointer( material->attrib_locs.normal, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attrib_locs.normal );
 	}
 
-	if( material->attribute_locs.tex_coords != -1 )
+	if( material->attrib_locs.tex_coords != -1 )
 	{
 		mesh->vbos.tex_coords.Bind();
-		glVertexAttribPointer( material->attribute_locs.tex_coords, 2, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( material->attribute_locs.tex_coords );
+		glVertexAttribPointer( material->attrib_locs.tex_coords, 2, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attrib_locs.tex_coords );
 	}
 
-	if( material->attribute_locs.tanget != -1 )
+	if( material->attrib_locs.tanget != -1 )
 	{
 		mesh->vbos.vert_tangents.Bind();
-		glVertexAttribPointer( material->attribute_locs.tanget, 4, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( material->attribute_locs.tanget );
+		glVertexAttribPointer( material->attrib_locs.tanget, 4, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( material->attrib_locs.tanget );
 	}
 
 	mesh->vbos.vert_indeces.Bind();
@@ -91,16 +92,16 @@ void mesh_node_t::Render()
 	glDrawElements( GL_TRIANGLES, mesh->vert_indeces.size(), GL_UNSIGNED_SHORT, 0 );
 
 	// disable
-	if( material->attribute_locs.position != -1 ) glDisableVertexAttribArray( material->attribute_locs.position );
-	if( material->attribute_locs.normal != -1 ) glDisableVertexAttribArray( material->attribute_locs.normal );
-	if( material->attribute_locs.tex_coords != -1 ) glDisableVertexAttribArray( material->attribute_locs.tex_coords );
-	if( material->attribute_locs.tanget != -1 ) glDisableVertexAttribArray( material->attribute_locs.tanget );
+	if( material->attrib_locs.position != -1 ) glDisableVertexAttribArray( material->attrib_locs.position );
+	if( material->attrib_locs.normal != -1 ) glDisableVertexAttribArray( material->attrib_locs.normal );
+	if( material->attrib_locs.tex_coords != -1 ) glDisableVertexAttribArray( material->attrib_locs.tex_coords );
+	if( material->attrib_locs.tanget != -1 ) glDisableVertexAttribArray( material->attrib_locs.tanget );
 
 	if( skel_controller )
 	{
-		glDisableVertexAttribArray( material->attribute_locs.vert_weight_bones_num );
-		glDisableVertexAttribArray( material->attribute_locs.vert_weight_bone_ids );
-		glDisableVertexAttribArray( material->attribute_locs.vert_weight_weights );
+		glDisableVertexAttribArray( material->attrib_locs.vert_weight_bones_num );
+		glDisableVertexAttribArray( material->attrib_locs.vert_weight_bone_ids );
+		glDisableVertexAttribArray( material->attrib_locs.vert_weight_weights );
 	}
 
 	vbo_t::UnbindAllTargets();
@@ -130,13 +131,13 @@ void mesh_node_t::RenderDepth()
 	if( skel_controller )
 	{
 		// first the uniforms
-		glUniformMatrix3fv( material->uniform_locs.skinning_rotations, skel_controller->skel_node->skeleton->bones.size(), 1,
+		glUniformMatrix3fv( material->uni_locs.skinning_rotations, skel_controller->skel_node->skeleton->bones.size(), 1,
 		                    &(skel_controller->skel_node->skel_anim_controller->bone_rotations[0])[0] );
-		glUniform3fv( material->uniform_locs.skinning_translations, skel_controller->skel_node->skeleton->bones.size(),
+		glUniform3fv( material->uni_locs.skinning_translations, skel_controller->skel_node->skeleton->bones.size(),
 		              &(skel_controller->skel_node->skel_anim_controller->bone_translations[0])[0] );
 
 		// then the attributes
-		DEBUG_ERR( material->attribute_locs.vert_weight_bones_num == -1 );
+		DEBUG_ERR( material->attrib_locs.vert_weight_bones_num == -1 );
 
 		mesh->vbos.vert_weights.Bind();
 		glEnableVertexAttribArray( r::is::shadows::shdr_depth_hw_skinning->GetAttributeLocation(0) );
@@ -159,9 +160,9 @@ void mesh_node_t::RenderDepth()
 
 	if( skel_controller )
 	{
-		glDisableVertexAttribArray( material->attribute_locs.vert_weight_bones_num );
-		glDisableVertexAttribArray( material->attribute_locs.vert_weight_bone_ids );
-		glDisableVertexAttribArray( material->attribute_locs.vert_weight_weights );
+		glDisableVertexAttribArray( material->attrib_locs.vert_weight_bones_num );
+		glDisableVertexAttribArray( material->attrib_locs.vert_weight_bone_ids );
+		glDisableVertexAttribArray( material->attrib_locs.vert_weight_weights );
 	}
 
 	vbo_t::UnbindAllTargets();
