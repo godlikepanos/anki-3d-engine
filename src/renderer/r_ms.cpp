@@ -41,11 +41,11 @@ void Init()
 
 	// create buffers
 	const int internal_format = GL_RGBA16F_ARB;
-	normal_fai.CreateEmpty( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
-	diffuse_fai.CreateEmpty( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
-	specular_fai.CreateEmpty( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
+	normal_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
+	diffuse_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
+	specular_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
 
-	depth_fai.CreateEmpty( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
+	depth_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
 	// you could use the above for SSAO but the difference is very litle.
 	//depth_fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	//depth_fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );

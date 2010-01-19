@@ -72,7 +72,7 @@ static void InitR()
 	r_fbo.SetNumOfColorAttachements(1);
 
 	// texture
-	r_fai.CreateEmpty( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGBA, GL_RGBA );
+	r_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGBA, GL_RGBA );
 
 	// attach the texes
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r_fai.GetGLID(), 0 );

@@ -47,7 +47,7 @@ static void InitBlurFBO()
 	blur_fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	blured_fai.CreateEmpty( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
+	blured_fai.CreateEmpty2D( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
 	blured_fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	blured_fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
@@ -82,7 +82,7 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	fai.CreateEmpty( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
+	fai.CreateEmpty2D( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
 	fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 

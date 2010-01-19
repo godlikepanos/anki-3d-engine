@@ -1,3 +1,4 @@
+/*
 #ifndef _PARTICLES_H_
 #define _PARTICLES_H_
 
@@ -8,11 +9,11 @@
 
 #define PARTICLE_VELS_NUM 2
 
-/*
+
 ===============================================================================================================================================================
 particle_t                                                                                                                                                    =
 ===============================================================================================================================================================
-*/
+
 class particle_t: public object_t
 {
 	public:
@@ -27,11 +28,11 @@ class particle_t: public object_t
 };
 
 
-/*
+
 ========
 particle_emitter_t
 ========
-*/
+
 class particle_emitter_t: public object_t
 {
 	private:
@@ -78,3 +79,4 @@ class particle_emitter_t: public object_t
 };
 
 #endif
+*/

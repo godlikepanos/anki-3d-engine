@@ -49,7 +49,7 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	fai.CreateEmpty( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGB, GL_RGB );
+	fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGB, GL_RGB );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
