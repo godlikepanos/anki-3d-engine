@@ -37,25 +37,27 @@ class image_t
 
 // texture_t
 /**
-Texture class. It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed
-and uncompressed TGAs and all formats of PNG (PNG loading comes through SDL)
-*/
+ * Texture resource class. It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed
+ * and uncompressed TGAs and all formats of PNG (PNG loading comes through SDL)
+ */
 class texture_t: public resource_t
 {
 	protected:
-		uint gl_id; ///< Idendification for OGL. The only class variable
+		uint   gl_id; ///< Idendification for OGL. The only class variable
+		GLenum type;
 
 	public:
-		 texture_t(): gl_id(numeric_limits<uint>::max()) {}
+		 texture_t(): gl_id(numeric_limits<uint>::max()), type(GL_TEXTURE_2D) {}
 		~texture_t() {}
 
 		inline uint GetGLID() const { DEBUG_ERR(gl_id==numeric_limits<uint>::max()); return gl_id; }
-		inline int  GetWidth() const { Bind(); int i; glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &i ); return i; }
-		inline int  GetHeight() const { Bind(); int i; glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &i ); return i; }
+		inline int  GetWidth() const { Bind(); int i; glGetTexLevelParameteriv( type, 0, GL_TEXTURE_WIDTH, &i ); return i; }
+		inline int  GetHeight() const { Bind(); int i; glGetTexLevelParameteriv( type, 0, GL_TEXTURE_HEIGHT, &i ); return i; }
 
 		bool Load( const char* filename );
 		void Unload();
-		void CreateEmpty( float width, float height, int internal_format, int format );
+		void CreateEmpty2D( float width, float height, int internal_format, int format );
+		void CreateEmpty2DMSAA( float width, float height, int samples_num, int internal_format );
 
 		void Bind( uint unit=0 ) const;
 

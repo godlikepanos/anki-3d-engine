@@ -8,11 +8,9 @@ unsigned char image_t::tga_header_uncompressed[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
 unsigned char image_t::tga_header_compressed[12]   = {0,0,10,0,0,0,0,0,0,0,0,0};
 
 
-/*
-=======================================================================================================================================
-LoadUncompressedTGA                                                                                                                   =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// LoadUncompressedTGA                                                                                                                =
+//=====================================================================================================================================
 bool image_t::LoadUncompressedTGA( const char* filename, fstream& fs )
 {
 	// read the info from header
@@ -58,11 +56,9 @@ bool image_t::LoadUncompressedTGA( const char* filename, fstream& fs )
 }
 
 
-/*
-=======================================================================================================================================
-LoadCompressedTGA                                                                                                                     =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// LoadCompressedTGA                                                                                                                  =
+//=====================================================================================================================================
 bool image_t::LoadCompressedTGA( const char* filename, fstream& fs )
 {
 	unsigned char header6[6];
@@ -172,12 +168,10 @@ bool image_t::LoadCompressedTGA( const char* filename, fstream& fs )
 }
 
 
-/*
-=======================================================================================================================================
-LoadTGA                                                                                                                               =
-Load a tga using the help of the above                                                                                                =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// LoadTGA                                                                                                                            =
+//=====================================================================================================================================
+/// Load a tga using the help of the above
 bool image_t::LoadTGA( const char* filename )
 {
 	fstream fs;
@@ -218,11 +212,9 @@ bool image_t::LoadTGA( const char* filename )
 }
 
 
-/*
-=======================================================================================================================================
-LoadPNG                                                                                                                               =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// LoadPNG                                                                                                                            =
+//=====================================================================================================================================
 bool image_t::LoadPNG( const char* filename )
 {
 	SDL_Surface *sdli;
@@ -265,11 +257,9 @@ bool image_t::LoadPNG( const char* filename )
 }
 
 
-/*
-=======================================================================================================================================
-Load                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// Load                                                                                                                               =
+//=====================================================================================================================================
 bool image_t::Load( const char* filename )
 {
 	// get the extension
@@ -309,13 +299,12 @@ texture_t                                                                       
 =======================================================================================================================================
 */
 
-/*
-=======================================================================================================================================
-Load                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// Load                                                                                                                               =
+//=====================================================================================================================================
 bool texture_t::Load( const char* filename )
 {
+	type = GL_TEXTURE_2D;
 	if( gl_id != numeric_limits<uint>::max() )
 	{
 		ERROR( "Texture allready loaded" );
@@ -329,16 +318,16 @@ bool texture_t::Load( const char* filename )
 	// bind the texture
 	glGenTextures( 1, &gl_id );
 	Bind(0);
-	if( r::mipmaping )  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	else                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	if( r::mipmaping )  glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( type, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, r::max_anisotropy );
+	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, r::max_anisotropy );
 
 	// leave to GL_REPEAT. There is not real performace impact
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( type, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( type, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
 	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
@@ -349,28 +338,22 @@ bool texture_t::Load( const char* filename )
 	else
 		int_format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
-	glTexImage2D( GL_TEXTURE_2D, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
-	if( r::mipmaping ) glGenerateMipmap(GL_TEXTURE_2D);
+	glTexImage2D( type, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
+	if( r::mipmaping ) glGenerateMipmap(type);
 
 	img.Unload();
 	return true;
 }
 
 
-/*
-=======================================================================================================================================
-CreateEmpty                                                                                                                           =
-=======================================================================================================================================
-*/
-void texture_t::CreateEmpty( float width_, float height_, int internal_format, int format_ )
+//=====================================================================================================================================
+// CreateEmpty2D                                                                                                                      =
+//=====================================================================================================================================
+void texture_t::CreateEmpty2D( float width_, float height_, int internal_format, int format_ )
 {
+	type = GL_TEXTURE_2D;
 	DEBUG_ERR( internal_format>0 && internal_format<=4 ); // deprecated internal format
-
-	if( gl_id != numeric_limits<uint>::max() )
-	{
-		ERROR( "Texture already loaded" );
-		return;
-	}
+	DEBUG_ERR( gl_id != numeric_limits<uint>::max() ) // Texture already loaded
 
 	// GL stuff
 	glGenTextures( 1, &gl_id );
@@ -381,9 +364,9 @@ void texture_t::CreateEmpty( float width_, float height_, int internal_format, i
 	TexParameter( GL_TEXTURE_WRAP_T, GL_CLAMP );
 
 	// allocate to vram
-	glTexImage2D( GL_TEXTURE_2D, 0, internal_format, width_, height_, 0, format_, GL_FLOAT, NULL );
+	glTexImage2D( type, 0, internal_format, width_, height_, 0, format_, GL_FLOAT, NULL );
 
-	if( r::mipmaping ) glGenerateMipmap(GL_TEXTURE_2D);
+	if( r::mipmaping ) glGenerateMipmap(type);
 
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
@@ -391,27 +374,40 @@ void texture_t::CreateEmpty( float width_, float height_, int internal_format, i
 }
 
 
-/*
-=======================================================================================================================================
-Unload                                                                                                                                =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// CreateEmpty2DMSAA                                                                                                                  =
+//=====================================================================================================================================
+void texture_t::CreateEmpty2DMSAA( float width, float height, int samples_num, int internal_format )
+{
+	type = GL_TEXTURE_2D_MULTISAMPLE;
+	DEBUG_ERR( internal_format>0 && internal_format<=4 ); // deprecated internal format
+	DEBUG_ERR( gl_id != numeric_limits<uint>::max() ) // Texture already loaded
+
+	glGenTextures( 1, &gl_id );
+	Bind();
+	
+	// allocate
+	glTexImage2DMultisample( type, samples_num, internal_format, width, height, false );
+}
+
+
+//=====================================================================================================================================
+// Unload                                                                                                                             =
+//=====================================================================================================================================
 void texture_t::Unload()
 {
 	glDeleteTextures( 1, &gl_id );
 }
 
 
-/*
-=======================================================================================================================================
-Bind                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// Bind                                                                                                                               =
+//=====================================================================================================================================
 void texture_t::Bind( uint unit ) const
 {
 	if( unit>=(uint)r::max_texture_units )
 		WARNING("Max tex units passed");
 
 	glActiveTexture( GL_TEXTURE0+unit );
-	glBindTexture( GL_TEXTURE_2D, gl_id );
+	glBindTexture( type, gl_id );
 }
