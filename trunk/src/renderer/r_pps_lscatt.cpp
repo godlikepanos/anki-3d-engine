@@ -46,7 +46,7 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	fai.CreateEmpty( wwidth, wheight, GL_RGB, GL_RGB );
+	fai.CreateEmpty2D( wwidth, wheight, GL_RGB, GL_RGB );
 	fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 

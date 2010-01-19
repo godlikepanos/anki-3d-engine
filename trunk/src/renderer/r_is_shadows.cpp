@@ -40,7 +40,7 @@ void Init()
 	fbo.Bind();
 
 	// texture
-	shadow_map.CreateEmpty( shadow_resolution * r::rendering_quality, shadow_resolution * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
+	shadow_map.CreateEmpty2D( shadow_resolution * r::rendering_quality, shadow_resolution * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
 	shadow_map.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	if( bilinear ) shadow_map.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	else           shadow_map.TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );

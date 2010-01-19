@@ -49,7 +49,7 @@ static void InitFBOs( fbo_t& fbo, texture_t& fai, int internal_format )
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	fai.CreateEmpty( wwidth, wheight, internal_format, GL_RGB );
+	fai.CreateEmpty2D( wwidth, wheight, internal_format, GL_RGB );
 	fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
