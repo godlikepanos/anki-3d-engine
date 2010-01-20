@@ -101,6 +101,7 @@ class material_t: public resource_t
 				int alpha_testing_map;
 			} uni_locs;
 		} dp;*/
+		material_t* dp_material;
 
 	//===================================================================================================================================
 	// funcs                                                                                                                            =
