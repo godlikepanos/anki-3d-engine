@@ -44,11 +44,8 @@ spot_light_t* spot_lights[2];
 //=====================================================================================================================================
 void Init()
 {
-	#if defined( _DEBUG_ )
-		PRINT( "Engine initializing (Debug)..." );
-	#else
-		PRINT( "Engine initializing (Release)..." );
-	#endif
+	PRINT( "Engine initializing..." );
+
 	srand( unsigned(time(NULL)) );
 	MathSanityChecks();
 
@@ -116,6 +113,8 @@ void Init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
+	app::PrintAppInfo();
+
 	Init();
 
 	PRINT( "Entering main loop" );

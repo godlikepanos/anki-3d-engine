@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include "app.h"
 
 namespace app { // begin of namespace
@@ -109,6 +110,23 @@ void WaitForNextFrame()
 	else
 		time = now;
 
+}
+
+
+//=====================================================================================================================================
+// PrintAppInfo                                                                                                                       =
+//=====================================================================================================================================
+void PrintAppInfo()
+{
+	cout << "App info: ";
+	#if defined( _DEBUG_ )
+		cout << "Debug ";
+	#else
+		cout << "Release ";
+	#endif
+	cout << "GLEW_" << glewGetString(GLEW_VERSION) << " ";
+	const SDL_version* v = SDL_Linked_Version();
+	cout << "SDL_" << int(v->major) << '.' << int(v->minor) << '.' <<  int(v->patch) << endl;
 }
 
 

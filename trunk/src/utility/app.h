@@ -16,6 +16,7 @@ extern void InitWindow( int w, int h, const char* window_caption  );
 extern void QuitApp( int code );
 extern void WaitForNextFrame();
 extern void TogleFullScreen();
+extern void PrintAppInfo();
 
 inline uint GetTicks()
 {
