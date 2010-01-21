@@ -97,6 +97,7 @@ void scanner_t::InitAsciiMap()
 	ascii_lookup_table['!'] = ascii_lookup_table['<'] = ascii_lookup_table['>'] = ascii_lookup_table['|'] = AC_SPECIAL;
 	ascii_lookup_table['&'] = ascii_lookup_table['+'] = ascii_lookup_table['-'] = ascii_lookup_table['*'] = AC_SPECIAL;
 	ascii_lookup_table['/'] = ascii_lookup_table['~'] = ascii_lookup_table['%'] = ascii_lookup_table['#'] = AC_SPECIAL;
+	ascii_lookup_table['^'] = AC_SPECIAL;
 
 	ascii_lookup_table['\t'] = ascii_lookup_table[' '] = ascii_lookup_table['\0'] = ascii_lookup_table['\r'] = AC_WHITESPACE;
 	ascii_lookup_table['\n'] = AC_ERROR; // newline is unacceptable char

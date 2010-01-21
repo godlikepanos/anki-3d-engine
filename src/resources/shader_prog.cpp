@@ -4,8 +4,8 @@
 #include "texture.h"
 
 
-#define SHADER_ERROR( x ) ERROR( "Shader prog \"" << GetName() << "\": " << x )
-#define SHADER_WARNING( x ) WARNING( "Shader prog \"" << GetName() << "\": " << x )
+#define SHADER_ERROR( x ) ERROR( "Shader (" << GetName() << "): " << x )
+#define SHADER_WARNING( x ) WARNING( "Shader (" << GetName() << "): " << x )
 
 
 

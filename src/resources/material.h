@@ -100,21 +100,22 @@ class material_t: public resource_t
 			{
 				int alpha_testing_map;
 			} uni_locs;
-		} dp;*/
-		material_t* dp_material;
+		} depth;*/
 
 	//===================================================================================================================================
 	// funcs                                                                                                                            =
 	//===================================================================================================================================
 	protected:
 		void SetToDefault();
-		bool InitTheOther(); ///< The func is for not polluting Load with extra code
+		bool AdditionalInit(); ///< The func is for not polluting Load with extra code
 		
 	public:
 		material_t() { SetToDefault(); }
 		void Setup();
 		bool Load( const char* filename );
 		void Unload();
+
+		bool HasHWSkinning() const { return attrib_locs.vert_weight_bones_num != -1; }
 };
 
 
