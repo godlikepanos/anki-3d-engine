@@ -7,6 +7,10 @@
 #include "shader_prog.h"
 #include "renderer.h"
 
+
+#define MTL_ERROR( x ) ERROR( "Material (" << GetPath() << GetName() << "): " << x );
+
+
 /*
 =======================================================================================================================================
 Blending dtuff                                                                                                                        =
@@ -65,10 +69,10 @@ bool material_t::Load( const char* filename )
 	{
 		token = &scanner.GetNextToken();
 
-		//** SHADER **
-		if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER" ) )
+		//** SHADER_PROG **
+		if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER_PROG" ) )
 		{
-			if( shader_prog ) ERROR( "Shader allready loaded" );
+			if( shader_prog ) ERROR( "Shader program allready loaded" );
 
 			token = &scanner.GetNextToken();
 			if( token->code != scanner_t::TC_STRING )
@@ -78,6 +82,19 @@ bool material_t::Load( const char* filename )
 			}
 			shader_prog = rsrc::shaders.Load( token->value.string );
 		}
+		/*//** DEPTH_SHADER_PROG **
+		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_SHADER_PROG" ) )
+		{
+			if( depth.shader_prog ) ERROR( "Depth shader program allready loaded" );
+
+			token = &scanner.GetNextToken();
+			if( token->code != scanner_t::TC_STRING )
+			{
+				PARSE_ERR_EXPECTED( "string" );
+				return false;
+			}
+			depth.shader_prog = rsrc::shaders.Load( token->value.string );
+		}*/
 		//** BLENDS **
 		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
 		{
@@ -263,6 +280,10 @@ bool material_t::Load( const char* filename )
 							return false;
 						}
 						break;
+					// vec2
+					case user_defined_var_t::VT_VEC2:
+						ERROR( "Unimplemented" );
+						break;
 					// vec3
 					case user_defined_var_t::VT_VEC3:
 						if( !ParseArrOfNumbers<float>( scanner, true, true, 3, &var.value.vec3[0] ) ) return false;
@@ -290,21 +311,27 @@ bool material_t::Load( const char* filename )
 
 	}while( true );
 
-	return InitTheOther();
+	return AdditionalInit();
 }
 
 
 //=====================================================================================================================================
-// InitTheOther                                                                                                                       =
+// AdditionalInit                                                                                                                     =
 //=====================================================================================================================================
-bool material_t::InitTheOther()
+bool material_t::AdditionalInit()
 {
-	// sanity check
+	// sanity checks
 	if( !shader_prog )
 	{
-		ERROR( "Material file (\"" << GetPath() << GetName() << "\") without shader is like cake without sugar" );
+		MTL_ERROR( "Without shader is like cake without sugar (missing SHADER_PROG)" );
 		return false;
 	}
+
+	/*if( !depth.shader_prog )
+	{
+		MTL_ERROR( "Without depth shader is like cake without shadow (missing DEPTH_SHADER_PROG)" );
+		return false;
+	}*/
 
 	// for all user defined vars get their location
 	shader_prog->Bind();
@@ -313,8 +340,8 @@ bool material_t::InitTheOther()
 		int loc = shader_prog->GetUniformLocation( user_defined_vars[i].name.c_str() );
 		if( loc == -1 )
 		{
-			ERROR( "Material \"" << GetPath() << GetName() << "\", shader \"" << shader_prog->GetName() << "\" and user defined var \"" <<
-			       user_defined_vars[i].name << "\" do not combine. Incorect location" );
+			MTL_ERROR( "Shader \"" << shader_prog->GetName() << "\" and user defined var \"" << user_defined_vars[i].name <<
+			           "\" do not combine. Incorrect location" );
 			return false;
 		}
 		user_defined_vars[i].uniform_location = loc;
@@ -378,6 +405,8 @@ void material_t::SetToDefault()
 	grass_map = NULL;
 	casts_shadow = true;
 	refracts = false;
+	/*depth.shader_prog = NULL;
+	depth.alpha_testing_map = NULL;*/
 }
 
 

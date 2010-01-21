@@ -50,7 +50,7 @@ void mesh_node_t::Render()
 		              &(skel_controller->skel_node->skel_anim_controller->bone_translations[0])[0] );
 
 		// then the attributes
-		DEBUG_ERR( mtl->attrib_locs.vert_weight_bones_num == -1 );
+		DEBUG_ERR( !mtl->HasHWSkinning() );
 
 		mesh->vbos.vert_weights.Bind();
 		glEnableVertexAttribArray( mtl->attrib_locs.vert_weight_bones_num );
