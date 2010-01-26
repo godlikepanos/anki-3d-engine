@@ -72,6 +72,9 @@ void Init()
 	spot_lights[0] = new spot_light_t();
 	spot_lights[0]->Init( "maps/temple/light2.light" );
 	spot_lights[0]->SetLocalTransformation( vec3_t( 1.3, 4.3, 3.0 ), mat3_t( euler_t(ToRad(-20), ToRad(20), 0.0) ), 1.0 );
+	spot_lights[1] = new spot_light_t();
+	spot_lights[1]->Init( "maps/temple/light3.light" );
+	spot_lights[1]->SetLocalTransformation( vec3_t( -2.3, 6.3, 2.9 ), mat3_t( euler_t(ToRad(-70), ToRad(-20), 0.0) ), 1.0 );
 
 	// horse
 	horse = new mesh_node_t();

@@ -125,7 +125,7 @@ void Init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	glClearColor( 0.1, 0.1, 0.1, 0.0 );
+	glClearColor( 0.1, 0.1, 0.1, 1.0 );
 	glClearDepth( 1.0 );
 	glClearStencil( 0 );
 	glDepthFunc( GL_LEQUAL );

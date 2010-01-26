@@ -63,7 +63,7 @@ RunPass                                                                         
 */
 void RunPass( const camera_t& cam )
 {
-	// FBO
+	/*// FBO
 	fbo.Bind();
 
 	// matrix
@@ -88,7 +88,7 @@ void RunPass( const camera_t& cam )
 	glColorMask( true, true, true, true );
 
 	// end
-	fbo.Unbind();
+	fbo.Unbind();*/
 }
 
 

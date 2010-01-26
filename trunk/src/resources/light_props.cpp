@@ -98,6 +98,7 @@ scanner_t scanner;
 			}
 				
 			texture = rsrc::textures.Load( token->value.string );
+			texture->TexParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
 		}
 		// end of file
 		else if( token->code == scanner_t::TC_EOF )

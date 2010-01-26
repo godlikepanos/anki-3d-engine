@@ -1,3 +1,4 @@
+//
 #if defined( _DIFFUSE_MAPPING_ ) || defined( _NORMAL_MAPPING_ ) || defined( _SPECULAR_MAPPING_ )
 	#define NEEDS_TEX_MAPPING 1
 #else

@@ -13,6 +13,9 @@ class material_t;
 /// Mesh node
 class mesh_node_t: public node_t
 {
+	private:
+		void Render( material_t* mtl ) const;
+
 	public:
 		// resources
 		mesh_t* mesh;

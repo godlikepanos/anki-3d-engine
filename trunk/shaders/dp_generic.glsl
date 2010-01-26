@@ -1,16 +1,17 @@
+//
 #pragma anki vert_shader_begins
 
 #pragma anki include "shaders/hw_skinning.glsl"
 
-uniform vec3 position;
-uniform vec2 tex_coords;
+attribute vec3 position;
+attribute vec2 tex_coords;
 
 varying vec2 tex_coords_v2f;
 
 void main()
 {
 	#if defined( _GRASS_LIKE_ )
-		tex_coords_v2f = gl_MultiTexCoord0.xy;
+		tex_coords_v2f = tex_coords;
 	#endif
 
 	#if defined( _HW_SKINNING_ )
@@ -19,10 +20,10 @@ void main()
 
 		HWSkinning( _rot, _tsl );
 		
-		vec3 pos_lspace = ( _rot * gl_Vertex.xyz) + _tsl;
+		vec3 pos_lspace = ( _rot * position) + _tsl;
 		gl_Position =  gl_ModelViewProjectionMatrix * vec4(pos_lspace, 1.0);
 	#else
-	  gl_Position = ftransform();
+	  gl_Position =  gl_ModelViewProjectionMatrix * vec4(position, 1.0);
 	#endif
 }
 

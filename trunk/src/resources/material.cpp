@@ -95,6 +95,19 @@ bool material_t::Load( const char* filename )
 			}
 			depth.shader_prog = rsrc::shaders.Load( token->value.string );
 		}*/
+		//** DEPTH_MATERIAL **
+		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_PASS_MATERIAL" ) )
+		{
+			if( dp_mtl ) ERROR( "Depth material already loaded" );
+
+			token = &scanner.GetNextToken();
+			if( token->code != scanner_t::TC_STRING )
+			{
+				PARSE_ERR_EXPECTED( "string" );
+				return false;
+			}
+			dp_mtl = rsrc::materials.Load( token->value.string );
+		}
 		//** BLENDS **
 		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
 		{
@@ -405,16 +418,15 @@ void material_t::SetToDefault()
 	grass_map = NULL;
 	casts_shadow = true;
 	refracts = false;
+	dp_mtl = NULL;
 	/*depth.shader_prog = NULL;
 	depth.alpha_testing_map = NULL;*/
 }
 
 
-/*
-=======================================================================================================================================
-Setup                                                                                                                                 =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// Setup                                                                                                                              =
+//=====================================================================================================================================
 void material_t::Setup()
 {
 	shader_prog->Bind();
