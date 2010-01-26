@@ -25,7 +25,7 @@ VARS                                                                            
 static fbo_t b_fbo; ///< blending models FBO
 static fbo_t r_fbo; ///< refracting models FBO
 
-static texture_t r_fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
+/*static*/ texture_t r_fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
 
 static shader_prog_t* r2b_shdr;
 
@@ -117,13 +117,7 @@ void RunStage( const camera_t& cam )
 	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
 	{
 		mesh_node_t* mesh_node = scene::mesh_nodes[i];
-		if( mesh_node->material->blends )
-		{
-			b_fbo.Bind();
-			mesh_node->material->Setup();
-			mesh_node->Render();
-		}
-		else if( mesh_node->material->refracts )
+		if( mesh_node->material->refracts )
 		{
 			// write to the rFbo
 			r_fbo.Bind();
@@ -131,8 +125,15 @@ void RunStage( const camera_t& cam )
 			mesh_node->material->Setup();
 			mesh_node->Render();
 
-			b_fbo.Bind();
+			//b_fbo.Bind();
 		}
+		else if( mesh_node->material->blends )
+		{
+			b_fbo.Bind();
+			mesh_node->material->Setup();
+			mesh_node->Render();
+		}
+
 	}
 
 	// render the smodels

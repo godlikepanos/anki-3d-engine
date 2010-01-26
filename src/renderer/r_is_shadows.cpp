@@ -104,7 +104,13 @@ void RunPass( const camera_t& cam )
 	// render all meshes
 	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
 	{
-		RenderDepth<mesh_node_t, true>( *scene::mesh_nodes[i] );
+		mesh_node_t* mesh_node = scene::mesh_nodes[i];
+		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
+
+		DEBUG_ERR( mesh_node->material->dp_mtl == NULL );
+
+		mesh_node->material->dp_mtl->Setup();
+		mesh_node->RenderDepth();
 	}
 
 	glDisable( GL_POLYGON_OFFSET_FILL );

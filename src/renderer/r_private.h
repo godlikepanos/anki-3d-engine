@@ -92,6 +92,8 @@ namespace bs
 	extern void Init();
 	extern void RunStage( const camera_t& cam );
 	extern texture_t fai_bs_scene;
+
+	extern texture_t r_fai; // ToDo: remove it
 }
 
 

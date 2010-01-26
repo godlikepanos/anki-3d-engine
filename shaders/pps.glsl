@@ -188,6 +188,6 @@ void main (void)
 	//gl_FragColor = texture2D( pps_boom_fai, tex_coords );
 	//gl_FragColor = texture2D( is_fai, tex_coords );
 	//gl_FragData[0].rgb = UnpackNormal( texture2D( ms_normal_fai, tex_coords ).rg );
-	//gl_FragData[0] = vec4( hdr, 1.0 );
+	gl_FragData[0] = vec4( hdr, 1.0 );
 }
 

@@ -102,6 +102,8 @@ class material_t: public resource_t
 			} uni_locs;
 		} depth;*/
 
+		material_t* dp_mtl;
+
 	//===================================================================================================================================
 	// funcs                                                                                                                            =
 	//===================================================================================================================================
@@ -116,6 +118,7 @@ class material_t: public resource_t
 		void Unload();
 
 		bool HasHWSkinning() const { return attrib_locs.vert_weight_bones_num != -1; }
+		bool HasAlphaTesting() const { return dp_mtl!=NULL && dp_mtl->attrib_locs.tex_coords!=-1; }
 };
 
 
