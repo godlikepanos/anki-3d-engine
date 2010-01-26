@@ -14,7 +14,7 @@ class material_t;
 class mesh_node_t: public node_t
 {
 	private:
-		void Render( material_t* mtl ) const;
+		void Render( material_t* mtl ) const; ///< Common code for Render() and RenderDepth()
 
 	public:
 		// resources
@@ -25,8 +25,8 @@ class mesh_node_t: public node_t
 		skel_controller_t* skel_controller;
 		// funcs
 		mesh_node_t(): node_t(NT_MESH), skel_controller(NULL) {}
-		void Render();
-		void RenderDepth();
+		void Render() { Render(material); }
+		void RenderDepth() { Render( material->dp_mtl ); }
 		void Init( const char* filename );
 		void Deinit();
 };
