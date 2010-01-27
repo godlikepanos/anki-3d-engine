@@ -370,7 +370,7 @@ void texture_t::CreateEmpty2D( float width_, float height_, int internal_format,
 
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
-		ERROR( "GL_ERR: glTexImage2D failed: " << gluErrorString( errid ) );
+		ERROR( "OpenGL Error: " << gluErrorString( errid ) );
 }
 
 

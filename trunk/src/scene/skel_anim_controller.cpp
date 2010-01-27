@@ -24,11 +24,11 @@ skel_anim_controller_t::skel_anim_controller_t( skel_node_t* skel_node_ ):
 //=====================================================================================================================================
 void skel_anim_controller_t::Interpolate( skel_anim_t* animation, float frame )
 {
-	DEBUG_ERR( frame >= skel_anim->frames_num );
+	DEBUG_ERR( frame >= animation->frames_num );
 
 	// calculate the t (used in slerp and lerp) and
 	// calc the l_pose and r_pose witch indicate the pose ids in witch the frame lies between
-	const vec_t<uint>& keyframes = skel_anim->keyframes;
+	const vec_t<uint>& keyframes = animation->keyframes;
 	float t = 0.0;
 	uint l_pose = 0, r_pose = 0;
 	for( uint j=0; j<keyframes.size(); j++ )
@@ -53,7 +53,7 @@ void skel_anim_controller_t::Interpolate( skel_anim_t* animation, float frame )
 	DEBUG_ERR( bone_rotations.size()<1 );
 	for( uint i=0; i<bone_rotations.size(); i++ )
 	{
-		const skel_anim_t::bone_anim_t& banim = skel_anim->bones[i];
+		const skel_anim_t::bone_anim_t& banim = animation->bones[i];
 
 		mat3_t& local_rot = bone_rotations[i];
 		vec3_t& local_transl = bone_translations[i];

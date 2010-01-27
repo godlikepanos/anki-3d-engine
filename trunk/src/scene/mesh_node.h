@@ -3,11 +3,10 @@
 
 #include "common.h"
 #include "node.h"
-
+#include "material.h"
 
 class skel_controller_t;
 class mesh_t;
-class material_t;
 
 
 /// Mesh node

@@ -79,7 +79,7 @@ static void InitR()
 	// unbind
 	r_fbo.Unbind();
 
-	//r2b_shdr =
+	r2b_shdr = rsrc::shaders.Load( "shaders/bs_refract.glsl" );
 }
 
 
@@ -119,7 +119,11 @@ void RunStage( const camera_t& cam )
 			mesh_node->material->Setup();
 			mesh_node->Render();
 
-			//b_fbo.Bind();
+			b_fbo.Bind();
+			glDisable( GL_DEPTH_TEST );
+			r2b_shdr->Bind();
+			r2b_shdr->LocTexUnit( r2b_shdr->GetUniformLocation(0), r_fai, 0 );
+			r::DrawQuad( r2b_shdr->GetAttributeLocation(0) );
 		}
 		else if( mesh_node->material->blends )
 		{

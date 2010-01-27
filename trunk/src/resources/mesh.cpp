@@ -154,7 +154,7 @@ bool mesh_t::Load( const char* filename )
 	}
 
 	CreateAllNormals();
-	CreateVertTangents();
+	if( tex_coords.size() > 0 ) CreateVertTangents();
 	CreateVertIndeces();
 	CreateVBOs();
 	CalcBSphere();
@@ -307,12 +307,12 @@ void mesh_t::CreateVBOs()
 	vbos.vert_indeces.Create( GL_ELEMENT_ARRAY_BUFFER, vert_indeces.GetSizeInBytes(), &vert_indeces[0], GL_STATIC_DRAW );
 	vbos.vert_coords.Create( GL_ARRAY_BUFFER, vert_coords.GetSizeInBytes(), &vert_coords[0], GL_STATIC_DRAW );
 	vbos.vert_normals.Create( GL_ARRAY_BUFFER, vert_normals.GetSizeInBytes(), &vert_normals[0], GL_STATIC_DRAW );
-	vbos.vert_tangents.Create( GL_ARRAY_BUFFER, vert_tangents.GetSizeInBytes(), &vert_tangents[0], GL_STATIC_DRAW );
+	if( vert_tangents.size() > 1 )
+		vbos.vert_tangents.Create( GL_ARRAY_BUFFER, vert_tangents.GetSizeInBytes(), &vert_tangents[0], GL_STATIC_DRAW );
 	if( tex_coords.size() > 1 )
 		vbos.tex_coords.Create( GL_ARRAY_BUFFER, tex_coords.GetSizeInBytes(), &tex_coords[0], GL_STATIC_DRAW );
 	if( vert_weights.size() > 1 )
 		vbos.vert_weights.Create( GL_ARRAY_BUFFER, vert_weights.GetSizeInBytes(), &vert_weights[0], GL_STATIC_DRAW );
-
 }
 
 

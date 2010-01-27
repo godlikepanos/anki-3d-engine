@@ -136,11 +136,9 @@ void RunStage( const camera_t& cam )
 
 	if( r::pps::hdr::enabled )
 	{
-		//r::pps::hdr::pass2_fai.Bind(3);
-		r::bs::r_fai.Bind(3);
+		r::pps::hdr::pass2_fai.Bind(3);
+		//r::bs::r_fai.Bind(3);
 		glUniform1i( shdr_vars::hdr_fai, 3 );
-
-
 	}
 
 	if( r::pps::lscatt::enabled )

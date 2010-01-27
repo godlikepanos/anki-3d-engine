@@ -5,7 +5,6 @@
 #include "mesh.h"
 #include "skel_anim.h"
 #include "light_props.h"
-#include "script.h"
 
 
 namespace rsrc {
@@ -23,6 +22,5 @@ container_t<mesh_t>        meshes;
 container_t<skeleton_t>    skeletons;
 container_t<skel_anim_t>   skel_anims;
 container_t<light_props_t> light_props;
-container_t<script_t>      scripts;
 
 } // end namespace
