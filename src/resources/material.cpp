@@ -278,7 +278,7 @@ bool material_t::Load( const char* filename )
 						}
 						else
 						{
-							PARSE_ERR_EXPECTED( "string" );
+							PARSE_ERR_EXPECTED( "string or IS_FAI or MS_NORMAL_FAI or MS_DEPTH_FAI" );
 							return false;
 						}
 						break;

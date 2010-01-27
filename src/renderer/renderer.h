@@ -36,6 +36,7 @@ extern int  max_anisotropy; ///< Max texture anisotropy. Used in texture_t::Load
 extern void TakeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
 extern void Init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::Init" functions among other things
 extern void PrepareNextFrame(); ///< Runs before rendering
+extern const uchar* GetLastError(); ///< GetLastError
 extern void PrintLastError(); ///< Prints last OpenGL error
 inline const string& GetStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
 extern void Render( const camera_t& cam ); ///< The spine function of the renderer

@@ -125,7 +125,7 @@ void Init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	glClearColor( 0.1, 0.1, 0.1, 1.0 );
+	glClearColor( 0.1, 0.1, 0.1, 0.0 );
 	glClearDepth( 1.0 );
 	glClearStencil( 0 );
 	glDepthFunc( GL_LEQUAL );
@@ -306,7 +306,16 @@ void PrintLastError()
 {
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
-		ERROR( "GL_ERR: " << gluErrorString( errid ) );
+		ERROR( "OpenGL Error: " << gluErrorString( errid ) );
+}
+
+
+//=====================================================================================================================================
+// GetLastError                                                                                                                       =
+//=====================================================================================================================================
+const uchar* GetLastError()
+{
+	return gluErrorString( glGetError() );
 }
 
 

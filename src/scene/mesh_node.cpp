@@ -16,6 +16,12 @@ void mesh_node_t::Init( const char* filename )
 {
 	mesh = rsrc::meshes.Load( filename );
 	material = rsrc::materials.Load( mesh->material_name.c_str() );
+
+	// sanity checks
+	if( material->attrib_locs.tex_coords != -1 && mesh->vbos.tex_coords.GetGLID() == 0 )
+	{
+		ERROR( "The shader program needs information that the mesh do not have" );
+	}
 }
 
 

@@ -101,7 +101,7 @@ void RunStage( const camera_t& cam )
 	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
 	{
 		mesh_node_t* mesh_node = scene::mesh_nodes[i];
-		if( mesh_node->material->blends ) continue;
+		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
 		mesh_node->material->Setup();
 		mesh_node->Render();
 	}
