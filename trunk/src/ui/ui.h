@@ -1,5 +1,5 @@
-#ifndef _HUD_H_
-#define _HUD_H_
+#ifndef _UI_H_
+#define _UI_H_
 
 #include "common.h"
 
@@ -7,7 +7,7 @@ namespace m {
 	class vec4_t;
 }
 
-namespace hud { // begin namespace
+namespace ui { // begin namespace
 
 
 extern void Init(); // exec after init SDL
