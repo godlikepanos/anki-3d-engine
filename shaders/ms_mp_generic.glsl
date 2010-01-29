@@ -37,8 +37,7 @@ varying vec3 normal_v2f;
 varying vec2 tex_coords_v2f;
 varying vec3 tangent_v2f;
 varying float w_v2f;
-varying vec3 eye_v2f; ///< In tangent space
-varying vec3 vert_pos_eye_space_v2f;
+varying vec3 vert_pos_eye_space_v2f; ///< For env mapping. AKA view_vector
 
 
 
@@ -89,23 +88,8 @@ void main()
 	#endif
 
 
-	#if defined( _ENVIRONMENT_MAPPING_ )
+	#if defined( _ENVIRONMENT_MAPPING_ ) && defined( _PARALLAX_MAPPING_ )
 		vert_pos_eye_space_v2f = vec3( gl_ModelViewMatrix * vec4(position, 1.0) );
-	#endif
-
-
-	#if defined( _PARALLAX_MAPPING_ )
-		/*vec3 t = gl_NormalMatrix * tangent.xyz;
-		vec3 n = normal;
-		vec3 b = cross( n, t )  tangent.w;
-
-		vec3 eye_pos = gl_Position.xyz - gl_ModelViewMatrixInverse[3].xyz;
-		eye_pos = eye_pos - ( gl_ModelViewMatrixInverse * gl_Vertex ).xyz;
-
-		mat3 tbn_mat = mat3( t, b, n );
-		eye = tbn_mat * eye_pos;
-		//eye.y = -eye.y;
-		//eye.x = -eye.x;*/
 	#endif
 }
 
@@ -159,7 +143,7 @@ void main()
 	// The code below reads the height map, makes some calculations and returns a new tex_coords                                        =
 	//===================================================================================================================================
 	#if defined( _PARALLAX_MAPPING_ )
-		const float _scale = 0.04;
+		/*const float _scale = 0.04;
 		const float _bias = scale * 0.4;
 
 		vec3 _norm_eye = normalize( eye );
@@ -167,7 +151,29 @@ void main()
 		float _h = texture2D( height_map, tex_coords_v2f ).r;
 		float _height = _scale * _h - _bias;
 
-		vec2 _super_tex_coords_v2f = _height * _norm_eye.xy + tex_coords_v2f;
+		vec2 _super_tex_coords_v2f = _height * _norm_eye.xy + tex_coords_v2f;*/
+		const float maxStepCount = 100.0;
+		float nSteps = maxStepCount * length(vert_pos_eye_space_v2f.xy);
+
+		vec3 dir = vert_pos_eye_space_v2f;
+		dir.xy /= 8.0;
+		dir /= -nSteps * dir.z;
+
+		float diff0, diff1 = 1.0 - texture2D( height_map, tex_coords_v2f ).a;
+		if( diff1 > 0.0 )
+		{
+			do 
+			{
+				tex_coords_v2f += dir;
+
+				diff0 = diff1;
+				diff1 = texCoord.z - texture2D(Bump, tex_coords_v2f.xy ).w;
+			} while( diff1 > 0.0 );
+
+			tex_coords_v2f.xy += (diff1 / (diff0 - diff1)) * dir.xy;
+		}
+
+		vec2 _super_tex_coords = texCoord.xy;
 	#else
 		#define _super_tex_coords tex_coords_v2f
 	#endif

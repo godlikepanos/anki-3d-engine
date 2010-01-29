@@ -14,25 +14,33 @@ IntToStr                                                                        
 */
 string IntToStr( int i )
 {
-	string s = "";
-	if( i == 0 )
-	{
-		s = "0";
-		return s;
-	}
+	char str [256];
+	char* pstr = str + ( (sizeof(str)/sizeof(char)) - 1 );
+	bool negative = false;
+	
+	*pstr = '\0';
+	
 	if( i < 0 )
 	{
-		s += '-';
 		i = -i;
+		negative = true;
 	}
-	int count = log10(i);
-	while( count >= 0 )
+	
+	do
 	{
-		s += ('0' + i/pow(10.0, count));
-		i -= static_cast<int>(i/pow(10.0,count)) * static_cast<int>(pow(10.0,count));
-		count--;
+		--pstr;
+		int remain = i % 10;
+		i = i / 10;
+		*pstr = '0' + remain;
+	} while( i != 0 );
+	
+	if( negative )
+	{
+		--pstr;
+		*pstr = '-';
 	}
-	return s;
+	
+	return string(pstr);
 }
 
 

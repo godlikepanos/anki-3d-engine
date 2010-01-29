@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include "hud.h"
+#include "ui.h"
 #include "renderer.h"
 #include "texture.h"
 #include "resource.h"
 
-namespace hud {
+namespace ui {
 
 
 /*

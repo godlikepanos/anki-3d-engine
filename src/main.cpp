@@ -8,7 +8,7 @@
 #include "camera.h"
 #include "gmath.h"
 #include "renderer.h"
-#include "hud.h"
+#include "ui.h"
 #include "app.h"
 #include "particles.h"
 #include "texture.h"
@@ -53,7 +53,7 @@ void Init()
 	uint ticks = app::GetTicks();
 
 	r::Init();
-	hud::Init();
+	ui::Init();
 
 	// camera
 	main_cam = new camera_t( r::aspect_ratio*ToRad(60.0), ToRad(60.0), 0.5, 100.0 );
@@ -180,12 +180,12 @@ int main( int /*argc*/, char* /*argv*/[] )
 		//map.octree.root->bounding_box.Render();
 
 		// print some debug stuff
-		hud::SetColor( vec4_t(1.0, 1.0, 1.0, 1.0) );
-		hud::SetPos( -0.98, 0.95 );
-		hud::SetFontWidth( 0.03 );
-		hud::Printf( "frame:%d time:%dms\n", r::frames_num, app::GetTicks()-ticks_ );
-		//hud::Print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
-		hud::Printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translation_wspace.x, mover->translation_wspace.y, mover->translation_wspace.z,
+		ui::SetColor( vec4_t(1.0, 1.0, 1.0, 1.0) );
+		ui::SetPos( -0.98, 0.95 );
+		ui::SetFontWidth( 0.03 );
+		ui::Printf( "frame:%d time:%dms\n", r::frames_num, app::GetTicks()-ticks_ );
+		//ui::Print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
+		ui::Printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translation_wspace.x, mover->translation_wspace.y, mover->translation_wspace.z,
 								 ToDegrees(euler_t(mover->rotation_wspace).x), ToDegrees(euler_t(mover->rotation_wspace).y), ToDegrees(euler_t(mover->rotation_wspace).z) );
 
 		if( i::keys[SDLK_ESCAPE] ) break;
