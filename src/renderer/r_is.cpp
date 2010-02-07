@@ -343,8 +343,8 @@ static void PointLightPass( const camera_t& cam, const point_light_t& light )
 	glEnableVertexAttribArray( shader.GetAttributeLocation(0) );
 	glEnableVertexAttribArray( shader.GetAttributeLocation(1) );
 
-	glVertexAttribPointer( shader.GetAttributeLocation(0), 3, GL_FLOAT, false, 0, &view_vectors[0] );
-	glVertexAttribPointer( shader.GetAttributeLocation(1), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
+	glVertexAttribPointer( shader.GetAttributeLocation(0), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
+	glVertexAttribPointer( shader.GetAttributeLocation(1), 3, GL_FLOAT, false, 0, &view_vectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
 
@@ -447,8 +447,8 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	glEnableVertexAttribArray( shdr->GetAttributeLocation(0) );
 	glEnableVertexAttribArray( shdr->GetAttributeLocation(1) );
 
-	glVertexAttribPointer( shdr->GetAttributeLocation(0), 3, GL_FLOAT, false, 0, &view_vectors[0] );
-	glVertexAttribPointer( shdr->GetAttributeLocation(1), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
+	glVertexAttribPointer( shdr->GetAttributeLocation(0), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
+	glVertexAttribPointer( shdr->GetAttributeLocation(1), 3, GL_FLOAT, false, 0, &view_vectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
 
@@ -481,7 +481,6 @@ void RunStage( const camera_t& cam )
 	glLoadIdentity();
 
 	glDisable( GL_DEPTH_TEST );
-	glPolygonMode( GL_FRONT, GL_FILL );
 
 	// ambient pass
 	AmbientPass( cam, scene::GetAmbientColor() );

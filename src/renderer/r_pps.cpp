@@ -8,7 +8,7 @@ namespace r {
 namespace pps {
 
 namespace edgeaa {
-	bool enabled = true;
+	bool enabled = false;
 }
 
 /*
@@ -112,7 +112,6 @@ void RunStage( const camera_t& cam )
 	// set GL
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
-	glPolygonMode( GL_FRONT, GL_FILL );
 
 	r::SetViewport( 0, 0, r::w*r::rendering_quality, r::h*r::rendering_quality );
 
@@ -120,6 +119,7 @@ void RunStage( const camera_t& cam )
 	shdr_post_proc_stage->Bind();
 
 	r::is::fai.Bind(0);
+	//r::ms::depth_fai.Bind(0);
 	glUniform1i( shdr_vars::is_fai, 0 );
 
 	if( r::pps::ssao::enabled )

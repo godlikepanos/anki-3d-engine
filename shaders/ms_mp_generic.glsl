@@ -88,7 +88,7 @@ void main()
 	#endif
 
 
-	#if defined( _ENVIRONMENT_MAPPING_ ) && defined( _PARALLAX_MAPPING_ )
+	#if defined( _ENVIRONMENT_MAPPING_ ) || defined( _PARALLAX_MAPPING_ )
 		vert_pos_eye_space_v2f = vec3( gl_ModelViewMatrix * vec4(position, 1.0) );
 	#endif
 }
@@ -152,28 +152,28 @@ void main()
 		float _height = _scale * _h - _bias;
 
 		vec2 _super_tex_coords_v2f = _height * _norm_eye.xy + tex_coords_v2f;*/
+
+		vec2 _super_tex_coords = tex_coords_v2f;
 		const float maxStepCount = 100.0;
-		float nSteps = maxStepCount * length(vert_pos_eye_space_v2f.xy);
+		float nSteps = maxStepCount * length(_super_tex_coords);
 
 		vec3 dir = vert_pos_eye_space_v2f;
 		dir.xy /= 8.0;
 		dir /= -nSteps * dir.z;
 
-		float diff0, diff1 = 1.0 - texture2D( height_map, tex_coords_v2f ).a;
+		float diff0, diff1 = 1.0 - texture2D( height_map, _super_tex_coords ).a;
 		if( diff1 > 0.0 )
 		{
 			do 
 			{
-				tex_coords_v2f += dir;
+				_super_tex_coords += dir.xy;
 
 				diff0 = diff1;
-				diff1 = texCoord.z - texture2D(Bump, tex_coords_v2f.xy ).w;
+				diff1 = texture2D(height_map, _super_tex_coords ).w;
 			} while( diff1 > 0.0 );
 
-			tex_coords_v2f.xy += (diff1 / (diff0 - diff1)) * dir.xy;
+			_super_tex_coords.xy += (diff1 / (diff0 - diff1)) * dir.xy;
 		}
-
-		vec2 _super_tex_coords = texCoord.xy;
 	#else
 		#define _super_tex_coords tex_coords_v2f
 	#endif

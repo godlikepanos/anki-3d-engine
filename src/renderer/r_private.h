@@ -56,7 +56,6 @@ namespace pps
 {
 	extern void Init();
 	extern void RunStage( const camera_t& cam );
-	extern texture_t fai;
 
 	namespace ssao
 	{

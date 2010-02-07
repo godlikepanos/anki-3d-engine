@@ -172,8 +172,8 @@ bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
 		int loc = GetUniformLocation( pars.uniforms[i].name.c_str() );
 		if( loc == -1 )
 		{
-			SHADER_ERROR( "Check the previous error" );
-			return false;
+			SHADER_WARNING( "Check the previous error" );
+			continue;
 		}
 		custom_uni_loc_to_real_loc[pars.uniforms[i].custom_loc] = loc;
 	}

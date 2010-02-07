@@ -113,6 +113,8 @@ namespace pps
 	{
 		extern bool enabled; ///< Light scattering on/of
 	}
+
+	extern texture_t fai;
 }
 
 /// debug stage namespace

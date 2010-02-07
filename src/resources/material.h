@@ -29,6 +29,7 @@ class material_t: public resource_t
 				{
 					texture_t* texture;
 					float      float_;
+					vec2_t     vec2;
 					vec3_t     vec3;
 					vec4_t     vec4;
 					value_t(): texture(NULL) {}

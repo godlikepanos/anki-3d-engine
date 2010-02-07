@@ -85,7 +85,7 @@ void Init()
 	sarge = new mesh_node_t();
 	sarge->Init( "meshes/sphere/sphere16.mesh" );
 	//sarge->SetLocalTransformation( vec3_t( 0, -2.8, 1.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 1.1 );
-	sarge->SetLocalTransformation( vec3_t( 0, 2.0, 2.0 ), mat3_t::GetIdentity(), 1.2 );
+	sarge->SetLocalTransformation( vec3_t( 0, 2.0, 2.0 ), mat3_t::GetIdentity(), 0.4 );
 	
 	// floor
 	floor__ = new mesh_node_t();
@@ -193,15 +193,15 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( i::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
-		sprintf( str, "capt/%05d.jpg", r::frames_num );
+		sprintf( str, "capt/%06d.jpg", r::frames_num );
 		r::TakeScreenshot(str);*/
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::PrintLastError();
-		if( 0 )
+		if( 1 )
 		{
-			if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
+			//if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
 			app::WaitForNextFrame();
 		}
 		else
