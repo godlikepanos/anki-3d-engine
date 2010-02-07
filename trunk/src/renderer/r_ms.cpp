@@ -45,8 +45,9 @@ void Init()
 	diffuse_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
 	specular_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, internal_format, GL_RGBA );
 
-	depth_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
-	// you could use the above for SSAO but the difference is very litle.
+	//depth_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
+	depth_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT );
+	// you could use the above for SSAO but the difference is very little.
 	//depth_fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	//depth_fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
@@ -55,7 +56,8 @@ void Init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, diffuse_fai.GetGLID(), 0 );
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, specular_fai.GetGLID(), 0 );
 
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.GetGLID(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )

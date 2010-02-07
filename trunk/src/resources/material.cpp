@@ -276,9 +276,13 @@ bool material_t::Load( const char* filename )
 						{
 							var.value.texture = &r::ms::depth_fai;
 						}
+						else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "PPS_FAI" ) )
+						{
+							var.value.texture = &r::pps::fai;
+						}
 						else
 						{
-							PARSE_ERR_EXPECTED( "string or IS_FAI or MS_NORMAL_FAI or MS_DEPTH_FAI" );
+							PARSE_ERR_EXPECTED( "string or IS_FAI or MS_NORMAL_FAI or MS_DEPTH_FAI or PPS_FAI" );
 							return false;
 						}
 						break;
@@ -462,6 +466,10 @@ void material_t::Setup()
 			// float
 			case user_defined_var_t::VT_FLOAT:
 				glUniform1f( udv->uniform_location, udv->value.float_ );
+				break;
+			// vec2
+			case user_defined_var_t::VT_VEC2:
+				glUniform2fv( udv->uniform_location, 1, &udv->value.vec2[0] );
 				break;
 			// vec3
 			case user_defined_var_t::VT_VEC3:

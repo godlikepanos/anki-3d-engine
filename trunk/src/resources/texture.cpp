@@ -349,7 +349,7 @@ bool texture_t::Load( const char* filename )
 //=====================================================================================================================================
 // CreateEmpty2D                                                                                                                      =
 //=====================================================================================================================================
-void texture_t::CreateEmpty2D( float width_, float height_, int internal_format, int format_ )
+void texture_t::CreateEmpty2D( float width_, float height_, int internal_format, int format_, GLenum type_ )
 {
 	type = GL_TEXTURE_2D;
 	DEBUG_ERR( internal_format>0 && internal_format<=4 ); // deprecated internal format
@@ -364,7 +364,7 @@ void texture_t::CreateEmpty2D( float width_, float height_, int internal_format,
 	TexParameter( GL_TEXTURE_WRAP_T, GL_CLAMP );
 
 	// allocate to vram
-	glTexImage2D( type, 0, internal_format, width_, height_, 0, format_, GL_FLOAT, NULL );
+	glTexImage2D( type, 0, internal_format, width_, height_, 0, format_, type_, NULL );
 
 	if( r::mipmaping ) glGenerateMipmap(type);
 

@@ -1,8 +1,8 @@
 #pragma anki vert_shader_begins
 
-#pragma anki attribute view_vector 0
+#pragma anki attribute view_vector 1
 attribute vec3 view_vector;
-#pragma anki attribute position 1
+#pragma anki attribute position 0
 attribute vec2 position;
 
 varying vec2 tex_coords;
@@ -277,7 +277,6 @@ void main()
 			#else
 				gl_FragData[0] = vec4( _color * _texel * _att, 1.0 );
 			#endif
-			//gl_FragData[0] = vec4( 1.0, 0.0, 1.0, 1.0 );
 		}
 		else
 		{

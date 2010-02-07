@@ -24,7 +24,6 @@ static fbo_t b_fbo; ///< blending models FBO
 static fbo_t r_fbo; ///< refracting models FBO
 
 /*static*/ texture_t r_fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
-
 static shader_prog_t* r2b_shdr;
 
 
@@ -58,18 +57,53 @@ static void InitB()
 //=====================================================================================================================================
 static void InitR()
 {
+	/*uint fbo_id, tex_id, depth_tex_id, stencil_rb;
+
+	glGenFramebuffersEXT( 1, &fbo_id );
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo_id );
+
+	// color
+	glGenTextures( 1, &tex_id );
+	glBindTexture( GL_TEXTURE_2D, tex_id );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, 100, 100, 0, GL_RGB, GL_FLOAT, NULL );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_id, 0 );
+
+	// depth
+	r::PrintLastError();
+	glGenTextures( 1, &depth_tex_id );
+	glBindTexture( GL_TEXTURE_2D, depth_tex_id );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, 100, 100, 0, GL_DEPTH_STENCIL, GL_FLOAT, NULL );
+	r::PrintLastError();
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_DEPTH24_STENCIL8, GL_TEXTURE_2D, depth_tex_id, 0 );
+	r::PrintLastError();
+
+	// stencil
+	glGenRenderbuffersEXT( 1, &stencil_rb );
+	glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, stencil_rb );
+	glRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_STENCIL_INDEX, 100, 100 );
+	glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, stencil_rb );
+
+	if( glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT )
+		FATAL( glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );*/
+
+
+	/*r::PrintLastError();
+	uint depth_tex_id;
+	glGenTextures( 1, &depth_tex_id );
+	glBindTexture( GL_TEXTURE_2D, depth_tex_id );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8_EXT, 100, 100, 0, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT, NULL );
+	r::PrintLastError();*/
+
 	// create FBO
 	r_fbo.Create();
 	r_fbo.Bind();
 
-	// inform FBO about the color buffers
-	r_fbo.SetNumOfColorAttachements(1);
-
 	// texture
-	r_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGBA, GL_RGBA );
+	r_fbo.SetNumOfColorAttachements(1);
+	r_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGBA8, GL_RGBA );
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r_fai.GetGLID(), 0 );
 
 	// attach the texes
-	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r_fai.GetGLID(), 0 );
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r::ms::depth_fai.GetGLID(), 0 );
 
 	// test if success

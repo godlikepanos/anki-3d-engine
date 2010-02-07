@@ -17,7 +17,8 @@ data vars                                                                       
 */
 
 // misc
-uint w = 1280, h = 800;
+//uint w = 1280, h = 800;
+uint w = 480, h = 360;
 //uint w = 720, h = 480;
 uint frames_num = 0;
 float aspect_ratio = (float)w/(float)h;
@@ -115,6 +116,9 @@ void Init()
 
 	if( !glewIsSupported("GL_EXT_framebuffer_object") )
 		WARNING( "Framebuffer objects not supported. The application may crash (and burn)" );
+
+	if( !glewIsSupported("GL_EXT_packed_depth_stencil") )
+		WARNING( "GL_EXT_packed_depth_stencil not supported. The application may crash (and burn)" );
 
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex buffer objects not supported. The application may crash (and burn)" );
