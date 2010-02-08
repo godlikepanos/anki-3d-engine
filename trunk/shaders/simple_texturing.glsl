@@ -28,7 +28,7 @@ void main()
 	_noise = _noise * 2 - 1;
 	_noise *= 7.0;*/
 
-	vec4 _texel = texture2D( diffuse_map, (gl_FragCoord.xy+(normal_v2f.z*100))*vec2( 1.0/R_W, 1.0/R_H ) ) * 0.75;
+	vec4 _texel = texture2D( diffuse_map, (gl_FragCoord.xy+(normal_v2f.z*50))*vec2( 1.0/R_W, 1.0/R_H ) ) * 0.75;
 	//vec4 _texel = texture2D( diffuse_map, gl_FragCoord.xy*vec2( 1.0/R_W, 1.0/R_H ) );
 
 	gl_FragData[0] = _texel;

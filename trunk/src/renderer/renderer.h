@@ -92,7 +92,10 @@ namespace is
 
 /// blending stage namespace
 namespace bs
-{}
+{
+	extern void Init2();
+	extern void RunStage2( const camera_t& cam );
+}
 
 /// pre-processing stage namespace
 namespace pps
