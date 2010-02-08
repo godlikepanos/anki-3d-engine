@@ -17,8 +17,8 @@ data vars                                                                       
 */
 
 // misc
-//uint w = 1280, h = 800;
-uint w = 480, h = 360;
+uint w = 1280, h = 800;
+//uint w = 480, h = 360;
 //uint w = 720, h = 480;
 uint frames_num = 0;
 float aspect_ratio = (float)w/(float)h;
@@ -170,6 +170,7 @@ void Init()
 	r::is::Init();
 	r::bs::Init();
 	r::pps::Init();
+	r::bs::Init2();
 	r::dbg::Init();
 
 	PRINT( "Renderer initialization ends" );
@@ -187,6 +188,7 @@ void Render( const camera_t& cam )
 	r::is::RunStage( cam );
 	r::bs::RunStage( cam );
 	r::pps::RunStage( cam );
+	r::bs::RunStage2( cam );
 	r::dbg::RunStage( cam );
 
 	r::SetViewport( 0, 0, r::w, r::h );
@@ -196,6 +198,23 @@ void Render( const camera_t& cam )
 
 	shdr_final->Bind();
 	shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::fai, 0 );
+
+	/*const int step = 100;
+	if( r::frames_num < step )
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::diffuse_fai, 0 );
+	else if( r::frames_num < step*2 )
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::normal_fai, 0 );
+	else if( r::frames_num < step*3 )
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::specular_fai, 0 );
+	else if( r::frames_num < step*4 )
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::depth_fai, 0 );
+	else if( r::frames_num < step*5 )
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::ssao::blured_fai, 0 );
+	else if( r::frames_num < step*6 )
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::hdr::pass2_fai, 0 );
+	else
+		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::fai, 0 );*/
+
 
 	r::DrawQuad( shdr_final->GetAttributeLocation(0) );
 }
