@@ -17,9 +17,9 @@ data vars                                                                       
 */
 
 // misc
-uint w = 1280, h = 800;
+//uint w = 1280, h = 800;
 //uint w = 480, h = 360;
-//uint w = 720, h = 480;
+uint w = 720, h = 480;
 uint frames_num = 0;
 float aspect_ratio = (float)w/(float)h;
 
@@ -211,7 +211,9 @@ void Render( const camera_t& cam )
 	else if( r::frames_num < step*5 )
 		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::ssao::blured_fai, 0 );
 	else if( r::frames_num < step*6 )
+	{
 		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::hdr::pass2_fai, 0 );
+	}
 	else
 		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::fai, 0 );*/
 
