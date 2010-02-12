@@ -5,7 +5,7 @@
 #include "node.h"
 #include "material.h"
 
-class skel_controller_t;
+class mesh_skel_ctrl_t;
 class mesh_t;
 
 
@@ -21,9 +21,9 @@ class mesh_node_t: public node_t
 		material_t* material;
 		material_t* dp_material; ///< Depth pass material
 		// controllers
-		skel_controller_t* skel_controller;
+		mesh_skel_ctrl_t* mesh_skel_ctrl;
 		// funcs
-		mesh_node_t(): node_t(NT_MESH), skel_controller(NULL) {}
+		mesh_node_t(): node_t(NT_MESH), mesh_skel_ctrl(NULL) {}
 		void Render() { Render(material); }
 		void RenderDepth() { Render( material->dp_mtl ); }
 		void Init( const char* filename );

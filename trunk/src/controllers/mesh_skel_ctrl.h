@@ -1,5 +1,5 @@
-#ifndef _SKEL_CONTROLLER_H_
-#define _SKEL_CONTROLLER_H_
+#ifndef _MESH_SKEL_CTRL_H_
+#define _MESH_SKEL_CTRL_H_
 
 #include "common.h"
 #include "controller.h"
@@ -14,13 +14,13 @@ class mesh_t;
  * Skeleton controller
  * It controls a mesh node using a skeleton node and the skeleton node's controllers
  */
-class skel_controller_t: public controller_t
+class mesh_skel_ctrl_t: public controller_t
 {
 	public:
 		skel_node_t* skel_node;
 		mesh_node_t* mesh_node;
 
-		skel_controller_t( skel_node_t* skel_node_, mesh_node_t* mesh_node_ ):
+		mesh_skel_ctrl_t( skel_node_t* skel_node_, mesh_node_t* mesh_node_ ):
 			controller_t( CT_SKEL ),
 			skel_node( skel_node_ ),
 			mesh_node( mesh_node_ ) 

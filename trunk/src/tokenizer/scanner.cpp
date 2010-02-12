@@ -252,7 +252,7 @@ void scanner_t::GetAllPrintAll()
 // LoadFile                                                                                                                           =
 //=====================================================================================================================================
 bool scanner_t::LoadFile( const char* filename_ )
-{
+{	
 	in_fstream.open( filename_, ios::in );
 	if( !in_fstream.good() )
 	{

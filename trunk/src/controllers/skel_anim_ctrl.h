@@ -1,5 +1,5 @@
-#ifndef _SKEL_ANIM_CONTROLLER_H_
-#define _SKEL_ANIM_CONTROLLER_H_
+#ifndef _SKEL_ANIM_CTRL_H_
+#define _SKEL_ANIM_CTRL_H_
 
 #include "common.h"
 #include "controller.h"
@@ -11,7 +11,7 @@ class skel_node_t;
 
 
 /// Skeleton animation controller
-class skel_anim_controller_t: public controller_t
+class skel_anim_ctrl_t: public controller_t
 {
 	private:
 		void Interpolate( skel_anim_t* animation, float frame );
@@ -28,7 +28,7 @@ class skel_anim_controller_t: public controller_t
 		float step;
 		float frame;
 
-		skel_anim_controller_t( skel_node_t* skel_node_ );
+		skel_anim_ctrl_t( skel_node_t* skel_node_ );
 		void Update( float time );
 };
 

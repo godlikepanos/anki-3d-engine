@@ -5,8 +5,8 @@
 #include "material.h"
 #include "skel_node.h"
 #include "skeleton.h"
-#include "skel_controller.h"
-#include "skel_anim_controller.h"
+#include "mesh_skel_ctrl.h"
+#include "skel_anim_ctrl.h"
 
 
 //=====================================================================================================================================
@@ -45,13 +45,13 @@ void mesh_node_t::Render( material_t* mtl ) const
 	r::MultMatrix( transformation_wspace );
 
 	// if we have skeleton controller
-	if( skel_controller )
+	if( mesh_skel_ctrl )
 	{
 		// first the uniforms
-		glUniformMatrix3fv( mtl->uni_locs.skinning_rotations, skel_controller->skel_node->skeleton->bones.size(), 1,
-		                    &(skel_controller->skel_node->skel_anim_controller->bone_rotations[0])[0] );
-		glUniform3fv( mtl->uni_locs.skinning_translations, skel_controller->skel_node->skeleton->bones.size(),
-		              &(skel_controller->skel_node->skel_anim_controller->bone_translations[0])[0] );
+		glUniformMatrix3fv( mtl->uni_locs.skinning_rotations, mesh_skel_ctrl->skel_node->skeleton->bones.size(), 1,
+		                    &(mesh_skel_ctrl->skel_node->skel_anim_ctrl->bone_rotations[0])[0] );
+		glUniform3fv( mtl->uni_locs.skinning_translations, mesh_skel_ctrl->skel_node->skeleton->bones.size(),
+		              &(mesh_skel_ctrl->skel_node->skel_anim_ctrl->bone_translations[0])[0] );
 
 		// then the attributes
 		DEBUG_ERR( !mtl->HasHWSkinning() );
@@ -103,7 +103,7 @@ void mesh_node_t::Render( material_t* mtl ) const
 	if( mtl->attrib_locs.tex_coords != -1 ) glDisableVertexAttribArray( mtl->attrib_locs.tex_coords );
 	if( mtl->attrib_locs.tanget != -1 ) glDisableVertexAttribArray( mtl->attrib_locs.tanget );
 
-	if( skel_controller )
+	if( mesh_skel_ctrl )
 	{
 		glDisableVertexAttribArray( mtl->attrib_locs.vert_weight_bones_num );
 		glDisableVertexAttribArray( mtl->attrib_locs.vert_weight_bone_ids );

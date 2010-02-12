@@ -1,9 +1,9 @@
 #include "skel_model_node.h"
 #include "parser.h"
 #include "skel_node.h"
-#include "skel_controller.h"
+#include "mesh_skel_ctrl.h"
 
-/// Create a skel_node and N mesh_nodes that have a skel_controller
+/// Create a skel_node and N mesh_nodes that have a mesh_skel_ctrl
 void skel_model_node_t::Init( const char* filename )
 {
 	scanner_t scanner;
@@ -59,6 +59,6 @@ void skel_model_node_t::Init( const char* filename )
 		mesh_nodes[i] = new mesh_node_t;
 		mesh_nodes[i]->Init( token->value.string );
 		skel_node->AddChild( mesh_nodes[i] );
-		mesh_nodes[i]->skel_controller = new skel_controller_t( skel_node, mesh_nodes[i] );
+		mesh_nodes[i]->mesh_skel_ctrl = new mesh_skel_ctrl_t( skel_node, mesh_nodes[i] );
 	}
 }

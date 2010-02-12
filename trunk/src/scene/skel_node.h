@@ -7,7 +7,7 @@
 #include "gmath.h"
 
 class skeleton_t;
-class skel_anim_controller_t;
+class skel_anim_ctrl_t;
 
 
 /// Skeleton node
@@ -15,7 +15,7 @@ class skel_node_t: public node_t
 {
 	public:
 		skeleton_t* skeleton; ///< The skeleton resource
-		skel_anim_controller_t* skel_anim_controller; ///< Hold the controller here as well
+		skel_anim_ctrl_t* skel_anim_ctrl; ///< Hold the controller here as well
 
 		skel_node_t();
 		void Render();
