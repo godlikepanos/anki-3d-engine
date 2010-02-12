@@ -4,6 +4,19 @@ from threading import Thread
 
 
 #======================================================================================================================================
+# GLOBAL VARS                                                                                                                         =
+#======================================================================================================================================
+include_paths = []
+precompiled_headers = []
+executable_name = "unamed_project"
+compiler = ""
+common_flags = ""
+compiler_flags = ""
+precompiled_headers_flags = ""
+linker_flags = ""
+
+
+#======================================================================================================================================
 # GetCommandOutput                                                                                                                    =
 #======================================================================================================================================
 def GetCommandOutput( command ):
@@ -136,7 +149,7 @@ master_str += "COMMONFLAGS = " + common_flags + "\n"
 master_str += "CFLAGS = $(COMMONFLAGS) " + compiler_flags + "\n"
 master_str += "PHFLAGS = $(CFLAGS) " + precompiled_headers_flags + "\n"
 master_str += "LFLAGS = $(COMMONFLAGS) " + linker_flags + "\n"
-master_str += "EXECUTABLE = " + project_name + "\n"
+master_str += "EXECUTABLE = " + executable_name + "\n"
 
 master_str += "INCPATH = "
 for path in include_paths:

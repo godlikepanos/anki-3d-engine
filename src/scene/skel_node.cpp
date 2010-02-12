@@ -2,7 +2,7 @@
 #include "renderer.h"
 #include "skel_anim.h"
 #include "skeleton.h"
-#include "skel_anim_controller.h"
+#include "skel_anim_ctrl.h"
 
 
 //=====================================================================================================================================
@@ -10,7 +10,7 @@
 //=====================================================================================================================================
 skel_node_t::skel_node_t(): 
 	node_t( NT_SKELETON ),
-	skel_anim_controller( NULL )
+	skel_anim_ctrl( NULL )
 {
 }
 
@@ -21,7 +21,7 @@ skel_node_t::skel_node_t():
 void skel_node_t::Init( const char* filename )
 {
 	skeleton = rsrc::skeletons.Load( filename );
-	skel_anim_controller = new skel_anim_controller_t( this );
+	skel_anim_ctrl = new skel_anim_ctrl_t( this );
 }
 
 
@@ -49,13 +49,13 @@ void skel_node_t::Render()
 	{
 		glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
 		glBegin( GL_POINTS );
-			glVertex3fv( &skel_anim_controller->heads[i][0] );
+			glVertex3fv( &skel_anim_ctrl->heads[i][0] );
 		glEnd();
 
 		glBegin( GL_LINES );
-			glVertex3fv( &skel_anim_controller->heads[i][0] );
+			glVertex3fv( &skel_anim_ctrl->heads[i][0] );
 			glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
-			glVertex3fv( &skel_anim_controller->tails[i][0] );
+			glVertex3fv( &skel_anim_ctrl->tails[i][0] );
 		glEnd();
 	}
 

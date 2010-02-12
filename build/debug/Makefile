@@ -3,10 +3,10 @@ COMMONFLAGS =
 CFLAGS = $(COMMONFLAGS) -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg `sdl-config --cflags` -D_DEBUG_ -D_TERMINAL_COLORING_ -D_PLATFORM_LINUX_
 PHFLAGS = $(CFLAGS) -x c++-header
 LFLAGS = $(COMMONFLAGS) -lGL -lGLU -lSDL_image `sdl-config --static-libs` -ljpeg -lGLEW
-EXECUTABLE = AnKi
-INCPATH = -I../../src/math/ -I../../src/tokenizer/ -I../../src/uncategorized/ -I../../src/ -I../../src/renderer/ -I../../src/scene/ -I../../src/ui/ -I../../src/resources/ -I../../src/utility/ 
-SOURCES = ../../src/tokenizer//scanner.cpp ../../src/uncategorized//input.cpp ../../src/uncategorized//skybox.cpp ../../src/uncategorized//particles.cpp ../../src/uncategorized//memory.cpp ../../src/uncategorized//engine_class.cpp ../../src/uncategorized//collision.cpp ../../src/uncategorized//map.cpp ../../src//main.cpp ../../src/renderer//r_ms.cpp ../../src/renderer//r_pps_hdr.cpp ../../src/renderer//r_pps.cpp ../../src/renderer//r_is_shadows.cpp ../../src/renderer//r_bs.cpp ../../src/renderer//r_ms_earlyz.cpp ../../src/renderer//renderer.cpp ../../src/renderer//r_pps_ssao.cpp ../../src/renderer//r_is.cpp ../../src/renderer//r_dbg.cpp ../../src/renderer//r_pps_lscatt.cpp ../../src/renderer//r_bs2.cpp ../../src/scene//mesh_node.cpp ../../src/scene//skel_node.cpp ../../src/scene//skel_anim_controller.cpp ../../src/scene//light.cpp ../../src/scene//skel_model_node.cpp ../../src/scene//controller.cpp ../../src/scene//node.cpp ../../src/scene//camera.cpp ../../src/scene//scene.cpp ../../src/ui//ui.cpp ../../src/resources//material.cpp ../../src/resources//texture.cpp ../../src/resources//skel_anim.cpp ../../src/resources//extension.cpp ../../src/resources//shader_parser.cpp ../../src/resources//skeleton.cpp ../../src/resources//resource.cpp ../../src/resources//light_props.cpp ../../src/resources//mesh.cpp ../../src/resources//shader_prog.cpp ../../src/utility//app.cpp ../../src/utility//common.cpp ../../src/utility//util.cpp 
-OBJECTS = scanner.o input.o skybox.o particles.o memory.o engine_class.o collision.o map.o main.o r_ms.o r_pps_hdr.o r_pps.o r_is_shadows.o r_bs.o r_ms_earlyz.o renderer.o r_pps_ssao.o r_is.o r_dbg.o r_pps_lscatt.o r_bs2.o mesh_node.o skel_node.o skel_anim_controller.o light.o skel_model_node.o controller.o node.o camera.o scene.o ui.o material.o texture.o skel_anim.o extension.o shader_parser.o skeleton.o resource.o light_props.o mesh.o shader_prog.o app.o common.o util.o 
+EXECUTABLE = AnKi.bin
+INCPATH = -I../../src/math/ -I../../src/tokenizer/ -I../../src/uncategorized/ -I../../src/ -I../../src/renderer/ -I../../src/scene/ -I../../src/ui/ -I../../src/resources/ -I../../src/utility/ -I../../src/controllers/ 
+SOURCES = ../../src/tokenizer//scanner.cpp ../../src/uncategorized//input.cpp ../../src/uncategorized//skybox.cpp ../../src/uncategorized//particles.cpp ../../src/uncategorized//memory.cpp ../../src/uncategorized//engine_class.cpp ../../src/uncategorized//collision.cpp ../../src/uncategorized//map.cpp ../../src//main.cpp ../../src/renderer//r_ms.cpp ../../src/renderer//r_pps_hdr.cpp ../../src/renderer//r_pps.cpp ../../src/renderer//r_is_shadows.cpp ../../src/renderer//r_bs.cpp ../../src/renderer//r_ms_earlyz.cpp ../../src/renderer//renderer.cpp ../../src/renderer//r_pps_ssao.cpp ../../src/renderer//r_is.cpp ../../src/renderer//r_dbg.cpp ../../src/renderer//r_pps_lscatt.cpp ../../src/renderer//r_bs2.cpp ../../src/scene//mesh_node.cpp ../../src/scene//skel_node.cpp ../../src/scene//light.cpp ../../src/scene//skel_model_node.cpp ../../src/scene//node.cpp ../../src/scene//camera.cpp ../../src/scene//scene.cpp ../../src/ui//ui.cpp ../../src/resources//material.cpp ../../src/resources//texture.cpp ../../src/resources//skel_anim.cpp ../../src/resources//extension.cpp ../../src/resources//shader_parser.cpp ../../src/resources//skeleton.cpp ../../src/resources//resource.cpp ../../src/resources//light_props.cpp ../../src/resources//mesh.cpp ../../src/resources//shader_prog.cpp ../../src/utility//app.cpp ../../src/utility//common.cpp ../../src/utility//util.cpp ../../src/controllers//controller.cpp ../../src/controllers//skel_anim_ctrl.cpp 
+OBJECTS = scanner.o input.o skybox.o particles.o memory.o engine_class.o collision.o map.o main.o r_ms.o r_pps_hdr.o r_pps.o r_is_shadows.o r_bs.o r_ms_earlyz.o renderer.o r_pps_ssao.o r_is.o r_dbg.o r_pps_lscatt.o r_bs2.o mesh_node.o skel_node.o light.o skel_model_node.o node.o camera.o scene.o ui.o material.o texture.o skel_anim.o extension.o shader_parser.o skeleton.o resource.o light_props.o mesh.o shader_prog.o app.o common.o util.o controller.o skel_anim_ctrl.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -150,9 +150,10 @@ main.o: ../../src//main.cpp ../../src/utility/common.h \
  ../../src/tokenizer/scanner.h ../../src/uncategorized/map.h \
  ../../src/uncategorized/collision.h ../../src/scene/mesh_node.h \
  ../../src/scene/skel_model_node.h ../../src/scene/mesh_node.h \
- ../../src/resources/skel_anim.h ../../src/scene/skel_controller.h \
- ../../src/scene/controller.h ../../src/scene/skel_anim_controller.h \
- ../../src/scene/skel_node.h ../../src/resources/light_props.h
+ ../../src/resources/skel_anim.h ../../src/controllers/mesh_skel_ctrl.h \
+ ../../src/controllers/controller.h \
+ ../../src/controllers/skel_anim_ctrl.h ../../src/scene/skel_node.h \
+ ../../src/controllers/controller.h ../../src/resources/light_props.h
 	@echo Compiling ../../src//main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//main.cpp -o main.o
 
@@ -387,7 +388,7 @@ r_dbg.o: ../../src/renderer//r_dbg.cpp ../../src/renderer//renderer.h \
  ../../src/renderer//fbo.h ../../src/scene/scene.h \
  ../../src/uncategorized/skybox.h ../../src/resources/texture.h \
  ../../src/scene/node.h ../../src/scene/skel_node.h \
- ../../src/scene/controller.h
+ ../../src/controllers/controller.h
 	@echo Compiling ../../src/renderer//r_dbg.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/renderer//r_dbg.cpp -o r_dbg.o
 
@@ -458,9 +459,10 @@ mesh_node.o: ../../src/scene//mesh_node.cpp ../../src/scene//mesh_node.h \
  ../../src/renderer/vbo.h ../../src/uncategorized/collision.h \
  ../../src/renderer/renderer.h ../../src/resources/shader_prog.h \
  ../../src/scene/camera.h ../../src/scene/node.h \
- ../../src/scene//skel_node.h ../../src/scene//controller.h \
- ../../src/resources/skeleton.h ../../src/scene//skel_controller.h \
- ../../src/scene//skel_anim_controller.h
+ ../../src/scene//skel_node.h ../../src/controllers/controller.h \
+ ../../src/resources/skeleton.h ../../src/controllers/mesh_skel_ctrl.h \
+ ../../src/controllers/controller.h \
+ ../../src/controllers/skel_anim_ctrl.h
 	@echo Compiling ../../src/scene//mesh_node.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/scene//mesh_node.cpp -o mesh_node.o
 
@@ -476,38 +478,16 @@ skel_node.o: ../../src/scene//skel_node.cpp ../../src/scene//skel_node.h \
  ../../src/math/euler.inl.h ../../src/math/mat3.h \
  ../../src/math/mat3.inl.h ../../src/math/mat4.h \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
- ../../src/math/m_misc.inl.h ../../src/scene//controller.h \
+ ../../src/math/m_misc.inl.h ../../src/controllers/controller.h \
  ../../src/renderer/renderer.h ../../src/resources/shader_prog.h \
  ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
  ../../src/utility/util.h ../../src/utility/common.h \
  ../../src/scene/camera.h ../../src/uncategorized/collision.h \
  ../../src/scene/node.h ../../src/resources/skel_anim.h \
- ../../src/resources/skeleton.h ../../src/scene//skel_anim_controller.h
+ ../../src/resources/skeleton.h ../../src/controllers/skel_anim_ctrl.h \
+ ../../src/controllers/controller.h
 	@echo Compiling ../../src/scene//skel_node.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/scene//skel_node.cpp -o skel_node.o
-
-skel_anim_controller.o: ../../src/scene//skel_anim_controller.cpp \
- ../../src/scene//skel_anim_controller.h ../../src/utility/common.h \
- ../../src/uncategorized/memory.h ../../src/scene//controller.h \
- ../../src/math/gmath.h ../../src/math/vec2.h \
- ../../src/math/forward_decls.h ../../src/math/vec2.inl.h \
- ../../src/math/m_dflt_header.h ../../src/math/vec3.h \
- ../../src/math/vec3.inl.h ../../src/math/vec4.h \
- ../../src/math/vec4.inl.h ../../src/math/quat.h \
- ../../src/math/quat.inl.h ../../src/math/axisang.h \
- ../../src/math/axisang.inl.h ../../src/math/euler.h \
- ../../src/math/euler.inl.h ../../src/math/mat3.h \
- ../../src/math/mat3.inl.h ../../src/math/mat4.h \
- ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
- ../../src/math/m_misc.inl.h ../../src/resources/skel_anim.h \
- ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
- ../../src/utility/util.h ../../src/utility/common.h \
- ../../src/scene//skel_node.h ../../src/scene//node.h \
- ../../src/resources/skeleton.h ../../src/renderer/renderer.h \
- ../../src/resources/shader_prog.h ../../src/scene/camera.h \
- ../../src/uncategorized/collision.h ../../src/scene/node.h
-	@echo Compiling ../../src/scene//skel_anim_controller.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/scene//skel_anim_controller.cpp -o skel_anim_controller.o
 
 light.o: ../../src/scene//light.cpp ../../src/scene//light.h \
  ../../src/utility/common.h ../../src/uncategorized/memory.h \
@@ -548,30 +528,11 @@ skel_model_node.o: ../../src/scene//skel_model_node.cpp \
  ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
  ../../src/utility/util.h ../../src/utility/common.h \
  ../../src/tokenizer/parser.h ../../src/tokenizer/scanner.h \
- ../../src/scene//skel_node.h ../../src/scene//controller.h \
- ../../src/scene//skel_controller.h
+ ../../src/scene//skel_node.h ../../src/controllers/controller.h \
+ ../../src/controllers/mesh_skel_ctrl.h \
+ ../../src/controllers/controller.h
 	@echo Compiling ../../src/scene//skel_model_node.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/scene//skel_model_node.cpp -o skel_model_node.o
-
-controller.o: ../../src/scene//controller.cpp \
- ../../src/scene//controller.h ../../src/utility/common.h \
- ../../src/uncategorized/memory.h ../../src/scene//scene.h \
- ../../src/uncategorized/skybox.h ../../src/resources/texture.h \
- ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
- ../../src/utility/util.h ../../src/utility/common.h \
- ../../src/math/gmath.h ../../src/math/vec2.h \
- ../../src/math/forward_decls.h ../../src/math/vec2.inl.h \
- ../../src/math/m_dflt_header.h ../../src/math/vec3.h \
- ../../src/math/vec3.inl.h ../../src/math/vec4.h \
- ../../src/math/vec4.inl.h ../../src/math/quat.h \
- ../../src/math/quat.inl.h ../../src/math/axisang.h \
- ../../src/math/axisang.inl.h ../../src/math/euler.h \
- ../../src/math/euler.inl.h ../../src/math/mat3.h \
- ../../src/math/mat3.inl.h ../../src/math/mat4.h \
- ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
- ../../src/math/m_misc.inl.h
-	@echo Compiling ../../src/scene//controller.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/scene//controller.cpp -o controller.o
 
 node.o: ../../src/scene//node.cpp ../../src/scene//node.h \
  ../../src/utility/common.h ../../src/uncategorized/memory.h \
@@ -590,7 +551,7 @@ node.o: ../../src/scene//node.cpp ../../src/scene//node.h \
  ../../src/uncategorized/engine_class.h ../../src/utility/util.h \
  ../../src/utility/common.h ../../src/scene/camera.h \
  ../../src/uncategorized/collision.h ../../src/scene/node.h \
- ../../src/scene//controller.h
+ ../../src/controllers/controller.h
 	@echo Compiling ../../src/scene//node.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/scene//node.cpp -o node.o
 
@@ -630,7 +591,7 @@ scene.o: ../../src/scene//scene.cpp ../../src/scene//scene.h \
  ../../src/math/mat3.inl.h ../../src/math/mat4.h \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
  ../../src/math/m_misc.inl.h ../../src/scene//skel_node.h \
- ../../src/scene//node.h ../../src/scene//controller.h \
+ ../../src/scene//node.h ../../src/controllers/controller.h \
  ../../src/scene//camera.h ../../src/uncategorized/collision.h \
  ../../src/scene//mesh_node.h ../../src/resources/material.h \
  ../../src/scene//light.h
@@ -858,6 +819,49 @@ util.o: ../../src/utility//util.cpp ../../src/utility//util.h \
  ../../src/utility/common.h
 	@echo Compiling ../../src/utility//util.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/utility//util.cpp -o util.o
+
+controller.o: ../../src/controllers//controller.cpp \
+ ../../src/controllers//controller.h ../../src/utility/common.h \
+ ../../src/uncategorized/memory.h ../../src/scene/scene.h \
+ ../../src/uncategorized/skybox.h ../../src/resources/texture.h \
+ ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
+ ../../src/utility/util.h ../../src/utility/common.h \
+ ../../src/math/gmath.h ../../src/math/vec2.h \
+ ../../src/math/forward_decls.h ../../src/math/vec2.inl.h \
+ ../../src/math/m_dflt_header.h ../../src/math/vec3.h \
+ ../../src/math/vec3.inl.h ../../src/math/vec4.h \
+ ../../src/math/vec4.inl.h ../../src/math/quat.h \
+ ../../src/math/quat.inl.h ../../src/math/axisang.h \
+ ../../src/math/axisang.inl.h ../../src/math/euler.h \
+ ../../src/math/euler.inl.h ../../src/math/mat3.h \
+ ../../src/math/mat3.inl.h ../../src/math/mat4.h \
+ ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
+ ../../src/math/m_misc.inl.h
+	@echo Compiling ../../src/controllers//controller.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/controllers//controller.cpp -o controller.o
+
+skel_anim_ctrl.o: ../../src/controllers//skel_anim_ctrl.cpp \
+ ../../src/controllers//skel_anim_ctrl.h ../../src/utility/common.h \
+ ../../src/uncategorized/memory.h ../../src/controllers//controller.h \
+ ../../src/math/gmath.h ../../src/math/vec2.h \
+ ../../src/math/forward_decls.h ../../src/math/vec2.inl.h \
+ ../../src/math/m_dflt_header.h ../../src/math/vec3.h \
+ ../../src/math/vec3.inl.h ../../src/math/vec4.h \
+ ../../src/math/vec4.inl.h ../../src/math/quat.h \
+ ../../src/math/quat.inl.h ../../src/math/axisang.h \
+ ../../src/math/axisang.inl.h ../../src/math/euler.h \
+ ../../src/math/euler.inl.h ../../src/math/mat3.h \
+ ../../src/math/mat3.inl.h ../../src/math/mat4.h \
+ ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
+ ../../src/math/m_misc.inl.h ../../src/resources/skel_anim.h \
+ ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
+ ../../src/utility/util.h ../../src/utility/common.h \
+ ../../src/scene/skel_node.h ../../src/scene/node.h \
+ ../../src/controllers/controller.h ../../src/resources/skeleton.h \
+ ../../src/renderer/renderer.h ../../src/resources/shader_prog.h \
+ ../../src/scene/camera.h ../../src/uncategorized/collision.h
+	@echo Compiling ../../src/controllers//skel_anim_ctrl.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/controllers//skel_anim_ctrl.cpp -o skel_anim_ctrl.o
 
 clean:
 	rm -f *.o

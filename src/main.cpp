@@ -25,8 +25,8 @@
 #include "skel_model_node.h"
 #include "mesh_node.h"
 #include "skel_anim.h"
-#include "skel_controller.h"
-#include "skel_anim_controller.h"
+#include "mesh_skel_ctrl.h"
+#include "skel_anim_ctrl.h"
 #include "skel_node.h"
 #include "light_props.h"
 
@@ -96,8 +96,8 @@ void Init()
 	imp = new skel_model_node_t();
 	imp->Init( "models/imp/imp.smdl" );
 	imp->SetLocalTransformation( vec3_t( 0.0, 2.11, 0.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.7 );
-	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->skel_anim = rsrc::skel_anims.Load( "models/imp/walk.imp.anim" );
-	imp->mesh_nodes[0]->skel_controller->skel_node->skel_anim_controller->step = 0.8;
+	imp->mesh_nodes[0]->mesh_skel_ctrl->skel_node->skel_anim_ctrl->skel_anim = rsrc::skel_anims.Load( "models/imp/walk.imp.anim" );
+	imp->mesh_nodes[0]->mesh_skel_ctrl->skel_node->skel_anim_ctrl->step = 0.8;
 
 
 

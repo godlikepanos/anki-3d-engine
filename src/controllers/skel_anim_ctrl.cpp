@@ -1,4 +1,4 @@
-#include "skel_anim_controller.h"
+#include "skel_anim_ctrl.h"
 #include "skel_anim.h"
 #include "skel_node.h"
 #include "skeleton.h"
@@ -6,9 +6,9 @@
 
 
 //=====================================================================================================================================
-// skel_anim_controller_t                                                                                                             =
+// skel_anim_ctrl_t                                                                                                             =
 //=====================================================================================================================================
-skel_anim_controller_t::skel_anim_controller_t( skel_node_t* skel_node_ ):
+skel_anim_ctrl_t::skel_anim_ctrl_t( skel_node_t* skel_node_ ):
 	controller_t(CT_SKEL_ANIM),
 	skel_node( skel_node_ )
 {
@@ -22,7 +22,7 @@ skel_anim_controller_t::skel_anim_controller_t( skel_node_t* skel_node_ ):
 //=====================================================================================================================================
 // Interpolate                                                                                                                        =
 //=====================================================================================================================================
-void skel_anim_controller_t::Interpolate( skel_anim_t* animation, float frame )
+void skel_anim_ctrl_t::Interpolate( skel_anim_t* animation, float frame )
 {
 	DEBUG_ERR( frame >= animation->frames_num );
 
@@ -87,7 +87,7 @@ void skel_anim_controller_t::Interpolate( skel_anim_t* animation, float frame )
 //=====================================================================================================================================
 // UpdateBoneTransforms                                                                                                               =
 //=====================================================================================================================================
-void skel_anim_controller_t::UpdateBoneTransforms()
+void skel_anim_ctrl_t::UpdateBoneTransforms()
 {
 	uint queue[ 128 ];
 	uint head = 0, tail = 0;
@@ -132,7 +132,7 @@ void skel_anim_controller_t::UpdateBoneTransforms()
 //=====================================================================================================================================
 // Deform                                                                                                                             =
 //=====================================================================================================================================
-void skel_anim_controller_t::Deform()
+void skel_anim_ctrl_t::Deform()
 {
 	skeleton_t* skeleton = skel_node->skeleton;
 
@@ -150,7 +150,7 @@ void skel_anim_controller_t::Deform()
 //=====================================================================================================================================
 // Update                                                                                                                             =
 //=====================================================================================================================================
-void skel_anim_controller_t::Update( float )
+void skel_anim_ctrl_t::Update( float )
 {
 	frame += step;
 	if( frame > skel_anim->frames_num ) // if the crnt is finished then play the next or loop the crnt
