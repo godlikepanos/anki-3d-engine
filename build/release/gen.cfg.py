@@ -1,4 +1,4 @@
-include_paths = [ "../../src/math/", "../../src/tokenizer/", "../../src/uncategorized/", "../../src/", "../../src/renderer/", "../../src/scene/", "../../src/resources/", "../../src/utility/", "../../src/ui/" ]
+include_paths = [ "../../src/math/", "../../src/tokenizer/", "../../src/uncategorized/", "../../src/", "../../src/renderer/", "../../src/scene/", "../../src/resources/", "../../src/utility/", "../../src/ui/", "../../src/controllers/" ]
 executable_name = "AnKi.bin"
 precompiled_headers = []
 compiler = "gcc"

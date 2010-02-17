@@ -19,7 +19,7 @@ namespace r { // begin namespace
 
 extern uint  w; ///< width of the rendering window
 extern uint  h; ///< height of the rendering window
-extern float rendering_quality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
+//extern float rendering_quality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
 extern uint  frames_num;
 extern float aspect_ratio;
 extern int   screenshot_jpeg_quality; ///< The quality of the JPEG screenshots. From 0 to 100

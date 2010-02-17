@@ -18,6 +18,7 @@ namespace scene {
 // misc
 extern skybox_t skybox;
 inline vec3_t GetAmbientColor() { return vec3_t( 0.1, 0.05, 0.05 )*1; }
+inline vec3_t SunPos() { return vec3_t( 0.0, 1.0, -1.0 ) * 50.0; }
 
 // funcs
 extern void RegisterNode( node_t* node );

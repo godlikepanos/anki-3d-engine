@@ -49,7 +49,7 @@ void Init()
 	srand( unsigned(time(NULL)) );
 	MathSanityChecks();
 
-	app::InitWindow( r::w, r::h, "AnKi Engine" );
+	app::InitWindow();
 	uint ticks = app::GetTicks();
 
 	r::Init();
@@ -193,7 +193,10 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( i::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
-		sprintf( str, "capt/%06d.jpg", r::frames_num );
+		if( r::frames_num < 1000 )
+			sprintf( str, "capt/%06d.jpg", r::frames_num );
+		else
+			sprintf( str, "capt2/%06d.jpg", r::frames_num );
 		r::TakeScreenshot(str);*/
 
 		// std stuff follow

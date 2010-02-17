@@ -1,0 +1,14 @@
+There are 4 build targets in this folder. There is also a build system that generates GNU makefiles. If you want to generate the makefile for the debug target (for example) do the following:
+
+cd <path to anki>/build/debug
+../genmakefile.py
+
+This will generate a "Makefile". To build just type:
+
+make
+
+And the build will will begin. 
+
+Sometimes I forget to to update all the targets. The debug is allways updated though.
+
+The gen.cfg.py files contain the build options of every target. Their format is pretty straightforward and minimal.

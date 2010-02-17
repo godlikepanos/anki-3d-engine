@@ -6,6 +6,7 @@
 #include "scene.h"
 #include "r_private.h"
 #include "camera.h"
+#include "app.h"
 
 namespace r {
 
@@ -17,14 +18,12 @@ data vars                                                                       
 */
 
 // misc
-//uint w = 1280, h = 800;
-//uint w = 480, h = 360;
-uint w = 720, h = 480;
+uint w, h;
 uint frames_num = 0;
-float aspect_ratio = (float)w/(float)h;
+float aspect_ratio;
 
 int max_color_atachments = 0;
-float rendering_quality = 1.;
+//float rendering_quality = 1.0;
 int screenshot_jpeg_quality = 90;
 
 static shader_prog_t* shdr_final;
@@ -78,7 +77,7 @@ static void BuildStdShaderPreProcStr()
 	tmp += "#pragma debug(off)\n";
 	tmp += "#define R_W " + FloatToStr(r::w) + "\n";
 	tmp += "#define R_H " + FloatToStr(r::h) + "\n";
-	tmp += "#define R_Q " + FloatToStr(r::rendering_quality) + "\n";
+	//tmp += "#define R_Q " + FloatToStr(r::rendering_quality) + "\n";
 	tmp += "#define SHADOWMAP_SIZE " + IntToStr(r::is::shadows::shadow_resolution) + "\n";
 	if( r::is::shadows::pcf )
 		tmp += "#define _SHADOW_MAPPING_PCF_\n";
@@ -110,6 +109,7 @@ Init                                                                            
 void Init()
 {
 	PRINT( "Renderer initializing..." );
+
 	glewInit();
 	if( !glewIsSupported("GL_VERSION_2_1") )
 		WARNING( "OpenGL ver 2.1 not supported. The application may crash (and burn)" );
@@ -128,6 +128,10 @@ void Init()
 
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
+
+	w = app::window_w /* * rendering_quality*/;
+	h = app::window_h /* * rendering_quality*/;
+	aspect_ratio = float(w)/h;
 
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
 	glClearDepth( 1.0 );
@@ -191,7 +195,8 @@ void Render( const camera_t& cam )
 	r::bs::RunStage2( cam );
 	r::dbg::RunStage( cam );
 
-	r::SetViewport( 0, 0, r::w, r::h );
+	//r::SetViewport( 0, 0, app::window_w, app::window_h );
+	r::SetViewport( 0, 0, app::window_w, app::window_h );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
@@ -436,6 +441,7 @@ static bool TakeScreenshotJPEG( const char* filename )
 
 	// done
 	free( buffer );
+	fclose( outfile );
 	return true;
 }
 

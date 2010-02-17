@@ -12,11 +12,11 @@ namespace r {
 namespace dbg {
 
 
-/*
-=======================================================================================================================================
-DATA VARS                                                                                                                             =
-=======================================================================================================================================
-*/
+static void RenderSun();
+
+//=====================================================================================================================================
+// DATA VARS                                                                                                                          =
+//=====================================================================================================================================
 bool show_axis = true;
 bool show_fnormals = false;
 bool show_vnormals = false;
@@ -74,7 +74,7 @@ void RunStage( const camera_t& cam )
 
 	// OGL stuff
 	SetProjectionViewMatrices( cam );
-	SetViewport( 0, 0, r::w*r::rendering_quality, r::h*r::rendering_quality );
+	SetViewport( 0, 0, r::w, r::h );
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
@@ -98,6 +98,9 @@ void RunStage( const camera_t& cam )
 			glEnable( GL_DEPTH_TEST );
 		}
 	}
+
+	// the sun
+	//RenderSun();
 
 
 	// unbind
@@ -297,6 +300,48 @@ void RenderCube( bool cols, float size )
 		glTexCoord2f(1.0, 1.0); glVertex3f(-size,  size,  size);
 		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size, -size);
 	glEnd();
+}
+
+
+//=====================================================================================================================================
+// RenderSun                                                                                                                          =
+//=====================================================================================================================================
+static void RenderSun()
+{
+	glPushMatrix();
+
+	r::MultMatrix( mat4_t( scene::SunPos(), mat3_t::GetIdentity(), 50.0 ) );
+
+	r::Color3( vec3_t(1.0, 1.0, 0.0) );
+	r::dbg::RenderSphere( 1.0/8.0, 8 );
+
+	glPopMatrix();
+
+
+/*	/////////////////////////////////////////////////////
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho( 0, 1, 0, 1, -1, 1 );
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+	glLoadIdentity();
+
+
+	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
+	p = main_cam->GetProjectionMatrix() * (main_cam->GetViewMatrix() * p);
+	p /= p.w;
+	p = p/2 + 0.5;
+
+	glPointSize( 10 );
+	glBegin( GL_POINTS );
+		r::Color3( vec3_t(0.0,1.0,0.0) );
+		glVertex3fv( &p[0] );
+	glEnd();
+
+	glPopMatrix();
+	glMatrixMode( GL_PROJECTION );
+	glPopMatrix();*/
 }
 
 

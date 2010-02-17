@@ -12,7 +12,10 @@ extern uint timer_tick;
 extern uint desktop_w;
 extern uint desktop_h;
 
-extern void InitWindow( int w, int h, const char* window_caption  );
+extern uint window_w;
+extern uint window_h;
+
+extern void InitWindow();
 extern void QuitApp( int code );
 extern void WaitForNextFrame();
 extern void TogleFullScreen();
