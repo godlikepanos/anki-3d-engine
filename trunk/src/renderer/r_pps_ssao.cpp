@@ -71,8 +71,8 @@ Init                                                                            
 void Init()
 {
 	if( rendering_quality<0.0 || rendering_quality>1.0 ) ERROR("Incorect r::pps:ssao::rendering_quality");
-	wwidth = r::rendering_quality * r::pps::ssao::rendering_quality * r::w;
-	wheight = r::rendering_quality * r::pps::ssao::rendering_quality * r::h;
+	wwidth = r::pps::ssao::rendering_quality * r::w;
+	wheight = r::pps::ssao::rendering_quality * r::h;
 
 	// create FBO
 	fbo.Create();

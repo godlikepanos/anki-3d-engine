@@ -82,8 +82,8 @@ static void DrawSMOUVS( const point_light_t& light )
 /// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 static void CalcViewVector( const camera_t& cam )
 {
-	int _w = r::w * r::rendering_quality;
-	int _h = r::h * r::rendering_quality;
+	int _w = r::w;
+	int _h = r::h;
 	int pixels[4][2]={ {_w,_h}, {0,_h}, { 0,0 }, {_w,0} }; // from righ up and CC wise to right down, Just like we render the quad
 	int viewport[4]={ 0, 0, _w, _h };
 
@@ -131,14 +131,14 @@ static void InitStageFBO()
 	// init the stencil render buffer
 	glGenRenderbuffers( 1, &stencil_rb );
 	glBindRenderbuffer( GL_RENDERBUFFER, stencil_rb );
-	glRenderbufferStorage( GL_RENDERBUFFER, GL_STENCIL_INDEX, r::w * r::rendering_quality, r::h * r::rendering_quality );
+	glRenderbufferStorage( GL_RENDERBUFFER, GL_STENCIL_INDEX, r::w, r::h );
 	glFramebufferRenderbufferEXT( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil_rb );
 
 	// inform in what buffers we draw
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the txtrs
-	fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGB, GL_RGB );
+	fai.CreateEmpty2D( r::w, r::h, GL_RGB, GL_RGB );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
@@ -475,7 +475,7 @@ void RunStage( const camera_t& cam )
 	fbo.Bind();
 
 	// OGL stuff
-	r::SetViewport( 0, 0, r::w*r::rendering_quality, r::h*r::rendering_quality );
+	r::SetViewport( 0, 0, r::w, r::h );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();

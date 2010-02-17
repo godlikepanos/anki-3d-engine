@@ -10,7 +10,7 @@ float exposure = 2.0;
 float decay = 0.8;
 float density = 1.0;
 float weight = 0.3;
-vec2 light_pos_screen_space = vec2(0.5, 0.5);
+uniform vec2 light_pos_screen_space = vec2(0.5, 0.5);
 
 #pragma anki uniform ms_depth_fai 0
 uniform sampler2D ms_depth_fai;

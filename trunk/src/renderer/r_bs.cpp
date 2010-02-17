@@ -55,7 +55,7 @@ void RunStage( const camera_t& cam )
 {
 	// OGL stuff
 	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, r::w*r::rendering_quality, r::h*r::rendering_quality );
+	r::SetViewport( 0, 0, r::w, r::h );
 
 	glEnable( GL_DEPTH_TEST );
 	glDepthMask( false );

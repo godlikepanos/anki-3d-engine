@@ -18,7 +18,7 @@ VARS                                                                            
 static fbo_t fbo; // yet another FBO
 
 float rendering_quality = 1.0;
-bool enabled = false;
+bool enabled = true;
 
 texture_t fai;
 
@@ -35,8 +35,8 @@ Init                                                                            
 void Init()
 {
 	if( rendering_quality<0.0 || rendering_quality>1.0 ) ERROR("Incorect r::pps:lscatt::rendering_quality");
-	float wwidth = r::rendering_quality * r::pps::lscatt::rendering_quality * r::w;
-	float wheight = r::rendering_quality * r::pps::lscatt::rendering_quality * r::h;
+	float wwidth = r::pps::lscatt::rendering_quality * r::w;
+	float wheight = r::pps::lscatt::rendering_quality * r::h;
 
 	// create FBO
 	fbo.Create();
@@ -73,11 +73,11 @@ void Init()
 RunPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const camera_t& /*cam*/ )
+void RunPass( const camera_t& cam )
 {
 	fbo.Bind();
 
-	r::SetViewport( 0, 0, r::w * r::rendering_quality * rendering_quality, r::h * r::rendering_quality * rendering_quality );
+	r::SetViewport( 0, 0, r::w * rendering_quality, r::h * rendering_quality );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -87,6 +87,13 @@ void RunPass( const camera_t& /*cam*/ )
 
 	shdr->LocTexUnit( ms_depth_fai_uni_loc, r::ms::depth_fai, 0 );
 	shdr->LocTexUnit( is_fai_uni_loc, r::is::fai, 1 );
+
+	// pass the light
+	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
+	p = cam.GetProjectionMatrix() * (cam.GetViewMatrix() * p);
+	p /= p.w;
+	p = p/2 + 0.5;
+	glUniform2fv( shdr->GetUniformLocation("light_pos_screen_space"), 1, &p[0] );
 
 	// Draw quad
 	r::DrawQuad( shdr->GetAttributeLocation(0) );

@@ -7,6 +7,9 @@ namespace app { // begin of namespace
 static SDL_Surface* main_surf;
 static SDL_Surface* icon_image;
 
+uint window_w = 1280;
+uint window_h = 800;
+
 uint timer_tick = 1000/40; // in ms. 1000/Hz
 static uint time = 0;
 
@@ -19,12 +22,12 @@ uint desktop_h;
 InitWindow                                                                                                                            =
 =======================================================================================================================================
 */
-void InitWindow( int w, int h, const char* window_caption )
+void InitWindow()
 {
 	PRINT( "SDL window initializing..." );
 	SDL_Init( SDL_INIT_VIDEO );
 
-	// get desctop size
+	// get desktop size
 	const SDL_VideoInfo* info = SDL_GetVideoInfo();
 	desktop_w = info->current_w;
 	desktop_h = info->current_h;
@@ -43,12 +46,12 @@ void InitWindow( int w, int h, const char* window_caption )
 	}
 
 	// set GL attribs
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 8 ); // WARNING: Set this only in deffered shading
+	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 8 ); // WARNING: Set this only in deferred shading
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 
 	// set the surface
-	main_surf = SDL_SetVideoMode( w, h, 24, SDL_HWSURFACE | SDL_OPENGL );
+	main_surf = SDL_SetVideoMode( window_w, window_h, 24, SDL_HWSURFACE | SDL_OPENGL );
 
 	// move the window
 #ifdef WIN32
@@ -61,7 +64,8 @@ void InitWindow( int w, int h, const char* window_caption )
 	}
 #endif
 
-	SDL_WM_SetCaption( window_caption, NULL );
+	SDL_WM_SetCaption( "AnKi Engine", NULL );
+
 
 	PRINT( "SDL window initialization ends" );
 }

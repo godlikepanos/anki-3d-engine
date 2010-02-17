@@ -40,7 +40,7 @@ void Init()
 	fbo.Bind();
 
 	// texture
-	shadow_map.CreateEmpty2D( shadow_resolution * r::rendering_quality, shadow_resolution * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
+	shadow_map.CreateEmpty2D( shadow_resolution, shadow_resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
 	shadow_map.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	if( bilinear ) shadow_map.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	else           shadow_map.TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
@@ -90,7 +90,7 @@ void RunPass( const camera_t& cam )
 
 	glClear( GL_DEPTH_BUFFER_BIT );
 	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, shadow_resolution * r::rendering_quality, shadow_resolution * r::rendering_quality );
+	r::SetViewport( 0, 0, shadow_resolution, shadow_resolution );
 
 	// disable color & blend & enable depth test
 	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );

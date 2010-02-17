@@ -86,8 +86,8 @@ void HandleEvents()
 				mouse_pos.x = event_.button.x;
 				mouse_pos.y = event_.button.y;
 
-				mouse_pos_ndc.x = (2.0f * mouse_pos.x) / (float)r::w - 1.0f;
-				mouse_pos_ndc.y = 1.0f - (2.0f * mouse_pos.y) / (float)r::h;
+				mouse_pos_ndc.x = (2.0f * mouse_pos.x) / (float)app::window_w - 1.0f;
+				mouse_pos_ndc.y = 1.0f - (2.0f * mouse_pos.y) / (float)app::window_h;
 
 				if( warp_mouse )
 				{
@@ -95,7 +95,7 @@ void HandleEvents()
 					// ...SDL_WarpMouse function
 					if( mouse_pos_ndc == vec2_t::GetZero() ) break;
 
-					SDL_WarpMouse( r::w/2, r::h/2);
+					SDL_WarpMouse( app::window_w/2, app::window_h/2);
 				}
 
 				mouse_velocity = mouse_pos_ndc - prev_mouse_pos_ndc;

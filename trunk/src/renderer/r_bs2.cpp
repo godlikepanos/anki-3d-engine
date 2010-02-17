@@ -57,7 +57,7 @@ void Init2()
 
 	// texture
 	intermid_fbo.SetNumOfColorAttachements(1);
-	fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGBA8, GL_RGBA );
+	fai.CreateEmpty2D( r::w, r::h, GL_RGBA8, GL_RGBA );
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.GetGLID(), 0 );
 
 	// attach the texes
@@ -80,7 +80,7 @@ void Init2()
 void RunStage2( const camera_t& cam )
 {
 	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, r::w*r::rendering_quality, r::h*r::rendering_quality );
+	r::SetViewport( 0, 0, r::w, r::h );
 
 
 	glDepthMask( false );

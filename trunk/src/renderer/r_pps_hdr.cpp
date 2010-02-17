@@ -72,8 +72,8 @@ Init                                                                            
 */
 void Init()
 {
-	wwidth = r::rendering_quality * r::pps::hdr::rendering_quality * r::w;
-	wheight = r::rendering_quality * r::pps::hdr::rendering_quality * r::h;
+	wwidth = r::pps::hdr::rendering_quality * r::w;
+	wheight = r::pps::hdr::rendering_quality * r::h;
 
 	InitFBOs( pass0_fbo, pass0_fai, GL_RGB );
 	InitFBOs( pass1_fbo, pass1_fai, GL_RGB );

@@ -49,7 +49,7 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_RGB, GL_RGB );
+	fai.CreateEmpty2D( r::w, r::h, GL_RGB, GL_RGB );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
@@ -113,7 +113,7 @@ void RunStage( const camera_t& cam )
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	r::SetViewport( 0, 0, r::w*r::rendering_quality, r::h*r::rendering_quality );
+	r::SetViewport( 0, 0, r::w, r::h );
 
 	// set shader
 	shdr_post_proc_stage->Bind();
