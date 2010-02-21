@@ -24,8 +24,8 @@ class mesh_node_t: public node_t
 		mesh_skel_ctrl_t* mesh_skel_ctrl;
 		// funcs
 		mesh_node_t(): node_t(NT_MESH), mesh_skel_ctrl(NULL) {}
-		void Render() { Render(material); }
-		void RenderDepth() { Render( material->dp_mtl ); }
+		virtual void Render() { Render(material); }
+		virtual void RenderDepth() { Render( material->dp_mtl ); }
 		void Init( const char* filename );
 		void Deinit();
 };

@@ -18,7 +18,7 @@ VARS                                                                            
 static fbo_t fbo; // yet another FBO
 
 float rendering_quality = 1.0;
-bool enabled = true;
+bool enabled = false;
 
 texture_t fai;
 

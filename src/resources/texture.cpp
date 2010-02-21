@@ -349,7 +349,7 @@ bool texture_t::Load( const char* filename )
 //=====================================================================================================================================
 // CreateEmpty2D                                                                                                                      =
 //=====================================================================================================================================
-void texture_t::CreateEmpty2D( float width_, float height_, int internal_format, int format_, GLenum type_ )
+bool texture_t::CreateEmpty2D( float width_, float height_, int internal_format, int format_, GLenum type_ )
 {
 	type = GL_TEXTURE_2D;
 	DEBUG_ERR( internal_format>0 && internal_format<=4 ); // deprecated internal format
@@ -370,14 +370,18 @@ void texture_t::CreateEmpty2D( float width_, float height_, int internal_format,
 
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
+	{
 		ERROR( "OpenGL Error: " << gluErrorString( errid ) );
+		return false;
+	}
+	return true;
 }
 
 
 //=====================================================================================================================================
 // CreateEmpty2DMSAA                                                                                                                  =
 //=====================================================================================================================================
-void texture_t::CreateEmpty2DMSAA( float width, float height, int samples_num, int internal_format )
+bool texture_t::CreateEmpty2DMSAA( float width, float height, int samples_num, int internal_format )
 {
 	/*type = GL_TEXTURE_2D_MULTISAMPLE;
 	DEBUG_ERR( internal_format>0 && internal_format<=4 ); // deprecated internal format
@@ -388,6 +392,7 @@ void texture_t::CreateEmpty2DMSAA( float width, float height, int samples_num, i
 	
 	// allocate
 	glTexImage2DMultisample( type, samples_num, internal_format, width, height, false );*/
+	return true;
 }
 
 
