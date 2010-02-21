@@ -132,6 +132,7 @@ template<typename type_t> class container_t: public vec_t<type_t*>
 		/**
 		 * Load an object and register it. If its allready loaded return its pointer
 		 * @param fname The filename that initializes the object
+		 * @return A pointer of a new resource or NULL on fail
 		 */
 		type_t* Load( const char* fname )
 		{

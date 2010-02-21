@@ -56,8 +56,8 @@ class texture_t: public resource_t
 
 		bool Load( const char* filename );
 		void Unload();
-		void CreateEmpty2D( float width, float height, int internal_format, int format, GLenum type_ = GL_FLOAT );
-		void CreateEmpty2DMSAA( float width, float height, int samples_num, int internal_format );
+		bool CreateEmpty2D( float width, float height, int internal_format, int format, GLenum type_ = GL_FLOAT );
+		bool CreateEmpty2DMSAA( float width, float height, int samples_num, int internal_format );
 
 		void Bind( uint unit=0 ) const;
 

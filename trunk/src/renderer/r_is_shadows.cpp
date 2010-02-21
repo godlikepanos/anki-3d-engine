@@ -24,7 +24,7 @@ static fbo_t fbo;
 shader_prog_t* shdr_depth, * shdr_depth_grass, * shdr_depth_hw_skinning;
 
 // exportable vars
-int shadow_resolution = 256;
+int shadow_resolution = 512;
 texture_t shadow_map;
 
 
@@ -109,8 +109,10 @@ void RunPass( const camera_t& cam )
 
 		DEBUG_ERR( mesh_node->material->dp_mtl == NULL );
 
-		mesh_node->material->dp_mtl->Setup();
-		mesh_node->RenderDepth();
+		//mesh_node->material->dp_mtl->Setup();
+		//mesh_node->RenderDepth();
+		mesh_node->material->Setup();
+		mesh_node->Render();
 	}
 
 	glDisable( GL_POLYGON_OFFSET_FILL );

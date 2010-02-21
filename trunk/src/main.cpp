@@ -29,6 +29,8 @@
 #include "skel_anim_ctrl.h"
 #include "skel_node.h"
 #include "light_props.h"
+//#include "btBulletCollisionCommon.h"
+//#include "btBulletDynamicsCommon.h"
 
 
 // map (hard coded)
@@ -37,6 +39,31 @@ mesh_node_t* floor__,* sarge,* horse;
 skel_model_node_t* imp;
 point_light_t* point_lights[10];
 spot_light_t* spot_lights[2];
+
+class floor_t: public camera_t
+{
+	public:
+		void Render()
+		{
+			r::dbg::RenderCube( true, 1.0 );
+		}
+
+		void RenderDepth()
+		{
+			r::dbg::RenderCube( true, 1.0 );
+		}
+}* floor_;
+
+
+// Physics
+//btDefaultCollisionConfiguration* collisionConfiguration;
+
+
+
+void initPhysics()
+{
+	//collisionConfiguration = new btDefaultCollisionConfiguration();
+}
 
 
 //=====================================================================================================================================
@@ -100,8 +127,9 @@ void Init()
 	imp->mesh_nodes[0]->mesh_skel_ctrl->skel_node->skel_anim_ctrl->step = 0.8;
 
 
-
-
+	//
+	floor_ = new floor_t;
+	//floor_->material = rsrc::materials.Load( "materials/default.mtl" );
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };

@@ -6,7 +6,7 @@ from threading import Thread
 #======================================================================================================================================
 # GLOBAL VARS                                                                                                                         =
 #======================================================================================================================================
-include_paths = []
+source_paths = []
 precompiled_headers = []
 executable_name = "unamed_project"
 compiler = ""
@@ -44,7 +44,7 @@ class target_thread_t( Thread ):
 	def run( self ):
 		for i in self.range:
 			source_file = source_files[i]
-			self.out_str += GetCommandOutput( compiler + " -MM " + compiler_flags + " " + source_file.cpp_file + " -MT" + source_file.obj_file )
+			self.out_str += GetCommandOutput( compiler + " -MM " + compiler_flags + " " + source_file.cpp_file + " -MT " + source_file.obj_file )
 			self.out_str += "\t@echo Compiling " + source_file.cpp_file + "...\n"
 			self.out_str += "\t@$(CXX) $(INCPATH) $(CFLAGS) " + source_file.cpp_file + " -o " + \
 			                source_file.obj_file + "\n\n"
@@ -116,7 +116,7 @@ exec( compile( source, input_cfgfile, "exec" ) )
 
 # find the cpp files
 source_files = []
-for source_dir in include_paths:
+for source_dir in source_paths:
 	files = os.listdir( source_dir )
 	for file_ in fnmatch.filter( files, "*.cpp" ):
 		sfile = source_file_t()
@@ -176,7 +176,7 @@ master_str += "all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)\n\n"
 
 master_str += "$(EXECUTABLE): $(OBJECTS)\n"
 master_str += "\t@echo Linking...\n"
-master_str += "\t@$(CXX) $(LFLAGS) $(OBJECTS) -o $(EXECUTABLE)\n"
+master_str += "\t$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
 master_str += "\t@echo All Done!\n\n"
 
 

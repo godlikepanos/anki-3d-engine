@@ -138,7 +138,10 @@ static void InitStageFBO()
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the txtrs
-	fai.CreateEmpty2D( r::w, r::h, GL_RGB, GL_RGB );
+	if( !fai.CreateEmpty2D( r::w, r::h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE ) )
+	{
+		FATAL( "See prev error" );
+	}
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
