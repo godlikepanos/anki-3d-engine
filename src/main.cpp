@@ -29,8 +29,8 @@
 #include "skel_anim_ctrl.h"
 #include "skel_node.h"
 #include "light_props.h"
-//#include "btBulletCollisionCommon.h"
-//#include "btBulletDynamicsCommon.h"
+#include "btBulletCollisionCommon.h"
+#include "btBulletDynamicsCommon.h"
 
 
 // map (hard coded)
@@ -56,13 +56,12 @@ class floor_t: public camera_t
 
 
 // Physics
-//btDefaultCollisionConfiguration* collisionConfiguration;
-
+btDefaultCollisionConfiguration* collisionConfiguration;
 
 
 void initPhysics()
 {
-	//collisionConfiguration = new btDefaultCollisionConfiguration();
+	collisionConfiguration = new btDefaultCollisionConfiguration();
 }
 
 

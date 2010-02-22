@@ -39,14 +39,17 @@ void Init()
 	// inform in what buffers we draw
 	fbo.SetNumOfColorAttachements(3);
 
-	// create buffers
+	// create the FAIs
 	const int internal_format = GL_RGBA16F_ARB;
-	normal_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA );
-	diffuse_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA );
-	specular_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA );
+	if( !normal_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !diffuse_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !specular_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !depth_fai.CreateEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
+	{
+		FATAL( "See prev error" );
+	}
 
-	//depth_fai.CreateEmpty2D( r::w * r::rendering_quality, r::h * r::rendering_quality, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
-	depth_fai.CreateEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT );
+	
 	// you could use the above for SSAO but the difference is very little.
 	//depth_fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	//depth_fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
