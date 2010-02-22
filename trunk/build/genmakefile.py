@@ -176,7 +176,7 @@ master_str += "all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)\n\n"
 
 master_str += "$(EXECUTABLE): $(OBJECTS)\n"
 master_str += "\t@echo Linking...\n"
-master_str += "\t$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
+master_str += "\t@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
 master_str += "\t@echo All Done!\n\n"
 
 
