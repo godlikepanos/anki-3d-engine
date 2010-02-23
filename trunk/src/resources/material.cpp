@@ -1,7 +1,7 @@
 #include <string.h>
 #include "material.h"
 #include "resource.h"
-#include "scanner.h"
+#include "Scanner.h"
 #include "parser.h"
 #include "texture.h"
 #include "shader_prog.h"
@@ -60,22 +60,22 @@ Load                                                                            
 */
 bool material_t::Load( const char* filename )
 {
-	scanner_t scanner;
-	if( !scanner.LoadFile( filename ) ) return false;
+	Scanner scanner;
+	if( !scanner.loadFile( filename ) ) return false;
 
-	const scanner_t::token_t* token;
+	const Scanner::Token* token;
 
 	do
 	{
-		token = &scanner.GetNextToken();
+		token = &scanner.getNextToken();
 
 		//** SHADER_PROG **
-		if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER_PROG" ) )
+		if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER_PROG" ) )
 		{
 			if( shader_prog ) ERROR( "Shader program allready loaded" );
 
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_STRING )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
@@ -83,12 +83,12 @@ bool material_t::Load( const char* filename )
 			shader_prog = rsrc::shaders.Load( token->value.string );
 		}
 		/*//** DEPTH_SHADER_PROG **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_SHADER_PROG" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_SHADER_PROG" ) )
 		{
 			if( depth.shader_prog ) ERROR( "Depth shader program allready loaded" );
 
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_STRING )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
@@ -96,12 +96,12 @@ bool material_t::Load( const char* filename )
 			depth.shader_prog = rsrc::shaders.Load( token->value.string );
 		}*/
 		//** DEPTH_MATERIAL **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_PASS_MATERIAL" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_PASS_MATERIAL" ) )
 		{
 			if( dp_mtl ) ERROR( "Depth material already loaded" );
 
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_STRING )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
@@ -109,10 +109,10 @@ bool material_t::Load( const char* filename )
 			dp_mtl = rsrc::materials.Load( token->value.string );
 		}
 		//** BLENDS **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
@@ -120,10 +120,10 @@ bool material_t::Load( const char* filename )
 			blends = token->value.int_;
 		}
 		//** REFRACTS **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "REFRACTS" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "REFRACTS" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
@@ -131,10 +131,10 @@ bool material_t::Load( const char* filename )
 			refracts = token->value.int_;
 		}
 		//** BLENDING_SFACTOR **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_SFACTOR" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_SFACTOR" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_IDENTIFIER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_IDENTIFIER )
 			{
 				PARSE_ERR_EXPECTED( "identifier" );
 				return false;
@@ -148,10 +148,10 @@ bool material_t::Load( const char* filename )
 			blending_sfactor = gl_enum;
 		}
 		//** BLENDING_DFACTOR **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_DFACTOR" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_DFACTOR" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_IDENTIFIER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_IDENTIFIER )
 			{
 				PARSE_ERR_EXPECTED( "identifier" );
 				return false;
@@ -165,10 +165,10 @@ bool material_t::Load( const char* filename )
 			blending_dfactor = gl_enum;
 		}
 		//** DEPTH_TESTING **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_TESTING" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_TESTING" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
@@ -176,10 +176,10 @@ bool material_t::Load( const char* filename )
 			depth_testing = token->value.int_;
 		}
 		//** GRASS_MAP **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "GRASS_MAP" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "GRASS_MAP" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_STRING )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
@@ -187,10 +187,10 @@ bool material_t::Load( const char* filename )
 			grass_map = rsrc::textures.Load( token->value.string );
 		}
 		//** WIREFRAME **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "WIREFRAME" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "WIREFRAME" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
@@ -198,10 +198,10 @@ bool material_t::Load( const char* filename )
 			wireframe = token->value.int_;
 		}
 		//** CASTS_SHADOW **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "CASTS_SHADOW" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "CASTS_SHADOW" ) )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
@@ -209,11 +209,11 @@ bool material_t::Load( const char* filename )
 			casts_shadow = token->value.int_;
 		}
 		//** USER_DEFINED_VARS **
-		else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "USER_DEFINED_VARS" ) )
+		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "USER_DEFINED_VARS" ) )
 		{
 			// read {
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_LBRACKET )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_LBRACKET )
 			{
 				PARSE_ERR_EXPECTED( "{" );
 				return false;
@@ -223,16 +223,16 @@ bool material_t::Load( const char* filename )
 			{
 				// read var type
 				user_defined_var_t::type_e type;
-				token = &scanner.GetNextToken();
-				if( token->code == scanner_t::TC_RBRACKET )
+				token = &scanner.getNextToken();
+				if( token->code == Scanner::TC_RBRACKET )
 					break;
-				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "TEXTURE" ) )
+				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "TEXTURE" ) )
 					type = user_defined_var_t::VT_TEXTURE;
-				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "FLOAT" ) )
+				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "FLOAT" ) )
 					type = user_defined_var_t::VT_FLOAT;
-				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "VEC3" ) )
+				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "VEC3" ) )
 					type = user_defined_var_t::VT_VEC3;
-				else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "VEC4" ) )
+				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "VEC4" ) )
 					type = user_defined_var_t::VT_VEC4;
 				else
 				{
@@ -245,8 +245,8 @@ bool material_t::Load( const char* filename )
 				var.type = type;
 
 				// read the name
-				token = &scanner.GetNextToken();
-				if( token->code == scanner_t::TC_IDENTIFIER )
+				token = &scanner.getNextToken();
+				if( token->code == Scanner::TC_IDENTIFIER )
 					var.name = token->value.string;
 				else
 				{
@@ -259,24 +259,24 @@ bool material_t::Load( const char* filename )
 				{
 					// texture
 					case user_defined_var_t::VT_TEXTURE:
-						token = &scanner.GetNextToken();
-						if( token->code == scanner_t::TC_STRING )
+						token = &scanner.getNextToken();
+						if( token->code == Scanner::TC_STRING )
 						{
 							var.value.texture = rsrc::textures.Load( token->value.string );
 						}
-						else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "IS_FAI" ) )
+						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "IS_FAI" ) )
 						{
 							var.value.texture = &r::is::fai;
 						}
-						else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "MS_NORMAL_FAI" ) )
+						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_NORMAL_FAI" ) )
 						{
 							var.value.texture = &r::ms::normal_fai;
 						}
-						else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "MS_DEPTH_FAI" ) )
+						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_DEPTH_FAI" ) )
 						{
 							var.value.texture = &r::ms::depth_fai;
 						}
-						else if( token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "PPS_FAI" ) )
+						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "PPS_FAI" ) )
 						{
 							var.value.texture = &r::pps::fai;
 						}
@@ -288,8 +288,8 @@ bool material_t::Load( const char* filename )
 						break;
 					// float
 					case user_defined_var_t::VT_FLOAT:
-						token = &scanner.GetNextToken();
-						if( token->code == scanner_t::TC_NUMBER && token->type == scanner_t::DT_FLOAT )
+						token = &scanner.getNextToken();
+						if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_FLOAT )
 							var.value.float_ = token->value.float_;
 						else
 						{
@@ -315,7 +315,7 @@ bool material_t::Load( const char* filename )
 
 		}
 		// end of file
-		else if( token->code == scanner_t::TC_EOF )
+		else if( token->code == Scanner::TC_EOF )
 		{
 			break;
 		}

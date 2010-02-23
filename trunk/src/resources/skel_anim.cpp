@@ -1,5 +1,5 @@
 #include "skel_anim.h"
-#include "scanner.h"
+#include "Scanner.h"
 #include "parser.h"
 
 
@@ -8,15 +8,15 @@
 //=====================================================================================================================================
 bool skel_anim_t::Load( const char* filename )
 {
-	scanner_t scanner;
-	if( !scanner.LoadFile( filename ) ) return false;
+	Scanner scanner;
+	if( !scanner.loadFile( filename ) ) return false;
 
-	const scanner_t::token_t* token;
+	const Scanner::Token* token;
 
 
 	// keyframes
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT  )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT  )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -26,8 +26,8 @@ bool skel_anim_t::Load( const char* filename )
 	if( !ParseArrOfNumbers( scanner, false, false, keyframes.size(), &keyframes[0] ) ) return false;
 
 	// bones num
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT  )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT  )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -38,8 +38,8 @@ bool skel_anim_t::Load( const char* filename )
 	for( uint i=0; i<bones.size(); i++ )
 	{
 		// has anim?
-		token = &scanner.GetNextToken();
-		if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT  )
+		token = &scanner.getNextToken();
+		if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT  )
 		{
 			PARSE_ERR_EXPECTED( "integer" );
 			return false;

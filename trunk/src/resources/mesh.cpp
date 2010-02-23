@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include "renderer.h"
 #include "resource.h"
-#include "scanner.h"
+#include "Scanner.h"
 #include "parser.h"
 
 
@@ -10,15 +10,15 @@
 //=====================================================================================================================================
 bool mesh_t::Load( const char* filename )
 {
-	scanner_t scanner;
-	if( !scanner.LoadFile( filename ) ) return false;
+	Scanner scanner;
+	if( !scanner.loadFile( filename ) ) return false;
 
-	const scanner_t::token_t* token;
+	const Scanner::Token* token;
 
 
 	//** MATERIAL **
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_STRING )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_STRING )
 	{
 		PARSE_ERR_EXPECTED( "string" );
 		return false;
@@ -26,8 +26,8 @@ bool mesh_t::Load( const char* filename )
 	material_name = token->value.string;
 
 	//** DP_MATERIAL **
-	/*token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_STRING )
+	/*token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_STRING )
 	{
 		PARSE_ERR_EXPECTED( "string" );
 		return false;
@@ -36,8 +36,8 @@ bool mesh_t::Load( const char* filename )
 
 	//** VERTS **
 	// verts num
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -52,8 +52,8 @@ bool mesh_t::Load( const char* filename )
 
 	//** FACES **
 	// faces num
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -67,8 +67,8 @@ bool mesh_t::Load( const char* filename )
 
 	//** UVS **
 	// UVs num
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -81,8 +81,8 @@ bool mesh_t::Load( const char* filename )
 	}
 
 	//** VERTEX WEIGHTS **
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -91,8 +91,8 @@ bool mesh_t::Load( const char* filename )
 	for( uint i=0; i<vert_weights.size(); i++ )
 	{
 		// get the bone connections num
-		token = &scanner.GetNextToken();
-		if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+		token = &scanner.getNextToken();
+		if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 		{
 			PARSE_ERR_EXPECTED( "integer" );
 			return false;
@@ -117,8 +117,8 @@ bool mesh_t::Load( const char* filename )
 		for( uint j=0; j<vert_weights[i].bones_num; j++ )
 		{
 			// read bone id
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 			{
 				PARSE_ERR_EXPECTED( "integer" );
 				return false;
@@ -126,8 +126,8 @@ bool mesh_t::Load( const char* filename )
 			vert_weights[i].bone_ids[j] = token->value.int_;
 
 			// read the weight of that bone
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_FLOAT )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_FLOAT )
 			{
 				PARSE_ERR_EXPECTED( "float" );
 				return false;

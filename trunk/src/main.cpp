@@ -18,7 +18,7 @@
 #include "material.h"
 #include "resource.h"
 #include "scene.h"
-#include "scanner.h"
+#include "Scanner.h"
 #include "skybox.h"
 #include "map.h"
 #include "mesh_node.h"

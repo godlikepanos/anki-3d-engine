@@ -4,76 +4,76 @@
 #include <math.h>
 #include <sstream>
 #include <iomanip>
-#include "scanner.h"
+#include "Scanner.h"
 
 
-#define SERROR(x) ERROR( "SCAN_ERR (" << script_name << ':' << line_nmbr << "): " << x )
+#define SERROR(x) ERROR( "SCAN_ERR (" << scriptName << ':' << lineNmbr << "): " << x )
 
 
 //=====================================================================================================================================
-// token_t                                                                                                                            =
+// Token                                                                                                                            =
 //=====================================================================================================================================
-scanner_t::token_t::token_t( const token_t& b ): code(b.code), type(b.type)
+Scanner::Token::Token( const Token& b ): code(b.code), type(b.type)
 {
 	switch( b.type )
 	{
-		case scanner_t::DT_FLOAT:
+		case Scanner::DT_FLOAT:
 			value.float_ = b.value.float_;
 			break;
-		case scanner_t::DT_INT:
+		case Scanner::DT_INT:
 			value.int_ = b.value.int_;
 			break;
-		case scanner_t::DT_CHAR:
+		case Scanner::DT_CHAR:
 			value.char_ = b.value.char_;
 			break;
-		case scanner_t::DT_STR:
+		case Scanner::DT_STR:
 			value.string = b.value.string;
 			break;	
 	}
-	memcpy( as_string, b.as_string, scanner_t::MAX_SCRIPT_LINE_LEN*sizeof(char) );
+	memcpy( as_string, b.as_string, Scanner::MAX_SCRIPT_LINE_LEN*sizeof(char) );
 }
 
 
 //=====================================================================================================================================
 // data vars                                                                                                                          =
 //=====================================================================================================================================
-char scanner_t::eof_char = 0x7F;
+char Scanner::eofChar = 0x7F;
 
 
 //=====================================================================================================================================
 // reserved words grouped by length                                                                                                   =
 //=====================================================================================================================================
-scanner_t::res_word_t scanner_t::rw2 [] =
+Scanner::ResWord Scanner::rw2 [] =
 {
 	{"ke", TC_KE}, {NULL, TC_ERROR}
 };
 
-scanner_t::res_word_t scanner_t::rw3 [] =
+Scanner::ResWord Scanner::rw3 [] =
 {
 	{"key", TC_KEY}, {NULL, TC_ERROR}
 };
 
-scanner_t::res_word_t scanner_t::rw4 [] =
+Scanner::ResWord Scanner::rw4 [] =
 {
 	{"keyw", TC_KEYW}, {NULL, TC_ERROR}
 };
 
-scanner_t::res_word_t scanner_t::rw5 [] =
+Scanner::ResWord Scanner::rw5 [] =
 {
 	{"keywo", TC_KEYWO}, {NULL, TC_ERROR}
 };
 
-scanner_t::res_word_t scanner_t::rw6 [] =
+Scanner::ResWord Scanner::rw6 [] =
 {
 	{"keywor", TC_KEYWOR}, {NULL, TC_ERROR}
 };
 
-scanner_t::res_word_t scanner_t::rw7 [] =
+Scanner::ResWord Scanner::rw7 [] =
 {
 	{"keyword", TC_KEYWORD}, {NULL, TC_ERROR}
 };
 
-scanner_t::res_word_t* scanner_t::rw_table [] =  // reserved word table
+Scanner::ResWord* Scanner::rw_table [] =  // reserved word table
 {
 	NULL, NULL, rw2, rw3, rw4, rw5, rw6, rw7,
 };
@@ -82,88 +82,88 @@ scanner_t::res_word_t* scanner_t::rw_table [] =  // reserved word table
 //=====================================================================================================================================
 // ascii map                                                                                                                          =
 //=====================================================================================================================================
-uint scanner_t::ascii_lookup_table [128] = {AC_ERROR};
+uint Scanner::asciiLookupTable [128] = {AC_ERROR};
 
-void scanner_t::InitAsciiMap()
+void Scanner::initAsciiMap()
 {
-	memset( &ascii_lookup_table[0], AC_ERROR, sizeof(ascii_lookup_table) );
-	for( uint x='a'; x<='z'; x++) ascii_lookup_table[x] = AC_LETTER;
-	for( uint x='A'; x<='Z'; x++) ascii_lookup_table[x] = AC_LETTER;
-	for( uint x='0'; x<='9'; x++) ascii_lookup_table[x] = AC_DIGIT;
+	memset( &asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable) );
+	for( uint x='a'; x<='z'; x++) asciiLookupTable[x] = AC_LETTER;
+	for( uint x='A'; x<='Z'; x++) asciiLookupTable[x] = AC_LETTER;
+	for( uint x='0'; x<='9'; x++) asciiLookupTable[x] = AC_DIGIT;
 
-	ascii_lookup_table[':'] = ascii_lookup_table['['] = ascii_lookup_table[']'] = ascii_lookup_table['('] = AC_SPECIAL;
-	ascii_lookup_table[')'] = ascii_lookup_table['.'] = ascii_lookup_table['{'] = ascii_lookup_table['}'] = AC_SPECIAL;
-	ascii_lookup_table[','] = ascii_lookup_table[';'] = ascii_lookup_table['?'] = ascii_lookup_table['='] = AC_SPECIAL;
-	ascii_lookup_table['!'] = ascii_lookup_table['<'] = ascii_lookup_table['>'] = ascii_lookup_table['|'] = AC_SPECIAL;
-	ascii_lookup_table['&'] = ascii_lookup_table['+'] = ascii_lookup_table['-'] = ascii_lookup_table['*'] = AC_SPECIAL;
-	ascii_lookup_table['/'] = ascii_lookup_table['~'] = ascii_lookup_table['%'] = ascii_lookup_table['#'] = AC_SPECIAL;
-	ascii_lookup_table['^'] = AC_SPECIAL;
+	asciiLookupTable[':'] = asciiLookupTable['['] = asciiLookupTable[']'] = asciiLookupTable['('] = AC_SPECIAL;
+	asciiLookupTable[')'] = asciiLookupTable['.'] = asciiLookupTable['{'] = asciiLookupTable['}'] = AC_SPECIAL;
+	asciiLookupTable[','] = asciiLookupTable[';'] = asciiLookupTable['?'] = asciiLookupTable['='] = AC_SPECIAL;
+	asciiLookupTable['!'] = asciiLookupTable['<'] = asciiLookupTable['>'] = asciiLookupTable['|'] = AC_SPECIAL;
+	asciiLookupTable['&'] = asciiLookupTable['+'] = asciiLookupTable['-'] = asciiLookupTable['*'] = AC_SPECIAL;
+	asciiLookupTable['/'] = asciiLookupTable['~'] = asciiLookupTable['%'] = asciiLookupTable['#'] = AC_SPECIAL;
+	asciiLookupTable['^'] = AC_SPECIAL;
 
-	ascii_lookup_table['\t'] = ascii_lookup_table[' '] = ascii_lookup_table['\0'] = ascii_lookup_table['\r'] = AC_WHITESPACE;
-	ascii_lookup_table['\n'] = AC_ERROR; // newline is unacceptable char
+	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] = asciiLookupTable['\r'] = AC_WHITESPACE;
+	asciiLookupTable['\n'] = AC_ERROR; // newline is unacceptable char
 	                   
-	ascii_lookup_table['\"']          = AC_DOUBLEQUOTE;
-	ascii_lookup_table['\'']          = AC_QUOTE;
-	ascii_lookup_table[(int)eof_char] = AC_EOF;
-	ascii_lookup_table['_']           = AC_LETTER;
+	asciiLookupTable['\"']          = AC_DOUBLEQUOTE;
+	asciiLookupTable['\'']          = AC_QUOTE;
+	asciiLookupTable[(int)eofChar] = AC_EOF;
+	asciiLookupTable['_']           = AC_LETTER;
 }
 
 
 //=====================================================================================================================================
-// scanner_t                                                                                                                          =
+// Scanner                                                                                                                          =
 //=====================================================================================================================================
-scanner_t::scanner_t( bool newlines_as_whitespace_ ):
-	newlines_as_whitespace(newlines_as_whitespace_), commented_lines(0), in_stream(NULL)
+Scanner::Scanner( bool newlinesAsWhitespace_ ):
+	newlinesAsWhitespace(newlinesAsWhitespace_), commentedLines(0), inStream(NULL)
 {
-	if( ascii_lookup_table['a'] != AC_LETTER )
-		InitAsciiMap();
+	if( asciiLookupTable['a'] != AC_LETTER )
+		initAsciiMap();
 
-	line_nmbr = 0;
-	memset( line_txt, eof_char, sizeof(char)*MAX_SCRIPT_LINE_LEN );
+	lineNmbr = 0;
+	memset( line, eofChar, sizeof(char)*MAX_SCRIPT_LINE_LEN );
 }
 
 
 //=====================================================================================================================================
-// GetLine                                                                                                                            =
+// getLine                                                                                                                            =
 // it simply gets a new line from the file and it points to the first char of that line                                               =
 //=====================================================================================================================================
-void scanner_t::GetLine()
+void Scanner::getLine()
 {
-	/*if( in_stream->eof() )
-		pchar = &eof_char;
+	/*if( inStream->eof() )
+		pchar = &eofChar;
 	else
 	{
-		in_stream->getline( line_txt, MAX_SCRIPT_LINE_LEN - 1 );
-		pchar = &line_txt[0];
-		++line_nmbr;
+		inStream->getline( line, MAX_SCRIPT_LINE_LEN - 1 );
+		pchar = &line[0];
+		++lineNmbr;
 	}*/
-	if( !in_stream->getline( line_txt, MAX_SCRIPT_LINE_LEN - 1, '\n' ) )
-		pchar = &eof_char;
+	if( !inStream->getline( line, MAX_SCRIPT_LINE_LEN - 1, '\n' ) )
+		pchar = &eofChar;
 	else
 	{
-		pchar = &line_txt[0];
-		++line_nmbr;
+		pchar = &line[0];
+		++lineNmbr;
 	}
-	DEBUG_ERR( in_stream->gcount() > MAX_SCRIPT_LINE_LEN - 10 ); // too big line
+	DEBUG_ERR( inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10 ); // too big line
 	
-	/*if( *pchar != eof_char )
+	/*if( *pchar != eofChar )
 	{
-		PRINT( line_nmbr << ": " << line_txt );
+		PRINT( lineNmbr << ": " << line );
 	}
 	else
 	{
-		PRINT( line_nmbr << ": eof" );
+		PRINT( lineNmbr << ": eof" );
 	}*/
 }
 
 
 //=====================================================================================================================================
-// GetNextChar                                                                                                                        =
+// getNextChar                                                                                                                        =
 //=====================================================================================================================================
-char scanner_t::GetNextChar()
+char Scanner::getNextChar()
 {
 	if( *pchar=='\0' )
-		GetLine();
+		getLine();
 	else
 		++pchar;
 
@@ -172,11 +172,11 @@ char scanner_t::GetNextChar()
 
 
 //=====================================================================================================================================
-// PutBackChar                                                                                                                        =
+// putBackChar                                                                                                                        =
 //=====================================================================================================================================
-char scanner_t::PutBackChar()
+char Scanner::putBackChar()
 {
-	if( pchar != line_txt && *pchar != eof_char )
+	if( pchar != line && *pchar != eofChar )
 		--pchar;
 
 	return *pchar;
@@ -186,7 +186,7 @@ char scanner_t::PutBackChar()
 //=====================================================================================================================================
 // GetTokenInfo                                                                                                                       =
 //=====================================================================================================================================
-string scanner_t::GetTokenInfo( const token_t& token )
+string Scanner::getTokenInfo( const Token& token )
 {
 	char token_info_str[256];
 	switch( token.code )
@@ -227,153 +227,153 @@ string scanner_t::GetTokenInfo( const token_t& token )
 
 
 //=====================================================================================================================================
-// PrintTokenInfo                                                                                                                     =
+// printTokenInfo                                                                                                                     =
 //=====================================================================================================================================
-void scanner_t::PrintTokenInfo( const token_t& token )
+void Scanner::printTokenInfo( const Token& token )
 {
-	cout << "Token: " << GetTokenInfo(token) << endl;
+	cout << "Token: " << getTokenInfo(token) << endl;
 }
 
 
 //=====================================================================================================================================
-// GetAllPrintAll                                                                                                                     =
+// getAllPrintAll                                                                                                                     =
 //=====================================================================================================================================
-void scanner_t::GetAllPrintAll()
+void Scanner::getAllPrintAll()
 {
 	do
 	{
-		GetNextToken();
-		cout << setw(3) << setfill('0') << GetLineNmbr() << ": " << GetTokenInfo( crnt_token ) << endl;
-	} while( crnt_token.code != TC_EOF );
+		getNextToken();
+		cout << setw(3) << setfill('0') << getLineNmbr() << ": " << getTokenInfo( crntToken ) << endl;
+	} while( crntToken.code != TC_EOF );
 }
 
 
 //=====================================================================================================================================
-// LoadFile                                                                                                                           =
+// loadFile                                                                                                                           =
 //=====================================================================================================================================
-bool scanner_t::LoadFile( const char* filename_ )
+bool Scanner::loadFile( const char* filename_ )
 {	
-	in_fstream.open( filename_, ios::in );
-	if( !in_fstream.good() )
+	inFstream.open( filename_, ios::in );
+	if( !inFstream.good() )
 	{
 		ERROR( "Cannot open file \"" << filename_ << '\"' );
 		return false;
 	}
 	
-	return LoadIoStream( &in_fstream, filename_ );
+	return loadIoStream( &inFstream, filename_ );
 }
 
 
 //=====================================================================================================================================
-// LoadIoStream                                                                                                                       =
+// loadIoStream                                                                                                                       =
 //=====================================================================================================================================
-bool scanner_t::LoadIoStream( iostream* iostream_, const char* script_name_ )
+bool Scanner::loadIoStream( iostream* iostream_, const char* scriptName_ )
 {
-	if( in_stream != NULL )
+	if( inStream != NULL )
 	{
 		ERROR( "Tokenizer already initialized" );
 		return false;
 	}
 
-	in_stream = iostream_;
+	inStream = iostream_;
 
 	// init globals
-	DEBUG_ERR( strlen(script_name_) > sizeof(script_name)/sizeof(char) - 1 ) // Too big name
-	crnt_token.code = TC_ERROR;
-	line_nmbr = 0;
-	strcpy( script_name, script_name_ );
+	DEBUG_ERR( strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1 ) // Too big name
+	crntToken.code = TC_ERROR;
+	lineNmbr = 0;
+	strcpy( scriptName, scriptName_ );
 
 
-	GetLine();
+	getLine();
 	return true;
 }
 
 
 //=====================================================================================================================================
-// Unload                                                                                                                             =
+// unload                                                                                                                             =
 //=====================================================================================================================================
-void scanner_t::Unload()
+void Scanner::unload()
 {
-	in_fstream.close();
+	inFstream.close();
 }
 
 
 //=====================================================================================================================================
-// GetNextToken                                                                                                                       =
+// getNextToken                                                                                                                       =
 //=====================================================================================================================================
-const scanner_t::token_t& scanner_t::GetNextToken()
+const Scanner::Token& Scanner::getNextToken()
 {
 	start:
 
-	//if( crnt_token.code == TC_NEWLINE ) GetNextChar();
+	//if( crntToken.code == TC_NEWLINE ) getNextChar();
 
-	if( commented_lines>0 )
+	if( commentedLines>0 )
 	{
-		crnt_token.code = TC_NEWLINE;
-		--commented_lines;
-		++line_nmbr; // the ultimate hack. I should remember not to do such crapp
+		crntToken.code = TC_NEWLINE;
+		--commentedLines;
+		++lineNmbr; // the ultimate hack. I should remember not to do such crapp
 	}
 	else if( *pchar == '/' )
 	{
-		char ch = GetNextChar();
+		char ch = getNextChar();
 		if( ch == '/' || ch == '*' )
 		{
-			PutBackChar();
-			int line = GetLineNmbr();
-			CheckComment();
+			putBackChar();
+			int line = getLineNmbr();
+			checkComment();
 			
-			commented_lines = GetLineNmbr() - line; // update commented_lines
-			line_nmbr -= commented_lines; // part of the ultimate hack
+			commentedLines = getLineNmbr() - line; // update commentedLines
+			lineNmbr -= commentedLines; // part of the ultimate hack
 		}
 		else
 		{
-			PutBackChar();
+			putBackChar();
 			goto crappy_label;
 		}
 	}
 	else if( *pchar == '.' )
 	{
-		uint asc = AsciiLookup(GetNextChar());
-		PutBackChar();
+		uint asc = asciiLookup(getNextChar());
+		putBackChar();
 		if( asc == AC_DIGIT )
-			CheckNumber();
+			checkNumber();
 		else
-			CheckSpecial();
+			checkSpecial();
 	}
 	else if( *pchar=='\0' ) // if newline
 	{
-		if( AsciiLookup( GetNextChar() ) == AC_EOF )
-			crnt_token.code = TC_EOF;
+		if( asciiLookup( getNextChar() ) == AC_EOF )
+			crntToken.code = TC_EOF;
 		else
-			crnt_token.code = TC_NEWLINE;
+			crntToken.code = TC_NEWLINE;
 	}
 	else
 	{
 		crappy_label:
-		switch( AsciiLookup(*pchar) )
+		switch( asciiLookup(*pchar) )
 		{
-			case AC_WHITESPACE : GetNextChar();  goto start;
-			case AC_LETTER     : CheckWord();    break;
-			case AC_DIGIT      : CheckNumber();  break;
-			case AC_SPECIAL    : CheckSpecial(); break;
-			case AC_QUOTE      : CheckChar();    break;
-			case AC_DOUBLEQUOTE: CheckString();  break;
+			case AC_WHITESPACE : getNextChar();  goto start;
+			case AC_LETTER     : checkWord();    break;
+			case AC_DIGIT      : checkNumber();  break;
+			case AC_SPECIAL    : checkSpecial(); break;
+			case AC_QUOTE      : checkChar();    break;
+			case AC_DOUBLEQUOTE: checkString();  break;
 			case AC_EOF:
-				crnt_token.code = TC_EOF;
+				crntToken.code = TC_EOF;
 				break;
 			case AC_ERROR:
 			default:
 				SERROR( "Unexpected character \'" << *pchar << '\'');
 
-				GetNextChar();
+				getNextChar();
 				goto start;
 		}
 	}
 
-	if( crnt_token.code == TC_COMMENT ) goto start; // skip comments
-	if( crnt_token.code == TC_NEWLINE && newlines_as_whitespace ) goto start;
+	if( crntToken.code == TC_COMMENT ) goto start; // skip comments
+	if( crntToken.code == TC_NEWLINE && newlinesAsWhitespace ) goto start;
 	
-	return crnt_token;
+	return crntToken;
 }
 
 
@@ -386,25 +386,25 @@ CHECKERS (bellow only checkers)                                                 
 //=====================================================================================================================================
 // CheckWord                                                                                                                          =
 //=====================================================================================================================================
-bool scanner_t::CheckWord()
+bool Scanner::checkWord()
 {
-	char* tmp_str = crnt_token.as_string;
+	char* tmp_str = crntToken.as_string;
 	char ch = *pchar;
 
 	//build the string
 	do
 	{
 		*tmp_str++ = ch;
-		ch = GetNextChar();
-	}while ( AsciiLookup(ch)==AC_LETTER || AsciiLookup(ch)==AC_DIGIT );
+		ch = getNextChar();
+	}while ( asciiLookup(ch)==AC_LETTER || asciiLookup(ch)==AC_DIGIT );
 
 	*tmp_str = '\0'; // finalize it
 
 	//check if reserved
-	int len = tmp_str-crnt_token.as_string;
-	crnt_token.code = TC_IDENTIFIER;
-	crnt_token.value.string = crnt_token.as_string;
-	crnt_token.type = DT_STR; // not important
+	int len = tmp_str-crntToken.as_string;
+	crntToken.code = TC_IDENTIFIER;
+	crntToken.value.string = crntToken.as_string;
+	crntToken.type = DT_STR; // not important
 
 	if( len<=7 && len>=2 )
 	{
@@ -413,9 +413,9 @@ bool scanner_t::CheckWord()
 		{
 			if( rw_table[len][x].string == NULL ) break;
 
-			if( strcmp(rw_table[len][x].string, crnt_token.as_string ) == 0 )
+			if( strcmp(rw_table[len][x].string, crntToken.as_string ) == 0 )
 			{
-				crnt_token.code = rw_table[len][x].code;
+				crntToken.code = rw_table[len][x].code;
 				break;
 			}
 			++x;
@@ -429,16 +429,16 @@ bool scanner_t::CheckWord()
 //=====================================================================================================================================
 // CheckComment                                                                                                                       =
 //=====================================================================================================================================
-bool scanner_t::CheckComment()
+bool Scanner::checkComment()
 {
 	// begining
-	if( GetNextChar()=='*' )
+	if( getNextChar()=='*' )
 		goto branchy_cmnt;
 	else if( *pchar=='/' )
 	{
 		// end
-		GetLine();
-		crnt_token.code = TC_COMMENT;
+		getLine();
+		crntToken.code = TC_COMMENT;
 		return true;
 	}
 	else
@@ -446,19 +446,19 @@ bool scanner_t::CheckComment()
 
 	// multi-line comment
 	branchy_cmnt:
-		if( GetNextChar()=='*' )
+		if( getNextChar()=='*' )
 			goto finalize_branchy;
-		else if( *pchar==eof_char )
+		else if( *pchar==eofChar )
 			goto error;
 		else
 			goto branchy_cmnt;
 
 	// multi-line "branchy"
 	finalize_branchy:
-		if( GetNextChar()=='/' )
+		if( getNextChar()=='/' )
 		{
-			crnt_token.code = TC_COMMENT;
-			GetNextChar();
+			crntToken.code = TC_COMMENT;
+			getNextChar();
 			return true;
 		}
 		else
@@ -466,7 +466,7 @@ bool scanner_t::CheckComment()
 
 	//error
 	error:
-		crnt_token.code = TC_ERROR;
+		crntToken.code = TC_ERROR;
 		SERROR( "Incorrect comment ending" );
 		return false;
 }
@@ -475,7 +475,7 @@ bool scanner_t::CheckComment()
 //=====================================================================================================================================
 // CheckNumber                                                                                                                        =
 //=====================================================================================================================================
-bool scanner_t::CheckNumber()
+bool Scanner::checkNumber()
 {
 	//DEBUG_ERR( sizeof(long) != 8 ); // ulong must be 64bit
 	long num = 0;      // value of the number & part of the float num before '.'
@@ -483,14 +483,14 @@ bool scanner_t::CheckNumber()
 	long dad = 0;      // digits after dot (for floats)
 	bool exp_sign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
 	long exp = 0;      // the exponent in case float is represented in mant/exp format
-	char* tmp_str = crnt_token.as_string;
-	crnt_token.type = DT_INT;
+	char* tmp_str = crntToken.as_string;
+	crntToken.type = DT_INT;
 	uint asc;
 
 	// begin
 		if( *pchar == '0' )
 			goto _0;
-		else if( AsciiLookup(*pchar) == AC_DIGIT )
+		else if( asciiLookup(*pchar) == AC_DIGIT )
 		{
 			num = num*10 + *pchar-'0';
 			goto _0_9;
@@ -503,15 +503,15 @@ bool scanner_t::CheckNumber()
 	// 0????
 	_0:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 		if ( *pchar == 'x' || *pchar == 'X' )
 			goto _0x;
 		else if( *pchar == 'e' || *pchar == 'E' )
 			goto _0_9_dot_0_9_e;
 		else if( asc == AC_DIGIT )
 		{
-			PutBackChar();
+			putBackChar();
 			goto _0_9;
 		}
 		else if( *pchar == '.' )
@@ -524,8 +524,8 @@ bool scanner_t::CheckNumber()
 	// 0x????
 	_0x:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 		if( (asc == AC_DIGIT)  ||
 				(*pchar >= 'a' && *pchar <= 'f' ) ||
 				(*pchar >= 'A' && *pchar <= 'F' ) )
@@ -546,8 +546,8 @@ bool scanner_t::CheckNumber()
 	// 0x{0-9 || a-f}??
 	_0x0_9orA_F:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 		if( (asc == AC_DIGIT)         ||
 				(*pchar >= 'a' && *pchar <= 'f' ) ||
 				(*pchar >= 'A' && *pchar <= 'F' ) )
@@ -570,8 +570,8 @@ bool scanner_t::CheckNumber()
 	// {0-9}
 	_0_9:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 		if( asc == AC_DIGIT )
 		{
 			num = num * 10 + *pchar - '0';
@@ -589,9 +589,9 @@ bool scanner_t::CheckNumber()
 	// {0-9}.??
 	_float:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
-		crnt_token.type = DT_FLOAT;
+		getNextChar();
+		asc = asciiLookup(*pchar);
+		crntToken.type = DT_FLOAT;
 		if( asc == AC_DIGIT )
 		{
 			fnum = fnum * 10 + *pchar - '0';
@@ -601,7 +601,7 @@ bool scanner_t::CheckNumber()
 		else if( *pchar == '.' )
 		{
 			*tmp_str++ = *pchar;
-			GetNextChar();
+			getNextChar();
 			goto error;
 		}
 		else if( *pchar == 'f' || *pchar == 'F' )
@@ -618,8 +618,8 @@ bool scanner_t::CheckNumber()
 	// [{0-9}].[{0-9}]f??
 	_0_9_dot_0_9_f:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 
 		if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
 			goto finalize;
@@ -629,14 +629,14 @@ bool scanner_t::CheckNumber()
 	// [{0-9}].[{0-9}]e??
 	_0_9_dot_0_9_e:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
-		crnt_token.type = DT_FLOAT;
+		getNextChar();
+		asc = asciiLookup(*pchar);
+		crntToken.type = DT_FLOAT;
 
 		if( *pchar == '+' || *pchar == '-' )
 		{
 			if( *pchar == '-' ) exp_sign = 1;
-			//*tmp_str++ = *pchar; GetNextChar();
+			//*tmp_str++ = *pchar; getNextChar();
 			goto _0_9_dot_0_9_e_sign;
 		}
 		else if( asc == AC_DIGIT )
@@ -651,8 +651,8 @@ bool scanner_t::CheckNumber()
 	// After the sign we want number
 	_0_9_dot_0_9_e_sign:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 
 		if( asc == AC_DIGIT )
 		{
@@ -666,8 +666,8 @@ bool scanner_t::CheckNumber()
 	// After the number in exponent we want other number or we finalize
 	_0_9_dot_0_9_e_sign_0_9:
 		*tmp_str++ = *pchar;
-		GetNextChar();
-		asc = AsciiLookup(*pchar);
+		getNextChar();
+		asc = asciiLookup(*pchar);
 
 		if( asc == AC_DIGIT )
 		{
@@ -681,11 +681,11 @@ bool scanner_t::CheckNumber()
 
 	// finalize
 	finalize:
-		crnt_token.code = TC_NUMBER;
+		crntToken.code = TC_NUMBER;
 
-		if( crnt_token.type == DT_INT )
+		if( crntToken.type == DT_INT )
 		{
-			crnt_token.value.int_ = num;
+			crntToken.value.int_ = num;
 		}
 		else
 		{
@@ -696,25 +696,25 @@ bool scanner_t::CheckNumber()
 				dbl = dbl * pow( 10, exp );
 			}
 
-			crnt_token.value.float_ = dbl;
+			crntToken.value.float_ = dbl;
 		}
 		*tmp_str = '\0';
 		return true;
 
 	//error
 	error:
-		crnt_token.code = TC_ERROR;
+		crntToken.code = TC_ERROR;
 
 		// run until white space or special
-		asc = AsciiLookup(*pchar);
+		asc = asciiLookup(*pchar);
 		while( asc!=AC_WHITESPACE && asc!=AC_SPECIAL && asc!=AC_EOF )
 		{
 			*tmp_str++ = *pchar;
-			asc = AsciiLookup(GetNextChar());
+			asc = asciiLookup(getNextChar());
 		}
 
 		*tmp_str = '\0';
-		SERROR( "Bad number suffix \"" << crnt_token.as_string << '\"' );
+		SERROR( "Bad number suffix \"" << crntToken.as_string << '\"' );
 
 	return false;
 }
@@ -723,30 +723,30 @@ bool scanner_t::CheckNumber()
 //=====================================================================================================================================
 // CheckString                                                                                                                        =
 //=====================================================================================================================================
-bool scanner_t::CheckString()
+bool Scanner::checkString()
 {
-	char* tmp_str = crnt_token.as_string;
-	char ch = GetNextChar();
+	char* tmp_str = crntToken.as_string;
+	char ch = getNextChar();
 
 	for(;;)
 	{
 		//Error
-		if( ch=='\0' || ch==eof_char ) // if end of line or eof
+		if( ch=='\0' || ch==eofChar ) // if end of line or eof
 		{
-			crnt_token.code = TC_ERROR;
+			crntToken.code = TC_ERROR;
 			*tmp_str = '\0';
-			SERROR( "Incorect string ending \"" << crnt_token.as_string );
+			SERROR( "Incorect string ending \"" << crntToken.as_string );
 			return false;
 		}
 		//Escape Codes
 		else if( ch=='\\' )
 		{
-			ch = GetNextChar();
-			if( ch=='\0' || ch==eof_char )
+			ch = getNextChar();
+			if( ch=='\0' || ch==eofChar )
 			{
-				crnt_token.code = TC_ERROR;
+				crntToken.code = TC_ERROR;
 				*tmp_str = '\0';
-				SERROR( "Incorect string ending \"" << crnt_token.as_string << '\"' );
+				SERROR( "Incorect string ending \"" << crntToken.as_string << '\"' );
 				return false;
 			}
 
@@ -771,9 +771,9 @@ bool scanner_t::CheckString()
 		else if( ch=='\"' )
 		{
 			*tmp_str = '\0';
-			crnt_token.code = TC_STRING;
-			crnt_token.value.string = crnt_token.as_string;
-			GetNextChar();
+			crntToken.code = TC_STRING;
+			crntToken.value.string = crntToken.as_string;
+			getNextChar();
 			return true;
 		}
 		//Build str( main loop )
@@ -782,7 +782,7 @@ bool scanner_t::CheckString()
 			*tmp_str++ = ch;
 		}
 
-		ch = GetNextChar();
+		ch = getNextChar();
 	}
 
 	return false;
@@ -790,18 +790,18 @@ bool scanner_t::CheckString()
 
 
 //=====================================================================================================================================
-// CheckChar                                                                                                                          =
+// checkChar                                                                                                                          =
 //=====================================================================================================================================
-bool scanner_t::CheckChar()
+bool Scanner::checkChar()
 {
-	char ch = GetNextChar();
+	char ch = getNextChar();
 	char ch0 = ch;
-	char* tmp_str = crnt_token.as_string;
+	char* tmp_str = crntToken.as_string;
 
-	crnt_token.code = TC_ERROR;
+	crntToken.code = TC_ERROR;
 	*tmp_str++ = ch;
 
-	if( ch=='\0' || ch==eof_char ) // check char after '
+	if( ch=='\0' || ch==eofChar ) // check char after '
 	{
 		SERROR( "Newline in constant" );
 		return false;
@@ -810,15 +810,15 @@ bool scanner_t::CheckChar()
 	if (ch=='\'') // if '
 	{
 		SERROR( "Empty constant" );
-		GetNextChar();
+		getNextChar();
 		return false;
 	}
 
 	if (ch=='\\')                // if \ then maybe escape char
 	{
-		ch = GetNextChar();
+		ch = getNextChar();
 		*tmp_str++ = ch;
-		if( ch=='\0' || ch==eof_char ) //check again after the \.
+		if( ch=='\0' || ch==eofChar ) //check again after the \.
 		{
 			SERROR( "Newline in constant" );
 			return false;
@@ -838,19 +838,19 @@ bool scanner_t::CheckChar()
 			case '\?': ch0 = '\?'; break;
 			default  : ch0 = ch  ; SERROR( "Unrecognized escape charachter \'\\" << ch << '\'' );
 		}
-		crnt_token.value.char_ = ch0;
+		crntToken.value.char_ = ch0;
 	}
 	else
 	{
-		crnt_token.value.char_ = ch;
+		crntToken.value.char_ = ch;
 	}
 
-	ch = GetNextChar();
+	ch = getNextChar();
 	if( ch=='\'' )    //end
 	{
 		*tmp_str = '\0';
-		crnt_token.code = TC_CHAR;
-		GetNextChar();
+		crntToken.code = TC_CHAR;
+		getNextChar();
 		return true;
 	}
 
@@ -860,12 +860,12 @@ bool scanner_t::CheckChar()
 
 
 //=====================================================================================================================================
-// CheckSpecial                                                                                                                       =
+// checkSpecial                                                                                                                       =
 //=====================================================================================================================================
-bool scanner_t::CheckSpecial()
+bool Scanner::checkSpecial()
 {
 	char ch = *pchar;
-	token_code_e code = TC_ERROR;
+	TokenCode code = TC_ERROR;
 
 	switch( ch )
 	{
@@ -882,33 +882,33 @@ bool scanner_t::CheckSpecial()
 		case '~': code = TC_ONESCOMPLEMENT; break;
 
 		case '.':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '*':
 					code = TC_POINTERTOMEMBER;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_DOT;
 			}
 			break;
 
 		case ':':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case ':':
 					code = TC_SCOPERESOLUTION;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_UPDOWNDOT;
 			}
 			break;
 
 		case '-':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '>':
@@ -921,89 +921,89 @@ bool scanner_t::CheckSpecial()
 					code = TC_ASSIGNSUB;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_MINUS;
 			}
 			break;
 
 		case '=':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_EQUAL;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_ASSIGN;
 			}
 			break;
 
 		case '!':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_NOTEQUAL;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_NOT;
 			}
 			break;
 
 		case '<':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_LESSEQUAL;
 					break;
 				case '<':
-					ch = GetNextChar();
+					ch = getNextChar();
 					switch( ch )
 					{
 						case '=':
 							code = TC_ASSIGNSHL;
 							break;
 						default:
-							PutBackChar();
+							putBackChar();
 							code = TC_SHL;
 					}
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_LESS;
 			}
 			break;
 
 		case '>':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_GREATEREQUAL;
 					break;
 				case '>':
-					ch = GetNextChar();
+					ch = getNextChar();
 					switch( ch )
 					{
 						case '=':
 							code = TC_ASSIGNSHR;
 							break;
 						default:
-							PutBackChar();
+							putBackChar();
 							code = TC_SHR;
 					}
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_GREATER;
 			}
 			break;
 
 		case '|':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '|':
@@ -1013,13 +1013,13 @@ bool scanner_t::CheckSpecial()
 					code = TC_ASSIGNOR;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_BITWISEOR;
 			}
 			break;
 
 		case '&':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '&':
@@ -1029,13 +1029,13 @@ bool scanner_t::CheckSpecial()
 					code = TC_ASSIGNAND;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_BITWISEAND;
 			}
 			break;
 
 		case '+':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '+':
@@ -1045,66 +1045,66 @@ bool scanner_t::CheckSpecial()
 					code = TC_ASSIGNADD;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_PLUS;
 			}
 			break;
 
 		case '*':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_ASSIGNMUL;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_STAR;
 			}
 			break;
 
 		case '/':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_ASSIGNDIV;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_BSLASH;
 			}
 			break;
 
 		case '%':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_ASSIGNMOD;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_MOD;
 			}
 			break;
 
 		case '^':
-			ch = GetNextChar();
+			ch = getNextChar();
 			switch( ch )
 			{
 				case '=':
 					code = TC_ASSIGNXOR;
 					break;
 				default:
-					PutBackChar();
+					putBackChar();
 					code = TC_XOR;
 			}
 			break;
 	}
 
-	GetNextChar();
-	crnt_token.code = code;
+	getNextChar();
+	crntToken.code = code;
 
 	return true;
 }
