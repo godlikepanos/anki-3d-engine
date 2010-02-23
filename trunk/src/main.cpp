@@ -31,6 +31,7 @@
 #include "light_props.h"
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
+#include "BulletDebuger.h"
 
 
 // map (hard coded)
@@ -57,11 +58,112 @@ class floor_t: public camera_t
 
 // Physics
 btDefaultCollisionConfiguration* collisionConfiguration;
+btCollisionDispatcher* dispatcher;
+btDbvtBroadphase* broadphase;
+btSequentialImpulseConstraintSolver* sol;
+btDiscreteDynamicsWorld* dynamicsWorld;
+BulletDebuger debugDrawer;
+
+#define ARRAY_SIZE_X 5
+#define ARRAY_SIZE_Y 5
+#define ARRAY_SIZE_Z 5
+
+#define MAX_PROXIES (ARRAY_SIZE_X*ARRAY_SIZE_Y*ARRAY_SIZE_Z + 1024)
+
+#define SCALING 1.
+#define START_POS_X -5
+#define START_POS_Y -5
+#define START_POS_Z -3
 
 
 void initPhysics()
 {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
+	dispatcher = new	btCollisionDispatcher(collisionConfiguration);
+	broadphase = new btDbvtBroadphase();
+	sol = new btSequentialImpulseConstraintSolver;
+	dynamicsWorld = new btDiscreteDynamicsWorld( dispatcher, broadphase, sol, collisionConfiguration );
+
+	dynamicsWorld->setGravity(btVector3(0,-10,0));
+
+	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
+
+	btTransform groundTransform;
+	groundTransform.setIdentity();
+	groundTransform.setOrigin(btVector3(0,-50,0));
+
+	//We can also use DemoApplication::localCreateRigidBody, but for clarity it is provided here:
+	{
+		btScalar mass(0.);
+
+		//rigidbody is dynamic if and only if mass is non zero, otherwise static
+		bool isDynamic = (mass != 0.f);
+
+		btVector3 localInertia(0,0,0);
+		if (isDynamic)
+			groundShape->calculateLocalInertia(mass,localInertia);
+
+		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
+		btRigidBody* body = new btRigidBody(rbInfo);
+
+		//add the body to the dynamics world
+		dynamicsWorld->addRigidBody(body);
+	}
+
+
+	{
+		//create a few dynamic rigidbodies
+		// Re-using the same collision is better for memory usage and performance
+
+		btCollisionShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
+		//btCollisionShape* colShape = new btSphereShape(btScalar(1.));
+
+		/// Create Dynamic Objects
+		btTransform startTransform;
+		startTransform.setIdentity();
+
+		btScalar	mass(1.f);
+
+		//rigidbody is dynamic if and only if mass is non zero, otherwise static
+		bool isDynamic = (mass != 0.f);
+
+		btVector3 localInertia(0,0,0);
+		if (isDynamic)
+			colShape->calculateLocalInertia(mass,localInertia);
+
+		float start_x = START_POS_X - ARRAY_SIZE_X/2;
+		float start_y = START_POS_Y;
+		float start_z = START_POS_Z - ARRAY_SIZE_Z/2;
+
+		for (int k=0;k<ARRAY_SIZE_Y;k++)
+		{
+			for (int i=0;i<ARRAY_SIZE_X;i++)
+			{
+				for(int j = 0;j<ARRAY_SIZE_Z;j++)
+				{
+					startTransform.setOrigin(SCALING*btVector3(
+										btScalar(2.0*i + start_x),
+										btScalar(20+2.0*k + start_y),
+										btScalar(2.0*j + start_z)));
+
+
+					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+					btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
+					btRigidBody* body = new btRigidBody(rbInfo);
+
+					body->setActivationState(ISLAND_SLEEPING);
+
+					dynamicsWorld->addRigidBody(body);
+					body->setActivationState(ISLAND_SLEEPING);
+				}
+			}
+		}
+	}
+
+	dynamicsWorld->setDebugDrawer(&debugDrawer);
 }
 
 
@@ -71,6 +173,8 @@ void initPhysics()
 void Init()
 {
 	PRINT( "Engine initializing..." );
+
+	initPhysics();
 
 	srand( unsigned(time(NULL)) );
 	MathSanityChecks();
@@ -201,6 +305,8 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		scene::UpdateAllControllers();
 		scene::UpdateAllWorldStuff();
+
+		dynamicsWorld->stepSimulation( 1 );
 
 		r::Render( *main_cam );
 
