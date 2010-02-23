@@ -6,21 +6,21 @@
 /// Create a skel_node and N mesh_nodes that have a mesh_skel_ctrl
 void skel_model_node_t::Init( const char* filename )
 {
-	scanner_t scanner;
-	if( !scanner.LoadFile( filename ) ) return;
-	const scanner_t::token_t* token;
+	Scanner scanner;
+	if( !scanner.loadFile( filename ) ) return;
+	const Scanner::Token* token;
 
 
 	//** SKELETON **
-	token = &scanner.GetNextToken();
-	if( !(token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "SKELETON" )) )
+	token = &scanner.getNextToken();
+	if( !(token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SKELETON" )) )
 	{
 		PARSE_ERR_EXPECTED( "identifier SKELETON" );
 		return;
 	}
 	
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_STRING )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_STRING )
 	{
 		PARSE_ERR_EXPECTED( "string" );
 		return;
@@ -31,15 +31,15 @@ void skel_model_node_t::Init( const char* filename )
 	AddChild( skel_node );
 	
 	//** MESHES **
-	token = &scanner.GetNextToken();
-	if( !(token->code == scanner_t::TC_IDENTIFIER && !strcmp( token->value.string, "MESHES_NUM" )) )
+	token = &scanner.getNextToken();
+	if( !(token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MESHES_NUM" )) )
 	{
 		PARSE_ERR_EXPECTED( "identifier MESHES_NUM" );
 		return;
 	}
 		
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return;
@@ -49,8 +49,8 @@ void skel_model_node_t::Init( const char* filename )
 			
 	for( uint i=0; i<mesh_nodes.size(); ++i )
 	{
-		token = &scanner.GetNextToken();
-		if( token->code != scanner_t::TC_STRING )
+		token = &scanner.getNextToken();
+		if( token->code != Scanner::TC_STRING )
 		{
 			PARSE_ERR_EXPECTED( "string" );
 			return;

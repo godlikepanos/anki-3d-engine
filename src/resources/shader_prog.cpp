@@ -1,6 +1,6 @@
 #include "shader_prog.h"
 #include "renderer.h"
-#include "shader_parser.h"
+#include "ShaderParser.h"
 #include "texture.h"
 
 
@@ -149,7 +149,7 @@ void shader_prog_t::GetUniAndAttribLocs()
 //=====================================================================================================================================
 // FillTheCustomLocationsVectors                                                                                                      =
 //=====================================================================================================================================
-bool shader_prog_t::FillTheCustomLocationsVectors( const shader_parser_t& pars )
+bool shader_prog_t::FillTheCustomLocationsVectors( const ShaderParser& pars )
 {
 	Bind();
 	uint max = 0;
@@ -230,7 +230,7 @@ bool shader_prog_t::CustomLoad( const char* filename, const char* extra_source )
 		path = util::GetPath( filename );
 	}
 
-	shader_parser_t pars;
+	ShaderParser pars;
 
 	if( !pars.ParseFile( filename ) ) return false;
 

@@ -5,8 +5,8 @@ PHFLAGS = $(CFLAGS) -x c++-header
 LFLAGS = $(COMMONFLAGS) -rdynamic -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -Wl,-Bdynamic -lSDL -lpthread -lGL -ljpeg -lpng -ltiff -lesd -lcaca -laa -ldirectfb -laudio -lpulse-simple
 EXECUTABLE = AnKi.bin
 INCPATH = -I../../src/math/ -I../../src/tokenizer/ -I../../src/uncategorized/ -I../../src/ -I../../src/renderer/ -I../../src/scene/ -I../../src/ui/ -I../../src/resources/ -I../../src/utility/ -I../../src/controllers/ -I../../../bullet_svn/src/ 
-SOURCES = ../../src/tokenizer//scanner.cpp ../../src/uncategorized//input.cpp ../../src/uncategorized//skybox.cpp ../../src/uncategorized//particles.cpp ../../src/uncategorized//memory.cpp ../../src/uncategorized//engine_class.cpp ../../src/uncategorized//collision.cpp ../../src/uncategorized//map.cpp ../../src//main.cpp ../../src/renderer//r_ms.cpp ../../src/renderer//r_pps_hdr.cpp ../../src/renderer//r_pps.cpp ../../src/renderer//r_is_shadows.cpp ../../src/renderer//r_bs.cpp ../../src/renderer//r_ms_earlyz.cpp ../../src/renderer//renderer.cpp ../../src/renderer//r_pps_ssao.cpp ../../src/renderer//r_is.cpp ../../src/renderer//r_dbg.cpp ../../src/renderer//r_pps_lscatt.cpp ../../src/renderer//r_bs2.cpp ../../src/scene//mesh_node.cpp ../../src/scene//skel_node.cpp ../../src/scene//light.cpp ../../src/scene//skel_model_node.cpp ../../src/scene//node.cpp ../../src/scene//camera.cpp ../../src/scene//scene.cpp ../../src/ui//ui.cpp ../../src/resources//material.cpp ../../src/resources//texture.cpp ../../src/resources//skel_anim.cpp ../../src/resources//extension.cpp ../../src/resources//shader_parser.cpp ../../src/resources//skeleton.cpp ../../src/resources//resource.cpp ../../src/resources//light_props.cpp ../../src/resources//mesh.cpp ../../src/resources//shader_prog.cpp ../../src/utility//app.cpp ../../src/utility//common.cpp ../../src/utility//util.cpp ../../src/controllers//controller.cpp ../../src/controllers//skel_anim_ctrl.cpp 
-OBJECTS = scanner.o input.o skybox.o particles.o memory.o engine_class.o collision.o map.o main.o r_ms.o r_pps_hdr.o r_pps.o r_is_shadows.o r_bs.o r_ms_earlyz.o renderer.o r_pps_ssao.o r_is.o r_dbg.o r_pps_lscatt.o r_bs2.o mesh_node.o skel_node.o light.o skel_model_node.o node.o camera.o scene.o ui.o material.o texture.o skel_anim.o extension.o shader_parser.o skeleton.o resource.o light_props.o mesh.o shader_prog.o app.o common.o util.o controller.o skel_anim_ctrl.o 
+SOURCES = ../../src/tokenizer//Scanner.cpp ../../src/uncategorized//input.cpp ../../src/uncategorized//skybox.cpp ../../src/uncategorized//particles.cpp ../../src/uncategorized//memory.cpp ../../src/uncategorized//engine_class.cpp ../../src/uncategorized//collision.cpp ../../src/uncategorized//map.cpp ../../src//main.cpp ../../src/renderer//r_ms.cpp ../../src/renderer//r_pps_hdr.cpp ../../src/renderer//r_pps.cpp ../../src/renderer//r_is_shadows.cpp ../../src/renderer//r_bs.cpp ../../src/renderer//r_ms_earlyz.cpp ../../src/renderer//renderer.cpp ../../src/renderer//r_pps_ssao.cpp ../../src/renderer//r_is.cpp ../../src/renderer//r_dbg.cpp ../../src/renderer//r_pps_lscatt.cpp ../../src/renderer//r_bs2.cpp ../../src/scene//mesh_node.cpp ../../src/scene//skel_node.cpp ../../src/scene//light.cpp ../../src/scene//skel_model_node.cpp ../../src/scene//node.cpp ../../src/scene//camera.cpp ../../src/scene//scene.cpp ../../src/ui//ui.cpp ../../src/resources//material.cpp ../../src/resources//texture.cpp ../../src/resources//skel_anim.cpp ../../src/resources//extension.cpp ../../src/resources//skeleton.cpp ../../src/resources//resource.cpp ../../src/resources//ShaderParser.cpp ../../src/resources//light_props.cpp ../../src/resources//mesh.cpp ../../src/resources//shader_prog.cpp ../../src/utility//app.cpp ../../src/utility//common.cpp ../../src/utility//util.cpp ../../src/controllers//controller.cpp ../../src/controllers//skel_anim_ctrl.cpp 
+OBJECTS = Scanner.o input.o skybox.o particles.o memory.o engine_class.o collision.o map.o main.o r_ms.o r_pps_hdr.o r_pps.o r_is_shadows.o r_bs.o r_ms_earlyz.o renderer.o r_pps_ssao.o r_is.o r_dbg.o r_pps_lscatt.o r_bs2.o mesh_node.o skel_node.o light.o skel_model_node.o node.o camera.o scene.o ui.o material.o texture.o skel_anim.o extension.o skeleton.o resource.o ShaderParser.o light_props.o mesh.o shader_prog.o app.o common.o util.o controller.o skel_anim_ctrl.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -16,11 +16,11 @@ $(EXECUTABLE): $(OBJECTS)
 	@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)
 	@echo All Done!
 
-scanner.o: ../../src/tokenizer//scanner.cpp \
- ../../src/tokenizer//scanner.h ../../src/utility/common.h \
+Scanner.o: ../../src/tokenizer//Scanner.cpp \
+ ../../src/tokenizer//Scanner.h ../../src/utility/common.h \
  ../../src/uncategorized/memory.h
-	@echo Compiling ../../src/tokenizer//scanner.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/tokenizer//scanner.cpp -o scanner.o
+	@echo Compiling ../../src/tokenizer//Scanner.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/tokenizer//Scanner.cpp -o Scanner.o
 
 input.o: ../../src/uncategorized//input.cpp \
  ../../src/uncategorized//input.h ../../src/utility/common.h \
@@ -118,8 +118,8 @@ map.o: ../../src/uncategorized//map.cpp ../../src/uncategorized//map.h \
  ../../src/renderer/vbo.h ../../src/resources/resource.h \
  ../../src/uncategorized/engine_class.h ../../src/utility/util.h \
  ../../src/utility/common.h ../../src/uncategorized/collision.h \
- ../../src/tokenizer/scanner.h ../../src/tokenizer/parser.h \
- ../../src/tokenizer/scanner.h ../../src/resources/resource.h \
+ ../../src/tokenizer/Scanner.h ../../src/tokenizer/parser.h \
+ ../../src/tokenizer/Scanner.h ../../src/resources/resource.h \
  ../../src/scene/camera.h ../../src/scene/node.h
 	@echo Compiling ../../src/uncategorized//map.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/uncategorized//map.cpp -o map.o
@@ -147,7 +147,7 @@ main.o: ../../src//main.cpp ../../src/utility/common.h \
  ../../src/scene/light.h ../../src/scene/camera.h \
  ../../src/resources/material.h ../../src/resources/resource.h \
  ../../src/scene/scene.h ../../src/uncategorized/skybox.h \
- ../../src/tokenizer/scanner.h ../../src/uncategorized/map.h \
+ ../../src/tokenizer/Scanner.h ../../src/uncategorized/map.h \
  ../../src/uncategorized/collision.h ../../src/scene/mesh_node.h \
  ../../src/scene/skel_model_node.h ../../src/scene/mesh_node.h \
  ../../src/resources/skel_anim.h ../../src/controllers/mesh_skel_ctrl.h \
@@ -211,6 +211,12 @@ main.o: ../../src//main.cpp ../../src/utility/common.h \
  ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../../bullet_svn/src/BulletCollision/CollisionShapes/btOptimizedBvh.h \
  ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../../bullet_svn/src/LinearMath/btHashMap.h \
+ ../../../bullet_svn/src/LinearMath/btAlignedObjectArray.h \
+ ../../../bullet_svn/src/LinearMath/btSerializer.h \
+ ../../../bullet_svn/src/LinearMath/btStackAlloc.h \
+ ../../../bullet_svn/src/LinearMath/btHashMap.h \
  ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -239,9 +245,6 @@ main.o: ../../src//main.cpp ../../src/utility/common.h \
  ../../../bullet_svn/src/LinearMath/btQuickprof.h \
  ../../../bullet_svn/src/LinearMath/btIDebugDraw.h \
  ../../../bullet_svn/src/LinearMath/btSerializer.h \
- ../../../bullet_svn/src/LinearMath/btStackAlloc.h \
- ../../../bullet_svn/src/LinearMath/btHashMap.h \
- ../../../bullet_svn/src/LinearMath/btAlignedObjectArray.h \
  ../../../bullet_svn/src/btBulletDynamicsCommon.h \
  ../../../bullet_svn/src/btBulletCollisionCommon.h \
  ../../../bullet_svn/src/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
@@ -651,7 +654,7 @@ skel_model_node.o: ../../src/scene//skel_model_node.cpp \
  ../../src/math/m_misc.inl.h ../../src/resources/material.h \
  ../../src/resources/resource.h ../../src/uncategorized/engine_class.h \
  ../../src/utility/util.h ../../src/utility/common.h \
- ../../src/tokenizer/parser.h ../../src/tokenizer/scanner.h \
+ ../../src/tokenizer/parser.h ../../src/tokenizer/Scanner.h \
  ../../src/scene//skel_node.h ../../src/controllers/controller.h \
  ../../src/controllers/mesh_skel_ctrl.h \
  ../../src/controllers/controller.h
@@ -757,8 +760,8 @@ material.o: ../../src/resources//material.cpp \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
  ../../src/math/m_misc.inl.h ../../src/resources//resource.h \
  ../../src/uncategorized/engine_class.h ../../src/utility/util.h \
- ../../src/utility/common.h ../../src/tokenizer/scanner.h \
- ../../src/tokenizer/parser.h ../../src/tokenizer/scanner.h \
+ ../../src/utility/common.h ../../src/tokenizer/Scanner.h \
+ ../../src/tokenizer/parser.h ../../src/tokenizer/Scanner.h \
  ../../src/resources//texture.h ../../src/resources//shader_prog.h \
  ../../src/renderer/renderer.h ../../src/resources/shader_prog.h \
  ../../src/scene/camera.h ../../src/uncategorized/collision.h \
@@ -801,8 +804,8 @@ skel_anim.o: ../../src/resources//skel_anim.cpp \
  ../../src/math/euler.inl.h ../../src/math/mat3.h \
  ../../src/math/mat3.inl.h ../../src/math/mat4.h \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
- ../../src/math/m_misc.inl.h ../../src/tokenizer/scanner.h \
- ../../src/tokenizer/parser.h ../../src/tokenizer/scanner.h
+ ../../src/math/m_misc.inl.h ../../src/tokenizer/Scanner.h \
+ ../../src/tokenizer/parser.h ../../src/tokenizer/Scanner.h
 	@echo Compiling ../../src/resources//skel_anim.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//skel_anim.cpp -o skel_anim.o
 
@@ -813,14 +816,6 @@ extension.o: ../../src/resources//extension.cpp \
  ../../src/utility/common.h
 	@echo Compiling ../../src/resources//extension.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//extension.cpp -o extension.o
-
-shader_parser.o: ../../src/resources//shader_parser.cpp \
- ../../src/resources//shader_parser.h ../../src/utility/common.h \
- ../../src/uncategorized/memory.h ../../src/tokenizer/scanner.h \
- ../../src/tokenizer/parser.h ../../src/tokenizer/scanner.h \
- ../../src/utility/util.h ../../src/utility/common.h
-	@echo Compiling ../../src/resources//shader_parser.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//shader_parser.cpp -o shader_parser.o
 
 skeleton.o: ../../src/resources//skeleton.cpp \
  ../../src/resources//skeleton.h ../../src/utility/common.h \
@@ -836,8 +831,8 @@ skeleton.o: ../../src/resources//skeleton.cpp \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
  ../../src/math/m_misc.inl.h ../../src/resources//resource.h \
  ../../src/uncategorized/engine_class.h ../../src/utility/util.h \
- ../../src/utility/common.h ../../src/tokenizer/scanner.h \
- ../../src/tokenizer/parser.h ../../src/tokenizer/scanner.h
+ ../../src/utility/common.h ../../src/tokenizer/Scanner.h \
+ ../../src/tokenizer/parser.h ../../src/tokenizer/Scanner.h
 	@echo Compiling ../../src/resources//skeleton.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//skeleton.cpp -o skeleton.o
 
@@ -863,6 +858,14 @@ resource.o: ../../src/resources//resource.cpp \
 	@echo Compiling ../../src/resources//resource.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//resource.cpp -o resource.o
 
+ShaderParser.o: ../../src/resources//ShaderParser.cpp \
+ ../../src/resources//ShaderParser.h ../../src/utility/common.h \
+ ../../src/uncategorized/memory.h ../../src/tokenizer/Scanner.h \
+ ../../src/tokenizer/parser.h ../../src/tokenizer/Scanner.h \
+ ../../src/utility/util.h ../../src/utility/common.h
+	@echo Compiling ../../src/resources//ShaderParser.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//ShaderParser.cpp -o ShaderParser.o
+
 light_props.o: ../../src/resources//light_props.cpp \
  ../../src/resources//light_props.h ../../src/utility/common.h \
  ../../src/uncategorized/memory.h ../../src/resources//resource.h \
@@ -878,7 +881,7 @@ light_props.o: ../../src/resources//light_props.cpp \
  ../../src/math/mat3.inl.h ../../src/math/mat4.h \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
  ../../src/math/m_misc.inl.h ../../src/tokenizer/parser.h \
- ../../src/tokenizer/scanner.h ../../src/resources//texture.h
+ ../../src/tokenizer/Scanner.h ../../src/resources//texture.h
 	@echo Compiling ../../src/resources//light_props.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//light_props.cpp -o light_props.o
 
@@ -900,8 +903,8 @@ mesh.o: ../../src/resources//mesh.cpp ../../src/resources//mesh.h \
  ../../src/uncategorized/collision.h ../../src/renderer/renderer.h \
  ../../src/resources/shader_prog.h ../../src/resources/resource.h \
  ../../src/scene/camera.h ../../src/scene/node.h \
- ../../src/tokenizer/scanner.h ../../src/tokenizer/parser.h \
- ../../src/tokenizer/scanner.h
+ ../../src/tokenizer/Scanner.h ../../src/tokenizer/parser.h \
+ ../../src/tokenizer/Scanner.h
 	@echo Compiling ../../src/resources//mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//mesh.cpp -o mesh.o
 
@@ -922,7 +925,7 @@ shader_prog.o: ../../src/resources//shader_prog.cpp \
  ../../src/math/mat4.inl.h ../../src/math/m_misc.h \
  ../../src/math/m_misc.inl.h ../../src/resources/shader_prog.h \
  ../../src/scene/camera.h ../../src/uncategorized/collision.h \
- ../../src/scene/node.h ../../src/resources//shader_parser.h \
+ ../../src/scene/node.h ../../src/resources//ShaderParser.h \
  ../../src/resources//texture.h
 	@echo Compiling ../../src/resources//shader_prog.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/resources//shader_prog.cpp -o shader_prog.o

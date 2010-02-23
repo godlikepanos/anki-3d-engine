@@ -1,6 +1,6 @@
 #include <iomanip>
-#include "shader_parser.h"
-#include "scanner.h"
+#include "ShaderParser.h"
+#include "Scanner.h"
 #include "parser.h"
 #include "util.h"
 
@@ -8,7 +8,7 @@
 //=====================================================================================================================================
 // FindShaderVar                                                                                                                      =
 //=====================================================================================================================================
-void shader_parser_t::PrintSourceLines() const
+void ShaderParser::PrintSourceLines() const
 {
 	for( uint i=0; i<source_lines.size(); ++i )
 	{
@@ -20,7 +20,7 @@ void shader_parser_t::PrintSourceLines() const
 //=====================================================================================================================================
 // PrintShaderVars                                                                                                                    =
 //=====================================================================================================================================
-void shader_parser_t::PrintShaderVars() const
+void ShaderParser::PrintShaderVars() const
 {
 	PRINT( "TYPE" << setw(20) << "NAME" << setw(4) << "LOC" );
 	for( uint i=0; i<uniforms.size(); ++i )
@@ -37,9 +37,9 @@ void shader_parser_t::PrintShaderVars() const
 //=====================================================================================================================================
 // FindShaderVar                                                                                                                      =
 //=====================================================================================================================================
-vec_t<shader_parser_t::shader_var_t>::iterator shader_parser_t::FindShaderVar( vec_t<shader_var_t>& vec, const string& name ) const
+vec_t<ShaderParser::ShaderVarPragma>::iterator ShaderParser::FindShaderVar( vec_t<ShaderVarPragma>& vec, const string& name ) const
 {
-	vec_t<shader_var_t>::iterator it = vec.begin();
+	vec_t<ShaderVarPragma>::iterator it = vec.begin();
 	while( it != vec.end() && it->name != name )
 	{
 		++it;
@@ -51,7 +51,7 @@ vec_t<shader_parser_t::shader_var_t>::iterator shader_parser_t::FindShaderVar( v
 //=====================================================================================================================================
 // ParseFileForPragmas                                                                                                                =
 //=====================================================================================================================================
-bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
+bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 {
 	// load file in lines
 	vec_t<string> lines = util::GetFileLines( filename.c_str() );
@@ -62,49 +62,49 @@ bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 	}
 
 	// scanner
-	scanner_t scanner( false );
-	if( !scanner.LoadFile( filename.c_str() ) ) return false;
-	const scanner_t::token_t* token;
+	Scanner scanner( false );
+	if( !scanner.loadFile( filename.c_str() ) ) return false;
+	const Scanner::Token* token;
 
 	
 	do
 	{
-		token = &scanner.GetNextToken();
+		token = &scanner.getNextToken();
 
-		if( token->code == scanner_t::TC_SHARP )
+		if( token->code == Scanner::TC_SHARP )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "pragma") == 0 )
+			token = &scanner.getNextToken();
+			if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "pragma") == 0 )
 			{
-				token = &scanner.GetNextToken();
-				if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "anki") == 0 )
+				token = &scanner.getNextToken();
+				if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "anki") == 0 )
 				{
-					token = &scanner.GetNextToken();
+					token = &scanner.getNextToken();
 /* vert_shader_begins */
-					if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "vert_shader_begins") == 0 )
+					if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "vert_shader_begins") == 0 )
 					{
 						// play
 						if( frag_shader_begins.defined_in_line != -1 ) // check if frag shader allready defined
 						{
-							PARSE_ERR( "vert_shader_begins must precede frag_shader_begins defined at " << frag_shader_begins.defined_in_file << 
+							PARSE_ERR( "vert_shader_begins must precede frag_shader_begins defined at " << frag_shader_begins.definedInFile <<
 							           ":" << frag_shader_begins.defined_in_line );
 							return false;
 						}
 						
 						if( vert_shader_begins.defined_in_line != -1 ) // allready defined elseware so throw error
 						{
-							PARSE_ERR( "vert_shader_begins allready defined at " << vert_shader_begins.defined_in_file << ":" << 
+							PARSE_ERR( "vert_shader_begins allready defined at " << vert_shader_begins.definedInFile << ":" <<
 							           vert_shader_begins.defined_in_line );
 							return false;
 						}
-						vert_shader_begins.defined_in_file = filename;
-						vert_shader_begins.defined_in_line = scanner.GetLineNmbr();
+						vert_shader_begins.definedInFile = filename;
+						vert_shader_begins.defined_in_line = scanner.getLineNmbr();
 						vert_shader_begins.global_line = source_lines.size() + 1;
-						source_lines.push_back( string("#line ") + IntToStr(scanner.GetLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.GetLineNmbr()-1] );
+						source_lines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* frag_shader_begins */
-					else if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "frag_shader_begins") == 0 )
+					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "frag_shader_begins") == 0 )
 					{
 						// play
 						if( vert_shader_begins.defined_in_line == -1 )
@@ -115,27 +115,27 @@ bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 						
 						if( frag_shader_begins.defined_in_line != -1 ) // if allready defined elseware throw error
 						{
-							PARSE_ERR( "frag_shader_begins allready defined at " << frag_shader_begins.defined_in_file << ":" << 
+							PARSE_ERR( "frag_shader_begins allready defined at " << frag_shader_begins.definedInFile << ":" <<
 							           frag_shader_begins.defined_in_line );
 							return false;
 						}
-						frag_shader_begins.defined_in_file = filename;
-						frag_shader_begins.defined_in_line = scanner.GetLineNmbr();
+						frag_shader_begins.definedInFile = filename;
+						frag_shader_begins.defined_in_line = scanner.getLineNmbr();
 						frag_shader_begins.global_line = source_lines.size() + 1;
-						source_lines.push_back( string("#line ") + IntToStr(scanner.GetLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.GetLineNmbr()-1] );
+						source_lines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* include */
-					else if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "include") == 0 )
+					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "include") == 0 )
 					{
-						token = &scanner.GetNextToken();
-						if( token->code == scanner_t::TC_STRING )
+						token = &scanner.getNextToken();
+						if( token->code == Scanner::TC_STRING )
 						{
 							// play
 							//int line = source_lines.size();
-							source_lines.push_back( string("#line 0 ") + IntToStr(id+1) + " // " + lines[scanner.GetLineNmbr()-1] );
+							source_lines.push_back( string("#line 0 ") + IntToStr(id+1) + " // " + lines[scanner.getLineNmbr()-1] );
 							if( !ParseFileForPragmas( token->value.string, id+1 ) ) return false;
-							source_lines.push_back( string("#line ") + IntToStr(scanner.GetLineNmbr()) + ' ' + IntToStr(id) +  " // end of " + lines[scanner.GetLineNmbr()-1] );
+							source_lines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) +  " // end of " + lines[scanner.getLineNmbr()-1] );
 							// stop play
 						}
 						else
@@ -145,25 +145,25 @@ bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 						}
 					}
 /* uniform */
-					else if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "uniform") == 0 )
+					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "uniform") == 0 )
 					{
-						token = &scanner.GetNextToken();
-						if( token->code == scanner_t::TC_IDENTIFIER )
+						token = &scanner.getNextToken();
+						if( token->code == Scanner::TC_IDENTIFIER )
 						{
 							string var_name = token->value.string;
-							token = &scanner.GetNextToken();
-							if( token->code == scanner_t::TC_NUMBER && token->type == scanner_t::DT_INT )
+							token = &scanner.getNextToken();
+							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
 							{
 								// play
-								vec_t<shader_var_t>::iterator uniform = FindShaderVar( uniforms, var_name );
+								vec_t<ShaderVarPragma>::iterator uniform = FindShaderVar( uniforms, var_name );
 								if( uniform != uniforms.end() )
 								{
-									PARSE_ERR( "Uniform allready defined at " << uniform->defined_in_file << ":" << uniform->defined_in_line );
+									PARSE_ERR( "Uniform allready defined at " << uniform->definedInFile << ":" << uniform->defined_in_line );
 									return false;
 								}
 								
-								uniforms.push_back( shader_var_t( filename, scanner.GetLineNmbr(), var_name, token->value.int_ ) );
-								source_lines.push_back( lines[scanner.GetLineNmbr()-1] );
+								uniforms.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
+								source_lines.push_back( lines[scanner.getLineNmbr()-1] );
 								// stop play
 							}
 							else
@@ -179,25 +179,25 @@ bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 						}
 					}
 /* attribute */
-					else if( token->code == scanner_t::TC_IDENTIFIER && strcmp(token->value.string, "attribute") == 0 )
+					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "attribute") == 0 )
 					{
-						token = &scanner.GetNextToken();
-						if( token->code == scanner_t::TC_IDENTIFIER )
+						token = &scanner.getNextToken();
+						if( token->code == Scanner::TC_IDENTIFIER )
 						{
 							string var_name = token->value.string;
-							token = &scanner.GetNextToken();
-							if( token->code == scanner_t::TC_NUMBER && token->type == scanner_t::DT_INT )
+							token = &scanner.getNextToken();
+							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
 							{
 								// play
-								vec_t<shader_var_t>::iterator attrib = FindShaderVar( attributes, var_name );
+								vec_t<ShaderVarPragma>::iterator attrib = FindShaderVar( attributes, var_name );
 								if( attrib != attributes.end() )
 								{
-									PARSE_ERR( "Attribute allready defined at " << attrib->defined_in_file << ":" << attrib->defined_in_line );
+									PARSE_ERR( "Attribute allready defined at " << attrib->definedInFile << ":" << attrib->defined_in_line );
 									return false;
 								}
 								
-								attributes.push_back( shader_var_t( filename, scanner.GetLineNmbr(), var_name, token->value.int_ ) );
-								source_lines.push_back( lines[scanner.GetLineNmbr()-1] );
+								attributes.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
+								source_lines.push_back( lines[scanner.getLineNmbr()-1] );
 								// stop play
 							}
 							else
@@ -218,33 +218,33 @@ bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 					}
 				} // end if anki
 				
-				token = &scanner.GetNextToken();
-				if( token->code!=scanner_t::TC_NEWLINE && token->code!=scanner_t::TC_EOF )
+				token = &scanner.getNextToken();
+				if( token->code!=Scanner::TC_NEWLINE && token->code!=Scanner::TC_EOF )
 				{
 					PARSE_ERR_EXPECTED( "newline or end of file" );
 					return false;
 				}
 				
-				if( token->code == scanner_t::TC_EOF )
+				if( token->code == Scanner::TC_EOF )
 					break;
 				
 			} // end if pragma
 		} // end if #
 /* newline */		
-		else if( token->code == scanner_t::TC_NEWLINE )
+		else if( token->code == Scanner::TC_NEWLINE )
 		{
-			source_lines.push_back( lines[ scanner.GetLineNmbr() - 2 ] );
-			//PRINT( lines[ scanner.GetLineNmbr() - 2 ] )
+			source_lines.push_back( lines[ scanner.getLineNmbr() - 2 ] );
+			//PRINT( lines[ scanner.getLineNmbr() - 2 ] )
 		}
 /* EOF */
-		else if( token->code == scanner_t::TC_EOF )
+		else if( token->code == Scanner::TC_EOF )
 		{
-			source_lines.push_back( lines[ scanner.GetLineNmbr() - 1 ] );
-			//PRINT( lines[ scanner.GetLineNmbr() - 1 ] )
+			source_lines.push_back( lines[ scanner.getLineNmbr() - 1 ] );
+			//PRINT( lines[ scanner.getLineNmbr() - 1 ] )
 			break;
 		}
 /* error */
-		else if( token->code == scanner_t::TC_ERROR )
+		else if( token->code == Scanner::TC_ERROR )
 		{
 			return false;
 		}
@@ -258,7 +258,7 @@ bool shader_parser_t::ParseFileForPragmas( const string& filename, int id )
 //=====================================================================================================================================
 // Load                                                                                                                               =
 //=====================================================================================================================================
-bool shader_parser_t::ParseFile( const char* filename )
+bool ShaderParser::ParseFile( const char* filename )
 {
 	// parse master file
 	if( !ParseFileForPragmas( filename ) ) return false;

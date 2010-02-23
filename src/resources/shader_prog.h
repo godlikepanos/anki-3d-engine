@@ -6,7 +6,7 @@
 #include "common.h"
 #include "resource.h"
 
-class shader_parser_t;
+class ShaderParser;
 class texture_t;
 
 /// Shader program. Combines a fragment and a vertex shader
@@ -23,7 +23,7 @@ class shader_prog_t: public resource_t
 		map<string,int> attrib_name_to_loc;
 		
 		void GetUniAndAttribLocs();
-		bool FillTheCustomLocationsVectors( const shader_parser_t& pars );
+		bool FillTheCustomLocationsVectors( const ShaderParser& pars );
 		uint CreateAndCompileShader( const char* source_code, const char* preproc, int type ) const; ///< @return Returns zero on falure
 		bool Link();
 		

@@ -1,5 +1,5 @@
 #include "skeleton.h"
-#include "scanner.h"
+#include "Scanner.h"
 #include "parser.h"
 
 
@@ -8,15 +8,15 @@
 //=====================================================================================================================================
 bool skeleton_t::Load( const char* filename )
 {
-	scanner_t scanner;
-	if( !scanner.LoadFile( filename ) ) return false;
+	Scanner scanner;
+	if( !scanner.loadFile( filename ) ) return false;
 
-	const scanner_t::token_t* token;
+	const Scanner::Token* token;
 
 
 	//** BONES NUM **
-	token = &scanner.GetNextToken();
-	if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+	token = &scanner.getNextToken();
+	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
@@ -29,8 +29,8 @@ bool skeleton_t::Load( const char* filename )
 		bone.id = i;
 
 		// NAME
-		token = &scanner.GetNextToken();
-		if( token->code != scanner_t::TC_STRING )
+		token = &scanner.getNextToken();
+		if( token->code != Scanner::TC_STRING )
 		{
 			PARSE_ERR_EXPECTED( "string" );
 			return false;
@@ -55,22 +55,22 @@ bool skeleton_t::Load( const char* filename )
 		bone.tsl_skel_space_inv = MAi.GetTranslationPart();
 
 		// parent
-		token = &scanner.GetNextToken();
-		if( (token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT) &&
-		    (token->code != scanner_t::TC_IDENTIFIER || strcmp( token->value.string, "NULL" )!=0) )
+		token = &scanner.getNextToken();
+		if( (token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT) &&
+		    (token->code != Scanner::TC_IDENTIFIER || strcmp( token->value.string, "NULL" )!=0) )
 		{
 			PARSE_ERR_EXPECTED( "integer or NULL" );
 			return false;
 		}
 
-		if( token->code == scanner_t::TC_IDENTIFIER )
+		if( token->code == Scanner::TC_IDENTIFIER )
 			bone.parent = NULL;
 		else
 			bone.parent = &bones[ token->value.int_ ];
 
 		// childs
-		token = &scanner.GetNextToken();
-		if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+		token = &scanner.getNextToken();
+		if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 		{
 			PARSE_ERR_EXPECTED( "integer" );
 			return false;
@@ -83,8 +83,8 @@ bool skeleton_t::Load( const char* filename )
 		bone.childs_num = token->value.int_;
 		for( int j=0; j<bone.childs_num; j++ )
 		{
-			token = &scanner.GetNextToken();
-			if( token->code != scanner_t::TC_NUMBER || token->type != scanner_t::DT_INT )
+			token = &scanner.getNextToken();
+			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
 			{
 				PARSE_ERR_EXPECTED( "integer" );
 				return false;

@@ -1,7 +1,7 @@
 #include <limits>
 #include "map.h"
 #include "mesh.h"
-#include "scanner.h"
+#include "Scanner.h"
 #include "parser.h"
 #include "resource.h"
 #include "camera.h"
@@ -185,16 +185,16 @@ bool map_t::Load( const char* filename )
 {
 	DEBUG_ERR( meshes.size() != 0 ); // meshes vector should be empty
 
-	scanner_t scanner;
-	const scanner_t::token_t* token;
-	if( !scanner.LoadFile( filename ) ) return false;
+	Scanner scanner;
+	const Scanner::Token* token;
+	if( !scanner.loadFile( filename ) ) return false;
 
 	do
 	{
-		token = &scanner.GetNextToken();
+		token = &scanner.getNextToken();
 
 		// strings is what we want in this case... please let it be G-Strings
-		if( token->code == scanner_t::TC_STRING )
+		if( token->code == Scanner::TC_STRING )
 		{
 			mesh_t* mesh = rsrc::meshes.Load( token->value.string );
 			if( !mesh ) return false;
@@ -202,7 +202,7 @@ bool map_t::Load( const char* filename )
 			meshes.push_back( mesh );
 		}
 		// end of file
-		else if( token->code == scanner_t::TC_EOF )
+		else if( token->code == Scanner::TC_EOF )
 		{
 			break;
 		}
