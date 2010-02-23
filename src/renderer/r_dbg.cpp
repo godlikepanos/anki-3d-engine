@@ -8,6 +8,97 @@
 #include "skel_node.h"
 
 
+#include "btBulletCollisionCommon.h"
+#include "btBulletDynamicsCommon.h"
+#include "BulletDebuger.h"
+
+extern btDefaultCollisionConfiguration* collisionConfiguration;
+extern btCollisionDispatcher* dispatcher;
+extern btDbvtBroadphase* broadphase;
+extern btSequentialImpulseConstraintSolver* sol;
+extern btDiscreteDynamicsWorld* dynamicsWorld;
+
+void renderscene( int pass )
+{
+	btScalar m[16];
+	btMatrix3x3 rot;
+	rot.setIdentity();
+	const int numObjects = dynamicsWorld->getNumCollisionObjects();
+	btVector3 wireColor( 1, 0, 0 );
+	for( int i = 0; i < numObjects; i++ )
+	{
+		btCollisionObject* colObj = dynamicsWorld->getCollisionObjectArray()[i];
+		btRigidBody* body = btRigidBody::upcast( colObj );
+		if( body && body->getMotionState() )
+		{
+			btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
+			myMotionState->m_graphicsWorldTrans.getOpenGLMatrix( m );
+			rot = myMotionState->m_graphicsWorldTrans.getBasis();
+		}
+		else
+		{
+			colObj->getWorldTransform().getOpenGLMatrix( m );
+			rot = colObj->getWorldTransform().getBasis();
+		}
+		btVector3 wireColor( 1.f, 1.0f, 0.5f ); //wants deactivation
+		if( i & 1 ) wireColor = btVector3( 0.f, 0.0f, 1.f );
+		///color differently for active, sleeping, wantsdeactivation states
+		if( colObj->getActivationState() == 1 ) //active
+		{
+			if( i & 1 )
+			{
+				wireColor += btVector3( 1.f, 0.f, 0.f );
+			}
+			else
+			{
+				wireColor += btVector3( .5f, 0.f, 0.f );
+			}
+		}
+		if( colObj->getActivationState() == 2 ) //ISLAND_SLEEPING
+		{
+			if( i & 1 )
+			{
+				wireColor += btVector3( 0.f, 1.f, 0.f );
+			}
+			else
+			{
+				wireColor += btVector3( 0.f, 0.5f, 0.f );
+			}
+		}
+
+		btVector3 aabbMin, aabbMax;
+		dynamicsWorld->getBroadphase()->getBroadphaseAabb( aabbMin, aabbMax );
+
+		aabbMin -= btVector3( BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT );
+		aabbMax += btVector3( BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT );
+		//		printf("aabbMin=(%f,%f,%f)\n",aabbMin.getX(),aabbMin.getY(),aabbMin.getZ());
+		//		printf("aabbMax=(%f,%f,%f)\n",aabbMax.getX(),aabbMax.getY(),aabbMax.getZ());
+		//		m_dynamicsWorld->getDebugDrawer()->drawAabb(aabbMin,aabbMax,btVector3(1,1,1));
+
+
+		if( 1 )
+		{
+			switch( pass )
+			{
+				case 0:
+					//m_shapeDrawer->drawOpenGL( m, colObj->getCollisionShape(), wireColor, getDebugMode(), aabbMin, aabbMax );
+					break;
+				case 1:
+					//m_shapeDrawer->drawShadow( m, m_sundirection * rot, colObj->getCollisionShape(), aabbMin, aabbMax );
+					break;
+				case 2:
+					//m_shapeDrawer->drawOpenGL( m, colObj->getCollisionShape(), wireColor * btScalar( 0.3 ), 0, aabbMin, aabbMax );
+					break;
+			}
+		}
+	}
+}
+
+
+
+
+
+
 namespace r {
 namespace dbg {
 
@@ -101,6 +192,8 @@ void RunStage( const camera_t& cam )
 
 	// the sun
 	//RenderSun();
+
+	renderscene(1);
 
 
 	// unbind
