@@ -1,14 +1,14 @@
 #include <string.h>
-#include "material.h"
-#include "resource.h"
+#include "Material.h"
+#include "Resource.h"
 #include "Scanner.h"
 #include "parser.h"
-#include "texture.h"
-#include "shader_prog.h"
+#include "Texture.h"
+#include "ShaderProg.h"
 #include "renderer.h"
 
 
-#define MTL_ERROR( x ) ERROR( "Material (" << GetPath() << GetName() << "): " << x );
+#define MTL_ERROR( x ) ERROR( "Material (" << getPath() << getName() << "): " << x );
 
 
 /*
@@ -55,10 +55,10 @@ static bool SearchBlendEnum( const char* str, int& gl_enum )
 
 /*
 =======================================================================================================================================
-Load                                                                                                                                  =
+load                                                                                                                                  =
 =======================================================================================================================================
 */
-bool material_t::Load( const char* filename )
+bool Material::load( const char* filename )
 {
 	Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return false;
@@ -72,7 +72,7 @@ bool material_t::Load( const char* filename )
 		//** SHADER_PROG **
 		if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER_PROG" ) )
 		{
-			if( shader_prog ) ERROR( "Shader program allready loaded" );
+			if( shaderProg ) ERROR( "Shader program allready loaded" );
 
 			token = &scanner.getNextToken();
 			if( token->code != Scanner::TC_STRING )
@@ -80,12 +80,12 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			shader_prog = rsrc::shaders.Load( token->value.string );
+			shaderProg = rsrc::shaders.load( token->value.string );
 		}
 		/*//** DEPTH_SHADER_PROG **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_SHADER_PROG" ) )
 		{
-			if( depth.shader_prog ) ERROR( "Depth shader program allready loaded" );
+			if( depth.shaderProg ) ERROR( "Depth shader program allready loaded" );
 
 			token = &scanner.getNextToken();
 			if( token->code != Scanner::TC_STRING )
@@ -93,7 +93,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			depth.shader_prog = rsrc::shaders.Load( token->value.string );
+			depth.shaderProg = rsrc::shaders.load( token->value.string );
 		}*/
 		//** DEPTH_MATERIAL **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_PASS_MATERIAL" ) )
@@ -106,7 +106,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			dp_mtl = rsrc::materials.Load( token->value.string );
+			dp_mtl = rsrc::materials.load( token->value.string );
 		}
 		//** BLENDS **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
@@ -145,7 +145,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR( "Incorrect blending factor \"" << token->value.string << "\"" );
 				return false;
 			}
-			blending_sfactor = gl_enum;
+			blendingSfactor = gl_enum;
 		}
 		//** BLENDING_DFACTOR **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_DFACTOR" ) )
@@ -162,7 +162,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR( "Incorrect blending factor \"" << token->value.string << "\"" );
 				return false;
 			}
-			blending_dfactor = gl_enum;
+			blendingDfactor = gl_enum;
 		}
 		//** DEPTH_TESTING **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_TESTING" ) )
@@ -173,7 +173,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			depth_testing = token->value.int_;
+			depthTesting = token->value.int_;
 		}
 		//** GRASS_MAP **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "GRASS_MAP" ) )
@@ -184,7 +184,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			grass_map = rsrc::textures.Load( token->value.string );
+			grassMap = rsrc::textures.load( token->value.string );
 		}
 		//** WIREFRAME **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "WIREFRAME" ) )
@@ -206,7 +206,7 @@ bool material_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			casts_shadow = token->value.int_;
+			castsShadow = token->value.int_;
 		}
 		//** USER_DEFINED_VARS **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "USER_DEFINED_VARS" ) )
@@ -222,26 +222,26 @@ bool material_t::Load( const char* filename )
 			do
 			{
 				// read var type
-				user_defined_var_t::type_e type;
+				UserDefinedVar::type_e type;
 				token = &scanner.getNextToken();
 				if( token->code == Scanner::TC_RBRACKET )
 					break;
 				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "TEXTURE" ) )
-					type = user_defined_var_t::VT_TEXTURE;
+					type = UserDefinedVar::VT_TEXTURE;
 				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "FLOAT" ) )
-					type = user_defined_var_t::VT_FLOAT;
+					type = UserDefinedVar::VT_FLOAT;
 				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "VEC3" ) )
-					type = user_defined_var_t::VT_VEC3;
+					type = UserDefinedVar::VT_VEC3;
 				else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "VEC4" ) )
-					type = user_defined_var_t::VT_VEC4;
+					type = UserDefinedVar::VT_VEC4;
 				else
 				{
 					PARSE_ERR_EXPECTED( "TEXTURE or FLOAT or VEC3 or VEC4 or }" );
 					return false;
 				}
 
-				user_defined_vars.push_back( user_defined_var_t() ); // create new var
-				user_defined_var_t& var = user_defined_vars.back();
+				user_defined_vars.push_back( UserDefinedVar() ); // create new var
+				UserDefinedVar& var = user_defined_vars.back();
 				var.type = type;
 
 				// read the name
@@ -258,11 +258,11 @@ bool material_t::Load( const char* filename )
 				switch( type )
 				{
 					// texture
-					case user_defined_var_t::VT_TEXTURE:
+					case UserDefinedVar::VT_TEXTURE:
 						token = &scanner.getNextToken();
 						if( token->code == Scanner::TC_STRING )
 						{
-							var.value.texture = rsrc::textures.Load( token->value.string );
+							var.value.texture = rsrc::textures.load( token->value.string );
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "IS_FAI" ) )
 						{
@@ -287,7 +287,7 @@ bool material_t::Load( const char* filename )
 						}
 						break;
 					// float
-					case user_defined_var_t::VT_FLOAT:
+					case UserDefinedVar::VT_FLOAT:
 						token = &scanner.getNextToken();
 						if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_FLOAT )
 							var.value.float_ = token->value.float_;
@@ -298,15 +298,15 @@ bool material_t::Load( const char* filename )
 						}
 						break;
 					// vec2
-					case user_defined_var_t::VT_VEC2:
+					case UserDefinedVar::VT_VEC2:
 						ERROR( "Unimplemented" );
 						break;
 					// vec3
-					case user_defined_var_t::VT_VEC3:
+					case UserDefinedVar::VT_VEC3:
 						if( !ParseArrOfNumbers<float>( scanner, true, true, 3, &var.value.vec3[0] ) ) return false;
 						break;
 					// vec4
-					case user_defined_var_t::VT_VEC4:
+					case UserDefinedVar::VT_VEC4:
 						if( !ParseArrOfNumbers<float>( scanner, true, true, 4, &var.value.vec4[0] ) ) return false;
 						break;
 				};
@@ -328,57 +328,57 @@ bool material_t::Load( const char* filename )
 
 	}while( true );
 
-	return AdditionalInit();
+	return additionalInit();
 }
 
 
 //=====================================================================================================================================
-// AdditionalInit                                                                                                                     =
+// additionalInit                                                                                                                     =
 //=====================================================================================================================================
-bool material_t::AdditionalInit()
+bool Material::additionalInit()
 {
 	// sanity checks
-	if( !shader_prog )
+	if( !shaderProg )
 	{
 		MTL_ERROR( "Without shader is like cake without sugar (missing SHADER_PROG)" );
 		return false;
 	}
 
-	/*if( !depth.shader_prog )
+	/*if( !depth.shaderProg )
 	{
 		MTL_ERROR( "Without depth shader is like cake without shadow (missing DEPTH_SHADER_PROG)" );
 		return false;
 	}*/
 
 	// for all user defined vars get their location
-	shader_prog->Bind();
+	shaderProg->bind();
 	for( uint i=0; i<user_defined_vars.size(); i++ )
 	{
-		int loc = shader_prog->GetUniformLocation( user_defined_vars[i].name.c_str() );
+		int loc = shaderProg->getUniLoc( user_defined_vars[i].name.c_str() );
 		if( loc == -1 )
 		{
-			MTL_ERROR( "Shader \"" << shader_prog->GetName() << "\" and user defined var \"" << user_defined_vars[i].name <<
+			MTL_ERROR( "Shader \"" << shaderProg->getName() << "\" and user defined var \"" << user_defined_vars[i].name <<
 			           "\" do not combine. Incorrect location" );
 			return false;
 		}
-		user_defined_vars[i].uniform_location = loc;
+		user_defined_vars[i].uniLoc = loc;
 	}
-	shader_prog->Unbind();
+	shaderProg->unbind();
 
 	// init the attribute locations
-	attrib_locs.tanget = shader_prog->GetAttributeLocationSilently( "tangent" );
-	attrib_locs.position = shader_prog->GetAttributeLocationSilently( "position" );
-	attrib_locs.normal = shader_prog->GetAttributeLocationSilently( "normal" );
-	attrib_locs.tex_coords = shader_prog->GetAttributeLocationSilently( "tex_coords" );
+	attribLocs.tanget = shaderProg->getAttribLocSilently( "tangent" );
+	attribLocs.position = shaderProg->getAttribLocSilently( "position" );
+	attribLocs.normal = shaderProg->getAttribLocSilently( "normal" );
+	attribLocs.texCoords = shaderProg->getAttribLocSilently( "texCoords" );
 
 	// vertex weights
-	attrib_locs.vert_weight_bones_num = shader_prog->GetAttributeLocationSilently( "vert_weight_bones_num" );
-	if( attrib_locs.vert_weight_bones_num != -1 )
+	attribLocs.vertWeightBonesNum = shaderProg->getAttribLocSilently( "vertWeightBonesNum" );
+	if( attribLocs.vertWeightBonesNum != -1 )
 	{
-		attrib_locs.vert_weight_bone_ids = shader_prog->GetAttributeLocation( "vert_weight_bone_ids" );
-		attrib_locs.vert_weight_weights = shader_prog->GetAttributeLocation( "vert_weight_weights" );
-		uni_locs.skinning_rotations = shader_prog->GetUniformLocation( "skinning_rotations" );
-		uni_locs.skinning_translations = shader_prog->GetUniformLocation( "skinning_translations" );
+		attribLocs.vertWeightBoneIds = shaderProg->getAttribLoc( "vertWeightBoneIds" );
+		attribLocs.vertWeightWeights = shaderProg->getAttribLoc( "vertWeightWeights" );
+		uniLocs.skinningRotations = shaderProg->getUniLoc( "skinningRotations" );
+		uniLocs.skinningTranslations = shaderProg->getUniLoc( "skinningTranslations" );
 	}
 
 	return true;
@@ -387,65 +387,65 @@ bool material_t::AdditionalInit()
 
 /*
 =======================================================================================================================================
-Unload                                                                                                                                =
+unload                                                                                                                                =
 =======================================================================================================================================
 */
-void material_t::Unload()
+void Material::unload()
 {
-	rsrc::shaders.Unload( shader_prog );
+	rsrc::shaders.unload( shaderProg );
 
 	// loop all user defined vars and unload the textures
 	for( uint i=0; i<user_defined_vars.size(); i++ )
 	{
-		if( user_defined_vars[i].type == user_defined_var_t::VT_TEXTURE )
-			rsrc::textures.Unload( user_defined_vars[i].value.texture );
+		if( user_defined_vars[i].type == UserDefinedVar::VT_TEXTURE )
+			rsrc::textures.unload( user_defined_vars[i].value.texture );
 	}
 
 	// the grass map
-	if( grass_map )
-		rsrc::textures.Unload( grass_map );
+	if( grassMap )
+		rsrc::textures.unload( grassMap );
 }
 
 /*
 =======================================================================================================================================
-SetToDefault                                                                                                                          =
+setToDefault                                                                                                                          =
 =======================================================================================================================================
 */
-void material_t::SetToDefault()
+void Material::setToDefault()
 {
-	shader_prog = NULL;
+	shaderProg = NULL;
 	blends = false;
-	blending_sfactor = GL_ONE;
-	blending_dfactor = GL_ZERO;
-	depth_testing = true;
+	blendingSfactor = GL_ONE;
+	blendingDfactor = GL_ZERO;
+	depthTesting = true;
 	wireframe = false;
-	grass_map = NULL;
-	casts_shadow = true;
+	grassMap = NULL;
+	castsShadow = true;
 	refracts = false;
 	dp_mtl = NULL;
-	/*depth.shader_prog = NULL;
+	/*depth.shaderProg = NULL;
 	depth.alpha_testing_map = NULL;*/
 }
 
 
 //=====================================================================================================================================
-// Setup                                                                                                                              =
+// setup                                                                                                                              =
 //=====================================================================================================================================
-void material_t::Setup()
+void Material::setup()
 {
-	shader_prog->Bind();
+	shaderProg->bind();
 
 	if( blends )
 	{
 		glEnable( GL_BLEND );
 		//glDisable( GL_BLEND );
-		glBlendFunc( blending_sfactor, blending_dfactor );
+		glBlendFunc( blendingSfactor, blendingDfactor );
 	}
 	else
 		glDisable( GL_BLEND );
 
 
-	if( depth_testing )  glEnable( GL_DEPTH_TEST );
+	if( depthTesting )  glEnable( GL_DEPTH_TEST );
 	else                 glDisable( GL_DEPTH_TEST );
 
 	if( wireframe )  glPolygonMode( GL_FRONT, GL_LINE );
@@ -454,30 +454,30 @@ void material_t::Setup()
 
 	// now loop all the user defined vars and set them
 	uint texture_unit = 0;
-	vec_t<user_defined_var_t>::iterator udv;
+	Vec<UserDefinedVar>::iterator udv;
 	for( udv=user_defined_vars.begin(); udv!=user_defined_vars.end(); udv++ )
 	{
 		switch( udv->type )
 		{
 			// texture
-			case user_defined_var_t::VT_TEXTURE:
-				shader_prog->LocTexUnit( udv->uniform_location, *udv->value.texture, texture_unit++ );
+			case UserDefinedVar::VT_TEXTURE:
+				shaderProg->locTexUnit( udv->uniLoc, *udv->value.texture, texture_unit++ );
 				break;
 			// float
-			case user_defined_var_t::VT_FLOAT:
-				glUniform1f( udv->uniform_location, udv->value.float_ );
+			case UserDefinedVar::VT_FLOAT:
+				glUniform1f( udv->uniLoc, udv->value.float_ );
 				break;
 			// vec2
-			case user_defined_var_t::VT_VEC2:
-				glUniform2fv( udv->uniform_location, 1, &udv->value.vec2[0] );
+			case UserDefinedVar::VT_VEC2:
+				glUniform2fv( udv->uniLoc, 1, &udv->value.vec2[0] );
 				break;
 			// vec3
-			case user_defined_var_t::VT_VEC3:
-				glUniform3fv( udv->uniform_location, 1, &udv->value.vec3[0] );
+			case UserDefinedVar::VT_VEC3:
+				glUniform3fv( udv->uniLoc, 1, &udv->value.vec3[0] );
 				break;
 			// vec4
-			case user_defined_var_t::VT_VEC4:
-				glUniform4fv( udv->uniform_location, 1, &udv->value.vec4[0] );
+			case UserDefinedVar::VT_VEC4:
+				glUniform4fv( udv->uniLoc, 1, &udv->value.vec4[0] );
 				break;
 		}
 	}

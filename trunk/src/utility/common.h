@@ -37,7 +37,7 @@ typedef unsigned long int ulong;
 //=====================================================================================================================================
 // misc funcs                                                                                                                         =
 //=====================================================================================================================================
-template<typename type_t> class vec_t;
+template<typename Type> class Vec;
 
 extern string        IntToStr( int );
 extern string        FloatToStr( float );
@@ -112,22 +112,22 @@ extern string GetFunctionFromPrettyFunction( const char* pretty_function );
 
 
 /// useful property macros
-#define PROPERTY_RW( __type_t__, __var_name__, __set_func__, __get_func__ ) \
+#define PROPERTY_RW( __Type__, __var_name__, __set_func__, __get_func__ ) \
 	private: \
-		__type_t__ __var_name__; \
+		__Type__ __var_name__; \
 	public: \
-		void __set_func__( const __type_t__& __x__ ) { \
+		void __set_func__( const __Type__& __x__ ) { \
 			__var_name__ = __x__; \
 		} \
-		const __type_t__& __get_func__() const { \
+		const __Type__& __get_func__() const { \
 			return __var_name__; \
 		}
 
-#define PROPERTY_R( __type_t__, __var_name__, __get_func__ ) \
+#define PROPERTY_R( __Type__, __var_name__, __get_func__ ) \
 	private: \
-		__type_t__ __var_name__; \
+		__Type__ __var_name__; \
 	public: \
-		const __type_t__& __get_func__() const { \
+		const __Type__& __get_func__() const { \
 			return __var_name__; \
 		}
 
@@ -144,38 +144,38 @@ extern string GetFunctionFromPrettyFunction( const char* pretty_function );
 // MemZero                                                                                                                            =
 //=====================================================================================================================================
 /// sets memory to zero
-template <typename type_t> inline void MemZero( type_t& t )
+template <typename Type> inline void MemZero( Type& t )
 {
-	memset( &t, 0, sizeof(type_t) );
+	memset( &t, 0, sizeof(Type) );
 }
 
 
 //=====================================================================================================================================
-// vec_t                                                                                                                              =
+// Vec                                                                                                                              =
 //=====================================================================================================================================
 /// New vector class
-template<typename type_t> class vec_t: public vector<type_t>
+template<typename Type> class Vec: public vector<Type>
 {
 	public:
-		vec_t(): vector<type_t>() {}
-		vec_t( size_t size ): vector<type_t>(size) {}
-		vec_t( size_t size, type_t val ): vector<type_t>(val,size) {}
+		Vec(): vector<Type>() {}
+		Vec( size_t size ): vector<Type>(size) {}
+		Vec( size_t size, Type val ): vector<Type>(val,size) {}
 
-		type_t& operator[]( size_t n )
+		Type& operator[]( size_t n )
 		{
-			DEBUG_ERR( n >= vector<type_t>::size() );
-			return vector<type_t>::operator []( n );
+			DEBUG_ERR( n >= vector<Type>::size() );
+			return vector<Type>::operator []( n );
 		}
 
-		const type_t& operator[]( size_t n ) const
+		const Type& operator[]( size_t n ) const
 		{
-			DEBUG_ERR( n >= vector<type_t>::size() );
-			return vector<type_t>::operator []( n );
+			DEBUG_ERR( n >= vector<Type>::size() );
+			return vector<Type>::operator []( n );
 		}
 
 		size_t GetSizeInBytes() const
 		{
-			return vector<type_t>::size() * sizeof(type_t);
+			return vector<Type>::size() * sizeof(Type);
 		}
 };
 

@@ -25,7 +25,7 @@ void renderer_t::illumination_stage_t::point_light_pass_t::DrawSMOUVS( const poi
 	const float scale = 1.2;
 	renderer.matrices.model = mat4_t( light.translation_wspace, mat3_t::GetIdentity(), light.radius*scale );
 
-	shader_progs.smouvs.Bind();
+	shader_progs.smouvs.bind();
 
 	renderer.UpdateMatrices();
 
@@ -88,7 +88,7 @@ void renderer_t::illumination_stage_t::CalcPlanes()
 //=====================================================================================================================================
 void renderer_t::illumination_stage_t::ambient_pass_t::Init()
 {
-	shader_prog.CustomLoad( "shaders/is_ap.glsl", "" );
+	shaderProg.customload( "shaders/is_ap.glsl", "" );
 }
 
 
@@ -100,11 +100,11 @@ void renderer_t::illumination_stage_t::ambient_pass_t::Run() const
 	glDisable( GL_BLEND );
 
 	// set the shader
-	shader_prog.Bind();
+	shaderProg.bind();
 
 	// set the uniforms
-	glUniform3fv( shader_prog.GetUniformLocation(0), 1, &((vec3_t)scene::GetAmbientColor())[0] );
-	shader_prog.LocTexUnit( shader_prog.GetUniformLocation(1), renderer.ms.fais.diffuse, 0 );
+	glUniform3fv( shaderProg.getUniLoc(0), 1, &((vec3_t)scene::GetAmbientColor())[0] );
+	shaderProg.locTexUnit( shaderProg.getUniLoc(1), renderer.ms.fais.diffuse, 0 );
 
 	// Draw quad
 	renderer.DrawQuad();

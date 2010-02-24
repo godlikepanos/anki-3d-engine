@@ -9,17 +9,17 @@
 class vbo_t
 {
 	protected:
-		uint gl_id; ///< The OpenGL id of the VBO
+		uint glId; ///< The OpenGL id of the VBO
 		// the below vars can be extracted by quering OpenGL but I suppose keeping them here is faster
 		GLenum target;
 		GLenum usage;
 
 	public:
-		vbo_t(): gl_id(0) {}
+		vbo_t(): glId(0) {}
 		virtual ~vbo_t() { Delete(); }
-		uint   GetGLID() const { DEBUG_ERR(gl_id==0); return gl_id; }
-		GLenum GetBufferTarget() const { DEBUG_ERR(gl_id==0); return target; }
-		GLenum GetBufferUsage() const { DEBUG_ERR(gl_id==0); return usage; }
+		uint   getGlId() const { DEBUG_ERR(glId==0); return glId; }
+		GLenum GetBufferTarget() const { DEBUG_ERR(glId==0); return target; }
+		GLenum GetBufferUsage() const { DEBUG_ERR(glId==0); return usage; }
 
 		/**
 		 * Creates a new VBO with the given params and checks if everything went OK
@@ -30,7 +30,7 @@ class vbo_t
 		 */
 		void Create( GLenum target_, uint size_in_bytes, const void* data_ptr, GLenum usage_ )
 		{
-			DEBUG_ERR( gl_id!=0 ); // VBO allready initialized
+			DEBUG_ERR( glId!=0 ); // VBO allready initialized
 			DEBUG_ERR( target_!=GL_ARRAY_BUFFER && target_!=GL_ELEMENT_ARRAY_BUFFER ); // unacceptable target_
 			DEBUG_ERR( usage_!=GL_STREAM_DRAW && usage_!=GL_STATIC_DRAW && usage_!=GL_DYNAMIC_DRAW ); // unacceptable usage_
 			DEBUG_ERR( size_in_bytes < 1 ); // unacceptable size
@@ -38,7 +38,7 @@ class vbo_t
 			usage = usage_;
 			target = target_;
 
-			glGenBuffers( 1, &gl_id );
+			glGenBuffers( 1, &glId );
 			Bind();
 			glBufferData( target, size_in_bytes, data_ptr, usage ); // allocate memory and copy data from data_ptr to the VBO. If data_ptr is NULL just allocate
 
@@ -60,18 +60,18 @@ class vbo_t
 		 */
 		void Delete()
 		{
-			DEBUG_ERR( gl_id==0 ); // VBO unitialized
-			glDeleteBuffers( 1, &gl_id );
-			gl_id = 0;
+			DEBUG_ERR( glId==0 ); // VBO unitialized
+			glDeleteBuffers( 1, &glId );
+			glId = 0;
 		}
 
 		/**
-		 * Bind the VBO
+		 * bind the VBO
 		 */
 		void Bind() const
 		{
-			DEBUG_ERR( gl_id==0 ); // VBO unitialized
-			glBindBuffer( target, gl_id );
+			DEBUG_ERR( glId==0 ); // VBO unitialized
+			glBindBuffer( target, glId );
 		}
 
 		/**
@@ -79,7 +79,7 @@ class vbo_t
 		 */
 		void Unbind() const
 		{
-			DEBUG_ERR( gl_id==0 ); // VBO unitialized
+			DEBUG_ERR( glId==0 ); // VBO unitialized
 			glBindBuffer( target, 0 );
 		}
 

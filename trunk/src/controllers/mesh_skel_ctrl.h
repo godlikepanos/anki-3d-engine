@@ -7,7 +7,7 @@
 
 class mesh_node_t;
 class skel_node_t;
-class mesh_t;
+class Mesh;
 
 
 /**

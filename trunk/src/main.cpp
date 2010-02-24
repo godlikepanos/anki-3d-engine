@@ -11,12 +11,12 @@
 #include "ui.h"
 #include "app.h"
 #include "particles.h"
-#include "texture.h"
-#include "mesh.h"
+#include "Texture.h"
+#include "Mesh.h"
 #include "light.h"
 #include "collision.h"
-#include "material.h"
-#include "resource.h"
+#include "Material.h"
+#include "Resource.h"
 #include "scene.h"
 #include "Scanner.h"
 #include "skybox.h"
@@ -24,11 +24,11 @@
 #include "mesh_node.h"
 #include "skel_model_node.h"
 #include "mesh_node.h"
-#include "skel_anim.h"
+#include "SkelAnim.h"
 #include "mesh_skel_ctrl.h"
 #include "skel_anim_ctrl.h"
 #include "skel_node.h"
-#include "light_props.h"
+#include "LightProps.h"
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
 #include "BulletDebuger.h"
@@ -226,17 +226,17 @@ void Init()
 	imp = new skel_model_node_t();
 	imp->Init( "models/imp/imp.smdl" );
 	imp->SetLocalTransformation( vec3_t( 0.0, 2.11, 0.0 ), mat3_t( euler_t(-m::PI/2, 0.0, 0.0) ), 0.7 );
-	imp->mesh_nodes[0]->mesh_skel_ctrl->skel_node->skel_anim_ctrl->skel_anim = rsrc::skel_anims.Load( "models/imp/walk.imp.anim" );
+	imp->mesh_nodes[0]->mesh_skel_ctrl->skel_node->skel_anim_ctrl->skel_anim = rsrc::skel_anims.load( "models/imp/walk.imp.anim" );
 	imp->mesh_nodes[0]->mesh_skel_ctrl->skel_node->skel_anim_ctrl->step = 0.8;
 
 
 	//
 	floor_ = new floor_t;
-	//floor_->material = rsrc::materials.Load( "materials/default.mtl" );
+	//floor_->material = rsrc::materials.load( "materials/default.mtl" );
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	scene::skybox.Load( skybox_fnames );
+	scene::skybox.load( skybox_fnames );
 
 	PRINT( "Engine initialization ends (" << app::GetTicks()-ticks << ")" );
 	cerr.flush();

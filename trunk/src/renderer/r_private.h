@@ -4,7 +4,7 @@ The file contains some externs of funcs and vars that no one else needs to know 
 #ifndef _R_PRIVATE_H_
 #define _R_PRIVATE_H_
 
-class texture_t;
+class Texture;
 class camera_t;
 
 namespace r {
@@ -16,14 +16,14 @@ externs                                                                         
 =======================================================================================================================================
 */
 
-extern void DrawQuad( int vert_coords_uni_loc );
+extern void DrawQuad( int vertCoords_uni_loc );
 extern float quad_vert_cords [][2];
 
 namespace ms
 {
 	extern void Init();
 	extern void RunStage( const camera_t& cam );
-	extern texture_t normal_fai, diffuse_fai, specular_fai, depth_fai;
+	extern Texture normal_fai, diffuse_fai, specular_fai, depth_fai;
 	const int fbo_attachable_imgs_num = 4;
 
 #if defined( _EARLY_Z_ )
@@ -44,7 +44,7 @@ namespace is
 
 	namespace shadows
 	{
-		extern texture_t shadow_map;
+		extern Texture shadow_map;
 		extern int shadow_resolution;
 		extern void RunPass( const camera_t& cam );
 		extern void Init();
@@ -61,8 +61,8 @@ namespace pps
 	{
 		extern void Init();
 		extern void RunPass( const camera_t& cam );
-		extern texture_t fai;
-		extern texture_t blured_fai;
+		extern Texture fai;
+		extern Texture blured_fai;
 		extern float rendering_quality;
 	}
 
@@ -70,9 +70,9 @@ namespace pps
 	{
 		extern void Init();
 		extern void RunPass( const camera_t& cam );
-		extern texture_t pass0_fai;
-		extern texture_t pass1_fai;
-		extern texture_t pass2_fai;
+		extern Texture pass0_fai;
+		extern Texture pass1_fai;
+		extern Texture pass2_fai;
 		extern float rendering_quality;
 	}
 
@@ -80,7 +80,7 @@ namespace pps
 	{
 		extern void Init();
 		extern void RunPass( const camera_t& cam );
-		extern texture_t fai;
+		extern Texture fai;
 		extern float rendering_quality;
 	}
 }
@@ -90,9 +90,9 @@ namespace bs
 {
 	extern void Init();
 	extern void RunStage( const camera_t& cam );
-	extern texture_t fai_bs_scene;
+	extern Texture fai_bs_scene;
 
-	extern texture_t r_fai; // ToDo: remove it
+	extern Texture r_fai; // ToDo: remove it
 }
 
 
@@ -115,14 +115,14 @@ and by r::is::shadow::RunStage. Used like macro
 @param the shader to bind if the t's material IS NOT a grass like material
 @param the shader to bind if the t's material IS a grass like material
 */
-template <typename type_t, bool make_check_for_shadow_casting>
-void RenderDepth( type_t& t )
+template <typename Type, bool make_check_for_shadow_casting>
+void RenderDepth( Type& t )
 {
 	DEBUG_ERR( !t.material ); // the object doesnt have material
 
 	// casts shadow?
 	if( make_check_for_shadow_casting )
-		if( !t.material->casts_shadow ) return;
+		if( !t.material->castsShadow ) return;
 
 	// blends?
 	if( t.material->blends ) return;
@@ -130,16 +130,16 @@ void RenderDepth( type_t& t )
 	// chose the appropriate shader
 	if( t.material->grass_map )
 	{
-		r::is::shadows::shdr_depth_grass->Bind();
-		r::is::shadows::shdr_depth_grass->LocTexUnit( r::is::shadows::shdr_depth_grass->GetUniformLocation(0), *t.material->grass_map, 0 );
+		r::is::shadows::shdr_depth_grass->bind();
+		r::is::shadows::shdr_depth_grass->locTexUnit( r::is::shadows::shdr_depth_grass->GetUniLoc(0), *t.material->grass_map, 0 );
 	}
-	else if( t.material->attrib_locs.vert_weight_bones_num != -1 )
+	else if( t.material->attrib_locs.vertWeightBonesNum != -1 )
 	{
-		r::is::shadows::shdr_depth_hw_skinning->Bind();
+		r::is::shadows::shdr_depth_hw_skinning->bind();
 	}
 	else
 	{
-		r::is::shadows::shdr_depth->Bind();
+		r::is::shadows::shdr_depth->bind();
 	}
 
 	// wireframe ?
@@ -162,7 +162,7 @@ void RenderDepth( type_t& t )
 // Render                                                                                                                             =
 //=====================================================================================================================================
 /// The template function renders an entity. Used by r::ms::RunStage and r::bs::RunStage. Used like macro
-template <typename type_t, bool render_transparent> void Render( type_t* t )
+template <typename Type, bool render_transparent> void Render( Type* t )
 {
 	DEBUG_ERR( !t->material );
 

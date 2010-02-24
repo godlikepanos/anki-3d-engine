@@ -314,19 +314,19 @@ class obb_t: public bvolume_t
 collision triangle                                                                                                                    =
 =======================================================================================================================================
 */
-/*class ctriangle_t: public bvolume_t
+/*class cTriangle: public bvolume_t
 {
 	public:
 		// data members
 		vec3_t a, b, c;
 
 		// constructors & destractor
-		ctriangle_t() {}
-		ctriangle_t( const vec3_t& a_, const vec3_t& b_, const vec3_t& c_ ): a(a_), b(b_), c(c_) {}
-		ctriangle_t( const  )
+		cTriangle() {}
+		cTriangle( const vec3_t& a_, const vec3_t& b_, const vec3_t& c_ ): a(a_), b(b_), c(c_) {}
+		cTriangle( const  )
 
 		// operators
-		ctriangle_t& operator =( const ctriangle_t& other ) { a=other.a; b=other.b; c=other.c; return (*this); }
+		cTriangle& operator =( const cTriangle& other ) { a=other.a; b=other.b; c=other.c; return (*this); }
 
 		// std funcs
 };*/

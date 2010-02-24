@@ -30,11 +30,11 @@ extern void UpdateAllWorldStuff();
 extern void UpdateAllControllers();
 
 
-// container_t
+// Container
 /// entities container class
-template<typename type_t> class container_t: public vec_t<type_t*>
+template<typename Type> class container_t: public Vec<Type*>
 {
-}; // end class container_t
+}; // end class Container
 
 
 
@@ -52,7 +52,7 @@ extern container_camera_t     cameras;
 extern container_mesh_node_t  mesh_nodes;
 extern container_skel_node_t  skel_nodes;
 
-extern vec_t<controller_t*>   controllers;
+extern Vec<controller_t*>   controllers;
 
 
 } // end namespace

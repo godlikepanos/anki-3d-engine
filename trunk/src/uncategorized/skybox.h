@@ -2,10 +2,10 @@
 #define _SKYBOX_H_
 
 #include "common.h"
-#include "texture.h"
+#include "Texture.h"
 #include "gmath.h"
 
-class shader_prog_t;
+class ShaderProg;
 
 class skybox_t
 {
@@ -20,16 +20,16 @@ class skybox_t
 			DOWN
 		};
 
-		texture_t* textures[6];
-		texture_t* noise;
-		shader_prog_t* shader;
+		Texture* textures[6];
+		Texture* noise;
+		ShaderProg* shader;
 
 		float rotation_ang;
 
 	public:
 		skybox_t() { rotation_ang=0.0; }
 
-		bool Load( const char* filenames[6] );
+		bool load( const char* filenames[6] );
 		void Render( const mat3_t& rotation );
 };
 

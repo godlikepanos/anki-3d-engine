@@ -30,7 +30,7 @@ struct renderer_t
 
 		struct
 		{
-			texture_t normal, diffuse, specular, depth;
+			Texture normal, diffuse, specular, depth;
 		} fais;
 
 		material_stage_t( renderer_t& r ): knowyourfather_t(r) {}
@@ -45,7 +45,7 @@ struct renderer_t
 		/// ambient pass
 		struct ambient_pass_t: knowyourfather_t
 		{
-			shader_prog_t shader_prog;
+			ShaderProg shaderProg;
 
 			ambient_pass_t( renderer_t& r ): knowyourfather_t(r) {}
 			void Init();
@@ -64,7 +64,7 @@ struct renderer_t
 
 			struct
 			{
-				shader_prog_t main, smouvs;
+				ShaderProg main, smouvs;
 			} shader_progs;
 
 			point_light_pass_t( renderer_t& r ): knowyourfather_t(r) {}
@@ -79,7 +79,7 @@ struct renderer_t
 
 			struct
 			{
-				shader_prog_t shadow, no_shadow, smouvs;
+				ShaderProg shadow, no_shadow, smouvs;
 			} shader_progs;
 
 			spot_light_pass_t( renderer_t& r ): knowyourfather_t(r) {}
@@ -90,7 +90,7 @@ struct renderer_t
 
 		// data
 		fbo_t fbo;
-		texture_t fai;
+		Texture fai;
 		vec3_t view_vectors[4];
 		vec2_t planes;
 
@@ -145,12 +145,12 @@ struct renderer_t
 
 				struct
 				{
-					shader_prog_t pass0, pass1, pass2;
+					ShaderProg pass0, pass1, pass2;
 				} shader_progs;
 
 				struct
 				{
-					texture_t pass0, pass1, pass2;
+					Texture pass0, pass1, pass2;
 				} fais;
 
 				hdr_pass_t( renderer_t& r ): knowyourfather_t(r) {}
@@ -168,12 +168,12 @@ struct renderer_t
 
 				struct
 				{
-					shader_prog_t main, blured;
+					ShaderProg main, blured;
 				} shader_progs;
 
 				struct
 				{
-					texture_t main, blured;
+					Texture main, blured;
 				} fais;
 
 				ssao_pass_t( renderer_t& r ): knowyourfather_t(r) {}
@@ -194,12 +194,12 @@ struct renderer_t
 
 			struct
 			{
-				shader_prog_t main;
+				ShaderProg main;
 			} shader_progs;
 
 			struct
 			{
-				texture_t main;
+				Texture main;
 			} fais;
 
 			hdr_pass_t hdr;
@@ -249,7 +249,7 @@ struct renderer_t
 
 	void UpdateMatrices();
 	static void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); };
-	static void NoShaders() { shader_prog_t::Unbind(); }
+	static void NoShaders() { ShaderProg::unbind(); }
 	static void DrawQuad();
 	void Init();
 	void Run( camera_t* cam );

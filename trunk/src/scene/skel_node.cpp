@@ -1,7 +1,7 @@
 #include "skel_node.h"
 #include "renderer.h"
-#include "skel_anim.h"
-#include "skeleton.h"
+#include "SkelAnim.h"
+#include "Skeleton.h"
 #include "skel_anim_ctrl.h"
 
 
@@ -20,7 +20,7 @@ skel_node_t::skel_node_t():
 //=====================================================================================================================================
 void skel_node_t::Init( const char* filename )
 {
-	skeleton = rsrc::skeletons.Load( filename );
+	skeleton = rsrc::skeletons.load( filename );
 	skel_anim_ctrl = new skel_anim_ctrl_t( this );
 }
 
@@ -30,7 +30,7 @@ void skel_node_t::Init( const char* filename )
 //=====================================================================================================================================
 void skel_node_t::Deinit()
 {
-	rsrc::skeletons.Unload( skeleton );
+	rsrc::skeletons.unload( skeleton );
 }
 
 

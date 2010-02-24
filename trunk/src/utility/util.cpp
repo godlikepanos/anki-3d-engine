@@ -50,9 +50,9 @@ string ReadFile( const char* filename )
 //=====================================================================================================================================
 // GetFileLines                                                                                                                       =
 //=====================================================================================================================================
-vec_t<string> GetFileLines( const char* filename )
+Vec<string> GetFileLines( const char* filename )
 {
-	vec_t<string> lines;
+	Vec<string> lines;
 	ifstream ifs( filename );
 	if( !ifs.is_open() )
 	{

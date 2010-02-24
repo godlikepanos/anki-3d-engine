@@ -6,12 +6,12 @@
 #include "renderer.h"
 #include "camera.h"
 #include "scene.h"
-#include "mesh.h"
+#include "Mesh.h"
 #include "r_private.h"
-#include "resource.h"
+#include "Resource.h"
 #include "fbo.h"
 #include "mesh_node.h"
-#include "material.h"
+#include "Material.h"
 
 
 namespace r {
@@ -36,8 +36,8 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// attach the texes
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::is::fai.GetGLID(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::is::fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )
@@ -69,7 +69,7 @@ void RunStage( const camera_t& cam )
 		if( mesh_node->material->blends && !mesh_node->material->blends )
 		{
 			fbo.Bind();
-			mesh_node->material->Setup();
+			mesh_node->material->setup();
 			mesh_node->Render();
 		}
 

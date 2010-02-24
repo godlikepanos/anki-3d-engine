@@ -4,7 +4,7 @@
 #include "common.h"
 #include "collision.h"
 
-class mesh_t;
+class Mesh;
 class camera_t;
 
 
@@ -24,9 +24,9 @@ class octree_t
 				node_t* childs[8];
 				aabb_t  bounding_box;
 
-				vec_t<mesh_t*>   meshes;
-				vec_t< vec_t<uint> > vert_ids;
-				vec_t< vec_t<uint> > face_ids;
+				Vec<Mesh*>   meshes;
+				Vec< Vec<uint> > vertIds;
+				Vec< Vec<uint> > face_ids;
 
 				node_t() {}
 				~node_t() { /*ToDo: when class is finalized add code*/ }
@@ -40,7 +40,7 @@ class octree_t
 		// funcs for the tree creation
 		bool IsSubdivHeuristicMet( node_t* node ) const;
 		void SubdivideNode( node_t* node );
-		void CreateRoot( const vec_t<mesh_t*>& meshes );
+		void CreateRoot( const Vec<Mesh*>& meshes );
 
 		// frustum funcs
 		uint CheckNodeAgainstFrustum( node_t* node, const camera_t& cam ) const;
@@ -48,7 +48,7 @@ class octree_t
 	public:
 		node_t* root;
 
-		void CreateTree( const vec_t<mesh_t*>& meshes );
+		void CreateTree( const Vec<Mesh*>& meshes );
 };
 
 
@@ -60,10 +60,10 @@ map_t                                                                           
 class map_t
 {
 	public:
-		vec_t<mesh_t*> meshes;
+		Vec<Mesh*> meshes;
 		octree_t             octree;
 
-		bool Load( const char* filename );
+		bool load( const char* filename );
 		void CreateOctree() { DEBUG_ERR( meshes.size() < 1 ); octree.CreateTree(meshes); };
 };
 

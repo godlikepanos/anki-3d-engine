@@ -6,12 +6,12 @@
 #include "renderer.h"
 #include "camera.h"
 #include "scene.h"
-#include "mesh.h"
+#include "Mesh.h"
 #include "r_private.h"
-#include "resource.h"
+#include "Resource.h"
 #include "fbo.h"
 #include "mesh_node.h"
-#include "material.h"
+#include "Material.h"
 
 
 namespace r {
@@ -22,8 +22,8 @@ namespace bs {
 //=====================================================================================================================================
 static fbo_t intermid_fbo, fbo;
 
-static texture_t fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
-static shader_prog_t* shader_prog;
+static Texture fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
+static ShaderProg* shader_prog;
 
 
 //=====================================================================================================================================
@@ -40,8 +40,8 @@ void Init2()
 	fbo.SetNumOfColorAttachements(1);
 
 	// attach the texes
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.GetGLID(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )
@@ -57,11 +57,11 @@ void Init2()
 
 	// texture
 	intermid_fbo.SetNumOfColorAttachements(1);
-	fai.CreateEmpty2D( r::w, r::h, GL_RGBA8, GL_RGBA );
-	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.GetGLID(), 0 );
+	fai.createEmpty2D( r::w, r::h, GL_RGBA8, GL_RGBA );
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0 );
 
 	// attach the texes
-	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r::ms::depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
 
 	// test if success
 	if( !intermid_fbo.IsGood() )
@@ -70,7 +70,7 @@ void Init2()
 	// unbind
 	intermid_fbo.Unbind();
 
-	shader_prog = rsrc::shaders.Load( "shaders/bs_refract.glsl" );
+	shader_prog = rsrc::shaders.load( "shaders/bs_refract.glsl" );
 }
 
 
@@ -96,14 +96,14 @@ void RunStage2( const camera_t& cam )
 			intermid_fbo.Bind();
 			glEnable( GL_DEPTH_TEST );
 			glClear( GL_COLOR_BUFFER_BIT );
-			mesh_node->material->Setup();
+			mesh_node->material->setup();
 			mesh_node->Render();
 
 			fbo.Bind();
 			glDisable( GL_DEPTH_TEST );
-			shader_prog->Bind();
-			shader_prog->LocTexUnit( shader_prog->GetUniformLocation(0), fai, 0 );
-			r::DrawQuad( shader_prog->GetAttributeLocation(0) );
+			shader_prog->bind();
+			shader_prog->locTexUnit( shader_prog->GetUniLoc(0), fai, 0 );
+			r::DrawQuad( shader_prog->getAttribLoc(0) );
 		}
 	}
 

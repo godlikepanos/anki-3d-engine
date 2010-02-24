@@ -6,7 +6,7 @@
 #include "controller.h"
 #include "gmath.h"
 
-class skeleton_t;
+class Skeleton;
 class skel_anim_ctrl_t;
 
 
@@ -14,7 +14,7 @@ class skel_anim_ctrl_t;
 class skel_node_t: public node_t
 {
 	public:
-		skeleton_t* skeleton; ///< The skeleton resource
+		Skeleton* skeleton; ///< The skeleton resource
 		skel_anim_ctrl_t* skel_anim_ctrl; ///< Hold the controller here as well
 
 		skel_node_t();

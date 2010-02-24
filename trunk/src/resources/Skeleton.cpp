@@ -1,12 +1,12 @@
-#include "skeleton.h"
+#include "Skeleton.h"
 #include "Scanner.h"
 #include "parser.h"
 
 
 //=====================================================================================================================================
-// Load                                                                                                                               =
+// load                                                                                                                               =
 //=====================================================================================================================================
-bool skeleton_t::Load( const char* filename )
+bool Skeleton::load( const char* filename )
 {
 	Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return false;
@@ -21,11 +21,11 @@ bool skeleton_t::Load( const char* filename )
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	bones.resize( token->value.int_, bone_t() );
+	bones.resize( token->value.int_, Bone() );
 
 	for( uint i=0; i<bones.size(); i++ )
 	{
-		bone_t& bone = bones[i];
+		Bone& bone = bones[i];
 		bone.id = i;
 
 		// NAME
@@ -48,11 +48,11 @@ bool skeleton_t::Load( const char* filename )
 		if( !ParseArrOfNumbers<float>( scanner, false, true, 16, &m4[0] ) ) return false;
 
 		// matrix for real
-		bone.rot_skel_space = m4.GetRotationPart();
-		bone.tsl_skel_space = m4.GetTranslationPart();
+		bone.rotSkelSpace = m4.GetRotationPart();
+		bone.tslSkelSpace = m4.GetTranslationPart();
 		mat4_t MAi( m4.GetInverse() );
-		bone.rot_skel_space_inv = MAi.GetRotationPart();
-		bone.tsl_skel_space_inv = MAi.GetTranslationPart();
+		bone.rotSkelSpaceInv = MAi.GetRotationPart();
+		bone.tslSkelSpaceInv = MAi.GetTranslationPart();
 
 		// parent
 		token = &scanner.getNextToken();
@@ -75,13 +75,13 @@ bool skeleton_t::Load( const char* filename )
 			PARSE_ERR_EXPECTED( "integer" );
 			return false;
 		}
-		if( token->value.int_ > bone_t::MAX_CHILDS_PER_BONE )
+		if( token->value.int_ > Bone::MAX_CHILDS_PER_BONE )
 		{
 			ERROR( "Childs for bone \"" << bone.GetName() << "\" exceed the max" );
 			return false;
 		}
-		bone.childs_num = token->value.int_;
-		for( int j=0; j<bone.childs_num; j++ )
+		bone.childsNum = token->value.int_;
+		for( int j=0; j<bone.childsNum; j++ )
 		{
 			token = &scanner.getNextToken();
 			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )

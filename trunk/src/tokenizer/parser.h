@@ -29,7 +29,7 @@ It parses expressions like this one: { 10 -0.2 123.e-10 -0x0FF } and stores the 
 @param arr The array that the func returns the numbers
 @return True if the parsing was success or false otherwise
 */
-template <typename type_t> bool ParseArrOfNumbers( Scanner& scanner, bool paren, bool signs, uint size, type_t* arr )
+template <typename Type> bool ParseArrOfNumbers( Scanner& scanner, bool paren, bool signs, uint size, Type* arr )
 {
 	const Scanner::Token* token;
 
@@ -74,12 +74,12 @@ template <typename type_t> bool ParseArrOfNumbers( Scanner& scanner, bool paren,
 		} // end if signs
 
 		// put the number in the arr and do typecasting from int to float
-		type_t nmbr;
+		Type nmbr;
 
 		if( token->type == Scanner::DT_FLOAT )
-			nmbr = static_cast<type_t>( token->value.float_ );
+			nmbr = static_cast<Type>( token->value.float_ );
 		else
-			nmbr = static_cast<type_t>( token->value.int_ );
+			nmbr = static_cast<Type>( token->value.int_ );
 
 		arr[i] = (sign==0) ? nmbr : -nmbr;
 	}

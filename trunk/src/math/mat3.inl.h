@@ -443,7 +443,7 @@ inline void mat3_t::SetRotationY( float rad )
 	ME(2,2) = costheta;
 }
 
-// LoadRotationZ
+// loadRotationZ
 inline void mat3_t::SetRotationZ( float rad )
 {
 	float sintheta, costheta;

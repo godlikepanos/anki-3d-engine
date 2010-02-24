@@ -1,6 +1,6 @@
 #include "renderer.h"
-#include "resource.h"
-#include "texture.h"
+#include "Resource.h"
+#include "Texture.h"
 #include "scene.h"
 #include "r_private.h"
 #include "fbo.h"
@@ -20,9 +20,9 @@ static fbo_t fbo; // yet another FBO
 float rendering_quality = 1.0;
 bool enabled = false;
 
-texture_t fai;
+Texture fai;
 
-static shader_prog_t* shdr;
+static ShaderProg* shdr;
 static int ms_depth_fai_uni_loc;
 static int is_fai_uni_loc;
 
@@ -46,12 +46,12 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// create the texes
-	fai.CreateEmpty2D( wwidth, wheight, GL_RGB, GL_RGB );
-	fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	fai.createEmpty2D( wwidth, wheight, GL_RGB, GL_RGB );
+	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	// attach
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )
@@ -62,9 +62,9 @@ void Init()
 
 
 	// init shaders
-	shdr = rsrc::shaders.Load( "shaders/pps_lscatt.glsl" );
-	ms_depth_fai_uni_loc = shdr->GetUniformLocation( "ms_depth_fai" );
-	is_fai_uni_loc = shdr->GetUniformLocation( "is_fai" );
+	shdr = rsrc::shaders.load( "shaders/pps_lscatt.glsl" );
+	ms_depth_fai_uni_loc = shdr->getUniLoc( "ms_depth_fai" );
+	is_fai_uni_loc = shdr->getUniLoc( "is_fai" );
 }
 
 
@@ -83,20 +83,20 @@ void RunPass( const camera_t& cam )
 	glDisable( GL_DEPTH_TEST );
 
 	// set the shader
-	shdr->Bind();
+	shdr->bind();
 
-	shdr->LocTexUnit( ms_depth_fai_uni_loc, r::ms::depth_fai, 0 );
-	shdr->LocTexUnit( is_fai_uni_loc, r::is::fai, 1 );
+	shdr->locTexUnit( ms_depth_fai_uni_loc, r::ms::depth_fai, 0 );
+	shdr->locTexUnit( is_fai_uni_loc, r::is::fai, 1 );
 
 	// pass the light
 	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
 	p = cam.GetProjectionMatrix() * (cam.GetViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
-	glUniform2fv( shdr->GetUniformLocation("light_pos_screen_space"), 1, &p[0] );
+	glUniform2fv( shdr->getUniLoc("light_pos_screen_space"), 1, &p[0] );
 
 	// Draw quad
-	r::DrawQuad( shdr->GetAttributeLocation(0) );
+	r::DrawQuad( shdr->getAttribLoc(0) );
 
 	// end
 	fbo.Unbind();

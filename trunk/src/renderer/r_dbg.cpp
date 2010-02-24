@@ -2,7 +2,7 @@
 #include "r_private.h"
 #include "fbo.h"
 #include "scene.h"
-#include "texture.h"
+#include "Texture.h"
 #include "fbo.h"
 #include "node.h"
 #include "skel_node.h"
@@ -119,7 +119,7 @@ bool show_bvolumes = true;
 
 static fbo_t fbo;
 
-static shader_prog_t* shdr;
+static ShaderProg* shdr;
 
 
 /*
@@ -137,8 +137,8 @@ void Init()
 	fbo.SetNumOfColorAttachements(1);
 
 	// attach the textures
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.GetGLID(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )
@@ -148,7 +148,7 @@ void Init()
 	fbo.Unbind();
 
 	// shader
-	shdr = rsrc::shaders.Load( "shaders/dbg.glsl" );
+	shdr = rsrc::shaders.load( "shaders/dbg.glsl" );
 }
 
 
@@ -161,7 +161,7 @@ void RunStage( const camera_t& cam )
 {
 	fbo.Bind();
 
-	shdr->Bind();
+	shdr->bind();
 
 	// OGL stuff
 	SetProjectionViewMatrices( cam );

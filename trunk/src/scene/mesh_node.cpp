@@ -1,10 +1,10 @@
 #include "mesh_node.h"
-#include "resource.h"
-#include "mesh.h"
+#include "Resource.h"
+#include "Mesh.h"
 #include "renderer.h"
-#include "material.h"
+#include "Material.h"
 #include "skel_node.h"
-#include "skeleton.h"
+#include "Skeleton.h"
 #include "mesh_skel_ctrl.h"
 #include "skel_anim_ctrl.h"
 
@@ -14,11 +14,11 @@
 //=====================================================================================================================================
 void mesh_node_t::Init( const char* filename )
 {
-	mesh = rsrc::meshes.Load( filename );
-	material = rsrc::materials.Load( mesh->material_name.c_str() );
+	mesh = rsrc::meshes.load( filename );
+	material = rsrc::materials.load( mesh->materialName.c_str() );
 
 	// sanity checks
-	if( material->attrib_locs.tex_coords != -1 && mesh->vbos.tex_coords.GetGLID() == 0 )
+	if( material->attribLocs.texCoords != -1 && mesh->vbos.texCoords.getGlId() == 0 )
 	{
 		ERROR( "The shader program needs information that the mesh do not have" );
 	}
@@ -30,8 +30,8 @@ void mesh_node_t::Init( const char* filename )
 //=====================================================================================================================================
 void mesh_node_t::Deinit()
 {
-	rsrc::meshes.Unload( mesh );
-	rsrc::materials.Unload( material );
+	rsrc::meshes.unload( mesh );
+	rsrc::materials.unload( material );
 }
 
 
@@ -39,7 +39,7 @@ void mesh_node_t::Deinit()
 // Render                                                                                                                             =
 //=====================================================================================================================================
 /// Called in material or blending stages
-void mesh_node_t::Render( material_t* mtl ) const
+void mesh_node_t::Render( Material* mtl ) const
 {
 	glPushMatrix();
 	r::MultMatrix( transformation_wspace );
@@ -48,66 +48,66 @@ void mesh_node_t::Render( material_t* mtl ) const
 	if( mesh_skel_ctrl )
 	{
 		// first the uniforms
-		glUniformMatrix3fv( mtl->uni_locs.skinning_rotations, mesh_skel_ctrl->skel_node->skeleton->bones.size(), 1,
+		glUniformMatrix3fv( mtl->uniLocs.skinningRotations, mesh_skel_ctrl->skel_node->skeleton->bones.size(), 1,
 		                    &(mesh_skel_ctrl->skel_node->skel_anim_ctrl->bone_rotations[0])[0] );
-		glUniform3fv( mtl->uni_locs.skinning_translations, mesh_skel_ctrl->skel_node->skeleton->bones.size(),
-		              &(mesh_skel_ctrl->skel_node->skel_anim_ctrl->bone_translations[0])[0] );
+		glUniform3fv( mtl->uniLocs.skinningTranslations, mesh_skel_ctrl->skel_node->skeleton->bones.size(),
+		              &(mesh_skel_ctrl->skel_node->skel_anim_ctrl->Boneranslations[0])[0] );
 
 		// then the attributes
-		DEBUG_ERR( !mtl->HasHWSkinning() );
+		DEBUG_ERR( !mtl->hasHWSkinning() );
 
-		mesh->vbos.vert_weights.Bind();
-		glEnableVertexAttribArray( mtl->attrib_locs.vert_weight_bones_num );
-		glVertexAttribPointer( mtl->attrib_locs.vert_weight_bones_num, 1, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(0) );
-		glEnableVertexAttribArray( mtl->attrib_locs.vert_weight_bone_ids );
-		glVertexAttribPointer( mtl->attrib_locs.vert_weight_bone_ids, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(4) );
-		glEnableVertexAttribArray( mtl->attrib_locs.vert_weight_weights );
-		glVertexAttribPointer( mtl->attrib_locs.vert_weight_weights, 4, GL_FLOAT, GL_FALSE, sizeof(mesh_t::vertex_weight_t), BUFFER_OFFSET(20) );
+		mesh->vbos.vertWeights.Bind();
+		glEnableVertexAttribArray( mtl->attribLocs.vertWeightBonesNum );
+		glVertexAttribPointer( mtl->attribLocs.vertWeightBonesNum, 1, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(0) );
+		glEnableVertexAttribArray( mtl->attribLocs.vertWeightBoneIds );
+		glVertexAttribPointer( mtl->attribLocs.vertWeightBoneIds, 4, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(4) );
+		glEnableVertexAttribArray( mtl->attribLocs.vertWeightWeights );
+		glVertexAttribPointer( mtl->attribLocs.vertWeightWeights, 4, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(20) );
 	}
 
-	if( mtl->attrib_locs.position != -1 )
+	if( mtl->attribLocs.position != -1 )
 	{
-		mesh->vbos.vert_coords.Bind();
-		glVertexAttribPointer( mtl->attrib_locs.position, 3, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( mtl->attrib_locs.position );
+		mesh->vbos.vertCoords.Bind();
+		glVertexAttribPointer( mtl->attribLocs.position, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( mtl->attribLocs.position );
 	}
 
-	if( mtl->attrib_locs.normal != -1 )
+	if( mtl->attribLocs.normal != -1 )
 	{
-		mesh->vbos.vert_normals.Bind();
-		glVertexAttribPointer( mtl->attrib_locs.normal, 3, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( mtl->attrib_locs.normal );
+		mesh->vbos.vertNormals.Bind();
+		glVertexAttribPointer( mtl->attribLocs.normal, 3, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( mtl->attribLocs.normal );
 	}
 
-	if( mtl->attrib_locs.tex_coords != -1 )
+	if( mtl->attribLocs.texCoords != -1 )
 	{
-		mesh->vbos.tex_coords.Bind();
-		glVertexAttribPointer( mtl->attrib_locs.tex_coords, 2, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( mtl->attrib_locs.tex_coords );
+		mesh->vbos.texCoords.Bind();
+		glVertexAttribPointer( mtl->attribLocs.texCoords, 2, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( mtl->attribLocs.texCoords );
 	}
 
-	if( mtl->attrib_locs.tanget != -1 )
+	if( mtl->attribLocs.tanget != -1 )
 	{
-		mesh->vbos.vert_tangents.Bind();
-		glVertexAttribPointer( mtl->attrib_locs.tanget, 4, GL_FLOAT, false, 0, NULL );
-		glEnableVertexAttribArray( mtl->attrib_locs.tanget );
+		mesh->vbos.vertTangents.Bind();
+		glVertexAttribPointer( mtl->attribLocs.tanget, 4, GL_FLOAT, false, 0, NULL );
+		glEnableVertexAttribArray( mtl->attribLocs.tanget );
 	}
 
-	mesh->vbos.vert_indeces.Bind();
+	mesh->vbos.vertIndeces.Bind();
 
-	glDrawElements( GL_TRIANGLES, mesh->vert_indeces.size(), GL_UNSIGNED_SHORT, 0 );
+	glDrawElements( GL_TRIANGLES, mesh->vertIndeces.size(), GL_UNSIGNED_SHORT, 0 );
 
 	// disable
-	if( mtl->attrib_locs.position != -1 ) glDisableVertexAttribArray( mtl->attrib_locs.position );
-	if( mtl->attrib_locs.normal != -1 ) glDisableVertexAttribArray( mtl->attrib_locs.normal );
-	if( mtl->attrib_locs.tex_coords != -1 ) glDisableVertexAttribArray( mtl->attrib_locs.tex_coords );
-	if( mtl->attrib_locs.tanget != -1 ) glDisableVertexAttribArray( mtl->attrib_locs.tanget );
+	if( mtl->attribLocs.position != -1 ) glDisableVertexAttribArray( mtl->attribLocs.position );
+	if( mtl->attribLocs.normal != -1 ) glDisableVertexAttribArray( mtl->attribLocs.normal );
+	if( mtl->attribLocs.texCoords != -1 ) glDisableVertexAttribArray( mtl->attribLocs.texCoords );
+	if( mtl->attribLocs.tanget != -1 ) glDisableVertexAttribArray( mtl->attribLocs.tanget );
 
 	if( mesh_skel_ctrl )
 	{
-		glDisableVertexAttribArray( mtl->attrib_locs.vert_weight_bones_num );
-		glDisableVertexAttribArray( mtl->attrib_locs.vert_weight_bone_ids );
-		glDisableVertexAttribArray( mtl->attrib_locs.vert_weight_weights );
+		glDisableVertexAttribArray( mtl->attribLocs.vertWeightBonesNum );
+		glDisableVertexAttribArray( mtl->attribLocs.vertWeightBoneIds );
+		glDisableVertexAttribArray( mtl->attribLocs.vertWeightWeights );
 	}
 
 	vbo_t::UnbindAllTargets();

@@ -5,7 +5,7 @@
 #include "mesh_node.h"
 #include "light.h"
 #include "controller.h"
-#include "material.h"
+#include "Material.h"
 
 namespace scene {
 
@@ -22,21 +22,21 @@ container_camera_t     cameras;
 container_mesh_node_t  mesh_nodes;
 container_skel_node_t  skel_nodes;
 
-vec_t<controller_t*>   controllers;
+Vec<controller_t*>   controllers;
 
 
 //=====================================================================================================================================
 // Static template funcs                                                                                                              =
 //=====================================================================================================================================
-template<typename container_type_t, typename type_t> static void PutBackNode( container_type_t& container, type_t* x )
+template<typename container_Type, typename Type> static void PutBackNode( container_Type& container, Type* x )
 {
 	DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
 	container.push_back( x );
 }
 
-template<typename container_type_t, typename type_t> static void EraseNode( container_type_t& container, type_t* x )
+template<typename container_Type, typename Type> static void EraseNode( container_Type& container, Type* x )
 {
-	typename container_type_t::iterator it = std::find( container.begin(), container.end(), x );
+	typename container_Type::iterator it = std::find( container.begin(), container.end(), x );
 	DEBUG_ERR( it == container.end() );
 	container.erase( it );
 }
@@ -109,7 +109,7 @@ void RegisterController( controller_t* controller )
 
 void UnregisterController( controller_t* controller )
 {
-	vec_t<controller_t*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
+	Vec<controller_t*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
 	DEBUG_ERR( it == controllers.end() );
 	controllers.erase( it );
 }
@@ -155,11 +155,11 @@ void UpdateAllControllers()
 	/*for( container_node_t::iterator it=nodes.begin(); it!=nodes.end(); it++ )
 	{
 		node_t* node = (*it);
-		for( vec_t<controller_t*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
+		for( Vec<controller_t*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
 			(*it1)->Update( 0.0 );
 	}*/
 
-	for( vec_t<controller_t*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
+	for( Vec<controller_t*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
 	{
 		(*it)->Update( 0.0 );
 	}

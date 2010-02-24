@@ -1,10 +1,10 @@
-#include "resource.h"
-#include "texture.h"
-#include "material.h"
-#include "shader_prog.h"
-#include "mesh.h"
-#include "skel_anim.h"
-#include "light_props.h"
+#include "Resource.h"
+#include "Texture.h"
+#include "Material.h"
+#include "ShaderProg.h"
+#include "Mesh.h"
+#include "SkelAnim.h"
+#include "LightProps.h"
 
 
 namespace rsrc {
@@ -15,12 +15,12 @@ namespace rsrc {
 DATA OBJECTS                                                                                                                          =
 =======================================================================================================================================
 */
-container_t<texture_t>     textures;
-container_t<shader_prog_t> shaders;
-container_t<material_t>    materials;
-container_t<mesh_t>        meshes;
-container_t<skeleton_t>    skeletons;
-container_t<skel_anim_t>   skel_anims;
-container_t<light_props_t> light_props;
+Container<Texture>     textures;
+Container<ShaderProg> shaders;
+Container<Material>    materials;
+Container<Mesh>        meshes;
+Container<Skeleton>    skeletons;
+Container<SkelAnim>   skel_anims;
+Container<LightProps> light_props;
 
 } // end namespace

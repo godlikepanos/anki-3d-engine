@@ -16,7 +16,7 @@ class skel_node_t;
 class skel_model_node_t: public node_t
 {
 	public:
-		vec_t<mesh_node_t*> mesh_nodes;
+		Vec<mesh_node_t*> mesh_nodes;
 		skel_node_t* skel_node;
 		
 		skel_model_node_t(): node_t(NT_SKEL_MODEL), skel_node(NULL) { is_group_node = true; }
