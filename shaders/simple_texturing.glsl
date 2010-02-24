@@ -1,25 +1,25 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 attribute vec3 position;
 attribute vec3 normal;
-//attribute vec2 tex_coords;
+//attribute vec2 texCoords;
 
-//varying vec2 tex_coords_v2f;
+//varying vec2 texCoords_v2f;
 varying vec3 normal_v2f;
 
 void main()
 {
-	//tex_coords_v2f = tex_coords;
+	//texCoords_v2f = texCoords;
 	normal_v2f = gl_NormalMatrix * normal;
 	gl_Position = gl_ModelViewProjectionMatrix * vec4(position, 1.0);
 }
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 #pragma anki include "shaders/pack.glsl"
 
 uniform sampler2D diffuse_map, noise_map;
-//varying vec2 tex_coords_v2f;
+//varying vec2 texCoords_v2f;
 varying vec3 normal_v2f;
 
 void main()

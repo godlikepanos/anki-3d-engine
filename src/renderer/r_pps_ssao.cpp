@@ -5,10 +5,10 @@ The file contains functions and vars used for the deferred shading/post-processi
 #include "renderer.h"
 #include "Resource.h"
 #include "Texture.h"
-#include "scene.h"
+#include "Scene.h"
 #include "r_private.h"
 #include "fbo.h"
-#include "camera.h"
+#include "Camera.h"
 
 namespace r {
 namespace pps {
@@ -65,7 +65,7 @@ static void InitBlurFBO()
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -124,7 +124,7 @@ void Init()
 RunPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const camera_t& cam )
+void RunPass( const Camera& cam )
 {
 	fbo.Bind();
 
@@ -135,7 +135,7 @@ void RunPass( const camera_t& cam )
 
 	// fill SSAO FAI
 	shdr_ppp_ssao->bind();
-	glUniform2fv( shdr_ppp_ssao->GetUniLoc(0), 1, &(vec2_t(cam.GetZNear(), cam.GetZFar()))[0] );
+	glUniform2fv( shdr_ppp_ssao->GetUniLoc(0), 1, &(vec2_t(cam.getZNear(), cam.getZFar()))[0] );
 	shdr_ppp_ssao->locTexUnit( shdr_ppp_ssao->GetUniLoc(1), ms::depth_fai, 0 );
 	shdr_ppp_ssao->locTexUnit( shdr_ppp_ssao->GetUniLoc(2), *noise_map, 1 );
 	shdr_ppp_ssao->locTexUnit( shdr_ppp_ssao->GetUniLoc(3), ms::normal_fai, 2 );

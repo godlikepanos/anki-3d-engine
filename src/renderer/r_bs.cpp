@@ -4,13 +4,13 @@
  */
 
 #include "renderer.h"
-#include "camera.h"
-#include "scene.h"
+#include "Camera.h"
+#include "Scene.h"
 #include "Mesh.h"
 #include "r_private.h"
 #include "Resource.h"
 #include "fbo.h"
-#include "mesh_node.h"
+#include "MeshNode.h"
 #include "Material.h"
 
 
@@ -24,7 +24,7 @@ static fbo_t fbo; ///< blending models FBO
 
 
 //=====================================================================================================================================
-// Init                                                                                                                               =
+// init                                                                                                                               =
 //=====================================================================================================================================
 void Init()
 {
@@ -51,7 +51,7 @@ void Init()
 //=====================================================================================================================================
 // RunStage                                                                                                                           =
 //=====================================================================================================================================
-void RunStage( const camera_t& cam )
+void RunStage( const Camera& cam )
 {
 	// OGL stuff
 	r::SetProjectionViewMatrices( cam );
@@ -63,14 +63,14 @@ void RunStage( const camera_t& cam )
 
 
 	// render the meshes
-	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
+	for( uint i=0; i<scene::meshNodes.size(); i++ )
 	{
-		mesh_node_t* mesh_node = scene::mesh_nodes[i];
+		MeshNode* mesh_node = scene::meshNodes[i];
 		if( mesh_node->material->blends && !mesh_node->material->blends )
 		{
 			fbo.Bind();
 			mesh_node->material->setup();
-			mesh_node->Render();
+			mesh_node->render();
 		}
 
 	}

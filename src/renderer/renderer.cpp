@@ -3,9 +3,9 @@
 #include <jpeglib.h>
 #include "renderer.h"
 #include "Texture.h"
-#include "scene.h"
+#include "Scene.h"
 #include "r_private.h"
-#include "camera.h"
+#include "Camera.h"
 #include "app.h"
 
 namespace r {
@@ -103,7 +103,7 @@ static void BuildStdShaderPreProcStr()
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -183,10 +183,10 @@ void Init()
 
 /*
 =======================================================================================================================================
-Render                                                                                                                                =
+render                                                                                                                                =
 =======================================================================================================================================
 */
-void Render( const camera_t& cam )
+void Render( const Camera& cam )
 {
 	r::ms::RunStage( cam );
 	r::is::RunStage( cam );
@@ -232,10 +232,10 @@ void Render( const camera_t& cam )
 SetProjectionMatrix                                                                                                                   =
 =======================================================================================================================================
 */
-void SetProjectionMatrix( const camera_t& cam )
+void SetProjectionMatrix( const Camera& cam )
 {
 	glMatrixMode( GL_PROJECTION );
-	loadMatrix( cam.GetProjectionMatrix() );
+	loadMatrix( cam.getProjectionMatrix() );
 }
 
 
@@ -244,10 +244,10 @@ void SetProjectionMatrix( const camera_t& cam )
 SetViewMatrix                                                                                                                         =
 =======================================================================================================================================
 */
-void SetViewMatrix( const camera_t& cam )
+void SetViewMatrix( const Camera& cam )
 {
 	glMatrixMode( GL_MODELVIEW );
-	loadMatrix( cam.GetViewMatrix() );
+	loadMatrix( cam.getViewMatrix() );
 }
 
 
@@ -329,10 +329,10 @@ void PrepareNextFrame()
 
 /*
 =======================================================================================================================================
-PrintLastError                                                                                                                        =
+printLastError                                                                                                                        =
 =======================================================================================================================================
 */
-void PrintLastError()
+void printLastError()
 {
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )

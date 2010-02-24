@@ -5,10 +5,10 @@
 
 
 /// Scenegraph node controller (A)
-class controller_t
+class Controller
 {
 	public:
-		enum type_e
+		enum Type
 		{ 
 			CT_SKEL_ANIM, 
 			CT_SKEL,
@@ -18,12 +18,12 @@ class controller_t
 			CT_LIGHT
 		};
 	
-	PROPERTY_R( type_e, type, GetType ) ///< Once the type is set nothing can change it
+	PROPERTY_R( Type, type, getType ) ///< Once the type is set nothing can change it
 
 	public:
-		controller_t( type_e type_ );
-		virtual ~controller_t();
-		virtual void Update( float time ) = 0;
+		Controller( Type type_ );
+		virtual ~Controller();
+		virtual void update( float time ) = 0;
 };
 
 

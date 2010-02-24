@@ -23,8 +23,8 @@ class particle_t: public object_t
 
 		particle_t(): object_t(LIGHT) {life = 0;}
 
-		void Render();
-		void RenderDepth() {}
+		void render();
+		void renderDepth() {}
 };
 
 
@@ -38,7 +38,7 @@ class particle_emitter_t: public object_t
 	private:
 		struct velocity_t
 		{
-			euler_t angs[2]; // MIN MAX
+			Euler angs[2]; // MIN MAX
 			float   magnitude;
 			float   acceleration_magnitude;
 			bool    rotatable;
@@ -72,10 +72,10 @@ class particle_emitter_t: public object_t
 		particle_emitter_t(): object_t(LIGHT) {}
 		~particle_emitter_t(){ particles.clear(); }
 
-		void Init();
+		void init();
 		void ReInitParticle( particle_t& particle );
-		void Render();
-		void RenderDepth() {}
+		void render();
+		void renderDepth() {}
 };
 
 #endif

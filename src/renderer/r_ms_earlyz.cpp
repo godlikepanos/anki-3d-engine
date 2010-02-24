@@ -5,7 +5,7 @@ The file contains functions and vars used for the deferred shading/material stag
 #include "renderer.h"
 #include "Resource.h"
 #include "Texture.h"
-#include "scene.h"
+#include "Scene.h"
 #include "r_private.h"
 #include "fbo.h"
 
@@ -28,10 +28,10 @@ static ShaderProg* shdr_dp, * shdr_dp_grass; // passes for solid objects and gra
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
-void Init()
+void init()
 {
 	// create FBO
 	fbo.Create();
@@ -61,7 +61,7 @@ void Init()
 RunPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const camera_t& cam )
+void RunPass( const Camera& cam )
 {
 	/*// FBO
 	fbo.bind();
@@ -79,11 +79,11 @@ void RunPass( const camera_t& cam )
 
 	// render all meshes
 	for( uint i=0; i<scene::meshes.size(); i++ )
-		RenderDepth<Mesh>( *scene::meshes[i], shdr_dp, shdr_dp_grass );
+		renderDepth<Mesh>( *scene::meshes[i], shdr_dp, shdr_dp_grass );
 
 	// render all smodels
 	for( uint i=0; i<scene::models.size(); i++ )
-		RenderDepth<model_t>( *scene::models[i], shdr_dp, shdr_dp_grass );
+		renderDepth<model_t>( *scene::models[i], shdr_dp, shdr_dp_grass );
 
 	glColorMask( true, true, true, true );
 

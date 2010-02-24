@@ -13,7 +13,7 @@
 #endif
 
 
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 /**
  * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write in all the
@@ -24,7 +24,7 @@
 // attributes
 attribute vec3 position;
 attribute vec3 normal;
-attribute vec2 tex_coords;
+attribute vec2 texCoords;
 attribute vec4 tangent;
 
 // uniforms
@@ -34,7 +34,7 @@ uniform mat3 N_mat;
 
 // varyings
 varying vec3 normal_v2f;
-varying vec2 tex_coords_v2f;
+varying vec2 texCoords_v2f;
 varying vec3 tangent_v2f;
 varying float w_v2f;
 varying vec3 vert_pos_eye_space_v2f; ///< For env mapping. AKA view_vector
@@ -79,7 +79,7 @@ void main()
 	// calculate the rest
 
 	#if NEEDS_TEX_MAPPING
-		tex_coords_v2f = tex_coords;
+		texCoords_v2f = texCoords;
 	#endif
 
 
@@ -94,7 +94,7 @@ void main()
 }
 
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 /**
  * Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens before the
@@ -125,7 +125,7 @@ uniform float shininess;
 varying vec3 normal_v2f;
 varying vec3 tangent_v2f;
 varying float w_v2f;
-varying vec2 tex_coords_v2f;
+varying vec2 texCoords_v2f;
 varying vec3 eye;
 varying vec3 vert_pos_eye_space_v2f;
 
@@ -140,7 +140,7 @@ void main()
 {
 	//===================================================================================================================================
 	// Paralax Mapping Calculations                                                                                                     =
-	// The code below reads the height map, makes some calculations and returns a new tex_coords                                        =
+	// The code below reads the height map, makes some calculations and returns a new texCoords                                        =
 	//===================================================================================================================================
 	#if defined( _PARALLAX_MAPPING_ )
 		/*const float _scale = 0.04;
@@ -148,34 +148,34 @@ void main()
 
 		vec3 _norm_eye = normalize( eye );
 
-		float _h = texture2D( height_map, tex_coords_v2f ).r;
+		float _h = texture2D( height_map, texCoords_v2f ).r;
 		float _height = _scale * _h - _bias;
 
-		vec2 _super_tex_coords_v2f = _height * _norm_eye.xy + tex_coords_v2f;*/
+		vec2 _super_texCoords_v2f = _height * _norm_eye.xy + texCoords_v2f;*/
 
-		vec2 _super_tex_coords = tex_coords_v2f;
+		vec2 _super_texCoords = texCoords_v2f;
 		const float maxStepCount = 100.0;
-		float nSteps = maxStepCount * length(_super_tex_coords);
+		float nSteps = maxStepCount * length(_super_texCoords);
 
 		vec3 dir = vert_pos_eye_space_v2f;
 		dir.xy /= 8.0;
 		dir /= -nSteps * dir.z;
 
-		float diff0, diff1 = 1.0 - texture2D( height_map, _super_tex_coords ).a;
+		float diff0, diff1 = 1.0 - texture2D( height_map, _super_texCoords ).a;
 		if( diff1 > 0.0 )
 		{
 			do 
 			{
-				_super_tex_coords += dir.xy;
+				_super_texCoords += dir.xy;
 
 				diff0 = diff1;
-				diff1 = texture2D(height_map, _super_tex_coords ).w;
+				diff1 = texture2D(height_map, _super_texCoords ).w;
 			} while( diff1 > 0.0 );
 
-			_super_tex_coords.xy += (diff1 / (diff0 - diff1)) * dir.xy;
+			_super_texCoords.xy += (diff1 / (diff0 - diff1)) * dir.xy;
 		}
 	#else
-		#define _super_tex_coords tex_coords_v2f
+		#define _super_texCoords texCoords_v2f
 	#endif
 
 
@@ -187,11 +187,11 @@ void main()
 	#if defined( _DIFFUSE_MAPPING_ )
 
 		#if defined( _GRASS_LIKE_ )
-			vec4 _diff_color4 = texture2D( diffuse_map, _super_tex_coords );
+			vec4 _diff_color4 = texture2D( diffuse_map, _super_texCoords );
 			if( _diff_color4.a == 0.0 ) discard;
 			_diff_color = _diff_color4.rgb;
 		#else
-			_diff_color = texture2D( diffuse_map, _super_tex_coords ).rgb;
+			_diff_color = texture2D( diffuse_map, _super_texCoords ).rgb;
 		#endif
 
 		_diff_color *= diffuse_color.rgb;
@@ -211,7 +211,7 @@ void main()
 
 		mat3 _tbn_mat = mat3(_t,_b,_n);
 
-		vec3 _n_at_tangentspace = ( texture2D( normal_map, _super_tex_coords ).rgb - 0.5 ) * 2.0;
+		vec3 _n_at_tangentspace = ( texture2D( normal_map, _super_texCoords ).rgb - 0.5 ) * 2.0;
 
 		vec3 _new_normal = normalize( _tbn_mat * _n_at_tangentspace );
 	#else
@@ -231,9 +231,9 @@ void main()
 		                                      // ...results and its allready computed
 		_r.z += 1.0;
 		float _m = 2.0 * length(_r);
-		vec2 _sem_tex_coords = _r.xy/_m + 0.5;
+		vec2 _sem_texCoords = _r.xy/_m + 0.5;
 
-		vec3 _sem_col = texture2D( environment_map, _sem_tex_coords ).rgb;
+		vec3 _sem_col = texture2D( environment_map, _sem_texCoords ).rgb;
 		_diff_color = _diff_color + _sem_col; // blend existing color with the SEM texture map
 	#endif
 
@@ -244,7 +244,7 @@ void main()
 
 	// has specular map
 	#if defined( _SPECULAR_MAPPING_ )
-		vec4 _specular = vec4(texture2D( specular_map, _super_tex_coords ).rgb * specular_color, shininess);
+		vec4 _specular = vec4(texture2D( specular_map, _super_texCoords ).rgb * specular_color, shininess);
 	// no specular map
 	#else
 		vec4 _specular = vec4(specular_color, shininess);

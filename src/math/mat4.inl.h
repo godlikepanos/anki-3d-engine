@@ -515,8 +515,8 @@ inline const mat4_t& mat4_t::GetZero()
 	return zero;
 }
 
-// Print
-inline void mat4_t::Print() const
+// print
+inline void mat4_t::print() const
 {
 	cout << fixed;
 	for( int i=0; i<4; i++ )

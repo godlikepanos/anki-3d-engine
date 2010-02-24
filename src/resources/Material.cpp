@@ -72,7 +72,7 @@ bool Material::load( const char* filename )
 		//** SHADER_PROG **
 		if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER_PROG" ) )
 		{
-			if( shaderProg ) ERROR( "Shader program allready loaded" );
+			if( shaderProg ) ERROR( "Shader program already loaded" );
 
 			token = &scanner.getNextToken();
 			if( token->code != Scanner::TC_STRING )
@@ -222,7 +222,7 @@ bool Material::load( const char* filename )
 			do
 			{
 				// read var type
-				UserDefinedVar::type_e type;
+				UserDefinedVar::Type type;
 				token = &scanner.getNextToken();
 				if( token->code == Scanner::TC_RBRACKET )
 					break;
@@ -240,8 +240,8 @@ bool Material::load( const char* filename )
 					return false;
 				}
 
-				user_defined_vars.push_back( UserDefinedVar() ); // create new var
-				UserDefinedVar& var = user_defined_vars.back();
+				userDefinedVars.push_back( UserDefinedVar() ); // create new var
+				UserDefinedVar& var = userDefinedVars.back();
 				var.type = type;
 
 				// read the name
@@ -352,16 +352,16 @@ bool Material::additionalInit()
 
 	// for all user defined vars get their location
 	shaderProg->bind();
-	for( uint i=0; i<user_defined_vars.size(); i++ )
+	for( uint i=0; i<userDefinedVars.size(); i++ )
 	{
-		int loc = shaderProg->getUniLoc( user_defined_vars[i].name.c_str() );
+		int loc = shaderProg->getUniLoc( userDefinedVars[i].name.c_str() );
 		if( loc == -1 )
 		{
-			MTL_ERROR( "Shader \"" << shaderProg->getName() << "\" and user defined var \"" << user_defined_vars[i].name <<
+			MTL_ERROR( "Shader \"" << shaderProg->getName() << "\" and user defined var \"" << userDefinedVars[i].name <<
 			           "\" do not combine. Incorrect location" );
 			return false;
 		}
-		user_defined_vars[i].uniLoc = loc;
+		userDefinedVars[i].uniLoc = loc;
 	}
 	shaderProg->unbind();
 
@@ -395,10 +395,10 @@ void Material::unload()
 	rsrc::shaders.unload( shaderProg );
 
 	// loop all user defined vars and unload the textures
-	for( uint i=0; i<user_defined_vars.size(); i++ )
+	for( uint i=0; i<userDefinedVars.size(); i++ )
 	{
-		if( user_defined_vars[i].type == UserDefinedVar::VT_TEXTURE )
-			rsrc::textures.unload( user_defined_vars[i].value.texture );
+		if( userDefinedVars[i].type == UserDefinedVar::VT_TEXTURE )
+			rsrc::textures.unload( userDefinedVars[i].value.texture );
 	}
 
 	// the grass map
@@ -455,7 +455,7 @@ void Material::setup()
 	// now loop all the user defined vars and set them
 	uint texture_unit = 0;
 	Vec<UserDefinedVar>::iterator udv;
-	for( udv=user_defined_vars.begin(); udv!=user_defined_vars.end(); udv++ )
+	for( udv=userDefinedVars.begin(); udv!=userDefinedVars.end(); udv++ )
 	{
 		switch( udv->type )
 		{

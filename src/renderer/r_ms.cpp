@@ -3,13 +3,13 @@
  */
 
 #include "renderer.h"
-#include "camera.h"
-#include "scene.h"
+#include "Camera.h"
+#include "Scene.h"
 #include "Mesh.h"
 #include "r_private.h"
 #include "fbo.h"
 #include "Material.h"
-#include "mesh_node.h"
+#include "MeshNode.h"
 
 
 namespace r {
@@ -28,7 +28,7 @@ Texture normal_fai, diffuse_fai, specular_fai, depth_fai;
 
 
 //=====================================================================================================================================
-// Init                                                                                                                               =
+// init                                                                                                                               =
 //=====================================================================================================================================
 void Init()
 {
@@ -70,7 +70,7 @@ void Init()
 	fbo.Unbind();
 
 #if defined( _EARLY_Z_ )
-	r::ms::earlyz::Init();
+	r::ms::earlyz::init();
 #endif
 }
 
@@ -78,7 +78,7 @@ void Init()
 //=====================================================================================================================================
 // RunStage                                                                                                                           =
 //=====================================================================================================================================
-void RunStage( const camera_t& cam )
+void RunStage( const Camera& cam )
 {
 	#if defined( _EARLY_Z_ )
 		// run the early z pass
@@ -94,7 +94,7 @@ void RunStage( const camera_t& cam )
 	r::SetViewport( 0, 0, r::w, r::h );
 
 	//glEnable( GL_DEPTH_TEST );
-	scene::skybox.Render( cam.GetViewMatrix().GetRotationPart() );
+	scene::skybox.Render( cam.getViewMatrix().GetRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 	#if defined( _EARLY_Z_ )
@@ -103,13 +103,13 @@ void RunStage( const camera_t& cam )
 	#endif
 
 	// render the meshes
-	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
+	for( uint i=0; i<scene::meshNodes.size(); i++ )
 	{
-		mesh_node_t* mesh_node = scene::mesh_nodes[i];
+		MeshNode* mesh_node = scene::meshNodes[i];
 		DEBUG_ERR( mesh_node->material == NULL );
 		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
 		mesh_node->material->setup();
-		mesh_node->Render();
+		mesh_node->render();
 	}
 
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode

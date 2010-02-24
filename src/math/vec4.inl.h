@@ -231,23 +231,23 @@ inline float vec4_t::Dot( const vec4_t& b ) const
 // Length
 inline float vec4_t::Length() const
 {
-	return Sqrt( x*x + y*y + z*z + w*w );
+	return sqrt( x*x + y*y + z*z + w*w );
 }
 
 // Normalized
 inline vec4_t vec4_t::GetNormalized() const
 {
-	return ME * InvSqrt( x*x +y*y + z*z + w*w );
+	return ME * invSqrt( x*x +y*y + z*z + w*w );
 }
 
 // Normalize
 inline void vec4_t::Normalize()
 {
-	ME *= InvSqrt( x*x +y*y + z*z + w*w );
+	ME *= invSqrt( x*x +y*y + z*z + w*w );
 }
 
-// Print
-inline void vec4_t::Print() const
+// print
+inline void vec4_t::print() const
 {
 	for( int i=0; i<4; i++ )
 		cout << fixed << ME[i] << " ";

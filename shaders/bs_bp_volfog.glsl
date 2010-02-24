@@ -1,11 +1,11 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 void main()
 {
 	gl_Position = ftransform();
 }
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 #pragma anki include "shaders/linear_depth.glsl"
 

@@ -194,23 +194,23 @@ inline mallinfo_t GetMallInfo()
 	return mallinfo();
 }
 
-inline void PrintMallInfo( const mallinfo_t& minfo )
+inline void printMallInfo( const mallinfo_t& minfo )
 {
 	PRINT( "used:" << minfo.uordblks << " free:" << minfo.fordblks << " total:" << minfo.arena );
 }
 
-inline void PrintMallInfoDiff( const mallinfo_t& prev, const mallinfo_t& now )
+inline void printMallInfoDiff( const mallinfo_t& prev, const mallinfo_t& now )
 {
 	mallinfo_t diff;
 	diff.uordblks = now.uordblks-prev.uordblks;
 	diff.fordblks = now.fordblks-prev.fordblks;
 	diff.arena = now.arena-prev.arena;
-	PrintMallInfo( diff );
+	printMallInfo( diff );
 }
 
 #define MALLINFO_BEGIN mallinfo_t __m__ = GetMallInfo();
 
-#define MALLINFO_END PrintMallInfoDiff( __m__, GetMallInfo() ); 
+#define MALLINFO_END printMallInfoDiff( __m__, GetMallInfo() ); 
 
 #endif
 

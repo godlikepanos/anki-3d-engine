@@ -1,8 +1,8 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 #pragma anki include "shaders/simple_vert.glsl"
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 #pragma anki uniform raster_image 0
 uniform sampler2D raster_image;

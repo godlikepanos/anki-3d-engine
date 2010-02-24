@@ -47,7 +47,7 @@ inline quat_t::quat_t( const mat3_t& m3 )
 	float trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
 	if( trace > EPSILON )
 	{
-		float s = 0.5 * InvSqrt(trace);
+		float s = 0.5 * invSqrt(trace);
 		w = 0.25 / s;
 		x = ( m3(2, 1) - m3(1, 2) ) * s;
 		y = ( m3(0, 2) - m3(2, 0) ) * s;
@@ -57,7 +57,7 @@ inline quat_t::quat_t( const mat3_t& m3 )
 	{
 		if( m3(0, 0) > m3(1, 1) && m3(0, 0) > m3(2, 2) )
 		{
-			float s = 0.5 * InvSqrt( 1.0 + m3(0, 0) - m3(1, 1) - m3(2, 2) );
+			float s = 0.5 * invSqrt( 1.0 + m3(0, 0) - m3(1, 1) - m3(2, 2) );
 			w = (m3(1, 2) - m3(2, 1) ) * s;
 			x = 0.25 / s;
 			y = (m3(0, 1) + m3(1, 0) ) * s;
@@ -65,7 +65,7 @@ inline quat_t::quat_t( const mat3_t& m3 )
 		}
 		else if( m3(1, 1) > m3(2, 2) )
 		{
-			float s = 0.5 * InvSqrt( 1.0 + m3(1, 1) - m3(0, 0) - m3(2, 2) );
+			float s = 0.5 * invSqrt( 1.0 + m3(1, 1) - m3(0, 0) - m3(2, 2) );
 			w = (m3(0, 2) - m3(2, 0) ) * s;
 			x = (m3(0, 1) + m3(1, 0) ) * s;
 			y = 0.25 / s;
@@ -73,7 +73,7 @@ inline quat_t::quat_t( const mat3_t& m3 )
 		}
 		else
 		{
-			float s = 0.5 * InvSqrt( 1.0 + m3(2, 2) - m3(0, 0) - m3(1, 1) );
+			float s = 0.5 * invSqrt( 1.0 + m3(2, 2) - m3(0, 0) - m3(1, 1) );
 			w = (m3(0, 1) - m3(1, 0) ) * s;
 			x = (m3(0, 2) + m3(2, 0) ) * s;
 			y = (m3(1, 2) + m3(2, 1) ) * s;
@@ -83,16 +83,16 @@ inline quat_t::quat_t( const mat3_t& m3 )
 }
 
 // constructor [euler]
-inline quat_t::quat_t( const euler_t& eu )
+inline quat_t::quat_t( const Euler& eu )
 {
 	float cx, sx;
-	SinCos( eu.heading()*0.5, sx, cx );
+	sinCos( eu.heading()*0.5, sx, cx );
 
 	float cy, sy;
-	SinCos( eu.attitude()*0.5, sy, cy );
+	sinCos( eu.attitude()*0.5, sy, cy );
 
 	float cz, sz;
-	SinCos( eu.bank()*0.5, sz, cz );
+	sinCos( eu.bank()*0.5, sz, cz );
 
 	float cxcy = cx*cy;
 	float sxsy = sx*sy;
@@ -103,7 +103,7 @@ inline quat_t::quat_t( const euler_t& eu )
 }
 
 // constructor [euler]
-inline quat_t::quat_t( const axisang_t& axisang )
+inline quat_t::quat_t( const Axisang& axisang )
 {
 	float lengthsq = axisang.axis.LengthSquared();
 	if( IsZero( lengthsq ) )
@@ -115,9 +115,9 @@ inline quat_t::quat_t( const axisang_t& axisang )
 	float rad = axisang.ang * 0.5;
 
 	float sintheta, costheta;
-	SinCos( rad, sintheta, costheta );
+	sinCos( rad, sintheta, costheta );
 
-	float scalefactor = sintheta * InvSqrt(lengthsq);
+	float scalefactor = sintheta * invSqrt(lengthsq);
 
 	x = scalefactor * axisang.axis.x;
 	y = scalefactor * axisang.axis.y;
@@ -184,7 +184,7 @@ inline void quat_t::Normalize()
 // Length
 inline float quat_t::Length() const
 {
-	return Sqrt( w*w + x*x + y*y + z*z );
+	return sqrt( w*w + x*x + y*y + z*z );
 }
 
 // Invert
@@ -198,8 +198,8 @@ inline void quat_t::Invert()
 	ME = quat_t( -normi*x, -normi*y, -normi*z, normi*w );
 }
 
-// Print
-inline void quat_t::Print() const
+// print
+inline void quat_t::print() const
 {
 	cout << fixed << "(w,x,y,z) = " << w << ' ' << x << ' ' << y << ' ' << z  << '\n' << endl;
 }
@@ -257,7 +257,7 @@ inline quat_t quat_t::Slerp( const quat_t& q1_, float t ) const
 	}
 
 	float half_theta = acos( cos_half_theta );
-	float sin_half_theta = Sqrt(1.0 - cos_half_theta*cos_half_theta);
+	float sin_half_theta = sqrt(1.0 - cos_half_theta*cos_half_theta);
 
 	if( fabs(sin_half_theta) < 0.001 )
 	{

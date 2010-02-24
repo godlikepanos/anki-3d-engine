@@ -1,4 +1,4 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 void main()
 {
@@ -6,7 +6,7 @@ void main()
 	gl_FrontColor = gl_Color;
 }
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 void main()
 {

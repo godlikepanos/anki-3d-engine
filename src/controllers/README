@@ -2,13 +2,8 @@ The controllers are part of the scene node objects. The control the node's behav
 
 They have an input (script, animation, etc) and they control a scene node. The naming convention of the controllers is:
 
-<what the controller controls>_<the input of the contoller>_ctrl_t
+<what the controller controls><the input of the contoller>Ctrl
 
 For Example:
 
-script_trf_ctrl_t
-path_trf_ctrl_t
-anim_skel_ctrl_t
-skel_mesh_ctrl_t
-script_light_ctrl_t
-
+MeshSkelNodeCtrl A Mesh is controlled by a SkelNode 

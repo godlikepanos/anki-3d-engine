@@ -16,7 +16,7 @@ class Material: public Resource
 		class UserDefinedVar
 		{
 			public:
-				enum type_e
+				enum Type
 				{
 					VT_TEXTURE,
 					VT_FLOAT,
@@ -28,20 +28,20 @@ class Material: public Resource
 				struct Value       // unfortunately we cannot use union because of vec3_t and vec4_t
 				{
 					Texture* texture;
-					float      float_;
-					vec2_t     vec2;
-					vec3_t     vec3;
-					vec4_t     vec4;
+					float    float_;
+					vec2_t   vec2;
+					vec3_t   vec3;
+					vec4_t   vec4;
 					Value(): texture(NULL) {}
 				};
 
-				type_e type;
-				Value value;
-				int uniLoc;
+				Type   type;
+				Value  value;
+				int    uniLoc;
 				string name;
 		}; // end class UserDefinedVar
 
-		Vec<UserDefinedVar> user_defined_vars;
+		Vec<UserDefinedVar> userDefinedVars;
 
 
 	//===================================================================================================================================

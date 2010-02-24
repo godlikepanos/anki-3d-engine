@@ -12,10 +12,10 @@ const float PI = 3.14159265358979323846;
 const float EPSILON = 1.0e-6;
 
 
-void  MathSanityChecks();
-void  SinCos( float rad, float& sin_, float& cos_ );
-float InvSqrt( float f );
-float Sqrt( float f );
+void  mathSanityChecks();
+void  sinCos( float rad, float& sin_, float& cos_ );
+float invSqrt( float f );
+float sqrt( float f );
 float ToRad( float degrees );
 float ToDegrees( float rad );
 float Sin( float rad );

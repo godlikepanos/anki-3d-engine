@@ -4,7 +4,7 @@
 #include "Scanner.h"
 #include "parser.h"
 #include "Resource.h"
-#include "camera.h"
+#include "Camera.h"
 
 
 /*
@@ -141,7 +141,7 @@ the func checks the node and returns if its inside the cameras fruntum. It retur
 inside and 2 if totaly inside                                                                                                         =
 =======================================================================================================================================
 */
-uint octree_t::CheckNodeAgainstFrustum( node_t* node, const camera_t& cam ) const
+uint octree_t::CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const
 {
 	int points_outside_frustum_num = 0;
 	const aabb_t& box = node->bounding_box;
@@ -152,7 +152,7 @@ uint octree_t::CheckNodeAgainstFrustum( node_t* node, const camera_t& cam ) cons
 	{
 		for( int j=0; j<6; j++ )
 		{
-			const plane_t& plane = cam.wspace_frustum_planes[j];
+			const plane_t& plane = cam.wspaceFrustumPlanes[j];
 
 			if( plane.Test( box_points[i] ) < 0.0  )
 			{

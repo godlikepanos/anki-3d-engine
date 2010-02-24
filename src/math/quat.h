@@ -24,8 +24,8 @@ class quat_t
 		explicit quat_t( const vec4_t& v4 );
 		         quat_t( const quat_t& b );
 		explicit quat_t( const mat3_t& m3 );
-		explicit quat_t( const euler_t& eu );
-		explicit quat_t( const axisang_t& axisang );
+		explicit quat_t( const Euler& eu );
+		explicit quat_t( const Axisang& axisang );
 		// ops with same
 		quat_t  operator * ( const quat_t& b ) const;
 		quat_t& operator *=( const quat_t& b );
@@ -40,7 +40,7 @@ class quat_t
 		quat_t Conjugated() const;
 		void   Normalize();
 		quat_t GetNormalized() const;
-		void   Print() const;
+		void   print() const;
 		float  Dot( const quat_t& b ) const;
 		quat_t Slerp( const quat_t& q1, float t ) const; // returns Slerp( this, q1, t )
 		quat_t GetRotated( const quat_t& b ) const;

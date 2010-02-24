@@ -8,7 +8,7 @@
 
 namespace mem {
 
-// for PrintInfo
+// for printInfo
 const uint PRINT_ALL    = 0x0001;
 const uint PRINT_HEADER = 0x0002;
 const uint PRINT_BLOCKS = 0x0004;
@@ -24,7 +24,7 @@ extern size_t free_size;
 extern const size_t buffer_size;
 extern uint errors_num;
 
-extern void PrintInfo( uint flags=PRINT_ALL );
+extern void printInfo( uint flags=PRINT_ALL );
 extern void Enable( uint flags );
 extern void Disable( uint flags );
 

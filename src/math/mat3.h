@@ -31,8 +31,8 @@ class mat3_t
 		explicit mat3_t( float arr [] );
 		         mat3_t( const mat3_t& b );
 		explicit mat3_t( const quat_t& q ); // 12 muls, 12 adds
-		explicit mat3_t( const euler_t& eu );
-		explicit mat3_t( const axisang_t& axisang );
+		explicit mat3_t( const Euler& eu );
+		explicit mat3_t( const Axisang& axisang );
 		// ops with mat3
 		mat3_t  operator + ( const mat3_t& b ) const;
 		mat3_t& operator +=( const mat3_t& b );
@@ -74,7 +74,7 @@ class mat3_t
 		void   Transpose();
 		mat3_t GetTransposed() const;
 		void   Reorthogonalize();
-		void   Print() const;
+		void   print() const;
 		float  Det() const;
 		void   Invert();
 		mat3_t GetInverse() const;

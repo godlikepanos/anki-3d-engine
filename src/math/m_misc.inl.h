@@ -4,19 +4,19 @@
 namespace m {
 
 
-// MathSanityChecks
+// mathSanityChecks
 // test if the compiler keeps the correct sizes for the classes
-inline void MathSanityChecks()
+inline void mathSanityChecks()
 {
 	const int fs = sizeof(float); // float size
-	if( sizeof(vec2_t)!=fs*2 || sizeof(vec3_t)!=fs*3 || sizeof(vec4_t)!=fs*4 || sizeof(quat_t)!=fs*4 || sizeof(euler_t)!=fs*3 ||
+	if( sizeof(vec2_t)!=fs*2 || sizeof(vec3_t)!=fs*3 || sizeof(vec4_t)!=fs*4 || sizeof(quat_t)!=fs*4 || sizeof(Euler)!=fs*3 ||
 	    sizeof(mat3_t)!=fs*9 || sizeof(mat4_t)!=fs*16 )
 		FATAL("Your compiler does class alignment. Quiting");
 }
 
 
 // 1/sqrt(f)
-inline float InvSqrt( float f )
+inline float invSqrt( float f )
 {
 #if defined( _DEBUG_ )
 	return 1.0/sqrtf(f);
@@ -49,7 +49,7 @@ inline float InvSqrt( float f )
 
 
 // PolynomialSinQuadrant
-// used in SinCos
+// used in sinCos
 #if !defined(_DEBUG_)
 inline static float PolynomialSinQuadrant(float a)
 {
@@ -59,7 +59,7 @@ inline static float PolynomialSinQuadrant(float a)
 
 
 // Sine and Cosine
-inline void SinCos( float a, float& sina, float& cosa )
+inline void sinCos( float a, float& sina, float& cosa )
 {
 #ifdef _DEBUG_
 	sina = sin(a);
@@ -111,7 +111,7 @@ inline void SinCos( float a, float& sina, float& cosa )
 //=====================================================================================================================================
 // Small funcs                                                                                                                        =
 //=====================================================================================================================================
-inline float Sqrt( float f ) { return 1/InvSqrt(f); }
+inline float sqrt( float f ) { return 1/invSqrt(f); }
 inline float ToRad( float degrees ) { return degrees*(PI/180.0); }
 inline float ToDegrees( float rad ) { return rad*(180.0/PI); }
 inline float Sin( float rad ) { return sin(rad); }

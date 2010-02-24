@@ -4,13 +4,13 @@
  */
 
 #include "renderer.h"
-#include "camera.h"
-#include "scene.h"
+#include "Camera.h"
+#include "Scene.h"
 #include "Mesh.h"
 #include "r_private.h"
 #include "Resource.h"
 #include "fbo.h"
-#include "mesh_node.h"
+#include "MeshNode.h"
 #include "Material.h"
 
 
@@ -77,7 +77,7 @@ void Init2()
 //=====================================================================================================================================
 // RunStage2                                                                                                                          =
 //=====================================================================================================================================
-void RunStage2( const camera_t& cam )
+void RunStage2( const Camera& cam )
 {
 	r::SetProjectionViewMatrices( cam );
 	r::SetViewport( 0, 0, r::w, r::h );
@@ -87,9 +87,9 @@ void RunStage2( const camera_t& cam )
 
 
 	// render the meshes
-	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
+	for( uint i=0; i<scene::meshNodes.size(); i++ )
 	{
-		mesh_node_t* mesh_node = scene::mesh_nodes[i];
+		MeshNode* mesh_node = scene::meshNodes[i];
 		if( mesh_node->material->refracts )
 		{
 			// write to the rFbo
@@ -97,7 +97,7 @@ void RunStage2( const camera_t& cam )
 			glEnable( GL_DEPTH_TEST );
 			glClear( GL_COLOR_BUFFER_BIT );
 			mesh_node->material->setup();
-			mesh_node->Render();
+			mesh_node->render();
 
 			fbo.Bind();
 			glDisable( GL_DEPTH_TEST );

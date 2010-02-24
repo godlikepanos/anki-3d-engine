@@ -1,4 +1,4 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 varying vec2 txtr_coords;
 
@@ -8,7 +8,7 @@ void main()
 	gl_Position = ftransform();
 }
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 #pragma anki uniform colormap 0
 uniform sampler2D colormap;

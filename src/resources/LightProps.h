@@ -17,7 +17,7 @@ class LightProps: public Resource
 	PROPERTY_R( vec3_t, specularCol, getSpecularColor )
 	PROPERTY_R( float, radius, getRadius ) ///< For point lights
 	PROPERTY_R( bool, castsShadow_, castsShadow ) ///< For spot lights
-	PROPERTY_R( float, distance, getDistance ) ///< For spot lights. A.K.A.: camera's zfar
+	PROPERTY_R( float, distance, getDistance ) ///< For spot lights. A.K.A.: camera's zFar
 	PROPERTY_R( float, fovX, getFovX ) ///< For spot lights
 	PROPERTY_R( float, fovY, getFovY ) ///< For spot lights
 		
