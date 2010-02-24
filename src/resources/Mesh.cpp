@@ -1,14 +1,14 @@
-#include "mesh.h"
+#include "Mesh.h"
 #include "renderer.h"
-#include "resource.h"
+#include "Resource.h"
 #include "Scanner.h"
 #include "parser.h"
 
 
 //=====================================================================================================================================
-// Load                                                                                                                               =
+// load                                                                                                                               =
 //=====================================================================================================================================
-bool mesh_t::Load( const char* filename )
+bool Mesh::load( const char* filename )
 {
 	Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return false;
@@ -23,7 +23,7 @@ bool mesh_t::Load( const char* filename )
 		PARSE_ERR_EXPECTED( "string" );
 		return false;
 	}
-	material_name = token->value.string;
+	materialName = token->value.string;
 
 	//** DP_MATERIAL **
 	/*token = &scanner.getNextToken();
@@ -32,7 +32,7 @@ bool mesh_t::Load( const char* filename )
 		PARSE_ERR_EXPECTED( "string" );
 		return false;
 	}
-	dp_material_name = token->value.string;*/
+	dp_materialName = token->value.string;*/
 
 	//** VERTS **
 	// verts num
@@ -42,12 +42,12 @@ bool mesh_t::Load( const char* filename )
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	vert_coords.resize( token->value.int_ );
+	vertCoords.resize( token->value.int_ );
 
 	// read the verts
-	for( uint i=0; i<vert_coords.size(); i++ )
+	for( uint i=0; i<vertCoords.size(); i++ )
 	{
-		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &vert_coords[i][0] ) ) return false;
+		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &vertCoords[i][0] ) ) return false;
 	}
 
 	//** FACES **
@@ -62,7 +62,7 @@ bool mesh_t::Load( const char* filename )
 	// read the faces
 	for( uint i=0; i<tris.size(); i++ )
 	{
-		if( !ParseArrOfNumbers<uint>( scanner, false, true, 3, tris[i].vert_ids ) ) return false;
+		if( !ParseArrOfNumbers<uint>( scanner, false, true, 3, tris[i].vertIds ) ) return false;
 	}
 
 	//** UVS **
@@ -73,11 +73,11 @@ bool mesh_t::Load( const char* filename )
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	tex_coords.resize( token->value.int_ );
-	// read the tex_coords
-	for( uint i=0; i<tex_coords.size(); i++ )
+	texCoords.resize( token->value.int_ );
+	// read the texCoords
+	for( uint i=0; i<texCoords.size(); i++ )
 	{
-		if( !ParseArrOfNumbers( scanner, false, true, 2, &tex_coords[i][0] ) ) return false;
+		if( !ParseArrOfNumbers( scanner, false, true, 2, &texCoords[i][0] ) ) return false;
 	}
 
 	//** VERTEX WEIGHTS **
@@ -87,8 +87,8 @@ bool mesh_t::Load( const char* filename )
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	vert_weights.resize( token->value.int_ );
-	for( uint i=0; i<vert_weights.size(); i++ )
+	vertWeights.resize( token->value.int_ );
+	for( uint i=0; i<vertWeights.size(); i++ )
 	{
 		// get the bone connections num
 		token = &scanner.getNextToken();
@@ -106,15 +106,15 @@ bool mesh_t::Load( const char* filename )
 		}
 
 		// and here is another possible error
-		if( token->value.int_ > vertex_weight_t::MAX_BONES_PER_VERT )
+		if( token->value.int_ > VertexWeight::MAX_BONES_PER_VERT )
 		{
-			ERROR( "Cannot have more than " << vertex_weight_t::MAX_BONES_PER_VERT << " bones per vertex" );
+			ERROR( "Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex" );
 			return false;
 		}
-		vert_weights[i].bones_num = token->value.int_;
+		vertWeights[i].bonesNum = token->value.int_;
 
 		// for all the weights of the current vertes
-		for( uint j=0; j<vert_weights[i].bones_num; j++ )
+		for( uint j=0; j<vertWeights[i].bonesNum; j++ )
 		{
 			// read bone id
 			token = &scanner.getNextToken();
@@ -123,7 +123,7 @@ bool mesh_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "integer" );
 				return false;
 			}
-			vert_weights[i].bone_ids[j] = token->value.int_;
+			vertWeights[i].boneIds[j] = token->value.int_;
 
 			// read the weight of that bone
 			token = &scanner.getNextToken();
@@ -132,74 +132,74 @@ bool mesh_t::Load( const char* filename )
 				PARSE_ERR_EXPECTED( "float" );
 				return false;
 			}
-			vert_weights[i].weights[j] = token->value.float_;
+			vertWeights[i].weights[j] = token->value.float_;
 		}
 	}
 
 	// Sanity checks
-	if( vert_coords.size()<1 || tris.size()<1 )
+	if( vertCoords.size()<1 || tris.size()<1 )
 	{
 		ERROR( "Vert coords and tris must be filled \"" << filename << "\"" );
 		return false;
 	}
-	if( tex_coords.size()!=0 && tex_coords.size()!=vert_coords.size() )
+	if( texCoords.size()!=0 && texCoords.size()!=vertCoords.size() )
 	{
 		ERROR( "Tex coords num must be zero or equal to vertex coords num \"" << filename << "\"" );
 		return false;
 	}
-	if( vert_weights.size()!=0 && vert_weights.size()!=vert_coords.size() )
+	if( vertWeights.size()!=0 && vertWeights.size()!=vertCoords.size() )
 	{
 		ERROR( "Vert weights num must be zero or equal to vertex coords num \"" << filename << "\"" );
 		return false;
 	}
 
-	CreateAllNormals();
-	if( tex_coords.size() > 0 ) CreateVertTangents();
-	CreateVertIndeces();
-	CreateVBOs();
-	CalcBSphere();
+	createAllNormals();
+	if( texCoords.size() > 0 ) createVertTangents();
+	createVertIndeces();
+	createVBOs();
+	calcBSphere();
 
 	return true;
 }
 
 
 //=====================================================================================================================================
-// Unload                                                                                                                             =
+// unload                                                                                                                             =
 //=====================================================================================================================================
-void mesh_t::Unload()
+void Mesh::unload()
 {
 	// ToDo: add when finalized
 }
 
 
 //=====================================================================================================================================
-// CreateFaceNormals                                                                                                                  =
+// createFaceNormals                                                                                                                  =
 //=====================================================================================================================================
-void mesh_t::CreateVertIndeces()
+void Mesh::createVertIndeces()
 {
-	DEBUG_ERR( vert_indeces.size() > 0 );
+	DEBUG_ERR( vertIndeces.size() > 0 );
 
-	vert_indeces.resize( tris.size() * 3 );
+	vertIndeces.resize( tris.size() * 3 );
 	for( uint i=0; i<tris.size(); i++ )
 	{
-		vert_indeces[i*3+0] = tris[i].vert_ids[0];
-		vert_indeces[i*3+1] = tris[i].vert_ids[1];
-		vert_indeces[i*3+2] = tris[i].vert_ids[2];
+		vertIndeces[i*3+0] = tris[i].vertIds[0];
+		vertIndeces[i*3+1] = tris[i].vertIds[1];
+		vertIndeces[i*3+2] = tris[i].vertIds[2];
 	}
 }
 
 
 //=====================================================================================================================================
-// CreateFaceNormals                                                                                                                  =
+// createFaceNormals                                                                                                                  =
 //=====================================================================================================================================
-void mesh_t::CreateFaceNormals()
+void Mesh::createFaceNormals()
 {
 	for( uint i=0; i<tris.size(); i++ )
 	{
-		triangle_t& tri = tris[i];
-		const vec3_t& v0 = vert_coords[ tri.vert_ids[0] ];
-		const vec3_t& v1 = vert_coords[ tri.vert_ids[1] ];
-		const vec3_t& v2 = vert_coords[ tri.vert_ids[2] ];
+		Triangle& tri = tris[i];
+		const vec3_t& v0 = vertCoords[ tri.vertIds[0] ];
+		const vec3_t& v1 = vertCoords[ tri.vertIds[1] ];
+		const vec3_t& v2 = vertCoords[ tri.vertIds[2] ];
 
 		tri.normal = ( v1 - v0 ).Cross( v2 - v0 );
 
@@ -209,56 +209,56 @@ void mesh_t::CreateFaceNormals()
 
 
 //=====================================================================================================================================
-// CreateVertNormals                                                                                                                  =
+// createVertNormals                                                                                                                  =
 //=====================================================================================================================================
-void mesh_t::CreateVertNormals()
+void Mesh::createVertNormals()
 {
-	vert_normals.resize( vert_coords.size() ); // alloc
+	vertNormals.resize( vertCoords.size() ); // alloc
 
-	for( uint i=0; i<vert_coords.size(); i++ )
-		vert_normals[i] = vec3_t( 0.0, 0.0, 0.0 );
+	for( uint i=0; i<vertCoords.size(); i++ )
+		vertNormals[i] = vec3_t( 0.0, 0.0, 0.0 );
 
 	for( uint i=0; i<tris.size(); i++ )
 	{
-		const triangle_t& tri = tris[i];
-		vert_normals[ tri.vert_ids[0] ] += tri.normal;
-		vert_normals[ tri.vert_ids[1] ] += tri.normal;
-		vert_normals[ tri.vert_ids[2] ] += tri.normal;
+		const Triangle& tri = tris[i];
+		vertNormals[ tri.vertIds[0] ] += tri.normal;
+		vertNormals[ tri.vertIds[1] ] += tri.normal;
+		vertNormals[ tri.vertIds[2] ] += tri.normal;
 	}
 
-	for( uint i=0; i<vert_normals.size(); i++ )
-		vert_normals[i].Normalize();
+	for( uint i=0; i<vertNormals.size(); i++ )
+		vertNormals[i].Normalize();
 }
 
 
 //=====================================================================================================================================
-// CreateVertTangents                                                                                                                 =
+// createVertTangents                                                                                                                 =
 //=====================================================================================================================================
-void mesh_t::CreateVertTangents()
+void Mesh::createVertTangents()
 {
-	vert_tangents.resize( vert_coords.size() ); // alloc
+	vertTangents.resize( vertCoords.size() ); // alloc
 
-	vec_t<vec3_t> bitagents( vert_coords.size() );
+	Vec<vec3_t> bitagents( vertCoords.size() );
 
-	for( uint i=0; i<vert_tangents.size(); i++ )
+	for( uint i=0; i<vertTangents.size(); i++ )
 	{
-		vert_tangents[i] = vec4_t( 0.0 );
+		vertTangents[i] = vec4_t( 0.0 );
 		bitagents[i] = vec3_t( 0.0 );
 	}
 
 	for( uint i=0; i<tris.size(); i++ )
 	{
-		const triangle_t& tri = tris[i];
-		const int i0 = tri.vert_ids[0];
-		const int i1 = tri.vert_ids[1];
-		const int i2 = tri.vert_ids[2];
-		const vec3_t& v0 = vert_coords[ i0 ];
-		const vec3_t& v1 = vert_coords[ i1 ];
-		const vec3_t& v2 = vert_coords[ i2 ];
+		const Triangle& tri = tris[i];
+		const int i0 = tri.vertIds[0];
+		const int i1 = tri.vertIds[1];
+		const int i2 = tri.vertIds[2];
+		const vec3_t& v0 = vertCoords[ i0 ];
+		const vec3_t& v1 = vertCoords[ i1 ];
+		const vec3_t& v2 = vertCoords[ i2 ];
 		vec3_t edge01 = v1 - v0;
 		vec3_t edge02 = v2 - v0;
-		vec2_t uvedge01 = tex_coords[i1] - tex_coords[i0];
-		vec2_t uvedge02 = tex_coords[i2] - tex_coords[i0];
+		vec2_t uvedge01 = texCoords[i1] - texCoords[i0];
+		vec2_t uvedge02 = texCoords[i2] - texCoords[i0];
 
 
 		float det = (uvedge01.y * uvedge02.x) - (uvedge01.x * uvedge02.y);
@@ -270,19 +270,19 @@ void mesh_t::CreateVertTangents()
 		t.Normalize();
 		b.Normalize();
 
-		vert_tangents[i0] += vec4_t(t, 1.0);
-		vert_tangents[i1] += vec4_t(t, 1.0);
-		vert_tangents[i2] += vec4_t(t, 1.0);
+		vertTangents[i0] += vec4_t(t, 1.0);
+		vertTangents[i1] += vec4_t(t, 1.0);
+		vertTangents[i2] += vec4_t(t, 1.0);
 
 		bitagents[i0] += b;
 		bitagents[i1] += b;
 		bitagents[i2] += b;
 	}
 
-	for( uint i=0; i<vert_tangents.size(); i++ )
+	for( uint i=0; i<vertTangents.size(); i++ )
 	{
-		vec3_t t = vec3_t(vert_tangents[i]);
-		const vec3_t& n = vert_normals[i];
+		vec3_t t = vec3_t(vertTangents[i]);
+		const vec3_t& n = vertNormals[i];
 		vec3_t& b = bitagents[i];
 
 		//t = t - n * n.Dot(t);
@@ -292,7 +292,7 @@ void mesh_t::CreateVertTangents()
 
 		float w = ( (n.Cross(t)).Dot( b ) < 0.0) ? 1.0 : -1.0;
 
-		vert_tangents[i] = vec4_t( t, w );
+		vertTangents[i] = vec4_t( t, w );
 	}
 
 	bitagents.clear();
@@ -300,26 +300,26 @@ void mesh_t::CreateVertTangents()
 
 
 //=====================================================================================================================================
-// CreateVBOs                                                                                                                         =
+// createVBOs                                                                                                                         =
 //=====================================================================================================================================
-void mesh_t::CreateVBOs()
+void Mesh::createVBOs()
 {
-	vbos.vert_indeces.Create( GL_ELEMENT_ARRAY_BUFFER, vert_indeces.GetSizeInBytes(), &vert_indeces[0], GL_STATIC_DRAW );
-	vbos.vert_coords.Create( GL_ARRAY_BUFFER, vert_coords.GetSizeInBytes(), &vert_coords[0], GL_STATIC_DRAW );
-	vbos.vert_normals.Create( GL_ARRAY_BUFFER, vert_normals.GetSizeInBytes(), &vert_normals[0], GL_STATIC_DRAW );
-	if( vert_tangents.size() > 1 )
-		vbos.vert_tangents.Create( GL_ARRAY_BUFFER, vert_tangents.GetSizeInBytes(), &vert_tangents[0], GL_STATIC_DRAW );
-	if( tex_coords.size() > 1 )
-		vbos.tex_coords.Create( GL_ARRAY_BUFFER, tex_coords.GetSizeInBytes(), &tex_coords[0], GL_STATIC_DRAW );
-	if( vert_weights.size() > 1 )
-		vbos.vert_weights.Create( GL_ARRAY_BUFFER, vert_weights.GetSizeInBytes(), &vert_weights[0], GL_STATIC_DRAW );
+	vbos.vertIndeces.Create( GL_ELEMENT_ARRAY_BUFFER, vertIndeces.GetSizeInBytes(), &vertIndeces[0], GL_STATIC_DRAW );
+	vbos.vertCoords.Create( GL_ARRAY_BUFFER, vertCoords.GetSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW );
+	vbos.vertNormals.Create( GL_ARRAY_BUFFER, vertNormals.GetSizeInBytes(), &vertNormals[0], GL_STATIC_DRAW );
+	if( vertTangents.size() > 1 )
+		vbos.vertTangents.Create( GL_ARRAY_BUFFER, vertTangents.GetSizeInBytes(), &vertTangents[0], GL_STATIC_DRAW );
+	if( texCoords.size() > 1 )
+		vbos.texCoords.Create( GL_ARRAY_BUFFER, texCoords.GetSizeInBytes(), &texCoords[0], GL_STATIC_DRAW );
+	if( vertWeights.size() > 1 )
+		vbos.vertWeights.Create( GL_ARRAY_BUFFER, vertWeights.GetSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW );
 }
 
 
 //=====================================================================================================================================
-// CalcBSphere                                                                                                                        =
+// calcBSphere                                                                                                                        =
 //=====================================================================================================================================
-void mesh_t::CalcBSphere()
+void Mesh::calcBSphere()
 {
-	bsphere.Set( &vert_coords[0], 0, vert_coords.size() );
+	bsphere.Set( &vertCoords[0], 0, vertCoords.size() );
 }

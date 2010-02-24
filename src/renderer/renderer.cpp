@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <jpeglib.h>
 #include "renderer.h"
-#include "texture.h"
+#include "Texture.h"
 #include "scene.h"
 #include "r_private.h"
 #include "camera.h"
@@ -26,7 +26,7 @@ int max_color_atachments = 0;
 //float rendering_quality = 1.0;
 int screenshot_jpeg_quality = 90;
 
-static shader_prog_t* shdr_final;
+static ShaderProg* shdr_final;
 
 // for the pps and is quad rendering
 float quad_vert_cords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
@@ -48,16 +48,16 @@ bool texture_compression = false;
 //=====================================================================================================================================
 // DrawQuad                                                                                                                           =
 //=====================================================================================================================================
-void DrawQuad( int vert_coords_uni_loc )
+void DrawQuad( int vertCoords_uni_loc )
 {
 	/*glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableClientState( GL_VERTEX_ARRAY );*/
-	glVertexAttribPointer( vert_coords_uni_loc, 2, GL_FLOAT, false, 0, quad_vert_cords );
-	glEnableVertexAttribArray( vert_coords_uni_loc );
+	glVertexAttribPointer( vertCoords_uni_loc, 2, GL_FLOAT, false, 0, quad_vert_cords );
+	glEnableVertexAttribArray( vertCoords_uni_loc );
 	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableVertexAttribArray( vert_coords_uni_loc );
+	glDisableVertexAttribArray( vertCoords_uni_loc );
 }
 
 
@@ -166,7 +166,7 @@ void Init()
 	BuildStdShaderPreProcStr();
 
 	// misc
-	shdr_final = rsrc::shaders.Load( "shaders/final.glsl" );
+	shdr_final = rsrc::shaders.load( "shaders/final.glsl" );
 
 	// init deferred stages
 	// WARNING: the order of the inits is crucial!!!!!
@@ -201,29 +201,29 @@ void Render( const camera_t& cam )
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	shdr_final->Bind();
-	shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::fai, 0 );
+	shdr_final->bind();
+	shdr_final->locTexUnit( shdr_final->GetUniLoc(0), r::pps::fai, 0 );
 
 	/*const int step = 100;
 	if( r::frames_num < step )
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::diffuse_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::diffuse_fai, 0 );
 	else if( r::frames_num < step*2 )
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::normal_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::normal_fai, 0 );
 	else if( r::frames_num < step*3 )
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::specular_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::specular_fai, 0 );
 	else if( r::frames_num < step*4 )
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::ms::depth_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::depth_fai, 0 );
 	else if( r::frames_num < step*5 )
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::ssao::blured_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::ssao::blured_fai, 0 );
 	else if( r::frames_num < step*6 )
 	{
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::hdr::pass2_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::hdr::pass2_fai, 0 );
 	}
 	else
-		shdr_final->LocTexUnit( shdr_final->GetUniformLocation(0), r::pps::fai, 0 );*/
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::fai, 0 );*/
 
 
-	r::DrawQuad( shdr_final->GetAttributeLocation(0) );
+	r::DrawQuad( shdr_final->getAttribLoc(0) );
 }
 
 
@@ -235,7 +235,7 @@ SetProjectionMatrix                                                             
 void SetProjectionMatrix( const camera_t& cam )
 {
 	glMatrixMode( GL_PROJECTION );
-	LoadMatrix( cam.GetProjectionMatrix() );
+	loadMatrix( cam.GetProjectionMatrix() );
 }
 
 
@@ -247,7 +247,7 @@ SetViewMatrix                                                                   
 void SetViewMatrix( const camera_t& cam )
 {
 	glMatrixMode( GL_MODELVIEW );
-	LoadMatrix( cam.GetViewMatrix() );
+	loadMatrix( cam.GetViewMatrix() );
 }
 
 

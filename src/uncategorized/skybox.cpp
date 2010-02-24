@@ -1,5 +1,5 @@
 #include "skybox.h"
-#include "resource.h"
+#include "Resource.h"
 #include "renderer.h"
 #include "gmath.h"
 #include "camera.h"
@@ -26,21 +26,21 @@ static float coords [][4][3] =
 
 /*
 =======================================================================================================================================
-Load                                                                                                                                  =
+load                                                                                                                                  =
 =======================================================================================================================================
 */
-bool skybox_t::Load( const char* filenames[6] )
+bool skybox_t::load( const char* filenames[6] )
 {
 	for( int i=0; i<6; i++ )
 	{
-		textures[i] = rsrc::textures.Load( filenames[i] );
+		textures[i] = rsrc::textures.load( filenames[i] );
 	}
 
-	noise = rsrc::textures.Load( "gfx/noise2.tga" );
-	noise->TexParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-	noise->TexParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
+	noise = rsrc::textures.load( "gfx/noise2.tga" );
+	noise->texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
+	noise->texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
 
-	shader = rsrc::shaders.Load( "shaders/ms_mp_skybox.glsl" );
+	shader = rsrc::shaders.load( "shaders/ms_mp_skybox.glsl" );
 
 	return true;
 }
@@ -58,16 +58,16 @@ void skybox_t::Render( const mat3_t& rotation )
 
 	glPushMatrix();
 
-	shader->Bind();
-	glUniform1i( shader->GetUniformLocation("colormap"), 0 );
-	shader->LocTexUnit( shader->GetUniformLocation("noisemap"), *noise, 1 );
-	glUniform1f( shader->GetUniformLocation("timer"), (rotation_ang/(2*PI))*100 );
-	glUniform3fv( shader->GetUniformLocation("scene_ambient_color"), 1, &(vec3_t( 1.0, 1.0, 1.0 ) / scene::GetAmbientColor())[0] );
+	shader->bind();
+	glUniform1i( shader->getUniLoc("colormap"), 0 );
+	shader->locTexUnit( shader->getUniLoc("noisemap"), *noise, 1 );
+	glUniform1f( shader->getUniLoc("timer"), (rotation_ang/(2*PI))*100 );
+	glUniform3fv( shader->getUniLoc("scene_ambient_color"), 1, &(vec3_t( 1.0, 1.0, 1.0 ) / scene::GetAmbientColor())[0] );
 
 	// set the rotation matrix
 	mat3_t tmp( rotation );
 	tmp.RotateYAxis(rotation_ang);
-	r::LoadMatrix( mat4_t( tmp ) );
+	r::loadMatrix( mat4_t( tmp ) );
 	rotation_ang += 0.0001;
 	if( rotation_ang >= 2*PI ) rotation_ang = 0.0;
 
@@ -78,7 +78,7 @@ void skybox_t::Render( const mat3_t& rotation )
 
 	for( int i=0; i<6; i++ )
 	{
-		textures[i]->Bind(0);
+		textures[i]->bind(0);
 		glBegin( GL_QUADS );
 			glTexCoord2fv( uvs[0] );
 			glVertex3fv( coords[i][0] );

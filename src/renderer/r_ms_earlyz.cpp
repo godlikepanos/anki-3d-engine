@@ -3,8 +3,8 @@ The file contains functions and vars used for the deferred shading/material stag
 */
 
 #include "renderer.h"
-#include "resource.h"
-#include "texture.h"
+#include "Resource.h"
+#include "Texture.h"
 #include "scene.h"
 #include "r_private.h"
 #include "fbo.h"
@@ -23,7 +23,7 @@ VARS                                                                            
 */
 static fbo_t fbo;
 
-static shader_prog_t* shdr_dp, * shdr_dp_grass; // passes for solid objects and grass-like
+static ShaderProg* shdr_dp, * shdr_dp_grass; // passes for solid objects and grass-like
 
 
 /*
@@ -35,24 +35,24 @@ void Init()
 {
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// inform the we wont write to color buffers
 	fbo.SetNumOfColorAttachements(0);
 
 	// attach the texture
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r::ms::depth_fai.gl_id, 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r::ms::depth_fai.glId, 0 );
 
 	// test if success
 	if( !fbo.CheckStatus() )
 		FATAL( "Cannot create earlyZ FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 
 	// shaders
-	shdr_dp = rsrc::shaders.Load( "shaders/dp.glsl" );
-	shdr_dp_grass = rsrc::shaders.Load( "shaders/dp_grass.glsl" );
+	shdr_dp = rsrc::shaders.load( "shaders/dp.glsl" );
+	shdr_dp_grass = rsrc::shaders.load( "shaders/dp_grass.glsl" );
 }
 
 
@@ -64,7 +64,7 @@ RunPass                                                                         
 void RunPass( const camera_t& cam )
 {
 	/*// FBO
-	fbo.Bind();
+	fbo.bind();
 
 	// matrix
 	glClear( GL_DEPTH_BUFFER_BIT );
@@ -79,7 +79,7 @@ void RunPass( const camera_t& cam )
 
 	// render all meshes
 	for( uint i=0; i<scene::meshes.size(); i++ )
-		RenderDepth<mesh_t>( *scene::meshes[i], shdr_dp, shdr_dp_grass );
+		RenderDepth<Mesh>( *scene::meshes[i], shdr_dp, shdr_dp_grass );
 
 	// render all smodels
 	for( uint i=0; i<scene::models.size(); i++ )
@@ -88,7 +88,7 @@ void RunPass( const camera_t& cam )
 	glColorMask( true, true, true, true );
 
 	// end
-	fbo.Unbind();*/
+	fbo.unbind();*/
 }
 
 

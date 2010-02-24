@@ -46,7 +46,7 @@ class particle_emitter_t: public object_t
 		};
 
 	public:
-		vec_t<particle_t> particles;
+		Vec<particle_t> particles;
 
 		int start_frame;
 		int stop_frame;

@@ -31,7 +31,7 @@ class string_t
 		uint length;
 		
 		// private funcs
-		template<typename type_t> string_t ConvertT( type_t t, const char* format )
+		template<typename Type> string_t ConvertT( Type t, const char* format )
 		{
 			string_t out;
 			char tmps [1024];

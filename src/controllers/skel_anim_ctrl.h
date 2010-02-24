@@ -5,8 +5,8 @@
 #include "controller.h"
 #include "gmath.h"
 
-class skeleton_t;
-class skel_anim_t;
+class Skeleton;
+class SkelAnim;
 class skel_node_t;
 
 
@@ -14,17 +14,17 @@ class skel_node_t;
 class skel_anim_ctrl_t: public controller_t
 {
 	private:
-		void Interpolate( skel_anim_t* animation, float frame );
+		void Interpolate( SkelAnim* animation, float frame );
 		void UpdateBoneTransforms();
 		void Deform();
 
 	public:
-		skel_anim_t*  skel_anim; ///< Skeleton animation resource
+		SkelAnim*  skel_anim; ///< Skeleton animation resource
 		skel_node_t*  skel_node;
-		vec_t<vec3_t> heads;
-		vec_t<vec3_t> tails;
-		vec_t<mat3_t> bone_rotations;
-		vec_t<vec3_t> bone_translations;
+		Vec<vec3_t> heads;
+		Vec<vec3_t> tails;
+		Vec<mat3_t> bone_rotations;
+		Vec<vec3_t> Boneranslations;
 		float step;
 		float frame;
 

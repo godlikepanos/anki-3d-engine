@@ -7,7 +7,7 @@
 
 /**
  * The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to have all the
- * shaders in the same file
+ * shaders in the same file. The file that includes all the shaders is called ShaderParser-compatible
  */
 class ShaderParser
 {
@@ -19,10 +19,10 @@ class ShaderParser
 		{
 			
 			string definedInFile;
-			int    defined_in_line;
-			Pragma(): defined_in_line(-1) {}
-			Pragma( const string& definedInFile_, int defined_in_line_ ):
-				definedInFile(definedInFile_), defined_in_line(defined_in_line_)
+			int    definedInLine;
+			Pragma(): definedInLine(-1) {}
+			Pragma( const string& definedInFile_, int definedInLine_ ):
+				definedInFile(definedInFile_), definedInLine(definedInLine_)
 			{}
 		};
 		
@@ -34,39 +34,80 @@ class ShaderParser
 		struct ShaderVarPragma: Pragma
 		{
 			string name;
-			uint   custom_loc;
-			ShaderVarPragma( const string& defined_in_file_, int defined_in_line_, const string& name_, uint custom_loc_ ):
-				Pragma( defined_in_file_, defined_in_line_ ), name(name_), custom_loc(custom_loc_)
+			uint   customLoc;
+			ShaderVarPragma( const string& definedInFile_, int definedInLine_, const string& name_, uint customLoc_ ):
+				Pragma( definedInFile_, definedInLine_ ), name(name_), customLoc(customLoc_)
 			{}
 		};
 	
-		struct code_beginning_t: Pragma
+		struct CodeBeginningPragma: Pragma
 		{
-			int global_line;
+			int globalLine; ///< The line number in the ShaderParser-compatible file
 
-			code_beginning_t(): global_line(-1) {}
+			CodeBeginningPragma(): globalLine(-1) {}
 		};
 		
-		vec_t<string> source_lines;
-		code_beginning_t vert_shader_begins;
-		code_beginning_t frag_shader_begins;
+		Vec<string> sourceLines;  ///< The parseFileForPragmas fills this
+		CodeBeginningPragma vertShaderBegins;
+		CodeBeginningPragma fragShaderBegins;
 		
-		bool ParseFileForPragmas( const string& filename, int id = 0 );
-		vec_t<ShaderVarPragma>::iterator FindShaderVar( vec_t<ShaderVarPragma>& vec, const string& name ) const;
-		void PrintSourceLines() const;  ///< For debugging
-		void PrintShaderVars() const;  ///< For debugging
+		/**
+		 * A recursive function that parses a file for pragmas and updates the output
+		 * @param filename The file to parse
+		 * @param id The #line in GLSL does not support filename so an id it being used instead
+		 * @return True on success
+		 */
+		bool parseFileForPragmas( const string& filename, int id = 0 );
+
+		/**
+		 * Searches inside the Output::uniforms or Output::attributes vectors
+		 * @param vec Output::uniforms or Output::attributes
+		 * @param name The name of the location
+		 * @return Iterator to the vector
+		 */
+		Vec<ShaderVarPragma>::iterator findShaderVar( Vec<ShaderVarPragma>& vec, const string& name ) const;
+
+		void printSourceLines() const;  ///< For debugging
+		void printShaderVars() const;  ///< For debugging
+
+		/**
+		 * The output of the class packed in this struct
+		 */
+		struct Output
+		{
+			friend class ShaderParser;
+
+			private:
+				Vec<ShaderVarPragma> uniforms;  ///< It holds the name and the custom location
+				Vec<ShaderVarPragma> attributes;  ///< It holds the name and the custom location
+				string vertShaderSource; ///< This is the vert shader source
+				string fragShaderSource; ///< This is the frag shader source
+
+			public:
+				const Vec<ShaderVarPragma>& getUniLocs() const { return uniforms; }
+				const Vec<ShaderVarPragma>& getAttribLocs() const { return attributes; }
+				const string& getVertShaderSource() const { return vertShaderSource; }
+				const string& getFragShaderSource() const { return fragShaderSource; }
+		};
+
+		Output output; ///< The output of the parser. parseFile fills it
 
 	public:
-		// the output
-		vec_t<ShaderVarPragma> uniforms;
-		vec_t<ShaderVarPragma> attributes;
-		string vert_shader_source;
-		string frag_shader_source;
-		
 		ShaderParser() {}
 		~ShaderParser() {}
 
-		bool ParseFile( const char* fname ); ///< Parse a file and its includes 
+		/**
+		 * Parse a ShaderParser formated GLSL file. Use getOutput to get the output
+		 * @param fname The file to parse
+		 * @return True on success
+		 */
+		bool parseFile( const char* fname );
+
+		/**
+		 * Wrapper func to get the output. Use it after calling parseFile
+		 * @return The output
+		 */
+		const Output& getOutput() const { return output; }
 };
 
 

@@ -160,8 +160,8 @@ class Scanner
 		Scanner( bool newlinesAsWhitespace = true );
 		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
 
-		bool loadFile( const char* filename ); ///< Load a file to extract tokens
-		bool loadIoStream( iostream* iostream_, const char* scriptName_ = "unamed-iostream" ); ///< Load a STL iostream to extract tokens
+		bool loadFile( const char* filename ); ///< load a file to extract tokens
+		bool loadIoStream( iostream* iostream_, const char* scriptName_ = "unamed-iostream" ); ///< load a STL iostream to extract tokens
 		void unload();
 
 		static void   printTokenInfo( const Token& token ); ///< Print info of the given token

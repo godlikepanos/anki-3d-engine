@@ -6,40 +6,40 @@
 
 
 //=====================================================================================================================================
-// FindShaderVar                                                                                                                      =
+// printSourceLines                                                                                                                   =
 //=====================================================================================================================================
-void ShaderParser::PrintSourceLines() const
+void ShaderParser::printSourceLines() const
 {
-	for( uint i=0; i<source_lines.size(); ++i )
+	for( uint i=0; i<sourceLines.size(); ++i )
 	{
-		PRINT( setw(3) << i+1 << ": " << source_lines[i] );
+		PRINT( setw(3) << i+1 << ": " << sourceLines[i] );
 	}
 }
 
 
 //=====================================================================================================================================
-// PrintShaderVars                                                                                                                    =
+// printShaderVars                                                                                                                    =
 //=====================================================================================================================================
-void ShaderParser::PrintShaderVars() const
+void ShaderParser::printShaderVars() const
 {
 	PRINT( "TYPE" << setw(20) << "NAME" << setw(4) << "LOC" );
-	for( uint i=0; i<uniforms.size(); ++i )
+	for( uint i=0; i<output.uniforms.size(); ++i )
 	{
-		PRINT( setw(4) << "U" << setw(20) << uniforms[i].name << setw(4) << uniforms[i].custom_loc );
+		PRINT( setw(4) << "U" << setw(20) << output.uniforms[i].name << setw(4) << output.uniforms[i].customLoc );
 	}
-	for( uint i=0; i<attributes.size(); ++i )
+	for( uint i=0; i<output.attributes.size(); ++i )
 	{
-		PRINT( setw(4) << "A" << setw(20) << attributes[i].name << setw(4) << attributes[i].custom_loc );
+		PRINT( setw(4) << "A" << setw(20) << output.attributes[i].name << setw(4) << output.attributes[i].customLoc );
 	}
 }
 
 
 //=====================================================================================================================================
-// FindShaderVar                                                                                                                      =
+// findShaderVar                                                                                                                      =
 //=====================================================================================================================================
-vec_t<ShaderParser::ShaderVarPragma>::iterator ShaderParser::FindShaderVar( vec_t<ShaderVarPragma>& vec, const string& name ) const
+Vec<ShaderParser::ShaderVarPragma>::iterator ShaderParser::findShaderVar( Vec<ShaderVarPragma>& vec, const string& name ) const
 {
-	vec_t<ShaderVarPragma>::iterator it = vec.begin();
+	Vec<ShaderVarPragma>::iterator it = vec.begin();
 	while( it != vec.end() && it->name != name )
 	{
 		++it;
@@ -49,12 +49,12 @@ vec_t<ShaderParser::ShaderVarPragma>::iterator ShaderParser::FindShaderVar( vec_
 
 
 //=====================================================================================================================================
-// ParseFileForPragmas                                                                                                                =
+// parseFileForPragmas                                                                                                                =
 //=====================================================================================================================================
-bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
+bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 {
 	// load file in lines
-	vec_t<string> lines = util::GetFileLines( filename.c_str() );
+	Vec<string> lines = util::GetFileLines( filename.c_str() );
 	if( lines.size() < 1 )
 	{
 		ERROR( "Cannot parse file \"" << filename << "\"" );
@@ -80,49 +80,49 @@ bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 				if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "anki") == 0 )
 				{
 					token = &scanner.getNextToken();
-/* vert_shader_begins */
-					if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "vert_shader_begins") == 0 )
+/* vertShaderBegins */
+					if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "vertShaderBegins") == 0 )
 					{
 						// play
-						if( frag_shader_begins.defined_in_line != -1 ) // check if frag shader allready defined
+						if( fragShaderBegins.definedInLine != -1 ) // check if frag shader allready defined
 						{
-							PARSE_ERR( "vert_shader_begins must precede frag_shader_begins defined at " << frag_shader_begins.definedInFile <<
-							           ":" << frag_shader_begins.defined_in_line );
+							PARSE_ERR( "vertShaderBegins must precede fragShaderBegins defined at " << fragShaderBegins.definedInFile <<
+							           ":" << fragShaderBegins.definedInLine );
 							return false;
 						}
 						
-						if( vert_shader_begins.defined_in_line != -1 ) // allready defined elseware so throw error
+						if( vertShaderBegins.definedInLine != -1 ) // allready defined elseware so throw error
 						{
-							PARSE_ERR( "vert_shader_begins allready defined at " << vert_shader_begins.definedInFile << ":" <<
-							           vert_shader_begins.defined_in_line );
+							PARSE_ERR( "vertShaderBegins allready defined at " << vertShaderBegins.definedInFile << ":" <<
+							           vertShaderBegins.definedInLine );
 							return false;
 						}
-						vert_shader_begins.definedInFile = filename;
-						vert_shader_begins.defined_in_line = scanner.getLineNmbr();
-						vert_shader_begins.global_line = source_lines.size() + 1;
-						source_lines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
+						vertShaderBegins.definedInFile = filename;
+						vertShaderBegins.definedInLine = scanner.getLineNmbr();
+						vertShaderBegins.globalLine = sourceLines.size() + 1;
+						sourceLines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
-/* frag_shader_begins */
-					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "frag_shader_begins") == 0 )
+/* fragShaderBegins */
+					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "fragShaderBegins") == 0 )
 					{
 						// play
-						if( vert_shader_begins.defined_in_line == -1 )
+						if( vertShaderBegins.definedInLine == -1 )
 						{
-							PARSE_ERR( "frag_shader_begins should be defined after vert_shader_begins" );
+							PARSE_ERR( "fragShaderBegins should be defined after vertShaderBegins" );
 							return false;
 						}
 						
-						if( frag_shader_begins.defined_in_line != -1 ) // if allready defined elseware throw error
+						if( fragShaderBegins.definedInLine != -1 ) // if allready defined elseware throw error
 						{
-							PARSE_ERR( "frag_shader_begins allready defined at " << frag_shader_begins.definedInFile << ":" <<
-							           frag_shader_begins.defined_in_line );
+							PARSE_ERR( "fragShaderBegins allready defined at " << fragShaderBegins.definedInFile << ":" <<
+							           fragShaderBegins.definedInLine );
 							return false;
 						}
-						frag_shader_begins.definedInFile = filename;
-						frag_shader_begins.defined_in_line = scanner.getLineNmbr();
-						frag_shader_begins.global_line = source_lines.size() + 1;
-						source_lines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
+						fragShaderBegins.definedInFile = filename;
+						fragShaderBegins.definedInLine = scanner.getLineNmbr();
+						fragShaderBegins.globalLine = sourceLines.size() + 1;
+						sourceLines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* include */
@@ -132,10 +132,10 @@ bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 						if( token->code == Scanner::TC_STRING )
 						{
 							// play
-							//int line = source_lines.size();
-							source_lines.push_back( string("#line 0 ") + IntToStr(id+1) + " // " + lines[scanner.getLineNmbr()-1] );
-							if( !ParseFileForPragmas( token->value.string, id+1 ) ) return false;
-							source_lines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) +  " // end of " + lines[scanner.getLineNmbr()-1] );
+							//int line = sourceLines.size();
+							sourceLines.push_back( string("#line 0 ") + IntToStr(id+1) + " // " + lines[scanner.getLineNmbr()-1] );
+							if( !parseFileForPragmas( token->value.string, id+1 ) ) return false;
+							sourceLines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) +  " // end of " + lines[scanner.getLineNmbr()-1] );
 							// stop play
 						}
 						else
@@ -155,15 +155,15 @@ bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
 							{
 								// play
-								vec_t<ShaderVarPragma>::iterator uniform = FindShaderVar( uniforms, var_name );
-								if( uniform != uniforms.end() )
+								Vec<ShaderVarPragma>::iterator uniform = findShaderVar( output.uniforms, var_name );
+								if( uniform != output.uniforms.end() )
 								{
-									PARSE_ERR( "Uniform allready defined at " << uniform->definedInFile << ":" << uniform->defined_in_line );
+									PARSE_ERR( "Uniform allready defined at " << uniform->definedInFile << ":" << uniform->definedInLine );
 									return false;
 								}
 								
-								uniforms.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
-								source_lines.push_back( lines[scanner.getLineNmbr()-1] );
+								output.uniforms.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
+								sourceLines.push_back( lines[scanner.getLineNmbr()-1] );
 								// stop play
 							}
 							else
@@ -189,15 +189,15 @@ bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
 							{
 								// play
-								vec_t<ShaderVarPragma>::iterator attrib = FindShaderVar( attributes, var_name );
-								if( attrib != attributes.end() )
+								Vec<ShaderVarPragma>::iterator attrib = findShaderVar( output.attributes, var_name );
+								if( attrib != output.attributes.end() )
 								{
-									PARSE_ERR( "Attribute allready defined at " << attrib->definedInFile << ":" << attrib->defined_in_line );
+									PARSE_ERR( "Attribute allready defined at " << attrib->definedInFile << ":" << attrib->definedInLine );
 									return false;
 								}
 								
-								attributes.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
-								source_lines.push_back( lines[scanner.getLineNmbr()-1] );
+								output.attributes.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
+								sourceLines.push_back( lines[scanner.getLineNmbr()-1] );
 								// stop play
 							}
 							else
@@ -233,13 +233,13 @@ bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 /* newline */		
 		else if( token->code == Scanner::TC_NEWLINE )
 		{
-			source_lines.push_back( lines[ scanner.getLineNmbr() - 2 ] );
+			sourceLines.push_back( lines[ scanner.getLineNmbr() - 2 ] );
 			//PRINT( lines[ scanner.getLineNmbr() - 2 ] )
 		}
 /* EOF */
 		else if( token->code == Scanner::TC_EOF )
 		{
-			source_lines.push_back( lines[ scanner.getLineNmbr() - 1 ] );
+			sourceLines.push_back( lines[ scanner.getLineNmbr() - 1 ] );
 			//PRINT( lines[ scanner.getLineNmbr() - 1 ] )
 			break;
 		}
@@ -256,44 +256,44 @@ bool ShaderParser::ParseFileForPragmas( const string& filename, int id )
 
 
 //=====================================================================================================================================
-// Load                                                                                                                               =
+// parseFile                                                                                                                          =
 //=====================================================================================================================================
-bool ShaderParser::ParseFile( const char* filename )
+bool ShaderParser::parseFile( const char* filename )
 {
 	// parse master file
-	if( !ParseFileForPragmas( filename ) ) return false;
+	if( !parseFileForPragmas( filename ) ) return false;
 
 	// sanity checks
-	if( vert_shader_begins.global_line == -1 )
+	if( vertShaderBegins.globalLine == -1 )
 	{
-		ERROR( "Entry point \"vert_shader_begins\" is not defined in file \"" << filename << "\"" );
+		ERROR( "Entry point \"vertShaderBegins\" is not defined in file \"" << filename << "\"" );
 		return false;
 	}
-	if( frag_shader_begins.global_line == -1 )
+	if( fragShaderBegins.globalLine == -1 )
 	{
-		ERROR( "Entry point \"frag_shader_begins\" is not defined in file \"" << filename << "\"" );
+		ERROR( "Entry point \"fragShaderBegins\" is not defined in file \"" << filename << "\"" );
 		return false;
 	}
 	
 	// construct shader's source code
-	vert_shader_source = "";
-	frag_shader_source = "";
-	for( int i=0; i<vert_shader_begins.global_line-1; ++i )
+	output.vertShaderSource = "";
+	output.fragShaderSource = "";
+	for( int i=0; i<vertShaderBegins.globalLine-1; ++i )
 	{
-		vert_shader_source += source_lines[i] + "\n";
-		frag_shader_source += source_lines[i] + "\n";
+		output.vertShaderSource += sourceLines[i] + "\n";
+		output.fragShaderSource += sourceLines[i] + "\n";
 	}	
-	for( int i=vert_shader_begins.global_line-1; i<frag_shader_begins.global_line-1; ++i )
+	for( int i=vertShaderBegins.globalLine-1; i<fragShaderBegins.globalLine-1; ++i )
 	{
-		vert_shader_source += source_lines[i] + "\n";
+		output.vertShaderSource += sourceLines[i] + "\n";
 	}
-	for( int i=frag_shader_begins.global_line-1; i<int(source_lines.size()); ++i )
+	for( int i=fragShaderBegins.globalLine-1; i<int(sourceLines.size()); ++i )
 	{
-		frag_shader_source += source_lines[i] + "\n";
+		output.fragShaderSource += sourceLines[i] + "\n";
 	}
 	
-	//PRINT( "vert_shader_begins.global_line: " << vert_shader_begins.global_line )
-	//PRINT( "frag_shader_begins.global_line: " << frag_shader_begins.global_line )
+	//PRINT( "vertShaderBegins.globalLine: " << vertShaderBegins.globalLine )
+	//PRINT( "fragShaderBegins.globalLine: " << fragShaderBegins.globalLine )
 	//PrintSourceLines();
 	//PrintShaderVars();
 

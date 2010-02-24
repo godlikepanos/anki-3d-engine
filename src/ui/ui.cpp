@@ -2,8 +2,8 @@
 #include <stdarg.h>
 #include "ui.h"
 #include "renderer.h"
-#include "texture.h"
-#include "resource.h"
+#include "Texture.h"
+#include "Resource.h"
 
 namespace ui {
 
@@ -13,9 +13,9 @@ namespace ui {
 data members                                                                                                                          =
 =======================================================================================================================================
 */
-static texture_t* font_map;
+static Texture* font_map;
 
-static shader_prog_t* shader;
+static ShaderProg* shader;
 
 static float  initial_x;
 static float  font_w;
@@ -37,8 +37,8 @@ static funcs                                                                    
 // SetGL
 static void SetGL()
 {
-	shader->Bind();
-	shader->LocTexUnit( shader->GetUniformLocation(0), *font_map, 0 );
+	shader->bind();
+	shader->locTexUnit( shader->GetUniLoc(0), *font_map, 0 );
 
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -53,7 +53,7 @@ static void SetGL()
 
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::LoadMatrix( r::Ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 ) );
+	r::loadMatrix( r::Ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 ) );
 
 	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
@@ -159,10 +159,10 @@ non static funcs                                                                
 // exec after init SDL
 void Init()
 {
-	font_map = rsrc::textures.Load( "gfx/fontmapa.tga" );
-	font_map->TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	//font_map->TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	shader = rsrc::shaders.Load( "shaders/txt.glsl" );
+	font_map = rsrc::textures.load( "gfx/fontmapa.tga" );
+	font_map->texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	//font_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	shader = rsrc::shaders.load( "shaders/txt.glsl" );
 	SetPos( 0.0f, 0.0f );
 	SetFontWidth( 0.05f );
 	SetColor( vec4_t(1.0f, 1.0f, 1.0f, 1.0f) );

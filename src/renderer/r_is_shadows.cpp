@@ -1,10 +1,10 @@
 #include "renderer.h"
-#include "texture.h"
+#include "Texture.h"
 #include "scene.h"
-#include "resource.h"
+#include "Resource.h"
 #include "r_private.h"
 #include "fbo.h"
-#include "material.h"
+#include "Material.h"
 #include "mesh_node.h"
 
 namespace r {
@@ -21,11 +21,11 @@ bool bilinear = true;
 
 static fbo_t fbo;
 
-shader_prog_t* shdr_depth, * shdr_depth_grass, * shdr_depth_hw_skinning;
+ShaderProg* shdr_depth, * shdr_depth_grass, * shdr_depth_hw_skinning;
 
 // exportable vars
 int shadow_resolution = 512;
-texture_t shadow_map;
+Texture shadow_map;
 
 
 /*
@@ -40,12 +40,12 @@ void Init()
 	fbo.Bind();
 
 	// texture
-	shadow_map.CreateEmpty2D( shadow_resolution, shadow_resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
-	shadow_map.TexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	if( bilinear ) shadow_map.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	else           shadow_map.TexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	shadow_map.TexParameter( GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
-	shadow_map.TexParameter( GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
+	shadow_map.createEmpty2D( shadow_resolution, shadow_resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
+	shadow_map.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	if( bilinear ) shadow_map.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	else           shadow_map.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	shadow_map.texParameter( GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
+	shadow_map.texParameter( GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
 	/// If you dont want to use the FFP for comparing the shadwomap (the above two lines) then you can make the comparision inside the
 	/// glsl shader. The GL_LEQUAL means that: shadow = ( R <= Dt ) ? 1.0 : 0.0; . The R is given by: R = _tex_coord2.z/_tex_coord2.w;
 	/// and the Dt = shadow2D(shadow_depth_map, _shadow_uv ).r (see lp_generic.frag). Hardware filters like GL_LINEAR cannot be applied.
@@ -54,7 +54,7 @@ void Init()
 	fbo.SetNumOfColorAttachements(0);
 
 	// attach the texture
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadow_map.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadow_map.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )
@@ -64,9 +64,9 @@ void Init()
 	fbo.Unbind();
 
 	// shaders
-	shdr_depth = rsrc::shaders.Load( "shaders/dp.glsl" );
-	shdr_depth_grass = rsrc::shaders.Load( "shaders/dp_grass.glsl" );
-	shdr_depth_hw_skinning = rsrc::shaders.Load( "shaders/dp_hw_skinning.glsl" );
+	shdr_depth = rsrc::shaders.load( "shaders/dp.glsl" );
+	shdr_depth_grass = rsrc::shaders.load( "shaders/dp_grass.glsl" );
+	shdr_depth_hw_skinning = rsrc::shaders.load( "shaders/dp_hw_skinning.glsl" );
 }
 
 
@@ -109,9 +109,9 @@ void RunPass( const camera_t& cam )
 
 		DEBUG_ERR( mesh_node->material->dp_mtl == NULL );
 
-		//mesh_node->material->dp_mtl->Setup();
+		//mesh_node->material->dp_mtl->setup();
 		//mesh_node->RenderDepth();
-		mesh_node->material->Setup();
+		mesh_node->material->setup();
 		mesh_node->Render();
 	}
 

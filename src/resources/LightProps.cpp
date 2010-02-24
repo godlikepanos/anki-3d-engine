@@ -1,12 +1,12 @@
-#include "light_props.h"
+#include "LightProps.h"
 #include "parser.h"
-#include "texture.h"
+#include "Texture.h"
 
 
 //=====================================================================================================================================
-// Load                                                                                                                               =
+// load                                                                                                                               =
 //=====================================================================================================================================
-bool light_props_t::Load( const char* filename )
+bool LightProps::load( const char* filename )
 {
 Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return false;
@@ -20,12 +20,12 @@ Scanner scanner;
 		//** DIFFUSE_COL **
 		if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DIFFUSE_COLOR" ) )
 		{
-			ParseArrOfNumbers<float>( scanner, true, true, 3, &diffuse_col[0] );
+			ParseArrOfNumbers<float>( scanner, true, true, 3, &diffuseCol[0] );
 		}
 		//** SPECULAR_COL **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SPECULAR_COLOR" ) )
 		{
-			ParseArrOfNumbers<float>( scanner, true, true, 3, &specular_col[0] );
+			ParseArrOfNumbers<float>( scanner, true, true, 3, &specularCol[0] );
 		}
 		//** RADIUS **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "RADIUS" ) )
@@ -49,7 +49,7 @@ Scanner scanner;
 				return false;
 			}
 
-			casts_shadow = token->value.int_;
+			castsShadow_ = token->value.int_;
 		}
 		//** DISTANCE **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DISTANCE" ) )
@@ -73,7 +73,7 @@ Scanner scanner;
 				return false;
 			}
 
-			fov_x = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
+			fovX = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
 		}
 		//** FOV_Y **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "FOV_Y" ) )
@@ -85,7 +85,7 @@ Scanner scanner;
 				return false;
 			}
 
-			fov_y = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
+			fovY = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
 		}
 		//** TEXTURE **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "TEXTURE" ) )
@@ -97,8 +97,8 @@ Scanner scanner;
 				return false;
 			}
 				
-			texture = rsrc::textures.Load( token->value.string );
-			texture->TexParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
+			texture = rsrc::textures.load( token->value.string );
+			texture->texParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
 		}
 		// end of file
 		else if( token->code == Scanner::TC_EOF )
@@ -119,10 +119,10 @@ Scanner scanner;
 
 
 //=====================================================================================================================================
-// Unload                                                                                                                             =
+// unload                                                                                                                             =
 //=====================================================================================================================================
-void light_props_t::Unload()
+void LightProps::unload()
 {
 	if( texture != NULL )
-		rsrc::textures.Unload( texture );
+		rsrc::textures.unload( texture );
 }

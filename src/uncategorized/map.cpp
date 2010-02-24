@@ -1,9 +1,9 @@
 #include <limits>
 #include "map.h"
-#include "mesh.h"
+#include "Mesh.h"
 #include "Scanner.h"
 #include "parser.h"
-#include "resource.h"
+#include "Resource.h"
 #include "camera.h"
 
 
@@ -12,7 +12,7 @@
 CreateRoot                                                                                                                            =
 =======================================================================================================================================
 */
-void octree_t::CreateRoot( const vec_t<mesh_t*>& meshes )
+void octree_t::CreateRoot( const Vec<Mesh*>& meshes )
 {
 	DEBUG_ERR( root ); // root should be NULL
 
@@ -21,16 +21,16 @@ void octree_t::CreateRoot( const vec_t<mesh_t*>& meshes )
 
 	for( uint m=0; m<meshes.size(); m++ )
 	{
-		mesh_t* cmesh = meshes[m];
-		for( uint v=0; v<cmesh->vert_coords.size(); v++ )
+		Mesh* cmesh = meshes[m];
+		for( uint v=0; v<cmesh->vertCoords.size(); v++ )
 		{
-			const vec3_t& vert_coords = cmesh->vert_coords[v];
+			const vec3_t& vertCoords = cmesh->vertCoords[v];
 			for( int i=0; i<3; i++ )
 			{
-				if( vert_coords[i] > max[i] )
-					max[i] = vert_coords[i];
-				else if( vert_coords[i] < min[i] )
-					min[i] = vert_coords[i];
+				if( vertCoords[i] > max[i] )
+					max[i] = vertCoords[i];
+				else if( vertCoords[i] < min[i] )
+					min[i] = vertCoords[i];
 			} // end for 3 times
 		} // end for all mesh verts
 	} // end for all meshes
@@ -43,15 +43,15 @@ void octree_t::CreateRoot( const vec_t<mesh_t*>& meshes )
 
 
 	/// create the face and vert ids
-	DEBUG_ERR( node->face_ids.size() != 0 || node->vert_ids.size() != 0 || node->meshes.size() != 0 ); // vectors not empty. wrong node init
+	DEBUG_ERR( node->face_ids.size() != 0 || node->vertIds.size() != 0 || node->meshes.size() != 0 ); // vectors not empty. wrong node init
 
 	node->face_ids.resize( meshes.size() );
-	node->vert_ids.resize( meshes.size() );
+	node->vertIds.resize( meshes.size() );
 	node->meshes.resize( meshes.size() );
 
 	for( uint m=0; m<meshes.size(); m++ )
 	{
-		mesh_t* cmesh = meshes[m];
+		Mesh* cmesh = meshes[m];
 
 		// first set the mesh
 		node->meshes[m] = cmesh;
@@ -127,7 +127,7 @@ void octree_t::SubdivideNode( node_t* node )
 CreateTree                                                                                                                            =
 =======================================================================================================================================
 */
-void octree_t::CreateTree( const vec_t<mesh_t*>& meshes )
+void octree_t::CreateTree( const Vec<Mesh*>& meshes )
 {
 	CreateRoot( meshes );
 	SubdivideNode( root );
@@ -178,10 +178,10 @@ map                                                                             
 
 /*
 =======================================================================================================================================
-Load                                                                                                                                  =
+load                                                                                                                                  =
 =======================================================================================================================================
 */
-bool map_t::Load( const char* filename )
+bool map_t::load( const char* filename )
 {
 	DEBUG_ERR( meshes.size() != 0 ); // meshes vector should be empty
 
@@ -196,7 +196,7 @@ bool map_t::Load( const char* filename )
 		// strings is what we want in this case... please let it be G-Strings
 		if( token->code == Scanner::TC_STRING )
 		{
-			mesh_t* mesh = rsrc::meshes.Load( token->value.string );
+			Mesh* mesh = rsrc::meshes.load( token->value.string );
 			if( !mesh ) return false;
 
 			meshes.push_back( mesh );

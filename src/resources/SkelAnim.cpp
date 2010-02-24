@@ -1,12 +1,12 @@
-#include "skel_anim.h"
+#include "SkelAnim.h"
 #include "Scanner.h"
 #include "parser.h"
 
 
 //=====================================================================================================================================
-// Load                                                                                                                               =
+// load                                                                                                                               =
 //=====================================================================================================================================
-bool skel_anim_t::Load( const char* filename )
+bool SkelAnim::load( const char* filename )
 {
 	Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return false;

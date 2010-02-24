@@ -142,7 +142,7 @@ void node_t::AddChild( node_t* node )
 //=====================================================================================================================================
 void node_t::RemoveChild( node_t* node )
 {
-	vec_t<node_t*>::iterator it = find( childs.begin(), childs.end(), node );
+	Vec<node_t*>::iterator it = find( childs.begin(), childs.end(), node );
 	if( it == childs.end() )
 	{
 		ERROR( "Child not found" );

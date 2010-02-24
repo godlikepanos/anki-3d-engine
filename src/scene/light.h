@@ -18,11 +18,11 @@ Specular intensity of material: Sm
 #define _LIGHT_H_
 
 #include "common.h"
-#include "texture.h"
+#include "Texture.h"
 #include "node.h"
 #include "camera.h"
 
-class light_props_t;
+class LightProps;
 
 
 /// light_t (A)
@@ -32,7 +32,7 @@ class light_t: public node_t
 		enum type_e { LT_POINT, LT_SPOT };
 
 		type_e type;
-		light_props_t* light_props; ///< Later we will add a controller
+		LightProps* light_props; ///< Later we will add a controller
 	
 		light_t( type_e type_ ): node_t(NT_LIGHT), type(type_) {}
 		//void Init( const char* );
@@ -57,9 +57,9 @@ class spot_light_t: public light_t
 {
 	public:
 		camera_t camera;
-		bool casts_shadow;
+		bool castsShadow;
 
-		spot_light_t(): light_t(LT_SPOT), casts_shadow(false) { AddChild( &camera ); }
+		spot_light_t(): light_t(LT_SPOT), castsShadow(false) { AddChild( &camera ); }
 		float GetDistance() const { return camera.GetZFar(); }
 		void  SetDistance( float d ) { camera.SetZFar(d); }
 		void  Init( const char* );

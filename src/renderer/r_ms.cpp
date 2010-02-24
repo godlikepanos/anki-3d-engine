@@ -5,10 +5,10 @@
 #include "renderer.h"
 #include "camera.h"
 #include "scene.h"
-#include "mesh.h"
+#include "Mesh.h"
 #include "r_private.h"
 #include "fbo.h"
-#include "material.h"
+#include "Material.h"
 #include "mesh_node.h"
 
 
@@ -23,7 +23,7 @@ VARS                                                                            
 */
 static fbo_t fbo;
 
-texture_t normal_fai, diffuse_fai, specular_fai, depth_fai;
+Texture normal_fai, diffuse_fai, specular_fai, depth_fai;
 
 
 
@@ -41,26 +41,26 @@ void Init()
 
 	// create the FAIs
 	const int internal_format = GL_RGBA16F_ARB;
-	if( !normal_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !diffuse_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !specular_fai.CreateEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !depth_fai.CreateEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
+	if( !normal_fai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !diffuse_fai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !specular_fai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !depth_fai.createEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
 	{
 		FATAL( "See prev error" );
 	}
 
 	
 	// you could use the above for SSAO but the difference is very little.
-	//depth_fai.TexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	//depth_fai.TexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	//depth_fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	//depth_fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	// attach the buffers to the FBO
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, normal_fai.GetGLID(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, diffuse_fai.GetGLID(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, specular_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, normal_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, diffuse_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, specular_fai.getGlId(), 0 );
 
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.GetGLID(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.GetGLID(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.IsGood() )
@@ -108,7 +108,7 @@ void RunStage( const camera_t& cam )
 		mesh_node_t* mesh_node = scene::mesh_nodes[i];
 		DEBUG_ERR( mesh_node->material == NULL );
 		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
-		mesh_node->material->Setup();
+		mesh_node->material->setup();
 		mesh_node->Render();
 	}
 

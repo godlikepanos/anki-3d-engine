@@ -8,23 +8,23 @@
 /// The class is created as a wrapper to avoid common mistakes
 class fbo_t
 {
-	PROPERTY_R( uint, gl_id, GetGLID ) ///< OpenGL idendification
+	PROPERTY_R( uint, glId, getGlId ) ///< OpenGL idendification
 
 	public:
-		fbo_t(): gl_id(0) {}
+		fbo_t(): glId(0) {}
 
 		/// Creates a new FBO
 		void Create()
 		{
-			DEBUG_ERR( gl_id != 0 ); // FBO allready initialized
-			glGenFramebuffers( 1, &gl_id );
+			DEBUG_ERR( glId != 0 ); // FBO allready initialized
+			glGenFramebuffers( 1, &glId );
 		}
 
 		/// Binds FBO
 		void Bind() const
 		{
-			DEBUG_ERR( gl_id == 0 );  // FBO unitialized
-			glBindFramebuffer( GL_FRAMEBUFFER, gl_id );
+			DEBUG_ERR( glId == 0 );  // FBO unitialized
+			glBindFramebuffer( GL_FRAMEBUFFER, glId );
 		}
 
 		/// Unbinds the FBO. Actualy unbinds all FBOs
@@ -36,8 +36,8 @@ class fbo_t
 		 */
 		bool IsGood() const
 		{
-			DEBUG_ERR( gl_id == 0 );  // FBO unitialized
-			DEBUG_ERR( GetCurrentFBO() != gl_id ); // another FBO is binded
+			DEBUG_ERR( glId == 0 );  // FBO unitialized
+			DEBUG_ERR( GetCurrentFBO() != glId ); // another FBO is binded
 
 			return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 		}
@@ -45,8 +45,8 @@ class fbo_t
 		/// Set the number of color attachements of the FBO
 		void SetNumOfColorAttachements( uint num ) const
 		{
-			DEBUG_ERR( gl_id == 0 );  // FBO unitialized
-			DEBUG_ERR( GetCurrentFBO() != gl_id ); // another FBO is binded
+			DEBUG_ERR( glId == 0 );  // FBO unitialized
+			DEBUG_ERR( GetCurrentFBO() != glId ); // another FBO is binded
 
 			if( num == 0 )
 			{
@@ -67,9 +67,9 @@ class fbo_t
 		 */
 		static uint GetCurrentFBO()
 		{
-			int fbo_gl_id;
-			glGetIntegerv( GL_FRAMEBUFFER_BINDING, &fbo_gl_id );
-			return (uint)fbo_gl_id;
+			int fbo_glId;
+			glGetIntegerv( GL_FRAMEBUFFER_BINDING, &fbo_glId );
+			return (uint)fbo_glId;
 		}
 };
 

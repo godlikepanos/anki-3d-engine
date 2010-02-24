@@ -3,17 +3,17 @@
 
 #include "common.h"
 #include "gmath.h"
-#include "resource.h"
+#include "Resource.h"
 
 /// Mesh material resource
-class material_t: public resource_t
+class Material: public Resource
 {
 	//===================================================================================================================================
 	// User defined variables                                                                                                           =
 	//===================================================================================================================================
 	public:
 		/// class for user defined material variables that will be passes in to the shader
-		class user_defined_var_t
+		class UserDefinedVar
 		{
 			public:
 				enum type_e
@@ -25,39 +25,39 @@ class material_t: public resource_t
 					VT_VEC4
 				};
 
-				struct value_t       // unfortunately we cannot use union because of vec3_t and vec4_t
+				struct Value       // unfortunately we cannot use union because of vec3_t and vec4_t
 				{
-					texture_t* texture;
+					Texture* texture;
 					float      float_;
 					vec2_t     vec2;
 					vec3_t     vec3;
 					vec4_t     vec4;
-					value_t(): texture(NULL) {}
+					Value(): texture(NULL) {}
 				};
 
 				type_e type;
-				value_t value;
-				int uniform_location;
+				Value value;
+				int uniLoc;
 				string name;
-		}; // end class user_defined_var_t
+		}; // end class UserDefinedVar
 
-		vec_t<user_defined_var_t> user_defined_vars;
+		Vec<UserDefinedVar> user_defined_vars;
 
 
 	//===================================================================================================================================
 	// data                                                                                                                             =
 	//===================================================================================================================================
 	public:
-		shader_prog_t* shader_prog; ///< The most imortant asspect of materials
+		ShaderProg* shaderProg; ///< The most imortant asspect of materials
 
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
 		bool refracts;
-		int  blending_sfactor;
-		int  blending_dfactor;
-		bool depth_testing;
+		int  blendingSfactor;
+		int  blendingDfactor;
+		bool depthTesting;
 		bool wireframe;
-		bool casts_shadow; ///< Used in shadowmapping passes but not in EarlyZ
-		texture_t* grass_map; // ToDo remove this
+		bool castsShadow; ///< Used in shadowmapping passes but not in EarlyZ
+		Texture* grassMap; // ToDo remove this
 
 		// vertex attributes
 		struct
@@ -65,61 +65,61 @@ class material_t: public resource_t
 			int position;
 			int tanget;
 			int normal;
-			int tex_coords;
+			int texCoords;
 
 			// for hw skinning
-			int vert_weight_bones_num;
-			int vert_weight_bone_ids;
-			int vert_weight_weights;
-		} attrib_locs;
+			int vertWeightBonesNum;
+			int vertWeightBoneIds;
+			int vertWeightWeights;
+		} attribLocs;
 
 		// uniforms
 		struct
 		{
-			int skinning_rotations;
-			int skinning_translations;
-		} uni_locs;
+			int skinningRotations;
+			int skinningTranslations;
+		} uniLocs;
 
 		// for depth passing
 		/*struct
 		{
-			shader_prog_t* shader_prog; ///< Depth pass shader program
-			texture_t* alpha_testing_map;
+			ShaderProg* shaderProg; ///< Depth pass shader program
+			Texture* alpha_testing_map;
 			
 			struct
 			{
 				int position;
-				int tex_coords;
+				int texCoords;
 
 				// for hw skinning
-				int vert_weight_bones_num;
-				int vert_weight_bone_ids;
-				int vert_weight_weights;
+				int vertWeightBonesNum;
+				int vertWeightBoneIds;
+				int vertWeightWeights;
 			} attribute_locs;
 			
 			struct
 			{
 				int alpha_testing_map;
-			} uni_locs;
+			} uniLocs;
 		} depth;*/
 
-		material_t* dp_mtl;
+		Material* dp_mtl;
 
 	//===================================================================================================================================
 	// funcs                                                                                                                            =
 	//===================================================================================================================================
 	protected:
-		void SetToDefault();
-		bool AdditionalInit(); ///< The func is for not polluting Load with extra code
+		void setToDefault();
+		bool additionalInit(); ///< The func is for not polluting load with extra code
 		
 	public:
-		material_t() { SetToDefault(); }
-		void Setup();
-		bool Load( const char* filename );
-		void Unload();
+		Material() { setToDefault(); }
+		void setup();
+		bool load( const char* filename );
+		void unload();
 
-		bool HasHWSkinning() const { return attrib_locs.vert_weight_bones_num != -1; }
-		bool HasAlphaTesting() const { return dp_mtl!=NULL && dp_mtl->attrib_locs.tex_coords!=-1; }
+		bool hasHWSkinning() const { return attribLocs.vertWeightBonesNum != -1; }
+		bool hasAlphaTesting() const { return dp_mtl!=NULL && dp_mtl->attribLocs.texCoords!=-1; }
 };
 
 

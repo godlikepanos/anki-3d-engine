@@ -7,7 +7,7 @@
 
 
 class bvolume_t;
-class material_t;
+class Material;
 class controller_t;
 
 
@@ -36,7 +36,7 @@ class node_t
 		mat4_t transformation_wspace;
 
 		node_t* parent;
-		vec_t<node_t*> childs;
+		Vec<node_t*> childs;
 
 		type_e type;
 

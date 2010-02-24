@@ -6,7 +6,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include "gmath.h"
-#include "shader_prog.h"
+#include "ShaderProg.h"
 #include "camera.h"
 
 
@@ -27,10 +27,10 @@ extern int   screenshot_jpeg_quality; ///< The quality of the JPEG screenshots. 
 extern int  max_color_atachments; ///< Max color atachements a FBO can accept
 
 // texture stuff
-extern bool texture_compression; ///< Used in texture_t::Load to enable texture compression. Decreases video memory usage
-extern int  max_texture_units; ///< Used in texture_t::Bind so we wont bind in a nonexistent texture unit. Readonly
-extern bool mipmaping; ///< Used in texture_t::Load. Enables mipmaping increases video memory usage
-extern int  max_anisotropy; ///< Max texture anisotropy. Used in texture_t::Load
+extern bool texture_compression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
+extern int  max_texture_units; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
+extern bool mipmaping; ///< Used in Texture::load. Enables mipmaping increases video memory usage
+extern int  max_anisotropy; ///< Max texture anisotropy. Used in Texture::load
 
 // misc
 extern void TakeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
@@ -51,11 +51,11 @@ extern void SetGLState_AlphaSolid();
 
 // ogl and glu wrappers
 inline void   MultMatrix( const mat4_t& m4 ) { glMultMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
-inline void   LoadMatrix( const mat4_t& m4 ) { glLoadMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   loadMatrix( const mat4_t& m4 ) { glLoadMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
 
 inline void   Color3( const vec3_t& v ) { glColor3fv( &((vec3_t&)v)[0] ); } ///< OpenGL wrapper
 inline void   Color4( const vec4_t& v ) { glColor4fv( &((vec4_t&)v)[0] ); } ///< OpenGL wrapper
-inline void   NoShaders() { shader_prog_t::Unbind(); } ///< Unbind shaders
+inline void   NoShaders() { ShaderProg::unbind(); } ///< unbind shaders
 extern bool   Unproject( float winX, float winY, float winZ, const mat4_t& modelview_mat, const mat4_t& projection_mat, const int* view, float& objX, float& objY, float& objZ ); ///< My version of gluUnproject
 extern mat4_t Ortho( float left, float right, float bottom, float top, float near, float far );
 
@@ -70,21 +70,21 @@ inline void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h);
 /// material stage namespace
 namespace ms
 {
-	extern texture_t normal_fai;
-	extern texture_t depth_fai;
+	extern Texture normal_fai;
+	extern Texture depth_fai;
 }
 
 /// illumination stage namespace
 namespace is
 {
-	extern texture_t fai;
+	extern Texture fai;
 
 	/// illumination stage shadows namesapce
 	namespace shadows
 	{
-		extern shader_prog_t* shdr_depth;
-		extern shader_prog_t* shdr_depth_grass;
-		extern shader_prog_t* shdr_depth_hw_skinning;
+		extern ShaderProg* shdr_depth;
+		extern ShaderProg* shdr_depth_grass;
+		extern ShaderProg* shdr_depth_hw_skinning;
 		extern bool pcf; ///< PCF on/off
 		extern bool bilinear; ///< Shadowmap bilinear filtering on/off
 	}
@@ -117,7 +117,7 @@ namespace pps
 		extern bool enabled; ///< Light scattering on/of
 	}
 
-	extern texture_t fai;
+	extern Texture fai;
 }
 
 /// debug stage namespace
