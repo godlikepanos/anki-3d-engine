@@ -14,8 +14,8 @@ extern void Init(); // exec after init SDL
 extern void SetColor( const m::vec4_t& color );
 extern void SetPos( float x_, float y_ );
 extern void SetFontWidth( float w_ );
-extern void Printf( const char* format, ... );
-extern void Print( const char* str );
+extern void printf( const char* format, ... );
+extern void print( const char* str );
 
 
 } // end namespace

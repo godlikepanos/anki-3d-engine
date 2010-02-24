@@ -1,10 +1,10 @@
-#include "skel_model_node.h"
+#include "SkelModelNode.h"
 #include "parser.h"
-#include "skel_node.h"
-#include "mesh_skel_ctrl.h"
+#include "SkelNode.h"
+#include "MeshSkelNodeCtrl.h"
 
-/// Create a skel_node and N mesh_nodes that have a mesh_skel_ctrl
-void skel_model_node_t::Init( const char* filename )
+/// Create a skelNode and N meshNodes that have a meshSkelCtrl
+void skelModelNode::init( const char* filename )
 {
 	Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return;
@@ -26,9 +26,9 @@ void skel_model_node_t::Init( const char* filename )
 		return;
 	}
 	
-	skel_node = new skel_node_t;
-	skel_node->Init( token->value.string );
-	AddChild( skel_node );
+	skelNode = new SkelNode;
+	skelNode->init( token->value.string );
+	addChild( skelNode );
 	
 	//** MESHES **
 	token = &scanner.getNextToken();
@@ -45,9 +45,9 @@ void skel_model_node_t::Init( const char* filename )
 		return;
 	}
 			
-	mesh_nodes.resize( token->value.int_ );
+	meshNodes.resize( token->value.int_ );
 			
-	for( uint i=0; i<mesh_nodes.size(); ++i )
+	for( uint i=0; i<meshNodes.size(); ++i )
 	{
 		token = &scanner.getNextToken();
 		if( token->code != Scanner::TC_STRING )
@@ -56,9 +56,9 @@ void skel_model_node_t::Init( const char* filename )
 			return;
 		}
 				
-		mesh_nodes[i] = new mesh_node_t;
-		mesh_nodes[i]->Init( token->value.string );
-		skel_node->AddChild( mesh_nodes[i] );
-		mesh_nodes[i]->mesh_skel_ctrl = new mesh_skel_ctrl_t( skel_node, mesh_nodes[i] );
+		meshNodes[i] = new MeshNode;
+		meshNodes[i]->init( token->value.string );
+		skelNode->addChild( meshNodes[i] );
+		meshNodes[i]->meshSkelCtrl = new MeshSkelNodeCtrl( skelNode, meshNodes[i] );
 	}
 }

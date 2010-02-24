@@ -52,7 +52,7 @@ class vec4_t
 		float  Length() const;
 		vec4_t GetNormalized() const;
 		void   Normalize();
-		void   Print() const;
+		void   print() const;
 		float  Dot( const vec4_t& b ) const;
 };
 

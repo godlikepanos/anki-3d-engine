@@ -1,12 +1,12 @@
 /*
 #include "renderer.hpp"
-#include "scene.h"
+#include "Scene.h"
 
 
 //=====================================================================================================================================
-// Init                                                                                                                               =
+// init                                                                                                                               =
 //=====================================================================================================================================
-void renderer_t::material_stage_t::Init()
+void renderer_t::material_stage_t::init()
 {
 	// create FBO
 	fbo.Create();
@@ -50,22 +50,22 @@ void renderer_t::material_stage_t::Run() const
 	fbo.bind();
 
 	glClear( GL_DEPTH_BUFFER_BIT );
-	renderer.matrices.view = renderer.camera->GetViewMatrix();
-	renderer.matrices.projection = renderer.camera->GetProjectionMatrix();
+	renderer.matrices.view = renderer.camera->getViewMatrix();
+	renderer.matrices.projection = renderer.camera->getProjectionMatrix();
 	renderer.SetViewport( 0, 0, renderer.width, renderer.height );
 
 	//glEnable( GL_DEPTH_TEST );
-	scene::skybox.Render( renderer.camera->GetViewMatrix().GetRotationPart() );
+	scene::skybox.render( renderer.camera->getViewMatrix().GetRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 
 	// render the meshes
 	for( uint i=0; i<scene::meshes.size(); i++ )
-		Render<Mesh, false>( scene::meshes[i] );
+		render<Mesh, false>( scene::meshes[i] );
 
 	// render the smodels
 	for( uint i=0; i<scene::smodels.size(); i++ )
-		Render<smodel_t, false>( scene::smodels[i] );
+		render<smodel_t, false>( scene::smodels[i] );
 
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode
 

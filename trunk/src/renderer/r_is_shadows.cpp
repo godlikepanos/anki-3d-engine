@@ -1,11 +1,11 @@
 #include "renderer.h"
 #include "Texture.h"
-#include "scene.h"
+#include "Scene.h"
 #include "Resource.h"
 #include "r_private.h"
 #include "fbo.h"
 #include "Material.h"
-#include "mesh_node.h"
+#include "MeshNode.h"
 
 namespace r {
 namespace is {
@@ -30,7 +30,7 @@ Texture shadow_map;
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -76,7 +76,7 @@ RunPass                                                                         
 render scene only with depth and store the result in the shadow map                                                                   =
 =======================================================================================================================================
 */
-void RunPass( const camera_t& cam )
+void RunPass( const Camera& cam )
 {
 	// FBO
 	fbo.Bind();
@@ -102,17 +102,17 @@ void RunPass( const camera_t& cam )
 	glEnable( GL_POLYGON_OFFSET_FILL );
 
 	// render all meshes
-	for( uint i=0; i<scene::mesh_nodes.size(); i++ )
+	for( uint i=0; i<scene::meshNodes.size(); i++ )
 	{
-		mesh_node_t* mesh_node = scene::mesh_nodes[i];
+		MeshNode* mesh_node = scene::meshNodes[i];
 		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
 
 		DEBUG_ERR( mesh_node->material->dp_mtl == NULL );
 
-		//mesh_node->material->dp_mtl->setup();
-		//mesh_node->RenderDepth();
+		//meshNode->material->dp_mtl->setup();
+		//meshNode->renderDepth();
 		mesh_node->material->setup();
-		mesh_node->Render();
+		mesh_node->render();
 	}
 
 	glDisable( GL_POLYGON_OFFSET_FILL );

@@ -1,7 +1,7 @@
 #include "renderer.h"
 #include "Resource.h"
 #include "Texture.h"
-#include "scene.h"
+#include "Scene.h"
 #include "r_private.h"
 #include "fbo.h"
 
@@ -29,7 +29,7 @@ static int is_fai_uni_loc;
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -73,7 +73,7 @@ void Init()
 RunPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const camera_t& cam )
+void RunPass( const Camera& cam )
 {
 	fbo.Bind();
 
@@ -90,7 +90,7 @@ void RunPass( const camera_t& cam )
 
 	// pass the light
 	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
-	p = cam.GetProjectionMatrix() * (cam.GetViewMatrix() * p);
+	p = cam.getProjectionMatrix() * (cam.getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
 	glUniform2fv( shdr->getUniLoc("light_pos_screen_space"), 1, &p[0] );

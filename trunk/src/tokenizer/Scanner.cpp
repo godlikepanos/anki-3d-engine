@@ -30,7 +30,7 @@ Scanner::Token::Token( const Token& b ): code(b.code), type(b.type)
 			value.string = b.value.string;
 			break;	
 	}
-	memcpy( as_string, b.as_string, Scanner::MAX_SCRIPT_LINE_LEN*sizeof(char) );
+	memcpy( asString, b.asString, Scanner::MAX_SCRIPT_LINE_LEN*sizeof(char) );
 }
 
 
@@ -201,13 +201,13 @@ string Scanner::getTokenInfo( const Token& token )
 			sprintf( token_info_str, "string \"%s\"", token.value.string );
 			break;
 		case TC_CHAR:
-			sprintf( token_info_str, "char '%c' (\"%s\")", token.value.char_, token.as_string );
+			sprintf( token_info_str, "char '%c' (\"%s\")", token.value.char_, token.asString );
 			break;
 		case TC_NUMBER:
 			if( token.type == DT_FLOAT )
-				sprintf( token_info_str, "float %f or %e (\"%s\")", token.value.float_, token.value.float_, token.as_string );
+				sprintf( token_info_str, "float %f or %e (\"%s\")", token.value.float_, token.value.float_, token.asString );
 			else
-				sprintf( token_info_str, "int %lu (\"%s\")", token.value.int_, token.as_string );
+				sprintf( token_info_str, "int %lu (\"%s\")", token.value.int_, token.asString );
 			break;
 		case TC_IDENTIFIER:
 			sprintf( token_info_str, "identifier \"%s\"", token.value.string );
@@ -236,9 +236,9 @@ void Scanner::printTokenInfo( const Token& token )
 
 
 //=====================================================================================================================================
-// getAllPrintAll                                                                                                                     =
+// getAllprintAll                                                                                                                     =
 //=====================================================================================================================================
-void Scanner::getAllPrintAll()
+void Scanner::getAllprintAll()
 {
 	do
 	{
@@ -388,7 +388,7 @@ CHECKERS (bellow only checkers)                                                 
 //=====================================================================================================================================
 bool Scanner::checkWord()
 {
-	char* tmp_str = crntToken.as_string;
+	char* tmp_str = crntToken.asString;
 	char ch = *pchar;
 
 	//build the string
@@ -401,9 +401,9 @@ bool Scanner::checkWord()
 	*tmp_str = '\0'; // finalize it
 
 	//check if reserved
-	int len = tmp_str-crntToken.as_string;
+	int len = tmp_str-crntToken.asString;
 	crntToken.code = TC_IDENTIFIER;
-	crntToken.value.string = crntToken.as_string;
+	crntToken.value.string = crntToken.asString;
 	crntToken.type = DT_STR; // not important
 
 	if( len<=7 && len>=2 )
@@ -413,7 +413,7 @@ bool Scanner::checkWord()
 		{
 			if( rw_table[len][x].string == NULL ) break;
 
-			if( strcmp(rw_table[len][x].string, crntToken.as_string ) == 0 )
+			if( strcmp(rw_table[len][x].string, crntToken.asString ) == 0 )
 			{
 				crntToken.code = rw_table[len][x].code;
 				break;
@@ -483,7 +483,7 @@ bool Scanner::checkNumber()
 	long dad = 0;      // digits after dot (for floats)
 	bool exp_sign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
 	long exp = 0;      // the exponent in case float is represented in mant/exp format
-	char* tmp_str = crntToken.as_string;
+	char* tmp_str = crntToken.asString;
 	crntToken.type = DT_INT;
 	uint asc;
 
@@ -714,7 +714,7 @@ bool Scanner::checkNumber()
 		}
 
 		*tmp_str = '\0';
-		SERROR( "Bad number suffix \"" << crntToken.as_string << '\"' );
+		SERROR( "Bad number suffix \"" << crntToken.asString << '\"' );
 
 	return false;
 }
@@ -725,7 +725,7 @@ bool Scanner::checkNumber()
 //=====================================================================================================================================
 bool Scanner::checkString()
 {
-	char* tmp_str = crntToken.as_string;
+	char* tmp_str = crntToken.asString;
 	char ch = getNextChar();
 
 	for(;;)
@@ -735,7 +735,7 @@ bool Scanner::checkString()
 		{
 			crntToken.code = TC_ERROR;
 			*tmp_str = '\0';
-			SERROR( "Incorect string ending \"" << crntToken.as_string );
+			SERROR( "Incorect string ending \"" << crntToken.asString );
 			return false;
 		}
 		//Escape Codes
@@ -746,7 +746,7 @@ bool Scanner::checkString()
 			{
 				crntToken.code = TC_ERROR;
 				*tmp_str = '\0';
-				SERROR( "Incorect string ending \"" << crntToken.as_string << '\"' );
+				SERROR( "Incorect string ending \"" << crntToken.asString << '\"' );
 				return false;
 			}
 
@@ -772,7 +772,7 @@ bool Scanner::checkString()
 		{
 			*tmp_str = '\0';
 			crntToken.code = TC_STRING;
-			crntToken.value.string = crntToken.as_string;
+			crntToken.value.string = crntToken.asString;
 			getNextChar();
 			return true;
 		}
@@ -796,7 +796,7 @@ bool Scanner::checkChar()
 {
 	char ch = getNextChar();
 	char ch0 = ch;
-	char* tmp_str = crntToken.as_string;
+	char* tmp_str = crntToken.asString;
 
 	crntToken.code = TC_ERROR;
 	*tmp_str++ = ch;

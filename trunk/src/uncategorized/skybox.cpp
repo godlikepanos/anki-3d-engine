@@ -2,8 +2,8 @@
 #include "Resource.h"
 #include "renderer.h"
 #include "gmath.h"
-#include "camera.h"
-#include "scene.h"
+#include "Camera.h"
+#include "Scene.h"
 
 
 static float coords [][4][3] =
@@ -48,7 +48,7 @@ bool skybox_t::load( const char* filenames[6] )
 
 /*
 =======================================================================================================================================
-Render                                                                                                                                =
+render                                                                                                                                =
 =======================================================================================================================================
 */
 void skybox_t::Render( const mat3_t& rotation )

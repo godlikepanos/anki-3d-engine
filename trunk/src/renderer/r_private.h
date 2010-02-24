@@ -5,7 +5,7 @@ The file contains some externs of funcs and vars that no one else needs to know 
 #define _R_PRIVATE_H_
 
 class Texture;
-class camera_t;
+class Camera;
 
 namespace r {
 
@@ -22,7 +22,7 @@ extern float quad_vert_cords [][2];
 namespace ms
 {
 	extern void Init();
-	extern void RunStage( const camera_t& cam );
+	extern void RunStage( const Camera& cam );
 	extern Texture normal_fai, diffuse_fai, specular_fai, depth_fai;
 	const int fbo_attachable_imgs_num = 4;
 
@@ -30,8 +30,8 @@ namespace ms
 	/// EarlyZ depth pass namespace
 	namespace earlyz
 	{
-		extern void Init(); ///< Inits the the earlyz FBO with r::ms::depth_fai
-		extern void RunPass( const camera_t& cam ); ///< Renders the scene's depth in the r::ms:depth_fai
+		extern void init(); ///< Inits the the earlyz FBO with r::ms::depth_fai
+		extern void RunPass( const Camera& cam ); ///< Renders the scene's depth in the r::ms:depth_fai
 	}
 #endif
 }
@@ -40,13 +40,13 @@ namespace ms
 namespace is
 {
 	extern void Init();
-	extern void RunStage( const camera_t& cam );
+	extern void RunStage( const Camera& cam );
 
 	namespace shadows
 	{
 		extern Texture shadow_map;
 		extern int shadow_resolution;
-		extern void RunPass( const camera_t& cam );
+		extern void RunPass( const Camera& cam );
 		extern void Init();
 	}
 }
@@ -55,12 +55,12 @@ namespace is
 namespace pps
 {
 	extern void Init();
-	extern void RunStage( const camera_t& cam );
+	extern void RunStage( const Camera& cam );
 
 	namespace ssao
 	{
 		extern void Init();
-		extern void RunPass( const camera_t& cam );
+		extern void RunPass( const Camera& cam );
 		extern Texture fai;
 		extern Texture blured_fai;
 		extern float rendering_quality;
@@ -69,7 +69,7 @@ namespace pps
 	namespace hdr
 	{
 		extern void Init();
-		extern void RunPass( const camera_t& cam );
+		extern void RunPass( const Camera& cam );
 		extern Texture pass0_fai;
 		extern Texture pass1_fai;
 		extern Texture pass2_fai;
@@ -79,7 +79,7 @@ namespace pps
 	namespace lscatt
 	{
 		extern void Init();
-		extern void RunPass( const camera_t& cam );
+		extern void RunPass( const Camera& cam );
 		extern Texture fai;
 		extern float rendering_quality;
 	}
@@ -89,7 +89,7 @@ namespace pps
 namespace bs
 {
 	extern void Init();
-	extern void RunStage( const camera_t& cam );
+	extern void RunStage( const Camera& cam );
 	extern Texture fai_bs_scene;
 
 	extern Texture r_fai; // ToDo: remove it
@@ -99,17 +99,17 @@ namespace bs
 namespace dbg
 {
 	extern void Init();
-	extern void RunStage( const camera_t& cam );
+	extern void RunStage( const Camera& cam );
 }
 
 
 /*
 =======================================================================================================================================
-RenderDepth                                                                                                                           =
+renderDepth                                                                                                                           =
 =======================================================================================================================================
 */
 /**
-The template function calls t.RenderDepth and sets the state according to t's material. It being used by r::ms::earlyz::RunStage
+The template function calls t.renderDepth and sets the state according to t's material. It being used by r::ms::earlyz::RunStage
 and by r::is::shadow::RunStage. Used like macro
 @param a renderable object
 @param the shader to bind if the t's material IS NOT a grass like material
@@ -159,7 +159,7 @@ void RenderDepth( Type& t )
 
 
 //=====================================================================================================================================
-// Render                                                                                                                             =
+// render                                                                                                                             =
 //=====================================================================================================================================
 /// The template function renders an entity. Used by r::ms::RunStage and r::bs::RunStage. Used like macro
 template <typename Type, bool render_transparent> void Render( Type* t )

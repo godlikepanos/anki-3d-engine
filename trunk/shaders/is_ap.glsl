@@ -1,8 +1,8 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 #pragma anki include "shaders/simple_vert.glsl"
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 #pragma anki uniform ambient_color 0
 uniform vec3 ambient_color;

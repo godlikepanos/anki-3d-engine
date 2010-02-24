@@ -69,7 +69,7 @@ class mat4_t
 		vec3_t GetTranslationPart() const;
 		void   Transpose();
 		mat4_t GetTransposed() const;
-		void   Print() const;
+		void   print() const;
 		float  Det() const;
 		void   Invert();
 		mat4_t GetInverse() const;

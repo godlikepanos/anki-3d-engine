@@ -222,7 +222,7 @@ inline vec3_t vec3_t::Cross( const vec3_t& b ) const
 // Length
 inline float vec3_t::Length() const
 {
-	return Sqrt( x*x + y*y + z*z );
+	return sqrt( x*x + y*y + z*z );
 }
 
 // LengthSquared
@@ -240,13 +240,13 @@ inline float vec3_t::DistanceSquared( const vec3_t& b ) const
 // Normalize
 inline void vec3_t::Normalize()
 {
-	ME *= InvSqrt( x*x + y*y + z*z );
+	ME *= invSqrt( x*x + y*y + z*z );
 }
 
 // Normalized (return the normalized)
 inline vec3_t vec3_t::GetNormalized() const
 {
-	return ME * InvSqrt( x*x + y*y + z*z );
+	return ME * invSqrt( x*x + y*y + z*z );
 }
 
 // Project
@@ -277,8 +277,8 @@ inline void vec3_t::Rotate( const quat_t& q )
 	ME = GetRotated(q);
 }
 
-// Print
-inline void vec3_t::Print() const
+// print
+inline void vec3_t::print() const
 {
 	for( int i=0; i<3; i++ )
 		cout << fixed << ME[i] << " ";

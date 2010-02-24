@@ -12,10 +12,10 @@ using namespace std;
 
 
 =============================================================================================================================================================
-Render @ particle_t                                                                                                                                         =
+render @ particle_t                                                                                                                                         =
 =============================================================================================================================================================
 
-void particle_t::Render()
+void particle_t::render()
 {
 	if( !life ) return;
 	//glPointSize( 4.0 );
@@ -31,26 +31,26 @@ void particle_t::Render()
 		s_vel += velocity[i];
 	}
 
-	translation_lspace = s_vel * dt + translation_lspace;
+	translationLspace = s_vel * dt + translationLspace;
 
 	quat_t q;
 	q.CalcFrom2Vec3( vec3_t(1.0, 0.0, 0.0), s_vel );
-	rotation_lspace = mat3_t( q );
+	rotationLspace = mat3_t( q );
 
-	UpdateWorldTransform();
+	updateWorldTransform();
 
 
 	// draw the point
 	glColor3f( 1.0, 0.0, 0.0 );
 	glBegin( GL_POINTS );
-		glVertex3fv( &translation_wspace[0] );
+		glVertex3fv( &translationWspace[0] );
 	glEnd();
 
 	// draw axis
 	if( 1 )
 	{
 		glPushMatrix();
-		r::MultMatrix( transformation_wspace );
+		r::MultMatrix( transformationWspace );
 
 		glBegin( GL_LINES );
 			// x-axis
@@ -78,16 +78,16 @@ void particle_t::Render()
 		{
 			glColor3f( 0.0, 0.0, 1.0 );
 			glBegin( GL_LINES );
-				glVertex3fv( &translation_wspace[0] );
-				glVertex3fv( &(velocity[i]+translation_wspace)[0] );
+				glVertex3fv( &translationWspace[0] );
+				glVertex3fv( &(velocity[i]+translationWspace)[0] );
 			glEnd();
 		}
 
 		// draw the Sv
 		glColor3f( 1.0, 1.0, 1.0 );
 		glBegin( GL_LINES );
-			glVertex3fv( &translation_wspace[0] );
-			glVertex3fv( &(s_vel+translation_wspace)[0] );
+			glVertex3fv( &translationWspace[0] );
+			glVertex3fv( &(s_vel+translationWspace)[0] );
 		glEnd();
 	}
 }
@@ -95,10 +95,10 @@ void particle_t::Render()
 
 
 =============================================================================================================================================================
-Init @ particle_emitter_t                                                                                                                                   =
+init @ particle_emitter_t                                                                                                                                   =
 =============================================================================================================================================================
 
-void particle_emitter_t::Init()
+void particle_emitter_t::init()
 {
 	particles.resize(200);
 
@@ -106,14 +106,14 @@ void particle_emitter_t::Init()
 	particle_life[1] = 400;
 	particles_per_frame = 1;
 
-	velocities[VEL0].angs[MIN] = euler_t( 0.0, ToRad(-30.0), ToRad(10.0) );
-	velocities[VEL0].angs[MAX] = euler_t( 0.0, ToRad(30.0), ToRad(45.0) );
+	velocities[VEL0].angs[MIN] = Euler( 0.0, ToRad(-30.0), ToRad(10.0) );
+	velocities[VEL0].angs[MAX] = Euler( 0.0, ToRad(30.0), ToRad(45.0) );
 	velocities[VEL0].magnitude = 5.0f;
 	velocities[VEL0].acceleration_magnitude = -0.1f;
 	velocities[VEL0].rotatable = true;
 
-	velocities[VEL1].angs[MIN] = euler_t( 0.0, 0.0, ToRad(270.0) );
-	velocities[VEL1].angs[MAX] = euler_t( 0.0, 0.0, ToRad(270.0) );
+	velocities[VEL1].angs[MIN] = Euler( 0.0, 0.0, ToRad(270.0) );
+	velocities[VEL1].angs[MAX] = Euler( 0.0, 0.0, ToRad(270.0) );
 	velocities[VEL1].magnitude = 0.0f;
 	velocities[VEL1].acceleration_magnitude = 1.0f;
 	velocities[VEL1].rotatable = false;
@@ -134,33 +134,33 @@ void particle_emitter_t::ReInitParticle( particle_t& particle )
 	particle.life = util::RandRange( particle_life[MIN], particle_life[MAX] );
 
 	// pos
-	particle.translation_lspace = vec3_t(
+	particle.translationLspace = vec3_t(
 		util::RandRange( particles_translation_lspace[MIN].x, particles_translation_lspace[MAX].x ),
 		util::RandRange( particles_translation_lspace[MIN].y, particles_translation_lspace[MAX].y ),
 		util::RandRange( particles_translation_lspace[MIN].z, particles_translation_lspace[MAX].z )
 	);
-	particle.rotation_lspace = mat3_t::GetIdentity();
-	particle.scale_lspace = 1.0;
+	particle.rotationLspace = mat3_t::GetIdentity();
+	particle.scaleLspace = 1.0;
 
 	particle.parent = this;
-	particle.UpdateWorldTransform();
+	particle.updateWorldTransform();
 
-	particle.translation_lspace = particle.translation_wspace;
-	particle.rotation_lspace = particle.rotation_wspace;
-	particle.scale_lspace = particle.scale_wspace;
+	particle.translationLspace = particle.translationWspace;
+	particle.rotationLspace = particle.rotationWspace;
+	particle.scaleLspace = particle.scaleWspace;
 	particle.parent = NULL;
 
 	// initial velocities
 	for( int i=0; i<PARTICLE_VELS_NUM; i++ )
 	{
-		euler_t tmp_angs = euler_t(
+		Euler tmp_angs = Euler(
 			util::RandRange( velocities[i].angs[MIN].x, velocities[i].angs[MAX].x ),
 			util::RandRange( velocities[i].angs[MIN].y, velocities[i].angs[MAX].y ),
 			util::RandRange( velocities[i].angs[MIN].z, velocities[i].angs[MAX].z )
 		);
 		mat3_t m3;
 		m3 = mat3_t(tmp_angs);
-		if( velocities[i].rotatable ) m3 = rotation_wspace * m3;
+		if( velocities[i].rotatable ) m3 = rotationWspace * m3;
 		particle.velocity[i] = particle.acceleration[i] = m3 * vec3_t( 1.0, 0.0, 0.0 );
 		particle.velocity[i] *= velocities[i].magnitude;
 		particle.acceleration[i] *= velocities[i].acceleration_magnitude;
@@ -171,12 +171,12 @@ void particle_emitter_t::ReInitParticle( particle_t& particle )
 
 
 =============================================================================================================================================================
-Render @ particle_emitter_t                                                                                                                                 =
+render @ particle_emitter_t                                                                                                                                 =
 =============================================================================================================================================================
 
-void particle_emitter_t::Render()
+void particle_emitter_t::render()
 {
-	UpdateWorldTransform();
+	updateWorldTransform();
 
 	// emitt new particles
 	int remain = particles_per_frame;
@@ -192,7 +192,7 @@ void particle_emitter_t::Render()
 
 	// render all particles
 	for( uint i=0; i<particles.size(); i++ )
-		particles[i].Render();
+		particles[i].render();
 
 	// render the debug cube
 	if( 1 )
@@ -205,8 +205,8 @@ void particle_emitter_t::Render()
 
 		glPushMatrix();
 
-		UpdateWorldTransform();
-		r::MultMatrix( transformation_wspace );
+		updateWorldTransform();
+		r::MultMatrix( transformationWspace );
 
 		glColor3f( 0.0, 1.0, 0.0 );
 

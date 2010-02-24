@@ -5,63 +5,63 @@ namespace m {
 
 
 // accessors
-inline float& euler_t::operator []( uint i )
+inline float& Euler::operator []( uint i )
 {
 	return (&x)[i];
 }
 
-inline float euler_t::operator []( uint i) const
+inline float Euler::operator []( uint i) const
 {
 	return (&x)[i];
 }
 
-inline float& euler_t::bank()
+inline float& Euler::bank()
 {
 	return x;
 }
 
-inline float euler_t::bank() const
+inline float Euler::bank() const
 {
 	return x;
 }
 
-inline float& euler_t::heading()
+inline float& Euler::heading()
 {
 	return y;
 }
 
-inline float euler_t::heading() const
+inline float Euler::heading() const
 {
 	return y;
 }
 
-inline float& euler_t::attitude()
+inline float& Euler::attitude()
 {
 	return z;
 }
 
-inline float euler_t::attitude() const
+inline float Euler::attitude() const
 {
 	return z;
 }
 
 // constructor []
-inline euler_t::euler_t()
+inline Euler::Euler()
 	: x(0.0), y(0.0), z(0.0)
 {}
 
 // constructor [float, float, float]
-inline euler_t::euler_t( float x_, float y_, float z_ )
+inline Euler::Euler( float x_, float y_, float z_ )
 	: x(x_), y(y_), z(z_)
 {}
 
 // constructor [euler]
-inline euler_t::euler_t( const euler_t& b )
+inline Euler::Euler( const Euler& b )
 	: x(b.x), y(b.y), z(b.z)
 {}
 
 // constructor [quat]
-inline euler_t::euler_t( const quat_t& q )
+inline Euler::Euler( const quat_t& q )
 {
 	float test = q.x*q.y + q.z*q.w;
 	if( test > 0.499 )
@@ -88,14 +88,14 @@ inline euler_t::euler_t( const quat_t& q )
 }
 
 // constructor [mat3]
-inline euler_t::euler_t( const mat3_t& m3 )
+inline Euler::Euler( const mat3_t& m3 )
 {
 	float cx, sx;
 	float cy, sy;
 	float cz, sz;
 
 	sy = m3(0,2);
-	cy = Sqrt( 1.0 - sy*sy );
+	cy = sqrt( 1.0 - sy*sy );
 	// normal case
 	if ( !IsZero( cy ) )
 	{

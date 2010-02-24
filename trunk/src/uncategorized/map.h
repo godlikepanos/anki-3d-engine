@@ -5,7 +5,7 @@
 #include "collision.h"
 
 class Mesh;
-class camera_t;
+class Camera;
 
 
 /*
@@ -16,7 +16,7 @@ octree_t                                                                        
 class octree_t
 {
 	public:
-		/// node_t class
+		/// Node class
 		// the class does not contain complicated functions. It mainly holds the data
 		class node_t
 		{
@@ -34,7 +34,7 @@ class octree_t
 				uint GetMeshesNum() const { return meshes.size(); }
 				uint GetFacesNum() const;
 		};
-		/// end node_t class
+		/// end Node class
 
 	protected:
 		// funcs for the tree creation
@@ -43,7 +43,7 @@ class octree_t
 		void CreateRoot( const Vec<Mesh*>& meshes );
 
 		// frustum funcs
-		uint CheckNodeAgainstFrustum( node_t* node, const camera_t& cam ) const;
+		uint CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const;
 
 	public:
 		node_t* root;

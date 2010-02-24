@@ -294,8 +294,8 @@ bool ShaderParser::parseFile( const char* filename )
 	
 	//PRINT( "vertShaderBegins.globalLine: " << vertShaderBegins.globalLine )
 	//PRINT( "fragShaderBegins.globalLine: " << fragShaderBegins.globalLine )
-	//PrintSourceLines();
-	//PrintShaderVars();
+	//printSourceLines();
+	//printShaderVars();
 
 	return true;
 }

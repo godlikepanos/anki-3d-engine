@@ -1,11 +1,11 @@
 #include "renderer.h"
 #include "r_private.h"
 #include "fbo.h"
-#include "scene.h"
+#include "Scene.h"
 #include "Texture.h"
 #include "fbo.h"
-#include "node.h"
-#include "skel_node.h"
+#include "Node.h"
+#include "SkelNode.h"
 
 
 #include "btBulletCollisionCommon.h"
@@ -124,7 +124,7 @@ static ShaderProg* shdr;
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -157,7 +157,7 @@ void Init()
 RunStage                                                                                                                              =
 =======================================================================================================================================
 */
-void RunStage( const camera_t& cam )
+void RunStage( const Camera& cam )
 {
 	fbo.Bind();
 
@@ -175,17 +175,17 @@ void RunStage( const camera_t& cam )
 	{
 		if
 		(
-			(scene::nodes[i]->type == node_t::NT_LIGHT && show_lights) ||
-			(scene::nodes[i]->type == node_t::NT_CAMERA && show_cameras)
+			(scene::nodes[i]->type == Node::NT_LIGHT && show_lights) ||
+			(scene::nodes[i]->type == Node::NT_CAMERA && show_cameras)
 		)
 		{
-			scene::nodes[i]->Render();
+			scene::nodes[i]->render();
 		}
-		else if( scene::nodes[i]->type == node_t::NT_SKELETON && show_skeletons )
+		else if( scene::nodes[i]->type == Node::NT_SKELETON && show_skeletons )
 		{
-			skel_node_t* skel_node = static_cast<skel_node_t*>( scene::nodes[i] );
+			SkelNode* skel_node = static_cast<SkelNode*>( scene::nodes[i] );
 			glDisable( GL_DEPTH_TEST );
-			skel_node->Render();
+			skel_node->render();
 			glEnable( GL_DEPTH_TEST );
 		}
 	}
@@ -306,11 +306,11 @@ void RenderSphere( float r, int p )
 				theta3 = j * twopi / p;
 
 				float sintheta1, costheta1;
-				SinCos( theta1, sintheta1, costheta1 );
+				sinCos( theta1, sintheta1, costheta1 );
 				float sintheta2, costheta2;
-				SinCos( theta2, sintheta2, costheta2 );
+				sinCos( theta2, sintheta2, costheta2 );
 				float sintheta3, costheta3;
-				SinCos( theta3, sintheta3, costheta3 );
+				sinCos( theta3, sintheta3, costheta3 );
 
 
 				ex = costheta2 * costheta3;
@@ -422,7 +422,7 @@ static void RenderSun()
 
 
 	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
-	p = main_cam->GetProjectionMatrix() * (main_cam->GetViewMatrix() * p);
+	p = main_cam->getProjectionMatrix() * (main_cam->getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
 

@@ -4,25 +4,25 @@ namespace m {
 
 
 // constructor []
-inline axisang_t::axisang_t()
+inline Axisang::Axisang()
 	: ang(0.0), axis()
 {}
 
-// constructor [axisang_t]
-inline axisang_t::axisang_t( const axisang_t& b )
+// constructor [Axisang]
+inline Axisang::Axisang( const Axisang& b )
 	: ang(b.ang), axis(b.axis)
 {}
 
 // constructor [float, axis]
-inline axisang_t::axisang_t( float rad, const vec3_t& axis_ )
+inline Axisang::Axisang( float rad, const vec3_t& axis_ )
 	: ang(rad), axis(axis_)
 {}
 
 // constructor [quat]
-inline axisang_t::axisang_t( const quat_t& q )
+inline Axisang::Axisang( const quat_t& q )
 {
 	ang = 2.0*acos( q.w );
-	float length = Sqrt( 1.0 - q.w*q.w );
+	float length = sqrt( 1.0 - q.w*q.w );
 	if( IsZero(length) )
 		axis = vec3_t(0.0);
 	else
@@ -33,7 +33,7 @@ inline axisang_t::axisang_t( const quat_t& q )
 }
 
 // constructor [mat3]
-inline axisang_t::axisang_t( const mat3_t& m3 )
+inline Axisang::Axisang( const mat3_t& m3 )
 {
 	if( (fabs(m3(0,1)-m3(1,0))< EPSILON)  && (fabs(m3(0,2)-m3(2,0))< EPSILON)  && (fabs(m3(1,2)-m3(2,1))< EPSILON) )
 	{
@@ -48,17 +48,17 @@ inline axisang_t::axisang_t( const mat3_t& m3 )
 		ang = PI;
 		axis.x = (m3(0,0)+1)/2;
 		if( axis.x > 0.0 )
-			axis.x = Sqrt(axis.x);
+			axis.x = sqrt(axis.x);
 		else
 			axis.x = 0;
 		axis.y = (m3(1,1)+1)/2;
 		if( axis.y > 0 )
-			axis.y = Sqrt(axis.y);
+			axis.y = sqrt(axis.y);
 		else
 			axis.y = 0;
 		axis.z = (m3(2,2)+1)/2;
 		if( axis.z > 0 )
-			axis.z = Sqrt(axis.z);
+			axis.z = sqrt(axis.z);
 		else
 			axis.z = 0.0;
 
@@ -79,7 +79,7 @@ inline axisang_t::axisang_t( const mat3_t& m3 )
 		return;
 	}
 
-	float s = Sqrt((m3(2,1) - m3(1,2))*(m3(2,1) - m3(1,2))+(m3(0,2) - m3(2,0))*(m3(0,2) - m3(2,0))+(m3(1,0) - m3(0,1))*(m3(1,0) - m3(0,1)));
+	float s = sqrt((m3(2,1) - m3(1,2))*(m3(2,1) - m3(1,2))+(m3(0,2) - m3(2,0))*(m3(0,2) - m3(2,0))+(m3(1,0) - m3(0,1))*(m3(1,0) - m3(0,1)));
 
 	if( fabs(s) < 0.001 ) s = 1;
 

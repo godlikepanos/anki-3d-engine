@@ -6,8 +6,8 @@ namespace m {
 	class vec3_t;
 	class vec4_t;
 	class quat_t;
-	class euler_t;
-	class axisang_t;
+	class Euler;
+	class Axisang;
 	class mat3_t;
 	class mat4_t;
 }

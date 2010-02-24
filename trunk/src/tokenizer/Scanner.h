@@ -103,7 +103,7 @@ class Scanner
 			char   char_;
 			ulong  int_;
 			double float_;
-			char*  string; ///< points to Token::as_string if the token is string
+			char*  string; ///< points to Token::asString if the token is string
 		};
 
 		/// The Token class
@@ -113,7 +113,7 @@ class Scanner
 			TokenDataType  type;
 			TokenDataVal   value;
 
-			char as_string[ MAX_SCRIPT_LINE_LEN ];
+			char asString[ MAX_SCRIPT_LINE_LEN ];
 
 			Token(): code( TC_ERROR ) {}
 			Token( const Token& b );
@@ -164,9 +164,9 @@ class Scanner
 		bool loadIoStream( iostream* iostream_, const char* scriptName_ = "unamed-iostream" ); ///< load a STL iostream to extract tokens
 		void unload();
 
-		static void   printTokenInfo( const Token& token ); ///< Print info of the given token
+		static void   printTokenInfo( const Token& token ); ///< print info of the given token
 		static string getTokenInfo( const Token& token ); ///< Get a string with the info of the given token
-		       void   getAllPrintAll();
+		       void   getAllprintAll();
 
 		const Token& getNextToken(); ///< Get the next token from the file
 		const Token& getCrntToken() const { return crntToken; } ///< Accessor for the current token

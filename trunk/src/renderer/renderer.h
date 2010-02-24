@@ -7,11 +7,11 @@
 #include <GL/glu.h>
 #include "gmath.h"
 #include "ShaderProg.h"
-#include "camera.h"
+#include "Camera.h"
 
 
 
-class camera_t;
+class Camera;
 
 /// renderer namespace
 namespace r { // begin namespace
@@ -34,12 +34,12 @@ extern int  max_anisotropy; ///< Max texture anisotropy. Used in Texture::load
 
 // misc
 extern void TakeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
-extern void Init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::Init" functions among other things
+extern void Init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::init" functions among other things
 extern void PrepareNextFrame(); ///< Runs before rendering
 extern const uchar* GetLastError(); ///< GetLastError
-extern void PrintLastError(); ///< Prints last OpenGL error
+extern void printLastError(); ///< prints last OpenGL error
 inline const string& GetStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
-extern void Render( const camera_t& cam ); ///< The spine function of the renderer
+extern void Render( const Camera& cam ); ///< The spine function of the renderer
 
 extern void SetGLState_Wireframe();
 extern void SetGLState_WireframeDotted();
@@ -60,9 +60,9 @@ extern bool   Unproject( float winX, float winY, float winZ, const mat4_t& model
 extern mat4_t Ortho( float left, float right, float bottom, float top, float near, float far );
 
 // Matrix stuff
-extern void SetProjectionMatrix( const camera_t& cam );
-extern void SetViewMatrix( const camera_t& cam );
-inline void SetProjectionViewMatrices( const camera_t& cam ) { SetProjectionMatrix(cam); SetViewMatrix(cam); }
+extern void SetProjectionMatrix( const Camera& cam );
+extern void SetViewMatrix( const Camera& cam );
+inline void SetProjectionViewMatrices( const Camera& cam ) { SetProjectionMatrix(cam); SetViewMatrix(cam); }
 inline void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); }
 
 // externals that have global scope in other namespaces
@@ -94,7 +94,7 @@ namespace is
 namespace bs
 {
 	extern void Init2();
-	extern void RunStage2( const camera_t& cam );
+	extern void RunStage2( const Camera& cam );
 }
 
 /// pre-processing stage namespace

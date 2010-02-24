@@ -19,7 +19,7 @@ extern void InitWindow();
 extern void QuitApp( int code );
 extern void WaitForNextFrame();
 extern void TogleFullScreen();
-extern void PrintAppInfo();
+extern void printAppInfo();
 
 inline uint GetTicks()
 {

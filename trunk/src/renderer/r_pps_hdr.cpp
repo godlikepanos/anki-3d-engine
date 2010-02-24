@@ -5,7 +5,7 @@ The file contains functions and vars used for the deferred shading/post-processi
 #include "renderer.h"
 #include "Resource.h"
 #include "Texture.h"
-#include "scene.h"
+#include "Scene.h"
 #include "r_private.h"
 #include "fbo.h"
 
@@ -67,7 +67,7 @@ static void InitFBOs( fbo_t& fbo, Texture& fai, int internal_format )
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -91,7 +91,7 @@ void Init()
 RunPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const camera_t& /*cam*/ )
+void RunPass( const Camera& /*cam*/ )
 {
 	r::SetViewport( 0, 0, wwidth, wheight );
 

@@ -155,7 +155,7 @@ non static funcs                                                                
 */
 
 
-// Init
+// init
 // exec after init SDL
 void Init()
 {
@@ -196,8 +196,8 @@ void SetPos( float x_, float y_ )
 }
 
 
-// Printf
-void Printf( const char* format, ... )
+// printf
+void printf( const char* format, ... )
 {
 	va_list ap;
 	char text[512];
@@ -206,12 +206,12 @@ void Printf( const char* format, ... )
 		vsprintf(text, format, ap);  // And Converts Symbols To Actual Numbers
 	va_end(ap);
 
-	Print( text );
+	print( text );
 }
 
 
-//Print
-void Print( const char* text )
+//print
+void print( const char* text )
 {
 	SetGL();
 	glTranslatef( crnt_x, crnt_y, 0.0f );

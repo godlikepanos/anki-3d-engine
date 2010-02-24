@@ -3,12 +3,12 @@ The file contains functions and vars used for the deferred shading illumination 
 */
 
 #include "renderer.h"
-#include "camera.h"
-#include "scene.h"
+#include "Camera.h"
+#include "Scene.h"
 #include "Mesh.h"
-#include "light.h"
+#include "Light.h"
 #include "Resource.h"
-#include "scene.h"
+#include "Scene.h"
 #include "r_private.h"
 #include "fbo.h"
 #include "LightProps.h"
@@ -58,10 +58,10 @@ static void InitSMOUVS()
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
-static void DrawSMOUVS( const point_light_t& light )
+static void DrawSMOUVS( const PointLight& light )
 {
 	const float scale = 1.2;
-	r::MultMatrix( mat4_t( light.translation_wspace, mat3_t::GetIdentity(), light.radius*scale ) );
+	r::MultMatrix( mat4_t( light.translationWspace, mat3_t::GetIdentity(), light.radius*scale ) );
 
 	r::NoShaders();
 
@@ -80,7 +80,7 @@ static void DrawSMOUVS( const point_light_t& light )
 // CalcViewVector                                                                                                                     =
 //=====================================================================================================================================
 /// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
-static void CalcViewVector( const camera_t& cam )
+static void CalcViewVector( const Camera& cam )
 {
 	int _w = r::w;
 	int _h = r::h;
@@ -90,9 +90,9 @@ static void CalcViewVector( const camera_t& cam )
 	for( int i=0; i<4; i++ )
 	{
 		/* Original Code:
-		r::UnProject( pixels[i][0], pixels[i][1], 10, cam.GetViewMatrix(), cam.GetProjectionMatrix(), viewport,
+		r::UnProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
 		              view_vectors[i].x, view_vectors[i].y, view_vectors[i].z );
-		view_vectors[i] = cam.GetViewMatrix() * view_vectors[i];
+		view_vectors[i] = cam.getViewMatrix() * view_vectors[i];
 		The original code is the above 3 lines. The optimized follows:*/
 
 		vec3_t vec;
@@ -100,7 +100,7 @@ static void CalcViewVector( const camera_t& cam )
 		vec.y = (2.0*(pixels[i][1]-viewport[1]))/viewport[3] - 1.0;
 		vec.z = 1.0;
 
-		view_vectors[i] = vec.GetTransformed( cam.GetInvProjectionMatrix() );
+		view_vectors[i] = vec.GetTransformed( cam.getInvProjectionMatrix() );
 		// end of optimized code
 	}
 }
@@ -110,10 +110,10 @@ static void CalcViewVector( const camera_t& cam )
 // CalcPlanes                                                                                                                         =
 //=====================================================================================================================================
 /// Calc the planes that we will use inside the shader to calculate the frag pos in view space
-static void CalcPlanes( const camera_t& cam )
+static void CalcPlanes( const Camera& cam )
 {
-	planes.x = -cam.GetZFar() / (cam.GetZFar() - cam.GetZNear());
-	planes.y = -cam.GetZFar() * cam.GetZNear() / (cam.GetZFar() - cam.GetZNear());
+	planes.x = -cam.getZFar() / (cam.getZFar() - cam.getZNear());
+	planes.y = -cam.getZFar() * cam.getZNear() / (cam.getZFar() - cam.getZNear());
 }
 
 
@@ -157,7 +157,7 @@ static void InitStageFBO()
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
 void Init()
@@ -182,7 +182,7 @@ void Init()
 AmbientPass                                                                                                                           =
 =======================================================================================================================================
 */
-static void AmbientPass( const camera_t& /*cam*/, const vec3_t& color )
+static void AmbientPass( const Camera& /*cam*/, const vec3_t& color )
 {
 	glDisable( GL_BLEND );
 
@@ -202,7 +202,7 @@ static void AmbientPass( const camera_t& /*cam*/, const vec3_t& color )
 // SetStencilMask [point light]                                                                                                       =
 //=====================================================================================================================================
 /// Clears the stencil buffer and draws a shape in the stencil buffer (in this case the shape is a UV shpere)
-static void SetStencilMask( const camera_t& cam, const point_light_t& light )
+static void SetStencilMask( const Camera& cam, const PointLight& light )
 {
 	glEnable( GL_STENCIL_TEST );
 	glClear( GL_STENCIL_BUFFER_BIT );
@@ -247,7 +247,7 @@ SetStencilMask [spot light]                                                     
 see above                                                                                                                             =
 =======================================================================================================================================
 */
-static void SetStencilMask( const camera_t& cam, const spot_light_t& light )
+static void SetStencilMask( const Camera& cam, const SpotLight& light )
 {
 	glEnable( GL_STENCIL_TEST );
 	glClear( GL_STENCIL_BUFFER_BIT );
@@ -268,10 +268,10 @@ static void SetStencilMask( const camera_t& cam, const spot_light_t& light )
 
 	// render camera's shape to stencil buffer
 	r::NoShaders();
-	const camera_t& lcam = light.camera;
-	float x = lcam.GetZFar() / tan( (PI-lcam.GetFovX())/2 );
-	float y = tan( lcam.GetFovY()/2 ) * lcam.GetZFar();
-	float z = -lcam.GetZFar();
+	const Camera& lcam = light.camera;
+	float x = lcam.getZFar() / tan( (PI-lcam.getFovX())/2 );
+	float y = tan( lcam.getFovY()/2 ) * lcam.getZFar();
+	float z = -lcam.getZFar();
 
 	const int tris_num = 6;
 
@@ -284,7 +284,7 @@ static void SetStencilMask( const camera_t& cam, const spot_light_t& light )
 		{ { x, -y, z }, {-x, -y, z }, {-x,  y, z } }, // front bottom left
 	};
 
-	r::MultMatrix( lcam.transformation_wspace );
+	r::MultMatrix( lcam.transformationWspace );
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, verts );
 	glDrawArrays( GL_TRIANGLES, 0, tris_num*3 );
@@ -312,14 +312,14 @@ static void SetStencilMask( const camera_t& cam, const spot_light_t& light )
 PointLightPass                                                                                                                        =
 =======================================================================================================================================
 */
-static void PointLightPass( const camera_t& cam, const point_light_t& light )
+static void PointLightPass( const Camera& cam, const PointLight& light )
 {
 	//** make a check wether the point light passes the frustum test **
-	bsphere_t sphere( light.translation_wspace, light.radius );
-	if( !cam.InsideFrustum( sphere ) ) return;
+	bsphere_t sphere( light.translationWspace, light.radius );
+	if( !cam.insideFrustum( sphere ) ) return;
 
 	//** set the scissors **
-	//int n = SetScissors( cam.GetViewMatrix()*light.translation_wspace, light.radius );
+	//int n = SetScissors( cam.getViewMatrix()*light.translationWspace, light.radius );
 	//if( n < 1 ) return;
 
 	//** stencil optimization **
@@ -336,11 +336,11 @@ static void PointLightPass( const camera_t& cam, const point_light_t& light )
 	shader.locTexUnit( shader.GetUniLoc(3), r::ms::depth_fai, 3 );
 	glUniform2fv( shader.GetUniLoc(4), 1, &planes[0] );
 
-	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
+	vec3_t light_pos_eye_space = light.translationWspace.GetTransformed( cam.getViewMatrix() );
 	glUniform3fv( shader.GetUniLoc(5), 1, &light_pos_eye_space[0] );
 	glUniform1f( shader.GetUniLoc(6), 1.0/light.radius );
-	glUniform3fv( shader.GetUniLoc(7), 1, &vec3_t(light.light_props->getDiffuseColor())[0] );
-	glUniform3fv( shader.GetUniLoc(8), 1, &vec3_t(light.light_props->getSpecularColor())[0] );
+	glUniform3fv( shader.GetUniLoc(7), 1, &vec3_t(light.lightProps->getDiffuseColor())[0] );
+	glUniform3fv( shader.GetUniLoc(8), 1, &vec3_t(light.lightProps->getSpecularColor())[0] );
 
 	//** render quad **
 	glEnableVertexAttribArray( shader.getAttribLoc(0) );
@@ -364,10 +364,10 @@ static void PointLightPass( const camera_t& cam, const point_light_t& light )
 SpotLightPass                                                                                                                         =
 =======================================================================================================================================
 */
-static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
+static void SpotLightPass( const Camera& cam, const SpotLight& light )
 {
 	//** first of all check if the light's camera is inside the frustum **
-	if( !cam.InsideFrustum( light.camera ) ) return;
+	if( !cam.insideFrustum( light.camera ) ) return;
 
 	//** stencil optimization **
 	SetStencilMask( cam, light );
@@ -400,22 +400,22 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	shdr->locTexUnit( shdr->GetUniLoc(2), r::ms::specular_fai, 2 );
 	shdr->locTexUnit( shdr->GetUniLoc(3), r::ms::depth_fai, 3 );
 
-	if( light.light_props->getTexture() == NULL )
-		ERROR( "No texture is attached to the light. light_props name: " << light.light_props->getName() );
+	if( light.lightProps->getTexture() == NULL )
+		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getName() );
 
 	// the planes
 	//glUniform2fv( shdr->getUniLoc("planes"), 1, &planes[0] );
 	glUniform2fv( shdr->GetUniLoc(4), 1, &planes[0] );
 
 	// the light params
-	vec3_t light_pos_eye_space = light.translation_wspace.GetTransformed( cam.GetViewMatrix() );
+	vec3_t light_pos_eye_space = light.translationWspace.GetTransformed( cam.getViewMatrix() );
 	glUniform3fv( shdr->GetUniLoc(5), 1, &light_pos_eye_space[0] );
-	glUniform1f( shdr->GetUniLoc(6), 1.0/light.GetDistance() );
-	glUniform3fv( shdr->GetUniLoc(7), 1, &vec3_t(light.light_props->getDiffuseColor())[0] );
-	glUniform3fv( shdr->GetUniLoc(8), 1, &vec3_t(light.light_props->getSpecularColor())[0] );
+	glUniform1f( shdr->GetUniLoc(6), 1.0/light.getDistance() );
+	glUniform3fv( shdr->GetUniLoc(7), 1, &vec3_t(light.lightProps->getDiffuseColor())[0] );
+	glUniform3fv( shdr->GetUniLoc(8), 1, &vec3_t(light.lightProps->getSpecularColor())[0] );
 
 	// set the light texture
-	shdr->locTexUnit( shdr->GetUniLoc(9), *light.light_props->getTexture(), 4 );
+	shdr->locTexUnit( shdr->GetUniLoc(9), *light.lightProps->getTexture(), 4 );
 	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -426,7 +426,7 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	//const float mBias[] = {0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
 	static mat4_t bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	mat4_t tex_projection_mat;
-	tex_projection_mat = bias_m4 * light.camera.GetProjectionMatrix() * light.camera.GetViewMatrix() * cam.transformation_wspace;
+	tex_projection_mat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * cam.transformationWspace;
 	glUniformMatrix4fv( shdr->GetUniLoc(10), 1, true, &tex_projection_mat[0] );
 
 	/*
@@ -434,9 +434,9 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 	glActiveTexture( GL_TEXTURE0 );
 	glMatrixMode( GL_TEXTURE );
 	glloadMatrixf( mBias );
-	r::MultMatrix( light.camera.GetProjectionMatrix() );
-	r::MultMatrix( light.camera.GetViewMatrix() );
-	r::MultMatrix( cam.transformation_wspace );
+	r::MultMatrix( light.camera.getProjectionMatrix() );
+	r::MultMatrix( light.camera.getViewMatrix() );
+	r::MultMatrix( cam.transformationWspace );
 	glMatrixMode(GL_MODELVIEW);*/
 
 	// the shadow stuff
@@ -472,7 +472,7 @@ static void SpotLightPass( const camera_t& cam, const spot_light_t& light )
 RunStage                                                                                                                              =
 =======================================================================================================================================
 */
-void RunStage( const camera_t& cam )
+void RunStage( const Camera& cam )
 {
 	// FBO
 	fbo.Bind();
@@ -498,19 +498,19 @@ void RunStage( const camera_t& cam )
 	// for all lights
 	for( uint i=0; i<scene::lights.size(); i++ )
 	{
-		const light_t& light = *scene::lights[i];
+		const Light& light = *scene::lights[i];
 		switch( light.type )
 		{
-			case light_t::LT_POINT:
+			case Light::LT_POINT:
 			{
-				const point_light_t& pointl = static_cast<const point_light_t&>(light);
+				const PointLight& pointl = static_cast<const PointLight&>(light);
 				PointLightPass( cam, pointl );
 				break;
 			}
 
-			case light_t::LT_SPOT:
+			case Light::LT_SPOT:
 			{
-				const spot_light_t& projl = static_cast<const spot_light_t&>(light);
+				const SpotLight& projl = static_cast<const SpotLight&>(light);
 				SpotLightPass( cam, projl );
 				break;
 			}

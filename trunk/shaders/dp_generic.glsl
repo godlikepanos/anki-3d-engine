@@ -1,5 +1,5 @@
 //
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 #pragma anki include "shaders/hw_skinning.glsl"
 
@@ -27,7 +27,7 @@ void main()
 	#endif
 }
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 uniform sampler2D diffuse_map;
 varying vec2 tex_coords_v2f;

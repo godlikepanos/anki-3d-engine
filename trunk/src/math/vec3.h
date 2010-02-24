@@ -60,7 +60,7 @@ class vec3_t
 		vec3_t GetRotated( const quat_t& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		void   Rotate( const quat_t& q );
 		vec3_t Lerp( const vec3_t& v1, float t ) const; // return Lerp( this, v1, t )
-		void   Print() const;
+		void   print() const;
 		// transformations. The faster way is by far the mat4 * vec3 or the Transformed( vec3_t, mat3_t )
 		vec3_t GetTransformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const;
 		void   Transform( const vec3_t& translate, const mat3_t& rotate, float scale );

@@ -1,4 +1,4 @@
-#pragma anki vert_shader_begins
+#pragma anki vertShaderBegins
 
 #pragma anki attribute view_vector 1
 attribute vec3 view_vector;
@@ -18,7 +18,7 @@ void main()
 }
 
 
-#pragma anki frag_shader_begins
+#pragma anki fragShaderBegins
 
 #pragma anki include "shaders/pack.glsl"
 

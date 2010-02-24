@@ -1,10 +1,10 @@
 #include <algorithm>
-#include "scene.h"
-#include "skel_node.h"
-#include "camera.h"
-#include "mesh_node.h"
-#include "light.h"
-#include "controller.h"
+#include "Scene.h"
+#include "SkelNode.h"
+#include "Camera.h"
+#include "MeshNode.h"
+#include "Light.h"
+#include "Controller.h"
 #include "Material.h"
 
 namespace scene {
@@ -16,13 +16,13 @@ DATA                                                                            
 */
 skybox_t skybox;
 
-container_node_t       nodes;
-container_light_t      lights;
-container_camera_t     cameras;
-container_mesh_node_t  mesh_nodes;
-container_skel_node_t  skel_nodes;
+NodeContainer     nodes;
+LightContainer    lights;
+CameraContainer   cameras;
+MeshContainer     meshNodes;
+SkelNodeContainer skelNodes;
 
-Vec<controller_t*>   controllers;
+Vec<Controller*> controllers;
 
 
 //=====================================================================================================================================
@@ -43,27 +43,27 @@ template<typename container_Type, typename Type> static void EraseNode( containe
 
 
 //=====================================================================================================================================
-// RegisterNode                                                                                                                       =
+// registerNode                                                                                                                       =
 //=====================================================================================================================================
-void RegisterNode( node_t* node )
+void registerNode( Node* node )
 {
 	PutBackNode( nodes, node );
 	
 	switch( node->type )
 	{
-		case node_t::NT_LIGHT:
-			PutBackNode( lights, static_cast<light_t*>(node) );
+		case Node::NT_LIGHT:
+			PutBackNode( lights, static_cast<Light*>(node) );
 			break;
-		case node_t::NT_CAMERA:
-			PutBackNode( cameras, static_cast<camera_t*>(node) );
+		case Node::NT_CAMERA:
+			PutBackNode( cameras, static_cast<Camera*>(node) );
 			break;
-		case node_t::NT_MESH:
-			PutBackNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
+		case Node::NT_MESH:
+			PutBackNode( meshNodes, static_cast<MeshNode*>(node) );
 			break;
-		case node_t::NT_SKELETON:
-			PutBackNode( skel_nodes, static_cast<skel_node_t*>(node) );
+		case Node::NT_SKELETON:
+			PutBackNode( skelNodes, static_cast<SkelNode*>(node) );
 			break;
-		case node_t::NT_SKEL_MODEL:
+		case Node::NT_SKEL_MODEL:
 			// ToDo
 			break;
 	};
@@ -71,27 +71,27 @@ void RegisterNode( node_t* node )
 
 
 //=====================================================================================================================================
-// UnregisterNode                                                                                                                     =
+// unregisterNode                                                                                                                     =
 //=====================================================================================================================================
-void UnregisterNode( node_t* node )
+void unregisterNode( Node* node )
 {
 	EraseNode( nodes, node );
 	
 	switch( node->type )
 	{
-		case node_t::NT_LIGHT:
-			EraseNode( lights, static_cast<light_t*>(node) );
+		case Node::NT_LIGHT:
+			EraseNode( lights, static_cast<Light*>(node) );
 			break;
-		case node_t::NT_CAMERA:
-			EraseNode( cameras, static_cast<camera_t*>(node) );
+		case Node::NT_CAMERA:
+			EraseNode( cameras, static_cast<Camera*>(node) );
 			break;
-		case node_t::NT_MESH:
-			EraseNode( mesh_nodes, static_cast<mesh_node_t*>(node) );
+		case Node::NT_MESH:
+			EraseNode( meshNodes, static_cast<MeshNode*>(node) );
 			break;
-		case node_t::NT_SKELETON:
-			EraseNode( skel_nodes, static_cast<skel_node_t*>(node) );
+		case Node::NT_SKELETON:
+			EraseNode( skelNodes, static_cast<SkelNode*>(node) );
 			break;
-		case node_t::NT_SKEL_MODEL:
+		case Node::NT_SKEL_MODEL:
 			// ToDo
 			break;
 	};
@@ -101,27 +101,27 @@ void UnregisterNode( node_t* node )
 //=====================================================================================================================================
 // Register and Unregister controllers                                                                                                =
 //=====================================================================================================================================
-void RegisterController( controller_t* controller )
+void registerController( Controller* controller )
 {
 	DEBUG_ERR( std::find( controllers.begin(), controllers.end(), controller ) != controllers.end() );
 	controllers.push_back( controller );
 }
 
-void UnregisterController( controller_t* controller )
+void unregisterController( Controller* controller )
 {
-	Vec<controller_t*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
+	Vec<Controller*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
 	DEBUG_ERR( it == controllers.end() );
 	controllers.erase( it );
 }
 
 
 //=====================================================================================================================================
-// UpdateAllWorldStuff                                                                                                                =
+// updateAllWorldStuff                                                                                                                =
 //=====================================================================================================================================
-void UpdateAllWorldStuff()
+void updateAllWorldStuff()
 {
 	DEBUG_ERR( nodes.size() > 1024 );
-	node_t* queue [1024];
+	Node* queue [1024];
 	uint head = 0, tail = 0;
 	uint num = 0;
 
@@ -134,9 +134,9 @@ void UpdateAllWorldStuff()
 	// loop
 	while( head != tail ) // while queue not empty
 	{
-		node_t* obj = queue[head++]; // queue pop
+		Node* obj = queue[head++]; // queue pop
 
-		obj->UpdateWorldStuff();
+		obj->updateWorldStuff();
 		++num;
 
 		for( uint i=0; i<obj->childs.size(); i++ )
@@ -148,20 +148,20 @@ void UpdateAllWorldStuff()
 
 
 //=====================================================================================================================================
-// UpdateAllControllers                                                                                                               =
+// updateAllControllers                                                                                                               =
 //=====================================================================================================================================
-void UpdateAllControllers()
+void updateAllControllers()
 {
-	/*for( container_node_t::iterator it=nodes.begin(); it!=nodes.end(); it++ )
+	/*for( NodeContainer::iterator it=nodes.begin(); it!=nodes.end(); it++ )
 	{
-		node_t* node = (*it);
-		for( Vec<controller_t*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
-			(*it1)->Update( 0.0 );
+		Node* node = (*it);
+		for( Vec<Controller*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
+			(*it1)->update( 0.0 );
 	}*/
 
-	for( Vec<controller_t*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
+	for( Vec<Controller*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
 	{
-		(*it)->Update( 0.0 );
+		(*it)->update( 0.0 );
 	}
 }
 

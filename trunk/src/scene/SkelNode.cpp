@@ -1,46 +1,46 @@
-#include "skel_node.h"
+#include "SkelNode.h"
 #include "renderer.h"
 #include "SkelAnim.h"
 #include "Skeleton.h"
-#include "skel_anim_ctrl.h"
+#include "SkelAnimCtrl.h"
 
 
 //=====================================================================================================================================
-// skel_node_t                                                                                                                        =
+// SkelNode                                                                                                                        =
 //=====================================================================================================================================
-skel_node_t::skel_node_t(): 
-	node_t( NT_SKELETON ),
-	skel_anim_ctrl( NULL )
+SkelNode::SkelNode(): 
+	Node( NT_SKELETON ),
+	skelAnimCtrl( NULL )
 {
 }
 
 
 //=====================================================================================================================================
-// Init                                                                                                                               =
+// init                                                                                                                               =
 //=====================================================================================================================================
-void skel_node_t::Init( const char* filename )
+void SkelNode::init( const char* filename )
 {
 	skeleton = rsrc::skeletons.load( filename );
-	skel_anim_ctrl = new skel_anim_ctrl_t( this );
+	skelAnimCtrl = new SkelAnimCtrl( this );
 }
 
 
 //=====================================================================================================================================
-// Deinit                                                                                                                             =
+// deinit                                                                                                                             =
 //=====================================================================================================================================
-void skel_node_t::Deinit()
+void SkelNode::deinit()
 {
 	rsrc::skeletons.unload( skeleton );
 }
 
 
 //=====================================================================================================================================
-// Render                                                                                                                             =
+// render                                                                                                                             =
 //=====================================================================================================================================
-void skel_node_t::Render()
+void SkelNode::render()
 {
 	glPushMatrix();
-	r::MultMatrix( transformation_wspace );
+	r::MultMatrix( transformationWspace );
 
 	//glPointSize( 4.0f );
 	//glLineWidth( 2.0f );
@@ -49,13 +49,13 @@ void skel_node_t::Render()
 	{
 		glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
 		glBegin( GL_POINTS );
-			glVertex3fv( &skel_anim_ctrl->heads[i][0] );
+			glVertex3fv( &skelAnimCtrl->heads[i][0] );
 		glEnd();
 
 		glBegin( GL_LINES );
-			glVertex3fv( &skel_anim_ctrl->heads[i][0] );
+			glVertex3fv( &skelAnimCtrl->heads[i][0] );
 			glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
-			glVertex3fv( &skel_anim_ctrl->tails[i][0] );
+			glVertex3fv( &skelAnimCtrl->tails[i][0] );
 		glEnd();
 	}
 

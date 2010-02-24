@@ -8,7 +8,7 @@
 namespace m {
 
 
-class euler_t
+class Euler
 {
 	public:
 		// data members
@@ -23,20 +23,20 @@ class euler_t
 		float& attitude();
 		float  attitude() const;
 		// constructors & distructors
-		explicit euler_t();
-		explicit euler_t( float x, float y, float z  );
-		         euler_t( const euler_t& b );
-		explicit euler_t( const quat_t& q );
-		explicit euler_t( const mat3_t& m3 );
+		explicit Euler();
+		explicit Euler( float x, float y, float z  );
+		         Euler( const Euler& b );
+		explicit Euler( const quat_t& q );
+		explicit Euler( const mat3_t& m3 );
 		// other
-		void Print() const;
+		void print() const;
 };
 
 
 } // end namespace
 
 
-#include "euler.inl.h"
+#include "Euler.inl.h"
 
 
 #endif

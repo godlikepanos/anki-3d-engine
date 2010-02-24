@@ -195,7 +195,7 @@ inline vec2_t& vec2_t::operator /=( float f )
 // Length
 inline float vec2_t::Length() const
 {
-	return Sqrt( x*x + y*y );
+	return sqrt( x*x + y*y );
 }
 
 // set to zero
@@ -207,13 +207,13 @@ inline void vec2_t::SetZero()
 // Normalize
 inline void vec2_t::Normalize()
 {
-	ME *= InvSqrt( x*x + y*y );
+	ME *= invSqrt( x*x + y*y );
 }
 
 // Normalized (return the normalized)
 inline vec2_t vec2_t::GetNormalized() const
 {
-	return ME * InvSqrt( x*x + y*y );
+	return ME * invSqrt( x*x + y*y );
 }
 
 // Dot
@@ -234,8 +234,8 @@ inline vec2_t vec2_t::GetOne()
 	return vec2_t(1.0);
 }
 
-// Print
-inline void vec2_t::Print() const
+// print
+inline void vec2_t::print() const
 {
 	for( int i=0; i<2; i++ )
 		cout << fixed << ME[i] << ' ';

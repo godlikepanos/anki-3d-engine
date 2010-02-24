@@ -89,12 +89,12 @@ inline mat3_t::mat3_t( const quat_t& q )
 }
 
 // constructor [euler]
-inline mat3_t::mat3_t( const euler_t& e )
+inline mat3_t::mat3_t( const Euler& e )
 {
 	float ch, sh, ca, sa, cb, sb;
-  SinCos( e.heading(), sh, ch );
-  SinCos( e.attitude(), sa, ca );
-  SinCos( e.bank(), sb, cb );
+  sinCos( e.heading(), sh, ch );
+  sinCos( e.attitude(), sa, ca );
+  sinCos( e.bank(), sb, cb );
 
   ME(0,0) = ch * ca;
   ME(0,1) = sh*sb - ch*sa*cb;
@@ -108,12 +108,12 @@ inline mat3_t::mat3_t( const euler_t& e )
 }
 
 // constructor [axisang]
-inline mat3_t::mat3_t( const axisang_t& axisang )
+inline mat3_t::mat3_t( const Axisang& axisang )
 {
 	DEBUG_ERR( !IsZero( 1.0-axisang.axis.Length() ) ); // Not normalized axis
 
 	float c, s;
-	SinCos( axisang.ang, s, c );
+	sinCos( axisang.ang, s, c );
 	float t = 1.0 - c;
 
 	const vec3_t& axis = axisang.axis;
@@ -413,7 +413,7 @@ inline vec3_t mat3_t::GetColumn( const uint i ) const
 inline void mat3_t::SetRotationX( float rad )
 {
 	float sintheta, costheta;
-	SinCos( rad, sintheta, costheta );
+	sinCos( rad, sintheta, costheta );
 
 	ME(0,0) = 1.0f;
 	ME(0,1) = 0.0f;
@@ -430,7 +430,7 @@ inline void mat3_t::SetRotationX( float rad )
 inline void mat3_t::SetRotationY( float rad )
 {
 	float sintheta, costheta;
-	SinCos( rad, sintheta, costheta );
+	sinCos( rad, sintheta, costheta );
 
 	ME(0,0) = costheta;
 	ME(0,1) = 0.0f;
@@ -447,7 +447,7 @@ inline void mat3_t::SetRotationY( float rad )
 inline void mat3_t::SetRotationZ( float rad )
 {
 	float sintheta, costheta;
-	SinCos( rad, sintheta, costheta );
+	sinCos( rad, sintheta, costheta );
 
 	ME(0,0) = costheta;
 	ME(0,1) = -sintheta;
@@ -468,7 +468,7 @@ from the vector from colomn 0*/
 inline void mat3_t::RotateXAxis( float rad )
 {
 	float sina, cosa;
-	SinCos( rad, sina, cosa );
+	sinCos( rad, sina, cosa );
 
 	/*vec3_t x_axis, y_axis, z_axis;
 	GetColumns( x_axis, y_axis, z_axis );*/
@@ -479,7 +479,7 @@ inline void mat3_t::RotateXAxis( float rad )
 	ME(2,2) = ME(2,2)*cosa - ME(2,1)*sina;
 
 	// z_axis.Normalize();
-	float len = InvSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
+	float len = invSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
 	ME(0,2) *= len;
 	ME(1,2) *= len;
 	ME(2,2) *= len;
@@ -490,7 +490,7 @@ inline void mat3_t::RotateXAxis( float rad )
 	ME(2,1) = ME(0,2)*ME(1,0) - ME(1,2)*ME(0,0);
 
 	// y_axis.Normalize();
-	/*len = InvSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
+	/*len = invSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
 	ME(0,1) *= len;
 	ME(1,1) *= len;
 	ME(2,1) *= len;*/
@@ -503,7 +503,7 @@ inline void mat3_t::RotateXAxis( float rad )
 inline void mat3_t::RotateYAxis( float rad )
 {
 	float sina, cosa;
-	SinCos( rad, sina, cosa );
+	sinCos( rad, sina, cosa );
 
 	/*vec3_t x_axis, y_axis, z_axis;
 	GetColumns( x_axis, y_axis, z_axis );*/
@@ -514,7 +514,7 @@ inline void mat3_t::RotateYAxis( float rad )
 	ME(2,2) = ME(2,2)*cosa + ME(2,0)*sina;
 
 	// z_axis.Normalize();
-	float len = InvSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
+	float len = invSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
 	ME(0,2) *= len;
 	ME(1,2) *= len;
 	ME(2,2) *= len;
@@ -525,7 +525,7 @@ inline void mat3_t::RotateYAxis( float rad )
 	ME(2,0) = ME(1,2)*ME(0,1) - ME(0,2)*ME(1,1);
 
 	// x_axis.Normalize();
-	/*len = InvSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
+	/*len = invSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
 	ME(0,0) *= len;
 	ME(1,0) *= len;
 	ME(2,0) *= len;*/
@@ -538,7 +538,7 @@ inline void mat3_t::RotateYAxis( float rad )
 inline void mat3_t::RotateZAxis( float rad )
 {
 	float sina, cosa;
-	SinCos( rad, sina, cosa );
+	sinCos( rad, sina, cosa );
 
 	/*vec3_t x_axis, y_axis, z_axis;
 	GetColumns( x_axis, y_axis, z_axis );*/
@@ -549,7 +549,7 @@ inline void mat3_t::RotateZAxis( float rad )
 	ME(2,0) = ME(2,0)*cosa + ME(2,1)*sina;
 
 	// x_axis.Normalize();
-	float len = InvSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
+	float len = invSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
 	ME(0,0) *= len;
 	ME(1,0) *= len;
 	ME(2,0) *= len;
@@ -560,7 +560,7 @@ inline void mat3_t::RotateZAxis( float rad )
 	ME(2,1) = ME(0,2)*ME(1,0) - ME(1,2)*ME(0,0);
 
 	// y_axis.Normalize();
-	/*len = InvSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
+	/*len = invSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
 	ME(0,1) *= len;
 	ME(1,1) *= len;
 	ME(2,1) *= len;*/
@@ -624,8 +624,8 @@ inline void mat3_t::Reorthogonalize()
 	SetColumns( x_axis, y_axis, z_axis );
 }
 
-// Print
-inline void mat3_t::Print() const
+// print
+inline void mat3_t::print() const
 {
 	for( int i=0; i<3; i++ )
 	{

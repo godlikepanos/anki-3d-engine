@@ -84,8 +84,8 @@ mem_block_t& tail_node = mem_blocks[1];
 static void DummyFunc() {}
 
 // Used so we can save a check in NewBlock
-static void Init();
-void (*p_Init)(void) = Init;
+static void init();
+void (*p_Init)(void) = init;
 
 // threads
 void (*p_Lock)(void) = DummyFunc;
@@ -208,10 +208,10 @@ static char* BytesStr( size_t size )
 
 /*
 =======================================================================================================================================
-PrintBlockInfo                                                                                                                        =
+printBlockInfo                                                                                                                        =
 =======================================================================================================================================
 */
-static void PrintBlockInfo( const mem_block_t* mb )
+static void printBlockInfo( const mem_block_t* mb )
 {
 	const char cond = (mb->free_space) ? 'F' : 'U';
 	cout << setw(4) << setfill(' ') << mb->id << setw(0) << ' ' << cond << ' ' << setw(6) <<  BytesStr( mb->size ) << setw(0) << hex <<
@@ -225,10 +225,10 @@ static void PrintBlockInfo( const mem_block_t* mb )
 
 /*
 =======================================================================================================================================
-PrintInfo                                                                                                                             =
+printInfo                                                                                                                             =
 =======================================================================================================================================
 */
-void PrintInfo( uint flags )
+void printInfo( uint flags )
 {
 	cout << "\n=========================== MEM REPORT =========================" << endl;
 
@@ -270,7 +270,7 @@ void PrintInfo( uint flags )
 		mem_block_t* mb = head_node.next;
 		do
 		{
-			PrintBlockInfo( mb );
+			printBlockInfo( mb );
 			mb = mb->next;
 		} while( mb!=&tail_node );
 	}
@@ -281,10 +281,10 @@ void PrintInfo( uint flags )
 
 /*
 =======================================================================================================================================
-Init                                                                                                                                  =
+init                                                                                                                                  =
 =======================================================================================================================================
 */
-static void Init()
+static void init()
 {
 #ifdef _DEBUG_
 	memset( buffer, (char)0xCC, buffer_size );

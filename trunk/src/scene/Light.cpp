@@ -1,41 +1,41 @@
-#include "light.h"
+#include "Light.h"
 #include "collision.h"
 #include "renderer.h"
 #include "LightProps.h"
 
 
 //=====================================================================================================================================
-// Init [point_light_t]                                                                                                               =
+// init [PointLight]                                                                                                               =
 //=====================================================================================================================================
-void point_light_t::Init( const char* filename )
+void PointLight::init( const char* filename )
 {
-	light_props = rsrc::light_props.load( filename );
-	radius = light_props->getRadius();
+	lightProps = rsrc::light_props.load( filename );
+	radius = lightProps->getRadius();
 }
 
 
 //=====================================================================================================================================
-// Init [spot_light_t]                                                                                                                =
+// init [SpotLight]                                                                                                                =
 //=====================================================================================================================================
-void spot_light_t::Init( const char* filename )
+void SpotLight::init( const char* filename )
 {
-	light_props = rsrc::light_props.load( filename );
-	camera.SetAll( light_props->getFovX(), light_props->getFovY(), 0.2, light_props->getDistance() );
-	castsShadow = light_props->castsShadow();
-	if( light_props->getTexture() == NULL )
+	lightProps = rsrc::light_props.load( filename );
+	camera.setAll( lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance() );
+	castsShadow = lightProps->castsShadow();
+	if( lightProps->getTexture() == NULL )
 	{
-		ERROR( "Light properties \"" << light_props->getName() << "\" do not have a texture" );
+		ERROR( "Light properties \"" << lightProps->getName() << "\" do not have a texture" );
 		return;
 	}
 }
 
 
 //=====================================================================================================================================
-// Deinit                                                                                                                             =
+// deinit                                                                                                                             =
 //=====================================================================================================================================
-void light_t::Deinit()
+void Light::deinit()
 {
-	rsrc::light_props.unload( light_props );
+	rsrc::light_props.unload( lightProps );
 }
 
 
@@ -55,18 +55,18 @@ static void RenderSphere( const mat4_t& tsl, const vec3_t& col )
 
 
 //=====================================================================================================================================
-// Render                                                                                                                             =
+// render                                                                                                                             =
 //=====================================================================================================================================
-void point_light_t::Render()
+void PointLight::render()
 {
-	RenderSphere( transformation_wspace, light_props->getDiffuseColor() );
+	RenderSphere( transformationWspace, lightProps->getDiffuseColor() );
 }
 
 
 //=====================================================================================================================================
-// Render                                                                                                                             =
+// render                                                                                                                             =
 //=====================================================================================================================================
-void spot_light_t::Render()
+void SpotLight::render()
 {
-	RenderSphere( transformation_wspace, light_props->getDiffuseColor() );
+	RenderSphere( transformationWspace, lightProps->getDiffuseColor() );
 }

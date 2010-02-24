@@ -6,8 +6,8 @@
 #include "fbo.h"
 #include "texture.h"
 
-class point_light_t;
-class spot_light_t;
+class PointLight;
+class SpotLight;
 
 
 struct renderer_t
@@ -34,7 +34,7 @@ struct renderer_t
 		} fais;
 
 		material_stage_t( renderer_t& r ): knowyourfather_t(r) {}
-		void Init();
+		void init();
 		void Run() const;
 	}; // end MS
 
@@ -48,7 +48,7 @@ struct renderer_t
 			ShaderProg shaderProg;
 
 			ambient_pass_t( renderer_t& r ): knowyourfather_t(r) {}
-			void Init();
+			void init();
 			void Run() const;
 		}; // end AP
 
@@ -59,8 +59,8 @@ struct renderer_t
 			static float smo_uvs_coords [];
 			static uint smo_uvs_vbo_id;
 			static void InitSMOUVS();
-			void DrawSMOUVS( const point_light_t& light );
-			void SetStencilMask( const point_light_t& light ) const;
+			void DrawSMOUVS( const PointLight& light );
+			void SetStencilMask( const PointLight& light ) const;
 
 			struct
 			{
@@ -68,14 +68,14 @@ struct renderer_t
 			} shader_progs;
 
 			point_light_pass_t( renderer_t& r ): knowyourfather_t(r) {}
-			void Init();
-			void Run( const point_light_t& light );
+			void init();
+			void Run( const PointLight& light );
 		}; // end point light pass
 
 		/// spot light pass
 		struct spot_light_pass_t: knowyourfather_t
 		{
-			void SetStencilMask( const spot_light_t& light ) const;
+			void SetStencilMask( const SpotLight& light ) const;
 
 			struct
 			{
@@ -83,8 +83,8 @@ struct renderer_t
 			} shader_progs;
 
 			spot_light_pass_t( renderer_t& r ): knowyourfather_t(r) {}
-			void Init() {}
-			void Run( const spot_light_t& light );
+			void init() {}
+			void Run( const SpotLight& light );
 
 		}; // end spot light pass
 
@@ -101,7 +101,7 @@ struct renderer_t
 		illumination_stage_t( renderer_t& r ): knowyourfather_t(r), ap(r), plp(r), slp(r) {}
 		void CalcViewVector();
 		void CalcPlanes();
-		void Init();
+		void init();
 		void Run() const;
 	}; // end IS
 
@@ -154,7 +154,7 @@ struct renderer_t
 				} fais;
 
 				hdr_pass_t( renderer_t& r ): knowyourfather_t(r) {}
-				void Init() {};
+				void init() {};
 				void Run() const {};
 			}; // end HDR
 
@@ -177,7 +177,7 @@ struct renderer_t
 				} fais;
 
 				ssao_pass_t( renderer_t& r ): knowyourfather_t(r) {}
-				void Init() {};
+				void init() {};
 				void Run() const {};
 			}; // end SSAO
 
@@ -207,7 +207,7 @@ struct renderer_t
 			edgeaa_t eaa;
 
 			postprocessing_stage_t( renderer_t& r ): knowyourfather_t(r), hdr(r), ssao(r), eaa(r) {}
-			void Init() {};
+			void init() {};
 			void Run() const {};
 	}; // end pps
 
@@ -251,7 +251,7 @@ struct renderer_t
 	static void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); };
 	static void NoShaders() { ShaderProg::unbind(); }
 	static void DrawQuad();
-	void Init();
+	void init();
 	void Run( camera_t* cam );
 };
 
