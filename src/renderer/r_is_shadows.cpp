@@ -73,7 +73,7 @@ void Init()
 /*
 =======================================================================================================================================
 RunPass                                                                                                                               =
-render scene only with depth and store the result in the shadow map                                                                   =
+render Scene only with depth and store the result in the shadow map                                                                   =
 =======================================================================================================================================
 */
 void RunPass( const Camera& cam )
@@ -102,9 +102,9 @@ void RunPass( const Camera& cam )
 	glEnable( GL_POLYGON_OFFSET_FILL );
 
 	// render all meshes
-	for( uint i=0; i<scene::meshNodes.size(); i++ )
+	for( uint i=0; i<Scene::meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = scene::meshNodes[i];
+		MeshNode* mesh_node = Scene::meshNodes[i];
 		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
 
 		DEBUG_ERR( mesh_node->material->dp_mtl == NULL );

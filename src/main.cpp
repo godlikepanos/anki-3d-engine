@@ -2,14 +2,14 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
-#include "common.h"
+#include "Common.h"
 
-#include "input.h"
+#include "Input.h"
 #include "Camera.h"
 #include "Math.h"
 #include "renderer.h"
-#include "ui.h"
-#include "app.h"
+#include "Ui.h"
+#include "App.h"
 #include "particles.h"
 #include "Texture.h"
 #include "Mesh.h"
@@ -35,7 +35,7 @@
 
 
 // map (hard coded)
-Camera* main_cam;
+Camera* mainCam;
 MeshNode* floor__,* sarge,* horse;
 skelModelNode* imp;
 PointLight* point_lights[10];
@@ -49,7 +49,7 @@ class floor_t: public Camera
 			r::dbg::RenderCube( true, 1.0 );
 		}
 
-		void RenderDepth()
+		void renderDepth()
 		{
 			r::dbg::RenderCube( true, 1.0 );
 		}
@@ -179,17 +179,17 @@ void Init()
 	srand( unsigned(time(NULL)) );
 	mathSanityChecks();
 
-	app::initWindow();
-	uint ticks = app::getTicks();
+	App::initWindow();
+	uint ticks = App::getTicks();
 
 	r::Init();
-	ui::Init();
+	Ui::init();
 
 	// camera
-	main_cam = new Camera( r::aspect_ratio*toRad(60.0), toRad(60.0), 0.5, 100.0 );
-	main_cam->moveLocalY( 3.0 );
-	main_cam->moveLocalZ( 5.7 );
-	main_cam->moveLocalX( -0.3 );
+	mainCam = new Camera( r::aspect_ratio*toRad(60.0), toRad(60.0), 0.5, 100.0 );
+	mainCam->moveLocalY( 3.0 );
+	mainCam->moveLocalZ( 5.7 );
+	mainCam->moveLocalX( -0.3 );
 
 	// lights
 	point_lights[0] = new PointLight();
@@ -226,7 +226,7 @@ void Init()
 	imp = new skelModelNode();
 	imp->init( "models/imp/imp.smdl" );
 	imp->setLocalTransformation( Vec3( 0.0, 2.11, 0.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.7 );
-	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = rsrc::skel_anims.load( "models/imp/walk.imp.anim" );
+	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = rsrc::skelAnims.load( "models/imp/walk.imp.anim" );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 
@@ -236,9 +236,9 @@ void Init()
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	scene::skybox.load( skybox_fnames );
+	Scene::skybox.load( skybox_fnames );
 
-	PRINT( "Engine initialization ends (" << app::getTicks()-ticks << ")" );
+	PRINT( "Engine initialization ends (" << App::getTicks()-ticks << ")" );
 	cerr.flush();
 }
 
@@ -251,16 +251,16 @@ int main( int /*argc*/, char* /*argv*/[] )
 	float f = M::sin( 10.0 );
 	PRINT( f );
 
-	app::printAppInfo();
+	App::printAppInfo();
 
 	Init();
 
 	PRINT( "Entering main loop" );
-	int ticks = app::getTicks();
+	int ticks = App::getTicks();
 	do
 	{
-		int ticks_ = app::getTicks();
-		i::HandleEvents();
+		int ticks_ = App::getTicks();
+		I::handleEvents();
 		r::PrepareNextFrame();
 
 		float dist = 0.2;
@@ -268,65 +268,65 @@ int main( int /*argc*/, char* /*argv*/[] )
 		float scale = 0.01;
 
 		// move the camera
-		static Node* mover = main_cam;
+		static Node* mover = mainCam;
 
-		if( i::keys[ SDLK_1 ] ) mover = main_cam;
-		if( i::keys[ SDLK_2 ] ) mover = point_lights[0];
-		if( i::keys[ SDLK_3 ] ) mover = spot_lights[0];
-		if( i::keys[ SDLK_4 ] ) mover = point_lights[1];
-		if( i::keys[ SDLK_5 ] ) mover = spot_lights[1];
-		if( i::keys[ SDLK_m ] == 1 ) i::warp_mouse = !i::warp_mouse;
+		if( I::keys[ SDLK_1 ] ) mover = mainCam;
+		if( I::keys[ SDLK_2 ] ) mover = point_lights[0];
+		if( I::keys[ SDLK_3 ] ) mover = spot_lights[0];
+		if( I::keys[ SDLK_4 ] ) mover = point_lights[1];
+		if( I::keys[ SDLK_5 ] ) mover = spot_lights[1];
+		if( I::keys[ SDLK_m ] == 1 ) I::warpMouse = !I::warpMouse;
 
-		if( i::keys[SDLK_a] ) mover->moveLocalX( -dist );
-		if( i::keys[SDLK_d] ) mover->moveLocalX( dist );
-		if( i::keys[SDLK_LSHIFT] ) mover->moveLocalY( dist );
-		if( i::keys[SDLK_SPACE] ) mover->moveLocalY( -dist );
-		if( i::keys[SDLK_w] ) mover->moveLocalZ( -dist );
-		if( i::keys[SDLK_s] ) mover->moveLocalZ( dist );
-		if( !i::warp_mouse )
+		if( I::keys[SDLK_a] ) mover->moveLocalX( -dist );
+		if( I::keys[SDLK_d] ) mover->moveLocalX( dist );
+		if( I::keys[SDLK_LSHIFT] ) mover->moveLocalY( dist );
+		if( I::keys[SDLK_SPACE] ) mover->moveLocalY( -dist );
+		if( I::keys[SDLK_w] ) mover->moveLocalZ( -dist );
+		if( I::keys[SDLK_s] ) mover->moveLocalZ( dist );
+		if( !I::warpMouse )
 		{
-			if( i::keys[SDLK_UP] ) mover->rotateLocalX( ang );
-			if( i::keys[SDLK_DOWN] ) mover->rotateLocalX( -ang );
-			if( i::keys[SDLK_LEFT] ) mover->rotateLocalY( ang );
-			if( i::keys[SDLK_RIGHT] ) mover->rotateLocalY( -ang );
+			if( I::keys[SDLK_UP] ) mover->rotateLocalX( ang );
+			if( I::keys[SDLK_DOWN] ) mover->rotateLocalX( -ang );
+			if( I::keys[SDLK_LEFT] ) mover->rotateLocalY( ang );
+			if( I::keys[SDLK_RIGHT] ) mover->rotateLocalY( -ang );
 		}
 		else
 		{
 			float accel = 44.0;
-			mover->rotateLocalX( ang * i::mouse_velocity.y * accel );
-			mover->rotateLocalY( -ang * i::mouse_velocity.x * accel );
+			mover->rotateLocalX( ang * I::mouseVelocity.y * accel );
+			mover->rotateLocalY( -ang * I::mouseVelocity.x * accel );
 		}
-		if( i::keys[SDLK_q] ) mover->rotateLocalZ( ang );
-		if( i::keys[SDLK_e] ) mover->rotateLocalZ( -ang );
-		if( i::keys[SDLK_PAGEUP] ) mover->scaleLspace += scale ;
-		if( i::keys[SDLK_PAGEDOWN] ) mover->scaleLspace -= scale ;
+		if( I::keys[SDLK_q] ) mover->rotateLocalZ( ang );
+		if( I::keys[SDLK_e] ) mover->rotateLocalZ( -ang );
+		if( I::keys[SDLK_PAGEUP] ) mover->scaleLspace += scale ;
+		if( I::keys[SDLK_PAGEDOWN] ) mover->scaleLspace -= scale ;
 
-		if( i::keys[SDLK_k] ) main_cam->lookAtPoint( point_lights[0]->translationWspace );
+		if( I::keys[SDLK_k] ) mainCam->lookAtPoint( point_lights[0]->translationWspace );
 
 		mover->rotationLspace.reorthogonalize();
 
 
-		scene::updateAllControllers();
-		scene::updateAllWorldStuff();
+		Scene::updateAllControllers();
+		Scene::updateAllWorldStuff();
 
 		dynamicsWorld->stepSimulation( 1 );
 
-		r::Render( *main_cam );
+		r::Render( *mainCam );
 
 		//map.octree.root->bounding_box.render();
 
 		// print some debug stuff
-		ui::SetColor( Vec4(1.0, 1.0, 1.0, 1.0) );
-		ui::SetPos( -0.98, 0.95 );
-		ui::SetFontWidth( 0.03 );
-		ui::printf( "frame:%d time:%dms\n", r::frames_num, app::getTicks()-ticks_ );
-		//ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
-		ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
+		Ui::setColor( Vec4(1.0, 1.0, 1.0, 1.0) );
+		Ui::setPos( -0.98, 0.95 );
+		Ui::setFontWidth( 0.03 );
+		Ui::printf( "frame:%d time:%dms\n", r::frames_num, App::getTicks()-ticks_ );
+		//Ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
+		Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
 
-		if( i::keys[SDLK_ESCAPE] ) break;
-		if( i::keys[SDLK_F11] ) app::togleFullScreen();
-		if( i::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
+		if( I::keys[SDLK_ESCAPE] ) break;
+		if( I::keys[SDLK_F11] ) App::togleFullScreen();
+		if( I::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
 		if( r::frames_num < 1000 )
@@ -341,15 +341,15 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( 1 )
 		{
 			//if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
-			app::waitForNextFrame();
+			App::waitForNextFrame();
 		}
 		else
 			if( r::frames_num == 5000 ) break;
 	}while( true );
-	PRINT( "Exiting main loop (" << app::getTicks()-ticks << ")" );
+	PRINT( "Exiting main loop (" << App::getTicks()-ticks << ")" );
 
 
 	PRINT( "Exiting..." );
-	app::quitApp( EXIT_SUCCESS );
+	App::quitApp( EXIT_SUCCESS );
 	return 0;
 }

@@ -35,7 +35,7 @@ bool Skeleton::load( const char* filename )
 			PARSE_ERR_EXPECTED( "string" );
 			return false;
 		}
-		bone.SetName( token->value.string );
+		bone.setName( token->value.string );
 
 		// head
 		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &bone.head[0] ) ) return false;
@@ -77,7 +77,7 @@ bool Skeleton::load( const char* filename )
 		}
 		if( token->value.int_ > Bone::MAX_CHILDS_PER_BONE )
 		{
-			ERROR( "Childs for bone \"" << bone.GetName() << "\" exceed the max" );
+			ERROR( "Childs for bone \"" << bone.getName() << "\" exceed the max" );
 			return false;
 		}
 		bone.childsNum = token->value.int_;

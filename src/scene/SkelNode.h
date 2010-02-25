@@ -1,7 +1,7 @@
 #ifndef _SKEL_NODE_H_
 #define _SKEL_NODE_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Node.h"
 #include "Controller.h"
 #include "Math.h"

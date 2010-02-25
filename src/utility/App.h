@@ -2,12 +2,12 @@
 #define _APP_H_
 
 #include <SDL/SDL.h>
-#include "common.h"
+#include "Common.h"
 
-namespace app {
+namespace App {
 
 
-extern uint timer_tick;
+extern uint timerTick;
 
 extern uint desktopW;
 extern uint desktopH;

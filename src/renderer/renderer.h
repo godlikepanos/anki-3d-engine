@@ -1,7 +1,7 @@
 #ifndef _RENDERER_H_
 #define _RENDERER_H_
 
-#include "common.h"
+#include "Common.h"
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>

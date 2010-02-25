@@ -9,7 +9,7 @@
 //=====================================================================================================================================
 void PointLight::init( const char* filename )
 {
-	lightProps = rsrc::light_props.load( filename );
+	lightProps = rsrc::lightProps.load( filename );
 	radius = lightProps->getRadius();
 }
 
@@ -19,12 +19,12 @@ void PointLight::init( const char* filename )
 //=====================================================================================================================================
 void SpotLight::init( const char* filename )
 {
-	lightProps = rsrc::light_props.load( filename );
+	lightProps = rsrc::lightProps.load( filename );
 	camera.setAll( lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance() );
 	castsShadow = lightProps->castsShadow();
 	if( lightProps->getTexture() == NULL )
 	{
-		ERROR( "Light properties \"" << lightProps->getName() << "\" do not have a texture" );
+		ERROR( "Light properties \"" << lightProps->getRsrcName() << "\" do not have a texture" );
 		return;
 	}
 }
@@ -35,7 +35,7 @@ void SpotLight::init( const char* filename )
 //=====================================================================================================================================
 void Light::deinit()
 {
-	rsrc::light_props.unload( lightProps );
+	rsrc::lightProps.unload( lightProps );
 }
 
 

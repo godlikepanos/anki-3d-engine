@@ -6,7 +6,7 @@
 #include "Scene.h"
 #include "r_private.h"
 #include "Camera.h"
-#include "app.h"
+#include "App.h"
 
 namespace r {
 
@@ -129,8 +129,8 @@ void Init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	w = app::windowW /* * rendering_quality*/;
-	h = app::windowH /* * rendering_quality*/;
+	w = App::windowW /* * rendering_quality*/;
+	h = App::windowH /* * rendering_quality*/;
 	aspect_ratio = float(w)/h;
 
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
@@ -195,8 +195,8 @@ void Render( const Camera& cam )
 	r::bs::RunStage2( cam );
 	r::dbg::RunStage( cam );
 
-	//r::SetViewport( 0, 0, app::windowW, app::windowH );
-	r::SetViewport( 0, 0, app::windowW, app::windowH );
+	//r::SetViewport( 0, 0, App::windowW, App::windowH );
+	r::SetViewport( 0, 0, App::windowW, App::windowH );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );

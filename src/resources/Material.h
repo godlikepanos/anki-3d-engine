@@ -1,7 +1,7 @@
 #ifndef _MATERIAL_H_
 #define _MATERIAL_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Math.h"
 #include "Resource.h"
 

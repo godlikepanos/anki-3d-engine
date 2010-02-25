@@ -31,7 +31,7 @@ namespace ms
 	namespace earlyz
 	{
 		extern void init(); ///< Inits the the earlyz FBO with r::ms::depth_fai
-		extern void RunPass( const Camera& cam ); ///< Renders the scene's depth in the r::ms:depth_fai
+		extern void RunPass( const Camera& cam ); ///< Renders the Scene's depth in the r::ms:depth_fai
 	}
 #endif
 }

@@ -62,7 +62,7 @@ void skybox_t::Render( const Mat3& rotation )
 	glUniform1i( shader->getUniLoc("colormap"), 0 );
 	shader->locTexUnit( shader->getUniLoc("noisemap"), *noise, 1 );
 	glUniform1f( shader->getUniLoc("timer"), (rotation_ang/(2*PI))*100 );
-	glUniform3fv( shader->getUniLoc("scene_ambient_color"), 1, &(Vec3( 1.0, 1.0, 1.0 ) / scene::GetAmbientColor())[0] );
+	glUniform3fv( shader->getUniLoc("scene_ambient_color"), 1, &(Vec3( 1.0, 1.0, 1.0 ) / Scene::getAmbientColor())[0] );
 
 	// set the rotation matrix
 	Mat3 tmp( rotation );

@@ -8,7 +8,7 @@
 #include "renderer.h"
 
 
-#define MTL_ERROR( x ) ERROR( "Material (" << getPath() << getName() << "): " << x );
+#define MTL_ERROR( x ) ERROR( "Material (" << getRsrcPath() << getRsrcName() << "): " << x );
 
 
 /*
@@ -357,7 +357,7 @@ bool Material::additionalInit()
 		int loc = shaderProg->getUniLoc( userDefinedVars[i].name.c_str() );
 		if( loc == -1 )
 		{
-			MTL_ERROR( "Shader \"" << shaderProg->getName() << "\" and user defined var \"" << userDefinedVars[i].name <<
+			MTL_ERROR( "Shader \"" << shaderProg->getRsrcName() << "\" and user defined var \"" << userDefinedVars[i].name <<
 			           "\" do not combine. Incorrect location" );
 			return false;
 		}

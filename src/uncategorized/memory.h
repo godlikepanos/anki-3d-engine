@@ -1,7 +1,7 @@
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
-#include "common.h"
+#include "Common.h"
 
 #define MEGABYTE 1048576
 #define KILOBYTE 1024

@@ -1,8 +1,8 @@
-#include "input.h"
+#include "Input.h"
 #include "renderer.h"
 
 
-namespace i {
+namespace I {
 
 
 
@@ -12,37 +12,37 @@ data vars                                                                       
 =======================================================================================================================================
 */
 short keys [SDLK_LAST];  // shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
-short mouse_btns [8];    // mouse btns. Supporting 3 btns & wheel. Works the same as above
-Vec2 mouse_pos_ndc;    // the coords are in the ndc space
-Vec2 mouse_pos;        // the coords are in the window space
-Vec2 mouse_velocity;
+short mouseBtns [8];    // mouse btns. Supporting 3 btns & wheel. Works the same as above
+Vec2 mousePosNdc;    // the coords are in the ndc space
+Vec2 mousePos;        // the coords are in the window space
+Vec2 mouseVelocity;
 
-bool warp_mouse = false;
-bool hide_cursor = true;
+bool warpMouse = false;
+bool hideCursor = true;
 
 
 /*
 =======================================================================================================================================
-Reset                                                                                                                                 =
+reset                                                                                                                                 =
 =======================================================================================================================================
 */
 void Reset( void )
 {
 	memset( keys, 0, sizeof(keys) );
-	memset(mouse_btns, 0, sizeof(mouse_btns) );
-	mouse_pos_ndc.setZero();
-	mouse_velocity.setZero();
+	memset(mouseBtns, 0, sizeof(mouseBtns) );
+	mousePosNdc.setZero();
+	mouseVelocity.setZero();
 }
 
 
 /*
 =======================================================================================================================================
-HandleEvents                                                                                                                          =
+handleEvents                                                                                                                          =
 =======================================================================================================================================
 */
-void HandleEvents()
+void handleEvents()
 {
-	if( hide_cursor ) SDL_ShowCursor( SDL_DISABLE );
+	if( hideCursor ) SDL_ShowCursor( SDL_DISABLE );
 	else              SDL_ShowCursor( SDL_ENABLE );
 
 	// add the times a key is bying pressed
@@ -52,11 +52,11 @@ void HandleEvents()
 	}
 	for( int x=0; x<8; x++ )
 	{
-		if( mouse_btns[x] ) ++mouse_btns[x];
+		if( mouseBtns[x] ) ++mouseBtns[x];
 	}
 
 
-	mouse_velocity.setZero();
+	mouseVelocity.setZero();
 
 	SDL_Event event_;
 	while( SDL_PollEvent(&event_) )
@@ -72,46 +72,46 @@ void HandleEvents()
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
-				mouse_btns[event_.button.button] = 1;
+				mouseBtns[event_.button.button] = 1;
 				break;
 
 			case SDL_MOUSEBUTTONUP:
-				mouse_btns[event_.button.button] = 0;
+				mouseBtns[event_.button.button] = 0;
 				break;
 
 			case SDL_MOUSEMOTION:
 			{
-				Vec2 prev_mouse_pos_ndc( mouse_pos_ndc );
+				Vec2 prev_mouse_pos_ndc( mousePosNdc );
 
-				mouse_pos.x = event_.button.x;
-				mouse_pos.y = event_.button.y;
+				mousePos.x = event_.button.x;
+				mousePos.y = event_.button.y;
 
-				mouse_pos_ndc.x = (2.0f * mouse_pos.x) / (float)app::windowW - 1.0f;
-				mouse_pos_ndc.y = 1.0f - (2.0f * mouse_pos.y) / (float)app::windowH;
+				mousePosNdc.x = (2.0f * mousePos.x) / (float)App::windowW - 1.0f;
+				mousePosNdc.y = 1.0f - (2.0f * mousePos.y) / (float)App::windowH;
 
-				if( warp_mouse )
+				if( warpMouse )
 				{
 					// the SDL_WarpMouse pushes an event in the event queue. This check is so we wont process the event of the...
 					// ...SDL_WarpMouse function
-					if( mouse_pos_ndc == Vec2::getZero() ) break;
+					if( mousePosNdc == Vec2::getZero() ) break;
 
-					SDL_WarpMouse( app::windowW/2, app::windowH/2);
+					SDL_WarpMouse( App::windowW/2, App::windowH/2);
 				}
 
-				mouse_velocity = mouse_pos_ndc - prev_mouse_pos_ndc;
+				mouseVelocity = mousePosNdc - prev_mouse_pos_ndc;
 				break;
 			}
 
 			case SDL_QUIT:
-				app::quitApp(1);
+				App::quitApp(1);
 				break;
 		}
 	}
 
-	//cout << fixed << " velocity: " << mouse_velocity.x() << ' ' << mouse_velocity.y() << endl;
-	//cout << fixed << mouse_pos_ndc.x() << ' ' << mouse_pos_ndc.y() << endl;
+	//cout << fixed << " velocity: " << mouseVelocity.x() << ' ' << mouseVelocity.y() << endl;
+	//cout << fixed << mousePosNdc.x() << ' ' << mousePosNdc.y() << endl;
 	//cout << crnt_keys[SDLK_m] << ' ' << prev_keys[SDLK_m] << "      " << keys[SDLK_m] << endl;
-	//cout << mouse_btns[SDL_BUTTON_LEFT] << endl;
+	//cout << mouseBtns[SDL_BUTTON_LEFT] << endl;
 
 }
 

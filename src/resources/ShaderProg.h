@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include <map>
-#include "common.h"
+#include "Common.h"
 #include "Resource.h"
 
 class ShaderParser;

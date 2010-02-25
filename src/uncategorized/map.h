@@ -1,7 +1,7 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include "common.h"
+#include "Common.h"
 #include "collision.h"
 
 class Mesh;

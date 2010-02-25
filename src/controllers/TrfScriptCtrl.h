@@ -1,7 +1,7 @@
 #ifndef _TRF_SCRIPT_CTRL_H_
 #define _TRF_SCRIPT_CTRL_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Controller.h"
 
 

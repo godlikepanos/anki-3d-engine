@@ -1,7 +1,7 @@
 #ifndef _MAT3_H_
 #define _MAT3_H_
 
-#include "common.h"
+#include "Common.h"
 #include "MathForwardDecls.h"
 
 

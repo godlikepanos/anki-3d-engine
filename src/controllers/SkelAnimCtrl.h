@@ -1,7 +1,7 @@
 #ifndef _SKEL_ANIM_CTRL_H_
 #define _SKEL_ANIM_CTRL_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Controller.h"
 #include "Math.h"
 

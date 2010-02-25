@@ -20,7 +20,7 @@ Container<ShaderProg> shaders;
 Container<Material>    materials;
 Container<Mesh>        meshes;
 Container<Skeleton>    skeletons;
-Container<SkelAnim>   skel_anims;
-Container<LightProps> light_props;
+Container<SkelAnim>   skelAnims;
+Container<LightProps> lightProps;
 
 } // end namespace

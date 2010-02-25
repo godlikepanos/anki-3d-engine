@@ -1,7 +1,7 @@
 #ifndef _VEC2_H_
 #define _VEC2_H_
 
-#include "common.h"
+#include "Common.h"
 #include "MathForwardDecls.h"
 
 

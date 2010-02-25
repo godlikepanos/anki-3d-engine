@@ -1,7 +1,7 @@
 #ifndef _SCENE_H_
 #define _SCENE_H_
 
-#include "common.h"
+#include "Common.h"
 #include "skybox.h"
 
 
@@ -13,12 +13,12 @@ class SkelNode;
 class Controller;
 
 
-namespace scene {
+namespace Scene {
 
 // misc
 extern skybox_t skybox;
-inline Vec3 GetAmbientColor() { return Vec3( 0.1, 0.05, 0.05 )*1; }
-inline Vec3 SunPos() { return Vec3( 0.0, 1.0, -1.0 ) * 50.0; }
+inline Vec3 getAmbientColor() { return Vec3( 0.1, 0.05, 0.05 )*1; }
+inline Vec3 getSunPos() { return Vec3( 0.0, 1.0, -1.0 ) * 50.0; }
 
 // funcs
 extern void registerNode( Node* node );

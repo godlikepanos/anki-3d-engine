@@ -171,19 +171,19 @@ void RunStage( const Camera& cam )
 	glDisable( GL_BLEND );
 
 	//r::RenderGrid();
-	for( uint i=0; i<scene::nodes.size(); i++ )
+	for( uint i=0; i<Scene::nodes.size(); i++ )
 	{
 		if
 		(
-			(scene::nodes[i]->type == Node::NT_LIGHT && show_lights) ||
-			(scene::nodes[i]->type == Node::NT_CAMERA && show_cameras)
+			(Scene::nodes[i]->type == Node::NT_LIGHT && show_lights) ||
+			(Scene::nodes[i]->type == Node::NT_CAMERA && show_cameras)
 		)
 		{
-			scene::nodes[i]->render();
+			Scene::nodes[i]->render();
 		}
-		else if( scene::nodes[i]->type == Node::NT_SKELETON && show_skeletons )
+		else if( Scene::nodes[i]->type == Node::NT_SKELETON && show_skeletons )
 		{
-			SkelNode* skel_node = static_cast<SkelNode*>( scene::nodes[i] );
+			SkelNode* skel_node = static_cast<SkelNode*>( Scene::nodes[i] );
 			glDisable( GL_DEPTH_TEST );
 			skel_node->render();
 			glEnable( GL_DEPTH_TEST );
@@ -403,7 +403,7 @@ static void RenderSun()
 {
 	glPushMatrix();
 
-	r::MultMatrix( Mat4( scene::SunPos(), Mat3::getIdentity(), 50.0 ) );
+	r::MultMatrix( Mat4( Scene::getSunPos(), Mat3::getIdentity(), 50.0 ) );
 
 	r::Color3( Vec3(1.0, 1.0, 0.0) );
 	r::dbg::RenderSphere( 1.0/8.0, 8 );
@@ -421,8 +421,8 @@ static void RenderSun()
 	glLoadIdentity();
 
 
-	Vec4 p = Vec4( scene::SunPos(), 1.0 );
-	p = main_cam->getProjectionMatrix() * (main_cam->getViewMatrix() * p);
+	Vec4 p = Vec4( Scene::getSunPos(), 1.0 );
+	p = mainCam->getProjectionMatrix() * (mainCam->getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
 

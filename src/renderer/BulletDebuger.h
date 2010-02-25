@@ -1,7 +1,7 @@
 #ifndef _BULLETDEBUGER_H_
 #define _BULLETDEBUGER_H_
 
-#include "common.h"
+#include "Common.h"
 #include <LinearMath/btIDebugDraw.h>
 
 

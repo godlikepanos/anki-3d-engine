@@ -4,8 +4,8 @@
 #include "Texture.h"
 
 
-#define SHADER_ERROR( x ) ERROR( "Shader (" << getName() << "): " << x )
-#define SHADER_WARNING( x ) WARNING( "Shader (" << getName() << "): " << x )
+#define SHADER_ERROR( x ) ERROR( "Shader (" << getRsrcName() << "): " << x )
+#define SHADER_WARNING( x ) WARNING( "Shader (" << getRsrcName() << "): " << x )
 
 
 
@@ -224,7 +224,7 @@ bool ShaderProg::load( const char* filename )
 //=====================================================================================================================================
 bool ShaderProg::customload( const char* filename, const char* extra_source )
 {
-	if( getName().length() == 0 )
+	if( getRsrcName().length() == 0 )
 	{
 		name = Util::cutPath( filename );
 		path = Util::getPath( filename );

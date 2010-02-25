@@ -1,8 +1,7 @@
 #ifndef _RESOURCE_H_
 #define _RESOURCE_H_
 
-#include "common.h"
-#include "engine_class.h"
+#include "Common.h"
 #include "Util.h"
 
 
@@ -27,9 +26,9 @@ template< typename Type > class Container;
  */
 class Resource
 {
-	PROPERTY_R( string, path, getPath );
-	PROPERTY_R( string, name, getName );
-	PROPERTY_R( uint, usersNum, getUsersNum );
+	PROPERTY_R( string, path, getRsrcPath );
+	PROPERTY_R( string, name, getRsrcName );
+	PROPERTY_R( uint, usersNum, getRsrcUsersNum );
 
 	// friends
 	friend class rsrc::Container<Texture>;
@@ -54,13 +53,13 @@ class Resource
 namespace rsrc {
 
 
-extern Container<Texture>     textures;
+extern Container<Texture>    textures;
 extern Container<ShaderProg> shaders;
-extern Container<Material>    materials;
-extern Container<Mesh>        meshes;
-extern Container<Skeleton>    skeletons;
-extern Container<SkelAnim>   skel_anims;
-extern Container<LightProps> light_props;
+extern Container<Material>   materials;
+extern Container<Mesh>       meshes;
+extern Container<Skeleton>   skeletons;
+extern Container<SkelAnim>   skelAnims;
+extern Container<LightProps> lightProps;
 
 
 /// resource container template class

@@ -9,7 +9,7 @@ The normal shows the direction we have to move bvolume2 in order to seperate the
 move bvolume2 for the seperation. The impact_point is a point between inside the collision area.
 */
 
-#include "common.h"
+#include "Common.h"
 #include "Math.h"
 
 class lineseg_t;

@@ -1,7 +1,7 @@
 #ifndef _SKEL_ANIM_H_
 #define _SKEL_ANIM_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 
