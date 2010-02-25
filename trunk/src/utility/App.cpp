@@ -1,16 +1,16 @@
 #include <GL/glew.h>
-#include "app.h"
+#include "App.h"
 
-namespace app { // begin of namespace
+namespace App { // begin of namespace
 
 
-static SDL_Surface* main_surf;
-static SDL_Surface* icon_image;
+static SDL_Surface* mainSurf;
+static SDL_Surface* iconImage;
 
 uint windowW = 1280;
 uint windowH = 800;
 
-uint timer_tick = 1000/40; // in ms. 1000/Hz
+uint timerTick = 1000/40; // in ms. 1000/Hz
 static uint time = 0;
 
 uint desktopW;
@@ -45,16 +45,16 @@ void initWindow()
 	desktopH = info->current_h;
 
 	// the icon
-	icon_image = SDL_LoadBMP("gfx/icon.bmp");
-	if( icon_image == NULL )
+	iconImage = SDL_LoadBMP("gfx/icon.bmp");
+	if( iconImage == NULL )
 	{
 		ERROR( "Cannot load window icon" );
 	}
 	else
 	{
-		Uint32 colorkey = SDL_MapRGB( icon_image->format, 255, 0, 255 );
-		SDL_SetColorKey( icon_image, SDL_SRCCOLORKEY, colorkey );
-		SDL_WM_SetIcon( icon_image, NULL );
+		Uint32 colorkey = SDL_MapRGB( iconImage->format, 255, 0, 255 );
+		SDL_SetColorKey( iconImage, SDL_SRCCOLORKEY, colorkey );
+		SDL_WM_SetIcon( iconImage, NULL );
 	}
 
 	// set GL attribs
@@ -63,7 +63,7 @@ void initWindow()
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 
 	// set the surface
-	main_surf = SDL_SetVideoMode( windowW, windowH, 24, SDL_HWSURFACE | SDL_OPENGL );
+	mainSurf = SDL_SetVideoMode( windowW, windowH, 24, SDL_HWSURFACE | SDL_OPENGL );
 
 	// move the window
 #ifdef WIN32
@@ -90,7 +90,7 @@ togleFullScreen                                                                 
 */
 void togleFullScreen()
 {
-	SDL_WM_ToggleFullScreen( main_surf );
+	SDL_WM_ToggleFullScreen( mainSurf );
 }
 
 
@@ -101,7 +101,7 @@ quitApp                                                                         
 */
 void quitApp( int code )
 {
-	SDL_FreeSurface( main_surf );
+	SDL_FreeSurface( mainSurf );
 	SDL_Quit();
 	exit(code);
 }
@@ -116,10 +116,10 @@ void waitForNextFrame()
 {
 	uint now = SDL_GetTicks();
 
-	if( now - time < timer_tick )
+	if( now - time < timerTick )
 	{
 		// the new time after the SDL_Delay will be...
-		time += timer_tick;
+		time += timerTick;
 		// sleep a little
 		SDL_Delay( time - now);
 	}

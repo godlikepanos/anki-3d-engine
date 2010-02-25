@@ -1,7 +1,7 @@
 #ifndef _SKEL_MODEL_NODE_H_
 #define _SKEL_MODEL_NODE_H_
 
-#include "common.h"
+#include "Common.h"
 #include "MeshNode.h" 
 
 
@@ -10,7 +10,7 @@ class SkelNode;
 
 
 /** 
- * Skeleton model scene node
+ * Skeleton model Scene node
  * It is just a group node with a derived init
  */
 class skelModelNode: public Node

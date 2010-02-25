@@ -2,9 +2,9 @@
 #ifndef _PARTICLES_H_
 #define _PARTICLES_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Math.h"
-#include "app.h"
+#include "App.h"
 #include "object.h"
 
 #define PARTICLE_VELS_NUM 2

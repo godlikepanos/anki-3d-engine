@@ -63,9 +63,9 @@ void RunStage( const Camera& cam )
 
 
 	// render the meshes
-	for( uint i=0; i<scene::meshNodes.size(); i++ )
+	for( uint i=0; i<Scene::meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = scene::meshNodes[i];
+		MeshNode* mesh_node = Scene::meshNodes[i];
 		if( mesh_node->material->blends && !mesh_node->material->blends )
 		{
 			fbo.Bind();

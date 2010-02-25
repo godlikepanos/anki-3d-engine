@@ -5,7 +5,7 @@
 #include "Controller.h"
 
 
-namespace scene
+namespace Scene
 {
 	extern void registerNode( Node* );
 }
@@ -26,7 +26,7 @@ void Node::commonConstructorCode()
 	rotationWspace = Mat3::getIdentity();
 	bvolumeLspace = NULL;
 
-	scene::registerNode( this );
+	Scene::registerNode( this );
 }
 
 

@@ -1,7 +1,7 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-#include "common.h"
+#include "Common.h"
 #include "collision.h"
 #include "Node.h"
 

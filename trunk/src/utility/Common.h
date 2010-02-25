@@ -34,11 +34,6 @@ typedef unsigned long int ulong;
 #endif
 
 
-//=====================================================================================================================================
-// misc funcs                                                                                                                         =
-//=====================================================================================================================================
-template<typename Type> class Vec;
-
 
 //=====================================================================================================================================
 // MACROS                                                                                                                             =
@@ -184,28 +179,28 @@ template<typename Type> class Vec: public vector<Type>
 
 #include <malloc.h>
 
-typedef struct mallinfo mallinfo_t; 
+typedef struct mallinfo Mallinfo; 
 
-inline mallinfo_t GetMallInfo()
+inline Mallinfo GetMallInfo()
 {
 	return mallinfo();
 }
 
-inline void printMallInfo( const mallinfo_t& minfo )
+inline void printMallInfo( const Mallinfo& minfo )
 {
 	PRINT( "used:" << minfo.uordblks << " free:" << minfo.fordblks << " total:" << minfo.arena );
 }
 
-inline void printMallInfoDiff( const mallinfo_t& prev, const mallinfo_t& now )
+inline void printMallInfoDiff( const Mallinfo& prev, const Mallinfo& now )
 {
-	mallinfo_t diff;
+	Mallinfo diff;
 	diff.uordblks = now.uordblks-prev.uordblks;
 	diff.fordblks = now.fordblks-prev.fordblks;
 	diff.arena = now.arena-prev.arena;
 	printMallInfo( diff );
 }
 
-#define MALLINFO_BEGIN mallinfo_t __m__ = GetMallInfo();
+#define MALLINFO_BEGIN Mallinfo __m__ = GetMallInfo();
 
 #define MALLINFO_END printMallInfoDiff( __m__, GetMallInfo() ); 
 

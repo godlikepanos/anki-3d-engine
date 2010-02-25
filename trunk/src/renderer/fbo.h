@@ -1,7 +1,7 @@
 #ifndef _FBO_H_
 #define _FBO_H_
 
-#include "common.h"
+#include "Common.h"
 #include "renderer.h"
 
 

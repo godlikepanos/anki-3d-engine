@@ -1,10 +1,9 @@
 #ifndef _SKELETON_H_
 #define _SKELETON_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Math.h"
 #include "Resource.h"
-#include "engine_class.h"
 
 
 /// Skeleton
@@ -12,8 +11,10 @@ class Skeleton: public Resource
 {
 	public:
 		/// Bone
-		class Bone: public nc_t
+		class Bone
 		{
+			PROPERTY_RW( string, name, setName, getName )
+
 			public:
 				static const uint MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 				ushort  id; ///< pos inside the Skeleton::bones vector

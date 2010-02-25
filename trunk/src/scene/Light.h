@@ -17,7 +17,7 @@ Specular intensity of material: Sm
 #ifndef _LIGHT_H_
 #define _LIGHT_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Texture.h"
 #include "Node.h"
 #include "Camera.h"

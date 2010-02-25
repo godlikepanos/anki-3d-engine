@@ -111,7 +111,7 @@ inline void sinCos( float a, float& sina, float& cosa )
 //=====================================================================================================================================
 // Small funcs                                                                                                                        =
 //=====================================================================================================================================
-inline float sqrt( float f ) { PRINT("LALA") return 1/invSqrt(f); }
+inline float sqrt( float f ) { return 1/invSqrt(f); }
 inline float toRad( float degrees ) { return degrees*(PI/180.0); }
 inline float toDegrees( float rad ) { return rad*(180.0/PI); }
 inline float sin( float rad ) { return ::sin(rad); }

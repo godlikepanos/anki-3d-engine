@@ -78,12 +78,12 @@ void RunPass( const Camera& cam )
 
 
 	// render all meshes
-	for( uint i=0; i<scene::meshes.size(); i++ )
-		renderDepth<Mesh>( *scene::meshes[i], shdr_dp, shdr_dp_grass );
+	for( uint i=0; i<Scene::meshes.size(); i++ )
+		renderDepth<Mesh>( *Scene::meshes[i], shdr_dp, shdr_dp_grass );
 
 	// render all smodels
-	for( uint i=0; i<scene::models.size(); i++ )
-		renderDepth<model_t>( *scene::models[i], shdr_dp, shdr_dp_grass );
+	for( uint i=0; i<Scene::models.size(); i++ )
+		renderDepth<model_t>( *Scene::models[i], shdr_dp, shdr_dp_grass );
 
 	glColorMask( true, true, true, true );
 

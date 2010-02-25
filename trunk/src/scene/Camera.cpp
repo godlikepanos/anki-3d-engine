@@ -61,7 +61,7 @@ void Camera::render()
 
 	glPopMatrix();
 
-//	if( !strcmp( camera_data_user_class_t::GetName(), "main_cam") ) return;
+//	if( !strcmp( camera_data_user_class_t::getName(), "mainCam") ) return;
 //	//for( uint i=0; i<2; i++ )
 //		wspaceFrustumPlanes[TOP].render();
 }

@@ -1,7 +1,7 @@
 #ifndef _LIGHTPROPS_H_
 #define _LIGHTPROPS_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 

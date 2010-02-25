@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include "ui.h"
+#include "Ui.h"
 #include "renderer.h"
 #include "Texture.h"
 #include "Resource.h"
 
-namespace ui {
+namespace Ui {
 
 
 /*
@@ -157,22 +157,22 @@ non static funcs                                                                
 
 // init
 // exec after init SDL
-void Init()
+void init()
 {
 	font_map = rsrc::textures.load( "gfx/fontmapa.tga" );
 	font_map->texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	//font_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	shader = rsrc::shaders.load( "shaders/txt.glsl" );
-	SetPos( 0.0f, 0.0f );
-	SetFontWidth( 0.05f );
-	SetColor( Vec4(1.0f, 1.0f, 1.0f, 1.0f) );
+	setPos( 0.0f, 0.0f );
+	setFontWidth( 0.05f );
+	setColor( Vec4(1.0f, 1.0f, 1.0f, 1.0f) );
 	italic = false;
 }
 
 
-// SetFontWidth
+// setFontWidth
 // sets font width from the given param and the height fron the aspect ratio
-void SetFontWidth( float w_ )
+void setFontWidth( float w_ )
 {
 	// width
 	font_w = w_;
@@ -181,15 +181,15 @@ void SetFontWidth( float w_ )
 }
 
 
-// SetColor
-void SetColor( const Vec4& color_ )
+// setColor
+void setColor( const Vec4& color_ )
 {
 	for( int i=0; i<4; i++ )
 		color[i] = color_[i];
 }
 
-// SetPos
-void SetPos( float x_, float y_ )
+// setPos
+void setPos( float x_, float y_ )
 {
 	initial_x = crnt_x = x_;
 	crnt_y = y_;

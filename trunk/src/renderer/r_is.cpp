@@ -24,7 +24,7 @@ VARS                                                                            
 */
 static fbo_t fbo;
 
-Texture fai;  // illuminated scene
+Texture fai;  // illuminated Scene
 
 static uint stencil_rb; // framebuffer render buffer for stencil optimizations
 
@@ -401,7 +401,7 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	shdr->locTexUnit( shdr->GetUniLoc(3), r::ms::depth_fai, 3 );
 
 	if( light.lightProps->getTexture() == NULL )
-		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getName() );
+		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getRsrcName() );
 
 	// the planes
 	//glUniform2fv( shdr->getUniLoc("planes"), 1, &planes[0] );
@@ -486,7 +486,7 @@ void RunStage( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 
 	// ambient pass
-	AmbientPass( cam, scene::GetAmbientColor() );
+	AmbientPass( cam, Scene::getAmbientColor() );
 
 	// light passes
 	glEnable( GL_BLEND );
@@ -496,9 +496,9 @@ void RunStage( const Camera& cam )
 	CalcPlanes( cam );
 
 	// for all lights
-	for( uint i=0; i<scene::lights.size(); i++ )
+	for( uint i=0; i<Scene::lights.size(); i++ )
 	{
-		const Light& light = *scene::lights[i];
+		const Light& light = *Scene::lights[i];
 		switch( light.type )
 		{
 			case Light::LT_POINT:

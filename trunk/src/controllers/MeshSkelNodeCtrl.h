@@ -1,7 +1,7 @@
 #ifndef _MESH_SKEL_CTRL_H_
 #define _MESH_SKEL_CTRL_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Controller.h"
 
 

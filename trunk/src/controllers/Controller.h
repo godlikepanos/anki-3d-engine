@@ -1,7 +1,7 @@
 #ifndef _CONTROLLER_H_
 #define _CONTROLLER_H_
 
-#include "common.h"
+#include "Common.h"
 
 
 /// Scenegraph node controller (A)

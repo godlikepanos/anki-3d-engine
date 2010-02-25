@@ -1,7 +1,7 @@
 #ifndef _SKYBOX_H_
 #define _SKYBOX_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Texture.h"
 #include "Math.h"
 

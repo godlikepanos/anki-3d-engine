@@ -1,7 +1,7 @@
 #ifndef _MATHFUNCS_H_
 #define _MATHFUNCS_H_
 
-#include "common.h"
+#include "Common.h"
 #include "MathForwardDecls.h"
 
 

@@ -1,7 +1,7 @@
 #ifndef _LIGHT_SCRIPT_CTRL_H_
 #define _LIGHT_SCRIPT_CTRL_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Controller.h"
 
 

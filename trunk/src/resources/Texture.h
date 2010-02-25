@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <limits>
-#include "common.h"
+#include "Common.h"
 #include "Resource.h"
 
 

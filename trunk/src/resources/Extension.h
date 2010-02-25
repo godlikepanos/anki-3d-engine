@@ -1,7 +1,7 @@
 #ifndef _EXTENSION_H_
 #define _EXTENSION_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Resource.h"
 
 

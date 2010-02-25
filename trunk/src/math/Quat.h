@@ -1,7 +1,7 @@
 #ifndef _QUAT_H_
 #define _QUAT_H_
 
-#include "common.h"
+#include "Common.h"
 #include "MathForwardDecls.h"
 
 

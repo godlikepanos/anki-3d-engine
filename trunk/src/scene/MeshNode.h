@@ -1,7 +1,7 @@
 #ifndef _MESH_NODE_H_
 #define _MESH_NODE_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Node.h"
 #include "Material.h"
 

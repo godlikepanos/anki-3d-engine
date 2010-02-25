@@ -1,7 +1,7 @@
 #ifndef _MESH_H_
 #define _MESH_H_
 
-#include "common.h"
+#include "Common.h"
 #include "Math.h"
 #include "vbo.h"
 #include "Resource.h"

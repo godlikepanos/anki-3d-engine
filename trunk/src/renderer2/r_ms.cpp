@@ -55,17 +55,17 @@ void renderer_t::material_stage_t::Run() const
 	renderer.SetViewport( 0, 0, renderer.width, renderer.height );
 
 	//glEnable( GL_DEPTH_TEST );
-	scene::skybox.render( renderer.camera->getViewMatrix().getRotationPart() );
+	Scene::skybox.render( renderer.camera->getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 
 	// render the meshes
-	for( uint i=0; i<scene::meshes.size(); i++ )
-		render<Mesh, false>( scene::meshes[i] );
+	for( uint i=0; i<Scene::meshes.size(); i++ )
+		render<Mesh, false>( Scene::meshes[i] );
 
 	// render the smodels
-	for( uint i=0; i<scene::smodels.size(); i++ )
-		render<smodel_t, false>( scene::smodels[i] );
+	for( uint i=0; i<Scene::smodels.size(); i++ )
+		render<smodel_t, false>( Scene::smodels[i] );
 
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode
 

@@ -103,7 +103,7 @@ void renderer_t::illumination_stage_t::ambient_pass_t::Run() const
 	shaderProg.bind();
 
 	// set the uniforms
-	glUniform3fv( shaderProg.getUniLoc(0), 1, &((Vec3)scene::GetAmbientColor())[0] );
+	glUniform3fv( shaderProg.getUniLoc(0), 1, &((Vec3)Scene::getAmbientColor())[0] );
 	shaderProg.locTexUnit( shaderProg.getUniLoc(1), renderer.ms.fais.diffuse, 0 );
 
 	// Draw quad

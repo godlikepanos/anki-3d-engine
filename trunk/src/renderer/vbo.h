@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include <GL/gl.h>
-#include "common.h"
+#include "Common.h"
 
 /// This is a wrapper for Vertex Buffer Objects to prevent us from making idiotic errors
 class vbo_t
