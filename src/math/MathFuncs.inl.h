@@ -1,7 +1,7 @@
-#include "m_dflt_header.h"
+#include "MathDfltHeader.h"
 
 
-namespace m {
+namespace M {
 
 
 // mathSanityChecks
@@ -9,8 +9,8 @@ namespace m {
 inline void mathSanityChecks()
 {
 	const int fs = sizeof(float); // float size
-	if( sizeof(vec2_t)!=fs*2 || sizeof(vec3_t)!=fs*3 || sizeof(vec4_t)!=fs*4 || sizeof(quat_t)!=fs*4 || sizeof(Euler)!=fs*3 ||
-	    sizeof(mat3_t)!=fs*9 || sizeof(mat4_t)!=fs*16 )
+	if( sizeof(Vec2)!=fs*2 || sizeof(Vec3)!=fs*3 || sizeof(Vec4)!=fs*4 || sizeof(Quat)!=fs*4 || sizeof(Euler)!=fs*3 ||
+	    sizeof(Mat3)!=fs*9 || sizeof(Mat4)!=fs*16 )
 		FATAL("Your compiler does class alignment. Quiting");
 }
 
@@ -62,8 +62,8 @@ inline static float PolynomialSinQuadrant(float a)
 inline void sinCos( float a, float& sina, float& cosa )
 {
 #ifdef _DEBUG_
-	sina = sin(a);
-	cosa = cos(a);
+	sina = M::sin(a);
+	cosa = M::cos(a);
 #else
 	bool negative = false;
 	if (a < 0.0)
@@ -111,31 +111,29 @@ inline void sinCos( float a, float& sina, float& cosa )
 //=====================================================================================================================================
 // Small funcs                                                                                                                        =
 //=====================================================================================================================================
-inline float sqrt( float f ) { return 1/invSqrt(f); }
-inline float ToRad( float degrees ) { return degrees*(PI/180.0); }
-inline float ToDegrees( float rad ) { return rad*(180.0/PI); }
-inline float Sin( float rad ) { return sin(rad); }
-inline float Cos( float rad ) { return cos(rad); }
-inline bool  IsZero( float f ) { return ( fabs(f) < EPSILON ); }
-inline float Max( float a, float b ) { return (a>b) ? a : b; }
-inline float Min( float a, float b ) { return (a<b) ? a : b; }
+inline float sqrt( float f ) { PRINT("LALA") return 1/invSqrt(f); }
+inline float toRad( float degrees ) { return degrees*(PI/180.0); }
+inline float toDegrees( float rad ) { return rad*(180.0/PI); }
+inline float sin( float rad ) { return ::sin(rad); }
+inline float cos( float rad ) { return ::cos(rad); }
+inline bool  isZero( float f ) { return ( fabs(f) < EPSILON ); }
 
 
-//  CombineTransformations
+//  combineTransformations
 //  mat4(t0,r0,s0)*mat4(t1,r1,s1) == mat4(tf,rf,sf)
-inline void CombineTransformations( const vec3_t& t0, const mat3_t& r0, float s0,
-                                      const vec3_t& t1, const mat3_t& r1, float s1,
-                                      vec3_t& tf, mat3_t& rf, float& sf )
+inline void combineTransformations( const Vec3& t0, const Mat3& r0, float s0,
+                                    const Vec3& t1, const Mat3& r1, float s1,
+                                    Vec3& tf, Mat3& rf, float& sf )
 {
-	tf = t1.GetTransformed( t0, r0, s0 );
+	tf = t1.getTransformed( t0, r0, s0 );
 	rf = r0 * r1;
 	sf = s0 * s1;
 }
 
-//  CombineTransformations as the above but without scale
-inline void CombineTransformations( const vec3_t& t0, const mat3_t& r0, const vec3_t& t1, const mat3_t& r1, vec3_t& tf, mat3_t& rf)
+//  combineTransformations as the above but without scale
+inline void combineTransformations( const Vec3& t0, const Mat3& r0, const Vec3& t1, const Mat3& r1, Vec3& tf, Mat3& rf)
 {
-	tf = t1.GetTransformed( t0, r0 );
+	tf = t1.getTransformed( t0, r0 );
 	rf = r0 * r1;
 }
 

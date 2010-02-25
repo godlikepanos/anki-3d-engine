@@ -5,7 +5,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include "gmath.h"
+#include "Math.h"
 #include "ShaderProg.h"
 #include "Camera.h"
 
@@ -42,7 +42,7 @@ inline const string& GetStdShaderPreprocDefines() { extern string std_shader_pre
 extern void Render( const Camera& cam ); ///< The spine function of the renderer
 
 extern void SetGLState_Wireframe();
-extern void SetGLState_WireframeDotted();
+extern void SetGLState_Wireframedotted();
 extern void SetGLState_Solid();
 extern void SetGLState_AlphaSolid();
 
@@ -50,14 +50,14 @@ extern void SetGLState_AlphaSolid();
 //extern
 
 // ogl and glu wrappers
-inline void   MultMatrix( const mat4_t& m4 ) { glMultMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
-inline void   loadMatrix( const mat4_t& m4 ) { glLoadMatrixf( &(m4.GetTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   MultMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   loadMatrix( const Mat4& m4 ) { glLoadMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
 
-inline void   Color3( const vec3_t& v ) { glColor3fv( &((vec3_t&)v)[0] ); } ///< OpenGL wrapper
-inline void   Color4( const vec4_t& v ) { glColor4fv( &((vec4_t&)v)[0] ); } ///< OpenGL wrapper
+inline void   Color3( const Vec3& v ) { glColor3fv( &((Vec3&)v)[0] ); } ///< OpenGL wrapper
+inline void   Color4( const Vec4& v ) { glColor4fv( &((Vec4&)v)[0] ); } ///< OpenGL wrapper
 inline void   NoShaders() { ShaderProg::unbind(); } ///< unbind shaders
-extern bool   Unproject( float winX, float winY, float winZ, const mat4_t& modelview_mat, const mat4_t& projection_mat, const int* view, float& objX, float& objY, float& objZ ); ///< My version of gluUnproject
-extern mat4_t Ortho( float left, float right, float bottom, float top, float near, float far );
+extern bool   Unproject( float winX, float winY, float winZ, const Mat4& modelview_mat, const Mat4& projection_mat, const int* view, float& objX, float& objY, float& objZ ); ///< My version of gluUnproject
+extern Mat4 Ortho( float left, float right, float bottom, float top, float near, float far );
 
 // Matrix stuff
 extern void SetProjectionMatrix( const Camera& cam );

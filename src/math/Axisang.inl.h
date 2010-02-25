@@ -1,6 +1,6 @@
-#include "m_dflt_header.h"
+#include "MathDfltHeader.h"
 
-namespace m {
+namespace M {
 
 
 // constructor []
@@ -14,33 +14,33 @@ inline Axisang::Axisang( const Axisang& b )
 {}
 
 // constructor [float, axis]
-inline Axisang::Axisang( float rad, const vec3_t& axis_ )
+inline Axisang::Axisang( float rad, const Vec3& axis_ )
 	: ang(rad), axis(axis_)
 {}
 
 // constructor [quat]
-inline Axisang::Axisang( const quat_t& q )
+inline Axisang::Axisang( const Quat& q )
 {
 	ang = 2.0*acos( q.w );
-	float length = sqrt( 1.0 - q.w*q.w );
-	if( IsZero(length) )
-		axis = vec3_t(0.0);
+	float length = M::sqrt( 1.0 - q.w*q.w );
+	if( isZero(length) )
+		axis = Vec3(0.0);
 	else
 	{
 		length = 1.0/length;
-		axis = vec3_t( q.x*length, q.y*length, q.z*length );
+		axis = Vec3( q.x*length, q.y*length, q.z*length );
 	}
 }
 
 // constructor [mat3]
-inline Axisang::Axisang( const mat3_t& m3 )
+inline Axisang::Axisang( const Mat3& m3 )
 {
 	if( (fabs(m3(0,1)-m3(1,0))< EPSILON)  && (fabs(m3(0,2)-m3(2,0))< EPSILON)  && (fabs(m3(1,2)-m3(2,1))< EPSILON) )
 	{
 
 		if( (fabs(m3(0,1)+m3(1,0)) < 0.1 ) && (fabs(m3(0,2)+m3(2,0)) < 0.1) && (fabs(m3(1,2)+m3(2,1)) < 0.1) && (fabs(m3(0,0)+m3(1,1)+m3(2,2))-3) < 0.1 )
 		{
-			axis = vec3_t( 1.0, 0.0, 0.0 );
+			axis = Vec3( 1.0, 0.0, 0.0 );
 			ang = 0.0;
 			return;
 		}
@@ -48,17 +48,17 @@ inline Axisang::Axisang( const mat3_t& m3 )
 		ang = PI;
 		axis.x = (m3(0,0)+1)/2;
 		if( axis.x > 0.0 )
-			axis.x = sqrt(axis.x);
+			axis.x = M::sqrt(axis.x);
 		else
 			axis.x = 0;
 		axis.y = (m3(1,1)+1)/2;
 		if( axis.y > 0 )
-			axis.y = sqrt(axis.y);
+			axis.y = M::sqrt(axis.y);
 		else
 			axis.y = 0;
 		axis.z = (m3(2,2)+1)/2;
 		if( axis.z > 0 )
-			axis.z = sqrt(axis.z);
+			axis.z = M::sqrt(axis.z);
 		else
 			axis.z = 0.0;
 
@@ -79,7 +79,7 @@ inline Axisang::Axisang( const mat3_t& m3 )
 		return;
 	}
 
-	float s = sqrt((m3(2,1) - m3(1,2))*(m3(2,1) - m3(1,2))+(m3(0,2) - m3(2,0))*(m3(0,2) - m3(2,0))+(m3(1,0) - m3(0,1))*(m3(1,0) - m3(0,1)));
+	float s = M::sqrt((m3(2,1) - m3(1,2))*(m3(2,1) - m3(1,2))+(m3(0,2) - m3(2,0))*(m3(0,2) - m3(2,0))+(m3(1,0) - m3(0,1))*(m3(1,0) - m3(0,1)));
 
 	if( fabs(s) < 0.001 ) s = 1;
 

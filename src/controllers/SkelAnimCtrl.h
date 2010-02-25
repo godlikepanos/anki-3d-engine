@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "Controller.h"
-#include "gmath.h"
+#include "Math.h"
 
 class Skeleton;
 class SkelAnim;
@@ -21,10 +21,10 @@ class SkelAnimCtrl: public Controller
 	public:
 		SkelAnim*  skelAnim; ///< Skeleton animation resource
 		SkelNode*  skelNode;
-		Vec<vec3_t> heads;
-		Vec<vec3_t> tails;
-		Vec<mat3_t> boneRotations;
-		Vec<vec3_t> boneTranslations;
+		Vec<Vec3> heads;
+		Vec<Vec3> tails;
+		Vec<Mat3> boneRotations;
+		Vec<Vec3> boneTranslations;
 		float step;
 		float frame;
 

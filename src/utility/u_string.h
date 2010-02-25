@@ -269,7 +269,7 @@ class string_t
 			return data;
 		}
 		
-		// Length
+		// getLength
 		uint Length() const
 		{
 			DEBUG_ERR( data!=NULL && length!=strlen(data) );

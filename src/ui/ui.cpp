@@ -165,7 +165,7 @@ void Init()
 	shader = rsrc::shaders.load( "shaders/txt.glsl" );
 	SetPos( 0.0f, 0.0f );
 	SetFontWidth( 0.05f );
-	SetColor( vec4_t(1.0f, 1.0f, 1.0f, 1.0f) );
+	SetColor( Vec4(1.0f, 1.0f, 1.0f, 1.0f) );
 	italic = false;
 }
 
@@ -182,7 +182,7 @@ void SetFontWidth( float w_ )
 
 
 // SetColor
-void SetColor( const vec4_t& color_ )
+void SetColor( const Vec4& color_ )
 {
 	for( int i=0; i<4; i++ )
 		color[i] = color_[i];

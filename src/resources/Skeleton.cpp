@@ -44,15 +44,15 @@ bool Skeleton::load( const char* filename )
 		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &bone.tail[0] ) ) return false;
 
 		// matrix
-		mat4_t m4;
+		Mat4 m4;
 		if( !ParseArrOfNumbers<float>( scanner, false, true, 16, &m4[0] ) ) return false;
 
 		// matrix for real
-		bone.rotSkelSpace = m4.GetRotationPart();
-		bone.tslSkelSpace = m4.GetTranslationPart();
-		mat4_t MAi( m4.GetInverse() );
-		bone.rotSkelSpaceInv = MAi.GetRotationPart();
-		bone.tslSkelSpaceInv = MAi.GetTranslationPart();
+		bone.rotSkelSpace = m4.getRotationPart();
+		bone.tslSkelSpace = m4.getTranslationPart();
+		Mat4 MAi( m4.getInverse() );
+		bone.rotSkelSpaceInv = MAi.getRotationPart();
+		bone.tslSkelSpaceInv = MAi.getTranslationPart();
 
 		// parent
 		token = &scanner.getNextToken();

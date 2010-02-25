@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "engine_class.h"
-#include "util.h"
+#include "Util.h"
 
 
 // forward decls
@@ -135,8 +135,8 @@ template<typename Type> class Container: public Vec<Type*>
 		 */
 		Type* load( const char* fname )
 		{
-			char* name = util::CutPath( fname );
-			string path = util::GetPath( fname );
+			char* name = Util::cutPath( fname );
+			string path = Util::getPath( fname );
 			Iterator it = findByNameAndPath( name, path.c_str() );
 
 			// if allready loaded then inc the users and return the pointer

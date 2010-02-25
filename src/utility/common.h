@@ -39,23 +39,20 @@ typedef unsigned long int ulong;
 //=====================================================================================================================================
 template<typename Type> class Vec;
 
-extern string        IntToStr( int );
-extern string        FloatToStr( float );
-
 
 //=====================================================================================================================================
 // MACROS                                                                                                                             =
 //=====================================================================================================================================
 
-namespace util {
-extern char*  CutPath( const char* path );
-extern string GetFunctionFromPrettyFunction( const char* pretty_function );
+namespace Util {
+extern char*  cutPath( const char* path );
+extern string getFunctionFromPrettyFunction( const char* pretty_function );
 }
 
-#define __FILENAME__ util::CutPath( __FILE__ )
+#define __FILENAME__ Util::cutPath( __FILE__ )
 
 #ifdef __GNUG__
-	#define __G_FUNCTION__ util::GetFunctionFromPrettyFunction( __PRETTY_FUNCTION__ )
+	#define __G_FUNCTION__ Util::getFunctionFromPrettyFunction( __PRETTY_FUNCTION__ )
 #else
 	#define __G_FUNCTION__ __func__
 #endif
@@ -173,7 +170,7 @@ template<typename Type> class Vec: public vector<Type>
 			return vector<Type>::operator []( n );
 		}
 
-		size_t GetSizeInBytes() const
+		size_t getSizeInBytes() const
 		{
 			return vector<Type>::size() * sizeof(Type);
 		}

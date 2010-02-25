@@ -2,10 +2,10 @@
 #define _AXISANG_H_
 
 #include "common.h"
-#include "forward_decls.h"
+#include "MathForwardDecls.h"
 
 
-namespace m {
+namespace M {
 
 
 class Axisang
@@ -13,13 +13,13 @@ class Axisang
 	public:
 		// data members
 		float ang;
-		vec3_t axis;
+		Vec3 axis;
 		// constructors & distructors
 		explicit Axisang();
 		         Axisang( const Axisang& b );
-		explicit Axisang( float rad, const vec3_t& axis_ );
-		explicit Axisang( const quat_t& q );
-		explicit Axisang( const mat3_t& m3 );
+		explicit Axisang( float rad, const Vec3& axis_ );
+		explicit Axisang( const Quat& q );
+		explicit Axisang( const Mat3& m3 );
 };
 
 

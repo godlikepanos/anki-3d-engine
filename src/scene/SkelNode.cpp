@@ -47,14 +47,14 @@ void SkelNode::render()
 
 	for( uint i=0; i<skeleton->bones.size(); i++ )
 	{
-		glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
+		glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
 		glBegin( GL_POINTS );
 			glVertex3fv( &skelAnimCtrl->heads[i][0] );
 		glEnd();
 
 		glBegin( GL_LINES );
 			glVertex3fv( &skelAnimCtrl->heads[i][0] );
-			glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
+			glColor3fv( &Vec3( 1.0, 0.0, 0.0 )[0] );
 			glVertex3fv( &skelAnimCtrl->tails[i][0] );
 		glEnd();
 	}

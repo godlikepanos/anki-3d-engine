@@ -14,28 +14,28 @@ static int render_seperation_lock = 0;
 misc                                                                                                                                  =
 =======================================================================================================================================
 */
-static void RenderSeparationData( const vec3_t& normal, const vec3_t& impact_point, float depth )
+static void RenderSeparationData( const Vec3& normal, const Vec3& impact_point, float depth )
 {
 	float con = 0.5f;
-	const vec3_t& i = impact_point;
+	const Vec3& i = impact_point;
 
 	//glLineWidth( 2.0 );
 	glBegin( GL_LINES );
-		glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
+		glColor3fv( &Vec3( 1.0, 0.0, 0.0 )[0] );
 		glVertex3f( i.x-con, i.y, i.z );
 		glVertex3f( i.x+con, i.y, i.z );
-		glColor3fv( &vec3_t( 0.0, 1.0, 0.0 )[0] );
+		glColor3fv( &Vec3( 0.0, 1.0, 0.0 )[0] );
 		glVertex3f( i.x, i.y-con, i.z );
 		glVertex3f( i.x, i.y+con, i.z );
-		glColor3fv( &vec3_t( 0.0, 0.0, 1.0 )[0] );
+		glColor3fv( &Vec3( 0.0, 0.0, 1.0 )[0] );
 		glVertex3f( i.x, i.y, i.z-con );
 		glVertex3f( i.x, i.y, i.z+con );
 	glEnd();
 
 	//glLineWidth( 6.0 );
 	glBegin( GL_LINES );
-		glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
-		glVertex3fv( &((vec3_t&)impact_point)[0] );
+		glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
+		glVertex3fv( &((Vec3&)impact_point)[0] );
 		glVertex3fv( &(impact_point+ normal*depth )[0] );
 	glEnd();
 }
@@ -75,7 +75,7 @@ bool bvolume_t::Intersects( const bvolume_t& bv ) const
 SeperationTest                                                                                                                        =
 =======================================================================================================================================
 */
-bool bvolume_t::SeperationTest( const bvolume_t& bv, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool bvolume_t::SeperationTest( const bvolume_t& bv, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	switch( type )
 	{
@@ -94,26 +94,26 @@ bool bvolume_t::SeperationTest( const bvolume_t& bv, vec3_t& normal, vec3_t& imp
 
 /*
 =======================================================================================================================================
-DistanceSquared                                                                                                                       =
+getDistanceSquared                                                                                                                       =
 seg - seg                                                                                                                             =
 =======================================================================================================================================
 */
 float lineseg_t::DistanceSquared( const lineseg_t& ls, float& s_c, float& t_c ) const
 {
 	// compute intermediate parameters
-	vec3_t w0 = origin - ls.origin;
-	float a = dir.Dot( dir );
-	float b = dir.Dot( ls.dir );
-	float c = ls.dir.Dot( ls.dir );
-	float d = dir.Dot( w0 );
-	float e = ls.dir.Dot( w0 );
+	Vec3 w0 = origin - ls.origin;
+	float a = dir.dot( dir );
+	float b = dir.dot( ls.dir );
+	float c = ls.dir.dot( ls.dir );
+	float d = dir.dot( w0 );
+	float e = ls.dir.dot( w0 );
 
 	float denom = a*c - b*b;
 	// parameters to compute s_c, t_c
 	float sn, sd, tn, td;
 
 	// if denom is zero, try finding closest point on sl to origin0
-	if( IsZero(denom) )
+	if( isZero(denom) )
 	{
 		// clamp s_c to 0
 		sd = td = c;
@@ -177,33 +177,33 @@ float lineseg_t::DistanceSquared( const lineseg_t& ls, float& s_c, float& t_c ) 
 	}
 
 	// compute difference vector and distance squared
-	vec3_t wc = w0 + dir*s_c - ls.dir*t_c;
-	return wc.Dot(wc);
+	Vec3 wc = w0 + dir*s_c - ls.dir*t_c;
+	return wc.dot(wc);
 }
 
 
 /*
 =======================================================================================================================================
-DistanceSquared                                                                                                                       =
+getDistanceSquared                                                                                                                       =
 seg - ray                                                                                                                             =
 =======================================================================================================================================
 */
 float lineseg_t::DistanceSquared( const ray_t& ray, float& s_c, float& t_c ) const
 {
 	// compute intermediate parameters
-	vec3_t w0 = origin - ray.origin;
-	float a = dir.Dot( dir );
-	float b = dir.Dot( ray.dir );
-	float c = ray.dir.Dot( ray.dir );
-	float d = dir.Dot( w0 );
-	float e = ray.dir.Dot( w0 );
+	Vec3 w0 = origin - ray.origin;
+	float a = dir.dot( dir );
+	float b = dir.dot( ray.dir );
+	float c = ray.dir.dot( ray.dir );
+	float d = dir.dot( w0 );
+	float e = ray.dir.dot( w0 );
 
 	float denom = a*c - b*b;
 	// parameters to compute s_c, t_c
 	float sn, sd, tn, td;
 
 	// if denom is zero, try finding closest point on ME1 to origin0
-	if( IsZero(denom) )
+	if( isZero(denom) )
 	{
 		// clamp s_c to 0
 		sd = td = c;
@@ -254,41 +254,41 @@ float lineseg_t::DistanceSquared( const ray_t& ray, float& s_c, float& t_c ) con
 	}
 
 	// compute difference vector and distance squared
-	vec3_t wc = w0 + dir*s_c - ray.dir*t_c;
-	return wc.Dot(wc);
+	Vec3 wc = w0 + dir*s_c - ray.dir*t_c;
+	return wc.dot(wc);
 }
 
 
 /*
 =======================================================================================================================================
-DistanceSquared                                                                                                                       =
+getDistanceSquared                                                                                                                       =
 seg - point                                                                                                                           =
 =======================================================================================================================================
 */
-float lineseg_t::DistanceSquared( const vec3_t& point, float& t_c ) const
+float lineseg_t::DistanceSquared( const Vec3& point, float& t_c ) const
 {
-	vec3_t w = point - origin;
-	float proj = w.Dot(dir);
+	Vec3 w = point - origin;
+	float proj = w.dot(dir);
 	// endpoint 0 is closest point
 	if ( proj <= 0 )
 	{
 		t_c = 0.0f;
-		return w.Dot(w);
+		return w.dot(w);
 	}
 	else
 	{
-		float vsq = dir.Dot(dir);
+		float vsq = dir.dot(dir);
 		// endpoint 1 is closest point
 		if ( proj >= vsq )
 		{
 			t_c = 1.0f;
-			return w.Dot(w) - 2.0f*proj + vsq;
+			return w.dot(w) - 2.0f*proj + vsq;
 		}
 		// otherwise somewhere else in segment
 		else
 		{
 			t_c = proj/vsq;
-			return w.Dot(w) - t_c*proj;
+			return w.dot(w) - t_c*proj;
 		}
 	}
 }
@@ -300,15 +300,15 @@ ClosestPoints                                                                   
 seg - seg                                                                                                                             =
 =======================================================================================================================================
 */
-void lineseg_t::ClosestPoints( const lineseg_t& segment1, vec3_t& point0, vec3_t& point1 ) const
+void lineseg_t::ClosestPoints( const lineseg_t& segment1, Vec3& point0, Vec3& point1 ) const
 {
   // compute intermediate parameters
-  vec3_t w0 = origin - segment1.origin;
-  float a = dir.Dot( dir );
-  float b = dir.Dot( segment1.dir );
-  float c = segment1.dir.Dot( segment1.dir );
-  float d = dir.Dot( w0 );
-  float e = segment1.dir.Dot( w0 );
+  Vec3 w0 = origin - segment1.origin;
+  float a = dir.dot( dir );
+  float b = dir.dot( segment1.dir );
+  float c = segment1.dir.dot( segment1.dir );
+  float d = dir.dot( w0 );
+  float e = segment1.dir.dot( w0 );
 
   float denom = a*c - b*b;
   // parameters to compute s_c, t_c
@@ -316,7 +316,7 @@ void lineseg_t::ClosestPoints( const lineseg_t& segment1, vec3_t& point0, vec3_t
   float sn, sd, tn, td;
 
   // if denom is zero, try finding closest point on segment1 to origin0
-  if( IsZero(denom) )
+  if( isZero(denom) )
   {
 		// clamp s_c to 0
 		sd = td = c;
@@ -391,15 +391,15 @@ ClosestPoints                                                                   
 seg - ray                                                                                                                             =
 =======================================================================================================================================
 */
-void lineseg_t::ClosestPoints( const ray_t& ray, vec3_t& point0, vec3_t& point1 ) const
+void lineseg_t::ClosestPoints( const ray_t& ray, Vec3& point0, Vec3& point1 ) const
 {
 	// compute intermediate parameters
-	vec3_t w0 = origin - ray.origin;
-	float a = dir.Dot( dir );
-	float b = dir.Dot( ray.dir );
-	float c = ray.dir.Dot( ray.dir );
-	float d = dir.Dot( w0 );
-	float e = ray.dir.Dot( w0 );
+	Vec3 w0 = origin - ray.origin;
+	float a = dir.dot( dir );
+	float b = dir.dot( ray.dir );
+	float c = ray.dir.dot( ray.dir );
+	float d = dir.dot( w0 );
+	float e = ray.dir.dot( w0 );
 
 	float denom = a*c - b*b;
 	// parameters to compute s_c, t_c
@@ -407,7 +407,7 @@ void lineseg_t::ClosestPoints( const ray_t& ray, vec3_t& point0, vec3_t& point1 
 	float sn, sd, tn, td;
 
 	// if denom is zero, try finding closest point on 1 to origin0
-	if( IsZero(denom) )
+	if( isZero(denom) )
 	{
 		// clamp s_c to 0
 		sd = td = c;
@@ -476,16 +476,16 @@ ClosestPoints                                                                   
 seg - point                                                                                                                           =
 =======================================================================================================================================
 */
-vec3_t lineseg_t::ClosestPoints( const vec3_t& point ) const
+Vec3 lineseg_t::ClosestPoints( const Vec3& point ) const
 {
-    vec3_t w = point - origin;
-    float proj = w.Dot( dir );
+    Vec3 w = point - origin;
+    float proj = w.dot( dir );
     // endpoint 0 is closest point
     if( proj <= 0.0f )
 			return origin;
     else
     {
-			float vsq = dir.Dot(dir);
+			float vsq = dir.dot(dir);
 			// endpoint 1 is closest point
 			if( proj >= vsq )
 				return origin + dir;
@@ -501,11 +501,11 @@ vec3_t lineseg_t::ClosestPoints( const vec3_t& point ) const
 Transformed                                                                                                                           =
 =======================================================================================================================================
 */
-lineseg_t lineseg_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale  ) const
+lineseg_t lineseg_t::Transformed( const Vec3& translate, const Mat3& rotate, float scale  ) const
 {
 	lineseg_t seg;
 
-	seg.origin = origin.GetTransformed( translate, rotate, scale );
+	seg.origin = origin.getTransformed( translate, rotate, scale );
 	seg.dir = rotate * (dir * scale);
 
 	return seg;
@@ -519,9 +519,9 @@ render                                                                          
 */
 void lineseg_t::Render()
 {
-	vec3_t P1 = origin+dir;
+	Vec3 P1 = origin+dir;
 
-	glColor3fv( &vec3_t(1.0f, 1.0f, 1.0f )[0] );
+	glColor3fv( &Vec3(1.0f, 1.0f, 1.0f )[0] );
 	glBegin( GL_LINES );
 		glVertex3fv( &origin[0] );
 		glVertex3fv( &P1[0] );
@@ -530,14 +530,14 @@ void lineseg_t::Render()
 
 	//glPointSize( 4.0f );
 	glBegin( GL_POINTS );
-		glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
+		glColor3fv( &Vec3( 1.0, 0.0, 0.0 )[0] );
 		glVertex3fv( &origin[0] );
-		glColor3fv( &vec3_t( 0.0, 1.0, 0.0 )[0] );
+		glColor3fv( &Vec3( 0.0, 1.0, 0.0 )[0] );
 		glVertex3fv( &P1[0] );
 	glEnd();
 
 	glDisable( GL_DEPTH_TEST );
-	glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
+	glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
 	glBegin( GL_LINES );
 		glVertex3fv( &origin[0] );
 		glVertex3fv( &(P1)[0] );
@@ -552,8 +552,8 @@ PlaneTest                                                                       
 */
 float lineseg_t::PlaneTest( const plane_t& plane ) const
 {
-	const vec3_t& P0 = origin;
-	vec3_t P1 = origin+dir;
+	const Vec3& P0 = origin;
+	Vec3 P1 = origin+dir;
 
 	float dist0 = plane.Test( P0 );
 	float dist1 = plane.Test( P1 );
@@ -563,14 +563,14 @@ float lineseg_t::PlaneTest( const plane_t& plane ) const
 		if( dist1 < 0.0 )
 			return 0.0;
 		else
-			return Min( dist0, -dist1 );
+			return min( dist0, -dist1 );
 	}
 	else
 	{
 		if( dist1 > 0.0 )
 			return 0.0;
 		else
-			return Min( -dist0, dist1 );
+			return min( -dist0, dist1 );
 	}
 }
 
@@ -616,14 +616,14 @@ bool lineseg_t::Intersects( const obb_t& obb ) const
 Transformed                                                                                                                           =
 =======================================================================================================================================
 */
-ray_t ray_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
+ray_t ray_t::Transformed( const Vec3& translate, const Mat3& rotate, float scale ) const
 {
 	/*ray_t ray;
 
-	mat4_t semi_transf( rotate*scale );
+	Mat4 semi_transf( rotate*scale );
 
 	ray.dir = semi_transf * dir;
-	ray.dir.Normalize();
+	ray.dir.normalize();
 
 	ray.origin = semi_transf * origin;
 	ray.origin += translate;
@@ -631,7 +631,7 @@ ray_t ray_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float s
 	return ray;*/
 	ray_t new_ray;
 
-	new_ray.origin = origin.GetTransformed( translate, rotate, scale );
+	new_ray.origin = origin.getTransformed( translate, rotate, scale );
 	new_ray.dir = rotate * dir;
 
 	return new_ray;
@@ -646,7 +646,7 @@ render                                                                          
 void ray_t::Render()
 {
 	const float dist = 100.0f;
-	glColor3fv( &vec3_t( 1.0f, 1.0f, 0.0f )[0] );
+	glColor3fv( &Vec3( 1.0f, 1.0f, 0.0f )[0] );
 
 	// render a dotted without depth
 	glDisable( GL_DEPTH_TEST );
@@ -678,7 +678,7 @@ PlaneTest                                                                       
 float ray_t::PlaneTest( const plane_t& plane ) const
 {
 	float dist = plane.Test( origin );
-	float cos_ = plane.normal.Dot( dir );
+	float cos_ = plane.normal.dot( dir );
 
 	if( cos_ > 0.0 ) // the ray points to the same half-space as the plane
 	{
@@ -745,18 +745,18 @@ void plane_t::Set( float a, float b, float c, float d )
 	// normalize for cheap distance checks
 	float lensq = a*a + b*b + c*c;
 	// length of normal had better not be zero
-	DEBUG_ERR( IsZero( lensq ) );
+	DEBUG_ERR( isZero( lensq ) );
 
 	// recover gracefully
-	if ( IsZero( lensq ) )
+	if ( isZero( lensq ) )
 	{
-		normal = vec3_t( 1.0, 0.0, 0.0 );
+		normal = Vec3( 1.0, 0.0, 0.0 );
 		offset = 0.0f;
 	}
 	else
 	{
 		float recip = invSqrt(lensq);
-		normal = vec3_t( a*recip, b*recip, c*recip );
+		normal = Vec3( a*recip, b*recip, c*recip );
 		offset = d*recip;
 	}
 }
@@ -768,19 +768,19 @@ Set                                                                             
 from 3 points                                                                                                                         =
 =======================================================================================================================================
 */
-void plane_t::Set( const vec3_t& p0, const vec3_t& p1, const vec3_t& p2 )
+void plane_t::Set( const Vec3& p0, const Vec3& p1, const Vec3& p2 )
 {
 	// get plane vectors
-	vec3_t u = p1 - p0;
-	vec3_t v = p2 - p0;
+	Vec3 u = p1 - p0;
+	Vec3 v = p2 - p0;
 
-	normal = u.Cross(v);
+	normal = u.cross(v);
 
 	// length of normal had better not be zero
-	DEBUG_ERR( IsZero( normal.LengthSquared() ) );
+	DEBUG_ERR( isZero( normal.getLengthSquared() ) );
 
-	normal.Normalize();
-	offset = normal.Dot(p0); // ToDo: correct??
+	normal.normalize();
+	offset = normal.dot(p0); // ToDo: correct??
 
 }
 
@@ -790,7 +790,7 @@ void plane_t::Set( const vec3_t& p0, const vec3_t& p1, const vec3_t& p2 )
 Transformed                                                                                                                           =
 =======================================================================================================================================
 */
-plane_t plane_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
+plane_t plane_t::Transformed( const Vec3& translate, const Mat3& rotate, float scale ) const
 {
 	plane_t plane;
 
@@ -798,8 +798,8 @@ plane_t plane_t::Transformed( const vec3_t& translate, const mat3_t& rotate, flo
 	plane.normal = rotate*normal;
 
 	// the offset
-	vec3_t new_trans = rotate.GetTransposed() * translate;
-	plane.offset = offset*scale + new_trans.Dot( normal );
+	Vec3 new_trans = rotate.getTransposed() * translate;
+	plane.offset = offset*scale + new_trans.dot( normal );
 
 	return plane;
 }
@@ -814,36 +814,36 @@ void plane_t::Render()
 {
 	glPushMatrix();
 
-	vec3_t translate( normal*offset );
-	quat_t q;
-	q.CalcFrom2Vec3( vec3_t( 0.0, 0.0, 1.0 ), normal );
-	mat3_t rotate( q );
-	mat4_t transform( translate, rotate );
+	Vec3 translate( normal*offset );
+	Quat q;
+	q.setFrom2Vec3( Vec3( 0.0, 0.0, 1.0 ), normal );
+	Mat3 rotate( q );
+	Mat4 transform( translate, rotate );
 	r::MultMatrix( transform );
 
-	glColor4fv( &vec4_t(1.0f, 1.0f, 1.0f, 0.5f)[0] );
+	glColor4fv( &Vec4(1.0f, 1.0f, 1.0f, 0.5f)[0] );
 
 	const float size = 10.0f;
 
 	glBegin( GL_QUADS );
-		glVertex3fv( &vec3_t(size, size, 0.0f)[0] );
-		glVertex3fv( &vec3_t(-size, size, 0.0f)[0] );
-		glVertex3fv( &vec3_t(-size, -size, 0.0f)[0] );
-		glVertex3fv( &vec3_t(size, -size, 0.0f)[0] );
+		glVertex3fv( &Vec3(size, size, 0.0f)[0] );
+		glVertex3fv( &Vec3(-size, size, 0.0f)[0] );
+		glVertex3fv( &Vec3(-size, -size, 0.0f)[0] );
+		glVertex3fv( &Vec3(size, -size, 0.0f)[0] );
 	glEnd();
 
-	glColor4fv( &vec4_t(1.0f, 1.0f, 1.0f, 0.2f)[0] );
+	glColor4fv( &Vec4(1.0f, 1.0f, 1.0f, 0.2f)[0] );
 	glBegin( GL_QUADS );
-		glVertex3fv( &vec3_t(size, -size, 0.0f)[0] );
-		glVertex3fv( &vec3_t(-size, -size, 0.0f)[0] );
-		glVertex3fv( &vec3_t(-size, size, 0.0f)[0] );
-		glVertex3fv( &vec3_t(size, size, 0.0f)[0] );
+		glVertex3fv( &Vec3(size, -size, 0.0f)[0] );
+		glVertex3fv( &Vec3(-size, -size, 0.0f)[0] );
+		glVertex3fv( &Vec3(-size, size, 0.0f)[0] );
+		glVertex3fv( &Vec3(size, size, 0.0f)[0] );
 	glEnd();
 
 	glPopMatrix();
 
 	glDisable( GL_DEPTH_TEST );
-	glColor3fv( &vec3_t(1, 1, 0)[0] );
+	glColor3fv( &Vec3(1, 1, 0)[0] );
 	glBegin( GL_LINES );
 		glVertex3fv( &(normal*offset)[0] );
 		glVertex3fv( &(normal*(offset+1))[0] );
@@ -861,15 +861,15 @@ from a vec3 array                                                               
 void bsphere_t::Set( const void* pointer, uint stride, int count )
 {
 	void* tmp_pointer = (void*)pointer;
-	vec3_t min( *(vec3_t*)tmp_pointer ),
-	       max( *(vec3_t*)tmp_pointer );
+	Vec3 min( *(Vec3*)tmp_pointer ),
+	       max( *(Vec3*)tmp_pointer );
 
 	// for all the vec3 calc the max and min
 	for( int i=1; i<count; i++ )
 	{
 		tmp_pointer = (char*)tmp_pointer + stride;
 
-		const vec3_t& tmp = *((vec3_t*)tmp_pointer);
+		const Vec3& tmp = *((Vec3*)tmp_pointer);
 
 		for( int j=0; j<3; j++ )
 		{
@@ -883,18 +883,18 @@ void bsphere_t::Set( const void* pointer, uint stride, int count )
 	center = (min+max) * 0.5; // average
 
 	tmp_pointer = (void*)pointer;
-	float max_dist = (*((vec3_t*)tmp_pointer) - center).LengthSquared(); // max distance between center and the vec3 arr
+	float max_dist = (*((Vec3*)tmp_pointer) - center).getLengthSquared(); // max distance between center and the vec3 arr
 	for( int i=1; i<count; i++ )
 	{
 		tmp_pointer = (char*)tmp_pointer + stride;
 
-		const vec3_t& vertco = *((vec3_t*)tmp_pointer);
-		float dist = (vertco - center).LengthSquared();
+		const Vec3& vertco = *((Vec3*)tmp_pointer);
+		float dist = (vertco - center).getLengthSquared();
 		if( dist > max_dist )
 			max_dist = dist;
 	}
 
-	radius = sqrt( max_dist );
+	radius = M::sqrt( max_dist );
 }
 
 
@@ -909,7 +909,7 @@ void bsphere_t::Render()
 
 	glTranslatef( center.x, center.y, center.z );
 
-	glColor4fv( &vec4_t(1.0, 1.0, 1.0, 0.2)[0] );
+	glColor4fv( &Vec4(1.0, 1.0, 1.0, 0.2)[0] );
 
 	r::dbg::RenderSphere( radius, 24 );
 
@@ -922,11 +922,11 @@ void bsphere_t::Render()
 Transformed                                                                                                                           =
 =======================================================================================================================================
 */
-bsphere_t bsphere_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
+bsphere_t bsphere_t::Transformed( const Vec3& translate, const Mat3& rotate, float scale ) const
 {
 	bsphere_t new_sphere;
 
-	new_sphere.center = center.GetTransformed( translate, rotate, scale );
+	new_sphere.center = center.getTransformed( translate, rotate, scale );
 	new_sphere.radius = radius * scale;
 	return new_sphere;
 }
@@ -941,7 +941,7 @@ sphere - sphere                                                                 
 bool bsphere_t::Intersects( const bsphere_t& other ) const
 {
 	float tmp = radius + other.radius;
-	return (center-other.center).LengthSquared() <= tmp*tmp ;
+	return (center-other.center).getLengthSquared() <= tmp*tmp ;
 }
 
 
@@ -965,16 +965,16 @@ sphere - ray                                                                    
 */
 bool bsphere_t::Intersects( const ray_t& ray ) const
 {
-	vec3_t w( center - ray.origin );
-	const vec3_t& v = ray.dir;
-	float proj = v.Dot( w );
-	float wsq = w.LengthSquared();
+	Vec3 w( center - ray.origin );
+	const Vec3& v = ray.dir;
+	float proj = v.dot( w );
+	float wsq = w.getLengthSquared();
 	float rsq = radius*radius;
 
 	if( proj < 0.0 && wsq > rsq )
 		return false;
 
-	float vsq = v.LengthSquared();
+	float vsq = v.getLengthSquared();
 
 	return (vsq*wsq - proj*proj <= vsq*rsq);
 }
@@ -988,22 +988,22 @@ sphere - segment                                                                
 */
 bool bsphere_t::Intersects( const lineseg_t& segment ) const
 {
-	const vec3_t& v = segment.dir;
-	vec3_t w0 = center - segment.origin;
-	float w0dv = w0.Dot( v );
+	const Vec3& v = segment.dir;
+	Vec3 w0 = center - segment.origin;
+	float w0dv = w0.dot( v );
 	float rsq = radius * radius;
 
 	if( w0dv < 0.0f ) // if the ang is >90
-		return w0.LengthSquared() <= rsq;
+		return w0.getLengthSquared() <= rsq;
 
-	vec3_t w1 = w0 - v; // aka center - P1, where P1 = seg.origin + seg.dir
-	float w1dv = w1.Dot( v );
+	Vec3 w1 = w0 - v; // aka center - P1, where P1 = seg.origin + seg.dir
+	float w1dv = w1.dot( v );
 
 	if( w1dv > 0.0f ) // if the ang is <90
-		return w1.LengthSquared() <= rsq;
+		return w1.getLengthSquared() <= rsq;
 
-	vec3_t tmp = w0 - ( v * (w0.Dot(v) / v.LengthSquared()) ); // the big parenthesis is the projection of w0 to v
-	return tmp.LengthSquared() <= rsq;
+	Vec3 tmp = w0 - ( v * (w0.dot(v) / v.getLengthSquared()) ); // the big parenthesis is the projection of w0 to v
+	return tmp.getLengthSquared() <= rsq;
 }
 
 
@@ -1043,19 +1043,19 @@ SeperationTest                                                                  
 sphere - sphere                                                                                                                       =
 =======================================================================================================================================
 */
-bool bsphere_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool bsphere_t::SeperationTest( const bsphere_t& sphere, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	normal = sphere.center - center;
 	float rsum = radius + sphere.radius;
-	float distsq = normal.LengthSquared();
+	float distsq = normal.getLengthSquared();
 
 	if( distsq <= rsum*rsum )
 	{
 		// calc the depth
-		float dist = sqrt( distsq );
+		float dist = M::sqrt( distsq );
 		depth = rsum - dist;
 
-		normal.Normalize();
+		normal.normalize();
 
 		impact_point = ((center + normal*radius) + (sphere.center - normal*sphere.radius)) * 0.5f;
 
@@ -1074,7 +1074,7 @@ SeperationTest                                                                  
 sphere - aabb                                                                                                                         =
 =======================================================================================================================================
 */
-bool bsphere_t::SeperationTest( const aabb_t& box, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool bsphere_t::SeperationTest( const aabb_t& box, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	UNLOCK_RENDER_SEPERATION
 	bool test = box.SeperationTest( *this, normal, impact_point, depth );
@@ -1094,7 +1094,7 @@ SeperationTest                                                                  
 sphere - obb                                                                                                                          =
 =======================================================================================================================================
 */
-bool bsphere_t::SeperationTest( const obb_t& obb, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool bsphere_t::SeperationTest( const obb_t& obb, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	UNLOCK_RENDER_SEPERATION
 	bool test = obb.SeperationTest( *this, normal, impact_point, depth );
@@ -1119,15 +1119,15 @@ Calc origin and radius from a vec3 array                                        
 void aabb_t::Set( const void* pointer, uint stride, int count )
 {
 	void* tmp_pointer = (void*)pointer;
-	min = *(vec3_t*)tmp_pointer;
-	max = *(vec3_t*)tmp_pointer;
+	min = *(Vec3*)tmp_pointer;
+	max = *(Vec3*)tmp_pointer;
 
 	// for all the vec3 calc the max and min
 	for( int i=1; i<count; i++ )
 	{
 		tmp_pointer = (char*)tmp_pointer + stride;
 
-		vec3_t tmp( *(vec3_t*)tmp_pointer );
+		Vec3 tmp( *(Vec3*)tmp_pointer );
 
 		for( int j=0; j<3; j++ )
 		{
@@ -1145,7 +1145,7 @@ void aabb_t::Set( const void* pointer, uint stride, int count )
 Transformed                                                                                                                           =
 =======================================================================================================================================
 */
-aabb_t aabb_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
+aabb_t aabb_t::Transformed( const Vec3& translate, const Mat3& rotate, float scale ) const
 {
 	/*aabb_t aabb;
 	aabb.min = min * scale;
@@ -1157,7 +1157,7 @@ aabb_t aabb_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float
 	aabb_t new_aabb;
 
 	// if there is no rotation our job is easy
-	if( rotate == mat3_t::GetIdentity() )
+	if( rotate == Mat3::getIdentity() )
 	{
 		new_aabb.min = (min * scale) + translate;
 		new_aabb.max = (max * scale) + translate;
@@ -1165,11 +1165,11 @@ aabb_t aabb_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float
 	// if not then we are fucked
 	else
 	{
-		vec3_t points [8] = { max, vec3_t(min.x,max.y,max.z), vec3_t(min.x,min.y,max.z), vec3_t(max.x,min.y,max.z),
-		                      vec3_t(max.x,max.y,min.z), vec3_t(min.x,max.y,min.z), min, vec3_t(max.x,min.y,min.z) };
+		Vec3 points [8] = { max, Vec3(min.x,max.y,max.z), Vec3(min.x,min.y,max.z), Vec3(max.x,min.y,max.z),
+		                      Vec3(max.x,max.y,min.z), Vec3(min.x,max.y,min.z), min, Vec3(max.x,min.y,min.z) };
 
 		for( int i=0; i<8; i++ )
-			points[i].Transform( translate, rotate, scale );
+			points[i].transform( translate, rotate, scale );
 
 		new_aabb.Set( points, 0, 8 );
 	}
@@ -1187,22 +1187,22 @@ void aabb_t::Render()
 {
 	glPushMatrix();
 
-	vec3_t sub( max-min );
-	vec3_t center( (max+min)*0.5 );
+	Vec3 sub( max-min );
+	Vec3 center( (max+min)*0.5 );
 
 	glTranslatef( center.x, center.y, center.z );
 	glScalef( sub.x, sub.y, sub.z );
 
-	glColor3fv( &vec3_t( 1.0, 1.0, 1.0 )[0] );
+	glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
 
 	r::dbg::RenderCube();
 
 	glPopMatrix();
 
 	glBegin( GL_POINTS );
-		glColor3fv( &vec3_t( 1.0, 0.0, 0.0 )[0] );
+		glColor3fv( &Vec3( 1.0, 0.0, 0.0 )[0] );
 		glVertex3fv( &min[0] );
-		glColor3fv( &vec3_t( 0.0, 1.0, 0.0 )[0] );
+		glColor3fv( &Vec3( 0.0, 1.0, 0.0 )[0] );
 		glVertex3fv( &max[0] );
 	glEnd();
 }
@@ -1241,10 +1241,10 @@ aabb - sphere                                                                   
 */
 bool aabb_t::Intersects( const bsphere_t& sphere ) const
 {
-	const vec3_t& c = sphere.center;
+	const Vec3& c = sphere.center;
 
 	// find the box's closest point to the sphere
-	vec3_t cp; // Closest Point
+	Vec3 cp; // Closest Point
 	for( uint i=0; i<3; i++ )
 	{
 		if( c[i] > max[i] ) // if the center is greater than the max then the closest point is the max
@@ -1256,10 +1256,10 @@ bool aabb_t::Intersects( const bsphere_t& sphere ) const
 	}
 
 	float rsq = sphere.radius * sphere.radius;
-	vec3_t sub = c - cp; // if the c lies totaly inside the box then the sub is the zero,
+	Vec3 sub = c - cp; // if the c lies totaly inside the box then the sub is the zero,
 	                     //this means that the length is also zero and thus its always smaller than rsq
 
-	if( sub.LengthSquared() <= rsq ) return true;
+	if( sub.getLengthSquared() <= rsq ) return true;
 
 	return false;
 }
@@ -1280,7 +1280,7 @@ bool aabb_t::Intersects( const ray_t& ray ) const
 	for ( int i = 0; i < 3; ++i )
 	{
 		// ray is parallel to plane
-		if ( IsZero( ray.dir[i] ) )
+		if ( isZero( ray.dir[i] ) )
 		{
 			// ray passes by box
 			if ( ray.origin[i] < min[i] || ray.origin[i] > max[i] )
@@ -1329,7 +1329,7 @@ bool aabb_t::Intersects( const lineseg_t& segment ) const
 	for( int i = 0; i < 3; ++i )
 	{
 		// segment is parallel to plane
-		if( IsZero( segment.dir[i] ) )
+		if( isZero( segment.dir[i] ) )
 		{
 			// segment passes by box
 			if( (segment.origin)[i] < min[i] || (segment.origin)[i] > max[i] )
@@ -1382,7 +1382,7 @@ PlaneTest                                                                       
 */
 float aabb_t::PlaneTest( const plane_t& plane ) const
 {
-	vec3_t diag_min, diag_max;
+	Vec3 diag_min, diag_max;
 	// set min/max values for x,y,z direction
 	for( int i=0; i<3; i++ )
 	{
@@ -1419,7 +1419,7 @@ SeperationTest                                                                  
 aabb - aabb                                                                                                                           =
 =======================================================================================================================================
 */
-bool aabb_t::SeperationTest( const aabb_t& other, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool aabb_t::SeperationTest( const aabb_t& other, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	// calculete the closest points
 	for( uint i=0; i<3; i++ ) // for 3 axis
@@ -1474,17 +1474,17 @@ bool aabb_t::SeperationTest( const aabb_t& other, vec3_t& normal, vec3_t& impact
 
 	}
 
-	vec3_t dist( fabs(normal.x), fabs(normal.y), fabs(normal.z) );
+	Vec3 dist( fabs(normal.x), fabs(normal.y), fabs(normal.z) );
 	if( dist.x < dist.y && dist.x < dist.z )
-		normal = vec3_t( normal.x, 0.0f, 0.0f );
+		normal = Vec3( normal.x, 0.0f, 0.0f );
 	else if( dist.y < dist.z )
-		normal = vec3_t( 0.0f, normal.y, 0.0f );
+		normal = Vec3( 0.0f, normal.y, 0.0f );
 	else
-		normal = vec3_t( 0.0f, 0.0f, normal.z );
+		normal = Vec3( 0.0f, 0.0f, normal.z );
 
-	depth = normal.Length();
+	depth = normal.getLength();
 
-	normal *= 1.0f/depth; // aka normal.Normalize()
+	normal *= 1.0f/depth; // aka normal.normalize()
 
 	RENDER_SEPERATION_TEST
 
@@ -1498,7 +1498,7 @@ SeperationTest                                                                  
 aabb - obb                                                                                                                           =
 =======================================================================================================================================
 */
-bool aabb_t::SeperationTest( const obb_t& obb, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool aabb_t::SeperationTest( const obb_t& obb, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	UNLOCK_RENDER_SEPERATION
 	bool test = obb.SeperationTest( *this, normal, impact_point, depth );
@@ -1520,11 +1520,11 @@ SeperationTest                                                                  
 aabb - sphere                                                                                                                         =
 =======================================================================================================================================
 */
-bool aabb_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool aabb_t::SeperationTest( const bsphere_t& sphere, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
-	const vec3_t& c = sphere.center;
+	const Vec3& c = sphere.center;
 	const float r = sphere.radius;
-	vec3_t cp; // closest point of box that its closer to the sphere's center
+	Vec3 cp; // closest point of box that its closer to the sphere's center
 
 	for( int i=0; i<3; i++ )
 	{
@@ -1536,13 +1536,13 @@ bool aabb_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& im
 			cp[i] = c[i];
 	}
 
-	vec3_t sub = c - cp; // if the c lies totaly inside the box then the sub is the zero,
+	Vec3 sub = c - cp; // if the c lies totaly inside the box then the sub is the zero,
 	                     // this means that the length is also zero and thus its always smaller than rsq
 
-	float sublsq = sub.LengthSquared();
+	float sublsq = sub.getLengthSquared();
 	if( sublsq > r*r ) return false; // if no collision leave before its too late
 
-	if( IsZero(sublsq) ) // this means that the closest point is coincide with the center so the center is totaly inside tha box. We have to revise the calcs
+	if( isZero(sublsq) ) // this means that the closest point is coincide with the center so the center is totaly inside tha box. We have to revise the calcs
 	{
 		int n_axis = 0; // the axis that the normal will be
 		float min_d = FLT_MAX; // in the end of "for" the min_d holds the min projection dist of c to every cube's facet
@@ -1569,7 +1569,7 @@ bool aabb_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& im
 
 		float dif = coord - c[n_axis];
 
-		normal = vec3_t( 0.0, 0.0, 0.0 );
+		normal = Vec3( 0.0, 0.0, 0.0 );
 		normal[n_axis] = dif / min_d; // aka ... = (dif<0.0f) ? -1.0f : 1.0f;
 
 		depth = r + min_d;
@@ -1581,9 +1581,9 @@ bool aabb_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& im
 	{
 		normal = c - cp;
 
-		depth = r - normal.Length();
+		depth = r - normal.getLength();
 
-		normal.Normalize();
+		normal.normalize();
 
 		impact_point = c-(normal*r);
 	}
@@ -1603,15 +1603,15 @@ calc from a vec3 array                                                          
 void obb_t::Set( const void* pointer, uint stride, int count )
 {
 	void* tmp_pointer = (void*)pointer;
-	vec3_t min = *(vec3_t*)tmp_pointer;
-	vec3_t max = *(vec3_t*)tmp_pointer;
+	Vec3 min = *(Vec3*)tmp_pointer;
+	Vec3 max = *(Vec3*)tmp_pointer;
 
 	// for all the vec3 calc the max and min
 	for( int i=1; i<count; i++ )
 	{
 		tmp_pointer = (char*)tmp_pointer + stride;
 
-		vec3_t tmp( *(vec3_t*)tmp_pointer );
+		Vec3 tmp( *(Vec3*)tmp_pointer );
 
 		for( int j=0; j<3; j++ ) // for x y z
 		{
@@ -1624,7 +1624,7 @@ void obb_t::Set( const void* pointer, uint stride, int count )
 
 	// set the locals
 	center = (max+min)*0.5f;
-	rotation = mat3_t::GetIdentity();
+	rotation = Mat3::getIdentity();
 	extends = max-center;
 }
 
@@ -1639,16 +1639,16 @@ void obb_t::Render()
 	glPushMatrix();
 
 	glTranslatef( center.x, center.y, center.z ); // translate
-	r::MultMatrix( mat4_t(rotation) ); // rotate
+	r::MultMatrix( Mat4(rotation) ); // rotate
 	glScalef( extends.x, extends.y, extends.z ); // scale
 
-	glColor3fv( &vec3_t(1.0f, 1.0f, 1.0f)[0] );
+	glColor3fv( &Vec3(1.0f, 1.0f, 1.0f)[0] );
 
 	r::dbg::RenderCube( false, 2.0f );
 
-	r::Color3( vec3_t( 0.0, 1.0, 0.0 ) );
+	r::Color3( Vec3( 0.0, 1.0, 0.0 ) );
 	glBegin( GL_POINTS );
-		glVertex3fv( &vec3_t(1.0, 1.0, 1.0)[0] );
+		glVertex3fv( &Vec3(1.0, 1.0, 1.0)[0] );
 	glEnd();
 
 	glPopMatrix();
@@ -1660,12 +1660,12 @@ void obb_t::Render()
 Transformed                                                                                                                           =
 =======================================================================================================================================
 */
-obb_t obb_t::Transformed( const vec3_t& translate, const mat3_t& rotate, float scale ) const
+obb_t obb_t::Transformed( const Vec3& translate, const Mat3& rotate, float scale ) const
 {
 	obb_t res;
 
 	res.extends = extends * scale;
-	res.center = center.GetTransformed( translate, rotate, scale );
+	res.center = center.getTransformed( translate, rotate, scale );
 	res.rotation = rotate * rotation;
 
 	return res;
@@ -1679,7 +1679,7 @@ PlaneTest                                                                       
 */
 float obb_t::PlaneTest( const plane_t& plane ) const
 {
-	vec3_t x_normal = rotation.GetTransposed() * plane.normal;
+	Vec3 x_normal = rotation.getTransposed() * plane.normal;
 	// maximum extent in direction of plane normal
 	float r = fabs(extends.x*x_normal.x)
 					+ fabs(extends.y*x_normal.y)
@@ -1706,18 +1706,18 @@ obb - obb                                                                       
 bool obb_t::Intersects( const obb_t& other ) const
 {
 	// extent vectors
-	const vec3_t& a = extends;
-	const vec3_t& b = other.extends;
+	const Vec3& a = extends;
+	const Vec3& b = other.extends;
 
 	// test factors
 	float cTest, aTest, bTest;
 	bool parallelAxes = false;
 
 	// transpose of rotation of B relative to A, i.e. (R_b^T * R_a)^T
-	mat3_t Rt = rotation.GetTransposed() * other.rotation;
+	Mat3 Rt = rotation.getTransposed() * other.rotation;
 
 	// absolute value of relative rotation matrix
-	mat3_t Rabs;
+	Mat3 Rabs;
 	for( uint i = 0; i < 3; ++i )
 	{
 		for( uint j = 0; j < 3; ++j )
@@ -1733,7 +1733,7 @@ bool obb_t::Intersects( const obb_t& other ) const
 	}
 
 	// relative translation (in A's frame)
-	vec3_t c = rotation.GetTransposed()*(other.center - center);
+	Vec3 c = rotation.getTransposed()*(other.center - center);
 
 	// separating axis A0
 	cTest = fabs(c.x);
@@ -1843,7 +1843,7 @@ bool obb_t::Intersects( const ray_t& ray ) const
 {
 	aabb_t aabb_( -extends, extends );
 	ray_t newray;
-	mat3_t rottrans = rotation.GetTransposed();
+	Mat3 rottrans = rotation.getTransposed();
 
 	newray.origin = rottrans * ( ray.origin - center );
 	newray.dir = rottrans * ray.dir;
@@ -1865,20 +1865,20 @@ bool obb_t::Intersects( const lineseg_t& segment ) const
 	float minT = FLT_MAX;
 
 	// compute difference vector
-	vec3_t diff = center - segment.origin;
+	Vec3 diff = center - segment.origin;
 
 	// for each axis do
 	for( int i = 0; i < 3; ++i )
 	{
 		// get axis i
-		vec3_t axis = rotation.GetColumn( i );
+		Vec3 axis = rotation.getColumn( i );
 
 		// project relative vector onto axis
-		float e = axis.Dot( diff );
-		float f = segment.dir.Dot( axis );
+		float e = axis.dot( diff );
+		float f = segment.dir.dot( axis );
 
 		// ray is parallel to plane
-		if( IsZero( f ) )
+		if( isZero( f ) )
 		{
 			// ray passes by box
 			if( -e - extends[i] > 0.0f || -e + extends[i] > 0.0f )
@@ -1922,7 +1922,7 @@ obb - sphere                                                                    
 bool obb_t::Intersects( const bsphere_t& sphere ) const
 {
 	aabb_t aabb_( -extends, extends ); // aabb_ is in "this" frame
-	vec3_t new_center = rotation.GetTransposed() * (sphere.center - center);
+	Vec3 new_center = rotation.getTransposed() * (sphere.center - center);
 	bsphere_t sphere_( new_center, sphere.radius ); // sphere1 to "this" fame
 
 	return aabb_.Intersects( sphere_ );
@@ -1937,9 +1937,9 @@ obb - aabb                                                                      
 */
 bool obb_t::Intersects( const aabb_t& aabb ) const
 {
-	vec3_t center_ = (aabb.max + aabb.min) * 0.5f;
-	vec3_t extends_ = (aabb.max - aabb.min) * 0.5f;
-	obb_t obb_( center_, mat3_t::GetIdentity(), extends_ );
+	Vec3 center_ = (aabb.max + aabb.min) * 0.5f;
+	Vec3 extends_ = (aabb.max - aabb.min) * 0.5f;
+	obb_t obb_( center_, Mat3::getIdentity(), extends_ );
 
 	return Intersects( obb_ );
 }
@@ -1951,10 +1951,10 @@ SeperationTest                                                                  
 obb - sphere                                                                                                                          =
 =======================================================================================================================================
 */
-bool obb_t::SeperationTest( const bsphere_t& sphere, vec3_t& normal, vec3_t& impact_point, float& depth ) const
+bool obb_t::SeperationTest( const bsphere_t& sphere, Vec3& normal, Vec3& impact_point, float& depth ) const
 {
 	aabb_t aabb_( -extends, extends ); // aabb_ is in "this" frame
-	vec3_t new_center = rotation.GetTransposed() * (sphere.center - center); // sphere's new center
+	Vec3 new_center = rotation.getTransposed() * (sphere.center - center); // sphere's new center
 	bsphere_t sphere_( new_center, sphere.radius ); // sphere_ to "this" frame
 
 	UNLOCK_RENDER_SEPERATION

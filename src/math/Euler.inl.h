@@ -1,7 +1,7 @@
-#include "m_dflt_header.h"
+#include "MathDfltHeader.h"
 
 
-namespace m {
+namespace M {
 
 
 // accessors
@@ -61,7 +61,7 @@ inline Euler::Euler( const Euler& b )
 {}
 
 // constructor [quat]
-inline Euler::Euler( const quat_t& q )
+inline Euler::Euler( const Quat& q )
 {
 	float test = q.x*q.y + q.z*q.w;
 	if( test > 0.499 )
@@ -88,16 +88,16 @@ inline Euler::Euler( const quat_t& q )
 }
 
 // constructor [mat3]
-inline Euler::Euler( const mat3_t& m3 )
+inline Euler::Euler( const Mat3& m3 )
 {
 	float cx, sx;
 	float cy, sy;
 	float cz, sz;
 
 	sy = m3(0,2);
-	cy = sqrt( 1.0 - sy*sy );
+	cy = M::sqrt( 1.0 - sy*sy );
 	// normal case
-	if ( !IsZero( cy ) )
+	if ( !isZero( cy ) )
 	{
 		float factor = 1.0/cy;
 		sx = -m3(1,2) * factor;

@@ -3,15 +3,15 @@
 
 #include "common.h"
 
-namespace m {
-	class vec4_t;
+namespace M {
+	class Vec4;
 }
 
 namespace ui { // begin namespace
 
 
 extern void Init(); // exec after init SDL
-extern void SetColor( const m::vec4_t& color );
+extern void SetColor( const M::Vec4& color );
 extern void SetPos( float x_, float y_ );
 extern void SetFontWidth( float w_ );
 extern void printf( const char* format, ... );

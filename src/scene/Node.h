@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "common.h"
-#include "gmath.h"
+#include "Math.h"
 
 
 class bvolume_t;
@@ -25,15 +25,15 @@ class Node
 			NT_SKEL_MODEL
 		};
 
-		vec3_t translationLspace;
-		mat3_t rotationLspace;
+		Vec3 translationLspace;
+		Mat3 rotationLspace;
 		float  scaleLspace;
 
-		vec3_t translationWspace;
-		mat3_t rotationWspace;
+		Vec3 translationWspace;
+		Mat3 rotationWspace;
 		float  scaleWspace;
 
-		mat4_t transformationWspace;
+		Mat4 transformationWspace;
 
 		Node* parent;
 		Vec<Node*> childs;
@@ -58,15 +58,15 @@ class Node
 		virtual void deinit() = 0;
 		virtual void updateWorldStuff() { updateWorldTransform(); } ///< This update happens only when the object gets moved. Override it if you want more
 		void updateWorldTransform();
-		void rotateLocalX( float ang_degrees ) { rotationLspace.RotateXAxis( ang_degrees ); }
-		void rotateLocalY( float ang_degrees ) { rotationLspace.RotateYAxis( ang_degrees ); }
-		void rotateLocalZ( float ang_degrees ) { rotationLspace.RotateZAxis( ang_degrees ); }
+		void rotateLocalX( float ang_degrees ) { rotationLspace.rotateXAxis( ang_degrees ); }
+		void rotateLocalY( float ang_degrees ) { rotationLspace.rotateYAxis( ang_degrees ); }
+		void rotateLocalZ( float ang_degrees ) { rotationLspace.rotateZAxis( ang_degrees ); }
 		void moveLocalX( float distance );
 		void moveLocalY( float distance );
 		void moveLocalZ( float distance );
 		void addChild( Node* node );
 		void removeChild( Node* node );
-		void setLocalTransformation( const vec3_t& t, const mat3_t& r, float s ) { translationLspace=t; rotationLspace=r; scaleLspace=s; }
+		void setLocalTransformation( const Vec3& t, const Mat3& r, float s ) { translationLspace=t; rotationLspace=r; scaleLspace=s; }
 };
 
 

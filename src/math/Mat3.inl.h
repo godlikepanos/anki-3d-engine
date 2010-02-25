@@ -1,41 +1,41 @@
-#include "m_dflt_header.h"
+#include "MathDfltHeader.h"
 
 
 #define ME (*this)
 
 
-namespace m {
+namespace M {
 
 // accessors
-inline float& mat3_t::operator ()( const uint i, const uint j )
+inline float& Mat3::operator ()( const uint i, const uint j )
 {
 	return arr2[i][j];
 }
 
-inline const float& mat3_t::operator ()( const uint i, const uint j ) const
+inline const float& Mat3::operator ()( const uint i, const uint j ) const
 {
 	return arr2[i][j]; 
 }
 
-inline float& mat3_t::operator []( const uint i)
+inline float& Mat3::operator []( const uint i)
 {
 	return arr1[i];
 }
 
-inline const float& mat3_t::operator []( const uint i) const
+inline const float& Mat3::operator []( const uint i) const
 {
 	return arr1[i];
 }
 
 // constructor [float[]]
-inline mat3_t::mat3_t( float arr [] )
+inline Mat3::Mat3( float arr [] )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] = arr[i];
 }
 
 // constructor [float...........float]
-inline mat3_t::mat3_t( float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22 )
+inline Mat3::Mat3( float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22 )
 {
 	ME(0,0) = m00;
 	ME(0,1) = m01;
@@ -49,16 +49,16 @@ inline mat3_t::mat3_t( float m00, float m01, float m02, float m10, float m11, fl
 }
 
 // constructor [mat3]
-inline mat3_t::mat3_t( const mat3_t& b )
+inline Mat3::Mat3( const Mat3& b )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] = b[i];
 }
 
 // constructor [quat]
-inline mat3_t::mat3_t( const quat_t& q )
+inline Mat3::Mat3( const Quat& q )
 {
-	DEBUG_ERR( !IsZero( 1.0f - q.Length()) ); // Not normalized quat
+	DEBUG_ERR( !isZero( 1.0f - q.getLength()) ); // Not normalized quat
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
@@ -89,7 +89,7 @@ inline mat3_t::mat3_t( const quat_t& q )
 }
 
 // constructor [euler]
-inline mat3_t::mat3_t( const Euler& e )
+inline Mat3::Mat3( const Euler& e )
 {
 	float ch, sh, ca, sa, cb, sb;
   sinCos( e.heading(), sh, ch );
@@ -108,15 +108,15 @@ inline mat3_t::mat3_t( const Euler& e )
 }
 
 // constructor [axisang]
-inline mat3_t::mat3_t( const Axisang& axisang )
+inline Mat3::Mat3( const Axisang& axisang )
 {
-	DEBUG_ERR( !IsZero( 1.0-axisang.axis.Length() ) ); // Not normalized axis
+	DEBUG_ERR( !isZero( 1.0-axisang.axis.getLength() ) ); // Not normalized axis
 
 	float c, s;
 	sinCos( axisang.ang, s, c );
 	float t = 1.0 - c;
 
-	const vec3_t& axis = axisang.axis;
+	const Vec3& axis = axisang.axis;
 	ME(0,0) = c + axis.x*axis.x*t;
 	ME(1,1) = c + axis.y*axis.y*t;
 	ME(2,2) = c + axis.z*axis.z*t;
@@ -135,23 +135,23 @@ inline mat3_t::mat3_t( const Axisang& axisang )
 }
 
 // constructor [float]
-inline mat3_t::mat3_t( float f )
+inline Mat3::Mat3( float f )
 {
 	for( int i=0; i<9; i++ )
 			ME[i] = f;
 }
 
 // 3x3 + 3x3
-inline mat3_t mat3_t::operator +( const mat3_t& b ) const
+inline Mat3 Mat3::operator +( const Mat3& b ) const
 {
-	mat3_t c;
+	Mat3 c;
 	for( int i=0; i<9; i++ )
 		c[i] = ME[i] + b[i];
 	return c;
 }
 
 // 3x3 += 3x3
-inline mat3_t& mat3_t::operator +=( const mat3_t& b )
+inline Mat3& Mat3::operator +=( const Mat3& b )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] += b[i];
@@ -159,16 +159,16 @@ inline mat3_t& mat3_t::operator +=( const mat3_t& b )
 }
 
 // 3x3 - 3x3
-inline mat3_t mat3_t::operator -( const mat3_t& b ) const
+inline Mat3 Mat3::operator -( const Mat3& b ) const
 {
-	mat3_t c;
+	Mat3 c;
 	for( int i=0; i<9; i++ )
 		c[i] = ME[i] - b[i];
 	return c;
 }
 
 // 3x3 -= 3x3
-inline mat3_t& mat3_t::operator -=( const mat3_t& b )
+inline Mat3& Mat3::operator -=( const Mat3& b )
 {
 	for( int i=0; i<9; i++ )
 		ME[i] -= b[i];
@@ -176,9 +176,9 @@ inline mat3_t& mat3_t::operator -=( const mat3_t& b )
 }
 
 // 3x3 * 3x3
-inline mat3_t mat3_t::operator *( const mat3_t& b ) const
+inline Mat3 Mat3::operator *( const Mat3& b ) const
 {
-	mat3_t c;
+	Mat3 c;
 	c(0, 0) = ME(0, 0)*b(0, 0) + ME(0, 1)*b(1, 0) + ME(0, 2)*b(2, 0);
 	c(0, 1) = ME(0, 0)*b(0, 1) + ME(0, 1)*b(1, 1) + ME(0, 2)*b(2, 1);
 	c(0, 2) = ME(0, 0)*b(0, 2) + ME(0, 1)*b(1, 2) + ME(0, 2)*b(2, 2);
@@ -192,29 +192,29 @@ inline mat3_t mat3_t::operator *( const mat3_t& b ) const
 }
 
 // 3x3 *= 3x3
-inline mat3_t& mat3_t::operator *=( const mat3_t& b )
+inline Mat3& Mat3::operator *=( const Mat3& b )
 {
 	ME = ME * b;
 	return ME;
 }
 
 // 3x3 + float
-inline mat3_t mat3_t::operator +( float f ) const
+inline Mat3 Mat3::operator +( float f ) const
 {
-	mat3_t c;
+	Mat3 c;
 	for( uint i=0; i<9; i++ )
 		c[i] = ME[i] + f;
 	return c;
 }
 
 // float + 3x3
-inline mat3_t operator +( float f, const mat3_t& m3 )
+inline Mat3 operator +( float f, const Mat3& m3 )
 {
 	return m3+f;
 }
 
 // 3x3 += float
-inline mat3_t& mat3_t::operator +=( float f )
+inline Mat3& Mat3::operator +=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] += f;
@@ -222,25 +222,25 @@ inline mat3_t& mat3_t::operator +=( float f )
 }
 
 // 3x3 - float
-inline mat3_t mat3_t::operator -( float f ) const
+inline Mat3 Mat3::operator -( float f ) const
 {
-	mat3_t c;
+	Mat3 c;
 	for( uint i=0; i<9; i++ )
 		c[i] = ME[i] - f;
 	return c;
 }
 
 // float - 3x3
-inline mat3_t operator -( float f, const mat3_t& m3 )
+inline Mat3 operator -( float f, const Mat3& m3 )
 {
-	mat3_t out;
+	Mat3 out;
 	for( uint i=0; i<9; i++ )
 		out[i] = f - m3[i];
 	return out;
 }
 
 // 3x3 -= float
-inline mat3_t& mat3_t::operator -=( float f )
+inline Mat3& Mat3::operator -=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] -= f;
@@ -248,25 +248,25 @@ inline mat3_t& mat3_t::operator -=( float f )
 }
 
 // 3x3 * float
-inline mat3_t mat3_t::operator *( float f ) const
+inline Mat3 Mat3::operator *( float f ) const
 {
-	mat3_t c;
+	Mat3 c;
 	for( uint i=0; i<9; i++ )
 		c[i] = ME[i] * f;
 	return c;
 }
 
 // float * 3x3
-inline mat3_t operator *( float f, const mat3_t& m3 )
+inline Mat3 operator *( float f, const Mat3& m3 )
 {
-	mat3_t out;
+	Mat3 out;
 	for( uint i=0; i<9; i++ )
 		out[i] = f * m3[i];
 	return out;
 }
 
 // 3x3 *= float
-inline mat3_t& mat3_t::operator *=( float f )
+inline Mat3& Mat3::operator *=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] *= f;
@@ -274,25 +274,25 @@ inline mat3_t& mat3_t::operator *=( float f )
 }
 
 // 3x3 / float
-inline mat3_t mat3_t::operator /( float f ) const
+inline Mat3 Mat3::operator /( float f ) const
 {
-	mat3_t c;
+	Mat3 c;
 	for( uint i=0; i<9; i++ )
 		c[i] = ME[i] / f;
 	return c;
 }
 
 // float / 3x3
-inline mat3_t operator /( float f, const mat3_t& m3 )
+inline Mat3 operator /( float f, const Mat3& m3 )
 {
-	mat3_t out;
+	Mat3 out;
 	for( uint i=0; i<9; i++ )
 		out[i] = f / m3[i];
 	return out;
 }
 
 // 3x3 / float (self)
-inline mat3_t& mat3_t::operator /=( float f )
+inline Mat3& Mat3::operator /=( float f )
 {
 	for( uint i=0; i<9; i++ )
 		ME[i] /= f;
@@ -300,9 +300,9 @@ inline mat3_t& mat3_t::operator /=( float f )
 }
 
 // 3x3 * vec3 (cross products with rows)
-inline vec3_t mat3_t::operator *( const vec3_t& b ) const
+inline Vec3 Mat3::operator *( const Vec3& b ) const
 {
-	return vec3_t(
+	return Vec3(
 		ME(0, 0)*b.x + ME(0, 1)*b.y + ME(0, 2)*b.z,
 		ME(1, 0)*b.x + ME(1, 1)*b.y + ME(1, 2)*b.z,
 		ME(2, 0)*b.x + ME(2, 1)*b.y + ME(2, 2)*b.z
@@ -310,23 +310,23 @@ inline vec3_t mat3_t::operator *( const vec3_t& b ) const
 }
 
 // ==
-inline bool mat3_t::operator ==( const mat3_t& b ) const
+inline bool Mat3::operator ==( const Mat3& b ) const
 {
 	for( int i=0; i<9; i++ )
-		if( !IsZero( ME[i]-b[i] ) ) return false;
+		if( !isZero( ME[i]-b[i] ) ) return false;
 	return true;
 }
 
 // !=
-inline bool mat3_t::operator !=( const mat3_t& b ) const
+inline bool Mat3::operator !=( const Mat3& b ) const
 {
 	for( int i=0; i<9; i++ )
-		if( !IsZero( ME[i]-b[i] ) ) return true;
+		if( !isZero( ME[i]-b[i] ) ) return true;
 	return false;
 }
 
-// SetRows
-inline void mat3_t::SetRows( const vec3_t& a, const vec3_t& b, const vec3_t& c )
+// setRows
+inline void Mat3::setRows( const Vec3& a, const Vec3& b, const Vec3& c )
 {
 	ME(0,0) = a.x;
 	ME(0,1) = a.y;
@@ -339,8 +339,8 @@ inline void mat3_t::SetRows( const vec3_t& a, const vec3_t& b, const vec3_t& c )
 	ME(2,2) = c.z;
 }
 
-// SetColumns
-inline void mat3_t::SetColumns( const vec3_t& a, const vec3_t& b, const vec3_t& c )
+// setColumns
+inline void Mat3::setColumns( const Vec3& a, const Vec3& b, const Vec3& c )
 {
 	ME(0,0) = a.x;
 	ME(1,0) = a.y;
@@ -353,8 +353,8 @@ inline void mat3_t::SetColumns( const vec3_t& a, const vec3_t& b, const vec3_t& 
 	ME(2,2) = c.z;
 }
 
-// GetRows
-inline void mat3_t::GetRows( vec3_t& a, vec3_t& b, vec3_t& c ) const
+// getRows
+inline void Mat3::getRows( Vec3& a, Vec3& b, Vec3& c ) const
 {
 	a.x = ME(0,0);
 	a.y = ME(0,1);
@@ -367,8 +367,8 @@ inline void mat3_t::GetRows( vec3_t& a, vec3_t& b, vec3_t& c ) const
 	c.z = ME(2,2);
 }
 
-// GetColumns
-inline void mat3_t::GetColumns( vec3_t& a, vec3_t& b, vec3_t& c ) const
+// getColumns
+inline void Mat3::getColumns( Vec3& a, Vec3& b, Vec3& c ) const
 {
 	a.x = ME(0,0);
 	a.y = ME(1,0);
@@ -381,36 +381,36 @@ inline void mat3_t::GetColumns( vec3_t& a, vec3_t& b, vec3_t& c ) const
 	c.z = ME(2,2);
 }
 
-// SetRow
-inline void mat3_t::SetRow( const uint i, const vec3_t& v )
+// setRow
+inline void Mat3::setRow( const uint i, const Vec3& v )
 {
 	ME(i,0)=v.x;
 	ME(i,1)=v.y;
 	ME(i,2)=v.z;
 }
 
-// GetRow
-inline vec3_t mat3_t::GetRow( const uint i ) const
+// getRow
+inline Vec3 Mat3::getRow( const uint i ) const
 {
-	return vec3_t( ME(i,0), ME(i,1), ME(i,2) );
+	return Vec3( ME(i,0), ME(i,1), ME(i,2) );
 }
 
-// SetColumn
-inline void mat3_t::SetColumn( const uint i, const vec3_t& v )
+// setColumn
+inline void Mat3::setColumn( const uint i, const Vec3& v )
 {
 	ME(0,i)=v.x;
 	ME(1,i)=v.y;
 	ME(2,i)=v.z;
 }
 
-// GetColumn
-inline vec3_t mat3_t::GetColumn( const uint i ) const
+// getColumn
+inline Vec3 Mat3::getColumn( const uint i ) const
 {
-	return vec3_t( ME(0,i), ME(1,i), ME(2,i) );
+	return Vec3( ME(0,i), ME(1,i), ME(2,i) );
 }
 
-// SetRotationX
-inline void mat3_t::SetRotationX( float rad )
+// setRotationX
+inline void Mat3::setRotationX( float rad )
 {
 	float sintheta, costheta;
 	sinCos( rad, sintheta, costheta );
@@ -426,8 +426,8 @@ inline void mat3_t::SetRotationX( float rad )
 	ME(2,2) = costheta;
 }
 
-// SetRotationY
-inline void mat3_t::SetRotationY( float rad )
+// setRotationY
+inline void Mat3::setRotationY( float rad )
 {
 	float sintheta, costheta;
 	sinCos( rad, sintheta, costheta );
@@ -444,7 +444,7 @@ inline void mat3_t::SetRotationY( float rad )
 }
 
 // loadRotationZ
-inline void mat3_t::SetRotationZ( float rad )
+inline void Mat3::setRotationZ( float rad )
 {
 	float sintheta, costheta;
 	sinCos( rad, sintheta, costheta );
@@ -460,25 +460,25 @@ inline void mat3_t::SetRotationZ( float rad )
 	ME(2,2) = 1.0f;
 }
 
-// RotateXAxis
+// rotateXAxis
 /* the slow code is in comments and above the comments the optimized one
 If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in mat's colomns.
-This means that: mat3.colomn[0] == i*mat3. RotateXAxis() rotates rad angle not from i vector (aka x axis) but
+This means that: mat3.colomn[0] == i*mat3. rotateXAxis() rotates rad angle not from i vector (aka x axis) but
 from the vector from colomn 0*/
-inline void mat3_t::RotateXAxis( float rad )
+inline void Mat3::rotateXAxis( float rad )
 {
 	float sina, cosa;
 	sinCos( rad, sina, cosa );
 
-	/*vec3_t x_axis, y_axis, z_axis;
-	GetColumns( x_axis, y_axis, z_axis );*/
+	/*Vec3 x_axis, y_axis, z_axis;
+	getColumns( x_axis, y_axis, z_axis );*/
 
 	// z_axis = z_axis*cosa - y_axis*sina;
 	ME(0,2) = ME(0,2)*cosa - ME(0,1)*sina;
 	ME(1,2) = ME(1,2)*cosa - ME(1,1)*sina;
 	ME(2,2) = ME(2,2)*cosa - ME(2,1)*sina;
 
-	// z_axis.Normalize();
+	// z_axis.normalize();
 	float len = invSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
 	ME(0,2) *= len;
 	ME(1,2) *= len;
@@ -489,31 +489,31 @@ inline void mat3_t::RotateXAxis( float rad )
 	ME(1,1) = ME(2,2)*ME(0,0) - ME(0,2)*ME(2,0);
 	ME(2,1) = ME(0,2)*ME(1,0) - ME(1,2)*ME(0,0);
 
-	// y_axis.Normalize();
+	// y_axis.normalize();
 	/*len = invSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
 	ME(0,1) *= len;
 	ME(1,1) *= len;
 	ME(2,1) *= len;*/
 
-	// SetColumns( x_axis, y_axis, z_axis );
+	// setColumns( x_axis, y_axis, z_axis );
 
 }
 
-// RotateYAxis
-inline void mat3_t::RotateYAxis( float rad )
+// rotateYAxis
+inline void Mat3::rotateYAxis( float rad )
 {
 	float sina, cosa;
 	sinCos( rad, sina, cosa );
 
-	/*vec3_t x_axis, y_axis, z_axis;
-	GetColumns( x_axis, y_axis, z_axis );*/
+	/*Vec3 x_axis, y_axis, z_axis;
+	getColumns( x_axis, y_axis, z_axis );*/
 
 	// z_axis = z_axis*cosa + x_axis*sina;
 	ME(0,2) = ME(0,2)*cosa + ME(0,0)*sina;
 	ME(1,2) = ME(1,2)*cosa + ME(1,0)*sina;
 	ME(2,2) = ME(2,2)*cosa + ME(2,0)*sina;
 
-	// z_axis.Normalize();
+	// z_axis.normalize();
 	float len = invSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
 	ME(0,2) *= len;
 	ME(1,2) *= len;
@@ -524,31 +524,31 @@ inline void mat3_t::RotateYAxis( float rad )
 	ME(1,0) = ME(0,2)*ME(2,1) - ME(2,2)*ME(0,1);
 	ME(2,0) = ME(1,2)*ME(0,1) - ME(0,2)*ME(1,1);
 
-	// x_axis.Normalize();
+	// x_axis.normalize();
 	/*len = invSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
 	ME(0,0) *= len;
 	ME(1,0) *= len;
 	ME(2,0) *= len;*/
 
-	// SetColumns( x_axis, y_axis, z_axis );
+	// setColumns( x_axis, y_axis, z_axis );
 }
 
 
-// RotateZAxis
-inline void mat3_t::RotateZAxis( float rad )
+// rotateZAxis
+inline void Mat3::rotateZAxis( float rad )
 {
 	float sina, cosa;
 	sinCos( rad, sina, cosa );
 
-	/*vec3_t x_axis, y_axis, z_axis;
-	GetColumns( x_axis, y_axis, z_axis );*/
+	/*Vec3 x_axis, y_axis, z_axis;
+	getColumns( x_axis, y_axis, z_axis );*/
 
 	// x_axis = x_axis*cosa + y_axis*sina;
 	ME(0,0) = ME(0,0)*cosa + ME(0,1)*sina;
 	ME(1,0) = ME(1,0)*cosa + ME(1,1)*sina;
 	ME(2,0) = ME(2,0)*cosa + ME(2,1)*sina;
 
-	// x_axis.Normalize();
+	// x_axis.normalize();
 	float len = invSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
 	ME(0,0) *= len;
 	ME(1,0) *= len;
@@ -559,17 +559,17 @@ inline void mat3_t::RotateZAxis( float rad )
 	ME(1,1) = ME(2,2)*ME(0,0) - ME(0,2)*ME(2,0);
 	ME(2,1) = ME(0,2)*ME(1,0) - ME(1,2)*ME(0,0);
 
-	// y_axis.Normalize();
+	// y_axis.normalize();
 	/*len = invSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
 	ME(0,1) *= len;
 	ME(1,1) *= len;
 	ME(2,1) *= len;*/
 
-	//SetColumns( x_axis, y_axis, z_axis );
+	//setColumns( x_axis, y_axis, z_axis );
 }
 
-// Transpose
-inline void mat3_t::Transpose()
+// transpose
+inline void Mat3::transpose()
 {
 	float temp = ME(0,1);
 	ME(0,1) = ME(1,0);
@@ -582,10 +582,10 @@ inline void mat3_t::Transpose()
 	ME(2,1) = temp;
 }
 
-// Transposed
-inline mat3_t mat3_t::GetTransposed() const
+// transposed
+inline Mat3 Mat3::getTransposed() const
 {
-	mat3_t m3;
+	Mat3 m3;
 	m3[0] = ME[0];
 	m3[1] = ME[3];
 	m3[2] = ME[6];
@@ -598,34 +598,34 @@ inline mat3_t mat3_t::GetTransposed() const
 	return m3;
 }
 
-// Reorthogonalize
-inline void mat3_t::Reorthogonalize()
+// reorthogonalize
+inline void Mat3::reorthogonalize()
 {
 	// method 1: standard orthogonalization method
-	/*mat3_t correction_m3 =
+	/*Mat3 correction_m3 =
 	(
-		(mat3_t::ident * 3.0f) -
-		(ME * ME.Transposed())
+		(Mat3::ident * 3.0f) -
+		(ME * ME.transposed())
 	) * 0.5f;
 
 	ME = correction_m3 * ME;*/
 
 	// method 2: Gram-Schmidt method with a twist for z_axis
-	vec3_t x_axis, y_axis, z_axis;
-	GetColumns( x_axis, y_axis, z_axis );
+	Vec3 x_axis, y_axis, z_axis;
+	getColumns( x_axis, y_axis, z_axis );
 
-	x_axis.Normalize();
+	x_axis.normalize();
 
-	y_axis = y_axis - ( x_axis * x_axis.Dot(y_axis) );
-	y_axis.Normalize();
+	y_axis = y_axis - ( x_axis * x_axis.dot(y_axis) );
+	y_axis.normalize();
 
-	z_axis = x_axis.Cross(y_axis);
+	z_axis = x_axis.cross(y_axis);
 
-	SetColumns( x_axis, y_axis, z_axis );
+	setColumns( x_axis, y_axis, z_axis );
 }
 
 // print
-inline void mat3_t::print() const
+inline void Mat3::print() const
 {
 	for( int i=0; i<3; i++ )
 	{
@@ -637,7 +637,7 @@ inline void mat3_t::print() const
 }
 
 // Determinant
-inline float mat3_t::Det() const
+inline float Mat3::getDet() const
 {
 	/* accurate method:
 	return ME(0, 0)*ME(1, 1)*ME(2, 2) + ME(0, 1)*ME(1, 2)*ME(2, 0) + ME(0, 2)*ME(1, 0)*ME(2, 1)
@@ -647,11 +647,11 @@ inline float mat3_t::Det() const
 	ME(0, 2)*( ME(0, 1)*ME(2, 1) - ME(1, 1)*ME(2, 0) );
 }
 
-// GetInverse
-// using Gramer's method ( Inv(A) = ( 1/Det(A) ) * Adj(A)  )
-inline mat3_t mat3_t::GetInverse() const
+// getInverse
+// using Gramer's method ( Inv(A) = ( 1/getDet(A) ) * Adj(A)  )
+inline Mat3 Mat3::getInverse() const
 {
-	mat3_t result;
+	Mat3 result;
 
 	// compute determinant
 	float cofactor0 = ME(1,1)*ME(2,2) - ME(1,2)*ME(2,1);
@@ -659,7 +659,7 @@ inline mat3_t mat3_t::GetInverse() const
 	float cofactor6 = ME(0,1)*ME(1,2) - ME(0,2)*ME(1,1);
 	float det = ME(0,0)*cofactor0 + ME(1,0)*cofactor3 + ME(2,0)*cofactor6;
 
-	DEBUG_ERR( IsZero( det ) ); // Cannot invert det == 0
+	DEBUG_ERR( isZero( det ) ); // Cannot invert det == 0
 
 	// create adjoint matrix and multiply by 1/det to get inverse
 	float invDet = 1.0f/det;
@@ -678,24 +678,24 @@ inline mat3_t mat3_t::GetInverse() const
 	return result;
 }
 
-// Invert
+// invert
 // see above
-inline void mat3_t::Invert()
+inline void Mat3::invert()
 {
-	ME = GetInverse();
+	ME = getInverse();
 }
 
-// GetZero
-inline const mat3_t& mat3_t::GetZero()
+// getZero
+inline const Mat3& Mat3::getZero()
 {
-	static mat3_t zero( 0.0 );
+	static Mat3 zero( 0.0 );
 	return zero;
 }
 
-// GetIdentity
-inline const mat3_t& mat3_t::GetIdentity()
+// getIdentity
+inline const Mat3& Mat3::getIdentity()
 {
-	static mat3_t ident( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 );
+	static Mat3 ident( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 );
 	return ident;
 }
 

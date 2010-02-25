@@ -42,7 +42,7 @@ void Light::deinit()
 //=====================================================================================================================================
 // RenderSphere                                                                                                                       =
 //=====================================================================================================================================
-static void RenderSphere( const mat4_t& tsl, const vec3_t& col )
+static void RenderSphere( const Mat4& tsl, const Vec3& col )
 {
 	glPushMatrix();
 	r::MultMatrix( tsl );

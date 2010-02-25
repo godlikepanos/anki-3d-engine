@@ -75,28 +75,28 @@ static void BuildStdShaderPreProcStr()
 	tmp += "precision lowp float;\n";
 	tmp += "#pragma optimize(on)\n";
 	tmp += "#pragma debug(off)\n";
-	tmp += "#define R_W " + FloatToStr(r::w) + "\n";
-	tmp += "#define R_H " + FloatToStr(r::h) + "\n";
-	//tmp += "#define R_Q " + FloatToStr(r::rendering_quality) + "\n";
-	tmp += "#define SHADOWMAP_SIZE " + IntToStr(r::is::shadows::shadow_resolution) + "\n";
+	tmp += "#define R_W " + Util::floatToStr(r::w) + "\n";
+	tmp += "#define R_H " + Util::floatToStr(r::h) + "\n";
+	//tmp += "#define R_Q " + floatToStr(r::rendering_quality) + "\n";
+	tmp += "#define SHADOWMAP_SIZE " + Util::intToStr(r::is::shadows::shadow_resolution) + "\n";
 	if( r::is::shadows::pcf )
 		tmp += "#define _SHADOW_MAPPING_PCF_\n";
 	if( r::pps::ssao::enabled )
 	{
 		tmp += "#define _SSAO_\n";
-		tmp += "#define SSAO_RENDERING_QUALITY " + FloatToStr(r::pps::ssao::rendering_quality) + "\n";
+		tmp += "#define SSAO_RENDERING_QUALITY " + Util::floatToStr(r::pps::ssao::rendering_quality) + "\n";
 	}
 	if( r::pps::edgeaa::enabled )
 		tmp += "#define _EDGEAA_\n";
 	if( r::pps::hdr::enabled )
 	{
 		tmp += "#define _HDR_\n";
-		tmp += "#define HDR_RENDERING_QUALITY " + FloatToStr(r::pps::hdr::rendering_quality) + "\n";
+		tmp += "#define HDR_RENDERING_QUALITY " + Util::floatToStr(r::pps::hdr::rendering_quality) + "\n";
 	}
 	if( r::pps::lscatt::enabled )
 	{
 		tmp += "#define _LSCATT_\n";
-		tmp += "#define LSCATT_RENDERING_QUALITY " + FloatToStr(r::pps::lscatt::rendering_quality) + "\n";
+		tmp += "#define LSCATT_RENDERING_QUALITY " + Util::floatToStr(r::pps::lscatt::rendering_quality) + "\n";
 	}
 }
 
@@ -129,8 +129,8 @@ void Init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	w = app::window_w /* * rendering_quality*/;
-	h = app::window_h /* * rendering_quality*/;
+	w = app::windowW /* * rendering_quality*/;
+	h = app::windowH /* * rendering_quality*/;
 	aspect_ratio = float(w)/h;
 
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
@@ -195,8 +195,8 @@ void Render( const Camera& cam )
 	r::bs::RunStage2( cam );
 	r::dbg::RunStage( cam );
 
-	//r::SetViewport( 0, 0, app::window_w, app::window_h );
-	r::SetViewport( 0, 0, app::window_w, app::window_h );
+	//r::SetViewport( 0, 0, app::windowW, app::windowH );
+	r::SetViewport( 0, 0, app::windowW, app::windowH );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
@@ -258,20 +258,20 @@ my version of gluUnproject                                                      
 =======================================================================================================================================
 */
 bool Unproject( float winX, float winY, float winZ, // window screen coords
-                const mat4_t& modelview_mat, const mat4_t& projection_mat, const int* view,
+                const Mat4& modelview_mat, const Mat4& projection_mat, const int* view,
                 float& objX, float& objY, float& objZ )
 {
-	mat4_t inv_pm = projection_mat * modelview_mat;
-	inv_pm.Invert();
+	Mat4 inv_pm = projection_mat * modelview_mat;
+	inv_pm.invert();
 
 	// the vec is in ndc space meaning: -1<=vec.x<=1 -1<=vec.y<=1 -1<=vec.z<=1
-	vec4_t vec;
+	Vec4 vec;
 	vec.x = (2.0*(winX-view[0]))/view[2] - 1.0;
 	vec.y = (2.0*(winY-view[1]))/view[3] - 1.0;
 	vec.z = 2.0*winZ - 1.0;
 	vec.w = 1.0;
 
-	vec4_t final = inv_pm * vec;
+	Vec4 final = inv_pm * vec;
 	final /= final.w;
 	objX = final.x;
 	objY = final.y;
@@ -285,7 +285,7 @@ bool Unproject( float winX, float winY, float winZ, // window screen coords
 Ortho                                                                                                                                 =
 =======================================================================================================================================
 */
-mat4_t Ortho( float left, float right, float bottom, float top, float near, float far )
+Mat4 Ortho( float left, float right, float bottom, float top, float near, float far )
 {
 	float difx = right-left;
 	float dify = top-bottom;
@@ -293,7 +293,7 @@ mat4_t Ortho( float left, float right, float bottom, float top, float near, floa
 	float tx = -(right+left) / difx;
 	float ty = -(top+bottom) / dify;
 	float tz = -(far+near) / difz;
-	mat4_t m;
+	Mat4 m;
 
 	m(0,0) = 2.0 / difx;
 	m(0,1) = 0.0;
@@ -453,7 +453,7 @@ TakeScreenshot                                                                  
 */
 void TakeScreenshot( const char* filename )
 {
-	char* ext = util::GetFileExtension( filename );
+	char* ext = Util::getFileExtension( filename );
 	bool ret;
 
 	// exec from this extension

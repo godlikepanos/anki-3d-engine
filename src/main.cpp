@@ -6,7 +6,7 @@
 
 #include "input.h"
 #include "Camera.h"
-#include "gmath.h"
+#include "Math.h"
 #include "renderer.h"
 #include "ui.h"
 #include "app.h"
@@ -179,14 +179,14 @@ void Init()
 	srand( unsigned(time(NULL)) );
 	mathSanityChecks();
 
-	app::InitWindow();
-	uint ticks = app::GetTicks();
+	app::initWindow();
+	uint ticks = app::getTicks();
 
 	r::Init();
 	ui::Init();
 
 	// camera
-	main_cam = new Camera( r::aspect_ratio*ToRad(60.0), ToRad(60.0), 0.5, 100.0 );
+	main_cam = new Camera( r::aspect_ratio*toRad(60.0), toRad(60.0), 0.5, 100.0 );
 	main_cam->moveLocalY( 3.0 );
 	main_cam->moveLocalZ( 5.7 );
 	main_cam->moveLocalX( -0.3 );
@@ -194,38 +194,38 @@ void Init()
 	// lights
 	point_lights[0] = new PointLight();
 	point_lights[0]->init( "maps/temple/light0.light" );
-	point_lights[0]->setLocalTransformation( vec3_t( -1.0, 2.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
+	point_lights[0]->setLocalTransformation( Vec3( -1.0, 2.4, 1.0 ), Mat3::getIdentity(), 1.0 );
 	point_lights[1] = new PointLight();
 	point_lights[1]->init( "maps/temple/light1.light" );
-	point_lights[1]->setLocalTransformation( vec3_t( 2.5, 1.4, 1.0 ), mat3_t::GetIdentity(), 1.0 );
+	point_lights[1]->setLocalTransformation( Vec3( 2.5, 1.4, 1.0 ), Mat3::getIdentity(), 1.0 );
 
 	spot_lights[0] = new SpotLight();
 	spot_lights[0]->init( "maps/temple/light2.light" );
-	spot_lights[0]->setLocalTransformation( vec3_t( 1.3, 4.3, 3.0 ), mat3_t( Euler(ToRad(-20), ToRad(20), 0.0) ), 1.0 );
+	spot_lights[0]->setLocalTransformation( Vec3( 1.3, 4.3, 3.0 ), Mat3( Euler(toRad(-20), toRad(20), 0.0) ), 1.0 );
 	spot_lights[1] = new SpotLight();
 	spot_lights[1]->init( "maps/temple/light3.light" );
-	spot_lights[1]->setLocalTransformation( vec3_t( -2.3, 6.3, 2.9 ), mat3_t( Euler(ToRad(-70), ToRad(-20), 0.0) ), 1.0 );
+	spot_lights[1]->setLocalTransformation( Vec3( -2.3, 6.3, 2.9 ), Mat3( Euler(toRad(-70), toRad(-20), 0.0) ), 1.0 );
 
 	// horse
 	horse = new MeshNode();
 	horse->init( "meshes/horse/horse.mesh" );
-	horse->setLocalTransformation( vec3_t( -2, 0, 1 ), mat3_t( Euler(-m::PI/2, 0.0, 0.0) ), 0.5 );
+	horse->setLocalTransformation( Vec3( -2, 0, 1 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.5 );
 	
 	// sarge
 	sarge = new MeshNode();
 	sarge->init( "meshes/sphere/sphere16.mesh" );
-	//sarge->setLocalTransformation( vec3_t( 0, -2.8, 1.0 ), mat3_t( Euler(-m::PI/2, 0.0, 0.0) ), 1.1 );
-	sarge->setLocalTransformation( vec3_t( 0, 2.0, 2.0 ), mat3_t::GetIdentity(), 0.4 );
+	//sarge->setLocalTransformation( Vec3( 0, -2.8, 1.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 1.1 );
+	sarge->setLocalTransformation( Vec3( 0, 2.0, 2.0 ), Mat3::getIdentity(), 0.4 );
 	
 	// floor
 	floor__ = new MeshNode();
 	floor__->init( "maps/temple/Cube.019.mesh" );
-	floor__->setLocalTransformation( vec3_t(0.0, -0.19, 0.0), mat3_t( Euler(-m::PI/2, 0.0, 0.0) ), 0.8 );
+	floor__->setLocalTransformation( Vec3(0.0, -0.19, 0.0), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.8 );
 
 	// imp	
 	imp = new skelModelNode();
 	imp->init( "models/imp/imp.smdl" );
-	imp->setLocalTransformation( vec3_t( 0.0, 2.11, 0.0 ), mat3_t( Euler(-m::PI/2, 0.0, 0.0) ), 0.7 );
+	imp->setLocalTransformation( Vec3( 0.0, 2.11, 0.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.7 );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = rsrc::skel_anims.load( "models/imp/walk.imp.anim" );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
@@ -238,7 +238,7 @@ void Init()
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
 	scene::skybox.load( skybox_fnames );
 
-	PRINT( "Engine initialization ends (" << app::GetTicks()-ticks << ")" );
+	PRINT( "Engine initialization ends (" << app::getTicks()-ticks << ")" );
 	cerr.flush();
 }
 
@@ -248,20 +248,23 @@ void Init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
+	float f = M::sin( 10.0 );
+	PRINT( f );
+
 	app::printAppInfo();
 
 	Init();
 
 	PRINT( "Entering main loop" );
-	int ticks = app::GetTicks();
+	int ticks = app::getTicks();
 	do
 	{
-		int ticks_ = app::GetTicks();
+		int ticks_ = app::getTicks();
 		i::HandleEvents();
 		r::PrepareNextFrame();
 
 		float dist = 0.2;
-		float ang = ToRad(3.0);
+		float ang = toRad(3.0);
 		float scale = 0.01;
 
 		// move the camera
@@ -300,7 +303,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		if( i::keys[SDLK_k] ) main_cam->lookAtPoint( point_lights[0]->translationWspace );
 
-		mover->rotationLspace.Reorthogonalize();
+		mover->rotationLspace.reorthogonalize();
 
 
 		scene::updateAllControllers();
@@ -313,16 +316,16 @@ int main( int /*argc*/, char* /*argv*/[] )
 		//map.octree.root->bounding_box.render();
 
 		// print some debug stuff
-		ui::SetColor( vec4_t(1.0, 1.0, 1.0, 1.0) );
+		ui::SetColor( Vec4(1.0, 1.0, 1.0, 1.0) );
 		ui::SetPos( -0.98, 0.95 );
 		ui::SetFontWidth( 0.03 );
-		ui::printf( "frame:%d time:%dms\n", r::frames_num, app::GetTicks()-ticks_ );
+		ui::printf( "frame:%d time:%dms\n", r::frames_num, app::getTicks()-ticks_ );
 		//ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
-								 ToDegrees(Euler(mover->rotationWspace).x), ToDegrees(Euler(mover->rotationWspace).y), ToDegrees(Euler(mover->rotationWspace).z) );
+								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
 
 		if( i::keys[SDLK_ESCAPE] ) break;
-		if( i::keys[SDLK_F11] ) app::TogleFullScreen();
+		if( i::keys[SDLK_F11] ) app::togleFullScreen();
 		if( i::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
@@ -338,15 +341,15 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( 1 )
 		{
 			//if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
-			app::WaitForNextFrame();
+			app::waitForNextFrame();
 		}
 		else
 			if( r::frames_num == 5000 ) break;
 	}while( true );
-	PRINT( "Exiting main loop (" << app::GetTicks()-ticks << ")" );
+	PRINT( "Exiting main loop (" << app::getTicks()-ticks << ")" );
 
 
 	PRINT( "Exiting..." );
-	app::QuitApp( EXIT_SUCCESS );
+	app::quitApp( EXIT_SUCCESS );
 	return 0;
 }

@@ -17,14 +17,14 @@ void octree_t::CreateRoot( const Vec<Mesh*>& meshes )
 	DEBUG_ERR( root ); // root should be NULL
 
 	/// get the root's aabb size
-	vec3_t min( numeric_limits<float>::max() ), max( numeric_limits<float>::min() );
+	Vec3 min( numeric_limits<float>::max() ), max( numeric_limits<float>::min() );
 
 	for( uint m=0; m<meshes.size(); m++ )
 	{
 		Mesh* cmesh = meshes[m];
 		for( uint v=0; v<cmesh->vertCoords.size(); v++ )
 		{
-			const vec3_t& vertCoords = cmesh->vertCoords[v];
+			const Vec3& vertCoords = cmesh->vertCoords[v];
 			for( int i=0; i<3; i++ )
 			{
 				if( vertCoords[i] > max[i] )
@@ -145,8 +145,8 @@ uint octree_t::CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const
 {
 	int points_outside_frustum_num = 0;
 	const aabb_t& box = node->bounding_box;
-	vec3_t box_points[] = { box.max, vec3_t(box.min.x, box.max.y, box.max.z), vec3_t(box.min.x, box.min.y, box.max.z), vec3_t(box.max.x, box.min.y, box.max.z),
-	                        box.min, vec3_t(box.min.x, box.max.y, box.min.z), vec3_t(box.min.x, box.min.y, box.min.z), vec3_t(box.max.x, box.min.y, box.min.z), };
+	Vec3 box_points[] = { box.max, Vec3(box.min.x, box.max.y, box.max.z), Vec3(box.min.x, box.min.y, box.max.z), Vec3(box.max.x, box.min.y, box.max.z),
+	                        box.min, Vec3(box.min.x, box.max.y, box.min.z), Vec3(box.min.x, box.min.y, box.min.z), Vec3(box.max.x, box.min.y, box.min.z), };
 
 	for( int i=0; i<8; i++ )
 	{

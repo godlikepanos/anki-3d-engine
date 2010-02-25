@@ -18,12 +18,12 @@ void Node::commonConstructorCode()
 {
 	parent = NULL;
 	isGroupNode = false;
-	translationLspace = vec3_t( 0.0 );
+	translationLspace = Vec3( 0.0 );
 	scaleLspace = 1.0;
-	rotationLspace = mat3_t::GetIdentity();
-	translationWspace = vec3_t( 0.0 );
+	rotationLspace = Mat3::getIdentity();
+	translationWspace = Vec3( 0.0 );
 	scaleWspace = 1.0;
-	rotationWspace = mat3_t::GetIdentity();
+	rotationWspace = Mat3::getIdentity();
 	bvolumeLspace = NULL;
 
 	scene::registerNode( this );
@@ -49,7 +49,7 @@ void Node::updateWorldTransform()
 		scaleWspace = parent->scaleWspace * scaleLspace;
 		rotationWspace = parent->rotationWspace * rotationLspace;
 		translationWspace = translationLspace.Transformed( parent->translationWspace, parent->rotationWspace, parent->scaleWspace ); */
-		CombineTransformations( parent->translationWspace, parent->rotationWspace, parent->scaleWspace,
+		combineTransformations( parent->translationWspace, parent->rotationWspace, parent->scaleWspace,
 		                        translationLspace, rotationLspace, scaleLspace,
 		                        translationWspace, rotationWspace, scaleWspace );
 	}
@@ -60,7 +60,7 @@ void Node::updateWorldTransform()
 		translationWspace = translationLspace;
 	}
 
-	transformationWspace = mat4_t( translationWspace, rotationWspace, scaleWspace );
+	transformationWspace = Mat4( translationWspace, rotationWspace, scaleWspace );
 
 
 	// transform the bvolume
@@ -104,19 +104,19 @@ void Node::updateWorldTransform()
 //=====================================================================================================================================
 void Node::moveLocalX( float distance )
 {
-	vec3_t x_axis = rotationLspace.GetColumn(0);
+	Vec3 x_axis = rotationLspace.getColumn(0);
 	translationLspace += x_axis * distance;
 }
 
 void Node::moveLocalY( float distance )
 {
-	vec3_t y_axis = rotationLspace.GetColumn(1);
+	Vec3 y_axis = rotationLspace.getColumn(1);
 	translationLspace += y_axis * distance;
 }
 
 void Node::moveLocalZ( float distance )
 {
-	vec3_t z_axis = rotationLspace.GetColumn(2);
+	Vec3 z_axis = rotationLspace.getColumn(2);
 	translationLspace += z_axis * distance;
 }
 

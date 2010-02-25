@@ -197,13 +197,13 @@ void Mesh::createFaceNormals()
 	for( uint i=0; i<tris.size(); i++ )
 	{
 		Triangle& tri = tris[i];
-		const vec3_t& v0 = vertCoords[ tri.vertIds[0] ];
-		const vec3_t& v1 = vertCoords[ tri.vertIds[1] ];
-		const vec3_t& v2 = vertCoords[ tri.vertIds[2] ];
+		const Vec3& v0 = vertCoords[ tri.vertIds[0] ];
+		const Vec3& v1 = vertCoords[ tri.vertIds[1] ];
+		const Vec3& v2 = vertCoords[ tri.vertIds[2] ];
 
-		tri.normal = ( v1 - v0 ).Cross( v2 - v0 );
+		tri.normal = ( v1 - v0 ).cross( v2 - v0 );
 
-		tri.normal.Normalize();
+		tri.normal.normalize();
 	}
 }
 
@@ -216,7 +216,7 @@ void Mesh::createVertNormals()
 	vertNormals.resize( vertCoords.size() ); // alloc
 
 	for( uint i=0; i<vertCoords.size(); i++ )
-		vertNormals[i] = vec3_t( 0.0, 0.0, 0.0 );
+		vertNormals[i] = Vec3( 0.0, 0.0, 0.0 );
 
 	for( uint i=0; i<tris.size(); i++ )
 	{
@@ -227,7 +227,7 @@ void Mesh::createVertNormals()
 	}
 
 	for( uint i=0; i<vertNormals.size(); i++ )
-		vertNormals[i].Normalize();
+		vertNormals[i].normalize();
 }
 
 
@@ -238,12 +238,12 @@ void Mesh::createVertTangents()
 {
 	vertTangents.resize( vertCoords.size() ); // alloc
 
-	Vec<vec3_t> bitagents( vertCoords.size() );
+	Vec<Vec3> bitagents( vertCoords.size() );
 
 	for( uint i=0; i<vertTangents.size(); i++ )
 	{
-		vertTangents[i] = vec4_t( 0.0 );
-		bitagents[i] = vec3_t( 0.0 );
+		vertTangents[i] = Vec4( 0.0 );
+		bitagents[i] = Vec3( 0.0 );
 	}
 
 	for( uint i=0; i<tris.size(); i++ )
@@ -252,27 +252,27 @@ void Mesh::createVertTangents()
 		const int i0 = tri.vertIds[0];
 		const int i1 = tri.vertIds[1];
 		const int i2 = tri.vertIds[2];
-		const vec3_t& v0 = vertCoords[ i0 ];
-		const vec3_t& v1 = vertCoords[ i1 ];
-		const vec3_t& v2 = vertCoords[ i2 ];
-		vec3_t edge01 = v1 - v0;
-		vec3_t edge02 = v2 - v0;
-		vec2_t uvedge01 = texCoords[i1] - texCoords[i0];
-		vec2_t uvedge02 = texCoords[i2] - texCoords[i0];
+		const Vec3& v0 = vertCoords[ i0 ];
+		const Vec3& v1 = vertCoords[ i1 ];
+		const Vec3& v2 = vertCoords[ i2 ];
+		Vec3 edge01 = v1 - v0;
+		Vec3 edge02 = v2 - v0;
+		Vec2 uvedge01 = texCoords[i1] - texCoords[i0];
+		Vec2 uvedge02 = texCoords[i2] - texCoords[i0];
 
 
 		float det = (uvedge01.y * uvedge02.x) - (uvedge01.x * uvedge02.y);
-		DEBUG_ERR( IsZero(det) );
+		DEBUG_ERR( isZero(det) );
 		det = 1.0f / det;
 
-		vec3_t t = ( edge02 * uvedge01.y - edge01 * uvedge02.y ) * det;
-		vec3_t b = ( edge02 * uvedge01.x - edge01 * uvedge02.x ) * det;
-		t.Normalize();
-		b.Normalize();
+		Vec3 t = ( edge02 * uvedge01.y - edge01 * uvedge02.y ) * det;
+		Vec3 b = ( edge02 * uvedge01.x - edge01 * uvedge02.x ) * det;
+		t.normalize();
+		b.normalize();
 
-		vertTangents[i0] += vec4_t(t, 1.0);
-		vertTangents[i1] += vec4_t(t, 1.0);
-		vertTangents[i2] += vec4_t(t, 1.0);
+		vertTangents[i0] += Vec4(t, 1.0);
+		vertTangents[i1] += Vec4(t, 1.0);
+		vertTangents[i2] += Vec4(t, 1.0);
 
 		bitagents[i0] += b;
 		bitagents[i1] += b;
@@ -281,18 +281,18 @@ void Mesh::createVertTangents()
 
 	for( uint i=0; i<vertTangents.size(); i++ )
 	{
-		vec3_t t = vec3_t(vertTangents[i]);
-		const vec3_t& n = vertNormals[i];
-		vec3_t& b = bitagents[i];
+		Vec3 t = Vec3(vertTangents[i]);
+		const Vec3& n = vertNormals[i];
+		Vec3& b = bitagents[i];
 
-		//t = t - n * n.Dot(t);
-		t.Normalize();
+		//t = t - n * n.dot(t);
+		t.normalize();
 
-		b.Normalize();
+		b.normalize();
 
-		float w = ( (n.Cross(t)).Dot( b ) < 0.0) ? 1.0 : -1.0;
+		float w = ( (n.cross(t)).dot( b ) < 0.0) ? 1.0 : -1.0;
 
-		vertTangents[i] = vec4_t( t, w );
+		vertTangents[i] = Vec4( t, w );
 	}
 
 	bitagents.clear();
@@ -304,15 +304,15 @@ void Mesh::createVertTangents()
 //=====================================================================================================================================
 void Mesh::createVBOs()
 {
-	vbos.vertIndeces.Create( GL_ELEMENT_ARRAY_BUFFER, vertIndeces.GetSizeInBytes(), &vertIndeces[0], GL_STATIC_DRAW );
-	vbos.vertCoords.Create( GL_ARRAY_BUFFER, vertCoords.GetSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW );
-	vbos.vertNormals.Create( GL_ARRAY_BUFFER, vertNormals.GetSizeInBytes(), &vertNormals[0], GL_STATIC_DRAW );
+	vbos.vertIndeces.Create( GL_ELEMENT_ARRAY_BUFFER, vertIndeces.getSizeInBytes(), &vertIndeces[0], GL_STATIC_DRAW );
+	vbos.vertCoords.Create( GL_ARRAY_BUFFER, vertCoords.getSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW );
+	vbos.vertNormals.Create( GL_ARRAY_BUFFER, vertNormals.getSizeInBytes(), &vertNormals[0], GL_STATIC_DRAW );
 	if( vertTangents.size() > 1 )
-		vbos.vertTangents.Create( GL_ARRAY_BUFFER, vertTangents.GetSizeInBytes(), &vertTangents[0], GL_STATIC_DRAW );
+		vbos.vertTangents.Create( GL_ARRAY_BUFFER, vertTangents.getSizeInBytes(), &vertTangents[0], GL_STATIC_DRAW );
 	if( texCoords.size() > 1 )
-		vbos.texCoords.Create( GL_ARRAY_BUFFER, texCoords.GetSizeInBytes(), &texCoords[0], GL_STATIC_DRAW );
+		vbos.texCoords.Create( GL_ARRAY_BUFFER, texCoords.getSizeInBytes(), &texCoords[0], GL_STATIC_DRAW );
 	if( vertWeights.size() > 1 )
-		vbos.vertWeights.Create( GL_ARRAY_BUFFER, vertWeights.GetSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW );
+		vbos.vertWeights.Create( GL_ARRAY_BUFFER, vertWeights.getSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW );
 }
 
 

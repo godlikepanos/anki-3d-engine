@@ -2,7 +2,7 @@
 #include "ShaderParser.h"
 #include "Scanner.h"
 #include "parser.h"
-#include "util.h"
+#include "Util.h"
 
 
 //=====================================================================================================================================
@@ -54,7 +54,7 @@ Vec<ShaderParser::ShaderVarPragma>::iterator ShaderParser::findShaderVar( Vec<Sh
 bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 {
 	// load file in lines
-	Vec<string> lines = util::GetFileLines( filename.c_str() );
+	Vec<string> lines = Util::getFileLines( filename.c_str() );
 	if( lines.size() < 1 )
 	{
 		ERROR( "Cannot parse file \"" << filename << "\"" );
@@ -100,7 +100,7 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 						vertShaderBegins.definedInFile = filename;
 						vertShaderBegins.definedInLine = scanner.getLineNmbr();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* fragShaderBegins */
@@ -122,7 +122,7 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 						fragShaderBegins.definedInFile = filename;
 						fragShaderBegins.definedInLine = scanner.getLineNmbr();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* include */
@@ -133,9 +133,9 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 						{
 							// play
 							//int line = sourceLines.size();
-							sourceLines.push_back( string("#line 0 ") + IntToStr(id+1) + " // " + lines[scanner.getLineNmbr()-1] );
+							sourceLines.push_back( string("#line 0 ") + Util::intToStr(id+1) + " // " + lines[scanner.getLineNmbr()-1] );
 							if( !parseFileForPragmas( token->value.string, id+1 ) ) return false;
-							sourceLines.push_back( string("#line ") + IntToStr(scanner.getLineNmbr()) + ' ' + IntToStr(id) +  " // end of " + lines[scanner.getLineNmbr()-1] );
+							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(id) +  " // end of " + lines[scanner.getLineNmbr()-1] );
 							// stop play
 						}
 						else

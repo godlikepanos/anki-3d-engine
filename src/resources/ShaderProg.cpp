@@ -226,8 +226,8 @@ bool ShaderProg::customload( const char* filename, const char* extra_source )
 {
 	if( getName().length() == 0 )
 	{
-		name = util::CutPath( filename );
-		path = util::GetPath( filename );
+		name = Util::cutPath( filename );
+		path = Util::getPath( filename );
 	}
 
 	ShaderParser pars;

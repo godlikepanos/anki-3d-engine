@@ -23,7 +23,7 @@ void renderer_t::illumination_stage_t::point_light_pass_t::InitSMOUVS()
 void renderer_t::illumination_stage_t::point_light_pass_t::DrawSMOUVS( const PointLight& light )
 {
 	const float scale = 1.2;
-	renderer.matrices.model = mat4_t( light.translationWspace, mat3_t::GetIdentity(), light.radius*scale );
+	renderer.matrices.model = Mat4( light.translationWspace, Mat3::getIdentity(), light.radius*scale );
 
 	shader_progs.smouvs.bind();
 
@@ -59,12 +59,12 @@ void renderer_t::illumination_stage_t::CalcViewVector()
 		view_vectors[i] = cam.getViewMatrix() * view_vectors[i];
 		The original code is the above 3 lines. The optimized follows:
 
-		vec3_t vec;
+		Vec3 vec;
 		vec.x = (2.0*(pixels[i][0]-viewport[0]))/viewport[2] - 1.0;
 		vec.y = (2.0*(pixels[i][1]-viewport[1]))/viewport[3] - 1.0;
 		vec.z = 1.0;
 
-		view_vectors[i] = vec.GetTransformed( renderer.camera->getInvProjectionMatrix() );
+		view_vectors[i] = vec.getTransformed( renderer.camera->getInvProjectionMatrix() );
 		// end of optimized code
 	}
 }
@@ -103,7 +103,7 @@ void renderer_t::illumination_stage_t::ambient_pass_t::Run() const
 	shaderProg.bind();
 
 	// set the uniforms
-	glUniform3fv( shaderProg.getUniLoc(0), 1, &((vec3_t)scene::GetAmbientColor())[0] );
+	glUniform3fv( shaderProg.getUniLoc(0), 1, &((Vec3)scene::GetAmbientColor())[0] );
 	shaderProg.locTexUnit( shaderProg.getUniLoc(1), renderer.ms.fais.diffuse, 0 );
 
 	// Draw quad
