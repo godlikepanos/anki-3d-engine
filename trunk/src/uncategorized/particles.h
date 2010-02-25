@@ -3,7 +3,7 @@
 #define _PARTICLES_H_
 
 #include "common.h"
-#include "gmath.h"
+#include "Math.h"
 #include "app.h"
 #include "object.h"
 
@@ -17,8 +17,8 @@ particle_t                                                                      
 class particle_t: public object_t
 {
 	public:
-		vec3_t velocity[PARTICLE_VELS_NUM];
-		vec3_t acceleration[PARTICLE_VELS_NUM];
+		Vec3 velocity[PARTICLE_VELS_NUM];
+		Vec3 acceleration[PARTICLE_VELS_NUM];
 		int life; // frames to death
 
 		particle_t(): object_t(LIGHT) {life = 0;}
@@ -42,7 +42,7 @@ class particle_emitter_t: public object_t
 			float   magnitude;
 			float   acceleration_magnitude;
 			bool    rotatable;
-			vec3_t  vel[2];
+			Vec3  vel[2];
 		};
 
 	public:
@@ -55,7 +55,7 @@ class particle_emitter_t: public object_t
 		int particle_life[2];  // []
 		int particles_per_frame;
 
-		vec3_t particles_translation_lspace[2]; // []
+		Vec3 particles_translation_lspace[2]; // []
 
 		// velocities
 		velocity_t velocities[PARTICLE_VELS_NUM];

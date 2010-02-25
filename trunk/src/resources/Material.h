@@ -2,7 +2,7 @@
 #define _MATERIAL_H_
 
 #include "common.h"
-#include "gmath.h"
+#include "Math.h"
 #include "Resource.h"
 
 /// Mesh material resource
@@ -25,13 +25,13 @@ class Material: public Resource
 					VT_VEC4
 				};
 
-				struct Value       // unfortunately we cannot use union because of vec3_t and vec4_t
+				struct Value       // unfortunately we cannot use union because of Vec3 and Vec4
 				{
 					Texture* texture;
 					float    float_;
-					vec2_t   vec2;
-					vec3_t   vec3;
-					vec4_t   vec4;
+					Vec2   vec2;
+					Vec3   vec3;
+					Vec4   vec4;
 					Value(): texture(NULL) {}
 				};
 

@@ -1,19 +1,19 @@
-#include "util.h"
+#include "Util.h"
 #include <math.h>
 
 
-namespace util {
+namespace Util {
 
 //=====================================================================================================================================
-// RandRange                                                                                                                          =
+// randRange                                                                                                                          =
 //=====================================================================================================================================
-int RandRange( int min, int max )
+int randRange( int min, int max )
 {
 	return (rand() % (max-min+1)) + min ;
 }
 
 
-float RandRange( float min, float max )
+float randRange( float min, float max )
 {
 	double d = max - min; // difference
 	if( d==0.0 ) return min;
@@ -32,9 +32,9 @@ float RandRange( float min, float max )
 
 
 //=====================================================================================================================================
-// ReadFile                                                                                                                           =
+// readFile                                                                                                                           =
 //=====================================================================================================================================
-string ReadFile( const char* filename )
+string readFile( const char* filename )
 {
 	ifstream file( filename );
 	if ( !file.is_open() )
@@ -48,9 +48,9 @@ string ReadFile( const char* filename )
 
 
 //=====================================================================================================================================
-// GetFileLines                                                                                                                       =
+// getFileLines                                                                                                                       =
 //=====================================================================================================================================
-Vec<string> GetFileLines( const char* filename )
+Vec<string> getFileLines( const char* filename )
 {
 	Vec<string> lines;
 	ifstream ifs( filename );
@@ -70,10 +70,10 @@ Vec<string> GetFileLines( const char* filename )
 
 
 //=====================================================================================================================================
-// CutPath                                                                                                                            =
+// cutPath                                                                                                                            =
 //=====================================================================================================================================
 /// Used only to cut the path from __FILE__ and return the actual file name and some other cases
-char* CutPath( const char* path )
+char* cutPath( const char* path )
 {
 	char* str = (char*)path + strlen(path) - 1;
 	for(;;)
@@ -86,9 +86,9 @@ char* CutPath( const char* path )
 
 
 //=====================================================================================================================================
-// GetPath                                                                                                                            =
+// getPath                                                                                                                            =
 //=====================================================================================================================================
-string GetPath( const char* path )
+string getPath( const char* path )
 {
 	char* str = (char*)path + strlen(path) - 1;
 	for(;;)
@@ -106,10 +106,10 @@ string GetPath( const char* path )
 
 
 //=====================================================================================================================================
-// GetFunctionFromPrettyFunction                                                                                                      =
+// getFunctionFromPrettyFunction                                                                                                      =
 //=====================================================================================================================================
 /// The function gets __PRETTY_FUNCTION__ and strips it to get only the function name with its namespace
-string GetFunctionFromPrettyFunction( const char* pretty_function )
+string getFunctionFromPrettyFunction( const char* pretty_function )
 {
 	string ret( pretty_function );
 
@@ -127,9 +127,9 @@ string GetFunctionFromPrettyFunction( const char* pretty_function )
 
 
 //=====================================================================================================================================
-// GetFileExtension                                                                                                                   =
+// getFileExtension                                                                                                                   =
 //=====================================================================================================================================
-char* GetFileExtension( const char* path )
+char* getFileExtension( const char* path )
 {
 	char* str = (char*)path + strlen(path) - 1;
 	for(;;)
@@ -142,6 +142,55 @@ char* GetFileExtension( const char* path )
 	if( str+1 == path ) ERROR( "Path \"" << path << "\" doesnt contain a '.'. What the fuck?" );
 
 	return str+1;
+}
+
+
+//=====================================================================================================================================
+// intToStr                                                                                                                           =
+//=====================================================================================================================================
+string intToStr( int i )
+{
+	char str [256];
+	char* pstr = str + ( (sizeof(str)/sizeof(char)) - 1 );
+	bool negative = false;
+
+	*pstr = '\0';
+
+	if( i < 0 )
+	{
+		i = -i;
+		negative = true;
+	}
+
+	do
+	{
+		--pstr;
+		int remain = i % 10;
+		i = i / 10;
+		*pstr = '0' + remain;
+	} while( i != 0 );
+
+	if( negative )
+	{
+		--pstr;
+		*pstr = '-';
+	}
+
+	return string(pstr);
+}
+
+
+//=====================================================================================================================================
+// floatToStr                                                                                                                         =
+//=====================================================================================================================================
+string floatToStr( float f )
+{
+	char tmp [128];
+
+	sprintf( tmp, "%f", f );
+
+	string s(tmp);
+	return s;
 }
 
 

@@ -2,7 +2,7 @@
 #define _MESH_H_
 
 #include "common.h"
-#include "gmath.h"
+#include "Math.h"
 #include "vbo.h"
 #include "Resource.h"
 #include "collision.h"
@@ -28,13 +28,13 @@ class Mesh: public Resource
 		{
 			public:
 				uint   vertIds[3]; // an array with the vertex indexes in the mesh class
-				vec3_t normal;
+				Vec3 normal;
 		};
 
-		Vec<vec3_t>       vertCoords;
-		Vec<vec3_t>       vertNormals;
-		Vec<vec4_t>       vertTangents;
-		Vec<vec2_t>       texCoords;    ///< One for every vert so we can use vertex arrays
+		Vec<Vec3>       vertCoords;
+		Vec<Vec3>       vertNormals;
+		Vec<Vec4>       vertTangents;
+		Vec<Vec2>       texCoords;    ///< One for every vert so we can use vertex arrays
 		Vec<VertexWeight> vertWeights;
 		Vec<Triangle>     tris;
 		Vec<ushort>       vertIndeces; ///< Used for vertex arrays

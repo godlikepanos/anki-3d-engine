@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "Texture.h"
-#include "gmath.h"
+#include "Math.h"
 
 class ShaderProg;
 
@@ -30,7 +30,7 @@ class skybox_t
 		skybox_t() { rotation_ang=0.0; }
 
 		bool load( const char* filenames[6] );
-		void Render( const mat3_t& rotation );
+		void Render( const Mat3& rotation );
 };
 
 

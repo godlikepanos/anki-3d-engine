@@ -13,9 +13,9 @@ data vars                                                                       
 */
 short keys [SDLK_LAST];  // shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
 short mouse_btns [8];    // mouse btns. Supporting 3 btns & wheel. Works the same as above
-vec2_t mouse_pos_ndc;    // the coords are in the ndc space
-vec2_t mouse_pos;        // the coords are in the window space
-vec2_t mouse_velocity;
+Vec2 mouse_pos_ndc;    // the coords are in the ndc space
+Vec2 mouse_pos;        // the coords are in the window space
+Vec2 mouse_velocity;
 
 bool warp_mouse = false;
 bool hide_cursor = true;
@@ -30,8 +30,8 @@ void Reset( void )
 {
 	memset( keys, 0, sizeof(keys) );
 	memset(mouse_btns, 0, sizeof(mouse_btns) );
-	mouse_pos_ndc.SetZero();
-	mouse_velocity.SetZero();
+	mouse_pos_ndc.setZero();
+	mouse_velocity.setZero();
 }
 
 
@@ -56,7 +56,7 @@ void HandleEvents()
 	}
 
 
-	mouse_velocity.SetZero();
+	mouse_velocity.setZero();
 
 	SDL_Event event_;
 	while( SDL_PollEvent(&event_) )
@@ -81,21 +81,21 @@ void HandleEvents()
 
 			case SDL_MOUSEMOTION:
 			{
-				vec2_t prev_mouse_pos_ndc( mouse_pos_ndc );
+				Vec2 prev_mouse_pos_ndc( mouse_pos_ndc );
 
 				mouse_pos.x = event_.button.x;
 				mouse_pos.y = event_.button.y;
 
-				mouse_pos_ndc.x = (2.0f * mouse_pos.x) / (float)app::window_w - 1.0f;
-				mouse_pos_ndc.y = 1.0f - (2.0f * mouse_pos.y) / (float)app::window_h;
+				mouse_pos_ndc.x = (2.0f * mouse_pos.x) / (float)app::windowW - 1.0f;
+				mouse_pos_ndc.y = 1.0f - (2.0f * mouse_pos.y) / (float)app::windowH;
 
 				if( warp_mouse )
 				{
 					// the SDL_WarpMouse pushes an event in the event queue. This check is so we wont process the event of the...
 					// ...SDL_WarpMouse function
-					if( mouse_pos_ndc == vec2_t::GetZero() ) break;
+					if( mouse_pos_ndc == Vec2::getZero() ) break;
 
-					SDL_WarpMouse( app::window_w/2, app::window_h/2);
+					SDL_WarpMouse( app::windowW/2, app::windowH/2);
 				}
 
 				mouse_velocity = mouse_pos_ndc - prev_mouse_pos_ndc;
@@ -103,7 +103,7 @@ void HandleEvents()
 			}
 
 			case SDL_QUIT:
-				app::QuitApp(1);
+				app::quitApp(1);
 				break;
 		}
 	}

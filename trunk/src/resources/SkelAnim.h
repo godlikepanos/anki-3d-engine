@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "Resource.h"
-#include "gmath.h"
+#include "Math.h"
 
 
 /// Skeleton animation
@@ -14,8 +14,8 @@ class SkelAnim: public Resource
 		class BonePose
 		{
 			public:
-				quat_t rotation;
-				vec3_t translation;
+				Quat rotation;
+				Vec3 translation;
 		};
 
 

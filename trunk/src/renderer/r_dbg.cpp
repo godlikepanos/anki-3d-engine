@@ -258,7 +258,7 @@ void RenderQuad( float w, float h )
 	float uvs [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
 
 	glBegin( GL_QUADS );
-		glNormal3fv( &(-vec3_t( 0.0, 0.0, 1.0 ))[0] );
+		glNormal3fv( &(-Vec3( 0.0, 0.0, 1.0 ))[0] );
 		glTexCoord2fv( uvs[0] );
 		glVertex2fv( points[0] );
 		glTexCoord2fv( uvs[1] );
@@ -403,9 +403,9 @@ static void RenderSun()
 {
 	glPushMatrix();
 
-	r::MultMatrix( mat4_t( scene::SunPos(), mat3_t::GetIdentity(), 50.0 ) );
+	r::MultMatrix( Mat4( scene::SunPos(), Mat3::getIdentity(), 50.0 ) );
 
-	r::Color3( vec3_t(1.0, 1.0, 0.0) );
+	r::Color3( Vec3(1.0, 1.0, 0.0) );
 	r::dbg::RenderSphere( 1.0/8.0, 8 );
 
 	glPopMatrix();
@@ -421,14 +421,14 @@ static void RenderSun()
 	glLoadIdentity();
 
 
-	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
+	Vec4 p = Vec4( scene::SunPos(), 1.0 );
 	p = main_cam->getProjectionMatrix() * (main_cam->getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
 
 	glPointSize( 10 );
 	glBegin( GL_POINTS );
-		r::Color3( vec3_t(0.0,1.0,0.0) );
+		r::Color3( Vec3(0.0,1.0,0.0) );
 		glVertex3fv( &p[0] );
 	glEnd();
 

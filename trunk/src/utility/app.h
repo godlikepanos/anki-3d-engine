@@ -9,19 +9,19 @@ namespace app {
 
 extern uint timer_tick;
 
-extern uint desktop_w;
-extern uint desktop_h;
+extern uint desktopW;
+extern uint desktopH;
 
-extern uint window_w;
-extern uint window_h;
+extern uint windowW;
+extern uint windowH;
 
-extern void InitWindow();
-extern void QuitApp( int code );
-extern void WaitForNextFrame();
-extern void TogleFullScreen();
+extern void initWindow();
+extern void quitApp( int code );
+extern void waitForNextFrame();
+extern void togleFullScreen();
 extern void printAppInfo();
 
-inline uint GetTicks()
+inline uint getTicks()
 {
 	return SDL_GetTicks();
 }

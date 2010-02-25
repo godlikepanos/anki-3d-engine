@@ -30,15 +30,15 @@ class Camera: public Node
 		plane_t wspaceFrustumPlanes[6];
 
 		// matrices
-		mat4_t projectionMat;
-		mat4_t viewMat;
+		Mat4 projectionMat;
+		Mat4 viewMat;
 		/**
 		 * Used in deferred shading for the calculation of view vector (see CalcViewVector). The reason we store this matrix here is
 		 * that we dont want it to be re-calculated all the time but only when the projection params (fovX, fovY, zNear, zFar) change.
 		 * Fortunately the projection params change rarely. Note that the Camera as we all know re-calculates the matreces only when the
 		 * parameteres change!!
 		 */
-		mat4_t invProjectionMat;
+		Mat4 invProjectionMat;
 
 		// misc
 		void calcProjectionMatrix();
@@ -68,12 +68,12 @@ class Camera: public Node
 		float getFovY () const { return fovY; }
 		float getZNear() const { return zNear; }
 		float getZFar () const { return zFar; }
-		const mat4_t& getProjectionMatrix() const { return projectionMat; }
-		const mat4_t& getViewMatrix() const { return viewMat; }
-		const mat4_t& getInvProjectionMatrix() const { return invProjectionMat; } // see the declaration of invProjectionMat for info
+		const Mat4& getProjectionMatrix() const { return projectionMat; }
+		const Mat4& getViewMatrix() const { return viewMat; }
+		const Mat4& getInvProjectionMatrix() const { return invProjectionMat; } // see the declaration of invProjectionMat for info
 
 		// misc
-		void lookAtPoint( const vec3_t& point );
+		void lookAtPoint( const Vec3& point );
 		void updateWorldStuff();
 		void render();
 		void init( const char* ) {}

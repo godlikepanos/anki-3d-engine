@@ -10,32 +10,32 @@ float renderer_t::quad_vert_cords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.
 //=====================================================================================================================================
 void renderer_t::UpdateMatrices()
 {
-	const mat4_t& M = matrices.model;
-	const mat4_t& V = matrices.view;
-	const mat4_t& P = matrices.projection;
-	mat4_t& MV = matrices.model_view;
-	mat4_t& MVP = matrices.model_view_projection;
-	mat3_t& N = matrices.normal;
+	const Mat4& M = matrices.model;
+	const Mat4& V = matrices.view;
+	const Mat4& P = matrices.projection;
+	Mat4& MV = matrices.model_view;
+	Mat4& MVP = matrices.model_view_projection;
+	Mat3& N = matrices.normal;
 
-	mat4_t& Mi = matrices.model_inv;
-	mat4_t& Vi = matrices.view_inv;
-	mat4_t& Pi = matrices.projection_inv;
-	mat4_t& MVi = matrices.model_view_inv;
-	mat4_t& MVPi = matrices.model_view_projection_inv;
-	mat3_t& Ni = matrices.normal_inv;
+	Mat4& Mi = matrices.model_inv;
+	Mat4& Vi = matrices.view_inv;
+	Mat4& Pi = matrices.projection_inv;
+	Mat4& MVi = matrices.model_view_inv;
+	Mat4& MVPi = matrices.model_view_projection_inv;
+	Mat3& Ni = matrices.normal_inv;
 
 	// matrices
 	MV = V * M;
 	MVP = P * MV;
-	N = MV.GetRotationPart();
+	N = MV.getRotationPart();
 
 	// inv matrices
-	Mi = M.GetInverseTransformation();
-	Vi = V.GetInverseTransformation();
-	Pi = P.GetInverse();
+	Mi = M.getInverseTransformation();
+	Vi = V.getInverseTransformation();
+	Pi = P.getInverse();
 	MV = Mi * Vi;
 	MVPi = MVi * Pi;
-	Ni = MVi.GetRotationPart();
+	Ni = MVi.getRotationPart();
 }
 
 

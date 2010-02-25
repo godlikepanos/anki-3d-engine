@@ -263,7 +263,7 @@ bool Image::loadPNG( const char* filename )
 bool Image::load( const char* filename )
 {
 	// get the extension
-	char* ext = util::GetFileExtension( filename );
+	char* ext = Util::getFileExtension( filename );
 
 	// load from this extension
 	if( strcmp( ext, "tga" ) == 0 )

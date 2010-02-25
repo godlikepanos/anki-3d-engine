@@ -1,7 +1,7 @@
 #include "skybox.h"
 #include "Resource.h"
 #include "renderer.h"
-#include "gmath.h"
+#include "Math.h"
 #include "Camera.h"
 #include "Scene.h"
 
@@ -51,7 +51,7 @@ bool skybox_t::load( const char* filenames[6] )
 render                                                                                                                                =
 =======================================================================================================================================
 */
-void skybox_t::Render( const mat3_t& rotation )
+void skybox_t::Render( const Mat3& rotation )
 {
 	//glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
@@ -62,12 +62,12 @@ void skybox_t::Render( const mat3_t& rotation )
 	glUniform1i( shader->getUniLoc("colormap"), 0 );
 	shader->locTexUnit( shader->getUniLoc("noisemap"), *noise, 1 );
 	glUniform1f( shader->getUniLoc("timer"), (rotation_ang/(2*PI))*100 );
-	glUniform3fv( shader->getUniLoc("scene_ambient_color"), 1, &(vec3_t( 1.0, 1.0, 1.0 ) / scene::GetAmbientColor())[0] );
+	glUniform3fv( shader->getUniLoc("scene_ambient_color"), 1, &(Vec3( 1.0, 1.0, 1.0 ) / scene::GetAmbientColor())[0] );
 
 	// set the rotation matrix
-	mat3_t tmp( rotation );
-	tmp.RotateYAxis(rotation_ang);
-	r::loadMatrix( mat4_t( tmp ) );
+	Mat3 tmp( rotation );
+	tmp.rotateYAxis(rotation_ang);
+	r::loadMatrix( Mat4( tmp ) );
 	rotation_ang += 0.0001;
 	if( rotation_ang >= 2*PI ) rotation_ang = 0.0;
 

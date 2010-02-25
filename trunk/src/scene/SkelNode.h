@@ -4,7 +4,7 @@
 #include "common.h"
 #include "Node.h"
 #include "Controller.h"
-#include "gmath.h"
+#include "Math.h"
 
 class Skeleton;
 class SkelAnimCtrl;

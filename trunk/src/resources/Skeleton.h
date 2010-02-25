@@ -2,7 +2,7 @@
 #define _SKELETON_H_
 
 #include "common.h"
-#include "gmath.h"
+#include "Math.h"
 #include "Resource.h"
 #include "engine_class.h"
 
@@ -20,17 +20,17 @@ class Skeleton: public Resource
 				Bone* parent;
 				Bone* childs[ MAX_CHILDS_PER_BONE ];
 				ushort  childsNum;
-				vec3_t  head;
-				vec3_t  tail;
+				Vec3  head;
+				Vec3  tail;
 
 				/* The rotation and translation that transform the bone from bone space to armature space. Meaning that if
-				MA = TRS(rotSkelSpace, tslSkelSpace) then head = MA * vec3_t(0.0, length, 0.0) and tail = MA * vec3_t( 0.0, 0.0, 0.0 )
-				We also keep the inverted ones for fast calculations. rotSkelSpaceInv = MA.Inverted().GetRotationPart() and NOT
+				MA = TRS(rotSkelSpace, tslSkelSpace) then head = MA * Vec3(0.0, length, 0.0) and tail = MA * Vec3( 0.0, 0.0, 0.0 )
+				We also keep the inverted ones for fast calculations. rotSkelSpaceInv = MA.Inverted().getRotationPart() and NOT
 				rotSkelSpaceInv = rotSkelSpace.GetInverted() */
-				mat3_t rotSkelSpace;
-				vec3_t tslSkelSpace;
-				mat3_t rotSkelSpaceInv;
-				vec3_t tslSkelSpaceInv;
+				Mat3 rotSkelSpace;
+				Vec3 tslSkelSpace;
+				Mat3 rotSkelSpaceInv;
+				Vec3 tslSkelSpaceInv;
 
 				 Bone() {}
 				~Bone() {}

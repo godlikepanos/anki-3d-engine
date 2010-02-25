@@ -55,7 +55,7 @@ bool SkelAnim::load( const char* filename )
 				// parse the quat
 				float tmp[4];
 				if( !ParseArrOfNumbers( scanner, false, true, 4, &tmp[0] ) ) return false;
-				bones[i].keyframes[j].rotation = quat_t( tmp[1], tmp[2], tmp[3], tmp[0] );
+				bones[i].keyframes[j].rotation = Quat( tmp[1], tmp[2], tmp[3], tmp[0] );
 
 				// parse the vec3
 				if( !ParseArrOfNumbers( scanner, false, true, 3, &bones[i].keyframes[j].translation[0] ) ) return false;

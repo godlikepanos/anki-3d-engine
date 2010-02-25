@@ -38,7 +38,7 @@ void Camera::render()
 
 	//glLineWidth( 2.0 );
 
-	glColor3fv( &vec3_t(1.0,0.0,1.0)[0] );
+	glColor3fv( &Vec3(1.0,0.0,1.0)[0] );
 	glBegin( GL_LINES );
 		glVertex3fv( &points[0][0] );
 		glVertex3fv( &points[1][0] );
@@ -70,13 +70,13 @@ void Camera::render()
 //=====================================================================================================================================
 // lookAtPoint                                                                                                                        =
 //=====================================================================================================================================
-void Camera::lookAtPoint( const vec3_t& point )
+void Camera::lookAtPoint( const Vec3& point )
 {
-	const vec3_t& j = vec3_t( 0.0, 1.0, 0.0 );
-	vec3_t vdir = (point - translationLspace).GetNormalized();
-	vec3_t vup = j - vdir * j.Dot(vdir);
-	vec3_t vside = vdir.Cross( vup );
-	rotationLspace.SetColumns( vside, vup, -vdir );
+	const Vec3& j = Vec3( 0.0, 1.0, 0.0 );
+	Vec3 vdir = (point - translationLspace).getNormalized();
+	Vec3 vup = j - vdir * j.dot(vdir);
+	Vec3 vside = vdir.cross( vup );
+	rotationLspace.setColumns( vside, vup, -vdir );
 }
 
 
@@ -89,20 +89,20 @@ void Camera::calcLSpaceFrustumPlanes()
 
 	sinCos( PI+fovX/2, s, c );
 	// right
-	lspaceFrustumPlanes[FP_RIGHT] = plane_t( vec3_t(c, 0.0, s), 0.0 );
+	lspaceFrustumPlanes[FP_RIGHT] = plane_t( Vec3(c, 0.0, s), 0.0 );
 	// left
-	lspaceFrustumPlanes[FP_LEFT] = plane_t( vec3_t(-c, 0.0, s), 0.0 );
+	lspaceFrustumPlanes[FP_LEFT] = plane_t( Vec3(-c, 0.0, s), 0.0 );
 
 	sinCos( (3*PI-fovY)*0.5, s, c );
 	// top
-	lspaceFrustumPlanes[FP_TOP] = plane_t( vec3_t(0.0, s, c), 0.0 );
+	lspaceFrustumPlanes[FP_TOP] = plane_t( Vec3(0.0, s, c), 0.0 );
 	// bottom
-	lspaceFrustumPlanes[FP_BOTTOM] = plane_t( vec3_t(0.0, -s, c), 0.0 );
+	lspaceFrustumPlanes[FP_BOTTOM] = plane_t( Vec3(0.0, -s, c), 0.0 );
 
 	// near
-	lspaceFrustumPlanes[FP_NEAR] = plane_t( vec3_t( 0.0, 0.0, -1.0 ), zNear );
+	lspaceFrustumPlanes[FP_NEAR] = plane_t( Vec3( 0.0, 0.0, -1.0 ), zNear );
 	// far
-	lspaceFrustumPlanes[FP_FAR] = plane_t( vec3_t( 0.0, 0.0, 1.0 ), -zFar );
+	lspaceFrustumPlanes[FP_FAR] = plane_t( Vec3( 0.0, 0.0, 1.0 ), -zFar );
 }
 
 
@@ -137,7 +137,7 @@ bool Camera::insideFrustum( const bvolume_t& bvol ) const
 bool Camera::insideFrustum( const Camera& cam ) const
 {
 	//** get five points. These points are the tips of the given camera **
-	vec3_t points[5];
+	Vec3 points[5];
 
 	// get 3 sample floats
 	float x = cam.getZFar() / tan( (PI-cam.getFovX())/2 );
@@ -145,15 +145,15 @@ bool Camera::insideFrustum( const Camera& cam ) const
 	float z = -cam.getZFar();
 
 	// the actual points in local space
-	points[0] = vec3_t( x, y, z ); // top right
-	points[1] = vec3_t( -x, y, z ); // top left
-	points[2] = vec3_t( -x, -y, z ); // bottom left
-	points[3] = vec3_t( x, -y, z ); // bottom right
-	points[4] = vec3_t( cam.translationWspace ); // eye (allready in world space)
+	points[0] = Vec3( x, y, z ); // top right
+	points[1] = Vec3( -x, y, z ); // top left
+	points[2] = Vec3( -x, -y, z ); // bottom left
+	points[3] = Vec3( x, -y, z ); // bottom right
+	points[4] = Vec3( cam.translationWspace ); // eye (allready in world space)
 
 	// transform them to the given camera's world space (exept the eye)
 	for( uint i=0; i<4; i++ )
-		points[i].Transform( cam.translationWspace, cam.rotationWspace, cam.scaleWspace );
+		points[i].transform( cam.translationWspace, cam.rotationWspace, cam.scaleWspace );
 
 
 	//** the collision code **
@@ -197,7 +197,7 @@ void Camera::calcProjectionMatrix()
 	projectionMat(3,2) = -1.0;
 	projectionMat(3,3) = 0.0;
 
-	invProjectionMat = projectionMat.GetInverse();
+	invProjectionMat = projectionMat.getInverse();
 }
 
 
@@ -207,16 +207,16 @@ void Camera::calcProjectionMatrix()
 void Camera::updateViewMatrix()
 {
 	/* The point at which the camera looks:
-	vec3_t viewpoint = translationLspace + z_axis;
+	Vec3 viewpoint = translationLspace + z_axis;
 	as we know the up vector, we can easily use gluLookAt:
 	gluLookAt( translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x, y_axis.y, y_axis.z );
 	*/
 
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
-	mat3_t cam_inverted_rot = rotationWspace.GetTransposed();
-	vec3_t cam_inverted_tsl = -( cam_inverted_rot * translationWspace );
-	viewMat = mat4_t( cam_inverted_tsl, cam_inverted_rot );
+	Mat3 cam_inverted_rot = rotationWspace.getTransposed();
+	Vec3 cam_inverted_tsl = -( cam_inverted_rot * translationWspace );
+	viewMat = Mat4( cam_inverted_tsl, cam_inverted_rot );
 }
 
 

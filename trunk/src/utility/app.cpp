@@ -7,30 +7,42 @@ namespace app { // begin of namespace
 static SDL_Surface* main_surf;
 static SDL_Surface* icon_image;
 
-uint window_w = 1280;
-uint window_h = 800;
+uint windowW = 1280;
+uint windowH = 800;
 
 uint timer_tick = 1000/40; // in ms. 1000/Hz
 static uint time = 0;
 
-uint desktop_w;
-uint desktop_h;
+uint desktopW;
+uint desktopH;
 
 
 /*
 =======================================================================================================================================
-InitWindow                                                                                                                            =
+initWindow                                                                                                                            =
 =======================================================================================================================================
 */
-void InitWindow()
+void initWindow()
 {
 	PRINT( "SDL window initializing..." );
 	SDL_Init( SDL_INIT_VIDEO );
 
+	// print driver name
+	char charBuff [256];
+	if( SDL_VideoDriverName(charBuff, sizeof(charBuff)) != NULL )
+	{
+		PRINT( "The video driver name is " << charBuff );
+	}
+	else
+	{
+		ERROR( "Failed to obtain the video driver name" );
+	}
+
+
 	// get desktop size
 	const SDL_VideoInfo* info = SDL_GetVideoInfo();
-	desktop_w = info->current_w;
-	desktop_h = info->current_h;
+	desktopW = info->current_w;
+	desktopH = info->current_h;
 
 	// the icon
 	icon_image = SDL_LoadBMP("gfx/icon.bmp");
@@ -51,7 +63,7 @@ void InitWindow()
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 
 	// set the surface
-	main_surf = SDL_SetVideoMode( window_w, window_h, 24, SDL_HWSURFACE | SDL_OPENGL );
+	main_surf = SDL_SetVideoMode( windowW, windowH, 24, SDL_HWSURFACE | SDL_OPENGL );
 
 	// move the window
 #ifdef WIN32
@@ -73,10 +85,10 @@ void InitWindow()
 
 /*
 =======================================================================================================================================
-TogleFullScreen                                                                                                                       =
+togleFullScreen                                                                                                                       =
 =======================================================================================================================================
 */
-void TogleFullScreen()
+void togleFullScreen()
 {
 	SDL_WM_ToggleFullScreen( main_surf );
 }
@@ -84,10 +96,10 @@ void TogleFullScreen()
 
 /*
 =======================================================================================================================================
-QuitApp                                                                                                                               =
+quitApp                                                                                                                               =
 =======================================================================================================================================
 */
-void QuitApp( int code )
+void quitApp( int code )
 {
 	SDL_FreeSurface( main_surf );
 	SDL_Quit();
@@ -97,10 +109,10 @@ void QuitApp( int code )
 
 /*
 =======================================================================================================================================
-WaitForNextFrame                                                                                                                      =
+waitForNextFrame                                                                                                                      =
 =======================================================================================================================================
 */
-void WaitForNextFrame()
+void waitForNextFrame()
 {
 	uint now = SDL_GetTicks();
 

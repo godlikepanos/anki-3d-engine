@@ -94,7 +94,7 @@ void RunStage( const Camera& cam )
 	r::SetViewport( 0, 0, r::w, r::h );
 
 	//glEnable( GL_DEPTH_TEST );
-	scene::skybox.Render( cam.getViewMatrix().GetRotationPart() );
+	scene::skybox.Render( cam.getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 	#if defined( _EARLY_Z_ )

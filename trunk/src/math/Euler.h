@@ -2,10 +2,10 @@
 #define _EULER_H_
 
 #include "common.h"
-#include "forward_decls.h"
+#include "MathForwardDecls.h"
 
 
-namespace m {
+namespace M {
 
 
 class Euler
@@ -26,8 +26,8 @@ class Euler
 		explicit Euler();
 		explicit Euler( float x, float y, float z  );
 		         Euler( const Euler& b );
-		explicit Euler( const quat_t& q );
-		explicit Euler( const mat3_t& m3 );
+		explicit Euler( const Quat& q );
+		explicit Euler( const Mat3& m3 );
 		// other
 		void print() const;
 };

@@ -1,7 +1,7 @@
 /*
 #include "particles.h"
 #include "renderer.h"
-#include "util.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -23,8 +23,8 @@ void particle_t::render()
 
 	// calc new pos
 	float dt = ( float(app::timer_tick)/1000 );
-	vec3_t s_vel; // sigma velocity
-	s_vel = vec3_t( 0.0, 0.0, 0.0 );
+	Vec3 s_vel; // sigma velocity
+	s_vel = Vec3( 0.0, 0.0, 0.0 );
 	for( int i=0; i<PARTICLE_VELS_NUM; i++ )
 	{
 		velocity[i] = (acceleration[i] * dt) + velocity[i];
@@ -33,9 +33,9 @@ void particle_t::render()
 
 	translationLspace = s_vel * dt + translationLspace;
 
-	quat_t q;
-	q.CalcFrom2Vec3( vec3_t(1.0, 0.0, 0.0), s_vel );
-	rotationLspace = mat3_t( q );
+	Quat q;
+	q.setFrom2Vec3( Vec3(1.0, 0.0, 0.0), s_vel );
+	rotationLspace = Mat3( q );
 
 	updateWorldTransform();
 
@@ -106,20 +106,20 @@ void particle_emitter_t::init()
 	particle_life[1] = 400;
 	particles_per_frame = 1;
 
-	velocities[VEL0].angs[MIN] = Euler( 0.0, ToRad(-30.0), ToRad(10.0) );
-	velocities[VEL0].angs[MAX] = Euler( 0.0, ToRad(30.0), ToRad(45.0) );
+	velocities[VEL0].angs[MIN] = Euler( 0.0, toRad(-30.0), toRad(10.0) );
+	velocities[VEL0].angs[MAX] = Euler( 0.0, toRad(30.0), toRad(45.0) );
 	velocities[VEL0].magnitude = 5.0f;
 	velocities[VEL0].acceleration_magnitude = -0.1f;
 	velocities[VEL0].rotatable = true;
 
-	velocities[VEL1].angs[MIN] = Euler( 0.0, 0.0, ToRad(270.0) );
-	velocities[VEL1].angs[MAX] = Euler( 0.0, 0.0, ToRad(270.0) );
+	velocities[VEL1].angs[MIN] = Euler( 0.0, 0.0, toRad(270.0) );
+	velocities[VEL1].angs[MAX] = Euler( 0.0, 0.0, toRad(270.0) );
 	velocities[VEL1].magnitude = 0.0f;
 	velocities[VEL1].acceleration_magnitude = 1.0f;
 	velocities[VEL1].rotatable = false;
 
-	particles_translation_lspace[0] = vec3_t( 0.0, 0.0, 0.0 );
-	particles_translation_lspace[1] = vec3_t( 0.0, 0.0, 0.0 );
+	particles_translation_lspace[0] = Vec3( 0.0, 0.0, 0.0 );
+	particles_translation_lspace[1] = Vec3( 0.0, 0.0, 0.0 );
 }
 
 
@@ -131,15 +131,15 @@ ReInitParticle @ particle_emitter_t                                             
 void particle_emitter_t::ReInitParticle( particle_t& particle )
 {
 	// life
-	particle.life = util::RandRange( particle_life[MIN], particle_life[MAX] );
+	particle.life = Util::randRange( particle_life[MIN], particle_life[MAX] );
 
 	// pos
-	particle.translationLspace = vec3_t(
-		util::RandRange( particles_translation_lspace[MIN].x, particles_translation_lspace[MAX].x ),
-		util::RandRange( particles_translation_lspace[MIN].y, particles_translation_lspace[MAX].y ),
-		util::RandRange( particles_translation_lspace[MIN].z, particles_translation_lspace[MAX].z )
+	particle.translationLspace = Vec3(
+		Util::randRange( particles_translation_lspace[MIN].x, particles_translation_lspace[MAX].x ),
+		Util::randRange( particles_translation_lspace[MIN].y, particles_translation_lspace[MAX].y ),
+		Util::randRange( particles_translation_lspace[MIN].z, particles_translation_lspace[MAX].z )
 	);
-	particle.rotationLspace = mat3_t::GetIdentity();
+	particle.rotationLspace = Mat3::getIdentity();
 	particle.scaleLspace = 1.0;
 
 	particle.parent = this;
@@ -154,14 +154,14 @@ void particle_emitter_t::ReInitParticle( particle_t& particle )
 	for( int i=0; i<PARTICLE_VELS_NUM; i++ )
 	{
 		Euler tmp_angs = Euler(
-			util::RandRange( velocities[i].angs[MIN].x, velocities[i].angs[MAX].x ),
-			util::RandRange( velocities[i].angs[MIN].y, velocities[i].angs[MAX].y ),
-			util::RandRange( velocities[i].angs[MIN].z, velocities[i].angs[MAX].z )
+			Util::randRange( velocities[i].angs[MIN].x, velocities[i].angs[MAX].x ),
+			Util::randRange( velocities[i].angs[MIN].y, velocities[i].angs[MAX].y ),
+			Util::randRange( velocities[i].angs[MIN].z, velocities[i].angs[MAX].z )
 		);
-		mat3_t m3;
-		m3 = mat3_t(tmp_angs);
+		Mat3 m3;
+		m3 = Mat3(tmp_angs);
 		if( velocities[i].rotatable ) m3 = rotationWspace * m3;
-		particle.velocity[i] = particle.acceleration[i] = m3 * vec3_t( 1.0, 0.0, 0.0 );
+		particle.velocity[i] = particle.acceleration[i] = m3 * Vec3( 1.0, 0.0, 0.0 );
 		particle.velocity[i] *= velocities[i].magnitude;
 		particle.acceleration[i] *= velocities[i].acceleration_magnitude;
 

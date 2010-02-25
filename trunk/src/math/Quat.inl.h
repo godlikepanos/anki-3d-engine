@@ -1,48 +1,48 @@
-#include "m_dflt_header.h"
+#include "MathDfltHeader.h"
 
 
 #define ME (*this)
 
-namespace m {
+namespace M {
 
 
 // constructor []
-inline quat_t::quat_t()
+inline Quat::Quat()
 	: x(0.0), y(0.0), z(0.0), w(1.0)
 {}
 
 // constructor [float]
-inline quat_t::quat_t( float f )
+inline Quat::Quat( float f )
 	: x(f), y(f), z(f), w(f)
 {}
 
 // constructor [float, float, float, float]
-inline quat_t::quat_t( float x_, float y_, float z_, float w_ )
+inline Quat::Quat( float x_, float y_, float z_, float w_ )
 	: x(x_), y(y_), z(z_), w(w_)
 {}
 
 // constructor [vec2, float, float]
-inline quat_t::quat_t( const vec2_t& v2, float z_, float w_ )
+inline Quat::Quat( const Vec2& v2, float z_, float w_ )
 	: x(v2.x), y(v2.y), z(z_), w(w_)
 {}
 
 // constructor [vec3, float]
-inline quat_t::quat_t( const vec3_t& v3, float w_ )
+inline Quat::Quat( const Vec3& v3, float w_ )
 	: x(v3.x), y(v3.y), z(v3.z), w(w_)
 {}
 
 // constructor [vec4]
-inline quat_t::quat_t( const vec4_t& v4 )
+inline Quat::Quat( const Vec4& v4 )
 	: x(v4.x), y(v4.y), z(v4.z), w(v4.w)
 {}
 
 // constructor [quat]
-inline quat_t::quat_t( const quat_t& b )
+inline Quat::Quat( const Quat& b )
 	: x(b.x), y(b.y), z(b.z), w(b.w)
 {}
 
 // constructor [mat3]
-inline quat_t::quat_t( const mat3_t& m3 )
+inline Quat::Quat( const Mat3& m3 )
 {
 	float trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
 	if( trace > EPSILON )
@@ -83,7 +83,7 @@ inline quat_t::quat_t( const mat3_t& m3 )
 }
 
 // constructor [euler]
-inline quat_t::quat_t( const Euler& eu )
+inline Quat::Quat( const Euler& eu )
 {
 	float cx, sx;
 	sinCos( eu.heading()*0.5, sx, cx );
@@ -103,10 +103,10 @@ inline quat_t::quat_t( const Euler& eu )
 }
 
 // constructor [euler]
-inline quat_t::quat_t( const Axisang& axisang )
+inline Quat::Quat( const Axisang& axisang )
 {
-	float lengthsq = axisang.axis.LengthSquared();
-	if( IsZero( lengthsq ) )
+	float lengthsq = axisang.axis.getLengthSquared();
+	if( isZero( lengthsq ) )
 	{
 		ME = ident;
 		return;
@@ -126,9 +126,9 @@ inline quat_t::quat_t( const Axisang& axisang )
 }
 
 // *
-inline quat_t quat_t::operator *( const quat_t& b ) const
+inline Quat Quat::operator *( const Quat& b ) const
 {
-	return quat_t(
+	return Quat(
 		 x * b.w + y * b.z - z * b.y + w * b.x,
 		-x * b.z + y * b.w + z * b.x + w * b.y,
 		 x * b.y - y * b.x + z * b.w + w * b.z,
@@ -137,140 +137,140 @@ inline quat_t quat_t::operator *( const quat_t& b ) const
 }
 
 // *=
-inline quat_t& quat_t::operator *=( const quat_t& b )
+inline Quat& Quat::operator *=( const Quat& b )
 {
 	ME = ME * b;
 	return ME;
 }
 
 // ==
-inline bool quat_t::operator ==( const quat_t& b ) const
+inline bool Quat::operator ==( const Quat& b ) const
 {
-	return ( IsZero(x-b.x) && IsZero(y-b.y) && IsZero(z-b.z) && IsZero(w-b.w) ) ? true : false;
+	return ( isZero(x-b.x) && isZero(y-b.y) && isZero(z-b.z) && isZero(w-b.w) ) ? true : false;
 }
 
 // !=
-inline bool quat_t::operator !=( const quat_t& b ) const
+inline bool Quat::operator !=( const Quat& b ) const
 {
-	return ( IsZero(x-b.x) && IsZero(y-b.y) && IsZero(z-b.z) && IsZero(w-b.w) ) ? false : true;
+	return ( isZero(x-b.x) && isZero(y-b.y) && isZero(z-b.z) && isZero(w-b.w) ) ? false : true;
 }
 
-// Conjugate
-inline void quat_t::Conjugate()
+// conjugate
+inline void Quat::conjugate()
 {
 	x = -x;
 	y = -y;
 	z = -z;
 }
 
-// Conjugated
-inline quat_t quat_t::Conjugated() const
+// getConjugated
+inline Quat Quat::getConjugated() const
 {
-	return quat_t( -x, -y, -z, w );
+	return Quat( -x, -y, -z, w );
 }
 
 // Normalized
-inline quat_t quat_t::GetNormalized() const
+inline Quat Quat::getNormalized() const
 {
-	return quat_t( vec4_t(ME).GetNormalized() );
+	return Quat( Vec4(ME).getNormalized() );
 }
 
-// Normalize
-inline void quat_t::Normalize()
+// normalize
+inline void Quat::normalize()
 {
-	ME = GetNormalized();
+	ME = getNormalized();
 }
 
-// Length
-inline float quat_t::Length() const
+// getLength
+inline float Quat::getLength() const
 {
-	return sqrt( w*w + x*x + y*y + z*z );
+	return M::sqrt( w*w + x*x + y*y + z*z );
 }
 
-// Invert
-inline void quat_t::Invert()
+// invert
+inline void Quat::invert()
 {
 	float norm = w*w + x*x + y*y + z*z;
 
-	DEBUG_ERR( IsZero(norm) ); // Norm is zero
+	DEBUG_ERR( isZero(norm) ); // Norm is zero
 
 	float normi = 1.0 / norm;
-	ME = quat_t( -normi*x, -normi*y, -normi*z, normi*w );
+	ME = Quat( -normi*x, -normi*y, -normi*z, normi*w );
 }
 
 // print
-inline void quat_t::print() const
+inline void Quat::print() const
 {
 	cout << fixed << "(w,x,y,z) = " << w << ' ' << x << ' ' << y << ' ' << z  << '\n' << endl;
 }
 
 // CalcFromVecVec
-inline void quat_t::CalcFrom2Vec3( const vec3_t& from, const vec3_t& to )
+inline void Quat::setFrom2Vec3( const Vec3& from, const Vec3& to )
 {
-	vec3_t axis( from.Cross(to) );
-	ME = quat_t( axis.x, axis.y, axis.z, from.Dot(to) );
-	Normalize();
+	Vec3 axis( from.cross(to) );
+	ME = Quat( axis.x, axis.y, axis.z, from.dot(to) );
+	normalize();
 	w += 1.0;
 
 	if( w <= EPSILON )
 	{
 		if( from.z*from.z > from.x*from.x )
-			ME = quat_t( 0.0, from.z, -from.y, 0.0 );
+			ME = Quat( 0.0, from.z, -from.y, 0.0 );
 		else
-			ME = quat_t( from.y, -from.x, 0.0, 0.0 );
+			ME = Quat( from.y, -from.x, 0.0, 0.0 );
 	}
-	Normalize();
+	normalize();
 }
 
 // Rotated
-inline quat_t quat_t::GetRotated( const quat_t& b ) const
+inline Quat Quat::getRotated( const Quat& b ) const
 {
 	return ME * b;
 }
 
-// Rotate
-inline void quat_t::Rotate( const quat_t& b )
+// rotate
+inline void Quat::rotate( const Quat& b )
 {
-	ME = GetRotated( b );
+	ME = getRotated( b );
 }
 
-// Dot
-inline float quat_t::Dot( const quat_t& b ) const
+// dot
+inline float Quat::dot( const Quat& b ) const
 {
 	return w*b.w + x*b.x + y*b.y + z*b.z;
 }
 
 // SLERP
-inline quat_t quat_t::Slerp( const quat_t& q1_, float t ) const
+inline Quat Quat::slerp( const Quat& q1_, float t ) const
 {
-	const quat_t& q0 = ME;
-	quat_t q1( q1_ );
+	const Quat& q0 = ME;
+	Quat q1( q1_ );
 	float cos_half_theta = q0.w*q1.w + q0.x*q1.x + q0.y*q1.y + q0.z*q1.z;
 	if( cos_half_theta < 0.0 )
 	{
-		q1 = quat_t( -vec4_t(q1) ); // quat changes
+		q1 = Quat( -Vec4(q1) ); // quat changes
 		cos_half_theta = -cos_half_theta;
 	}
 	if( fabs(cos_half_theta) >= 1.0f )
 	{
-		return quat_t( q0 );
+		return Quat( q0 );
 	}
 
 	float half_theta = acos( cos_half_theta );
-	float sin_half_theta = sqrt(1.0 - cos_half_theta*cos_half_theta);
+	float sinhalf_theta = M::sqrt(1.0 - cos_half_theta*cos_half_theta);
 
-	if( fabs(sin_half_theta) < 0.001 )
+	if( fabs(sinhalf_theta) < 0.001 )
 	{
-		return quat_t( (vec4_t(q0) + vec4_t(q1))*0.5 );
+		return Quat( (Vec4(q0) + Vec4(q1))*0.5 );
 	}
-	float ratio_a = sin((1.0 - t) * half_theta) / sin_half_theta;
-	float ratio_b = sin(t * half_theta) / sin_half_theta;
-	vec4_t tmp, tmp1, sum;
-	tmp = vec4_t(q0)*ratio_a;
-	tmp1 = vec4_t(q1)*ratio_b;
+	float ratio_a = sin((1.0 - t) * half_theta) / sinhalf_theta;
+	float ratio_b = sin(t * half_theta) / sinhalf_theta;
+	Vec4 tmp, tmp1, sum;
+	tmp = Vec4(q0)*ratio_a;
+	tmp1 = Vec4(q1)*ratio_b;
 	sum = tmp + tmp1;
-	sum.Normalize();
-	return quat_t( sum );
+	sum.normalize();
+	return Quat( sum );
 }
 
 

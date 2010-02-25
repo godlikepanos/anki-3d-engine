@@ -1,48 +1,48 @@
-#include "m_dflt_header.h"
+#include "MathDfltHeader.h"
 
 
 #define ME (*this)
 
 
-namespace m {
+namespace M {
 
 // accessors
-inline float& mat4_t::operator ()( const uint i, const uint j )
+inline float& Mat4::operator ()( const uint i, const uint j )
 {
 	return arr2[i][j];
 }
 
-inline const float& mat4_t::operator ()( const uint i, const uint j ) const
+inline const float& Mat4::operator ()( const uint i, const uint j ) const
 {
 	return arr2[i][j];
 }
 
-inline float& mat4_t::operator []( const uint i) 
+inline float& Mat4::operator []( const uint i) 
 { 
 	return arr1[i]; 
 }
 
-inline const float& mat4_t::operator []( const uint i) const 
+inline const float& Mat4::operator []( const uint i) const 
 { 
 	return arr1[i]; 
 }
 
 // constructor [mat4]
-inline mat4_t::mat4_t( const mat4_t& b )
+inline Mat4::Mat4( const Mat4& b )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] = b[i];
 }
 
 // constructor [float[]]
-inline mat4_t::mat4_t( const float arr_ [] )
+inline Mat4::Mat4( const float arr_ [] )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] = arr_[i];
 }
 
 // constructor [float..........]
-inline mat4_t::mat4_t( float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33 )
+inline Mat4::Mat4( float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33 )
 {
 	ME(0,0) = m00;
 	ME(0,1) = m01;
@@ -63,7 +63,7 @@ inline mat4_t::mat4_t( float m00, float m01, float m02, float m03, float m10, fl
 }
 
 // constructor [mat3]
-inline mat4_t::mat4_t( const mat3_t& m3 )
+inline Mat4::Mat4( const Mat3& m3 )
 {
 	ME(0,0) = m3(0,0);
 	ME(0,1) = m3(0,1);
@@ -79,7 +79,7 @@ inline mat4_t::mat4_t( const mat3_t& m3 )
 }
 
 // constructor [vec3]
-inline mat4_t::mat4_t( const vec3_t& v )
+inline Mat4::Mat4( const Vec3& v )
 {
 	ME(0, 0) = 1.0;
 	ME(0, 1) = 0.0;
@@ -100,7 +100,7 @@ inline mat4_t::mat4_t( const vec3_t& v )
 }
 
 // constructor [vec4]
-inline mat4_t::mat4_t( const vec4_t& v )
+inline Mat4::Mat4( const Vec4& v )
 {
 	ME(0, 0) = 1.0;
 	ME(0, 1) = 0.0;
@@ -121,46 +121,46 @@ inline mat4_t::mat4_t( const vec4_t& v )
 }
 
 // constructor [vec3, mat3]
-inline mat4_t::mat4_t( const vec3_t& transl, const mat3_t& rot )
+inline Mat4::Mat4( const Vec3& transl, const Mat3& rot )
 {
-	SetRotationPart(rot);
-	SetTranslationPart(transl);
+	setRotationPart(rot);
+	setTranslationPart(transl);
 	ME(3,0) = ME(3,1) = ME(3,2) = 0.0;
 	ME(3,3) = 1.0;
 }
 
 // constructor [vec3, mat3, float]
-inline mat4_t::mat4_t( const vec3_t& translate, const mat3_t& rotate, float scale )
+inline Mat4::Mat4( const Vec3& translate, const Mat3& rotate, float scale )
 {
-	if( !IsZero( scale-1.0 ) )
-		SetRotationPart( rotate*scale );
+	if( !isZero( scale-1.0 ) )
+		setRotationPart( rotate*scale );
 	else
-		SetRotationPart( rotate );
+		setRotationPart( rotate );
 
-	SetTranslationPart( translate );
+	setTranslationPart( translate );
 
 	ME(3,0) = ME(3,1) = ME(3,2) = 0.0;
 	ME(3,3) = 1.0;
 }
 
 // constructor [float]
-inline mat4_t::mat4_t( float f )
+inline Mat4::Mat4( float f )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] = f;
 }
 
 // 4x4 + 4x4
-inline mat4_t mat4_t::operator +( const mat4_t& b ) const
+inline Mat4 Mat4::operator +( const Mat4& b ) const
 {
-	mat4_t c;
+	Mat4 c;
 	for( int i=0; i<16; i++ )
 		c[i] = ME[i] + b[i];
 	return c;
 }
 
 // 4x4 + 4x4 (self)
-inline mat4_t& mat4_t::operator +=( const mat4_t& b )
+inline Mat4& Mat4::operator +=( const Mat4& b )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] += b[i];
@@ -168,16 +168,16 @@ inline mat4_t& mat4_t::operator +=( const mat4_t& b )
 }
 
 // 4x4 - 4x4
-inline mat4_t mat4_t::operator -( const mat4_t& b ) const
+inline Mat4 Mat4::operator -( const Mat4& b ) const
 {
-	mat4_t c;
+	Mat4 c;
 	for( int i=0; i<16; i++ )
 		c[i] = ME[i] - b[i];
 	return c;
 }
 
 // 4x4 - 4x4 (self)
-inline mat4_t& mat4_t::operator -=( const mat4_t& b )
+inline Mat4& Mat4::operator -=( const Mat4& b )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] -= b[i];
@@ -185,9 +185,9 @@ inline mat4_t& mat4_t::operator -=( const mat4_t& b )
 }
 
 // 4x4 * 4x4
-inline mat4_t mat4_t::operator *( const mat4_t& b ) const
+inline Mat4 Mat4::operator *( const Mat4& b ) const
 {
-	mat4_t c;
+	Mat4 c;
 	c(0,0) = ME(0,0)*b(0,0) + ME(0,1)*b(1,0) + ME(0,2)*b(2,0) + ME(0,3)*b(3,0);
 	c(0,1) = ME(0,0)*b(0,1) + ME(0,1)*b(1,1) + ME(0,2)*b(2,1) + ME(0,3)*b(3,1);
 	c(0,2) = ME(0,0)*b(0,2) + ME(0,1)*b(1,2) + ME(0,2)*b(2,2) + ME(0,3)*b(3,2);
@@ -208,32 +208,32 @@ inline mat4_t mat4_t::operator *( const mat4_t& b ) const
 }
 
 // 4x4 * 4x4 (self)
-inline mat4_t& mat4_t::operator *=( const mat4_t& b )
+inline Mat4& Mat4::operator *=( const Mat4& b )
 {
 	ME = ME * b;
 	return ME;
 }
 
 // ==
-inline bool mat4_t::operator ==( const mat4_t& b ) const
+inline bool Mat4::operator ==( const Mat4& b ) const
 {
 	for( int i=0; i<16; i++ )
-		if( !IsZero( ME[i]-b[i] ) ) return false;
+		if( !isZero( ME[i]-b[i] ) ) return false;
 	return true;
 }
 
 // !=
-inline bool mat4_t::operator !=( const mat4_t& b ) const
+inline bool Mat4::operator !=( const Mat4& b ) const
 {
 	for( int i=0; i<16; i++ )
-		if( !IsZero( ME[i]-b[i] ) ) return true;
+		if( !isZero( ME[i]-b[i] ) ) return true;
 	return false;
 }
 
 // 4x4 * vec4
-inline vec4_t mat4_t::operator *( const vec4_t& b ) const
+inline Vec4 Mat4::operator *( const Vec4& b ) const
 {
-	return vec4_t(
+	return Vec4(
 		ME(0,0)*b.x + ME(0,1)*b.y + ME(0,2)*b.z + ME(0,3)*b.w,
 		ME(1,0)*b.x + ME(1,1)*b.y + ME(1,2)*b.z + ME(1,3)*b.w,
 		ME(2,0)*b.x + ME(2,1)*b.y + ME(2,2)*b.z + ME(2,3)*b.w,
@@ -242,22 +242,22 @@ inline vec4_t mat4_t::operator *( const vec4_t& b ) const
 }
 
 // 4x4 + float
-inline mat4_t mat4_t::operator +( float f ) const
+inline Mat4 Mat4::operator +( float f ) const
 {
-	mat4_t c;
+	Mat4 c;
 	for( int i=0; i<16; i++ )
 		c[i] = ME[i] + f;
 	return c;
 }
 
 // float + 4x4
-inline mat4_t operator +( float f, const mat4_t& m4 )
+inline Mat4 operator +( float f, const Mat4& m4 )
 {
 	return m4+f;
 }
 
 // 4x4 + float (self)
-inline mat4_t& mat4_t::operator +=( float f )
+inline Mat4& Mat4::operator +=( float f )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] += f;
@@ -265,25 +265,25 @@ inline mat4_t& mat4_t::operator +=( float f )
 }
 
 // 4x4 - float
-inline mat4_t mat4_t::operator -( float f ) const
+inline Mat4 Mat4::operator -( float f ) const
 {
-	mat4_t c;
+	Mat4 c;
 	for( int i=0; i<16; i++ )
 		c[i] = ME[i] - f;
 	return c;
 }
 
 // float - 4x4
-inline mat4_t operator -( float f, const mat4_t& m4 )
+inline Mat4 operator -( float f, const Mat4& m4 )
 {
-	mat4_t out;
+	Mat4 out;
 	for( int i=0; i<16; i++ )
 		out[i] = f- m4[i];
 	return out;
 }
 
 // 4x4 - float (self)
-inline mat4_t& mat4_t::operator -=( float f )
+inline Mat4& Mat4::operator -=( float f )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] -= f;
@@ -291,22 +291,22 @@ inline mat4_t& mat4_t::operator -=( float f )
 }
 
 // 4x4 * float
-inline mat4_t mat4_t::operator *( float f ) const
+inline Mat4 Mat4::operator *( float f ) const
 {
-	mat4_t c;
+	Mat4 c;
 	for( int i=0; i<16; i++ )
 		c[i] = ME[i] * f;
 	return c;
 }
 
 // float * 4x4
-inline mat4_t operator *( float f, const mat4_t& m4 )
+inline Mat4 operator *( float f, const Mat4& m4 )
 {
 	return m4*f;
 }
 
 // 4x4 *= float
-inline mat4_t& mat4_t::operator *=( float f )
+inline Mat4& Mat4::operator *=( float f )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] *= f;
@@ -314,33 +314,33 @@ inline mat4_t& mat4_t::operator *=( float f )
 }
 
 // 4x4 / float
-inline mat4_t mat4_t::operator /( float f ) const
+inline Mat4 Mat4::operator /( float f ) const
 {
-	mat4_t c;
+	Mat4 c;
 	for( int i=0; i<16; i++ )
 		c[i] = ME[i] / f;
 	return c;
 }
 
 // float / 4x4
-inline mat4_t operator /( float f, const mat4_t& m4 )
+inline Mat4 operator /( float f, const Mat4& m4 )
 {
-	mat4_t out;
+	Mat4 out;
 	for( uint i=0; i<9; i++ )
 		out[i] = f / m4[i];
 	return out;
 }
 
 // 4x4 /= float
-inline mat4_t& mat4_t::operator /=( float f )
+inline Mat4& Mat4::operator /=( float f )
 {
 	for( int i=0; i<16; i++ )
 		ME[i] /= f;
 	return ME;
 }
 
-// SetRows
-inline void mat4_t::SetRows( const vec4_t& a, const vec4_t& b, const vec4_t& c, const vec4_t& d )
+// setRows
+inline void Mat4::setRows( const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d )
 {
 	ME(0,0) = a.x;
 	ME(0,1) = a.y;
@@ -360,8 +360,8 @@ inline void mat4_t::SetRows( const vec4_t& a, const vec4_t& b, const vec4_t& c, 
 	ME(3,3) = d.w;
 }
 
-// SetRow
-inline void mat4_t::SetRow( uint i, const vec4_t& v )
+// setRow
+inline void Mat4::setRow( uint i, const Vec4& v )
 {
 	DEBUG_ERR( i > 3 );
 	ME(i,0) = v.x;
@@ -370,8 +370,8 @@ inline void mat4_t::SetRow( uint i, const vec4_t& v )
 	ME(i,3) = v.w;
 }
 
-// SetColumns
-inline void mat4_t::SetColumns( const vec4_t& a, const vec4_t& b, const vec4_t& c, const vec4_t& d )
+// setColumns
+inline void Mat4::setColumns( const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d )
 {
 	ME(0,0) = a.x;
 	ME(1,0) = a.y;
@@ -391,8 +391,8 @@ inline void mat4_t::SetColumns( const vec4_t& a, const vec4_t& b, const vec4_t& 
 	ME(3,3) = d.w;
 }
 
-// SetColumn
-inline void mat4_t::SetColumn( uint i, const vec4_t& v )
+// setColumn
+inline void Mat4::setColumn( uint i, const Vec4& v )
 {
 	DEBUG_ERR( i > 3 );
 	ME(0,i) = v.x;
@@ -401,8 +401,8 @@ inline void mat4_t::SetColumn( uint i, const vec4_t& v )
 	ME(3,i) = v.w;
 }
 
-// Transpose
-inline void mat4_t::Transpose()
+// transpose
+inline void Mat4::transpose()
 {
 	float tmp = ME(0,1);
 	ME(0,1) = ME(1,0);
@@ -424,11 +424,11 @@ inline void mat4_t::Transpose()
 	ME(3,2) = tmp;
 }
 
-// GetTransposed
+// getTransposed
 // return the transposed
-inline mat4_t mat4_t::GetTransposed() const
+inline Mat4 Mat4::getTransposed() const
 {
-	mat4_t m4;
+	Mat4 m4;
 	m4[0] = ME[0];
 	m4[1] = ME[4];
 	m4[2] = ME[8];
@@ -448,8 +448,8 @@ inline mat4_t mat4_t::GetTransposed() const
 	return m4;
 }
 
-// SetRotationPart
-inline void mat4_t::SetRotationPart( const mat3_t& m3 )
+// setRotationPart
+inline void Mat4::setRotationPart( const Mat3& m3 )
 {
 	ME(0,0) = m3(0,0);
 	ME(0,1) = m3(0,1);
@@ -462,10 +462,10 @@ inline void mat4_t::SetRotationPart( const mat3_t& m3 )
 	ME(2,2) = m3(2,2);
 }
 
-// GetRotationPart
-inline mat3_t mat4_t::GetRotationPart() const
+// getRotationPart
+inline Mat3 Mat4::getRotationPart() const
 {
-	mat3_t m3;
+	Mat3 m3;
 	m3(0,0) = ME(0,0);
 	m3(0,1) = ME(0,1);
 	m3(0,2) = ME(0,2);
@@ -478,8 +478,8 @@ inline mat3_t mat4_t::GetRotationPart() const
 	return m3;
 }
 
-// SetTranslationPart
-inline void mat4_t::SetTranslationPart( const vec4_t& v )
+// setTranslationPart
+inline void Mat4::setTranslationPart( const Vec4& v )
 {
 	ME(0, 3) = v.x;
 	ME(1, 3) = v.y;
@@ -487,36 +487,36 @@ inline void mat4_t::SetTranslationPart( const vec4_t& v )
 	ME(3, 3) = v.w;
 }
 
-// SetTranslationPart
-inline void mat4_t::SetTranslationPart( const vec3_t& v )
+// setTranslationPart
+inline void Mat4::setTranslationPart( const Vec3& v )
 {
 	ME(0, 3) = v.x;
 	ME(1, 3) = v.y;
 	ME(2, 3) = v.z;
 }
 
-// GetTranslationPart
-inline vec3_t mat4_t::GetTranslationPart() const
+// getTranslationPart
+inline Vec3 Mat4::getTranslationPart() const
 {
-	return vec3_t( ME(0, 3), ME(1, 3), ME(2, 3) );
+	return Vec3( ME(0, 3), ME(1, 3), ME(2, 3) );
 }
 
-// GetIdentity
-inline const mat4_t& mat4_t::GetIdentity()
+// getIdentity
+inline const Mat4& Mat4::getIdentity()
 {
-	static mat4_t ident( 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 );
+	static Mat4 ident( 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 );
 	return ident;
 }
 
-// GetZero
-inline const mat4_t& mat4_t::GetZero()
+// getZero
+inline const Mat4& Mat4::getZero()
 {
-	static mat4_t zero( 0.0 );
+	static Mat4 zero( 0.0 );
 	return zero;
 }
 
 // print
-inline void mat4_t::print() const
+inline void Mat4::print() const
 {
 	cout << fixed;
 	for( int i=0; i<4; i++ )
@@ -534,7 +534,7 @@ inline void mat4_t::print() const
 }
 
 // Determinant
-inline float mat4_t::Det() const
+inline float Mat4::getDet() const
 {
 	return
 	ME(0, 3)*ME(1, 2)*ME(2, 1)*ME(3, 0) - ME(0, 2)*ME(1, 3)*ME(2, 1)*ME(3, 0) -
@@ -551,20 +551,20 @@ inline float mat4_t::Det() const
 	ME(0, 1)*ME(1, 0)*ME(2, 2)*ME(3, 3) + ME(0, 0)*ME(1, 1)*ME(2, 2)*ME(3, 3);
 }
 
-// Invert
-inline void mat4_t::Invert()
+// invert
+inline void Mat4::invert()
 {
-	ME = GetInverse();
+	ME = getInverse();
 }
 
 // Inverted
-inline mat4_t mat4_t::GetInverse() const
+inline Mat4 Mat4::getInverse() const
 {
 	float tmp[12];
 	float det;
-	const mat4_t& in = ME;
+	const Mat4& in = ME;
 
-	mat4_t m4;
+	Mat4 m4;
 
 
 	tmp[0] = in(2,2) * in(3,3);
@@ -630,40 +630,40 @@ inline mat4_t mat4_t::GetInverse() const
 
 	det = ME(0,0)*m4(0,0)+ME(1,0)*m4(0,1)+ME(2,0)*m4(0,2)+ME(3,0)*m4(0,3);
 
-	DEBUG_ERR( IsZero( det ) ); // Cannot invert, det == 0
+	DEBUG_ERR( isZero( det ) ); // Cannot invert, det == 0
 	det = 1/det;
 	m4 *= det;
 	return m4;
 }
 
 
-// GetInverseTransformation
-inline mat4_t mat4_t::GetInverseTransformation() const
+// getInverseTransformation
+inline Mat4 Mat4::getInverseTransformation() const
 {
-	mat3_t inverted_rot = (GetRotationPart()).GetTransposed();
-	vec3_t inverted_tsl = GetTranslationPart();
+	Mat3 inverted_rot = (getRotationPart()).getTransposed();
+	Vec3 inverted_tsl = getTranslationPart();
 	inverted_tsl = -( inverted_rot * inverted_tsl );
-	return mat4_t( inverted_tsl, inverted_rot );
+	return Mat4( inverted_tsl, inverted_rot );
 }
 
-// Lerp
-inline mat4_t mat4_t::Lerp( const mat4_t& b, float t ) const
+// lerp
+inline Mat4 Mat4::lerp( const Mat4& b, float t ) const
 {
 	return (ME*(1.0-t))+(b*t);
 }
 
-// CombineTransformations
-inline mat4_t mat4_t::CombineTransformations( const mat4_t& m0, const mat4_t& m1 )
+// combineTransformations
+inline Mat4 Mat4::combineTransformations( const Mat4& m0, const Mat4& m1 )
 {
 	/* the clean code is:
-	mat3_t rot = m0.GetRotationPart() * m1.GetRotationPart();  // combine the rotations
-	vec3_t tra = (m1.GetTranslationPart()).Transformed( m0.GetTranslationPart(), m0.GetRotationPart(), 1.0 );
-	return mat4_t( tra, rot );
+	Mat3 rot = m0.getRotationPart() * m1.getRotationPart();  // combine the rotations
+	Vec3 tra = (m1.getTranslationPart()).Transformed( m0.getTranslationPart(), m0.getRotationPart(), 1.0 );
+	return Mat4( tra, rot );
 	and the optimized: */
-	DEBUG_ERR( !IsZero( m0(3,0)+m0(3,1)+m0(3,2)+m0(3,3)-1.0 ) ||
-	           !IsZero( m1(3,0)+m1(3,1)+m1(3,2)+m1(3,3)-1.0 ) ); // one of the 2 mat4 doesnt represent transformation
+	DEBUG_ERR( !isZero( m0(3,0)+m0(3,1)+m0(3,2)+m0(3,3)-1.0 ) ||
+	           !isZero( m1(3,0)+m1(3,1)+m1(3,2)+m1(3,3)-1.0 ) ); // one of the 2 mat4 doesnt represent transformation
 
-	mat4_t m4;
+	Mat4 m4;
 
 	m4(0, 0) = m0(0, 0)*m1(0, 0) + m0(0, 1)*m1(1, 0) + m0(0, 2)*m1(2, 0);
 	m4(0, 1) = m0(0, 0)*m1(0, 1) + m0(0, 1)*m1(1, 1) + m0(0, 2)*m1(2, 1);

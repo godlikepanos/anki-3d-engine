@@ -55,7 +55,7 @@ void renderer_t::material_stage_t::Run() const
 	renderer.SetViewport( 0, 0, renderer.width, renderer.height );
 
 	//glEnable( GL_DEPTH_TEST );
-	scene::skybox.render( renderer.camera->getViewMatrix().GetRotationPart() );
+	scene::skybox.render( renderer.camera->getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 

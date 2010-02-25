@@ -55,8 +55,8 @@ void SkelAnimCtrl::interpolate( SkelAnim* animation, float frame )
 	{
 		const SkelAnim::BoneAnim& banim = animation->bones[i];
 
-		mat3_t& local_rot = boneRotations[i];
-		vec3_t& local_transl = boneTranslations[i];
+		Mat3& local_rot = boneRotations[i];
+		Vec3& local_transl = boneTranslations[i];
 
 		// if the bone has animations then slerp and lerp to find the rotation and translation
 		if( banim.keyframes.size() != 0 )
@@ -65,20 +65,20 @@ void SkelAnimCtrl::interpolate( SkelAnim* animation, float frame )
 			const SkelAnim::BonePose& r_bpose = banim.keyframes[r_pose];
 
 			// rotation
-			const quat_t& q0 = l_bpose.rotation;
-			const quat_t& q1 = r_bpose.rotation;
-			local_rot = mat3_t( q0.Slerp(q1, t) );
+			const Quat& q0 = l_bpose.rotation;
+			const Quat& q1 = r_bpose.rotation;
+			local_rot = Mat3( q0.slerp(q1, t) );
 
 			// translation
-			const vec3_t& v0 = l_bpose.translation;
-			const vec3_t& v1 = r_bpose.translation;
-			local_transl = v0.Lerp( v1, t );
+			const Vec3& v0 = l_bpose.translation;
+			const Vec3& v1 = r_bpose.translation;
+			local_transl = v0.lerp( v1, t );
 		}
 		// else put the idents
 		else
 		{
-			local_rot = mat3_t::GetIdentity();
-			local_transl = vec3_t( 0.0, 0.0, 0.0 );
+			local_rot = Mat3::getIdentity();
+			local_transl = Vec3( 0.0, 0.0, 0.0 );
 		}
 	}
 }
@@ -105,11 +105,11 @@ void SkelAnimCtrl::updateBoneTransforms()
 
 		// bone.final_transform = MA * ANIM * MAi
 		// where MA is bone matrix at armature space and ANIM the interpolated transformation.
-		CombineTransformations( boneTranslations[bone_id], boneRotations[bone_id],
+		combineTransformations( boneTranslations[bone_id], boneRotations[bone_id],
 		                        boned.tslSkelSpaceInv, boned.rotSkelSpaceInv,
 		                        boneTranslations[bone_id], boneRotations[bone_id] );
 
-		CombineTransformations( boned.tslSkelSpace, boned.rotSkelSpace,
+		combineTransformations( boned.tslSkelSpace, boned.rotSkelSpace,
 		                        boneTranslations[bone_id], boneRotations[bone_id],
 		                        boneTranslations[bone_id], boneRotations[bone_id] );
 
@@ -117,7 +117,7 @@ void SkelAnimCtrl::updateBoneTransforms()
 		if( boned.parent )
 		{
 			// bone.final_final_transform = parent.transf * bone.final_transform
-			CombineTransformations( boneTranslations[boned.parent->id], boneRotations[boned.parent->id],
+			combineTransformations( boneTranslations[boned.parent->id], boneRotations[boned.parent->id],
 		                          boneTranslations[bone_id], boneRotations[bone_id],
 		                          boneTranslations[bone_id], boneRotations[bone_id] );
 		}
@@ -138,11 +138,11 @@ void SkelAnimCtrl::deform()
 
 	for( uint i=0; i<skeleton->bones.size(); i++ )
 	{
-		const mat3_t& rot = boneRotations[ i ];
-		const vec3_t& transl = boneTranslations[ i ];
+		const Mat3& rot = boneRotations[ i ];
+		const Vec3& transl = boneTranslations[ i ];
 
-		heads[i] = skeleton->bones[i].head.GetTransformed( transl, rot );
-		tails[i] = skeleton->bones[i].tail.GetTransformed( transl, rot );
+		heads[i] = skeleton->bones[i].head.getTransformed( transl, rot );
+		tails[i] = skeleton->bones[i].tail.getTransformed( transl, rot );
 	}
 }
 

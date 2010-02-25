@@ -89,7 +89,7 @@ void RunPass( const Camera& cam )
 	shdr->locTexUnit( is_fai_uni_loc, r::is::fai, 1 );
 
 	// pass the light
-	vec4_t p = vec4_t( scene::SunPos(), 1.0 );
+	Vec4 p = Vec4( scene::SunPos(), 1.0 );
 	p = cam.getProjectionMatrix() * (cam.getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;

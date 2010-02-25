@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "Resource.h"
-#include "gmath.h"
+#include "Math.h"
 
 
 class Texture;
@@ -13,8 +13,8 @@ class Texture;
 class LightProps: public Resource
 {
 	// data
-	PROPERTY_R( vec3_t, diffuseCol, getDiffuseColor )
-	PROPERTY_R( vec3_t, specularCol, getSpecularColor )
+	PROPERTY_R( Vec3, diffuseCol, getDiffuseColor )
+	PROPERTY_R( Vec3, specularCol, getSpecularColor )
 	PROPERTY_R( float, radius, getRadius ) ///< For point lights
 	PROPERTY_R( bool, castsShadow_, castsShadow ) ///< For spot lights
 	PROPERTY_R( float, distance, getDistance ) ///< For spot lights. A.K.A.: camera's zFar
@@ -34,8 +34,8 @@ class LightProps: public Resource
 			radius(1.0),
 			castsShadow_(false),
 			distance(3.0),
-			fovX(m::PI/4.0),
-			fovY(m::PI/4.0),
+			fovX(M::PI/4.0),
+			fovY(M::PI/4.0),
 			texture(NULL) 
 		{}
 		virtual ~LightProps() { /* ToDo */ }

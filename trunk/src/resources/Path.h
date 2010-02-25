@@ -3,15 +3,15 @@
 
 #include "common.h"
 #include "Resource.h"
-#include "gmath.h"
+#include "Math.h"
 
 
 /// Path resource
 class Path: public Resource
 {
 	public:
-		Vec<vec3_t> positions; ///< AKA translations
-		Vec<mat3_t> rotations;
+		Vec<Vec3> positions; ///< AKA translations
+		Vec<Mat3> rotations;
 		Vec<float>  scales;
 		float         step;
 
