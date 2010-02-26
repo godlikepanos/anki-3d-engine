@@ -2,8 +2,7 @@
 #include "Resource.h"
 #include "Texture.h"
 #include "Scene.h"
-#include "r_private.h"
-#include "fbo.h"
+#include "Fbo.h"
 
 namespace r {
 namespace pps {
@@ -15,9 +14,9 @@ namespace lscatt {
 VARS                                                                                                                                  =
 =======================================================================================================================================
 */
-static fbo_t fbo; // yet another FBO
+static Fbo fbo; // yet another FBO
 
-float rendering_quality = 1.0;
+float renderingQuality = 1.0;
 bool enabled = false;
 
 Texture fai;
@@ -32,18 +31,18 @@ static int is_fai_uni_loc;
 init                                                                                                                                  =
 =======================================================================================================================================
 */
-void Init()
+void init()
 {
-	if( rendering_quality<0.0 || rendering_quality>1.0 ) ERROR("Incorect r::pps:lscatt::rendering_quality");
-	float wwidth = r::pps::lscatt::rendering_quality * r::w;
-	float wheight = r::pps::lscatt::rendering_quality * r::h;
+	if( renderingQuality<0.0 || renderingQuality>1.0 ) ERROR("Incorect r::pps:lscatt::rendering_quality");
+	float wwidth = r::pps::lscatt::renderingQuality * r::w;
+	float wheight = r::pps::lscatt::renderingQuality * r::h;
 
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// inform in what buffers we draw
-	fbo.SetNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
 	fai.createEmpty2D( wwidth, wheight, GL_RGB, GL_RGB );
@@ -54,7 +53,7 @@ void Init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create deferred shading post-processing stage light scattering pass FBO" );
 
 	// unbind
@@ -70,14 +69,14 @@ void Init()
 
 /*
 =======================================================================================================================================
-RunPass                                                                                                                               =
+runPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const Camera& cam )
+void runPass( const Camera& cam )
 {
-	fbo.Bind();
+	fbo.bind();
 
-	r::SetViewport( 0, 0, r::w * rendering_quality, r::h * rendering_quality );
+	r::setViewport( 0, 0, r::w * renderingQuality, r::h * renderingQuality );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -85,7 +84,7 @@ void RunPass( const Camera& cam )
 	// set the shader
 	shdr->bind();
 
-	shdr->locTexUnit( ms_depth_fai_uni_loc, r::ms::depth_fai, 0 );
+	shdr->locTexUnit( ms_depth_fai_uni_loc, r::ms::depthFai, 0 );
 	shdr->locTexUnit( is_fai_uni_loc, r::is::fai, 1 );
 
 	// pass the light

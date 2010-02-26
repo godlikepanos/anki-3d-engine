@@ -25,7 +25,7 @@ class MeshNode: public Node
 		// funcs
 		MeshNode(): Node(NT_MESH), meshSkelCtrl(NULL) {}
 		virtual void render() { render(material); }
-		virtual void renderDepth() { render( material->dp_mtl ); }
+		virtual void renderDepth() { render( material->dpMtl ); }
 		void init( const char* filename );
 		void deinit();
 };

@@ -4,7 +4,6 @@
 #include "renderer.h"
 #include "Texture.h"
 #include "Scene.h"
-#include "r_private.h"
 #include "Camera.h"
 #include "App.h"
 
@@ -19,12 +18,12 @@ data vars                                                                       
 
 // misc
 uint w, h;
-uint frames_num = 0;
-float aspect_ratio;
+uint framesNum = 0;
+float aspectRatio;
 
-int max_color_atachments = 0;
-//float rendering_quality = 1.0;
-int screenshot_jpeg_quality = 90;
+int maxColorAtachments = 0;
+//float renderingQuality = 1.0;
+int screenshotJpegQuality = 90;
 
 static ShaderProg* shdr_final;
 
@@ -41,8 +40,8 @@ string std_shader_preproc_defines;
 // texture
 bool mipmaping = true;
 int max_anisotropy = 8;
-int max_texture_units = -1;
-bool texture_compression = false;
+int maxTextureUnits = -1;
+bool textureCompression = false;
 
 
 //=====================================================================================================================================
@@ -77,26 +76,26 @@ static void BuildStdShaderPreProcStr()
 	tmp += "#pragma debug(off)\n";
 	tmp += "#define R_W " + Util::floatToStr(r::w) + "\n";
 	tmp += "#define R_H " + Util::floatToStr(r::h) + "\n";
-	//tmp += "#define R_Q " + floatToStr(r::rendering_quality) + "\n";
-	tmp += "#define SHADOWMAP_SIZE " + Util::intToStr(r::is::shadows::shadow_resolution) + "\n";
+	//tmp += "#define R_Q " + floatToStr(r::renderingQuality) + "\n";
+	tmp += "#define SHADOWMAP_SIZE " + Util::intToStr(r::is::shadows::shadowResolution) + "\n";
 	if( r::is::shadows::pcf )
 		tmp += "#define _SHADOW_MAPPING_PCF_\n";
 	if( r::pps::ssao::enabled )
 	{
 		tmp += "#define _SSAO_\n";
-		tmp += "#define SSAO_RENDERING_QUALITY " + Util::floatToStr(r::pps::ssao::rendering_quality) + "\n";
+		tmp += "#define SSAO_RENDERING_QUALITY " + Util::floatToStr(r::pps::ssao::renderingQuality) + "\n";
 	}
 	if( r::pps::edgeaa::enabled )
 		tmp += "#define _EDGEAA_\n";
 	if( r::pps::hdr::enabled )
 	{
 		tmp += "#define _HDR_\n";
-		tmp += "#define HDR_RENDERING_QUALITY " + Util::floatToStr(r::pps::hdr::rendering_quality) + "\n";
+		tmp += "#define HDR_RENDERING_QUALITY " + Util::floatToStr(r::pps::hdr::renderingQuality) + "\n";
 	}
 	if( r::pps::lscatt::enabled )
 	{
 		tmp += "#define _LSCATT_\n";
-		tmp += "#define LSCATT_RENDERING_QUALITY " + Util::floatToStr(r::pps::lscatt::rendering_quality) + "\n";
+		tmp += "#define LSCATT_RENDERING_QUALITY " + Util::floatToStr(r::pps::lscatt::renderingQuality) + "\n";
 	}
 }
 
@@ -106,7 +105,7 @@ static void BuildStdShaderPreProcStr()
 init                                                                                                                                  =
 =======================================================================================================================================
 */
-void Init()
+void init()
 {
 	PRINT( "Renderer initializing..." );
 
@@ -129,20 +128,20 @@ void Init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	w = App::windowW /* * rendering_quality*/;
-	h = App::windowH /* * rendering_quality*/;
-	aspect_ratio = float(w)/h;
+	w = App::windowW /* * renderingQuality*/;
+	h = App::windowH /* * renderingQuality*/;
+	aspectRatio = float(w)/h;
 
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
 	glClearDepth( 1.0 );
 	glClearStencil( 0 );
 	glDepthFunc( GL_LEQUAL );
 
-	// query for max_color_atachments
-	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &max_color_atachments );
+	// query for maxColorAtachments
+	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments );
 
 	// get max texture units
-	glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &max_texture_units );
+	glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &maxTextureUnits );
 
 	// CullFace is always on
 	glCullFace( GL_BACK );
@@ -170,12 +169,12 @@ void Init()
 
 	// init deferred stages
 	// WARNING: the order of the inits is crucial!!!!!
-	r::ms::Init();
-	r::is::Init();
-	r::bs::Init();
-	r::pps::Init();
-	r::bs::Init2();
-	r::dbg::Init();
+	r::ms::init();
+	r::is::init();
+	r::bs::init();
+	r::pps::init();
+	r::bs::init2();
+	r::dbg::init();
 
 	PRINT( "Renderer initialization ends" );
 }
@@ -186,17 +185,17 @@ void Init()
 render                                                                                                                                =
 =======================================================================================================================================
 */
-void Render( const Camera& cam )
+void render( const Camera& cam )
 {
-	r::ms::RunStage( cam );
-	r::is::RunStage( cam );
-	r::bs::RunStage( cam );
-	r::pps::RunStage( cam );
-	r::bs::RunStage2( cam );
-	r::dbg::RunStage( cam );
+	r::ms::runStage( cam );
+	r::is::runStage( cam );
+	r::bs::runStage( cam );
+	r::pps::runStage( cam );
+	r::bs::runStage2( cam );
+	r::dbg::runStage( cam );
 
-	//r::SetViewport( 0, 0, App::windowW, App::windowH );
-	r::SetViewport( 0, 0, App::windowW, App::windowH );
+	//r::setViewport( 0, 0, App::windowW, App::windowH );
+	r::setViewport( 0, 0, App::windowW, App::windowH );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
@@ -205,19 +204,19 @@ void Render( const Camera& cam )
 	shdr_final->locTexUnit( shdr_final->GetUniLoc(0), r::pps::fai, 0 );
 
 	/*const int step = 100;
-	if( r::frames_num < step )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::diffuse_fai, 0 );
-	else if( r::frames_num < step*2 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::normal_fai, 0 );
-	else if( r::frames_num < step*3 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::specular_fai, 0 );
-	else if( r::frames_num < step*4 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::depth_fai, 0 );
-	else if( r::frames_num < step*5 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::ssao::blured_fai, 0 );
-	else if( r::frames_num < step*6 )
+	if( r::framesNum < step )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::diffuseFai, 0 );
+	else if( r::framesNum < step*2 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::normalFai, 0 );
+	else if( r::framesNum < step*3 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::specularFai, 0 );
+	else if( r::framesNum < step*4 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::depthFai, 0 );
+	else if( r::framesNum < step*5 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::ssao::bluredFai, 0 );
+	else if( r::framesNum < step*6 )
 	{
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::hdr::pass2_fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::hdr::pass2Fai, 0 );
 	}
 	else
 		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::fai, 0 );*/
@@ -229,10 +228,10 @@ void Render( const Camera& cam )
 
 /*
 =======================================================================================================================================
-SetProjectionMatrix                                                                                                                   =
+setProjectionMatrix                                                                                                                   =
 =======================================================================================================================================
 */
-void SetProjectionMatrix( const Camera& cam )
+void setProjectionMatrix( const Camera& cam )
 {
 	glMatrixMode( GL_PROJECTION );
 	loadMatrix( cam.getProjectionMatrix() );
@@ -241,10 +240,10 @@ void SetProjectionMatrix( const Camera& cam )
 
 /*
 =======================================================================================================================================
-SetViewMatrix                                                                                                                         =
+setViewMatrix                                                                                                                         =
 =======================================================================================================================================
 */
-void SetViewMatrix( const Camera& cam )
+void setViewMatrix( const Camera& cam )
 {
 	glMatrixMode( GL_MODELVIEW );
 	loadMatrix( cam.getViewMatrix() );
@@ -253,11 +252,11 @@ void SetViewMatrix( const Camera& cam )
 
 /*
 =======================================================================================================================================
-Unproject                                                                                                                             =
+unproject                                                                                                                             =
 my version of gluUnproject                                                                                                            =
 =======================================================================================================================================
 */
-bool Unproject( float winX, float winY, float winZ, // window screen coords
+bool unproject( float winX, float winY, float winZ, // window screen coords
                 const Mat4& modelview_mat, const Mat4& projection_mat, const int* view,
                 float& objX, float& objY, float& objZ )
 {
@@ -282,10 +281,10 @@ bool Unproject( float winX, float winY, float winZ, // window screen coords
 
 /*
 =======================================================================================================================================
-Ortho                                                                                                                                 =
+ortho                                                                                                                                 =
 =======================================================================================================================================
 */
-Mat4 Ortho( float left, float right, float bottom, float top, float near, float far )
+Mat4 ortho( float left, float right, float bottom, float top, float near, float far )
 {
 	float difx = right-left;
 	float dify = top-bottom;
@@ -318,12 +317,12 @@ Mat4 Ortho( float left, float right, float bottom, float top, float near, float 
 
 /*
 =======================================================================================================================================
-PrepareNextFrame                                                                                                                      =
+prepareNextFrame                                                                                                                      =
 =======================================================================================================================================
 */
-void PrepareNextFrame()
+void prepareNextFrame()
 {
-	frames_num++;
+	framesNum++;
 }
 
 
@@ -341,9 +340,9 @@ void printLastError()
 
 
 //=====================================================================================================================================
-// GetLastError                                                                                                                       =
+// getLastError                                                                                                                       =
 //=====================================================================================================================================
-const uchar* GetLastError()
+const uchar* getLastError()
 {
 	return gluErrorString( glGetError() );
 }
@@ -421,7 +420,7 @@ static bool TakeScreenshotJPEG( const char* filename )
 	cinfo.input_components = 3;
 	cinfo.in_color_space   = JCS_RGB;
 	jpeg_set_defaults( &cinfo);
-	jpeg_set_quality ( &cinfo, screenshot_jpeg_quality, true );
+	jpeg_set_quality ( &cinfo, screenshotJpegQuality, true );
 	jpeg_start_compress( &cinfo, true );
 
 	// read from OGL
@@ -448,10 +447,10 @@ static bool TakeScreenshotJPEG( const char* filename )
 
 /*
 =======================================================================================================================================
-TakeScreenshot                                                                                                                        =
+takeScreenshot                                                                                                                        =
 =======================================================================================================================================
 */
-void TakeScreenshot( const char* filename )
+void takeScreenshot( const char* filename )
 {
 	char* ext = Util::getFileExtension( filename );
 	bool ret;

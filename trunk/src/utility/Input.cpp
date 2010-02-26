@@ -81,7 +81,7 @@ void handleEvents()
 
 			case SDL_MOUSEMOTION:
 			{
-				Vec2 prev_mouse_pos_ndc( mousePosNdc );
+				Vec2 prevMousePosNdc( mousePosNdc );
 
 				mousePos.x = event_.button.x;
 				mousePos.y = event_.button.y;
@@ -98,7 +98,7 @@ void handleEvents()
 					SDL_WarpMouse( App::windowW/2, App::windowH/2);
 				}
 
-				mouseVelocity = mousePosNdc - prev_mouse_pos_ndc;
+				mouseVelocity = mousePosNdc - prevMousePosNdc;
 				break;
 			}
 

@@ -20,7 +20,7 @@ class Camera: public Node
 		};
 
 		// Fovx is the angle in the y axis (imagine the cam positioned in the default OGL pos)
-		// Note that fovX > fovY (most of the time) and aspect_ratio = fovX/fovY
+		// Note that fovX > fovY (most of the time) and aspectRatio = fovX/fovY
 		// fovX and fovY in rad
 		float fovX, fovY;
 		float zNear, zFar;

@@ -6,7 +6,7 @@
 #include "Common.h"
 
 /// This is a wrapper for Vertex Buffer Objects to prevent us from making idiotic errors
-class vbo_t
+class Vbo
 {
 	protected:
 		uint glId; ///< The OpenGL id of the VBO
@@ -15,11 +15,11 @@ class vbo_t
 		GLenum usage;
 
 	public:
-		vbo_t(): glId(0) {}
-		virtual ~vbo_t() { Delete(); }
+		Vbo(): glId(0) {}
+		virtual ~Vbo() { deleteBuff(); }
 		uint   getGlId() const { DEBUG_ERR(glId==0); return glId; }
-		GLenum GetBufferTarget() const { DEBUG_ERR(glId==0); return target; }
-		GLenum GetBufferUsage() const { DEBUG_ERR(glId==0); return usage; }
+		GLenum getBufferTarget() const { DEBUG_ERR(glId==0); return target; }
+		GLenum getBufferUsage() const { DEBUG_ERR(glId==0); return usage; }
 
 		/**
 		 * Creates a new VBO with the given params and checks if everything went OK
@@ -28,37 +28,37 @@ class vbo_t
 		 * @param data_ptr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
 		 * @param usage_ It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
 		 */
-		void Create( GLenum target_, uint size_in_bytes, const void* data_ptr, GLenum usage_ )
+		void Create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
 		{
-			DEBUG_ERR( glId!=0 ); // VBO allready initialized
+			DEBUG_ERR( glId!=0 ); // VBO already initialized
 			DEBUG_ERR( target_!=GL_ARRAY_BUFFER && target_!=GL_ELEMENT_ARRAY_BUFFER ); // unacceptable target_
 			DEBUG_ERR( usage_!=GL_STREAM_DRAW && usage_!=GL_STATIC_DRAW && usage_!=GL_DYNAMIC_DRAW ); // unacceptable usage_
-			DEBUG_ERR( size_in_bytes < 1 ); // unacceptable size
+			DEBUG_ERR( sizeInBytes < 1 ); // unacceptable size
 
 			usage = usage_;
 			target = target_;
 
 			glGenBuffers( 1, &glId );
-			Bind();
-			glBufferData( target, size_in_bytes, data_ptr, usage ); // allocate memory and copy data from data_ptr to the VBO. If data_ptr is NULL just allocate
+			bind();
+			glBufferData( target, sizeInBytes, dataPtr, usage ); // allocate memory and copy data from data_ptr to the VBO. If data_ptr is NULL just allocate
 
 			// make a check
-			int buffer_size = 0;
-			glGetBufferParameteriv( target, GL_BUFFER_SIZE, &buffer_size );
-			if( size_in_bytes != (uint)buffer_size )
+			int bufferSize = 0;
+			glGetBufferParameteriv( target, GL_BUFFER_SIZE, &bufferSize );
+			if( sizeInBytes != (uint)bufferSize )
 			{
-				Delete();
+				deleteBuff();
 				ERROR( "Data size mismatch" );
 				return;
 			}
 
-			Unbind();
+			unbind();
 		}
 
 		/**
 		 * Deletes the VBO
 		 */
-		void Delete()
+		void deleteBuff()
 		{
 			DEBUG_ERR( glId==0 ); // VBO unitialized
 			glDeleteBuffers( 1, &glId );
@@ -66,9 +66,9 @@ class vbo_t
 		}
 
 		/**
-		 * bind the VBO
+		 * Bind the VBO
 		 */
-		void Bind() const
+		void bind() const
 		{
 			DEBUG_ERR( glId==0 ); // VBO unitialized
 			glBindBuffer( target, glId );
@@ -77,7 +77,7 @@ class vbo_t
 		/**
 		 * Unbinds only the targets that have the same target as this
 		 */
-		void Unbind() const
+		void unbind() const
 		{
 			DEBUG_ERR( glId==0 ); // VBO unitialized
 			glBindBuffer( target, 0 );
@@ -86,7 +86,7 @@ class vbo_t
 		/**
 		 * Unbinds all VBOs, meaning both GL_ARRAY_BUFFER and GL_ELEMENT_ARRAY_BUFFER targets
 		 */
-		static void UnbindAllTargets()
+		static void unbindAllTargets()
 		{
 			glBindBufferARB( GL_ARRAY_BUFFER, 0 );
 			glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER, 0 );

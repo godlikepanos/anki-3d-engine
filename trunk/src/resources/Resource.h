@@ -128,7 +128,7 @@ template<typename Type> class Container: public Vec<Type*>
 
 		public:
 		/**
-		 * load an object and register it. If its allready loaded return its pointer
+		 * load an object and register it. If its already loaded return its pointer
 		 * @param fname The filename that initializes the object
 		 * @return A pointer of a new resource or NULL on fail
 		 */
@@ -138,7 +138,7 @@ template<typename Type> class Container: public Vec<Type*>
 			string path = Util::getPath( fname );
 			Iterator it = findByNameAndPath( name, path.c_str() );
 
-			// if allready loaded then inc the users and return the pointer
+			// if already loaded then inc the users and return the pointer
 			if( it != BaseClass::end() )
 			{
 				++ (*it)->usersNum;

@@ -245,28 +245,28 @@ inline Quat Quat::slerp( const Quat& q1_, float t ) const
 {
 	const Quat& q0 = ME;
 	Quat q1( q1_ );
-	float cos_half_theta = q0.w*q1.w + q0.x*q1.x + q0.y*q1.y + q0.z*q1.z;
-	if( cos_half_theta < 0.0 )
+	float cosHalfTheta = q0.w*q1.w + q0.x*q1.x + q0.y*q1.y + q0.z*q1.z;
+	if( cosHalfTheta < 0.0 )
 	{
 		q1 = Quat( -Vec4(q1) ); // quat changes
-		cos_half_theta = -cos_half_theta;
+		cosHalfTheta = -cosHalfTheta;
 	}
-	if( fabs(cos_half_theta) >= 1.0f )
+	if( fabs(cosHalfTheta) >= 1.0f )
 	{
 		return Quat( q0 );
 	}
 
-	float half_theta = acos( cos_half_theta );
-	float sinhalf_theta = M::sqrt(1.0 - cos_half_theta*cos_half_theta);
+	float halfTheta = acos( cosHalfTheta );
+	float sinHalfTheta = M::sqrt(1.0 - cosHalfTheta*cosHalfTheta);
 
-	if( fabs(sinhalf_theta) < 0.001 )
+	if( fabs(sinHalfTheta) < 0.001 )
 	{
 		return Quat( (Vec4(q0) + Vec4(q1))*0.5 );
 	}
-	float ratio_a = sin((1.0 - t) * half_theta) / sinhalf_theta;
-	float ratio_b = sin(t * half_theta) / sinhalf_theta;
+	float ratioA = sin((1.0 - t) * halfTheta) / sinHalfTheta;
+	float ratio_b = sin(t * halfTheta) / sinHalfTheta;
 	Vec4 tmp, tmp1, sum;
-	tmp = Vec4(q0)*ratio_a;
+	tmp = Vec4(q0)*ratioA;
 	tmp1 = Vec4(q1)*ratio_b;
 	sum = tmp + tmp1;
 	sum.normalize();

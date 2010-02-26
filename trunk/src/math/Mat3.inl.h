@@ -470,32 +470,32 @@ inline void Mat3::rotateXAxis( float rad )
 	float sina, cosa;
 	sinCos( rad, sina, cosa );
 
-	/*Vec3 x_axis, y_axis, z_axis;
-	getColumns( x_axis, y_axis, z_axis );*/
+	/*Vec3 xAxis, yAxis, zAxis;
+	getColumns( xAxis, yAxis, zAxis );*/
 
-	// z_axis = z_axis*cosa - y_axis*sina;
+	// zAxis = zAxis*cosa - yAxis*sina;
 	ME(0,2) = ME(0,2)*cosa - ME(0,1)*sina;
 	ME(1,2) = ME(1,2)*cosa - ME(1,1)*sina;
 	ME(2,2) = ME(2,2)*cosa - ME(2,1)*sina;
 
-	// z_axis.normalize();
+	// zAxis.normalize();
 	float len = invSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
 	ME(0,2) *= len;
 	ME(1,2) *= len;
 	ME(2,2) *= len;
 
-	// y_axis = z_axis * x_axis;
+	// yAxis = zAxis * xAxis;
 	ME(0,1) = ME(1,2)*ME(2,0) - ME(2,2)*ME(1,0);
 	ME(1,1) = ME(2,2)*ME(0,0) - ME(0,2)*ME(2,0);
 	ME(2,1) = ME(0,2)*ME(1,0) - ME(1,2)*ME(0,0);
 
-	// y_axis.normalize();
+	// yAxis.normalize();
 	/*len = invSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
 	ME(0,1) *= len;
 	ME(1,1) *= len;
 	ME(2,1) *= len;*/
 
-	// setColumns( x_axis, y_axis, z_axis );
+	// setColumns( xAxis, yAxis, zAxis );
 
 }
 
@@ -505,32 +505,32 @@ inline void Mat3::rotateYAxis( float rad )
 	float sina, cosa;
 	sinCos( rad, sina, cosa );
 
-	/*Vec3 x_axis, y_axis, z_axis;
-	getColumns( x_axis, y_axis, z_axis );*/
+	/*Vec3 xAxis, yAxis, zAxis;
+	getColumns( xAxis, yAxis, zAxis );*/
 
-	// z_axis = z_axis*cosa + x_axis*sina;
+	// zAxis = zAxis*cosa + xAxis*sina;
 	ME(0,2) = ME(0,2)*cosa + ME(0,0)*sina;
 	ME(1,2) = ME(1,2)*cosa + ME(1,0)*sina;
 	ME(2,2) = ME(2,2)*cosa + ME(2,0)*sina;
 
-	// z_axis.normalize();
+	// zAxis.normalize();
 	float len = invSqrt( ME(0,2)*ME(0,2) + ME(1,2)*ME(1,2) + ME(2,2)*ME(2,2) );
 	ME(0,2) *= len;
 	ME(1,2) *= len;
 	ME(2,2) *= len;
 
-	// x_axis = (z_axis*y_axis) * -1.0f;
+	// xAxis = (zAxis*yAxis) * -1.0f;
 	ME(0,0) = ME(2,2)*ME(1,1) - ME(1,2)*ME(2,1);
 	ME(1,0) = ME(0,2)*ME(2,1) - ME(2,2)*ME(0,1);
 	ME(2,0) = ME(1,2)*ME(0,1) - ME(0,2)*ME(1,1);
 
-	// x_axis.normalize();
+	// xAxis.normalize();
 	/*len = invSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
 	ME(0,0) *= len;
 	ME(1,0) *= len;
 	ME(2,0) *= len;*/
 
-	// setColumns( x_axis, y_axis, z_axis );
+	// setColumns( xAxis, yAxis, zAxis );
 }
 
 
@@ -540,32 +540,32 @@ inline void Mat3::rotateZAxis( float rad )
 	float sina, cosa;
 	sinCos( rad, sina, cosa );
 
-	/*Vec3 x_axis, y_axis, z_axis;
-	getColumns( x_axis, y_axis, z_axis );*/
+	/*Vec3 xAxis, yAxis, zAxis;
+	getColumns( xAxis, yAxis, zAxis );*/
 
-	// x_axis = x_axis*cosa + y_axis*sina;
+	// xAxis = xAxis*cosa + yAxis*sina;
 	ME(0,0) = ME(0,0)*cosa + ME(0,1)*sina;
 	ME(1,0) = ME(1,0)*cosa + ME(1,1)*sina;
 	ME(2,0) = ME(2,0)*cosa + ME(2,1)*sina;
 
-	// x_axis.normalize();
+	// xAxis.normalize();
 	float len = invSqrt( ME(0,0)*ME(0,0) + ME(1,0)*ME(1,0) + ME(2,0)*ME(2,0) );
 	ME(0,0) *= len;
 	ME(1,0) *= len;
 	ME(2,0) *= len;
 
-	// y_axis = z_axis*x_axis;
+	// yAxis = zAxis*xAxis;
 	ME(0,1) = ME(1,2)*ME(2,0) - ME(2,2)*ME(1,0);
 	ME(1,1) = ME(2,2)*ME(0,0) - ME(0,2)*ME(2,0);
 	ME(2,1) = ME(0,2)*ME(1,0) - ME(1,2)*ME(0,0);
 
-	// y_axis.normalize();
+	// yAxis.normalize();
 	/*len = invSqrt( ME(0,1)*ME(0,1) + ME(1,1)*ME(1,1) + ME(2,1)*ME(2,1) );
 	ME(0,1) *= len;
 	ME(1,1) *= len;
 	ME(2,1) *= len;*/
 
-	//setColumns( x_axis, y_axis, z_axis );
+	//setColumns( xAxis, yAxis, zAxis );
 }
 
 // transpose
@@ -610,18 +610,18 @@ inline void Mat3::reorthogonalize()
 
 	ME = correction_m3 * ME;*/
 
-	// method 2: Gram-Schmidt method with a twist for z_axis
-	Vec3 x_axis, y_axis, z_axis;
-	getColumns( x_axis, y_axis, z_axis );
+	// method 2: Gram-Schmidt method with a twist for zAxis
+	Vec3 xAxis, yAxis, zAxis;
+	getColumns( xAxis, yAxis, zAxis );
 
-	x_axis.normalize();
+	xAxis.normalize();
 
-	y_axis = y_axis - ( x_axis * x_axis.dot(y_axis) );
-	y_axis.normalize();
+	yAxis = yAxis - ( xAxis * xAxis.dot(yAxis) );
+	yAxis.normalize();
 
-	z_axis = x_axis.cross(y_axis);
+	zAxis = xAxis.cross(yAxis);
 
-	setColumns( x_axis, y_axis, z_axis );
+	setColumns( xAxis, yAxis, zAxis );
 }
 
 // print

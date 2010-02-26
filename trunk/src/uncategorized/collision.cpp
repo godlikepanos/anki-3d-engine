@@ -819,7 +819,7 @@ void plane_t::Render()
 	q.setFrom2Vec3( Vec3( 0.0, 0.0, 1.0 ), normal );
 	Mat3 rotate( q );
 	Mat4 transform( translate, rotate );
-	r::MultMatrix( transform );
+	r::multMatrix( transform );
 
 	glColor4fv( &Vec4(1.0f, 1.0f, 1.0f, 0.5f)[0] );
 
@@ -911,7 +911,7 @@ void bsphere_t::Render()
 
 	glColor4fv( &Vec4(1.0, 1.0, 1.0, 0.2)[0] );
 
-	r::dbg::RenderSphere( radius, 24 );
+	r::dbg::renderSphere( radius, 24 );
 
 	glPopMatrix();
 }
@@ -1195,7 +1195,7 @@ void aabb_t::Render()
 
 	glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
 
-	r::dbg::RenderCube();
+	r::dbg::renderCube();
 
 	glPopMatrix();
 
@@ -1639,14 +1639,14 @@ void obb_t::Render()
 	glPushMatrix();
 
 	glTranslatef( center.x, center.y, center.z ); // translate
-	r::MultMatrix( Mat4(rotation) ); // rotate
+	r::multMatrix( Mat4(rotation) ); // rotate
 	glScalef( extends.x, extends.y, extends.z ); // scale
 
 	glColor3fv( &Vec3(1.0f, 1.0f, 1.0f)[0] );
 
-	r::dbg::RenderCube( false, 2.0f );
+	r::dbg::renderCube( false, 2.0f );
 
-	r::Color3( Vec3( 0.0, 1.0, 0.0 ) );
+	r::color3( Vec3( 0.0, 1.0, 0.0 ) );
 	glBegin( GL_POINTS );
 		glVertex3fv( &Vec3(1.0, 1.0, 1.0)[0] );
 	glEnd();

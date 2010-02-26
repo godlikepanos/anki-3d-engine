@@ -6,8 +6,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
-#include "r_private.h"
-#include "fbo.h"
+#include "Fbo.h"
 #include "Material.h"
 #include "MeshNode.h"
 
@@ -21,49 +20,49 @@ namespace ms {
 VARS                                                                                                                                  =
 =======================================================================================================================================
 */
-static fbo_t fbo;
+static Fbo fbo;
 
-Texture normal_fai, diffuse_fai, specular_fai, depth_fai;
+Texture normalFai, diffuseFai, specularFai, depthFai;
 
 
 
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void Init()
+void init()
 {
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// inform in what buffers we draw
-	fbo.SetNumOfColorAttachements(3);
+	fbo.setNumOfColorAttachements(3);
 
 	// create the FAIs
 	const int internal_format = GL_RGBA16F_ARB;
-	if( !normal_fai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !diffuse_fai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !specular_fai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !depth_fai.createEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
+	if( !normalFai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !diffuseFai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !specularFai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
+	    !depthFai.createEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
 	{
 		FATAL( "See prev error" );
 	}
 
 	
 	// you could use the above for SSAO but the difference is very little.
-	//depth_fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	//depth_fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	//depthFai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	//depthFai.texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	// attach the buffers to the FBO
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, normal_fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, diffuse_fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, specular_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, normalFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, diffuseFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, specularFai.getGlId(), 0 );
 
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create deferred shading material pass FBO" );
 
 	// unbind
@@ -76,22 +75,22 @@ void Init()
 
 
 //=====================================================================================================================================
-// RunStage                                                                                                                           =
+// runStage                                                                                                                           =
 //=====================================================================================================================================
-void RunStage( const Camera& cam )
+void runStage( const Camera& cam )
 {
 	#if defined( _EARLY_Z_ )
 		// run the early z pass
-		r::ms::earlyz::RunPass( cam );
+		r::ms::earlyz::runPass( cam );
 	#endif
 
-	fbo.Bind();
+	fbo.bind();
 
 	#if !defined( _EARLY_Z_ )
 		glClear( GL_DEPTH_BUFFER_BIT );
 	#endif
-	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, r::w, r::h );
+	r::setProjectionViewMatrices( cam );
+	r::setViewport( 0, 0, r::w, r::h );
 
 	//glEnable( GL_DEPTH_TEST );
 	Scene::skybox.Render( cam.getViewMatrix().getRotationPart() );

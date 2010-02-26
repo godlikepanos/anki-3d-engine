@@ -144,7 +144,7 @@ class Scanner
 		bool  newlinesAsWhitespace; ///< Treat newlines as whitespace. This means that we extract new token for every line
 		/**
 		 * Used to keep track of the newlines in multiline comments so we can return the correct number of newlines in case of 
-		 * newlines_as_whitespace is false
+		 * newlinesAsWhitespace is false
 		 */
 		int     commentedLines;
 

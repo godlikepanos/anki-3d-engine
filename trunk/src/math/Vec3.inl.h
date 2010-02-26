@@ -250,9 +250,9 @@ inline Vec3 Vec3::getNormalized() const
 }
 
 // getProjection
-inline Vec3 Vec3::getProjection( const Vec3& to_this ) const
+inline Vec3 Vec3::getProjection( const Vec3& toThis ) const
 {
-	return to_this * ( ME.dot(to_this)/(to_this.dot(to_this)) );
+	return toThis * ( ME.dot(toThis)/(toThis.dot(toThis)) );
 }
 
 // Rotated
@@ -267,8 +267,8 @@ inline Vec3 Vec3::getRotated( const Quat& q ) const
 	return Vec3( pmult*x + vmult*q.x + crossmult*(q.y*z - q.z*y),
 							   pmult*y + vmult*q.y + crossmult*(q.z*x - q.x*z),
 	               pmult*z + vmult*q.z + crossmult*(q.x*y - q.y*x) );*/
-	Vec3 q_xyz( q );
-	return ME + q_xyz.cross( q_xyz.cross(ME) + ME*q.w ) * 2.0;
+	Vec3 qXyz( q );
+	return ME + qXyz.cross( qXyz.cross(ME) + ME*q.w ) * 2.0;
 }
 
 // rotate

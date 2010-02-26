@@ -30,14 +30,14 @@ class SkelAnim: public Resource
 		};
 		
 		Vec<uint> keyframes;
-		uint frames_num;
+		uint framesNum;
 
 		Vec<BoneAnim> bones;
 
 		SkelAnim() {}
 		~SkelAnim() {}
 		bool load( const char* filename );
-		void unload() { keyframes.clear(); bones.clear(); frames_num=0; }
+		void unload() { keyframes.clear(); bones.clear(); framesNum=0; }
 };
 
 

@@ -20,10 +20,10 @@ class MeshSkelNodeCtrl: public Controller
 		SkelNode* skelNode;
 		MeshNode* meshNode;
 
-		MeshSkelNodeCtrl( SkelNode* skel_node_, MeshNode* mesh_node_ ):
+		MeshSkelNodeCtrl( SkelNode* skelNode_, MeshNode* meshNode_ ):
 			Controller( CT_SKEL ),
-			skelNode( skel_node_ ),
-			meshNode( mesh_node_ ) 
+			skelNode( skelNode_ ),
+			meshNode( meshNode_ )
 		{}
 		/**
 		 * Do nothing! We use HW skinning so its not necessary to update anything in the meshNode. 

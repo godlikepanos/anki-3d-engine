@@ -58,9 +58,9 @@ class Node
 		virtual void deinit() = 0;
 		virtual void updateWorldStuff() { updateWorldTransform(); } ///< This update happens only when the object gets moved. Override it if you want more
 		void updateWorldTransform();
-		void rotateLocalX( float ang_degrees ) { rotationLspace.rotateXAxis( ang_degrees ); }
-		void rotateLocalY( float ang_degrees ) { rotationLspace.rotateYAxis( ang_degrees ); }
-		void rotateLocalZ( float ang_degrees ) { rotationLspace.rotateZAxis( ang_degrees ); }
+		void rotateLocalX( float angDegrees ) { rotationLspace.rotateXAxis( angDegrees ); }
+		void rotateLocalY( float angDegrees ) { rotationLspace.rotateYAxis( angDegrees ); }
+		void rotateLocalZ( float angDegrees ) { rotationLspace.rotateZAxis( angDegrees ); }
 		void moveLocalX( float distance );
 		void moveLocalY( float distance );
 		void moveLocalZ( float distance );

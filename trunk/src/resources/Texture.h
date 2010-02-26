@@ -54,12 +54,12 @@ class Texture: public Resource
 
 		bool load( const char* filename );
 		void unload();
-		bool createEmpty2D( float width, float height, int internal_format, int format, GLenum type_ = GL_FLOAT );
-		bool createEmpty2DMSAA( float width, float height, int samples_num, int internal_format );
+		bool createEmpty2D( float width, float height, int internalFormat, int format, GLenum type_ = GL_FLOAT );
+		bool createEmpty2DMSAA( float width, float height, int samplesNum, int internalFormat );
 
 		void bind( uint unit=0 ) const;
 
-		inline void texParameter( GLenum param_name, GLint value ) const { bind(); glTexParameteri( GL_TEXTURE_2D, param_name, value ); }
+		inline void texParameter( GLenum paramName, GLint value ) const { bind(); glTexParameteri( GL_TEXTURE_2D, paramName, value ); }
 };
 
 

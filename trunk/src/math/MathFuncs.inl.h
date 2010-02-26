@@ -71,34 +71,34 @@ inline void sinCos( float a, float& sina, float& cosa )
 		a = -a;
 		negative = true;
 	}
-	const float k_two_over_pi = 1.0 / (PI/2.0);
-	float float_a = k_two_over_pi * a;
-	int int_a = (int)float_a;
+	const float kTwoOverPi = 1.0 / (PI/2.0);
+	float floatA = kTwoOverPi * a;
+	int int_a = (int)floatA;
 
 	const float k_rational_half_pi = 201 / 128.0;
-	const float k_remainder_half_pi = 4.8382679e-4;
+	const float kRemainderHalfPi = 4.8382679e-4;
 
-	float_a = (a - k_rational_half_pi * int_a) - k_remainder_half_pi * int_a;
+	floatA = (a - k_rational_half_pi * int_a) - kRemainderHalfPi * int_a;
 
-	float float_a_minus_half_pi = (float_a - k_rational_half_pi) - k_remainder_half_pi;
+	float floatAMinusHalfPi = (floatA - k_rational_half_pi) - kRemainderHalfPi;
 
 	switch( int_a & 3 )
 	{
 	case 0: // 0 - Pi/2
-		sina = PolynomialSinQuadrant(float_a);
-		cosa = PolynomialSinQuadrant(-float_a_minus_half_pi);
+		sina = PolynomialSinQuadrant(floatA);
+		cosa = PolynomialSinQuadrant(-floatAMinusHalfPi);
 		break;
 	case 1: // Pi/2 - Pi
-		sina = PolynomialSinQuadrant(-float_a_minus_half_pi);
-		cosa = PolynomialSinQuadrant(-float_a);
+		sina = PolynomialSinQuadrant(-floatAMinusHalfPi);
+		cosa = PolynomialSinQuadrant(-floatA);
 		break;
 	case 2: // Pi - 3Pi/2
-		sina = PolynomialSinQuadrant(-float_a);
-		cosa = PolynomialSinQuadrant(float_a_minus_half_pi);
+		sina = PolynomialSinQuadrant(-floatA);
+		cosa = PolynomialSinQuadrant(floatAMinusHalfPi);
 		break;
 	case 3: // 3Pi/2 - 2Pi
-		sina = PolynomialSinQuadrant(float_a_minus_half_pi);
-		cosa = PolynomialSinQuadrant(float_a);
+		sina = PolynomialSinQuadrant(floatAMinusHalfPi);
+		cosa = PolynomialSinQuadrant(floatA);
 		break;
 	};
 

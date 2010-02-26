@@ -40,15 +40,15 @@ void Light::deinit()
 
 
 //=====================================================================================================================================
-// RenderSphere                                                                                                                       =
+// renderSphere                                                                                                                       =
 //=====================================================================================================================================
 static void RenderSphere( const Mat4& tsl, const Vec3& col )
 {
 	glPushMatrix();
-	r::MultMatrix( tsl );
+	r::multMatrix( tsl );
 
-	r::Color3( col );
-	r::dbg::RenderSphere( 1.0/8.0, 8 );
+	r::color3( col );
+	r::dbg::renderSphere( 1.0/8.0, 8 );
 
 	glPopMatrix();
 }

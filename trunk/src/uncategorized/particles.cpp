@@ -50,7 +50,7 @@ void particle_t::render()
 	if( 1 )
 	{
 		glPushMatrix();
-		r::MultMatrix( transformationWspace );
+		r::multMatrix( transformationWspace );
 
 		glBegin( GL_LINES );
 			// x-axis
@@ -206,11 +206,11 @@ void particle_emitter_t::render()
 		glPushMatrix();
 
 		updateWorldTransform();
-		r::MultMatrix( transformationWspace );
+		r::multMatrix( transformationWspace );
 
 		glColor3f( 0.0, 1.0, 0.0 );
 
-		r::dbg::RenderCube();
+		r::dbg::renderCube();
 
 		glPolygonMode( GL_FRONT, GL_FILL );
 		glPopMatrix();

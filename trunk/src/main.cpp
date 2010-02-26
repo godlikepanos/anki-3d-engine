@@ -46,12 +46,12 @@ class floor_t: public Camera
 	public:
 		void render()
 		{
-			r::dbg::RenderCube( true, 1.0 );
+			r::dbg::renderCube( true, 1.0 );
 		}
 
 		void renderDepth()
 		{
-			r::dbg::RenderCube( true, 1.0 );
+			r::dbg::renderCube( true, 1.0 );
 		}
 }* floor_;
 
@@ -170,7 +170,7 @@ void initPhysics()
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void Init()
+void init()
 {
 	PRINT( "Engine initializing..." );
 
@@ -182,11 +182,11 @@ void Init()
 	App::initWindow();
 	uint ticks = App::getTicks();
 
-	r::Init();
+	r::init();
 	Ui::init();
 
 	// camera
-	mainCam = new Camera( r::aspect_ratio*toRad(60.0), toRad(60.0), 0.5, 100.0 );
+	mainCam = new Camera( r::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 100.0 );
 	mainCam->moveLocalY( 3.0 );
 	mainCam->moveLocalZ( 5.7 );
 	mainCam->moveLocalX( -0.3 );
@@ -253,7 +253,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 	App::printAppInfo();
 
-	Init();
+	init();
 
 	PRINT( "Entering main loop" );
 	int ticks = App::getTicks();
@@ -261,7 +261,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 	{
 		int ticks_ = App::getTicks();
 		I::handleEvents();
-		r::PrepareNextFrame();
+		r::prepareNextFrame();
 
 		float dist = 0.2;
 		float ang = toRad(3.0);
@@ -311,7 +311,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		dynamicsWorld->stepSimulation( 1 );
 
-		r::Render( *mainCam );
+		r::render( *mainCam );
 
 		//map.octree.root->bounding_box.render();
 
@@ -319,32 +319,32 @@ int main( int /*argc*/, char* /*argv*/[] )
 		Ui::setColor( Vec4(1.0, 1.0, 1.0, 1.0) );
 		Ui::setPos( -0.98, 0.95 );
 		Ui::setFontWidth( 0.03 );
-		Ui::printf( "frame:%d time:%dms\n", r::frames_num, App::getTicks()-ticks_ );
+		Ui::printf( "frame:%d time:%dms\n", r::framesNum, App::getTicks()-ticks_ );
 		//Ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
 
 		if( I::keys[SDLK_ESCAPE] ) break;
 		if( I::keys[SDLK_F11] ) App::togleFullScreen();
-		if( I::keys[SDLK_F12] == 1 ) r::TakeScreenshot("gfx/screenshot.jpg");
+		if( I::keys[SDLK_F12] == 1 ) r::takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
-		if( r::frames_num < 1000 )
-			sprintf( str, "capt/%06d.jpg", r::frames_num );
+		if( r::framesNum < 1000 )
+			sprintf( str, "capt/%06d.jpg", r::framesNum );
 		else
-			sprintf( str, "capt2/%06d.jpg", r::frames_num );
-		r::TakeScreenshot(str);*/
+			sprintf( str, "capt2/%06d.jpg", r::framesNum );
+		r::takeScreenshot(str);*/
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		r::printLastError();
 		if( 1 )
 		{
-			//if( r::frames_num == 10 ) r::TakeScreenshot("gfx/screenshot.tga");
+			//if( r::framesNum == 10 ) r::takeScreenshot("gfx/screenshot.tga");
 			App::waitForNextFrame();
 		}
 		else
-			if( r::frames_num == 5000 ) break;
+			if( r::framesNum == 5000 ) break;
 	}while( true );
 	PRINT( "Exiting main loop (" << App::getTicks()-ticks << ")" );
 
