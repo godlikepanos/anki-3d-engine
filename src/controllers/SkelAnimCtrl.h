@@ -14,13 +14,14 @@ class SkelNode;
 class SkelAnimCtrl: public Controller
 {
 	private:
+		// The 3 steps of skeletal animation
 		void interpolate( SkelAnim* animation, float frame );
 		void updateBoneTransforms();
-		void deform();
+		void deform();  ///< Now with HW skinning it deforms only the debug skeleton
 
 	public:
-		SkelAnim*  skelAnim; ///< Skeleton animation resource
-		SkelNode*  skelNode;
+		SkelAnim* skelAnim; ///< Skeleton animation resource
+		SkelNode* skelNode;
 		Vec<Vec3> heads;
 		Vec<Vec3> tails;
 		Vec<Mat3> boneRotations;
@@ -28,7 +29,7 @@ class SkelAnimCtrl: public Controller
 		float step;
 		float frame;
 
-		SkelAnimCtrl( SkelNode* skel_node_ );
+		SkelAnimCtrl( SkelNode* skelNode_ );
 		void update( float time );
 };
 

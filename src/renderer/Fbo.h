@@ -6,22 +6,22 @@
 
 
 /// The class is created as a wrapper to avoid common mistakes
-class fbo_t
+class Fbo
 {
 	PROPERTY_R( uint, glId, getGlId ) ///< OpenGL idendification
 
 	public:
-		fbo_t(): glId(0) {}
+		Fbo(): glId(0) {}
 
 		/// Creates a new FBO
 		void Create()
 		{
-			DEBUG_ERR( glId != 0 ); // FBO allready initialized
+			DEBUG_ERR( glId != 0 ); // FBO already initialized
 			glGenFramebuffers( 1, &glId );
 		}
 
 		/// Binds FBO
-		void Bind() const
+		void bind() const
 		{
 			DEBUG_ERR( glId == 0 );  // FBO unitialized
 			glBindFramebuffer( GL_FRAMEBUFFER, glId );
@@ -34,19 +34,19 @@ class fbo_t
 		 * Checks the status of an initialized FBO
 		 * @return True if FBO is ok and false if not
 		 */
-		bool IsGood() const
+		bool isGood() const
 		{
 			DEBUG_ERR( glId == 0 );  // FBO unitialized
-			DEBUG_ERR( GetCurrentFBO() != glId ); // another FBO is binded
+			DEBUG_ERR( getCurrentFbo() != glId ); // another FBO is binded
 
 			return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 		}
 
 		/// Set the number of color attachements of the FBO
-		void SetNumOfColorAttachements( uint num ) const
+		void setNumOfColorAttachements( uint num ) const
 		{
 			DEBUG_ERR( glId == 0 );  // FBO unitialized
-			DEBUG_ERR( GetCurrentFBO() != glId ); // another FBO is binded
+			DEBUG_ERR( getCurrentFbo() != glId ); // another FBO is binded
 
 			if( num == 0 )
 			{
@@ -55,9 +55,9 @@ class fbo_t
 			}
 			else
 			{
-				static GLenum color_attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3,
-				                                      GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7 };
-				glDrawBuffers( num, color_attachments );
+				static GLenum colorAttachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3,
+				                                     GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7 };
+				glDrawBuffers( num, colorAttachments );
 			}
 		}
 
@@ -65,11 +65,11 @@ class fbo_t
 		 * Returns the GL id of the current attached FBO
 		 * @return Returns the GL id of the current attached FBO
 		 */
-		static uint GetCurrentFBO()
+		static uint getCurrentFbo()
 		{
-			int fbo_glId;
-			glGetIntegerv( GL_FRAMEBUFFER_BINDING, &fbo_glId );
-			return (uint)fbo_glId;
+			int fboGlId;
+			glGetIntegerv( GL_FRAMEBUFFER_BINDING, &fboGlId );
+			return (uint)fboGlId;
 		}
 };
 

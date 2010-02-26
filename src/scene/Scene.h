@@ -16,7 +16,7 @@ class Controller;
 namespace Scene {
 
 // misc
-extern skybox_t skybox;
+extern Skybox skybox;
 inline Vec3 getAmbientColor() { return Vec3( 0.1, 0.05, 0.05 )*1; }
 inline Vec3 getSunPos() { return Vec3( 0.0, 1.0, -1.0 ) * 50.0; }
 

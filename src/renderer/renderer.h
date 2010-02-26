@@ -19,59 +19,68 @@ namespace r { // begin namespace
 
 extern uint  w; ///< width of the rendering window
 extern uint  h; ///< height of the rendering window
-//extern float rendering_quality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
-extern uint  frames_num;
-extern float aspect_ratio;
-extern int   screenshot_jpeg_quality; ///< The quality of the JPEG screenshots. From 0 to 100
+//extern float renderingQuality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
+extern uint  framesNum;
+extern float aspectRatio;
+extern int   screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
 
-extern int  max_color_atachments; ///< Max color atachements a FBO can accept
+extern int  maxColorAtachments; ///< Max color atachements a FBO can accept
 
 // texture stuff
-extern bool texture_compression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
-extern int  max_texture_units; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
+extern bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
+extern int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
 extern bool mipmaping; ///< Used in Texture::load. Enables mipmaping increases video memory usage
 extern int  max_anisotropy; ///< Max texture anisotropy. Used in Texture::load
 
 // misc
-extern void TakeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
-extern void Init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::init" functions among other things
-extern void PrepareNextFrame(); ///< Runs before rendering
-extern const uchar* GetLastError(); ///< GetLastError
+extern void takeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
+extern void init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::init" functions among other things
+extern void prepareNextFrame(); ///< Runs before rendering
+extern const uchar* getLastError(); ///< getLastError
 extern void printLastError(); ///< prints last OpenGL error
-inline const string& GetStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
-extern void Render( const Camera& cam ); ///< The spine function of the renderer
+inline const string& getStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
+extern void render( const Camera& cam ); ///< The spine function of the renderer
 
-extern void SetGLState_Wireframe();
-extern void SetGLState_Wireframedotted();
-extern void SetGLState_Solid();
-extern void SetGLState_AlphaSolid();
+extern float quad_vert_cords [][2];
+extern void DrawQuad( int vertCoords_uni_loc );
 
 // matrices
 //extern
 
 // ogl and glu wrappers
-inline void   MultMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   multMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
 inline void   loadMatrix( const Mat4& m4 ) { glLoadMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
 
-inline void   Color3( const Vec3& v ) { glColor3fv( &((Vec3&)v)[0] ); } ///< OpenGL wrapper
-inline void   Color4( const Vec4& v ) { glColor4fv( &((Vec4&)v)[0] ); } ///< OpenGL wrapper
-inline void   NoShaders() { ShaderProg::unbind(); } ///< unbind shaders
-extern bool   Unproject( float winX, float winY, float winZ, const Mat4& modelview_mat, const Mat4& projection_mat, const int* view, float& objX, float& objY, float& objZ ); ///< My version of gluUnproject
-extern Mat4 Ortho( float left, float right, float bottom, float top, float near, float far );
+inline void   color3( const Vec3& v ) { glColor3fv( &((Vec3&)v)[0] ); } ///< OpenGL wrapper
+inline void   color4( const Vec4& v ) { glColor4fv( &((Vec4&)v)[0] ); } ///< OpenGL wrapper
+inline void   noShaders() { ShaderProg::unbind(); } ///< unbind shaders
+extern bool   unproject( float winX, float winY, float winZ, const Mat4& modelview_mat, const Mat4& projection_mat, const int* view, float& objX, float& objY, float& objZ ); ///< My version of gluUnproject
+extern Mat4   ortho( float left, float right, float bottom, float top, float near, float far );
 
 // Matrix stuff
-extern void SetProjectionMatrix( const Camera& cam );
-extern void SetViewMatrix( const Camera& cam );
-inline void SetProjectionViewMatrices( const Camera& cam ) { SetProjectionMatrix(cam); SetViewMatrix(cam); }
-inline void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); }
+extern void setProjectionMatrix( const Camera& cam );
+extern void setViewMatrix( const Camera& cam );
+inline void setProjectionViewMatrices( const Camera& cam ) { setProjectionMatrix(cam); setViewMatrix(cam); }
+inline void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); }
 
 // externals that have global scope in other namespaces
 
 /// material stage namespace
 namespace ms
 {
-	extern Texture normal_fai;
-	extern Texture depth_fai;
+	extern Texture normalFai, diffuseFai, specularFai, depthFai;
+
+	extern void init();
+	extern void runStage( const Camera& cam );
+
+#if defined( _EARLY_Z_ )
+	/// EarlyZ depth pass namespace
+	namespace earlyz
+	{
+		extern void init(); ///< Inits the the earlyz FBO with r::ms::depthFai
+		extern void runPass( const Camera& cam ); ///< Renders the Scene's depth in the r::ms:depthFai
+	}
+#endif
 }
 
 /// illumination stage namespace
@@ -79,12 +88,16 @@ namespace is
 {
 	extern Texture fai;
 
+	extern void init();
+	extern void runStage( const Camera& cam );
+
 	/// illumination stage shadows namesapce
 	namespace shadows
 	{
-		extern ShaderProg* shdr_depth;
-		extern ShaderProg* shdr_depth_grass;
-		extern ShaderProg* shdr_depth_hw_skinning;
+		extern void init();
+		extern void runPass( const Camera& cam );
+		extern Texture shadowMap;
+		extern int shadowResolution;
 		extern bool pcf; ///< PCF on/off
 		extern bool bilinear; ///< Shadowmap bilinear filtering on/off
 	}
@@ -93,28 +106,53 @@ namespace is
 /// blending stage namespace
 namespace bs
 {
-	extern void Init2();
-	extern void RunStage2( const Camera& cam );
+	extern Texture faiBsScene;
+
+	extern void init2();
+	extern void runStage2( const Camera& cam );
+	extern void init();
+	extern void runStage( const Camera& cam );
 }
 
 /// pre-processing stage namespace
 namespace pps
 {
+	extern void init();
+	extern void runStage( const Camera& cam );
+
 	namespace ssao
 	{
-		extern bool enabled; ///< SSAO on/of
+		extern bool enabled;
+		extern void init();
+		extern void runPass( const Camera& cam );
+		extern Texture fai;
+		extern Texture bluredFai;
+		extern float renderingQuality;
 	}
+
 	namespace edgeaa
 	{
-		extern bool enabled; ///< EdgeAA on/of
+		extern bool enabled;
 	}
+
 	namespace hdr
 	{
-		extern bool enabled; ///< Bloom on/of
+		extern bool    enabled;
+		extern void    init();
+		extern void    runPass( const Camera& cam );
+		extern Texture pass0Fai;
+		extern Texture pass1Fai;
+		extern Texture pass2Fai;
+		extern float   renderingQuality;
 	}
+
 	namespace lscatt
 	{
-		extern bool enabled; ///< Light scattering on/of
+		extern bool enabled;
+		extern void init();
+		extern void runPass( const Camera& cam );
+		extern Texture fai;
+		extern float renderingQuality;
 	}
 
 	extern Texture fai;
@@ -123,18 +161,21 @@ namespace pps
 /// debug stage namespace
 namespace dbg
 {
-	extern bool show_axis;
-	extern bool show_fnormals;
-	extern bool show_vnormals;
-	extern bool show_lights;
-	extern bool show_skeletons;
-	extern bool show_cameras;
-	extern bool show_bvolumes;
+	extern bool showAxis;
+	extern bool showFnormals;
+	extern bool showVnormals;
+	extern bool showLights;
+	extern bool showSkeletons;
+	extern bool showCameras;
+	extern bool showBvolumes;
 
-	extern void RenderGrid();
-	extern void RenderSphere( float radius, int precision );
-	extern void RenderCube( bool cols = false, float size = 1.0f );
-	extern void RenderQuad( float w, float h );
+	extern void init();
+	extern void runStage( const Camera& cam );
+
+	extern void renderGrid();
+	extern void renderSphere( float radius, int precision );
+	extern void renderCube( bool cols = false, float size = 1.0f );
+	extern void renderQuad( float w, float h );
 }
 
 } // end namespace

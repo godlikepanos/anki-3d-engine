@@ -7,7 +7,7 @@
 
 class ShaderProg;
 
-class skybox_t
+class Skybox
 {
 	protected:
 		enum textures_e
@@ -27,7 +27,7 @@ class skybox_t
 		float rotation_ang;
 
 	public:
-		skybox_t() { rotation_ang=0.0; }
+		Skybox() { rotation_ang=0.0; }
 
 		bool load( const char* filenames[6] );
 		void Render( const Mat3& rotation );

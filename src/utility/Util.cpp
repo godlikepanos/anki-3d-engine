@@ -24,10 +24,10 @@ float randRange( float min, float max )
 	int precision = 1000; // more accurate
 
 	mant *= precision;
-	double new_mant = rand() % (int)mant;
-	new_mant /= precision;
+	double newMant = rand() % (int)mant;
+	newMant /= precision;
 
-	return min + (float)ldexp( new_mant, exp ); // return min + (new_mant * e^exp)
+	return min + (float)ldexp( newMant, exp ); // return min + (new_mant * e^exp)
 }
 
 
@@ -99,9 +99,9 @@ string getPath( const char* path )
 	++str;
 	int n = str - path;
 	DEBUG_ERR( n<0 || n>100 ); // check the func. probably something wrong
-	string ret_str;
-	ret_str.assign( path, n );
-	return ret_str;
+	string retStr;
+	retStr.assign( path, n );
+	return retStr;
 }
 
 
@@ -109,9 +109,9 @@ string getPath( const char* path )
 // getFunctionFromPrettyFunction                                                                                                      =
 //=====================================================================================================================================
 /// The function gets __PRETTY_FUNCTION__ and strips it to get only the function name with its namespace
-string getFunctionFromPrettyFunction( const char* pretty_function )
+string getFunctionFromPrettyFunction( const char* prettyFunction )
 {
-	string ret( pretty_function );
+	string ret( prettyFunction );
 
 	size_t index = ret.find( "(" );
 

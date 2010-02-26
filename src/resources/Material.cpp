@@ -85,7 +85,7 @@ bool Material::load( const char* filename )
 		/*//** DEPTH_SHADER_PROG **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_SHADER_PROG" ) )
 		{
-			if( depth.shaderProg ) ERROR( "Depth shader program allready loaded" );
+			if( depth.shaderProg ) ERROR( "Depth shader program already loaded" );
 
 			token = &scanner.getNextToken();
 			if( token->code != Scanner::TC_STRING )
@@ -98,7 +98,7 @@ bool Material::load( const char* filename )
 		//** DEPTH_MATERIAL **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_PASS_MATERIAL" ) )
 		{
-			if( dp_mtl ) ERROR( "Depth material already loaded" );
+			if( dpMtl ) ERROR( "Depth material already loaded" );
 
 			token = &scanner.getNextToken();
 			if( token->code != Scanner::TC_STRING )
@@ -106,7 +106,7 @@ bool Material::load( const char* filename )
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			dp_mtl = rsrc::materials.load( token->value.string );
+			dpMtl = rsrc::materials.load( token->value.string );
 		}
 		//** BLENDS **
 		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
@@ -270,11 +270,11 @@ bool Material::load( const char* filename )
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_NORMAL_FAI" ) )
 						{
-							var.value.texture = &r::ms::normal_fai;
+							var.value.texture = &r::ms::normalFai;
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_DEPTH_FAI" ) )
 						{
-							var.value.texture = &r::ms::depth_fai;
+							var.value.texture = &r::ms::depthFai;
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "PPS_FAI" ) )
 						{
@@ -422,7 +422,7 @@ void Material::setToDefault()
 	grassMap = NULL;
 	castsShadow = true;
 	refracts = false;
-	dp_mtl = NULL;
+	dpMtl = NULL;
 	/*depth.shaderProg = NULL;
 	depth.alpha_testing_map = NULL;*/
 }

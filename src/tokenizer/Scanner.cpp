@@ -188,7 +188,7 @@ char Scanner::putBackChar()
 //=====================================================================================================================================
 string Scanner::getTokenInfo( const Token& token )
 {
-	char token_info_str[256];
+	char tokenInfoStr[256];
 	switch( token.code )
 	{
 		case TC_COMMENT:
@@ -198,31 +198,31 @@ string Scanner::getTokenInfo( const Token& token )
 		case TC_EOF:
 			return "end of file";
 		case TC_STRING:
-			sprintf( token_info_str, "string \"%s\"", token.value.string );
+			sprintf( tokenInfoStr, "string \"%s\"", token.value.string );
 			break;
 		case TC_CHAR:
-			sprintf( token_info_str, "char '%c' (\"%s\")", token.value.char_, token.asString );
+			sprintf( tokenInfoStr, "char '%c' (\"%s\")", token.value.char_, token.asString );
 			break;
 		case TC_NUMBER:
 			if( token.type == DT_FLOAT )
-				sprintf( token_info_str, "float %f or %e (\"%s\")", token.value.float_, token.value.float_, token.asString );
+				sprintf( tokenInfoStr, "float %f or %e (\"%s\")", token.value.float_, token.value.float_, token.asString );
 			else
-				sprintf( token_info_str, "int %lu (\"%s\")", token.value.int_, token.asString );
+				sprintf( tokenInfoStr, "int %lu (\"%s\")", token.value.int_, token.asString );
 			break;
 		case TC_IDENTIFIER:
-			sprintf( token_info_str, "identifier \"%s\"", token.value.string );
+			sprintf( tokenInfoStr, "identifier \"%s\"", token.value.string );
 			break;
 		case TC_ERROR:
 			return "scanner error";
 			break;
 		default:
 			if( token.code>=TC_KE && token.code<=TC_KEYWORD )
-				sprintf( token_info_str, "reserved word \"%s\"", token.value.string );
+				sprintf( tokenInfoStr, "reserved word \"%s\"", token.value.string );
 			else if( token.code>=TC_SCOPERESOLUTION && token.code<=TC_ASSIGNOR )
-				sprintf( token_info_str, "operator no %d", token.code - TC_SCOPERESOLUTION );
+				sprintf( tokenInfoStr, "operator no %d", token.code - TC_SCOPERESOLUTION );
 	}
 
-	return string(token_info_str);
+	return string(tokenInfoStr);
 }
 
 
@@ -388,20 +388,20 @@ CHECKERS (bellow only checkers)                                                 
 //=====================================================================================================================================
 bool Scanner::checkWord()
 {
-	char* tmp_str = crntToken.asString;
+	char* tmpStr = crntToken.asString;
 	char ch = *pchar;
 
 	//build the string
 	do
 	{
-		*tmp_str++ = ch;
+		*tmpStr++ = ch;
 		ch = getNextChar();
 	}while ( asciiLookup(ch)==AC_LETTER || asciiLookup(ch)==AC_DIGIT );
 
-	*tmp_str = '\0'; // finalize it
+	*tmpStr = '\0'; // finalize it
 
 	//check if reserved
-	int len = tmp_str-crntToken.asString;
+	int len = tmpStr-crntToken.asString;
 	crntToken.code = TC_IDENTIFIER;
 	crntToken.value.string = crntToken.asString;
 	crntToken.type = DT_STR; // not important
@@ -447,14 +447,14 @@ bool Scanner::checkComment()
 	// multi-line comment
 	branchy_cmnt:
 		if( getNextChar()=='*' )
-			goto finalize_branchy;
+			goto finalizeBranchy;
 		else if( *pchar==eofChar )
 			goto error;
 		else
 			goto branchy_cmnt;
 
 	// multi-line "branchy"
-	finalize_branchy:
+	finalizeBranchy:
 		if( getNextChar()=='/' )
 		{
 			crntToken.code = TC_COMMENT;
@@ -481,9 +481,9 @@ bool Scanner::checkNumber()
 	long num = 0;      // value of the number & part of the float num before '.'
 	long fnum = 0;     // part of the float num after '.'
 	long dad = 0;      // digits after dot (for floats)
-	bool exp_sign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
+	bool expSign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
 	long exp = 0;      // the exponent in case float is represented in mant/exp format
-	char* tmp_str = crntToken.asString;
+	char* tmpStr = crntToken.asString;
 	crntToken.type = DT_INT;
 	uint asc;
 
@@ -502,7 +502,7 @@ bool Scanner::checkNumber()
 
 	// 0????
 	_0:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		if ( *pchar == 'x' || *pchar == 'X' )
@@ -523,7 +523,7 @@ bool Scanner::checkNumber()
 
 	// 0x????
 	_0x:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		if( (asc == AC_DIGIT)  ||
@@ -545,7 +545,7 @@ bool Scanner::checkNumber()
 
 	// 0x{0-9 || a-f}??
 	_0x0_9orA_F:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		if( (asc == AC_DIGIT)         ||
@@ -569,7 +569,7 @@ bool Scanner::checkNumber()
 
 	// {0-9}
 	_0_9:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		if( asc == AC_DIGIT )
@@ -588,7 +588,7 @@ bool Scanner::checkNumber()
 
 	// {0-9}.??
 	_float:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		crntToken.type = DT_FLOAT;
@@ -600,7 +600,7 @@ bool Scanner::checkNumber()
 		}
 		else if( *pchar == '.' )
 		{
-			*tmp_str++ = *pchar;
+			*tmpStr++ = *pchar;
 			getNextChar();
 			goto error;
 		}
@@ -617,7 +617,7 @@ bool Scanner::checkNumber()
 
 	// [{0-9}].[{0-9}]f??
 	_0_9_dot_0_9_f:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 
@@ -628,15 +628,15 @@ bool Scanner::checkNumber()
 
 	// [{0-9}].[{0-9}]e??
 	_0_9_dot_0_9_e:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		crntToken.type = DT_FLOAT;
 
 		if( *pchar == '+' || *pchar == '-' )
 		{
-			if( *pchar == '-' ) exp_sign = 1;
-			//*tmp_str++ = *pchar; getNextChar();
+			if( *pchar == '-' ) expSign = 1;
+			//*tmpStr++ = *pchar; getNextChar();
 			goto _0_9_dot_0_9_e_sign;
 		}
 		else if( asc == AC_DIGIT )
@@ -650,7 +650,7 @@ bool Scanner::checkNumber()
 	// [{0-9}].[{0-9}]e{+,-}??
 	// After the sign we want number
 	_0_9_dot_0_9_e_sign:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 
@@ -665,7 +665,7 @@ bool Scanner::checkNumber()
 	// [{0-9}].[{0-9}]e{+,-}{0-9}??
 	// After the number in exponent we want other number or we finalize
 	_0_9_dot_0_9_e_sign_0_9:
-		*tmp_str++ = *pchar;
+		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
 
@@ -692,13 +692,13 @@ bool Scanner::checkNumber()
 			double dbl = (double)num + (double)(pow(10, -dad)*fnum);
 			if( exp != 0 ) // if we have exponent
 			{
-				if( exp_sign == 1 ) exp = -exp; // change the sign if necessary
+				if( expSign == 1 ) exp = -exp; // change the sign if necessary
 				dbl = dbl * pow( 10, exp );
 			}
 
 			crntToken.value.float_ = dbl;
 		}
-		*tmp_str = '\0';
+		*tmpStr = '\0';
 		return true;
 
 	//error
@@ -709,11 +709,11 @@ bool Scanner::checkNumber()
 		asc = asciiLookup(*pchar);
 		while( asc!=AC_WHITESPACE && asc!=AC_SPECIAL && asc!=AC_EOF )
 		{
-			*tmp_str++ = *pchar;
+			*tmpStr++ = *pchar;
 			asc = asciiLookup(getNextChar());
 		}
 
-		*tmp_str = '\0';
+		*tmpStr = '\0';
 		SERROR( "Bad number suffix \"" << crntToken.asString << '\"' );
 
 	return false;
@@ -725,7 +725,7 @@ bool Scanner::checkNumber()
 //=====================================================================================================================================
 bool Scanner::checkString()
 {
-	char* tmp_str = crntToken.asString;
+	char* tmpStr = crntToken.asString;
 	char ch = getNextChar();
 
 	for(;;)
@@ -734,7 +734,7 @@ bool Scanner::checkString()
 		if( ch=='\0' || ch==eofChar ) // if end of line or eof
 		{
 			crntToken.code = TC_ERROR;
-			*tmp_str = '\0';
+			*tmpStr = '\0';
 			SERROR( "Incorect string ending \"" << crntToken.asString );
 			return false;
 		}
@@ -745,32 +745,32 @@ bool Scanner::checkString()
 			if( ch=='\0' || ch==eofChar )
 			{
 				crntToken.code = TC_ERROR;
-				*tmp_str = '\0';
+				*tmpStr = '\0';
 				SERROR( "Incorect string ending \"" << crntToken.asString << '\"' );
 				return false;
 			}
 
 			switch( ch )
 			{
-				case 'n' : *tmp_str++ = '\n'; break;
-				case 't' : *tmp_str++ = '\t'; break;
-				case '0' : *tmp_str++ = '\0'; break;
-				case 'a' : *tmp_str++ = '\a'; break;
-				case '\"': *tmp_str++ = '\"'; break;
-				case 'f' : *tmp_str++ = '\f'; break;
-				case 'v' : *tmp_str++ = '\v'; break;
-				case '\'': *tmp_str++ = '\''; break;
-				case '\\': *tmp_str++ = '\\'; break;
-				case '\?': *tmp_str++ = '\?'; break;
+				case 'n' : *tmpStr++ = '\n'; break;
+				case 't' : *tmpStr++ = '\t'; break;
+				case '0' : *tmpStr++ = '\0'; break;
+				case 'a' : *tmpStr++ = '\a'; break;
+				case '\"': *tmpStr++ = '\"'; break;
+				case 'f' : *tmpStr++ = '\f'; break;
+				case 'v' : *tmpStr++ = '\v'; break;
+				case '\'': *tmpStr++ = '\''; break;
+				case '\\': *tmpStr++ = '\\'; break;
+				case '\?': *tmpStr++ = '\?'; break;
 				default  :
 					SERROR( "Unrecognized escape charachter \'\\" << ch << '\'' );
-					*tmp_str++ = ch;
+					*tmpStr++ = ch;
 			}
 		}
 		//End
 		else if( ch=='\"' )
 		{
-			*tmp_str = '\0';
+			*tmpStr = '\0';
 			crntToken.code = TC_STRING;
 			crntToken.value.string = crntToken.asString;
 			getNextChar();
@@ -779,7 +779,7 @@ bool Scanner::checkString()
 		//Build str( main loop )
 		else
 		{
-			*tmp_str++ = ch;
+			*tmpStr++ = ch;
 		}
 
 		ch = getNextChar();
@@ -796,10 +796,10 @@ bool Scanner::checkChar()
 {
 	char ch = getNextChar();
 	char ch0 = ch;
-	char* tmp_str = crntToken.asString;
+	char* tmpStr = crntToken.asString;
 
 	crntToken.code = TC_ERROR;
-	*tmp_str++ = ch;
+	*tmpStr++ = ch;
 
 	if( ch=='\0' || ch==eofChar ) // check char after '
 	{
@@ -817,7 +817,7 @@ bool Scanner::checkChar()
 	if (ch=='\\')                // if \ then maybe escape char
 	{
 		ch = getNextChar();
-		*tmp_str++ = ch;
+		*tmpStr++ = ch;
 		if( ch=='\0' || ch==eofChar ) //check again after the \.
 		{
 			SERROR( "Newline in constant" );
@@ -848,7 +848,7 @@ bool Scanner::checkChar()
 	ch = getNextChar();
 	if( ch=='\'' )    //end
 	{
-		*tmp_str = '\0';
+		*tmpStr = '\0';
 		crntToken.code = TC_CHAR;
 		getNextChar();
 		return true;

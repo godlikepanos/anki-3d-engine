@@ -84,16 +84,16 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 					if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "vertShaderBegins") == 0 )
 					{
 						// play
-						if( fragShaderBegins.definedInLine != -1 ) // check if frag shader allready defined
+						if( fragShaderBegins.definedInLine != -1 ) // check if frag shader already defined
 						{
 							PARSE_ERR( "vertShaderBegins must precede fragShaderBegins defined at " << fragShaderBegins.definedInFile <<
 							           ":" << fragShaderBegins.definedInLine );
 							return false;
 						}
 						
-						if( vertShaderBegins.definedInLine != -1 ) // allready defined elseware so throw error
+						if( vertShaderBegins.definedInLine != -1 ) // already defined elseware so throw error
 						{
-							PARSE_ERR( "vertShaderBegins allready defined at " << vertShaderBegins.definedInFile << ":" <<
+							PARSE_ERR( "vertShaderBegins already defined at " << vertShaderBegins.definedInFile << ":" <<
 							           vertShaderBegins.definedInLine );
 							return false;
 						}
@@ -113,9 +113,9 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 							return false;
 						}
 						
-						if( fragShaderBegins.definedInLine != -1 ) // if allready defined elseware throw error
+						if( fragShaderBegins.definedInLine != -1 ) // if already defined elseware throw error
 						{
-							PARSE_ERR( "fragShaderBegins allready defined at " << fragShaderBegins.definedInFile << ":" <<
+							PARSE_ERR( "fragShaderBegins already defined at " << fragShaderBegins.definedInFile << ":" <<
 							           fragShaderBegins.definedInLine );
 							return false;
 						}
@@ -158,7 +158,7 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 								Vec<ShaderVarPragma>::iterator uniform = findShaderVar( output.uniforms, var_name );
 								if( uniform != output.uniforms.end() )
 								{
-									PARSE_ERR( "Uniform allready defined at " << uniform->definedInFile << ":" << uniform->definedInLine );
+									PARSE_ERR( "Uniform already defined at " << uniform->definedInFile << ":" << uniform->definedInLine );
 									return false;
 								}
 								
@@ -192,7 +192,7 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 								Vec<ShaderVarPragma>::iterator attrib = findShaderVar( output.attributes, var_name );
 								if( attrib != output.attributes.end() )
 								{
-									PARSE_ERR( "Attribute allready defined at " << attrib->definedInFile << ":" << attrib->definedInLine );
+									PARSE_ERR( "Attribute already defined at " << attrib->definedInFile << ":" << attrib->definedInLine );
 									return false;
 								}
 								

@@ -9,8 +9,7 @@ The file contains functions and vars used for the deferred shading illumination 
 #include "Light.h"
 #include "Resource.h"
 #include "Scene.h"
-#include "r_private.h"
-#include "fbo.h"
+#include "Fbo.h"
 #include "LightProps.h"
 
 namespace r {
@@ -22,7 +21,7 @@ namespace is {
 VARS                                                                                                                                  =
 =======================================================================================================================================
 */
-static fbo_t fbo;
+static Fbo fbo;
 
 Texture fai;  // illuminated Scene
 
@@ -50,7 +49,7 @@ static float smo_uvs_coords [] = { -0.000000, 0.000000, -1.000000, 0.500000, 0.5
 static uint smo_uvs_vbo_id = 0; // stencil masking opt uv sphere vertex buffer object id
 
 // init stencil masking optimization UV sphere
-static void InitSMOUVS()
+static void initSMOUVS()
 {
 	glGenBuffers( 1, &smo_uvs_vbo_id );
 	glBindBuffer( GL_ARRAY_BUFFER, smo_uvs_vbo_id );
@@ -61,9 +60,9 @@ static void InitSMOUVS()
 static void DrawSMOUVS( const PointLight& light )
 {
 	const float scale = 1.2;
-	r::MultMatrix( Mat4( light.translationWspace, Mat3::getIdentity(), light.radius*scale ) );
+	r::multMatrix( Mat4( light.translationWspace, Mat3::getIdentity(), light.radius*scale ) );
 
-	r::NoShaders();
+	r::noShaders();
 
 	glBindBuffer( GL_ARRAY_BUFFER, smo_uvs_vbo_id );
 	glEnableClientState( GL_VERTEX_ARRAY );
@@ -119,14 +118,14 @@ static void CalcPlanes( const Camera& cam )
 
 /*
 =======================================================================================================================================
-InitStageFBO                                                                                                                          =
+initStageFBO                                                                                                                          =
 =======================================================================================================================================
 */
-static void InitStageFBO()
+static void initStageFBO()
 {
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// init the stencil render buffer
 	glGenRenderbuffers( 1, &stencil_rb );
@@ -135,7 +134,7 @@ static void InitStageFBO()
 	glFramebufferRenderbufferEXT( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil_rb );
 
 	// inform in what buffers we draw
-	fbo.SetNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements(1);
 
 	// create the txtrs
 	if( !fai.createEmpty2D( r::w, r::h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE ) )
@@ -147,7 +146,7 @@ static void InitStageFBO()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create deferred shading illumination stage FBO" );
 
 	// unbind
@@ -160,7 +159,7 @@ static void InitStageFBO()
 init                                                                                                                                  =
 =======================================================================================================================================
 */
-void Init()
+void init()
 {
 	// load the shaders
 	shdr_is_ambient = rsrc::shaders.load( "shaders/is_ap.glsl" );
@@ -170,10 +169,10 @@ void Init()
 
 
 	// init the rest
-	InitStageFBO();
-	InitSMOUVS();
+	initStageFBO();
+	initSMOUVS();
 
-	r::is::shadows::Init();
+	r::is::shadows::init();
 }
 
 
@@ -191,7 +190,7 @@ static void AmbientPass( const Camera& /*cam*/, const Vec3& color )
 
 	// set the uniforms
 	glUniform3fv( shdr_is_ambient->GetUniLoc(0), 1, &((Vec3)color)[0] );
-	shdr_is_ambient->locTexUnit( shdr_is_ambient->GetUniLoc(1), r::ms::diffuse_fai, 0 );
+	shdr_is_ambient->locTexUnit( shdr_is_ambient->GetUniLoc(1), r::ms::diffuseFai, 0 );
 
 	// Draw quad
 	r::DrawQuad( shdr_is_ambient->getAttribLoc(0) );
@@ -218,7 +217,7 @@ static void SetStencilMask( const Camera& cam, const PointLight& light )
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::SetProjectionViewMatrices( cam );
+	r::setProjectionViewMatrices( cam );
 
 
 	// render sphere to stencil buffer
@@ -263,11 +262,11 @@ static void SetStencilMask( const Camera& cam, const SpotLight& light )
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::SetProjectionViewMatrices( cam );
+	r::setProjectionViewMatrices( cam );
 
 
 	// render camera's shape to stencil buffer
-	r::NoShaders();
+	r::noShaders();
 	const Camera& lcam = light.camera;
 	float x = lcam.getZFar() / tan( (PI-lcam.getFovX())/2 );
 	float y = tan( lcam.getFovY()/2 ) * lcam.getZFar();
@@ -284,7 +283,7 @@ static void SetStencilMask( const Camera& cam, const SpotLight& light )
 		{ { x, -y, z }, {-x, -y, z }, {-x,  y, z } }, // front bottom left
 	};
 
-	r::MultMatrix( lcam.transformationWspace );
+	r::multMatrix( lcam.transformationWspace );
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, verts );
 	glDrawArrays( GL_TRIANGLES, 0, tris_num*3 );
@@ -330,10 +329,10 @@ static void PointLightPass( const Camera& cam, const PointLight& light )
 	shader.bind();
 
 	// bind the material stage framebuffer attachable images
-	shader.locTexUnit( shader.GetUniLoc(0), r::ms::normal_fai, 0 );
-	shader.locTexUnit( shader.GetUniLoc(1), r::ms::diffuse_fai, 1 );
-	shader.locTexUnit( shader.GetUniLoc(2), r::ms::specular_fai, 2 );
-	shader.locTexUnit( shader.GetUniLoc(3), r::ms::depth_fai, 3 );
+	shader.locTexUnit( shader.GetUniLoc(0), r::ms::normalFai, 0 );
+	shader.locTexUnit( shader.GetUniLoc(1), r::ms::diffuseFai, 1 );
+	shader.locTexUnit( shader.GetUniLoc(2), r::ms::specularFai, 2 );
+	shader.locTexUnit( shader.GetUniLoc(3), r::ms::depthFai, 3 );
 	glUniform2fv( shader.GetUniLoc(4), 1, &planes[0] );
 
 	Vec3 light_pos_eye_space = light.translationWspace.getTransformed( cam.getViewMatrix() );
@@ -375,10 +374,10 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	//** generate the shadow map (if needed) **
 	if( light.castsShadow )
 	{
-		r::is::shadows::RunPass( light.camera );
+		r::is::shadows::runPass( light.camera );
 
 		// restore the IS FBO
-		fbo.Bind();
+		fbo.bind();
 
 		// and restore blending and depth test
 		glEnable( GL_BLEND );
@@ -395,10 +394,10 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	shdr->bind();
 
 	// bind the framebuffer attachable images
-	shdr->locTexUnit( shdr->GetUniLoc(0), r::ms::normal_fai, 0 );
-	shdr->locTexUnit( shdr->GetUniLoc(1), r::ms::diffuse_fai, 1 );
-	shdr->locTexUnit( shdr->GetUniLoc(2), r::ms::specular_fai, 2 );
-	shdr->locTexUnit( shdr->GetUniLoc(3), r::ms::depth_fai, 3 );
+	shdr->locTexUnit( shdr->GetUniLoc(0), r::ms::normalFai, 0 );
+	shdr->locTexUnit( shdr->GetUniLoc(1), r::ms::diffuseFai, 1 );
+	shdr->locTexUnit( shdr->GetUniLoc(2), r::ms::specularFai, 2 );
+	shdr->locTexUnit( shdr->GetUniLoc(3), r::ms::depthFai, 3 );
 
 	if( light.lightProps->getTexture() == NULL )
 		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getRsrcName() );
@@ -434,16 +433,16 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	glActiveTexture( GL_TEXTURE0 );
 	glMatrixMode( GL_TEXTURE );
 	glloadMatrixf( mBias );
-	r::MultMatrix( light.camera.getProjectionMatrix() );
-	r::MultMatrix( light.camera.getViewMatrix() );
-	r::MultMatrix( cam.transformationWspace );
+	r::multMatrix( light.camera.getProjectionMatrix() );
+	r::multMatrix( light.camera.getViewMatrix() );
+	r::multMatrix( cam.transformationWspace );
 	glMatrixMode(GL_MODELVIEW);*/
 
 	// the shadow stuff
 	// render depth to texture and then bind it
 	if( light.castsShadow )
 	{
-		shdr->locTexUnit( shdr->GetUniLoc(11), r::is::shadows::shadow_map, 5 );
+		shdr->locTexUnit( shdr->GetUniLoc(11), r::is::shadows::shadowMap, 5 );
 	}
 
 	//** render quad **
@@ -469,16 +468,16 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 
 /*
 =======================================================================================================================================
-RunStage                                                                                                                              =
+runStage                                                                                                                              =
 =======================================================================================================================================
 */
-void RunStage( const Camera& cam )
+void runStage( const Camera& cam )
 {
 	// FBO
-	fbo.Bind();
+	fbo.bind();
 
 	// OGL stuff
-	r::SetViewport( 0, 0, r::w, r::h );
+	r::setViewport( 0, 0, r::w, r::h );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();

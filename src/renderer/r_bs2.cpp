@@ -7,9 +7,8 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
-#include "r_private.h"
 #include "Resource.h"
-#include "fbo.h"
+#include "Fbo.h"
 #include "MeshNode.h"
 #include "Material.h"
 
@@ -20,31 +19,31 @@ namespace bs {
 //=====================================================================================================================================
 // VARS                                                                                                                               =
 //=====================================================================================================================================
-static fbo_t intermid_fbo, fbo;
+static Fbo intermid_fbo, fbo;
 
 static Texture fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
 static ShaderProg* shader_prog;
 
 
 //=====================================================================================================================================
-// Init2                                                                                                                              =
+// init2                                                                                                                              =
 //=====================================================================================================================================
-void Init2()
+void init2()
 {
 	//** 1st FBO **
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// inform FBO about the color buffers
-	fbo.SetNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements(1);
 
 	// attach the texes
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create deferred shading blending stage FBO" );
 
 	// unbind
@@ -53,18 +52,18 @@ void Init2()
 
 	//** 2nd FBO **
 	intermid_fbo.Create();
-	intermid_fbo.Bind();
+	intermid_fbo.bind();
 
 	// texture
-	intermid_fbo.SetNumOfColorAttachements(1);
+	intermid_fbo.setNumOfColorAttachements(1);
 	fai.createEmpty2D( r::w, r::h, GL_RGBA8, GL_RGBA );
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0 );
 
 	// attach the texes
-	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
 
 	// test if success
-	if( !intermid_fbo.IsGood() )
+	if( !intermid_fbo.isGood() )
 		FATAL( "Cannot create deferred shading blending stage FBO" );
 
 	// unbind
@@ -75,12 +74,12 @@ void Init2()
 
 
 //=====================================================================================================================================
-// RunStage2                                                                                                                          =
+// runStage2                                                                                                                          =
 //=====================================================================================================================================
-void RunStage2( const Camera& cam )
+void runStage2( const Camera& cam )
 {
-	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, r::w, r::h );
+	r::setProjectionViewMatrices( cam );
+	r::setViewport( 0, 0, r::w, r::h );
 
 
 	glDepthMask( false );
@@ -93,13 +92,13 @@ void RunStage2( const Camera& cam )
 		if( mesh_node->material->refracts )
 		{
 			// write to the rFbo
-			intermid_fbo.Bind();
+			intermid_fbo.bind();
 			glEnable( GL_DEPTH_TEST );
 			glClear( GL_COLOR_BUFFER_BIT );
 			mesh_node->material->setup();
 			mesh_node->render();
 
-			fbo.Bind();
+			fbo.bind();
 			glDisable( GL_DEPTH_TEST );
 			shader_prog->bind();
 			shader_prog->locTexUnit( shader_prog->GetUniLoc(0), fai, 0 );
@@ -110,7 +109,7 @@ void RunStage2( const Camera& cam )
 
 	// restore a few things
 	glDepthMask( true );
-	fbo_t::Unbind();
+	Fbo::Unbind();
 }
 
 

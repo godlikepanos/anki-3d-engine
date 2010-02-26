@@ -13,7 +13,7 @@ void renderer_t::material_stage_t::init()
 	fbo.bind();
 
 	// inform in what buffers we draw
-	fbo.SetNumOfColorAttachements(3);
+	fbo.setNumOfColorAttachements(3);
 
 	// create buffers
 	const int internal_format = GL_RGBA16F_ARB;
@@ -23,8 +23,8 @@ void renderer_t::material_stage_t::init()
 
 	fais.depth.CreateEmpty( renderer.width, renderer.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
 	// you could use the above for SSAO but the difference is minimal.
-	//depth_fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	//depth_fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	//depthFai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	//depthFai.texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	// attach the buffers to the FBO
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fais.normal.getGlId(), 0 );
@@ -34,7 +34,7 @@ void renderer_t::material_stage_t::init()
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, fais.depth.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create deferred shading material pass FBO" );
 
 	// unbind
@@ -52,7 +52,7 @@ void renderer_t::material_stage_t::Run() const
 	glClear( GL_DEPTH_BUFFER_BIT );
 	renderer.matrices.view = renderer.camera->getViewMatrix();
 	renderer.matrices.projection = renderer.camera->getProjectionMatrix();
-	renderer.SetViewport( 0, 0, renderer.width, renderer.height );
+	renderer.setViewport( 0, 0, renderer.width, renderer.height );
 
 	//glEnable( GL_DEPTH_TEST );
 	Scene::skybox.render( renderer.camera->getViewMatrix().getRotationPart() );

@@ -22,7 +22,7 @@ void Camera::setAll( float fovx_, float fovy_, float znear_, float zfar_ )
 void Camera::render()
 {
 	glPushMatrix();
-	r::MultMatrix( transformationWspace );
+	r::multMatrix( transformationWspace );
 
 	const float camLen = 1.0;
 	float tmp0 = camLen / tan( (PI - fovX)*0.5 ) + 0.001;
@@ -149,7 +149,7 @@ bool Camera::insideFrustum( const Camera& cam ) const
 	points[1] = Vec3( -x, y, z ); // top left
 	points[2] = Vec3( -x, -y, z ); // bottom left
 	points[3] = Vec3( x, -y, z ); // bottom right
-	points[4] = Vec3( cam.translationWspace ); // eye (allready in world space)
+	points[4] = Vec3( cam.translationWspace ); // eye (already in world space)
 
 	// transform them to the given camera's world space (exept the eye)
 	for( uint i=0; i<4; i++ )
@@ -180,7 +180,7 @@ void Camera::calcProjectionMatrix()
 {
 	float f = 1.0/tan( fovY*0.5f ); // f = cot(fovY/2)
 
-	projectionMat(0,0) = f*fovY/fovX; // = f/aspect_ratio;
+	projectionMat(0,0) = f*fovY/fovX; // = f/aspectRatio;
 	projectionMat(0,1) = 0.0;
 	projectionMat(0,2) = 0.0;
 	projectionMat(0,3) = 0.0;
@@ -214,9 +214,9 @@ void Camera::updateViewMatrix()
 
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
-	Mat3 cam_inverted_rot = rotationWspace.getTransposed();
-	Vec3 cam_inverted_tsl = -( cam_inverted_rot * translationWspace );
-	viewMat = Mat4( cam_inverted_tsl, cam_inverted_rot );
+	Mat3 camInvertedRot = rotationWspace.getTransposed();
+	Vec3 camInvertedTsl = -( camInvertedRot * translationWspace );
+	viewMat = Mat4( camInvertedTsl, camInvertedRot );
 }
 
 

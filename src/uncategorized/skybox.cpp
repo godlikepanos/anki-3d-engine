@@ -29,7 +29,7 @@ static float coords [][4][3] =
 load                                                                                                                                  =
 =======================================================================================================================================
 */
-bool skybox_t::load( const char* filenames[6] )
+bool Skybox::load( const char* filenames[6] )
 {
 	for( int i=0; i<6; i++ )
 	{
@@ -51,7 +51,7 @@ bool skybox_t::load( const char* filenames[6] )
 render                                                                                                                                =
 =======================================================================================================================================
 */
-void skybox_t::Render( const Mat3& rotation )
+void Skybox::Render( const Mat3& rotation )
 {
 	//glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );

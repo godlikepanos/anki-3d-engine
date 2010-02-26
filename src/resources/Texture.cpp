@@ -307,7 +307,7 @@ bool Texture::load( const char* filename )
 	type = GL_TEXTURE_2D;
 	if( glId != numeric_limits<uint>::max() )
 	{
-		ERROR( "Texture allready loaded" );
+		ERROR( "Texture already loaded" );
 		return false;
 	}
 
@@ -332,7 +332,7 @@ bool Texture::load( const char* filename )
 	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
 	int int_format; // the internal format of the image
-	if( r::texture_compression )
+	if( r::textureCompression )
 		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
 	else
@@ -410,7 +410,7 @@ void Texture::unload()
 //=====================================================================================================================================
 void Texture::bind( uint unit ) const
 {
-	if( unit>=(uint)r::max_texture_units )
+	if( unit>=(uint)r::maxTextureUnits )
 		WARNING("Max tex units passed");
 
 	glActiveTexture( GL_TEXTURE0+unit );

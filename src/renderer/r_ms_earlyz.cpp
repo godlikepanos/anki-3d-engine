@@ -6,8 +6,7 @@ The file contains functions and vars used for the deferred shading/material stag
 #include "Resource.h"
 #include "Texture.h"
 #include "Scene.h"
-#include "r_private.h"
-#include "fbo.h"
+#include "Fbo.h"
 
 #if defined(_EARLY_Z_)
 
@@ -21,7 +20,7 @@ namespace earlyz {
 VARS                                                                                                                                  =
 =======================================================================================================================================
 */
-static fbo_t fbo;
+static Fbo fbo;
 
 static ShaderProg* shdr_dp, * shdr_dp_grass; // passes for solid objects and grass-like
 
@@ -38,10 +37,10 @@ void init()
 	fbo.bind();
 
 	// inform the we wont write to color buffers
-	fbo.SetNumOfColorAttachements(0);
+	fbo.setNumOfColorAttachements(0);
 
 	// attach the texture
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r::ms::depth_fai.glId, 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r::ms::depthFai.glId, 0 );
 
 	// test if success
 	if( !fbo.CheckStatus() )
@@ -58,18 +57,18 @@ void init()
 
 /*
 =======================================================================================================================================
-RunPass                                                                                                                               =
+runPass                                                                                                                               =
 =======================================================================================================================================
 */
-void RunPass( const Camera& cam )
+void runPass( const Camera& cam )
 {
 	/*// FBO
 	fbo.bind();
 
 	// matrix
 	glClear( GL_DEPTH_BUFFER_BIT );
-	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, r::w * r::rendering_quality, r::h * r::rendering_quality );
+	r::setProjectionViewMatrices( cam );
+	r::setViewport( 0, 0, r::w * r::renderingQuality, r::h * r::renderingQuality );
 
 	// disable color & blend & enable depth test
 	glColorMask( false, false, false, false );

@@ -40,7 +40,7 @@ void SkelNode::deinit()
 void SkelNode::render()
 {
 	glPushMatrix();
-	r::MultMatrix( transformationWspace );
+	r::multMatrix( transformationWspace );
 
 	//glPointSize( 4.0f );
 	//glLineWidth( 2.0f );

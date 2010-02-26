@@ -103,7 +103,7 @@ class Material: public Resource
 			} uniLocs;
 		} depth;*/
 
-		Material* dp_mtl;
+		Material* dpMtl;
 
 	//===================================================================================================================================
 	// funcs                                                                                                                            =
@@ -119,7 +119,7 @@ class Material: public Resource
 		void unload();
 
 		bool hasHWSkinning() const { return attribLocs.vertWeightBonesNum != -1; }
-		bool hasAlphaTesting() const { return dp_mtl!=NULL && dp_mtl->attribLocs.texCoords!=-1; }
+		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->attribLocs.texCoords!=-1; }
 };
 
 

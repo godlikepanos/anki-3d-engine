@@ -248,8 +248,8 @@ struct renderer_t
 	renderer_t(): ms(*this), is(*this), bs(*this), pps(*this) {}
 
 	void UpdateMatrices();
-	static void SetViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); };
-	static void NoShaders() { ShaderProg::unbind(); }
+	static void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); };
+	static void noShaders() { ShaderProg::unbind(); }
 	static void DrawQuad();
 	void init();
 	void Run( camera_t* cam );

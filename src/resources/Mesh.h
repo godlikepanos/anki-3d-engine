@@ -3,7 +3,7 @@
 
 #include "Common.h"
 #include "Math.h"
-#include "vbo.h"
+#include "Vbo.h"
 #include "Resource.h"
 #include "collision.h"
 
@@ -27,26 +27,26 @@ class Mesh: public Resource
 		class Triangle
 		{
 			public:
-				uint   vertIds[3]; // an array with the vertex indexes in the mesh class
+				uint vertIds[3]; // an array with the vertex indexes in the mesh class
 				Vec3 normal;
 		};
 
-		Vec<Vec3>       vertCoords;
-		Vec<Vec3>       vertNormals;
-		Vec<Vec4>       vertTangents;
-		Vec<Vec2>       texCoords;    ///< One for every vert so we can use vertex arrays
+		Vec<Vec3>         vertCoords;
+		Vec<Vec3>         vertNormals;
+		Vec<Vec4>         vertTangents;
+		Vec<Vec2>         texCoords;    ///< One for every vert so we can use vertex arrays
 		Vec<VertexWeight> vertWeights;
 		Vec<Triangle>     tris;
 		Vec<ushort>       vertIndeces; ///< Used for vertex arrays
 
 		struct
 		{
-			vbo_t vertCoords;
-			vbo_t vertNormals;
-			vbo_t vertTangents;
-			vbo_t texCoords;
-			vbo_t vertIndeces;
-			vbo_t vertWeights;
+			Vbo vertCoords;
+			Vbo vertNormals;
+			Vbo vertTangents;
+			Vbo texCoords;
+			Vbo vertIndeces;
+			Vbo vertWeights;
 		} vbos;
 
 		string materialName;

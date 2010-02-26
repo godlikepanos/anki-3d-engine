@@ -14,7 +14,7 @@ namespace Scene {
 DATA                                                                                                                                  =
 =======================================================================================================================================
 */
-skybox_t skybox;
+Skybox skybox;
 
 NodeContainer     nodes;
 LightContainer    lights;
@@ -28,15 +28,15 @@ Vec<Controller*> controllers;
 //=====================================================================================================================================
 // Static template funcs                                                                                                              =
 //=====================================================================================================================================
-template<typename container_Type, typename Type> static void PutBackNode( container_Type& container, Type* x )
+template<typename ContainerType, typename Type> static void PutBackNode( ContainerType& container, Type* x )
 {
 	DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
 	container.push_back( x );
 }
 
-template<typename container_Type, typename Type> static void EraseNode( container_Type& container, Type* x )
+template<typename ContainerType, typename Type> static void EraseNode( ContainerType& container, Type* x )
 {
-	typename container_Type::iterator it = std::find( container.begin(), container.end(), x );
+	typename ContainerType::iterator it = std::find( container.begin(), container.end(), x );
 	DEBUG_ERR( it == container.end() );
 	container.erase( it );
 }

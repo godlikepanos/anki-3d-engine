@@ -235,7 +235,7 @@ bool ShaderProg::customload( const char* filename, const char* extra_source )
 	if( !pars.parseFile( filename ) ) return false;
 
 	// create, compile, attach and link
-	string preproc_source = r::GetStdShaderPreprocDefines() + extra_source;
+	string preproc_source = r::getStdShaderPreprocDefines() + extra_source;
 	uint vert_glId = createAndCompileShader( pars.getOutput().getVertShaderSource().c_str(), preproc_source.c_str(), GL_VERTEX_SHADER );
 	if( vert_glId == 0 ) return false;
 

@@ -7,9 +7,8 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
-#include "r_private.h"
 #include "Resource.h"
-#include "fbo.h"
+#include "Fbo.h"
 #include "MeshNode.h"
 #include "Material.h"
 
@@ -20,27 +19,27 @@ namespace bs {
 //=====================================================================================================================================
 // VARS                                                                                                                               =
 //=====================================================================================================================================
-static fbo_t fbo; ///< blending models FBO
+static Fbo fbo; ///< blending models FBO
 
 
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void Init()
+void init()
 {
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// inform FBO about the color buffers
-	fbo.SetNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements(1);
 
 	// attach the texes
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::is::fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create deferred shading blending stage FBO" );
 
 	// unbind
@@ -49,13 +48,13 @@ void Init()
 
 
 //=====================================================================================================================================
-// RunStage                                                                                                                           =
+// runStage                                                                                                                           =
 //=====================================================================================================================================
-void RunStage( const Camera& cam )
+void runStage( const Camera& cam )
 {
 	// OGL stuff
-	r::SetProjectionViewMatrices( cam );
-	r::SetViewport( 0, 0, r::w, r::h );
+	r::setProjectionViewMatrices( cam );
+	r::setViewport( 0, 0, r::w, r::h );
 
 	glEnable( GL_DEPTH_TEST );
 	glDepthMask( false );
@@ -68,7 +67,7 @@ void RunStage( const Camera& cam )
 		MeshNode* mesh_node = Scene::meshNodes[i];
 		if( mesh_node->material->blends && !mesh_node->material->blends )
 		{
-			fbo.Bind();
+			fbo.bind();
 			mesh_node->material->setup();
 			mesh_node->render();
 		}
@@ -78,7 +77,7 @@ void RunStage( const Camera& cam )
 
 	// restore a few things
 	glDepthMask( true );
-	fbo_t::Unbind();
+	Fbo::Unbind();
 }
 
 

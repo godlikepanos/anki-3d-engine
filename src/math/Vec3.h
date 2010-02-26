@@ -56,7 +56,7 @@ class Vec3
 		float getDistanceSquared( const Vec3& b ) const;
 		void  normalize();
 		Vec3  getNormalized() const;
-		Vec3  getProjection( const Vec3& to_this ) const;
+		Vec3  getProjection( const Vec3& toThis ) const;
 		Vec3  getRotated( const Quat& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		void  rotate( const Quat& q );
 		Vec3  lerp( const Vec3& v1, float t ) const; // return lerp( this, v1, t )

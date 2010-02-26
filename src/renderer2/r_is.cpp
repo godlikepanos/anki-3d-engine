@@ -131,7 +131,7 @@ void renderer_t::illumination_stage_t::point_light_pass_t::SetStencilMask( const
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::SetProjectionViewMatrices( cam );
+	r::setProjectionViewMatrices( cam );
 
 
 	// render sphere to stencil buffer

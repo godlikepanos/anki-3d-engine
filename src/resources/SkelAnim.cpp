@@ -64,7 +64,7 @@ bool SkelAnim::load( const char* filename )
 	} // end for all bones
 
 
-	frames_num = keyframes[ keyframes.size()-1 ] + 1;
+	framesNum = keyframes[ keyframes.size()-1 ] + 1;
 
 	return true;
 }

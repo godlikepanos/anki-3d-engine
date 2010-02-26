@@ -640,10 +640,10 @@ inline Mat4 Mat4::getInverse() const
 // getInverseTransformation
 inline Mat4 Mat4::getInverseTransformation() const
 {
-	Mat3 inverted_rot = (getRotationPart()).getTransposed();
-	Vec3 inverted_tsl = getTranslationPart();
-	inverted_tsl = -( inverted_rot * inverted_tsl );
-	return Mat4( inverted_tsl, inverted_rot );
+	Mat3 invertedRot = (getRotationPart()).getTransposed();
+	Vec3 invertedTsl = getTranslationPart();
+	invertedTsl = -( invertedRot * invertedTsl );
+	return Mat4( invertedTsl, invertedRot );
 }
 
 // lerp

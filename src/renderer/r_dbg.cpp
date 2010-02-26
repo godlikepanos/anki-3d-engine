@@ -1,9 +1,8 @@
 #include "renderer.h"
-#include "r_private.h"
-#include "fbo.h"
+#include "Fbo.h"
 #include "Scene.h"
 #include "Texture.h"
-#include "fbo.h"
+#include "Fbo.h"
 #include "Node.h"
 #include "SkelNode.h"
 
@@ -108,16 +107,16 @@ static void RenderSun();
 //=====================================================================================================================================
 // DATA VARS                                                                                                                          =
 //=====================================================================================================================================
-bool show_axis = true;
-bool show_fnormals = false;
-bool show_vnormals = false;
-bool show_lights = true;
-bool show_skeletons = false;
-bool show_cameras = true;
-bool show_bvolumes = true;
+bool showAxis = true;
+bool showFnormals = false;
+bool showVnormals = false;
+bool showLights = true;
+bool showSkeletons = false;
+bool showCameras = true;
+bool showBvolumes = true;
 
 
-static fbo_t fbo;
+static Fbo fbo;
 
 static ShaderProg* shdr;
 
@@ -127,21 +126,21 @@ static ShaderProg* shdr;
 init                                                                                                                                  =
 =======================================================================================================================================
 */
-void Init()
+void init()
 {
 	// create FBO
 	fbo.Create();
-	fbo.Bind();
+	fbo.bind();
 
 	// inform in what buffers we draw
-	fbo.SetNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements(1);
 
 	// attach the textures
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depth_fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
 
 	// test if success
-	if( !fbo.IsGood() )
+	if( !fbo.isGood() )
 		FATAL( "Cannot create debug FBO" );
 
 	// unbind
@@ -154,34 +153,34 @@ void Init()
 
 /*
 =======================================================================================================================================
-RunStage                                                                                                                              =
+runStage                                                                                                                              =
 =======================================================================================================================================
 */
-void RunStage( const Camera& cam )
+void runStage( const Camera& cam )
 {
-	fbo.Bind();
+	fbo.bind();
 
 	shdr->bind();
 
 	// OGL stuff
-	SetProjectionViewMatrices( cam );
-	SetViewport( 0, 0, r::w, r::h );
+	setProjectionViewMatrices( cam );
+	setViewport( 0, 0, r::w, r::h );
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	//r::RenderGrid();
+	//r::renderGrid();
 	for( uint i=0; i<Scene::nodes.size(); i++ )
 	{
 		if
 		(
-			(Scene::nodes[i]->type == Node::NT_LIGHT && show_lights) ||
-			(Scene::nodes[i]->type == Node::NT_CAMERA && show_cameras)
+			(Scene::nodes[i]->type == Node::NT_LIGHT && showLights) ||
+			(Scene::nodes[i]->type == Node::NT_CAMERA && showCameras)
 		)
 		{
 			Scene::nodes[i]->render();
 		}
-		else if( Scene::nodes[i]->type == Node::NT_SKELETON && show_skeletons )
+		else if( Scene::nodes[i]->type == Node::NT_SKELETON && showSkeletons )
 		{
 			SkelNode* skel_node = static_cast<SkelNode*>( Scene::nodes[i] );
 			glDisable( GL_DEPTH_TEST );
@@ -203,10 +202,10 @@ void RunStage( const Camera& cam )
 
 /*
 =======================================================================================================================================
-RenderGrid                                                                                                                            =
+renderGrid                                                                                                                            =
 =======================================================================================================================================
 */
-void RenderGrid()
+void renderGrid()
 {
 	float col0[] = { 0.5f, 0.5f, 0.5f };
 	float col1[] = { 0.0f, 0.0f, 1.0f };
@@ -248,10 +247,10 @@ void RenderGrid()
 
 /*
 =======================================================================================================================================
-RenderQuad                                                                                                                            =
+renderQuad                                                                                                                            =
 =======================================================================================================================================
 */
-void RenderQuad( float w, float h )
+void renderQuad( float w, float h )
 {
 	float wdiv2 = w/2, hdiv2 = h/2;
 	float points [][2] = { {wdiv2,hdiv2}, {-wdiv2,hdiv2}, {-wdiv2,-hdiv2}, {wdiv2,-hdiv2} };
@@ -273,10 +272,10 @@ void RenderQuad( float w, float h )
 
 /*
 =======================================================================================================================================
-RenderSphere                                                                                                                          =
+renderSphere                                                                                                                          =
 =======================================================================================================================================
 */
-void RenderSphere( float r, int p )
+void renderSphere( float r, int p )
 {
 	const float twopi  = PI*2;
 	const float pidiv2 = PI/2;
@@ -343,10 +342,10 @@ void RenderSphere( float r, int p )
 
 /*
 =======================================================================================================================================
-RenderCube                                                                                                                            =
+renderCube                                                                                                                            =
 =======================================================================================================================================
 */
-void RenderCube( bool cols, float size )
+void renderCube( bool cols, float size )
 {
 	size *= 0.5f;
 	glBegin(GL_QUADS);
@@ -403,10 +402,10 @@ static void RenderSun()
 {
 	glPushMatrix();
 
-	r::MultMatrix( Mat4( Scene::getSunPos(), Mat3::getIdentity(), 50.0 ) );
+	r::multMatrix( Mat4( Scene::getSunPos(), Mat3::getIdentity(), 50.0 ) );
 
-	r::Color3( Vec3(1.0, 1.0, 0.0) );
-	r::dbg::RenderSphere( 1.0/8.0, 8 );
+	r::color3( Vec3(1.0, 1.0, 0.0) );
+	r::dbg::renderSphere( 1.0/8.0, 8 );
 
 	glPopMatrix();
 
@@ -428,7 +427,7 @@ static void RenderSun()
 
 	glPointSize( 10 );
 	glBegin( GL_POINTS );
-		r::Color3( Vec3(0.0,1.0,0.0) );
+		r::color3( Vec3(0.0,1.0,0.0) );
 		glVertex3fv( &p[0] );
 	glEnd();
 

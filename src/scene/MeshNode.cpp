@@ -42,7 +42,7 @@ void MeshNode::deinit()
 void MeshNode::render( Material* mtl ) const
 {
 	glPushMatrix();
-	r::MultMatrix( transformationWspace );
+	r::multMatrix( transformationWspace );
 
 	// if we have skeleton controller
 	if( meshSkelCtrl )
@@ -56,7 +56,7 @@ void MeshNode::render( Material* mtl ) const
 		// then the attributes
 		DEBUG_ERR( !mtl->hasHWSkinning() ); // it has skel controller but no skinning
 
-		mesh->vbos.vertWeights.Bind();
+		mesh->vbos.vertWeights.bind();
 		glEnableVertexAttribArray( mtl->attribLocs.vertWeightBonesNum );
 		glVertexAttribPointer( mtl->attribLocs.vertWeightBonesNum, 1, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(0) );
 		glEnableVertexAttribArray( mtl->attribLocs.vertWeightBoneIds );
@@ -67,33 +67,33 @@ void MeshNode::render( Material* mtl ) const
 
 	if( mtl->attribLocs.position != -1 )
 	{
-		mesh->vbos.vertCoords.Bind();
+		mesh->vbos.vertCoords.bind();
 		glVertexAttribPointer( mtl->attribLocs.position, 3, GL_FLOAT, false, 0, NULL );
 		glEnableVertexAttribArray( mtl->attribLocs.position );
 	}
 
 	if( mtl->attribLocs.normal != -1 )
 	{
-		mesh->vbos.vertNormals.Bind();
+		mesh->vbos.vertNormals.bind();
 		glVertexAttribPointer( mtl->attribLocs.normal, 3, GL_FLOAT, false, 0, NULL );
 		glEnableVertexAttribArray( mtl->attribLocs.normal );
 	}
 
 	if( mtl->attribLocs.texCoords != -1 )
 	{
-		mesh->vbos.texCoords.Bind();
+		mesh->vbos.texCoords.bind();
 		glVertexAttribPointer( mtl->attribLocs.texCoords, 2, GL_FLOAT, false, 0, NULL );
 		glEnableVertexAttribArray( mtl->attribLocs.texCoords );
 	}
 
 	if( mtl->attribLocs.tanget != -1 )
 	{
-		mesh->vbos.vertTangents.Bind();
+		mesh->vbos.vertTangents.bind();
 		glVertexAttribPointer( mtl->attribLocs.tanget, 4, GL_FLOAT, false, 0, NULL );
 		glEnableVertexAttribArray( mtl->attribLocs.tanget );
 	}
 
-	mesh->vbos.vertIndeces.Bind();
+	mesh->vbos.vertIndeces.bind();
 
 	glDrawElements( GL_TRIANGLES, mesh->vertIndeces.size(), GL_UNSIGNED_SHORT, 0 );
 
@@ -110,6 +110,6 @@ void MeshNode::render( Material* mtl ) const
 		glDisableVertexAttribArray( mtl->attribLocs.vertWeightWeights );
 	}
 
-	vbo_t::UnbindAllTargets();
+	Vbo::unbindAllTargets();
 	glPopMatrix();
 }
