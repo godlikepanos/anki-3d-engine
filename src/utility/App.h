@@ -21,6 +21,7 @@ extern void waitForNextFrame();
 extern void togleFullScreen();
 extern void printAppInfo();
 
+/// Gets the number of milliseconds since SDL library initialization
 inline uint getTicks()
 {
 	return SDL_GetTicks();

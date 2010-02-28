@@ -1,6 +1,6 @@
 #include <algorithm>
 #include "Node.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "collision.h"
 #include "Controller.h"
 

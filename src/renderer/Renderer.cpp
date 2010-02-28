@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <jpeglib.h>
-#include "renderer.h"
+#include "Renderer.h"
 #include "Texture.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "App.h"
 
-namespace r {
+namespace R {
 
 
 /*
@@ -74,28 +74,28 @@ static void BuildStdShaderPreProcStr()
 	tmp += "precision lowp float;\n";
 	tmp += "#pragma optimize(on)\n";
 	tmp += "#pragma debug(off)\n";
-	tmp += "#define R_W " + Util::floatToStr(r::w) + "\n";
-	tmp += "#define R_H " + Util::floatToStr(r::h) + "\n";
-	//tmp += "#define R_Q " + floatToStr(r::renderingQuality) + "\n";
-	tmp += "#define SHADOWMAP_SIZE " + Util::intToStr(r::is::shadows::shadowResolution) + "\n";
-	if( r::is::shadows::pcf )
+	tmp += "#define R_W " + Util::floatToStr(R::w) + "\n";
+	tmp += "#define R_H " + Util::floatToStr(R::h) + "\n";
+	//tmp += "#define R_Q " + floatToStr(R::renderingQuality) + "\n";
+	tmp += "#define SHADOWMAP_SIZE " + Util::intToStr(R::Is::Shad::shadowResolution) + "\n";
+	if( R::Is::Shad::pcf )
 		tmp += "#define _SHADOW_MAPPING_PCF_\n";
-	if( r::pps::ssao::enabled )
+	if( R::Pps::Ssao::enabled )
 	{
 		tmp += "#define _SSAO_\n";
-		tmp += "#define SSAO_RENDERING_QUALITY " + Util::floatToStr(r::pps::ssao::renderingQuality) + "\n";
+		tmp += "#define SSAO_RENDERING_QUALITY " + Util::floatToStr(R::Pps::Ssao::renderingQuality) + "\n";
 	}
-	if( r::pps::edgeaa::enabled )
+	if( R::Pps::edgeaa::enabled )
 		tmp += "#define _EDGEAA_\n";
-	if( r::pps::hdr::enabled )
+	if( R::Pps::Hdr::enabled )
 	{
 		tmp += "#define _HDR_\n";
-		tmp += "#define HDR_RENDERING_QUALITY " + Util::floatToStr(r::pps::hdr::renderingQuality) + "\n";
+		tmp += "#define HDR_RENDERING_QUALITY " + Util::floatToStr(R::Pps::Hdr::renderingQuality) + "\n";
 	}
-	if( r::pps::lscatt::enabled )
+	if( R::Pps::Lscatt::enabled )
 	{
 		tmp += "#define _LSCATT_\n";
-		tmp += "#define LSCATT_RENDERING_QUALITY " + Util::floatToStr(r::pps::lscatt::renderingQuality) + "\n";
+		tmp += "#define LSCATT_RENDERING_QUALITY " + Util::floatToStr(R::Pps::Lscatt::renderingQuality) + "\n";
 	}
 }
 
@@ -169,12 +169,12 @@ void init()
 
 	// init deferred stages
 	// WARNING: the order of the inits is crucial!!!!!
-	r::ms::init();
-	r::is::init();
-	r::bs::init();
-	r::pps::init();
-	r::bs::init2();
-	r::dbg::init();
+	R::Ms::init();
+	R::Is::init();
+	R::Bs::init();
+	R::Pps::init();
+	R::Bs::init2();
+	R::Dbg::init();
 
 	PRINT( "Renderer initialization ends" );
 }
@@ -187,42 +187,42 @@ render                                                                          
 */
 void render( const Camera& cam )
 {
-	r::ms::runStage( cam );
-	r::is::runStage( cam );
-	r::bs::runStage( cam );
-	r::pps::runStage( cam );
-	r::bs::runStage2( cam );
-	r::dbg::runStage( cam );
+	R::Ms::runStage( cam );
+	R::Is::runStage( cam );
+	R::Bs::runStage( cam );
+	R::Pps::runStage( cam );
+	R::Bs::runStage2( cam );
+	R::Dbg::runStage( cam );
 
-	//r::setViewport( 0, 0, App::windowW, App::windowH );
-	r::setViewport( 0, 0, App::windowW, App::windowH );
+	//R::setViewport( 0, 0, App::windowW, App::windowH );
+	R::setViewport( 0, 0, App::windowW, App::windowH );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
 	shdr_final->bind();
-	shdr_final->locTexUnit( shdr_final->GetUniLoc(0), r::pps::fai, 0 );
+	shdr_final->locTexUnit( shdr_final->GetUniLoc(0), R::Pps::fai, 0 );
 
 	/*const int step = 100;
-	if( r::framesNum < step )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::diffuseFai, 0 );
-	else if( r::framesNum < step*2 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::normalFai, 0 );
-	else if( r::framesNum < step*3 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::specularFai, 0 );
-	else if( r::framesNum < step*4 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::ms::depthFai, 0 );
-	else if( r::framesNum < step*5 )
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::ssao::bluredFai, 0 );
-	else if( r::framesNum < step*6 )
+	if( R::framesNum < step )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::Ms::diffuseFai, 0 );
+	else if( R::framesNum < step*2 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::Ms::normalFai, 0 );
+	else if( R::framesNum < step*3 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::Ms::specularFai, 0 );
+	else if( R::framesNum < step*4 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::Ms::depthFai, 0 );
+	else if( R::framesNum < step*5 )
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::pps::ssao::bluredFai, 0 );
+	else if( R::framesNum < step*6 )
 	{
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::hdr::pass2Fai, 0 );
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::pps::hdr::pass2Fai, 0 );
 	}
 	else
-		shdr_final->locTexUnit( shdr_final->getUniLoc(0), r::pps::fai, 0 );*/
+		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::pps::fai, 0 );*/
 
 
-	r::DrawQuad( shdr_final->getAttribLoc(0) );
+	R::DrawQuad( shdr_final->getAttribLoc(0) );
 }
 
 
@@ -368,10 +368,10 @@ static bool TakeScreenshotTGA( const char* filename )
 	unsigned char tga_header_uncompressed[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
 	unsigned char header[6];
 
-	header[1] = r::w / 256;
-	header[0] = r::w % 256;
-	header[3] = r::h / 256;
-	header[2] = r::h % 256;
+	header[1] = R::w / 256;
+	header[0] = R::w % 256;
+	header[3] = R::h / 256;
+	header[2] = R::h % 256;
 	header[4] = 24;
 	header[5] = 0;
 
@@ -379,10 +379,10 @@ static bool TakeScreenshotTGA( const char* filename )
 	fs.write( (char*)header, 6 );
 
 	// write the buffer
-	char* buffer = (char*)calloc( r::w*r::h*3, sizeof(char) );
+	char* buffer = (char*)calloc( R::w*R::h*3, sizeof(char) );
 
-	glReadPixels( 0, 0, r::w, r::h, GL_BGR, GL_UNSIGNED_BYTE, buffer );
-	fs.write( buffer, r::w*r::h*3 );
+	glReadPixels( 0, 0, R::w, R::h, GL_BGR, GL_UNSIGNED_BYTE, buffer );
+	fs.write( buffer, R::w*R::h*3 );
 
 	// end
 	fs.close();
@@ -415,8 +415,8 @@ static bool TakeScreenshotJPEG( const char* filename )
 	jpeg_create_compress( &cinfo );
 	jpeg_stdio_dest( &cinfo, outfile );
 
-	cinfo.image_width      = r::w;
-	cinfo.image_height     = r::h;
+	cinfo.image_width      = R::w;
+	cinfo.image_height     = R::h;
 	cinfo.input_components = 3;
 	cinfo.in_color_space   = JCS_RGB;
 	jpeg_set_defaults( &cinfo);
@@ -424,15 +424,15 @@ static bool TakeScreenshotJPEG( const char* filename )
 	jpeg_start_compress( &cinfo, true );
 
 	// read from OGL
-	char* buffer = (char*)malloc( r::w*r::h*3*sizeof(char) );
-	glReadPixels( 0, 0, r::w, r::h, GL_RGB, GL_UNSIGNED_BYTE, buffer );
+	char* buffer = (char*)malloc( R::w*R::h*3*sizeof(char) );
+	glReadPixels( 0, 0, R::w, R::h, GL_RGB, GL_UNSIGNED_BYTE, buffer );
 
 	// write buffer to file
 	JSAMPROW row_pointer;
 
 	while( cinfo.next_scanline < cinfo.image_height )
 	{
-		row_pointer = (JSAMPROW) &buffer[ (r::h-1-cinfo.next_scanline)*3*r::w ];
+		row_pointer = (JSAMPROW) &buffer[ (R::h-1-cinfo.next_scanline)*3*R::w ];
 		jpeg_write_scanlines( &cinfo, &row_pointer, 1 );
 	}
 

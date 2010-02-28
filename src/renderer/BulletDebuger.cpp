@@ -1,5 +1,5 @@
 #include "BulletDebuger.h"
-#include "renderer.h"
+#include "Renderer.h"
 
 BulletDebuger::BulletDebuger() :
 	m_debugMode( 0 )

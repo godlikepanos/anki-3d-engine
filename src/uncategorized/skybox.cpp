@@ -1,6 +1,6 @@
 #include "skybox.h"
 #include "Resource.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "Math.h"
 #include "Camera.h"
 #include "Scene.h"
@@ -67,7 +67,7 @@ void Skybox::Render( const Mat3& rotation )
 	// set the rotation matrix
 	Mat3 tmp( rotation );
 	tmp.rotateYAxis(rotation_ang);
-	r::loadMatrix( Mat4( tmp ) );
+	R::loadMatrix( Mat4( tmp ) );
 	rotation_ang += 0.0001;
 	if( rotation_ang >= 2*PI ) rotation_ang = 0.0;
 

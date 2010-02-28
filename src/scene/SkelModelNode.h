@@ -13,13 +13,13 @@ class SkelNode;
  * Skeleton model Scene node
  * It is just a group node with a derived init
  */
-class skelModelNode: public Node
+class SkelModelNode: public Node
 {
 	public:
 		Vec<MeshNode*> meshNodes;
 		SkelNode*   skelNode;
 		
-		skelModelNode(): Node(NT_SKEL_MODEL), skelNode(NULL) { isGroupNode = true; }
+		SkelModelNode(): Node(NT_SKEL_MODEL), skelNode(NULL) { isGroupNode = true; }
 		void init( const char* filename );
 		void deinit() {} ///< Do nothing because it loads no resources
 		void render() {} ///< Do nothing

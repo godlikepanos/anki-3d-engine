@@ -54,7 +54,7 @@ void renderer_t::illumination_stage_t::CalcViewVector()
 	for( int i=0; i<4; i++ )
 	{
 		 Original Code:
-		r::UnProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
+		R::UnProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
 		              view_vectors[i].x, view_vectors[i].y, view_vectors[i].z );
 		view_vectors[i] = cam.getViewMatrix() * view_vectors[i];
 		The original code is the above 3 lines. The optimized follows:
@@ -131,7 +131,7 @@ void renderer_t::illumination_stage_t::point_light_pass_t::SetStencilMask( const
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::setProjectionViewMatrices( cam );
+	R::setProjectionViewMatrices( cam );
 
 
 	// render sphere to stencil buffer

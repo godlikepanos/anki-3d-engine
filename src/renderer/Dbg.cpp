@@ -1,4 +1,4 @@
-#include "renderer.h"
+#include "Renderer.h"
 #include "Fbo.h"
 #include "Scene.h"
 #include "Texture.h"
@@ -19,6 +19,7 @@ extern btDiscreteDynamicsWorld* dynamicsWorld;
 
 void renderscene( int pass )
 {
+	return;
 	btScalar m[16];
 	btMatrix3x3 rot;
 	rot.setIdentity();
@@ -39,57 +40,13 @@ void renderscene( int pass )
 			colObj->getWorldTransform().getOpenGLMatrix( m );
 			rot = colObj->getWorldTransform().getBasis();
 		}
-		btVector3 wireColor( 1.f, 1.0f, 0.5f ); //wants deactivation
-		if( i & 1 ) wireColor = btVector3( 0.f, 0.0f, 1.f );
-		///color differently for active, sleeping, wantsdeactivation states
-		if( colObj->getActivationState() == 1 ) //active
-		{
-			if( i & 1 )
-			{
-				wireColor += btVector3( 1.f, 0.f, 0.f );
-			}
-			else
-			{
-				wireColor += btVector3( .5f, 0.f, 0.f );
-			}
-		}
-		if( colObj->getActivationState() == 2 ) //ISLAND_SLEEPING
-		{
-			if( i & 1 )
-			{
-				wireColor += btVector3( 0.f, 1.f, 0.f );
-			}
-			else
-			{
-				wireColor += btVector3( 0.f, 0.5f, 0.f );
-			}
-		}
 
-		btVector3 aabbMin, aabbMax;
-		dynamicsWorld->getBroadphase()->getBroadphaseAabb( aabbMin, aabbMax );
+		glPushMatrix();
+		glMultMatrixf(m);
 
-		aabbMin -= btVector3( BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT );
-		aabbMax += btVector3( BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT );
-		//		printf("aabbMin=(%f,%f,%f)\n",aabbMin.getX(),aabbMin.getY(),aabbMin.getZ());
-		//		printf("aabbMax=(%f,%f,%f)\n",aabbMax.getX(),aabbMax.getY(),aabbMax.getZ());
-		//		m_dynamicsWorld->getDebugDrawer()->drawAabb(aabbMin,aabbMax,btVector3(1,1,1));
+		R::Dbg::renderCube( true, 2.0 );
 
-
-		if( 1 )
-		{
-			switch( pass )
-			{
-				case 0:
-					//m_shapeDrawer->drawOpenGL( m, colObj->getCollisionShape(), wireColor, getDebugMode(), aabbMin, aabbMax );
-					break;
-				case 1:
-					//m_shapeDrawer->drawShadow( m, m_sundirection * rot, colObj->getCollisionShape(), aabbMin, aabbMax );
-					break;
-				case 2:
-					//m_shapeDrawer->drawOpenGL( m, colObj->getCollisionShape(), wireColor * btScalar( 0.3 ), 0, aabbMin, aabbMax );
-					break;
-			}
-		}
+		glPopMatrix();
 	}
 }
 
@@ -98,11 +55,11 @@ void renderscene( int pass )
 
 
 
-namespace r {
-namespace dbg {
+namespace R {
+namespace Dbg {
 
 
-static void RenderSun();
+static void renderSun();
 
 //=====================================================================================================================================
 // DATA VARS                                                                                                                          =
@@ -136,8 +93,8 @@ void init()
 	fbo.setNumOfColorAttachements(1);
 
 	// attach the textures
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, R::Pps::fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, R::Ms::depthFai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.isGood() )
@@ -163,13 +120,13 @@ void runStage( const Camera& cam )
 	shdr->bind();
 
 	// OGL stuff
-	setProjectionViewMatrices( cam );
-	setViewport( 0, 0, r::w, r::h );
+	R::setProjectionViewMatrices( cam );
+	R::setViewport( 0, 0, R::w, R::h );
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	//r::renderGrid();
+	//R::renderGrid();
 	for( uint i=0; i<Scene::nodes.size(); i++ )
 	{
 		if
@@ -398,14 +355,14 @@ void renderCube( bool cols, float size )
 //=====================================================================================================================================
 // RenderSun                                                                                                                          =
 //=====================================================================================================================================
-static void RenderSun()
+static void renderSun()
 {
 	glPushMatrix();
 
-	r::multMatrix( Mat4( Scene::getSunPos(), Mat3::getIdentity(), 50.0 ) );
+	R::multMatrix( Mat4( Scene::getSunPos(), Mat3::getIdentity(), 50.0 ) );
 
-	r::color3( Vec3(1.0, 1.0, 0.0) );
-	r::dbg::renderSphere( 1.0/8.0, 8 );
+	R::color3( Vec3(1.0, 1.0, 0.0) );
+	R::Dbg::renderSphere( 1.0/8.0, 8 );
 
 	glPopMatrix();
 
@@ -427,7 +384,7 @@ static void RenderSun()
 
 	glPointSize( 10 );
 	glBegin( GL_POINTS );
-		r::color3( Vec3(0.0,1.0,0.0) );
+		R::color3( Vec3(0.0,1.0,0.0) );
 		glVertex3fv( &p[0] );
 	glEnd();
 

@@ -1,5 +1,5 @@
 #include "SkelNode.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "SkelAnim.h"
 #include "Skeleton.h"
 #include "SkelAnimCtrl.h"
@@ -40,7 +40,7 @@ void SkelNode::deinit()
 void SkelNode::render()
 {
 	glPushMatrix();
-	r::multMatrix( transformationWspace );
+	R::multMatrix( transformationWspace );
 
 	//glPointSize( 4.0f );
 	//glLineWidth( 2.0f );

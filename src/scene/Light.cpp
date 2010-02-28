@@ -1,6 +1,6 @@
 #include "Light.h"
 #include "collision.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "LightProps.h"
 
 
@@ -45,10 +45,10 @@ void Light::deinit()
 static void RenderSphere( const Mat4& tsl, const Vec3& col )
 {
 	glPushMatrix();
-	r::multMatrix( tsl );
+	R::multMatrix( tsl );
 
-	r::color3( col );
-	r::dbg::renderSphere( 1.0/8.0, 8 );
+	R::color3( col );
+	R::Dbg::renderSphere( 1.0/8.0, 8 );
 
 	glPopMatrix();
 }

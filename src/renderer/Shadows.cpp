@@ -1,4 +1,4 @@
-#include "renderer.h"
+#include "Renderer.h"
 #include "Texture.h"
 #include "Scene.h"
 #include "Resource.h"
@@ -6,9 +6,9 @@
 #include "Material.h"
 #include "MeshNode.h"
 
-namespace r {
-namespace is {
-namespace shadows {
+namespace R {
+namespace Is {
+namespace Shad {
 
 /*
 =======================================================================================================================================
@@ -88,8 +88,8 @@ void runPass( const Camera& cam )
 	glPushAttrib( GL_VIEWPORT_BIT );
 
 	glClear( GL_DEPTH_BUFFER_BIT );
-	r::setProjectionViewMatrices( cam );
-	r::setViewport( 0, 0, shadowResolution, shadowResolution );
+	R::setProjectionViewMatrices( cam );
+	R::setViewport( 0, 0, shadowResolution, shadowResolution );
 
 	// disable color & blend & enable depth test
 	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );

@@ -7,7 +7,7 @@
 #include "Input.h"
 #include "Camera.h"
 #include "Math.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "Ui.h"
 #include "App.h"
 #include "particles.h"
@@ -37,7 +37,7 @@
 // map (hard coded)
 Camera* mainCam;
 MeshNode* floor__,* sarge,* horse;
-skelModelNode* imp;
+SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 
@@ -46,12 +46,12 @@ class floor_t: public Camera
 	public:
 		void render()
 		{
-			r::dbg::renderCube( true, 1.0 );
+			R::Dbg::renderCube( true, 1.0 );
 		}
 
 		void renderDepth()
 		{
-			r::dbg::renderCube( true, 1.0 );
+			R::Dbg::renderCube( true, 1.0 );
 		}
 }* floor_;
 
@@ -124,14 +124,10 @@ void initPhysics()
 		btTransform startTransform;
 		startTransform.setIdentity();
 
-		btScalar	mass(1.f);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
+		btScalar	mass(1.0);
 
 		btVector3 localInertia(0,0,0);
-		if (isDynamic)
-			colShape->calculateLocalInertia(mass,localInertia);
+		colShape->calculateLocalInertia(mass,localInertia);
 
 		float start_x = START_POS_X - ARRAY_SIZE_X/2;
 		float start_y = START_POS_Y;
@@ -154,10 +150,10 @@ void initPhysics()
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 
-					body->setActivationState(ISLAND_SLEEPING);
+					//body->setActivationState(ISLAND_SLEEPING);
 
 					dynamicsWorld->addRigidBody(body);
-					body->setActivationState(ISLAND_SLEEPING);
+					//body->setActivationState(ISLAND_SLEEPING);
 				}
 			}
 		}
@@ -182,11 +178,11 @@ void init()
 	App::initWindow();
 	uint ticks = App::getTicks();
 
-	r::init();
+	R::init();
 	Ui::init();
 
 	// camera
-	mainCam = new Camera( r::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 100.0 );
+	mainCam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
 	mainCam->moveLocalY( 3.0 );
 	mainCam->moveLocalZ( 5.7 );
 	mainCam->moveLocalX( -0.3 );
@@ -223,15 +219,20 @@ void init()
 	floor__->setLocalTransformation( Vec3(0.0, -0.19, 0.0), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.8 );
 
 	// imp	
-	imp = new skelModelNode();
+	imp = new SkelModelNode();
 	imp->init( "models/imp/imp.smdl" );
 	imp->setLocalTransformation( Vec3( 0.0, 2.11, 0.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.7 );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = rsrc::skelAnims.load( "models/imp/walk.imp.anim" );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
+	// crate
+	MeshNode* crate = new MeshNode;
+	crate->init( "models/crate0/crate0.mesh" );
+	crate->scaleLspace = 1.0;
+
 
 	//
-	floor_ = new floor_t;
+	//floor_ = new floor_t;
 	//floor_->material = rsrc::materials.load( "materials/default.mtl" );
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
@@ -257,11 +258,12 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 	PRINT( "Entering main loop" );
 	int ticks = App::getTicks();
+	uint ms = 0;
 	do
 	{
 		int ticks_ = App::getTicks();
 		I::handleEvents();
-		r::prepareNextFrame();
+		R::prepareNextFrame();
 
 		float dist = 0.2;
 		float ang = toRad(3.0);
@@ -309,9 +311,11 @@ int main( int /*argc*/, char* /*argv*/[] )
 		Scene::updateAllControllers();
 		Scene::updateAllWorldStuff();
 
-		dynamicsWorld->stepSimulation( 1 );
 
-		r::render( *mainCam );
+		dynamicsWorld->stepSimulation( App::timerTick );
+		dynamicsWorld->debugDrawWorld();
+
+		R::render( *mainCam );
 
 		//map.octree.root->bounding_box.render();
 
@@ -319,32 +323,32 @@ int main( int /*argc*/, char* /*argv*/[] )
 		Ui::setColor( Vec4(1.0, 1.0, 1.0, 1.0) );
 		Ui::setPos( -0.98, 0.95 );
 		Ui::setFontWidth( 0.03 );
-		Ui::printf( "frame:%d time:%dms\n", r::framesNum, App::getTicks()-ticks_ );
+		Ui::printf( "frame:%d time:%dms\n", R::framesNum, App::getTicks()-ticks_ );
 		//Ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
 
 		if( I::keys[SDLK_ESCAPE] ) break;
 		if( I::keys[SDLK_F11] ) App::togleFullScreen();
-		if( I::keys[SDLK_F12] == 1 ) r::takeScreenshot("gfx/screenshot.jpg");
+		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
-		if( r::framesNum < 1000 )
-			sprintf( str, "capt/%06d.jpg", r::framesNum );
+		if( R::framesNum < 1000 )
+			sprintf( str, "capt/%06d.jpg", R::framesNum );
 		else
-			sprintf( str, "capt2/%06d.jpg", r::framesNum );
-		r::takeScreenshot(str);*/
+			sprintf( str, "capt2/%06d.jpg", R::framesNum );
+		R::takeScreenshot(str);*/
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();
-		r::printLastError();
+		R::printLastError();
 		if( 1 )
 		{
-			//if( r::framesNum == 10 ) r::takeScreenshot("gfx/screenshot.tga");
+			//if( R::framesNum == 10 ) R::takeScreenshot("gfx/screenshot.tga");
 			App::waitForNextFrame();
 		}
 		else
-			if( r::framesNum == 5000 ) break;
+			if( R::framesNum == 5000 ) break;
 	}while( true );
 	PRINT( "Exiting main loop (" << App::getTicks()-ticks << ")" );
 

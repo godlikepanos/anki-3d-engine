@@ -1,7 +1,7 @@
 #include "MeshNode.h"
 #include "Resource.h"
 #include "Mesh.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "Material.h"
 #include "SkelNode.h"
 #include "Skeleton.h"
@@ -42,7 +42,7 @@ void MeshNode::deinit()
 void MeshNode::render( Material* mtl ) const
 {
 	glPushMatrix();
-	r::multMatrix( transformationWspace );
+	R::multMatrix( transformationWspace );
 
 	// if we have skeleton controller
 	if( meshSkelCtrl )

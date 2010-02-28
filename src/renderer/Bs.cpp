@@ -3,7 +3,7 @@
  * The blending stage comes after the illumination stage. All the objects that are transculent will be drawn here.
  */
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
@@ -13,8 +13,8 @@
 #include "Material.h"
 
 
-namespace r {
-namespace bs {
+namespace R {
+namespace Bs {
 
 //=====================================================================================================================================
 // VARS                                                                                                                               =
@@ -35,8 +35,8 @@ void init()
 	fbo.setNumOfColorAttachements(1);
 
 	// attach the texes
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::is::fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, R::Is::fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, R::Ms::depthFai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.isGood() )
@@ -53,8 +53,8 @@ void init()
 void runStage( const Camera& cam )
 {
 	// OGL stuff
-	r::setProjectionViewMatrices( cam );
-	r::setViewport( 0, 0, r::w, r::h );
+	R::setProjectionViewMatrices( cam );
+	R::setViewport( 0, 0, R::w, R::h );
 
 	glEnable( GL_DEPTH_TEST );
 	glDepthMask( false );

@@ -1,10 +1,10 @@
-#include "renderer.h"
+#include "Renderer.h"
 #include "Resource.h"
 #include "Texture.h"
 #include "Fbo.h"
 
-namespace r {
-namespace pps {
+namespace R {
+namespace Pps {
 
 namespace edgeaa {
 	bool enabled = false;
@@ -21,15 +21,15 @@ static Fbo fbo; // yet another FBO
 Texture fai;
 
 // shader stuff
-static ShaderProg* shdr_post_proc_stage;
+static ShaderProg* sProg;
 
-namespace shdr_vars
+namespace shdrVars
 {
-	int is_fai;
-	int pps_ssao_fai;
-	int ms_normal_fai;
-	int hdr_fai;
-	int lscatt_fai;
+	int isFai;
+	int ppsSsaoFai;
+	int msNormalFai;
+	int hdrFai;
+	int lscattFai;
 }
 
 
@@ -48,7 +48,7 @@ void init()
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( r::w, r::h, GL_RGB, GL_RGB );
+	fai.createEmpty2D( R::w, R::h, GL_RGB, GL_RGB );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
@@ -61,30 +61,30 @@ void init()
 
 
 	// init the shader and it's vars
-	shdr_post_proc_stage = rsrc::shaders.load( "shaders/pps.glsl" );
-	shdr_post_proc_stage->bind();
+	sProg = rsrc::shaders.load( "shaders/pps.glsl" );
+	sProg->bind();
 
-	shdr_vars::is_fai = shdr_post_proc_stage->getUniLoc( "is_fai" );
+	shdrVars::isFai = sProg->getUniLoc( "is_fai" );
 
-	if( r::pps::ssao::enabled )
+	if( R::Pps::Ssao::enabled )
 	{
-		r::pps::ssao::init();
-		shdr_vars::pps_ssao_fai = shdr_post_proc_stage->getUniLoc( "pps_ssao_fai" );
+		R::Pps::Ssao::init();
+		shdrVars::ppsSsaoFai = sProg->getUniLoc( "pps_ssao_fai" );
 	}
 
-	if( r::pps::hdr::enabled )
+	if( R::Pps::Hdr::enabled )
 	{
-		r::pps::hdr::init();
-		shdr_vars::hdr_fai = shdr_post_proc_stage->getUniLoc( "pps_hdr_fai" );
+		R::Pps::Hdr::init();
+		shdrVars::hdrFai = sProg->getUniLoc( "pps_hdr_fai" );
 	}
 
-	if( r::pps::edgeaa::enabled )
-		shdr_vars::ms_normal_fai = shdr_post_proc_stage->getUniLoc( "ms_normal_fai" );
+	if( R::Pps::edgeaa::enabled )
+		shdrVars::msNormalFai = sProg->getUniLoc( "ms_normal_fai" );
 
-	if( r::pps::lscatt::enabled )
+	if( R::Pps::Lscatt::enabled )
 	{
-		r::pps::lscatt::init();
-		shdr_vars::lscatt_fai = shdr_post_proc_stage->getUniLoc( "pps_lscatt_fai" );
+		R::Pps::Lscatt::init();
+		shdrVars::lscattFai = sProg->getUniLoc( "pps_lscatt_fai" );
 	}
 
 }
@@ -97,14 +97,14 @@ runStage                                                                        
 */
 void runStage( const Camera& cam )
 {
-	if( r::pps::ssao::enabled )
-		r::pps::ssao::runPass( cam );
+	if( R::Pps::Ssao::enabled )
+		R::Pps::Ssao::runPass( cam );
 
-	if( r::pps::hdr::enabled )
-		r::pps::hdr::runPass( cam );
+	if( R::Pps::Hdr::enabled )
+		R::Pps::Hdr::runPass( cam );
 
-	if( r::pps::lscatt::enabled )
-		r::pps::lscatt::runPass( cam );
+	if( R::Pps::Lscatt::enabled )
+		R::Pps::Lscatt::runPass( cam );
 
 	fbo.bind();
 
@@ -112,43 +112,43 @@ void runStage( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	r::setViewport( 0, 0, r::w, r::h );
+	R::setViewport( 0, 0, R::w, R::h );
 
 	// set shader
-	shdr_post_proc_stage->bind();
+	sProg->bind();
 
-	r::is::fai.bind(0);
-	//r::ms::depthFai.bind(0);
-	glUniform1i( shdr_vars::is_fai, 0 );
+	R::Is::fai.bind(0);
+	//R::Ms::depthFai.bind(0);
+	glUniform1i( shdrVars::isFai, 0 );
 
-	if( r::pps::ssao::enabled )
+	if( R::Pps::Ssao::enabled )
 	{
-		r::pps::ssao::bluredFai.bind(1);
-		glUniform1i( shdr_vars::pps_ssao_fai, 1 );
+		R::Pps::Ssao::bluredFai2.bind(1);
+		glUniform1i( shdrVars::ppsSsaoFai, 1 );
 	}
 
-	if( r::pps::edgeaa::enabled )
+	if( R::Pps::edgeaa::enabled )
 	{
-		r::ms::normalFai.bind(2);
-		glUniform1i( shdr_vars::ms_normal_fai, 2 );
+		R::Ms::normalFai.bind(2);
+		glUniform1i( shdrVars::msNormalFai, 2 );
 	}
 
-	if( r::pps::hdr::enabled )
+	if( R::Pps::Hdr::enabled )
 	{
-		r::pps::hdr::pass2Fai.bind(3);
-		//r::bs::r_fai.bind(3);
-		glUniform1i( shdr_vars::hdr_fai, 3 );
+		R::Pps::Hdr::pass2Fai.bind(3);
+		//R::Bs::r_fai.bind(3);
+		glUniform1i( shdrVars::hdrFai, 3 );
 	}
 
-	if( r::pps::lscatt::enabled )
+	if( R::Pps::Lscatt::enabled )
 	{
-		r::pps::lscatt::fai.bind(4);
-		glUniform1i( shdr_vars::lscatt_fai, 4 );
+		R::Pps::Lscatt::fai.bind(4);
+		glUniform1i( shdrVars::lscattFai, 4 );
 	}
 
 
 	// draw quad
-	r::DrawQuad( shdr_post_proc_stage->getAttribLoc(0) );
+	R::DrawQuad( sProg->getAttribLoc(0) );
 
 	// unbind FBO
 	fbo.Unbind();

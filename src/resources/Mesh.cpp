@@ -1,5 +1,5 @@
 #include "Mesh.h"
-#include "renderer.h"
+#include "Renderer.h"
 #include "Resource.h"
 #include "Scanner.h"
 #include "parser.h"
