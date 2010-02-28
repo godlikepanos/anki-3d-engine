@@ -4,7 +4,7 @@
 #include "MeshSkelNodeCtrl.h"
 
 /// Create a skelNode and N meshNodes that have a meshSkelCtrl
-void skelModelNode::init( const char* filename )
+void SkelModelNode::init( const char* filename )
 {
 	Scanner scanner;
 	if( !scanner.loadFile( filename ) ) return;

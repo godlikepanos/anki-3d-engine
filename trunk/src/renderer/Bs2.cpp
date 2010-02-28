@@ -3,7 +3,7 @@
  * The blending stage comes after the illumination stage. All the objects that are transculent will be drawn here.
  */
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
@@ -13,8 +13,8 @@
 #include "Material.h"
 
 
-namespace r {
-namespace bs {
+namespace R {
+namespace Bs {
 
 //=====================================================================================================================================
 // VARS                                                                                                                               =
@@ -39,8 +39,8 @@ void init2()
 	fbo.setNumOfColorAttachements(1);
 
 	// attach the texes
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r::pps::fai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, R::Pps::fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,  GL_TEXTURE_2D, R::Ms::depthFai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.isGood() )
@@ -56,11 +56,11 @@ void init2()
 
 	// texture
 	intermid_fbo.setNumOfColorAttachements(1);
-	fai.createEmpty2D( r::w, r::h, GL_RGBA8, GL_RGBA );
+	fai.createEmpty2D( R::w, R::h, GL_RGBA8, GL_RGBA );
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0 );
 
 	// attach the texes
-	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r::ms::depthFai.getGlId(), 0 );
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, R::Ms::depthFai.getGlId(), 0 );
 
 	// test if success
 	if( !intermid_fbo.isGood() )
@@ -78,8 +78,8 @@ void init2()
 //=====================================================================================================================================
 void runStage2( const Camera& cam )
 {
-	r::setProjectionViewMatrices( cam );
-	r::setViewport( 0, 0, r::w, r::h );
+	R::setProjectionViewMatrices( cam );
+	R::setViewport( 0, 0, R::w, R::h );
 
 
 	glDepthMask( false );
@@ -102,7 +102,7 @@ void runStage2( const Camera& cam )
 			glDisable( GL_DEPTH_TEST );
 			shader_prog->bind();
 			shader_prog->locTexUnit( shader_prog->GetUniLoc(0), fai, 0 );
-			r::DrawQuad( shader_prog->getAttribLoc(0) );
+			R::DrawQuad( shader_prog->getAttribLoc(0) );
 		}
 	}
 

@@ -2,7 +2,7 @@
 The file contains functions and vars used for the deferred shading/material stage/early z pass.
 */
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "Resource.h"
 #include "Texture.h"
 #include "Scene.h"
@@ -10,7 +10,7 @@ The file contains functions and vars used for the deferred shading/material stag
 
 #if defined(_EARLY_Z_)
 
-namespace r {
+namespace R {
 namespace ms {
 namespace earlyz {
 
@@ -40,7 +40,7 @@ void init()
 	fbo.setNumOfColorAttachements(0);
 
 	// attach the texture
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r::ms::depthFai.glId, 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, R::Ms::depthFai.glId, 0 );
 
 	// test if success
 	if( !fbo.CheckStatus() )
@@ -67,8 +67,8 @@ void runPass( const Camera& cam )
 
 	// matrix
 	glClear( GL_DEPTH_BUFFER_BIT );
-	r::setProjectionViewMatrices( cam );
-	r::setViewport( 0, 0, r::w * r::renderingQuality, r::h * r::renderingQuality );
+	R::setProjectionViewMatrices( cam );
+	R::setViewport( 0, 0, R::w * R::renderingQuality, R::h * R::renderingQuality );
 
 	// disable color & blend & enable depth test
 	glColorMask( false, false, false, false );

@@ -152,7 +152,7 @@ void updateAllWorldStuff()
 //=====================================================================================================================================
 void updateAllControllers()
 {
-	/*for( NodeContainer::iterator it=nodes.begin(); it!=nodes.end(); it++ )
+	/*for( NodeContaineR::iterator it=nodes.begin(); it!=nodes.end(); it++ )
 	{
 		Node* node = (*it);
 		for( Vec<Controller*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )

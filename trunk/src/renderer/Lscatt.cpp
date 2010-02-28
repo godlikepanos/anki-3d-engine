@@ -1,12 +1,12 @@
-#include "renderer.h"
+#include "Renderer.h"
 #include "Resource.h"
 #include "Texture.h"
 #include "Scene.h"
 #include "Fbo.h"
 
-namespace r {
-namespace pps {
-namespace lscatt {
+namespace R {
+namespace Pps {
+namespace Lscatt {
 
 
 /*
@@ -33,9 +33,9 @@ init                                                                            
 */
 void init()
 {
-	if( renderingQuality<0.0 || renderingQuality>1.0 ) ERROR("Incorect r::pps:lscatt::rendering_quality");
-	float wwidth = r::pps::lscatt::renderingQuality * r::w;
-	float wheight = r::pps::lscatt::renderingQuality * r::h;
+	if( renderingQuality<0.0 || renderingQuality>1.0 ) ERROR("Incorect R::pps:lscatt::rendering_quality");
+	float wwidth = R::Pps::Lscatt::renderingQuality * R::w;
+	float wheight = R::Pps::Lscatt::renderingQuality * R::h;
 
 	// create FBO
 	fbo.Create();
@@ -76,7 +76,7 @@ void runPass( const Camera& cam )
 {
 	fbo.bind();
 
-	r::setViewport( 0, 0, r::w * renderingQuality, r::h * renderingQuality );
+	R::setViewport( 0, 0, R::w * renderingQuality, R::h * renderingQuality );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -84,8 +84,8 @@ void runPass( const Camera& cam )
 	// set the shader
 	shdr->bind();
 
-	shdr->locTexUnit( ms_depth_fai_uni_loc, r::ms::depthFai, 0 );
-	shdr->locTexUnit( is_fai_uni_loc, r::is::fai, 1 );
+	shdr->locTexUnit( ms_depth_fai_uni_loc, R::Ms::depthFai, 0 );
+	shdr->locTexUnit( is_fai_uni_loc, R::Is::fai, 1 );
 
 	// pass the light
 	Vec4 p = Vec4( Scene::getSunPos(), 1.0 );
@@ -95,7 +95,7 @@ void runPass( const Camera& cam )
 	glUniform2fv( shdr->getUniLoc("light_pos_screen_space"), 1, &p[0] );
 
 	// Draw quad
-	r::DrawQuad( shdr->getAttribLoc(0) );
+	R::DrawQuad( shdr->getAttribLoc(0) );
 
 	// end
 	fbo.Unbind();

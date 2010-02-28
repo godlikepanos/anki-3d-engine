@@ -14,7 +14,7 @@
 class Camera;
 
 /// renderer namespace
-namespace r { // begin namespace
+namespace R { // begin namespace
 
 
 extern uint  w; ///< width of the rendering window
@@ -34,7 +34,7 @@ extern int  max_anisotropy; ///< Max texture anisotropy. Used in Texture::load
 
 // misc
 extern void takeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
-extern void init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "r::*::init" functions among other things
+extern void init(); ///< Inits the renderer subsystem. Setting OpenGL and executes "R::*::init" functions among other things
 extern void prepareNextFrame(); ///< Runs before rendering
 extern const uchar* getLastError(); ///< getLastError
 extern void printLastError(); ///< prints last OpenGL error
@@ -66,7 +66,7 @@ inline void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h);
 // externals that have global scope in other namespaces
 
 /// material stage namespace
-namespace ms
+namespace Ms
 {
 	extern Texture normalFai, diffuseFai, specularFai, depthFai;
 
@@ -77,14 +77,14 @@ namespace ms
 	/// EarlyZ depth pass namespace
 	namespace earlyz
 	{
-		extern void init(); ///< Inits the the earlyz FBO with r::ms::depthFai
-		extern void runPass( const Camera& cam ); ///< Renders the Scene's depth in the r::ms:depthFai
+		extern void init(); ///< Inits the the earlyz FBO with R::Ms::depthFai
+		extern void runPass( const Camera& cam ); ///< Renders the Scene's depth in the R::ms:depthFai
 	}
 #endif
 }
 
 /// illumination stage namespace
-namespace is
+namespace Is
 {
 	extern Texture fai;
 
@@ -92,7 +92,7 @@ namespace is
 	extern void runStage( const Camera& cam );
 
 	/// illumination stage shadows namesapce
-	namespace shadows
+	namespace Shad
 	{
 		extern void init();
 		extern void runPass( const Camera& cam );
@@ -104,7 +104,7 @@ namespace is
 }
 
 /// blending stage namespace
-namespace bs
+namespace Bs
 {
 	extern Texture faiBsScene;
 
@@ -115,18 +115,19 @@ namespace bs
 }
 
 /// pre-processing stage namespace
-namespace pps
+namespace Pps
 {
 	extern void init();
 	extern void runStage( const Camera& cam );
 
-	namespace ssao
+	namespace Ssao
 	{
 		extern bool enabled;
 		extern void init();
 		extern void runPass( const Camera& cam );
 		extern Texture fai;
 		extern Texture bluredFai;
+		extern Texture bluredFai2;
 		extern float renderingQuality;
 	}
 
@@ -135,7 +136,7 @@ namespace pps
 		extern bool enabled;
 	}
 
-	namespace hdr
+	namespace Hdr
 	{
 		extern bool    enabled;
 		extern void    init();
@@ -146,7 +147,7 @@ namespace pps
 		extern float   renderingQuality;
 	}
 
-	namespace lscatt
+	namespace Lscatt
 	{
 		extern bool enabled;
 		extern void init();
@@ -159,7 +160,7 @@ namespace pps
 }
 
 /// debug stage namespace
-namespace dbg
+namespace Dbg
 {
 	extern bool showAxis;
 	extern bool showFnormals;

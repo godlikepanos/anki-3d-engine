@@ -13,16 +13,16 @@ make
 
 And the build will will begin. 
 
-Sometimes I forget to update all the targets. The debug is always updated though.
+Sometimes I forget to update all the targets. The debug is always updated though
 
-The gen.cfg.py files contain the build options of every target. Their format is pretty straightforward and minimal.
+The gen.cfg.py files contain the build options of every target. Their format is pretty straightforward and minimal
 
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 HOW TO BUILD BULLET PHYSICS
 ---------------------------------------------------------------------------------------------------------------------------------------
 
-From now on the AnKi requires the Bullet Physics library. Bullet dev files does not ship with any distribution for now so you have to download it manually and build it. Here is how:
+From now on the AnKi requires the Bullet Physics library. Bullet dev files do not ship with any Linux distribution, for now, so you have to download it manually and build it. Here is how:
 
 1) Go to the root AnKi path (where src, shaders and blenderscripts are)
 2) cd ..
@@ -31,4 +31,4 @@ From now on the AnKi requires the Bullet Physics library. Bullet dev files does 
 5) cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
 6) make
 
-The above steps build Bullet statically in a certain dir. If you want to change the default dirs prepare to make changes in the gen.cfg.py files
+The above steps build Bullet statically. If you want to download bullet in a different dir then make the apropriate changes in the gen.cfg.py files

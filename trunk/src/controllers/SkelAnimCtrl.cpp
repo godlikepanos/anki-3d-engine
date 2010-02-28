@@ -2,7 +2,7 @@
 #include "SkelAnim.h"
 #include "SkelNode.h"
 #include "Skeleton.h"
-#include "renderer.h"
+#include "Renderer.h"
 
 
 //=====================================================================================================================================
@@ -160,7 +160,7 @@ void SkelAnimCtrl::update( float )
 
 	interpolate( skelAnim, frame );
 	updateBoneTransforms();
-	if( r::dbg::showSkeletons )
+	if( R::Dbg::showSkeletons )
 	{
 		deform();
 	}

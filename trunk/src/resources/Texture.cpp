@@ -1,7 +1,7 @@
 #include <fstream>
 #include <SDL/SDL_image.h>
 #include "Texture.h"
-#include "renderer.h"
+#include "Renderer.h"
 
 
 unsigned char Image::tgaHeaderUncompressed[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
@@ -318,12 +318,12 @@ bool Texture::load( const char* filename )
 	// bind the texture
 	glGenTextures( 1, &glId );
 	bind(0);
-	if( r::mipmaping )  glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	if( R::mipmaping )  glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	glTexParameteri( type, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, r::max_anisotropy );
+	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, R::max_anisotropy );
 
 	// leave to GL_REPEAT. There is not real performace impact
 	glTexParameteri( type, GL_TEXTURE_WRAP_S, GL_REPEAT );
@@ -332,14 +332,14 @@ bool Texture::load( const char* filename )
 	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
 	int int_format; // the internal format of the image
-	if( r::textureCompression )
+	if( R::textureCompression )
 		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
 	else
 		int_format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
 	glTexImage2D( type, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
-	if( r::mipmaping ) glGenerateMipmap(type);
+	if( R::mipmaping ) glGenerateMipmap(type);
 
 	img.unload();
 	return true;
@@ -366,7 +366,7 @@ bool Texture::createEmpty2D( float width_, float height_, int internal_format, i
 	// allocate to vram
 	glTexImage2D( type, 0, internal_format, width_, height_, 0, format_, type_, NULL );
 
-	if( r::mipmaping ) glGenerateMipmap(type);
+	if( R::mipmaping ) glGenerateMipmap(type);
 
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
@@ -410,7 +410,7 @@ void Texture::unload()
 //=====================================================================================================================================
 void Texture::bind( uint unit ) const
 {
-	if( unit>=(uint)r::maxTextureUnits )
+	if( unit>=(uint)R::maxTextureUnits )
 		WARNING("Max tex units passed");
 
 	glActiveTexture( GL_TEXTURE0+unit );

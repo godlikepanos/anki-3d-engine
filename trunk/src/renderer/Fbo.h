@@ -2,7 +2,7 @@
 #define _FBO_H_
 
 #include "Common.h"
-#include "renderer.h"
+#include "Renderer.h"
 
 
 /// The class is created as a wrapper to avoid common mistakes

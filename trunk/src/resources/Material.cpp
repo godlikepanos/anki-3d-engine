@@ -5,7 +5,7 @@
 #include "parser.h"
 #include "Texture.h"
 #include "ShaderProg.h"
-#include "renderer.h"
+#include "Renderer.h"
 
 
 #define MTL_ERROR( x ) ERROR( "Material (" << getRsrcPath() << getRsrcName() << "): " << x );
@@ -266,19 +266,19 @@ bool Material::load( const char* filename )
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "IS_FAI" ) )
 						{
-							var.value.texture = &r::is::fai;
+							var.value.texture = &R::Is::fai;
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_NORMAL_FAI" ) )
 						{
-							var.value.texture = &r::ms::normalFai;
+							var.value.texture = &R::Ms::normalFai;
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_DEPTH_FAI" ) )
 						{
-							var.value.texture = &r::ms::depthFai;
+							var.value.texture = &R::Ms::depthFai;
 						}
 						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "PPS_FAI" ) )
 						{
-							var.value.texture = &r::pps::fai;
+							var.value.texture = &R::Pps::fai;
 						}
 						else
 						{

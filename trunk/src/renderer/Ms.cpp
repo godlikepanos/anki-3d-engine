@@ -2,7 +2,7 @@
  * The file contains functions and vars used for the deferred shading material stage.
  */
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
@@ -11,8 +11,8 @@
 #include "MeshNode.h"
 
 
-namespace r {
-namespace ms {
+namespace R {
+namespace Ms {
 
 
 /*
@@ -40,10 +40,10 @@ void init()
 
 	// create the FAIs
 	const int internal_format = GL_RGBA16F_ARB;
-	if( !normalFai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !diffuseFai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !specularFai.createEmpty2D( r::w, r::h, internal_format, GL_RGBA ) ||
-	    !depthFai.createEmpty2D( r::w, r::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
+	if( !normalFai.createEmpty2D( R::w, R::h, internal_format, GL_RGBA ) ||
+	    !diffuseFai.createEmpty2D( R::w, R::h, internal_format, GL_RGBA ) ||
+	    !specularFai.createEmpty2D( R::w, R::h, internal_format, GL_RGBA ) ||
+	    !depthFai.createEmpty2D( R::w, R::h, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
 	{
 		FATAL( "See prev error" );
 	}
@@ -69,7 +69,7 @@ void init()
 	fbo.Unbind();
 
 #if defined( _EARLY_Z_ )
-	r::ms::earlyz::init();
+	R::Ms::earlyz::init();
 #endif
 }
 
@@ -81,7 +81,7 @@ void runStage( const Camera& cam )
 {
 	#if defined( _EARLY_Z_ )
 		// run the early z pass
-		r::ms::earlyz::runPass( cam );
+		R::Ms::earlyz::runPass( cam );
 	#endif
 
 	fbo.bind();
@@ -89,8 +89,8 @@ void runStage( const Camera& cam )
 	#if !defined( _EARLY_Z_ )
 		glClear( GL_DEPTH_BUFFER_BIT );
 	#endif
-	r::setProjectionViewMatrices( cam );
-	r::setViewport( 0, 0, r::w, r::h );
+	R::setProjectionViewMatrices( cam );
+	R::setViewport( 0, 0, R::w, R::h );
 
 	//glEnable( GL_DEPTH_TEST );
 	Scene::skybox.Render( cam.getViewMatrix().getRotationPart() );

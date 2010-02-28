@@ -14,7 +14,7 @@ uniform sampler2D tex;
 void main()
 {
 	//gl_FragData[0].a = MedianAndBlurA( tex, tex_coords );
-	float offset = 1.0 / float(textureSize(tex,0).x);
+	float offset = 1.0 / float(textureSize(tex,0).y);
 	const int KERNEL_SIZE = 9;
 	float kernel[KERNEL_SIZE] = float[]( -3.0 * offset, -2.0 * offset, -1.0 * offset, 0.0 * offset, 1.0 * offset, 2.0 * offset,
 																				3.0 * offset, -4.0 * offset, 4.0 * offset );
@@ -22,7 +22,7 @@ void main()
 	float factor = 0.0;
 	for( int i=0; i<KERNEL_SIZE; i++ )
 	{
-		factor += texture2D( tex, tex_coords + vec2(kernel[i], 0.0) ).a;
+		factor += texture2D( tex, tex_coords + vec2(0.0, kernel[i]) ).a;
 	}
 	gl_FragData[0].a = factor / KERNEL_SIZE;
 }

@@ -2,15 +2,15 @@
 The file contains functions and vars used for the deferred shading/post-processing stage/bloom passes.
 */
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "Resource.h"
 #include "Texture.h"
 #include "Scene.h"
 #include "Fbo.h"
 
-namespace r {
-namespace pps {
-namespace hdr {
+namespace R {
+namespace Pps {
+namespace Hdr {
 
 
 /*
@@ -71,8 +71,8 @@ init                                                                            
 */
 void init()
 {
-	wwidth = r::pps::hdr::renderingQuality * r::w;
-	wheight = r::pps::hdr::renderingQuality * r::h;
+	wwidth = R::Pps::Hdr::renderingQuality * R::w;
+	wheight = R::Pps::Hdr::renderingQuality * R::h;
 
 	InitFBOs( pass0_fbo, pass0Fai, GL_RGB );
 	InitFBOs( pass1_fbo, pass1Fai, GL_RGB );
@@ -92,7 +92,7 @@ runPass                                                                         
 */
 void runPass( const Camera& /*cam*/ )
 {
-	r::setViewport( 0, 0, wwidth, wheight );
+	R::setViewport( 0, 0, wwidth, wheight );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -103,10 +103,10 @@ void runPass( const Camera& /*cam*/ )
 
 	pass0_shdr->bind();
 
-	pass0_shdr->locTexUnit( pass0_shdr->GetUniLoc(0), r::is::fai, 0 );
+	pass0_shdr->locTexUnit( pass0_shdr->GetUniLoc(0), R::Is::fai, 0 );
 
 	// Draw quad
-	r::DrawQuad( pass0_shdr->getAttribLoc(0) );
+	R::DrawQuad( pass0_shdr->getAttribLoc(0) );
 
 
 	// pass 1
@@ -117,7 +117,7 @@ void runPass( const Camera& /*cam*/ )
 	pass1_shdr->locTexUnit( pass1_shdr->GetUniLoc(0), pass0Fai, 0 );
 
 	// Draw quad
-	r::DrawQuad( pass1_shdr->getAttribLoc(0) );
+	R::DrawQuad( pass1_shdr->getAttribLoc(0) );
 
 
 	// pass 2
@@ -128,7 +128,7 @@ void runPass( const Camera& /*cam*/ )
 	pass2_shdr->locTexUnit( pass2_shdr->GetUniLoc(0), pass1Fai, 0 );
 
 	// Draw quad
-	r::DrawQuad( pass2_shdr->getAttribLoc(0) );
+	R::DrawQuad( pass2_shdr->getAttribLoc(0) );
 
 	// end
 	Fbo::Unbind();

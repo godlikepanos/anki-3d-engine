@@ -217,7 +217,7 @@ struct renderer_t
 	//===================================================================================================================================
 	material_stage_t ms;
 	illumination_stage_t is;
-	blending_stage_t bs;
+	blending_stage_t Bs;
 	postprocessing_stage_t pps;
 
 	camera_t* camera;
@@ -245,7 +245,7 @@ struct renderer_t
 	//===================================================================================================================================
 	// FUNCS                                                                                                                            =
 	//===================================================================================================================================
-	renderer_t(): ms(*this), is(*this), bs(*this), pps(*this) {}
+	renderer_t(): ms(*this), is(*this), Bs(*this), pps(*this) {}
 
 	void UpdateMatrices();
 	static void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); };

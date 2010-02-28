@@ -2,7 +2,7 @@
 The file contains functions and vars used for the deferred shading illumination stage.
 */
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "Mesh.h"
@@ -12,8 +12,8 @@ The file contains functions and vars used for the deferred shading illumination 
 #include "Fbo.h"
 #include "LightProps.h"
 
-namespace r {
-namespace is {
+namespace R {
+namespace Is {
 
 
 /*
@@ -28,10 +28,10 @@ Texture fai;  // illuminated Scene
 static uint stencil_rb; // framebuffer render buffer for stencil optimizations
 
 // shaders
-static ShaderProg* shdr_is_ambient;
-static ShaderProg* shdr_is_lp_point_light;
-static ShaderProg* shdr_is_lp_spot_light_nos;
-static ShaderProg* shdr_is_lp_spot_light_s;
+static ShaderProg* ambientSProg;
+static ShaderProg* pointLightSProg;
+static ShaderProg* spotLightNoShadowSProg;
+static ShaderProg* spotLightShadowSProg;
 
 
 // the bellow are used to speedup the calculation of the frag pos (view space) inside the shader. This is done by precompute the
@@ -60,9 +60,9 @@ static void initSMOUVS()
 static void DrawSMOUVS( const PointLight& light )
 {
 	const float scale = 1.2;
-	r::multMatrix( Mat4( light.translationWspace, Mat3::getIdentity(), light.radius*scale ) );
+	R::multMatrix( Mat4( light.translationWspace, Mat3::getIdentity(), light.radius*scale ) );
 
-	r::noShaders();
+	R::noShaders();
 
 	glBindBuffer( GL_ARRAY_BUFFER, smo_uvs_vbo_id );
 	glEnableClientState( GL_VERTEX_ARRAY );
@@ -81,15 +81,15 @@ static void DrawSMOUVS( const PointLight& light )
 /// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 static void CalcViewVector( const Camera& cam )
 {
-	int _w = r::w;
-	int _h = r::h;
+	int _w = R::w;
+	int _h = R::h;
 	int pixels[4][2]={ {_w,_h}, {0,_h}, { 0,0 }, {_w,0} }; // from righ up and CC wise to right down, Just like we render the quad
 	int viewport[4]={ 0, 0, _w, _h };
 
 	for( int i=0; i<4; i++ )
 	{
 		/* Original Code:
-		r::UnProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
+		R::UnProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
 		              view_vectors[i].x, view_vectors[i].y, view_vectors[i].z );
 		view_vectors[i] = cam.getViewMatrix() * view_vectors[i];
 		The original code is the above 3 lines. The optimized follows:*/
@@ -130,14 +130,14 @@ static void initStageFBO()
 	// init the stencil render buffer
 	glGenRenderbuffers( 1, &stencil_rb );
 	glBindRenderbuffer( GL_RENDERBUFFER, stencil_rb );
-	glRenderbufferStorage( GL_RENDERBUFFER, GL_STENCIL_INDEX, r::w, r::h );
+	glRenderbufferStorage( GL_RENDERBUFFER, GL_STENCIL_INDEX, R::w, R::h );
 	glFramebufferRenderbufferEXT( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil_rb );
 
 	// inform in what buffers we draw
 	fbo.setNumOfColorAttachements(1);
 
 	// create the txtrs
-	if( !fai.createEmpty2D( r::w, r::h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE ) )
+	if( !fai.createEmpty2D( R::w, R::h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE ) )
 	{
 		FATAL( "See prev error" );
 	}
@@ -162,17 +162,17 @@ init                                                                            
 void init()
 {
 	// load the shaders
-	shdr_is_ambient = rsrc::shaders.load( "shaders/is_ap.glsl" );
-	shdr_is_lp_point_light = rsrc::shaders.load( "shaders/is_lp_point.glsl" );
-	shdr_is_lp_spot_light_nos = rsrc::shaders.load( "shaders/is_lp_spot.glsl" );
-	shdr_is_lp_spot_light_s = rsrc::shaders.load( "shaders/is_lp_spot_shad.glsl" );
+	ambientSProg = rsrc::shaders.load( "shaders/is_ap.glsl" );
+	pointLightSProg = rsrc::shaders.load( "shaders/is_lp_point.glsl" );
+	spotLightNoShadowSProg = rsrc::shaders.load( "shaders/is_lp_spot.glsl" );
+	spotLightShadowSProg = rsrc::shaders.load( "shaders/is_lp_spot_shad.glsl" );
 
 
 	// init the rest
 	initStageFBO();
 	initSMOUVS();
 
-	r::is::shadows::init();
+	R::Is::Shad::init();
 }
 
 
@@ -186,14 +186,14 @@ static void AmbientPass( const Camera& /*cam*/, const Vec3& color )
 	glDisable( GL_BLEND );
 
 	// set the shader
-	shdr_is_ambient->bind();
+	ambientSProg->bind();
 
 	// set the uniforms
-	glUniform3fv( shdr_is_ambient->GetUniLoc(0), 1, &((Vec3)color)[0] );
-	shdr_is_ambient->locTexUnit( shdr_is_ambient->GetUniLoc(1), r::ms::diffuseFai, 0 );
+	glUniform3fv( ambientSProg->GetUniLoc(0), 1, &((Vec3)color)[0] );
+	ambientSProg->locTexUnit( ambientSProg->GetUniLoc(1), R::Ms::diffuseFai, 0 );
 
 	// Draw quad
-	r::DrawQuad( shdr_is_ambient->getAttribLoc(0) );
+	R::DrawQuad( ambientSProg->getAttribLoc(0) );
 }
 
 
@@ -217,7 +217,7 @@ static void SetStencilMask( const Camera& cam, const PointLight& light )
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::setProjectionViewMatrices( cam );
+	R::setProjectionViewMatrices( cam );
 
 
 	// render sphere to stencil buffer
@@ -262,11 +262,11 @@ static void SetStencilMask( const Camera& cam, const SpotLight& light )
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	r::setProjectionViewMatrices( cam );
+	R::setProjectionViewMatrices( cam );
 
 
 	// render camera's shape to stencil buffer
-	r::noShaders();
+	R::noShaders();
 	const Camera& lcam = light.camera;
 	float x = lcam.getZFar() / tan( (PI-lcam.getFovX())/2 );
 	float y = tan( lcam.getFovY()/2 ) * lcam.getZFar();
@@ -283,7 +283,7 @@ static void SetStencilMask( const Camera& cam, const SpotLight& light )
 		{ { x, -y, z }, {-x, -y, z }, {-x,  y, z } }, // front bottom left
 	};
 
-	r::multMatrix( lcam.transformationWspace );
+	R::multMatrix( lcam.transformationWspace );
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, verts );
 	glDrawArrays( GL_TRIANGLES, 0, tris_num*3 );
@@ -325,14 +325,14 @@ static void PointLightPass( const Camera& cam, const PointLight& light )
 	SetStencilMask( cam, light );
 
 	//** bind the shader **
-	const ShaderProg& shader = *shdr_is_lp_point_light; // I dont want to type
+	const ShaderProg& shader = *pointLightSProg; // I dont want to type
 	shader.bind();
 
 	// bind the material stage framebuffer attachable images
-	shader.locTexUnit( shader.GetUniLoc(0), r::ms::normalFai, 0 );
-	shader.locTexUnit( shader.GetUniLoc(1), r::ms::diffuseFai, 1 );
-	shader.locTexUnit( shader.GetUniLoc(2), r::ms::specularFai, 2 );
-	shader.locTexUnit( shader.GetUniLoc(3), r::ms::depthFai, 3 );
+	shader.locTexUnit( shader.GetUniLoc(0), R::Ms::normalFai, 0 );
+	shader.locTexUnit( shader.GetUniLoc(1), R::Ms::diffuseFai, 1 );
+	shader.locTexUnit( shader.GetUniLoc(2), R::Ms::specularFai, 2 );
+	shader.locTexUnit( shader.GetUniLoc(3), R::Ms::depthFai, 3 );
 	glUniform2fv( shader.GetUniLoc(4), 1, &planes[0] );
 
 	Vec3 light_pos_eye_space = light.translationWspace.getTransformed( cam.getViewMatrix() );
@@ -345,7 +345,7 @@ static void PointLightPass( const Camera& cam, const PointLight& light )
 	glEnableVertexAttribArray( shader.getAttribLoc(0) );
 	glEnableVertexAttribArray( shader.getAttribLoc(1) );
 
-	glVertexAttribPointer( shader.getAttribLoc(0), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
+	glVertexAttribPointer( shader.getAttribLoc(0), 2, GL_FLOAT, false, 0, &R::quad_vert_cords[0] );
 	glVertexAttribPointer( shader.getAttribLoc(1), 3, GL_FLOAT, false, 0, &view_vectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
@@ -374,7 +374,7 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	//** generate the shadow map (if needed) **
 	if( light.castsShadow )
 	{
-		r::is::shadows::runPass( light.camera );
+		R::Is::Shad::runPass( light.camera );
 
 		// restore the IS FBO
 		fbo.bind();
@@ -388,16 +388,16 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	//** set the shader and uniforms **
 	const ShaderProg* shdr; // because of the huge name
 
-	if( light.castsShadow )  shdr = shdr_is_lp_spot_light_s;
-	else                      shdr = shdr_is_lp_spot_light_nos;
+	if( light.castsShadow )  shdr = spotLightShadowSProg;
+	else                      shdr = spotLightNoShadowSProg;
 
 	shdr->bind();
 
 	// bind the framebuffer attachable images
-	shdr->locTexUnit( shdr->GetUniLoc(0), r::ms::normalFai, 0 );
-	shdr->locTexUnit( shdr->GetUniLoc(1), r::ms::diffuseFai, 1 );
-	shdr->locTexUnit( shdr->GetUniLoc(2), r::ms::specularFai, 2 );
-	shdr->locTexUnit( shdr->GetUniLoc(3), r::ms::depthFai, 3 );
+	shdr->locTexUnit( shdr->GetUniLoc(0), R::Ms::normalFai, 0 );
+	shdr->locTexUnit( shdr->GetUniLoc(1), R::Ms::diffuseFai, 1 );
+	shdr->locTexUnit( shdr->GetUniLoc(2), R::Ms::specularFai, 2 );
+	shdr->locTexUnit( shdr->GetUniLoc(3), R::Ms::depthFai, 3 );
 
 	if( light.lightProps->getTexture() == NULL )
 		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getRsrcName() );
@@ -433,23 +433,23 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	glActiveTexture( GL_TEXTURE0 );
 	glMatrixMode( GL_TEXTURE );
 	glloadMatrixf( mBias );
-	r::multMatrix( light.camera.getProjectionMatrix() );
-	r::multMatrix( light.camera.getViewMatrix() );
-	r::multMatrix( cam.transformationWspace );
+	R::multMatrix( light.camera.getProjectionMatrix() );
+	R::multMatrix( light.camera.getViewMatrix() );
+	R::multMatrix( cam.transformationWspace );
 	glMatrixMode(GL_MODELVIEW);*/
 
 	// the shadow stuff
 	// render depth to texture and then bind it
 	if( light.castsShadow )
 	{
-		shdr->locTexUnit( shdr->GetUniLoc(11), r::is::shadows::shadowMap, 5 );
+		shdr->locTexUnit( shdr->GetUniLoc(11), R::Is::Shad::shadowMap, 5 );
 	}
 
 	//** render quad **
 	glEnableVertexAttribArray( shdr->getAttribLoc(0) );
 	glEnableVertexAttribArray( shdr->getAttribLoc(1) );
 
-	glVertexAttribPointer( shdr->getAttribLoc(0), 2, GL_FLOAT, false, 0, &quad_vert_cords[0] );
+	glVertexAttribPointer( shdr->getAttribLoc(0), 2, GL_FLOAT, false, 0, &R::quad_vert_cords[0] );
 	glVertexAttribPointer( shdr->getAttribLoc(1), 3, GL_FLOAT, false, 0, &view_vectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
@@ -477,7 +477,7 @@ void runStage( const Camera& cam )
 	fbo.bind();
 
 	// OGL stuff
-	r::setViewport( 0, 0, r::w, r::h );
+	R::setViewport( 0, 0, R::w, R::h );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
