@@ -1,25 +1,25 @@
 #pragma anki vertShaderBegins
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 
 void main(void)
 {
-	tex_coords = gl_MultiTexCoord0.xy;
+	texCoords = gl_MultiTexCoord0.xy;
 	gl_FrontColor = gl_Color;
 	gl_Position = ftransform();
 }
 
 #pragma anki fragShaderBegins
 
-#pragma anki uniform font_map 0
-uniform sampler2D font_map;
-varying vec2 tex_coords;
+#pragma anki uniform fontMap 0
+uniform sampler2D fontMap;
+varying vec2 texCoords;
 
 void main()
 {
-	vec2 tex_col = texture2D( font_map, tex_coords ).ra; // get only one value and the alpha
+	vec2 texCol = texture2D( fontMap, texCoords ).ra; // get only one value and the alpha
 
-	if( tex_col.y == 0.0 ) discard;
+	if( texCol.y == 0.0 ) discard;
 
-	gl_FragColor = vec4(tex_col.x) * gl_Color;
+	gl_FragColor = vec4(texCol.x) * gl_Color;
 }

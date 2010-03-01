@@ -5,14 +5,14 @@ attribute vec3 view_vector;
 #pragma anki attribute position 0
 attribute vec2 position;
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 varying vec3 vpos;
 
 void main()
 {
 	vpos = view_vector;
 	vec2 vert_pos = position; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
-	tex_coords = vert_pos;
+	texCoords = vert_pos;
 	vec2 vert_pos_ndc = vert_pos*2.0 - 1.0;
 	gl_Position = vec4( vert_pos_ndc, 0.0, 1.0 );
 }
@@ -33,7 +33,7 @@ uniform vec3 light_diffuse_col;
 uniform vec3 light_specular_col;
 uniform mat4 tex_projection_mat;
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 varying vec3 vpos; // for the calculation of frag pos in view space
 
 
@@ -45,7 +45,7 @@ return frag pos in view space                                                   
 */
 vec3 FragPosVSpace()
 {
-	float _depth = texture2D( ms_depth_fai, tex_coords ).r;
+	float _depth = texture2D( ms_depth_fai, texCoords ).r;
 
 	if( _depth == 1.0 ) discard;
 
@@ -189,8 +189,8 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 	vec3 _light_dir = _light_frag_vec * inversesqrt(_frag_light_dist); // ...because we want frag_light_dist for the calc of the attenuation
 
 	// read the normal
-	//vec3 _normal = texture2D( ms_normal_fai, tex_coords ).rgb;
-	vec3 _normal = UnpackNormal( texture2D( ms_normal_fai, tex_coords ).rg );
+	//vec3 _normal = texture2D( ms_normal_fai, texCoords ).rgb;
+	vec3 _normal = UnpackNormal( texture2D( ms_normal_fai, texCoords ).rg );
 
 	// the lambert term
 	float _lambert_term = dot( _normal, _light_dir );
@@ -199,12 +199,12 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 	//_lambert_term = max( 0.0, _lambert_term );
 
 	// diffuce lighting
-	vec3 _diffuse = texture2D( ms_diffuse_fai, tex_coords ).rgb;
+	vec3 _diffuse = texture2D( ms_diffuse_fai, texCoords ).rgb;
 	_diffuse = (_diffuse * light_diffuse_col);
 	vec3 _color = _diffuse * _lambert_term;
 
 	// specular lighting
-	vec4 _specular_mix = texture2D( ms_specular_fai, tex_coords );
+	vec4 _specular_mix = texture2D( ms_specular_fai, texCoords );
 	vec3 _specular = _specular_mix.xyz;
 	float _shininess = _specular_mix.w;
 
@@ -243,24 +243,24 @@ void main()
 	//===================================================================================================================================
 	#elif defined(_SPOT_LIGHT_)
 		vec4 _tex_coord2 = tex_projection_mat * vec4(_frag_pos_vspace, 1.0);
-		vec3 _tex_coords3 = _tex_coord2.xyz / _tex_coord2.w;
+		vec3 _texCoords3 = _tex_coord2.xyz / _tex_coord2.w;
 
 		if
 		(
 			_tex_coord2.w > 0.0 &&
-			_tex_coords3.x > 0.0 &&
-			_tex_coords3.x < 1.0 &&
-			_tex_coords3.y > 0.0 &&
-			_tex_coords3.y < 1.0 &&
+			_texCoords3.x > 0.0 &&
+			_texCoords3.x < 1.0 &&
+			_texCoords3.y > 0.0 &&
+			_texCoords3.y < 1.0 &&
 			_tex_coord2.w < 1.0/light_inv_radius
 		)
 		{
 			#if defined( _SHADOW_ )
 				#if defined( _SHADOW_MAPPING_PCF_ )
-					float _shadow_color = PCF_Low( _tex_coords3 );
-					//float _shadow_color = MedianFilterPCF( shadow_map, _tex_coords3 );
+					float _shadow_color = PCF_Low( _texCoords3 );
+					//float _shadow_color = MedianFilterPCF( shadow_map, _texCoords3 );
 				#else
-					float _shadow_color = PCF_Off( _tex_coords3 );
+					float _shadow_color = PCF_Off( _texCoords3 );
 				#endif
 
 				if( _shadow_color == 0.0 ) discard;
@@ -285,7 +285,7 @@ void main()
 	#endif // spot light
 
 	/*#if defined(_SPOT_LIGHT_)
-	gl_FragData[0] = vec4( UnpackNormal(texture2D( ms_normal_fai, tex_coords ).rg), 1.0 );
-	//gl_FragData[0] = vec4( texture2D( ms_depth_fai, tex_coords ).rg), 1.0 );
+	gl_FragData[0] = vec4( UnpackNormal(texture2D( ms_normal_fai, texCoords ).rg), 1.0 );
+	//gl_FragData[0] = vec4( texture2D( ms_depth_fai, texCoords ).rg), 1.0 );
 	#endif*/
 }

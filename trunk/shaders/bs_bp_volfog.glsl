@@ -14,9 +14,9 @@ uniform sampler2D ms_depth_fai;
 void main()
 {
 	vec2 tex_size_ = textureSize(ms_depth_fai, 0);
-	vec2 tex_coords_ = gl_FragCoord.xy/tex_size_;
+	vec2 texCoords_____________ = gl_FragCoord.xy/tex_size_;
 	
-	float depth_exp_ = texture2D( ms_depth_fai, tex_coords_ ).r;
+	float depth_exp_ = texture2D( ms_depth_fai, texCoords_____________ ).r;
 	if( depth_exp_ == 1 ) discard;
 	
 	float depth_ = LinearizeDepth( depth_exp_, 0.1, 10.0 );

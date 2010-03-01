@@ -13,7 +13,7 @@ uniform sampler2D ms_normal_fai;
 uniform sampler2D pps_hdr_fai;
 uniform sampler2D pps_lscatt_fai;
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 
 
 /*
@@ -49,28 +49,18 @@ EdgeAA                                                                          
 */
 #if defined(_EDGEAA_)
 
-//float LinearizeDepth( in float _depth )
-//{
-//	return (2.0 * camerarange.x) / (camerarange.y + camerarange.x - _depth * (camerarange.y - camerarange.x));
-//}
-//
-//float ReadLinearDepth( in vec2 coord )
-//{
-//	return LinearizeDepth( texture2D( depth_map, coord ).r );
-//}
-
 vec3 EdgeAA()
 {
 	const vec2 pixelsize = vec2( 1.0/(R_W*R_Q), 1.0/(R_H*R_Q) );
 	const vec2 kernel[8] = vec2[]( vec2(-1.0,1.0), vec2(1.0,-1.0), vec2(-1.0,-1.0), vec2(1.0,1.0), vec2(-1.0,0.0), vec2(1.0,0.0), vec2(0.0,-1.0), vec2(0.0,1.0) );
 	const float weight = 1.0;
 
-	vec3 tex = texture2D( ms_normal_fai, tex_coords ).rgb;
+	vec3 tex = texture2D( ms_normal_fai, texCoords ).rgb;
 	float factor = -0.5;
 
 	for( int i=0; i<4; i++ )
 	{
-		vec3 t = texture2D( ms_normal_fai, tex_coords + kernel[i]*pixelsize ).rgb;
+		vec3 t = texture2D( ms_normal_fai, texCoords + kernel[i]*pixelsize ).rgb;
 		t -= tex;
 		factor += dot(t, t);
 	}
@@ -78,16 +68,16 @@ vec3 EdgeAA()
 	factor = min(1.0, factor) * weight;
 
 	//return vec3(factor);
-	//if( factor < 0.01 ) return texture2D( is_fai, tex_coords ).rgb;
+	//if( factor < 0.01 ) return texture2D( is_fai, texCoords ).rgb;
 
 	vec3 color = vec3(0.0);
 
 	for( int i=0; i<8; i++ )
 	{
-		color += texture2D( is_fai, tex_coords + kernel[i]*pixelsize*factor ).rgb;
+		color += texture2D( is_fai, texCoords + kernel[i]*pixelsize*factor ).rgb;
 	}
 
-	color += 2.0 * texture2D( is_fai, tex_coords ).rgb;
+	color += 2.0 * texture2D( is_fai, texCoords ).rgb;
 
 	return color*(1.0/9.0);
 
@@ -105,14 +95,14 @@ vec3 EdgeAA()
 //
 //	vec2 pixelsize = vec2( 1.0/R_W, 1.0/R_H );
 //
-//	float d = ReadLinearDepth( tex_coords );
+//	float d = ReadLinearDepth( texCoords );
 //	float factor = 0.0;
 //
 //	const float weight = 8.0;
 //
 //	for( int i=0; i<4; i++ )
 //	{
-//		float ds = ReadLinearDepth( tex_coords + kernel[i]*pixelsize );
+//		float ds = ReadLinearDepth( texCoords + kernel[i]*pixelsize );
 //
 //		factor += abs(d - ds);
 //	}
@@ -123,17 +113,17 @@ vec3 EdgeAA()
 //
 //	/*if( factor < 0.001 )
 //	{
-//		return texture2D( is_fai, tex_coords ).rgb;
+//		return texture2D( is_fai, texCoords ).rgb;
 //	}*/
 //
 //	vec3 color = vec3(0.0);
 //
 //	for( int i=0; i<8; i++ )
 //	{
-//		color += texture2D( is_fai, tex_coords + kernel[i]*pixelsize*factor ).rgb;
+//		color += texture2D( is_fai, texCoords + kernel[i]*pixelsize*factor ).rgb;
 //	}
 //
-//	color += 2.0 * texture2D( is_fai, tex_coords ).rgb;
+//	color += 2.0 * texture2D( is_fai, texCoords ).rgb;
 //
 //	return color*(1.0/10.0);
 }
@@ -152,7 +142,7 @@ void main (void)
 	#if defined(_EDGEAA_)
 		color = EdgeAA();
 	#else
-		color = texture2D( is_fai, tex_coords ).rgb;
+		color = texture2D( is_fai, texCoords ).rgb;
 	#endif
 
 	/*const float gamma = 0.7;
@@ -161,17 +151,17 @@ void main (void)
 	color.b = pow(color.b, 1.0 / gamma);*/
 
 	#if defined(_SSAO_)
-		float ssao_factor = texture2D( pps_ssao_fai, tex_coords ).a;
+		float ssao_factor = texture2D( pps_ssao_fai, texCoords ).a;
 		color *= ssao_factor;
 	#endif
 
 	#if defined(_LSCATT_)
-		vec3 lscatt = texture2D( pps_lscatt_fai, tex_coords ).rgb;
+		vec3 lscatt = texture2D( pps_lscatt_fai, texCoords ).rgb;
 		color += lscatt;
 	#endif
 
 	#if defined(_HDR_)
-		vec3 hdr = texture2D( pps_hdr_fai, tex_coords ).rgb;
+		vec3 hdr = texture2D( pps_hdr_fai, texCoords ).rgb;
 		color += hdr;
 	#endif
 
@@ -185,9 +175,9 @@ void main (void)
 	//gl_FragData[0] = vec4( lscatt, 1.0 );
 	//gl_FragData[0] = vec4( bloom_factor );
 	//gl_FragColor = vec4( EdgeAA(), 1.0 );
-	//gl_FragColor = texture2D( pps_boom_fai, tex_coords );
-	//gl_FragColor = texture2D( is_fai, tex_coords );
-	//gl_FragData[0].rgb = UnpackNormal( texture2D( ms_normal_fai, tex_coords ).rg );
+	//gl_FragColor = texture2D( pps_boom_fai, texCoords );
+	//gl_FragColor = texture2D( is_fai, texCoords );
+	//gl_FragData[0].rgb = UnpackNormal( texture2D( ms_normal_fai, texCoords ).rg );
 	//gl_FragData[0] = vec4( hdr, 1.0 );
 }
 

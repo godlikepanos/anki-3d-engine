@@ -64,27 +64,27 @@ void init()
 	sProg = rsrc::shaders.load( "shaders/pps.glsl" );
 	sProg->bind();
 
-	shdrVars::isFai = sProg->getUniLoc( "is_fai" );
+	shdrVars::isFai = sProg->getUniVar( "is_fai" ).getLoc();
 
 	if( R::Pps::Ssao::enabled )
 	{
 		R::Pps::Ssao::init();
-		shdrVars::ppsSsaoFai = sProg->getUniLoc( "pps_ssao_fai" );
+		shdrVars::ppsSsaoFai = sProg->getUniVar( "pps_ssao_fai" ).getLoc();
 	}
 
 	if( R::Pps::Hdr::enabled )
 	{
 		R::Pps::Hdr::init();
-		shdrVars::hdrFai = sProg->getUniLoc( "pps_hdr_fai" );
+		shdrVars::hdrFai = sProg->getUniVar( "pps_hdr_fai" ).getLoc();
 	}
 
 	if( R::Pps::edgeaa::enabled )
-		shdrVars::msNormalFai = sProg->getUniLoc( "ms_normal_fai" );
+		shdrVars::msNormalFai = sProg->getUniVar( "ms_normal_fai" ).getLoc();
 
 	if( R::Pps::Lscatt::enabled )
 	{
 		R::Pps::Lscatt::init();
-		shdrVars::lscattFai = sProg->getUniLoc( "pps_lscatt_fai" );
+		shdrVars::lscattFai = sProg->getUniVar( "pps_lscatt_fai" ).getLoc();
 	}
 
 }

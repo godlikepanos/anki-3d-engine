@@ -17,7 +17,7 @@ http://graphics.cs.williams.edu
 //=====================================================================================================================================
 // MedianFilterRGB                                                                                                                    =
 //=====================================================================================================================================
-vec3 MedianFilterRGB( in sampler2D tex, in vec2 tex_coords )
+vec3 MedianFilterRGB( in sampler2D tex, in vec2 texCoords )
 {
 	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
   vec3 v[9];
@@ -32,7 +32,7 @@ vec3 MedianFilterRGB( in sampler2D tex, in vec2 tex_coords )
 			// If a pixel in the window is located at (x+dX, y+dY), put it at index (dX + R)(2R + 1) + (dY + R) of the
 			// pixel array. This will fill the pixel array, with the top left pixel of the window at pixel[0] and the
 			// bottom right pixel of the window at pixel[N-1].
-			v[(dX + 1) * 3 + (dY + 1)] = texture2D(tex, tex_coords + offset * tex_inv_size).rgb;
+			v[(dX + 1) * 3 + (dY + 1)] = texture2D(tex, texCoords + offset * tex_inv_size).rgb;
 		}
 	}
 
@@ -50,7 +50,7 @@ vec3 MedianFilterRGB( in sampler2D tex, in vec2 tex_coords )
 //=====================================================================================================================================
 // MedianFilterA                                                                                                                      =
 //=====================================================================================================================================
-float MedianFilterA( in sampler2D tex, in vec2 tex_coords )
+float MedianFilterA( in sampler2D tex, in vec2 texCoords )
 {
 	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
   float v[9];
@@ -65,7 +65,7 @@ float MedianFilterA( in sampler2D tex, in vec2 tex_coords )
 			// If a pixel in the window is located at (x+dX, y+dY), put it at index (dX + R)(2R + 1) + (dY + R) of the
 			// pixel array. This will fill the pixel array, with the top left pixel of the window at pixel[0] and the
 			// bottom right pixel of the window at pixel[N-1].
-			v[(dX + 1) * 3 + (dY + 1)] = texture2D(tex, tex_coords + offset * tex_inv_size).a;
+			v[(dX + 1) * 3 + (dY + 1)] = texture2D(tex, texCoords + offset * tex_inv_size).a;
 		}
 	}
 
@@ -83,7 +83,7 @@ float MedianFilterA( in sampler2D tex, in vec2 tex_coords )
 //=====================================================================================================================================
 // MedianAndBlurA                                                                                                                     =
 //=====================================================================================================================================
-float MedianAndBlurA( in sampler2D tex, in vec2 tex_coords )
+float MedianAndBlurA( in sampler2D tex, in vec2 texCoords )
 {
 	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
   float v[9];
@@ -99,7 +99,7 @@ float MedianAndBlurA( in sampler2D tex, in vec2 tex_coords )
 			// If a pixel in the window is located at (x+dX, y+dY), put it at index (dX + R)(2R + 1) + (dY + R) of the
 			// pixel array. This will fill the pixel array, with the top left pixel of the window at pixel[0] and the
 			// bottom right pixel of the window at pixel[N-1].
-			float f = texture2D(tex, tex_coords + offset * tex_inv_size).a;
+			float f = texture2D(tex, texCoords + offset * tex_inv_size).a;
 			v[(dX + 1) * 3 + (dY + 1)] = f;
 			sum += f;
 		}
@@ -119,7 +119,7 @@ float MedianAndBlurA( in sampler2D tex, in vec2 tex_coords )
 //=====================================================================================================================================
 // MedianFilterPCF                                                                                                                    =
 //=====================================================================================================================================
-float MedianFilterPCF( in sampler2DShadow tex, in vec3 tex_coords )
+float MedianFilterPCF( in sampler2DShadow tex, in vec3 texCoords )
 {
 	vec2 tex_inv_size = 1.0/vec2(textureSize(tex, 0));
   float v[9];
@@ -134,7 +134,7 @@ float MedianFilterPCF( in sampler2DShadow tex, in vec3 tex_coords )
 			// If a pixel in the window is located at (x+dX, y+dY), put it at index (dX + R)(2R + 1) + (dY + R) of the
 			// pixel array. This will fill the pixel array, with the top left pixel of the window at pixel[0] and the
 			// bottom right pixel of the window at pixel[N-1].
-			v[(dX + 1) * 3 + (dY + 1)] = shadow2D(tex, tex_coords + vec3(offset * tex_inv_size, 0.0)).r;
+			v[(dX + 1) * 3 + (dY + 1)] = shadow2D(tex, texCoords + vec3(offset * tex_inv_size, 0.0)).r;
 		}
 	}
 
