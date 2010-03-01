@@ -9,12 +9,41 @@
 class ShaderParser;
 class Texture;
 
-/// Shader program. Combines a fragment and a vertex shader
+/**
+ * Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of uniform variables
+ * and a vector of attribute variables. Every variable is a struct that contains the variable's name, location, OpenGL data type and
+ * if it is a uniform or an attribute var.
+ */
 class ShaderProg: public Resource
 {
 	PROPERTY_R( uint, glId, getGlId )
 	
 	private:
+		class Var
+		{
+			PROPERTY_R( int, loc, getLoc );
+			PROPERTY_R( string, name, getName );
+			PROPERTY_R( GLenum, glDataType, getGlDataType ); ///< GL_FLOAT, GL_FLOAT_VEC2... etc
+			PROPERTY_R( uint, type, getType ); ///< LT_ATTRIBUTE or LT_UNIFORM
+
+			public:
+				enum
+				{
+					LT_ATTRIBUTE,
+					LT_UNIFORM
+				};
+
+				Var( int loc_, const char* name_, GLenum glDataType_, uint type_ ):
+					loc(loc_), name(name_), glDataType(glDataType_), type(type_)
+				{}
+		};
+
+		Vec<Var> uniVars;
+		Vec<Var> attribVars;
+		map<string,Var*> uniNameToVar;  ///< A map for quick searching
+		map<string,Var*> attribNameToVar; ///< @see uniNameToVar
+		typedef map<string,Var*>::const_iterator NameToVarIterator; ///< Variable name to variable iterator
+
 		typedef map<string,int>::const_iterator NameToLocIterator; ///< name to location iterator
 	
 		Vec<int> customUniLocToRealLoc;
@@ -22,10 +51,11 @@ class ShaderProg: public Resource
 		map<string,int> uniNameToLoc;
 		map<string,int> attribNameToLoc;
 		
-		void getUniAndAttribLocs();
+		void getUniAndAttribVars(); ///< After the linking of the shader prog is done gather all the vars in custom containers
 		bool fillTheCustomLocationsVectors( const ShaderParser& pars );
-		uint createAndCompileShader( const char* source_code, const char* preproc, int type ) const; ///< @return Returns zero on falure
-		bool link();
+		bool bindCustomAttribLocs( const ShaderParser& pars ) const; ///< Uses glBindAttribLocation for every parser attrib location
+		uint createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const; ///< @return Returns zero on failure
+		bool link(); ///< Link the shader prog
 		
 	public:
 		ShaderProg(): glId(0) {}
@@ -33,23 +63,35 @@ class ShaderProg: public Resource
 		
 		inline void bind() const { DEBUG_ERR( glId==0 ); glUseProgram(glId); }
 		static void unbind() { glUseProgram(0); }
-		static uint getCurrentProgram() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
+		static uint getCurrentProgramGlId() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
 
 		bool load( const char* filename );
-		bool customload( const char* filename, const char* extra_source );
+		bool customload( const char* filename, const char* extraSource ); ///< Used by the renderer's shader programs
 		void unload() { /* ToDo: add code */ }
 
-		int getUniLoc( const char* name ) const; ///< Returns -1 if fail and throws error
-		int getAttribLoc( const char* name ) const; ///< Returns -1 if fail and throws error
-		int getUniLocSilently( const char* name ) const;
-		int getAttribLocSilently( const char* name ) const;
+		const Vec<Var>& getUniVars() const { return uniVars; } ///< Accessor to uniform vars vector
+		const Vec<Var>& getAttribVars() const { return attribVars; } ///< Accessor to attribute vars vector
 
-		int GetUniLoc( int id ) const;
+		int getUniLoc( int id ) const;
 		int getAttribLoc( int id ) const;
 
-		// The function's code is being used way to often so a function has to be made
-		void locTexUnit( int location, const Texture& tex, uint tex_unit ) const;
-		void locTexUnit( const char* name, const Texture& tex, uint tex_unit ) const;
+		/**
+		 * @param name The name of the var
+		 * @return It returns a uniform variable and on failure it throws an error and returns something random
+		 */
+		const Var& getUniVar( const char* varName ) const;
+		const Var& getAttribVar( const char* varName ) const; ///< @see getUniVar
+		bool uniVarExists( const char* varName ) const;
+		bool attribVarExists( const char* varName ) const;
+
+		/**
+		 * The function's code is being used way to often so a function has to be made. It connects a location a texture and a texture unit
+		 * @param location Shader program variable location
+		 * @param tex The texture
+		 * @param texUnit The number of the texture unit
+		 */
+		void locTexUnit( int varLoc, const Texture& tex, uint texUnit ) const;
+		void locTexUnit( const char* varName, const Texture& tex, uint texUnit ) const; ///< @see locTexUnit
 }; 
 
 #endif

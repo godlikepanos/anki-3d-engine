@@ -9,9 +9,9 @@ uniform vec3 ambient_color;
 #pragma anki uniform ms_diffuse_fai 1
 uniform sampler2D ms_diffuse_fai;
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 
 void main()
 {
-	gl_FragData[0].rgb = texture2D( ms_diffuse_fai, tex_coords ).rgb * ambient_color;
+	gl_FragData[0].rgb = texture2D( ms_diffuse_fai, texCoords ).rgb * ambient_color;
 }

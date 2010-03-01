@@ -101,7 +101,7 @@ void runStage2( const Camera& cam )
 			fbo.bind();
 			glDisable( GL_DEPTH_TEST );
 			shader_prog->bind();
-			shader_prog->locTexUnit( shader_prog->GetUniLoc(0), fai, 0 );
+			shader_prog->locTexUnit( shader_prog->getUniLoc(0), fai, 0 );
 			R::DrawQuad( shader_prog->getAttribLoc(0) );
 		}
 	}

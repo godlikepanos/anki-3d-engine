@@ -3,17 +3,25 @@ This file contains some of the naming convention we use in AnKi
 Shader Program     : shaderProg or sProg
 Material           : mtl
 Property           : prop
-Controller         : ctrl
-Skeleton           : skel
 Animation          : anim
-Skeletal Animation : sAnim
 Application        : app
+Camera             : cam
+Color              : col
+Controller         : ctrl
+Skeletal Animation : sAnim
+Skeleton           : skel
 Transformation     : trf
 Translation        : tsl
 Rotation           : rot
 Vector             : vec
+Quaternion         : quat
 Matrix             : mat
-Camera             : cam
 Utility            : util
 Texture            : tex
 Text               : txt
+Location           : loc
+Variable           : var
+Resource           : rsrc
+Fragment           : frag
+Vertex             : vert
+Triangle           : tri

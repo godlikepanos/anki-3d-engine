@@ -6,14 +6,14 @@
 
 #pragma anki include "shaders/median_filter.glsl"
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 
 #pragma anki uniform tex 0
 uniform sampler2D tex;
 
 void main()
 {
-	//gl_FragData[0].a = MedianAndBlurA( tex, tex_coords );
+	//gl_FragData[0].a = MedianAndBlurA( tex, texCoords );
 	float offset = 1.0 / float(textureSize(tex,0).y);
 	const int KERNEL_SIZE = 9;
 	float kernel[KERNEL_SIZE] = float[]( -3.0 * offset, -2.0 * offset, -1.0 * offset, 0.0 * offset, 1.0 * offset, 2.0 * offset,
@@ -22,7 +22,7 @@ void main()
 	float factor = 0.0;
 	for( int i=0; i<KERNEL_SIZE; i++ )
 	{
-		factor += texture2D( tex, tex_coords + vec2(0.0, kernel[i]) ).a;
+		factor += texture2D( tex, texCoords + vec2(0.0, kernel[i]) ).a;
 	}
 	gl_FragData[0].a = factor / KERNEL_SIZE;
 }

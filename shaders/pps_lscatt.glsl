@@ -17,14 +17,14 @@ uniform sampler2D ms_depth_fai;
 #pragma anki uniform is_fai 1
 uniform sampler2D is_fai;
 
-varying vec2 tex_coords;
+varying vec2 texCoords;
 
 
 
 void main()
 {
-	vec2 delta_tex_coord = tex_coords - light_pos_screen_space;
-	vec2 tex_coords2 = tex_coords;
+	vec2 delta_tex_coord = texCoords - light_pos_screen_space;
+	vec2 texCoords2 = texCoords;
 	delta_tex_coord *= 1.0 / float(SAMPLES_NUM) * density;
 	float illumination_decay = 1.0;
 
@@ -32,16 +32,16 @@ void main()
 
 	for( int i=0; i<SAMPLES_NUM; i++ )
 	{
-		tex_coords2 -= delta_tex_coord;
+		texCoords2 -= delta_tex_coord;
 
-		float depth = texture2D( ms_depth_fai, tex_coords2 ).r;
+		float depth = texture2D( ms_depth_fai, texCoords2 ).r;
 		if( depth != 1.0 ) // if the fragment is not part of the skybox dont bother continuing
 		{
 			illumination_decay *= decay;
 			continue;
 		}
 
-		vec3 sample = texture2D( is_fai, tex_coords2 ).rgb;			
+		vec3 sample = texture2D( is_fai, texCoords2 ).rgb;			
 		sample *= illumination_decay * weight;
 		gl_FragData[0].rgb += sample;
 		illumination_decay *= decay;
@@ -49,6 +49,6 @@ void main()
 
 	gl_FragData[0].rgb *= exposure;
 	
-	//gl_FragData[0].rgb = texture2D( is_fai, tex_coords ).rgb;
+	//gl_FragData[0].rgb = texture2D( is_fai, texCoords ).rgb;
 	//gl_FragData[0].rgb = vec3(1, 1, 0);
 }

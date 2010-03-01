@@ -62,8 +62,8 @@ void init()
 
 	// init shaders
 	shdr = rsrc::shaders.load( "shaders/pps_lscatt.glsl" );
-	ms_depth_fai_uni_loc = shdr->getUniLoc( "ms_depth_fai" );
-	is_fai_uni_loc = shdr->getUniLoc( "is_fai" );
+	ms_depth_fai_uni_loc = shdr->getUniVar( "ms_depth_fai" ).getLoc();
+	is_fai_uni_loc = shdr->getUniVar( "is_fai" ).getLoc();
 }
 
 
@@ -92,7 +92,7 @@ void runPass( const Camera& cam )
 	p = cam.getProjectionMatrix() * (cam.getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
-	glUniform2fv( shdr->getUniLoc("light_pos_screen_space"), 1, &p[0] );
+	glUniform2fv( shdr->getUniVar("light_pos_screen_space").getLoc(), 1, &p[0] );
 
 	// Draw quad
 	R::DrawQuad( shdr->getAttribLoc(0) );

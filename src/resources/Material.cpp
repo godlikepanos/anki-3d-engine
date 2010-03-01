@@ -354,7 +354,7 @@ bool Material::additionalInit()
 	shaderProg->bind();
 	for( uint i=0; i<userDefinedVars.size(); i++ )
 	{
-		int loc = shaderProg->getUniLoc( userDefinedVars[i].name.c_str() );
+		int loc = shaderProg->getUniVar( userDefinedVars[i].name.c_str() ).getLoc();
 		if( loc == -1 )
 		{
 			MTL_ERROR( "Shader \"" << shaderProg->getRsrcName() << "\" and user defined var \"" << userDefinedVars[i].name <<
@@ -366,19 +366,24 @@ bool Material::additionalInit()
 	shaderProg->unbind();
 
 	// init the attribute locations
-	attribLocs.tanget = shaderProg->getAttribLocSilently( "tangent" );
-	attribLocs.position = shaderProg->getAttribLocSilently( "position" );
-	attribLocs.normal = shaderProg->getAttribLocSilently( "normal" );
-	attribLocs.texCoords = shaderProg->getAttribLocSilently( "texCoords" );
+	attribLocs.tanget = shaderProg->attribVarExists( "tangent" ) ?  shaderProg->getAttribVar( "tangent" ).getLoc() : -1;
+	attribLocs.position = shaderProg->attribVarExists( "position" ) ?  shaderProg->getAttribVar( "position" ).getLoc() : -1;
+	attribLocs.normal = shaderProg->attribVarExists( "normal" ) ?  shaderProg->getAttribVar( "normal" ).getLoc() : -1;
+	attribLocs.normal = shaderProg->attribVarExists( "normal" ) ?  shaderProg->getAttribVar( "normal" ).getLoc() : -1;
 
 	// vertex weights
-	attribLocs.vertWeightBonesNum = shaderProg->getAttribLocSilently( "vertWeightBonesNum" );
-	if( attribLocs.vertWeightBonesNum != -1 )
+	if( shaderProg->attribVarExists( "vertWeightBonesNum" ) )
 	{
-		attribLocs.vertWeightBoneIds = shaderProg->getAttribLoc( "vertWeightBoneIds" );
-		attribLocs.vertWeightWeights = shaderProg->getAttribLoc( "vertWeightWeights" );
-		uniLocs.skinningRotations = shaderProg->getUniLoc( "skinningRotations" );
-		uniLocs.skinningTranslations = shaderProg->getUniLoc( "skinningTranslations" );
+		attribLocs.vertWeightBonesNum = shaderProg->getAttribVar( "vertWeightBonesNum" ).getLoc();
+		attribLocs.vertWeightBoneIds = shaderProg->getAttribVar( "vertWeightBoneIds" ).getLoc();
+		attribLocs.vertWeightWeights = shaderProg->getAttribVar( "vertWeightWeights" ).getLoc();
+		uniLocs.skinningRotations = shaderProg->getUniVar( "skinningRotations" ).getLoc();
+		uniLocs.skinningTranslations = shaderProg->getUniVar( "skinningTranslations" ).getLoc();
+	}
+	else
+	{
+		attribLocs.vertWeightBonesNum = attribLocs.vertWeightBoneIds = attribLocs.vertWeightWeights = uniLocs.skinningRotations =
+		uniLocs.skinningTranslations = -1;
 	}
 
 	return true;
