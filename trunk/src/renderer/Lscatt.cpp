@@ -95,7 +95,7 @@ void runPass( const Camera& cam )
 	glUniform2fv( shdr->getUniVar("light_pos_screen_space").getLoc(), 1, &p[0] );
 
 	// Draw quad
-	R::DrawQuad( shdr->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 
 	// end
 	fbo.Unbind();

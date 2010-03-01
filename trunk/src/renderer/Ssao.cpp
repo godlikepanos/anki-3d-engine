@@ -159,24 +159,24 @@ void runPass( const Camera& cam )
 
 	// fill SSAO FAI
 	ssaoSProg->bind();
-	glUniform2fv( ssaoSProg->getUniLoc(0), 1, &(Vec2(cam.getZNear(), cam.getZFar()))[0] );
-	ssaoSProg->locTexUnit( ssaoSProg->getUniLoc(1), R::Ms::depthFai, 0 );
-	ssaoSProg->locTexUnit( ssaoSProg->getUniLoc(2), *noise_map, 1 );
-	ssaoSProg->locTexUnit( ssaoSProg->getUniLoc(3), R::Ms::normalFai, 2 );
-	R::DrawQuad( ssaoSProg->getAttribLoc(0) ); // Draw quad
+	glUniform2fv( ssaoSProg->getUniVar("camerarange").getLoc(), 1, &(Vec2(cam.getZNear(), cam.getZFar()))[0] );
+	ssaoSProg->locTexUnit( ssaoSProg->getUniVar("msDepthFai").getLoc(), R::Ms::depthFai, 0 );
+	ssaoSProg->locTexUnit( ssaoSProg->getUniVar("noiseMap").getLoc(), *noise_map, 1 );
+	ssaoSProg->locTexUnit( ssaoSProg->getUniVar("msNormalFai").getLoc(), R::Ms::normalFai, 2 );
+	R::DrawQuad( 0 ); // Draw quad
 
 
 	// second pass. blur
 	blurFbo.bind();
 	blurSProg->bind();
-	blurSProg->locTexUnit( blurSProg->getUniLoc(0), fai, 0 );
-	R::DrawQuad( blurSProg->getAttribLoc(0) ); // Draw quad
+	blurSProg->locTexUnit( blurSProg->getUniVar("tex").getLoc(), fai, 0 );
+	R::DrawQuad( 0 ); // Draw quad
 
 	// third pass. blur
 	blurFbo2.bind();
 	blurSProg2->bind();
-	blurSProg2->locTexUnit( blurSProg2->getUniLoc(0), bluredFai, 0 );
-	R::DrawQuad( blurSProg2->getAttribLoc(0) ); // Draw quad
+	blurSProg2->locTexUnit( blurSProg2->getUniVar("tex").getLoc(), bluredFai, 0 );
+	R::DrawQuad( 0 ); // Draw quad
 
 
 	// end

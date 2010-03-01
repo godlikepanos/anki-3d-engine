@@ -189,11 +189,11 @@ static void AmbientPass( const Camera& /*cam*/, const Vec3& color )
 	ambientSProg->bind();
 
 	// set the uniforms
-	glUniform3fv( ambientSProg->getUniLoc(0), 1, &((Vec3)color)[0] );
-	ambientSProg->locTexUnit( ambientSProg->getUniLoc(1), R::Ms::diffuseFai, 0 );
+	glUniform3fv( ambientSProg->getUniVar("ambientCol").getLoc(), 1, &((Vec3)color)[0] );
+	ambientSProg->locTexUnit( ambientSProg->getUniVar("sceneColMap").getLoc(), R::Ms::diffuseFai, 0 );
 
 	// Draw quad
-	R::DrawQuad( ambientSProg->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 }
 
 
@@ -329,29 +329,29 @@ static void PointLightPass( const Camera& cam, const PointLight& light )
 	shader.bind();
 
 	// bind the material stage framebuffer attachable images
-	shader.locTexUnit( shader.getUniLoc(0), R::Ms::normalFai, 0 );
-	shader.locTexUnit( shader.getUniLoc(1), R::Ms::diffuseFai, 1 );
-	shader.locTexUnit( shader.getUniLoc(2), R::Ms::specularFai, 2 );
-	shader.locTexUnit( shader.getUniLoc(3), R::Ms::depthFai, 3 );
-	glUniform2fv( shader.getUniLoc(4), 1, &planes[0] );
+	shader.locTexUnit( shader.getUniVar("msNormalFai").getLoc(), R::Ms::normalFai, 0 );
+	shader.locTexUnit( shader.getUniVar("msDiffuseFai").getLoc(), R::Ms::diffuseFai, 1 );
+	shader.locTexUnit( shader.getUniVar("msSpecularFai").getLoc(), R::Ms::specularFai, 2 );
+	shader.locTexUnit( shader.getUniVar("msDepthFai").getLoc(), R::Ms::depthFai, 3 );
+	glUniform2fv( shader.getUniVar("planes").getLoc(), 1, &planes[0] );
 
 	Vec3 light_pos_eye_space = light.translationWspace.getTransformed( cam.getViewMatrix() );
-	glUniform3fv( shader.getUniLoc(5), 1, &light_pos_eye_space[0] );
-	glUniform1f( shader.getUniLoc(6), 1.0/light.radius );
-	glUniform3fv( shader.getUniLoc(7), 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
-	glUniform3fv( shader.getUniLoc(8), 1, &Vec3(light.lightProps->getSpecularColor())[0] );
+	glUniform3fv( shader.getUniVar("lightPos").getLoc(), 1, &light_pos_eye_space[0] );
+	glUniform1f( shader.getUniVar("lightInvRadius").getLoc(), 1.0/light.radius );
+	glUniform3fv( shader.getUniVar("lightDiffuseCol").getLoc(), 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
+	glUniform3fv( shader.getUniVar("lightSpecularCol").getLoc(), 1, &Vec3(light.lightProps->getSpecularColor())[0] );
 
 	//** render quad **
-	glEnableVertexAttribArray( shader.getAttribLoc(0) );
-	glEnableVertexAttribArray( shader.getAttribLoc(1) );
+	glEnableVertexAttribArray( 0 );
+	glEnableVertexAttribArray( 1 );
 
-	glVertexAttribPointer( shader.getAttribLoc(0), 2, GL_FLOAT, false, 0, &R::quad_vert_cords[0] );
-	glVertexAttribPointer( shader.getAttribLoc(1), 3, GL_FLOAT, false, 0, &view_vectors[0] );
+	glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &R::quad_vert_cords[0] );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &view_vectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
 
-	glDisableVertexAttribArray( shader.getAttribLoc(0) );
-	glDisableVertexAttribArray( shader.getAttribLoc(1) );
+	glDisableVertexAttribArray( 0 );
+	glDisableVertexAttribArray( 1 );
 
 	//glDisable( GL_SCISSOR_TEST );
 	glDisable( GL_STENCIL_TEST );
@@ -394,27 +394,27 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	shdr->bind();
 
 	// bind the framebuffer attachable images
-	shdr->locTexUnit( shdr->getUniLoc(0), R::Ms::normalFai, 0 );
-	shdr->locTexUnit( shdr->getUniLoc(1), R::Ms::diffuseFai, 1 );
-	shdr->locTexUnit( shdr->getUniLoc(2), R::Ms::specularFai, 2 );
-	shdr->locTexUnit( shdr->getUniLoc(3), R::Ms::depthFai, 3 );
+	shdr->locTexUnit( shdr->getUniVar("msNormalFai").getLoc(), R::Ms::normalFai, 0 );
+	shdr->locTexUnit( shdr->getUniVar("msDiffuseFai").getLoc(), R::Ms::diffuseFai, 1 );
+	shdr->locTexUnit( shdr->getUniVar("msSpecularFai").getLoc(), R::Ms::specularFai, 2 );
+	shdr->locTexUnit( shdr->getUniVar("msDepthFai").getLoc(), R::Ms::depthFai, 3 );
 
 	if( light.lightProps->getTexture() == NULL )
 		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getRsrcName() );
 
 	// the planes
 	//glUniform2fv( shdr->getUniLoc("planes"), 1, &planes[0] );
-	glUniform2fv( shdr->getUniLoc(4), 1, &planes[0] );
+	glUniform2fv( shdr->getUniVar("planes").getLoc(), 1, &planes[0] );
 
 	// the light params
 	Vec3 light_pos_eye_space = light.translationWspace.getTransformed( cam.getViewMatrix() );
-	glUniform3fv( shdr->getUniLoc(5), 1, &light_pos_eye_space[0] );
-	glUniform1f( shdr->getUniLoc(6), 1.0/light.getDistance() );
-	glUniform3fv( shdr->getUniLoc(7), 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
-	glUniform3fv( shdr->getUniLoc(8), 1, &Vec3(light.lightProps->getSpecularColor())[0] );
+	glUniform3fv( shdr->getUniVar("lightPos").getLoc(), 1, &light_pos_eye_space[0] );
+	glUniform1f( shdr->getUniVar("lightInvRadius").getLoc(), 1.0/light.getDistance() );
+	glUniform3fv( shdr->getUniVar("lightDiffuseCol").getLoc(), 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
+	glUniform3fv( shdr->getUniVar("lightSpecularCol").getLoc(), 1, &Vec3(light.lightProps->getSpecularColor())[0] );
 
 	// set the light texture
-	shdr->locTexUnit( shdr->getUniLoc(9), *light.lightProps->getTexture(), 4 );
+	shdr->locTexUnit( shdr->getUniVar("lightTex").getLoc(), *light.lightProps->getTexture(), 4 );
 	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -426,7 +426,7 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	static Mat4 bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 tex_projection_mat;
 	tex_projection_mat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * cam.transformationWspace;
-	glUniformMatrix4fv( shdr->getUniLoc(10), 1, true, &tex_projection_mat[0] );
+	glUniformMatrix4fv( shdr->getUniVar("texProjectionMat").getLoc(), 1, true, &tex_projection_mat[0] );
 
 	/*
 	const float mBias[] = {0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
@@ -442,20 +442,20 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	// render depth to texture and then bind it
 	if( light.castsShadow )
 	{
-		shdr->locTexUnit( shdr->getUniLoc(11), R::Is::Shad::shadowMap, 5 );
+		shdr->locTexUnit( shdr->getUniVar("shadowMap").getLoc(), R::Is::Shad::shadowMap, 5 );
 	}
 
 	//** render quad **
-	glEnableVertexAttribArray( shdr->getAttribLoc(0) );
-	glEnableVertexAttribArray( shdr->getAttribLoc(1) );
+	glEnableVertexAttribArray( 0 );
+	glEnableVertexAttribArray( 1 );
 
-	glVertexAttribPointer( shdr->getAttribLoc(0), 2, GL_FLOAT, false, 0, &R::quad_vert_cords[0] );
-	glVertexAttribPointer( shdr->getAttribLoc(1), 3, GL_FLOAT, false, 0, &view_vectors[0] );
+	glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &R::quad_vert_cords[0] );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &view_vectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
 
-	glDisableVertexAttribArray( shdr->getAttribLoc(0) );
-	glDisableVertexAttribArray( shdr->getAttribLoc(1) );
+	glDisableVertexAttribArray( 0 );
+	glDisableVertexAttribArray( 1 );
 
 	// restore texture matrix
 	glMatrixMode( GL_TEXTURE );

@@ -7,14 +7,10 @@
 #pragma anki include "shaders/linear_depth.glsl"
 #pragma anki include "shaders/pack.glsl"
 
-#pragma anki uniform camerarange 0
 uniform vec2 camerarange;  // = vec2( znear, zfar )
-#pragma anki uniform ms_depth_fai 1
-uniform sampler2D ms_depth_fai;
-#pragma anki uniform noise_map 2
-uniform sampler2D noise_map;
-#pragma anki uniform ms_normal_fai 3
-uniform sampler2D ms_normal_fai;
+uniform sampler2D msDepthFai;
+uniform sampler2D noiseMap;
+uniform sampler2D msNormalFai;
 
 varying vec2 texCoords;
 const float totStrength = 1.7;
@@ -33,11 +29,11 @@ void main(void)
 	//const vec3 pSphere[12] = vec3[](vec3(-0.13657719, 0.30651027, 0.16118456),vec3(-0.14714938, 0.33245975, -0.113095455),vec3(0.030659059, 0.27887347, -0.7332209),vec3(0.009913514, -0.89884496, 0.07381549),vec3(0.040318526, 0.40091, 0.6847858),vec3(0.22311053, -0.3039437, -0.19340435),vec3(0.36235332, 0.21894878, -0.05407306),vec3(-0.15198798, -0.38409665, -0.46785462),vec3(-0.013492276, -0.5345803, 0.11307949),vec3(-0.4972847, 0.037064247, -0.4381323),vec3(-0.024175806, -0.008928787, 0.17719103),vec3(0.694014, -0.122672155, 0.33098832));
 	//const vec3 pSphere[10] = vec3[](vec3(-0.010735935, 0.01647018, 0.0062425877),vec3(-0.06533369, 0.3647007, -0.13746321),vec3(-0.6539235, -0.016726388, -0.53000957),vec3(0.40958285, 0.0052428036, -0.5591124),vec3(-0.1465366, 0.09899267, 0.15571679),vec3(-0.44122112, -0.5458797, 0.04912532),vec3(0.03755566, -0.10961345, -0.33040273),vec3(0.019100213, 0.29652783, 0.066237666),vec3(0.8765323, 0.011236004, 0.28265962),vec3(0.29264435, -0.40794238, 0.15964167));
 	// grab a normal for reflecting the sample rays later on
-	vec3 fres = normalize((texture2D(noise_map,texCoords*offset).xyz*2.0) - vec3(1.0));
+	vec3 fres = normalize((texture2D(noiseMap,texCoords*offset).xyz*2.0) - vec3(1.0));
 
-	vec4 currentPixelSample = texture2D(ms_normal_fai,texCoords);
+	vec4 currentPixelSample = texture2D(msNormalFai,texCoords);
 
-	float currentPixelDepth = ReadFromTexAndLinearizeDepth( ms_depth_fai, texCoords, camerarange.x, camerarange.y );
+	float currentPixelDepth = ReadFromTexAndLinearizeDepth( msDepthFai, texCoords, camerarange.x, camerarange.y );
 
 	// current fragment coords in screen space
 	vec3 ep = vec3( texCoords.xy, currentPixelDepth );
@@ -60,13 +56,13 @@ void main(void)
 		se = ep + sign(dot(ray,norm) )*ray;
 
 		// get the depth of the occluder fragment
-		vec4 occluderFragment = texture2D(ms_normal_fai,se.xy);
+		vec4 occluderFragment = texture2D(msNormalFai,se.xy);
 
 		// get the normal of the occluder fragment
 		occNorm = UnpackNormal(occluderFragment.xy);
 
 		// if depthDifference is negative = occluder is behind current fragment
-		depthDifference = currentPixelDepth - ReadFromTexAndLinearizeDepth( ms_depth_fai, se.xy, camerarange.x, camerarange.y );;
+		depthDifference = currentPixelDepth - ReadFromTexAndLinearizeDepth( msDepthFai, se.xy, camerarange.x, camerarange.y );;
 
 		// calculate the difference between the normals as a weight
 

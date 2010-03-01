@@ -11,7 +11,6 @@ void main(void)
 
 #pragma anki fragShaderBegins
 
-#pragma anki uniform fontMap 0
 uniform sampler2D fontMap;
 varying vec2 texCoords;
 

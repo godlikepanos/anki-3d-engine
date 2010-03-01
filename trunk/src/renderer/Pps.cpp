@@ -148,7 +148,7 @@ void runStage( const Camera& cam )
 
 
 	// draw quad
-	R::DrawQuad( sProg->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 
 	// unbind FBO
 	fbo.Unbind();

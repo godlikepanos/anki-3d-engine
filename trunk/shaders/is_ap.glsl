@@ -4,14 +4,12 @@
 
 #pragma anki fragShaderBegins
 
-#pragma anki uniform ambient_color 0
-uniform vec3 ambient_color;
-#pragma anki uniform ms_diffuse_fai 1
-uniform sampler2D ms_diffuse_fai;
+uniform vec3 ambientCol;
+uniform sampler2D sceneColMap;
 
 varying vec2 texCoords;
 
 void main()
 {
-	gl_FragData[0].rgb = texture2D( ms_diffuse_fai, texCoords ).rgb * ambient_color;
+	gl_FragData[0].rgb = texture2D( sceneColMap, texCoords ).rgb * ambientCol;
 }

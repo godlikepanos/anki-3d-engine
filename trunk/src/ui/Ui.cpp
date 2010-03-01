@@ -38,7 +38,7 @@ static funcs                                                                    
 static void SetGL()
 {
 	shader->bind();
-	shader->locTexUnit( shader->getUniLoc(0), *fontMap, 0 );
+	shader->locTexUnit( shader->getUniVar("fontMap").getLoc(), *fontMap, 0 );
 
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );

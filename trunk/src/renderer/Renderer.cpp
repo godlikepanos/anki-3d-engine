@@ -66,7 +66,7 @@ BuildStdShaderPreProcStr                                                        
 I pass all the static vars (vars that do not change at all) with defines so I dont have to update uniform vars                        =
 =======================================================================================================================================
 */
-static void BuildStdShaderPreProcStr()
+static void buildStdShaderPreProcStr()
 {
 	string& tmp = std_shader_preproc_defines;
 
@@ -162,10 +162,7 @@ void init()
 	//glHint( GL_TEXTURE_COMPRESSION_HINT, GL_NICEST );
 
 	// execute this after the cvars are set and before the other inits (be cause these inits contain shader loads)
-	BuildStdShaderPreProcStr();
-
-	// misc
-	shdr_final = rsrc::shaders.load( "shaders/final.glsl" );
+	buildStdShaderPreProcStr();
 
 	// init deferred stages
 	// WARNING: the order of the inits is crucial!!!!!
@@ -175,6 +172,9 @@ void init()
 	R::Pps::init();
 	R::Bs::init2();
 	R::Dbg::init();
+
+	// misc
+	shdr_final = rsrc::shaders.load( "shaders/final.glsl" );
 
 	PRINT( "Renderer initialization ends" );
 }
@@ -201,7 +201,7 @@ void render( const Camera& cam )
 	glDisable( GL_BLEND );
 
 	shdr_final->bind();
-	shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::Pps::fai, 0 );
+	shdr_final->locTexUnit( shdr_final->getUniVar("rasterImage").getLoc(), R::Pps::fai, 0 );
 
 	/*const int step = 100;
 	if( R::framesNum < step )
@@ -222,7 +222,7 @@ void render( const Camera& cam )
 		shdr_final->locTexUnit( shdr_final->getUniLoc(0), R::pps::fai, 0 );*/
 
 
-	R::DrawQuad( shdr_final->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 }
 
 

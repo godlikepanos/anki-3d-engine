@@ -38,27 +38,20 @@ class ShaderProg: public Resource
 				{}
 		};
 
+		Var dummyVar; ///< Returned on error
 		Vec<Var> uniVars;
 		Vec<Var> attribVars;
 		map<string,Var*> uniNameToVar;  ///< A map for quick searching
 		map<string,Var*> attribNameToVar; ///< @see uniNameToVar
 		typedef map<string,Var*>::const_iterator NameToVarIterator; ///< Variable name to variable iterator
 
-		typedef map<string,int>::const_iterator NameToLocIterator; ///< name to location iterator
-	
-		Vec<int> customUniLocToRealLoc;
-		Vec<int> customAttribLocToRealLoc;
-		map<string,int> uniNameToLoc;
-		map<string,int> attribNameToLoc;
-		
 		void getUniAndAttribVars(); ///< After the linking of the shader prog is done gather all the vars in custom containers
-		bool fillTheCustomLocationsVectors( const ShaderParser& pars );
 		bool bindCustomAttribLocs( const ShaderParser& pars ) const; ///< Uses glBindAttribLocation for every parser attrib location
 		uint createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const; ///< @return Returns zero on failure
 		bool link(); ///< Link the shader prog
 		
 	public:
-		ShaderProg(): glId(0) {}
+		ShaderProg(): glId(0), dummyVar(-1, "dummyVar", 0, 0) {}
 		virtual ~ShaderProg() {}
 		
 		inline void bind() const { DEBUG_ERR( glId==0 ); glUseProgram(glId); }
@@ -71,9 +64,6 @@ class ShaderProg: public Resource
 
 		const Vec<Var>& getUniVars() const { return uniVars; } ///< Accessor to uniform vars vector
 		const Vec<Var>& getAttribVars() const { return attribVars; } ///< Accessor to attribute vars vector
-
-		int getUniLoc( int id ) const;
-		int getAttribLoc( int id ) const;
 
 		/**
 		 * @param name The name of the var

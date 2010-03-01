@@ -22,7 +22,7 @@ namespace Bs {
 static Fbo intermid_fbo, fbo;
 
 static Texture fai; ///< RGB for color and A for mask (0 doesnt pass, 1 pass)
-static ShaderProg* shader_prog;
+static ShaderProg* shaderProg;
 
 
 //=====================================================================================================================================
@@ -69,7 +69,7 @@ void init2()
 	// unbind
 	intermid_fbo.Unbind();
 
-	shader_prog = rsrc::shaders.load( "shaders/bs_refract.glsl" );
+	shaderProg = rsrc::shaders.load( "shaders/bs_refract.glsl" );
 }
 
 
@@ -100,9 +100,9 @@ void runStage2( const Camera& cam )
 
 			fbo.bind();
 			glDisable( GL_DEPTH_TEST );
-			shader_prog->bind();
-			shader_prog->locTexUnit( shader_prog->getUniLoc(0), fai, 0 );
-			R::DrawQuad( shader_prog->getAttribLoc(0) );
+			shaderProg->bind();
+			shaderProg->locTexUnit( shaderProg->getUniVar("fai").getLoc(), fai, 0 );
+			R::DrawQuad( 0 );
 		}
 	}
 

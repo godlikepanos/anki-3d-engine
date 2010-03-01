@@ -8,7 +8,6 @@
 
 varying vec2 texCoords;
 
-#pragma anki uniform tex 0
 uniform sampler2D tex;
 
 void main()
