@@ -10,14 +10,10 @@ void main()
 
 #pragma anki fragShaderBegins
 
-#pragma anki uniform colormap 0
 uniform sampler2D colormap;
-#pragma anki uniform noisemap 1
 uniform sampler2D noisemap;
-#pragma anki uniform timer 2
 uniform float timer;
-#pragma anki uniform scene_ambient_color 3
-uniform vec3 scene_ambient_color;
+uniform vec3 sceneAmbientCol;
 varying vec2 txtr_coords;
 
 #define PI 3.14159265358979323846
@@ -47,6 +43,6 @@ void main()
 
 	_noise_vec = _noise_vec * _strength_factor * _edge_factor;
 
-	gl_FragData[1].rgb = texture2D(colormap, txtr_coords + _noise_vec.xy).rgb * scene_ambient_color; // write to the diffuse buffer
+	gl_FragData[1].rgb = texture2D(colormap, txtr_coords + _noise_vec.xy).rgb * sceneAmbientCol; // write to the diffuse buffer
 }
 

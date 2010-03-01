@@ -249,16 +249,12 @@ void init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
-	float f = M::sin( 10.0 );
-	PRINT( f );
-
 	App::printAppInfo();
 
 	init();
 
 	PRINT( "Entering main loop" );
 	int ticks = App::getTicks();
-	uint ms = 0;
 	do
 	{
 		int ticks_ = App::getTicks();

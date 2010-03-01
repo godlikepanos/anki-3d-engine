@@ -5,7 +5,6 @@
 
 #pragma anki fragShaderBegins
 
-#pragma anki uniform fai 0
 uniform sampler2D fai;
 
 varying vec2 texCoords;

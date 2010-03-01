@@ -70,6 +70,8 @@ class Vbo
 		 */
 		void bind() const
 		{
+			if( glId==0 )
+				PRINT( "-" );
 			DEBUG_ERR( glId==0 ); // VBO unitialized
 			glBindBuffer( target, glId );
 		}

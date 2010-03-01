@@ -23,15 +23,15 @@ void main()
 #pragma anki include "shaders/pack.glsl"
 
 // uniforms
-uniform sampler2D ms_normal_fai, ms_diffuse_fai, ms_specular_fai, ms_depth_fai;
+uniform sampler2D msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai;
 uniform vec2 planes; // for the calculation of frag pos in view space
-uniform sampler2D light_tex;
-uniform sampler2DShadow shadow_map;
-uniform vec3 light_pos;
-uniform float light_inv_radius;
-uniform vec3 light_diffuse_col;
-uniform vec3 light_specular_col;
-uniform mat4 tex_projection_mat;
+uniform sampler2D lightTex;
+uniform sampler2DShadow shadowMap;
+uniform vec3 lightPos;
+uniform float lightInvRadius;
+uniform vec3 lightDiffuseCol;
+uniform vec3 lightSpecularCol;
+uniform mat4 texProjectionMat;
 
 varying vec2 texCoords;
 varying vec3 vpos; // for the calculation of frag pos in view space
@@ -45,7 +45,7 @@ return frag pos in view space                                                   
 */
 vec3 FragPosVSpace()
 {
-	float _depth = texture2D( ms_depth_fai, texCoords ).r;
+	float _depth = texture2D( msDepthFai, texCoords ).r;
 
 	if( _depth == 1.0 ) discard;
 
@@ -65,7 +65,7 @@ return the attenuation factor fiven the distance from the frag to the light sour
 */
 float Attenuation( in float _frag_light_dist )
 {
-	return clamp(1.0 - light_inv_radius * sqrt(_frag_light_dist), 0.0, 1.0);
+	return clamp(1.0 - lightInvRadius * sqrt(_frag_light_dist), 0.0, 1.0);
 	//return 1.0 - _frag_light_dist * _inv_light_radius;
 }
 
@@ -80,23 +80,23 @@ it returns a blured shadow                                                      
 
 float PCF_Off( in vec3 _shadow_uv )
 {
-	return shadow2D(shadow_map, _shadow_uv ).r;
+	return shadow2D(shadowMap, _shadow_uv ).r;
 }
 
 
 float PCF_Low( in vec3 _shadow_uv )
 {
-	float _shadow_col = shadow2D(shadow_map, _shadow_uv ).r;
+	float _shadow_col = shadow2D(shadowMap, _shadow_uv ).r;
 	const float _map_scale = 1.0 / SHADOWMAP_SIZE;
 
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,         0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,         0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,         0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,         0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
 	_shadow_col *= 1.0/9.0;
 
 	return _shadow_col;
@@ -105,28 +105,28 @@ float PCF_Low( in vec3 _shadow_uv )
 
 float PCF_Medium( in vec3 _shadow_uv )
 {
-	float _shadow_col = shadow2D(shadow_map, _shadow_uv ).r;
+	float _shadow_col = shadow2D(shadowMap, _shadow_uv ).r;
 	float _map_scale = 1.0 / SHADOWMAP_SIZE;
 
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,         0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,         0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,         0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,         0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
 
 	_map_scale *= 2.0;
 
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,         0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,         0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,         0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,         0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
 
 	_shadow_col *= 0.058823529; // aka: _shadow_col /= 17.0;
 	return _shadow_col;
@@ -135,37 +135,37 @@ float PCF_Medium( in vec3 _shadow_uv )
 
 float PCF_High( in vec3 _shadow_uv )
 {
-	float _shadow_col = shadow2D(shadow_map, _shadow_uv ).r;
+	float _shadow_col = shadow2D(shadowMap, _shadow_uv ).r;
 	float _map_scale = 1.0 / SHADOWMAP_SIZE;
 
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3( _map_scale,  	     0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale,  	     0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3( _map_scale,  	     0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale,  	     0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0,  _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(        0.0, -_map_scale, 0.0)).r;
 
 
 	float _map_scale_2 = 2.0 * _map_scale;
 
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale_2, _map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale, _map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(0.0, _map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale, _map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale_2, _map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale_2, _map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale_2, 0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale_2, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale_2, -_map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(0.0, -_map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale, -_map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale_2, -_map_scale_2, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale_2, -_map_scale, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale_2, 0.0, 0.0)).r;
-	_shadow_col += shadow2D(shadow_map, _shadow_uv.xyz + vec3(_map_scale_2, _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale_2, _map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale, _map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(0.0, _map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale, _map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale_2, _map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale_2, _map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale_2, 0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale_2, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale_2, -_map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(-_map_scale, -_map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(0.0, -_map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale, -_map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale_2, -_map_scale_2, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale_2, -_map_scale, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale_2, 0.0, 0.0)).r;
+	_shadow_col += shadow2D(shadowMap, _shadow_uv.xyz + vec3(_map_scale_2, _map_scale, 0.0)).r;
 
 	_shadow_col /= 25.0;
 	return _shadow_col;
@@ -182,15 +182,15 @@ Phong                                                                           
 vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 {
 	// get the lambert term
-	vec3 _light_pos_eyespace = light_pos;
-	vec3 _light_frag_vec = _light_pos_eyespace - _frag_pos_vspace;
+	vec3 _lightPos_eyespace = lightPos;
+	vec3 _light_frag_vec = _lightPos_eyespace - _frag_pos_vspace;
 
 	_frag_light_dist = dot( _light_frag_vec, _light_frag_vec ); // instead of using normalize(_frag_light_dist) we brake the operation...
 	vec3 _light_dir = _light_frag_vec * inversesqrt(_frag_light_dist); // ...because we want frag_light_dist for the calc of the attenuation
 
 	// read the normal
-	//vec3 _normal = texture2D( ms_normal_fai, texCoords ).rgb;
-	vec3 _normal = UnpackNormal( texture2D( ms_normal_fai, texCoords ).rg );
+	//vec3 _normal = texture2D( msNormalFai, texCoords ).rgb;
+	vec3 _normal = UnpackNormal( texture2D( msNormalFai, texCoords ).rg );
 
 	// the lambert term
 	float _lambert_term = dot( _normal, _light_dir );
@@ -199,19 +199,19 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 	//_lambert_term = max( 0.0, _lambert_term );
 
 	// diffuce lighting
-	vec3 _diffuse = texture2D( ms_diffuse_fai, texCoords ).rgb;
-	_diffuse = (_diffuse * light_diffuse_col);
+	vec3 _diffuse = texture2D( msDiffuseFai, texCoords ).rgb;
+	_diffuse = (_diffuse * lightDiffuseCol);
 	vec3 _color = _diffuse * _lambert_term;
 
 	// specular lighting
-	vec4 _specular_mix = texture2D( ms_specular_fai, texCoords );
+	vec4 _specular_mix = texture2D( msSpecularFai, texCoords );
 	vec3 _specular = _specular_mix.xyz;
 	float _shininess = _specular_mix.w;
 
 	vec3 _eye_vec = normalize( -_frag_pos_vspace );
 	vec3 _h = normalize( _light_dir + _eye_vec );
 	float _spec_intensity = pow(max(0.0, dot(_normal, _h)), _shininess);
-	_color += _specular * light_specular_col * (_spec_intensity * _lambert_term);
+	_color += _specular * lightSpecularCol * (_spec_intensity * _lambert_term);
 
 	return _color;
 }
@@ -242,7 +242,7 @@ void main()
 	// SPOT LIGHT                                                                                                                       =
 	//===================================================================================================================================
 	#elif defined(_SPOT_LIGHT_)
-		vec4 _tex_coord2 = tex_projection_mat * vec4(_frag_pos_vspace, 1.0);
+		vec4 _tex_coord2 = texProjectionMat * vec4(_frag_pos_vspace, 1.0);
 		vec3 _texCoords3 = _tex_coord2.xyz / _tex_coord2.w;
 
 		if
@@ -252,13 +252,13 @@ void main()
 			_texCoords3.x < 1.0 &&
 			_texCoords3.y > 0.0 &&
 			_texCoords3.y < 1.0 &&
-			_tex_coord2.w < 1.0/light_inv_radius
+			_tex_coord2.w < 1.0/lightInvRadius
 		)
 		{
 			#if defined( _SHADOW_ )
 				#if defined( _SHADOW_MAPPING_PCF_ )
 					float _shadow_color = PCF_Low( _texCoords3 );
-					//float _shadow_color = MedianFilterPCF( shadow_map, _texCoords3 );
+					//float _shadow_color = MedianFilterPCF( shadowMap, _texCoords3 );
 				#else
 					float _shadow_color = PCF_Off( _texCoords3 );
 				#endif
@@ -269,7 +269,7 @@ void main()
 			float _frag_light_dist;
 			vec3 _color = Phong( _frag_pos_vspace, _frag_light_dist );
 
-			vec3 _texel = texture2DProj( light_tex, _tex_coord2.xyz ).rgb;
+			vec3 _texel = texture2DProj( lightTex, _tex_coord2.xyz ).rgb;
 			float _att = Attenuation(_frag_light_dist);
 
 			#if defined( _SHADOW_ )
@@ -285,7 +285,7 @@ void main()
 	#endif // spot light
 
 	/*#if defined(_SPOT_LIGHT_)
-	gl_FragData[0] = vec4( UnpackNormal(texture2D( ms_normal_fai, texCoords ).rg), 1.0 );
-	//gl_FragData[0] = vec4( texture2D( ms_depth_fai, texCoords ).rg), 1.0 );
+	gl_FragData[0] = vec4( UnpackNormal(texture2D( msNormalFai, texCoords ).rg), 1.0 );
+	//gl_FragData[0] = vec4( texture2D( msDepthFai, texCoords ).rg), 1.0 );
 	#endif*/
 }

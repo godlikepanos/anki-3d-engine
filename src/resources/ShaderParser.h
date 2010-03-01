@@ -78,13 +78,11 @@ class ShaderParser
 			friend class ShaderParser;
 
 			private:
-				Vec<ShaderVarPragma> uniforms;  ///< It holds the name and the custom location
 				Vec<ShaderVarPragma> attributes;  ///< It holds the name and the custom location
 				string vertShaderSource; ///< This is the vert shader source
 				string fragShaderSource; ///< This is the frag shader source
 
 			public:
-				const Vec<ShaderVarPragma>& getUniLocs() const { return uniforms; }
 				const Vec<ShaderVarPragma>& getAttribLocs() const { return attributes; }
 				const string& getVertShaderSource() const { return vertShaderSource; }
 				const string& getFragShaderSource() const { return fragShaderSource; }

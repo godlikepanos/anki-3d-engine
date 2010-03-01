@@ -109,6 +109,7 @@ void ShaderProg::getUniAndAttribVars()
 
 	// attrib locations
 	glGetProgramiv( glId, GL_ACTIVE_ATTRIBUTES, &num );
+	attribVars.reserve( num );
 	for( int i=0; i<num; i++ ) // loop all attributes
 	{
 		glGetActiveAttrib( glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_ );
@@ -122,7 +123,6 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		attribNameToLoc[ name_ ] = loc; //ToDo to be removed
 		attribVars.push_back( Var( loc, name_, type, Var::LT_ATTRIBUTE ) );
 		attribNameToVar[ name_ ] = &attribVars.back();
 	}
@@ -130,6 +130,7 @@ void ShaderProg::getUniAndAttribVars()
 
 	// uni locations
 	glGetProgramiv( glId, GL_ACTIVE_UNIFORMS, &num );
+	uniVars.reserve( num );
 	for( int i=0; i<num; i++ ) // loop all uniforms
 	{
 		glGetActiveUniform( glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_ );
@@ -143,73 +144,9 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		uniNameToLoc[ name_ ] = loc;
 		uniVars.push_back( Var( loc, name_, type, Var::LT_UNIFORM ) );
 		uniNameToVar[ name_ ] = &uniVars.back();
 	}
-}
-
-
-//=====================================================================================================================================
-// fillTheCustomLocationsVectors                                                                                                      =
-//=====================================================================================================================================
-bool ShaderProg::fillTheCustomLocationsVectors( const ShaderParser& pars )
-{
-	bind();
-	uint max = 0;
-
-	// uniforms
-	for( uint i=0; i<pars.getOutput().getUniLocs().size(); ++i )
-	{
-		if( pars.getOutput().getUniLocs()[i].customLoc > max )
-			max = pars.getOutput().getUniLocs()[i].customLoc;
-	}
-	customUniLocToRealLoc.assign( max + 1, -1 );
-
-	for( uint i=0; i<pars.getOutput().getUniLocs().size(); ++i )
-	{
-		if( customUniLocToRealLoc[ pars.getOutput().getUniLocs()[i].customLoc ] != -1 )
-		{
-			SHADER_ERROR( "The uniform \"" << pars.getOutput().getUniLocs()[i].name << "\" has the same value with another one" );
-			return false;
-		}
-		int loc = getUniVar( pars.getOutput().getUniLocs()[i].name.c_str() ).getLoc();
-		if( loc == -1 )
-		{
-			SHADER_WARNING( "Check the previous error" );
-			continue;
-		}
-		customUniLocToRealLoc[pars.getOutput().getUniLocs()[i].customLoc] = loc;
-	}
-	
-	
-	// attributes
-	max = 0;
-	
-	for( uint i=0; i<pars.getOutput().getAttribLocs().size(); ++i )
-	{
-		if( pars.getOutput().getAttribLocs()[i].customLoc > max )
-			max = pars.getOutput().getAttribLocs()[i].customLoc;
-	}
-	customAttribLocToRealLoc.assign( max + 1, -1 );
-
-	for( uint i=0; i<pars.getOutput().getAttribLocs().size(); ++i )
-	{
-		if( customAttribLocToRealLoc[ pars.getOutput().getAttribLocs()[i].customLoc ] != -1 )
-		{
-			SHADER_ERROR( "The attribute \"" << pars.getOutput().getAttribLocs()[i].name << "\" has the same value with another one" );
-			return false;
-		}
-		int loc = getAttribVar( pars.getOutput().getAttribLocs()[i].name.c_str() ).getLoc();
-		if( loc == -1 )
-		{
-			SHADER_ERROR( "Check the previous error" );
-			return false;
-		}
-		customAttribLocToRealLoc[pars.getOutput().getAttribLocs()[i].customLoc] = loc;
-	}
-
-	return true;
 }
 
 
@@ -262,11 +199,11 @@ bool ShaderProg::customload( const char* filename, const char* extraSource )
 	if( !pars.parseFile( filename ) ) return false;
 
 	// 1) create and compile the shaders
-	string preproc_source = R::getStdShaderPreprocDefines() + extraSource;
-	uint vertGlId = createAndCompileShader( pars.getOutput().getVertShaderSource().c_str(), preproc_source.c_str(), GL_VERTEX_SHADER );
+	string preprocSource = R::getStdShaderPreprocDefines() + extraSource;
+	uint vertGlId = createAndCompileShader( pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(), GL_VERTEX_SHADER );
 	if( vertGlId == 0 ) return false;
 
-	uint fragGlId = createAndCompileShader( pars.getOutput().getFragShaderSource().c_str(), preproc_source.c_str(), GL_FRAGMENT_SHADER );
+	uint fragGlId = createAndCompileShader( pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(), GL_FRAGMENT_SHADER );
 	if( fragGlId == 0 ) return false;
 
 	// 2) create program and attach shaders
@@ -283,31 +220,8 @@ bool ShaderProg::customload( const char* filename, const char* extraSource )
 
 	// init the rest
 	getUniAndAttribVars();
-	if( !fillTheCustomLocationsVectors( pars ) ) return false;
 
 	return true;
-}
-
-
-//=====================================================================================================================================
-// getUniLoc                                                                                                                          =
-//=====================================================================================================================================
-int ShaderProg::getUniLoc( int id ) const
-{
-	DEBUG_ERR( uint(id) >= customUniLocToRealLoc.size() );
-	DEBUG_ERR( customUniLocToRealLoc[id] == -1 );
-	return customUniLocToRealLoc[id];
-}
-
-
-//=====================================================================================================================================
-// getAttribLoc                                                                                                                       =
-//=====================================================================================================================================
-int ShaderProg::getAttribLoc( int id ) const
-{
-	DEBUG_ERR( uint(id) >= customAttribLocToRealLoc.size() );
-	DEBUG_ERR( customAttribLocToRealLoc[id] == -1 );
-	return customAttribLocToRealLoc[id];
 }
 
 
@@ -320,6 +234,7 @@ const ShaderProg::Var& ShaderProg::getUniVar( const char* name ) const
 	if( it == uniNameToVar.end() )
 	{
 		SHADER_ERROR( "Cannot get uniform loc \"" << name << '\"' );
+		return dummyVar;
 	}
 	return *(it->second);
 }
@@ -334,6 +249,7 @@ const ShaderProg::Var& ShaderProg::getAttribVar( const char* name ) const
 	if( it == attribNameToVar.end() )
 	{
 		SHADER_ERROR( "Cannot get attribute loc \"" << name << '\"' );
+		return dummyVar;
 	}
 	return *(it->second);
 }

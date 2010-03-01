@@ -114,9 +114,9 @@ VARS                                                                            
 */
 
 uniform sampler2D diffuseMap;
-uniform sampler2D notmalMap;
+uniform sampler2D normalMap;
 uniform sampler2D specularMap;
-uniform sampler2D height_map;
+uniform sampler2D heightMap;
 uniform sampler2D environmentMap;
 uniform vec3 diffuseCol = vec3( 1.0, 1.0, 1.0 );
 uniform vec3 specularCol = vec3( 1.0, 1.0, 1.0 );
@@ -148,7 +148,7 @@ void main()
 
 		vec3 _norm_eye = normalize( eye );
 
-		float _h = texture2D( height_map, texCoords_v2f ).r;
+		float _h = texture2D( heightMap, texCoords_v2f ).r;
 		float _height = _scale * _h - _bias;
 
 		vec2 superTexCoords_v2f = _height * _norm_eye.xy + texCoords_v2f;*/
@@ -161,7 +161,7 @@ void main()
 		dir.xy /= 8.0;
 		dir /= -nSteps * dir.z;
 
-		float diff0, diff1 = 1.0 - texture2D( height_map, superTexCoords ).a;
+		float diff0, diff1 = 1.0 - texture2D( heightMap, superTexCoords ).a;
 		if( diff1 > 0.0 )
 		{
 			do 
@@ -169,7 +169,7 @@ void main()
 				superTexCoords += dir.xy;
 
 				diff0 = diff1;
-				diff1 = texture2D(height_map, superTexCoords ).w;
+				diff1 = texture2D(heightMap, superTexCoords ).w;
 			} while( diff1 > 0.0 );
 
 			superTexCoords.xy += (diff1 / (diff0 - diff1)) * dir.xy;
@@ -211,7 +211,7 @@ void main()
 
 		mat3 tbnMat = mat3(_t,_b,_n);
 
-		vec3 nAtTangentspace = ( texture2D( notmalMap, superTexCoords ).rgb - 0.5 ) * 2.0;
+		vec3 nAtTangentspace = ( texture2D( normalMap, superTexCoords ).rgb - 0.5 ) * 2.0;
 
 		vec3 newNormal = normalize( tbnMat * nAtTangentspace );
 	#else

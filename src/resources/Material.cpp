@@ -369,7 +369,7 @@ bool Material::additionalInit()
 	attribLocs.tanget = shaderProg->attribVarExists( "tangent" ) ?  shaderProg->getAttribVar( "tangent" ).getLoc() : -1;
 	attribLocs.position = shaderProg->attribVarExists( "position" ) ?  shaderProg->getAttribVar( "position" ).getLoc() : -1;
 	attribLocs.normal = shaderProg->attribVarExists( "normal" ) ?  shaderProg->getAttribVar( "normal" ).getLoc() : -1;
-	attribLocs.normal = shaderProg->attribVarExists( "normal" ) ?  shaderProg->getAttribVar( "normal" ).getLoc() : -1;
+	attribLocs.texCoords = shaderProg->attribVarExists( "texCoords" ) ?  shaderProg->getAttribVar( "texCoords" ).getLoc() : -1;
 
 	// vertex weights
 	if( shaderProg->attribVarExists( "vertWeightBonesNum" ) )

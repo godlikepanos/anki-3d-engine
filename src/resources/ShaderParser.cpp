@@ -23,10 +23,6 @@ void ShaderParser::printSourceLines() const
 void ShaderParser::printShaderVars() const
 {
 	PRINT( "TYPE" << setw(20) << "NAME" << setw(4) << "LOC" );
-	for( uint i=0; i<output.uniforms.size(); ++i )
-	{
-		PRINT( setw(4) << "U" << setw(20) << output.uniforms[i].name << setw(4) << output.uniforms[i].customLoc );
-	}
 	for( uint i=0; i<output.attributes.size(); ++i )
 	{
 		PRINT( setw(4) << "A" << setw(20) << output.attributes[i].name << setw(4) << output.attributes[i].customLoc );
@@ -141,40 +137,6 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 						else
 						{
 							PARSE_ERR_EXPECTED( "string" );
-							return false;
-						}
-					}
-/* uniform */
-					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "uniform") == 0 )
-					{
-						token = &scanner.getNextToken();
-						if( token->code == Scanner::TC_IDENTIFIER )
-						{
-							string var_name = token->value.string;
-							token = &scanner.getNextToken();
-							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
-							{
-								// play
-								Vec<ShaderVarPragma>::iterator uniform = findShaderVar( output.uniforms, var_name );
-								if( uniform != output.uniforms.end() )
-								{
-									PARSE_ERR( "Uniform already defined at " << uniform->definedInFile << ":" << uniform->definedInLine );
-									return false;
-								}
-								
-								output.uniforms.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
-								sourceLines.push_back( lines[scanner.getLineNmbr()-1] );
-								// stop play
-							}
-							else
-							{
-								PARSE_ERR_EXPECTED( "integer" );
-								return false;
-							}
-						}
-						else
-						{
-							PARSE_ERR_EXPECTED( "identifier" );
 							return false;
 						}
 					}

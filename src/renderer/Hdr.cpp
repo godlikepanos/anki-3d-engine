@@ -103,10 +103,10 @@ void runPass( const Camera& /*cam*/ )
 
 	pass0_shdr->bind();
 
-	pass0_shdr->locTexUnit( pass0_shdr->getUniLoc(0), R::Is::fai, 0 );
+	pass0_shdr->locTexUnit( pass0_shdr->getUniVar("tex").getLoc(), R::Is::fai, 0 );
 
 	// Draw quad
-	R::DrawQuad( pass0_shdr->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 
 
 	// pass 1
@@ -114,10 +114,10 @@ void runPass( const Camera& /*cam*/ )
 
 	pass1_shdr->bind();
 
-	pass1_shdr->locTexUnit( pass1_shdr->getUniLoc(0), pass0Fai, 0 );
+	pass1_shdr->locTexUnit( pass1_shdr->getUniVar("tex").getLoc(), pass0Fai, 0 );
 
 	// Draw quad
-	R::DrawQuad( pass1_shdr->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 
 
 	// pass 2
@@ -125,10 +125,10 @@ void runPass( const Camera& /*cam*/ )
 
 	pass2_shdr->bind();
 
-	pass2_shdr->locTexUnit( pass2_shdr->getUniLoc(0), pass1Fai, 0 );
+	pass2_shdr->locTexUnit( pass2_shdr->getUniVar("tex").getLoc(), pass1Fai, 0 );
 
 	// Draw quad
-	R::DrawQuad( pass2_shdr->getAttribLoc(0) );
+	R::DrawQuad( 0 );
 
 	// end
 	Fbo::Unbind();
