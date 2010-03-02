@@ -20,7 +20,6 @@ bool bilinear = true;
 
 static Fbo fbo;
 
-ShaderProg* shdr_depth, * shdr_depth_grass, * shdr_depth_hw_skinning;
 
 // exportable vars
 int shadowResolution = 512;
@@ -35,7 +34,7 @@ init                                                                            
 void init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// texture
@@ -60,12 +59,7 @@ void init()
 		FATAL( "Cannot create shadow FBO" );
 
 	// unbind
-	fbo.Unbind();
-
-	// shaders
-	shdr_depth = rsrc::shaders.load( "shaders/dp.glsl" );
-	shdr_depth_grass = rsrc::shaders.load( "shaders/dp_grass.glsl" );
-	shdr_depth_hw_skinning = rsrc::shaders.load( "shaders/dp_hw_skinning.glsl" );
+	fbo.unbind();
 }
 
 
@@ -125,7 +119,7 @@ void runPass( const Camera& cam )
 	glPopMatrix();
 
 	// FBO
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 

@@ -14,7 +14,7 @@ class Fbo
 		Fbo(): glId(0) {}
 
 		/// Creates a new FBO
-		void Create()
+		void create()
 		{
 			DEBUG_ERR( glId != 0 ); // FBO already initialized
 			glGenFramebuffers( 1, &glId );
@@ -28,7 +28,7 @@ class Fbo
 		}
 
 		/// Unbinds the FBO. Actualy unbinds all FBOs
-		static void Unbind() { glBindFramebuffer( GL_FRAMEBUFFER, 0 ); }
+		static void unbind() { glBindFramebuffer( GL_FRAMEBUFFER, 0 ); }
 
 		/**
 		 * Checks the status of an initialized FBO

@@ -19,6 +19,9 @@ class ShaderProg: public Resource
 	PROPERTY_R( uint, glId, getGlId )
 	
 	private:
+		/**
+		 * Attribute of uniform variable
+		 */
 		class Var
 		{
 			PROPERTY_R( int, loc, getLoc );
@@ -59,7 +62,7 @@ class ShaderProg: public Resource
 		static uint getCurrentProgramGlId() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
 
 		bool load( const char* filename );
-		bool customload( const char* filename, const char* extraSource ); ///< Used by the renderer's shader programs
+		bool customLoad( const char* filename, const char* extraSource = "" ); ///< Used by the renderer's shader programs
 		void unload() { /* ToDo: add code */ }
 
 		const Vec<Var>& getUniVars() const { return uniVars; } ///< Accessor to uniform vars vector

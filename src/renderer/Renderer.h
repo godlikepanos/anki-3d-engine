@@ -143,7 +143,7 @@ namespace Pps
 		extern void    runPass( const Camera& cam );
 		extern Texture pass0Fai;
 		extern Texture pass1Fai;
-		extern Texture pass2Fai;
+		extern Texture fai;
 		extern float   renderingQuality;
 	}
 

@@ -9,8 +9,8 @@
 parser macros                                                                                                                         =
 =======================================================================================================================================
 */
-#define PARSE_ERR(x) ERROR( "PARSE_ERR (" << scanner.getScriptName() << ':' << scanner.getLineNmbr() << "): " << x )
-#define PARSE_WARN(x) WARNING( "PARSE_WARN (" << scanner.getScriptName() << ':' << scanner.getLineNmbr() << "): " << x )
+#define PARSE_ERR(x) ERROR( "Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNmbr() << "): " << x )
+#define PARSE_WARN(x) WARNING( "Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNmbr() << "): " << x )
 
 // common parser errors
 #define PARSE_ERR_EXPECTED(x) PARSE_ERR( "Expected " << x << " and not " << Scanner::getTokenInfo(scanner.getCrntToken()) );
@@ -23,11 +23,11 @@ ParseArrOfNumbers                                                               
 =======================================================================================================================================
 */
 /**
-It parses expressions like this one: { 10 -0.2 123.e-10 -0x0FF } and stores the result in the arr array
-@param scanner The scanner that we will use
-@param size The number of numbers inside the brackets
-@param arr The array that the func returns the numbers
-@return True if the parsing was success or false otherwise
+ * It parses expressions like this one: { 10 -0.2 123.e-10 -0x0FF } and stores the result in the arr array
+ * @param scanner The scanner that we will use
+ * @param size The number of numbers inside the brackets
+ * @param arr The array that the func returns the numbers
+ * @return True if the parsing was successful
 */
 template <typename Type> bool ParseArrOfNumbers( Scanner& scanner, bool paren, bool signs, uint size, Type* arr )
 {

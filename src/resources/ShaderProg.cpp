@@ -178,15 +178,15 @@ bool ShaderProg::bindCustomAttribLocs( const ShaderParser& pars ) const
 //=====================================================================================================================================
 bool ShaderProg::load( const char* filename )
 {
-	if( !customload( filename, "" ) ) return false;
+	if( !customLoad( filename, "" ) ) return false;
 	return true;
 }
 
 
 //=====================================================================================================================================
-// customload                                                                                                                         =
+// customLoad                                                                                                                         =
 //=====================================================================================================================================
-bool ShaderProg::customload( const char* filename, const char* extraSource )
+bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 {
 	if( getRsrcName().length() == 0 )
 	{

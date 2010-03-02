@@ -28,7 +28,7 @@ static Fbo fbo; ///< blending models FBO
 void init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform FBO about the color buffers
@@ -43,7 +43,7 @@ void init()
 		FATAL( "Cannot create deferred shading blending stage FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 
@@ -77,7 +77,7 @@ void runStage( const Camera& cam )
 
 	// restore a few things
 	glDepthMask( true );
-	Fbo::Unbind();
+	Fbo::unbind();
 }
 
 
