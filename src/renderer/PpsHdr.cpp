@@ -82,13 +82,13 @@ void init()
 	initFbos( pass2Fbo, fai, GL_RGB );
 
 	// init shaders
-	pass0SProg.customLoad( "shaders/pps_hdr_generic.glsl", "#define _PPS_HDR_PASS_0_\n" );
+	pass0SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_0_\n" );
 	pass0SProg.uniLocs.fai = pass0SProg.uniLocs.fai;
 
-	pass1SProg.customLoad( "shaders/pps_hdr_generic.glsl", "#define _PPS_HDR_PASS_1_\n" );
+	pass1SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_1_\n" );
 	pass1SProg.uniLocs.fai = pass1SProg.uniLocs.fai;
 
-	pass2SProg.customLoad( "shaders/pps_hdr_generic.glsl", "#define _PPS_HDR_PASS_2_\n" );
+	pass2SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_2_\n" );
 	pass2SProg.uniLocs.fai = pass2SProg.uniLocs.fai;
 }
 

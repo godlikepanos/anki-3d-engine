@@ -215,7 +215,7 @@ void init()
 	spotLightNoShadowSProg.uniLocs.lightTex = spotLightNoShadowSProg.getUniVar("lightTex").getLoc();
 	spotLightNoShadowSProg.uniLocs.texProjectionMat = spotLightNoShadowSProg.getUniVar("texProjectionMat").getLoc();
 
-	spotLightShadowSProg.customLoad( "shaders/is_lp_spot_generic.glsl", "#define _SPOT_LIGHT_\n#define _SHADOW_\n" );
+	spotLightShadowSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _SPOT_LIGHT_\n#define _SHADOW_\n" );
 	spotLightShadowSProg.uniLocs.msNormalFai = spotLightShadowSProg.getUniVar("msNormalFai").getLoc();
 	spotLightShadowSProg.uniLocs.msDiffuseFai = spotLightShadowSProg.getUniVar("msDiffuseFai").getLoc();
 	spotLightShadowSProg.uniLocs.msSpecularFai = spotLightShadowSProg.getUniVar("msSpecularFai").getLoc();
@@ -479,7 +479,6 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 
 	//** set texture matrix for shadowmap projection **
 	// Bias * P_light * V_light * inv( V_cam )
-	//const float mBias[] = {0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
 	static Mat4 bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 tex_projection_mat;
 	tex_projection_mat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * cam.transformationWspace;
