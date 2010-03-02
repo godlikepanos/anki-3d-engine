@@ -21,16 +21,6 @@ static Fbo fbo; // yet another FBO
 Texture fai;
 
 // shader stuff
-/*static ShaderProg* sProg;
-
-namespace shdrVars
-{
-	int isFai;
-	int ppsSsaoFai;
-	int msNormalFai;
-	int hdrFai;
-	int lscattFai;
-}*/
 
 class PpsShaderProg: public ShaderProg
 {
@@ -76,7 +66,7 @@ void init()
 
 
 	// init the shader and it's vars
-	sProg.customLoad( "shaders/pps.glsl" );
+	sProg.customLoad( "shaders/Pps.glsl" );
 	sProg.bind();
 
 	sProg.uniLocs.isFai = sProg.getUniVar( "isFai" ).getLoc();
@@ -105,11 +95,9 @@ void init()
 }
 
 
-/*
-=======================================================================================================================================
-runStage                                                                                                                              =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// runStage                                                                                                                           =
+//=====================================================================================================================================
 void runStage( const Camera& cam )
 {
 	if( R::Pps::Ssao::enabled )
@@ -136,7 +124,7 @@ void runStage( const Camera& cam )
 
 	if( R::Pps::Ssao::enabled )
 	{
-		sProg.locTexUnit( sProg.uniLocs.ppsSsaoFai, R::Pps::Ssao::bluredFai2, 1 );
+		sProg.locTexUnit( sProg.uniLocs.ppsSsaoFai, R::Pps::Ssao::fai, 1 );
 	}
 
 	if( R::Pps::edgeaa::enabled )

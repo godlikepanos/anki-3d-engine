@@ -61,7 +61,7 @@ void init()
 
 
 	// init shaders
-	sProg.customLoad( "shaders/pps_lscatt.glsl" );
+	sProg.customLoad( "shaders/PpsLscatt.glsl" );
 	msDepthFaiUniLoc = sProg.getUniVar( "msDepthFai" ).getLoc();
 	isFaiUniLoc = sProg.getUniVar( "isFai" ).getLoc();
 }

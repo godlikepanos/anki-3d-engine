@@ -170,10 +170,6 @@ void initPhysics()
 //=====================================================================================================================================
 void init()
 {
-	ShaderParser par;
-	par.parseFile( "test.glsl" );
-
-
 	PRINT( "Engine initializing..." );
 
 	initPhysics();

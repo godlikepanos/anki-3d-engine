@@ -125,9 +125,9 @@ namespace Pps
 		extern bool enabled;
 		extern void init();
 		extern void runPass( const Camera& cam );
+		extern Texture pass0Fai;
+		extern Texture pass1Fai;
 		extern Texture fai;
-		extern Texture bluredFai;
-		extern Texture bluredFai2;
 		extern float renderingQuality;
 	}
 
