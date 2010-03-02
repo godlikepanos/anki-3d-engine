@@ -88,7 +88,7 @@ void renderer_t::illumination_stage_t::CalcPlanes()
 //=====================================================================================================================================
 void renderer_t::illumination_stage_t::ambient_pass_t::init()
 {
-	shaderProg.customload( "shaders/is_ap.glsl", "" );
+	shaderProg.customLoad( "shaders/is_ap.glsl", "" );
 }
 
 

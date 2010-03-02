@@ -21,7 +21,7 @@ static Fbo fbo; // yet another FBO
 Texture fai;
 
 // shader stuff
-static ShaderProg* sProg;
+/*static ShaderProg* sProg;
 
 namespace shdrVars
 {
@@ -30,7 +30,22 @@ namespace shdrVars
 	int msNormalFai;
 	int hdrFai;
 	int lscattFai;
-}
+}*/
+
+class PpsShaderProg: public ShaderProg
+{
+	public:
+		struct
+		{
+			int isFai;
+			int ppsSsaoFai;
+			int msNormalFai;
+			int hdrFai;
+			int lscattFai;
+		} uniLocs;
+};
+
+static PpsShaderProg sProg;
 
 
 /*
@@ -41,7 +56,7 @@ init                                                                            
 void init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
@@ -57,34 +72,34 @@ void init()
 	if( !fbo.isGood() )
 		FATAL( "Cannot create post-processing stage FBO" );
 
-	fbo.Unbind();
+	fbo.unbind();
 
 
 	// init the shader and it's vars
-	sProg = rsrc::shaders.load( "shaders/pps.glsl" );
-	sProg->bind();
+	sProg.customLoad( "shaders/pps.glsl" );
+	sProg.bind();
 
-	shdrVars::isFai = sProg->getUniVar( "is_fai" ).getLoc();
+	sProg.uniLocs.isFai = sProg.getUniVar( "isFai" ).getLoc();
 
 	if( R::Pps::Ssao::enabled )
 	{
 		R::Pps::Ssao::init();
-		shdrVars::ppsSsaoFai = sProg->getUniVar( "pps_ssao_fai" ).getLoc();
+		sProg.uniLocs.ppsSsaoFai = sProg.getUniVar( "ppsSsaoFai" ).getLoc();
 	}
 
 	if( R::Pps::Hdr::enabled )
 	{
 		R::Pps::Hdr::init();
-		shdrVars::hdrFai = sProg->getUniVar( "pps_hdr_fai" ).getLoc();
+		sProg.uniLocs.hdrFai = sProg.getUniVar( "ppsHdrFai" ).getLoc();
 	}
 
 	if( R::Pps::edgeaa::enabled )
-		shdrVars::msNormalFai = sProg->getUniVar( "ms_normal_fai" ).getLoc();
+		sProg.uniLocs.msNormalFai = sProg.getUniVar( "msNormalFai" ).getLoc();
 
 	if( R::Pps::Lscatt::enabled )
 	{
 		R::Pps::Lscatt::init();
-		shdrVars::lscattFai = sProg->getUniVar( "pps_lscatt_fai" ).getLoc();
+		sProg.uniLocs.lscattFai = sProg.getUniVar( "ppsLscattFai" ).getLoc();
 	}
 
 }
@@ -115,35 +130,28 @@ void runStage( const Camera& cam )
 	R::setViewport( 0, 0, R::w, R::h );
 
 	// set shader
-	sProg->bind();
+	sProg.bind();
 
-	R::Is::fai.bind(0);
-	//R::Ms::depthFai.bind(0);
-	glUniform1i( shdrVars::isFai, 0 );
+	sProg.locTexUnit( sProg.uniLocs.isFai, R::Is::fai, 0 );
 
 	if( R::Pps::Ssao::enabled )
 	{
-		R::Pps::Ssao::bluredFai2.bind(1);
-		glUniform1i( shdrVars::ppsSsaoFai, 1 );
+		sProg.locTexUnit( sProg.uniLocs.ppsSsaoFai, R::Pps::Ssao::bluredFai2, 1 );
 	}
 
 	if( R::Pps::edgeaa::enabled )
 	{
-		R::Ms::normalFai.bind(2);
-		glUniform1i( shdrVars::msNormalFai, 2 );
+		sProg.locTexUnit( sProg.uniLocs.msNormalFai, R::Ms::normalFai, 2 );
 	}
 
 	if( R::Pps::Hdr::enabled )
 	{
-		R::Pps::Hdr::pass2Fai.bind(3);
-		//R::Bs::r_fai.bind(3);
-		glUniform1i( shdrVars::hdrFai, 3 );
+		sProg.locTexUnit( sProg.uniLocs.hdrFai, R::Pps::Hdr::fai, 3 );
 	}
 
 	if( R::Pps::Lscatt::enabled )
 	{
-		R::Pps::Lscatt::fai.bind(4);
-		glUniform1i( shdrVars::lscattFai, 4 );
+		sProg.locTexUnit( sProg.uniLocs.lscattFai, R::Pps::Lscatt::fai, 4 );
 	}
 
 
@@ -151,7 +159,7 @@ void runStage( const Camera& cam )
 	R::DrawQuad( 0 );
 
 	// unbind FBO
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 

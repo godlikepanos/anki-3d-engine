@@ -162,12 +162,18 @@ void initPhysics()
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
 }
 
+#include "ShaderParser.h"
+
 
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
 void init()
 {
+	ShaderParser par;
+	par.parseFile( "test.glsl" );
+
+
 	PRINT( "Engine initializing..." );
 
 	initPhysics();

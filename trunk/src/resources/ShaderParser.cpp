@@ -47,8 +47,15 @@ Vec<ShaderParser::ShaderVarPragma>::iterator ShaderParser::findShaderVar( Vec<Sh
 //=====================================================================================================================================
 // parseFileForPragmas                                                                                                                =
 //=====================================================================================================================================
-bool ShaderParser::parseFileForPragmas( const string& filename, int id )
+bool ShaderParser::parseFileForPragmas( const string& filename, int depth )
 {
+	// first check the depth
+	if( depth > 99 )
+	{
+		ERROR( "The include depth is too high. Probably circular includance (Im in file \"" << filename << "\")" );
+		return false;
+	}
+
 	// load file in lines
 	Vec<string> lines = Util::getFileLines( filename.c_str() );
 	if( lines.size() < 1 )
@@ -80,45 +87,63 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 					if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "vertShaderBegins") == 0 )
 					{
 						// play
-						if( fragShaderBegins.definedInLine != -1 ) // check if frag shader already defined
+
+						// its defined in same place so there is probable circular includance
+						if( vertShaderBegins.definedInLine==scanner.getLineNmbr() && vertShaderBegins.definedInFile==filename )
+						{
+							PARSE_ERR( "vertShaderBegins already defined in the same place. Check for circular or multiple includance" );
+							return false;
+						}
+
+						if( vertShaderBegins.definedInLine != -1 ) // already defined elsewhere so throw error
+						{
+							PARSE_ERR( "vertShaderBegins already defined at " << vertShaderBegins.definedInFile << ":" <<
+							           vertShaderBegins.definedInLine );
+							return false;
+						}
+
+						if( fragShaderBegins.definedInLine != -1 ) // frag shader should be after vert
 						{
 							PARSE_ERR( "vertShaderBegins must precede fragShaderBegins defined at " << fragShaderBegins.definedInFile <<
 							           ":" << fragShaderBegins.definedInLine );
 							return false;
 						}
 						
-						if( vertShaderBegins.definedInLine != -1 ) // already defined elseware so throw error
-						{
-							PARSE_ERR( "vertShaderBegins already defined at " << vertShaderBegins.definedInFile << ":" <<
-							           vertShaderBegins.definedInLine );
-							return false;
-						}
 						vertShaderBegins.definedInFile = filename;
 						vertShaderBegins.definedInLine = scanner.getLineNmbr();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* fragShaderBegins */
 					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "fragShaderBegins") == 0 )
 					{
 						// play
-						if( vertShaderBegins.definedInLine == -1 )
+
+						// its defined in same place so there is probable circular includance
+						if( fragShaderBegins.definedInLine==scanner.getLineNmbr() && fragShaderBegins.definedInFile==filename )
 						{
-							PARSE_ERR( "fragShaderBegins should be defined after vertShaderBegins" );
+							PARSE_ERR( "fragShaderBegins already defined in the same place. Check for circular or multiple includance" );
 							return false;
 						}
-						
-						if( fragShaderBegins.definedInLine != -1 ) // if already defined elseware throw error
+
+						if( fragShaderBegins.definedInLine != -1 ) // if already defined elsewhere throw error
 						{
 							PARSE_ERR( "fragShaderBegins already defined at " << fragShaderBegins.definedInFile << ":" <<
 							           fragShaderBegins.definedInLine );
 							return false;
 						}
+						
+						if( vertShaderBegins.definedInLine == -1 ) // vert shader entry point not defined
+						{
+							PARSE_ERR( "fragShaderBegins should be defined after vertShaderBegins" );
+							return false;
+						}
+
 						fragShaderBegins.definedInFile = filename;
 						fragShaderBegins.definedInLine = scanner.getLineNmbr();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(id) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
 /* include */
@@ -129,9 +154,9 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 						{
 							// play
 							//int line = sourceLines.size();
-							sourceLines.push_back( string("#line 0 ") + Util::intToStr(id+1) + " // " + lines[scanner.getLineNmbr()-1] );
-							if( !parseFileForPragmas( token->value.string, id+1 ) ) return false;
-							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(id) +  " // end of " + lines[scanner.getLineNmbr()-1] );
+							sourceLines.push_back( string("#line 0 ") + Util::intToStr(depth+1) + " // " + lines[scanner.getLineNmbr()-1] );
+							if( !parseFileForPragmas( token->value.string, depth+1 ) ) return false;
+							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNmbr()-1] );
 							// stop play
 						}
 						else
@@ -146,21 +171,40 @@ bool ShaderParser::parseFileForPragmas( const string& filename, int id )
 						token = &scanner.getNextToken();
 						if( token->code == Scanner::TC_IDENTIFIER )
 						{
-							string var_name = token->value.string;
+							string varName = token->value.string;
 							token = &scanner.getNextToken();
 							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
 							{
-								// play
-								Vec<ShaderVarPragma>::iterator attrib = findShaderVar( output.attributes, var_name );
+								int loc = token->value.int_;
+
+								// check if already defined and for circular includance
+								Vec<ShaderVarPragma>::iterator attrib = findShaderVar( output.attributes, varName );
 								if( attrib != output.attributes.end() )
 								{
-									PARSE_ERR( "Attribute already defined at " << attrib->definedInFile << ":" << attrib->definedInLine );
+									if( attrib->definedInLine==scanner.getLineNmbr() && attrib->definedInFile==filename )
+									{
+										PARSE_ERR( "\"" << varName << "\" already defined in the same place. Check for circular or multiple includance" );
+									}
+									else
+									{
+										PARSE_ERR( "Attribute \"" << varName << "\" already defined at " << attrib->definedInFile << ":" << attrib->definedInLine );
+									}
 									return false;
 								}
+								// search if another var has the same loc
+								for( attrib = output.attributes.begin(); attrib!=output.attributes.end(); ++attrib )
+								{
+									if( attrib->customLoc == loc )
+									{
+										PARSE_ERR( "The attributes \"" << attrib->name << "\" (" << attrib->definedInFile << ":" << attrib->definedInLine <<
+										           ") and \"" << varName << "\" share the same location" );
+										return false;
+									}
+								}
 								
-								output.attributes.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), var_name, token->value.int_ ) );
+								// all ok, push it back
+								output.attributes.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), varName, loc ) );
 								sourceLines.push_back( lines[scanner.getLineNmbr()-1] );
-								// stop play
 							}
 							else
 							{

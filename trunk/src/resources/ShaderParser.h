@@ -7,7 +7,10 @@
 
 /**
  * The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to have all the
- * shaders in the same file. The file that includes all the shaders is called ShaderParser-compatible
+ * shaders in the same file. The file that includes all the shaders is called ShaderParser-compatible. The preprocessor pragmas are
+ * four: include, vertShaderBegins, fragShaderBegins and attribute. The *ShaderBegins indicate where the shader code begins and must be
+ * in certain order, first the vert shader and then the frag. The include is self-explanatory. The attribute is used to bind custom
+ * locations to attributes.
  */
 class ShaderParser
 {
@@ -54,10 +57,10 @@ class ShaderParser
 		/**
 		 * A recursive function that parses a file for pragmas and updates the output
 		 * @param filename The file to parse
-		 * @param id The #line in GLSL does not support filename so an id it being used instead
+		 * @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the include depth
 		 * @return True on success
 		 */
-		bool parseFileForPragmas( const string& filename, int id = 0 );
+		bool parseFileForPragmas( const string& filename, int depth = 0 );
 
 		/**
 		 * Searches inside the Output::uniforms or Output::attributes vectors

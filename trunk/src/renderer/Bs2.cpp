@@ -32,7 +32,7 @@ void init2()
 {
 	//** 1st FBO **
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform FBO about the color buffers
@@ -47,11 +47,11 @@ void init2()
 		FATAL( "Cannot create deferred shading blending stage FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 
 
 	//** 2nd FBO **
-	intermid_fbo.Create();
+	intermid_fbo.create();
 	intermid_fbo.bind();
 
 	// texture
@@ -67,7 +67,7 @@ void init2()
 		FATAL( "Cannot create deferred shading blending stage FBO" );
 
 	// unbind
-	intermid_fbo.Unbind();
+	intermid_fbo.unbind();
 
 	shaderProg = rsrc::shaders.load( "shaders/bs_refract.glsl" );
 }
@@ -109,7 +109,7 @@ void runStage2( const Camera& cam )
 
 	// restore a few things
 	glDepthMask( true );
-	Fbo::Unbind();
+	Fbo::unbind();
 }
 
 

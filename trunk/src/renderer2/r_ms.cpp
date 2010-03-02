@@ -9,7 +9,7 @@
 void renderer_t::material_stage_t::init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw

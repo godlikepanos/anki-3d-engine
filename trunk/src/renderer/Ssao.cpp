@@ -39,7 +39,7 @@ static Texture* noise_map;
 static void InitBlurFBO()
 {
 	// create FBO
-	blurFbo.Create();
+	blurFbo.create();
 	blurFbo.bind();
 
 	// inform in what buffers we draw
@@ -58,12 +58,12 @@ static void InitBlurFBO()
 		FATAL( "Cannot create deferred shading post-processing stage SSAO blur FBO" );
 
 	// unbind
-	blurFbo.Unbind();
+	blurFbo.unbind();
 
 
 
 	// create FBO
-	blurFbo2.Create();
+	blurFbo2.create();
 	blurFbo2.bind();
 
 	// inform in what buffers we draw
@@ -82,7 +82,7 @@ static void InitBlurFBO()
 		FATAL( "Cannot create deferred shading post-processing stage SSAO blur FBO" );
 
 	// unbind
-	blurFbo2.Unbind();
+	blurFbo2.unbind();
 }
 
 
@@ -98,7 +98,7 @@ void init()
 	wheight = R::Pps::Ssao::renderingQuality * R::h;
 
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
@@ -117,7 +117,7 @@ void init()
 		FATAL( "Cannot create deferred shading post-processing stage SSAO pass FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 
 
 	// init shaders
@@ -180,7 +180,7 @@ void runPass( const Camera& cam )
 
 
 	// end
-	Fbo::Unbind();
+	Fbo::unbind();
 }
 
 

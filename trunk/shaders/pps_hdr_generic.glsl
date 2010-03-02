@@ -1,3 +1,7 @@
+/**
+ * Pass 0 horizontal blur, pass 1 vertical, pass 2 median
+ */
+
 #pragma anki vertShaderBegins
 
 #pragma anki include "shaders/simple_vert.glsl"
@@ -8,13 +12,13 @@
 
 varying vec2 texCoords;
 
-uniform sampler2D tex;
+uniform sampler2D fai;
 
 void main()
 {
-	//gl_FragData[0].rgb = texture2D( tex, texCoords).rgb;return;
+	//gl_FragData[0].rgb = texture2D( fai, texCoords).rgb;return;
 
-	/*if( texCoords.x*R_W > textureSize(tex,0).x/2 )
+	/*if( texCoords.x*R_W > textureSize(fai,0).x/2 )
 		gl_FragData[0].rgb = vec3( 1, 0, 0 );
 	else
 		gl_FragData[0].rgb = vec3( 0, 1, 0 );
@@ -24,9 +28,9 @@ void main()
 		const float super_offset = 2.5;
 
 		#if defined( _PPS_HDR_PASS0_ )
-			float offset = 1.0 / float(textureSize(tex,0).x) * super_offset;
+			float offset = 1.0 / float(textureSize(fai,0).x) * super_offset;
 		#else
-			float offset = 1.0 / float(textureSize(tex,0).y) * super_offset;
+			float offset = 1.0 / float(textureSize(fai,0).y) * super_offset;
 		#endif
 
 		const int KERNEL_SIZE = 9;
@@ -38,17 +42,17 @@ void main()
 		for( int i=0; i<KERNEL_SIZE; i++ )
 		{
 			#if defined( _PPS_HDR_PASS_0_ )
-				color += texture2D( tex, texCoords + vec2(kernel[i], 0.0) ).rgb;
+				color += texture2D( fai, texCoords + vec2(kernel[i], 0.0) ).rgb;
 			#else // _PPS_HDR_PASS_1_
-				color += texture2D( tex, texCoords + vec2(0.0, kernel[i]) ).rgb;
+				color += texture2D( fai, texCoords + vec2(0.0, kernel[i]) ).rgb;
 			#endif
 		}
 
 		gl_FragData[0].rgb = color / KERNEL_SIZE;
 
 	#else // _PPS_HDR_PASS_2_
-		vec3 color = MedianFilterRGB( tex, texCoords );
-		//vec3 color = texture2D( tex, texCoords ).rgb;
+		vec3 color = MedianFilterRGB( fai, texCoords );
+		//vec3 color = texture2D( fai, texCoords ).rgb;
 
 		float Y = dot(vec3(0.30, 0.59, 0.11), color);
 		const float exposure = 4.0;

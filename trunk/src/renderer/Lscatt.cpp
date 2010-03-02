@@ -21,9 +21,9 @@ bool enabled = false;
 
 Texture fai;
 
-static ShaderProg* shdr;
-static int ms_depth_fai_uni_loc;
-static int is_fai_uni_loc;
+static ShaderProg sProg;
+static int msDepthFaiUniLoc;
+static int isFaiUniLoc;
 
 
 /*
@@ -38,7 +38,7 @@ void init()
 	float wheight = R::Pps::Lscatt::renderingQuality * R::h;
 
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
@@ -57,13 +57,13 @@ void init()
 		FATAL( "Cannot create deferred shading post-processing stage light scattering pass FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 
 
 	// init shaders
-	shdr = rsrc::shaders.load( "shaders/pps_lscatt.glsl" );
-	ms_depth_fai_uni_loc = shdr->getUniVar( "ms_depth_fai" ).getLoc();
-	is_fai_uni_loc = shdr->getUniVar( "is_fai" ).getLoc();
+	sProg.customLoad( "shaders/pps_lscatt.glsl" );
+	msDepthFaiUniLoc = sProg.getUniVar( "msDepthFai" ).getLoc();
+	isFaiUniLoc = sProg.getUniVar( "isFai" ).getLoc();
 }
 
 
@@ -82,23 +82,23 @@ void runPass( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 
 	// set the shader
-	shdr->bind();
+	sProg.bind();
 
-	shdr->locTexUnit( ms_depth_fai_uni_loc, R::Ms::depthFai, 0 );
-	shdr->locTexUnit( is_fai_uni_loc, R::Is::fai, 1 );
+	sProg.locTexUnit( msDepthFaiUniLoc, R::Ms::depthFai, 0 );
+	sProg.locTexUnit( isFaiUniLoc, R::Is::fai, 1 );
 
 	// pass the light
 	Vec4 p = Vec4( Scene::getSunPos(), 1.0 );
 	p = cam.getProjectionMatrix() * (cam.getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
-	glUniform2fv( shdr->getUniVar("light_pos_screen_space").getLoc(), 1, &p[0] );
+	glUniform2fv( sProg.getUniVar("lightPosScreenSpace").getLoc(), 1, &p[0] );
 
 	// Draw quad
 	R::DrawQuad( 0 );
 
 	// end
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 

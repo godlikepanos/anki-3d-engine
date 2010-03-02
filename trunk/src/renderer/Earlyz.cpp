@@ -33,7 +33,7 @@ init                                                                            
 void init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform the we wont write to color buffers

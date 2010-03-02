@@ -32,7 +32,7 @@ Texture normalFai, diffuseFai, specularFai, depthFai;
 void init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
@@ -66,7 +66,7 @@ void init()
 		FATAL( "Cannot create deferred shading material pass FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 
 #if defined( _EARLY_Z_ )
 	R::Ms::earlyz::init();
@@ -119,7 +119,7 @@ void runStage( const Camera& cam )
 		glDepthFunc( GL_LESS );
 	#endif
 
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 

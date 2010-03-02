@@ -71,21 +71,21 @@ bool showSkeletons = false;
 bool showCameras = true;
 bool showBvolumes = true;
 
-
 static Fbo fbo;
 
-static ShaderProg* shdr;
+class DbgShaderProg: public ShaderProg
+{};
+
+static DbgShaderProg sProg;
 
 
-/*
-=======================================================================================================================================
-init                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// init                                                                                                                               =
+//=====================================================================================================================================
 void init()
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
@@ -100,23 +100,21 @@ void init()
 		FATAL( "Cannot create debug FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 
 	// shader
-	shdr = rsrc::shaders.load( "shaders/dbg.glsl" );
+	sProg.customLoad( "shaders/dbg.glsl" );
 }
 
 
-/*
-=======================================================================================================================================
-runStage                                                                                                                              =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// runStage                                                                                                                           =
+//=====================================================================================================================================
 void runStage( const Camera& cam )
 {
 	fbo.bind();
 
-	shdr->bind();
+	sProg.bind();
 
 	// OGL stuff
 	R::setProjectionViewMatrices( cam );
@@ -152,20 +150,18 @@ void runStage( const Camera& cam )
 
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 
-/*
-=======================================================================================================================================
-renderGrid                                                                                                                            =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// renderGrid                                                                                                                         =
+//=====================================================================================================================================
 void renderGrid()
 {
-	float col0[] = { 0.5f, 0.5f, 0.5f };
-	float col1[] = { 0.0f, 0.0f, 1.0f };
-	float col2[] = { 1.0f, 0.0f, 0.0f };
+	float col0[] = { 0.5, 0.5, 0.5 };
+	float col1[] = { 0.0, 0.0, 1.0 };
+	float col2[] = { 1.0, 0.0, 0.0 };
 
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_LIGHTING );
@@ -201,11 +197,9 @@ void renderGrid()
 }
 
 
-/*
-=======================================================================================================================================
-renderQuad                                                                                                                            =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// renderQuad                                                                                                                         =
+//=====================================================================================================================================
 void renderQuad( float w, float h )
 {
 	float wdiv2 = w/2, hdiv2 = h/2;
@@ -226,11 +220,9 @@ void renderQuad( float w, float h )
 }
 
 
-/*
-=======================================================================================================================================
-renderSphere                                                                                                                          =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// renderSphere                                                                                                                       =
+//=====================================================================================================================================
 void renderSphere( float r, int p )
 {
 	const float twopi  = PI*2;
@@ -240,13 +232,13 @@ void renderSphere( float r, int p )
 	float theta2 = 0.0;
 	float theta3 = 0.0;
 
-	float ex = 0.0f;
-	float ey = 0.0f;
-	float ez = 0.0f;
+	float ex = 0.0;
+	float ey = 0.0;
+	float ez = 0.0;
 
-	float px = 0.0f;
-	float py = 0.0f;
-	float pz = 0.0f;
+	float px = 0.0;
+	float py = 0.0;
+	float pz = 0.0;
 
 
 	for( int i = 0; i < p/2; ++i )
@@ -296,53 +288,51 @@ void renderSphere( float r, int p )
 }
 
 
-/*
-=======================================================================================================================================
-renderCube                                                                                                                            =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// renderCube                                                                                                                         =
+//=====================================================================================================================================
 void renderCube( bool cols, float size )
 {
 	size *= 0.5f;
 	glBegin(GL_QUADS);
 		// Front Face
 		if(cols) glColor3f( 0.0, 0.0, 1.0 );
-		glNormal3f( 0.0f, 0.0f, 1.0f);
+		glNormal3f( 0.0, 0.0, 1.0f);
 		glTexCoord2f(0.0, 0.0); glVertex3f(-size, -size,  size);
 		glTexCoord2f(1.0, 0.0); glVertex3f( size, -size,  size);
 		glTexCoord2f(1.0, 1.0); glVertex3f( size,  size,  size);
 		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size,  size);
 		// Back Face
 		if(cols) glColor3f( 0.0, 0.0, size );
-		glNormal3f( 0.0f, 0.0f,-1.0f);
+		glNormal3f( 0.0, 0.0,-1.0f);
 		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size, -size);
 		glTexCoord2f(1.0, 1.0); glVertex3f(-size,  size, -size);
 		glTexCoord2f(0.0, 1.0); glVertex3f( size,  size, -size);
 		glTexCoord2f(0.0, 0.0); glVertex3f( size, -size, -size);
 		// Top Face
 		if(cols) glColor3f( 0.0, 1.0, 0.0 );
-		glNormal3f( 0.0f, 1.0f, 0.0f);
+		glNormal3f( 0.0, 1.0f, 0.0);
 		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size, -size);
 		glTexCoord2f(0.0, 0.0); glVertex3f(-size,  size,  size);
 		glTexCoord2f(1.0, 0.0); glVertex3f( size,  size,  size);
 		glTexCoord2f(1.0, 1.0); glVertex3f( size,  size, -size);
 		// Bottom Face
 		if(cols) glColor3f( 0.0, size, 0.0 );
-		glNormal3f( 0.0f,-1.0f, 0.0f);
+		glNormal3f( 0.0,-1.0f, 0.0);
 		glTexCoord2f(1.0, 1.0); glVertex3f(-size, -size, -size);
 		glTexCoord2f(0.0, 1.0); glVertex3f( size, -size, -size);
 		glTexCoord2f(0.0, 0.0); glVertex3f( size, -size,  size);
 		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size,  size);
 		// Right face
 		if(cols) glColor3f( 1.0, 0.0, 0.0 );
-		glNormal3f( 1.0f, 0.0f, 0.0f);
+		glNormal3f( 1.0f, 0.0, 0.0);
 		glTexCoord2f(1.0, 0.0); glVertex3f( size, -size, -size);
 		glTexCoord2f(1.0, 1.0); glVertex3f( size,  size, -size);
 		glTexCoord2f(0.0, 1.0); glVertex3f( size,  size,  size);
 		glTexCoord2f(0.0, 0.0); glVertex3f( size, -size,  size);
 		// Left Face
 		if(cols) glColor3f( size, 0.0, 0.0 );
-		glNormal3f(-1.0f, 0.0f, 0.0f);
+		glNormal3f(-1.0f, 0.0, 0.0);
 		glTexCoord2f(0.0, 0.0); glVertex3f(-size, -size, -size);
 		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size,  size);
 		glTexCoord2f(1.0, 1.0); glVertex3f(-size,  size,  size);

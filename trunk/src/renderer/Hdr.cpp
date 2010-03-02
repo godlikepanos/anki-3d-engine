@@ -13,14 +13,12 @@ namespace Pps {
 namespace Hdr {
 
 
-/*
-=======================================================================================================================================
-VARS                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// VARS                                                                                                                               =
+//=====================================================================================================================================
 bool enabled = true;
 
-static Fbo pass0_fbo, pass1_fbo, pass2_fbo; // yet another FBO and another, damn
+static Fbo pass0Fbo, pass1Fbo, pass2Fbo; // yet another FBO and another, damn
 
 float renderingQuality = 0.25; // 1/4 of the image
 static uint wwidth, wheight; // render width and height
@@ -28,27 +26,34 @@ static uint wwidth, wheight; // render width and height
 // hdr images
 Texture pass0Fai; // for vertical blur pass
 Texture pass1Fai; // with the horizontal blur
-Texture pass2Fai;
+Texture fai; ///< The final fai
 
-static ShaderProg* pass0_shdr, * pass1_shdr, * pass2_shdr; // hdr pass 0 and pass 1 shaders
+class HdrShaderProg: public ShaderProg
+{
+	public:
+		struct
+		{
+			int fai;
+		} uniLocs;
+};
+
+static HdrShaderProg pass0SProg, pass1SProg, pass2SProg;
 
 
-/*
-=======================================================================================================================================
-InitFBOs                                                                                                                              =
-=======================================================================================================================================
-*/
-static void InitFBOs( Fbo& fbo, Texture& fai, int internal_format )
+//=====================================================================================================================================
+// initFbos                                                                                                                           =
+//=====================================================================================================================================
+static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 {
 	// create FBO
-	fbo.Create();
+	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( wwidth, wheight, internal_format, GL_RGB );
+	fai.createEmpty2D( wwidth, wheight, internalFormat, GL_RGB );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
@@ -60,36 +65,37 @@ static void InitFBOs( Fbo& fbo, Texture& fai, int internal_format )
 		FATAL( "Cannot create deferred shading post-processing stage HDR passes FBO" );
 
 	// unbind
-	fbo.Unbind();
+	fbo.unbind();
 }
 
 
-/*
-=======================================================================================================================================
-init                                                                                                                                  =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// init                                                                                                                               =
+//=====================================================================================================================================
 void init()
 {
 	wwidth = R::Pps::Hdr::renderingQuality * R::w;
 	wheight = R::Pps::Hdr::renderingQuality * R::h;
 
-	InitFBOs( pass0_fbo, pass0Fai, GL_RGB );
-	InitFBOs( pass1_fbo, pass1Fai, GL_RGB );
-	InitFBOs( pass2_fbo, pass2Fai, GL_RGB );
+	initFbos( pass0Fbo, pass0Fai, GL_RGB );
+	initFbos( pass1Fbo, pass1Fai, GL_RGB );
+	initFbos( pass2Fbo, fai, GL_RGB );
 
 	// init shaders
-	pass0_shdr = rsrc::shaders.load( "shaders/pps_hdr_pass0.glsl" );
-	pass1_shdr = rsrc::shaders.load( "shaders/pps_hdr_pass1.glsl" );
-	pass2_shdr = rsrc::shaders.load( "shaders/pps_hdr_pass2.glsl" );
+	pass0SProg.customLoad( "shaders/pps_hdr_generic.glsl", "#define _PPS_HDR_PASS_0_\n" );
+	pass0SProg.uniLocs.fai = pass0SProg.uniLocs.fai;
+
+	pass1SProg.customLoad( "shaders/pps_hdr_generic.glsl", "#define _PPS_HDR_PASS_1_\n" );
+	pass1SProg.uniLocs.fai = pass1SProg.uniLocs.fai;
+
+	pass2SProg.customLoad( "shaders/pps_hdr_generic.glsl", "#define _PPS_HDR_PASS_2_\n" );
+	pass2SProg.uniLocs.fai = pass2SProg.uniLocs.fai;
 }
 
 
-/*
-=======================================================================================================================================
-runPass                                                                                                                               =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// runPass                                                                                                                            =
+//=====================================================================================================================================
 void runPass( const Camera& /*cam*/ )
 {
 	R::setViewport( 0, 0, wwidth, wheight );
@@ -99,39 +105,27 @@ void runPass( const Camera& /*cam*/ )
 
 
 	// pass 0
-	pass0_fbo.bind();
-
-	pass0_shdr->bind();
-
-	pass0_shdr->locTexUnit( pass0_shdr->getUniVar("tex").getLoc(), R::Is::fai, 0 );
-
-	// Draw quad
+	pass0Fbo.bind();
+	pass0SProg.bind();
+	pass0SProg.locTexUnit( pass0SProg.uniLocs.fai, R::Is::fai, 0 );
 	R::DrawQuad( 0 );
 
 
 	// pass 1
-	pass1_fbo.bind();
-
-	pass1_shdr->bind();
-
-	pass1_shdr->locTexUnit( pass1_shdr->getUniVar("tex").getLoc(), pass0Fai, 0 );
-
-	// Draw quad
+	pass1Fbo.bind();
+	pass1SProg.bind();
+	pass1SProg.locTexUnit( pass1SProg.uniLocs.fai, pass0Fai, 0 );
 	R::DrawQuad( 0 );
 
 
 	// pass 2
-	pass2_fbo.bind();
-
-	pass2_shdr->bind();
-
-	pass2_shdr->locTexUnit( pass2_shdr->getUniVar("tex").getLoc(), pass1Fai, 0 );
-
-	// Draw quad
+	pass2Fbo.bind();
+	pass2SProg.bind();
+	pass2SProg.locTexUnit( pass2SProg.uniLocs.fai, pass1Fai, 0 );
 	R::DrawQuad( 0 );
 
 	// end
-	Fbo::Unbind();
+	Fbo::unbind();
 }
 
 
