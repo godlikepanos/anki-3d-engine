@@ -1,4 +1,4 @@
-source_paths = [ "../../src/math/", "../../src/tokenizer/", "../../src/uncategorized/", "../../src/", "../../src/renderer/", "../../src/scene/", "../../src/ui/", "../../src/resources/", "../../src/utility/", "../../src/controllers/" ]
+source_paths = [ "../../src/Math/", "../../src/Tokenizer/", "../../src/Misc/", "../../src/", "../../src/Renderer/", "../../src/Scene/", "../../src/Ui/", "../../src/Resources/", "../../src/Util/", "../../src/Controllers/" ]
 
 include_paths = list(source_paths)
 include_paths.extend( [ "../../../bullet_svn/src/" ] ) # the bullet svn path
