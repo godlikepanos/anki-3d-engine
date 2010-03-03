@@ -200,19 +200,21 @@ bool Material::load( const char* filename )
 			// loop all the vars
 			do
 			{
-				userDefinedVars.push_back( UserDefinedVar() ); // create new var
-				UserDefinedVar& var = userDefinedVars.back();
-
 				// read the name
-				string varName;
 				token = &scanner.getNextToken();
-				if( token->code == Scanner::TC_IDENTIFIER )
-					varName = token->value.string;
-				else
+				if( token->code == Scanner::TC_RBRACKET ) break;
+
+				if( token->code != Scanner::TC_IDENTIFIER )
 				{
 					PARSE_ERR_EXPECTED( "identifier" );
 					return false;
 				}
+
+				string varName;
+				varName = token->value.string;
+
+				userDefinedVars.push_back( UserDefinedVar() ); // create new var
+				UserDefinedVar& var = userDefinedVars.back();
 
 				// check if the uniform exists
 				if( !shaderProg->uniVarExists( varName.c_str() ) )
@@ -224,7 +226,7 @@ bool Material::load( const char* filename )
 				var.sProgVar = & shaderProg->getUniVar( varName.c_str() );
 
 				// read the values
-				switch( var.sProgVar->getType() )
+				switch( var.sProgVar->getGlDataType() )
 				{
 					// texture
 					case GL_SAMPLER_2D:
@@ -398,15 +400,15 @@ void Material::setup()
 
 
 	// now loop all the user defined vars and set them
-	uint texture_unit = 0;
+	uint texture_Unit = 0;
 	Vec<UserDefinedVar>::iterator udv;
 	for( udv=userDefinedVars.begin(); udv!=userDefinedVars.end(); udv++ )
 	{
-		switch( udv->sProgVar->getType() )
+		switch( udv->sProgVar->getGlDataType() )
 		{
 			// texture
 			case GL_SAMPLER_2D:
-				shaderProg->locTexUnit( udv->sProgVar->getLoc(), *udv->value.texture, texture_unit++ );
+				shaderProg->locTexUnit( udv->sProgVar->getLoc(), *udv->value.texture, texture_Unit++ );
 				break;
 			// float
 			case GL_FLOAT:

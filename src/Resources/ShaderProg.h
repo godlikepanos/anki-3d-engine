@@ -41,6 +41,10 @@ class ShaderProg: public Resource
 				Var( int loc_, const char* name_, GLenum glDataType_, uint type_ ):
 					loc(loc_), name(name_), glDataType(glDataType_), type(type_)
 				{}
+
+				Var( const Var& var ):
+					loc(var.loc), name(var.name), glDataType(var.glDataType), type(var.type)
+				{}
 		};
 
 		Var dummyVar; ///< Returned on error
