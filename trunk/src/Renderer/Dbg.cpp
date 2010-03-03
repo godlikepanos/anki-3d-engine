@@ -109,7 +109,7 @@ void init()
 	fbo.unbind();
 
 	// shader
-	sProg.customLoad( "shaders/dbg.glsl" );
+	sProg.customLoad( "shaders/Dbg.glsl" );
 }
 
 
