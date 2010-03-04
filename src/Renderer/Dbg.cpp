@@ -5,6 +5,7 @@
 #include "Fbo.h"
 #include "Node.h"
 #include "SkelNode.h"
+#include "App.h"
 
 
 #include "btBulletCollisionCommon.h"
@@ -130,19 +131,19 @@ void runStage( const Camera& cam )
 	glDisable( GL_BLEND );
 
 	//R::renderGrid();
-	for( uint i=0; i<Scene::nodes.size(); i++ )
+	for( uint i=0; i<app->scene->nodes.size(); i++ )
 	{
 		if
 		(
-			(Scene::nodes[i]->type == Node::NT_LIGHT && showLights) ||
-			(Scene::nodes[i]->type == Node::NT_CAMERA && showCameras)
+			(app->scene->nodes[i]->type == Node::NT_LIGHT && showLights) ||
+			(app->scene->nodes[i]->type == Node::NT_CAMERA && showCameras)
 		)
 		{
-			Scene::nodes[i]->render();
+			app->scene->nodes[i]->render();
 		}
-		else if( Scene::nodes[i]->type == Node::NT_SKELETON && showSkeletons )
+		else if( app->scene->nodes[i]->type == Node::NT_SKELETON && showSkeletons )
 		{
-			SkelNode* skel_node = static_cast<SkelNode*>( Scene::nodes[i] );
+			SkelNode* skel_node = static_cast<SkelNode*>( app->scene->nodes[i] );
 			glDisable( GL_DEPTH_TEST );
 			skel_node->render();
 			glEnable( GL_DEPTH_TEST );
@@ -354,7 +355,7 @@ static void renderSun()
 {
 	glPushMatrix();
 
-	R::multMatrix( Mat4( Scene::getSunPos(), Mat3::getIdentity(), 50.0 ) );
+	R::multMatrix( Mat4( app->scene->getSunPos(), Mat3::getIdentity(), 50.0 ) );
 
 	R::color3( Vec3(1.0, 1.0, 0.0) );
 	R::Dbg::renderSphere( 1.0/8.0, 8 );
@@ -372,7 +373,7 @@ static void renderSun()
 	glLoadIdentity();
 
 
-	Vec4 p = Vec4( Scene::getSunPos(), 1.0 );
+	Vec4 p = Vec4( app->scene->getSunPos(), 1.0 );
 	p = mainCam->getProjectionMatrix() * (mainCam->getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;

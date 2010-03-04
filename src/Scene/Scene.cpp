@@ -7,61 +7,37 @@
 #include "Controller.h"
 #include "Material.h"
 
-namespace Scene {
-
-/*
-=======================================================================================================================================
-DATA                                                                                                                                  =
-=======================================================================================================================================
-*/
-Skybox skybox;
-
-NodeContainer     nodes;
-LightContainer    lights;
-CameraContainer   cameras;
-MeshContainer     meshNodes;
-SkelNodeContainer skelNodes;
-
-Vec<Controller*> controllers;
-
 
 //=====================================================================================================================================
-// Static template funcs                                                                                                              =
+// Constructor                                                                                                                        =
 //=====================================================================================================================================
-template<typename ContainerType, typename Type> static void PutBackNode( ContainerType& container, Type* x )
+Scene::Scene()
 {
-	DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
-	container.push_back( x );
-}
-
-template<typename ContainerType, typename Type> static void EraseNode( ContainerType& container, Type* x )
-{
-	typename ContainerType::iterator it = std::find( container.begin(), container.end(), x );
-	DEBUG_ERR( it == container.end() );
-	container.erase( it );
+	ambientCol = Vec3( 0.1, 0.05, 0.05 )*1;
+	sunPos = Vec3( 0.0, 1.0, -1.0 ) * 50.0;
 }
 
 
 //=====================================================================================================================================
 // registerNode                                                                                                                       =
 //=====================================================================================================================================
-void registerNode( Node* node )
+void Scene::registerNode( Node* node )
 {
-	PutBackNode( nodes, node );
+	putBackNode( nodes, node );
 	
 	switch( node->type )
 	{
 		case Node::NT_LIGHT:
-			PutBackNode( lights, static_cast<Light*>(node) );
+			putBackNode( lights, static_cast<Light*>(node) );
 			break;
 		case Node::NT_CAMERA:
-			PutBackNode( cameras, static_cast<Camera*>(node) );
+			putBackNode( cameras, static_cast<Camera*>(node) );
 			break;
 		case Node::NT_MESH:
-			PutBackNode( meshNodes, static_cast<MeshNode*>(node) );
+			putBackNode( meshNodes, static_cast<MeshNode*>(node) );
 			break;
 		case Node::NT_SKELETON:
-			PutBackNode( skelNodes, static_cast<SkelNode*>(node) );
+			putBackNode( skelNodes, static_cast<SkelNode*>(node) );
 			break;
 		case Node::NT_SKEL_MODEL:
 			// ToDo
@@ -73,23 +49,23 @@ void registerNode( Node* node )
 //=====================================================================================================================================
 // unregisterNode                                                                                                                     =
 //=====================================================================================================================================
-void unregisterNode( Node* node )
+void Scene::unregisterNode( Node* node )
 {
-	EraseNode( nodes, node );
+	eraseNode( nodes, node );
 	
 	switch( node->type )
 	{
 		case Node::NT_LIGHT:
-			EraseNode( lights, static_cast<Light*>(node) );
+			eraseNode( lights, static_cast<Light*>(node) );
 			break;
 		case Node::NT_CAMERA:
-			EraseNode( cameras, static_cast<Camera*>(node) );
+			eraseNode( cameras, static_cast<Camera*>(node) );
 			break;
 		case Node::NT_MESH:
-			EraseNode( meshNodes, static_cast<MeshNode*>(node) );
+			eraseNode( meshNodes, static_cast<MeshNode*>(node) );
 			break;
 		case Node::NT_SKELETON:
-			EraseNode( skelNodes, static_cast<SkelNode*>(node) );
+			eraseNode( skelNodes, static_cast<SkelNode*>(node) );
 			break;
 		case Node::NT_SKEL_MODEL:
 			// ToDo
@@ -101,13 +77,13 @@ void unregisterNode( Node* node )
 //=====================================================================================================================================
 // Register and Unregister controllers                                                                                                =
 //=====================================================================================================================================
-void registerController( Controller* controller )
+void Scene::registerController( Controller* controller )
 {
 	DEBUG_ERR( std::find( controllers.begin(), controllers.end(), controller ) != controllers.end() );
 	controllers.push_back( controller );
 }
 
-void unregisterController( Controller* controller )
+void Scene::unregisterController( Controller* controller )
 {
 	Vec<Controller*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
 	DEBUG_ERR( it == controllers.end() );
@@ -118,7 +94,7 @@ void unregisterController( Controller* controller )
 //=====================================================================================================================================
 // updateAllWorldStuff                                                                                                                =
 //=====================================================================================================================================
-void updateAllWorldStuff()
+void Scene::updateAllWorldStuff()
 {
 	DEBUG_ERR( nodes.size() > 1024 );
 	Node* queue [1024];
@@ -150,20 +126,10 @@ void updateAllWorldStuff()
 //=====================================================================================================================================
 // updateAllControllers                                                                                                               =
 //=====================================================================================================================================
-void updateAllControllers()
+void Scene::updateAllControllers()
 {
-	/*for( NodeContaineR::iterator it=nodes.begin(); it!=nodes.end(); it++ )
-	{
-		Node* node = (*it);
-		for( Vec<Controller*>::iterator it1=node->controllers.begin(); it1!=node->controllers.end(); it1++ )
-			(*it1)->update( 0.0 );
-	}*/
-
 	for( Vec<Controller*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
 	{
 		(*it)->update( 0.0 );
 	}
 }
-
-
-} // end namespace

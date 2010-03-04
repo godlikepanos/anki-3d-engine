@@ -4,7 +4,7 @@ CFLAGS = $(COMMONFLAGS) -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pi
 PHFLAGS = $(CFLAGS) -x c++-header
 LFLAGS = $(COMMONFLAGS) -rdynamic -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -Wl,-Bdynamic -lSDL -lGL -ljpeg -lpng -ltiff
 EXECUTABLE = AnKi.bin
-INCPATH = -I../../src/Math/ -I../../src/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Controllers/ -I../../../bullet_svn/src/ 
+INCPATH = -I../../src/Math/ -I../../src/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Controllers/ -I../../src/Physics/ -I../../../bullet_svn/src/ 
 SOURCES = ../../src/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//PpsHdr.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//IsShadows.cpp ../../src/Renderer//MsEarlyz.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//PpsLscatt.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//BulletDebuger.cpp ../../src/Renderer//Bs2.cpp ../../src/Renderer//PpsSsao.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Node.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ShaderPrePreprocessor.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Controllers//Controller.cpp ../../src/Controllers//SkelAnimCtrl.cpp 
 OBJECTS = Scanner.o skybox.o particles.o memory.o collision.o map.o Main.o PpsHdr.o Pps.o Bs.o IsShadows.o MsEarlyz.o Renderer.o Is.o PpsLscatt.o Ms.o BulletDebuger.o Bs2.o PpsSsao.o Dbg.o MeshNode.o SkelNode.o Node.o SkelModelNode.o Light.o Camera.o Scene.o Ui.o Material.o ShaderProg.o Texture.o SkelAnim.o Extension.o Skeleton.o Resource.o LightProps.o Mesh.o ShaderPrePreprocessor.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o 
 PRECOMPILED_HEADERS = 
@@ -35,10 +35,12 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/Resource.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/Resource.h \
  ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h \
- ../../src/Scene/Node.h ../../src/Scene/Scene.h ../../src/Misc/skybox.h
+ ../../src/Scene/Node.h ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Util/App.h
 	@echo Compiling ../../src/Misc//skybox.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//skybox.cpp -o skybox.o
 
@@ -62,7 +64,8 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h
@@ -81,7 +84,8 @@ map.o: ../../src/Misc//map.cpp ../../src/Misc//map.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/Mesh.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/Vbo.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Misc/collision.h \
  ../../src/Tokenizer/Scanner.h ../../src/Tokenizer/Parser.h \
@@ -102,7 +106,8 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Scene/Camera.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
  ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h ../../src/Ui/Ui.h \
@@ -248,6 +253,8 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Renderer/BulletDebuger.h \
  ../../../bullet_svn/src/LinearMath/btIDebugDraw.h \
+ ../../src/Physics/MotionState.h ../../src/Physics/PhyCommon.h \
+ ../../src/Physics/MotionState.h ../../src/Scene/Node.h \
  ../../src/Resources/ShaderPrePreprocessor.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
@@ -263,7 +270,8 @@ PpsHdr.o: ../../src/Renderer//PpsHdr.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -284,7 +292,8 @@ Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -304,7 +313,8 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -312,7 +322,8 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/Vbo.h ../../src/Resources/Resource.h \
  ../../src/Renderer//Fbo.h ../../src/Scene/MeshNode.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/App.h
 	@echo Compiling ../../src/Renderer//Bs.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Bs.cpp -o Bs.o
 
@@ -328,14 +339,16 @@ IsShadows.o: ../../src/Renderer//IsShadows.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
  ../../src/Resources/Texture.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Resources/Resource.h \
  ../../src/Renderer//Fbo.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/MeshNode.h
+ ../../src/Resources/ShaderProg.h ../../src/Scene/MeshNode.h \
+ ../../src/Util/App.h
 	@echo Compiling ../../src/Renderer//IsShadows.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//IsShadows.cpp -o IsShadows.o
 
@@ -351,7 +364,8 @@ MsEarlyz.o: ../../src/Renderer//MsEarlyz.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -373,7 +387,8 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -393,7 +408,8 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -401,7 +417,8 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/Vbo.h ../../src/Scene/Light.h \
  ../../src/Scene/Camera.h ../../src/Resources/Resource.h \
- ../../src/Renderer//Fbo.h ../../src/Resources/LightProps.h
+ ../../src/Renderer//Fbo.h ../../src/Resources/LightProps.h \
+ ../../src/Util/App.h
 	@echo Compiling ../../src/Renderer//Is.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Is.cpp -o Is.o
 
@@ -417,13 +434,14 @@ PpsLscatt.o: ../../src/Renderer//PpsLscatt.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
  ../../src/Resources/Resource.h ../../src/Resources/Texture.h \
  ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Renderer//Fbo.h
+ ../../src/Renderer//Fbo.h ../../src/Util/App.h
 	@echo Compiling ../../src/Renderer//PpsLscatt.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//PpsLscatt.cpp -o PpsLscatt.o
 
@@ -438,7 +456,8 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -446,7 +465,7 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/Vbo.h ../../src/Renderer//Fbo.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Scene/MeshNode.h
+ ../../src/Scene/MeshNode.h ../../src/Util/App.h
 	@echo Compiling ../../src/Renderer//Ms.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ms.cpp -o Ms.o
 
@@ -471,7 +490,8 @@ BulletDebuger.o: ../../src/Renderer//BulletDebuger.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h
@@ -489,7 +509,8 @@ Bs2.o: ../../src/Renderer//Bs2.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -497,7 +518,8 @@ Bs2.o: ../../src/Renderer//Bs2.cpp ../../src/Renderer//Renderer.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/Vbo.h ../../src/Resources/Resource.h \
  ../../src/Renderer//Fbo.h ../../src/Scene/MeshNode.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/App.h
 	@echo Compiling ../../src/Renderer//Bs2.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Bs2.cpp -o Bs2.o
 
@@ -512,7 +534,8 @@ PpsSsao.o: ../../src/Renderer//PpsSsao.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -533,14 +556,15 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
  ../../src/Renderer//Fbo.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Resources/Texture.h \
  ../../src/Scene/Node.h ../../src/Scene/SkelNode.h \
- ../../src/Controllers/Controller.h \
+ ../../src/Controllers/Controller.h ../../src/Util/App.h \
  ../../../bullet_svn/src/btBulletCollisionCommon.h \
  ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet_svn/src/LinearMath/btVector3.h \
@@ -685,7 +709,8 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/Material.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Resources/Mesh.h \
@@ -710,7 +735,8 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Controllers/Controller.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Controllers/Controller.h \
  ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
@@ -731,11 +757,14 @@ Node.o: ../../src/Scene//Node.cpp ../../src/Scene//Node.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
- ../../src/Controllers/Controller.h
+ ../../src/Controllers/Controller.h ../../src/Scene//Scene.h \
+ ../../src/Misc/skybox.h ../../src/Resources/Texture.h \
+ ../../src/Util/App.h
 	@echo Compiling ../../src/Scene//Node.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Node.cpp -o Node.o
 
@@ -752,7 +781,8 @@ SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/Material.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Resources/ShaderProg.h \
  ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h \
@@ -776,7 +806,8 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Scene//Camera.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Scene//Camera.h \
  ../../src/Misc/collision.h ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg.h ../../src/Scene/Camera.h \
  ../../src/Resources/LightProps.h
@@ -795,7 +826,8 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Scene//Node.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Scene//Node.h \
  ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h
@@ -815,7 +847,8 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Scene//SkelNode.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Scene//SkelNode.h \
  ../../src/Scene//Node.h ../../src/Controllers/Controller.h \
  ../../src/Scene//Camera.h ../../src/Misc/collision.h \
  ../../src/Scene//MeshNode.h ../../src/Resources/Material.h \
@@ -835,7 +868,8 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Util/Common.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h \
@@ -855,7 +889,8 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources//Resource.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources//Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
  ../../src/Resources//ShaderProg.h ../../src/Tokenizer/Scanner.h \
  ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h \
@@ -879,7 +914,8 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h \
  ../../src/Scene/Node.h ../../src/Resources//ShaderPrePreprocessor.h \
  ../../src/Resources//Texture.h
@@ -900,7 +936,8 @@ Texture.o: ../../src/Resources//Texture.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h
 	@echo Compiling ../../src/Resources//Texture.cpp...
@@ -919,7 +956,8 @@ SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Tokenizer/Scanner.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Tokenizer/Scanner.h \
  ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//SkelAnim.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//SkelAnim.cpp -o SkelAnim.o
@@ -943,7 +981,8 @@ Skeleton.o: ../../src/Resources//Skeleton.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources//Resource.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources//Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
  ../../src/Tokenizer/Scanner.h ../../src/Tokenizer/Parser.h \
  ../../src/Tokenizer/Scanner.h
@@ -964,7 +1003,8 @@ Resource.o: ../../src/Resources//Resource.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources//ShaderProg.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources//ShaderProg.h \
  ../../src/Resources//Mesh.h ../../src/Renderer/Vbo.h \
  ../../src/Misc/collision.h ../../src/Resources//SkelAnim.h \
  ../../src/Resources//LightProps.h
@@ -984,7 +1024,8 @@ LightProps.o: ../../src/Resources//LightProps.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Tokenizer/Parser.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Tokenizer/Parser.h \
  ../../src/Tokenizer/Scanner.h ../../src/Resources//Texture.h
 	@echo Compiling ../../src/Resources//LightProps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//LightProps.cpp -o LightProps.o
@@ -1000,7 +1041,8 @@ Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Renderer/Vbo.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/Vbo.h \
  ../../src/Resources//Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Misc/collision.h \
  ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
@@ -1030,7 +1072,8 @@ Input.o: ../../src/Util//Input.cpp ../../src/Util//Input.h \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/Node.h
@@ -1065,7 +1108,8 @@ Controller.o: ../../src/Controllers//Controller.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/App.h
 	@echo Compiling ../../src/Controllers//Controller.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Controllers//Controller.cpp -o Controller.o
 
@@ -1082,7 +1126,8 @@ SkelAnimCtrl.o: ../../src/Controllers//SkelAnimCtrl.cpp \
  ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Resources/SkelAnim.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/SkelAnim.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Scene/SkelNode.h \
  ../../src/Scene/Node.h ../../src/Controllers/Controller.h \

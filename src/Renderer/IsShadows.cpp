@@ -5,6 +5,7 @@
 #include "Fbo.h"
 #include "Material.h"
 #include "MeshNode.h"
+#include "App.h"
 
 namespace R {
 namespace Is {
@@ -95,9 +96,9 @@ void runPass( const Camera& cam )
 	glEnable( GL_POLYGON_OFFSET_FILL );
 
 	// render all meshes
-	for( uint i=0; i<Scene::meshNodes.size(); i++ )
+	for( uint i=0; i<app->scene->meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = Scene::meshNodes[i];
+		MeshNode* mesh_node = app->scene->meshNodes[i];
 		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
 
 		DEBUG_ERR( mesh_node->material->dpMtl == NULL );

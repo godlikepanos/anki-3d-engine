@@ -80,7 +80,7 @@ inline Mat3::Mat3( const Quat& q )
 	ME(0,2) = xz + wy;
 
 	ME(1,0) = xy + wz;
-	ME(1,1) = 1.0f - (xx + zz);
+	ME(1,1) = 1.0 - (xx + zz);
 	ME(1,2) = yz - wx;
 
 	ME(2,0) = xz - wy;

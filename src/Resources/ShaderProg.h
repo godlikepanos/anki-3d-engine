@@ -29,14 +29,14 @@ class ShaderProg: public Resource
 			PROPERTY_R( int, loc, getLoc );
 			PROPERTY_R( string, name, getName );
 			PROPERTY_R( GLenum, glDataType, getGlDataType ); ///< GL_FLOAT, GL_FLOAT_VEC2... etc
-			PROPERTY_R( uint, type, getType ); ///< LT_ATTRIBUTE or LT_UNIFORM
+			PROPERTY_R( uint, type, getType ); ///< SVT_ATTRIBUTE or SVT_UNIFORM
 
 			public:
 				enum
 				{
-					LT_ATTRIBUTE,
-					LT_UNIFORM
-				};
+					SVT_ATTRIBUTE,
+					SVT_UNIFORM
+				}; ///< Shader var types
 
 				Var( int loc_, const char* name_, GLenum glDataType_, uint type_ ):
 					loc(loc_), name(name_), glDataType(glDataType_), type(type_)

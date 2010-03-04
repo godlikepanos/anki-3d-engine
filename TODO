@@ -2,3 +2,5 @@
 *Changes in the blending objects problem. The BS will become one stage and the PPS will be divided in two steps. The first will apply the SSAO and the EdgeAA in the IS_FAI and the second will do the rest
 *See this to improve uniform handling http://www.opengl.org/wiki/GLSL_Uniforms
 *The second Physics demo: Create a box that is geting moved by the user. It has to interact with the other boxes
+*Create custom motion states in bullet that have as a member a Node. Then go though every motion state and update the Node's trf
+*Replace the rotations in Node with Quaternions

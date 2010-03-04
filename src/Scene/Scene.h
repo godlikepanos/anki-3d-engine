@@ -13,47 +13,51 @@ class SkelNode;
 class Controller;
 
 
-namespace Scene {
-
-// misc
-extern Skybox skybox;
-inline Vec3 getAmbientColor() { return Vec3( 0.1, 0.05, 0.05 )*1; }
-inline Vec3 getSunPos() { return Vec3( 0.0, 1.0, -1.0 ) * 50.0; }
-
-// funcs
-extern void registerNode( Node* node );
-extern void unregisterNode( Node* node );
-extern void registerController( Controller* controller );
-extern void unregisterController( Controller* controller );
-
-extern void updateAllWorldStuff();
-extern void updateAllControllers();
-
-
-// Container
-/// entities container class
-template<typename Type> class Container: public Vec<Type*>
+/**
+ *
+ */
+class Scene
 {
-}; // end class Container
+	PROPERTY_RW( Vec3, ambientCol, setAmbientCol, getAmbientCol )
+	PROPERTY_RW( Vec3, sunPos, setSunPos, getSunPos )
 
+	private:
+		template<typename ContainerType, typename Type> void putBackNode( ContainerType& container, Type* x )
+		{
+			DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
+			container.push_back( x );
+		}
 
+		template<typename ContainerType, typename Type> void eraseNode( ContainerType& container, Type* x )
+		{
+			typename ContainerType::iterator it = std::find( container.begin(), container.end(), x );
+			DEBUG_ERR( it == container.end() );
+			container.erase( it );
+		}
 
-// typedefs
-typedef Container<Node> NodeContainer;
-typedef Container<Light> LightContainer;
-typedef Container<Camera> CameraContainer;
-typedef Container<MeshNode> MeshContainer;
-typedef Container<SkelNode> SkelNodeContainer;
+	public:
+		template<typename Type> class Container: public Vec<Type*>
+		{}; /// end class Container
 
-// containers
-extern NodeContainer      nodes;
-extern LightContainer     lights;
-extern CameraContainer    cameras;
-extern MeshContainer      meshNodes;
-extern SkelNodeContainer  skelNodes;
+		// Vectors of scene's data
+		Container<Node>       nodes;
+		Container<Light>      lights;
+		Container<Camera>     cameras;
+		Container<MeshNode>   meshNodes;
+		Container<SkelNode>   skelNodes;
+		Container<Controller> controllers;
+		Skybox                skybox; // ToDo to be removed
 
-extern Vec<Controller*> controllers;
+		// The funcs
+		Scene();
 
+		void registerNode( Node* node );
+		void unregisterNode( Node* node );
+		void registerController( Controller* controller );
+		void unregisterController( Controller* controller );
 
-} // end namespace
+		void updateAllWorldStuff();
+		void updateAllControllers();
+};
+
 #endif

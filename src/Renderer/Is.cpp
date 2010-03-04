@@ -11,6 +11,7 @@ The file contains functions and vars used for the deferred shading illumination 
 #include "Scene.h"
 #include "Fbo.h"
 #include "LightProps.h"
+#include "App.h"
 
 namespace R {
 namespace Is {
@@ -531,7 +532,7 @@ void runStage( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 
 	// ambient pass
-	ambientPass( cam, Scene::getAmbientColor() );
+	ambientPass( cam, app->scene->getAmbientCol() );
 
 	// light passes
 	glEnable( GL_BLEND );
@@ -541,9 +542,9 @@ void runStage( const Camera& cam )
 	CalcPlanes( cam );
 
 	// for all lights
-	for( uint i=0; i<Scene::lights.size(); i++ )
+	for( uint i=0; i<app->scene->lights.size(); i++ )
 	{
-		const Light& light = *Scene::lights[i];
+		const Light& light = *app->scene->lights[i];
 		switch( light.type )
 		{
 			case Light::LT_POINT:

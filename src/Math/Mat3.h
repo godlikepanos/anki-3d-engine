@@ -38,7 +38,7 @@ class Mat3
 		Mat3& operator +=( const Mat3& b );
 		Mat3  operator - ( const Mat3& b ) const;
 		Mat3& operator -=( const Mat3& b );
-		Mat3  operator * ( const Mat3& b ) const; // 27 muls, 18 adds
+		Mat3  operator * ( const Mat3& b ) const; ///< 27 muls, 18 adds
 		Mat3& operator *=( const Mat3& b );
 		Mat3  operator / ( const Mat3& b ) const;
 		Mat3& operator /=( const Mat3& b );

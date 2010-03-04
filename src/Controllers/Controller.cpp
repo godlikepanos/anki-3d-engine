@@ -1,13 +1,16 @@
 #include "Controller.h"
 #include "Scene.h"
+#include "App.h"
 
 Controller::Controller( Type type_ ): 
 	type(type_) 
 {
-	Scene::registerController( this );
+	DEBUG_ERR( app->scene == NULL );
+	app->scene->registerController( this );
 }
 
 Controller::~Controller()
 {
-	Scene::unregisterController( this );
+	DEBUG_ERR( app->scene == NULL );
+	app->scene->unregisterController( this );
 }

@@ -19,7 +19,7 @@ class SkelModelNode: public Node
 		Vec<MeshNode*> meshNodes;
 		SkelNode*   skelNode;
 		
-		SkelModelNode(): Node(NT_SKEL_MODEL), skelNode(NULL) { isGroupNode = true; }
+		SkelModelNode(): Node(NT_SKEL_MODEL), skelNode(NULL) { isCompound = true; }
 		void init( const char* filename );
 		void deinit() {} ///< Do nothing because it loads no resources
 		void render() {} ///< Do nothing

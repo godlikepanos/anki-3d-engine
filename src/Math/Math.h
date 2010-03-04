@@ -12,6 +12,7 @@
 #include "Mat3.h"
 #include "Mat4.h"
 #include "MathFuncs.h"
+#include "Transform.h"
 
 using namespace M;
 

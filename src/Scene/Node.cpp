@@ -3,12 +3,8 @@
 #include "Renderer.h"
 #include "collision.h"
 #include "Controller.h"
-
-
-namespace Scene
-{
-	extern void registerNode( Node* );
-}
+#include "Scene.h"
+#include "App.h"
 
 
 //=====================================================================================================================================
@@ -17,7 +13,7 @@ namespace Scene
 void Node::commonConstructorCode()
 {
 	parent = NULL;
-	isGroupNode = false;
+	isCompound = false;
 	translationLspace = Vec3( 0.0 );
 	scaleLspace = 1.0;
 	rotationLspace = Mat3::getIdentity();
@@ -26,7 +22,8 @@ void Node::commonConstructorCode()
 	rotationWspace = Mat3::getIdentity();
 	bvolumeLspace = NULL;
 
-	Scene::registerNode( this );
+	DEBUG_ERR( app->scene == NULL );
+	app->scene->registerNode( this );
 }
 
 
@@ -35,6 +32,8 @@ void Node::commonConstructorCode()
 //=====================================================================================================================================
 Node::~Node()
 {
+	DEBUG_ERR( app->scene == NULL );
+	app->scene->unregisterNode( this );
 }
 
 

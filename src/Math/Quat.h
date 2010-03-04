@@ -27,7 +27,7 @@ class Quat
 		explicit Quat( const Euler& eu );
 		explicit Quat( const Axisang& axisang );
 		// ops with same
-		Quat  operator * ( const Quat& b ) const;
+		Quat  operator * ( const Quat& b ) const; ///< 16 muls, 12 adds
 		Quat& operator *=( const Quat& b );
 		// comparision
 		bool operator ==( const Quat& b ) const;
@@ -43,8 +43,8 @@ class Quat
 		void  print() const;
 		float dot( const Quat& b ) const;
 		Quat  slerp( const Quat& q1, float t ) const; ///< returns slerp( this, q1, t )
-		Quat  getRotated( const Quat& b ) const;
-		void  rotate( const Quat& b );
+		Quat  getRotated( const Quat& b ) const; ///< The same as Quat * Quat
+		void  rotate( const Quat& b ); ///< @see getRotated
 };
 
 

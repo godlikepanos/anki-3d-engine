@@ -11,6 +11,7 @@
 #include "Fbo.h"
 #include "MeshNode.h"
 #include "Material.h"
+#include "App.h"
 
 
 namespace R {
@@ -86,9 +87,9 @@ void runStage2( const Camera& cam )
 
 
 	// render the meshes
-	for( uint i=0; i<Scene::meshNodes.size(); i++ )
+	for( uint i=0; i<app->scene->meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = Scene::meshNodes[i];
+		MeshNode* mesh_node = app->scene->meshNodes[i];
 		if( mesh_node->material->refracts )
 		{
 			// write to the rFbo
