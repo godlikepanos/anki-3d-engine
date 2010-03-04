@@ -9,6 +9,7 @@
 #include "Fbo.h"
 #include "Material.h"
 #include "MeshNode.h"
+#include "App.h"
 
 
 namespace R {
@@ -93,7 +94,7 @@ void runStage( const Camera& cam )
 	R::setViewport( 0, 0, R::w, R::h );
 
 	//glEnable( GL_DEPTH_TEST );
-	Scene::skybox.Render( cam.getViewMatrix().getRotationPart() );
+	app->scene->skybox.Render( cam.getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 	#if defined( _EARLY_Z_ )
@@ -102,9 +103,9 @@ void runStage( const Camera& cam )
 	#endif
 
 	// render the meshes
-	for( uint i=0; i<Scene::meshNodes.size(); i++ )
+	for( uint i=0; i<app->scene->meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = Scene::meshNodes[i];
+		MeshNode* mesh_node = app->scene->meshNodes[i];
 		DEBUG_ERR( mesh_node->material == NULL );
 		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
 		mesh_node->material->setup();

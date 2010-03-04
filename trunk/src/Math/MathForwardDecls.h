@@ -10,6 +10,7 @@ namespace M {
 	class Axisang;
 	class Mat3;
 	class Mat4;
+	class Transform;
 }
 
 #endif

@@ -11,6 +11,7 @@
 #include "Fbo.h"
 #include "MeshNode.h"
 #include "Material.h"
+#include "App.h"
 
 
 namespace R {
@@ -62,14 +63,14 @@ void runStage( const Camera& cam )
 
 
 	// render the meshes
-	for( uint i=0; i<Scene::meshNodes.size(); i++ )
+	for( uint i=0; i<app->scene->meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = Scene::meshNodes[i];
-		if( mesh_node->material->blends && !mesh_node->material->blends )
+		MeshNode* meshNode = app->scene->meshNodes[i];
+		if( meshNode->material->blends && !meshNode->material->blends )
 		{
 			fbo.bind();
-			mesh_node->material->setup();
-			mesh_node->render();
+			meshNode->material->setup();
+			meshNode->render();
 		}
 
 	}

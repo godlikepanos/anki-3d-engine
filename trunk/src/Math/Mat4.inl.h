@@ -150,6 +150,12 @@ inline Mat4::Mat4( float f )
 		ME[i] = f;
 }
 
+// constructor [Transform]
+inline Mat4::Mat4( const Transform& t )
+{
+	ME = Mat4( t.getOrigin(), Mat3(t.getRotation()) );
+}
+
 // 4x4 + 4x4
 inline Mat4 Mat4::operator +( const Mat4& b ) const
 {

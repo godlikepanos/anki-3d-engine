@@ -34,6 +34,7 @@ class Mat4
 		explicit Mat4( const Vec4& v );
 		explicit Mat4( const Vec3& transl, const Mat3& rot );
 		explicit Mat4( const Vec3& transl, const Mat3& rot, float scale );
+		explicit Mat4( const Transform& t );
 		// ops with same type
 		Mat4  operator + ( const Mat4& b ) const;
 		Mat4& operator +=( const Mat4& b );

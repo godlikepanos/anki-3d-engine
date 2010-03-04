@@ -25,13 +25,13 @@ class Node
 			NT_SKEL_MODEL
 		};
 
-		Vec3 translationLspace;
-		Mat3 rotationLspace;
-		float  scaleLspace;
+		Vec3  translationLspace;
+		Mat3  rotationLspace;
+		float scaleLspace;
 
-		Vec3 translationWspace;
-		Mat3 rotationWspace;
-		float  scaleWspace;
+		Vec3  translationWspace;
+		Mat3  rotationWspace;
+		float scaleWspace;
 
 		Mat4 transformationWspace;
 
@@ -43,7 +43,7 @@ class Node
 		bvolume_t* bvolumeLspace;
 		bvolume_t* bvolumeWspace;
 
-		bool isGroupNode;
+		bool isCompound;
 
 	// funcs
 	private:

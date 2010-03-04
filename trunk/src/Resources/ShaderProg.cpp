@@ -8,7 +8,6 @@
 #define SHADER_WARNING( x ) WARNING( "Shader (" << getRsrcName() << "): " << x )
 
 
-
 //=====================================================================================================================================
 // createAndCompileShader                                                                                                             =
 //=====================================================================================================================================
@@ -123,7 +122,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		attribVars.push_back( Var( loc, name_, type, Var::LT_ATTRIBUTE ) );
+		attribVars.push_back( Var( loc, name_, type, Var::SVT_ATTRIBUTE ) );
 		attribNameToVar[ name_ ] = &attribVars.back();
 	}
 
@@ -144,7 +143,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		uniVars.push_back( Var( loc, name_, type, Var::LT_UNIFORM ) );
+		uniVars.push_back( Var( loc, name_, type, Var::SVT_UNIFORM ) );
 		uniNameToVar[ name_ ] = &uniVars.back();
 	}
 }

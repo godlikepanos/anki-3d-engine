@@ -4,29 +4,39 @@
 #include <SDL/SDL.h>
 #include "Common.h"
 
-namespace App {
+
+class Scene;
+class Camera;
 
 
-extern uint timerTick;
-
-extern uint desktopW;
-extern uint desktopH;
-
-extern uint windowW;
-extern uint windowH;
-
-extern void initWindow();
-extern void quitApp( int code );
-extern void waitForNextFrame();
-extern void togleFullScreen();
-extern void printAppInfo();
-
-/// Gets the number of milliseconds since SDL library initialization
-inline uint getTicks()
+class App
 {
-	return SDL_GetTicks();
-}
+	PROPERTY_R( uint, desktopW, getDesktopW )
+	PROPERTY_R( uint, desktopH, getDesktopH )
+
+	private:
+		uint time;
+		SDL_Surface* mainSurf;
+		SDL_Surface* iconImage;
+
+	public:
+		uint timerTick;
+		uint windowW;
+		uint windowH;
+
+		Scene*  scene;
+		Camera* activeCam;
+
+		App();
+		void initWindow();
+		void quitApp( int code );
+		void waitForNextFrame();
+		void togleFullScreen();
+		static void printAppInfo();
+
+		/// Gets the number of milliseconds since SDL library initialization
+		static uint getTicks() { return SDL_GetTicks(); }
+};
 
 
-} // end namespace
 #endif

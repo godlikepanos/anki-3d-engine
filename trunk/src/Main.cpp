@@ -29,10 +29,12 @@
 #include "SkelAnimCtrl.h"
 #include "SkelNode.h"
 #include "LightProps.h"
-#include "btBulletCollisionCommon.h"
-#include "btBulletDynamicsCommon.h"
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 #include "BulletDebuger.h"
+#include "MotionState.h"
 
+App* app;
 
 // map (hard coded)
 Camera* mainCam;
@@ -64,9 +66,9 @@ btSequentialImpulseConstraintSolver* sol;
 btDiscreteDynamicsWorld* dynamicsWorld;
 BulletDebuger debugDrawer;
 
-#define ARRAY_SIZE_X 5
-#define ARRAY_SIZE_Y 5
-#define ARRAY_SIZE_Z 5
+#define ARRAY_SIZE_X 1
+#define ARRAY_SIZE_Y 1
+#define ARRAY_SIZE_Z 1
 
 #define MAX_PROXIES (ARRAY_SIZE_X*ARRAY_SIZE_Y*ARRAY_SIZE_Z + 1024)
 
@@ -146,7 +148,7 @@ void initPhysics()
 
 
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-					btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+					MotionState* myMotionState = new MotionState(startTransform, floor__);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 
@@ -177,11 +179,13 @@ void init()
 	srand( unsigned(time(NULL)) );
 	mathSanityChecks();
 
-	App::initWindow();
-	uint ticks = App::getTicks();
+	app = new App;
+	app->initWindow();
+	uint ticks = app->getTicks();
 
 	R::init();
 	Ui::init();
+	app->scene = new Scene;
 
 	// camera
 	mainCam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
@@ -239,67 +243,10 @@ void init()
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	Scene::skybox.load( skybox_fnames );
+	app->scene->skybox.load( skybox_fnames );
 
 	PRINT( "Engine initialization ends (" << App::getTicks()-ticks << ")" );
 	cerr.flush();
-}
-
-
-Vec3 toAnki( const btVector3& v )
-{
-	return Vec3( v.x(), v.y(), v.z() );
-}
-
-Vec4 toAnki( const btVector4& v )
-{
-	return Vec4( v.x(), v.y(), v.z(), v.w() );
-}
-
-Mat3 toAnki( const btMatrix3x3& m )
-{
-	Mat3 m3;
-	m3.setRows( toAnki(m[0]), toAnki(m[1]), toAnki(m[2]) );
-	return m3;
-}
-
-Quat toAnki( const btQuaternion& q )
-{
-	return Quat( q.x(), q.y(), q.z(), q.w() );
-}
-
-Mat4 toAnki( const btTransform& t )
-{
-	Mat4 m;
-	t.getOpenGLMatrix( &m[0] );
-	m.transpose();
-	return m;
-}
-
-btVector3 toBt( const Vec3& v )
-{
-	return btVector3( v.x,  v.y, v.z );
-}
-
-btVector4 toBt( const Vec4& v )
-{
-	return btVector4( v.x,  v.y, v.z, v.w );
-}
-
-btMatrix3x3 toBt( const Mat3 m )
-{
-	btMatrix3x3 r;
-	r[0] = toBt(m.getRow(0));
-	r[1] = toBt(m.getRow(1));
-	r[2] = toBt(m.getRow(2));
-	return r;
-}
-
-btTransform toBt( const Mat4& m )
-{
-	btTransform r;
-	r.setFromOpenGLMatrix( &(m.getTransposed())[0] );
-	return r;
 }
 
 
@@ -364,11 +311,11 @@ int main( int /*argc*/, char* /*argv*/[] )
 		mover->rotationLspace.reorthogonalize();
 
 
-		Scene::updateAllControllers();
-		Scene::updateAllWorldStuff();
+		app->scene->updateAllControllers();
+		app->scene->updateAllWorldStuff();
 
 
-		dynamicsWorld->stepSimulation( App::timerTick );
+		dynamicsWorld->stepSimulation( app->timerTick );
 		dynamicsWorld->debugDrawWorld();
 
 		R::render( *mainCam );
@@ -385,7 +332,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
 
 		if( I::keys[SDLK_ESCAPE] ) break;
-		if( I::keys[SDLK_F11] ) App::togleFullScreen();
+		if( I::keys[SDLK_F11] ) app->togleFullScreen();
 		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
@@ -401,7 +348,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( 1 )
 		{
 			//if( R::framesNum == 10 ) R::takeScreenshot("gfx/screenshot.tga");
-			App::waitForNextFrame();
+			app->waitForNextFrame();
 		}
 		else
 			if( R::framesNum == 5000 ) break;
@@ -410,6 +357,6 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 
 	PRINT( "Exiting..." );
-	App::quitApp( EXIT_SUCCESS );
+	app->quitApp( EXIT_SUCCESS );
 	return 0;
 }
