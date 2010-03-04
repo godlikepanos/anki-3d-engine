@@ -11,7 +11,7 @@ App::App()
 	activeCam = NULL;
 
 	windowW = 1280;
-	windowH = 800;
+	windowH = 720;
 
 	timerTick = 1000/40; // in ms. 1000/Hz
 	uint time = 0;
