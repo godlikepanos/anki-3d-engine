@@ -17,11 +17,11 @@ void main()
 	#else
 		float offset = 1.0 / float(textureSize(tex,0).y);
 	#endif
-	const int KERNEL_SIZE = 5;
+	const int KERNEL_SIZE = 7;
 	float kernel[KERNEL_SIZE] = float[]( 0.0 * offset, 
 	                                     -1.0 * offset, 1.0 * offset, 
-	                                     -2.0 * offset, 2.0 * offset/*,
-																			 -3.0 * offset, 3.0 * offset,
+	                                     -2.0 * offset, 2.0 * offset,
+																			 -3.0 * offset, 3.0 * offset/*,
 																			 -4.0 * offset, 4.0 * offset*/ );
 
 	float factor = 0.0;

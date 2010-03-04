@@ -38,7 +38,7 @@ App* app;
 
 // map (hard coded)
 Camera* mainCam;
-MeshNode* floor__,* sarge,* horse;
+MeshNode* floor__,* sarge,* horse,* crate;
 SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
@@ -66,9 +66,9 @@ btSequentialImpulseConstraintSolver* sol;
 btDiscreteDynamicsWorld* dynamicsWorld;
 BulletDebuger debugDrawer;
 
-#define ARRAY_SIZE_X 1
-#define ARRAY_SIZE_Y 1
-#define ARRAY_SIZE_Z 1
+#define ARRAY_SIZE_X 5
+#define ARRAY_SIZE_Y 5
+#define ARRAY_SIZE_Z 5
 
 #define MAX_PROXIES (ARRAY_SIZE_X*ARRAY_SIZE_Y*ARRAY_SIZE_Z + 1024)
 
@@ -148,7 +148,10 @@ void initPhysics()
 
 
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-					MotionState* myMotionState = new MotionState(startTransform, floor__);
+					MeshNode* crate = new MeshNode;
+					crate->init( "models/crate0/crate0.mesh" );
+					crate->scaleLspace = 1.11;
+					MotionState* myMotionState = new MotionState(startTransform, crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 
@@ -173,8 +176,6 @@ void initPhysics()
 void init()
 {
 	PRINT( "Engine initializing..." );
-
-	initPhysics();
 
 	srand( unsigned(time(NULL)) );
 	mathSanityChecks();
@@ -232,9 +233,9 @@ void init()
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 	// crate
-	MeshNode* crate = new MeshNode;
+	/*crate = new MeshNode;
 	crate->init( "models/crate0/crate0.mesh" );
-	crate->scaleLspace = 1.0;
+	crate->scaleLspace = 1.0;*/
 
 
 	//
@@ -245,8 +246,10 @@ void init()
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
 	app->scene->skybox.load( skybox_fnames );
 
+
+	initPhysics();
+
 	PRINT( "Engine initialization ends (" << App::getTicks()-ticks << ")" );
-	cerr.flush();
 }
 
 
@@ -335,12 +338,9 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[SDLK_F11] ) app->togleFullScreen();
 		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
-		/*char str[128];
-		if( R::framesNum < 1000 )
-			sprintf( str, "capt/%06d.jpg", R::framesNum );
-		else
-			sprintf( str, "capt2/%06d.jpg", R::framesNum );
-		R::takeScreenshot(str);*/
+		char str[128];
+		sprintf( str, "capt/%06d.jpg", R::framesNum );
+		R::takeScreenshot(str);
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();

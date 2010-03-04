@@ -21,7 +21,7 @@ VARS                                                                            
 */
 static Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 
-float renderingQuality = 0.20; // the renderingQuality of the SSAO fai. Chose low so it can blend
+float renderingQuality = 1.0; // the renderingQuality of the SSAO fai. Chose low so it can blend
 bool enabled = true;
 
 static uint wwidth, wheight; // window width and height

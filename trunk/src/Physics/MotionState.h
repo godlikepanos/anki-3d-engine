@@ -19,7 +19,9 @@ class MotionState: public btMotionState
 		MotionState( const btTransform& initialPos, Node* node_ ):
 			mPos1( initialPos ),
 			node( node_ )
-		{}
+		{
+			DEBUG_ERR( node_==NULL );
+		}
 
 		virtual ~MotionState()
 		{}
