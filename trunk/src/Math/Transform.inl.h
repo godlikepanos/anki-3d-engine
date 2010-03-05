@@ -23,5 +23,17 @@ inline Transform::Transform( const Mat4& m4 )
 	translation = m4.getTranslationPart();
 }
 
+// constructor [Vec3, Quat]
+inline Transform::Transform( const Vec3& origin, const Quat& rotation_ ):
+	rotation(rotation_), translation(origin)
+{}
+
+// getIdentity
+inline const Transform& Transform::getIdentity()
+{
+	static Transform ident( Vec3(0.0), Quat::getIdentity() );
+	return ident;
+}
+
 
 } // end namespace

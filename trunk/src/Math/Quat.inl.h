@@ -108,7 +108,7 @@ inline Quat::Quat( const Axisang& axisang )
 	float lengthsq = axisang.axis.getLengthSquared();
 	if( isZero( lengthsq ) )
 	{
-		ME = ident;
+		ME = getIdentity();
 		return;
 	}
 
@@ -273,5 +273,11 @@ inline Quat Quat::slerp( const Quat& q1_, float t ) const
 	return Quat( sum );
 }
 
+// getIdentity
+inline const Quat::Quat& getIdentity()
+{
+	static Quat ident( 0.0, 0.0, 0.0, 1.0 );
+	return ident;
+}
 
 } // end namespace

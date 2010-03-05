@@ -12,12 +12,12 @@
 class MotionState: public btMotionState
 {
 	protected:
-		btTransform mPos1;
+		btTransform worldTransform;
 		Node* node;
 
 	public:
-		MotionState( const btTransform& initialPos, Node* node_ ):
-			mPos1( initialPos ),
+		MotionState( const btTransform& initialTransform, Node* node_ ):
+			worldTransform( initialTransform ),
 			node( node_ )
 		{
 			DEBUG_ERR( node_==NULL );
@@ -28,11 +28,17 @@ class MotionState: public btMotionState
 
 		virtual void getWorldTransform( btTransform &worldTrans ) const
 		{
-			worldTrans = mPos1;
+			worldTrans = worldTransform;
+		}
+
+		const btTransform& getWorldTransform() const
+		{
+			return worldTransform;
 		}
 
 		virtual void setWorldTransform( const btTransform &worldTrans )
 		{
+			worldTransform = worldTrans;
 			btQuaternion rot = worldTrans.getRotation();
 			node->rotationLspace = Mat3( Quat( toAnki(rot) ) );
 			btVector3 pos = worldTrans.getOrigin();

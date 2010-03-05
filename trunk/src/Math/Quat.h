@@ -13,8 +13,6 @@ class Quat
 	public:
 		// data members
 		float x, y, z, w;
-		static Quat zero;
-		static Quat ident;
 		// constructors & distructors
 		explicit Quat();
 		explicit Quat( float f );
@@ -45,6 +43,7 @@ class Quat
 		Quat  slerp( const Quat& q1, float t ) const; ///< returns slerp( this, q1, t )
 		Quat  getRotated( const Quat& b ) const; ///< The same as Quat * Quat
 		void  rotate( const Quat& b ); ///< @see getRotated
+		static const Quat& getIdentity();
 };
 
 
