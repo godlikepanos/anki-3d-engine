@@ -6,11 +6,7 @@
 #include "Node.h"
 #include "SkelNode.h"
 #include "App.h"
-
-
-#include "btBulletCollisionCommon.h"
-#include "btBulletDynamicsCommon.h"
-#include "BulletDebuger.h"
+#include "PhyCommon.h"
 
 extern btDefaultCollisionConfiguration* collisionConfiguration;
 extern btCollisionDispatcher* dispatcher;
@@ -31,9 +27,9 @@ void renderscene( int pass )
 		btRigidBody* body = btRigidBody::upcast( colObj );
 		if( body && body->getMotionState() )
 		{
-			btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
-			myMotionState->m_graphicsWorldTrans.getOpenGLMatrix( m );
-			rot = myMotionState->m_graphicsWorldTrans.getBasis();
+			MotionState* myMotionState = (MotionState*)body->getMotionState();
+			myMotionState->getWorldTransform().getOpenGLMatrix( m );
+			rot = myMotionState->getWorldTransform().getBasis();
 		}
 		else
 		{

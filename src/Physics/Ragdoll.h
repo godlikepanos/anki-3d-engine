@@ -1,0 +1,64 @@
+#ifndef _RAGDOLL_H_
+#define _RAGDOLL_H_
+
+#include "Common.h"
+#include "PhyCommon.h"
+
+
+/**
+ *
+ */
+class Ragdoll
+{
+	public:
+		enum
+		{
+			BP_PELVIS,
+			BP_SPINE,
+			BP_HEAD,
+
+			BP_LEFT_UPPER_ARM,
+			BP_LEFT_LOWER_ARM,
+			BP_LEFT_PALM,
+			BP_LEFT_UPPER_LEG,
+			BP_LEFT_LOWER_LEG,
+			BP_LEFT_FOOT,
+
+			BP_RIGHT_UPPER_ARM,
+			BP_RIGHT_LOWER_ARM,
+			BP_RIGHT_PALM,
+			BP_RIGHT_UPPER_LEG,
+			BP_RIGHT_LOWER_LEG,
+			BP_RIGHT_FOOT,
+
+			BP_NUM
+		};
+
+		enum
+		{
+			JOINT_PELVIS_SPINE,
+			JOINT_SPINE_HEAD,
+
+			JOINT_LEFT_SHOULDER,
+			JOINT_LEFT_ELBOW,
+			JOINT_LEFT_WRIST,
+			JOINT_LEFT_HIP,
+			JOINT_LEFT_KNEE,
+			JOINT_LEFT_ANKLE,
+
+			JOINT_RIGHT_SHOULDER,
+			JOINT_RIGHT_ELBOW,
+			JOINT_RIGHT_WRIST,
+			JOINT_RIGHT_HIP,
+			JOINT_RIGHT_KNEE,
+			JOINT_RIGHT_ANKLE,
+
+			JOINT_NUM
+		};
+
+		btRigidBody*       bodies[BP_NUM];
+		btTypedConstraint* joints[JOINT_NUM];
+};
+
+
+#endif

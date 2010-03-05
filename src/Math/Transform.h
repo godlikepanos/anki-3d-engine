@@ -17,6 +17,9 @@ class Transform
 		explicit Transform();
 		         Transform( const Transform& b );
 		explicit Transform( const Mat4& m4 );
+		explicit Transform( const Vec3& origin, const Quat& rotation_ );
+
+		static const Transform& getIdentity();
 };
 
 
