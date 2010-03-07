@@ -51,7 +51,8 @@ EdgeAA                                                                          
 
 vec3 EdgeAA()
 {
-	const vec2 pixelsize = vec2( 1.0/(R_W*R_Q), 1.0/(R_H*R_Q) );
+	ivec2 texSize = textureSize(msNormalFai,0);
+	vec2 pixelsize = vec2( 1.0/(float(texSize.x)), 1.0/(float(texSize.y)) );
 	const vec2 kernel[8] = vec2[]( vec2(-1.0,1.0), vec2(1.0,-1.0), vec2(-1.0,-1.0), vec2(1.0,1.0), vec2(-1.0,0.0), vec2(1.0,0.0), vec2(0.0,-1.0), vec2(0.0,1.0) );
 	const float weight = 1.0;
 

@@ -12,6 +12,9 @@ App::App()
 
 	windowW = 1280;
 	windowH = 720;
+	/*windowW = 1440;
+	windowH = 900;*/
+
 
 	timerTick = 1000/40; // in ms. 1000/Hz
 	uint time = 0;
