@@ -155,6 +155,8 @@ void initPhysics()
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 
+
+
 					//body->setActivationState(ISLAND_SLEEPING);
 
 					dynamicsWorld->addRigidBody(body);
@@ -164,7 +166,10 @@ void initPhysics()
 		}
 	}
 
-	dynamicsWorld->setDebugDrawer(&debugDrawer);
+
+
+
+	//dynamicsWorld->setDebugDrawer(&debugDrawer);
 }
 
 #include "ShaderPrePreprocessor.h"
@@ -338,16 +343,16 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[SDLK_F11] ) app->togleFullScreen();
 		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
-		char str[128];
+		/*char str[128];
 		sprintf( str, "capt/%06d.jpg", R::framesNum );
-		R::takeScreenshot(str);
+		R::takeScreenshot(str);*/
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();
 		R::printLastError();
 		if( 1 )
 		{
-			//if( R::framesNum == 10 ) R::takeScreenshot("gfx/screenshot.tga");
+			if( R::framesNum == 50 ) R::takeScreenshot("gfx/screenshot.tga");
 			app->waitForNextFrame();
 		}
 		else

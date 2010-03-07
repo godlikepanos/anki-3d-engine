@@ -13,9 +13,9 @@ uniform sampler2D tex;
 void main()
 {
 	#if defined( _PPS_SSAO_PASS_0_ )
-		float offset = 1.0 / float(textureSize(tex,0).x);
+		float offset = 1.0 / PASS0_FAI_WIDTH;
 	#else
-		float offset = 1.0 / float(textureSize(tex,0).y);
+		float offset = 1.0 / PASS1_FAI_HEIGHT;
 	#endif
 	const int KERNEL_SIZE = 7;
 	float kernel[KERNEL_SIZE] = float[]( 0.0 * offset, 

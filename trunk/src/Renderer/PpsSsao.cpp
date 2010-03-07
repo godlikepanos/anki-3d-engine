@@ -14,17 +14,18 @@ namespace Pps {
 namespace Ssao {
 
 
-/*
-=======================================================================================================================================
-VARS                                                                                                                                  =
-=======================================================================================================================================
-*/
-static Fbo pass0Fbo, pass1Fbo, pass2Fbo;
-
-float renderingQuality = 1.0; // the renderingQuality of the SSAO fai. Chose low so it can blend
+//=====================================================================================================================================
+// VARS                                                                                                                               =
+//=====================================================================================================================================
 bool enabled = true;
 
-static uint wwidth, wheight; // window width and height
+static Fbo pass0Fbo, pass1Fbo, pass2Fbo;
+
+float renderingQuality = 0.9; // the renderingQuality of the SSAO fai. Chose low so it can blend
+float bluringQuality = 0.75;
+
+static uint w, h;
+static uint bw, bh;
 
 Texture pass0Fai, pass1Fai, fai;
 
@@ -46,7 +47,7 @@ static void initBlurFbos()
 	pass1Fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	pass1Fai.createEmpty2D( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
+	pass1Fai.createEmpty2D( bw, bh, GL_ALPHA8, GL_ALPHA );
 	pass1Fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	pass1Fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
@@ -70,7 +71,7 @@ static void initBlurFbos()
 	pass2Fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
+	fai.createEmpty2D( bw, bh, GL_ALPHA8, GL_ALPHA );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
@@ -93,9 +94,10 @@ init                                                                            
 */
 void init()
 {
-	if( renderingQuality<0.0 || renderingQuality>1.0 ) ERROR("Incorect R::pps:ssao::rendering_quality");
-	wwidth = R::Pps::Ssao::renderingQuality * R::w;
-	wheight = R::Pps::Ssao::renderingQuality * R::h;
+	w = R::Pps::Ssao::renderingQuality * R::w;
+	h = R::Pps::Ssao::renderingQuality * R::h;
+	bw = w * bluringQuality;
+	bh = h * bluringQuality;
 
 	// create FBO
 	pass0Fbo.create();
@@ -105,7 +107,7 @@ void init()
 	pass0Fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	pass0Fai.createEmpty2D( wwidth, wheight, GL_ALPHA8, GL_ALPHA );
+	pass0Fai.createEmpty2D( w, h, GL_ALPHA8, GL_ALPHA );
 	pass0Fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	pass0Fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
@@ -138,8 +140,8 @@ void init()
 
 	// blur FBO
 	initBlurFbos();
-	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", "#define _PPS_SSAO_PASS_0_\n" );
-	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", "#define _PPS_SSAO_PASS_1_\n" );
+	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(w) + "\n").c_str() );
+	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bh) + "\n").c_str() );
 }
 
 
@@ -152,7 +154,7 @@ void runPass( const Camera& cam )
 {
 	pass0Fbo.bind();
 
-	R::setViewport( 0, 0, wwidth, wheight );
+	R::setViewport( 0, 0, w, h );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -165,6 +167,11 @@ void runPass( const Camera& cam )
 	ssaoSProg.locTexUnit( ssaoSProg.getUniVar("msNormalFai").getLoc(), R::Ms::normalFai, 2 );
 	R::DrawQuad( 0 ); // Draw quad
 
+	/*glBindFramebuffer( GL_READ_FRAMEBUFFER, pass0Fbo.getGlId() );
+	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, pass1Fbo.getGlId() );
+	glBlitFramebuffer( 0, 0, w, h, 0, 0, bw, bh, GL_COLOR_BUFFER_BIT, GL_NEAREST);*/
+
+	R::setViewport( 0, 0, bw, bh );
 
 	// second pass. blur
 	pass1Fbo.bind();

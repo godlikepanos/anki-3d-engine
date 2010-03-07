@@ -25,12 +25,12 @@ void main()
 	return;*/
 
 	#if defined( _PPS_HDR_PASS_0_ ) || defined( _PPS_HDR_PASS_1_ )
-		const float super_offset = 2.5;
+		const float super_offset = 1.5;
 
-		#if defined( _PPS_HDR_PASS0_ )
-			float offset = 1.0 / float(textureSize(fai,0).x) * super_offset;
+		#if defined( _PPS_HDR_PASS_0_ )
+			float offset = 1.0 / IS_FAI_WIDTH * super_offset;
 		#else
-			float offset = 1.0 / float(textureSize(fai,0).y) * super_offset;
+			float offset = 1.0 / PASS0_HEIGHT * super_offset;
 		#endif
 
 		const int KERNEL_SIZE = 9;
@@ -51,8 +51,8 @@ void main()
 		gl_FragData[0].rgb = color / KERNEL_SIZE;
 
 	#else // _PPS_HDR_PASS_2_
-		vec3 color = MedianFilterRGB( fai, texCoords );
-		//vec3 color = texture2D( fai, texCoords ).rgb;
+		//vec3 color = MedianFilterRGB( fai, texCoords );
+		vec3 color = texture2D( fai, texCoords ).rgb;
 
 		float Y = dot(vec3(0.30, 0.59, 0.11), color);
 		const float exposure = 4.0;

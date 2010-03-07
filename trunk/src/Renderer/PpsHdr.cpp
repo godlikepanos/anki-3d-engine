@@ -20,8 +20,8 @@ bool enabled = true;
 
 static Fbo pass0Fbo, pass1Fbo, pass2Fbo; // yet another FBO and another, damn
 
-float renderingQuality = 0.25; // 1/4 of the image
-static uint wwidth, wheight; // render width and height
+float renderingQuality = 0.5; // 1/4 of the image
+static uint w, h; // render width and height
 
 // hdr images
 Texture pass0Fai; // for vertical blur pass
@@ -53,8 +53,8 @@ static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( wwidth, wheight, internalFormat, GL_RGB );
-	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	fai.createEmpty2D( w, h, internalFormat, GL_RGB );
+	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach
@@ -74,22 +74,27 @@ static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 //=====================================================================================================================================
 void init()
 {
-	wwidth = R::Pps::Hdr::renderingQuality * R::w;
-	wheight = R::Pps::Hdr::renderingQuality * R::h;
+	w = R::Pps::Hdr::renderingQuality * R::w;
+	h = R::Pps::Hdr::renderingQuality * R::h;
 
 	initFbos( pass0Fbo, pass0Fai, GL_RGB );
 	initFbos( pass1Fbo, pass1Fai, GL_RGB );
 	initFbos( pass2Fbo, fai, GL_RGB );
 
+	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
 	// init shaders
-	pass0SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_0_\n" );
-	pass0SProg.uniLocs.fai = pass0SProg.uniLocs.fai;
+	if( !pass0SProg.customLoad( "shaders/PpsHdr.glsl", ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(R::w) + "\n").c_str() ) )
+		FATAL( "See prev error" );
+	pass0SProg.uniLocs.fai = pass0SProg.getUniVar("fai").getLoc();
 
-	pass1SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_1_\n" );
-	pass1SProg.uniLocs.fai = pass1SProg.uniLocs.fai;
+	if( !pass1SProg.customLoad( "shaders/PpsHdr.glsl", ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(h) + "\n").c_str() ) )
+		FATAL( "See prev error" );
+	pass1SProg.uniLocs.fai = pass1SProg.getUniVar("fai").getLoc();
 
-	pass2SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_2_\n" );
-	pass2SProg.uniLocs.fai = pass2SProg.uniLocs.fai;
+	if( !pass2SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_2_\n" ) )
+		FATAL( "See prev error" );
+	pass2SProg.uniLocs.fai = pass2SProg.getUniVar("fai").getLoc();
 }
 
 
@@ -98,7 +103,7 @@ void init()
 //=====================================================================================================================================
 void runPass( const Camera& /*cam*/ )
 {
-	R::setViewport( 0, 0, wwidth, wheight );
+	R::setViewport( 0, 0, w, h );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );

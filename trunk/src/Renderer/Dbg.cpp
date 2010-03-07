@@ -16,6 +16,7 @@ extern btDiscreteDynamicsWorld* dynamicsWorld;
 
 void renderscene( int pass )
 {
+	return;
 	btScalar m[16];
 	btMatrix3x3 rot;
 	rot.setIdentity();
