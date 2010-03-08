@@ -75,7 +75,7 @@ class ShaderProg: public Resource
 		const Vec<Var>& getAttribVars() const { return attribVars; } ///< Accessor to attribute vars vector
 
 		/**
-		 * @param name The name of the var
+		 * @param varName The name of the var
 		 * @return It returns a uniform variable and on failure it throws an error and returns something random
 		 */
 		const Var& getUniVar( const char* varName ) const;
