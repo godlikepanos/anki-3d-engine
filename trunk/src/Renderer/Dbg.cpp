@@ -153,6 +153,38 @@ void runStage( const Camera& cam )
 	renderscene(1);
 
 
+	glPushMatrix();
+	R::multMatrix( Mat4( Vec3(5.0, 2.0, 2.0), Mat3::getIdentity(), 1.0 ) );
+	R::Dbg::renderSphere( 1.0, 16 );
+	glPopMatrix();
+
+
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho( 0, 1, 0, 1, -1, 1 );
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+	glLoadIdentity();
+
+
+	Vec4 p = Vec4( Vec3(5.0, 2.0, 2.0), 1.0 );
+	p = app->activeCam->getProjectionMatrix() * (app->activeCam->getViewMatrix() * p);
+	p /= p.w;
+	p = p/2 + 0.5;
+
+	glPointSize( 10 );
+	glBegin( GL_POINTS );
+		R::color3( Vec3(0.0,1.0,0.0) );
+		glVertex3fv( &p[0] );
+	glEnd();
+
+
+
+	glPopMatrix();
+	glMatrixMode( GL_PROJECTION );
+	glPopMatrix();
+
 	// unbind
 	fbo.unbind();
 }

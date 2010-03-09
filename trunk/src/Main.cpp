@@ -36,7 +36,6 @@
 App* app;
 
 // map (hard coded)
-Camera* mainCam;
 MeshNode* floor__,* sarge,* horse,* crate;
 SkelModelNode* imp;
 PointLight* point_lights[10];
@@ -150,7 +149,7 @@ void initPhysics()
 					MeshNode* crate = new MeshNode;
 					crate->init( "models/crate0/crate0.mesh" );
 					crate->scaleLspace = 1.11;
-					MotionState* myMotionState = new MotionState( toAnki( startTransform ), crate);
+					MotionState* myMotionState = new MotionState( startTransform, crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 
@@ -193,10 +192,10 @@ void init()
 	app->scene = new Scene;
 
 	// camera
-	mainCam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
-	mainCam->moveLocalY( 3.0 );
-	mainCam->moveLocalZ( 5.7 );
-	mainCam->moveLocalX( -0.3 );
+	app->activeCam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
+	app->activeCam->moveLocalY( 3.0 );
+	app->activeCam->moveLocalZ( 5.7 );
+	app->activeCam->moveLocalX( -0.3 );
 
 	// lights
 	point_lights[0] = new PointLight();
@@ -280,9 +279,9 @@ int main( int /*argc*/, char* /*argv*/[] )
 		float scale = 0.01;
 
 		// move the camera
-		static Node* mover = mainCam;
+		static Node* mover = app->activeCam;
 
-		if( I::keys[ SDLK_1 ] ) mover = mainCam;
+		if( I::keys[ SDLK_1 ] ) mover = app->activeCam;
 		if( I::keys[ SDLK_2 ] ) mover = point_lights[0];
 		if( I::keys[ SDLK_3 ] ) mover = spot_lights[0];
 		if( I::keys[ SDLK_4 ] ) mover = point_lights[1];
@@ -313,7 +312,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[SDLK_PAGEUP] ) mover->scaleLspace += scale ;
 		if( I::keys[SDLK_PAGEDOWN] ) mover->scaleLspace -= scale ;
 
-		if( I::keys[SDLK_k] ) mainCam->lookAtPoint( point_lights[0]->translationWspace );
+		if( I::keys[SDLK_k] ) app->activeCam->lookAtPoint( point_lights[0]->translationWspace );
 
 		mover->rotationLspace.reorthogonalize();
 
@@ -325,7 +324,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		dynamicsWorld->stepSimulation( app->timerTick );
 		dynamicsWorld->debugDrawWorld();
 
-		R::render( *mainCam );
+		R::render( *app->activeCam );
 
 		//map.octree.root->bounding_box.render();
 
