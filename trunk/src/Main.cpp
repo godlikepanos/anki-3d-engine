@@ -29,10 +29,9 @@
 #include "SkelAnimCtrl.h"
 #include "SkelNode.h"
 #include "LightProps.h"
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
 #include "BulletDebuger.h"
-#include "MotionState.h"
+#include "PhyCommon.h"
+#include "Parser.h"
 
 App* app;
 
@@ -151,7 +150,7 @@ void initPhysics()
 					MeshNode* crate = new MeshNode;
 					crate->init( "models/crate0/crate0.mesh" );
 					crate->scaleLspace = 1.11;
-					MotionState* myMotionState = new MotionState(startTransform, crate);
+					MotionState* myMotionState = new MotionState( toAnki( startTransform ), crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 

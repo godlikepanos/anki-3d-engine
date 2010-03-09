@@ -187,15 +187,22 @@ inline float Quat::getLength() const
 	return M::sqrt( w*w + x*x + y*y + z*z );
 }
 
-// invert
-inline void Quat::invert()
+
+// getInverted
+inline Quat Quat::getInverted() const
 {
 	float norm = w*w + x*x + y*y + z*z;
 
 	DEBUG_ERR( isZero(norm) ); // Norm is zero
 
 	float normi = 1.0 / norm;
-	ME = Quat( -normi*x, -normi*y, -normi*z, normi*w );
+	return Quat( -normi*x, -normi*y, -normi*z, normi*w );
+}
+
+// invert
+inline void Quat::invert()
+{
+	ME = getInverted();
 }
 
 // print

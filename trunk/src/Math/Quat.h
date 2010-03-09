@@ -13,7 +13,7 @@ class Quat
 	public:
 		// data members
 		float x, y, z, w;
-		// constructors & distructors
+		// constructors & destructors
 		explicit Quat();
 		explicit Quat( float f );
 		explicit Quat( float x, float y, float z, float w );
@@ -33,6 +33,7 @@ class Quat
 		// other
 		void  setFrom2Vec3( const Vec3& v0, const Vec3& v1 ); ///< calculates a quat from v0 to v1
 		float getLength() const;
+		Quat  getInverted() const;
 		void  invert();
 		void  conjugate();
 		Quat  getConjugated() const;
