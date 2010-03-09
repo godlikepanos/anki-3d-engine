@@ -14,6 +14,9 @@ class Controller;
 /// Scene Node
 class Node
 {
+	PROPERTY_RW( Transform, localTransform, setLocalTransform, getLocalTransform );
+	PROPERTY_RW( Transform, worldTransform, setWorldTransform, getWorldTransform );
+
 	// data
 	public:
 		enum Type

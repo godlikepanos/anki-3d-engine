@@ -57,9 +57,9 @@ class Vec3
 		void  normalize();
 		Vec3  getNormalized() const;
 		Vec3  getProjection( const Vec3& toThis ) const;
-		Vec3  getRotated( const Quat& q ) const; // returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
+		Vec3  getRotated( const Quat& q ) const; ///< Returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		void  rotate( const Quat& q );
-		Vec3  lerp( const Vec3& v1, float t ) const; // return lerp( this, v1, t )
+		Vec3  lerp( const Vec3& v1, float t ) const; ///< return lerp( this, v1, t )
 		void  print() const;
 		// transformations. The faster way is by far the mat4 * vec3 or the Transformed( Vec3, Mat3 )
 		Vec3  getTransformed( const Vec3& translate, const Mat3& rotate, float scale ) const;
@@ -70,7 +70,7 @@ class Vec3
 		void  transform( const Vec3& translate, const Quat& rotate, float scale );
 		Vec3  getTransformed( const Vec3& translate, const Quat& rotate ) const;
 		void  transform( const Vec3& translate, const Quat& rotate );
-		Vec3  getTransformed( const Mat4& transform ) const;  // 9 muls, 9 adds
+		Vec3  getTransformed( const Mat4& transform ) const;  ///< 9 muls, 9 adds
 		void  transform( const Mat4& transform );
 };
 
