@@ -153,33 +153,49 @@ void runStage( const Camera& cam )
 	renderscene(1);
 
 
+	glDisable( GL_DEPTH_TEST );
+
 	glPushMatrix();
 	R::multMatrix( Mat4( Vec3(5.0, 2.0, 2.0), Mat3::getIdentity(), 1.0 ) );
-	R::Dbg::renderSphere( 1.0, 16 );
+	R::Dbg::renderSphere( 1.2, 16 );
 	glPopMatrix();
 
 
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
 	glLoadIdentity();
-	glOrtho( 0, 1, 0, 1, -1, 1 );
+	glOrtho( -1, 1, -1, 1, -1, 1 );
 	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
 	glLoadIdentity();
 
 
-	Vec4 p = Vec4( Vec3(5.0, 2.0, 2.0), 1.0 );
+	Vec3 c = Vec3(5.0, 2.0, 2.0);
+	float r = 1.2;
+
+	Vec4 p = Vec4( c, 1.0 );
 	p = app->activeCam->getProjectionMatrix() * (app->activeCam->getViewMatrix() * p);
 	p /= p.w;
-	p = p/2 + 0.5;
+	//p = p/2 + 0.5;
 
 	glPointSize( 10 );
 	glBegin( GL_POINTS );
 		R::color3( Vec3(0.0,1.0,0.0) );
-		glVertex3fv( &p[0] );
+		glVertex2fv( &p[0] );
 	glEnd();
 
 
+	Vec4 g = Vec4( Vec3(c) + Vec3(r,0,0), 1.0 );
+	g = app->activeCam->getProjectionMatrix() * (app->activeCam->getViewMatrix() * g);
+	g /= g.w;
+	float len = Vec2(p-g).getLength();
+	//g = g/2 + 0.5;
+
+	glPointSize( 10 );
+	glBegin( GL_POINTS );
+		R::color3( Vec3(1.0,1.0,1.0) );
+		glVertex2fv( &(g)[0] );
+	glEnd();
 
 	glPopMatrix();
 	glMatrixMode( GL_PROJECTION );

@@ -55,6 +55,7 @@ static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 	// create the texes
 	fai.createEmpty2D( w, h, internalFormat, GL_RGB );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	//fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach

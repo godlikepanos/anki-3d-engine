@@ -316,6 +316,8 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		mover->rotationLspace.reorthogonalize();
 
+		//static_cast<btRigidBody*>(dynamicsWorld->getCollisionObjectArray()[1])->getMotionState()->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
+		//dynamicsWorld->getCollisionObjectArray()[3]->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
 
 		app->scene->updateAllControllers();
 		app->scene->updateAllWorldStuff();
@@ -332,7 +334,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		Ui::setColor( Vec4(1.0, 1.0, 1.0, 1.0) );
 		Ui::setPos( -0.98, 0.95 );
 		Ui::setFontWidth( 0.03 );
-		Ui::printf( "frame:%d time:%dms\n", R::framesNum, App::getTicks()-ticks_ );
+		Ui::printf( "frame:%d fps:%dms\n", R::framesNum, (App::getTicks()-ticks_) );
 		//Ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
@@ -350,7 +352,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		R::printLastError();
 		if( 1 )
 		{
-			if( R::framesNum == 50 ) R::takeScreenshot("gfx/screenshot.tga");
+			//if( R::framesNum == 10 ) R::takeScreenshot("gfx/screenshot.tga");
 			app->waitForNextFrame();
 		}
 		else
