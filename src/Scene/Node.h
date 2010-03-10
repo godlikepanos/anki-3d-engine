@@ -25,7 +25,8 @@ class Node
 			NT_CAMERA,
 			NT_MESH,
 			NT_SKELETON,
-			NT_SKEL_MODEL
+			NT_SKEL_MODEL,
+			NT_PARTICLE_EMITTER
 		};
 
 		Vec3  translationLspace;
