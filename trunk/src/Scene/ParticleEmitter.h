@@ -4,13 +4,17 @@
 #include "Common.h"
 #include "Node.h"
 
+/**
+ *
+ */
 class ParticleEmitter: public Node
 {
 	public:
 
-		class Particle: public Node
+		class Particle: public MeshNode
 		{
-
+			public:
+				int life; ///< Life in ms
 		};
 
 		Vec<Particle*> particles;
