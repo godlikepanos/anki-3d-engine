@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "skybox.h"
+#include "PhyWorld.h"
 
 
 class Node;
@@ -20,6 +21,7 @@ class Scene
 {
 	PROPERTY_RW( Vec3, ambientCol, setAmbientCol, getAmbientCol )
 	PROPERTY_RW( Vec3, sunPos, setSunPos, getSunPos )
+	PTR_PROPERTY_RW( PhyWorld*, phyWorld, setPhyWorld, getPhyWorld )
 
 	private:
 		template<typename ContainerType, typename Type> void putBackNode( ContainerType& container, Type* x )
