@@ -104,25 +104,35 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 
 
 /// useful property macros
-#define PROPERTY_RW( __Type__, __var_name__, __set_func__, __get_func__ ) \
+#define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
 	private: \
-		__Type__ __var_name__; \
+		__Type__ __varName__; \
 	public: \
-		void __set_func__( const __Type__& __x__ ) { \
-			__var_name__ = __x__; \
+		void __setFunc__( const __Type__& __x__ ) { \
+			__varName__ = __x__; \
 		} \
-		const __Type__& __get_func__() const { \
-			return __var_name__; \
+		const __Type__& __getFunc__() const { \
+			return __varName__; \
 		}
 
-#define PROPERTY_R( __Type__, __var_name__, __get_func__ ) \
+#define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
 	private: \
-		__Type__ __var_name__; \
+		__Type__ __varName__; \
 	public: \
-		const __Type__& __get_func__() const { \
-			return __var_name__; \
+		const __Type__& __getFunc__() const { \
+			return __varName__; \
 		}
 
+#define PTR_PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
+	private: \
+		__Type__ __varName__; \
+	public: \
+		void __setFunc__( __Type__ __x__ ) { \
+			__varName__ = __x__; \
+		} \
+		const __Type__ __getFunc__() const { \
+			return __varName__; \
+		}
 
 /// PRINT
 #define PRINT( x ) cout << x << endl;

@@ -7,5 +7,6 @@
 #include "Math.h"
 #include "PhyConversions.h"
 #include "MotionState.h"
+#include "PhyWorld.h"
 
 #endif
