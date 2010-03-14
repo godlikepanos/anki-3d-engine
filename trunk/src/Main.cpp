@@ -57,11 +57,6 @@ class floor_t: public Camera
 
 
 // Physics
-btDefaultCollisionConfiguration* collisionConfiguration;
-btCollisionDispatcher* dispatcher;
-btDbvtBroadphase* broadphase;
-btSequentialImpulseConstraintSolver* sol;
-btDiscreteDynamicsWorld* dynamicsWorld;
 BulletDebuger debugDrawer;
 
 #define ARRAY_SIZE_X 5
@@ -78,13 +73,7 @@ BulletDebuger debugDrawer;
 
 void initPhysics()
 {
-	collisionConfiguration = new btDefaultCollisionConfiguration();
-	dispatcher = new	btCollisionDispatcher(collisionConfiguration);
-	broadphase = new btDbvtBroadphase();
-	sol = new btSequentialImpulseConstraintSolver;
-	dynamicsWorld = new btDiscreteDynamicsWorld( dispatcher, broadphase, sol, collisionConfiguration );
-
-	dynamicsWorld->setGravity(btVector3(0,-10,0));
+	btDiscreteDynamicsWorld* dynamicsWorld = app->scene->getPhyWorld()->getDynamicsWorld();
 
 	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
 
@@ -153,7 +142,7 @@ void initPhysics()
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					btRigidBody* body = new btRigidBody(rbInfo);
 
-
+					if( i=2 ) body->setActivationState(ISLAND_SLEEPING);
 
 					//body->setActivationState(ISLAND_SLEEPING);
 
@@ -323,8 +312,8 @@ int main( int /*argc*/, char* /*argv*/[] )
 		app->scene->updateAllWorldStuff();
 
 
-		dynamicsWorld->stepSimulation( app->timerTick );
-		dynamicsWorld->debugDrawWorld();
+		app->scene->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
+		app->scene->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();
 
 		R::render( *app->activeCam );
 

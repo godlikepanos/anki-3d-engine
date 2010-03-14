@@ -103,34 +103,25 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #define FOREACH( x ) for( int i=0; i<x; i++ )
 
 
-/// useful property macros
+/// useful property macros. It concatenates and creates a unique type so it can accept pointers
 #define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
 	private: \
-		__Type__ __varName__; \
+		typedef __Type__ __Dummy__##__varName__; \
+		__Dummy__##__varName__ __varName__; \
 	public: \
-		void __setFunc__( const __Type__& __x__ ) { \
+		void __setFunc__( const __Dummy__##__varName__& __x__ ) { \
 			__varName__ = __x__; \
 		} \
-		const __Type__& __getFunc__() const { \
+		const __Dummy__##__varName__& __getFunc__() const { \
 			return __varName__; \
 		}
 
 #define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
 	private: \
-		__Type__ __varName__; \
+		typedef __Type__ __Dummy__##__varName__; \
+		__Dummy__##__varName__ __varName__; \
 	public: \
-		const __Type__& __getFunc__() const { \
-			return __varName__; \
-		}
-
-#define PTR_PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
-	private: \
-		__Type__ __varName__; \
-	public: \
-		void __setFunc__( __Type__ __x__ ) { \
-			__varName__ = __x__; \
-		} \
-		const __Type__ __getFunc__() const { \
+		const __Dummy__##__varName__& __getFunc__() const { \
 			return __varName__; \
 		}
 
