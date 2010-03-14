@@ -4,6 +4,7 @@
 #include "Common.h"
 #include "Node.h"
 #include "MeshNode.h"
+#include "PhyCommon.h"
 
 
 /**
@@ -17,6 +18,7 @@ class ParticleEmitter: public Node
 		{
 			public:
 				int lifeTillDeath; ///< Life till death. If 0 then dead. In ms
+				btRigidBody* body;
 
 				Particle() {}
 				void render();
@@ -24,19 +26,21 @@ class ParticleEmitter: public Node
 		};
 
 		// the properties
-		int maxParticleLife;
-		int minParticleLife;
+		uint maxParticleLife;
+		uint minParticleLife;
 		Euler maxAngle;
 		Euler minAngle;
 		float minParticleMass;
 		float maxParticleMass;
-		int maxNumOfParticles; ///< The size of the particles vector
-		int emittionPeriod; ///< How often the emitter emits new particles. In ms
+		uint maxNumOfParticles; ///< The size of the particles vector
+		uint emittionPeriod; ///< How often the emitter emits new particles. In ms
+		uint particlesPerEmittion; ///< How many particles are emitted every emittion
 
 
 		// the changeable vars
 		Vec<Particle*> particles;
-		int life;
+		uint timeOfPrevUpdate;
+		uint timeOfPrevEmittion;
 
 		// funcs
 		ParticleEmitter(): Node( NT_PARTICLE_EMITTER ) {}
@@ -44,6 +48,7 @@ class ParticleEmitter: public Node
 		void renderDepth() {}
 		void init( const char* filename );
 		void deinit() {}
+		void update();
 };
 
 #endif

@@ -7,4 +7,3 @@
 *Ask in the bullet forum:
 	*How to make floating particles like smoke. But first try with one body and manualy setting the gravity
 	*What the btCollisionObject::setActivationState takes as parameter?
-*In eclipse add to Project Properties -> C/C++ General -> Paths and Symbols -> Include the bullet src dir so it can color the structs and classes

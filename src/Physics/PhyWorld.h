@@ -9,6 +9,14 @@
  */
 class PhyWorld
 {
+	PROPERTY_R( btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld )
+
+	private:
+		btDefaultCollisionConfiguration* collisionConfiguration;
+		btCollisionDispatcher* dispatcher;
+		btDbvtBroadphase* broadphase;
+		btSequentialImpulseConstraintSolver* sol;
+
 	public:
 		/**
 		 * Collision groups
@@ -21,11 +29,15 @@ class PhyWorld
 		};
 
 
-		btDefaultCollisionConfiguration* collisionConfiguration;
-		btCollisionDispatcher* dispatcher;
-		btDbvtBroadphase* broadphase;
-		btSequentialImpulseConstraintSolver* sol;
-		btDiscreteDynamicsWorld* dynamicsWorld;
+		PhyWorld()
+		{
+			collisionConfiguration = new btDefaultCollisionConfiguration();
+			dispatcher = new	btCollisionDispatcher(collisionConfiguration);
+			broadphase = new btDbvtBroadphase();
+			sol = new btSequentialImpulseConstraintSolver;
+			dynamicsWorld = new btDiscreteDynamicsWorld( dispatcher, broadphase, sol, collisionConfiguration );
+			dynamicsWorld->setGravity(btVector3(0,-10,0));
+		}
 };
 
 #endif

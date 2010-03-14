@@ -10,6 +10,8 @@
 //=====================================================================================================================================
 void ParticleEmitter::Particle::render()
 {
+	if( lifeTillDeath < 0 ) return;
+
 	glPushMatrix();
 	R::multMatrix( transformationWspace );
 
@@ -50,7 +52,38 @@ void ParticleEmitter::init( const char* filename )
 		MotionState* mState = new MotionState( btTransform::getIdentity(), particles[i] );
 		btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, mState, colShape, localInertia );
 		btRigidBody* body = new btRigidBody( rbInfo );
+		particles[i]->body = body;
 		body->setActivationState(ISLAND_SLEEPING);
-		app->scene->getPhyWorld()->dynamicsWorld->addRigidBody( body, PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
+		app->scene->getPhyWorld()->getDynamicsWorld()->addRigidBody( body, PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
 	}
+}
+
+
+//=====================================================================================================================================
+// update                                                                                                                             =
+//=====================================================================================================================================
+void ParticleEmitter::update()
+{
+	uint crntTime = app->getTicks();
+
+	// deactivate the dead particles
+	for( Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it )
+	{
+		Particle& part = **it;
+
+		part.lifeTillDeath -= crntTime-timeOfPrevUpdate;
+		if( part.lifeTillDeath < 1 )
+		{
+			part.body->setActivationState( ISLAND_SLEEPING );
+		}
+	}
+
+	if( (crntTime - timeOfPrevEmittion) > emittionPeriod )
+	{
+		timeOfPrevEmittion = crntTime;
+
+		//for(  )
+	}
+
+	timeOfPrevUpdate = crntTime;
 }
