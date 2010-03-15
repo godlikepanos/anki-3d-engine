@@ -36,7 +36,7 @@ class PhyWorld
 			broadphase = new btDbvtBroadphase();
 			sol = new btSequentialImpulseConstraintSolver;
 			dynamicsWorld = new btDiscreteDynamicsWorld( dispatcher, broadphase, sol, collisionConfiguration );
-			dynamicsWorld->setGravity(btVector3(0,-10,0));
+			dynamicsWorld->setGravity( btVector3(0,-10,0) );
 		}
 };
 

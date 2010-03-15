@@ -304,15 +304,15 @@ void Mesh::createVertTangents()
 //=====================================================================================================================================
 void Mesh::createVBOs()
 {
-	vbos.vertIndeces.Create( GL_ELEMENT_ARRAY_BUFFER, vertIndeces.getSizeInBytes(), &vertIndeces[0], GL_STATIC_DRAW );
-	vbos.vertCoords.Create( GL_ARRAY_BUFFER, vertCoords.getSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW );
-	vbos.vertNormals.Create( GL_ARRAY_BUFFER, vertNormals.getSizeInBytes(), &vertNormals[0], GL_STATIC_DRAW );
+	vbos.vertIndeces.create( GL_ELEMENT_ARRAY_BUFFER, vertIndeces.getSizeInBytes(), &vertIndeces[0], GL_STATIC_DRAW );
+	vbos.vertCoords.create( GL_ARRAY_BUFFER, vertCoords.getSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW );
+	vbos.vertNormals.create( GL_ARRAY_BUFFER, vertNormals.getSizeInBytes(), &vertNormals[0], GL_STATIC_DRAW );
 	if( vertTangents.size() > 1 )
-		vbos.vertTangents.Create( GL_ARRAY_BUFFER, vertTangents.getSizeInBytes(), &vertTangents[0], GL_STATIC_DRAW );
+		vbos.vertTangents.create( GL_ARRAY_BUFFER, vertTangents.getSizeInBytes(), &vertTangents[0], GL_STATIC_DRAW );
 	if( texCoords.size() > 1 )
-		vbos.texCoords.Create( GL_ARRAY_BUFFER, texCoords.getSizeInBytes(), &texCoords[0], GL_STATIC_DRAW );
+		vbos.texCoords.create( GL_ARRAY_BUFFER, texCoords.getSizeInBytes(), &texCoords[0], GL_STATIC_DRAW );
 	if( vertWeights.size() > 1 )
-		vbos.vertWeights.Create( GL_ARRAY_BUFFER, vertWeights.getSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW );
+		vbos.vertWeights.create( GL_ARRAY_BUFFER, vertWeights.getSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW );
 }
 
 

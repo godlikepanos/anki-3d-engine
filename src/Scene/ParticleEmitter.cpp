@@ -53,7 +53,7 @@ void ParticleEmitter::init( const char* filename )
 		btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, mState, colShape, localInertia );
 		btRigidBody* body = new btRigidBody( rbInfo );
 		particles[i]->body = body;
-		body->setActivationState(ISLAND_SLEEPING);
+		//body->setActivationState(ISLAND_SLEEPING);
 		app->scene->getPhyWorld()->getDynamicsWorld()->addRigidBody( body, PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
 	}
 }
@@ -69,20 +69,33 @@ void ParticleEmitter::update()
 	// deactivate the dead particles
 	for( Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it )
 	{
-		Particle& part = **it;
+		Particle* part = *it;
 
-		part.lifeTillDeath -= crntTime-timeOfPrevUpdate;
-		if( part.lifeTillDeath < 1 )
+		part->lifeTillDeath -= crntTime-timeOfPrevUpdate;
+		if( part->lifeTillDeath < 1 )
 		{
-			part.body->setActivationState( ISLAND_SLEEPING );
+			part->body->setActivationState( ISLAND_SLEEPING );
 		}
 	}
 
+	//
+	DEBUG_ERR( particlesPerEmittion == 0 );
 	if( (crntTime - timeOfPrevEmittion) > emittionPeriod )
 	{
-		timeOfPrevEmittion = crntTime;
+		uint partNum = 0;
+		for( Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it )
+		{
+			Particle* part = *it;
+			if( part->lifeTillDeath > 0 ) continue;
 
-		//for(  )
+			// reinit particle
+			//part->body->setActivationState(  );
+
+			++partNum;
+			if( partNum >= particlesPerEmittion ) break;
+		}
+
+		timeOfPrevEmittion = crntTime;
 	}
 
 	timeOfPrevUpdate = crntTime;

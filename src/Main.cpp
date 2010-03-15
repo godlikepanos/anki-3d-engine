@@ -122,6 +122,7 @@ void initPhysics()
 		float start_y = START_POS_Y;
 		float start_z = START_POS_Z - ARRAY_SIZE_Z/2;
 
+		btRigidBody* body;
 		for (int k=0;k<ARRAY_SIZE_Y;k++)
 		{
 			for (int i=0;i<ARRAY_SIZE_X;i++)
@@ -140,20 +141,19 @@ void initPhysics()
 					crate->scaleLspace = 1.11;
 					MotionState* myMotionState = new MotionState( startTransform, crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
-					btRigidBody* body = new btRigidBody(rbInfo);
+					//btRigidBody* body = new btRigidBody(rbInfo);
+					body = new btRigidBody(rbInfo);
 
-					if( i=2 ) body->setActivationState(ISLAND_SLEEPING);
+					//if( i=2 ) body->setActivationState(ISLAND_SLEEPING);
 
 					//body->setActivationState(ISLAND_SLEEPING);
+					//body->setGravity( btVector3( 0.0, -1.0, 0.0 ) );
 
 					dynamicsWorld->addRigidBody(body);
-					//body->setActivationState(ISLAND_SLEEPING);
 				}
 			}
 		}
 	}
-
-
 
 
 	//dynamicsWorld->setDebugDrawer(&debugDrawer);
