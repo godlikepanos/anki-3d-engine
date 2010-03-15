@@ -24,11 +24,11 @@ class Vbo
 		/**
 		 * Creates a new VBO with the given params and checks if everything went OK
 		 * @param target_ It should be: GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER only!!!!!
-		 * @param size_in_bytes The size of the buffer that we will allocate in bytes
-		 * @param data_ptr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
+		 * @param sizeInBytes The size of the buffer that we will allocate in bytes
+		 * @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
 		 * @param usage_ It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
 		 */
-		void Create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
+		void create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
 		{
 			DEBUG_ERR( glId!=0 ); // VBO already initialized
 			DEBUG_ERR( target_!=GL_ARRAY_BUFFER && target_!=GL_ELEMENT_ARRAY_BUFFER ); // unacceptable target_

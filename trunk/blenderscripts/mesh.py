@@ -223,8 +223,8 @@ def ScriptMesh( mesh_init ):
 				else:
 					ERROR( "The mesh \"" + mesh.name + "\" More than 1 coords for the " + str(vert_id) + " vert" )
 					mesh.verts[vert_id].sel=1
-					return "error"
-					#print " %f %f %f %f" % ( vertuvs[ vert_id ][0], vertuvs[ vert_id ][1], uvx, uvy )
+					#return "error"
+					print " %f %f %f %f" % ( vertuvs[ vert_id ][0], vertuvs[ vert_id ][1], uvx, uvy )
 			
 			# do the same if quat for the other forming triangle
 			if( len( face.verts ) == 4 ):
@@ -243,8 +243,8 @@ def ScriptMesh( mesh_init ):
 					else:
 						ERROR( "The mesh \"" + mesh.name + "\" More than 1 coords for the " + str(vert_id) + " vert" )
 						mesh.verts[vert_id].sel=1
-						return "error"
-						#print " %f %f %f %f" % ( vertuvs[ vert_id ][0], vertuvs[ vert_id ][1], uvx, uvy )
+						#return "error"
+						print " %f %f %f %f" % ( vertuvs[ vert_id ][0], vertuvs[ vert_id ][1], uvx, uvy )
 	# endif has UVs
 				
 	# now put the UVs in the ftxt
