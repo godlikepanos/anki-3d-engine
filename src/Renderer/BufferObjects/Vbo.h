@@ -1,24 +1,18 @@
 #ifndef _VBO_H_
 #define _VBO_H_
 
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include "Common.h"
+#include "BufferObject.h"
 
-/// This is a wrapper for Vertex Buffer Objects to prevent us from making idiotic errors
-class Vbo
+/**
+ * @brief This is a wrapper for Vertex Buffer Objects to prevent us from making idiotic errors
+ */
+class Vbo: public BufferObject
 {
 	protected:
-		uint glId; ///< The OpenGL id of the VBO
-		// the below vars can be extracted by quering OpenGL but I suppose keeping them here is faster
-		GLenum target;
-		GLenum usage;
+		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 
 	public:
-		Vbo(): glId(0) {}
-		virtual ~Vbo() { deleteBuff(); }
-		uint   getGlId() const { DEBUG_ERR(glId==0); return glId; }
-		GLenum getBufferTarget() const { DEBUG_ERR(glId==0); return target; }
 		GLenum getBufferUsage() const { DEBUG_ERR(glId==0); return usage; }
 
 		/**
@@ -53,36 +47,6 @@ class Vbo
 			}
 
 			unbind();
-		}
-
-		/**
-		 * Deletes the VBO
-		 */
-		void deleteBuff()
-		{
-			DEBUG_ERR( glId==0 ); // VBO unitialized
-			glDeleteBuffers( 1, &glId );
-			glId = 0;
-		}
-
-		/**
-		 * Bind the VBO
-		 */
-		void bind() const
-		{
-			if( glId==0 )
-				PRINT( "-" );
-			DEBUG_ERR( glId==0 ); // VBO unitialized
-			glBindBuffer( target, glId );
-		}
-
-		/**
-		 * Unbinds only the targets that have the same target as this
-		 */
-		void unbind() const
-		{
-			DEBUG_ERR( glId==0 ); // VBO unitialized
-			glBindBuffer( target, 0 );
 		}
 
 		/**

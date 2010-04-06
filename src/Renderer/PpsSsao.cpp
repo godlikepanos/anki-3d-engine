@@ -17,12 +17,12 @@ namespace Ssao {
 //=====================================================================================================================================
 // VARS                                                                                                                               =
 //=====================================================================================================================================
-bool enabled = false;
+bool enabled = true;
 
 static Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 
-float renderingQuality = 0.9; // the renderingQuality of the SSAO fai. Chose low so it can blend
-float bluringQuality = 0.75;
+float renderingQuality = 0.75; // the renderingQuality of the SSAO fai. Chose low so it can blend
+float bluringQuality = 1.0;
 
 static uint w, h;
 static uint bw, bh;
@@ -31,7 +31,7 @@ Texture pass0Fai, pass1Fai, fai;
 
 static ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
-static Texture* noise_map;
+static Texture* noiseMap;
 
 
 //=====================================================================================================================================
@@ -130,9 +130,9 @@ void init()
 	bool mipmaping = R::mipmaping;
 	R::textureCompression = false;
 	R::mipmaping = true;
-	noise_map = Rsrc::textures.load( "gfx/noise3.tga" );
-	noise_map->texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-	noise_map->texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
+	noiseMap = Rsrc::textures.load( "gfx/noise3.tga" );
+	noiseMap->texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
+	noiseMap->texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
 	//noise_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	//noise_map->texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	R::textureCompression = texCompr;
@@ -163,7 +163,7 @@ void runPass( const Camera& cam )
 	ssaoSProg.bind();
 	glUniform2fv( ssaoSProg.getUniVar("camerarange").getLoc(), 1, &(Vec2(cam.getZNear(), cam.getZFar()))[0] );
 	ssaoSProg.locTexUnit( ssaoSProg.getUniVar("msDepthFai").getLoc(), R::Ms::depthFai, 0 );
-	ssaoSProg.locTexUnit( ssaoSProg.getUniVar("noiseMap").getLoc(), *noise_map, 1 );
+	ssaoSProg.locTexUnit( ssaoSProg.getUniVar("noiseMap").getLoc(), *noiseMap, 1 );
 	ssaoSProg.locTexUnit( ssaoSProg.getUniVar("msNormalFai").getLoc(), R::Ms::normalFai, 2 );
 	R::DrawQuad( 0 ); // Draw quad
 

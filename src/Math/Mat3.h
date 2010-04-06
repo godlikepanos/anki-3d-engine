@@ -30,7 +30,7 @@ class Mat3
 		explicit Mat3( float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22 );
 		explicit Mat3( float arr [] );
 		         Mat3( const Mat3& b );
-		explicit Mat3( const Quat& q ); // 12 muls, 12 adds
+		explicit Mat3( const Quat& q ); ///< @ref Quat to @ref Mat3. 12 muls, 12 adds
 		explicit Mat3( const Euler& eu );
 		explicit Mat3( const Axisang& axisang );
 		// ops with mat3
@@ -52,7 +52,7 @@ class Mat3
 		Mat3  operator / ( float f ) const;
 		Mat3& operator /=( float f );
 		// ops with others
-		Vec3  operator * ( const Vec3& b ) const;  // 9 muls, 6 adds
+		Vec3  operator * ( const Vec3& b ) const;  ///< 9 muls, 6 adds
 		// comparision
 		bool operator ==( const Mat3& b ) const;
 		bool operator !=( const Mat3& b ) const;
@@ -65,10 +65,16 @@ class Mat3
 		void  setColumn( const uint i, const Vec3& v );
 		void  getColumns( Vec3& a, Vec3& b, Vec3& c ) const;
 		Vec3  getColumn( const uint i ) const;
+		Vec3  getXAxis() const;
+		Vec3  getYAxis() const;
+		Vec3  getZAxis() const;
+		void  setXAxis( const Vec3& v3 );
+		void  setYAxis( const Vec3& v3 );
+		void  setZAxis( const Vec3& v3 );
 		void  setRotationX( float rad );
 		void  setRotationY( float rad );
 		void  setRotationZ( float rad );
-		void  rotateXAxis( float rad ); // it rotates "this" in the axis defined by the rotation AND not the world axis
+		void  rotateXAxis( float rad ); ///< It rotates "this" in the axis defined by the rotation AND not the world axis
 		void  rotateYAxis( float rad );
 		void  rotateZAxis( float rad );
 		void  transpose();

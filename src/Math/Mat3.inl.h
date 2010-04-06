@@ -398,9 +398,9 @@ inline Vec3 Mat3::getRow( const uint i ) const
 // setColumn
 inline void Mat3::setColumn( const uint i, const Vec3& v )
 {
-	ME(0,i)=v.x;
-	ME(1,i)=v.y;
-	ME(2,i)=v.z;
+	ME(0,i) = v.x;
+	ME(1,i) = v.y;
+	ME(2,i) = v.z;
 }
 
 // getColumn
@@ -409,19 +409,55 @@ inline Vec3 Mat3::getColumn( const uint i ) const
 	return Vec3( ME(0,i), ME(1,i), ME(2,i) );
 }
 
+// getXAxis
+inline Vec3 Mat3::getXAxis() const
+{
+	return getColumn( 0 );
+}
+
+// getYAxis
+inline Vec3 Mat3::getYAxis() const
+{
+	return getColumn( 1 );
+}
+
+// getZAxis
+inline Vec3 Mat3::getZAxis() const
+{
+	return getColumn( 2 );
+}
+
+// setXAxis
+inline void Mat3::setXAxis( const Vec3& v3 )
+{
+	setColumn( 0, v3 );
+}
+
+// setYAxis
+inline void Mat3::setYAxis( const Vec3& v3 )
+{
+	setColumn( 1, v3 );
+}
+
+// setZAxis
+inline void Mat3::setZAxis( const Vec3& v3 )
+{
+	setColumn( 2, v3 );
+}
+
 // setRotationX
 inline void Mat3::setRotationX( float rad )
 {
 	float sintheta, costheta;
 	sinCos( rad, sintheta, costheta );
 
-	ME(0,0) = 1.0f;
-	ME(0,1) = 0.0f;
-	ME(0,2) = 0.0f;
-	ME(1,0) = 0.0f;
+	ME(0,0) = 1.0;
+	ME(0,1) = 0.0;
+	ME(0,2) = 0.0;
+	ME(1,0) = 0.0;
 	ME(1,1) = costheta;
 	ME(1,2) = -sintheta;
-	ME(2,0) = 0.0f;
+	ME(2,0) = 0.0;
 	ME(2,1) = sintheta;
 	ME(2,2) = costheta;
 }
@@ -433,13 +469,13 @@ inline void Mat3::setRotationY( float rad )
 	sinCos( rad, sintheta, costheta );
 
 	ME(0,0) = costheta;
-	ME(0,1) = 0.0f;
+	ME(0,1) = 0.0;
 	ME(0,2) = sintheta;
-	ME(1,0) = 0.0f;
-	ME(1,1) = 1.0f;
-	ME(1,2) = 0.0f;
+	ME(1,0) = 0.0;
+	ME(1,1) = 1.0;
+	ME(1,2) = 0.0;
 	ME(2,0) = -sintheta;
-	ME(2,1) = 0.0f;
+	ME(2,1) = 0.0;
 	ME(2,2) = costheta;
 }
 
@@ -451,13 +487,13 @@ inline void Mat3::setRotationZ( float rad )
 
 	ME(0,0) = costheta;
 	ME(0,1) = -sintheta;
-	ME(0,2) = 0.0f;
+	ME(0,2) = 0.0;
 	ME(1,0) = sintheta;
 	ME(1,1) = costheta;
-	ME(1,2) = 0.0f;
-	ME(2,0) = 0.0f;
-	ME(2,1) = 0.0f;
-	ME(2,2) = 1.0f;
+	ME(1,2) = 0.0;
+	ME(2,0) = 0.0;
+	ME(2,1) = 0.0;
+	ME(2,2) = 1.0;
 }
 
 // rotateXAxis

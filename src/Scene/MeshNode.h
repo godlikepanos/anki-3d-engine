@@ -23,7 +23,7 @@ class MeshNode: public Node
 		// controllers
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
-		MeshNode(): Node(NT_MESH), meshSkelCtrl(NULL) {}
+		MeshNode(): Node(NT_MESH), material(NULL), dpMaterial(NULL), meshSkelCtrl(NULL) {}
 		virtual void render() { render(material); }
 		virtual void renderDepth() { render( material->dpMtl ); }
 		void init( const char* filename );

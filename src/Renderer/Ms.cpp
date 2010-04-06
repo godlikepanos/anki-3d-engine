@@ -105,11 +105,11 @@ void runStage( const Camera& cam )
 	// render the meshes
 	for( uint i=0; i<app->scene->meshNodes.size(); i++ )
 	{
-		MeshNode* mesh_node = app->scene->meshNodes[i];
-		DEBUG_ERR( mesh_node->material == NULL );
-		if( mesh_node->material->blends || mesh_node->material->refracts ) continue;
-		mesh_node->material->setup();
-		mesh_node->render();
+		MeshNode* meshNode = app->scene->meshNodes[i];
+		DEBUG_ERR( meshNode->material == NULL );
+		if( meshNode->material->blends || meshNode->material->refracts ) continue;
+		meshNode->material->setup();
+		meshNode->render();
 	}
 
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode

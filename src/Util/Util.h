@@ -5,8 +5,10 @@
 
 namespace Util {
 
-extern int   randRange( int min, int max );
-extern float randRange( float min, float max );
+extern int    randRange( int min, int max );
+extern uint   randRange( uint min, uint max );
+extern float  randRange( float min, float max );
+extern double randRange( double min, double max );
 
 extern string      readFile( const char* filename );
 extern Vec<string> getFileLines( const char* filename );
