@@ -52,6 +52,7 @@ class ShaderPrePreprocessor
 		
 		Vec<string> sourceLines;  ///< The parseFileForPragmas fills this
 		CodeBeginningPragma vertShaderBegins;
+		CodeBeginningPragma geomShaderBegins;
 		CodeBeginningPragma fragShaderBegins;
 		
 		/**
@@ -80,15 +81,10 @@ class ShaderPrePreprocessor
 		{
 			friend class ShaderPrePreprocessor;
 
-			private:
-				Vec<ShaderVarPragma> attributes;  ///< It holds the name and the custom location
-				string vertShaderSource; ///< This is the vert shader source
-				string fragShaderSource; ///< This is the frag shader source
-
-			public:
-				const Vec<ShaderVarPragma>& getAttribLocs() const { return attributes; }
-				const string& getVertShaderSource() const { return vertShaderSource; }
-				const string& getFragShaderSource() const { return fragShaderSource; }
+			PROPERTY_R( Vec<ShaderVarPragma>, attributes, getAttribLocs ) ///< It holds the name and the custom location
+			PROPERTY_R( string, vertShaderSource, getVertShaderSource ) ///< The vert shader source
+			PROPERTY_R( string, geomShaderSource, getGeomShaderSource ) ///< The geom shader source
+			PROPERTY_R( string, fragShaderSource, getFragShaderSource ) ///< The frag shader source
 		};
 
 		Output output; ///< The output of the parser. parseFile fills it
