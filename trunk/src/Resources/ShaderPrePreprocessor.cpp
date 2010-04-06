@@ -95,23 +95,74 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 							return false;
 						}
 
-						if( vertShaderBegins.definedInLine != -1 ) // already defined elsewhere so throw error
+						// already defined elsewhere => error
+						if( vertShaderBegins.definedInLine != -1 )
 						{
 							PARSE_ERR( "vertShaderBegins already defined at " << vertShaderBegins.definedInFile << ":" <<
 							           vertShaderBegins.definedInLine );
 							return false;
 						}
 
-						if( fragShaderBegins.definedInLine != -1 ) // frag shader should be after vert
+						// vert shader should be before frag
+						if( fragShaderBegins.definedInLine != -1 )
 						{
 							PARSE_ERR( "vertShaderBegins must precede fragShaderBegins defined at " << fragShaderBegins.definedInFile <<
 							           ":" << fragShaderBegins.definedInLine );
 							return false;
 						}
 						
+						// vert shader should be before geom
+						if( geomShaderBegins.definedInLine != -1 )
+						{
+							PARSE_ERR( "vertShaderBegins must precede geomShaderBegins defined at " << geomShaderBegins.definedInFile <<
+							           ":" << geomShaderBegins.definedInLine );
+							return false;
+						}
+
 						vertShaderBegins.definedInFile = filename;
 						vertShaderBegins.definedInLine = scanner.getLineNmbr();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
+						// stop play
+					}
+/* geomShaderBegins */
+					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "geomShaderBegins") == 0 )
+					{
+						// play
+
+						// its defined in same place so there is probable circular includance
+						if( geomShaderBegins.definedInLine==scanner.getLineNmbr() && geomShaderBegins.definedInFile==filename )
+						{
+							PARSE_ERR( "geomShaderBegins already defined in the same place. Check for circular or multiple includance" );
+							return false;
+						}
+
+						// already defined elsewhere => error
+						if( geomShaderBegins.definedInLine != -1 )
+						{
+							PARSE_ERR( "geomShaderBegins already defined at " << geomShaderBegins.definedInFile << ":" <<
+							           geomShaderBegins.definedInLine );
+							return false;
+						}
+
+						// vert shader entry point not defined => error
+						if( vertShaderBegins.definedInLine == -1 )
+						{
+							PARSE_ERR( "geomShaderBegins must follow vertShaderBegins" );
+							return false;
+						}
+
+						// frag shader entry point defined => error
+						if( fragShaderBegins.definedInLine != -1 )
+						{
+							PARSE_ERR( "geomShaderBegins must precede fragShaderBegins defined at " << fragShaderBegins.definedInFile << ":" <<
+							           fragShaderBegins.definedInLine );
+							return false;
+						}
+
+						geomShaderBegins.definedInFile = filename;
+						geomShaderBegins.definedInLine = scanner.getLineNmbr();
+						geomShaderBegins.globalLine = sourceLines.size() + 1;
 						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
 						// stop play
 					}
@@ -134,9 +185,10 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 							return false;
 						}
 						
-						if( vertShaderBegins.definedInLine == -1 ) // vert shader entry point not defined
+						// vert shader entry point not defined
+						if( vertShaderBegins.definedInLine == -1 )
 						{
-							PARSE_ERR( "fragShaderBegins should be defined after vertShaderBegins" );
+							PARSE_ERR( "fragShaderBegins must follow vertShaderBegins" );
 							return false;
 						}
 
@@ -282,22 +334,46 @@ bool ShaderPrePreprocessor::parseFile( const char* filename )
 	}
 	
 	// construct shader's source code
-	output.vertShaderSource = "";
-	output.fragShaderSource = "";
-	for( int i=0; i<vertShaderBegins.globalLine-1; ++i )
 	{
-		output.vertShaderSource += sourceLines[i] + "\n";
-		output.fragShaderSource += sourceLines[i] + "\n";
-	}	
-	for( int i=vertShaderBegins.globalLine-1; i<fragShaderBegins.globalLine-1; ++i )
-	{
-		output.vertShaderSource += sourceLines[i] + "\n";
-	}
-	for( int i=fragShaderBegins.globalLine-1; i<int(sourceLines.size()); ++i )
-	{
-		output.fragShaderSource += sourceLines[i] + "\n";
-	}
-	
+		// init
+		output.vertShaderSource = "";
+		output.geomShaderSource = "";
+		output.fragShaderSource = "";
+
+		// put global source code
+		for( int i=0; i<vertShaderBegins.globalLine-1; ++i )
+		{
+			output.vertShaderSource += sourceLines[i] + "\n";
+
+			if( geomShaderBegins.definedInLine != -1 )
+				output.geomShaderSource += sourceLines[i] + "\n";
+
+			output.fragShaderSource += sourceLines[i] + "\n";
+		}
+
+		// vert shader code
+		int limit = (geomShaderBegins.definedInLine != -1) ? geomShaderBegins.globalLine-1 : fragShaderBegins.globalLine-1;
+		for( int i=vertShaderBegins.globalLine-1; i<limit; ++i )
+		{
+			output.vertShaderSource += sourceLines[i] + "\n";
+		}
+
+		// geom shader code
+		if( geomShaderBegins.definedInLine != -1 )
+		{
+			for( int i=geomShaderBegins.globalLine-1; i<fragShaderBegins.globalLine-1; ++i )
+			{
+				output.geomShaderSource += sourceLines[i] + "\n";
+			}
+		}
+
+		// frag shader code
+		for( int i=fragShaderBegins.globalLine-1; i<int(sourceLines.size()); ++i )
+		{
+			output.fragShaderSource += sourceLines[i] + "\n";
+		}
+	} // end construct shader's source code
+
 	//PRINT( "vertShaderBegins.globalLine: " << vertShaderBegins.globalLine )
 	//PRINT( "fragShaderBegins.globalLine: " << fragShaderBegins.globalLine )
 	//printSourceLines();
