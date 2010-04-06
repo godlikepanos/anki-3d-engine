@@ -111,6 +111,26 @@ void init()
 }
 
 
+float projectRadius( float r, const Vec3& location, const Camera& cam )
+{
+	Vec3 axis = cam.rotationWspace.getXAxis();
+	float c = axis.dot( cam.translationWspace );
+	float dist = axis.dot( location ) - c;
+
+	/*if( dist > 0.0 )
+		return 0.0;*/
+
+	Vec3 p( 0.0, fabs(r), -dist );
+	Vec4 projected = cam.getProjectionMatrix() * Vec4( p, 1.0 );
+	float pr = projected.y / projected.w;
+
+	/*if ( pr > 1.0 )
+		pr = 1.0;*/
+
+	return pr;
+}
+
+
 //=====================================================================================================================================
 // runStage                                                                                                                           =
 //=====================================================================================================================================
@@ -133,7 +153,8 @@ void runStage( const Camera& cam )
 		if
 		(
 			(app->scene->nodes[i]->type == Node::NT_LIGHT && showLights) ||
-			(app->scene->nodes[i]->type == Node::NT_CAMERA && showCameras)
+			(app->scene->nodes[i]->type == Node::NT_CAMERA && showCameras) ||
+			app->scene->nodes[i]->type == Node::NT_PARTICLE_EMITTER
 		)
 		{
 			app->scene->nodes[i]->render();
@@ -157,6 +178,7 @@ void runStage( const Camera& cam )
 
 	glPushMatrix();
 	R::multMatrix( Mat4( Vec3(5.0, 2.0, 2.0), Mat3::getIdentity(), 1.0 ) );
+	R::color3( Vec3(1,0,0) );
 	R::Dbg::renderSphere( 1.2, 16 );
 	glPopMatrix();
 
@@ -185,7 +207,7 @@ void runStage( const Camera& cam )
 	glEnd();
 
 
-	Vec4 g = Vec4( Vec3(c) + Vec3(r,0,0), 1.0 );
+	/*Vec4 g = Vec4( Vec3(c) + Vec3(r,0,0), 1.0 );
 	g = app->activeCam->getProjectionMatrix() * (app->activeCam->getViewMatrix() * g);
 	g /= g.w;
 	float len = Vec2(p-g).getLength();
@@ -195,6 +217,13 @@ void runStage( const Camera& cam )
 	glBegin( GL_POINTS );
 		R::color3( Vec3(1.0,1.0,1.0) );
 		glVertex2fv( &(g)[0] );
+	glEnd();*/
+	float pr = projectRadius( r, c, cam );
+	//PRINT( pr );
+	glPointSize( 10 );
+	glBegin( GL_POINTS );
+		R::color3( Vec3(1.0,0.0,1.0) );
+		glVertex2fv( &( Vec2(p) + Vec2(pr,0.0) )[0] );
 	glEnd();
 
 	glPopMatrix();

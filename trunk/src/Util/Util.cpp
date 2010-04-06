@@ -12,22 +12,21 @@ int randRange( int min, int max )
 	return (rand() % (max-min+1)) + min ;
 }
 
+uint randRange( uint min, uint max )
+{
+	return (rand() % (max-min+1)) + min ;
+}
 
 float randRange( float min, float max )
 {
-	double d = max - min; // difference
-	if( d==0.0 ) return min;
-	// diferrense = mant * e^exp
-	int exp;
-	double mant = frexp( d, &exp );
+	float r = (float)rand() / (float)RAND_MAX;
+	return min + r * (max - min);
+}
 
-	int precision = 1000; // more accurate
-
-	mant *= precision;
-	double newMant = rand() % (int)mant;
-	newMant /= precision;
-
-	return min + (float)ldexp( newMant, exp ); // return min + (new_mant * e^exp)
+double randRange( double min, double max )
+{
+	double r = (double)rand() / (double)RAND_MAX;
+	return min + r * (max - min);
 }
 
 

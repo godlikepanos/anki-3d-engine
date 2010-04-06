@@ -21,6 +21,7 @@ class Node
 	public:
 		enum Type
 		{
+			NT_GHOST,
 			NT_LIGHT,
 			NT_CAMERA,
 			NT_MESH,

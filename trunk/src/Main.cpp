@@ -32,6 +32,7 @@
 #include "BulletDebuger.h"
 #include "PhyCommon.h"
 #include "Parser.h"
+#include "ParticleEmitter.h"
 
 App* app;
 
@@ -40,6 +41,7 @@ MeshNode* floor__,* sarge,* horse,* crate;
 SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
+ParticleEmitter* partEmitter;
 
 class floor_t: public Camera
 {
@@ -58,6 +60,7 @@ class floor_t: public Camera
 
 // Physics
 BulletDebuger debugDrawer;
+Vec<btRigidBody*> boxes;
 
 #define ARRAY_SIZE_X 5
 #define ARRAY_SIZE_Y 5
@@ -147,9 +150,11 @@ void initPhysics()
 					//if( i=2 ) body->setActivationState(ISLAND_SLEEPING);
 
 					//body->setActivationState(ISLAND_SLEEPING);
-					//body->setGravity( btVector3( 0.0, -1.0, 0.0 ) );
+
 
 					dynamicsWorld->addRigidBody(body);
+					//body->setGravity( toBt( Vec3( Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0) ) ) );
+					boxes.push_back( body );
 				}
 			}
 		}
@@ -224,6 +229,11 @@ void init()
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = Rsrc::skelAnims.load( "models/imp/walk.imp.anim" );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
+	// particle emitter
+	partEmitter = new ParticleEmitter;
+	partEmitter->init( NULL );
+	partEmitter->translationLspace = Vec3( 3.0, 0.0, 0.0 );
+
 	// crate
 	/*crate = new MeshNode;
 	crate->init( "models/crate0/crate0.mesh" );
@@ -251,6 +261,10 @@ void init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
+	Mat3 m( Mat3::getIdentity() );
+	m.rotateYAxis( M::PI/2 );
+	m.print();
+
 	App::printAppInfo();
 
 	init();
@@ -275,6 +289,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[ SDLK_3 ] ) mover = spot_lights[0];
 		if( I::keys[ SDLK_4 ] ) mover = point_lights[1];
 		if( I::keys[ SDLK_5 ] ) mover = spot_lights[1];
+		if( I::keys[ SDLK_6 ] ) mover = partEmitter;
 		if( I::keys[ SDLK_m ] == 1 ) I::warpMouse = !I::warpMouse;
 
 		if( I::keys[SDLK_a] ) mover->moveLocalX( -dist );
@@ -303,6 +318,16 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		if( I::keys[SDLK_k] ) app->activeCam->lookAtPoint( point_lights[0]->translationWspace );
 
+
+		if( I::keys[SDLK_o] == 1 )
+		{
+			btRigidBody* body = static_cast<btRigidBody*>( boxes[0] );
+			//body->getMotionState()->setWorldTransform( toBt( Mat4( Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0 ) ) );
+			body->setWorldTransform( toBt( Mat4( Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0 ) ) );
+			//body->clearForces();
+			body->forceActivationState( ACTIVE_TAG );
+		}
+
 		mover->rotationLspace.reorthogonalize();
 
 		//static_cast<btRigidBody*>(dynamicsWorld->getCollisionObjectArray()[1])->getMotionState()->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
@@ -310,6 +335,8 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 		app->scene->updateAllControllers();
 		app->scene->updateAllWorldStuff();
+
+		partEmitter->update();
 
 
 		app->scene->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
