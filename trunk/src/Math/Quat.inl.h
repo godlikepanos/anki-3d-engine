@@ -229,7 +229,7 @@ inline void Quat::setFrom2Vec3( const Vec3& from, const Vec3& to )
 	normalize();
 }
 
-// Rotated
+// getRotated
 inline Quat Quat::getRotated( const Quat& b ) const
 {
 	return ME * b;
@@ -278,6 +278,13 @@ inline Quat Quat::slerp( const Quat& q1_, float t ) const
 	sum = tmp + tmp1;
 	sum.normalize();
 	return Quat( sum );
+}
+
+// setIdentity
+inline void Quat::setIdentity()
+{
+	x = y = z = 0.0;
+	w = 1.0;
 }
 
 // getIdentity

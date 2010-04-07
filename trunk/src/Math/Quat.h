@@ -8,6 +8,9 @@
 namespace M {
 
 
+/**
+ * Used in rotations
+ */
 class Quat
 {
 	public:
@@ -44,6 +47,7 @@ class Quat
 		Quat  slerp( const Quat& q1, float t ) const; ///< returns slerp( this, q1, t )
 		Quat  getRotated( const Quat& b ) const; ///< The same as Quat * Quat
 		void  rotate( const Quat& b ); ///< @see getRotated
+		void  setIdentity();
 		static const Quat& getIdentity();
 };
 

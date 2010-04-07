@@ -8,6 +8,9 @@
 namespace M {
 
 
+/**
+ * @brief Usef for rotations. It cannot describe a rotation accurately though
+ */
 class Euler
 {
 	public:

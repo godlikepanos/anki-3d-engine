@@ -111,10 +111,10 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 	public: \
 		void __setFunc__( const __Dummy__##__varName__& __x__ ) { \
 			__varName__ = __x__; \
-		} \
+		} /**< Set function */ \
 		const __Dummy__##__varName__& __getFunc__() const { \
 			return __varName__; \
-		}
+		} /**< Accessor */
 
 #define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
 	private: \
@@ -123,7 +123,8 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 	public: \
 		const __Dummy__##__varName__& __getFunc__() const { \
 			return __varName__; \
-		}
+		} /**< Accessor */
+
 
 /// PRINT
 #define PRINT( x ) cout << x << endl;

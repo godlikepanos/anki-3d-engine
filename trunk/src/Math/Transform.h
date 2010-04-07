@@ -8,18 +8,23 @@
 namespace M {
 
 
+/**
+ * @brief For transformations
+ */
 class Transform
 {
-	PROPERTY_RW( Quat, rotation, setRotation, getRotation );
-	PROPERTY_RW( Vec3, translation, setOrigin, getOrigin );
-	PROPERTY_RW( float, scale, setScale, getScale );
-
 	public:
+		// data members
+		Mat3  rotation;
+		Vec3  translation;
+		float scale;
+		// constructors
 		explicit Transform();
 		         Transform( const Transform& b );
 		explicit Transform( const Mat4& m4 );
-		explicit Transform( const Vec3& origin, const Quat& rotation_, float scale_ );
-
+		explicit Transform( const Vec3& origin, const Mat3& rotation_, float scale_ );
+		// funcs
+		void setIdentity();
 		static const Transform& getIdentity();
 };
 

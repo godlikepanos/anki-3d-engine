@@ -5,10 +5,6 @@
 #include "Common.h"
 
 
-class Scene;
-class Camera;
-
-
 class App
 {
 	PROPERTY_R( uint, desktopW, getDesktopW )
@@ -24,8 +20,8 @@ class App
 		uint windowW;
 		uint windowH;
 
-		Scene*  scene;
-		Camera* activeCam;
+		class Scene*  scene;
+		class Camera* activeCam;
 
 		App();
 		void initWindow();

@@ -15,13 +15,16 @@ class ParticleEmitter: public Node
 {
 	public:
 
+		/**
+		 * @brief The scene node particle class
+		 */
 		class Particle: public GhostNode
 		{
 			public:
-				int lifeTillDeath; ///< Life till death. If 0 then dead. In ms
+				int lifeTillDeath; ///< Life till death. If < 0 then dead. In ms
 				btRigidBody* body;
 
-				Particle() {}
+				Particle(): lifeTillDeath(-1) {}
 				void render();
 				void renderDepth() {};
 		};

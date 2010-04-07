@@ -8,6 +8,9 @@
 namespace M {
 
 
+/**
+ * @brief Used mainly for transformations but not necessarily
+ */
 class Mat4
 {
 	private:
@@ -54,7 +57,7 @@ class Mat4
 		Mat4  operator / ( float f ) const;
 		Mat4& operator /=( float f );
 		// ops with other types
-		Vec4  operator * ( const Vec4& v4 ) const; // 16 muls, 12 adds
+		Vec4  operator * ( const Vec4& v4 ) const; ///< 16 muls, 12 adds
 		// comparision
 		bool operator ==( const Mat4& b ) const;
 		bool operator !=( const Mat4& b ) const;
@@ -76,8 +79,8 @@ class Mat4
 		Mat4  getInverse() const;
 		Mat4  getInverseTransformation() const;
 		Mat4  lerp( const Mat4& b, float t ) const;
-		static Mat4 combineTransformations( const Mat4& m0, const Mat4& m1 );  // 12 muls, 27 adds. Something like m4 = m0 * m1 ...
-		                                                                       // ...but without touching the 4rth row and allot faster
+		void  setIdentity();
+		static Mat4 combineTransformations( const Mat4& m0, const Mat4& m1 ); ///< 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
 		static const Mat4& getIdentity();
 		static const Mat4& getZero();
 };

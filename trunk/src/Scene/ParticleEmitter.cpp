@@ -72,7 +72,7 @@ void ParticleEmitter::update()
 {
 	uint crntTime = app->getTicks();
 
-	// deactivate the dead particles
+	// decrease particle life and deactivate the dead particles
 	for( Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it )
 	{
 		Particle* part = *it;
@@ -80,11 +80,11 @@ void ParticleEmitter::update()
 		part->lifeTillDeath -= crntTime-timeOfPrevUpdate;
 		if( part->lifeTillDeath < 1 )
 		{
-			// ToDo see how bullet can deactivate itself
+			// ToDo see how bullet can deactivate bodies
 		}
 	}
 
-	//
+	// emit particles
 	DEBUG_ERR( particlesPerEmittion == 0 );
 	if( (crntTime - timeOfPrevEmittion) > emittionPeriod )
 	{
