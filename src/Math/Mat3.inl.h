@@ -714,6 +714,12 @@ inline Mat3 Mat3::getInverse() const
 	return result;
 }
 
+// setIdentity
+inline void Mat3::setIdentity()
+{
+	ME = getIdentity();
+}
+
 // invert
 // see above
 inline void Mat3::invert()

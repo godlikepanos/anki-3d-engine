@@ -6,16 +6,15 @@
 #include "Controller.h"
 #include "Math.h"
 
-class Skeleton;
-class SkelAnimCtrl;
 
-
-/// Skeleton node
+/**
+ * @brief Scene node that extends the @ref Skeleton resource
+ */
 class SkelNode: public Node
 {
 	public:
-		Skeleton* skeleton; ///< The skeleton resource
-		SkelAnimCtrl* skelAnimCtrl; ///< Hold the controller here as well
+		class Skeleton* skeleton; ///< The skeleton resource
+		class SkelAnimCtrl* skelAnimCtrl; ///< Hold the controller here as well
 
 		SkelNode();
 		void render();

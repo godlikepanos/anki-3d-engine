@@ -183,7 +183,6 @@ void init()
 
 	R::init();
 	Ui::init();
-	app->scene = new Scene;
 
 	// camera
 	app->activeCam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
@@ -261,9 +260,8 @@ void init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
-	Mat3 m( Mat3::getIdentity() );
-	m.rotateYAxis( M::PI/2 );
-	m.print();
+	Transform trf;
+	trf.rotation.setXAxis( Vec3(0.0) );
 
 	App::printAppInfo();
 
@@ -337,7 +335,6 @@ int main( int /*argc*/, char* /*argv*/[] )
 		app->scene->updateAllWorldStuff();
 
 		partEmitter->update();
-
 
 		app->scene->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
 		app->scene->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();

@@ -8,6 +8,9 @@
 namespace M {
 
 
+/**
+ * @brief Mainly used for rotations. It includes many helpful member functions
+ */
 class Mat3
 {
 	private:
@@ -84,6 +87,7 @@ class Mat3
 		float getDet() const;
 		void  invert();
 		Mat3  getInverse() const;
+		void  setIdentity();
 		static const Mat3& getZero();
 		static const Mat3& getIdentity();		
 };

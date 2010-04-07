@@ -153,7 +153,7 @@ inline Mat4::Mat4( float f )
 // constructor [Transform]
 inline Mat4::Mat4( const Transform& t )
 {
-	ME = Mat4( t.getOrigin(), Mat3(t.getRotation()), t.getScale() );
+	ME = Mat4( t.translation, Mat3(t.rotation), t.scale );
 }
 
 // 4x4 + 4x4
@@ -656,6 +656,12 @@ inline Mat4 Mat4::getInverseTransformation() const
 inline Mat4 Mat4::lerp( const Mat4& b, float t ) const
 {
 	return (ME*(1.0-t))+(b*t);
+}
+
+// setIdentity
+inline void Mat4::setIdentity()
+{
+	ME = getIdentity();
 }
 
 // combineTransformations

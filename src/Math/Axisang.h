@@ -8,6 +8,9 @@
 namespace M {
 
 
+/**
+ * @brief Used for rotations
+ */
 class Axisang
 {
 	public:
