@@ -103,7 +103,10 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #define FOREACH( x ) for( int i=0; i<x; i++ )
 
 
-/// useful property macros. It concatenates and creates a unique type so it can accept pointers
+/**
+ * Read write property. It concatenates and creates a unique type so it can accept pointers. The get funcs are coming into two
+ * flavors, one const and one not-const. The property is read-write after all and non-const is acceptable.
+ */
 #define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
 	private: \
 		typedef __Type__ __Dummy__##__varName__; \
@@ -111,11 +114,17 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 	public: \
 		void __setFunc__( const __Dummy__##__varName__& __x__ ) { \
 			__varName__ = __x__; \
-		} /**< Set function */ \
+		} \
 		const __Dummy__##__varName__& __getFunc__() const { \
 			return __varName__; \
-		} /**< Accessor */
+		} \
+		__Dummy__##__varName__& __getFunc__() { \
+			return __varName__; \
+		}
 
+/**
+ * Read only property. It concatenates and creates a unique type so it can accept pointers
+ */
 #define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
 	private: \
 		typedef __Type__ __Dummy__##__varName__; \
@@ -123,7 +132,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 	public: \
 		const __Dummy__##__varName__& __getFunc__() const { \
 			return __varName__; \
-		} /**< Accessor */
+		}
 
 
 /// PRINT

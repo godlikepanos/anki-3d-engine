@@ -9,7 +9,9 @@
 
 
 /**
+ * @brief The particle emitter scene node
  *
+ * This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
  */
 class ParticleEmitter: public Node
 {
@@ -29,7 +31,7 @@ class ParticleEmitter: public Node
 				void renderDepth() {};
 		};
 
-		// the properties
+		// the particle properties
 		uint minParticleLife;
 		uint maxParticleLife;
 		Vec3 minDirection;
@@ -40,8 +42,10 @@ class ParticleEmitter: public Node
 		float maxParticleMass;
 		Vec3 minGravity;
 		Vec3 maxGravity;
-		Vec3 minInitialPos;
-		Vec3 maxInitialPos;
+		Vec3 minStartingPos;
+		Vec3 maxStartingPos;
+
+		// the emittion properties
 		uint maxNumOfParticles; ///< The size of the particles vector
 		uint emittionPeriod; ///< How often the emitter emits new particles. In ms
 		uint particlesPerEmittion; ///< How many particles are emitted every emittion

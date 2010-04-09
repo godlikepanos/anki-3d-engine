@@ -33,6 +33,7 @@
 #include "PhyCommon.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
+#include "PhyCharacter.h"
 
 App* app;
 
@@ -260,9 +261,6 @@ void init()
 //=====================================================================================================================================
 int main( int /*argc*/, char* /*argv*/[] )
 {
-	Transform trf;
-	trf.rotation.setXAxis( Vec3(0.0) );
-
 	App::printAppInfo();
 
 	init();
@@ -356,9 +354,9 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[SDLK_F11] ) app->togleFullScreen();
 		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
-		/*char str[128];
+		char str[128];
 		sprintf( str, "capt/%06d.jpg", R::framesNum );
-		R::takeScreenshot(str);*/
+		R::takeScreenshot(str);
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();
