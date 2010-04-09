@@ -6,7 +6,7 @@
 
 
 //=====================================================================================================================================
-//                                                                                                                                    =
+// render                                                                                                                             =
 //=====================================================================================================================================
 void ParticleEmitter::Particle::render()
 {
@@ -39,12 +39,12 @@ void ParticleEmitter::init( const char* filename )
 	maxParticleMass = 2.0;
 	minGravity = Vec3( 0.0, 0.0, 0.0 );
 	minGravity = Vec3( 0.0, -1.0, 0.0 );
-	minInitialPos = Vec3( -1.0, -1.0, -1.0 );
-	maxInitialPos = Vec3( 1.0, 1.0, 1.0 );
+	minStartingPos = Vec3( -1.0, -1.0, -1.0 );
+	maxStartingPos = Vec3( 1.0, 1.0, 1.0 );
 	maxNumOfParticles = 5;
 	emittionPeriod = 1000;
 
-	// init the rest
+	// init the particles
 	btCollisionShape* colShape = new btSphereShape( 0.1 );
 
 	particles.resize( maxNumOfParticles );
@@ -59,7 +59,7 @@ void ParticleEmitter::init( const char* filename )
 		btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, mState, colShape, localInertia );
 		btRigidBody* body = new btRigidBody( rbInfo );
 		particles[i]->body = body;
-		//body->setActivationState(ISLAND_SLEEPING);
+		body->setActivationState( DISABLE_SIMULATION );
 		app->scene->getPhyWorld()->getDynamicsWorld()->addRigidBody( body, PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
 	}
 }
@@ -76,15 +76,16 @@ void ParticleEmitter::update()
 	for( Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it )
 	{
 		Particle* part = *it;
+		if( part->lifeTillDeath < 0 ) continue; // its already dead so dont deactivate it again
 
 		part->lifeTillDeath -= crntTime-timeOfPrevUpdate;
 		if( part->lifeTillDeath < 1 )
 		{
-			// ToDo see how bullet can deactivate bodies
+			part->body->setActivationState( DISABLE_SIMULATION );
 		}
 	}
 
-	// emit particles
+	// emit new particles
 	DEBUG_ERR( particlesPerEmittion == 0 );
 	if( (crntTime - timeOfPrevEmittion) > emittionPeriod )
 	{
@@ -92,25 +93,65 @@ void ParticleEmitter::update()
 		for( Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it )
 		{
 			Particle* part = *it;
-			if( part->lifeTillDeath > 0 ) continue;
+			if( part->lifeTillDeath > 0 ) continue; // its alive so skip it
 
-			// reinit particle
-			part->lifeTillDeath = Util::randRange( minParticleLife, maxParticleLife );
+			// reinit a dead particle
+			//
 
-			Vec3 forceDir = Vec3( Util::randRange( minDirection.x , maxDirection.x ), Util::randRange( minDirection.y , maxDirection.y ),
-			                                       Util::randRange( minDirection.z , maxDirection.z ) );
+			// activate it (Bullet stuff)
+			part->body->forceActivationState( ACTIVE_TAG );
+			part->body->clearForces();
+
+			// life
+			if( minParticleLife != maxParticleLife )
+				part->lifeTillDeath = Util::randRange( minParticleLife, maxParticleLife );
+			else
+				part->lifeTillDeath = minParticleLife;
+
+			// force
+			Vec3 forceDir;
+			if( minDirection != maxDirection )
+			{
+				forceDir = Vec3( Util::randRange( minDirection.x , maxDirection.x ), Util::randRange( minDirection.y , maxDirection.y ),
+			                                    Util::randRange( minDirection.z , maxDirection.z ) );
+			}
+			else
+			{
+				forceDir = minDirection;
+			}
 			forceDir.normalize();
-			part->body->applyCentralForce( toBt( forceDir * Util::randRange( minForceMagnitude, maxForceMagnitude ) ) );
 
-			minParticleMass = 1.0;
-			maxParticleMass = 2.0;
+			if( minForceMagnitude != maxForceMagnitude )
+				part->body->applyCentralForce( toBt( forceDir * Util::randRange( minForceMagnitude, maxForceMagnitude ) ) );
+			else
+				part->body->applyCentralForce( toBt( forceDir * minForceMagnitude ) );
 
-			Vec3 grav = Vec3( Util::randRange(minGravity.x,maxGravity.x), Util::randRange(minGravity.y,maxGravity.y),
-			                  Util::randRange(minGravity.z,maxGravity.z) );
+			// gravity
+			Vec3 grav;
+			if( minGravity != maxGravity )
+			{
+				grav = Vec3( Util::randRange(minGravity.x,maxGravity.x), Util::randRange(minGravity.y,maxGravity.y),
+			               Util::randRange(minGravity.z,maxGravity.z) );
+			}
+			else
+			{
+				grav = minGravity;
+			}
 			part->body->setGravity( toBt( grav ) );
 
-			//part->body->get
-
+			// starting pos
+			Vec3 pos;
+			if( minStartingPos != maxStartingPos )
+			{
+				pos = Vec3( Util::randRange(minStartingPos.x,maxStartingPos.x), Util::randRange(minStartingPos.y,maxStartingPos.y),
+			              Util::randRange(minStartingPos.z,maxStartingPos.z) );
+			}
+			else
+			{
+				pos = minStartingPos;
+			}
+			pos += translationWspace;
+			part->body->setWorldTransform( toBt( Mat4( pos, Mat3::getIdentity(), 1.0 ) ) );
 
 			// do the rest
 			++partNum;
@@ -129,14 +170,14 @@ void ParticleEmitter::update()
 //=====================================================================================================================================
 void ParticleEmitter::render()
 {
-	float vertPositions[] = { maxInitialPos.x, maxInitialPos.y, maxInitialPos.z,   // right top front
-	                          minInitialPos.x, maxInitialPos.y, maxInitialPos.z,   // left top front
-	                          minInitialPos.x, minInitialPos.y, maxInitialPos.z,   // left bottom front
-	                          maxInitialPos.x, minInitialPos.y, maxInitialPos.z,   // right bottom front
-	                          maxInitialPos.x, maxInitialPos.y, minInitialPos.z,   // right top back
-	                          minInitialPos.x, maxInitialPos.y, minInitialPos.z,   // left top back
-	                          minInitialPos.x, minInitialPos.y, minInitialPos.z,   // left bottom back
-	                          maxInitialPos.x, minInitialPos.y, minInitialPos.z }; // right bottom back
+	float vertPositions[] = { maxStartingPos.x, maxStartingPos.y, maxStartingPos.z,   // right top front
+	                          minStartingPos.x, maxStartingPos.y, maxStartingPos.z,   // left top front
+	                          minStartingPos.x, minStartingPos.y, maxStartingPos.z,   // left bottom front
+	                          maxStartingPos.x, minStartingPos.y, maxStartingPos.z,   // right bottom front
+	                          maxStartingPos.x, maxStartingPos.y, minStartingPos.z,   // right top back
+	                          minStartingPos.x, maxStartingPos.y, minStartingPos.z,   // left top back
+	                          minStartingPos.x, minStartingPos.y, minStartingPos.z,   // left bottom back
+	                          maxStartingPos.x, minStartingPos.y, minStartingPos.z }; // right bottom back
 
 	uint vertIndices [] = { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 3, 7, 2, 6 };
 

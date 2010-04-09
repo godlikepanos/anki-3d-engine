@@ -6,25 +6,25 @@ from threading import Thread
 #======================================================================================================================================
 # GLOBAL VARS                                                                                                                         =
 #======================================================================================================================================
-source_paths = []
-precompiled_headers = []
-executable_name = "unamed_project"
+sourcePaths = []
+precompiledHeaders = []
+executableName = "unamed_project"
 compiler = ""
-common_flags = ""
-compiler_flags = ""
-precompiled_headers_flags = ""
-linker_flags = ""
+commonFlags = ""
+compilerFlags = ""
+precompiledHeadersFlags = ""
+linkerFlags = ""
 
 
 #======================================================================================================================================
-# GetCommandOutput                                                                                                                    =
+# getCommandOutput                                                                                                                    =
 #======================================================================================================================================
-def GetCommandOutput( command ):
+def getCommandOutput( command ):
 	child = os.popen(command)
 	data = child.read()
 	err = child.close()
 	if err:
-		print( "GetCommandOutput failed:\n" + command )
+		print( "getCommandOutput failed:\n" + command )
 		exit( 0 )
 	return data
 
@@ -32,9 +32,9 @@ def GetCommandOutput( command ):
 #======================================================================================================================================
 # Threads                                                                                                                             =
 #======================================================================================================================================
-thread_list = []
+threadList = []
 
-class target_thread_t( Thread ):
+class TargetThread( Thread ):
 	def __init__( self, tid, range ):
 		Thread.__init__( self )
 		self.tid = tid
@@ -44,21 +44,21 @@ class target_thread_t( Thread ):
 	def run( self ):
 		for i in self.range:
 			source_file = source_files[i]
-			self.out_str += GetCommandOutput( compiler + " -MM " + compiler_flags + " " + source_file.cpp_file + " -MT " + source_file.obj_file )
-			self.out_str += "\t@echo Compiling " + source_file.cpp_file + "...\n"
-			self.out_str += "\t@$(CXX) $(INCPATH) $(CFLAGS) " + source_file.cpp_file + " -o " + \
-			                source_file.obj_file + "\n\n"
+			self.out_str += getCommandOutput( compiler + " -MM " + compilerFlags + " " + source_file.cppFile + " -MT " + source_file.objFile )
+			self.out_str += "\t@echo Compiling " + source_file.cppFile + "...\n"
+			self.out_str += "\t@$(CXX) $(INCPATH) $(CFLAGS) " + source_file.cppFile + " -o " + \
+			                source_file.objFile + "\n\n"
 			#print( "Im thread %d and I will make depends for %s" %(self.tid, source_file.fname) )
 			#print( "Im thread %d and my i is %d" %(self.tid, i) )
 
 
 #======================================================================================================================================
-# source_file_t                                                                                                                       =
+# SourceFile                                                                                                                          =
 #======================================================================================================================================
-class source_file_t:
+class SourceFile:
 	def __init__( self ):	
-		self.cpp_file = ""
-		self.obj_file = ""
+		self.cppFile = ""
+		self.objFile = ""
 
 
 #======================================================================================================================================
@@ -66,8 +66,8 @@ class source_file_t:
 #======================================================================================================================================
 
 # Read the arguments
-input_cfgfile = ""
-output_makefile = ""
+inputCfgFile = ""
+outputMakefile = ""
 
 i = 0
 while 1:
@@ -84,147 +84,146 @@ while 1:
 		print( "-o                 Output makefile. Default: Makefile" )
 		exit(0)
 	elif arg == "-i":
-		input_cfgfile = sys.argv[i+1]
+		inputCfgFile = sys.argv[i+1]
 		i = i+1
 	elif arg == "-o":
-		output_makefile = sys.argv[i+1]
+		outputMakefile = sys.argv[i+1]
 		i = i+1
 	else:
 		print( "Unrecognized argument " + arg )
 	
 
-if output_makefile == "":
-	output_makefile = "Makefile"
-if input_cfgfile == "":
-	input_cfgfile = "gen.cfg.py"
+if outputMakefile == "":
+	outputMakefile = "Makefile"
+if inputCfgFile == "":
+	inputCfgFile = "gen.cfg.py"
 
 
 # Check if cfg exists
-if not os.path.exists( input_cfgfile ):
-	print( "File " + input_cfgfile + " doesn't exist" )
+if not os.path.exists( inputCfgFile ):
+	print( "File " + inputCfgFile + " doesn't exist" )
 	exit(0)
 
 
 # compile the cfg
 source = ""
-f = open( input_cfgfile, "r" )
+f = open( inputCfgFile, "r" )
 for line in f.readlines():
 	source += line
 	
-exec( compile( source, input_cfgfile, "exec" ) )
+exec( compile( source, inputCfgFile, "exec" ) )
 
 
 # find the cpp files
 source_files = []
-for source_dir in source_paths:
-	files = os.listdir( source_dir )
+for sourceDir in sourcePaths:
+	files = os.listdir( sourceDir )
 	for file_ in fnmatch.filter( files, "*.cpp" ):
-		sfile = source_file_t()
+		sfile = SourceFile()
 		
 		(fname_wo_ext, ext) = os.path.splitext( file_ )
-		sfile.cpp_file = source_dir + "/" + file_
-		sfile.obj_file = fname_wo_ext + ".o"
+		sfile.cppFile = sourceDir + "/" + file_
+		sfile.objFile = fname_wo_ext + ".o"
 		
 		# search all the source files and resolve conflicts in .o
 		for sfile1 in source_files:
-			if sfile1.obj_file == sfile.obj_file:
-				print( "There is a conflict with \"" + sfile1.cpp_file + "\" and \"" + sfile.cpp_file + "\" but dont worry." )
+			if sfile1.objFile == sfile.objFile:
+				print( "There is a conflict with \"" + sfile1.cppFile + "\" and \"" + sfile.cppFile + "\" but dont worry." )
 				random.seed()
-				sfile.obj_file = str(random.randint(1,99)) + "." + sfile.obj_file;
+				sfile.objFile = str(random.randint(1,99)) + "." + sfile.objFile;
 	
 		source_files.append( sfile )
 	
 
 # now the precompiled headers
 ph_files = []
-for header in precompiled_headers:
-	ph_files.append( source_file_t( header ) )
+for header in precompiledHeaders:
+	ph_files.append( SourceFile( header ) )
 
 
 # build the string
-master_str = ""
+masterStr = ""
 
-master_str += "CXX = " + compiler + "\n"
-master_str += "COMMONFLAGS = " + common_flags + "\n"
-master_str += "CFLAGS = $(COMMONFLAGS) " + compiler_flags + "\n"
-master_str += "PHFLAGS = $(CFLAGS) " + precompiled_headers_flags + "\n"
-master_str += "LFLAGS = $(COMMONFLAGS) " + linker_flags + "\n"
-master_str += "EXECUTABLE = " + executable_name + "\n"
+masterStr += "CXX = " + compiler + "\n"
+masterStr += "COMMONFLAGS = " + commonFlags + "\n"
+masterStr += "CFLAGS = $(COMMONFLAGS) " + compilerFlags + "\n"
+masterStr += "PHFLAGS = $(CFLAGS) " + precompiledHeadersFlags + "\n"
+masterStr += "LFLAGS = $(COMMONFLAGS) " + linkerFlags + "\n"
+masterStr += "EXECUTABLE = " + executableName + "\n"
 
-master_str += "INCPATH = "
+masterStr += "INCPATH = "
 for path in include_paths:
-	master_str += "-I" + path + " "
-	compiler_flags += " -I" + path + " "
-master_str += "\n"
+	masterStr += "-I" + path + " "
+	compilerFlags += " -I" + path + " "
+masterStr += "\n"
 
-master_str += "SOURCES = "
+masterStr += "SOURCES = "
 for source_file in source_files:
-	master_str += source_file.cpp_file + " "
-master_str += "\n"
+	masterStr += source_file.cppFile + " "
+masterStr += "\n"
 
-master_str += "OBJECTS = "
+masterStr += "OBJECTS = "
 for source_file in source_files:
-	master_str += source_file.obj_file + " "
-master_str += "\n"
+	masterStr += source_file.objFile + " "
+masterStr += "\n"
 
-master_str += "PRECOMPILED_HEADERS = "
+masterStr += "PRECOMPILED_HEADERS = "
 for header in ph_files:
-	master_str += header.fname + ".gch "
-master_str += "\n\n"
+	masterStr += header.fname + ".gch "
+masterStr += "\n\n"
 
-master_str += "all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)\n\n"
+masterStr += "all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)\n\n"
 
-master_str += "$(EXECUTABLE): $(OBJECTS)\n"
-master_str += "\t@echo Linking...\n"
-master_str += "\t@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
-master_str += "\t@echo All Done!\n\n"
+masterStr += "$(EXECUTABLE): $(OBJECTS)\n"
+masterStr += "\t@echo Linking...\n"
+masterStr += "\t@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
+masterStr += "\t@echo All Done!\n\n"
 
 
 for header in ph_files:
-	depend_str = GetCommandOutput( compiler + " -MM " + compiler_flags + " " + precompiled_headers_flags + " " + header.path + "/" + 
-	                               header.fname )
-	master_str += depend_str.replace( header.fname_wo_ext + ".o", header.fname + ".gch" )
-	master_str += "\t@echo Pre-compiling header " + header.fname + "...\n"
-	master_str += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.path + "/" + header.fname + "\n\n"
+	dependStr = getCommandOutput( compiler + " -MM " + compilerFlags + " " + precompiledHeaders_flags + " " + header.path + "/" + header.fname )
+	masterStr += dependStr.replace( header.fname_wo_ext + ".o", header.fname + ".gch" )
+	masterStr += "\t@echo Pre-compiling header " + header.fname + "...\n"
+	masterStr += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.path + "/" + header.fname + "\n\n"
 
 
 # write source file target
-threads_num = os.sysconf('SC_NPROCESSORS_ONLN')
-print( "I will invoke %d threads to make the dependencies..." % threads_num )
+threadsNum = os.sysconf('SC_NPROCESSORS_ONLN')
+print( "I will invoke %d threads to make the dependencies..." % threadsNum )
 num = len(source_files);
-items_per_thread = num // threads_num;
+itemsPerThread = num // threadsNum;
 
-for i in range(0, threads_num):
-	begin = i*items_per_thread
-	if i == threads_num-1:
+for i in range(0, threadsNum):
+	begin = i*itemsPerThread
+	if i == threadsNum-1:
 		end = num
 	else:
-		end = begin + items_per_thread	
-	thread = target_thread_t( i, range( int(begin), int(end) ) )
+		end = begin + itemsPerThread	
+	thread = TargetThread( i, range( int(begin), int(end) ) )
 	thread.start()
-	thread_list.append( thread )
+	threadList.append( thread )
 
-for thread in thread_list:
+for thread in threadList:
 	thread.join()
 
-for thread in thread_list:
-	master_str += thread.out_str
+for thread in threadList:
+	masterStr += thread.out_str
 
 #for source_file in source_files:	
-	#master_str += source_file.fname_wo_ext + ".o: " + source_file.path + source_file.fname_wo_ext + ".cpp"
-	#master_str += GetCommandOutput( compiler + " -M " + compiler_flags + " " + source_file.path + "/" + source_file.fname )
-	#master_str += "\t@echo Compiling " + source_file.fname + "...\n"
-	#master_str += "\t@$(CXX) $(INCPATH) $(CFLAGS) " + source_file.path + "/" + source_file.fname + "\n\n"
+	#masterStr += source_file.fname_wo_ext + ".o: " + source_file.path + source_file.fname_wo_ext + ".cpp"
+	#masterStr += getCommandOutput( compiler + " -M " + compilerFlags + " " + source_file.path + "/" + source_file.fname )
+	#masterStr += "\t@echo Compiling " + source_file.fname + "...\n"
+	#masterStr += "\t@$(CXX) $(INCPATH) $(CFLAGS) " + source_file.path + "/" + source_file.fname + "\n\n"
 
 
-master_str += "clean:\n"
-master_str += "\trm -f *.o\n"
-master_str += "\trm -f *.gch\n"
-master_str += "\trm -f *~\n"
-master_str += "\trm -f $(EXECUTABLE)\n\n"
+masterStr += "clean:\n"
+masterStr += "\trm -f *.o\n"
+masterStr += "\trm -f *.gch\n"
+masterStr += "\trm -f *~\n"
+masterStr += "\trm -f $(EXECUTABLE)\n\n"
 
 
 # write file
-f = open( output_makefile, "w" )
-f.write( master_str )
-print( "File \"" + output_makefile + "\" created!" )
+f = open( outputMakefile, "w" )
+f.write( masterStr )
+print( "File \"" + outputMakefile + "\" created!" )
