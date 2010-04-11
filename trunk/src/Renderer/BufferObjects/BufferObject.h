@@ -68,7 +68,7 @@ class BufferObject
 		 */
 		bool create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
 		{
-			DEBUG_ERR( !isCreated() ); // BO already initialized
+			DEBUG_ERR( isCreated() ); // BO already initialized
 			DEBUG_ERR( usage_!=GL_STREAM_DRAW && usage_!=GL_STATIC_DRAW && usage_!=GL_DYNAMIC_DRAW ); // unacceptable usage_
 			DEBUG_ERR( sizeInBytes < 1 ); // unacceptable sizeInBytes
 

@@ -11,13 +11,12 @@ class PhyWorld
 {
 	PROPERTY_R( btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld )
 
-	private:
+	public:
 		btDefaultCollisionConfiguration* collisionConfiguration;
 		btCollisionDispatcher* dispatcher;
 		btDbvtBroadphase* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
 
-	public:
 		/**
 		 * Collision groups
 		 */

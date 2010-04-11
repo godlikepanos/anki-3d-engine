@@ -59,8 +59,8 @@ void ParticleEmitter::init( const char* filename )
 		btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, mState, colShape, localInertia );
 		btRigidBody* body = new btRigidBody( rbInfo );
 		particles[i]->body = body;
-		body->setActivationState( DISABLE_SIMULATION );
 		app->scene->getPhyWorld()->getDynamicsWorld()->addRigidBody( body, PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
+		body->forceActivationState( DISABLE_SIMULATION );
 	}
 }
 

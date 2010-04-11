@@ -165,7 +165,6 @@ void initPhysics()
 	//dynamicsWorld->setDebugDrawer(&debugDrawer);
 }
 
-#include "ShaderPrePreprocessor.h"
 
 
 //=====================================================================================================================================
@@ -332,7 +331,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		app->scene->updateAllControllers();
 		app->scene->updateAllWorldStuff();
 
-		partEmitter->update();
+		//partEmitter->update();
 
 		app->scene->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
 		app->scene->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();
@@ -354,9 +353,10 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[SDLK_F11] ) app->togleFullScreen();
 		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
-		char str[128];
+
+		/*char str[128];
 		sprintf( str, "capt/%06d.jpg", R::framesNum );
-		R::takeScreenshot(str);
+		R::takeScreenshot(str);*/
 
 		// std stuff follow
 		SDL_GL_SwapBuffers();
