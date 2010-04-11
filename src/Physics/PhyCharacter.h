@@ -13,7 +13,7 @@ class PhyCharacter
 	public:
 		btPairCachingGhostObject* ghostObject;
 		btCapsuleShape* capsule;
-		btKinematicCharacterController* charachter;
+		btKinematicCharacterController* character;
 
 		PhyCharacter( PhyWorld* world, float charHeight, float charWidth, float stepHeight, float maxJumpHeight )
 		{
@@ -25,6 +25,8 @@ class PhyCharacter
 			character = new btKinematicCharacterController( ghostObject, capsule, stepHeight );
 			character->setMaxJumpHeight( maxJumpHeight );
 		}
+
+
 };
 
 #endif
