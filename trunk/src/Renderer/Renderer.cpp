@@ -110,6 +110,10 @@ void init()
 	PRINT( "Renderer initializing..." );
 
 	glewInit();
+
+	// print GL info
+	cout << "OpenGL info: OGL_" << glGetString(GL_VERSION) << " GLSL_" << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+
 	if( !glewIsSupported("GL_VERSION_2_1") )
 		WARNING( "OpenGL ver 2.1 not supported. The application may crash (and burn)" );
 

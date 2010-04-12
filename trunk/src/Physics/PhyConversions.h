@@ -58,5 +58,18 @@ inline btTransform toBt( const Mat4& m )
 	return r;
 }
 
+inline btQuaternion toBt( const Quat& q )
+{
+	return btQuaternion( q.x, q.y, q.z, q.w );
+}
+
+inline btTransform toBt( const Transform& trf )
+{
+	btTransform r;
+	r.setOrigin( toBt(trf.translation) );
+	r.setRotation( toBt( Quat(trf.rotation) ) );
+	return r;
+}
+
 
 #endif

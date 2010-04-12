@@ -44,20 +44,6 @@ PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 ParticleEmitter* partEmitter;
 
-class floor_t: public Camera
-{
-	public:
-		void render()
-		{
-			R::Dbg::renderCube( true, 1.0 );
-		}
-
-		void renderDepth()
-		{
-			R::Dbg::renderCube( true, 1.0 );
-		}
-}* floor_;
-
 
 // Physics
 BulletDebuger debugDrawer;

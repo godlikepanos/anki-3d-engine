@@ -156,10 +156,10 @@ void ParticleEmitter::update()
 			// do the rest
 			++partNum;
 			if( partNum >= particlesPerEmittion ) break;
-		}
+		} // end for all particles
 
 		timeOfPrevEmittion = crntTime;
-	}
+	} // end if can emit
 
 	timeOfPrevUpdate = crntTime;
 }
