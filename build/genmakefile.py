@@ -1,5 +1,5 @@
 #!/usr/bin/python3.1
-import sys, os, fnmatch, random
+import sys, os, fnmatch, random, re
 from threading import Thread
 
 
@@ -14,6 +14,7 @@ commonFlags = ""
 compilerFlags = ""
 precompiledHeadersFlags = ""
 linkerFlags = ""
+sourceFilesRegExpr = r".*\.[c++|cpp|cc|cxx|C|c]"
 
 
 #======================================================================================================================================
@@ -116,9 +117,12 @@ exec( compile( source, inputCfgFile, "exec" ) )
 
 # find the cpp files
 source_files = []
+regexpr = re.compile( sourceFilesRegExpr )
 for sourceDir in sourcePaths:
 	files = os.listdir( sourceDir )
-	for file_ in fnmatch.filter( files, "*.cpp" ):
+	for file_ in files:
+		if not regexpr.match( file_ ): continue
+		
 		sfile = SourceFile()
 		
 		(fname_wo_ext, ext) = os.path.splitext( file_ )
@@ -128,7 +132,7 @@ for sourceDir in sourcePaths:
 		# search all the source files and resolve conflicts in .o
 		for sfile1 in source_files:
 			if sfile1.objFile == sfile.objFile:
-				print( "There is a conflict with \"" + sfile1.cppFile + "\" and \"" + sfile.cppFile + "\" but dont worry." )
+				print( "There is a naming conflict between \"" + sfile1.cppFile + "\" and \"" + sfile.cppFile + "\" but dont worry." )
 				random.seed()
 				sfile.objFile = str(random.randint(1,99)) + "." + sfile.objFile;
 	
