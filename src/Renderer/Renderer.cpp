@@ -132,8 +132,8 @@ void init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	w = app->windowW /* * renderingQuality*/;
-	h = app->windowH /* * renderingQuality*/;
+	w = app->getWindowWidth() /* * renderingQuality*/;
+	h = app->getWindowHeight() /* * renderingQuality*/;
 	aspectRatio = float(w)/h;
 
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
@@ -199,7 +199,7 @@ void render( const Camera& cam )
 	R::Dbg::runStage( cam );
 
 	//R::setViewport( 0, 0, App::windowW, App::windowH );
-	R::setViewport( 0, 0, app->windowW, app->windowH );
+	R::setViewport( 0, 0, app->getWindowWidth(), app->getWindowHeight() );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );

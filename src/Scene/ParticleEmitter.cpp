@@ -53,9 +53,13 @@ void ParticleEmitter::init( const char* filename )
 		particles[i] = new Particle;
 		float mass = Util::randRange( minParticleMass, maxParticleMass );
 		btRigidBody* body = app->getScene()->getPhyWorld()->createNewRigidBody( mass, Transform::getIdentity(), colShape, particles[i],
-		                                                                   PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
+		                                                                        PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
 		body->forceActivationState( DISABLE_SIMULATION );
 	}
+
+	/*btDiscreteDynamicsWorld* btWorld = app->getScene()->getPhyWorld()->getDynamicsWorld();
+	btWorld->getBroadphase()->resetPool( btWorld->getDispatcher() );
+	btWorld->getConstraintSolver()->reset();*/
 }
 
 

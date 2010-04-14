@@ -9,6 +9,8 @@
 // Scanner                                                                                                                          =
 //=====================================================================================================================================
 /**
+ * @brief C++ Tokenizer
+ *
  * The Scanner loads a file and returns the tokens. The script must be in C++ format. The class does not make any kind of
  * memory allocations so it can be fast.
  */

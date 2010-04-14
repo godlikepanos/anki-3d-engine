@@ -11,21 +11,22 @@
  */
 class App
 {
-	PROPERTY_R( uint, desktopW, getDesktopW ) ///< Property: The desktop width at App initialization
-	PROPERTY_R( uint, desktopH, getDesktopH ) ///< Property: The desktop height at App initialization
-	PROPERTY_RW( class Scene*, scene, setScene, getScene ) ///< Property: Pointer to the current scene
-	PROPERTY_RW( class Camera*, activeCam, setActiveCam, getActiveCam ) ///< Property: Pointer to the current camera
+	PROPERTY_R( uint, desktopW, getDesktopWidth ) ///< @ref PROPERTY_R : The desktop width at App initialization
+	PROPERTY_R( uint, desktopH, getDesktopHeight ) ///< @ref PROPERTY_R : The desktop height at App initialization
+	PROPERTY_R( uint, windowW, getWindowWidth ) ///< @ref PROPERTY_R : The main window width
+	PROPERTY_R( uint, windowH, getWindowHeight ) ///< @ref PROPERTY_R : The main window height
+
+	PROPERTY_RW( class Scene*, scene, setScene, getScene ) ///< @ref PROPERTY_RW : Pointer to the current scene
+	PROPERTY_RW( class Camera*, activeCam, setActiveCam, getActiveCam ) ///< @ref PROPERTY_RW : Pointer to the current camera
 
 	private:
 		static bool isCreated; ///< A flag to ensure one @ref App instance
 		uint time;
-		SDL_Surface* mainSurf;
-		SDL_Surface* iconImage;
+		SDL_Surface* mainSurf; ///< SDL stuff
+		SDL_Surface* iconImage; ///< SDL stuff
 
 	public:
 		uint timerTick;
-		uint windowW;
-		uint windowH;
 
 		App();
 		~App() {}
