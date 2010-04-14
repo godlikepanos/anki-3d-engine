@@ -15,6 +15,7 @@ compilerFlags = ""
 precompiledHeadersFlags = ""
 linkerFlags = ""
 sourceFilesRegExpr = r".*\.[c++|cpp|cc|cxx|C|c]"
+includePaths = []
 
 
 #======================================================================================================================================
@@ -156,7 +157,7 @@ masterStr += "LFLAGS = $(COMMONFLAGS) " + linkerFlags + "\n"
 masterStr += "EXECUTABLE = " + executableName + "\n"
 
 masterStr += "INCPATH = "
-for path in include_paths:
+for path in includePaths:
 	masterStr += "-I" + path + " "
 	compilerFlags += " -I" + path + " "
 masterStr += "\n"

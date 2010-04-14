@@ -532,7 +532,7 @@ void runStage( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 
 	// ambient pass
-	ambientPass( cam, app->scene->getAmbientCol() );
+	ambientPass( cam, app->getScene()->getAmbientCol() );
 
 	// light passes
 	glEnable( GL_BLEND );
@@ -542,9 +542,9 @@ void runStage( const Camera& cam )
 	CalcPlanes( cam );
 
 	// for all lights
-	for( uint i=0; i<app->scene->lights.size(); i++ )
+	for( uint i=0; i<app->getScene()->lights.size(); i++ )
 	{
-		const Light& light = *app->scene->lights[i];
+		const Light& light = *app->getScene()->lights[i];
 		switch( light.type )
 		{
 			case Light::LT_POINT:

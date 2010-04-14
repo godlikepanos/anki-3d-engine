@@ -22,8 +22,8 @@ void Node::commonConstructorCode()
 	rotationWspace = Mat3::getIdentity();
 	bvolumeLspace = NULL;
 
-	DEBUG_ERR( app->scene == NULL );
-	app->scene->registerNode( this );
+	DEBUG_ERR( app->getScene() == NULL );
+	app->getScene()->registerNode( this );
 }
 
 
@@ -32,8 +32,8 @@ void Node::commonConstructorCode()
 //=====================================================================================================================================
 Node::~Node()
 {
-	DEBUG_ERR( app->scene == NULL );
-	app->scene->unregisterNode( this );
+	DEBUG_ERR( app->getScene() == NULL );
+	app->getScene()->unregisterNode( this );
 }
 
 

@@ -1,13 +1,20 @@
 #include <GL/glew.h>
+#include <sstream>
 #include "App.h"
 #include "Scene.h"
 
+bool App::isCreated = false;
 
 //=====================================================================================================================================
 // Constructor                                                                                                                        =
 //=====================================================================================================================================
 App::App()
 {
+	if( isCreated )
+		FATAL( "You cannot create a second App instance" )
+
+	isCreated = true;
+
 	scene = new Scene;
 	activeCam = NULL;
 
@@ -18,7 +25,7 @@ App::App()
 
 
 	timerTick = 1000/40; // in ms. 1000/Hz
-	uint time = 0;
+	time = 0;
 }
 
 
@@ -34,7 +41,7 @@ void App::initWindow()
 	char charBuff [256];
 	if( SDL_VideoDriverName(charBuff, sizeof(charBuff)) != NULL )
 	{
-		PRINT( "The video driver name is " << charBuff );
+		INFO( "Video driver name: " << charBuff );
 	}
 	else
 	{
@@ -131,14 +138,17 @@ void App::waitForNextFrame()
 //=====================================================================================================================================
 void App::printAppInfo()
 {
-	cout << "App info: ";
+	stringstream msg;
+	msg << "App info: ";
 	#if defined( _DEBUG_ )
-		cout << "Debug ";
+		msg << "Debug, ";
 	#else
-		cout << "Release ";
+		msg << "Release, ";
 	#endif
-	cout << "GLEW_" << glewGetString(GLEW_VERSION) << " ";
+	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
-	cout << "SDL_" << int(v->major) << '.' << int(v->minor) << '.' <<  int(v->patch) << endl;
+	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch);
+
+	INFO( msg.str() )
 }
 
