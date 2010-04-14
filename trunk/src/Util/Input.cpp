@@ -43,7 +43,7 @@ handleEvents                                                                    
 void handleEvents()
 {
 	if( hideCursor ) SDL_ShowCursor( SDL_DISABLE );
-	else              SDL_ShowCursor( SDL_ENABLE );
+	else             SDL_ShowCursor( SDL_ENABLE );
 
 	// add the times a key is bying pressed
 	for( int x=0; x<SDLK_LAST; x++ )
@@ -86,8 +86,8 @@ void handleEvents()
 				mousePos.x = event_.button.x;
 				mousePos.y = event_.button.y;
 
-				mousePosNdc.x = (2.0f * mousePos.x) / (float)app->windowW - 1.0f;
-				mousePosNdc.y = 1.0f - (2.0f * mousePos.y) / (float)app->windowH;
+				mousePosNdc.x = (2.0f * mousePos.x) / (float)app->getWindowWidth() - 1.0f;
+				mousePosNdc.y = 1.0f - (2.0f * mousePos.y) / (float)app->getWindowHeight();
 
 				if( warpMouse )
 				{
@@ -95,7 +95,7 @@ void handleEvents()
 					// ...SDL_WarpMouse function
 					if( mousePosNdc == Vec2::getZero() ) break;
 
-					SDL_WarpMouse( app->windowW/2, app->windowH/2);
+					SDL_WarpMouse( app->getWindowWidth()/2, app->getWindowHeight()/2);
 				}
 
 				mouseVelocity = mousePosNdc - prevMousePosNdc;
