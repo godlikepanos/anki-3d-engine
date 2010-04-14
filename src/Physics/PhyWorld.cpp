@@ -4,9 +4,10 @@
 //=====================================================================================================================================
 // createNewRigidBody                                                                                                                 =
 //=====================================================================================================================================
-btRigidBody* PhyWorld::createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, Node* node )
+btRigidBody* PhyWorld::createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, Node* node, int group,
+                                           int mask )
 {
-	DEBUG_ERR( (!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE) )
+	DEBUG_ERR( shape==NULL || shape->getShapeType()==INVALID_SHAPE_PROXYTYPE )
 
 	//rigidbody is dynamic if and only if mass is non zero, otherwise static
 	bool isDynamic = (mass != 0.0);
@@ -23,7 +24,11 @@ btRigidBody* PhyWorld::createNewRigidBody( float mass, const Transform& startTra
 	btRigidBody* body = new btRigidBody( cInfo );
 	body->setContactProcessingThreshold( defaultContactProcessingThreshold );
 
-	dynamicsWorld->addRigidBody( body );
+	if( mask==-1 & group==-1 )
+		dynamicsWorld->addRigidBody( body );
+	else
+		dynamicsWorld->addRigidBody( body, group, mask );
+
 	return body;
 }
 

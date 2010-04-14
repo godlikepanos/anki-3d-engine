@@ -94,7 +94,7 @@ void runStage( const Camera& cam )
 	R::setViewport( 0, 0, R::w, R::h );
 
 	//glEnable( GL_DEPTH_TEST );
-	app->scene->skybox.Render( cam.getViewMatrix().getRotationPart() );
+	app->getScene()->skybox.Render( cam.getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
 	#if defined( _EARLY_Z_ )
@@ -103,9 +103,9 @@ void runStage( const Camera& cam )
 	#endif
 
 	// render the meshes
-	for( uint i=0; i<app->scene->meshNodes.size(); i++ )
+	for( uint i=0; i<app->getScene()->meshNodes.size(); i++ )
 	{
-		MeshNode* meshNode = app->scene->meshNodes[i];
+		MeshNode* meshNode = app->getScene()->meshNodes[i];
 		DEBUG_ERR( meshNode->material == NULL );
 		if( meshNode->material->blends || meshNode->material->refracts ) continue;
 		meshNode->material->setup();

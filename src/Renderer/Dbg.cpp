@@ -148,20 +148,20 @@ void runStage( const Camera& cam )
 	glDisable( GL_BLEND );
 
 	//R::renderGrid();
-	for( uint i=0; i<app->scene->nodes.size(); i++ )
+	for( uint i=0; i<app->getScene()->nodes.size(); i++ )
 	{
 		if
 		(
-			(app->scene->nodes[i]->type == Node::NT_LIGHT && showLights) ||
-			(app->scene->nodes[i]->type == Node::NT_CAMERA && showCameras) ||
-			app->scene->nodes[i]->type == Node::NT_PARTICLE_EMITTER
+			(app->getScene()->nodes[i]->type == Node::NT_LIGHT && showLights) ||
+			(app->getScene()->nodes[i]->type == Node::NT_CAMERA && showCameras) ||
+			app->getScene()->nodes[i]->type == Node::NT_PARTICLE_EMITTER
 		)
 		{
-			app->scene->nodes[i]->render();
+			app->getScene()->nodes[i]->render();
 		}
-		else if( app->scene->nodes[i]->type == Node::NT_SKELETON && showSkeletons )
+		else if( app->getScene()->nodes[i]->type == Node::NT_SKELETON && showSkeletons )
 		{
-			SkelNode* skel_node = static_cast<SkelNode*>( app->scene->nodes[i] );
+			SkelNode* skel_node = static_cast<SkelNode*>( app->getScene()->nodes[i] );
 			glDisable( GL_DEPTH_TEST );
 			skel_node->render();
 			glEnable( GL_DEPTH_TEST );
@@ -196,7 +196,7 @@ void runStage( const Camera& cam )
 	float r = 1.2;
 
 	Vec4 p = Vec4( c, 1.0 );
-	p = app->activeCam->getProjectionMatrix() * (app->activeCam->getViewMatrix() * p);
+	p = app->getActiveCam()->getProjectionMatrix() * (app->getActiveCam()->getViewMatrix() * p);
 	p /= p.w;
 	//p = p/2 + 0.5;
 
@@ -429,7 +429,7 @@ static void renderSun()
 {
 	glPushMatrix();
 
-	R::multMatrix( Mat4( app->scene->getSunPos(), Mat3::getIdentity(), 50.0 ) );
+	R::multMatrix( Mat4( app->getScene()->getSunPos(), Mat3::getIdentity(), 50.0 ) );
 
 	R::color3( Vec3(1.0, 1.0, 0.0) );
 	R::Dbg::renderSphere( 1.0/8.0, 8 );
@@ -447,7 +447,7 @@ static void renderSun()
 	glLoadIdentity();
 
 
-	Vec4 p = Vec4( app->scene->getSunPos(), 1.0 );
+	Vec4 p = Vec4( app->getScene()->getSunPos(), 1.0 );
 	p = mainCam->getProjectionMatrix() * (mainCam->getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;

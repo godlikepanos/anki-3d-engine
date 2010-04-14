@@ -63,7 +63,7 @@ Vec<btRigidBody*> boxes;
 
 void initPhysics()
 {
-	btDiscreteDynamicsWorld* dynamicsWorld = app->scene->getPhyWorld()->getDynamicsWorld();
+	btDiscreteDynamicsWorld* dynamicsWorld = app->getScene()->getPhyWorld()->getDynamicsWorld();
 
 	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
 
@@ -119,17 +119,21 @@ void initPhysics()
 			{
 				for(int j = 0;j<ARRAY_SIZE_Z;j++)
 				{
-					startTransform.setOrigin(SCALING*btVector3(
+					/*startTransform.setOrigin(SCALING*btVector3(
 										btScalar(2.0*i + start_x),
 										btScalar(20+2.0*k + start_y),
-										btScalar(2.0*j + start_z)));
+										btScalar(2.0*j + start_z)));*/
 
 
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 					MeshNode* crate = new MeshNode;
 					crate->init( "models/crate0/crate0.mesh" );
 					crate->scaleLspace = 1.11;
-					MotionState* myMotionState = new MotionState( startTransform, crate);
+
+					Transform trf( SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0 );
+					body = app->getScene()->getPhyWorld()->createNewRigidBody( mass, trf, colShape, crate );
+
+					/*MotionState* myMotionState = new MotionState( startTransform, crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					//btRigidBody* body = new btRigidBody(rbInfo);
 					body = new btRigidBody(rbInfo);
@@ -140,7 +144,7 @@ void initPhysics()
 
 
 					dynamicsWorld->addRigidBody(body);
-					//body->setGravity( toBt( Vec3( Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0) ) ) );
+					//body->setGravity( toBt( Vec3( Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0) ) ) );*/
 					boxes.push_back( body );
 				}
 			}
@@ -171,10 +175,11 @@ void init()
 	Ui::init();
 
 	// camera
-	app->activeCam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
-	app->activeCam->moveLocalY( 3.0 );
-	app->activeCam->moveLocalZ( 5.7 );
-	app->activeCam->moveLocalX( -0.3 );
+	Camera* cam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
+	cam->moveLocalY( 3.0 );
+	cam->moveLocalZ( 5.7 );
+	cam->moveLocalX( -0.3 );
+	app->setActiveCam( cam );
 
 	// lights
 	point_lights[0] = new PointLight();
@@ -231,7 +236,7 @@ void init()
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	app->scene->skybox.load( skybox_fnames );
+	app->getScene()->skybox.load( skybox_fnames );
 
 
 	initPhysics();
@@ -263,9 +268,9 @@ int main( int /*argc*/, char* /*argv*/[] )
 		float scale = 0.01;
 
 		// move the camera
-		static Node* mover = app->activeCam;
+		static Node* mover = app->getActiveCam();
 
-		if( I::keys[ SDLK_1 ] ) mover = app->activeCam;
+		if( I::keys[ SDLK_1 ] ) mover = app->getActiveCam();
 		if( I::keys[ SDLK_2 ] ) mover = point_lights[0];
 		if( I::keys[ SDLK_3 ] ) mover = spot_lights[0];
 		if( I::keys[ SDLK_4 ] ) mover = point_lights[1];
@@ -297,7 +302,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		if( I::keys[SDLK_PAGEUP] ) mover->scaleLspace += scale ;
 		if( I::keys[SDLK_PAGEDOWN] ) mover->scaleLspace -= scale ;
 
-		if( I::keys[SDLK_k] ) app->activeCam->lookAtPoint( point_lights[0]->translationWspace );
+		if( I::keys[SDLK_k] ) app->getActiveCam()->lookAtPoint( point_lights[0]->translationWspace );
 
 
 		if( I::keys[SDLK_o] == 1 )
@@ -314,15 +319,15 @@ int main( int /*argc*/, char* /*argv*/[] )
 		//static_cast<btRigidBody*>(dynamicsWorld->getCollisionObjectArray()[1])->getMotionState()->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
 		//dynamicsWorld->getCollisionObjectArray()[3]->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
 
-		app->scene->updateAllControllers();
-		app->scene->updateAllWorldStuff();
+		app->getScene()->updateAllControllers();
+		app->getScene()->updateAllWorldStuff();
 
 		//partEmitter->update();
 
-		app->scene->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
-		app->scene->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();
+		app->getScene()->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
+		app->getScene()->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();
 
-		R::render( *app->activeCam );
+		R::render( *app->getActiveCam() );
 
 		//map.octree.root->bounding_box.render();
 

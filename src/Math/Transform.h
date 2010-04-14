@@ -13,11 +13,11 @@ namespace M {
  */
 class Transform
 {
+	PROPERTY_RW( Mat3, rotation, setRotation, getRotation ) ///< Property
+	PROPERTY_RW( Vec3, origin, setOrigin, getOrigin ) ///< Property
+	PROPERTY_RW( float, scale, setScale, getScale ) ///< Property
+
 	public:
-		// data members
-		Mat3  rotation;
-		Vec3  translation;
-		float scale;
 		// constructors
 		explicit Transform();
 		         Transform( const Transform& b );

@@ -51,15 +51,9 @@ void ParticleEmitter::init( const char* filename )
 	for( uint i=0; i<maxNumOfParticles; i++ )
 	{
 		particles[i] = new Particle;
-
 		float mass = Util::randRange( minParticleMass, maxParticleMass );
-		btVector3 localInertia;
-		colShape->calculateLocalInertia( mass, localInertia );
-		MotionState* mState = new MotionState( btTransform::getIdentity(), particles[i] );
-		btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, mState, colShape, localInertia );
-		btRigidBody* body = new btRigidBody( rbInfo );
-		particles[i]->body = body;
-		app->scene->getPhyWorld()->getDynamicsWorld()->addRigidBody( body, PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
+		btRigidBody* body = app->getScene()->getPhyWorld()->createNewRigidBody( mass, Transform::getIdentity(), colShape, particles[i],
+		                                                                   PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP );
 		body->forceActivationState( DISABLE_SIMULATION );
 	}
 }

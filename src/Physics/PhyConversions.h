@@ -66,8 +66,8 @@ inline btQuaternion toBt( const Quat& q )
 inline btTransform toBt( const Transform& trf )
 {
 	btTransform r;
-	r.setOrigin( toBt(trf.translation) );
-	r.setRotation( toBt( Quat(trf.rotation) ) );
+	r.setOrigin( toBt(trf.getOrigin()) );
+	r.setRotation( toBt( Quat(trf.getRotation()) ) );
 	return r;
 }
 

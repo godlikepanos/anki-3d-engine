@@ -46,9 +46,12 @@ class PhyWorld
 		 * @param startTransform The initial position and orientation
 		 * @param shape The collision shape
 		 * @param node The scene node the body moves
+		 * @param group The group of the body. Leave it blank if there is no group
+		 * @param mask The mask of the body. Leave it blank if there is no mask
 		 * @return A new rigid body
 		 */
-		static btRigidBody* createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, Node* node );
+		btRigidBody* createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, Node* node, int group=-1,
+		                                 int mask=-1 );
 };
 
 #endif

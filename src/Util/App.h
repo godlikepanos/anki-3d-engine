@@ -5,12 +5,19 @@
 #include "Common.h"
 
 
+/**
+ * @brief This class contains all the global objects of the application. Its also responsible for some of the SDL stuff.
+ * It should be singleton
+ */
 class App
 {
-	PROPERTY_R( uint, desktopW, getDesktopW )
-	PROPERTY_R( uint, desktopH, getDesktopH )
+	PROPERTY_R( uint, desktopW, getDesktopW ) ///< Property: The desktop width at App initialization
+	PROPERTY_R( uint, desktopH, getDesktopH ) ///< Property: The desktop height at App initialization
+	PROPERTY_RW( class Scene*, scene, setScene, getScene ) ///< Property: Pointer to the current scene
+	PROPERTY_RW( class Camera*, activeCam, setActiveCam, getActiveCam ) ///< Property: Pointer to the current camera
 
 	private:
+		static bool isCreated; ///< A flag to ensure one @ref App instance
 		uint time;
 		SDL_Surface* mainSurf;
 		SDL_Surface* iconImage;
@@ -20,17 +27,17 @@ class App
 		uint windowW;
 		uint windowH;
 
-		class Scene*  scene;
-		class Camera* activeCam;
-
 		App();
+		~App() {}
 		void initWindow();
 		void quitApp( int code );
 		void waitForNextFrame();
 		void togleFullScreen();
 		static void printAppInfo();
 
-		/// Gets the number of milliseconds since SDL library initialization
+		/**
+		 * @return Returns the number of milliseconds since SDL library initialization
+		 */
 		static uint getTicks() { return SDL_GetTicks(); }
 };
 

@@ -13,20 +13,20 @@ inline Transform::Transform()
 
 // constructor [Transform]
 inline Transform::Transform( const Transform& b ):
-	rotation(b.rotation), translation(b.translation)
+	rotation(b.rotation), origin(b.origin)
 {}
 
 // constructor [Mat4]
 inline Transform::Transform( const Mat4& m4 )
 {
 	rotation = m4.getRotationPart();
-	translation = m4.getTranslationPart();
+	origin = m4.getTranslationPart();
 	scale = 1.0;
 }
 
 // constructor [Vec3, Quat, float]
 inline Transform::Transform( const Vec3& origin, const Mat3& rotation_, float scale_ ):
-	rotation(rotation_), translation(origin), scale(scale_)
+	rotation(rotation_), origin(origin), scale(scale_)
 {}
 
 // setIdentity
