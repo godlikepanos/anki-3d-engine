@@ -16,12 +16,12 @@ bool Skeleton::load( const char* filename )
 
 	//** BONES NUM **
 	token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+	if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	bones.resize( token->value.int_, Bone() );
+	bones.resize( token->getValue().getInt(), Bone() );
 
 	for( uint i=0; i<bones.size(); i++ )
 	{
@@ -30,22 +30,22 @@ bool Skeleton::load( const char* filename )
 
 		// NAME
 		token = &scanner.getNextToken();
-		if( token->code != Scanner::TC_STRING )
+		if( token->getCode() != Scanner::TC_STRING )
 		{
 			PARSE_ERR_EXPECTED( "string" );
 			return false;
 		}
-		bone.setName( token->value.string );
+		bone.setName( token->getValue().getString() );
 
 		// head
-		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &bone.head[0] ) ) return false;
+		if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 3, &bone.head[0] ) ) return false;
 
 		// tail
-		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &bone.tail[0] ) ) return false;
+		if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 3, &bone.tail[0] ) ) return false;
 
 		// matrix
 		Mat4 m4;
-		if( !ParseArrOfNumbers<float>( scanner, false, true, 16, &m4[0] ) ) return false;
+		if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 16, &m4[0] ) ) return false;
 
 		// matrix for real
 		bone.rotSkelSpace = m4.getRotationPart();
@@ -56,40 +56,40 @@ bool Skeleton::load( const char* filename )
 
 		// parent
 		token = &scanner.getNextToken();
-		if( (token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT) &&
-		    (token->code != Scanner::TC_IDENTIFIER || strcmp( token->value.string, "NULL" )!=0) )
+		if( (token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT) &&
+		    (token->getCode() != Scanner::TC_IDENTIFIER || strcmp( token->getValue().getString(), "NULL" )!=0) )
 		{
 			PARSE_ERR_EXPECTED( "integer or NULL" );
 			return false;
 		}
 
-		if( token->code == Scanner::TC_IDENTIFIER )
+		if( token->getCode() == Scanner::TC_IDENTIFIER )
 			bone.parent = NULL;
 		else
-			bone.parent = &bones[ token->value.int_ ];
+			bone.parent = &bones[ token->getValue().getInt() ];
 
 		// childs
 		token = &scanner.getNextToken();
-		if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+		if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 		{
 			PARSE_ERR_EXPECTED( "integer" );
 			return false;
 		}
-		if( token->value.int_ > Bone::MAX_CHILDS_PER_BONE )
+		if( token->getValue().getInt() > Bone::MAX_CHILDS_PER_BONE )
 		{
 			ERROR( "Childs for bone \"" << bone.getName() << "\" exceed the max" );
 			return false;
 		}
-		bone.childsNum = token->value.int_;
+		bone.childsNum = token->getValue().getInt();
 		for( int j=0; j<bone.childsNum; j++ )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+			if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 			{
 				PARSE_ERR_EXPECTED( "integer" );
 				return false;
 			}
-			bone.childs[j] = &bones[ token->value.int_ ];
+			bone.childs[j] = &bones[ token->getValue().getInt() ];
 		}
 	} // for all bones
 

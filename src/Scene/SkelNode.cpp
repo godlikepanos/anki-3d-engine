@@ -9,7 +9,7 @@
 // SkelNode                                                                                                                        =
 //=====================================================================================================================================
 SkelNode::SkelNode(): 
-	Node( NT_SKELETON ),
+	SceneNode( NT_SKELETON ),
 	skelAnimCtrl( NULL )
 {
 }

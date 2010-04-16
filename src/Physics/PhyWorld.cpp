@@ -4,7 +4,7 @@
 //=====================================================================================================================================
 // createNewRigidBody                                                                                                                 =
 //=====================================================================================================================================
-btRigidBody* PhyWorld::createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, Node* node, int group,
+btRigidBody* PhyWorld::createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node, int group,
                                            int mask )
 {
 	DEBUG_ERR( shape==NULL || shape->getShapeType()==INVALID_SHAPE_PROXYTYPE )

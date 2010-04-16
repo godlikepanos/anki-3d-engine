@@ -9,9 +9,9 @@
 class TrfScriptCtrl: public Controller
 {
 	public:
-		Node* node;
+		SceneNode* node;
 	
-		TrfScriptCtrl( Node* node_ ): Controller( CT_TRF ), node(node_) {}
+		TrfScriptCtrl( SceneNode* node_ ): Controller( CT_TRF ), node(node_) {}
 		void Update( float ) { /* ToDo */ }
 };
 

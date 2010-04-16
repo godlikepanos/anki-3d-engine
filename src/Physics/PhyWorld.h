@@ -50,7 +50,7 @@ class PhyWorld
 		 * @param mask The mask of the body. Leave it blank if there is no mask
 		 * @return A new rigid body
 		 */
-		btRigidBody* createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, Node* node, int group=-1,
+		btRigidBody* createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node, int group=-1,
 		                                 int mask=-1 );
 };
 

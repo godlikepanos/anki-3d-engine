@@ -18,7 +18,7 @@ class Euler
 		float x, y, z;
 		// accessors
 		float& operator []( uint i );
-		float  operator []( uint i) const;
+		float  operator []( uint i ) const;
 		float& bank();
 		float  bank() const;
 		float& heading();

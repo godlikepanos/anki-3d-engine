@@ -13,9 +13,9 @@
 //=====================================================================================================================================
 // Token                                                                                                                            =
 //=====================================================================================================================================
-Scanner::Token::Token( const Token& b ): code(b.code), type(b.type)
+Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
 {
-	switch( b.type )
+	switch( b.dataType )
 	{
 		case Scanner::DT_FLOAT:
 			value.float_ = b.value.float_;
@@ -73,7 +73,7 @@ Scanner::ResWord Scanner::rw7 [] =
 	{"keyword", TC_KEYWORD}, {NULL, TC_ERROR}
 };
 
-Scanner::ResWord* Scanner::rw_table [] =  // reserved word table
+Scanner::ResWord* Scanner::rwTable [] =  // reserved word table
 {
 	NULL, NULL, rw2, rw3, rw4, rw5, rw6, rw7,
 };
@@ -204,7 +204,7 @@ string Scanner::getTokenInfo( const Token& token )
 			sprintf( tokenInfoStr, "char '%c' (\"%s\")", token.value.char_, token.asString );
 			break;
 		case TC_NUMBER:
-			if( token.type == DT_FLOAT )
+			if( token.dataType == DT_FLOAT )
 				sprintf( tokenInfoStr, "float %f or %e (\"%s\")", token.value.float_, token.value.float_, token.asString );
 			else
 				sprintf( tokenInfoStr, "int %lu (\"%s\")", token.value.int_, token.asString );
@@ -404,18 +404,18 @@ bool Scanner::checkWord()
 	int len = tmpStr-crntToken.asString;
 	crntToken.code = TC_IDENTIFIER;
 	crntToken.value.string = crntToken.asString;
-	crntToken.type = DT_STR; // not important
+	crntToken.dataType = DT_STR; // not important
 
 	if( len<=7 && len>=2 )
 	{
 		int x = 0;
 		for (;;)
 		{
-			if( rw_table[len][x].string == NULL ) break;
+			if( rwTable[len][x].string == NULL ) break;
 
-			if( strcmp(rw_table[len][x].string, crntToken.asString ) == 0 )
+			if( strcmp(rwTable[len][x].string, crntToken.asString ) == 0 )
 			{
-				crntToken.code = rw_table[len][x].code;
+				crntToken.code = rwTable[len][x].code;
 				break;
 			}
 			++x;
@@ -484,7 +484,7 @@ bool Scanner::checkNumber()
 	bool expSign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
 	long exp = 0;      // the exponent in case float is represented in mant/exp format
 	char* tmpStr = crntToken.asString;
-	crntToken.type = DT_INT;
+	crntToken.dataType = DT_INT;
 	uint asc;
 
 	// begin
@@ -591,7 +591,7 @@ bool Scanner::checkNumber()
 		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
-		crntToken.type = DT_FLOAT;
+		crntToken.dataType = DT_FLOAT;
 		if( asc == AC_DIGIT )
 		{
 			fnum = fnum * 10 + *pchar - '0';
@@ -631,7 +631,7 @@ bool Scanner::checkNumber()
 		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
-		crntToken.type = DT_FLOAT;
+		crntToken.dataType = DT_FLOAT;
 
 		if( *pchar == '+' || *pchar == '-' )
 		{
@@ -683,7 +683,7 @@ bool Scanner::checkNumber()
 	finalize:
 		crntToken.code = TC_NUMBER;
 
-		if( crntToken.type == DT_INT )
+		if( crntToken.dataType == DT_INT )
 		{
 			crntToken.value.int_ = num;
 		}

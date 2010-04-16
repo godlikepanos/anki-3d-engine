@@ -1,12 +1,11 @@
 #ifndef _APP_H_
 #define _APP_H_
 
-#include <SDL/SDL.h>
 #include "Common.h"
 
 
 /**
- * @brief This class contains all the global objects of the application. Its also responsible for some of the SDL stuff.
+ * @brief This class holds all the global objects of the application. Its also responsible for some of the SDL stuff.
  * It should be singleton
  */
 class App
@@ -22,8 +21,8 @@ class App
 	private:
 		static bool isCreated; ///< A flag to ensure one @ref App instance
 		uint time;
-		SDL_Surface* mainSurf; ///< SDL stuff
-		SDL_Surface* iconImage; ///< SDL stuff
+		class SDL_Surface* mainSurf; ///< SDL stuff
+		class SDL_Surface* iconImage; ///< SDL stuff
 
 	public:
 		uint timerTick;
@@ -39,7 +38,7 @@ class App
 		/**
 		 * @return Returns the number of milliseconds since SDL library initialization
 		 */
-		static uint getTicks() { return SDL_GetTicks(); }
+		static uint getTicks();
 };
 
 

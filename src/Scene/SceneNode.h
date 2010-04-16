@@ -11,11 +11,11 @@ class Material;
 class Controller;
 
 
-/// Scene Node
-class Node
+/// Scene node
+class SceneNode
 {
 	PROPERTY_RW( Transform, localTransform, setLocalTransform, getLocalTransform ); ///< The transformation in local space
-	PROPERTY_RW( Transform, worldTransform, setWorldTransform, getWorldTransform ); ///< The transformation in world space
+	PROPERTY_RW( Transform, worldTransform, setWorldTransform, getWorldTransform ); ///< The transformation in world space (local combined with parent transformation)
 
 	// data
 	public:
@@ -40,8 +40,8 @@ class Node
 
 		Mat4 transformationWspace;
 
-		Node* parent;
-		Vec<Node*> childs;
+		SceneNode* parent;
+		Vec<SceneNode*> childs;
 
 		Type type;
 
@@ -55,9 +55,9 @@ class Node
 		void commonConstructorCode(); ///< Cause we cannot call constructor from other constructor
 		
 	public:
-		Node( Type type_ ): type(type_) { commonConstructorCode(); }
-		Node( Type type_, Node* parent ): type(type_) { commonConstructorCode(); parent->addChild(this); }
-		virtual ~Node();
+		SceneNode( Type type_ ): type(type_) { commonConstructorCode(); }
+		SceneNode( Type type_, SceneNode* parent ): type(type_) { commonConstructorCode(); parent->addChild(this); }
+		virtual ~SceneNode();
 		virtual void render() = 0;
 		virtual void init( const char* ) = 0; ///< init using a script
 		virtual void deinit() = 0;
@@ -69,8 +69,8 @@ class Node
 		void moveLocalX( float distance );
 		void moveLocalY( float distance );
 		void moveLocalZ( float distance );
-		void addChild( Node* node );
-		void removeChild( Node* node );
+		void addChild( SceneNode* node );
+		void removeChild( SceneNode* node );
 		void setLocalTransformation( const Vec3& t, const Mat3& r, float s ) { translationLspace=t; rotationLspace=r; scaleLspace=s; }
 };
 

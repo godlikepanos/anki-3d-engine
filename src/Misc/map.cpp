@@ -169,7 +169,7 @@ uint octree_t::CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const
 
 
 
-/**
+/*
 =======================================================================================================================================
 map                                                                                                                                   =
 =======================================================================================================================================
@@ -194,15 +194,15 @@ bool map_t::load( const char* filename )
 		token = &scanner.getNextToken();
 
 		// strings is what we want in this case... please let it be G-Strings
-		if( token->code == Scanner::TC_STRING )
+		if( token->getCode() == Scanner::TC_STRING )
 		{
-			Mesh* mesh = Rsrc::meshes.load( token->value.string );
+			Mesh* mesh = Rsrc::meshes.load( token->getValue().getString() );
 			if( !mesh ) return false;
 
 			meshes.push_back( mesh );
 		}
 		// end of file
-		else if( token->code == Scanner::TC_EOF )
+		else if( token->getCode() == Scanner::TC_EOF )
 		{
 			break;
 		}

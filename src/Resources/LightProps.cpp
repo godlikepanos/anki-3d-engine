@@ -18,90 +18,90 @@ Scanner scanner;
 		token = &scanner.getNextToken();
 
 		//** DIFFUSE_COL **
-		if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DIFFUSE_COLOR" ) )
+		if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "DIFFUSE_COLOR" ) )
 		{
-			ParseArrOfNumbers<float>( scanner, true, true, 3, &diffuseCol[0] );
+			Parser::parseArrOfNumbers<float>( scanner, true, true, 3, &diffuseCol[0] );
 		}
 		//** SPECULAR_COL **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SPECULAR_COLOR" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "SPECULAR_COLOR" ) )
 		{
-			ParseArrOfNumbers<float>( scanner, true, true, 3, &specularCol[0] );
+			Parser::parseArrOfNumbers<float>( scanner, true, true, 3, &specularCol[0] );
 		}
 		//** RADIUS **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "RADIUS" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "RADIUS" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
 
-			radius = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
+			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
 		}
 		//** CASTS_SHADOW **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "CASTS_SHADOW" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "CASTS_SHADOW" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+			if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
 
-			castsShadow_ = token->value.int_;
+			castsShadow_ = token->getValue().getInt();
 		}
 		//** DISTANCE **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DISTANCE" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "DISTANCE" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
 
-			distance = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
+			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
 		}
 		//** FOV_X **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "FOV_X" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "FOV_X" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
 
-			fovX = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
+			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
 		}
 		//** FOV_Y **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "FOV_Y" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "FOV_Y" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
 
-			fovY = (token->type == Scanner::DT_FLOAT) ? token->value.float_ : float(token->value.int_);
+			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
 		}
 		//** TEXTURE **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "TEXTURE" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "TEXTURE" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_STRING )
+			if( token->getCode() != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
 				
-			texture = Rsrc::textures.load( token->value.string );
+			texture = Rsrc::textures.load( token->getValue().getString() );
 			texture->texParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
 		}
 		// end of file
-		else if( token->code == Scanner::TC_EOF )
+		else if( token->getCode() == Scanner::TC_EOF )
 		{
 			break;
 		}

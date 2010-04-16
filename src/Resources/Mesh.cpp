@@ -18,121 +18,121 @@ bool Mesh::load( const char* filename )
 
 	//** MATERIAL **
 	token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_STRING )
+	if( token->getCode() != Scanner::TC_STRING )
 	{
 		PARSE_ERR_EXPECTED( "string" );
 		return false;
 	}
-	materialName = token->value.string;
+	materialName = token->getValue().getString();
 
 	//** DP_MATERIAL **
 	/*token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_STRING )
+	if( token->getCode() != Scanner::TC_STRING )
 	{
 		PARSE_ERR_EXPECTED( "string" );
 		return false;
 	}
-	dp_materialName = token->value.string;*/
+	dp_materialName = token->getValue().getString();*/
 
 	//** VERTS **
 	// verts num
 	token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+	if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	vertCoords.resize( token->value.int_ );
+	vertCoords.resize( token->getValue().getInt() );
 
 	// read the verts
 	for( uint i=0; i<vertCoords.size(); i++ )
 	{
-		if( !ParseArrOfNumbers<float>( scanner, false, true, 3, &vertCoords[i][0] ) ) return false;
+		if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 3, &vertCoords[i][0] ) ) return false;
 	}
 
 	//** FACES **
 	// faces num
 	token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+	if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	tris.resize( token->value.int_ );
+	tris.resize( token->getValue().getInt() );
 	// read the faces
 	for( uint i=0; i<tris.size(); i++ )
 	{
-		if( !ParseArrOfNumbers<uint>( scanner, false, true, 3, tris[i].vertIds ) ) return false;
+		if( !Parser::parseArrOfNumbers<uint>( scanner, false, true, 3, tris[i].vertIds ) ) return false;
 	}
 
 	//** UVS **
 	// UVs num
 	token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+	if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	texCoords.resize( token->value.int_ );
+	texCoords.resize( token->getValue().getInt() );
 	// read the texCoords
 	for( uint i=0; i<texCoords.size(); i++ )
 	{
-		if( !ParseArrOfNumbers( scanner, false, true, 2, &texCoords[i][0] ) ) return false;
+		if( !Parser::parseArrOfNumbers( scanner, false, true, 2, &texCoords[i][0] ) ) return false;
 	}
 
 	//** VERTEX WEIGHTS **
 	token = &scanner.getNextToken();
-	if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+	if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 	{
 		PARSE_ERR_EXPECTED( "integer" );
 		return false;
 	}
-	vertWeights.resize( token->value.int_ );
+	vertWeights.resize( token->getValue().getInt() );
 	for( uint i=0; i<vertWeights.size(); i++ )
 	{
 		// get the bone connections num
 		token = &scanner.getNextToken();
-		if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+		if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 		{
 			PARSE_ERR_EXPECTED( "integer" );
 			return false;
 		}
 
 		// we treat as error if one vert doesnt have a bone
-		if( token->value.int_ < 1 )
+		if( token->getValue().getInt() < 1 )
 		{
 			ERROR( "Vert \"" << i << "\" doesnt have at least one bone" );
 			return false;
 		}
 
 		// and here is another possible error
-		if( token->value.int_ > VertexWeight::MAX_BONES_PER_VERT )
+		if( token->getValue().getInt() > VertexWeight::MAX_BONES_PER_VERT )
 		{
 			ERROR( "Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex" );
 			return false;
 		}
-		vertWeights[i].bonesNum = token->value.int_;
+		vertWeights[i].bonesNum = token->getValue().getInt();
 
 		// for all the weights of the current vertes
 		for( uint j=0; j<vertWeights[i].bonesNum; j++ )
 		{
 			// read bone id
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_INT )
+			if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT )
 			{
 				PARSE_ERR_EXPECTED( "integer" );
 				return false;
 			}
-			vertWeights[i].boneIds[j] = token->value.int_;
+			vertWeights[i].boneIds[j] = token->getValue().getInt();
 
 			// read the weight of that bone
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER || token->type != Scanner::DT_FLOAT )
+			if( token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_FLOAT )
 			{
 				PARSE_ERR_EXPECTED( "float" );
 				return false;
 			}
-			vertWeights[i].weights[j] = token->value.float_;
+			vertWeights[i].weights[j] = token->getValue().getFloat();
 		}
 	}
 

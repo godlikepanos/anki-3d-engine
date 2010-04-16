@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "Node.h"
+#include "SceneNode.h"
 #include "Renderer.h"
 #include "collision.h"
 #include "Controller.h"
@@ -10,7 +10,7 @@
 //=====================================================================================================================================
 // commonConstructorCode                                                                                                              =
 //=====================================================================================================================================
-void Node::commonConstructorCode()
+void SceneNode::commonConstructorCode()
 {
 	parent = NULL;
 	isCompound = false;
@@ -28,9 +28,9 @@ void Node::commonConstructorCode()
 
 
 //=====================================================================================================================================
-// ~Node                                                                                                                            =
+// ~SceneNode                                                                                                                            =
 //=====================================================================================================================================
-Node::~Node()
+SceneNode::~SceneNode()
 {
 	DEBUG_ERR( app->getScene() == NULL );
 	app->getScene()->unregisterNode( this );
@@ -40,7 +40,7 @@ Node::~Node()
 //=====================================================================================================================================
 // updateWorldTransform                                                                                                               =
 //=====================================================================================================================================
-void Node::updateWorldTransform()
+void SceneNode::updateWorldTransform()
 {
 	if( parent )
 	{
@@ -101,19 +101,19 @@ void Node::updateWorldTransform()
 // Move(s)                                                                                                                            =
 // Move the object according to it's local axis                                                                                       =
 //=====================================================================================================================================
-void Node::moveLocalX( float distance )
+void SceneNode::moveLocalX( float distance )
 {
 	Vec3 x_axis = rotationLspace.getColumn(0);
 	translationLspace += x_axis * distance;
 }
 
-void Node::moveLocalY( float distance )
+void SceneNode::moveLocalY( float distance )
 {
 	Vec3 y_axis = rotationLspace.getColumn(1);
 	translationLspace += y_axis * distance;
 }
 
-void Node::moveLocalZ( float distance )
+void SceneNode::moveLocalZ( float distance )
 {
 	Vec3 z_axis = rotationLspace.getColumn(2);
 	translationLspace += z_axis * distance;
@@ -123,7 +123,7 @@ void Node::moveLocalZ( float distance )
 //=====================================================================================================================================
 // addChild                                                                                                                           =
 //=====================================================================================================================================
-void Node::addChild( Node* node )
+void SceneNode::addChild( SceneNode* node )
 {
 	if( node->parent != NULL )
 	{
@@ -139,9 +139,9 @@ void Node::addChild( Node* node )
 //=====================================================================================================================================
 // removeChild                                                                                                                        =
 //=====================================================================================================================================
-void Node::removeChild( Node* node )
+void SceneNode::removeChild( SceneNode* node )
 {
-	Vec<Node*>::iterator it = find( childs.begin(), childs.end(), node );
+	Vec<SceneNode*>::iterator it = find( childs.begin(), childs.end(), node );
 	if( it == childs.end() )
 	{
 		ERROR( "Child not found" );

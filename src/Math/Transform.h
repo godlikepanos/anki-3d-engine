@@ -13,9 +13,9 @@ namespace M {
  */
 class Transform
 {
-	PROPERTY_RW( Mat3, rotation, setRotation, getRotation ) ///< Property
-	PROPERTY_RW( Vec3, origin, setOrigin, getOrigin ) ///< Property
-	PROPERTY_RW( float, scale, setScale, getScale ) ///< Property
+	PROPERTY_RW( Mat3, rotation, setRotation, getRotation ) ///< @ref PROPERTY_RW : The rotation
+	PROPERTY_RW( Vec3, origin, setOrigin, getOrigin ) ///< @ref PROPERTY_RW : The translation
+	PROPERTY_RW( float, scale, setScale, getScale ) ///< @ref PROPERTY_RW : The uniform scaling
 
 	public:
 		// constructors

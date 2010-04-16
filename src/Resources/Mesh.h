@@ -8,7 +8,7 @@
 #include "collision.h"
 
 
-/// Mesh resource
+/// Mesh @ref Resource resource
 class Mesh: public Resource
 {
 	// data

@@ -2,7 +2,7 @@
 #define _PARTICLEEMITTER_H_
 
 #include "Common.h"
-#include "Node.h"
+#include "SceneNode.h"
 #include "MeshNode.h"
 #include "GhostNode.h"
 #include "PhyCommon.h"
@@ -13,7 +13,7 @@
  *
  * This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
  */
-class ParticleEmitter: public Node
+class ParticleEmitter: public SceneNode
 {
 	public:
 
@@ -57,7 +57,7 @@ class ParticleEmitter: public Node
 		uint timeOfPrevEmittion;
 
 		// funcs
-		ParticleEmitter(): Node( NT_PARTICLE_EMITTER ) {}
+		ParticleEmitter(): SceneNode( NT_PARTICLE_EMITTER ) {}
 		void render();
 		void renderDepth() {}
 		void init( const char* filename );
