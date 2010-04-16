@@ -2,15 +2,15 @@
 #define _GHOSTNODE_H_
 
 #include "Common.h"
-#include "Node.h"
+#include "SceneNode.h"
 
 /**
  * This is a node that does nothing
  */
-class GhostNode: public Node
+class GhostNode: public SceneNode
 {
 	public:
-		GhostNode(): Node(NT_GHOST) { }
+		GhostNode(): SceneNode(NT_GHOST) { }
 		void init( const char* ) {}
 		void render() {}
 		void deinit() {}

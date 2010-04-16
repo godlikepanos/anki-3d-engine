@@ -5,7 +5,7 @@
 #include "Resource.h"
 
 
-/// Extension resource
+/// Extension @ref Resource resource
 class Extension: public Resource
 {
 	private:

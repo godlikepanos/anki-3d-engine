@@ -2,15 +2,15 @@
 #define _MESH_NODE_H_
 
 #include "Common.h"
-#include "Node.h"
+#include "SceneNode.h"
 #include "Material.h"
 
 class MeshSkelNodeCtrl;
 class Mesh;
 
 
-/// Mesh node
-class MeshNode: public Node
+/// Mesh scene node
+class MeshNode: public SceneNode
 {
 	private:
 		void render( Material* mtl ) const; ///< Common code for render() and renderDepth()
@@ -23,7 +23,7 @@ class MeshNode: public Node
 		// controllers
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
-		MeshNode(): Node(NT_MESH), material(NULL), dpMaterial(NULL), meshSkelCtrl(NULL) {}
+		MeshNode(): SceneNode(NT_MESH), material(NULL), dpMaterial(NULL), meshSkelCtrl(NULL) {}
 		virtual void render() { render(material); }
 		virtual void renderDepth() { render( material->dpMtl ); }
 		void init( const char* filename );

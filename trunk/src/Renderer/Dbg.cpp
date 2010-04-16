@@ -3,7 +3,7 @@
 #include "Scene.h"
 #include "Texture.h"
 #include "Fbo.h"
-#include "Node.h"
+#include "SceneNode.h"
 #include "SkelNode.h"
 #include "App.h"
 #include "PhyCommon.h"
@@ -152,14 +152,14 @@ void runStage( const Camera& cam )
 	{
 		if
 		(
-			(app->getScene()->nodes[i]->type == Node::NT_LIGHT && showLights) ||
-			(app->getScene()->nodes[i]->type == Node::NT_CAMERA && showCameras) ||
-			app->getScene()->nodes[i]->type == Node::NT_PARTICLE_EMITTER
+			(app->getScene()->nodes[i]->type == SceneNode::NT_LIGHT && showLights) ||
+			(app->getScene()->nodes[i]->type == SceneNode::NT_CAMERA && showCameras) ||
+			app->getScene()->nodes[i]->type == SceneNode::NT_PARTICLE_EMITTER
 		)
 		{
 			app->getScene()->nodes[i]->render();
 		}
-		else if( app->getScene()->nodes[i]->type == Node::NT_SKELETON && showSkeletons )
+		else if( app->getScene()->nodes[i]->type == SceneNode::NT_SKELETON && showSkeletons )
 		{
 			SkelNode* skel_node = static_cast<SkelNode*>( app->getScene()->nodes[i] );
 			glDisable( GL_DEPTH_TEST );

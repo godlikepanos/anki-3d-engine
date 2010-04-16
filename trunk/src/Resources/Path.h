@@ -6,7 +6,7 @@
 #include "Math.h"
 
 
-/// Path resource
+/// Path @ref Resource resource
 class Path: public Resource
 {
 	public:

@@ -3,7 +3,7 @@
 
 #include "Common.h"
 #include "PhyCommon.h"
-#include "Node.h"
+#include "SceneNode.h"
 
 
 /**
@@ -13,10 +13,10 @@ class MotionState: public btMotionState
 {
 	protected:
 		btTransform worldTransform;
-		Node* node;
+		SceneNode* node;
 
 	public:
-		MotionState( const btTransform& initialTransform, Node* node_ ):
+		MotionState( const btTransform& initialTransform, SceneNode* node_ ):
 			worldTransform( initialTransform ),
 			node( node_ )
 		{

@@ -6,7 +6,7 @@
 #include "PhyWorld.h"
 
 
-class Node;
+class SceneNode;
 class Light;
 class Camera;
 class MeshNode;
@@ -51,7 +51,7 @@ class Scene
 		{};
 
 		// Containers of scene's data
-		Container<Node>       nodes;
+		Container<SceneNode>       nodes;
 		Container<Light>      lights;
 		Container<Camera>     cameras;
 		Container<MeshNode>   meshNodes;
@@ -62,8 +62,8 @@ class Scene
 		// The funcs
 		Scene();
 
-		void registerNode( Node* node ); ///< Put a node in the appropriate containers
-		void unregisterNode( Node* node );
+		void registerNode( SceneNode* node ); ///< Put a node in the appropriate containers
+		void unregisterNode( SceneNode* node );
 		void registerController( Controller* controller );
 		void unregisterController( Controller* controller );
 

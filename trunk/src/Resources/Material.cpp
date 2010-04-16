@@ -8,6 +8,7 @@
 #include "Renderer.h"
 
 
+/// Customized @ref ERROR used in @ref Material class
 #define MTL_ERROR( x ) ERROR( "Material (" << getRsrcPath() << getRsrcName() << "): " << x );
 
 
@@ -16,11 +17,11 @@
 //=====================================================================================================================================
 struct BlendParam
 {
-	int gl_enum;
+	int glEnum;
 	const char* str;
 };
 
-static BlendParam bparams [] =
+static BlendParam blendingParams [] =
 {
 	{GL_ZERO, "GL_ZERO"},
 	{GL_ONE, "GL_ONE"},
@@ -41,9 +42,9 @@ static bool searchBlendEnum( const char* str, int& gl_enum )
 {
 	for( int i=0; i<BLEND_PARAMS_NUM; i++ )
 	{
-		if( !strcmp( bparams[i].str, str) )
+		if( !strcmp( blendingParams[i].str, str) )
 		{
-			gl_enum = bparams[i].gl_enum;
+			gl_enum = blendingParams[i].glEnum;
 			return true;
 		}
 	}
@@ -66,122 +67,122 @@ bool Material::load( const char* filename )
 		token = &scanner.getNextToken();
 
 		//** SHADER_PROG **
-		if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "SHADER_PROG" ) )
+		if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "SHADER_PROG" ) )
 		{
 			if( shaderProg ) ERROR( "Shader program already loaded" );
 
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_STRING )
+			if( token->getCode() != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			shaderProg = Rsrc::shaders.load( token->value.string );
+			shaderProg = Rsrc::shaders.load( token->getValue().getString() );
 		}
 		//** DEPTH_MATERIAL **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_PASS_MATERIAL" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "DEPTH_PASS_MATERIAL" ) )
 		{
 			if( dpMtl ) ERROR( "Depth material already loaded" );
 
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_STRING )
+			if( token->getCode() != Scanner::TC_STRING )
 			{
 				PARSE_ERR_EXPECTED( "string" );
 				return false;
 			}
-			dpMtl = Rsrc::materials.load( token->value.string );
+			dpMtl = Rsrc::materials.load( token->getValue().getString() );
 		}
 		//** BLENDS **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDS" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "BLENDS" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			blends = token->value.int_;
+			blends = token->getValue().getInt();
 		}
 		//** REFRACTS **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "REFRACTS" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "REFRACTS" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			refracts = token->value.int_;
+			refracts = token->getValue().getInt();
 		}
 		//** BLENDING_SFACTOR **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_SFACTOR" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "BLENDING_SFACTOR" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_IDENTIFIER )
+			if( token->getCode() != Scanner::TC_IDENTIFIER )
 			{
 				PARSE_ERR_EXPECTED( "identifier" );
 				return false;
 			}
 			int gl_enum;
-			if( !searchBlendEnum(token->value.string, gl_enum) )
+			if( !searchBlendEnum(token->getValue().getString(), gl_enum) )
 			{
-				PARSE_ERR( "Incorrect blending factor \"" << token->value.string << "\"" );
+				PARSE_ERR( "Incorrect blending factor \"" << token->getValue().getString() << "\"" );
 				return false;
 			}
 			blendingSfactor = gl_enum;
 		}
 		//** BLENDING_DFACTOR **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "BLENDING_DFACTOR" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "BLENDING_DFACTOR" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_IDENTIFIER )
+			if( token->getCode() != Scanner::TC_IDENTIFIER )
 			{
 				PARSE_ERR_EXPECTED( "identifier" );
 				return false;
 			}
 			int gl_enum;
-			if( !searchBlendEnum(token->value.string, gl_enum) )
+			if( !searchBlendEnum(token->getValue().getString(), gl_enum) )
 			{
-				PARSE_ERR( "Incorrect blending factor \"" << token->value.string << "\"" );
+				PARSE_ERR( "Incorrect blending factor \"" << token->getValue().getString() << "\"" );
 				return false;
 			}
 			blendingDfactor = gl_enum;
 		}
 		//** DEPTH_TESTING **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "DEPTH_TESTING" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "DEPTH_TESTING" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			depthTesting = token->value.int_;
+			depthTesting = token->getValue().getInt();
 		}
 		//** WIREFRAME **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "WIREFRAME" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "WIREFRAME" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			wireframe = token->value.int_;
+			wireframe = token->getValue().getInt();
 		}
 		//** CASTS_SHADOW **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "CASTS_SHADOW" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "CASTS_SHADOW" ) )
 		{
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_NUMBER )
+			if( token->getCode() != Scanner::TC_NUMBER )
 			{
 				PARSE_ERR_EXPECTED( "number" );
 				return false;
 			}
-			castsShadow = token->value.int_;
+			castsShadow = token->getValue().getInt();
 		}
 		//** USER_DEFINED_VARS **
-		else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "USER_DEFINED_VARS" ) )
+		else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "USER_DEFINED_VARS" ) )
 		{
 			// first check if the shader is defined
 			if( shaderProg == NULL )
@@ -192,7 +193,7 @@ bool Material::load( const char* filename )
 
 			// read {
 			token = &scanner.getNextToken();
-			if( token->code != Scanner::TC_LBRACKET )
+			if( token->getCode() != Scanner::TC_LBRACKET )
 			{
 				PARSE_ERR_EXPECTED( "{" );
 				return false;
@@ -202,16 +203,16 @@ bool Material::load( const char* filename )
 			{
 				// read the name
 				token = &scanner.getNextToken();
-				if( token->code == Scanner::TC_RBRACKET ) break;
+				if( token->getCode() == Scanner::TC_RBRACKET ) break;
 
-				if( token->code != Scanner::TC_IDENTIFIER )
+				if( token->getCode() != Scanner::TC_IDENTIFIER )
 				{
 					PARSE_ERR_EXPECTED( "identifier" );
 					return false;
 				}
 
 				string varName;
-				varName = token->value.string;
+				varName = token->getValue().getString();
 
 				userDefinedVars.push_back( UserDefinedVar() ); // create new var
 				UserDefinedVar& var = userDefinedVars.back();
@@ -231,23 +232,23 @@ bool Material::load( const char* filename )
 					// texture
 					case GL_SAMPLER_2D:
 						token = &scanner.getNextToken();
-						if( token->code == Scanner::TC_STRING )
+						if( token->getCode() == Scanner::TC_STRING )
 						{
-							var.value.texture = Rsrc::textures.load( token->value.string );
+							var.value.texture = Rsrc::textures.load( token->getValue().getString() );
 						}
-						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "IS_FAI" ) )
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "IS_FAI" ) )
 						{
 							var.value.texture = &R::Is::fai;
 						}
-						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_NORMAL_FAI" ) )
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_NORMAL_FAI" ) )
 						{
 							var.value.texture = &R::Ms::normalFai;
 						}
-						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "MS_DEPTH_FAI" ) )
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DEPTH_FAI" ) )
 						{
 							var.value.texture = &R::Ms::depthFai;
 						}
-						else if( token->code == Scanner::TC_IDENTIFIER && !strcmp( token->value.string, "PPS_FAI" ) )
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "PPS_FAI" ) )
 						{
 							var.value.texture = &R::Pps::fai;
 						}
@@ -260,8 +261,8 @@ bool Material::load( const char* filename )
 					// float
 					case GL_FLOAT:
 						token = &scanner.getNextToken();
-						if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_FLOAT )
-							var.value.float_ = token->value.float_;
+						if( token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_FLOAT )
+							var.value.float_ = token->getValue().getFloat();
 						else
 						{
 							PARSE_ERR_EXPECTED( "float" );
@@ -274,11 +275,11 @@ bool Material::load( const char* filename )
 						break;
 					// vec3
 					case GL_FLOAT_VEC3:
-						if( !ParseArrOfNumbers<float>( scanner, true, true, 3, &var.value.vec3[0] ) ) return false;
+						if( !Parser::parseArrOfNumbers<float>( scanner, true, true, 3, &var.value.vec3[0] ) ) return false;
 						break;
 					// vec4
 					case GL_FLOAT_VEC4:
-						if( !ParseArrOfNumbers<float>( scanner, true, true, 4, &var.value.vec4[0] ) ) return false;
+						if( !Parser::parseArrOfNumbers<float>( scanner, true, true, 4, &var.value.vec4[0] ) ) return false;
 						break;
 				};
 
@@ -286,7 +287,7 @@ bool Material::load( const char* filename )
 
 		}
 		// end of file
-		else if( token->code == Scanner::TC_EOF )
+		else if( token->getCode() == Scanner::TC_EOF )
 		{
 			break;
 		}

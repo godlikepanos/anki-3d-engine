@@ -79,7 +79,7 @@ while 1:
 	arg = sys.argv[i]
 	if arg == "-h" or arg == "-help" or arg == "--help":
 		print( "Makefile generator by GODlike" )
-		print( "usage: genmakefile.py [options] [-i input] [-o output]" )
+		print( "usage: " + sys.argv[0] + " [options] [-i input] [-o output]" )
 		print( "options:" )
 		print( "-h, -help, --help  Print this text" )
 		print( "-i                 Input config file. Default: gen.cfg.py" )

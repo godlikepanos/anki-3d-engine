@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <sstream>
+#include <SDL/SDL.h>
 #include "App.h"
 #include "Scene.h"
 
@@ -34,7 +35,7 @@ App::App()
 //=====================================================================================================================================
 void App::initWindow()
 {
-	PRINT( "SDL window initializing..." );
+	INFO( "SDL window initializing..." );
 	SDL_Init( SDL_INIT_VIDEO );
 
 	// print driver name
@@ -89,7 +90,7 @@ void App::initWindow()
 	SDL_WM_SetCaption( "AnKi Engine", NULL );
 
 
-	PRINT( "SDL window initialization ends" );
+	INFO( "SDL window initialization ends" );
 }
 
 
@@ -150,5 +151,14 @@ void App::printAppInfo()
 	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch);
 
 	INFO( msg.str() )
+}
+
+
+//=====================================================================================================================================
+// getTicks                                                                                                                           =
+//=====================================================================================================================================
+uint App::getTicks()
+{
+	return SDL_GetTicks();
 }
 

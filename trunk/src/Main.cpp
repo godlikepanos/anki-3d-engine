@@ -192,7 +192,7 @@ void initPhysics()
 //=====================================================================================================================================
 void init()
 {
-	PRINT( "Engine initializing..." );
+	INFO( "Engine initializing..." );
 
 	srand( unsigned(time(NULL)) );
 	mathSanityChecks();
@@ -271,7 +271,7 @@ void init()
 
 	initPhysics();
 
-	PRINT( "Engine initialization ends (" << App::getTicks()-ticks << ")" );
+	INFO( "Engine initialization ends (" << App::getTicks()-ticks << ")" );
 }
 
 
@@ -285,7 +285,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 
 	init();
 
-	PRINT( "Entering main loop" );
+	INFO( "Entering main loop" );
 	int ticks = App::getTicks();
 	do
 	{
@@ -298,7 +298,7 @@ int main( int /*argc*/, char* /*argv*/[] )
 		float scale = 0.01;
 
 		// move the camera
-		static Node* mover = app->getActiveCam();
+		static SceneNode* mover = app->getActiveCam();
 
 		if( I::keys[ SDLK_1 ] ) mover = app->getActiveCam();
 		if( I::keys[ SDLK_2 ] ) mover = point_lights[0];
@@ -390,10 +390,10 @@ int main( int /*argc*/, char* /*argv*/[] )
 		else
 			if( R::framesNum == 5000 ) break;
 	}while( true );
-	PRINT( "Exiting main loop (" << App::getTicks()-ticks << ")" );
+	INFO( "Exiting main loop (" << App::getTicks()-ticks << ")" );
 
 
-	PRINT( "Exiting..." );
+	INFO( "Exiting..." );
 	app->quitApp( EXIT_SUCCESS );
 	return 0;
 }

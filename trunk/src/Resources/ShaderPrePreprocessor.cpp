@@ -74,17 +74,17 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 	{
 		token = &scanner.getNextToken();
 
-		if( token->code == Scanner::TC_SHARP )
+		if( token->getCode() == Scanner::TC_SHARP )
 		{
 			token = &scanner.getNextToken();
-			if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "pragma") == 0 )
+			if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "pragma") == 0 )
 			{
 				token = &scanner.getNextToken();
-				if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "anki") == 0 )
+				if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "anki") == 0 )
 				{
 					token = &scanner.getNextToken();
 /* vertShaderBegins */
-					if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "vertShaderBegins") == 0 )
+					if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "vertShaderBegins") == 0 )
 					{
 						// play
 
@@ -126,7 +126,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						// stop play
 					}
 /* geomShaderBegins */
-					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "geomShaderBegins") == 0 )
+					else if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "geomShaderBegins") == 0 )
 					{
 						// play
 
@@ -167,7 +167,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						// stop play
 					}
 /* fragShaderBegins */
-					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "fragShaderBegins") == 0 )
+					else if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "fragShaderBegins") == 0 )
 					{
 						// play
 
@@ -199,15 +199,15 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						// stop play
 					}
 /* include */
-					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "include") == 0 )
+					else if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "include") == 0 )
 					{
 						token = &scanner.getNextToken();
-						if( token->code == Scanner::TC_STRING )
+						if( token->getCode() == Scanner::TC_STRING )
 						{
 							// play
 							//int line = sourceLines.size();
 							sourceLines.push_back( string("#line 0 ") + Util::intToStr(depth+1) + " // " + lines[scanner.getLineNmbr()-1] );
-							if( !parseFileForPragmas( token->value.string, depth+1 ) ) return false;
+							if( !parseFileForPragmas( token->getValue().getString(), depth+1 ) ) return false;
 							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNmbr()-1] );
 							// stop play
 						}
@@ -218,16 +218,16 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						}
 					}
 /* attribute */
-					else if( token->code == Scanner::TC_IDENTIFIER && strcmp(token->value.string, "attribute") == 0 )
+					else if( token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "attribute") == 0 )
 					{
 						token = &scanner.getNextToken();
-						if( token->code == Scanner::TC_IDENTIFIER )
+						if( token->getCode() == Scanner::TC_IDENTIFIER )
 						{
-							string varName = token->value.string;
+							string varName = token->getValue().getString();
 							token = &scanner.getNextToken();
-							if( token->code == Scanner::TC_NUMBER && token->type == Scanner::DT_INT )
+							if( token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_INT )
 							{
-								int loc = token->value.int_;
+								int loc = token->getValue().getInt();
 
 								// check if already defined and for circular includance
 								Vec<ShaderVarPragma>::iterator attrib = findShaderVar( output.attributes, varName );
@@ -277,32 +277,32 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 				} // end if anki
 				
 				token = &scanner.getNextToken();
-				if( token->code!=Scanner::TC_NEWLINE && token->code!=Scanner::TC_EOF )
+				if( token->getCode()!=Scanner::TC_NEWLINE && token->getCode()!=Scanner::TC_EOF )
 				{
 					PARSE_ERR_EXPECTED( "newline or end of file" );
 					return false;
 				}
 				
-				if( token->code == Scanner::TC_EOF )
+				if( token->getCode() == Scanner::TC_EOF )
 					break;
 				
 			} // end if pragma
 		} // end if #
 /* newline */		
-		else if( token->code == Scanner::TC_NEWLINE )
+		else if( token->getCode() == Scanner::TC_NEWLINE )
 		{
 			sourceLines.push_back( lines[ scanner.getLineNmbr() - 2 ] );
 			//PRINT( lines[ scanner.getLineNmbr() - 2 ] )
 		}
 /* EOF */
-		else if( token->code == Scanner::TC_EOF )
+		else if( token->getCode() == Scanner::TC_EOF )
 		{
 			sourceLines.push_back( lines[ scanner.getLineNmbr() - 1 ] );
 			//PRINT( lines[ scanner.getLineNmbr() - 1 ] )
 			break;
 		}
 /* error */
-		else if( token->code == Scanner::TC_ERROR )
+		else if( token->getCode() == Scanner::TC_ERROR )
 		{
 			return false;
 		}

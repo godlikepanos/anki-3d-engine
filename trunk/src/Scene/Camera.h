@@ -3,10 +3,13 @@
 
 #include "Common.h"
 #include "collision.h"
-#include "Node.h"
+#include "SceneNode.h"
 
 
-class Camera: public Node
+/**
+ * @brief Camera SceneNode
+ */
+class Camera: public SceneNode
 {
 	public:
 		enum FrustrumPlanes
@@ -48,14 +51,14 @@ class Camera: public Node
 
 	public:
 		// constructors and destuctors
-		Camera( float fovx_, float fovy_, float znear_, float zfar_ ): Node(NT_CAMERA), fovX(fovx_), fovY(fovy_), zNear(znear_), zFar(zfar_)
+		Camera( float fovx_, float fovy_, float znear_, float zfar_ ): SceneNode(NT_CAMERA), fovX(fovx_), fovY(fovy_), zNear(znear_), zFar(zfar_)
 		{
 			calcLSpaceFrustumPlanes();
 			updateWSpaceFrustumPlanes();
 			calcProjectionMatrix();
 		}
-		Camera( const Camera& c ): Node(NT_CAMERA) { memcpy( this, &c, sizeof( Camera ) ); }
-		Camera(): Node(NT_CAMERA) {}
+		Camera( const Camera& c ): SceneNode(NT_CAMERA) { memcpy( this, &c, sizeof( Camera ) ); }
+		Camera(): SceneNode(NT_CAMERA) {}
 		~Camera() {}
 
 		// Sets & Gets
@@ -70,7 +73,7 @@ class Camera: public Node
 		float getZFar () const { return zFar; }
 		const Mat4& getProjectionMatrix() const { return projectionMat; }
 		const Mat4& getViewMatrix() const { return viewMat; }
-		const Mat4& getInvProjectionMatrix() const { return invProjectionMat; } // see the declaration of invProjectionMat for info
+		const Mat4& getInvProjectionMatrix() const { return invProjectionMat; } ///< See the declaration of invProjectionMat for info
 
 		// misc
 		void lookAtPoint( const Vec3& point );

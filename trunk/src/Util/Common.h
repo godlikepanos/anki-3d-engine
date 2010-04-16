@@ -110,8 +110,12 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 
 
 /**
- * Read write property. It concatenates and creates a unique type so it can accept pointers. The get funcs are coming into two
- * flavors, one const and one not-const. The property is read-write after all and non-const is acceptable.
+ * @brief Read write property
+ *
+ * - It concatenates and creates a unique type so it can accept pointers
+ * - The get funcs are coming into two flavors, one const and one non-const. The property is read-write after all so the non-const is
+ *   acceptable
+ * - Dont use it with semicolon at the end eg PROPERTY_RW( .... );
  */
 #define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
 	private: \
@@ -129,7 +133,10 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 		}
 
 /**
- * Read only property. It concatenates and creates a unique type so it can accept pointers
+ * @brief Read only property
+ *
+ * - It concatenates and creates a unique type so it can accept pointers
+ * - Dont use it with semicolon at the end eg PROPERTY_R( .... );
  */
 #define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
 	private: \
@@ -141,7 +148,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 		}
 
 
-/// PRINT
+/// Just print
 #define PRINT( x ) cout << x << endl;
 
 

@@ -19,14 +19,14 @@ Specular intensity of material: Sm
 
 #include "Common.h"
 #include "Texture.h"
-#include "Node.h"
+#include "SceneNode.h"
 #include "Camera.h"
 
 class LightProps;
 
 
-/// Light (A)
-class Light: public Node
+/// Light scene node (Abstract)
+class Light: public SceneNode
 {
 	public:
 		enum Type { LT_POINT, LT_SPOT };
@@ -34,13 +34,13 @@ class Light: public Node
 		Type type;
 		LightProps* lightProps; ///< Later we will add a controller
 	
-		Light( Type type_ ): Node(NT_LIGHT), type(type_) {}
+		Light( Type type_ ): SceneNode(NT_LIGHT), type(type_) {}
 		//void init( const char* );
 		void deinit();
 };
 
 
-/// PointLight
+/// PointLight scene node
 class PointLight: public Light
 {
 	public:
@@ -52,7 +52,7 @@ class PointLight: public Light
 };
 
 
-/// SpotLight
+/// SpotLight scene node
 class SpotLight: public Light
 {
 	public:

@@ -9,7 +9,7 @@
 class Texture;
 
 
-/// Light properties resource
+/// Light properties @ref Resource resource
 class LightProps: public Resource
 {
 	// data

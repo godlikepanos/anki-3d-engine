@@ -107,7 +107,7 @@ init                                                                            
 */
 void init()
 {
-	PRINT( "Renderer initializing..." );
+	INFO( "Renderer initializing..." );
 
 	glewInit();
 
@@ -180,7 +180,7 @@ void init()
 	// misc
 	shdr_final = Rsrc::shaders.load( "shaders/final.glsl" );
 
-	PRINT( "Renderer initialization ends" );
+	INFO( "Renderer initialization ends" );
 }
 
 

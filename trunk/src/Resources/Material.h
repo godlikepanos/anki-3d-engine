@@ -7,7 +7,7 @@
 #include "ShaderProg.h"
 
 
-/// Mesh material resource
+/// Mesh material @ref Resource resource
 class Material: public Resource
 {
 	//===================================================================================================================================

@@ -16,7 +16,7 @@ octree_t                                                                        
 class octree_t
 {
 	public:
-		/// Node class
+		/// SceneNode class
 		// the class does not contain complicated functions. It mainly holds the data
 		class node_t
 		{
@@ -34,7 +34,7 @@ class octree_t
 				uint GetMeshesNum() const { return meshes.size(); }
 				uint GetFacesNum() const;
 		};
-		/// end Node class
+		/// end SceneNode class
 
 	protected:
 		// funcs for the tree creation

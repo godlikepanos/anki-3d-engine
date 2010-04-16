@@ -23,25 +23,25 @@ Scene::Scene()
 //=====================================================================================================================================
 // registerNode                                                                                                                       =
 //=====================================================================================================================================
-void Scene::registerNode( Node* node )
+void Scene::registerNode( SceneNode* node )
 {
 	putBackNode( nodes, node );
 	
 	switch( node->type )
 	{
-		case Node::NT_LIGHT:
+		case SceneNode::NT_LIGHT:
 			putBackNode( lights, static_cast<Light*>(node) );
 			break;
-		case Node::NT_CAMERA:
+		case SceneNode::NT_CAMERA:
 			putBackNode( cameras, static_cast<Camera*>(node) );
 			break;
-		case Node::NT_MESH:
+		case SceneNode::NT_MESH:
 			putBackNode( meshNodes, static_cast<MeshNode*>(node) );
 			break;
-		case Node::NT_SKELETON:
+		case SceneNode::NT_SKELETON:
 			putBackNode( skelNodes, static_cast<SkelNode*>(node) );
 			break;
-		case Node::NT_SKEL_MODEL:
+		case SceneNode::NT_SKEL_MODEL:
 			// ToDo
 			break;
 	};
@@ -51,25 +51,25 @@ void Scene::registerNode( Node* node )
 //=====================================================================================================================================
 // unregisterNode                                                                                                                     =
 //=====================================================================================================================================
-void Scene::unregisterNode( Node* node )
+void Scene::unregisterNode( SceneNode* node )
 {
 	eraseNode( nodes, node );
 	
 	switch( node->type )
 	{
-		case Node::NT_LIGHT:
+		case SceneNode::NT_LIGHT:
 			eraseNode( lights, static_cast<Light*>(node) );
 			break;
-		case Node::NT_CAMERA:
+		case SceneNode::NT_CAMERA:
 			eraseNode( cameras, static_cast<Camera*>(node) );
 			break;
-		case Node::NT_MESH:
+		case SceneNode::NT_MESH:
 			eraseNode( meshNodes, static_cast<MeshNode*>(node) );
 			break;
-		case Node::NT_SKELETON:
+		case SceneNode::NT_SKELETON:
 			eraseNode( skelNodes, static_cast<SkelNode*>(node) );
 			break;
-		case Node::NT_SKEL_MODEL:
+		case SceneNode::NT_SKEL_MODEL:
 			// ToDo
 			break;
 	};
@@ -99,7 +99,7 @@ void Scene::unregisterController( Controller* controller )
 void Scene::updateAllWorldStuff()
 {
 	DEBUG_ERR( nodes.size() > 1024 );
-	Node* queue [1024];
+	SceneNode* queue [1024];
 	uint head = 0, tail = 0;
 	uint num = 0;
 
@@ -112,7 +112,7 @@ void Scene::updateAllWorldStuff()
 	// loop
 	while( head != tail ) // while queue not empty
 	{
-		Node* obj = queue[head++]; // queue pop
+		SceneNode* obj = queue[head++]; // queue pop
 
 		obj->updateWorldStuff();
 		++num;

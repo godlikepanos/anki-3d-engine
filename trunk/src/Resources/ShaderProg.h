@@ -6,37 +6,40 @@
 #include "Common.h"
 #include "Resource.h"
 
-class ShaderPrePreprocessor;
-class Texture;
 
 /**
+ * @brief Shader program @ref Resource
+ *
  * Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of uniform variables
  * and a vector of attribute variables. Every variable is a struct that contains the variable's name, location, OpenGL data type and
  * if it is a uniform or an attribute var.
  */
 class ShaderProg: public Resource
 {
-	PROPERTY_R( uint, glId, getGlId )
+	PROPERTY_R( uint, glId, getGlId ) ///< @ref PROPERTY_R : The OpenGL ID of the shader program
 	
 	friend class Material;
 
 	private:
 		/**
-		 * Attribute of uniform variable
+		 * @brief Shader program variable. The type is attribute or uniform
 		 */
 		class Var
 		{
-			PROPERTY_R( int, loc, getLoc );
-			PROPERTY_R( string, name, getName );
-			PROPERTY_R( GLenum, glDataType, getGlDataType ); ///< GL_FLOAT, GL_FLOAT_VEC2... etc
-			PROPERTY_R( uint, type, getType ); ///< SVT_ATTRIBUTE or SVT_UNIFORM
+			PROPERTY_R( int, loc, getLoc ) ///< ToDo
+			PROPERTY_R( string, name, getName ) ///< ToDo
+			PROPERTY_R( GLenum, glDataType, getGlDataType ) ///< @ref PROPERTY_R : GL_FLOAT, GL_FLOAT_VEC2... etc
+			PROPERTY_R( uint, type, getType ) ///< @ref PROPERTY_R : @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 
 			public:
+				/**
+				 * Shader var types
+				 */
 				enum
 				{
-					SVT_ATTRIBUTE,
-					SVT_UNIFORM
-				}; ///< Shader var types
+					SVT_ATTRIBUTE, ///< SVT_ATTRIBUTE
+					SVT_UNIFORM    ///< SVT_UNIFORM
+				};
 
 				Var( int loc_, const char* name_, GLenum glDataType_, uint type_ ):
 					loc(loc_), name(name_), glDataType(glDataType_), type(type_)
@@ -55,7 +58,7 @@ class ShaderProg: public Resource
 		typedef map<string,Var*>::const_iterator NameToVarIterator; ///< Variable name to variable iterator
 
 		void getUniAndAttribVars(); ///< After the linking of the shader prog is done gather all the vars in custom containers
-		bool bindCustomAttribLocs( const ShaderPrePreprocessor& pars ) const; ///< Uses glBindAttribLocation for every parser attrib location
+		bool bindCustomAttribLocs( const class ShaderPrePreprocessor& pars ) const; ///< Uses glBindAttribLocation for every parser attrib location
 		uint createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const; ///< @return Returns zero on failure
 		bool link(); ///< Link the shader prog
 		
@@ -65,7 +68,7 @@ class ShaderProg: public Resource
 		
 		inline void bind() const { DEBUG_ERR( glId==0 ); glUseProgram(glId); }
 		static void unbind() { glUseProgram(0); }
-		static uint getCurrentProgramGlId() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; }
+		static uint getCurrentProgramGlId() { int i; glGetIntegerv( GL_CURRENT_PROGRAM, &i ); return i; } ///< Query the GL driver for the current shader program GL ID
 
 		bool load( const char* filename );
 		bool customLoad( const char* filename, const char* extraSource = "" ); ///< Used by the renderer's shader programs
@@ -89,8 +92,8 @@ class ShaderProg: public Resource
 		 * @param tex The texture
 		 * @param texUnit The number of the texture unit
 		 */
-		void locTexUnit( int varLoc, const Texture& tex, uint texUnit ) const;
-		void locTexUnit( const char* varName, const Texture& tex, uint texUnit ) const; ///< @see locTexUnit
+		void locTexUnit( int varLoc, const class Texture& tex, uint texUnit ) const;
+		void locTexUnit( const char* varName, const class Texture& tex, uint texUnit ) const; ///< @see locTexUnit
 }; 
 
 #endif

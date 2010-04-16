@@ -5,14 +5,11 @@
 #include "Common.h"
 
 
-//=====================================================================================================================================
-// Scanner                                                                                                                          =
-//=====================================================================================================================================
 /**
- * @brief C++ Tokenizer
+ * C++ Tokenizer
  *
- * The Scanner loads a file and returns the tokens. The script must be in C++ format. The class does not make any kind of
- * memory allocations so it can be fast.
+ * The Scanner loads a file or an already loaded iostream and extracts the tokens. The script must be in C++ format. The class does
+ * not make any kind of memory allocations so it can be fast.
  */
 class Scanner
 {
@@ -32,13 +29,16 @@ class Scanner
 		bool checkSpecial();
 
 		void getLine(); ///< Reads a line from the script file
-		char getNextChar(); ///< Get the next char from the line_txt. If line_txt empty then get new line. It returns '\0' if we are in the end of the line
+		char getNextChar(); ///< Get the next char from the @ref line. If @ref line empty then get new line. It returns '\\0' if we are in the end of the line
 		char putBackChar(); ///< Put the char that Scanner::GetNextChar got back to the current line
 
 	//===================================================================================================================================
 	// ascii stuff                                                                                                                      =
 	//===================================================================================================================================
 	protected:
+		/**
+		 * Every char in the Ascii table is binded with one characteristic code type. This helps the scanning
+		 */
 		enum AsciiFlagsE
 		{
 			AC_ERROR = 0,
@@ -90,7 +90,7 @@ class Scanner
 				TC_ASSIGNOR                                                                                             //36 - 47
 		};
 
-		/// TokenDataType
+		/// The value of @ref Token::dataType
 		enum TokenDataType
 		{
 			DT_FLOAT,
@@ -99,26 +99,47 @@ class Scanner
 			DT_STR
 		};
 
-		/// TokenDataVal
-		union TokenDataVal
+		/// Used inside the Token
+		struct TokenDataVal
 		{
-			char   char_;
-			ulong  int_;
-			double float_;
-			char*  string; ///< points to Token::asString if the token is string
+			friend class Scanner;
+			friend class Token;
+
+			private:
+				/**
+				 * The data as unamed union
+				 */
+				union
+				{
+					char   char_;
+					ulong  int_;
+					double float_;
+					char*  string; ///< points to @ref Token::asString if the token is string
+				};
+
+			public:
+				// accessors
+				char        getChar()   const { return char_; } ///< Access the data as C char
+				ulong       getInt()    const { return int_; } ///< Access the data as unsigned int
+				float       getFloat()  const { return float_; }  ///< Access the data as double
+				const char* getString() const { return string; }  ///< Access the data as C string
 		};
 
 		/// The Token class
 		struct Token
 		{
-			TokenCode      code;
-			TokenDataType  type;
-			TokenDataVal   value;
+			PROPERTY_R( TokenCode, code, getCode )
+			PROPERTY_R( TokenDataType, dataType, getDataType )
+			PROPERTY_R( TokenDataVal, value, getValue )
 
-			char asString[ MAX_SCRIPT_LINE_LEN ];
+			friend class Scanner;
 
-			Token(): code( TC_ERROR ) {}
-			Token( const Token& b );
+			private:
+				char asString[ MAX_SCRIPT_LINE_LEN ];
+
+			public:
+				Token(): code( TC_ERROR ) {}
+				Token( const Token& b );
 		};
 
 	//===================================================================================================================================
@@ -133,7 +154,7 @@ class Scanner
 		};
 
 		static ResWord rw2 [], rw3 [], rw4 [], rw5 [], rw6 [], rw7 []; ///< Groups of ResWord grouped by the length of the ResWord::string
-		static ResWord* rw_table []; ///< The array contains all the groups of ResWord
+		static ResWord* rwTable []; ///< The array contains all the groups of ResWord
 
 	//===================================================================================================================================
 	// vars                                                                                                                            =
@@ -141,40 +162,44 @@ class Scanner
 	protected:
 		Token crntToken; ///< The current token
 		char  line [MAX_SCRIPT_LINE_LEN]; ///< In contains the current line's text
-		char* pchar; ///< Points to line_txt
+		char* pchar; ///< Points somewhere to @ref line
 		int   lineNmbr; ///< The number of the current line
-		bool  newlinesAsWhitespace; ///< Treat newlines as whitespace. This means that we extract new token for every line
+		bool  newlinesAsWhitespace; ///< Treat newlines as whitespace. If false means that the Scanner returns a new token for every line it finds
 		/**
-		 * Used to keep track of the newlines in multiline comments so we can return the correct number of newlines in case of 
+		 * Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines in case of
 		 * newlinesAsWhitespace is false
 		 */
 		int     commentedLines;
 
 		// input
-		fstream      inFstream;
-		iostream*    inStream; ///< Points to either in_fstream or an external std::iostream
-		char         scriptName[64]; ///< The name of the input stream. Mostly used for error handling
+		fstream      inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
+		iostream*    inStream; ///< Points to either @ref inFstream or an external std::iostream
+		char         scriptName[64]; ///< The name of the input stream. Mostly used for the error messages inside the @ref Scanner
 
 	//===================================================================================================================================
 	// public funcs                                                                                                                     =
 	//===================================================================================================================================
 	public:
+		/**
+		 * The one and only constructor
+		 * @param newlinesAsWhitespace If false the Scanner will return newline Tokens everytime if finds a newline. True is the default behavior
+		 */
 		Scanner( bool newlinesAsWhitespace = true );
 		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
 
-		bool loadFile( const char* filename ); ///< load a file to extract tokens
-		bool loadIoStream( iostream* iostream_, const char* scriptName_ = "unamed-iostream" ); ///< load a STL iostream to extract tokens
+		bool loadFile( const char* filename ); ///< Load a file to extract tokens
+		bool loadIoStream( iostream* iostream_, const char* scriptName_ = "unamed-iostream" ); ///< Load a STL iostream to extract tokens
 		void unload();
 
-		static void   printTokenInfo( const Token& token ); ///< print info of the given token
+		static void   printTokenInfo( const Token& token ); ///< Print info of the given token
 		static string getTokenInfo( const Token& token ); ///< Get a string with the info of the given token
 		       void   getAllprintAll();
 
-		const Token& getNextToken(); ///< Get the next token from the file
+		const Token& getNextToken(); ///< Get the next token from the stream
 		const Token& getCrntToken() const { return crntToken; } ///< Accessor for the current token
 
-		const char* getScriptName() const { return scriptName; } ///< Accessor for member variable
-		int         getLineNmbr() const { return lineNmbr; } ///< Accessor for member variable
+		const char* getScriptName() const { return scriptName; } ///< Get the name of the stream
+		int         getLineNmbr() const { return lineNmbr; } ///< Get the current line the Scanner is processing
 };
 
 #endif
