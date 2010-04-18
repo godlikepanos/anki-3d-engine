@@ -28,7 +28,7 @@ class Scanner
 		bool checkChar();
 		bool checkSpecial();
 
-		void getLine(); ///< Reads a line from the script file
+		void getLine(); ///< Reads a line from the iostream
 		char getNextChar(); ///< Get the next char from the @ref line. If @ref line empty then get new line. It returns '\\0' if we are in the end of the line
 		char putBackChar(); ///< Put the char that Scanner::GetNextChar got back to the current line
 
@@ -52,7 +52,7 @@ class Scanner
 		};
 
 		static uint asciiLookupTable []; ///< The array contains one ascii_code_e for every symbol of the ASCII table
-		/// Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner. See Scanner()
+		/// Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner @see Scanner()
 		static void initAsciiMap();
 
 		/// To save us from typing for example asciiLookupTable[ (int)'a' ]
@@ -88,7 +88,7 @@ class Scanner
 			TC_INC, TC_DEC, TC_SHL, TC_SHR,                                                                                //32 - 35
 			TC_ASSIGN, TC_ASSIGNADD, TC_ASSIGNSUB, TC_ASSIGNMUL, TC_ASSIGNDIV, TC_ASSIGNMOD, TC_ASSIGNSHL, TC_ASSIGNSHR, TC_ASSIGNAND, TC_ASSIGNXOR,
 				TC_ASSIGNOR                                                                                             //36 - 47
-		};
+		}; // end enum TokenCode
 
 		/// The value of @ref Token::dataType
 		enum TokenDataType
@@ -100,7 +100,7 @@ class Scanner
 		};
 
 		/// Used inside the Token
-		struct TokenDataVal
+		class TokenDataVal
 		{
 			friend class Scanner;
 			friend class Token;
@@ -119,18 +119,18 @@ class Scanner
 
 			public:
 				// accessors
-				char        getChar()   const { return char_; } ///< Access the data as C char
-				ulong       getInt()    const { return int_; } ///< Access the data as unsigned int
-				float       getFloat()  const { return float_; }  ///< Access the data as double
-				const char* getString() const { return string; }  ///< Access the data as C string
-		};
+				char        getChar()   const { return char_; }  ///< Access the data as C char
+				ulong       getInt()    const { return int_; }   ///< Access the data as unsigned int
+				float       getFloat()  const { return float_; } ///< Access the data as double
+				const char* getString() const { return string; } ///< Access the data as C string
+		}; // end class TokenDataVal
 
 		/// The Token class
 		struct Token
 		{
-			PROPERTY_R( TokenCode, code, getCode )
-			PROPERTY_R( TokenDataType, dataType, getDataType )
-			PROPERTY_R( TokenDataVal, value, getValue )
+			PROPERTY_R( TokenCode, code, getCode ) ///< @ref PROPERTY_R : The first thing you shoud know about a token
+			PROPERTY_R( TokenDataType, dataType, getDataType ) ///< @ref PROPERTY_R : Additional info in case @ref code is @ref TC_NUMBER
+			PROPERTY_R( TokenDataVal, value, getValue ) ///< @ref PROPERTY_R : A value variant
 
 			friend class Scanner;
 
@@ -140,7 +140,7 @@ class Scanner
 			public:
 				Token(): code( TC_ERROR ) {}
 				Token( const Token& b );
-		};
+		}; // end class Token
 
 	//===================================================================================================================================
 	// reserved words                                                                                                                   =
@@ -164,7 +164,7 @@ class Scanner
 		char  line [MAX_SCRIPT_LINE_LEN]; ///< In contains the current line's text
 		char* pchar; ///< Points somewhere to @ref line
 		int   lineNmbr; ///< The number of the current line
-		bool  newlinesAsWhitespace; ///< Treat newlines as whitespace. If false means that the Scanner returns a new token for every line it finds
+		bool  newlinesAsWhitespace; ///< Treat newlines as whitespace. If false means that the Scanner returns (among others) newline tokens
 		/**
 		 * Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines in case of
 		 * newlinesAsWhitespace is false
@@ -199,7 +199,7 @@ class Scanner
 		const Token& getCrntToken() const { return crntToken; } ///< Accessor for the current token
 
 		const char* getScriptName() const { return scriptName; } ///< Get the name of the stream
-		int         getLineNmbr() const { return lineNmbr; } ///< Get the current line the Scanner is processing
-};
+		int         getLineNumber() const { return lineNmbr; } ///< Get the current line the Scanner is processing
+}; // end class Scanner
 
 #endif

@@ -156,15 +156,15 @@ void initPhysics()
 
 
 
-	/*for (int i=0;i<app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray().size();i++)
+	/*for (int i=0; i<app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray().size();i++)
 	{
-		btCollisionObject* colObj = copyArray[i];
+		btCollisionObject* colObj = app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray()[i];
 		btRigidBody* body = btRigidBody::upcast(colObj);
-		if (body)
+		if( body )
 		{
-			if (body->getMotionState())
+			if( body->getMotionState() )
 			{
-				btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
+				MotionState* myMotionState = (MotionState*)body->getMotionState();
 				myMotionState->m_graphicsWorldTrans = myMotionState->m_startWorldTrans;
 				body->setCenterOfMassTransform( myMotionState->m_graphicsWorldTrans );
 				colObj->setInterpolationWorldTransform( myMotionState->m_startWorldTrans );
@@ -182,7 +182,8 @@ void initPhysics()
 				btRigidBody::upcast(colObj)->setLinearVelocity(btVector3(0,0,0));
 				btRigidBody::upcast(colObj)->setAngularVelocity(btVector3(0,0,0));
 			}
-		}*/
+		}
+	}*/
 }
 
 

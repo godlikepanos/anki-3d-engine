@@ -89,7 +89,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						// play
 
 						// its defined in same place so there is probable circular includance
-						if( vertShaderBegins.definedInLine==scanner.getLineNmbr() && vertShaderBegins.definedInFile==filename )
+						if( vertShaderBegins.definedInLine==scanner.getLineNumber() && vertShaderBegins.definedInFile==filename )
 						{
 							PARSE_ERR( "vertShaderBegins already defined in the same place. Check for circular or multiple includance" );
 							return false;
@@ -120,9 +120,9 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						}
 
 						vertShaderBegins.definedInFile = filename;
-						vertShaderBegins.definedInLine = scanner.getLineNmbr();
+						vertShaderBegins.definedInLine = scanner.getLineNumber();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
 						// stop play
 					}
 /* geomShaderBegins */
@@ -131,7 +131,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						// play
 
 						// its defined in same place so there is probable circular includance
-						if( geomShaderBegins.definedInLine==scanner.getLineNmbr() && geomShaderBegins.definedInFile==filename )
+						if( geomShaderBegins.definedInLine==scanner.getLineNumber() && geomShaderBegins.definedInFile==filename )
 						{
 							PARSE_ERR( "geomShaderBegins already defined in the same place. Check for circular or multiple includance" );
 							return false;
@@ -161,9 +161,9 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						}
 
 						geomShaderBegins.definedInFile = filename;
-						geomShaderBegins.definedInLine = scanner.getLineNmbr();
+						geomShaderBegins.definedInLine = scanner.getLineNumber();
 						geomShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
 						// stop play
 					}
 /* fragShaderBegins */
@@ -172,7 +172,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						// play
 
 						// its defined in same place so there is probable circular includance
-						if( fragShaderBegins.definedInLine==scanner.getLineNmbr() && fragShaderBegins.definedInFile==filename )
+						if( fragShaderBegins.definedInLine==scanner.getLineNumber() && fragShaderBegins.definedInFile==filename )
 						{
 							PARSE_ERR( "fragShaderBegins already defined in the same place. Check for circular or multiple includance" );
 							return false;
@@ -193,9 +193,9 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						}
 
 						fragShaderBegins.definedInFile = filename;
-						fragShaderBegins.definedInLine = scanner.getLineNmbr();
+						fragShaderBegins.definedInLine = scanner.getLineNumber();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNmbr()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
 						// stop play
 					}
 /* include */
@@ -206,9 +206,9 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						{
 							// play
 							//int line = sourceLines.size();
-							sourceLines.push_back( string("#line 0 ") + Util::intToStr(depth+1) + " // " + lines[scanner.getLineNmbr()-1] );
+							sourceLines.push_back( string("#line 0 ") + Util::intToStr(depth+1) + " // " + lines[scanner.getLineNumber()-1] );
 							if( !parseFileForPragmas( token->getValue().getString(), depth+1 ) ) return false;
-							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNmbr()) + ' ' + Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNmbr()-1] );
+							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNumber()-1] );
 							// stop play
 						}
 						else
@@ -233,7 +233,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 								Vec<ShaderVarPragma>::iterator attrib = findShaderVar( output.attributes, varName );
 								if( attrib != output.attributes.end() )
 								{
-									if( attrib->definedInLine==scanner.getLineNmbr() && attrib->definedInFile==filename )
+									if( attrib->definedInLine==scanner.getLineNumber() && attrib->definedInFile==filename )
 									{
 										PARSE_ERR( "\"" << varName << "\" already defined in the same place. Check for circular or multiple includance" );
 									}
@@ -255,8 +255,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 								}
 								
 								// all ok, push it back
-								output.attributes.push_back( ShaderVarPragma( filename, scanner.getLineNmbr(), varName, loc ) );
-								sourceLines.push_back( lines[scanner.getLineNmbr()-1] );
+								output.attributes.push_back( ShaderVarPragma( filename, scanner.getLineNumber(), varName, loc ) );
+								sourceLines.push_back( lines[scanner.getLineNumber()-1] );
 							}
 							else
 							{
@@ -291,13 +291,13 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 /* newline */		
 		else if( token->getCode() == Scanner::TC_NEWLINE )
 		{
-			sourceLines.push_back( lines[ scanner.getLineNmbr() - 2 ] );
+			sourceLines.push_back( lines[ scanner.getLineNumber() - 2 ] );
 			//PRINT( lines[ scanner.getLineNmbr() - 2 ] )
 		}
 /* EOF */
 		else if( token->getCode() == Scanner::TC_EOF )
 		{
-			sourceLines.push_back( lines[ scanner.getLineNmbr() - 1 ] );
+			sourceLines.push_back( lines[ scanner.getLineNumber() - 1 ] );
 			//PRINT( lines[ scanner.getLineNmbr() - 1 ] )
 			break;
 		}
