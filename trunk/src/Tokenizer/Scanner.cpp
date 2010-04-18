@@ -243,7 +243,7 @@ void Scanner::getAllprintAll()
 	do
 	{
 		getNextToken();
-		cout << setw(3) << setfill('0') << getLineNmbr() << ": " << getTokenInfo( crntToken ) << endl;
+		cout << setw(3) << setfill('0') << getLineNumber() << ": " << getTokenInfo( crntToken ) << endl;
 	} while( crntToken.code != TC_EOF );
 }
 
@@ -319,10 +319,10 @@ const Scanner::Token& Scanner::getNextToken()
 		if( ch == '/' || ch == '*' )
 		{
 			putBackChar();
-			int line = getLineNmbr();
+			int line = getLineNumber();
 			checkComment();
 			
-			commentedLines = getLineNmbr() - line; // update commentedLines
+			commentedLines = getLineNumber() - line; // update commentedLines
 			lineNmbr -= commentedLines; // part of the ultimate hack
 		}
 		else

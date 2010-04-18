@@ -1278,7 +1278,7 @@ INCLUDE_FILE_PATTERNS  =
 # instead of the = operator.
 
 PREDEFINED             = "PROPERTY_RW(_v0_,_v1_,_v2_,_v3_):=_v0_ _v1_;" \
-                         "PROPERTY_R(_v0_,_v1_,_v2_):=_v0_ _v2_;"
+                         "PROPERTY_R(_v0_,_v1_,_v2_):=_v0_ _v1_;"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

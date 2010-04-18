@@ -13,8 +13,8 @@ namespace Parser {
 //=====================================================================================================================================
 // Parser macros                                                                                                                      =
 //=====================================================================================================================================
-#define PARSE_ERR(x) ERROR( "Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNmbr() << "): " << x )
-#define PARSE_WARN(x) WARNING( "Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNmbr() << "): " << x )
+#define PARSE_ERR(x) ERROR( "Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x )
+#define PARSE_WARN(x) WARNING( "Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x )
 
 // common parser errors
 #define PARSE_ERR_EXPECTED(x) PARSE_ERR( "Expected " << x << " and not " << Scanner::getTokenInfo(scanner.getCrntToken()) );
