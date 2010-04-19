@@ -8,9 +8,7 @@
 namespace M {
 
 
-/**
- * @brief For transformations
- */
+/// For transformations
 class Transform
 {
 	PROPERTY_RW( Mat3, rotation, setRotation, getRotation ) ///< @ref PROPERTY_RW : The rotation

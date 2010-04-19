@@ -6,9 +6,8 @@
 #include "App.h"
 #include "Math.h"
 
-/// input namespace
+/// Handle the SDL input
 namespace I {
-
 
 extern void reset();
 extern void handleEvents();
@@ -24,7 +23,6 @@ extern Vec2 mouseVelocity;
 extern bool warpMouse;
 extern bool hideCursor;
 
-
-
 } // end namespace
+
 #endif

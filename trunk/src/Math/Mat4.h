@@ -8,9 +8,7 @@
 namespace M {
 
 
-/**
- * @brief Used mainly for transformations but not necessarily
- */
+/// Used mainly for transformations but not necessarily
 class Mat4
 {
 	private:

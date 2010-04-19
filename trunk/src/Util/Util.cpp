@@ -71,7 +71,6 @@ Vec<string> getFileLines( const char* filename )
 //=====================================================================================================================================
 // cutPath                                                                                                                            =
 //=====================================================================================================================================
-/// Used only to cut the path from __FILE__ and return the actual file name and some other cases
 char* cutPath( const char* path )
 {
 	char* str = (char*)path + strlen(path) - 1;
@@ -107,7 +106,6 @@ string getPath( const char* path )
 //=====================================================================================================================================
 // getFunctionFromPrettyFunction                                                                                                      =
 //=====================================================================================================================================
-/// The function gets __PRETTY_FUNCTION__ and strips it to get only the function name with its namespace
 string getFunctionFromPrettyFunction( const char* prettyFunction )
 {
 	string ret( prettyFunction );

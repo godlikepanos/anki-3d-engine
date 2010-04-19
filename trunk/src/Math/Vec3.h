@@ -8,6 +8,7 @@
 namespace M {
 
 
+/// 3D vector. One of the most used classes
 class Vec3
 {
 	public:

@@ -8,9 +8,7 @@
 namespace M {
 
 
-/**
- * @brief Mainly used for rotations. It includes many helpful member functions
- */
+/// Mainly used for rotations. It includes many helpful member functions
 class Mat3
 {
 	private:

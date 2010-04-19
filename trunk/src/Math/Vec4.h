@@ -8,6 +8,7 @@
 namespace M {
 
 
+/// 4D vector
 class Vec4
 {
 	public:

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * For Internal use in math lib
+ */
+
 #ifndef _MATHFORWARDDECLS_H_
 #define _MATHFORWARDDECLS_H_
 
