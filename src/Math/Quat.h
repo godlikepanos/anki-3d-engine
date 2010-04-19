@@ -8,9 +8,7 @@
 namespace M {
 
 
-/**
- * Used in rotations
- */
+/// Used in rotations
 class Quat
 {
 	public:

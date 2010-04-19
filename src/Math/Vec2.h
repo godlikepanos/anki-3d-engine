@@ -8,6 +8,7 @@
 namespace M {
 
 
+/// 2D vector
 class Vec2
 {
 	public:

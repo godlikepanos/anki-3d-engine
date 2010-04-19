@@ -52,7 +52,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 	#define __G_FUNCTION__ __func__
 #endif
 
-#if defined( _TERMINAL_COLORING_ )
+#if defined( _TERMINAL_COLORING_ ) && defined( _PLATFORM_LINUX_ )
 		// for the colors and formating see http://www.dreamincode.net/forums/showtopic75171.htm
     #define COL_ERROR "\033[6;31;6m"
     #define COL_WARNING "\033[6;33;6m"
@@ -69,29 +69,31 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
     #define COL_DEFAULT ""
 #endif
 
+/// For internal use
 #define GENERAL_ERR( x, y, col ) \
 	cerr << col << x << " (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
 
+/// For internal use
 #define GENERAL_MSG( x, y, col ) \
 	cout << col << x << " (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
 
-/// in ERROR you can write something like this: ERROR( "tralala" << 10 << ' ' )
+/// Use it like this: ERROR( "tralala" << 10 << ' ' )
 #define ERROR( x ) GENERAL_ERR( "Error", x, COL_ERROR )
 
-/// WARNING
+/// Show a warning
 #define WARNING( x ) GENERAL_ERR( "Warning", x, COL_WARNING );
 
-/// FATAL ERROR
+/// Show an error and exit application
 #define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); };
 
-/// INFO
+/// Show an info message
 #define INFO( x ) { GENERAL_MSG( "Info", x, COL_INFO ) }
 
-/// DEBUG_ERR
+/// Reverse assertion
 #ifdef _DEBUG_
 	#define DEBUG_ERR( x ) \
 		if( x ) \
-			GENERAL_ERR( "Assertion", #x, COL_DEBUG_ERR );
+			GENERAL_ERR( "Debug err", #x, COL_DEBUG_ERR );
 #else
     #define DEBUG_ERR( x )
 #endif
@@ -110,12 +112,12 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 
 
 /**
- * @brief Read write property
+ * Read write property
  *
- * - It concatenates and creates a unique type so it can accept pointers
+ * - It creates a unique type so it can work with pointers
  * - The get funcs are coming into two flavors, one const and one non-const. The property is read-write after all so the non-const is
  *   acceptable
- * - Dont use it with semicolon at the end eg PROPERTY_RW( .... );
+ * - Dont use it with semicolon at the end (eg PROPERTY_RW( .... );) because of a doxygen bug
  */
 #define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
 	private: \
@@ -133,10 +135,10 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 		}
 
 /**
- * @brief Read only property
+ * Read only property
  *
- * - It concatenates and creates a unique type so it can accept pointers
- * - Dont use it with semicolon at the end eg PROPERTY_R( .... );
+ * - It creates a unique type so it can work with pointers
+ * - Dont use it with semicolon at the end (eg PROPERTY_RW( .... );) because of a doxygen bug
  */
 #define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
 	private: \
@@ -170,7 +172,7 @@ template <typename Type> inline void MemZero( Type& t )
 // Vec                                                                                                                              =
 //=====================================================================================================================================
 /**
- * @brief This is a wrapper of std::vector that adds new functionality
+ * This is a wrapper of std::vector that adds new functionality
  */
 template<typename Type> class Vec: public vector<Type>
 {
@@ -198,9 +200,9 @@ template<typename Type> class Vec: public vector<Type>
 };
 
 
-//====================================================================================================================================
-// Memory allocation information for Linux                                                                                           =
-//====================================================================================================================================
+//=====================================================================================================================================
+// Memory allocation information for Linux                                                                                            =
+//=====================================================================================================================================
 #if defined( _PLATFORM_LINUX_ )
 
 #include <malloc.h>
@@ -234,8 +236,11 @@ inline void printMallInfoDiff( const Mallinfo& prev, const Mallinfo& now )
 
 
 //=====================================================================================================================================
-//                                                                                                                                    =
+// Application                                                                                                                        =
 //=====================================================================================================================================
+/**
+ * The only public variable @see App
+ */
 extern class App* app;
 
 
