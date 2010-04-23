@@ -35,7 +35,7 @@ bool Skeleton::load( const char* filename )
 			PARSE_ERR_EXPECTED( "string" );
 			return false;
 		}
-		bone.setName( token->getValue().getString() );
+		bone.name = token->getValue().getString();
 
 		// head
 		if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 3, &bone.head[0] ) ) return false;

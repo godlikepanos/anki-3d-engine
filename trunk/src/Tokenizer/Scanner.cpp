@@ -7,11 +7,11 @@
 #include "Scanner.h"
 
 
-#define SERROR(x) ERROR( "SCAN_ERR (" << scriptName << ':' << lineNmbr << "): " << x )
+#define SERROR(x) ERROR( "Scanning Error (" << scriptName << ':' << lineNmbr << "): " << x )
 
 
 //=====================================================================================================================================
-// Token                                                                                                                            =
+// Constructor                                                                                                                        =
 //=====================================================================================================================================
 Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
 {
@@ -102,15 +102,15 @@ void Scanner::initAsciiMap()
 	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] = asciiLookupTable['\r'] = AC_WHITESPACE;
 	asciiLookupTable['\n'] = AC_ERROR; // newline is unacceptable char
 	                   
-	asciiLookupTable['\"']          = AC_DOUBLEQUOTE;
-	asciiLookupTable['\'']          = AC_QUOTE;
+	asciiLookupTable['\"']         = AC_DOUBLEQUOTE;
+	asciiLookupTable['\'']         = AC_QUOTE;
 	asciiLookupTable[(int)eofChar] = AC_EOF;
-	asciiLookupTable['_']           = AC_LETTER;
+	asciiLookupTable['_']          = AC_LETTER;
 }
 
 
 //=====================================================================================================================================
-// Scanner                                                                                                                          =
+// Constructor                                                                                                                        =
 //=====================================================================================================================================
 Scanner::Scanner( bool newlinesAsWhitespace_ ):
 	newlinesAsWhitespace(newlinesAsWhitespace_), commentedLines(0), inStream(NULL)
@@ -125,18 +125,9 @@ Scanner::Scanner( bool newlinesAsWhitespace_ ):
 
 //=====================================================================================================================================
 // getLine                                                                                                                            =
-// it simply gets a new line from the file and it points to the first char of that line                                               =
 //=====================================================================================================================================
 void Scanner::getLine()
 {
-	/*if( inStream->eof() )
-		pchar = &eofChar;
-	else
-	{
-		inStream->getline( line, MAX_SCRIPT_LINE_LEN - 1 );
-		pchar = &line[0];
-		++lineNmbr;
-	}*/
 	if( !inStream->getline( line, MAX_SCRIPT_LINE_LEN - 1, '\n' ) )
 		pchar = &eofChar;
 	else
@@ -144,16 +135,8 @@ void Scanner::getLine()
 		pchar = &line[0];
 		++lineNmbr;
 	}
+
 	DEBUG_ERR( inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10 ); // too big line
-	
-	/*if( *pchar != eofChar )
-	{
-		PRINT( lineNmbr << ": " << line );
-	}
-	else
-	{
-		PRINT( lineNmbr << ": eof" );
-	}*/
 }
 
 
@@ -184,7 +167,7 @@ char Scanner::putBackChar()
 
 
 //=====================================================================================================================================
-// GetTokenInfo                                                                                                                       =
+// getTokenInfo                                                                                                                       =
 //=====================================================================================================================================
 string Scanner::getTokenInfo( const Token& token )
 {
@@ -236,9 +219,9 @@ void Scanner::printTokenInfo( const Token& token )
 
 
 //=====================================================================================================================================
-// getAllprintAll                                                                                                                     =
+// getAllPrintAll                                                                                                                     =
 //=====================================================================================================================================
-void Scanner::getAllprintAll()
+void Scanner::getAllPrintAll()
 {
 	do
 	{
@@ -328,7 +311,7 @@ const Scanner::Token& Scanner::getNextToken()
 		else
 		{
 			putBackChar();
-			goto crappy_label;
+			goto crappyLabel;
 		}
 	}
 	else if( *pchar == '.' )
@@ -349,7 +332,7 @@ const Scanner::Token& Scanner::getNextToken()
 	}
 	else
 	{
-		crappy_label:
+		crappyLabel:
 		switch( asciiLookup(*pchar) )
 		{
 			case AC_WHITESPACE : getNextChar();  goto start;
@@ -384,7 +367,7 @@ CHECKERS (bellow only checkers)                                                 
 */
 
 //=====================================================================================================================================
-// CheckWord                                                                                                                          =
+// checkWord                                                                                                                          =
 //=====================================================================================================================================
 bool Scanner::checkWord()
 {
@@ -427,7 +410,7 @@ bool Scanner::checkWord()
 
 
 //=====================================================================================================================================
-// CheckComment                                                                                                                       =
+// checkComment                                                                                                                       =
 //=====================================================================================================================================
 bool Scanner::checkComment()
 {
@@ -473,16 +456,16 @@ bool Scanner::checkComment()
 
 
 //=====================================================================================================================================
-// CheckNumber                                                                                                                        =
+// checkNumber                                                                                                                        =
 //=====================================================================================================================================
 bool Scanner::checkNumber()
 {
 	//DEBUG_ERR( sizeof(long) != 8 ); // ulong must be 64bit
-	long num = 0;      // value of the number & part of the float num before '.'
-	long fnum = 0;     // part of the float num after '.'
-	long dad = 0;      // digits after dot (for floats)
+	long num = 0;     // value of the number & part of the float num before '.'
+	long fnum = 0;    // part of the float num after '.'
+	long dad = 0;     // digits after dot (for floats)
 	bool expSign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
-	long exp = 0;      // the exponent in case float is represented in mant/exp format
+	long exp = 0;     // the exponent in case float is represented in mant/exp format
 	char* tmpStr = crntToken.asString;
 	crntToken.dataType = DT_INT;
 	uint asc;
@@ -721,7 +704,7 @@ bool Scanner::checkNumber()
 
 
 //=====================================================================================================================================
-// CheckString                                                                                                                        =
+// checkString                                                                                                                        =
 //=====================================================================================================================================
 bool Scanner::checkString()
 {
