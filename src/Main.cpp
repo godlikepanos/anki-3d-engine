@@ -35,7 +35,7 @@
 #include "ParticleEmitter.h"
 #include "PhyCharacter.h"
 
-App* app;
+App* app = NULL;
 
 // map (hard coded)
 MeshNode* floor__,* sarge,* horse,* crate;
@@ -198,7 +198,6 @@ void init()
 	srand( unsigned(time(NULL)) );
 	mathSanityChecks();
 
-	app = new App;
 	app->initWindow();
 	uint ticks = app->getTicks();
 
@@ -280,10 +279,11 @@ void init()
 //=====================================================================================================================================
 // main                                                                                                                               =
 //=====================================================================================================================================
-int main( int /*argc*/, char* /*argv*/[] )
+int main( int argc, char* argv[] )
 {
 	App::printAppInfo();
 
+	app = new App( argc, argv );
 	init();
 
 	INFO( "Entering main loop" );

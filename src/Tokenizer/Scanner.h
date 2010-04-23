@@ -21,6 +21,7 @@ class Scanner
 
 		static char eofChar; ///< Special end of file character
 
+		// checkers
 		bool checkWord();
 		bool checkComment();
 		bool checkNumber();
@@ -28,7 +29,7 @@ class Scanner
 		bool checkChar();
 		bool checkSpecial();
 
-		void getLine(); ///< Reads a line from the iostream
+		void getLine(); ///< It reads a new line from the iostream and it points @ref pchar to the beginning of that line
 		char getNextChar(); ///< Get the next char from the @ref line. If @ref line empty then get new line. It returns '\\0' if we are in the end of the line
 		char putBackChar(); ///< Put the char that Scanner::GetNextChar got back to the current line
 
@@ -63,10 +64,10 @@ class Scanner
 
 		
 	//===================================================================================================================================
-	// token types                                                                                                                      =
+	// Token and token info                                                                                                             =
 	//===================================================================================================================================
 	public:
-		/// The TokenCode is an enum that defines the Token
+		/// The TokenCode is an enum that defines the Token type
 		enum TokenCode
 		{
 			// general codes
@@ -99,7 +100,7 @@ class Scanner
 			DT_STR
 		};
 
-		/// Used inside the Token
+		/// Used inside the @ref Token, its a variant that holds the data of the Token
 		class TokenDataVal
 		{
 			friend class Scanner;
@@ -114,7 +115,7 @@ class Scanner
 					char   char_;
 					ulong  int_;
 					double float_;
-					char*  string; ///< points to @ref Token::asString if the token is string
+					char*  string; ///< points to @ref Token::asString if the token is string or identifier
 				};
 
 			public:
@@ -140,6 +141,8 @@ class Scanner
 			public:
 				Token(): code( TC_ERROR ) {}
 				Token( const Token& b );
+
+				const char* getString() const { return asString; }
 		}; // end class Token
 
 	//===================================================================================================================================
@@ -169,12 +172,12 @@ class Scanner
 		 * Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines in case of
 		 * newlinesAsWhitespace is false
 		 */
-		int     commentedLines;
+		int   commentedLines;
 
 		// input
-		fstream      inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
-		iostream*    inStream; ///< Points to either @ref inFstream or an external std::iostream
-		char         scriptName[64]; ///< The name of the input stream. Mostly used for the error messages inside the @ref Scanner
+		fstream   inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
+		iostream* inStream; ///< Points to either @ref inFstream or an external std::iostream
+		char      scriptName[64]; ///< The name of the input stream. Mostly used for the error messages inside the @ref Scanner
 
 	//===================================================================================================================================
 	// public funcs                                                                                                                     =
@@ -182,7 +185,7 @@ class Scanner
 	public:
 		/**
 		 * The one and only constructor
-		 * @param newlinesAsWhitespace If false the Scanner will return newline Tokens everytime if finds a newline. True is the default behavior
+		 * @param newlinesAsWhitespace If false the Scanner will return a newline @ref Token everytime if finds a newline. True is the default behavior
 		 */
 		Scanner( bool newlinesAsWhitespace = true );
 		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
@@ -193,7 +196,7 @@ class Scanner
 
 		static void   printTokenInfo( const Token& token ); ///< Print info of the given token
 		static string getTokenInfo( const Token& token ); ///< Get a string with the info of the given token
-		       void   getAllprintAll();
+		       void   getAllPrintAll(); ///< Extracts all tokens and prints them. Used for debugging
 
 		const Token& getNextToken(); ///< Get the next token from the stream
 		const Token& getCrntToken() const { return crntToken; } ///< Accessor for the current token

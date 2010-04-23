@@ -81,10 +81,10 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #define ERROR( x ) GENERAL_ERR( "Error", x, COL_ERROR )
 
 /// Show a warning
-#define WARNING( x ) GENERAL_ERR( "Warning", x, COL_WARNING );
+#define WARNING( x ) GENERAL_ERR( "Warning", x, COL_WARNING )
 
 /// Show an error and exit application
-#define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); };
+#define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); }
 
 /// Show an info message
 #define INFO( x ) { GENERAL_MSG( "Info", x, COL_INFO ) }
@@ -93,7 +93,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #ifdef _DEBUG_
 	#define DEBUG_ERR( x ) \
 		if( x ) \
-			GENERAL_ERR( "Debug err", #x, COL_DEBUG_ERR );
+			GENERAL_ERR( "Debug err", #x, COL_DEBUG_ERR )
 #else
     #define DEBUG_ERR( x )
 #endif
@@ -169,7 +169,7 @@ template <typename Type> inline void MemZero( Type& t )
 
 
 //=====================================================================================================================================
-// Vec                                                                                                                              =
+// Vec                                                                                                                                =
 //=====================================================================================================================================
 /**
  * This is a wrapper of std::vector that adds new functionality

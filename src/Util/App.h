@@ -5,7 +5,7 @@
 
 
 /**
- * @brief This class holds all the global objects of the application. Its also responsible for some of the SDL stuff.
+ * This class holds all the global objects of the application and its also responsible for some of the SDL stuff.
  * It should be singleton
  */
 class App
@@ -27,7 +27,7 @@ class App
 	public:
 		uint timerTick;
 
-		App();
+		App( int argc, char* argv[] );
 		~App() {}
 		void initWindow();
 		void quitApp( int code );
