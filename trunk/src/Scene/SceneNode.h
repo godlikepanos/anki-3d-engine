@@ -30,7 +30,7 @@ class SceneNode
 			NT_PARTICLE_EMITTER
 		};
 
-		Vec3  translationLspace;
+		/*Vec3  translationLspace;
 		Mat3  rotationLspace;
 		float scaleLspace;
 
@@ -38,7 +38,7 @@ class SceneNode
 		Mat3  rotationWspace;
 		float scaleWspace;
 
-		Mat4 transformationWspace;
+		Mat4 transformationWspace;*/
 
 		SceneNode* parent;
 		Vec<SceneNode*> childs;
@@ -63,15 +63,14 @@ class SceneNode
 		virtual void deinit() = 0;
 		virtual void updateWorldStuff() { updateWorldTransform(); } ///< This update happens only when the object gets moved. Override it if you want more
 		void updateWorldTransform();
-		void rotateLocalX( float angDegrees ) { rotationLspace.rotateXAxis( angDegrees ); }
-		void rotateLocalY( float angDegrees ) { rotationLspace.rotateYAxis( angDegrees ); }
-		void rotateLocalZ( float angDegrees ) { rotationLspace.rotateZAxis( angDegrees ); }
+		void rotateLocalX( float angDegrees ) { localTransform.getRotation().rotateXAxis( angDegrees ); }
+		void rotateLocalY( float angDegrees ) { localTransform.getRotation().rotateYAxis( angDegrees ); }
+		void rotateLocalZ( float angDegrees ) { localTransform.getRotation().rotateZAxis( angDegrees ); }
 		void moveLocalX( float distance );
 		void moveLocalY( float distance );
 		void moveLocalZ( float distance );
 		void addChild( SceneNode* node );
 		void removeChild( SceneNode* node );
-		void setLocalTransformation( const Vec3& t, const Mat3& r, float s ) { translationLspace=t; rotationLspace=r; scaleLspace=s; }
 };
 
 

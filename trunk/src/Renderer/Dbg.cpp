@@ -113,8 +113,8 @@ void init()
 
 float projectRadius( float r, const Vec3& location, const Camera& cam )
 {
-	Vec3 axis = cam.rotationWspace.getXAxis();
-	float c = axis.dot( cam.translationWspace );
+	Vec3 axis = cam.getWorldTransform().getRotation().getXAxis();
+	float c = axis.dot( cam.getWorldTransform().getOrigin() );
 	float dist = axis.dot( location ) - c;
 
 	/*if( dist > 0.0 )
@@ -374,7 +374,25 @@ void renderSphere( float r, int p )
 //=====================================================================================================================================
 void renderCube( bool cols, float size )
 {
-	size *= 0.5f;
+	Vec3 maxPos( 0.5 );
+	Vec3 minPos( -0.5 );
+	float vertPositions[] = { maxPos.x, maxPos.y, maxPos.z,   // right top front
+	                          minPos.x, maxPos.y, maxPos.z,   // left top front
+	                          minPos.x, minPos.y, maxPos.z,   // left bottom front
+	                          maxPos.x, minPos.y, maxPos.z,   // right bottom front
+	                          maxPos.x, maxPos.y, minPos.z,   // right top back
+	                          minPos.x, maxPos.y, minPos.z,   // left top back
+	                          minPos.x, minPos.y, minPos.z,   // left bottom back
+	                          maxPos.x, minPos.y, minPos.z }; // right bottom back
+
+	uint vertIndices [] = { 0, 1, 2, 3, 4, 5, 6, 7, 4, 0, 3, 7, 1, 5, 6, 2, 0, 4, 5, 1, 3, 2, 6, 7, 5, 4, 7, 6 };
+
+	glEnableClientState( GL_VERTEX_ARRAY );
+	glVertexPointer( 3, GL_FLOAT, 0, vertPositions );
+	glDrawElements( GL_QUADS, sizeof(vertIndices)/sizeof(uint), GL_UNSIGNED_INT, vertIndices );
+	glDisableClientState( GL_VERTEX_ARRAY );
+
+	/*size *= 0.5;
 	glBegin(GL_QUADS);
 		// Front Face
 		if(cols) glColor3f( 0.0, 0.0, 1.0 );
@@ -418,7 +436,7 @@ void renderCube( bool cols, float size )
 		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size,  size);
 		glTexCoord2f(1.0, 1.0); glVertex3f(-size,  size,  size);
 		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size, -size);
-	glEnd();
+	glEnd();*/
 }
 
 

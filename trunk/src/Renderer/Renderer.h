@@ -49,7 +49,9 @@ extern void DrawQuad( int vertCoords_uni_loc );
 
 // ogl and glu wrappers
 inline void   multMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   multMatrix( const Transform& trf ) { glMultMatrixf( &(Mat4(trf).getTransposed())(0,0) ); } ///< OpenGL wrapper
 inline void   loadMatrix( const Mat4& m4 ) { glLoadMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
+inline void   loadMatrix( const Transform& trf ) { glLoadMatrixf( &(Mat4(trf).getTransposed())(0,0) ); } ///< OpenGL wrapper
 
 inline void   color3( const Vec3& v ) { glColor3fv( &((Vec3&)v)[0] ); } ///< OpenGL wrapper
 inline void   color4( const Vec4& v ) { glColor4fv( &((Vec4&)v)[0] ); } ///< OpenGL wrapper

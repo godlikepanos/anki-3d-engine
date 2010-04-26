@@ -26,7 +26,7 @@ class MotionState: public btMotionState
 		virtual ~MotionState()
 		{}
 
-		virtual void getWorldTransform( btTransform &worldTrans ) const
+		virtual void getWorldTransform( btTransform& worldTrans ) const
 		{
 			worldTrans = worldTransform;
 		}
@@ -36,13 +36,18 @@ class MotionState: public btMotionState
 			return worldTransform;
 		}
 
-		virtual void setWorldTransform( const btTransform &worldTrans )
+		virtual void setWorldTransform( const btTransform& worldTrans )
 		{
+			float originalScale = node->getLocalTransform().getScale();
 			worldTransform = worldTrans;
-			btQuaternion rot = worldTrans.getRotation();
+
+			node->setLocalTransform( Transform( toAnki( worldTrans ) ) );
+			node->getLocalTransform().setScale( originalScale );
+
+			/*btQuaternion rot = worldTrans.getRotation();
 			node->rotationLspace = Mat3( Quat( toAnki(rot) ) );
 			btVector3 pos = worldTrans.getOrigin();
-			node->translationLspace = Vec3( toAnki(pos) );
+			node->translationLspace = Vec3( toAnki(pos) );*/
 		}
 };
 

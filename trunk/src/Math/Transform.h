@@ -24,6 +24,7 @@ class Transform
 		// funcs
 		void setIdentity();
 		static const Transform& getIdentity();
+		static Transform combineTransformations( const Transform& a, const Transform& b ); ///< @see M::combineTransformations
 };
 
 

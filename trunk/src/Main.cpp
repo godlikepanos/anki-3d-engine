@@ -128,7 +128,7 @@ void initPhysics()
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 					MeshNode* crate = new MeshNode;
 					crate->init( "models/crate0/crate0.mesh" );
-					crate->scaleLspace = 1.11;
+					crate->getLocalTransform().setScale( 1.11 );
 
 					Transform trf( SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0 );
 					body = app->getScene()->getPhyWorld()->createNewRigidBody( mass, trf, colShape, crate );
@@ -156,7 +156,7 @@ void initPhysics()
 
 
 
-	/*for (int i=0; i<app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray().size();i++)
+	/*for( int i=0; i<app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray().size();i++ )
 	{
 		btCollisionObject* colObj = app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray()[i];
 		btRigidBody* body = btRigidBody::upcast(colObj);
@@ -214,45 +214,45 @@ void init()
 	// lights
 	point_lights[0] = new PointLight();
 	point_lights[0]->init( "maps/temple/light0.light" );
-	point_lights[0]->setLocalTransformation( Vec3( -1.0, 2.4, 1.0 ), Mat3::getIdentity(), 1.0 );
+	point_lights[0]->setLocalTransform( Transform( Vec3( -1.0, 2.4, 1.0 ), Mat3::getIdentity(), 1.0 ) );
 	point_lights[1] = new PointLight();
 	point_lights[1]->init( "maps/temple/light1.light" );
-	point_lights[1]->setLocalTransformation( Vec3( 2.5, 1.4, 1.0 ), Mat3::getIdentity(), 1.0 );
+	point_lights[1]->setLocalTransform( Transform( Vec3( 2.5, 1.4, 1.0 ), Mat3::getIdentity(), 1.0 ) );
 
 	spot_lights[0] = new SpotLight();
 	spot_lights[0]->init( "maps/temple/light2.light" );
-	spot_lights[0]->setLocalTransformation( Vec3( 1.3, 4.3, 3.0 ), Mat3( Euler(toRad(-20), toRad(20), 0.0) ), 1.0 );
+	spot_lights[0]->setLocalTransform( Transform( Vec3( 1.3, 4.3, 3.0 ), Mat3( Euler(toRad(-20), toRad(20), 0.0) ), 1.0 ) );
 	spot_lights[1] = new SpotLight();
 	spot_lights[1]->init( "maps/temple/light3.light" );
-	spot_lights[1]->setLocalTransformation( Vec3( -2.3, 6.3, 2.9 ), Mat3( Euler(toRad(-70), toRad(-20), 0.0) ), 1.0 );
+	spot_lights[1]->setLocalTransform( Transform( Vec3( -2.3, 6.3, 2.9 ), Mat3( Euler(toRad(-70), toRad(-20), 0.0) ), 1.0 ) );
 
 	// horse
 	horse = new MeshNode();
 	horse->init( "meshes/horse/horse.mesh" );
-	horse->setLocalTransformation( Vec3( -2, 0, 1 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.5 );
+	horse->setLocalTransform( Transform( Vec3( -2, 0, 1 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.5 ) );
 	
 	// sarge
 	sarge = new MeshNode();
 	sarge->init( "meshes/sphere/sphere16.mesh" );
-	//sarge->setLocalTransformation( Vec3( 0, -2.8, 1.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 1.1 );
-	sarge->setLocalTransformation( Vec3( 0, 2.0, 2.0 ), Mat3::getIdentity(), 0.4 );
+	//sarge->setLocalTransform( Vec3( 0, -2.8, 1.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 1.1 );
+	sarge->setLocalTransform( Transform( Vec3( 0, 2.0, 2.0 ), Mat3::getIdentity(), 0.4 ) );
 	
 	// floor
 	floor__ = new MeshNode();
 	floor__->init( "maps/temple/Cube.019.mesh" );
-	floor__->setLocalTransformation( Vec3(0.0, -0.19, 0.0), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.8 );
+	floor__->setLocalTransform( Transform( Vec3(0.0, -0.19, 0.0), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.8 ) );
 
 	// imp	
 	imp = new SkelModelNode();
 	imp->init( "models/imp/imp.smdl" );
-	imp->setLocalTransformation( Vec3( 0.0, 2.11, 0.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.7 );
+	imp->setLocalTransform( Transform( Vec3( 0.0, 2.11, 0.0 ), Mat3( Euler(-M::PI/2, 0.0, 0.0) ), 0.7 ) );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = Rsrc::skelAnims.load( "models/imp/walk.imp.anim" );
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;
 	partEmitter->init( NULL );
-	partEmitter->translationLspace = Vec3( 3.0, 0.0, 0.0 );
+	partEmitter->getLocalTransform().setOrigin( Vec3( 3.0, 0.0, 0.0 ) );
 
 	// crate
 	/*crate = new MeshNode;
@@ -330,10 +330,10 @@ int main( int argc, char* argv[] )
 		}
 		if( I::keys[SDLK_q] ) mover->rotateLocalZ( ang );
 		if( I::keys[SDLK_e] ) mover->rotateLocalZ( -ang );
-		if( I::keys[SDLK_PAGEUP] ) mover->scaleLspace += scale ;
-		if( I::keys[SDLK_PAGEDOWN] ) mover->scaleLspace -= scale ;
+		if( I::keys[SDLK_PAGEUP] ) mover->getLocalTransform().getScale() += scale ;
+		if( I::keys[SDLK_PAGEDOWN] ) mover->getLocalTransform().getScale() -= scale ;
 
-		if( I::keys[SDLK_k] ) app->getActiveCam()->lookAtPoint( point_lights[0]->translationWspace );
+		if( I::keys[SDLK_k] ) app->getActiveCam()->lookAtPoint( point_lights[0]->getWorldTransform().getOrigin() );
 
 
 		if( I::keys[SDLK_o] == 1 )
@@ -345,7 +345,7 @@ int main( int argc, char* argv[] )
 			body->forceActivationState( ACTIVE_TAG );
 		}
 
-		mover->rotationLspace.reorthogonalize();
+		mover->getLocalTransform().getRotation().reorthogonalize();
 
 		//static_cast<btRigidBody*>(dynamicsWorld->getCollisionObjectArray()[1])->getMotionState()->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
 		//dynamicsWorld->getCollisionObjectArray()[3]->setWorldTransform( toBt(point_lights[0]->transformationWspace) );
@@ -368,8 +368,8 @@ int main( int argc, char* argv[] )
 		Ui::setFontWidth( 0.03 );
 		Ui::printf( "frame:%d fps:%dms\n", R::framesNum, (App::getTicks()-ticks_) );
 		//Ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
-		Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
-								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );
+		/*Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
+								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );*/
 
 		if( I::keys[SDLK_ESCAPE] ) break;
 		if( I::keys[SDLK_F11] ) app->togleFullScreen();

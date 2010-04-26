@@ -13,7 +13,7 @@ void ParticleEmitter::Particle::render()
 	if( lifeTillDeath < 0 ) return;
 
 	glPushMatrix();
-	R::multMatrix( transformationWspace );
+	R::multMatrix( getWorldTransform() );
 
 	glBegin( GL_POINTS );
 		glVertex3fv( &(Vec3(0.0))[0] );
@@ -148,7 +148,7 @@ void ParticleEmitter::update()
 			{
 				pos = minStartingPos;
 			}
-			pos += translationWspace;
+			pos += getWorldTransform().getOrigin();
 			part->body->setWorldTransform( toBt( Mat4( pos, Mat3::getIdentity(), 1.0 ) ) );
 
 			// do the rest
@@ -180,14 +180,15 @@ void ParticleEmitter::render()
 	uint vertIndices [] = { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 3, 7, 2, 6 };
 
 	glPushMatrix();
-	R::multMatrix( transformationWspace );
+	R::multMatrix( getWorldTransform() );
 
 	R::color3( Vec3(1.0) );
 
-	glEnableClientState( GL_VERTEX_ARRAY );
+	/*glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, vertPositions );
 	glDrawElements( GL_LINES, sizeof(vertIndices)/sizeof(uint), GL_UNSIGNED_INT, vertIndices );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	glDisableClientState( GL_VERTEX_ARRAY );*/
+	R::Dbg::renderCube();
 
 	glPopMatrix();
 }

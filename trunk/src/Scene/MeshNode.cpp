@@ -42,7 +42,7 @@ void MeshNode::deinit()
 void MeshNode::render( Material* mtl ) const
 {
 	glPushMatrix();
-	R::multMatrix( transformationWspace );
+	R::multMatrix( Mat4(getWorldTransform()) );
 
 	// if we have skeleton controller
 	if( meshSkelCtrl )
