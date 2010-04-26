@@ -11,9 +11,9 @@ This will generate a "Makefile". To build just type:
 
 make
 
-And the build will will begin. 
+And the build will begin. 
 
-Sometimes I forget to update all the targets. The debug is always updated though
+WARNING: Sometimes I forget to update all the targets. The debug is always updated though
 
 The gen.cfg.py files contain the build options of every target. Their format is pretty straightforward and minimal
 

@@ -42,5 +42,13 @@ inline const Transform& Transform::getIdentity()
 	return ident;
 }
 
+// combineTransformations
+inline Transform Transform::combineTransformations( const Transform& a, const Transform& b )
+{
+	Transform out;
+	M::combineTransformations( a.origin, a.rotation, a.scale, b.origin, b.rotation, b.scale, out.origin, out.rotation, out.scale );
+	return out;
+}
+
 
 } // end namespace

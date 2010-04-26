@@ -73,6 +73,8 @@ class Vec3
 		void  transform( const Vec3& translate, const Quat& rotate );
 		Vec3  getTransformed( const Mat4& transform ) const;  ///< 9 muls, 9 adds
 		void  transform( const Mat4& transform );
+		Vec3  getTransformed( const Transform& transform ) const;
+		void  transform( const Transform& transform );
 };
 
 

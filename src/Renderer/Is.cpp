@@ -90,7 +90,7 @@ static void initSMOUVS()
 static void DrawSMOUVS( const PointLight& light )
 {
 	const float scale = 1.2;
-	R::multMatrix( Mat4( light.translationWspace, Mat3::getIdentity(), light.radius*scale ) );
+	R::multMatrix( Mat4( light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.radius*scale ) );
 
 	R::noShaders();
 
@@ -341,7 +341,7 @@ static void setStencilMask( const Camera& cam, const SpotLight& light )
 		{ { x, -y, z }, {-x, -y, z }, {-x,  y, z } }, // front bottom left
 	};
 
-	R::multMatrix( lcam.transformationWspace );
+	R::multMatrix( Mat4(lcam.getWorldTransform()) );
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, verts );
 	glDrawArrays( GL_TRIANGLES, 0, tris_num*3 );
@@ -372,7 +372,7 @@ PointLightPass                                                                  
 static void PointLightPass( const Camera& cam, const PointLight& light )
 {
 	//** make a check wether the point light passes the frustum test **
-	bsphere_t sphere( light.translationWspace, light.radius );
+	bsphere_t sphere( light.getWorldTransform().getOrigin(), light.radius );
 	if( !cam.insideFrustum( sphere ) ) return;
 
 	//** set the scissors **
@@ -393,7 +393,7 @@ static void PointLightPass( const Camera& cam, const PointLight& light )
 	shader.locTexUnit( shader.uniLocs.msDepthFai, R::Ms::depthFai, 3 );
 	glUniform2fv( shader.uniLocs.planes, 1, &planes[0] );
 
-	Vec3 lightPosEyeSpace = light.translationWspace.getTransformed( cam.getViewMatrix() );
+	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed( cam.getViewMatrix() );
 	glUniform3fv( shader.uniLocs.lightPos, 1, &lightPosEyeSpace[0] );
 	glUniform1f( shader.uniLocs.lightInvRadius, 1.0/light.radius );
 	glUniform3fv( shader.uniLocs.lightDiffuseCol, 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
@@ -465,7 +465,7 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	glUniform2fv( shdr->uniLocs.planes, 1, &planes[0] );
 
 	// the light params
-	Vec3 light_pos_eye_space = light.translationWspace.getTransformed( cam.getViewMatrix() );
+	Vec3 light_pos_eye_space = light.getWorldTransform().getOrigin().getTransformed( cam.getViewMatrix() );
 	glUniform3fv( shdr->uniLocs.lightPos, 1, &light_pos_eye_space[0] );
 	glUniform1f( shdr->uniLocs.lightInvRadius, 1.0/light.getDistance() );
 	glUniform3fv( shdr->uniLocs.lightDiffuseCol, 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
@@ -482,7 +482,7 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 	// Bias * P_light * V_light * inv( V_cam )
 	static Mat4 bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 tex_projection_mat;
-	tex_projection_mat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * cam.transformationWspace;
+	tex_projection_mat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * Mat4(cam.getWorldTransform());
 	glUniformMatrix4fv( shdr->uniLocs.texProjectionMat, 1, true, &tex_projection_mat[0] );
 
 	// the shadow stuff

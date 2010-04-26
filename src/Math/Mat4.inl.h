@@ -153,7 +153,7 @@ inline Mat4::Mat4( float f )
 // constructor [Transform]
 inline Mat4::Mat4( const Transform& t )
 {
-	ME = Mat4( t.getOrigin(), Mat3(t.getRotation()), t.getScale() );
+	ME = Mat4( t.getOrigin(), t.getRotation(), t.getScale() );
 }
 
 // 4x4 + 4x4

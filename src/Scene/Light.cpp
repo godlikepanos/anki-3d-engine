@@ -59,7 +59,7 @@ static void RenderSphere( const Mat4& tsl, const Vec3& col )
 //=====================================================================================================================================
 void PointLight::render()
 {
-	RenderSphere( transformationWspace, lightProps->getDiffuseColor() );
+	RenderSphere( Mat4(getWorldTransform()), lightProps->getDiffuseColor() );
 }
 
 
@@ -68,5 +68,5 @@ void PointLight::render()
 //=====================================================================================================================================
 void SpotLight::render()
 {
-	RenderSphere( transformationWspace, lightProps->getDiffuseColor() );
+	RenderSphere( Mat4(getWorldTransform()), lightProps->getDiffuseColor() );
 }

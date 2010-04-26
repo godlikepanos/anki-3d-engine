@@ -14,13 +14,9 @@ void SceneNode::commonConstructorCode()
 {
 	parent = NULL;
 	isCompound = false;
-	translationLspace = Vec3( 0.0 );
-	scaleLspace = 1.0;
-	rotationLspace = Mat3::getIdentity();
-	translationWspace = Vec3( 0.0 );
-	scaleWspace = 1.0;
-	rotationWspace = Mat3::getIdentity();
 	bvolumeLspace = NULL;
+	getWorldTransform().setIdentity();
+	getLocalTransform().setIdentity();
 
 	DEBUG_ERR( app->getScene() == NULL );
 	app->getScene()->registerNode( this );
@@ -28,7 +24,7 @@ void SceneNode::commonConstructorCode()
 
 
 //=====================================================================================================================================
-// ~SceneNode                                                                                                                            =
+// Destructor                                                                                                                         =
 //=====================================================================================================================================
 SceneNode::~SceneNode()
 {
@@ -44,22 +40,12 @@ void SceneNode::updateWorldTransform()
 {
 	if( parent )
 	{
-		/* the original code:
-		scaleWspace = parent->scaleWspace * scaleLspace;
-		rotationWspace = parent->rotationWspace * rotationLspace;
-		translationWspace = translationLspace.Transformed( parent->translationWspace, parent->rotationWspace, parent->scaleWspace ); */
-		combineTransformations( parent->translationWspace, parent->rotationWspace, parent->scaleWspace,
-		                        translationLspace, rotationLspace, scaleLspace,
-		                        translationWspace, rotationWspace, scaleWspace );
+		worldTransform = Transform::combineTransformations( parent->getWorldTransform(), localTransform );
 	}
 	else // else copy
 	{
-		scaleWspace = scaleLspace;
-		rotationWspace = rotationLspace;
-		translationWspace = translationLspace;
+		worldTransform = localTransform;
 	}
-
-	transformationWspace = Mat4( translationWspace, rotationWspace, scaleWspace );
 
 
 	// transform the bvolume
@@ -103,20 +89,20 @@ void SceneNode::updateWorldTransform()
 //=====================================================================================================================================
 void SceneNode::moveLocalX( float distance )
 {
-	Vec3 x_axis = rotationLspace.getColumn(0);
-	translationLspace += x_axis * distance;
+	Vec3 x_axis = localTransform.getRotation().getColumn(0);
+	getLocalTransform().getOrigin() += x_axis * distance;
 }
 
 void SceneNode::moveLocalY( float distance )
 {
-	Vec3 y_axis = rotationLspace.getColumn(1);
-	translationLspace += y_axis * distance;
+	Vec3 y_axis = localTransform.getRotation().getColumn(1);
+	getLocalTransform().getOrigin() += y_axis * distance;
 }
 
 void SceneNode::moveLocalZ( float distance )
 {
-	Vec3 z_axis = rotationLspace.getColumn(2);
-	translationLspace += z_axis * distance;
+	Vec3 z_axis = localTransform.getRotation().getColumn(2);
+	getLocalTransform().getOrigin() += z_axis * distance;
 }
 
 
