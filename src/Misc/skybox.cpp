@@ -60,10 +60,10 @@ void Skybox::Render( const Mat3& rotation )
 	glPushMatrix();
 
 	shader->bind();
-	glUniform1i( shader->getUniVar("colormap").getLoc(), 0 );
-	shader->locTexUnit( shader->getUniVar("noisemap").getLoc(), *noise, 1 );
-	glUniform1f( shader->getUniVar("timer").getLoc(), (rotation_ang/(2*PI))*100 );
-	glUniform3fv( shader->getUniVar("sceneAmbientCol").getLoc(), 1, &(Vec3( 1.0, 1.0, 1.0 ) / app->getScene()->getAmbientCol())[0] );
+	glUniform1i( shader->getUniVar("colormap")->getLoc(), 0 );
+	shader->locTexUnit( shader->getUniVar("noisemap")->getLoc(), *noise, 1 );
+	glUniform1f( shader->getUniVar("timer")->getLoc(), (rotation_ang/(2*PI))*100 );
+	glUniform3fv( shader->getUniVar("sceneAmbientCol")->getLoc(), 1, &(Vec3( 1.0, 1.0, 1.0 ) / app->getScene()->getAmbientCol())[0] );
 
 	// set the rotation matrix
 	Mat3 tmp( rotation );

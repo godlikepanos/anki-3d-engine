@@ -40,7 +40,11 @@ class Resource
 	friend class ShaderProg;
 
 	public:
-		virtual bool load( const char* ) = 0;
+		/**
+		 * @param filename The file to load
+		 * @return True on success
+		 */
+		virtual bool load( const char* filename ) = 0;
 		virtual void unload() = 0;
 
 		Resource(): usersNum(0) {}

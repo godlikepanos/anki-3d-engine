@@ -17,20 +17,20 @@ class Camera;
 namespace R { // begin namespace
 
 
-extern uint  w; ///< width of the rendering window
-extern uint  h; ///< height of the rendering window
-//extern float renderingQuality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
+extern uint  w; ///< width of the rendering. Dont confuse with the window width
+extern uint  h; ///< height of the rendering. Dont confuse with the window width
+extern float renderingQuality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
 extern uint  framesNum;
 extern float aspectRatio;
 extern int   screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
 
-extern int  maxColorAtachments; ///< Max color atachements a FBO can accept
+extern int  maxColorAtachments; ///< Max color attachments a FBO can accept
 
 // texture stuff
 extern bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
 extern int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
 extern bool mipmaping; ///< Used in Texture::load. Enables mipmaping increases video memory usage
-extern int  max_anisotropy; ///< Max texture anisotropy. Used in Texture::load
+extern int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
 
 // misc
 extern void takeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
@@ -41,7 +41,7 @@ extern void printLastError(); ///< prints last OpenGL error
 inline const string& getStdShaderPreprocDefines() { extern string std_shader_preproc_defines; return std_shader_preproc_defines; }
 extern void render( const Camera& cam ); ///< The spine function of the renderer
 
-extern float quad_vert_cords [][2];
+extern float quadVertCoords [][2];
 extern void DrawQuad( int vertCoords_uni_loc );
 
 // matrices

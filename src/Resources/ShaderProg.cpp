@@ -227,30 +227,30 @@ bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 //=====================================================================================================================================
 // getUniVar                                                                                                                          =
 //=====================================================================================================================================
-const ShaderProg::Var& ShaderProg::getUniVar( const char* name ) const
+const ShaderProg::Var* ShaderProg::getUniVar( const char* name ) const
 {
 	NameToVarIterator it = uniNameToVar.find( name );
 	if( it == uniNameToVar.end() )
 	{
 		SHADER_ERROR( "Cannot get uniform loc \"" << name << '\"' );
-		return dummyVar;
+		return NULL;
 	}
-	return *(it->second);
+	return it->second;
 }
 
 
 //=====================================================================================================================================
 // getAttribVar                                                                                                                       =
 //=====================================================================================================================================
-const ShaderProg::Var& ShaderProg::getAttribVar( const char* name ) const
+const ShaderProg::Var* ShaderProg::getAttribVar( const char* name ) const
 {
 	NameToVarIterator it = attribNameToVar.find( name );
 	if( it == attribNameToVar.end() )
 	{
 		SHADER_ERROR( "Cannot get attribute loc \"" << name << '\"' );
-		return dummyVar;
+		return NULL;
 	}
-	return *(it->second);
+	return it->second;
 }
 
 
@@ -289,5 +289,5 @@ void ShaderProg::locTexUnit( const char* loc, const Texture& tex, uint tex_unit 
 {
 	DEBUG_ERR( getCurrentProgramGlId() != glId );
 	tex.bind( tex_unit );
-	glUniform1i( getUniVar(loc).getLoc(), tex_unit );
+	glUniform1i( getUniVar(loc)->getLoc(), tex_unit );
 }

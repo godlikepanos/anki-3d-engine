@@ -87,15 +87,15 @@ void init()
 	// init shaders
 	if( !pass0SProg.customLoad( "shaders/PpsHdr.glsl", ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(R::w) + "\n").c_str() ) )
 		FATAL( "See prev error" );
-	pass0SProg.uniLocs.fai = pass0SProg.getUniVar("fai").getLoc();
+	pass0SProg.uniLocs.fai = pass0SProg.getUniVar("fai")->getLoc();
 
 	if( !pass1SProg.customLoad( "shaders/PpsHdr.glsl", ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(h) + "\n").c_str() ) )
 		FATAL( "See prev error" );
-	pass1SProg.uniLocs.fai = pass1SProg.getUniVar("fai").getLoc();
+	pass1SProg.uniLocs.fai = pass1SProg.getUniVar("fai")->getLoc();
 
 	if( !pass2SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_2_\n" ) )
 		FATAL( "See prev error" );
-	pass2SProg.uniLocs.fai = pass2SProg.getUniVar("fai").getLoc();
+	pass2SProg.uniLocs.fai = pass2SProg.getUniVar("fai")->getLoc();
 }
 
 

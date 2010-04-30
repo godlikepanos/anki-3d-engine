@@ -93,7 +93,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #ifdef _DEBUG_
 	#define DEBUG_ERR( x ) \
 		if( x ) \
-			GENERAL_ERR( "Debug err", #x, COL_DEBUG_ERR )
+			GENERAL_ERR( "Debug Err", #x, COL_DEBUG_ERR )
 #else
     #define DEBUG_ERR( x )
 #endif

@@ -175,8 +175,8 @@ class Scanner
 		int   commentedLines;
 
 		// input
-		fstream   inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
-		iostream* inStream; ///< Points to either @ref inFstream or an external std::iostream
+		ifstream  inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
+		istream*  inStream; ///< Points to either @ref inFstream or an external std::istream
 		char      scriptName[64]; ///< The name of the input stream. Mostly used for the error messages inside the @ref Scanner
 
 	//===================================================================================================================================
@@ -191,7 +191,7 @@ class Scanner
 		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
 
 		bool loadFile( const char* filename ); ///< Load a file to extract tokens
-		bool loadIoStream( iostream* iostream_, const char* scriptName_ = "unamed-iostream" ); ///< Load a STL iostream to extract tokens
+		bool loadIstream( istream& iostream_, const char* scriptName_ = "unamed-istream" ); ///< Load a STL iostream to extract tokens
 		void unload();
 
 		static void   printTokenInfo( const Token& token ); ///< Print info of the given token

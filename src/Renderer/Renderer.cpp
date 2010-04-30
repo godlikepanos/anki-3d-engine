@@ -22,13 +22,13 @@ uint framesNum = 0;
 float aspectRatio;
 
 int maxColorAtachments = 0;
-//float renderingQuality = 1.0;
+float renderingQuality = 1.0;
 int screenshotJpegQuality = 90;
 
 static ShaderProg* shdr_final;
 
 // for the pps and is quad rendering
-float quad_vert_cords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
+float quadVertCoords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
 
 
 /**
@@ -39,7 +39,7 @@ string std_shader_preproc_defines;
 
 // texture
 bool mipmaping = true;
-int max_anisotropy = 8;
+int maxAnisotropy = 8;
 int maxTextureUnits = -1;
 bool textureCompression = false;
 
@@ -50,10 +50,10 @@ bool textureCompression = false;
 void DrawQuad( int vertCoords_uni_loc )
 {
 	/*glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 2, GL_FLOAT, 0, quad_vert_cords );
+	glVertexPointer( 2, GL_FLOAT, 0, quadVertCoords );
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableClientState( GL_VERTEX_ARRAY );*/
-	glVertexAttribPointer( vertCoords_uni_loc, 2, GL_FLOAT, false, 0, quad_vert_cords );
+	glVertexAttribPointer( vertCoords_uni_loc, 2, GL_FLOAT, false, 0, quadVertCoords );
 	glEnableVertexAttribArray( vertCoords_uni_loc );
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableVertexAttribArray( vertCoords_uni_loc );
@@ -132,8 +132,8 @@ void init()
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
-	w = app->getWindowWidth() /* * renderingQuality*/;
-	h = app->getWindowHeight() /* * renderingQuality*/;
+	w = app->getWindowWidth() * renderingQuality;
+	h = app->getWindowHeight() * renderingQuality;
 	aspectRatio = float(w)/h;
 
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
@@ -205,7 +205,7 @@ void render( const Camera& cam )
 	glDisable( GL_BLEND );
 
 	shdr_final->bind();
-	shdr_final->locTexUnit( shdr_final->getUniVar("rasterImage").getLoc(), R::Pps::fai, 0 );
+	shdr_final->locTexUnit( shdr_final->getUniVar("rasterImage")->getLoc(), R::Pps::fai, 0 );
 
 	/*const int step = 100;
 	if( R::framesNum < step )
