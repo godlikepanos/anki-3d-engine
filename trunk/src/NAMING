@@ -1,37 +1,38 @@
 This file contains some of the naming shortcuts we use in AnKi
 
 
-Array              : arr
-Animation          : anim
-Application        : app
-Buffer             : buff
-Camera             : cam
-Color              : col
-Controller         : ctrl
-Feature            : feat
-Fragment           : frag
-Geometry           : geom
-Location           : loc
-Material           : mtl
-Matrix             : mat
-Number             : num
-Physics            : phy
-Property           : prop
-Quadrilateral      : quad
-Quaternion         : quat
-Resource           : rsrc
-Rotation           : rot
-Shader             : shdr
-Shader Program     : shaderProg or sProg
-Skeletal Animation : sAnim
-Skeleton           : skel
-Text               : txt
-Texture            : tex
-Transformation     : trf
-Translation        : tsl
-Triangle           : tri
-Utility            : util
-Variable           : var
-Vector             : vec
-Vertex             : vert
+Array                        : arr
+Animation                    : anim
+Application                  : app
+Buffer                       : buff
+Camera                       : cam
+Color                        : col
+Controller                   : ctrl
+Feature                      : feat
+Fragment                     : frag
+Framebuffer Attachable Image : fai
+Geometry                     : geom
+Location                     : loc
+Material                     : mtl
+Matrix                       : mat
+Number                       : num
+Physics                      : phy
+Property                     : prop
+Quadrilateral                : quad
+Quaternion                   : quat
+Resource                     : rsrc
+Rotation                     : rot
+Shader                       : shdr
+Shader Program               : shaderProg or sProg
+Skeletal Animation           : sAnim
+Skeleton                     : skel
+Text                         : txt
+Texture                      : tex
+Transformation               : trf
+Translation                  : tsl
+Triangle                     : tri
+Utility                      : util
+Variable                     : var
+Vector                       : vec
+Vertex                       : vert
 

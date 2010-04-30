@@ -137,18 +137,24 @@ void App::waitForNextFrame()
 //=====================================================================================================================================
 // printAppInfo                                                                                                                       =
 //=====================================================================================================================================
+#if !defined( REVISION )
+	#define REVISION "unknown"
+#endif
+
 void App::printAppInfo()
 {
 	stringstream msg;
-	msg << "App info: ";
+	msg << "App info: debugging ";
 	#if defined( _DEBUG_ )
-		msg << "Debug, ";
+		msg << "on, ";
 	#else
-		msg << "Release, ";
+		msg << "off, ";
 	#endif
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
-	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch);
+	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch) << ", ";
+	msg << "build date " __DATE__ << ", ";
+	msg << "rev " << REVISION;
 
 	INFO( msg.str() )
 }

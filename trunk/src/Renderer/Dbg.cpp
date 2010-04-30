@@ -304,7 +304,7 @@ void renderQuad( float w, float h )
 //=====================================================================================================================================
 // renderSphere                                                                                                                       =
 //=====================================================================================================================================
-void renderSphere( float r, int p )
+void renderSphere( float radius, int complexity )
 {
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
@@ -321,51 +321,58 @@ void renderSphere( float r, int p )
 	float py = 0.0;
 	float pz = 0.0;
 
+	Vec<Vec3> positions;
+	Vec<Vec3> normals;
+	Vec<Vec2> texCoodrs;
 
-	for( int i = 0; i < p/2; ++i )
+	for( int i = 0; i < complexity/2; ++i )
 	{
-		theta1 = i * twopi / p - pidiv2;
-		theta2 = (i + 1) * twopi / p - pidiv2;
+		theta1 = i * twopi / complexity - pidiv2;
+		theta2 = (i + 1) * twopi / complexity - pidiv2;
 
-		glBegin( GL_QUAD_STRIP );
+		for( int j = complexity; j >= 0; --j )
 		{
-			for( int j = p; j >= 0; --j )
-			{
-				theta3 = j * twopi / p;
+			theta3 = j * twopi / complexity;
 
-				float sintheta1, costheta1;
-				sinCos( theta1, sintheta1, costheta1 );
-				float sintheta2, costheta2;
-				sinCos( theta2, sintheta2, costheta2 );
-				float sintheta3, costheta3;
-				sinCos( theta3, sintheta3, costheta3 );
+			float sintheta1, costheta1;
+			sinCos( theta1, sintheta1, costheta1 );
+			float sintheta2, costheta2;
+			sinCos( theta2, sintheta2, costheta2 );
+			float sintheta3, costheta3;
+			sinCos( theta3, sintheta3, costheta3 );
 
 
-				ex = costheta2 * costheta3;
-				ey = sintheta2;
-				ez = costheta2 * sintheta3;
-				px = r * ex;
-				py = r * ey;
-				pz = r * ez;
+			ex = costheta2 * costheta3;
+			ey = sintheta2;
+			ez = costheta2 * sintheta3;
+			px = radius * ex;
+			py = radius * ey;
+			pz = radius * ez;
 
-				glNormal3f( ex, ey, ez );
-				glTexCoord2f( -(j/(float)p) , 2*(i+1)/(float)p );
-				glVertex3f( px, py, pz );
+			positions.push_back( Vec3(px, py, pz) );
+			normals.push_back( Vec3(ex, ey, ez) );
+			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity) );
 
-				ex = costheta1 * costheta3;
-				ey = sintheta1;
-				ez = costheta1 * sintheta3;
-				px = r * ex;
-				py = r * ey;
-				pz = r * ez;
+			ex = costheta1 * costheta3;
+			ey = sintheta1;
+			ez = costheta1 * sintheta3;
+			px = radius * ex;
+			py = radius * ey;
+			pz = radius * ez;
 
-				glNormal3f( ex, ey, ez );
-				glTexCoord2f( -(j/(float)p), 2*i/(float)p );
-				glVertex3f( px, py, pz );
-			}
+			positions.push_back( Vec3(px, py, pz) );
+			normals.push_back( Vec3(ex, ey, ez) );
+			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*i/(float)complexity) );
 		}
-		glEnd();
 	}
+
+	glEnableClientState( GL_VERTEX_ARRAY );
+	glEnableClientState( GL_NORMAL_ARRAY );
+	glVertexPointer( 3, GL_FLOAT, 0, &positions[0][0] );
+	glNormalPointer( GL_FLOAT, 0, &normals[0][0] );
+	glDrawArrays( GL_QUAD_STRIP, 0, positions.size() );
+	glDisableClientState( GL_VERTEX_ARRAY );
+	glDisableClientState( GL_NORMAL_ARRAY );
 }
 
 
@@ -374,69 +381,69 @@ void renderSphere( float r, int p )
 //=====================================================================================================================================
 void renderCube( bool cols, float size )
 {
-	Vec3 maxPos( 0.5 );
-	Vec3 minPos( -0.5 );
-	float vertPositions[] = { maxPos.x, maxPos.y, maxPos.z,   // right top front
-	                          minPos.x, maxPos.y, maxPos.z,   // left top front
-	                          minPos.x, minPos.y, maxPos.z,   // left bottom front
-	                          maxPos.x, minPos.y, maxPos.z,   // right bottom front
-	                          maxPos.x, maxPos.y, minPos.z,   // right top back
-	                          minPos.x, maxPos.y, minPos.z,   // left top back
-	                          minPos.x, minPos.y, minPos.z,   // left bottom back
-	                          maxPos.x, minPos.y, minPos.z }; // right bottom back
+	Vec3 maxPos( 0.5 * size );
+	Vec3 minPos( -0.5 * size );
 
-	uint vertIndices [] = { 0, 1, 2, 3, 4, 5, 6, 7, 4, 0, 3, 7, 1, 5, 6, 2, 0, 4, 5, 1, 3, 2, 6, 7, 5, 4, 7, 6 };
+	Vec3 vertPositions[] = {
+		Vec3( maxPos.x, maxPos.y, maxPos.z ),  // right top front
+		Vec3( minPos.x, maxPos.y, maxPos.z ),  // left top front
+		Vec3( minPos.x, minPos.y, maxPos.z ),  // left bottom front
+		Vec3( maxPos.x, minPos.y, maxPos.z ),  // right bottom front
+		Vec3( maxPos.x, maxPos.y, minPos.z ),  // right top back
+		Vec3( minPos.x, maxPos.y, minPos.z ),  // left top back
+		Vec3( minPos.x, minPos.y, minPos.z ),  // left bottom back
+		Vec3( maxPos.x, minPos.y, minPos.z )   // right bottom back
+	};
+
+	Vec3 bakedVertPositions[] = {
+		vertPositions[0], vertPositions[1], vertPositions[2], vertPositions[3], // front face
+		vertPositions[5], vertPositions[4], vertPositions[7], vertPositions[6], // back face
+		vertPositions[4], vertPositions[0], vertPositions[3], vertPositions[7], // right face
+		vertPositions[1], vertPositions[5], vertPositions[6], vertPositions[2], // left face
+		vertPositions[0], vertPositions[4], vertPositions[5], vertPositions[1], // top face
+		vertPositions[3], vertPositions[2], vertPositions[6], vertPositions[7]  // bottom face
+	};
+
+	static Vec3 normals[] = {
+		Vec3( 0.0, 0.0, 1.0 ),  // front face
+		Vec3( 0.0, 0.0, -1.0 ), // back face
+		Vec3( 1.0, 0.0, 0.0 ),  // right face
+		Vec3( -1.0, 0.0, 0.0 ), // left face
+		Vec3( 0.0, 1.0, 0.0 ),  // top face
+		Vec3( 0.0, -1.0, 0.0 )  // bottom face
+	};
+
+	static Vec3 bakedNormals [] = {
+		normals[0], normals[0], normals[0], normals[0],
+		normals[1], normals[1], normals[1], normals[1],
+		normals[2], normals[2], normals[2], normals[2],
+		normals[3], normals[3], normals[3], normals[3],
+		normals[4], normals[4], normals[4], normals[4],
+		normals[5], normals[5], normals[5], normals[5]
+	};
+
+	static Vec3 colors [] = {
+		Vec3( 0.0, 0.0, 1.0 ),
+		Vec3( 0.0, 0.0, 0.5 ),
+		Vec3( 1.0, 0.0, 0.0 ),
+		Vec3( 0.5, 0.0, 1.0 ),
+		Vec3( 0.0, 1.0, 1.0 ),
+		Vec3( 0.0, 0.5, 1.0 )
+	};
+
+	static Vec3 bakedColors [] = {
+		colors[0], colors[0], colors[0], colors[0],
+		colors[1], colors[1], colors[1], colors[1],
+		colors[2], colors[2], colors[2], colors[2],
+		colors[3], colors[3], colors[3], colors[3],
+		colors[4], colors[4], colors[4], colors[4],
+		colors[5], colors[5], colors[5], colors[5]
+	};
 
 	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 3, GL_FLOAT, 0, vertPositions );
-	glDrawElements( GL_QUADS, sizeof(vertIndices)/sizeof(uint), GL_UNSIGNED_INT, vertIndices );
+	glVertexPointer( 3, GL_FLOAT, 0, bakedVertPositions );
+	glDrawArrays( GL_QUADS, 0, 24 );
 	glDisableClientState( GL_VERTEX_ARRAY );
-
-	/*size *= 0.5;
-	glBegin(GL_QUADS);
-		// Front Face
-		if(cols) glColor3f( 0.0, 0.0, 1.0 );
-		glNormal3f( 0.0, 0.0, 1.0f);
-		glTexCoord2f(0.0, 0.0); glVertex3f(-size, -size,  size);
-		glTexCoord2f(1.0, 0.0); glVertex3f( size, -size,  size);
-		glTexCoord2f(1.0, 1.0); glVertex3f( size,  size,  size);
-		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size,  size);
-		// Back Face
-		if(cols) glColor3f( 0.0, 0.0, size );
-		glNormal3f( 0.0, 0.0,-1.0f);
-		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size, -size);
-		glTexCoord2f(1.0, 1.0); glVertex3f(-size,  size, -size);
-		glTexCoord2f(0.0, 1.0); glVertex3f( size,  size, -size);
-		glTexCoord2f(0.0, 0.0); glVertex3f( size, -size, -size);
-		// Top Face
-		if(cols) glColor3f( 0.0, 1.0, 0.0 );
-		glNormal3f( 0.0, 1.0f, 0.0);
-		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size, -size);
-		glTexCoord2f(0.0, 0.0); glVertex3f(-size,  size,  size);
-		glTexCoord2f(1.0, 0.0); glVertex3f( size,  size,  size);
-		glTexCoord2f(1.0, 1.0); glVertex3f( size,  size, -size);
-		// Bottom Face
-		if(cols) glColor3f( 0.0, size, 0.0 );
-		glNormal3f( 0.0,-1.0f, 0.0);
-		glTexCoord2f(1.0, 1.0); glVertex3f(-size, -size, -size);
-		glTexCoord2f(0.0, 1.0); glVertex3f( size, -size, -size);
-		glTexCoord2f(0.0, 0.0); glVertex3f( size, -size,  size);
-		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size,  size);
-		// Right face
-		if(cols) glColor3f( 1.0, 0.0, 0.0 );
-		glNormal3f( 1.0f, 0.0, 0.0);
-		glTexCoord2f(1.0, 0.0); glVertex3f( size, -size, -size);
-		glTexCoord2f(1.0, 1.0); glVertex3f( size,  size, -size);
-		glTexCoord2f(0.0, 1.0); glVertex3f( size,  size,  size);
-		glTexCoord2f(0.0, 0.0); glVertex3f( size, -size,  size);
-		// Left Face
-		if(cols) glColor3f( size, 0.0, 0.0 );
-		glNormal3f(-1.0f, 0.0, 0.0);
-		glTexCoord2f(0.0, 0.0); glVertex3f(-size, -size, -size);
-		glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size,  size);
-		glTexCoord2f(1.0, 1.0); glVertex3f(-size,  size,  size);
-		glTexCoord2f(0.0, 1.0); glVertex3f(-size,  size, -size);
-	glEnd();*/
 }
 
 

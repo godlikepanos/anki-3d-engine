@@ -63,8 +63,8 @@ void init()
 
 	// init shaders
 	sProg.customLoad( "shaders/PpsLscatt.glsl" );
-	msDepthFaiUniLoc = sProg.getUniVar( "msDepthFai" ).getLoc();
-	isFaiUniLoc = sProg.getUniVar( "isFai" ).getLoc();
+	msDepthFaiUniLoc = sProg.getUniVar( "msDepthFai" )->getLoc();
+	isFaiUniLoc = sProg.getUniVar( "isFai" )->getLoc();
 }
 
 
@@ -93,7 +93,7 @@ void runPass( const Camera& cam )
 	p = cam.getProjectionMatrix() * (cam.getViewMatrix() * p);
 	p /= p.w;
 	p = p/2 + 0.5;
-	glUniform2fv( sProg.getUniVar("lightPosScreenSpace").getLoc(), 1, &p[0] );
+	glUniform2fv( sProg.getUniVar("lightPosScreenSpace")->getLoc(), 1, &p[0] );
 
 	// Draw quad
 	R::DrawQuad( 0 );

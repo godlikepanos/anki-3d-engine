@@ -236,21 +236,21 @@ void Scanner::getAllPrintAll()
 //=====================================================================================================================================
 bool Scanner::loadFile( const char* filename_ )
 {	
-	inFstream.open( filename_, ios::in );
+	inFstream.open( filename_ );
 	if( !inFstream.good() )
 	{
 		ERROR( "Cannot open file \"" << filename_ << '\"' );
 		return false;
 	}
 	
-	return loadIoStream( &inFstream, filename_ );
+	return loadIstream( inFstream, filename_ );
 }
 
 
 //=====================================================================================================================================
-// loadIoStream                                                                                                                       =
+// loadIstream                                                                                                                       =
 //=====================================================================================================================================
-bool Scanner::loadIoStream( iostream* iostream_, const char* scriptName_ )
+bool Scanner::loadIstream( istream& istream_, const char* scriptName_ )
 {
 	if( inStream != NULL )
 	{
@@ -258,7 +258,7 @@ bool Scanner::loadIoStream( iostream* iostream_, const char* scriptName_ )
 		return false;
 	}
 
-	inStream = iostream_;
+	inStream = &istream_;
 
 	// init globals
 	DEBUG_ERR( strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1 ) // Too big name

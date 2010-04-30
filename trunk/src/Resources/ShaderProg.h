@@ -50,7 +50,6 @@ class ShaderProg: public Resource
 				{}
 		};
 
-		Var dummyVar; ///< Returned on error
 		Vec<Var> uniVars;
 		Vec<Var> attribVars;
 		map<string,Var*> uniNameToVar;  ///< A map for quick searching
@@ -63,7 +62,7 @@ class ShaderProg: public Resource
 		bool link(); ///< Link the shader prog
 		
 	public:
-		ShaderProg(): glId(0), dummyVar(-1, "dummyVar", 0, 0) {}
+		ShaderProg(): glId(0) {}
 		virtual ~ShaderProg() {}
 		
 		inline void bind() const { DEBUG_ERR( glId==0 ); glUseProgram(glId); }
@@ -81,8 +80,8 @@ class ShaderProg: public Resource
 		 * @param varName The name of the var
 		 * @return It returns a uniform variable and on failure it throws an error and returns something random
 		 */
-		const Var& getUniVar( const char* varName ) const;
-		const Var& getAttribVar( const char* varName ) const; ///< @see getUniVar
+		const Var* getUniVar( const char* varName ) const;
+		const Var* getAttribVar( const char* varName ) const; ///< @see getUniVar
 		bool uniVarExists( const char* varName ) const;
 		bool attribVarExists( const char* varName ) const;
 

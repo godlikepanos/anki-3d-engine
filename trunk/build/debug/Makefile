@@ -1,11 +1,11 @@
 CXX = g++
 COMMONFLAGS = 
-CFLAGS = $(COMMONFLAGS) -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg `sdl-config --cflags` -fsingle-precision-constant -D_DEBUG_ -D_TERMINAL_COLORING__ -D_PLATFORM_LINUX_
+CFLAGS = $(COMMONFLAGS) -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg `sdl-config --cflags` -fsingle-precision-constant -D_DEBUG_ -D_TERMINAL_COLORING__ -D_PLATFORM_LINUX_ -DREVISION=\"`svnversion -c ../..`\" 
 PHFLAGS = $(CFLAGS) -x c++-header
 LFLAGS = $(COMMONFLAGS) -rdynamic -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -Wl,-Bdynamic -lSDL -lGL -ljpeg -lpng -ltiff
 EXECUTABLE = AnKi.bin
-INCPATH = -I../../src/Math/ -I../../src/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../../bullet_svn/src/ 
-SOURCES = ../../src/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//PpsHdr.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//IsShadows.cpp ../../src/Renderer//MsEarlyz.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//PpsLscatt.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//BulletDebuger.cpp ../../src/Renderer//Bs2.cpp ../../src/Renderer//PpsSsao.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//SceneNode.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ShaderPrePreprocessor.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp 
+INCPATH = -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../../bullet_svn/src/ 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//PpsHdr.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//IsShadows.cpp ../../src/Renderer//MsEarlyz.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//PpsLscatt.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//BulletDebuger.cpp ../../src/Renderer//Bs2.cpp ../../src/Renderer//PpsSsao.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//SceneNode.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ShaderPrePreprocessor.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp 
 OBJECTS = Scanner.o skybox.o particles.o memory.o collision.o map.o Main.o PpsHdr.o Pps.o Bs.o IsShadows.o MsEarlyz.o Renderer.o Is.o PpsLscatt.o Ms.o BulletDebuger.o Bs2.o PpsSsao.o Dbg.o MeshNode.o SkelNode.o SkelModelNode.o Light.o Camera.o Scene.o ParticleEmitter.o SceneNode.o Ui.o Material.o ShaderProg.o Texture.o SkelAnim.o Extension.o Skeleton.o ShaderPrePreprocessor.o Resource.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o 
 PRECOMPILED_HEADERS = 
 
@@ -16,11 +16,11 @@ $(EXECUTABLE): $(OBJECTS)
 	@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)
 	@echo All Done!
 
-Scanner.o: ../../src/Tokenizer//Scanner.cpp \
- ../../src/Tokenizer//Scanner.h ../../src/Util/Common.h \
+Scanner.o: ../../src/Util/Tokenizer//Scanner.cpp \
+ ../../src/Util/Tokenizer//Scanner.h ../../src/Util/Common.h \
  ../../src/Misc/memory.h
-	@echo Compiling ../../src/Tokenizer//Scanner.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Tokenizer//Scanner.cpp -o Scanner.o
+	@echo Compiling ../../src/Util/Tokenizer//Scanner.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Tokenizer//Scanner.cpp -o Scanner.o
 
 skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Util/Common.h ../../src/Misc/memory.h \
@@ -226,8 +226,8 @@ map.o: ../../src/Misc//map.cpp ../../src/Misc//map.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Misc/collision.h \
- ../../src/Tokenizer/Scanner.h ../../src/Tokenizer/Parser.h \
- ../../src/Tokenizer/Scanner.h ../../src/Resources/Resource.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Resources/Resource.h \
  ../../src/Scene/Camera.h ../../src/Scene/SceneNode.h
 	@echo Compiling ../../src/Misc//map.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//map.cpp -o map.o
@@ -391,7 +391,7 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
  ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Tokenizer/Scanner.h ../../src/Misc/map.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Misc/map.h \
  ../../src/Misc/collision.h ../../src/Scene/MeshNode.h \
  ../../src/Scene/SkelModelNode.h ../../src/Scene/MeshNode.h \
  ../../src/Resources/SkelAnim.h \
@@ -401,8 +401,8 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Scene/Controllers/Controller.h \
  ../../src/Resources/LightProps.h ../../src/Renderer/BulletDebuger.h \
  ../../../bullet_svn/src/LinearMath/btIDebugDraw.h \
- ../../src/Physics/PhyCommon.h ../../src/Tokenizer/Parser.h \
- ../../src/Tokenizer/Scanner.h ../../src/Scene/ParticleEmitter.h \
+ ../../src/Physics/PhyCommon.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Scene/ParticleEmitter.h \
  ../../src/Scene/GhostNode.h ../../src/Physics/PhyCharacter.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
@@ -2282,7 +2282,7 @@ SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
  ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Resources/ShaderProg.h \
- ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
  ../../src/Scene//SkelNode.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h
@@ -2843,8 +2843,8 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources//Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources//ShaderProg.h ../../src/Tokenizer/Scanner.h \
- ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h \
+ ../../src/Resources//ShaderProg.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
  ../../src/Resources//Texture.h ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h
@@ -2908,8 +2908,8 @@ SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Tokenizer/Scanner.h \
- ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h
+ ../../src/Math/Transform.inl.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//SkelAnim.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//SkelAnim.cpp -o SkelAnim.o
 
@@ -2935,15 +2935,15 @@ Skeleton.o: ../../src/Resources//Skeleton.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources//Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Tokenizer/Scanner.h ../../src/Tokenizer/Parser.h \
- ../../src/Tokenizer/Scanner.h
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//Skeleton.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Skeleton.cpp -o Skeleton.o
 
 ShaderPrePreprocessor.o: ../../src/Resources//ShaderPrePreprocessor.cpp \
  ../../src/Resources//ShaderPrePreprocessor.h ../../src/Util/Common.h \
- ../../src/Misc/memory.h ../../src/Tokenizer/Scanner.h \
- ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h \
+ ../../src/Misc/memory.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
  ../../src/Util/Util.h ../../src/Util/Common.h
 	@echo Compiling ../../src/Resources//ShaderPrePreprocessor.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//ShaderPrePreprocessor.cpp -o ShaderPrePreprocessor.o
@@ -2985,8 +2985,8 @@ LightProps.o: ../../src/Resources//LightProps.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Tokenizer/Parser.h \
- ../../src/Tokenizer/Scanner.h ../../src/Resources//Texture.h
+ ../../src/Math/Transform.inl.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Resources//Texture.h
 	@echo Compiling ../../src/Resources//LightProps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//LightProps.cpp -o LightProps.o
 
@@ -3008,8 +3008,8 @@ Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
  ../../src/Util/Common.h ../../src/Misc/collision.h \
  ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Resource.h ../../src/Scene/Camera.h \
- ../../src/Scene/SceneNode.h ../../src/Tokenizer/Scanner.h \
- ../../src/Tokenizer/Parser.h ../../src/Tokenizer/Scanner.h
+ ../../src/Scene/SceneNode.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//Mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Mesh.cpp -o Mesh.o
 

@@ -323,7 +323,7 @@ bool Texture::load( const char* filename )
 
 	glTexParameteri( type, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, R::max_anisotropy );
+	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, R::maxAnisotropy );
 
 	// leave to GL_REPEAT. There is not real performace impact
 	glTexParameteri( type, GL_TEXTURE_WRAP_S, GL_REPEAT );
