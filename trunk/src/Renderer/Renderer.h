@@ -29,7 +29,7 @@ extern int  maxColorAtachments; ///< Max color attachments a FBO can accept
 // texture stuff
 extern bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
 extern int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
-extern bool mipmaping; ///< Used in Texture::load. Enables mipmaping increases video memory usage
+extern bool mipmapping; ///< Used in Texture::load. Enables mipmapping increases video memory usage
 extern int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
 
 // misc

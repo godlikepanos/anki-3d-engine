@@ -38,7 +38,7 @@ float quadVertCoords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
 string std_shader_preproc_defines;
 
 // texture
-bool mipmaping = true;
+bool mipmapping = true;
 int maxAnisotropy = 8;
 int maxTextureUnits = -1;
 bool textureCompression = false;
@@ -168,14 +168,22 @@ void init()
 	// execute this after the cvars are set and before the other inits (be cause these inits contain shader loads)
 	buildStdShaderPreProcStr();
 
-	// init deferred stages
-	// WARNING: the order of the inits is crucial!!!!!
+	//
+	// init deferred stages. WARNING: the order of the inits is crucial!!!!!
+	//
+
+	// disable mipmapping
+	bool mipmapping_ = mipmapping;
+	mipmapping = false;
+
 	R::Ms::init();
 	R::Is::init();
 	R::Bs::init();
 	R::Pps::init();
 	R::Bs::init2();
 	R::Dbg::init();
+
+	mipmapping = mipmapping_;
 
 	// misc
 	shdr_final = Rsrc::shaders.load( "shaders/final.glsl" );
