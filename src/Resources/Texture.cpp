@@ -318,14 +318,14 @@ bool Texture::load( const char* filename )
 	// bind the texture
 	glGenTextures( 1, &glId );
 	bind(0);
-	if( R::mipmaping )  glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	if( R::mipmapping ) glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	glTexParameteri( type, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, R::maxAnisotropy );
 
-	// leave to GL_REPEAT. There is not real performace impact
+	// leave to GL_REPEAT. There is not real performance impact
 	glTexParameteri( type, GL_TEXTURE_WRAP_S, GL_REPEAT );
 	glTexParameteri( type, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
@@ -339,7 +339,7 @@ bool Texture::load( const char* filename )
 		int_format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
 	glTexImage2D( type, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
-	if( R::mipmaping ) glGenerateMipmap(type);
+	if( R::mipmapping ) glGenerateMipmap(type);
 
 	img.unload();
 	return true;
@@ -358,15 +358,18 @@ bool Texture::createEmpty2D( float width_, float height_, int internal_format, i
 	// GL stuff
 	glGenTextures( 1, &glId );
 	bind();
-	texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+
+	if( R::mipmapping ) glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
+	texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	texParameter( GL_TEXTURE_WRAP_S, GL_CLAMP );
 	texParameter( GL_TEXTURE_WRAP_T, GL_CLAMP );
 
 	// allocate to vram
 	glTexImage2D( type, 0, internal_format, width_, height_, 0, format_, type_, NULL );
 
-	if( R::mipmaping ) glGenerateMipmap(type);
+	if( R::mipmapping ) glGenerateMipmap(type);
 
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )

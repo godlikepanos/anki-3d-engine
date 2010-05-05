@@ -125,18 +125,18 @@ void init()
 	// init shaders
 	ssaoSProg.customLoad( "shaders/PpsSsao.glsl" );
 
-	// load noise map and disable temporaly the texture compression and enable mipmaping
+	// load noise map and disable temporaly the texture compression and enable mipmapping
 	bool texCompr = R::textureCompression;
-	bool mipmaping = R::mipmaping;
+	bool mipmaping = R::mipmapping;
 	R::textureCompression = false;
-	R::mipmaping = true;
+	R::mipmapping = true;
 	noiseMap = Rsrc::textures.load( "gfx/noise3.tga" );
 	noiseMap->texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
 	noiseMap->texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
 	//noise_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	//noise_map->texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	R::textureCompression = texCompr;
-	R::mipmaping = mipmaping;
+	R::mipmapping = mipmaping;
 
 	// blur FBO
 	initBlurFbos();
