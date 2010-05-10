@@ -2,7 +2,6 @@
 #define _TEXTURE_H_
 
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <limits>
 #include "Common.h"
 #include "Resource.h"

@@ -3,11 +3,13 @@
 
 #include "Common.h"
 #include "Math.h"
+#include "Fbo.h"
+#include "Texture.h"
+#include "ShaderProg.h"
 
 class Camera;
 class PointLight;
 class SpotLight;
-class Texture;
 
 
 /**
@@ -121,7 +123,7 @@ class Renderer
 				Texture fai;
 				Sm sm;
 
-				Is( Renderer& r_ ): RenderingStage(r_), Sm(r) {}
+				Is( Renderer& r_ ): RenderingStage(r_), sm(r) {}
 		}; // end Is
 
 
@@ -139,8 +141,22 @@ class Renderer
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 						float renderingQuality;
-						uint w, h;
 						ShaderProg pass0SProg, pass1SProg, pass2SProg;
+						struct
+						{
+							struct
+							{
+								int fai;
+							} pass0SProg;
+							struct
+							{
+								int fai;
+							} pass1SProg;
+							struct
+							{
+								int fai;
+							} pass2SProg;
+						} uniLocs;
 
 						void initFbos( Fbo& fbo, Texture& fai, int internalFormat );
 						void init();
@@ -162,8 +178,8 @@ class Renderer
 				{
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
-						uint w, h;
-						uint bw, bh;
+						uint width, height;
+						uint bwidth, bheight;
 						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 						Texture* noiseMap;
 
@@ -264,11 +280,18 @@ class Renderer
 		uint  framesNum;
 		float aspectRatio;
 		// matrices & viewing
-		Camera* crntCamera;
+		Camera* cam; ///< Current camera
 		Mat4 modelViewMat; ///< This changes once for every mesh rendering
 		Mat4 projectionMat; ///< This changes once every frame
 		Mat4 modelViewProjectionMat; ///< This changes just like @ref modelViewMat
 		Mat3 normalMat; ///< The rotation part of modelViewMat
+
+
+		void setProjectionMatrix( const Camera& cam ) {}
+		void setViewMatrix( const Camera& cam ) {}
+		void setProjectionViewMatrices( const Camera& cam ) {}
+		static void setViewport( uint x, uint y, uint w, uint h ) {}
+		static void drawQuad( int vertCoordsUniLoc ) {};
 
 };
 

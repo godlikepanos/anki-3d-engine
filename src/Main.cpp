@@ -34,6 +34,7 @@
 #include "Parser.h"
 #include "ParticleEmitter.h"
 #include "PhyCharacter.h"
+#include "Renderer.hpp"
 
 App* app = NULL;
 
