@@ -47,8 +47,9 @@ bool textureCompression = false;
 //=====================================================================================================================================
 // DrawQuad                                                                                                                           =
 //=====================================================================================================================================
-void DrawQuad( int vertCoords_uni_loc )
+void DrawQuad( int vertCoordsUniLoc )
 {
+	DEBUG_ERR( vertCoordsUniLoc == -1 );
 	/*glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 2, GL_FLOAT, 0, quadVertCoords );
 	glDrawArrays( GL_QUADS, 0, 4 );

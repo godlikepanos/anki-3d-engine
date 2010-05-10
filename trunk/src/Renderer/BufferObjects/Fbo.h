@@ -1,8 +1,8 @@
 #ifndef _FBO_H_
 #define _FBO_H_
 
+#include <GL/glew.h>
 #include "Common.h"
-#include "Renderer.h"
 
 
 /// The class is created as a wrapper to avoid common mistakes

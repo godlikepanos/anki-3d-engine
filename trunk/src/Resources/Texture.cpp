@@ -349,10 +349,12 @@ bool Texture::load( const char* filename )
 //=====================================================================================================================================
 // createEmpty2D                                                                                                                      =
 //=====================================================================================================================================
-bool Texture::createEmpty2D( float width_, float height_, int internal_format, int format_, GLenum type_ )
+bool Texture::createEmpty2D( float width_, float height_, int internalFormat, int format_, GLenum type_ )
 {
+	DEBUG_ERR( glGetError() != GL_NO_ERROR ); // dont enter the func holding an error
+
 	type = GL_TEXTURE_2D;
-	DEBUG_ERR( internal_format>0 && internal_format<=4 ); // deprecated internal format
+	DEBUG_ERR( internalFormat>0 && internalFormat<=4 ); // deprecated internal format
 	DEBUG_ERR( glId != numeric_limits<uint>::max() ) // Texture already loaded
 
 	// GL stuff
@@ -363,11 +365,11 @@ bool Texture::createEmpty2D( float width_, float height_, int internal_format, i
 	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	texParameter( GL_TEXTURE_WRAP_S, GL_CLAMP );
-	texParameter( GL_TEXTURE_WRAP_T, GL_CLAMP );
+	texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
+	texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
 
 	// allocate to vram
-	glTexImage2D( type, 0, internal_format, width_, height_, 0, format_, type_, NULL );
+	glTexImage2D( type, 0, internalFormat, width_, height_, 0, format_, type_, NULL );
 
 	if( R::mipmapping ) glGenerateMipmap(type);
 
