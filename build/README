@@ -1,34 +1,64 @@
----------------------------------------------------------------------------------------------------------------------------------------
-HOW TO GENERATE MAKEFILES
----------------------------------------------------------------------------------------------------------------------------------------
 
-There are 4 build targets in this folder. There is also a build system that generates GNU makefiles. If you want to generate the makefile for the debug target (for example) do the following:
-
-cd <path to anki>/build/debug
-../genmakefile.py
-
-This will generate a "Makefile". To build just type:
-
-make
-
-And the build will begin. 
-
-WARNING: Sometimes I forget to update all the targets. The debug is always updated though
-
-The gen.cfg.py files contain the build options of every target. Their format is pretty straightforward and minimal
+AnKi build system is very Linux specific (GNU make only) at the moment. It
+also requires a few extra development libraries. You can also find a custom
+build system that generates GNU makefiles.
 
 
----------------------------------------------------------------------------------------------------------------------------------------
-HOW TO BUILD BULLET PHYSICS
----------------------------------------------------------------------------------------------------------------------------------------
+1) Required libraries
 
-From now on the AnKi requires the Bullet Physics library. Bullet dev files do not ship with any Linux distribution, for now, so you have to download it manually and build it. Here is how:
+	AnKi requires a few up to date versions of some libraries. The libraries are:
+	- Bullet Physics
+	- SDL 1.3
 
-1) Go to the root AnKi path (where src, shaders and blenderscripts are)
-2) cd ..
-3) svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
-4) cd bullet_svn
-5) cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
-6) make
+	So before generating makefiles or building AnKi you have to download from
+	their repositories and build the above libraries. Instructions follow:
+	
 
-The above steps build Bullet statically. If you want to download bullet in a different dir then make the apropriate changes in the gen.cfg.py files
+1.1) Bullet Physics Library
+
+	From now on the AnKi requires the Bullet physics library. You need CMake and
+	SVN installed.
+
+	1) Go to the root AnKi path (where src, shaders and blenderscripts are)
+	2) cd ..
+	3) svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
+	4) cd bullet_svn
+	5) cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+	6) make
+
+
+1.2) SDL ver 1.3
+
+	We need SDL ver 1.3 for creating OpenGL 3.x context. You need to have the
+	Mercurial and autoconf installed.
+
+	1) Go to the root AnKi path (where src, shaders and blenderscripts are)
+	2) cd ..
+	3) hg clone http://hg.libsdl.org/SDL SDL-hg
+	4) cd SDL-hg
+	5) ./autogen.sh
+	6) ./configure
+	7) make
+
+
+2) Generating makefiles and building AnKi
+
+	There are 4 build targets in this folder. There is also a build system that
+	generates GNU makefiles (it requires Python 3 installed). If you want to 
+	generate the makefile for the debug target (for example) do the following:
+
+	1) cd <path to anki>/build/debug
+	3) ../genmakefile.py
+	
+	Now there is an updated "Makefile". To build just type:
+	
+	1) make
+
+	And the build process will begin. 
+
+	WARNING: Sometimes I forget to update all the targets. The debug is always
+	updated though.
+
+	The gen.cfg.py files contain the build options of every target. Their format
+	is pretty straightforward and minimal.
+	
