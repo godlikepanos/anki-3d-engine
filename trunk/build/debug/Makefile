@@ -1,12 +1,12 @@
 CXX = g++
 COMMONFLAGS = 
-CFLAGS = $(COMMONFLAGS) -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg `sdl-config --cflags` -fsingle-precision-constant -D_DEBUG_ -D_TERMINAL_COLORING__ -D_PLATFORM_LINUX_ -DREVISION=\"`svnversion -c ../..`\" 
+CFLAGS = $(COMMONFLAGS) -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg -fsingle-precision-constant -D_DEBUG_ -D_TERMINAL_COLORING__ -D_PLATFORM_LINUX_ -DPLATFORM=LINUX -DREVISION=\"`svnversion -c ../..`\" 
 PHFLAGS = $(CFLAGS) -x c++-header
-LFLAGS = $(COMMONFLAGS) -rdynamic -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -Wl,-Bdynamic -lSDL -lGL -ljpeg -lpng -ltiff
+LFLAGS = $(COMMONFLAGS) -rdynamic -L../../../SDL-hg/build/.libs -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff
 EXECUTABLE = AnKi.bin
-INCPATH = -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Renderer2/ -I../../../bullet_svn/src/ 
-SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//PpsHdr.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//IsShadows.cpp ../../src/Renderer//MsEarlyz.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//PpsLscatt.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//BulletDebuger.cpp ../../src/Renderer//Bs2.cpp ../../src/Renderer//PpsSsao.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//SceneNode.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ShaderPrePreprocessor.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp ../../src/Renderer2//Ms.cpp 
-OBJECTS = Scanner.o skybox.o particles.o memory.o collision.o map.o Main.o PpsHdr.o Pps.o Bs.o IsShadows.o MsEarlyz.o Renderer.o Is.o PpsLscatt.o Ms.o BulletDebuger.o Bs2.o PpsSsao.o Dbg.o MeshNode.o SkelNode.o SkelModelNode.o Light.o Camera.o Scene.o ParticleEmitter.o SceneNode.o Ui.o Material.o ShaderProg.o Texture.o SkelAnim.o Extension.o Skeleton.o ShaderPrePreprocessor.o Resource.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o 25.Ms.o 
+INCPATH = -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Renderer2/ -I../../../bullet_svn/src/ -I../../../SDL-hg/include 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//PpsHdr.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//IsShadows.cpp ../../src/Renderer//MsEarlyz.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//PpsLscatt.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//BulletDebuger.cpp ../../src/Renderer//Bs2.cpp ../../src/Renderer//PpsSsao.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//SceneNode.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ShaderPrePreprocessor.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp ../../src/Renderer2//Ms.cpp ../../src/Renderer2//Hdr.cpp 
+OBJECTS = Scanner.o skybox.o particles.o memory.o collision.o map.o Main.o PpsHdr.o Pps.o Bs.o IsShadows.o MsEarlyz.o Renderer.o Is.o PpsLscatt.o Ms.o BulletDebuger.o Bs2.o PpsSsao.o Dbg.o MeshNode.o SkelNode.o SkelModelNode.o Light.o Camera.o Scene.o ParticleEmitter.o SceneNode.o Ui.o Material.o ShaderProg.o Texture.o SkelAnim.o Extension.o Skeleton.o ShaderPrePreprocessor.o Resource.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o 67.Ms.o Hdr.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -3522,7 +3522,7 @@ PhyWorld.o: ../../src/Physics//PhyWorld.cpp ../../src/Physics//PhyWorld.h \
 	@echo Compiling ../../src/Physics//PhyWorld.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics//PhyWorld.cpp -o PhyWorld.o
 
-25.Ms.o: ../../src/Renderer2//Ms.cpp ../../src/Renderer2//Renderer.hpp \
+67.Ms.o: ../../src/Renderer2//Ms.cpp ../../src/Renderer2//Renderer.hpp \
  ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
@@ -3675,9 +3675,14 @@ PhyWorld.o: ../../src/Physics//PhyWorld.cpp ../../src/Physics//PhyWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
  ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h \
- ../../src/Scene/SceneNode.h
+ ../../src/Scene/SceneNode.h ../../src/Scene/MeshNode.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h
 	@echo Compiling ../../src/Renderer2//Ms.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer2//Ms.cpp -o 25.Ms.o
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer2//Ms.cpp -o 67.Ms.o
+
+Hdr.o: ../../src/Renderer2//Hdr.cpp
+	@echo Compiling ../../src/Renderer2//Hdr.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer2//Hdr.cpp -o Hdr.o
 
 clean:
 	rm -f *.o
