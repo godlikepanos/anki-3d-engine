@@ -31,17 +31,17 @@ class SpotLight;
 class Renderer
 {
 	//===================================================================================================================================
-	// Rendering Stages                                                                                                                 =
+	// The rendering stages                                                                                                             =
 	//===================================================================================================================================
 	public:
-
 		/**
-		 * Rendering stage base class
+		 * Rendering stage
 		 */
 		class RenderingStage
 		{
 			protected:
 				Renderer& r;
+
 			public:
 				RenderingStage( Renderer& r_ ): r(r_) {}
 		};
@@ -50,7 +50,7 @@ class Renderer
 		/**
 		 * Material stage
 		 */
-		class Ms: public RenderingStage
+		class Ms: private RenderingStage
 		{
 			private:
 				Fbo fbo;
@@ -64,20 +64,19 @@ class Renderer
 				Texture specularFai;
 				Texture depthFai;
 
-				Ms( Renderer& r_ ): RenderingStage(r_) {}
-		}; // end Ms
-
+				Ms( Renderer& r_ ): RenderingStage( r_ ) {}
+		};
 
 		/**
 		 * Illumination stage
 		 */
-		class Is: public RenderingStage
+		class Is: private RenderingStage
 		{
 			public:
 				/**
 				 * Shadowmapping sub-stage
 				 */
-				class Sm: public RenderingStage
+				class Sm: private RenderingStage
 				{
 					private:
 						Fbo fbo; ///< Illumination stage shadowmapping FBO
@@ -89,9 +88,9 @@ class Renderer
 					public:
 						bool pcfEnabled;
 						bool bilinearEnabled;
-						int  mapRez;
+						int  resolution;
 
-						Sm( Renderer& r_ ): RenderingStage(r_) {}
+						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
 				};
 
 			private:
@@ -121,26 +120,26 @@ class Renderer
 
 			public:
 				Texture fai;
+
 				Sm sm;
 
-				Is( Renderer& r_ ): RenderingStage(r_), sm(r) {}
-		}; // end Is
+				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
+		};
 
 
 		/**
 		 * Post-processing stage
 		 */
-		class Pps: public RenderingStage
+		class Pps: private RenderingStage
 		{
 			public:
 				/**
-				 * High dynamic range lighting
+				 * High dynamic range lighting stage
 				 */
-				class Hdr: public RenderingStage
+				class Hdr: private RenderingStage
 				{
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
-						float renderingQuality;
 						ShaderProg pass0SProg, pass1SProg, pass2SProg;
 						struct
 						{
@@ -163,24 +162,23 @@ class Renderer
 						void run();
 
 					public:
-						Texture pass0Fai; ///< Vertical blur pass
-						Texture pass1Fai; ///< @ref pass0Fai with the horizontal blur
-						Texture fai; ///< The final FAI
 						bool enabled;
+						float renderingQuality;
+						Texture pass0Fai; ///< Vertical blur pass
+						Texture pass1Fai; ///< pass0Fai with the horizontal blur
+						Texture fai; ///< The final FAI
 
 						Hdr( Renderer& r_ ): RenderingStage(r_) {}
-				}; // end Hdr
+				};
 
 				/**
-				 * Screen space ambient occlusion
+				 * Screen space ambien occlusion stage
 				 */
-				class Ssao: public RenderingStage
+				class Saao: private RenderingStage
 				{
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
-						uint width, height;
-						uint bwidth, bheight;
-						ShaderProg ssaoSProg, blurSProg, blurSProg2;
+						uint width, height, bwidth, bheight;
 						Texture* noiseMap;
 
 						void initBlurFbos();
@@ -188,78 +186,20 @@ class Renderer
 						void run();
 
 					public:
-						bool enabled;
 						float renderingQuality;
 						float bluringQuality;
 						Texture pass0Fai, pass1Fai, fai;
+						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
-						Ssao( Renderer& r_ ): RenderingStage(r_) {}
-				}; // end Ssao
+						Saao( Renderer& r_ ): RenderingStage(r_) {}
+				};
 
-				/**
-				 * Light scattering
-				 */
-				class Lscatt: public RenderingStage
-				{
-					private:
-						Fbo fbo;
-						ShaderProg sProg;
-						int msDepthFaiUniLoc;
-						int isFaiUniLoc;
+		};
 
-						void init();
-						void run();
-
-					public:
-						float renderingQuality;
-						bool enabled;
-						Texture fai;
-
-						Lscatt( Renderer& r_ ): RenderingStage(r_) {}
-				}; // end Lscatt
-
-			private:
-				Fbo fbo;
-				ShaderProg sProg;
-				struct
-				{
-					int isFai;
-					int ppsSsaoFai;
-					int msNormalFai;
-					int hdrFai;
-					int lscattFai;
-				} uniLocs;
-
-				void init();
-				void run();
-
-			public:
-				Texture fai;
-
-				Hdr hdr;
-				Ssao ssao;
-				Lscatt lscatt;
-
-				Pps( Renderer& r_ ): RenderingStage(r_), hdr(r), ssao(r), lscatt(r) {}
-		}; // end Pps
-
-
-		/**
-		 * Blending stage
-		 */
-		class Bs: public RenderingStage
-		{
-			private:
-			public:
-				Bs( Renderer& r_ ): RenderingStage(r_) {}
-		}; // end Bs
-
-
-		// define the stages
-		Ms  ms;
-		Is  is;
+		// the data members
+		Ms ms;
+		Is is;
 		Pps pps;
-		Bs  bs;
 
 	//===================================================================================================================================
 	//                                                                                                                                  =
@@ -269,14 +209,14 @@ class Renderer
 		uint  width; ///< width of the rendering. Dont confuse with the window width
 		uint  height; ///< height of the rendering. Dont confuse with the window width
 		float renderingQuality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
-		int   screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
+		static int screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
 		// texture stuff
-		bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
-		int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
-		bool mipmaping; ///< Used in Texture::load. Enables mipmapping increases video memory usage
-		int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
+		static bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
+		static int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
+		static bool mipmapping; ///< Used in Texture::load. Enables mipmapping increases video memory usage
+		static int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
 		// other
-		int   maxColorAtachments; ///< Max color attachments a FBO can accept
+		static int   maxColorAtachments; ///< Max color attachments a FBO can accept
 		uint  framesNum;
 		float aspectRatio;
 		// matrices & viewing
@@ -285,7 +225,6 @@ class Renderer
 		Mat4 projectionMat; ///< This changes once every frame
 		Mat4 modelViewProjectionMat; ///< This changes just like @ref modelViewMat
 		Mat3 normalMat; ///< The rotation part of modelViewMat
-
 
 		void setProjectionMatrix( const Camera& cam ) {}
 		void setViewMatrix( const Camera& cam ) {}

@@ -20,14 +20,14 @@ inline float invSqrt( float f )
 {
 #if defined( _DEBUG_ )
 	return 1.0/sqrtf(f);
-#elif defined( _PLATFORM_WIN_ )
+#elif PLATFORM==WIN
 	float fhalf = 0.5*f;
 	int i = *(int*)&f;
 	i = 0x5F3759DF - (i>>1);
 	f = *(float*)&i;
 	f *= 1.5 - fhalf*f*f;
 	return f;
-#elif defined( _PLATFORM_LINUX_ )
+#elif PLATFORM==LINUX
 	float fhalf = 0.5*f;
 	asm
 	(

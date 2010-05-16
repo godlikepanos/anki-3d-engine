@@ -382,7 +382,7 @@ int main( int argc, char* argv[] )
 		R::takeScreenshot(str);*/
 
 		// std stuff follow
-		SDL_GL_SwapBuffers();
+		app->swapBuffers();
 		R::printLastError();
 		if( 1 )
 		{

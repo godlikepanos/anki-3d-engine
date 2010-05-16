@@ -1,5 +1,5 @@
 #include "memory.h"
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #ifdef _USE_MEM_MANAGER_
 

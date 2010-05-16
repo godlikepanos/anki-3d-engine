@@ -6,6 +6,9 @@
 //=====================================================================================================================================
 void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 {
+	int width = renderingQuality * r.width;
+	int height = renderingQuality * r.height;
+
 	// create FBO
 	fbo.create();
 	fbo.bind();
@@ -14,7 +17,7 @@ void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( w, h, internalFormat, GL_RGB );
+	fai.createEmpty2D( width, height, internalFormat, GL_RGB );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	//fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -36,8 +39,8 @@ void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 //=====================================================================================================================================
 void Renderer::Pps::Hdr::init()
 {
-	w = R::Pps::Hdr::renderingQuality * R::w;
-	h = R::Pps::Hdr::renderingQuality * R::h;
+	int width = renderingQuality * r.width;
+	int height = renderingQuality * r.height;
 
 	initFbos( pass0Fbo, pass0Fai, GL_RGB );
 	initFbos( pass1Fbo, pass1Fai, GL_RGB );
@@ -49,11 +52,11 @@ void Renderer::Pps::Hdr::init()
 	//
 	const char* shaderFname = "shaders/PpsHdr.glsl";
 
-	if( !pass0SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(R::w) + "\n").c_str() ) )
+	if( !pass0SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n").c_str() ) )
 		FATAL( "See prev error" );
 	uniLocs.pass0SProg.fai = pass0SProg.getUniVar("fai")->getLoc();
 
-	if( !pass1SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(h) + "\n").c_str() ) )
+	if( !pass1SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n").c_str() ) )
 		FATAL( "See prev error" );
 	uniLocs.pass1SProg.fai = pass1SProg.getUniVar("fai")->getLoc();
 
@@ -86,7 +89,7 @@ void Renderer::Pps::Hdr::run()
 	// pass 1
 	pass1Fbo.bind();
 	pass1SProg.bind();
-	pass1SProg.locTexUnit( uniLocs.pass1SProg.uniLocs.fai, pass0Fai, 0 );
+	pass1SProg.locTexUnit( uniLocs.pass1SProg.fai, pass0Fai, 0 );
 	r.drawQuad( 0 );
 
 

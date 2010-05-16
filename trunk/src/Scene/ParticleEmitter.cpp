@@ -168,17 +168,6 @@ void ParticleEmitter::update()
 //=====================================================================================================================================
 void ParticleEmitter::render()
 {
-	float vertPositions[] = { maxStartingPos.x, maxStartingPos.y, maxStartingPos.z,   // right top front
-	                          minStartingPos.x, maxStartingPos.y, maxStartingPos.z,   // left top front
-	                          minStartingPos.x, minStartingPos.y, maxStartingPos.z,   // left bottom front
-	                          maxStartingPos.x, minStartingPos.y, maxStartingPos.z,   // right bottom front
-	                          maxStartingPos.x, maxStartingPos.y, minStartingPos.z,   // right top back
-	                          minStartingPos.x, maxStartingPos.y, minStartingPos.z,   // left top back
-	                          minStartingPos.x, minStartingPos.y, minStartingPos.z,   // left bottom back
-	                          maxStartingPos.x, minStartingPos.y, minStartingPos.z }; // right bottom back
-
-	uint vertIndices [] = { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 3, 7, 2, 6 };
-
 	glPushMatrix();
 	R::multMatrix( getWorldTransform() );
 
@@ -188,7 +177,9 @@ void ParticleEmitter::render()
 	glVertexPointer( 3, GL_FLOAT, 0, vertPositions );
 	glDrawElements( GL_LINES, sizeof(vertIndices)/sizeof(uint), GL_UNSIGNED_INT, vertIndices );
 	glDisableClientState( GL_VERTEX_ARRAY );*/
+	glPolygonMode( GL_FRONT, GL_LINE );
 	R::Dbg::renderCube();
+	glPolygonMode( GL_FRONT, GL_FILL );
 
 	glPopMatrix();
 }

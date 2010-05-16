@@ -1,6 +1,6 @@
 #include <GL/glew.h>
 #include <sstream>
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include "App.h"
 #include "Scene.h"
 
@@ -36,7 +36,8 @@ App::App( int /*argc*/, char* /*argv*/[] )
 void App::initWindow()
 {
 	INFO( "SDL window initializing..." );
-	SDL_Init( SDL_INIT_VIDEO );
+	if( SDL_Init(SDL_INIT_VIDEO) < 0 )
+		FATAL( "Failed to init SDL_VIDEO" );
 
 	// print driver name
 	char charBuff [256];
@@ -100,6 +101,16 @@ void App::initWindow()
 void App::togleFullScreen()
 {
 	SDL_WM_ToggleFullScreen( mainSurf );
+}
+
+
+//=====================================================================================================================================
+// swapBuffers                                                                                                                        =
+//=====================================================================================================================================
+void App::swapBuffers()
+{
+	SDL_GL_SwapBuffers();
+	//SDL_GL_SwapWindow(mainwindow);
 }
 
 

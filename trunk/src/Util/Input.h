@@ -1,7 +1,7 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include "Common.h"
 #include "App.h"
 #include "Math.h"
@@ -13,7 +13,7 @@ extern void reset();
 extern void handleEvents();
 
 // keys and btns
-extern short keys [];  ///< Shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
+extern Vec<short> keys;  ///< Shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
 extern short mouseBtns [];    ///< Mouse btns. Supporting 3 btns & wheel. Works the same as above
 
 // mouse stuff
