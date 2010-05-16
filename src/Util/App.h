@@ -24,6 +24,7 @@ class App
 		class SDL_Surface* mainSurf; ///< SDL stuff
 		class SDL_Surface* iconImage; ///< SDL stuff
 
+
 	public:
 		uint timerTick;
 
@@ -33,6 +34,7 @@ class App
 		void quitApp( int code );
 		void waitForNextFrame();
 		void togleFullScreen();
+		void swapBuffers();
 		static void printAppInfo();
 
 		/**

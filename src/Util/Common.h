@@ -159,10 +159,10 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 
 
 //=====================================================================================================================================
-// MemZero                                                                                                                            =
+// memZero                                                                                                                            =
 //=====================================================================================================================================
 /// sets memory to zero
-template <typename Type> inline void MemZero( Type& t )
+template <typename Type> inline void memZero( Type& t )
 {
 	memset( &t, 0, sizeof(Type) );
 }

@@ -11,7 +11,7 @@ namespace I {
 data vars                                                                                                                             =
 =======================================================================================================================================
 */
-short keys [SDLK_LAST];  // shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
+Vec<short> keys( 1024 );  // shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
 short mouseBtns [8];    // mouse btns. Supporting 3 btns & wheel. Works the same as above
 Vec2 mousePosNdc;    // the coords are in the ndc space
 Vec2 mousePos;        // the coords are in the window space
@@ -26,9 +26,10 @@ bool hideCursor = true;
 reset                                                                                                                                 =
 =======================================================================================================================================
 */
-void Reset( void )
+void reset( void )
 {
-	memset( keys, 0, sizeof(keys) );
+	DEBUG_ERR( keys.size() < 1 );
+	memset( &keys[0], 0, keys.size()*sizeof(short) );
 	memset(mouseBtns, 0, sizeof(mouseBtns) );
 	mousePosNdc.setZero();
 	mouseVelocity.setZero();
@@ -46,7 +47,7 @@ void handleEvents()
 	else             SDL_ShowCursor( SDL_ENABLE );
 
 	// add the times a key is bying pressed
-	for( int x=0; x<SDLK_LAST; x++ )
+	for( uint x=0; x<keys.size(); x++ )
 	{
 		if( keys[x] ) ++keys[x];
 	}
@@ -86,8 +87,8 @@ void handleEvents()
 				mousePos.x = event_.button.x;
 				mousePos.y = event_.button.y;
 
-				mousePosNdc.x = (2.0f * mousePos.x) / (float)app->getWindowWidth() - 1.0f;
-				mousePosNdc.y = 1.0f - (2.0f * mousePos.y) / (float)app->getWindowHeight();
+				mousePosNdc.x = (2.0 * mousePos.x) / (float)app->getWindowWidth() - 1.0;
+				mousePosNdc.y = 1.0 - (2.0 * mousePos.y) / (float)app->getWindowHeight();
 
 				if( warpMouse )
 				{

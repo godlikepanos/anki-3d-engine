@@ -54,10 +54,10 @@ void DrawQuad( int vertCoordsUniLoc )
 	glVertexPointer( 2, GL_FLOAT, 0, quadVertCoords );
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableClientState( GL_VERTEX_ARRAY );*/
-	glVertexAttribPointer( vertCoords_uni_loc, 2, GL_FLOAT, false, 0, quadVertCoords );
-	glEnableVertexAttribArray( vertCoords_uni_loc );
+	glVertexAttribPointer( vertCoordsUniLoc, 2, GL_FLOAT, false, 0, quadVertCoords );
+	glEnableVertexAttribArray( vertCoordsUniLoc );
 	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableVertexAttribArray( vertCoords_uni_loc );
+	glDisableVertexAttribArray( vertCoordsUniLoc );
 }
 
 
@@ -110,13 +110,15 @@ void init()
 {
 	INFO( "Renderer initializing..." );
 
-	glewInit();
+	GLenum err = glewInit();
+	if( err != GLEW_OK )
+		FATAL( "GLEW initialization failed" );
 
 	// print GL info
 	INFO( "OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION) );
 
-	if( !glewIsSupported("GL_VERSION_2_1") )
-		WARNING( "OpenGL ver 2.1 not supported. The application may crash (and burn)" );
+	if( !glewIsSupported("GL_VERSION_3_1") )
+		WARNING( "OpenGL ver 3.1 not supported. The application may crash (and burn)" );
 
 	if( !glewIsSupported("GL_EXT_framebuffer_object") )
 		WARNING( "Framebuffer objects not supported. The application may crash (and burn)" );
