@@ -1,3 +1,4 @@
+#include <SDL.h>
 #include "Input.h"
 #include "Renderer.h"
 
@@ -6,31 +7,28 @@ namespace I {
 
 
 
-/*
-=======================================================================================================================================
-data vars                                                                                                                             =
-=======================================================================================================================================
-*/
-Vec<short> keys( 1024 );  // shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continucely
-short mouseBtns [8];    // mouse btns. Supporting 3 btns & wheel. Works the same as above
-Vec2 mousePosNdc;    // the coords are in the ndc space
-Vec2 mousePos;        // the coords are in the window space
+//=====================================================================================================================================
+// VARS                                                                                                                               =
+//=====================================================================================================================================
+Vec<short> keys( SDL_NUM_SCANCODES, 0 );
+Vec<short> mouseBtns( 8, 0 );
+Vec2 mousePosNdc;
+Vec2 mousePos;
 Vec2 mouseVelocity;
 
 bool warpMouse = false;
 bool hideCursor = true;
 
 
-/*
-=======================================================================================================================================
-reset                                                                                                                                 =
-=======================================================================================================================================
-*/
+//=====================================================================================================================================
+// reset                                                                                                                              =
+//=====================================================================================================================================
 void reset( void )
 {
 	DEBUG_ERR( keys.size() < 1 );
+	DEBUG_ERR( mouseBtns.size() < 1 );
 	memset( &keys[0], 0, keys.size()*sizeof(short) );
-	memset(mouseBtns, 0, sizeof(mouseBtns) );
+	memset( &mouseBtns[0], 0, mouseBtns.size()*sizeof(short) );
 	mousePosNdc.setZero();
 	mouseVelocity.setZero();
 }
@@ -65,11 +63,11 @@ void handleEvents()
 		switch( event_.type )
 		{
 			case SDL_KEYDOWN:
-				keys[event_.key.keysym.sym] = 1;
+				keys[event_.key.keysym.scancode] = 1;
 				break;
 
 			case SDL_KEYUP:
-				keys[event_.key.keysym.sym] = 0;
+				keys[event_.key.keysym.scancode] = 0;
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:

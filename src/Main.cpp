@@ -302,26 +302,26 @@ int main( int argc, char* argv[] )
 		// move the camera
 		static SceneNode* mover = app->getActiveCam();
 
-		if( I::keys[ SDLK_1 ] ) mover = app->getActiveCam();
-		if( I::keys[ SDLK_2 ] ) mover = point_lights[0];
-		if( I::keys[ SDLK_3 ] ) mover = spot_lights[0];
-		if( I::keys[ SDLK_4 ] ) mover = point_lights[1];
-		if( I::keys[ SDLK_5 ] ) mover = spot_lights[1];
-		if( I::keys[ SDLK_6 ] ) mover = partEmitter;
-		if( I::keys[ SDLK_m ] == 1 ) I::warpMouse = !I::warpMouse;
+		if( I::keys[ SDL_SCANCODE_1 ] ) mover = app->getActiveCam();
+		if( I::keys[ SDL_SCANCODE_2 ] ) mover = point_lights[0];
+		if( I::keys[ SDL_SCANCODE_3 ] ) mover = spot_lights[0];
+		if( I::keys[ SDL_SCANCODE_4 ] ) mover = point_lights[1];
+		if( I::keys[ SDL_SCANCODE_5 ] ) mover = spot_lights[1];
+		if( I::keys[ SDL_SCANCODE_6 ] ) mover = partEmitter;
+		if( I::keys[ SDL_SCANCODE_M ] == 1 ) I::warpMouse = !I::warpMouse;
 
-		if( I::keys[SDLK_a] ) mover->moveLocalX( -dist );
-		if( I::keys[SDLK_d] ) mover->moveLocalX( dist );
-		if( I::keys[SDLK_LSHIFT] ) mover->moveLocalY( dist );
-		if( I::keys[SDLK_SPACE] ) mover->moveLocalY( -dist );
-		if( I::keys[SDLK_w] ) mover->moveLocalZ( -dist );
-		if( I::keys[SDLK_s] ) mover->moveLocalZ( dist );
+		if( I::keys[ SDL_SCANCODE_A ] ) mover->moveLocalX( -dist );
+		if( I::keys[ SDL_SCANCODE_D ] ) mover->moveLocalX( dist );
+		if( I::keys[ SDL_SCANCODE_LSHIFT ] ) mover->moveLocalY( dist );
+		if( I::keys[ SDL_SCANCODE_SPACE ] ) mover->moveLocalY( -dist );
+		if( I::keys[ SDL_SCANCODE_W ] ) mover->moveLocalZ( -dist );
+		if( I::keys[ SDL_SCANCODE_S ] ) mover->moveLocalZ( dist );
 		if( !I::warpMouse )
 		{
-			if( I::keys[SDLK_UP] ) mover->rotateLocalX( ang );
-			if( I::keys[SDLK_DOWN] ) mover->rotateLocalX( -ang );
-			if( I::keys[SDLK_LEFT] ) mover->rotateLocalY( ang );
-			if( I::keys[SDLK_RIGHT] ) mover->rotateLocalY( -ang );
+			if( I::keys[ SDL_SCANCODE_UP ] ) mover->rotateLocalX( ang );
+			if( I::keys[ SDL_SCANCODE_DOWN ] ) mover->rotateLocalX( -ang );
+			if( I::keys[ SDL_SCANCODE_LEFT ] ) mover->rotateLocalY( ang );
+			if( I::keys[ SDL_SCANCODE_RIGHT ] ) mover->rotateLocalY( -ang );
 		}
 		else
 		{
@@ -329,15 +329,15 @@ int main( int argc, char* argv[] )
 			mover->rotateLocalX( ang * I::mouseVelocity.y * accel );
 			mover->rotateLocalY( -ang * I::mouseVelocity.x * accel );
 		}
-		if( I::keys[SDLK_q] ) mover->rotateLocalZ( ang );
-		if( I::keys[SDLK_e] ) mover->rotateLocalZ( -ang );
-		if( I::keys[SDLK_PAGEUP] ) mover->getLocalTransform().getScale() += scale ;
-		if( I::keys[SDLK_PAGEDOWN] ) mover->getLocalTransform().getScale() -= scale ;
+		if( I::keys[ SDL_SCANCODE_Q ] ) mover->rotateLocalZ( ang );
+		if( I::keys[ SDL_SCANCODE_E ] ) mover->rotateLocalZ( -ang );
+		if( I::keys[ SDL_SCANCODE_PAGEUP ] ) mover->getLocalTransform().getScale() += scale ;
+		if( I::keys[ SDL_SCANCODE_PAGEDOWN ] ) mover->getLocalTransform().getScale() -= scale ;
 
-		if( I::keys[SDLK_k] ) app->getActiveCam()->lookAtPoint( point_lights[0]->getWorldTransform().getOrigin() );
+		if( I::keys[ SDL_SCANCODE_K ] ) app->getActiveCam()->lookAtPoint( point_lights[0]->getWorldTransform().getOrigin() );
 
 
-		if( I::keys[SDLK_o] == 1 )
+		if( I::keys[ SDL_SCANCODE_O ] == 1 )
 		{
 			btRigidBody* body = static_cast<btRigidBody*>( boxes[0] );
 			//body->getMotionState()->setWorldTransform( toBt( Mat4( Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0 ) ) );
@@ -372,9 +372,9 @@ int main( int argc, char* argv[] )
 		/*Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );*/
 
-		if( I::keys[SDLK_ESCAPE] ) break;
-		if( I::keys[SDLK_F11] ) app->togleFullScreen();
-		if( I::keys[SDLK_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
+		if( I::keys[SDL_SCANCODE_ESCAPE] ) break;
+		if( I::keys[SDL_SCANCODE_F11] ) app->togleFullScreen();
+		if( I::keys[SDL_SCANCODE_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
 
 
 		/*char str[128];
