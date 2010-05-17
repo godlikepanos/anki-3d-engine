@@ -45,7 +45,7 @@ class TargetThread( Thread ):
 		
 	def run( self ):
 		for i in self.range:
-			source_file = source_files[i]
+			source_file = sourceFiles[i]
 			self.out_str += getCommandOutput( compiler + " -MM " + compilerFlags + " " + source_file.cppFile + " -MT " + source_file.objFile )
 			self.out_str += "\t@echo Compiling " + source_file.cppFile + "...\n"
 			self.out_str += "\t@$(CXX) $(INCPATH) $(CFLAGS) " + source_file.cppFile + " -o " + \
@@ -117,7 +117,7 @@ exec( compile( source, inputCfgFile, "exec" ) )
 
 
 # find the cpp files
-source_files = []
+sourceFiles = []
 regexpr = re.compile( sourceFilesRegExpr )
 for sourceDir in sourcePaths:
 	files = os.listdir( sourceDir )
@@ -131,19 +131,23 @@ for sourceDir in sourcePaths:
 		sfile.objFile = fname_wo_ext + ".o"
 		
 		# search all the source files and resolve conflicts in .o
-		for sfile1 in source_files:
+		for sfile1 in sourceFiles:
 			if sfile1.objFile == sfile.objFile:
 				print( "There is a naming conflict between \"" + sfile1.cppFile + "\" and \"" + sfile.cppFile + "\" but dont worry." )
 				random.seed()
 				sfile.objFile = str(random.randint(1,99)) + "." + sfile.objFile;
 	
-		source_files.append( sfile )
+		sourceFiles.append( sfile )
 	
 
 # now the precompiled headers
-ph_files = []
+phFiles = []
 for header in precompiledHeaders:
-	ph_files.append( SourceFile( header ) )
+	sFile = SourceFile()
+	(fnameWoExt, ext) = os.path.splitext( header )
+	sFile.cppFile = header
+	sFile.objFile = fnameWoExt + ".gch"
+	phFiles.append( sFile )
 
 
 # build the string
@@ -163,18 +167,18 @@ for path in includePaths:
 masterStr += "\n"
 
 masterStr += "SOURCES = "
-for source_file in source_files:
+for source_file in sourceFiles:
 	masterStr += source_file.cppFile + " "
 masterStr += "\n"
 
 masterStr += "OBJECTS = "
-for source_file in source_files:
+for source_file in sourceFiles:
 	masterStr += source_file.objFile + " "
 masterStr += "\n"
 
 masterStr += "PRECOMPILED_HEADERS = "
-for header in ph_files:
-	masterStr += header.fname + ".gch "
+for header in phFiles:
+	masterStr += header.objFile
 masterStr += "\n\n"
 
 masterStr += "all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)\n\n"
@@ -185,17 +189,17 @@ masterStr += "\t@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
 masterStr += "\t@echo All Done!\n\n"
 
 
-for header in ph_files:
-	dependStr = getCommandOutput( compiler + " -MM " + compilerFlags + " " + precompiledHeaders_flags + " " + header.path + "/" + header.fname )
-	masterStr += dependStr.replace( header.fname_wo_ext + ".o", header.fname + ".gch" )
-	masterStr += "\t@echo Pre-compiling header " + header.fname + "...\n"
-	masterStr += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.path + "/" + header.fname + "\n\n"
+for header in phFiles:
+	dependStr = getCommandOutput( compiler + " -MM " + compilerFlags + " " + precompiledHeadersFlags + " " + header.cppFile )
+	#masterStr += dependStr.replace( header.fname_wo_ext + ".o", header.fname + ".gch" )
+	masterStr += "\t@echo Pre-compiling header " + header.cppFile + "...\n"
+	masterStr += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.objFile + "\n\n"
 
 
 # write source file target
 threadsNum = os.sysconf('SC_NPROCESSORS_ONLN')
 print( "I will invoke %d threads to make the dependencies..." % threadsNum )
-num = len(source_files);
+num = len(sourceFiles);
 itemsPerThread = num // threadsNum;
 
 for i in range(0, threadsNum):
@@ -214,7 +218,7 @@ for thread in threadList:
 for thread in threadList:
 	masterStr += thread.out_str
 
-#for source_file in source_files:	
+#for source_file in sourceFiles:	
 	#masterStr += source_file.fname_wo_ext + ".o: " + source_file.path + source_file.fname_wo_ext + ".cpp"
 	#masterStr += getCommandOutput( compiler + " -M " + compilerFlags + " " + source_file.path + "/" + source_file.fname )
 	#masterStr += "\t@echo Compiling " + source_file.fname + "...\n"

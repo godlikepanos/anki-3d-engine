@@ -24,6 +24,7 @@ App::App( int /*argc*/, char* /*argv*/[] )
 	/*windowW = 1440;
 	windowH = 900;*/
 
+	terminalColoringEnabled = true;
 
 	timerTick = 1000/40; // in ms. 1000/Hz
 	time = 0;
@@ -50,6 +51,9 @@ void App::initWindow()
 		ERROR( "Failed to obtain the video driver name" );
 	}
 
+	// Chose GL ver
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
 
 	// get desktop size
 	const SDL_VideoInfo* info = SDL_GetVideoInfo();
@@ -76,17 +80,6 @@ void App::initWindow()
 
 	// set the surface
 	mainSurf = SDL_SetVideoMode( windowW, windowH, 24, SDL_HWSURFACE | SDL_OPENGL );
-
-	// move the window
-#ifdef WIN32
-	SDL_SysWMinfo i;
-	SDL_VERSION( &i.version );
-	if( SDL_GetWMInfo(&i) )
-	{
-		HWND hwnd = i.window;
-		SetWindowPos( hwnd, HWND_TOP, 10, 25, w, h, NULL );
-	}
-#endif
 
 	SDL_WM_SetCaption( "AnKi Engine", NULL );
 
