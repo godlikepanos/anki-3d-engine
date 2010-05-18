@@ -10,7 +10,6 @@ sourcePaths = []
 precompiledHeaders = []
 executableName = "unamed_project"
 compiler = ""
-commonFlags = ""
 compilerFlags = ""
 precompiledHeadersFlags = ""
 linkerFlags = ""
@@ -146,7 +145,7 @@ for header in precompiledHeaders:
 	sFile = SourceFile()
 	(fnameWoExt, ext) = os.path.splitext( header )
 	sFile.cppFile = header
-	sFile.objFile = fnameWoExt + ".gch"
+	sFile.objFile = os.path.basename(fnameWoExt) + ".gch"
 	phFiles.append( sFile )
 
 
@@ -154,10 +153,9 @@ for header in precompiledHeaders:
 masterStr = ""
 
 masterStr += "CXX = " + compiler + "\n"
-masterStr += "COMMONFLAGS = " + commonFlags + "\n"
-masterStr += "CFLAGS = $(COMMONFLAGS) " + compilerFlags + "\n"
-masterStr += "PHFLAGS = $(CFLAGS) " + precompiledHeadersFlags + "\n"
-masterStr += "LFLAGS = $(COMMONFLAGS) " + linkerFlags + "\n"
+masterStr += "CFLAGS = " + compilerFlags + "\n"
+masterStr += "PHFLAGS = " + precompiledHeadersFlags + "\n"
+masterStr += "LFLAGS = " + linkerFlags + "\n"
 masterStr += "EXECUTABLE = " + executableName + "\n"
 
 masterStr += "INCPATH = "
@@ -190,8 +188,9 @@ masterStr += "\t@echo All Done!\n\n"
 
 
 for header in phFiles:
-	dependStr = getCommandOutput( compiler + " -MM " + compilerFlags + " " + precompiledHeadersFlags + " " + header.cppFile )
-	#masterStr += dependStr.replace( header.fname_wo_ext + ".o", header.fname + ".gch" )
+  #            getCommandOutput( compiler + " -MM " + compilerFlags + " " + source_file.cppFile + " -MT " + source_file.objFile )
+	dependStr = getCommandOutput( compiler + " -MM " + compilerFlags + " " + header.cppFile + " -MT " + header.objFile )
+	masterStr += dependStr
 	masterStr += "\t@echo Pre-compiling header " + header.cppFile + "...\n"
 	masterStr += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.objFile + "\n\n"
 

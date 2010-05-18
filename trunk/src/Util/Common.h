@@ -87,7 +87,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); }
 
 /// Show an info message
-#define INFO( x ) { GENERAL_MSG( "Info", x, COL_INFO ) }
+#define INFO( x ) GENERAL_MSG( "Info", x, COL_INFO )
 
 /// Reverse assertion
 #ifdef _DEBUG_
