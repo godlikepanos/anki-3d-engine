@@ -1,6 +1,7 @@
 #ifndef _APP_H_
 #define _APP_H_
 
+#include <SDL.h>
 #include "Common.h"
 
 
@@ -10,8 +11,6 @@
  */
 class App
 {
-	PROPERTY_R( uint, desktopW, getDesktopWidth ) ///< @ref PROPERTY_R : The desktop width at App initialization
-	PROPERTY_R( uint, desktopH, getDesktopHeight ) ///< @ref PROPERTY_R : The desktop height at App initialization
 	PROPERTY_R( uint, windowW, getWindowWidth ) ///< @ref PROPERTY_R : The main window width
 	PROPERTY_R( uint, windowH, getWindowHeight ) ///< @ref PROPERTY_R : The main window height
 	PROPERTY_R( bool, terminalColoringEnabled, isTerminalColoringEnabled ) ///< @ref PROPERTY_R : Terminal coloring for Unix terminals. Default is enabled
@@ -22,8 +21,9 @@ class App
 	private:
 		static bool isCreated; ///< A flag to ensure one @ref App instance
 		uint time;
-		class SDL_Surface* mainSurf; ///< SDL stuff
-		class SDL_Surface* iconImage; ///< SDL stuff
+		SDL_WindowID windowId;
+		SDL_GLContext glContext;
+		bool fullScreenFlag;
 
 	public:
 		uint timerTick;
@@ -36,6 +36,9 @@ class App
 		void togleFullScreen();
 		void swapBuffers();
 		static void printAppInfo();
+
+		uint getDesktopWidth() const;
+		uint getDesktopHeight() const;
 
 		/**
 		 * @return Returns the number of milliseconds since SDL library initialization

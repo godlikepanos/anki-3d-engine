@@ -177,7 +177,7 @@ class Scanner
 		// input
 		ifstream  inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
 		istream*  inStream; ///< Points to either @ref inFstream or an external std::istream
-		char      scriptName[64]; ///< The name of the input stream. Mostly used for the error messages inside the @ref Scanner
+		char      scriptName[512]; ///< The name of the input stream. Mostly used for the error messages inside the @ref Scanner
 
 	//===================================================================================================================================
 	// public funcs                                                                                                                     =
