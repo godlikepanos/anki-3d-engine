@@ -39,7 +39,7 @@ void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 //=====================================================================================================================================
 void Renderer::Pps::Hdr::init()
 {
-	int width = renderingQuality * r.width;
+	//int width = renderingQuality * r.width;
 	int height = renderingQuality * r.height;
 
 	initFbos( pass0Fbo, pass0Fai, GL_RGB );

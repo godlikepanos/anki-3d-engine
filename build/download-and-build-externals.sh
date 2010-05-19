@@ -1,5 +1,6 @@
 #! /bin/bash
 
+set -x
 cd ../../
 svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
 cd bullet_svn
