@@ -12,7 +12,8 @@ build system that generates GNU makefiles.
 	- GLEW
 
 	So before generating makefiles or building AnKi you have to download from
-	their repositories and build the above libraries. Instructions follow:
+	their repositories and build the above libraries. Instructions follow. You can
+	alternately use the script download-and-build-externals.sh
 	
 
 1.1) Bullet Physics Library

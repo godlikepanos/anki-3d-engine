@@ -14,19 +14,6 @@ class SpotLight;
 
 /**
  * @todo write
- *
- * @note Because of the many members of the class there is a naming convention that helps
- * - MS: material stage
- * - IS: illumination stage
- * - SM: shadowmapping
- * - AP: ambient pass
- * - PLS: point light pass
- * - SLS: spot light pass
- * - PPS: preprocessing stage
- * - HDR: high dynamic range lighting
- * - SSAO: screen space ambient occlusion
- * - LScat: light scattering
- * - FAI: frame buffer attachable image
  */
 class Renderer
 {
@@ -83,12 +70,17 @@ class Renderer
 						Texture shadowMap;
 
 						void init();
+
+						/**
+						 * Render the scene only with depth and store the result in the shadowMap
+						 * @param cam The light camera
+						 */
 						void run( const Camera& cam );
 
 					public:
 						bool pcfEnabled;
 						bool bilinearEnabled;
-						int  resolution;
+						int  resolution; ///< Shadowmap resolution. The higher the more quality
 
 						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
 				};
@@ -96,10 +88,21 @@ class Renderer
 			private:
 				Fbo fbo;
 				uint stencilRb; ///< Illumination stage stencil buffer
+				// shader stuff
 				ShaderProg apSProg; ///< Illumination stage ambient pass shader program
 				ShaderProg plSProg; ///< Illumination stage point light shader program
 				ShaderProg slSProg; ///< Illumination stage spot light w/o shadow shader program
 				ShaderProg slSSProg; ///< Illumination stage spot light w/ shadow shader program
+				struct
+				{
+					struct
+					{
+						int ambientCol;
+						int sceneColMap;
+					} ap;
+
+				} uniLocs;
+				// other
 				Vec3 viewVectors[4];
 				Vec2 planes;
 				static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex coords
@@ -107,8 +110,16 @@ class Renderer
 
 				static void initSMOUvS(); ///< Init the illumination stage stencil masking optimizations uv sphere (eg create the @ref sMOUvSVboId VBO)
 				void renderSMOUvS( const PointLight& light ); ///< Render the illumination stage stencil masking optimizations uv sphere
-				void calcViewVector(); ///< Calc the view vector that we will use inside the shader to calculate the frag pos in view space
-				void calcPlanes(); ///< Calc the planes that we will use inside the shader to calculate the frag pos in view space
+
+				/**
+				 * Calc the view vector that we will use inside the shader to calculate the frag pos in view space
+				 */
+				void calcViewVector();
+
+				/**
+				 * Calc the planes that we will use inside the shader to calculate the frag pos in view space
+				 */
+				void calcPlanes();
 				void setStencilMask( const PointLight& light );
 				void setStencilMask( const SpotLight& light );
 				void ambientPass( const Vec3& color );
@@ -120,7 +131,6 @@ class Renderer
 
 			public:
 				Texture fai;
-
 				Sm sm;
 
 				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
@@ -172,7 +182,12 @@ class Renderer
 				};
 
 				/**
-				 * Screen space ambien occlusion stage
+				 * Screen space ambient occlusion stage
+				 *
+				 * Three passes:
+				 * - Calc ssao factor
+				 * - Blur vertically
+				 * - Blur horizontally
 				 */
 				class Saao: private RenderingStage
 				{
@@ -180,15 +195,30 @@ class Renderer
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 						uint width, height, bwidth, bheight;
 						Texture* noiseMap;
+						struct
+						{
+							struct
+							{
+								int camerarange, msDepthFai, noiseMap, msNormalFai;
+							} pass0SProg;
+							struct
+							{
+								int fai;
+							} pass1SProg;
+							struct
+							{
+								int fai;
+							} pass2SProg;
+						} uniLocs;
 
-						void initBlurFbos();
+						void initBlurFbo( Fbo& fbo, Texture& fai );
 						void init();
 						void run();
 
 					public:
 						float renderingQuality;
 						float bluringQuality;
-						Texture pass0Fai, pass1Fai, fai;
+						Texture pass0Fai, pass1Fai, fai /** The final FAI */;
 						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
 						Saao( Renderer& r_ ): RenderingStage(r_) {}

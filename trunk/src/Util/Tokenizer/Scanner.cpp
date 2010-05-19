@@ -82,7 +82,7 @@ Scanner::ResWord* Scanner::rwTable [] =  // reserved word table
 //=====================================================================================================================================
 // ascii map                                                                                                                          =
 //=====================================================================================================================================
-uint Scanner::asciiLookupTable [128] = {AC_ERROR};
+Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
 
 void Scanner::initAsciiMap()
 {

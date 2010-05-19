@@ -40,7 +40,7 @@ class Scanner
 		/**
 		 * Every char in the Ascii table is binded with one characteristic code type. This helps the scanning
 		 */
-		enum AsciiFlagsE
+		enum AsciiFlag
 		{
 			AC_ERROR = 0,
 			AC_EOF = 1,
@@ -52,12 +52,12 @@ class Scanner
 			AC_DOUBLEQUOTE = 64
 		};
 
-		static uint asciiLookupTable []; ///< The array contains one ascii_code_e for every symbol of the ASCII table
+		static AsciiFlag asciiLookupTable []; ///< The array contains one ascii_code_e for every symbol of the ASCII table
 		/// Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner @see Scanner()
 		static void initAsciiMap();
 
 		/// To save us from typing for example asciiLookupTable[ (int)'a' ]
-		inline uint asciiLookup( char ch_ )
+		inline AsciiFlag asciiLookup( char ch_ )
 		{
 			return asciiLookupTable[ (int)ch_ ];
 		}
@@ -191,7 +191,7 @@ class Scanner
 		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
 
 		bool loadFile( const char* filename ); ///< Load a file to extract tokens
-		bool loadIstream( istream& iostream_, const char* scriptName_ = "unamed-istream" ); ///< Load a STL iostream to extract tokens
+		bool loadIstream( istream& istream_, const char* scriptName_ = "unamed-istream" ); ///< Load a STL istream to extract tokens
 		void unload();
 
 		static void   printTokenInfo( const Token& token ); ///< Print info of the given token
