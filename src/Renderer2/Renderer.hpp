@@ -13,7 +13,9 @@ class SpotLight;
 
 
 /**
- * @todo write
+ * The renderer class
+ *
+ * It is a class and not a namespace because we may need external renderers for security cameras for example
  */
 class Renderer
 {
@@ -52,7 +54,7 @@ class Renderer
 				Texture depthFai;
 
 				Ms( Renderer& r_ ): RenderingStage( r_ ) {}
-		};
+		}; // end Ms
 
 		/**
 		 * Illumination stage
@@ -65,6 +67,8 @@ class Renderer
 				 */
 				class Sm: private RenderingStage
 				{
+					friend class Is;
+
 					private:
 						Fbo fbo; ///< Illumination stage shadowmapping FBO
 						Texture shadowMap;
@@ -83,25 +87,34 @@ class Renderer
 						int  resolution; ///< Shadowmap resolution. The higher the more quality
 
 						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
-				};
+				}; // end Sm
 
 			private:
 				Fbo fbo;
 				uint stencilRb; ///< Illumination stage stencil buffer
 				// shader stuff
-				ShaderProg apSProg; ///< Illumination stage ambient pass shader program
-				ShaderProg plSProg; ///< Illumination stage point light shader program
-				ShaderProg slSProg; ///< Illumination stage spot light w/o shadow shader program
-				ShaderProg slSSProg; ///< Illumination stage spot light w/ shadow shader program
-				struct
+				/// Illumination stage ambient pass shader program
+				class AmbientShaderProg: public ShaderProg
 				{
-					struct
-					{
-						int ambientCol;
-						int sceneColMap;
-					} ap;
-
-				} uniLocs;
+					public:
+						struct
+						{
+							int ambientCol, sceneColMap;
+						}uniLocs;
+				};
+				/// Illumination stage light pass shader program
+				class LightShaderProg: public ShaderProg
+				{
+					public:
+						struct
+						{
+							int msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai, planes, lightPos, lightInvRadius, lightDiffuseCol, lightSpecularCol, lightTex, texProjectionMat, shadowMap;
+						}uniLocs;
+				};
+				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program
+				LightShaderProg pointLightSProg; ///< Illumination stage point light shader program
+				LightShaderProg spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
+				LightShaderProg spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
 				// other
 				Vec3 viewVectors[4];
 				Vec2 planes;
@@ -110,16 +123,8 @@ class Renderer
 
 				static void initSMOUvS(); ///< Init the illumination stage stencil masking optimizations uv sphere (eg create the @ref sMOUvSVboId VBO)
 				void renderSMOUvS( const PointLight& light ); ///< Render the illumination stage stencil masking optimizations uv sphere
-
-				/**
-				 * Calc the view vector that we will use inside the shader to calculate the frag pos in view space
-				 */
-				void calcViewVector();
-
-				/**
-				 * Calc the planes that we will use inside the shader to calculate the frag pos in view space
-				 */
-				void calcPlanes();
+				void calcViewVector(); ///< Calc the view vector that we will use inside the shader to calculate the frag pos in view space
+				void calcPlanes(); ///< Calc the planes that we will use inside the shader to calculate the frag pos in view space
 				void setStencilMask( const PointLight& light );
 				void setStencilMask( const SpotLight& light );
 				void ambientPass( const Vec3& color );
@@ -134,7 +139,7 @@ class Renderer
 				Sm sm;
 
 				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
-		};
+		}; // end Is
 
 
 		/**
@@ -179,7 +184,7 @@ class Renderer
 						Texture fai; ///< The final FAI
 
 						Hdr( Renderer& r_ ): RenderingStage(r_) {}
-				};
+				}; // end Hrd
 
 				/**
 				 * Screen space ambient occlusion stage
@@ -222,14 +227,32 @@ class Renderer
 						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
 						Saao( Renderer& r_ ): RenderingStage(r_) {}
-				};
+				}; // end Ssao
 
-		};
+				private:
+					class PpsShaderProg: public ShaderProg
+					{
+						public:
+							struct
+							{
+								int isFai, ppsSsaoFai, msNormalFai, hdrFai, lscattFai;
+							} uniLocs;
+					};
+					PpsShaderProg sProg;
+					Fbo fbo;
 
-		// the data members
-		Ms ms;
-		Is is;
-		Pps pps;
+					void init();
+					void run();
+
+				public:
+					Texture fai;
+
+		}; // end Pps
+
+		// the stages as data members
+		Ms ms; ///< Material rendering stage
+		Is is; ///< Illumination rendering stage
+		Pps pps; ///< Postprocessing rendering stage
 
 	//===================================================================================================================================
 	//                                                                                                                                  =
@@ -249,6 +272,7 @@ class Renderer
 		static int   maxColorAtachments; ///< Max color attachments a FBO can accept
 		uint  framesNum;
 		float aspectRatio;
+		static float quadVertCoords [][2];
 		// matrices & viewing
 		Camera* cam; ///< Current camera
 		Mat4 modelViewMat; ///< This changes once for every mesh rendering
@@ -260,15 +284,10 @@ class Renderer
 		void setViewMatrix( const Camera& cam ) {}
 		void setProjectionViewMatrices( const Camera& cam ) {}
 		static void setViewport( uint x, uint y, uint w, uint h ) {}
+		static void multMatrix( const Mat4& ) {}
 		static void drawQuad( int vertCoordsUniLoc ) {};
+		static void noShaders() {}
 
 };
 
 #endif
-
-
-
-
-
-
-
