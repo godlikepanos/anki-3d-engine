@@ -34,14 +34,16 @@ class Image
 
 
 /**
- * Texture resource class. It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed
- * and uncompressed TGAs and all formats of PNG (PNG loading comes through SDL_image)
+ * Texture resource class
+ *
+ * It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and uncompressed TGAs
+ * and all formats of PNG (PNG loading comes through SDL_image)
  */
 class Texture: public Resource
 {
 	protected:
 		uint   glId; ///< Identification for OGL
-		GLenum type; ///< GL_TEXTURE_*
+		GLenum type; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
 
 	public:
 		 Texture(): glId(numeric_limits<uint>::max()), type(GL_TEXTURE_2D) {}

@@ -1,9 +1,10 @@
-*Continue working on the new coding style in shaders
-*Changes in the blending objects problem. The BS will become one stage and the PPS will be divided in two steps. The first will apply the SSAO and the EdgeAA in the IS_FAI and the second will do the rest
-*The second Physics demo: Create a box that is geting moved by the user. It has to interact with the other boxes
-*Replace the rotations in Node with Quaternions
-*Set the gravity of a certain body to a lower value and see how it behaves
-*In the Ragdoll bullet demo try to change the distances of the bodies
-*Ask in the bullet forum:
-	*How to make floating particles like smoke. But first try with one body and manualy setting the gravity
-	*What the btCollisionObject::setActivationState takes as parameter?
+- Continue working on the new coding style in shaders
+- Changes in the blending objects problem. The BS will become one stage and the PPS will be divided in two steps. The first will apply the SSAO and the EdgeAA in the IS_FAI and the second will do the rest
+- The second Physics demo: Create a box that is geting moved by the user. It has to interact with the other boxes
+- Replace the rotations in Node with Quaternions
+- Set the gravity of a certain body to a lower value and see how it behaves
+- In the Ragdoll bullet demo try to change the distances of the bodies
+- Ask in the bullet forum:
+	- How to make floating particles like smoke. But first try with one body and manualy setting the gravity
+	- What the btCollisionObject::setActivationState takes as parameter?
+- Move the texture anisotropy, texCompression, mipmapping from Renderer to Texture

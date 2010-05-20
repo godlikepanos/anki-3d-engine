@@ -56,6 +56,7 @@ void Renderer::Is::Sm::run( const Camera& cam )
 	fbo.bind();
 
 	// push attribs
+	/// @todo remove the matrices
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
 	glMatrixMode( GL_MODELVIEW );
