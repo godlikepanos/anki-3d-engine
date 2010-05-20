@@ -179,7 +179,7 @@ template<typename Type> class Vec: public vector<Type>
 	public:
 		Vec(): vector<Type>() {}
 		Vec( size_t size ): vector<Type>(size) {}
-		Vec( size_t size, Type val ): vector<Type>(val,size) {}
+		Vec( size_t size, Type val ): vector<Type>(size,val) {}
 
 		Type& operator[]( size_t n )
 		{
