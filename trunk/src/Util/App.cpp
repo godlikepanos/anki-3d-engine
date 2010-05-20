@@ -72,7 +72,7 @@ void App::initWindow()
 
 
 	// the icon
-	/*iconImage = SDL_LoadBMP("gfx/icon.bmp");
+	iconImage = SDL_LoadBMP("gfx/icon.bmp");
 	if( iconImage == NULL )
 	{
 		ERROR( "Cannot load window icon" );
@@ -81,8 +81,9 @@ void App::initWindow()
 	{
 		Uint32 colorkey = SDL_MapRGB( iconImage->format, 255, 0, 255 );
 		SDL_SetColorKey( iconImage, SDL_SRCCOLORKEY, colorkey );
-		SDL_WM_SetIcon( iconImage, NULL );
-	}*/
+		//SDL_WM_SetIcon( iconImage, NULL );
+		SDL_SetWindowIcon( windowId, iconImage );
+	}
 
 	INFO( "SDL window initialization ends" );
 }
@@ -114,6 +115,7 @@ void App::swapBuffers()
 //=====================================================================================================================================
 void App::quitApp( int code )
 {
+	SDL_FreeSurface( iconImage );
 	SDL_GL_DeleteContext( glContext );
 	SDL_DestroyWindow( windowId );
 	SDL_Quit();

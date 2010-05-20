@@ -23,6 +23,7 @@ class App
 		uint time;
 		SDL_WindowID windowId;
 		SDL_GLContext glContext;
+		SDL_Surface* iconImage;
 		bool fullScreenFlag;
 
 	public:
