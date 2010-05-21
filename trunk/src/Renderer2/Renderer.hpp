@@ -63,7 +63,7 @@ class Renderer
 		{
 			public:
 				/**
-				 * Shadowmapping sub-stage
+				 * Shadowmapping pass
 				 */
 				class Sm: private RenderingStage
 				{
@@ -144,15 +144,19 @@ class Renderer
 
 		/**
 		 * Post-processing stage
+		 *
+		 * This stage is divided into 2 two parts. The first happens before blending stage and the second after.
 		 */
 		class Pps: private RenderingStage
 		{
 			public:
 				/**
-				 * High dynamic range lighting stage
+				 * High dynamic range lighting pass
 				 */
 				class Hdr: private RenderingStage
 				{
+					friend class Pps;
+
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 						ShaderProg pass0SProg, pass1SProg, pass2SProg;
@@ -179,23 +183,26 @@ class Renderer
 					public:
 						bool enabled;
 						float renderingQuality;
-						Texture pass0Fai; ///< Vertical blur pass
-						Texture pass1Fai; ///< pass0Fai with the horizontal blur
+						Texture pass0Fai; ///< Vertical blur pass FAI
+						Texture pass1Fai; ///< pass0Fai with the horizontal blur FAI
 						Texture fai; ///< The final FAI
 
 						Hdr( Renderer& r_ ): RenderingStage(r_) {}
 				}; // end Hrd
 
+
 				/**
-				 * Screen space ambient occlusion stage
+				 * Screen space ambient occlusion pass
 				 *
 				 * Three passes:
 				 * - Calc ssao factor
 				 * - Blur vertically
 				 * - Blur horizontally
 				 */
-				class Saao: private RenderingStage
+				class Ssao: private RenderingStage
 				{
+					friend class Pps;
+
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 						uint width, height, bwidth, bheight;
@@ -221,12 +228,13 @@ class Renderer
 						void run();
 
 					public:
+						bool enabled;
 						float renderingQuality;
 						float bluringQuality;
 						Texture pass0Fai, pass1Fai, fai /** The final FAI */;
 						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
-						Saao( Renderer& r_ ): RenderingStage(r_) {}
+						Ssao( Renderer& r_ ): RenderingStage(r_) {}
 				}; // end Ssao
 
 				private:
@@ -246,8 +254,21 @@ class Renderer
 
 				public:
 					Texture fai;
+					Hdr hdr;
+					Ssao ssao;
 
+					Pps( Renderer& r_ ): RenderingStage(r_), hdr(r_), ssao(r_) {}
 		}; // end Pps
+
+		/**
+		 * Debugging stage
+		 */
+		class Dbg: public RenderingStage
+		{
+			private:
+			public:
+				bool enabled;
+		};
 
 		// the stages as data members
 		Ms ms; ///< Material rendering stage
