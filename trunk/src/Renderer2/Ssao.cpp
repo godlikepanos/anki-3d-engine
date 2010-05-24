@@ -80,12 +80,12 @@ void Renderer::Pps::Ssao::init()
 	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(width) + "\n").c_str() );
 	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bheight) + "\n").c_str() );
 
-	uniLocs.pass0SProg.camerarange = ssaoSProg.getUniVar("camerarange")->getLoc();
-	uniLocs.pass0SProg.msDepthFai = ssaoSProg.getUniVar("msDepthFai")->getLoc();
-	uniLocs.pass0SProg.noiseMap = ssaoSProg.getUniVar("noiseMap")->getLoc();
-	uniLocs.pass0SProg.msNormalFai = ssaoSProg.getUniVar("msNormalFai")->getLoc();
-	uniLocs.pass1SProg.fai = blurSProg.getUniVar("tex")->getLoc(); /// @todo rename the tex in the shader
-	uniLocs.pass2SProg.fai = blurSProg2.getUniVar("tex")->getLoc(); /// @todo rename the tex in the shader
+	uniLocs.pass0SProg.camerarange = ssaoSProg.findUniVar("camerarange")->getLoc();
+	uniLocs.pass0SProg.msDepthFai = ssaoSProg.findUniVar("msDepthFai")->getLoc();
+	uniLocs.pass0SProg.noiseMap = ssaoSProg.findUniVar("noiseMap")->getLoc();
+	uniLocs.pass0SProg.msNormalFai = ssaoSProg.findUniVar("msNormalFai")->getLoc();
+	uniLocs.pass1SProg.fai = blurSProg.findUniVar("tex")->getLoc(); /// @todo rename the tex in the shader
+	uniLocs.pass2SProg.fai = blurSProg2.findUniVar("tex")->getLoc(); /// @todo rename the tex in the shader
 
 
 	//

@@ -9,6 +9,15 @@
 
 
 //=====================================================================================================================================
+// set uniforms                                                                                                                       =
+//=====================================================================================================================================
+void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
+{
+	glUniformMatrix4fv( getLoc(), size, true, &(m4[0])[0] );
+}
+
+
+//=====================================================================================================================================
 // createAndCompileShader                                                                                                             =
 //=====================================================================================================================================
 uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const
@@ -122,7 +131,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		attribVars.push_back( Var( loc, name_, type, Var::SVT_ATTRIBUTE ) );
+		attribVars.push_back( AttribVar( loc, name_, type ) );
 		attribNameToVar[ name_ ] = &attribVars.back();
 	}
 
@@ -143,7 +152,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		uniVars.push_back( Var( loc, name_, type, Var::SVT_UNIFORM ) );
+		uniVars.push_back( UniVar( loc, name_, type ) );
 		uniNameToVar[ name_ ] = &uniVars.back();
 	}
 }
@@ -225,11 +234,11 @@ bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 
 
 //=====================================================================================================================================
-// getUniVar                                                                                                                          =
+// findUniVar                                                                                                                          =
 //=====================================================================================================================================
-const ShaderProg::Var* ShaderProg::getUniVar( const char* name ) const
+const ShaderProg::UniVar* ShaderProg::findUniVar( const char* name ) const
 {
-	NameToVarIterator it = uniNameToVar.find( name );
+	NameToUniVarIterator it = uniNameToVar.find( name );
 	if( it == uniNameToVar.end() )
 	{
 		SHADER_ERROR( "Cannot get uniform loc \"" << name << '\"' );
@@ -240,11 +249,11 @@ const ShaderProg::Var* ShaderProg::getUniVar( const char* name ) const
 
 
 //=====================================================================================================================================
-// getAttribVar                                                                                                                       =
+// findAttribVar                                                                                                                       =
 //=====================================================================================================================================
-const ShaderProg::Var* ShaderProg::getAttribVar( const char* name ) const
+const ShaderProg::AttribVar* ShaderProg::findAttribVar( const char* name ) const
 {
-	NameToVarIterator it = attribNameToVar.find( name );
+	NameToAttribVarIterator it = attribNameToVar.find( name );
 	if( it == attribNameToVar.end() )
 	{
 		SHADER_ERROR( "Cannot get attribute loc \"" << name << '\"' );
@@ -259,7 +268,7 @@ const ShaderProg::Var* ShaderProg::getAttribVar( const char* name ) const
 //=====================================================================================================================================
 bool ShaderProg::uniVarExists( const char* name ) const
 {
-	NameToVarIterator it = uniNameToVar.find( name );
+	NameToUniVarIterator it = uniNameToVar.find( name );
 	return it != uniNameToVar.end();
 }
 
@@ -269,7 +278,7 @@ bool ShaderProg::uniVarExists( const char* name ) const
 //=====================================================================================================================================
 bool ShaderProg::attribVarExists( const char* name ) const
 {
-	NameToVarIterator it = attribNameToVar.find( name );
+	NameToAttribVarIterator it = attribNameToVar.find( name );
 	return it != attribNameToVar.end();
 }
 
@@ -289,5 +298,5 @@ void ShaderProg::locTexUnit( const char* loc, const Texture& tex, uint tex_unit 
 {
 	DEBUG_ERR( getCurrentProgramGlId() != glId );
 	tex.bind( tex_unit );
-	glUniform1i( getUniVar(loc)->getLoc(), tex_unit );
+	glUniform1i( findUniVar(loc)->getLoc(), tex_unit );
 }

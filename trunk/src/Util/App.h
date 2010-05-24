@@ -16,6 +16,7 @@ class App
 	PROPERTY_R( bool, terminalColoringEnabled, isTerminalColoringEnabled ) ///< @ref PROPERTY_R : Terminal coloring for Unix terminals. Default is enabled
 
 	PROPERTY_RW( class Scene*, scene, setScene, getScene ) ///< @ref PROPERTY_RW : Pointer to the current scene
+	PROPERTY_RW( class MainRenderer*, mainRenderer, setMainRenderer, getMainRenderer ) ///< @ref PROPERTY_RW : Pointer to the main renderer
 	PROPERTY_RW( class Camera*, activeCam, setActiveCam, getActiveCam ) ///< @ref PROPERTY_RW : Pointer to the current camera
 
 	private:

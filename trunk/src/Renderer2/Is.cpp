@@ -136,46 +136,46 @@ void Renderer::Is::init()
 
 	// load the shaders
 	ambientPassSProg.customLoad( "shaders/is_ap.glsl" );
-	ambientPassSProg.uniLocs.ambientCol = ambientPassSProg.getUniVar("ambientCol")->getLoc();
-	ambientPassSProg.uniLocs.sceneColMap = ambientPassSProg.getUniVar("sceneColMap")->getLoc();
+	ambientPassSProg.uniLocs.ambientCol = ambientPassSProg.findUniVar("ambientCol")->getLoc();
+	ambientPassSProg.uniLocs.sceneColMap = ambientPassSProg.findUniVar("sceneColMap")->getLoc();
 
 	pointLightSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _POINT_LIGHT_\n" );
-	pointLightSProg.uniLocs.msNormalFai = pointLightSProg.getUniVar("msNormalFai")->getLoc();
-	pointLightSProg.uniLocs.msDiffuseFai = pointLightSProg.getUniVar("msDiffuseFai")->getLoc();
-	pointLightSProg.uniLocs.msSpecularFai = pointLightSProg.getUniVar("msSpecularFai")->getLoc();
-	pointLightSProg.uniLocs.msDepthFai = pointLightSProg.getUniVar("msDepthFai")->getLoc();
-	pointLightSProg.uniLocs.planes = pointLightSProg.getUniVar("planes")->getLoc();
-	pointLightSProg.uniLocs.lightPos = pointLightSProg.getUniVar("lightPos")->getLoc();
-	pointLightSProg.uniLocs.lightInvRadius = pointLightSProg.getUniVar("lightInvRadius")->getLoc();
-	pointLightSProg.uniLocs.lightDiffuseCol = pointLightSProg.getUniVar("lightDiffuseCol")->getLoc();
-	pointLightSProg.uniLocs.lightSpecularCol = pointLightSProg.getUniVar("lightSpecularCol")->getLoc();
+	pointLightSProg.uniLocs.msNormalFai = pointLightSProg.findUniVar("msNormalFai")->getLoc();
+	pointLightSProg.uniLocs.msDiffuseFai = pointLightSProg.findUniVar("msDiffuseFai")->getLoc();
+	pointLightSProg.uniLocs.msSpecularFai = pointLightSProg.findUniVar("msSpecularFai")->getLoc();
+	pointLightSProg.uniLocs.msDepthFai = pointLightSProg.findUniVar("msDepthFai")->getLoc();
+	pointLightSProg.uniLocs.planes = pointLightSProg.findUniVar("planes")->getLoc();
+	pointLightSProg.uniLocs.lightPos = pointLightSProg.findUniVar("lightPos")->getLoc();
+	pointLightSProg.uniLocs.lightInvRadius = pointLightSProg.findUniVar("lightInvRadius")->getLoc();
+	pointLightSProg.uniLocs.lightDiffuseCol = pointLightSProg.findUniVar("lightDiffuseCol")->getLoc();
+	pointLightSProg.uniLocs.lightSpecularCol = pointLightSProg.findUniVar("lightSpecularCol")->getLoc();
 
 	spotLightNoShadowSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _SPOT_LIGHT_\n" );
-	spotLightNoShadowSProg.uniLocs.msNormalFai = spotLightNoShadowSProg.getUniVar("msNormalFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.msDiffuseFai = spotLightNoShadowSProg.getUniVar("msDiffuseFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.msSpecularFai = spotLightNoShadowSProg.getUniVar("msSpecularFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.msDepthFai = spotLightNoShadowSProg.getUniVar("msDepthFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.planes = spotLightNoShadowSProg.getUniVar("planes")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightPos = spotLightNoShadowSProg.getUniVar("lightPos")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightInvRadius = spotLightNoShadowSProg.getUniVar("lightInvRadius")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightDiffuseCol = spotLightNoShadowSProg.getUniVar("lightDiffuseCol")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightSpecularCol = spotLightNoShadowSProg.getUniVar("lightSpecularCol")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightTex = spotLightNoShadowSProg.getUniVar("lightTex")->getLoc();
-	spotLightNoShadowSProg.uniLocs.texProjectionMat = spotLightNoShadowSProg.getUniVar("texProjectionMat")->getLoc();
+	spotLightNoShadowSProg.uniLocs.msNormalFai = spotLightNoShadowSProg.findUniVar("msNormalFai")->getLoc();
+	spotLightNoShadowSProg.uniLocs.msDiffuseFai = spotLightNoShadowSProg.findUniVar("msDiffuseFai")->getLoc();
+	spotLightNoShadowSProg.uniLocs.msSpecularFai = spotLightNoShadowSProg.findUniVar("msSpecularFai")->getLoc();
+	spotLightNoShadowSProg.uniLocs.msDepthFai = spotLightNoShadowSProg.findUniVar("msDepthFai")->getLoc();
+	spotLightNoShadowSProg.uniLocs.planes = spotLightNoShadowSProg.findUniVar("planes")->getLoc();
+	spotLightNoShadowSProg.uniLocs.lightPos = spotLightNoShadowSProg.findUniVar("lightPos")->getLoc();
+	spotLightNoShadowSProg.uniLocs.lightInvRadius = spotLightNoShadowSProg.findUniVar("lightInvRadius")->getLoc();
+	spotLightNoShadowSProg.uniLocs.lightDiffuseCol = spotLightNoShadowSProg.findUniVar("lightDiffuseCol")->getLoc();
+	spotLightNoShadowSProg.uniLocs.lightSpecularCol = spotLightNoShadowSProg.findUniVar("lightSpecularCol")->getLoc();
+	spotLightNoShadowSProg.uniLocs.lightTex = spotLightNoShadowSProg.findUniVar("lightTex")->getLoc();
+	spotLightNoShadowSProg.uniLocs.texProjectionMat = spotLightNoShadowSProg.findUniVar("texProjectionMat")->getLoc();
 
 	spotLightShadowSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _SPOT_LIGHT_\n#define _SHADOW_\n" );
-	spotLightShadowSProg.uniLocs.msNormalFai = spotLightShadowSProg.getUniVar("msNormalFai")->getLoc();
-	spotLightShadowSProg.uniLocs.msDiffuseFai = spotLightShadowSProg.getUniVar("msDiffuseFai")->getLoc();
-	spotLightShadowSProg.uniLocs.msSpecularFai = spotLightShadowSProg.getUniVar("msSpecularFai")->getLoc();
-	spotLightShadowSProg.uniLocs.msDepthFai = spotLightShadowSProg.getUniVar("msDepthFai")->getLoc();
-	spotLightShadowSProg.uniLocs.planes = spotLightShadowSProg.getUniVar("planes")->getLoc();
-	spotLightShadowSProg.uniLocs.lightPos = spotLightShadowSProg.getUniVar("lightPos")->getLoc();
-	spotLightShadowSProg.uniLocs.lightInvRadius = spotLightShadowSProg.getUniVar("lightInvRadius")->getLoc();
-	spotLightShadowSProg.uniLocs.lightDiffuseCol = spotLightShadowSProg.getUniVar("lightDiffuseCol")->getLoc();
-	spotLightShadowSProg.uniLocs.lightSpecularCol = spotLightShadowSProg.getUniVar("lightSpecularCol")->getLoc();
-	spotLightShadowSProg.uniLocs.lightTex = spotLightShadowSProg.getUniVar("lightTex")->getLoc();
-	spotLightShadowSProg.uniLocs.texProjectionMat = spotLightShadowSProg.getUniVar("texProjectionMat")->getLoc();
-	spotLightShadowSProg.uniLocs.shadowMap = spotLightShadowSProg.getUniVar("shadowMap")->getLoc();
+	spotLightShadowSProg.uniLocs.msNormalFai = spotLightShadowSProg.findUniVar("msNormalFai")->getLoc();
+	spotLightShadowSProg.uniLocs.msDiffuseFai = spotLightShadowSProg.findUniVar("msDiffuseFai")->getLoc();
+	spotLightShadowSProg.uniLocs.msSpecularFai = spotLightShadowSProg.findUniVar("msSpecularFai")->getLoc();
+	spotLightShadowSProg.uniLocs.msDepthFai = spotLightShadowSProg.findUniVar("msDepthFai")->getLoc();
+	spotLightShadowSProg.uniLocs.planes = spotLightShadowSProg.findUniVar("planes")->getLoc();
+	spotLightShadowSProg.uniLocs.lightPos = spotLightShadowSProg.findUniVar("lightPos")->getLoc();
+	spotLightShadowSProg.uniLocs.lightInvRadius = spotLightShadowSProg.findUniVar("lightInvRadius")->getLoc();
+	spotLightShadowSProg.uniLocs.lightDiffuseCol = spotLightShadowSProg.findUniVar("lightDiffuseCol")->getLoc();
+	spotLightShadowSProg.uniLocs.lightSpecularCol = spotLightShadowSProg.findUniVar("lightSpecularCol")->getLoc();
+	spotLightShadowSProg.uniLocs.lightTex = spotLightShadowSProg.findUniVar("lightTex")->getLoc();
+	spotLightShadowSProg.uniLocs.texProjectionMat = spotLightShadowSProg.findUniVar("texProjectionMat")->getLoc();
+	spotLightShadowSProg.uniLocs.shadowMap = spotLightShadowSProg.findUniVar("shadowMap")->getLoc();
 
 
 	// init the rest
