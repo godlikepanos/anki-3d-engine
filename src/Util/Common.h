@@ -1,8 +1,8 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstdio>
 #include <memory.h>
 #include <string.h>
 #include <fstream>

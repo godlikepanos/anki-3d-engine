@@ -30,25 +30,25 @@ void Renderer::Pps::init()
 	sProg.customLoad( "shaders/Pps.glsl" );
 	sProg.bind();
 
-	sProg.uniLocs.isFai = sProg.getUniVar( "isFai" )->getLoc();
+	sProg.uniLocs.isFai = sProg.findUniVar( "isFai" )->getLoc();
 
 	if( ssao.enabled )
 	{
 		ssao.init();
-		sProg.uniLocs.ppsSsaoFai = sProg.getUniVar( "ppsSsaoFai" )->getLoc();
+		sProg.uniLocs.ppsSsaoFai = sProg.findUniVar( "ppsSsaoFai" )->getLoc();
 	}
 
 	if( hdr.enabled )
 	{
 		hdr.init();
-		sProg.uniLocs.hdrFai = sProg.getUniVar( "ppsHdrFai" )->getLoc();
+		sProg.uniLocs.hdrFai = sProg.findUniVar( "ppsHdrFai" )->getLoc();
 	}
 
 	/// @ todo enable lscatt
 	/*if( R::Pps::Lscatt::enabled )
 	{
 		R::Pps::Lscatt::init();
-		sProg.uniLocs.lscattFai = sProg.getUniVar( "ppsLscattFai" )->getLoc();
+		sProg.uniLocs.lscattFai = sProg.findUniVar( "ppsLscattFai" )->getLoc();
 	}*/
 
 }

@@ -69,27 +69,27 @@ void init()
 	sProg.customLoad( "shaders/Pps.glsl" );
 	sProg.bind();
 
-	sProg.uniLocs.isFai = sProg.getUniVar( "isFai" )->getLoc();
+	sProg.uniLocs.isFai = sProg.findUniVar( "isFai" )->getLoc();
 
 	if( R::Pps::Ssao::enabled )
 	{
 		R::Pps::Ssao::init();
-		sProg.uniLocs.ppsSsaoFai = sProg.getUniVar( "ppsSsaoFai" )->getLoc();
+		sProg.uniLocs.ppsSsaoFai = sProg.findUniVar( "ppsSsaoFai" )->getLoc();
 	}
 
 	if( R::Pps::Hdr::enabled )
 	{
 		R::Pps::Hdr::init();
-		sProg.uniLocs.hdrFai = sProg.getUniVar( "ppsHdrFai" )->getLoc();
+		sProg.uniLocs.hdrFai = sProg.findUniVar( "ppsHdrFai" )->getLoc();
 	}
 
 	if( R::Pps::edgeaa::enabled )
-		sProg.uniLocs.msNormalFai = sProg.getUniVar( "msNormalFai" )->getLoc();
+		sProg.uniLocs.msNormalFai = sProg.findUniVar( "msNormalFai" )->getLoc();
 
 	if( R::Pps::Lscatt::enabled )
 	{
 		R::Pps::Lscatt::init();
-		sProg.uniLocs.lscattFai = sProg.getUniVar( "ppsLscattFai" )->getLoc();
+		sProg.uniLocs.lscattFai = sProg.findUniVar( "ppsLscattFai" )->getLoc();
 	}
 
 }

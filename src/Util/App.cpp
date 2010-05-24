@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include "App.h"
 #include "Scene.h"
+#include "MainRenderer.h"
 
 bool App::isCreated = false;
 
@@ -17,6 +18,7 @@ App::App( int /*argc*/, char* /*argv*/[] )
 	isCreated = true;
 
 	scene = new Scene;
+	mainRenderer = new MainRenderer;
 	activeCam = NULL;
 
 	windowW = 1280;

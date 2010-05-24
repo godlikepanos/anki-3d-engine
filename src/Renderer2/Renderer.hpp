@@ -41,6 +41,8 @@ class Renderer
 		 */
 		class Ms: private RenderingStage
 		{
+			friend class Renderer;
+
 			private:
 				Fbo fbo;
 
@@ -61,6 +63,8 @@ class Renderer
 		 */
 		class Is: private RenderingStage
 		{
+			friend class Renderer;
+
 			public:
 				/**
 				 * Shadowmapping pass
@@ -141,7 +145,6 @@ class Renderer
 				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
 		}; // end Is
 
-
 		/**
 		 * Post-processing stage
 		 *
@@ -149,6 +152,8 @@ class Renderer
 		 */
 		class Pps: private RenderingStage
 		{
+			friend class Renderer;
+
 			public:
 				/**
 				 * High dynamic range lighting pass
@@ -189,7 +194,6 @@ class Renderer
 
 						Hdr( Renderer& r_ ): RenderingStage(r_) {}
 				}; // end Hrd
-
 
 				/**
 				 * Screen space ambient occlusion pass
@@ -265,50 +269,110 @@ class Renderer
 		 */
 		class Dbg: public RenderingStage
 		{
+			friend class Renderer;
+
+			PROPERTY_R( bool, enabled, isEnabled )
+			PROPERTY_RW( bool, showAxisEnabled, setShowAxis, isShowAxisEnabled )
+			PROPERTY_RW( bool, showLightsEnabled, setShowLights, isShowLightsEnabled )
+			PROPERTY_RW( bool, showSkeletonsEnabled, setShowSkeletons, isShowSkeletonsEnabled )
+			PROPERTY_RW( bool, showCamerasEnabled, setShowCameras, isShowCamerasEnabled )
+
 			private:
+				Fbo fbo;
+				ShaderProg sProg; /// @todo move Dbg to GL 3
+
+				void init();
+				void run();
+
 			public:
-				bool enabled;
+				Dbg( Renderer& r_ );
+				static void renderGrid();
+				static void renderSphere( float radius, int complexity );
+				static void renderCube( bool cols, float size );
 		};
 
 		// the stages as data members
 		Ms ms; ///< Material rendering stage
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
+		Dbg dbg; ///< Debugging rendering stage
 
 	//===================================================================================================================================
 	//                                                                                                                                  =
 	//===================================================================================================================================
+	protected:
+		Camera* cam; ///< Current camera
+		static float quadVertCoords [][2];
+
+		static void drawQuad( int vertCoordsUniLoc );
+
 	public:
 		// quality
 		uint  width; ///< width of the rendering. Dont confuse with the window width
 		uint  height; ///< height of the rendering. Dont confuse with the window width
 		float renderingQuality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
-		static int screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
 		// texture stuff
 		static bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
 		static int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
 		static bool mipmapping; ///< Used in Texture::load. Enables mipmapping increases video memory usage
 		static int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
 		// other
-		static int   maxColorAtachments; ///< Max color attachments a FBO can accept
 		uint  framesNum;
 		float aspectRatio;
-		static float quadVertCoords [][2];
+
 		// matrices & viewing
-		Camera* cam; ///< Current camera
 		Mat4 modelViewMat; ///< This changes once for every mesh rendering
 		Mat4 projectionMat; ///< This changes once every frame
 		Mat4 modelViewProjectionMat; ///< This changes just like @ref modelViewMat
 		Mat3 normalMat; ///< The rotation part of modelViewMat
 
-		void setProjectionMatrix( const Camera& cam ) {}
-		void setViewMatrix( const Camera& cam ) {}
-		void setProjectionViewMatrices( const Camera& cam ) {}
-		static void setViewport( uint x, uint y, uint w, uint h ) {}
-		static void multMatrix( const Mat4& ) {}
-		static void drawQuad( int vertCoordsUniLoc ) {};
-		static void noShaders() {}
+		Renderer();
 
+		void init();
+		void render( Camera& cam );
+
+		/**
+		 * My version of gluUnproject
+		 * @param windowCoords Window screen coords
+		 * @param modelViewMat The modelview matrix
+		 * @param projectionMat The projection matrix
+		 * @param view The view vector
+		 * @return The unprojected coords coords
+		 */
+		static Vec3 unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4] );
+
+		/**
+		 *
+		 * @param left
+		 * @param right
+		 * @param bottom
+		 * @param top
+		 * @param near
+		 * @param far
+		 * @return
+		 */
+		static Mat4 ortho( float left, float right, float bottom, float top, float near, float far );
+
+		/**
+		 * Get last OpenGL error string
+		 * @return An error string or NULL if not error
+		 */
+		static const uchar* getLastError();
+
+		/**
+		 * Print last OpenGL error or nothing if there is no error
+		 */
+		static void printLastError();
+
+		static void setProjectionMatrix( const Camera& cam );
+		static void setViewMatrix( const Camera& cam );
+		static void noShaders() { ShaderProg::unbind(); } ///< unbind shaders @todo remove this. From now on the will be only shaders
+		static void setProjectionViewMatrices( const Camera& cam ) { setProjectionMatrix(cam); setViewMatrix(cam); }
+		static void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); }
+		static void multMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
+		static void multMatrix( const Transform& trf ) { glMultMatrixf( &(Mat4(trf).getTransposed())(0,0) ); } ///< OpenGL wrapper
+		static void loadMatrix( const Mat4& m4 ) { glLoadMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
+		static void loadMatrix( const Transform& trf ) { glLoadMatrixf( &(Mat4(trf).getTransposed())(0,0) ); } ///< OpenGL wrapper
 };
 
 #endif

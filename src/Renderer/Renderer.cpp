@@ -216,7 +216,7 @@ void render( const Camera& cam )
 	glDisable( GL_BLEND );
 
 	shdr_final->bind();
-	shdr_final->locTexUnit( shdr_final->getUniVar("rasterImage")->getLoc(), R::Pps::fai, 0 );
+	shdr_final->locTexUnit( shdr_final->findUniVar("rasterImage")->getLoc(), R::Pps::fai, 0 );
 
 	/*const int step = 100;
 	if( R::framesNum < step )
