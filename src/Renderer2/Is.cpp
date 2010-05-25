@@ -180,9 +180,11 @@ void Renderer::Is::init()
 
 	// init the rest
 	initFbo();
-	if( sMOUvSVboId == 0 ) initSMOUvS();
+	if( sMOUvSVboId == 0 )
+		initSMOUvS();
 
-	sm.init();
+	if( sm.enabled )
+		sm.init();
 }
 
 
@@ -378,7 +380,7 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	//
 	// generate the shadow map (if needed)
 	//
-	if( light.castsShadow )
+	if( light.castsShadow && sm.enabled )
 	{
 		sm.run( light.camera );
 
@@ -396,8 +398,10 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	//
 	const LightShaderProg* shdr; // because of the huge name
 
-	if( light.castsShadow )  shdr = &spotLightShadowSProg;
-	else                     shdr = &spotLightNoShadowSProg;
+	if( light.castsShadow && sm.enabled )
+		shdr = &spotLightShadowSProg;
+	else
+		shdr = &spotLightNoShadowSProg;
 
 	shdr->bind();
 
@@ -429,17 +433,17 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 
 
 	//
-	// set texture matrix for shadowmap projection
+	// set texture matrix for texture & shadowmap projection
 	//
 	// Bias * P_light * V_light * inv( V_cam )
-	static Mat4 bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
+	static Mat4 biasMat4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 texProjectionMat;
-	texProjectionMat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * Mat4(cam.getWorldTransform());
+	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * Mat4(cam.getWorldTransform());
 	glUniformMatrix4fv( shdr->uniLocs.texProjectionMat, 1, true, &texProjectionMat[0] );
 
 	// the shadow stuff
 	// render depth to texture and then bind it
-	if( light.castsShadow )
+	if( light.castsShadow && sm.enabled )
 	{
 		shdr->locTexUnit( shdr->uniLocs.shadowMap, sm.shadowMap, 5 );
 	}

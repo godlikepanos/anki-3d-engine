@@ -1,5 +1,6 @@
 #include "Renderer.hpp"
 #include "Camera.h" /// @todo remove this
+#include "RendererInitializer.h"
 
 
 //=====================================================================================================================================
@@ -28,8 +29,22 @@ Renderer::Renderer():
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void Renderer::init()
+void Renderer::init( const RendererInitializer& initializer )
 {
+	// set from the initializer
+	is.sm.enabled = initializer.is.sm.enabled;
+	is.sm.pcfEnabled = initializer.is.sm.pcfEnabled;
+	is.sm.bilinearEnabled = initializer.is.sm.bilinearEnabled;
+	is.sm.resolution = initializer.is.sm.resolution;
+	pps.hdr.enabled = initializer.pps.hdr.enabled;
+	pps.hdr.renderingQuality = initializer.pps.hdr.renderingQuality;
+	pps.ssao.enabled = initializer.pps.ssao.enabled;
+	pps.ssao.renderingQuality = initializer.pps.ssao.renderingQuality;
+	pps.ssao.bluringQuality = initializer.pps.ssao.bluringQuality;
+	dbg.enabled = initializer.dbg.enabled;
+	width = initializer.width;
+	height = initializer.height;
+
 	aspectRatio = float(width)/height;
 
 	// init the stages. Careful with the order!!!!!!!!!!

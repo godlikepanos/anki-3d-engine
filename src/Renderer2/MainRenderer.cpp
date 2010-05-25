@@ -3,12 +3,12 @@
 #include <jpeglib.h>
 #include "MainRenderer.h"
 #include "App.h"
-
+#include "RendererInitializer.h"
 
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void MainRenderer::init()
+void MainRenderer::init( const RendererInitializer& initializer )
 {
 	INFO( "Main renderer initializing..." );
 
@@ -57,7 +57,7 @@ void MainRenderer::init()
 	// init the rest
 	//
 	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments );
-	Renderer::init();
+	Renderer::init( initializer );
 	sProg.customLoad( "shaders/final.glsl" );
 
 	INFO( "Main renderer initialization ends" );
@@ -101,10 +101,10 @@ bool MainRenderer::takeScreenshotTga( const char* filename )
 	unsigned char tgaHeaderUncompressed[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
 	unsigned char header[6];
 
-	header[1] = width / 256;
-	header[0] = width % 256;
-	header[3] = height / 256;
-	header[2] = height % 256;
+	header[1] = getWidth() / 256;
+	header[0] = getWidth() % 256;
+	header[3] = getHeight() / 256;
+	header[2] = getHeight() % 256;
 	header[4] = 24;
 	header[5] = 0;
 
@@ -112,10 +112,10 @@ bool MainRenderer::takeScreenshotTga( const char* filename )
 	fs.write( (char*)header, 6 );
 
 	// write the buffer
-	char* buffer = (char*)calloc( width*height*3, sizeof(char) );
+	char* buffer = (char*)calloc( getWidth()*getHeight()*3, sizeof(char) );
 
-	glReadPixels( 0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, buffer );
-	fs.write( buffer, width*height*3 );
+	glReadPixels( 0, 0, getWidth(), getHeight(), GL_BGR, GL_UNSIGNED_BYTE, buffer );
+	fs.write( buffer, getWidth()*getHeight()*3 );
 
 	// end
 	fs.close();
@@ -146,8 +146,8 @@ bool MainRenderer::takeScreenshotJpeg( const char* filename )
 	jpeg_create_compress( &cinfo );
 	jpeg_stdio_dest( &cinfo, outfile );
 
-	cinfo.image_width      = width;
-	cinfo.image_height     = height;
+	cinfo.image_width      = getWidth();
+	cinfo.image_height     = getHeight();
 	cinfo.input_components = 3;
 	cinfo.in_color_space   = JCS_RGB;
 	jpeg_set_defaults( &cinfo);
@@ -155,15 +155,15 @@ bool MainRenderer::takeScreenshotJpeg( const char* filename )
 	jpeg_start_compress( &cinfo, true );
 
 	// read from OGL
-	char* buffer = (char*)malloc( width*height*3*sizeof(char) );
-	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer );
+	char* buffer = (char*)malloc( getWidth()*getHeight()*3*sizeof(char) );
+	glReadPixels( 0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer );
 
 	// write buffer to file
 	JSAMPROW row_pointer;
 
 	while( cinfo.next_scanline < cinfo.image_height )
 	{
-		row_pointer = (JSAMPROW) &buffer[ (height-1-cinfo.next_scanline)*3*width ];
+		row_pointer = (JSAMPROW) &buffer[ (getHeight()-1-cinfo.next_scanline)*3*getWidth() ];
 		jpeg_write_scanlines( &cinfo, &row_pointer, 1 );
 	}
 

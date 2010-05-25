@@ -10,6 +10,7 @@
 class Camera;
 class PointLight;
 class SpotLight;
+class RendererInitializer;
 
 
 /**
@@ -72,6 +73,12 @@ class Renderer
 				class Sm: private RenderingStage
 				{
 					friend class Is;
+					friend class Renderer;
+
+					PROPERTY_R( bool, enabled, isEnabled ) ///< @ref PROPERTY_R : If false thene there is no shadowmapping at all
+					PROPERTY_R( bool, pcfEnabled, isPcfEnabled ) ///< @ref PROPERTY_R : Enable Percentage Closer Filtering
+					PROPERTY_R( bool, bilinearEnabled, isBilinearEnabled ) ///< @ref PROPERTY_R : Enable bilinear filtering in shadowMap. Better quality
+					PROPERTY_R( int, resolution, getResolution ) ///< Shadowmap resolution. The higher the more quality the shadows are
 
 					private:
 						Fbo fbo; ///< Illumination stage shadowmapping FBO
@@ -86,10 +93,6 @@ class Renderer
 						void run( const Camera& cam );
 
 					public:
-						bool pcfEnabled;
-						bool bilinearEnabled;
-						int  resolution; ///< Shadowmap resolution. The higher the more quality
-
 						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
 				}; // end Sm
 
@@ -113,7 +116,7 @@ class Renderer
 						struct
 						{
 							int msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai, planes, lightPos, lightInvRadius, lightDiffuseCol, lightSpecularCol, lightTex, texProjectionMat, shadowMap;
-						}uniLocs;
+						} uniLocs;
 				};
 				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program
 				LightShaderProg pointLightSProg; ///< Illumination stage point light shader program
@@ -154,6 +157,9 @@ class Renderer
 		{
 			friend class Renderer;
 
+			PROPERTY_R( bool, enabled, isEnabled )
+			PROPERTY_R( float, renderingQuality, getRenderingQuality )
+
 			public:
 				/**
 				 * High dynamic range lighting pass
@@ -161,6 +167,10 @@ class Renderer
 				class Hdr: private RenderingStage
 				{
 					friend class Pps;
+					friend class Renderer;
+
+					PROPERTY_R( bool, enabled, isEnabled )
+					PROPERTY_R( float, renderingQuality, getRenderingQuality )
 
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
@@ -186,8 +196,6 @@ class Renderer
 						void run();
 
 					public:
-						bool enabled;
-						float renderingQuality;
 						Texture pass0Fai; ///< Vertical blur pass FAI
 						Texture pass1Fai; ///< pass0Fai with the horizontal blur FAI
 						Texture fai; ///< The final FAI
@@ -206,6 +214,11 @@ class Renderer
 				class Ssao: private RenderingStage
 				{
 					friend class Pps;
+					friend class Renderer;
+
+					PROPERTY_R( bool, enabled, isEnabled )
+					PROPERTY_R( float, renderingQuality, getRenderingQuality )
+					PROPERTY_R( float, bluringQuality, getBluringQuality )
 
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
@@ -232,9 +245,6 @@ class Renderer
 						void run();
 
 					public:
-						bool enabled;
-						float renderingQuality;
-						float bluringQuality;
 						Texture pass0Fai, pass1Fai, fai /** The final FAI */;
 						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
@@ -289,37 +299,36 @@ class Renderer
 				static void renderGrid();
 				static void renderSphere( float radius, int complexity );
 				static void renderCube( bool cols, float size );
-		};
+		}; // end Dbg
 
-		// the stages as data members
-		Ms ms; ///< Material rendering stage
-		Is is; ///< Illumination rendering stage
-		Pps pps; ///< Postprocessing rendering stage
-		Dbg dbg; ///< Debugging rendering stage
 
 	//===================================================================================================================================
 	//                                                                                                                                  =
 	//===================================================================================================================================
+	PROPERTY_R( uint, width, getWidth ) ///< Width of the rendering. Dont confuse with the window width
+	PROPERTY_R( uint, height, getHeight ) ///< Height of the rendering. Dont confuse with the window width
+	PROPERTY_R( uint, framesNum, getFramesNum )
+	PROPERTY_R( float, aspectRatio, getAspectRatio )
+
 	protected:
+		// the rest
 		Camera* cam; ///< Current camera
 		static float quadVertCoords [][2];
 
 		static void drawQuad( int vertCoordsUniLoc );
 
 	public:
-		// quality
-		uint  width; ///< width of the rendering. Dont confuse with the window width
-		uint  height; ///< height of the rendering. Dont confuse with the window width
-		float renderingQuality; ///< The global rendering quality of the raster image. From 0.0(low) to 1.0(high)
+		// the stages as data members
+		Ms ms; ///< Material rendering stage
+		Is is; ///< Illumination rendering stage
+		Pps pps; ///< Postprocessing rendering stage
+		Dbg dbg; ///< Debugging rendering stage
+
 		// texture stuff
 		static bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
 		static int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
 		static bool mipmapping; ///< Used in Texture::load. Enables mipmapping increases video memory usage
 		static int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
-		// other
-		uint  framesNum;
-		float aspectRatio;
-
 		// matrices & viewing
 		Mat4 modelViewMat; ///< This changes once for every mesh rendering
 		Mat4 projectionMat; ///< This changes once every frame
@@ -328,7 +337,16 @@ class Renderer
 
 		Renderer();
 
-		void init();
+		/**
+		 * Init the renderer given an initialization class
+		 * @param initializer The initializer class
+		 */
+		void init( const RendererInitializer& initializer );
+
+		/**
+		 * This function does all the rendering stages and produces a final FAI
+		 * @param cam The camera from where the rendering will be done
+		 */
 		void render( Camera& cam );
 
 		/**
