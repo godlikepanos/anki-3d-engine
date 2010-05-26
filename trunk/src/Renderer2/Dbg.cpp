@@ -50,6 +50,8 @@ void Renderer::Dbg::init()
 //=====================================================================================================================================
 void Renderer::Dbg::run()
 {
+	if( !enabled ) return;
+
 	const Camera& cam = *r.cam;
 
 	fbo.bind();
