@@ -7,32 +7,6 @@
 #include "Resource.h"
 
 
-/// Image class. Used in Texture::load
-class Image
-{
-	protected:
-		static unsigned char tgaHeaderUncompressed[12];
-		static unsigned char tgaHeaderCompressed[12];
-
-		bool loadUncompressedTGA( const char* filename, fstream& fs );
-		bool loadCompressedTGA( const char* filename, fstream& fs );
-		bool loadPNG( const char* filename );
-		bool loadTGA( const char* filename );
-
-	public:
-		uint  width;
-		uint  height;
-		uint  bpp;
-		char* data;
-
-		 Image(): data(NULL) {}
-		~Image() { unload(); }
-
-		bool load( const char* filename );
-		void unload() { if( data ) delete [] data; data=NULL; }
-};
-
-
 /**
  * Texture resource class
  *
@@ -44,6 +18,10 @@ class Texture: public Resource
 	protected:
 		uint   glId; ///< Identification for OGL
 		GLenum type; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+		static int  textureUnitsNum;
+		static bool mipmappingEnabled;
+		static bool compressionEnabled;
+		static int  anisotropyLevel;
 
 	public:
 		 Texture(): glId(numeric_limits<uint>::max()), type(GL_TEXTURE_2D) {}

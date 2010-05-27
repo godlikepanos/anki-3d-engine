@@ -106,8 +106,9 @@ class Renderer
 					public:
 						struct
 						{
-							int ambientCol, sceneColMap;
-						}uniLocs;
+							const ShaderProg::UniVar* ambientCol;
+							const ShaderProg::UniVar* sceneColMap;
+						} uniVars;
 				};
 				/// Illumination stage light pass shader program
 				class LightShaderProg: public ShaderProg
@@ -115,8 +116,19 @@ class Renderer
 					public:
 						struct
 						{
-							int msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai, planes, lightPos, lightInvRadius, lightDiffuseCol, lightSpecularCol, lightTex, texProjectionMat, shadowMap;
-						} uniLocs;
+							const ShaderProg::UniVar* msNormalFai;
+							const ShaderProg::UniVar* msDiffuseFai;
+							const ShaderProg::UniVar* msSpecularFai;
+							const ShaderProg::UniVar* msDepthFai;
+							const ShaderProg::UniVar* planes;
+							const ShaderProg::UniVar* lightPos;
+							const ShaderProg::UniVar* lightInvRadius;
+							const ShaderProg::UniVar* lightDiffuseCol;
+							const ShaderProg::UniVar* lightSpecularCol;
+							const ShaderProg::UniVar* lightTex;
+							const ShaderProg::UniVar* texProjectionMat;
+							const ShaderProg::UniVar* shadowMap;
+						} uniVars;
 				};
 				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program
 				LightShaderProg pointLightSProg; ///< Illumination stage point light shader program
