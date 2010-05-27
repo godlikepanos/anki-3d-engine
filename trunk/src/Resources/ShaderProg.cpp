@@ -11,9 +11,48 @@
 //=====================================================================================================================================
 // set uniforms                                                                                                                       =
 //=====================================================================================================================================
+/**
+ * Standard set uniform check
+ */
+#define STD_SET_UNI_CHECK() DEBUG_ERR( getLoc() == -1 || ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() );
+
+
+void ShaderProg::UniVar::setFloat( float f ) const
+{
+	STD_SET_UNI_CHECK();
+	glUniform1f( getLoc(), f );
+}
+
+void ShaderProg::UniVar::setFloatVec( float f[], uint size ) const
+{
+	STD_SET_UNI_CHECK();
+	glUniform1fv( getLoc(), size, f );
+}
+
+void ShaderProg::UniVar::setVec2( const Vec2 v2[], uint size ) const
+{
+	STD_SET_UNI_CHECK();
+	glUniform2fv( getLoc(), size, &( const_cast<Vec2&>(v2[0]) )[0] );
+}
+
+void ShaderProg::UniVar::setVec3( const Vec3 v3[], uint size ) const
+{
+	STD_SET_UNI_CHECK();
+	glUniform3fv( getLoc(), size, &( const_cast<Vec3&>(v3[0]) )[0] );
+}
+
 void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
 {
+	STD_SET_UNI_CHECK();
 	glUniformMatrix4fv( getLoc(), size, true, &(m4[0])[0] );
+}
+
+void ShaderProg::UniVar::setTexture( const Texture& tex, uint texUnit ) const
+{
+	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_TEXTURE_2D );
+	tex.bind( texUnit );
+	glUniform1i( getLoc(), texUnit );
 }
 
 
@@ -23,17 +62,17 @@ void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
 uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const
 {
 	uint glId = 0;
-	const char* source_strs[2] = {NULL, NULL};
+	const char* sourceStrs[2] = {NULL, NULL};
 
 	// create the shader
 	glId = glCreateShader( type );
 
 	// attach the source
-	source_strs[1] = sourceCode;
-	source_strs[0] = preproc;
+	sourceStrs[1] = sourceCode;
+	sourceStrs[0] = preproc;
 
 	// compile
-	glShaderSource( glId, 2, source_strs, NULL );
+	glShaderSource( glId, 2, sourceStrs, NULL );
 	glCompileShader( glId );
 
 	int success;
@@ -43,28 +82,28 @@ uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* pre
 	{
 		// print info log
 		int info_len = 0;
-		int chars_written = 0;
-		char* info_log = NULL;
+		int charsWritten = 0;
+		char* infoLog = NULL;
 
 		glGetShaderiv( glId, GL_INFO_LOG_LENGTH, &info_len );
-		info_log = (char*)malloc( (info_len+1)*sizeof(char) );
-		glGetShaderInfoLog( glId, info_len, &chars_written, info_log );
+		infoLog = (char*)malloc( (info_len+1)*sizeof(char) );
+		glGetShaderInfoLog( glId, info_len, &charsWritten, infoLog );
 		
-		const char* shader_type;
+		const char* shaderType;
 		switch( type )
 		{
 			case GL_VERTEX_SHADER:
-				shader_type = "Vertex shader";
+				shaderType = "Vertex shader";
 				break;
 			case GL_FRAGMENT_SHADER:
-				shader_type = "Fragment shader";
+				shaderType = "Fragment shader";
 				break;
 			default:
 				DEBUG_ERR( 1 ); // Not supported
 		}
-		SHADER_ERROR( shader_type << " compiler log follows:\n" << info_log );
+		SHADER_ERROR( shaderType << " compiler log follows:\n" << infoLog );
 		
-		free( info_log );
+		free( infoLog );
 		return 0;
 	}
 
@@ -131,7 +170,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		attribVars.push_back( AttribVar( loc, name_, type ) );
+		attribVars.push_back( AttribVar( loc, name_, type, this ) );
 		attribNameToVar[ name_ ] = &attribVars.back();
 	}
 
@@ -152,7 +191,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		uniVars.push_back( UniVar( loc, name_, type ) );
+		uniVars.push_back( UniVar( loc, name_, type, this ) );
 		uniNameToVar[ name_ ] = &uniVars.back();
 	}
 }
@@ -216,6 +255,11 @@ bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 
 	// 2) create program and attach shaders
 	glId = glCreateProgram();
+	if( glId == 0 )
+	{
+		ERROR( "glCreateProgram failed" );
+		return false;
+	}
 	glAttachShader( glId, vertGlId );
 	glAttachShader( glId, fragGlId );
 
