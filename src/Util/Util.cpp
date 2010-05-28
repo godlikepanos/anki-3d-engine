@@ -126,7 +126,7 @@ string getFunctionFromPrettyFunction( const char* prettyFunction )
 //=====================================================================================================================================
 // getFileExtension                                                                                                                   =
 //=====================================================================================================================================
-char* getFileExtension( const char* path )
+string getFileExtension( const char* path )
 {
 	char* str = (char*)path + strlen(path) - 1;
 	for(;;)
@@ -135,7 +135,7 @@ char* getFileExtension( const char* path )
 		str--;
 	}
 
-	if( str == (char*)path + strlen(path) - 1 ) ERROR( "Please puth something after the '.' in path \"" << path << "\". Idiot" );
+	if( str == (char*)path + strlen(path) - 1 ) ERROR( "Please put something after the '.' in path \"" << path << "\". Idiot" );
 	if( str+1 == path ) ERROR( "Path \"" << path << "\" doesnt contain a '.'. What the fuck?" );
 
 	return str+1;

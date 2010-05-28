@@ -181,15 +181,15 @@ bool MainRenderer::takeScreenshotJpeg( const char* filename )
 //=====================================================================================================================================
 void MainRenderer::takeScreenshot( const char* filename )
 {
-	char* ext = Util::getFileExtension( filename );
+	string ext = Util::getFileExtension( filename );
 	bool ret;
 
 	// exec from this extension
-	if( strcmp( ext, "tga" ) == 0 )
+	if( ext == "tga" )
 	{
 		ret = takeScreenshotTga( filename );
 	}
-	else if( strcmp( ext, "jpg" ) == 0 )
+	else if( ext == "jpg" || ext == "jpeg" )
 	{
 		ret = takeScreenshotJpeg( filename );
 	}

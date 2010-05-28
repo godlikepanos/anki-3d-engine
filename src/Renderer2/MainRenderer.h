@@ -6,7 +6,7 @@
 
 
 /**
- * Main renderer
+ * Main onscreen renderer
  */
 class MainRenderer: public Renderer
 {
@@ -27,6 +27,9 @@ class MainRenderer: public Renderer
 	public:
 		MainRenderer(): screenshotJpegQuality( 90 ) {}
 
+		/**
+		 * The same as Renderer::init but with additional initialization. @see Renderer::init
+		 */
 		void init( const RendererInitializer& initializer );
 
 		/**
@@ -34,6 +37,11 @@ class MainRenderer: public Renderer
 		 * @param cam @see Renderer::render
 		 */
 		void render( Camera& cam );
+
+		/**
+		 * Save the color buffer to a tga (lossless & uncompressed & slow) or jpeg (lossy & compressed * fast)
+		 * @param filename The file to save
+		 */
 		void takeScreenshot( const char* filename ); ///< Save the colorbuffer as 24bit uncompressed TGA image
 };
 

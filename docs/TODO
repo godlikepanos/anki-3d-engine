@@ -1,3 +1,4 @@
+
 - Continue working on the new coding style in shaders
 - Changes in the blending objects problem. The BS will become one stage and the PPS will be divided in two steps. The first will apply the SSAO and the EdgeAA in the IS_FAI and the second will do the rest
 - The second Physics demo: Create a box that is geting moved by the user. It has to interact with the other boxes
