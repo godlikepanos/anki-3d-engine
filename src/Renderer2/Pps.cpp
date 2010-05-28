@@ -30,25 +30,25 @@ void Renderer::Pps::init()
 	sProg.customLoad( "shaders/Pps.glsl" );
 	sProg.bind();
 
-	sProg.uniLocs.isFai = sProg.findUniVar( "isFai" )->getLoc();
+	sProg.uniVars.isFai = sProg.findUniVar( "isFai" );
 
 	if( ssao.enabled )
 	{
 		ssao.init();
-		sProg.uniLocs.ppsSsaoFai = sProg.findUniVar( "ppsSsaoFai" )->getLoc();
+		sProg.uniVars.ppsSsaoFai = sProg.findUniVar( "ppsSsaoFai" );
 	}
 
 	if( hdr.enabled )
 	{
 		hdr.init();
-		sProg.uniLocs.hdrFai = sProg.findUniVar( "ppsHdrFai" )->getLoc();
+		sProg.uniVars.hdrFai = sProg.findUniVar( "ppsHdrFai" );
 	}
 
 	/// @ todo enable lscatt
 	/*if( R::Pps::Lscatt::enabled )
 	{
 		R::Pps::Lscatt::init();
-		sProg.uniLocs.lscattFai = sProg.findUniVar( "ppsLscattFai" )->getLoc();
+		sProg.uniVars.lscattFai = sProg.findUniVar( "ppsLscattFai" )->getLoc();
 	}*/
 
 }
@@ -75,17 +75,16 @@ void Renderer::Pps::run()
 
 	// set shader
 	sProg.bind();
-
-	sProg.locTexUnit( sProg.uniLocs.isFai, r.is.fai, 0 ); // the IS FAI
+	sProg.uniVars.isFai->setTexture( r.is.fai, 0 );
 
 	if( hdr.enabled )
 	{
-		sProg.locTexUnit( sProg.uniLocs.hdrFai, hdr.fai, 1 );
+		sProg.uniVars.hdrFai->setTexture( hdr.fai, 1 );
 	}
 
 	if( ssao.enabled )
 	{
-		sProg.locTexUnit( sProg.uniLocs.ppsSsaoFai, ssao.fai, 2 );
+		sProg.uniVars.ppsSsaoFai->setTexture( ssao.fai, 2 );
 	}
 
 	// draw quad

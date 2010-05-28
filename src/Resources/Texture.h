@@ -15,16 +15,18 @@
  */
 class Texture: public Resource
 {
+	friend class MainRenderer;
+
 	protected:
 		uint   glId; ///< Identification for OGL
 		GLenum type; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-		static int  textureUnitsNum;
+		static int  textureUnitsNum; ///< This needs to be filled after the main renderer initialization
 		static bool mipmappingEnabled;
 		static bool compressionEnabled;
 		static int  anisotropyLevel;
 
 	public:
-		 Texture(): glId(numeric_limits<uint>::max()), type(GL_TEXTURE_2D) {}
+		 Texture();
 		~Texture() {}
 
 		inline uint getGlId() const { DEBUG_ERR(glId==numeric_limits<uint>::max()); return glId; }

@@ -3,6 +3,21 @@
 #include "Image.h"
 
 
+int Texture::textureUnitsNum = -1;
+bool Texture::mipmappingEnabled = true;
+bool Texture::compressionEnabled = true;
+int Texture::anisotropyLevel = 16;
+
+
+//=====================================================================================================================================
+// Constructor                                                                                                                        =
+//=====================================================================================================================================
+Texture::Texture():
+	glId(numeric_limits<uint>::max()),
+	type(GL_TEXTURE_2D)
+{
+}
+
 //=====================================================================================================================================
 // load                                                                                                                               =
 //=====================================================================================================================================
@@ -22,8 +37,14 @@ bool Texture::load( const char* filename )
 	// bind the texture
 	glGenTextures( 1, &glId );
 	bind(0);
-	if( R::mipmapping ) glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	if( R::mipmapping )
+	{
+		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	}
+	else
+	{
+		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	}
 
 	glTexParameteri( type, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
@@ -35,15 +56,22 @@ bool Texture::load( const char* filename )
 
 	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
-	int int_format; // the internal format of the image
+	int intFormat; // the internal format of the image
 	if( R::textureCompression )
+	{
 		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-		int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
+		intFormat = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
+	}
 	else
-		int_format = (img.bpp==32) ? GL_RGBA : GL_RGB;
+	{
+		intFormat = (img.bpp==32) ? GL_RGBA : GL_RGB;
+	}
 
-	glTexImage2D( type, 0, int_format, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
-	if( R::mipmapping ) glGenerateMipmap(type);
+	glTexImage2D( type, 0, intFormat, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
+	if( R::mipmapping )
+	{
+		glGenerateMipmap(type);
+	}
 
 	img.unload();
 	return true;

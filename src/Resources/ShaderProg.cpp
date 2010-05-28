@@ -7,6 +7,12 @@
 #define SHADER_ERROR( x ) ERROR( "Shader (" << getRsrcName() << "): " << x )
 #define SHADER_WARNING( x ) WARNING( "Shader (" << getRsrcName() << "): " << x )
 
+string ShaderProg::stdSourceCode(
+	"#version 150 compatibility\n \
+	precision lowp float;\n \
+	#pragma optimize(on)\n \
+	#pragma debug(off)\n"
+);
 
 //=====================================================================================================================================
 // set uniforms                                                                                                                       =
