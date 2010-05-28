@@ -94,6 +94,7 @@ class ShaderProg: public Resource
 		};
 
 	private:
+		static string stdSourceCode;
 		Vec<UniVar> uniVars; ///< All the uniform variables
 		Vec<AttribVar> attribVars; ///< All the attribute variables
 		map<string,UniVar*> uniNameToVar;  ///< A map for quick variable searching

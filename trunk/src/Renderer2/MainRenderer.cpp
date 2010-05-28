@@ -37,6 +37,10 @@ void MainRenderer::init( const RendererInitializer& initializer )
 	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
 		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
 
+
+	// get max texture units
+	glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum );
+
 	//
 	// Set default OpenGL
 	//

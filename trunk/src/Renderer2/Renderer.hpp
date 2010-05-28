@@ -30,12 +30,11 @@ class Renderer
 		class RenderingStage
 		{
 			protected:
-				Renderer& r;
+				Renderer& r; ///< Just so that the stage can know the father class
 
 			public:
 				RenderingStage( Renderer& r_ ): r(r_) {}
 		};
-
 
 		/**
 		 * Material stage
@@ -97,9 +96,6 @@ class Renderer
 				}; // end Sm
 
 			private:
-				Fbo fbo;
-				uint stencilRb; ///< Illumination stage stencil buffer
-				// shader stuff
 				/// Illumination stage ambient pass shader program
 				class AmbientShaderProg: public ShaderProg
 				{
@@ -110,6 +106,7 @@ class Renderer
 							const ShaderProg::UniVar* sceneColMap;
 						} uniVars;
 				};
+
 				/// Illumination stage light pass shader program
 				class LightShaderProg: public ShaderProg
 				{
@@ -130,11 +127,13 @@ class Renderer
 							const ShaderProg::UniVar* shadowMap;
 						} uniVars;
 				};
+
+				Fbo fbo; ///< This FBO writes to the Is::fai
+				uint stencilRb; ///< Illumination stage stencil buffer
 				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program
 				LightShaderProg pointLightSProg; ///< Illumination stage point light shader program
 				LightShaderProg spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
 				LightShaderProg spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
-				// other
 				Vec3 viewVectors[4];
 				Vec2 planes;
 				static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex coords
@@ -186,22 +185,15 @@ class Renderer
 
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
-						ShaderProg pass0SProg, pass1SProg, pass2SProg;
-						struct
+						class HdrShaderProg: public ShaderProg
 						{
-							struct
-							{
-								int fai;
-							} pass0SProg;
-							struct
-							{
-								int fai;
-							} pass1SProg;
-							struct
-							{
-								int fai;
-							} pass2SProg;
-						} uniLocs;
+							public:
+								struct
+								{
+									const ShaderProg::UniVar* fai;
+								} uniVars;
+						};
+						HdrShaderProg pass0SProg, pass1SProg, pass2SProg;
 
 						void initFbos( Fbo& fbo, Texture& fai, int internalFormat );
 						void init();
@@ -236,21 +228,29 @@ class Renderer
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
 						uint width, height, bwidth, bheight;
 						Texture* noiseMap;
-						struct
+
+						class SsaoShaderProg: public ShaderProg
 						{
-							struct
-							{
-								int camerarange, msDepthFai, noiseMap, msNormalFai;
-							} pass0SProg;
-							struct
-							{
-								int fai;
-							} pass1SProg;
-							struct
-							{
-								int fai;
-							} pass2SProg;
-						} uniLocs;
+							public:
+								struct
+								{
+									const ShaderProg::UniVar* camerarange;
+									const ShaderProg::UniVar* msDepthFai;
+									const ShaderProg::UniVar* noiseMap;
+									const ShaderProg::UniVar* msNormalFai;
+								} uniVars;
+						};
+						SsaoShaderProg ssaoSProg;
+
+						class BlurSProg: public ShaderProg
+						{
+							public:
+								struct
+								{
+									const ShaderProg::UniVar* fai;
+								} uniVars;
+						};
+						BlurSProg blurSProg, blurSProg2;
 
 						void initBlurFbo( Fbo& fbo, Texture& fai );
 						void init();
@@ -258,7 +258,6 @@ class Renderer
 
 					public:
 						Texture pass0Fai, pass1Fai, fai /** The final FAI */;
-						ShaderProg ssaoSProg, blurSProg, blurSProg2;
 
 						Ssao( Renderer& r_ ): RenderingStage(r_) {}
 				}; // end Ssao
@@ -269,8 +268,13 @@ class Renderer
 						public:
 							struct
 							{
-								int isFai, ppsSsaoFai, msNormalFai, hdrFai, lscattFai;
-							} uniLocs;
+								const ShaderProg::UniVar* isFai;
+								const ShaderProg::UniVar* ppsSsaoFai;
+								const ShaderProg::UniVar* msNormalFai;
+								const ShaderProg::UniVar* hdrFai;
+								const ShaderProg::UniVar* lscattFai;
+
+							} uniVars;
 					};
 					PpsShaderProg sProg;
 					Fbo fbo;
@@ -396,7 +400,7 @@ class Renderer
 
 		static void setProjectionMatrix( const Camera& cam );
 		static void setViewMatrix( const Camera& cam );
-		static void noShaders() { ShaderProg::unbind(); } ///< unbind shaders @todo remove this. From now on the will be only shaders
+		static void noShaders() { ShaderProg::unbind(); } ///< unbind shaders @todo remove this. From now on there will be only shaders
 		static void setProjectionViewMatrices( const Camera& cam ) { setProjectionMatrix(cam); setViewMatrix(cam); }
 		static void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); }
 		static void multMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper

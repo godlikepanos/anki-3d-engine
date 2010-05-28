@@ -80,12 +80,12 @@ void Renderer::Pps::Ssao::init()
 	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(width) + "\n").c_str() );
 	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bheight) + "\n").c_str() );
 
-	uniLocs.pass0SProg.camerarange = ssaoSProg.findUniVar("camerarange")->getLoc();
-	uniLocs.pass0SProg.msDepthFai = ssaoSProg.findUniVar("msDepthFai")->getLoc();
-	uniLocs.pass0SProg.noiseMap = ssaoSProg.findUniVar("noiseMap")->getLoc();
-	uniLocs.pass0SProg.msNormalFai = ssaoSProg.findUniVar("msNormalFai")->getLoc();
-	uniLocs.pass1SProg.fai = blurSProg.findUniVar("tex")->getLoc(); /// @todo rename the tex in the shader
-	uniLocs.pass2SProg.fai = blurSProg2.findUniVar("tex")->getLoc(); /// @todo rename the tex in the shader
+	ssaoSProg.uniVars.camerarange = ssaoSProg.findUniVar("camerarange");
+	ssaoSProg.uniVars.msDepthFai = ssaoSProg.findUniVar("msDepthFai");
+	ssaoSProg.uniVars.noiseMap = ssaoSProg.findUniVar("noiseMap");
+	ssaoSProg.uniVars.msNormalFai = ssaoSProg.findUniVar("msNormalFai");
+	blurSProg.uniVars.fai = blurSProg.findUniVar("tex"); /// @todo rename the tex in the shader
+	blurSProg2.uniVars.fai = blurSProg2.findUniVar("tex"); /// @todo rename the tex in the shader
 
 
 	//
@@ -123,10 +123,11 @@ void Renderer::Pps::Ssao::run()
 	r.setViewport( 0, 0, width, height );
 	pass0Fbo.bind();
 	ssaoSProg.bind();
-	glUniform2fv( uniLocs.pass0SProg.camerarange, 1, &(Vec2(cam.getZNear(), cam.getZFar()))[0] );
-	ssaoSProg.locTexUnit( uniLocs.pass0SProg.msDepthFai, r.ms.depthFai, 0 );
-	ssaoSProg.locTexUnit( uniLocs.pass0SProg.noiseMap, *noiseMap, 1 );
-	ssaoSProg.locTexUnit( uniLocs.pass0SProg.msNormalFai, r.ms.normalFai, 2 );
+	Vec2 camRange( cam.getZNear(), cam.getZFar() );
+	ssaoSProg.uniVars.camerarange->setVec2( &camRange );
+	ssaoSProg.uniVars.msDepthFai->setTexture( r.ms.depthFai, 0 );
+	ssaoSProg.uniVars.noiseMap->setTexture( *noiseMap, 1 );
+	ssaoSProg.uniVars.msNormalFai->setTexture( r.ms.normalFai, 2 );
 	r.drawQuad( 0 );
 
 	// for 2nd and 3rd passes
@@ -135,13 +136,13 @@ void Renderer::Pps::Ssao::run()
 	// 2nd pass
 	pass1Fbo.bind();
 	blurSProg.bind();
-	blurSProg.locTexUnit( uniLocs.pass1SProg.fai, pass0Fai, 0 );
+	blurSProg.uniVars.fai->setTexture( pass0Fai, 0 );
 	r.drawQuad( 0 );
 
 	// 3rd pass
 	pass2Fbo.bind();
 	blurSProg2.bind();
-	blurSProg2.locTexUnit( uniLocs.pass2SProg.fai, pass1Fai, 0 );
+	blurSProg2.uniVars.fai->setTexture( pass1Fai, 0 );
 	r.drawQuad( 0 );
 
 	// end
