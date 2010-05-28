@@ -14,7 +14,7 @@ class RendererInitializer;
 
 
 /**
- * The renderer class
+ * Offscreen renderer
  *
  * It is a class and not a namespace because we may need external renderers for security cameras for example
  */
@@ -372,14 +372,14 @@ class Renderer
 		static Vec3 unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4] );
 
 		/**
-		 *
-		 * @param left
-		 * @param right
-		 * @param bottom
-		 * @param top
-		 * @param near
-		 * @param far
-		 * @return
+		 * It returns an orthographic projection matrix
+		 * @param left left vertical clipping plane
+		 * @param right right vertical clipping plane
+		 * @param bottom bottom horizontal clipping plane
+		 * @param top top horizontal clipping plane
+		 * @param near nearer distance of depth clipping plane
+		 * @param far farther distance of depth clipping plane
+		 * @return A 4x4 projection matrix
 		 */
 		static Mat4 ortho( float left, float right, float bottom, float top, float near, float far );
 
