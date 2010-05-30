@@ -5,7 +5,8 @@
 #include "Parser.h"
 #include "Texture.h"
 #include "ShaderProg.h"
-#include "Renderer.h"
+#include "App.h"
+#include "MainRenderer.h"
 
 
 /// Customized @ref ERROR used in @ref Material class
@@ -238,19 +239,19 @@ bool Material::load( const char* filename )
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "IS_FAI" ) )
 						{
-							var.value.texture = &R::Is::fai;
+							var.value.texture = &app->getMainRenderer()->is.fai;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_NORMAL_FAI" ) )
 						{
-							var.value.texture = &R::Ms::normalFai;
+							var.value.texture = &app->getMainRenderer()->ms.normalFai;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DEPTH_FAI" ) )
 						{
-							var.value.texture = &R::Ms::depthFai;
+							var.value.texture = &app->getMainRenderer()->ms.depthFai;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "PPS_FAI" ) )
 						{
-							var.value.texture = &R::Pps::fai;
+							var.value.texture = &app->getMainRenderer()->pps.fai;
 						}
 						else
 						{

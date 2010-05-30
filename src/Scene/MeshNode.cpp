@@ -1,12 +1,13 @@
 #include "MeshNode.h"
 #include "Resource.h"
 #include "Mesh.h"
-#include "Renderer.h"
 #include "Material.h"
 #include "SkelNode.h"
 #include "Skeleton.h"
 #include "MeshSkelNodeCtrl.h"
 #include "SkelAnimCtrl.h"
+#include "App.h"
+#include "MainRenderer.h"
 
 
 //=====================================================================================================================================
@@ -42,7 +43,7 @@ void MeshNode::deinit()
 void MeshNode::render( Material* mtl ) const
 {
 	glPushMatrix();
-	R::multMatrix( Mat4(getWorldTransform()) );
+	app->getMainRenderer()->multMatrix( Mat4(getWorldTransform()) );
 
 	// if we have skeleton controller
 	if( meshSkelCtrl )

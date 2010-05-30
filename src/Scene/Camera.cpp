@@ -1,5 +1,6 @@
 #include "Camera.h"
-#include "Renderer.h"
+#include "MainRenderer.h"
+#include "App.h"
 
 
 //=====================================================================================================================================
@@ -22,7 +23,7 @@ void Camera::setAll( float fovx_, float fovy_, float znear_, float zfar_ )
 void Camera::render()
 {
 	glPushMatrix();
-	R::multMatrix( Mat4( getWorldTransform() ) );
+	app->getMainRenderer()->multMatrix( Mat4( getWorldTransform() ) );
 
 	const float camLen = 1.0;
 	float tmp0 = camLen / tan( (PI - fovX)*0.5 ) + 0.001;

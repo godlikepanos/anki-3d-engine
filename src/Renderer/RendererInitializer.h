@@ -1,7 +1,7 @@
 #ifndef _RENDERERINITIALIZER_H_
 #define _RENDERERINITIALIZER_H_
 
-#include <Common.h>
+#include "Common.h"
 
 /**
  * A struct to initialize the renderer. It contains a few extra params for the MainRenderer
@@ -47,7 +47,17 @@ struct RendererInitializer
 	} dbg;
 
 	// the globals
-	int width, height;
+	int width; ///< Ignored by MainRenderer
+	int height; ///< Ignored by MainRenderer
+	float mainRendererQuality; ///< Only for MainRenderer
+
+	// funcs
+	RendererInitializer() {}
+
+	RendererInitializer( const RendererInitializer& initializer )
+	{
+		memcpy( this, &initializer, sizeof(RendererInitializer) );
+	}
 };
 
 #endif

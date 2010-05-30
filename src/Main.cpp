@@ -29,12 +29,13 @@
 #include "SkelAnimCtrl.h"
 #include "SkelNode.h"
 #include "LightProps.h"
-#include "BulletDebuger.h"
 #include "PhyCommon.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
 #include "PhyCharacter.h"
-#include "Renderer.hpp"
+#include "Renderer.h"
+#include "RendererInitializer.h"
+#include "MainRenderer.h"
 
 App* app = NULL;
 
@@ -47,7 +48,6 @@ ParticleEmitter* partEmitter;
 
 
 // Physics
-BulletDebuger debugDrawer;
 Vec<btRigidBody*> boxes;
 
 #define ARRAY_SIZE_X 5
@@ -202,11 +202,25 @@ void init()
 	app->initWindow();
 	uint ticks = app->getTicks();
 
-	R::init();
+	RendererInitializer initializer;
+	initializer.width = 1280;
+	initializer.height = 800;
+	initializer.dbg.enabled = true;
+	initializer.is.sm.bilinearEnabled = true;
+	initializer.is.sm.enabled = true;
+	initializer.is.sm.pcfEnabled = true;
+	initializer.is.sm.resolution = 512;
+	initializer.pps.hdr.enabled = true;
+	initializer.pps.hdr.renderingQuality = 0.5;
+	initializer.pps.ssao.bluringQuality = 1.0;
+	initializer.pps.ssao.enabled = true;
+	initializer.pps.ssao.renderingQuality = 0.5;
+	initializer.mainRendererQuality = 1.0;
+	app->getMainRenderer()->init( initializer );
 	Ui::init();
 
 	// camera
-	Camera* cam = new Camera( R::aspectRatio*toRad(60.0), toRad(60.0), 0.5, 200.0 );
+	Camera* cam = new Camera( app->getMainRenderer()->getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0 );
 	cam->moveLocalY( 3.0 );
 	cam->moveLocalZ( 5.7 );
 	cam->moveLocalX( -0.3 );
@@ -293,7 +307,6 @@ int main( int argc, char* argv[] )
 	{
 		int ticks_ = App::getTicks();
 		I::handleEvents();
-		R::prepareNextFrame();
 
 		float dist = 0.2;
 		float ang = toRad(3.0);
@@ -359,7 +372,7 @@ int main( int argc, char* argv[] )
 		app->getScene()->getPhyWorld()->getDynamicsWorld()->stepSimulation( app->timerTick );
 		app->getScene()->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();
 
-		R::render( *app->getActiveCam() );
+		app->getMainRenderer()->render( *app->getActiveCam() );
 
 		//map.octree.root->bounding_box.render();
 
@@ -367,14 +380,14 @@ int main( int argc, char* argv[] )
 		Ui::setColor( Vec4(1.0, 1.0, 1.0, 1.0) );
 		Ui::setPos( -0.98, 0.95 );
 		Ui::setFontWidth( 0.03 );
-		Ui::printf( "frame:%d fps:%dms\n", R::framesNum, (App::getTicks()-ticks_) );
+		Ui::printf( "frame:%d fps:%dms\n", app->getMainRenderer()->getFramesNum(), (App::getTicks()-ticks_) );
 		//Ui::print( "Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n" );
 		/*Ui::printf( "Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z) );*/
 
 		if( I::keys[SDL_SCANCODE_ESCAPE] ) break;
 		if( I::keys[SDL_SCANCODE_F11] ) app->togleFullScreen();
-		if( I::keys[SDL_SCANCODE_F12] == 1 ) R::takeScreenshot("gfx/screenshot.jpg");
+		if( I::keys[SDL_SCANCODE_F12] == 1 )  app->getMainRenderer()->takeScreenshot( "gfx/screenshot.jpg" );
 
 
 		/*char str[128];
@@ -383,14 +396,14 @@ int main( int argc, char* argv[] )
 
 		// std stuff follow
 		app->swapBuffers();
-		R::printLastError();
+		Renderer::printLastError();
 		if( 1 )
 		{
 			//if( R::framesNum == 10 ) R::takeScreenshot("gfx/screenshot.tga");
 			app->waitForNextFrame();
 		}
 		else
-			if( R::framesNum == 5000 ) break;
+			if( app->getMainRenderer()->getFramesNum() == 5000 ) break;
 	}while( true );
 	INFO( "Exiting main loop (" << App::getTicks()-ticks << ")" );
 

@@ -1,7 +1,8 @@
 #include "Light.h"
 #include "collision.h"
-#include "Renderer.h"
 #include "LightProps.h"
+#include "App.h"
+#include "MainRenderer.h"
 
 
 //=====================================================================================================================================
@@ -45,10 +46,11 @@ void Light::deinit()
 static void RenderSphere( const Mat4& tsl, const Vec3& col )
 {
 	glPushMatrix();
-	R::multMatrix( tsl );
 
-	R::color3( col );
-	R::Dbg::renderSphere( 1.0/8.0, 8 );
+	/// @todo move to GL 3.x
+	app->getMainRenderer()->multMatrix( tsl );
+	app->getMainRenderer()->color3( col );
+	app->getMainRenderer()->dbg.renderSphere( 1.0/8.0, 8 );
 
 	glPopMatrix();
 }

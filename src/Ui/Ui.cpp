@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "Ui.h"
-#include "Renderer.h"
+#include "MainRenderer.h"
+#include "App.h"
 #include "Texture.h"
 #include "Resource.h"
 
@@ -53,7 +54,7 @@ static void SetGL()
 
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	R::loadMatrix( R::ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 ) );
+	app->getMainRenderer()->loadMatrix( Renderer::ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 ) );
 
 	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
@@ -177,7 +178,7 @@ void setFontWidth( float w_ )
 	// width
 	fontW = w_;
 	// height
-	fontH = fontW * R::aspectRatio;
+	fontH = fontW * app->getMainRenderer()->getAspectRatio();
 }
 
 

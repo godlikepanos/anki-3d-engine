@@ -2,7 +2,7 @@
 #define _MAINRENDERER_H_
 
 #include "Common.h"
-#include "Renderer.hpp"
+#include "Renderer.h"
 
 
 /**

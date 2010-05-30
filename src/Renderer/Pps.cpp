@@ -1,59 +1,20 @@
 #include "Renderer.h"
-#include "Resource.h"
-#include "Texture.h"
-#include "Fbo.h"
-
-namespace R {
-namespace Pps {
-
-namespace edgeaa {
-	bool enabled = false;
-}
-
-/*
-=======================================================================================================================================
-VARS                                                                                                                                  =
-=======================================================================================================================================
-*/
-
-static Fbo fbo; // yet another FBO
-
-Texture fai;
-
-// shader stuff
-
-class PpsShaderProg: public ShaderProg
-{
-	public:
-		struct
-		{
-			int isFai;
-			int ppsSsaoFai;
-			int msNormalFai;
-			int hdrFai;
-			int lscattFai;
-		} uniLocs;
-};
-
-static PpsShaderProg sProg;
 
 
-/*
-=======================================================================================================================================
-init                                                                                                                                  =
-=======================================================================================================================================
-*/
-void init()
+//=====================================================================================================================================
+// init                                                                                                                               =
+//=====================================================================================================================================
+void Renderer::Pps::init()
 {
 	// create FBO
 	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements( 1 );
 
 	// create the texes
-	fai.createEmpty2D( R::w, R::h, GL_RGB, GL_RGB );
+	fai.createEmpty2D( r.width, r.height, GL_RGB, GL_RGB );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
@@ -66,48 +27,54 @@ void init()
 
 
 	// init the shader and it's vars
-	sProg.customLoad( "shaders/Pps.glsl" );
+	string pps = "";
+	if( ssao.enabled )
+	{
+		pps += "#define _SSAO_\n";
+	}
+
+	if( hdr.enabled )
+	{
+		pps += "#define _HDR_\n";
+	}
+
+	sProg.customLoad( "shaders/Pps.glsl", pps.c_str() );
 	sProg.bind();
 
-	sProg.uniLocs.isFai = sProg.findUniVar( "isFai" )->getLoc();
+	sProg.uniVars.isFai = sProg.findUniVar( "isFai" );
 
-	if( R::Pps::Ssao::enabled )
+	if( ssao.enabled )
 	{
-		R::Pps::Ssao::init();
-		sProg.uniLocs.ppsSsaoFai = sProg.findUniVar( "ppsSsaoFai" )->getLoc();
+		ssao.init();
+		sProg.uniVars.ppsSsaoFai = sProg.findUniVar( "ppsSsaoFai" );
 	}
 
-	if( R::Pps::Hdr::enabled )
+	if( hdr.enabled )
 	{
-		R::Pps::Hdr::init();
-		sProg.uniLocs.hdrFai = sProg.findUniVar( "ppsHdrFai" )->getLoc();
+		hdr.init();
+		sProg.uniVars.hdrFai = sProg.findUniVar( "ppsHdrFai" );
 	}
 
-	if( R::Pps::edgeaa::enabled )
-		sProg.uniLocs.msNormalFai = sProg.findUniVar( "msNormalFai" )->getLoc();
-
-	if( R::Pps::Lscatt::enabled )
+	/// @ todo enable lscatt
+	/*if( R::Pps::Lscatt::enabled )
 	{
 		R::Pps::Lscatt::init();
-		sProg.uniLocs.lscattFai = sProg.findUniVar( "ppsLscattFai" )->getLoc();
-	}
+		sProg.uniVars.lscattFai = sProg.findUniVar( "ppsLscattFai" )->getLoc();
+	}*/
 
 }
 
 
 //=====================================================================================================================================
-// runStage                                                                                                                           =
+// run                                                                                                                                =
 //=====================================================================================================================================
-void runStage( const Camera& cam )
+void Renderer::Pps::run()
 {
-	if( R::Pps::Ssao::enabled )
-		R::Pps::Ssao::runPass( cam );
+	if( ssao.enabled )
+		ssao.run();
 
-	if( R::Pps::Hdr::enabled )
-		R::Pps::Hdr::runPass( cam );
-
-	if( R::Pps::Lscatt::enabled )
-		R::Pps::Lscatt::runPass( cam );
+	if( hdr.enabled )
+		hdr.run();
 
 	fbo.bind();
 
@@ -115,41 +82,25 @@ void runStage( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
-	R::setViewport( 0, 0, R::w, R::h );
+	Renderer::setViewport( 0, 0, r.width, r.height );
 
 	// set shader
 	sProg.bind();
+	sProg.uniVars.isFai->setTexture( r.is.fai, 0 );
 
-	sProg.locTexUnit( sProg.uniLocs.isFai, R::Is::fai, 0 );
-
-	if( R::Pps::Ssao::enabled )
+	if( hdr.enabled )
 	{
-		sProg.locTexUnit( sProg.uniLocs.ppsSsaoFai, R::Pps::Ssao::fai, 1 );
+		sProg.uniVars.hdrFai->setTexture( hdr.fai, 1 );
 	}
 
-	if( R::Pps::edgeaa::enabled )
+	if( ssao.enabled )
 	{
-		sProg.locTexUnit( sProg.uniLocs.msNormalFai, R::Ms::normalFai, 2 );
+		sProg.uniVars.ppsSsaoFai->setTexture( ssao.fai, 2 );
 	}
-
-	if( R::Pps::Hdr::enabled )
-	{
-		sProg.locTexUnit( sProg.uniLocs.hdrFai, R::Pps::Hdr::fai, 3 );
-	}
-
-	if( R::Pps::Lscatt::enabled )
-	{
-		sProg.locTexUnit( sProg.uniLocs.lscattFai, R::Pps::Lscatt::fai, 4 );
-	}
-
 
 	// draw quad
-	R::DrawQuad( 0 );
+	Renderer::drawQuad( 0 );
 
 	// unbind FBO
 	fbo.unbind();
 }
-
-
-}} // end namespaces
-

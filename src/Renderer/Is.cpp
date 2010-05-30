@@ -1,104 +1,48 @@
-/*
-The file contains functions and vars used for the deferred shading illumination stage.
-*/
-
 #include "Renderer.h"
 #include "Camera.h"
-#include "Scene.h"
-#include "Mesh.h"
 #include "Light.h"
-#include "Resource.h"
-#include "Scene.h"
-#include "Fbo.h"
 #include "LightProps.h"
 #include "App.h"
-
-namespace R {
-namespace Is {
-
-
-/*
-=======================================================================================================================================
-VARS                                                                                                                                  =
-=======================================================================================================================================
-*/
-static Fbo fbo;
-
-Texture fai;  // illuminated Scene
-
-static uint stencilRb; // framebuffer render buffer for stencil optimizations
-
-// shaders
-class AmbientShaderProg: public ShaderProg
-{
-	public:
-		struct
-		{
-			int ambientCol;
-			int sceneColMap;
-		}uniLocs;
-};
-
-static AmbientShaderProg ambientSProg;
-
-class LightShaderProg: public ShaderProg
-{
-	public:
-		struct
-		{
-			int msNormalFai;
-			int msDiffuseFai;
-			int msSpecularFai;
-			int msDepthFai;
-			int planes;
-			int lightPos;
-			int lightInvRadius;
-			int lightDiffuseCol;
-			int lightSpecularCol;
-			int lightTex;
-			int texProjectionMat;
-			int shadowMap;
-		}uniLocs;
-};
-
-static LightShaderProg pointLightSProg;
-static LightShaderProg spotLightNoShadowSProg;
-static LightShaderProg spotLightShadowSProg;
-
-
-// the bellow are used to speedup the calculation of the frag pos (view space) inside the shader. This is done by precompute the
-// view vectors each for one corner of the screen and the planes used to compute the frag_pos_view_space.z from the depth value.
-static Vec3 viewVectors[4];
-static Vec2 planes;
+#include "Scene.h"
 
 
 //=====================================================================================================================================
-// Stencil Masking Opt Uv Sphere                                                                                                      =
+// STATICS                                                                                                                            =
 //=====================================================================================================================================
-static float smo_uvs_coords [] = { -0.000000, 0.000000, -1.000000, 0.500000, 0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.707107, 0.000000, 0.707107, -0.000000, 0.707107, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.000000, 0.707107, -0.707107, 0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.000000, 0.707107, 0.707107, -0.707107, -0.000000, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.707107, -0.000000, -0.707107, -0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, -0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.707107, -0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, -0.500000, -0.500000, -0.707107, -0.000000, 0.000000, -1.000000, 0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.707107, 0.000000, -0.707107, 0.500000, -0.500000, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 1.000000, 0.000000, -0.000000, 0.500000, -0.500000, -0.707107, 1.000000, 0.000000, -0.000000, 0.707107, -0.707107, 0.000000, 0.707107, -0.707107, 0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.000000, 0.707107, 0.707107, -0.707107, 0.000000, 0.707107, 0.000000, 0.707107, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.707107, -0.707107, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, -0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, -0.707107, 0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, 0.707107, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.500000, -0.500000, 0.707107, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, -0.707107, -0.707107, -0.707107, 0.000000, -0.707107, -0.000000, -0.707107, -0.707107, -0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -1.000000, -0.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.707107, -0.000000, 0.707107, -0.707107, 0.707107, 0.000000, -0.707107, -0.000000, 0.707107, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.707107, 0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 0.707107, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 1.000000, 0.000000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.707107, 0.707107, 0.000000, -0.000000, 0.707107, 0.707107, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.000000, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.500000, 0.500000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 1.000000, 0.000000, -0.000000 };
-static uint smo_uvs_vbo_id = 0; // stencil masking opt uv sphere vertex buffer object id
+float Renderer::Is::sMOUvSCoords[] = { -0.000000, 0.000000, -1.000000, 0.500000, 0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.707107, 0.000000, 0.707107, -0.000000, 0.707107, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.000000, 0.707107, -0.707107, 0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.000000, 0.707107, 0.707107, -0.707107, -0.000000, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.707107, -0.000000, -0.707107, -0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, -0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.707107, -0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, -0.500000, -0.500000, -0.707107, -0.000000, 0.000000, -1.000000, 0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.707107, 0.000000, -0.707107, 0.500000, -0.500000, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 1.000000, 0.000000, -0.000000, 0.500000, -0.500000, -0.707107, 1.000000, 0.000000, -0.000000, 0.707107, -0.707107, 0.000000, 0.707107, -0.707107, 0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.000000, 0.707107, 0.707107, -0.707107, 0.000000, 0.707107, 0.000000, 0.707107, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.707107, -0.707107, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, -0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, -0.707107, 0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, 0.707107, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.500000, -0.500000, 0.707107, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, -0.707107, -0.707107, -0.707107, 0.000000, -0.707107, -0.000000, -0.707107, -0.707107, -0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -1.000000, -0.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.707107, -0.000000, 0.707107, -0.707107, 0.707107, 0.000000, -0.707107, -0.000000, 0.707107, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.707107, 0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 0.707107, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 1.000000, 0.000000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.707107, 0.707107, 0.000000, -0.000000, 0.707107, 0.707107, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.000000, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.500000, 0.500000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 1.000000, 0.000000, -0.000000 };
+uint Renderer::Is::sMOUvSVboId = 0;
 
-// init stencil masking optimization UV sphere
-static void initSMOUVS()
+
+//=====================================================================================================================================
+// initSMOUvS                                                                                                                         =
+//=====================================================================================================================================
+void Renderer::Is::initSMOUvS()
 {
-	glGenBuffers( 1, &smo_uvs_vbo_id );
-	glBindBuffer( GL_ARRAY_BUFFER, smo_uvs_vbo_id );
-	glBufferData( GL_ARRAY_BUFFER, sizeof(smo_uvs_coords), smo_uvs_coords, GL_STATIC_DRAW );
+	DEBUG_ERR( sMOUvSVboId != 0 );
+	glGenBuffers( 1, &sMOUvSVboId );
+	glBindBuffer( GL_ARRAY_BUFFER, sMOUvSVboId );
+	glBufferData( GL_ARRAY_BUFFER, sizeof(sMOUvSVboId), sMOUvSCoords, GL_STATIC_DRAW );
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
-static void DrawSMOUVS( const PointLight& light )
+
+//=====================================================================================================================================
+// renderSMOUvS                                                                                                                       =
+//=====================================================================================================================================
+void Renderer::Is::renderSMOUvS( const PointLight& light )
 {
 	const float scale = 1.2;
-	R::multMatrix( Mat4( light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.radius*scale ) );
 
-	R::noShaders();
+	/// @todo Replace the rendering code. Use shader prog
 
-	glBindBuffer( GL_ARRAY_BUFFER, smo_uvs_vbo_id );
+	r.multMatrix( Mat4( light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.radius*scale ) );
+	Renderer::noShaders();
+
+	glBindBuffer( GL_ARRAY_BUFFER, sMOUvSVboId );
 	glEnableClientState( GL_VERTEX_ARRAY );
 
 	glVertexPointer( 3, GL_FLOAT, 0, 0 );
-	glDrawArrays( GL_TRIANGLES, 0, sizeof(smo_uvs_coords)/sizeof(float)/3 );
+	glDrawArrays( GL_TRIANGLES, 0, sizeof(sMOUvSCoords)/sizeof(float)/3 );
 
 	glDisableClientState( GL_VERTEX_ARRAY );
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -108,13 +52,14 @@ static void DrawSMOUVS( const PointLight& light )
 //=====================================================================================================================================
 // CalcViewVector                                                                                                                     =
 //=====================================================================================================================================
-/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
-static void CalcViewVector( const Camera& cam )
+void Renderer::Is::calcViewVector()
 {
-	int _w = R::w;
-	int _h = R::h;
-	int pixels[4][2]={ {_w,_h}, {0,_h}, { 0,0 }, {_w,0} }; // from righ up and CC wise to right down, Just like we render the quad
-	int viewport[4]={ 0, 0, _w, _h };
+	const Camera& cam = *r.cam;
+
+	int w = r.width;
+	int h = r.height;
+	int pixels[4][2]={ {w,h}, {0,h}, { 0,0 }, {w,0} }; // from righ up and CC wise to right down, Just like we render the quad
+	int viewport[4]={ 0, 0, w, h };
 
 	for( int i=0; i<4; i++ )
 	{
@@ -136,20 +81,21 @@ static void CalcViewVector( const Camera& cam )
 
 
 //=====================================================================================================================================
-// CalcPlanes                                                                                                                         =
+// calcPlanes                                                                                                                         =
 //=====================================================================================================================================
-/// Calc the planes that we will use inside the shader to calculate the frag pos in view space
-static void CalcPlanes( const Camera& cam )
+void Renderer::Is::calcPlanes()
 {
+	const Camera& cam = *r.cam;
+
 	planes.x = -cam.getZFar() / (cam.getZFar() - cam.getZNear());
 	planes.y = -cam.getZFar() * cam.getZNear() / (cam.getZFar() - cam.getZNear());
 }
 
 
 //=====================================================================================================================================
-// initStageFbo                                                                                                                       =
+// initFbo                                                                                                                            =
 //=====================================================================================================================================
-static void initStageFbo()
+void Renderer::Is::initFbo()
 {
 	// create FBO
 	fbo.create();
@@ -158,17 +104,15 @@ static void initStageFbo()
 	// init the stencil render buffer
 	glGenRenderbuffers( 1, &stencilRb );
 	glBindRenderbuffer( GL_RENDERBUFFER, stencilRb );
-	glRenderbufferStorage( GL_RENDERBUFFER, GL_STENCIL_INDEX, R::w, R::h );
+	glRenderbufferStorage( GL_RENDERBUFFER, GL_STENCIL_INDEX, r.width, r.height );
 	glFramebufferRenderbufferEXT( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb );
 
 	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(1);
+	fbo.setNumOfColorAttachements( 1 );
 
 	// create the txtrs
-	if( !fai.createEmpty2D( R::w, R::h, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE ) )
-	{
-		FATAL( "See prev error" );
-	}
+	if( !fai.createEmpty2D( r.width, r.height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE ) )
+		FATAL( "Cannot create deferred shading illumination stage FAI" );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
@@ -185,84 +129,88 @@ static void initStageFbo()
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void init()
+void Renderer::Is::init()
 {
+	/// @todo see what to do with the commented code
+
 	// load the shaders
-	ambientSProg.customLoad( "shaders/is_ap.glsl" );
-	ambientSProg.uniLocs.ambientCol = ambientSProg.findUniVar("ambientCol")->getLoc();
-	ambientSProg.uniLocs.sceneColMap = ambientSProg.findUniVar("sceneColMap")->getLoc();
+	ambientPassSProg.customLoad( "shaders/is_ap.glsl" );
+	ambientPassSProg.uniVars.ambientCol = ambientPassSProg.findUniVar("ambientCol");
+	ambientPassSProg.uniVars.sceneColMap = ambientPassSProg.findUniVar("sceneColMap");
 
 	pointLightSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _POINT_LIGHT_\n" );
-	pointLightSProg.uniLocs.msNormalFai = pointLightSProg.findUniVar("msNormalFai")->getLoc();
-	pointLightSProg.uniLocs.msDiffuseFai = pointLightSProg.findUniVar("msDiffuseFai")->getLoc();
-	pointLightSProg.uniLocs.msSpecularFai = pointLightSProg.findUniVar("msSpecularFai")->getLoc();
-	pointLightSProg.uniLocs.msDepthFai = pointLightSProg.findUniVar("msDepthFai")->getLoc();
-	pointLightSProg.uniLocs.planes = pointLightSProg.findUniVar("planes")->getLoc();
-	pointLightSProg.uniLocs.lightPos = pointLightSProg.findUniVar("lightPos")->getLoc();
-	pointLightSProg.uniLocs.lightInvRadius = pointLightSProg.findUniVar("lightInvRadius")->getLoc();
-	pointLightSProg.uniLocs.lightDiffuseCol = pointLightSProg.findUniVar("lightDiffuseCol")->getLoc();
-	pointLightSProg.uniLocs.lightSpecularCol = pointLightSProg.findUniVar("lightSpecularCol")->getLoc();
+	pointLightSProg.uniVars.msNormalFai = pointLightSProg.findUniVar("msNormalFai");
+	pointLightSProg.uniVars.msDiffuseFai = pointLightSProg.findUniVar("msDiffuseFai");
+	pointLightSProg.uniVars.msSpecularFai = pointLightSProg.findUniVar("msSpecularFai");
+	pointLightSProg.uniVars.msDepthFai = pointLightSProg.findUniVar("msDepthFai");
+	pointLightSProg.uniVars.planes = pointLightSProg.findUniVar("planes");
+	pointLightSProg.uniVars.lightPos = pointLightSProg.findUniVar("lightPos");
+	pointLightSProg.uniVars.lightInvRadius = pointLightSProg.findUniVar("lightInvRadius");
+	pointLightSProg.uniVars.lightDiffuseCol = pointLightSProg.findUniVar("lightDiffuseCol");
+	pointLightSProg.uniVars.lightSpecularCol = pointLightSProg.findUniVar("lightSpecularCol");
 
 	spotLightNoShadowSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _SPOT_LIGHT_\n" );
-	spotLightNoShadowSProg.uniLocs.msNormalFai = spotLightNoShadowSProg.findUniVar("msNormalFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.msDiffuseFai = spotLightNoShadowSProg.findUniVar("msDiffuseFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.msSpecularFai = spotLightNoShadowSProg.findUniVar("msSpecularFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.msDepthFai = spotLightNoShadowSProg.findUniVar("msDepthFai")->getLoc();
-	spotLightNoShadowSProg.uniLocs.planes = spotLightNoShadowSProg.findUniVar("planes")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightPos = spotLightNoShadowSProg.findUniVar("lightPos")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightInvRadius = spotLightNoShadowSProg.findUniVar("lightInvRadius")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightDiffuseCol = spotLightNoShadowSProg.findUniVar("lightDiffuseCol")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightSpecularCol = spotLightNoShadowSProg.findUniVar("lightSpecularCol")->getLoc();
-	spotLightNoShadowSProg.uniLocs.lightTex = spotLightNoShadowSProg.findUniVar("lightTex")->getLoc();
-	spotLightNoShadowSProg.uniLocs.texProjectionMat = spotLightNoShadowSProg.findUniVar("texProjectionMat")->getLoc();
+	spotLightNoShadowSProg.uniVars.msNormalFai = spotLightNoShadowSProg.findUniVar("msNormalFai");
+	spotLightNoShadowSProg.uniVars.msDiffuseFai = spotLightNoShadowSProg.findUniVar("msDiffuseFai");
+	spotLightNoShadowSProg.uniVars.msSpecularFai = spotLightNoShadowSProg.findUniVar("msSpecularFai");
+	spotLightNoShadowSProg.uniVars.msDepthFai = spotLightNoShadowSProg.findUniVar("msDepthFai");
+	spotLightNoShadowSProg.uniVars.planes = spotLightNoShadowSProg.findUniVar("planes");
+	spotLightNoShadowSProg.uniVars.lightPos = spotLightNoShadowSProg.findUniVar("lightPos");
+	spotLightNoShadowSProg.uniVars.lightInvRadius = spotLightNoShadowSProg.findUniVar("lightInvRadius");
+	spotLightNoShadowSProg.uniVars.lightDiffuseCol = spotLightNoShadowSProg.findUniVar("lightDiffuseCol");
+	spotLightNoShadowSProg.uniVars.lightSpecularCol = spotLightNoShadowSProg.findUniVar("lightSpecularCol");
+	spotLightNoShadowSProg.uniVars.lightTex = spotLightNoShadowSProg.findUniVar("lightTex");
+	spotLightNoShadowSProg.uniVars.texProjectionMat = spotLightNoShadowSProg.findUniVar("texProjectionMat");
 
-	spotLightShadowSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _SPOT_LIGHT_\n#define _SHADOW_\n" );
-	spotLightShadowSProg.uniLocs.msNormalFai = spotLightShadowSProg.findUniVar("msNormalFai")->getLoc();
-	spotLightShadowSProg.uniLocs.msDiffuseFai = spotLightShadowSProg.findUniVar("msDiffuseFai")->getLoc();
-	spotLightShadowSProg.uniLocs.msSpecularFai = spotLightShadowSProg.findUniVar("msSpecularFai")->getLoc();
-	spotLightShadowSProg.uniLocs.msDepthFai = spotLightShadowSProg.findUniVar("msDepthFai")->getLoc();
-	spotLightShadowSProg.uniLocs.planes = spotLightShadowSProg.findUniVar("planes")->getLoc();
-	spotLightShadowSProg.uniLocs.lightPos = spotLightShadowSProg.findUniVar("lightPos")->getLoc();
-	spotLightShadowSProg.uniLocs.lightInvRadius = spotLightShadowSProg.findUniVar("lightInvRadius")->getLoc();
-	spotLightShadowSProg.uniLocs.lightDiffuseCol = spotLightShadowSProg.findUniVar("lightDiffuseCol")->getLoc();
-	spotLightShadowSProg.uniLocs.lightSpecularCol = spotLightShadowSProg.findUniVar("lightSpecularCol")->getLoc();
-	spotLightShadowSProg.uniLocs.lightTex = spotLightShadowSProg.findUniVar("lightTex")->getLoc();
-	spotLightShadowSProg.uniLocs.texProjectionMat = spotLightShadowSProg.findUniVar("texProjectionMat")->getLoc();
-	spotLightShadowSProg.uniLocs.shadowMap = spotLightShadowSProg.findUniVar("shadowMap")->getLoc();
+	string pps = "#define SHADOWMAP_SIZE " + Util::intToStr( sm.resolution ) + "\n#define _SPOT_LIGHT_\n#define _SHADOW_\n";
+	spotLightShadowSProg.customLoad( "shaders/is_lp_generic.glsl", pps.c_str() );
+	spotLightShadowSProg.uniVars.msNormalFai = spotLightShadowSProg.findUniVar("msNormalFai");
+	spotLightShadowSProg.uniVars.msDiffuseFai = spotLightShadowSProg.findUniVar("msDiffuseFai");
+	spotLightShadowSProg.uniVars.msSpecularFai = spotLightShadowSProg.findUniVar("msSpecularFai");
+	spotLightShadowSProg.uniVars.msDepthFai = spotLightShadowSProg.findUniVar("msDepthFai");
+	spotLightShadowSProg.uniVars.planes = spotLightShadowSProg.findUniVar("planes");
+	spotLightShadowSProg.uniVars.lightPos = spotLightShadowSProg.findUniVar("lightPos");
+	spotLightShadowSProg.uniVars.lightInvRadius = spotLightShadowSProg.findUniVar("lightInvRadius");
+	spotLightShadowSProg.uniVars.lightDiffuseCol = spotLightShadowSProg.findUniVar("lightDiffuseCol");
+	spotLightShadowSProg.uniVars.lightSpecularCol = spotLightShadowSProg.findUniVar("lightSpecularCol");
+	spotLightShadowSProg.uniVars.lightTex = spotLightShadowSProg.findUniVar("lightTex");
+	spotLightShadowSProg.uniVars.texProjectionMat = spotLightShadowSProg.findUniVar("texProjectionMat");
+	spotLightShadowSProg.uniVars.shadowMap = spotLightShadowSProg.findUniVar("shadowMap");
 
 
 	// init the rest
-	initStageFbo();
-	initSMOUVS();
+	initFbo();
+	if( sMOUvSVboId == 0 )
+		initSMOUvS();
 
-	R::Is::Shad::init();
+	if( sm.enabled )
+		sm.init();
 }
 
 
 //=====================================================================================================================================
 // ambientPass                                                                                                                        =
 //=====================================================================================================================================
-static void ambientPass( const Camera& /*cam*/, const Vec3& color )
+void Renderer::Is::ambientPass( const Vec3& color )
 {
 	glDisable( GL_BLEND );
 
 	// set the shader
-	ambientSProg.bind();
+	ambientPassSProg.bind();
 
 	// set the uniforms
-	glUniform3fv( ambientSProg.uniLocs.ambientCol, 1, &(const_cast<Vec3&>(color)[0]) );
-	ambientSProg.locTexUnit( ambientSProg.uniLocs.sceneColMap, R::Ms::diffuseFai, 0 );
+	ambientPassSProg.uniVars.ambientCol->setVec3( &color );
+	ambientPassSProg.uniVars.sceneColMap->setTexture( r.ms.diffuseFai, 0 );
 
 	// Draw quad
-	R::DrawQuad( 0 );
+	r.drawQuad( 0 );
 }
 
 
 //=====================================================================================================================================
 // setStencilMask [point light]                                                                                                       =
 //=====================================================================================================================================
-/// Clears the stencil buffer and draws a shape in the stencil buffer (in this case the shape is a UV shpere)
-static void setStencilMask( const Camera& cam, const PointLight& light )
+void Renderer::Is::setStencilMask( const PointLight& light )
 {
 	glEnable( GL_STENCIL_TEST );
 	glClear( GL_STENCIL_BUFFER_BIT );
@@ -274,16 +222,15 @@ static void setStencilMask( const Camera& cam, const PointLight& light )
 	glDisable( GL_CULL_FACE );
 
 	// set matrices
+	/// @todo opegnl 3.x
 	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	R::setProjectionViewMatrices( cam );
-
+	r.setProjectionViewMatrices( *r.cam );
 
 	// render sphere to stencil buffer
-	DrawSMOUVS( light );
-
+	renderSMOUvS( light );
 
 	// restore matrices
 	glMatrixMode( GL_PROJECTION );
@@ -302,9 +249,9 @@ static void setStencilMask( const Camera& cam, const PointLight& light )
 
 
 //=====================================================================================================================================
-// setStencilMask                                                                                                                     =
+// setStencilMask [spot light]                                                                                                        =
 //=====================================================================================================================================
-static void setStencilMask( const Camera& cam, const SpotLight& light )
+void Renderer::Is::setStencilMask( const SpotLight& light )
 {
 	glEnable( GL_STENCIL_TEST );
 	glClear( GL_STENCIL_BUFFER_BIT );
@@ -316,15 +263,16 @@ static void setStencilMask( const Camera& cam, const SpotLight& light )
 	glDisable( GL_CULL_FACE );
 
 	// set matrices
+	/// @todo opengl 3.x
 	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
-	R::setProjectionViewMatrices( cam );
+	r.setProjectionViewMatrices( *r.cam );
 
 
 	// render camera's shape to stencil buffer
-	R::noShaders();
+	r.noShaders();
 	const Camera& lcam = light.camera;
 	float x = lcam.getZFar() / tan( (PI-lcam.getFovX())/2 );
 	float y = tan( lcam.getFovY()/2 ) * lcam.getZFar();
@@ -341,7 +289,7 @@ static void setStencilMask( const Camera& cam, const SpotLight& light )
 		{ { x, -y, z }, {-x, -y, z }, {-x,  y, z } }, // front bottom left
 	};
 
-	R::multMatrix( Mat4(lcam.getWorldTransform()) );
+	r.multMatrix( Mat4(lcam.getWorldTransform()) );
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, verts );
 	glDrawArrays( GL_TRIANGLES, 0, tris_num*3 );
@@ -364,46 +312,42 @@ static void setStencilMask( const Camera& cam, const SpotLight& light )
 }
 
 
-/*
-=======================================================================================================================================
-PointLightPass                                                                                                                        =
-=======================================================================================================================================
-*/
-static void PointLightPass( const Camera& cam, const PointLight& light )
+//=====================================================================================================================================
+// pointLightPass                                                                                                                     =
+//=====================================================================================================================================
+void Renderer::Is::pointLightPass( const PointLight& light )
 {
-	//** make a check wether the point light passes the frustum test **
+	const Camera& cam = *r.cam;
+
+	// make a check weather the point light passes the frustum test
 	bsphere_t sphere( light.getWorldTransform().getOrigin(), light.radius );
 	if( !cam.insideFrustum( sphere ) ) return;
 
-	//** set the scissors **
-	//int n = SetScissors( cam.getViewMatrix()*light.translationWspace, light.radius );
-	//if( n < 1 ) return;
+	// stencil optimization
+	setStencilMask( light );
 
-	//** stencil optimization **
-	setStencilMask( cam, light );
-
-	//** bind the shader **
+	// bind the shader
 	const LightShaderProg& shader = pointLightSProg; // I dont want to type
 	shader.bind();
 
 	// bind the material stage framebuffer attachable images
-	shader.locTexUnit( shader.uniLocs.msDepthFai, R::Ms::normalFai, 0 );
-	shader.locTexUnit( shader.uniLocs.msDiffuseFai, R::Ms::diffuseFai, 1 );
-	shader.locTexUnit( shader.uniLocs.msSpecularFai, R::Ms::specularFai, 2 );
-	shader.locTexUnit( shader.uniLocs.msDepthFai, R::Ms::depthFai, 3 );
-	glUniform2fv( shader.uniLocs.planes, 1, &planes[0] );
+	shader.uniVars.msNormalFai->setTexture( r.ms.normalFai, 0 );
+	shader.uniVars.msDiffuseFai->setTexture( r.ms.diffuseFai, 1 );
+	shader.uniVars.msSpecularFai->setTexture( r.ms.specularFai, 2 );
+	shader.uniVars.msDepthFai->setTexture( r.ms.depthFai, 3 );
+	shader.uniVars.planes->setVec2( &planes );
 
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed( cam.getViewMatrix() );
-	glUniform3fv( shader.uniLocs.lightPos, 1, &lightPosEyeSpace[0] );
-	glUniform1f( shader.uniLocs.lightInvRadius, 1.0/light.radius );
-	glUniform3fv( shader.uniLocs.lightDiffuseCol, 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
-	glUniform3fv( shader.uniLocs.lightSpecularCol, 1, &Vec3(light.lightProps->getSpecularColor())[0] );
+	shader.uniVars.lightPos->setVec3( &lightPosEyeSpace );
+	shader.uniVars.lightInvRadius->setFloat( 1.0/light.radius );
+	shader.uniVars.lightDiffuseCol->setVec3( &light.lightProps->getDiffuseColor() );
+	shader.uniVars.lightSpecularCol->setVec3( &light.lightProps->getSpecularColor() );
 
-	//** render quad **
+	// render quad
 	glEnableVertexAttribArray( 0 );
 	glEnableVertexAttribArray( 1 );
 
-	glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &R::quadVertCoords[0] );
+	glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &Renderer::quadVertCoords[0] );
 	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &viewVectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
@@ -411,28 +355,34 @@ static void PointLightPass( const Camera& cam, const PointLight& light )
 	glDisableVertexAttribArray( 0 );
 	glDisableVertexAttribArray( 1 );
 
-	//glDisable( GL_SCISSOR_TEST );
+	// cleanup
 	glDisable( GL_STENCIL_TEST );
 }
 
 
-/*
-=======================================================================================================================================
-SpotLightPass                                                                                                                         =
-=======================================================================================================================================
-*/
-static void SpotLightPass( const Camera& cam, const SpotLight& light )
+//=====================================================================================================================================
+// spotLightPass                                                                                                                      =
+//=====================================================================================================================================
+void Renderer::Is::spotLightPass( const SpotLight& light )
 {
-	//** first of all check if the light's camera is inside the frustum **
+	const Camera& cam = *r.cam;
+
+	//
+	// first of all check if the light's camera is inside the frustum
+	//
 	if( !cam.insideFrustum( light.camera ) ) return;
 
-	//** stencil optimization **
-	setStencilMask( cam, light );
+	//
+	// stencil optimization
+	//
+	setStencilMask( light );
 
-	//** generate the shadow map (if needed) **
-	if( light.castsShadow )
+	//
+	// generate the shadow map (if needed)
+	//
+	if( light.castsShadow && sm.enabled )
 	{
-		R::Is::Shad::runPass( light.camera );
+		sm.run( light.camera );
 
 		// restore the IS FBO
 		fbo.bind();
@@ -443,60 +393,67 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 		glDisable( GL_DEPTH_TEST );
 	}
 
-	//** set the shader and uniforms **
+	//
+	// set the shader and uniforms
+	//
 	const LightShaderProg* shdr; // because of the huge name
 
-	if( light.castsShadow )  shdr = &spotLightShadowSProg;
-	else                     shdr = &spotLightNoShadowSProg;
+	if( light.castsShadow && sm.enabled )
+		shdr = &spotLightShadowSProg;
+	else
+		shdr = &spotLightNoShadowSProg;
 
 	shdr->bind();
 
 	// bind the framebuffer attachable images
-	shdr->locTexUnit( shdr->uniLocs.msNormalFai, R::Ms::normalFai, 0 );
-	shdr->locTexUnit( shdr->uniLocs.msDiffuseFai, R::Ms::diffuseFai, 1 );
-	shdr->locTexUnit( shdr->uniLocs.msSpecularFai, R::Ms::specularFai, 2 );
-	shdr->locTexUnit( shdr->uniLocs.msDepthFai, R::Ms::depthFai, 3 );
+	shdr->uniVars.msNormalFai->setTexture( r.ms.normalFai, 0 );
+	shdr->uniVars.msDiffuseFai->setTexture( r.ms.diffuseFai, 1 );
+	shdr->uniVars.msSpecularFai->setTexture( r.ms.specularFai, 2 );
+	shdr->uniVars.msDepthFai->setTexture( r.ms.depthFai, 3 );
 
 	if( light.lightProps->getTexture() == NULL )
-		ERROR( "No texture is attached to the light. light_props name: " << light.lightProps->getRsrcName() );
+		ERROR( "No texture is attached to the light. lightProps name: " << light.lightProps->getRsrcName() );
 
 	// the planes
-	//glUniform2fv( shdr->getUniLoc("planes"), 1, &planes[0] );
-	glUniform2fv( shdr->uniLocs.planes, 1, &planes[0] );
+	shdr->uniVars.planes->setVec2( &planes );
 
 	// the light params
-	Vec3 light_pos_eye_space = light.getWorldTransform().getOrigin().getTransformed( cam.getViewMatrix() );
-	glUniform3fv( shdr->uniLocs.lightPos, 1, &light_pos_eye_space[0] );
-	glUniform1f( shdr->uniLocs.lightInvRadius, 1.0/light.getDistance() );
-	glUniform3fv( shdr->uniLocs.lightDiffuseCol, 1, &Vec3(light.lightProps->getDiffuseColor())[0] );
-	glUniform3fv( shdr->uniLocs.lightSpecularCol, 1, &Vec3(light.lightProps->getSpecularColor())[0] );
+	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed( cam.getViewMatrix() );
+	shdr->uniVars.lightPos->setVec3( &lightPosEyeSpace );
+	shdr->uniVars.lightInvRadius->setFloat( 1.0/light.getDistance() );
+	shdr->uniVars.lightDiffuseCol->setVec3( &light.lightProps->getDiffuseColor() );
+	shdr->uniVars.lightSpecularCol->setVec3( &light.lightProps->getSpecularColor() );
 
 	// set the light texture
-	shdr->locTexUnit( shdr->uniLocs.lightTex, *light.lightProps->getTexture(), 4 );
+	shdr->uniVars.lightTex->setTexture( *light.lightProps->getTexture(), 3 );
 	// before we render disable anisotropic in the light.texture because it produces artefacts. ToDo: see if this is unececeary in future drivers
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 
-	//** set texture matrix for shadowmap projection **
+	//
+	// set texture matrix for texture & shadowmap projection
+	//
 	// Bias * P_light * V_light * inv( V_cam )
-	static Mat4 bias_m4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
-	Mat4 tex_projection_mat;
-	tex_projection_mat = bias_m4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * Mat4(cam.getWorldTransform());
-	glUniformMatrix4fv( shdr->uniLocs.texProjectionMat, 1, true, &tex_projection_mat[0] );
+	static Mat4 biasMat4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
+	Mat4 texProjectionMat;
+	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() * light.camera.getViewMatrix() * Mat4(cam.getWorldTransform());
+	shdr->uniVars.texProjectionMat->setMat4( &texProjectionMat );
 
 	// the shadow stuff
 	// render depth to texture and then bind it
-	if( light.castsShadow )
+	if( light.castsShadow && sm.enabled )
 	{
-		shdr->locTexUnit( shdr->uniLocs.shadowMap, R::Is::Shad::shadowMap, 5 );
+		shdr->uniVars.shadowMap->setTexture( sm.shadowMap, 5 );
 	}
 
-	//** render quad **
+	//
+	// render quad
+	//
 	glEnableVertexAttribArray( 0 );
 	glEnableVertexAttribArray( 1 );
 
-	glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &R::quadVertCoords[0] );
+	glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &Renderer::quadVertCoords[0] );
 	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &viewVectors[0] );
 
 	glDrawArrays( GL_QUADS, 0, 4 );
@@ -513,18 +470,16 @@ static void SpotLightPass( const Camera& cam, const SpotLight& light )
 }
 
 
-/*
-=======================================================================================================================================
-runStage                                                                                                                              =
-=======================================================================================================================================
-*/
-void runStage( const Camera& cam )
+//=====================================================================================================================================
+// run                                                                                                                                =
+//=====================================================================================================================================
+void Renderer::Is::run()
 {
 	// FBO
 	fbo.bind();
 
 	// OGL stuff
-	R::setViewport( 0, 0, R::w, R::h );
+	r.setViewport( 0, 0, r.width, r.height );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
@@ -532,14 +487,14 @@ void runStage( const Camera& cam )
 	glDisable( GL_DEPTH_TEST );
 
 	// ambient pass
-	ambientPass( cam, app->getScene()->getAmbientCol() );
+	ambientPass( app->getScene()->getAmbientCol() );
 
 	// light passes
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_ONE, GL_ONE );
 
-	CalcViewVector( cam );
-	CalcPlanes( cam );
+	calcViewVector();
+	calcPlanes();
 
 	// for all lights
 	for( uint i=0; i<app->getScene()->lights.size(); i++ )
@@ -550,14 +505,14 @@ void runStage( const Camera& cam )
 			case Light::LT_POINT:
 			{
 				const PointLight& pointl = static_cast<const PointLight&>(light);
-				PointLightPass( cam, pointl );
+				pointLightPass( pointl );
 				break;
 			}
 
 			case Light::LT_SPOT:
 			{
 				const SpotLight& projl = static_cast<const SpotLight&>(light);
-				SpotLightPass( cam, projl );
+				spotLightPass( projl );
 				break;
 			}
 
@@ -569,5 +524,3 @@ void runStage( const Camera& cam )
 	// FBO
 	fbo.unbind();
 }
-
-}} // end namespaces
