@@ -1,8 +1,9 @@
 #include "SkelNode.h"
-#include "Renderer.h"
 #include "SkelAnim.h"
 #include "Skeleton.h"
 #include "SkelAnimCtrl.h"
+#include "App.h"
+#include "MainRenderer.h"
 
 
 //=====================================================================================================================================
@@ -40,7 +41,7 @@ void SkelNode::deinit()
 void SkelNode::render()
 {
 	glPushMatrix();
-	R::multMatrix( Mat4(getWorldTransform()) );
+	app->getMainRenderer()->multMatrix( Mat4(getWorldTransform()) );
 
 	//glPointSize( 4.0f );
 	//glLineWidth( 2.0f );

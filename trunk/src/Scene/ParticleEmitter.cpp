@@ -1,5 +1,5 @@
 #include "ParticleEmitter.h"
-#include "Renderer.h"
+#include "MainRenderer.h"
 #include "PhyCommon.h"
 #include "App.h"
 #include "Scene.h"
@@ -13,7 +13,7 @@ void ParticleEmitter::Particle::render()
 	if( lifeTillDeath < 0 ) return;
 
 	glPushMatrix();
-	R::multMatrix( getWorldTransform() );
+	app->getMainRenderer()->multMatrix( getWorldTransform() );
 
 	glBegin( GL_POINTS );
 		glVertex3fv( &(Vec3(0.0))[0] );
@@ -169,16 +169,16 @@ void ParticleEmitter::update()
 void ParticleEmitter::render()
 {
 	glPushMatrix();
-	R::multMatrix( getWorldTransform() );
+	app->getMainRenderer()->multMatrix( getWorldTransform() );
 
-	R::color3( Vec3(1.0) );
+	app->getMainRenderer()->color3( Vec3(1.0) );
 
 	/*glEnableClientState( GL_VERTEX_ARRAY );
 	glVertexPointer( 3, GL_FLOAT, 0, vertPositions );
 	glDrawElements( GL_LINES, sizeof(vertIndices)/sizeof(uint), GL_UNSIGNED_INT, vertIndices );
 	glDisableClientState( GL_VERTEX_ARRAY );*/
 	glPolygonMode( GL_FRONT, GL_LINE );
-	R::Dbg::renderCube();
+	app->getMainRenderer()->dbg.renderCube();
 	glPolygonMode( GL_FRONT, GL_FILL );
 
 	glPopMatrix();

@@ -1,50 +1,14 @@
-/*
-The file contains functions and vars used for the deferred shading/post-processing stage/bloom passes.
-*/
-
 #include "Renderer.h"
-#include "Resource.h"
-#include "Texture.h"
-#include "Scene.h"
-#include "Fbo.h"
-
-namespace R {
-namespace Pps {
-namespace Hdr {
-
-
-//=====================================================================================================================================
-// VARS                                                                                                                               =
-//=====================================================================================================================================
-bool enabled = true;
-
-static Fbo pass0Fbo, pass1Fbo, pass2Fbo; // yet another FBO and another, damn
-
-float renderingQuality = 0.5; // 1/4 of the image
-static uint w, h; // render width and height
-
-// hdr images
-Texture pass0Fai; // for vertical blur pass
-Texture pass1Fai; // with the horizontal blur
-Texture fai; ///< The final fai
-
-class HdrShaderProg: public ShaderProg
-{
-	public:
-		struct
-		{
-			int fai;
-		} uniLocs;
-};
-
-static HdrShaderProg pass0SProg, pass1SProg, pass2SProg;
 
 
 //=====================================================================================================================================
 // initFbos                                                                                                                           =
 //=====================================================================================================================================
-static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
+void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 {
+	int width = renderingQuality * r.width;
+	int height = renderingQuality * r.height;
+
 	// create FBO
 	fbo.create();
 	fbo.bind();
@@ -53,7 +17,7 @@ static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( w, h, internalFormat, GL_RGB );
+	fai.createEmpty2D( width, height, internalFormat, GL_RGB );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	//fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -73,10 +37,10 @@ static void initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void init()
+void Renderer::Pps::Hdr::init()
 {
-	w = R::Pps::Hdr::renderingQuality * R::w;
-	h = R::Pps::Hdr::renderingQuality * R::h;
+	//int width = renderingQuality * r.width;
+	int height = renderingQuality * r.height;
 
 	initFbos( pass0Fbo, pass0Fai, GL_RGB );
 	initFbos( pass1Fbo, pass1Fai, GL_RGB );
@@ -85,26 +49,31 @@ void init()
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	// init shaders
-	if( !pass0SProg.customLoad( "shaders/PpsHdr.glsl", ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(R::w) + "\n").c_str() ) )
-		FATAL( "See prev error" );
-	pass0SProg.uniLocs.fai = pass0SProg.findUniVar("fai")->getLoc();
+	//
+	const char* shaderFname = "shaders/PpsHdr.glsl";
 
-	if( !pass1SProg.customLoad( "shaders/PpsHdr.glsl", ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(h) + "\n").c_str() ) )
+	if( !pass0SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n").c_str() ) )
 		FATAL( "See prev error" );
-	pass1SProg.uniLocs.fai = pass1SProg.findUniVar("fai")->getLoc();
+	pass0SProg.uniVars.fai = pass0SProg.findUniVar("fai");
 
-	if( !pass2SProg.customLoad( "shaders/PpsHdr.glsl", "#define _PPS_HDR_PASS_2_\n" ) )
+	if( !pass1SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n").c_str() ) )
 		FATAL( "See prev error" );
-	pass2SProg.uniLocs.fai = pass2SProg.findUniVar("fai")->getLoc();
+	pass1SProg.uniVars.fai = pass1SProg.findUniVar("fai");
+
+	if( !pass2SProg.customLoad( shaderFname, "#define _PPS_HDR_PASS_2_\n" ) )
+		FATAL( "See prev error" );
+	pass2SProg.uniVars.fai = pass2SProg.findUniVar("fai");
 }
 
 
 //=====================================================================================================================================
 // runPass                                                                                                                            =
 //=====================================================================================================================================
-void runPass( const Camera& /*cam*/ )
+void Renderer::Pps::Hdr::run()
 {
-	R::setViewport( 0, 0, w, h );
+	int w = renderingQuality * r.width;
+	int h = renderingQuality * r.height;
+	r.setViewport( 0, 0, w, h );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -113,27 +82,23 @@ void runPass( const Camera& /*cam*/ )
 	// pass 0
 	pass0Fbo.bind();
 	pass0SProg.bind();
-	pass0SProg.locTexUnit( pass0SProg.uniLocs.fai, R::Is::fai, 0 );
-	R::DrawQuad( 0 );
+	pass0SProg.uniVars.fai->setTexture( r.is.fai, 0 );
+	r.drawQuad( 0 );
 
 
 	// pass 1
 	pass1Fbo.bind();
 	pass1SProg.bind();
-	pass1SProg.locTexUnit( pass1SProg.uniLocs.fai, pass0Fai, 0 );
-	R::DrawQuad( 0 );
+	pass1SProg.uniVars.fai->setTexture( pass0Fai, 0 );
+	r.drawQuad( 0 );
 
 
 	// pass 2
 	pass2Fbo.bind();
 	pass2SProg.bind();
-	pass2SProg.locTexUnit( pass2SProg.uniLocs.fai, pass1Fai, 0 );
-	R::DrawQuad( 0 );
+	pass2SProg.uniVars.fai->setTexture( pass1Fai, 0 );
+	r.drawQuad( 0 );
 
 	// end
 	Fbo::unbind();
 }
-
-
-}}} // end namespaces
-

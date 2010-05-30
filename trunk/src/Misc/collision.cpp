@@ -1,6 +1,7 @@
 #include <float.h>
 #include "collision.h"
-#include "Renderer.h"
+#include "MainRenderer.h"
+#include "App.h"
 
 
 static int render_seperation_lock = 0;
@@ -819,7 +820,7 @@ void plane_t::Render()
 	q.setFrom2Vec3( Vec3( 0.0, 0.0, 1.0 ), normal );
 	Mat3 rotate( q );
 	Mat4 transform( translate, rotate );
-	R::multMatrix( transform );
+	app->getMainRenderer()->multMatrix( transform );
 
 	glColor4fv( &Vec4(1.0f, 1.0f, 1.0f, 0.5f)[0] );
 
@@ -911,7 +912,7 @@ void bsphere_t::Render()
 
 	glColor4fv( &Vec4(1.0, 1.0, 1.0, 0.2)[0] );
 
-	R::Dbg::renderSphere( radius, 24 );
+	app->getMainRenderer()->dbg.renderSphere( radius, 24 );
 
 	glPopMatrix();
 }
@@ -1195,7 +1196,7 @@ void aabb_t::Render()
 
 	glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
 
-	R::Dbg::renderCube();
+	app->getMainRenderer()->dbg.renderCube();
 
 	glPopMatrix();
 
@@ -1639,14 +1640,14 @@ void obb_t::Render()
 	glPushMatrix();
 
 	glTranslatef( center.x, center.y, center.z ); // translate
-	R::multMatrix( Mat4(rotation) ); // rotate
+	app->getMainRenderer()->multMatrix( Mat4(rotation) ); // rotate
 	glScalef( extends.x, extends.y, extends.z ); // scale
 
 	glColor3fv( &Vec3(1.0f, 1.0f, 1.0f)[0] );
 
-	R::Dbg::renderCube( false, 2.0f );
+	app->getMainRenderer()->dbg.renderCube( false, 2.0 );
 
-	R::color3( Vec3( 0.0, 1.0, 0.0 ) );
+	app->getMainRenderer()->color3( Vec3( 0.0, 1.0, 0.0 ) );
 	glBegin( GL_POINTS );
 		glVertex3fv( &Vec3(1.0, 1.0, 1.0)[0] );
 	glEnd();

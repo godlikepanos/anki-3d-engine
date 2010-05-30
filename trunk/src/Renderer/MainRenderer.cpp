@@ -8,7 +8,7 @@
 //=====================================================================================================================================
 // init                                                                                                                               =
 //=====================================================================================================================================
-void MainRenderer::init( const RendererInitializer& initializer )
+void MainRenderer::init( const RendererInitializer& initializer_ )
 {
 	INFO( "Main renderer initializing..." );
 
@@ -42,7 +42,7 @@ void MainRenderer::init( const RendererInitializer& initializer )
 	glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum );
 
 	//
-	// Set default OpenGL
+	// Set GL
 	//
 	glClearColor( 0.1, 0.1, 0.1, 0.0 );
 	glClearDepth( 1.0 );
@@ -57,12 +57,17 @@ void MainRenderer::init( const RendererInitializer& initializer )
 	glDisable( GL_BLEND );
 	glPolygonMode( GL_FRONT, GL_FILL );
 
-	//
-	// init the rest
-	//
 	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments );
-	Renderer::init( initializer );
 	sProg.customLoad( "shaders/final.glsl" );
+
+	//
+	// init the offscreen Renderer
+	//
+	RendererInitializer initializer = initializer_;
+	renderingQuality = initializer.mainRendererQuality;
+	initializer.width = app->getWindowWidth() * renderingQuality;
+	initializer.height = app->getWindowHeight() * renderingQuality;
+	Renderer::init( initializer );
 
 	INFO( "Main renderer initialization ends" );
 }

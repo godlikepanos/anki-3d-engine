@@ -3,6 +3,9 @@
 #include "Image.h"
 
 
+//=====================================================================================================================================
+// Statics                                                                                                                            =
+//=====================================================================================================================================
 int Texture::textureUnitsNum = -1;
 bool Texture::mipmappingEnabled = true;
 bool Texture::compressionEnabled = true;
@@ -37,7 +40,7 @@ bool Texture::load( const char* filename )
 	// bind the texture
 	glGenTextures( 1, &glId );
 	bind(0);
-	if( R::mipmapping )
+	if( mipmappingEnabled )
 	{
 		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	}
@@ -48,7 +51,7 @@ bool Texture::load( const char* filename )
 
 	glTexParameteri( type, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, R::maxAnisotropy );
+	glTexParameterf( type, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropyLevel );
 
 	// leave to GL_REPEAT. There is not real performance impact
 	glTexParameteri( type, GL_TEXTURE_WRAP_S, GL_REPEAT );
@@ -57,7 +60,7 @@ bool Texture::load( const char* filename )
 	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
 	int intFormat; // the internal format of the image
-	if( R::textureCompression )
+	if( compressionEnabled )
 	{
 		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		intFormat = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
@@ -68,7 +71,7 @@ bool Texture::load( const char* filename )
 	}
 
 	glTexImage2D( type, 0, intFormat, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data );
-	if( R::mipmapping )
+	if( mipmappingEnabled )
 	{
 		glGenerateMipmap(type);
 	}
@@ -93,8 +96,10 @@ bool Texture::createEmpty2D( float width_, float height_, int internalFormat, in
 	glGenTextures( 1, &glId );
 	bind();
 
-	if( R::mipmapping ) glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	else                glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	if( mipmappingEnabled )
+		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	else
+		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 	texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
@@ -103,7 +108,8 @@ bool Texture::createEmpty2D( float width_, float height_, int internalFormat, in
 	// allocate to vram
 	glTexImage2D( type, 0, internalFormat, width_, height_, 0, format_, type_, NULL );
 
-	if( R::mipmapping ) glGenerateMipmap(type);
+	if( mipmappingEnabled )
+		glGenerateMipmap( type );
 
 	GLenum errid = glGetError();
 	if( errid != GL_NO_ERROR )
@@ -147,7 +153,7 @@ void Texture::unload()
 //=====================================================================================================================================
 void Texture::bind( uint unit ) const
 {
-	if( unit>=(uint)R::maxTextureUnits )
+	if( unit >= static_cast<uint>(textureUnitsNum) )
 		WARNING("Max tex units passed");
 
 	glActiveTexture( GL_TEXTURE0+unit );

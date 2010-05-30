@@ -18,13 +18,19 @@ class Material: public Resource
 		class UserDefinedVar
 		{
 			public:
+				enum SpecialValue
+				{
+					SV_IS_FAI
+				};
+
 				struct Value       // unfortunately we cannot use union because of Vec3 and Vec4
 				{
 					Texture* texture;
-					float    float_;
-					Vec2     vec2;
-					Vec3     vec3;
-					Vec4     vec4;
+					float float_;
+					Vec2 vec2;
+					Vec3 vec3;
+					Vec4 vec4;
+					SpecialValue speciaValue;
 					Value(): texture(NULL) {}
 				};
 
