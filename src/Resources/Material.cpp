@@ -239,33 +239,27 @@ bool Material::load( const char* filename )
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_NORMAL_FAI" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_MS_NORMAL_FAI;
+							var.specialValue = SV_MS_NORMAL_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DIFFUSE_FAI" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_MS_DIFFUSE_FAI;
+							var.specialValue = SV_MS_DIFFUSE_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_SPECULAR_FAI" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_MS_SPECULAR_FAI;
+							var.specialValue = SV_MS_SPECULAR_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DEPTH_FAI" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_MS_DEPTH_FAI;
+							var.specialValue = SV_MS_DEPTH_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "IS_FAI" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_IS_FAI;
+							var.specialValue = SV_IS_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "PPS_FAI" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_PPS_FAI;
+							var.specialValue = SV_PPS_FAI;
 						}
 						else
 						{
@@ -286,12 +280,14 @@ bool Material::load( const char* filename )
 						break;
 					// vec2
 					case GL_FLOAT_VEC2:
+						// {
 						token = &scanner.getNextToken();
 						if( token->getCode() == Scanner::TC_LBRACKET )
 						{
 							if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 2, &var.value.vec2[0] ) )
 								return false;
 
+							// }
 							token = &scanner.getNextToken();
 							if( token->getCode() != Scanner::TC_RBRACKET )
 							{
@@ -301,8 +297,7 @@ bool Material::load( const char* filename )
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "RENDERER_SIZE" ) )
 						{
-							var.specialVariable = true;
-							var.value.speciaValue = UserDefinedVar::SV_RENDERER_SIZE;
+							var.specialValue = SV_RENDERER_SIZE;
 						}
 						else
 						{
@@ -388,7 +383,7 @@ void Material::unload()
 	// loop all user defined vars and unload the textures
 	for( uint i=0; i<userDefinedVars.size(); i++ )
 	{
-		if( userDefinedVars[i].sProgVar->getGlDataType() == GL_SAMPLER_2D && ! userDefinedVars[i].specialVariable )
+		if( userDefinedVars[i].sProgVar->getGlDataType() == GL_SAMPLER_2D && userDefinedVars[i].specialValue != SV_NONE )
 			Rsrc::textures.unload( userDefinedVars[i].value.texture );
 	}
 }
