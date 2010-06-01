@@ -25,7 +25,7 @@ namespace Parser {
 // parseArrOfNumbers                                                                                                                  =
 //=====================================================================================================================================
 /**
- * @brief This template func is used for a common operation of parsing arrays of numbers
+ * This template func is used for a common operation of parsing arrays of numbers
  *
  * It parses expressions like this one: { 10 -0.2 123.e-10 -0x0FF } and stores the result in the arr array. The acceptable types
  * (typename Type) are integer or floating point types
