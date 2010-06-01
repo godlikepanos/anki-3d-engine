@@ -84,7 +84,7 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #define WARNING( x ) GENERAL_ERR( "Warning", x, COL_WARNING )
 
 /// Show an error and exit application
-#define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); exit( EXIT_FAILURE ); }
+#define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); ::exit( EXIT_FAILURE ); }
 
 /// Show an info message
 #define INFO( x ) GENERAL_MSG( "Info", x, COL_INFO )

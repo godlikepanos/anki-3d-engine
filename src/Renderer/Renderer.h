@@ -332,6 +332,7 @@ class Renderer
 		static float quadVertCoords [][2];
 
 		static void drawQuad( int vertCoordsUniLoc );
+		void setupMaterial( const Material& mtl );
 
 	public:
 		// the stages as data members
@@ -340,11 +341,6 @@ class Renderer
 		Pps pps; ///< Postprocessing rendering stage
 		Dbg dbg; ///< Debugging rendering stage
 
-		// texture stuff
-		static bool textureCompression; ///< Used in Texture::load to enable texture compression. Decreases video memory usage
-		static int  maxTextureUnits; ///< Used in Texture::bind so we wont bind in a nonexistent texture unit. Readonly
-		static bool mipmapping; ///< Used in Texture::load. Enables mipmapping increases video memory usage
-		static int  maxAnisotropy; ///< Max texture anisotropy. Used in Texture::load
 		// matrices & viewing
 		Mat4 modelViewMat; ///< This changes once for every mesh rendering
 		Mat4 projectionMat; ///< This changes once every frame

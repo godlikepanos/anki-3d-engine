@@ -47,6 +47,12 @@ void ShaderProg::UniVar::setVec3( const Vec3 v3[], uint size ) const
 	glUniform3fv( getLoc(), size, &( const_cast<Vec3&>(v3[0]) )[0] );
 }
 
+void ShaderProg::UniVar::setVec4( const Vec4 v4[], uint size ) const
+{
+	STD_SET_UNI_CHECK();
+	glUniform4fv( getLoc(), size, &( const_cast<Vec4&>(v4[0]) )[0] );
+}
+
 void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
 {
 	STD_SET_UNI_CHECK();

@@ -92,18 +92,19 @@ void Renderer::Pps::Ssao::init()
 	// noise map
 	//
 
+	/// @todo fix this crap
 	// load noise map and disable temporally the texture compression and enable mipmapping
-	bool texCompr = Renderer::textureCompression;
-	bool mipmaping = Renderer::mipmapping;
-	Renderer::textureCompression = false;
-	Renderer::mipmapping = true;
+	bool texCompr = Texture::compressionEnabled;
+	bool mipmaping = Texture::mipmappingEnabled;
+	Texture::compressionEnabled = false;
+	Texture::mipmappingEnabled = true;
 	noiseMap = Rsrc::textures.load( "gfx/noise3.tga" );
 	noiseMap->texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
 	noiseMap->texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
 	//noise_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	//noise_map->texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	Renderer::textureCompression = texCompr;
-	Renderer::mipmapping = mipmaping;
+	Texture::compressionEnabled = texCompr;
+	Texture::mipmappingEnabled = mipmaping;
 
 }
 

@@ -237,25 +237,39 @@ bool Material::load( const char* filename )
 						{
 							var.value.texture = Rsrc::textures.load( token->getValue().getString() );
 						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "IS_FAI" ) )
-						{
-							var.value.texture = &app->getMainRenderer()->is.fai;
-						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_NORMAL_FAI" ) )
 						{
-							var.value.texture = &app->getMainRenderer()->ms.normalFai;
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_MS_NORMAL_FAI;
+						}
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DIFFUSE_FAI" ) )
+						{
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_MS_DIFFUSE_FAI;
+						}
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_SPECULAR_FAI" ) )
+						{
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_MS_SPECULAR_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DEPTH_FAI" ) )
 						{
-							var.value.texture = &app->getMainRenderer()->ms.depthFai;
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_MS_DEPTH_FAI;
+						}
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "IS_FAI" ) )
+						{
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_IS_FAI;
 						}
 						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "PPS_FAI" ) )
 						{
-							var.value.texture = &app->getMainRenderer()->pps.fai;
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_PPS_FAI;
 						}
 						else
 						{
-							PARSE_ERR_EXPECTED( "string or IS_FAI or MS_NORMAL_FAI or MS_DEPTH_FAI or PPS_FAI" );
+							PARSE_ERR_EXPECTED( "string or MS_NORMAL_FAI or MS_DIFFUSE_FAI or MS_SPECULAR_FAI or MS_DEPTH_FAI or IS_FAI or PPS_FAI" );
 							return false;
 						}
 						break;
@@ -272,7 +286,29 @@ bool Material::load( const char* filename )
 						break;
 					// vec2
 					case GL_FLOAT_VEC2:
-						ERROR( "Unimplemented" );
+						token = &scanner.getNextToken();
+						if( token->getCode() == Scanner::TC_LBRACKET )
+						{
+							if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 2, &var.value.vec2[0] ) )
+								return false;
+
+							token = &scanner.getNextToken();
+							if( token->getCode() != Scanner::TC_RBRACKET )
+							{
+								PARSE_ERR_EXPECTED( "}" );
+								return false;
+							}
+						}
+						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "RENDERER_SIZE" ) )
+						{
+							var.specialVariable = true;
+							var.value.speciaValue = UserDefinedVar::SV_RENDERER_SIZE;
+						}
+						else
+						{
+							PARSE_ERR_EXPECTED( "{ or RENDERER_SIZE" );
+							return false;
+						}
 						break;
 					// vec3
 					case GL_FLOAT_VEC3:
@@ -352,7 +388,7 @@ void Material::unload()
 	// loop all user defined vars and unload the textures
 	for( uint i=0; i<userDefinedVars.size(); i++ )
 	{
-		if( userDefinedVars[i].sProgVar->getGlDataType() == GL_SAMPLER_2D )
+		if( userDefinedVars[i].sProgVar->getGlDataType() == GL_SAMPLER_2D && ! userDefinedVars[i].specialVariable )
 			Rsrc::textures.unload( userDefinedVars[i].value.texture );
 	}
 }
@@ -372,8 +408,6 @@ void Material::setToDefault()
 	castsShadow = true;
 	refracts = false;
 	dpMtl = NULL;
-	/*depth.shaderProg = NULL;
-	depth.alpha_testing_map = NULL;*/
 }
 
 

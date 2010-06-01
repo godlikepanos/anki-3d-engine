@@ -1,15 +1,12 @@
 #include "Renderer.h"
 #include "Camera.h" /// @todo remove this
 #include "RendererInitializer.h"
+#include "Material.h"
 
 
 //=====================================================================================================================================
 // Vars                                                                                                                               =
 //=====================================================================================================================================
-bool Renderer::textureCompression = false;
-int  Renderer::maxTextureUnits = -1;
-bool Renderer::mipmapping = true;
-int  Renderer::maxAnisotropy = 8;
 float Renderer::quadVertCoords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
 
 
@@ -88,6 +85,117 @@ void Renderer::drawQuad( int vertCoordsUniLoc )
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableVertexAttribArray( vertCoordsUniLoc );
 }
+
+
+//=====================================================================================================================================
+// setupMaterial                                                                                                                      =
+//=====================================================================================================================================
+void Renderer::setupMaterial( const Material& mtl )
+{
+	mtl.shaderProg->bind();
+
+	if( mtl.blends )
+	{
+		glEnable( GL_BLEND );
+		//glDisable( GL_BLEND );
+		glBlendFunc( mtl.blendingSfactor, mtl.blendingDfactor );
+	}
+	else
+		glDisable( GL_BLEND );
+
+
+	if( mtl.depthTesting )
+		glEnable( GL_DEPTH_TEST );
+	else
+		glDisable( GL_DEPTH_TEST );
+
+	if( mtl.wireframe )
+		glPolygonMode( GL_FRONT, GL_LINE );
+	else
+		glPolygonMode( GL_FRONT, GL_FILL );
+
+
+	// now loop all the user defined vars and set them
+	uint textureUnit = 0;
+	for( uint i=0; i<mtl.userDefinedVars.size(); i++ )
+	{
+		const Material::UserDefinedVar* udv = &mtl.userDefinedVars[i];
+		switch( udv->sProgVar->getGlDataType() )
+		{
+			// texture
+			case GL_SAMPLER_2D:
+				if( !udv->specialVariable )
+				{
+					udv->sProgVar->setTexture( *udv->value.texture, textureUnit++ );
+				}
+				else
+				{
+					switch( udv->value.speciaValue )
+					{
+						case Material::UserDefinedVar::SV_MS_NORMAL_FAI:
+							udv->sProgVar->setTexture( ms.normalFai, textureUnit++ );
+							break;
+
+						case Material::UserDefinedVar::SV_MS_DIFFUSE_FAI:
+							udv->sProgVar->setTexture( ms.diffuseFai, textureUnit++ );
+							break;
+
+						case Material::UserDefinedVar::SV_MS_SPECULAR_FAI:
+							udv->sProgVar->setTexture( ms.specularFai, textureUnit++ );
+							break;
+
+						case Material::UserDefinedVar::SV_MS_DEPTH_FAI:
+							udv->sProgVar->setTexture( ms.depthFai, textureUnit++ );
+							break;
+
+						case Material::UserDefinedVar::SV_IS_FAI:
+							udv->sProgVar->setTexture( is.fai, textureUnit++ );
+							break;
+
+						case Material::UserDefinedVar::SV_PPS_FAI:
+							udv->sProgVar->setTexture( pps.fai, textureUnit++ );
+							break;
+
+						default:
+							DEBUG_ERR( 1 );
+					}
+				}
+				break;
+			// float
+			case GL_FLOAT:
+				udv->sProgVar->setFloat( udv->value.float_ );
+				break;
+			// vec2
+			case GL_FLOAT_VEC2:
+				if( !udv->specialVariable )
+				{
+					udv->sProgVar->setVec2( &udv->value.vec2 );
+				}
+				else
+				{
+					switch( udv->value.speciaValue )
+					{
+						case Material::UserDefinedVar::SV_RENDERER_SIZE:
+						{
+							Vec2 v( width, height );
+							udv->sProgVar->setVec2( &v );
+							break;
+						}
+					}
+				}
+				break;
+			// vec3
+			case GL_FLOAT_VEC3:
+				udv->sProgVar->setVec3( &udv->value.vec3 );
+				break;
+			// vec4
+			case GL_FLOAT_VEC4:
+				udv->sProgVar->setVec4( &udv->value.vec4 );
+				break;
+		}
+	}
+}
+
 
 //=====================================================================================================================================
 // setProjectionMatrix                                                                                                                =
