@@ -71,9 +71,9 @@ build system that generates GNU makefiles.
 
 	And the build process will begin. 
 
-	WARNING: Sometimes I forget to update all the targets. The debug is always
-	updated though.
-
 	The gen.cfg.py files contain the build options of every target. Their format
 	is pretty straightforward and minimal.
+
+	WARNING: Sometimes I forget to update all the targets. The debug is always
+	updated though.
 	

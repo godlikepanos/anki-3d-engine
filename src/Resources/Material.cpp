@@ -14,6 +14,38 @@
 
 
 //=====================================================================================================================================
+// Statics                                                                                                                            =
+//=====================================================================================================================================
+Material::StdVarInfo Material::stdAttribVarInfos[ SAV_NUM ] =
+{
+	{ "position", GL_FLOAT_VEC3 },
+	{ "tangent", GL_FLOAT_VEC4 },
+	{ "normal", GL_FLOAT_VEC3 },
+	{ "texCoords", GL_FLOAT_VEC2 },
+	{ "vertWeightBonesNum", GL_FLOAT },
+	{ "vertWeightBoneIds", GL_FLOAT_VEC4},
+	{ "vertWeightWeights", GL_FLOAT_VEC4 }
+};
+
+Material::StdVarInfo Material::stdUniVarInfos[ SUV_NUM ] =
+{
+	{ "skinningRotations", GL_FLOAT_MAT3},
+	{ "skinningTranslations", GL_FLOAT_VEC3 },
+	{ "modelViewMat", GL_FLOAT_MAT4 },
+	{ "projectionMat", GL_FLOAT_MAT4 },
+	{ "modelViewProjectionMat", GL_FLOAT_MAT4 },
+	{ "normalMat", GL_FLOAT_MAT3 },
+	{ "msNormalFai", GL_TEXTURE_2D },
+	{ "msDiffuseFai", GL_TEXTURE_2D },
+	{ "msSpecularFai", GL_TEXTURE_2D },
+	{ "msDepthFai", GL_TEXTURE_2D },
+	{ "isFai", GL_TEXTURE_2D },
+	{ "ppsFai", GL_TEXTURE_2D },
+	{ "rendererSize", GL_FLOAT_VEC2 }
+};
+
+
+//=====================================================================================================================================
 // Blending stuff                                                                                                                     =
 //=====================================================================================================================================
 struct BlendParam
@@ -215,8 +247,8 @@ bool Material::load( const char* filename )
 				string varName;
 				varName = token->getValue().getString();
 
-				userDefinedVars.push_back( UserDefinedVar() ); // create new var
-				UserDefinedVar& var = userDefinedVars.back();
+				userDefinedVars.push_back( UserDefinedUniVar() ); // create new var
+				UserDefinedUniVar& var = userDefinedVars.back();
 
 				// check if the uniform exists
 				if( !shaderProg->uniVarExists( varName.c_str() ) )
@@ -237,33 +269,9 @@ bool Material::load( const char* filename )
 						{
 							var.value.texture = Rsrc::textures.load( token->getValue().getString() );
 						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_NORMAL_FAI" ) )
-						{
-							var.specialValue = SV_MS_NORMAL_FAI;
-						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DIFFUSE_FAI" ) )
-						{
-							var.specialValue = SV_MS_DIFFUSE_FAI;
-						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_SPECULAR_FAI" ) )
-						{
-							var.specialValue = SV_MS_SPECULAR_FAI;
-						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "MS_DEPTH_FAI" ) )
-						{
-							var.specialValue = SV_MS_DEPTH_FAI;
-						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "IS_FAI" ) )
-						{
-							var.specialValue = SV_IS_FAI;
-						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "PPS_FAI" ) )
-						{
-							var.specialValue = SV_PPS_FAI;
-						}
 						else
 						{
-							PARSE_ERR_EXPECTED( "string or MS_NORMAL_FAI or MS_DIFFUSE_FAI or MS_SPECULAR_FAI or MS_DEPTH_FAI or IS_FAI or PPS_FAI" );
+							PARSE_ERR_EXPECTED( "string" );
 							return false;
 						}
 						break;
@@ -280,30 +288,7 @@ bool Material::load( const char* filename )
 						break;
 					// vec2
 					case GL_FLOAT_VEC2:
-						// {
-						token = &scanner.getNextToken();
-						if( token->getCode() == Scanner::TC_LBRACKET )
-						{
-							if( !Parser::parseArrOfNumbers<float>( scanner, false, true, 2, &var.value.vec2[0] ) )
-								return false;
-
-							// }
-							token = &scanner.getNextToken();
-							if( token->getCode() != Scanner::TC_RBRACKET )
-							{
-								PARSE_ERR_EXPECTED( "}" );
-								return false;
-							}
-						}
-						else if( token->getCode() == Scanner::TC_IDENTIFIER && !strcmp( token->getValue().getString(), "RENDERER_SIZE" ) )
-						{
-							var.specialValue = SV_RENDERER_SIZE;
-						}
-						else
-						{
-							PARSE_ERR_EXPECTED( "{ or RENDERER_SIZE" );
-							return false;
-						}
+						if( !Parser::parseArrOfNumbers<float>( scanner, true, true, 2, &var.value.vec2[0] ) ) return false;
 						break;
 					// vec3
 					case GL_FLOAT_VEC3:
@@ -332,14 +317,14 @@ bool Material::load( const char* filename )
 
 	}while( true );
 
-	return additionalInit();
+	return initStdShaderVars();
 }
 
 
 //=====================================================================================================================================
-// additionalInit                                                                                                                     =
+// initStdShaderVars                                                                                                                  =
 //=====================================================================================================================================
-bool Material::additionalInit()
+bool Material::initStdShaderVars()
 {
 	// sanity checks
 	if( !shaderProg )
@@ -348,30 +333,70 @@ bool Material::additionalInit()
 		return false;
 	}
 
-	// init the attribute locations
-	attribLocs.tanget = shaderProg->attribVarExists( "tangent" ) ?  shaderProg->findAttribVar( "tangent" )->getLoc() : -1;
-	attribLocs.position = shaderProg->attribVarExists( "position" ) ?  shaderProg->findAttribVar( "position" )->getLoc() : -1;
-	attribLocs.normal = shaderProg->attribVarExists( "normal" ) ?  shaderProg->findAttribVar( "normal" )->getLoc() : -1;
-	attribLocs.texCoords = shaderProg->attribVarExists( "texCoords" ) ?  shaderProg->findAttribVar( "texCoords" )->getLoc() : -1;
+	// the attributes
+	for( uint i=0; i<SAV_NUM; i++ )
+	{
+		// if the var is not in the sProg then... bye
+		if( !shaderProg->attribVarExists( stdAttribVarInfos[i].varName ) )
+		{
+			stdAttribVars[ i ] = NULL;
+			continue;
+		}
 
-	// vertex weights
-	if( shaderProg->attribVarExists( "vertWeightBonesNum" ) )
-	{
-		attribLocs.vertWeightBonesNum = shaderProg->findAttribVar( "vertWeightBonesNum" )->getLoc();
-		attribLocs.vertWeightBoneIds = shaderProg->findAttribVar( "vertWeightBoneIds" )->getLoc();
-		attribLocs.vertWeightWeights = shaderProg->findAttribVar( "vertWeightWeights" )->getLoc();
-		uniLocs.skinningRotations = shaderProg->findUniVar( "skinningRotations" )->getLoc();
-		uniLocs.skinningTranslations = shaderProg->findUniVar( "skinningTranslations" )->getLoc();
+		// set the std var
+		stdAttribVars[ i ] = shaderProg->findAttribVar( stdAttribVarInfos[i].varName );
+
+		// check if the shader has different GL data type from that it suppose to have
+		if( stdAttribVars[ i ]->getGlDataType() != stdAttribVarInfos[i].dataType )
+		{
+			MTL_ERROR( "The \"" << stdAttribVarInfos[i].varName << "\" attribute var has incorrect GL data type from the expected (0x" <<
+			           hex << stdAttribVars[ i ]->getGlDataType() << ")" );
+			return false;
+		}
 	}
-	else
+
+	// the uniforms
+	for( uint i=0; i<SUV_NUM; i++ )
 	{
-		attribLocs.vertWeightBonesNum = attribLocs.vertWeightBoneIds = attribLocs.vertWeightWeights = uniLocs.skinningRotations =
-		uniLocs.skinningTranslations = -1;
+		// if the var is not in the sProg then... bye
+		if( !shaderProg->uniVarExists( stdUniVarInfos[i].varName ) )
+		{
+			stdUniVars[ i ] = NULL;
+			continue;
+		}
+
+		// set the std var
+		stdUniVars[ i ] = shaderProg->findUniVar( stdUniVarInfos[i].varName );
+
+		// check if the shader has different GL data type from that it suppose to have
+		if( stdUniVars[ i ]->getGlDataType() != stdUniVarInfos[i].dataType )
+		{
+			MTL_ERROR( "The \"" << stdUniVarInfos[i].varName << "\" uniform var has incorrect GL data type from the expected (0x" <<
+			           hex << stdUniVars[ i ]->getGlDataType() << ")" );
+			return false;
+		}
 	}
+
 
 	return true;
 }
 
+
+//=====================================================================================================================================
+// Constructor                                                                                                                        =
+//=====================================================================================================================================
+Material::Material()
+{
+	shaderProg = NULL;
+	blends = false;
+	blendingSfactor = GL_ONE;
+	blendingDfactor = GL_ZERO;
+	depthTesting = true;
+	wireframe = false;
+	castsShadow = true;
+	refracts = false;
+	dpMtl = NULL;
+}
 
 //=====================================================================================================================================
 // unload                                                                                                                             =
@@ -383,26 +408,8 @@ void Material::unload()
 	// loop all user defined vars and unload the textures
 	for( uint i=0; i<userDefinedVars.size(); i++ )
 	{
-		if( userDefinedVars[i].sProgVar->getGlDataType() == GL_SAMPLER_2D && userDefinedVars[i].specialValue != SV_NONE )
-			Rsrc::textures.unload( userDefinedVars[i].value.texture );
+		Rsrc::textures.unload( userDefinedVars[i].value.texture );
 	}
-}
-
-
-//=====================================================================================================================================
-// setToDefault                                                                                                                       =
-//=====================================================================================================================================
-void Material::setToDefault()
-{
-	shaderProg = NULL;
-	blends = false;
-	blendingSfactor = GL_ONE;
-	blendingDfactor = GL_ZERO;
-	depthTesting = true;
-	wireframe = false;
-	castsShadow = true;
-	refracts = false;
-	dpMtl = NULL;
 }
 
 
@@ -432,7 +439,7 @@ void Material::setup()
 
 	// now loop all the user defined vars and set them
 	uint texture_Unit = 0;
-	Vec<UserDefinedVar>::iterator udv;
+	Vec<UserDefinedUniVar>::iterator udv;
 	for( udv=userDefinedVars.begin(); udv!=userDefinedVars.end(); udv++ )
 	{
 		switch( udv->sProgVar->getGlDataType() )

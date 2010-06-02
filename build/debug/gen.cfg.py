@@ -1,7 +1,6 @@
 sourcePaths = [ "../../src/Math/", "../../src/Util/Tokenizer/", "../../src/Misc/", "../../src/", "../../src/Renderer/", "../../src/Scene/", "../../src/Ui/", "../../src/Resources/", "../../src/Util/", "../../src/Scene/Controllers/", "../../src/Physics/", "../../src/Renderer/BufferObjects/", "../../src/Resources/Helpers/" ]
 
 includePaths = list(sourcePaths)
-#includePaths.extend( [ "../../../bullet_svn/src/", "/usr/include/SDL" ] )
 includePaths.extend( [ "../../../bullet_svn/src/", "../../../SDL-hg/include", "../../glew/include" ] )
 
 precompiledHeaders = []

@@ -26,36 +26,49 @@ string ShaderProg::stdSourceCode(
 void ShaderProg::UniVar::setFloat( float f ) const
 {
 	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT );
 	glUniform1f( getLoc(), f );
 }
 
 void ShaderProg::UniVar::setFloatVec( float f[], uint size ) const
 {
 	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT );
 	glUniform1fv( getLoc(), size, f );
 }
 
 void ShaderProg::UniVar::setVec2( const Vec2 v2[], uint size ) const
 {
 	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT_VEC2 );
 	glUniform2fv( getLoc(), size, &( const_cast<Vec2&>(v2[0]) )[0] );
 }
 
 void ShaderProg::UniVar::setVec3( const Vec3 v3[], uint size ) const
 {
 	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT_VEC3 );
 	glUniform3fv( getLoc(), size, &( const_cast<Vec3&>(v3[0]) )[0] );
 }
 
 void ShaderProg::UniVar::setVec4( const Vec4 v4[], uint size ) const
 {
 	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT_VEC4 );
 	glUniform4fv( getLoc(), size, &( const_cast<Vec4&>(v4[0]) )[0] );
+}
+
+void ShaderProg::UniVar::setMat3( const Mat3 m3[], uint size ) const
+{
+	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT_MAT3 );
+	glUniformMatrix3fv( getLoc(), size, true, &(m3[0])[0] );
 }
 
 void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
 {
 	STD_SET_UNI_CHECK();
+	DEBUG_ERR( getGlDataType() != GL_FLOAT_MAT4 );
 	glUniformMatrix4fv( getLoc(), size, true, &(m4[0])[0] );
 }
 

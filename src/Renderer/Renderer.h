@@ -324,7 +324,7 @@ class Renderer
 	PROPERTY_R( uint, width, getWidth ) ///< Width of the rendering. Dont confuse with the window width
 	PROPERTY_R( uint, height, getHeight ) ///< Height of the rendering. Dont confuse with the window width
 	PROPERTY_R( uint, framesNum, getFramesNum )
-	PROPERTY_R( float, aspectRatio, getAspectRatio )
+	PROPERTY_R( float, aspectRatio, getAspectRatio ) ///< Just a precalculated value
 
 	protected:
 		// the rest

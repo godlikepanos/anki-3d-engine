@@ -119,44 +119,12 @@ void Renderer::setupMaterial( const Material& mtl )
 	uint textureUnit = 0;
 	for( uint i=0; i<mtl.userDefinedVars.size(); i++ )
 	{
-		const Material::UserDefinedVar* udv = &mtl.userDefinedVars[i];
+		const Material::UserDefinedUniVar* udv = &mtl.userDefinedVars[i];
 		switch( udv->sProgVar->getGlDataType() )
 		{
 			// texture
 			case GL_SAMPLER_2D:
-				switch( udv->specialValue )
-				{
-					case Material::SV_NONE:
-						udv->sProgVar->setTexture( *udv->value.texture, textureUnit++ );
-						break;
-
-					case Material::SV_MS_NORMAL_FAI:
-						udv->sProgVar->setTexture( ms.normalFai, textureUnit++ );
-						break;
-
-					case Material::SV_MS_DIFFUSE_FAI:
-						udv->sProgVar->setTexture( ms.diffuseFai, textureUnit++ );
-						break;
-
-					case Material::SV_MS_SPECULAR_FAI:
-						udv->sProgVar->setTexture( ms.specularFai, textureUnit++ );
-						break;
-
-					case Material::SV_MS_DEPTH_FAI:
-						udv->sProgVar->setTexture( ms.depthFai, textureUnit++ );
-						break;
-
-					case Material::SV_IS_FAI:
-						udv->sProgVar->setTexture( is.fai, textureUnit++ );
-						break;
-
-					case Material::SV_PPS_FAI:
-						udv->sProgVar->setTexture( pps.fai, textureUnit++ );
-						break;
-
-					default:
-						DEBUG_ERR( 1 );
-				}
+				udv->sProgVar->setTexture( *udv->value.texture, textureUnit++ );
 				break;
 			// float
 			case GL_FLOAT:
@@ -164,22 +132,7 @@ void Renderer::setupMaterial( const Material& mtl )
 				break;
 			// vec2
 			case GL_FLOAT_VEC2:
-				switch( udv->specialValue )
-				{
-					case Material::SV_NONE:
-						udv->sProgVar->setVec2( &udv->value.vec2 );
-						break;
-
-					case Material::SV_RENDERER_SIZE:
-					{
-						Vec2 v( width, height );
-						udv->sProgVar->setVec2( &v );
-						break;
-					}
-
-					default:
-						DEBUG_ERR( 1 );
-				}
+				udv->sProgVar->setVec2( &udv->value.vec2 );
 				break;
 			// vec3
 			case GL_FLOAT_VEC3:

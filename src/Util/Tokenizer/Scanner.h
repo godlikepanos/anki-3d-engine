@@ -129,11 +129,11 @@ class Scanner
 		/// The Token class
 		struct Token
 		{
+			friend class Scanner;
+
 			PROPERTY_R( TokenCode, code, getCode ) ///< @ref PROPERTY_R : The first thing you shoud know about a token
 			PROPERTY_R( TokenDataType, dataType, getDataType ) ///< @ref PROPERTY_R : Additional info in case @ref code is @ref TC_NUMBER
 			PROPERTY_R( TokenDataVal, value, getValue ) ///< @ref PROPERTY_R : A value variant
-
-			friend class Scanner;
 
 			private:
 				char asString[ MAX_SCRIPT_LINE_LEN ];
