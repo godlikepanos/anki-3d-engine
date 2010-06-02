@@ -8,7 +8,11 @@
 
 
 /**
- * Mesh material @ref Resource resource
+ * Mesh material @ref Resource
+ *
+ * Every material keeps among other things the locations of the attribute and uniform variables. The attributes come from a selection
+ * of standard vertex attributes. We dont have to write these attribs in the .mtl file. The uniforms on the other hand are in two
+ * categories. The standard uniforms that we dont have to write in the file and the user defined.
  */
 class Material: public Resource
 {
@@ -17,32 +21,61 @@ class Material: public Resource
 
 	protected:
 		/**
-		 *
+		 * Standard attribute variables that are acceptable inside the @ref ShaderProg
 		 */
-		enum SpecialVar
+		enum StdAttribVars
 		{
-			SV_NONE,           ///< SV_NONE
-			// Texture
-			SV_MS_NORMAL_FAI,  ///< SV_MS_NORMAL_FAI
-			SV_MS_DIFFUSE_FAI, ///< SV_MS_DIFFUSE_FAI
-			SV_MS_SPECULAR_FAI,///< SV_MS_SPECULAR_FAI
-			SV_MS_DEPTH_FAI,   ///< SV_MS_DEPTH_FAI
-			SV_IS_FAI,         ///< SV_IS_FAI
-			SV_PPS_FAI,        ///< SV_PPS_FAI
-			// Vec2
-			SV_RENDERER_SIZE, ///< Active renderer's width and height
-			// Mat3
-			SV_NORMAL_MAT,
-			// Mat4
-			SV_MODELVIEW_MAT,
-			SV_PROJECTION_MAT,
-			SV_MODELVIEWPROJECTION_MAT
+			SAV_POSITION,
+			SAV_TANGENT,
+			SAV_NORMAL,
+			SAV_TEX_COORDS,
+			SAV_VERT_WEIGHT_BONES_NUM,
+			SAV_VERT_WEIGHT_BONE_IDS,
+			SAV_VERT_WEIGHT_WEIGHTS,
+			SAV_NUM
 		};
+
+
+		/**
+		 * Standard uniform variables
+		 */
+		enum StdUniVars
+		{
+			// Skinning
+			SUV_SKINNING_ROTATIONS,
+			SUV_SKINNING_TRANSLATIONS,
+			// Matrices
+			SUV_MODELVIEW_MAT,
+			SUV_PROJECTION_MAT,
+			SUV_MODELVIEWPROJECTION_MAT,
+			SUV_NORMAL_MAT,
+			// FAIs
+			SUV_MS_NORMAL_FAI,
+			SUV_MS_DIFFUSE_FAI,
+			SUV_MS_SPECULAR_FAI,
+			SUV_MS_DEPTH_FAI,
+			SUV_IS_FAI,
+			SUV_PPS_FAI,
+			// Other
+			SUV_RENDERER_SIZE,
+			SUV_NUM ///< The number of standard uniform variables
+		};
+
+
+		/**
+		 * Information for the standard shader program variables
+		 */
+		struct StdVarInfo
+		{
+			const char* varName;
+			GLenum dataType; ///< aka GL data type
+		};
+
 
 		/**
 		 * Class for user defined material variables that will be passes in to the shader
 		 */
-		struct UserDefinedVar
+		struct UserDefinedUniVar
 		{
 			struct Value  // unfortunately we cannot use union because of Vec3 and Vec4
 			{
@@ -56,59 +89,41 @@ class Material: public Resource
 			};
 
 			Value value;
-			SpecialVar specialValue;
 			const ShaderProg::UniVar* sProgVar;
-
-			UserDefinedVar(): specialValue( SV_NONE ) {}
 		}; // end UserDefinedVar
 
-		static map<string, SpecialVar> keywordToSpecial;
 
+		static StdVarInfo stdAttribVarInfos[ SAV_NUM ];
+		static StdVarInfo stdUniVarInfos[ SUV_NUM ];
+		const ShaderProg::AttribVar* stdAttribVars[ SAV_NUM ];
+		const ShaderProg::UniVar* stdUniVars[ SUV_NUM ];
 		ShaderProg* shaderProg; ///< The most important aspect of materials
-
+		Material* dpMtl; ///< The material for depth passes. To be removed when skinning is done using tranform feedback
+		Vec<UserDefinedUniVar> userDefinedVars;
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
-		int  blendingSfactor;
-		int  blendingDfactor;
+		int blendingSfactor;
+		int blendingDfactor;
 		bool refracts;
 		bool depthTesting;
 		bool wireframe;
 		bool castsShadow; ///< Used in shadowmapping passes but not in EarlyZ
-		Vec<UserDefinedVar> userDefinedVars;
 
-		// vertex attributes
-		struct
-		{
-			int position;
-			int tanget;
-			int normal;
-			int texCoords;
 
-			// for hw skinning
-			int vertWeightBonesNum;
-			int vertWeightBoneIds;
-			int vertWeightWeights;
-		} attribLocs;
+		/**
+		 * The func sweeps all the variables of the shader program to find standard shader program variables. It updates the stdAttribVars
+		 * and stdUniVars arrays.
+		 * @return True on success
+		 */
+		bool initStdShaderVars();
 
-		// uniforms
-		struct
-		{
-			int skinningRotations;
-			int skinningTranslations;
-		} uniLocs;
-
-		Material* dpMtl;
-
-		void setToDefault();
-		bool additionalInit(); ///< The func is for not polluting load with extra code
-		
 	public:
-		Material() { setToDefault(); }
+		Material();
 		void setup();
 		bool load( const char* filename );
 		void unload();
 
-		bool hasHWSkinning() const { return attribLocs.vertWeightBonesNum != -1; }
-		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->attribLocs.texCoords!=-1; }
+		bool hasHWSkinning() const { return stdAttribVars[ SAV_VERT_WEIGHT_BONES_NUM ] != NULL; }
+		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->stdAttribVars[ SAV_TEX_COORDS ] != NULL; }
 };
 
 
