@@ -479,7 +479,7 @@ void Renderer::Is::run()
 	fbo.bind();
 
 	// OGL stuff
-	r.setViewport( 0, 0, r.width, r.height );
+	Renderer::setViewport( 0, 0, r.width, r.height );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();

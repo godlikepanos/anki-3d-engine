@@ -31,10 +31,12 @@ Material::StdVarInfo Material::stdUniVarInfos[ SUV_NUM ] =
 {
 	{ "skinningRotations", GL_FLOAT_MAT3},
 	{ "skinningTranslations", GL_FLOAT_VEC3 },
-	{ "modelViewMat", GL_FLOAT_MAT4 },
+	{ "modelMat", GL_FLOAT_MAT4 },
+	{ "viewMat", GL_FLOAT_MAT4 },
 	{ "projectionMat", GL_FLOAT_MAT4 },
-	{ "modelViewProjectionMat", GL_FLOAT_MAT4 },
+	{ "modelViewMat", GL_FLOAT_MAT4 },
 	{ "normalMat", GL_FLOAT_MAT3 },
+	{ "modelViewProjectionMat", GL_FLOAT_MAT4 },
 	{ "msNormalFai", GL_TEXTURE_2D },
 	{ "msDiffuseFai", GL_TEXTURE_2D },
 	{ "msSpecularFai", GL_TEXTURE_2D },
@@ -411,62 +413,4 @@ void Material::unload()
 		Rsrc::textures.unload( userDefinedVars[i].value.texture );
 	}
 }
-
-
-//=====================================================================================================================================
-// setup                                                                                                                              =
-//=====================================================================================================================================
-void Material::setup()
-{
-	shaderProg->bind();
-
-	if( blends )
-	{
-		glEnable( GL_BLEND );
-		//glDisable( GL_BLEND );
-		glBlendFunc( blendingSfactor, blendingDfactor );
-	}
-	else
-		glDisable( GL_BLEND );
-
-
-	if( depthTesting )  glEnable( GL_DEPTH_TEST );
-	else                glDisable( GL_DEPTH_TEST );
-
-	if( wireframe )  glPolygonMode( GL_FRONT, GL_LINE );
-	else             glPolygonMode( GL_FRONT, GL_FILL );
-
-
-	// now loop all the user defined vars and set them
-	uint texture_Unit = 0;
-	Vec<UserDefinedUniVar>::iterator udv;
-	for( udv=userDefinedVars.begin(); udv!=userDefinedVars.end(); udv++ )
-	{
-		switch( udv->sProgVar->getGlDataType() )
-		{
-			// texture
-			case GL_SAMPLER_2D:
-				shaderProg->locTexUnit( udv->sProgVar->getLoc(), *udv->value.texture, texture_Unit++ );
-				break;
-			// float
-			case GL_FLOAT:
-				glUniform1f( udv->sProgVar->getLoc(), udv->value.float_ );
-				break;
-			// vec2
-			case GL_FLOAT_VEC2:
-				glUniform2fv( udv->sProgVar->getLoc(), 1, &udv->value.vec2[0] );
-				break;
-			// vec3
-			case GL_FLOAT_VEC3:
-				glUniform3fv( udv->sProgVar->getLoc(), 1, &udv->value.vec3[0] );
-				break;
-			// vec4
-			case GL_FLOAT_VEC4:
-				glUniform4fv( udv->sProgVar->getLoc(), 1, &udv->value.vec4[0] );
-				break;
-		}
-	}
-}
-
-
 

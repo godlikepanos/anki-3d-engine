@@ -45,7 +45,7 @@ void Renderer::init( const RendererInitializer& initializer )
 	aspectRatio = float(width)/height;
 
 	// a few sanity checks
-	if( width < 1 || height < 1 )
+	if( width < 10 || height < 10 )
 	{
 		FATAL( "Incorrect width" );
 	}
@@ -90,10 +90,14 @@ void Renderer::drawQuad( int vertCoordsUniLoc )
 //=====================================================================================================================================
 // setupMaterial                                                                                                                      =
 //=====================================================================================================================================
-void Renderer::setupMaterial( const Material& mtl )
+void Renderer::setupMaterial( const Material& mtl, const SceneNode& sceneNode, const Camera& cam )
 {
 	mtl.shaderProg->bind();
+	uint textureUnit = 0;
 
+	//
+	// FFP stuff
+	//
 	if( mtl.blends )
 	{
 		glEnable( GL_BLEND );
@@ -115,8 +119,85 @@ void Renderer::setupMaterial( const Material& mtl )
 		glPolygonMode( GL_FRONT, GL_FILL );
 
 
+	//
+	// matrices
+	//
+	Mat4 modelMat( sceneNode.getWorldTransform() );
+	const Mat4& projectionMat = cam.getProjectionMatrix();
+	const Mat4& viewMat = cam.getViewMatrix();
+	Mat4 modelViewMat;
+	Mat3 normalMat;
+	Mat4 modelViewProjectionMat;
+
+	// should I calculate the modelViewMat ?
+	if( mtl.stdUniVars[ Material::SUV_MODELVIEW_MAT ] ||
+			mtl.stdUniVars[ Material::SUV_MODELVIEWPROJECTION_MAT ] ||
+			mtl.stdUniVars[ Material::SUV_NORMAL_MAT ] )
+	{
+		modelViewMat = Mat4::combineTransformations( viewMat, modelMat );
+	}
+
+	// set all the matrices
+	if( mtl.stdUniVars[ Material::SUV_MODEL_MAT ] )
+		mtl.stdUniVars[ Material::SUV_MODEL_MAT ]->setMat4( &modelMat );
+
+	if( mtl.stdUniVars[ Material::SUV_VIEW_MAT ] )
+		mtl.stdUniVars[ Material::SUV_VIEW_MAT ]->setMat4( &viewMat );
+
+	if( mtl.stdUniVars[ Material::SUV_PROJECTION_MAT ] )
+		mtl.stdUniVars[ Material::SUV_PROJECTION_MAT ]->setMat4( &projectionMat );
+
+	if( mtl.stdUniVars[ Material::SUV_MODELVIEW_MAT ] )
+		mtl.stdUniVars[ Material::SUV_MODELVIEW_MAT ]->setMat4( &modelViewMat );
+
+	if( mtl.stdUniVars[ Material::SUV_NORMAL_MAT ] )
+	{
+		normalMat = modelViewMat.getRotationPart();
+		mtl.stdUniVars[ Material::SUV_NORMAL_MAT ]->setMat3( &normalMat );
+	}
+
+	if( mtl.stdUniVars[ Material::SUV_MODELVIEWPROJECTION_MAT ] )
+	{
+		modelViewProjectionMat = projectionMat * modelViewMat;
+		mtl.stdUniVars[ Material::SUV_MODELVIEWPROJECTION_MAT ]->setMat4( &modelViewProjectionMat );
+	}
+
+
+	//
+	// FAis
+	//
+	if( mtl.stdUniVars[ Material::SUV_MS_NORMAL_FAI ] )
+		mtl.stdUniVars[ Material::SUV_MS_NORMAL_FAI ]->setTexture( ms.normalFai, textureUnit++ );
+
+	if( mtl.stdUniVars[ Material::SUV_MS_DIFFUSE_FAI ] )
+		mtl.stdUniVars[ Material::SUV_MS_DIFFUSE_FAI ]->setTexture( ms.diffuseFai, textureUnit++ );
+
+	if( mtl.stdUniVars[ Material::SUV_MS_SPECULAR_FAI ] )
+		mtl.stdUniVars[ Material::SUV_MS_SPECULAR_FAI ]->setTexture( ms.specularFai, textureUnit++ );
+
+	if( mtl.stdUniVars[ Material::SUV_MS_DEPTH_FAI ] )
+		mtl.stdUniVars[ Material::SUV_MS_DEPTH_FAI ]->setTexture( ms.depthFai, textureUnit++ );
+
+	if( mtl.stdUniVars[ Material::SUV_IS_FAI ] )
+		mtl.stdUniVars[ Material::SUV_IS_FAI ]->setTexture( is.fai, textureUnit++ );
+
+	if( mtl.stdUniVars[ Material::SUV_PPS_FAI ] )
+		mtl.stdUniVars[ Material::SUV_PPS_FAI ]->setTexture( pps.fai, textureUnit++ );
+
+
+	//
+	// Other
+	//
+	if( mtl.stdUniVars[ Material::SUV_RENDERER_SIZE ] )
+	{
+		Vec2 v( width, height );
+		mtl.stdUniVars[ Material::SUV_RENDERER_SIZE ]->setVec2( &v );
+	}
+
+
+	//
 	// now loop all the user defined vars and set them
-	uint textureUnit = 0;
+	//
 	for( uint i=0; i<mtl.userDefinedVars.size(); i++ )
 	{
 		const Material::UserDefinedUniVar* udv = &mtl.userDefinedVars[i];
@@ -175,7 +256,7 @@ Vec3 Renderer::unproject( const Vec3& windowCoords, const Mat4& modelViewMat, co
 	Mat4 invPm = projectionMat * modelViewMat;
 	invPm.invert();
 
-	// the vec is in ndc space meaning: -1<=vec.x<=1 -1<=vec.y<=1 -1<=vec.z<=1
+	// the vec is in NDC space meaning: -1<=vec.x<=1 -1<=vec.y<=1 -1<=vec.z<=1
 	Vec4 vec;
 	vec.x = (2.0*(windowCoords.x-view[0]))/view[2] - 1.0;
 	vec.y = (2.0*(windowCoords.y-view[1]))/view[3] - 1.0;

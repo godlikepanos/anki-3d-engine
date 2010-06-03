@@ -121,7 +121,7 @@ void Renderer::Pps::Ssao::run()
 
 
 	// 1st pass
-	r.setViewport( 0, 0, width, height );
+	Renderer::setViewport( 0, 0, width, height );
 	pass0Fbo.bind();
 	ssaoSProg.bind();
 	Vec2 camRange( cam.getZNear(), cam.getZFar() );
@@ -132,7 +132,7 @@ void Renderer::Pps::Ssao::run()
 	r.drawQuad( 0 );
 
 	// for 2nd and 3rd passes
-	r.setViewport( 0, 0, bwidth, bheight );
+	Renderer::setViewport( 0, 0, bwidth, bheight );
 
 	// 2nd pass
 	pass1Fbo.bind();

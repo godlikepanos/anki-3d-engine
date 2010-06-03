@@ -1,3 +1,4 @@
 For build info see build/README
 
-Currently there are no assets (models, textures, materials etc) so even if you compile it the application will crash if you try to run it
+Currently there are no assets (models, textures, materials etc) so even if you
+compile it, the application will fail to run

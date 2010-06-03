@@ -4,8 +4,8 @@ PHFLAGS = -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg
 LFLAGS = -rdynamic -L../../../SDL-hg/build/.libs -L../../../glew/lib -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff
 EXECUTABLE = AnKi.bin
 INCPATH = -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../../bullet_svn/src/ -I../../../SDL-hg/include -I../../glew/include 
-SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//SceneNode.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Helpers//Image.cpp 
-OBJECTS = Scanner.o skybox.o particles.o memory.o collision.o map.o Main.o Sm.o Pps.o Renderer.o Ssao.o Is.o MainRenderer.o Ms.o Hdr.o Dbg.o MeshNode.o SkelNode.o SkelModelNode.o Light.o Camera.o Scene.o ParticleEmitter.o SceneNode.o Ui.o Material.o ShaderProg.o Texture.o SkelAnim.o Extension.o Skeleton.o Resource.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o ShaderPrePreprocessor.o Image.o 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//particles.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//EarlyZ.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Dbg.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Camera.cpp ../../src/Scene//Scene.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//SceneNode.cpp ../../src/Ui//Ui.cpp ../../src/Resources//Material.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Resource.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Helpers//Image.cpp 
+OBJECTS = Scanner.o skybox.o particles.o memory.o collision.o map.o Main.o EarlyZ.o Sm.o Pps.o Renderer.o Ssao.o Is.o MainRenderer.o Ms.o Hdr.o Dbg.o MeshNode.o SkelNode.o SkelModelNode.o Light.o Camera.o Scene.o ParticleEmitter.o SceneNode.o Ui.o Material.o ShaderProg.o Texture.o SkelAnim.o Extension.o Skeleton.o Resource.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o ShaderPrePreprocessor.o Image.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -503,6 +503,25 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
+
+EarlyZ.o: ../../src/Renderer//EarlyZ.cpp ../../src/Renderer//Renderer.h \
+ ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Common.h \
+ ../../src/Resources/ShaderProg.h
+	@echo Compiling ../../src/Renderer//EarlyZ.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//EarlyZ.cpp -o EarlyZ.o
 
 Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \

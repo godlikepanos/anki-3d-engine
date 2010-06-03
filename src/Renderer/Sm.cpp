@@ -66,7 +66,7 @@ void Renderer::Is::Sm::run( const Camera& cam )
 
 	glClear( GL_DEPTH_BUFFER_BIT );
 	r.setProjectionViewMatrices( cam );
-	r.setViewport( 0, 0, resolution, resolution );
+	Renderer::setViewport( 0, 0, resolution, resolution );
 
 	// disable color & blend & enable depth test
 	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
@@ -87,7 +87,7 @@ void Renderer::Is::Sm::run( const Camera& cam )
 
 		//meshNode->material->dpMtl->setup();
 		//meshNode->renderDepth();
-		meshNode->material->setup();
+		r.setupMaterial( *meshNode->material, *meshNode, cam );
 		meshNode->render();
 	}
 
