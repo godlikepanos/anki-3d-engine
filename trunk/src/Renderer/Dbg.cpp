@@ -248,7 +248,7 @@ void Renderer::Dbg::run()
 
 	// OGL stuff
 	r.setProjectionViewMatrices( cam );
-	r.setViewport( 0, 0, r.width, r.height );
+	Renderer::setViewport( 0, 0, r.width, r.height );
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );

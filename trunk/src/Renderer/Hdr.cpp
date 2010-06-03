@@ -73,7 +73,7 @@ void Renderer::Pps::Hdr::run()
 {
 	int w = renderingQuality * r.width;
 	int h = renderingQuality * r.height;
-	r.setViewport( 0, 0, w, h );
+	Renderer::setViewport( 0, 0, w, h );
 
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );

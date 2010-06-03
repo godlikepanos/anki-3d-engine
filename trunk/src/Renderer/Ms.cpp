@@ -50,11 +50,11 @@ void Renderer::Ms::init()
 
 
 //=====================================================================================================================================
-// runStage                                                                                                                           =
+// run                                                                                                                                =
 //=====================================================================================================================================
 void Renderer::Ms::run()
 {
-	Camera& cam = *r.cam;
+	const Camera& cam = *r.cam;
 
 	#if defined( _EARLY_Z_ )
 		// run the early z pass
@@ -67,7 +67,7 @@ void Renderer::Ms::run()
 		glClear( GL_DEPTH_BUFFER_BIT );
 	#endif
 	r.setProjectionViewMatrices( cam );
-	r.setViewport( 0, 0, r.width, r.height );
+	Renderer::setViewport( 0, 0, r.width, r.height );
 
 	//glEnable( GL_DEPTH_TEST );
 	app->getScene()->skybox.Render( cam.getViewMatrix().getRotationPart() );
@@ -84,7 +84,8 @@ void Renderer::Ms::run()
 		MeshNode* meshNode = app->getScene()->meshNodes[i];
 		DEBUG_ERR( meshNode->material == NULL );
 		if( meshNode->material->blends || meshNode->material->refracts ) continue;
-		meshNode->material->setup();
+
+		r.setupMaterial( *meshNode->material, *meshNode, cam );
 		meshNode->render();
 	}
 

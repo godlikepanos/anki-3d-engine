@@ -136,7 +136,6 @@ bool Camera::insideFrustum( const bvolume_t& bvol ) const
 //=====================================================================================================================================
 // insideFrustum                                                                                                                      =
 //=====================================================================================================================================
-/// Check if the given camera is inside the frustum cliping planes. This is used mainly to test if the projected lights are visible
 bool Camera::insideFrustum( const Camera& cam ) const
 {
 	//** get five points. These points are the tips of the given camera **
@@ -209,12 +208,12 @@ void Camera::calcProjectionMatrix()
 //=====================================================================================================================================
 void Camera::updateViewMatrix()
 {
-	/* The point at which the camera looks:
-	Vec3 viewpoint = translationLspace + z_axis;
-	as we know the up vector, we can easily use gluLookAt:
-	gluLookAt( translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x, y_axis.y, y_axis.z );
+	/*
+	 * The point at which the camera looks:
+	 * Vec3 viewpoint = translationLspace + z_axis;
+	 * as we know the up vector, we can easily use gluLookAt:
+	 * gluLookAt( translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x, y_axis.y, y_axis.z );
 	*/
-
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
 	Mat3 camInvertedRot = getWorldTransform().getRotation().getTransposed();

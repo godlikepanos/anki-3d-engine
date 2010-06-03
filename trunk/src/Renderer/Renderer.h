@@ -11,6 +11,7 @@ class Camera;
 class PointLight;
 class SpotLight;
 class RendererInitializer;
+class SceneNode;
 
 
 /**
@@ -43,6 +44,24 @@ class Renderer
 		{
 			friend class Renderer;
 
+			public:
+				/**
+				 * EarlyZ pass
+				 */
+				class EarlyZ: public RenderingStage
+				{
+					PROPERTY_R( bool, enabled, isEnabled )
+
+					private:
+						Fbo fbo;
+
+						void init();
+						void run();
+
+					public:
+						EarlyZ( Renderer& r_ ): RenderingStage( r_ ) {}
+				};
+
 			private:
 				Fbo fbo;
 
@@ -54,8 +73,9 @@ class Renderer
 				Texture diffuseFai;
 				Texture specularFai;
 				Texture depthFai;
+				EarlyZ earlyZ;
 
-				Ms( Renderer& r_ ): RenderingStage( r_ ) {}
+				Ms( Renderer& r_ ): RenderingStage( r_ ), earlyZ( r_ ) {}
 		}; // end Ms
 
 		/**
@@ -328,11 +348,11 @@ class Renderer
 
 	protected:
 		// the rest
-		Camera* cam; ///< Current camera
+		const Camera* cam; ///< Current camera
 		static float quadVertCoords [][2];
 
 		static void drawQuad( int vertCoordsUniLoc );
-		void setupMaterial( const Material& mtl );
+		void setupMaterial( const Material& mtl, const SceneNode& sceneNode, const Camera& cam );
 
 	public:
 		// the stages as data members
@@ -340,12 +360,6 @@ class Renderer
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
 		Dbg dbg; ///< Debugging rendering stage
-
-		// matrices & viewing
-		Mat4 modelViewMat; ///< This changes once for every mesh rendering
-		Mat4 projectionMat; ///< This changes once every frame
-		Mat4 modelViewProjectionMat; ///< This changes just like @ref modelViewMat
-		Mat3 normalMat; ///< The rotation part of modelViewMat
 
 		Renderer();
 

@@ -35,11 +35,12 @@ class Camera: public SceneNode
 		// matrices
 		Mat4 projectionMat;
 		Mat4 viewMat;
+
 		/**
 		 * Used in deferred shading for the calculation of view vector (see CalcViewVector). The reason we store this matrix here is
 		 * that we dont want it to be re-calculated all the time but only when the projection params (fovX, fovY, zNear, zFar) change.
-		 * Fortunately the projection params change rarely. Note that the Camera as we all know re-calculates the matreces only when the
-		 * parameteres change!!
+		 * Fortunately the projection params change rarely. Note that the Camera as we all know re-calculates the matrices only when the
+		 * parameters change!!
 		 */
 		Mat4 invProjectionMat;
 
@@ -83,8 +84,16 @@ class Camera: public SceneNode
 		void deinit() {}
 
 		// frustum stuff
+
+		/**
+		 * Check if the given camera is inside the frustum clipping planes. This is used mainly to test if the projected lights are visible
+		 */
 		bool insideFrustum( const bvolume_t& vol ) const;
-		bool insideFrustum( const Camera& cam ) const; // check if another camera is inside our view (used for projected lights)
+
+		/**
+		 * Check if another camera is inside our view (used for projected lights)
+		 */
+		bool insideFrustum( const Camera& cam ) const;
 };
 
 

@@ -10,16 +10,19 @@
 /**
  * Mesh material @ref Resource
  *
- * Every material keeps among other things the locations of the attribute and uniform variables. The attributes come from a selection
- * of standard vertex attributes. We dont have to write these attribs in the .mtl file. The uniforms on the other hand are in two
- * categories. The standard uniforms that we dont have to write in the file and the user defined.
+ * Every material keeps info of how to render a @ref MeshNode. Among this info it keeps the locations of attribute and uniform
+ * variables. The variables can be standard or user defined. The standard variables have standard names inside the shader program and
+ * we dont have to mention them in the .mtl files. The material init func scoops the shader program for standard variables and keeps
+ * a pointer to the variable. The standard variables are like the GL build-in variables (that we cannot longer use on GL >3) with a few
+ * additions. The user defined variables are defined and values inside the .mtl file. The attribute variables cannot be user defined,
+ * the uniform on the other hand can.
  */
 class Material: public Resource
 {
 	friend class Renderer;
 	friend class MeshNode;
 
-	protected:
+	private:
 		/**
 		 * Standard attribute variables that are acceptable inside the @ref ShaderProg
 		 */
@@ -38,6 +41,7 @@ class Material: public Resource
 
 		/**
 		 * Standard uniform variables
+		 * Changes here should update some statics and Renderer::setupMaterial
 		 */
 		enum StdUniVars
 		{
@@ -45,10 +49,12 @@ class Material: public Resource
 			SUV_SKINNING_ROTATIONS,
 			SUV_SKINNING_TRANSLATIONS,
 			// Matrices
-			SUV_MODELVIEW_MAT,
+			SUV_MODEL_MAT,
+			SUV_VIEW_MAT,
 			SUV_PROJECTION_MAT,
-			SUV_MODELVIEWPROJECTION_MAT,
+			SUV_MODELVIEW_MAT,
 			SUV_NORMAL_MAT,
+			SUV_MODELVIEWPROJECTION_MAT,
 			// FAIs
 			SUV_MS_NORMAL_FAI,
 			SUV_MS_DIFFUSE_FAI,
@@ -58,6 +64,7 @@ class Material: public Resource
 			SUV_PPS_FAI,
 			// Other
 			SUV_RENDERER_SIZE,
+			// num
 			SUV_NUM ///< The number of standard uniform variables
 		};
 
@@ -77,7 +84,10 @@ class Material: public Resource
 		 */
 		struct UserDefinedUniVar
 		{
-			struct Value  // unfortunately we cannot use union because of Vec3 and Vec4
+			/**
+			 * Unfortunately we cannot use union because of complex classes (Vec2, Vec3 etc)
+			 */
+			struct Value
 			{
 				Texture* texture;
 				float float_;
@@ -116,14 +126,13 @@ class Material: public Resource
 		 */
 		bool initStdShaderVars();
 
-	public:
-		Material();
-		void setup();
-		bool load( const char* filename );
-		void unload();
-
 		bool hasHWSkinning() const { return stdAttribVars[ SAV_VERT_WEIGHT_BONES_NUM ] != NULL; }
 		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->stdAttribVars[ SAV_TEX_COORDS ] != NULL; }
+
+	public:
+		Material();
+		bool load( const char* filename );
+		void unload();
 };
 
 
