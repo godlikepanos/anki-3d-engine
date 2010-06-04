@@ -41,7 +41,7 @@ class Mat4
 		Mat4& operator +=( const Mat4& b );
 		Mat4  operator - ( const Mat4& b ) const;
 		Mat4& operator -=( const Mat4& b );
-		Mat4  operator * ( const Mat4& b ) const;
+		Mat4  operator * ( const Mat4& b ) const; ///< 64 muls, 48 adds
 		Mat4& operator *=( const Mat4& b );
 		Mat4  operator / ( const Mat4& b ) const;
 		Mat4& operator /=( const Mat4& b );

@@ -50,6 +50,9 @@ class Renderer
 				 */
 				class EarlyZ: public RenderingStage
 				{
+					friend class Renderer;
+					friend class Ms;
+
 					PROPERTY_R( bool, enabled, isEnabled )
 
 					private:

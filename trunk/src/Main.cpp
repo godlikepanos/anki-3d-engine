@@ -205,6 +205,7 @@ void init()
 	RendererInitializer initializer;
 	initializer.width = 1280;
 	initializer.height = 800;
+	initializer.ms.earlyZ.enabled = false;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;

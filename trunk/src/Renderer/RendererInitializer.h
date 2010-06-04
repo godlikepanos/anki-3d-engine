@@ -8,6 +8,15 @@
  */
 struct RendererInitializer
 {
+	// Ms
+	struct Ms
+	{
+		struct EarlyZ
+		{
+			bool enabled;
+		} earlyZ;
+	} ms;
+
 	// Is
 	struct Is
 	{

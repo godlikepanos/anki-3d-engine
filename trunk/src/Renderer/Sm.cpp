@@ -85,9 +85,7 @@ void Renderer::Is::Sm::run( const Camera& cam )
 
 		DEBUG_ERR( meshNode->material->dpMtl == NULL );
 
-		//meshNode->material->dpMtl->setup();
-		//meshNode->renderDepth();
-		r.setupMaterial( *meshNode->material, *meshNode, cam );
+		r.setupMaterial( *meshNode->material->dpMtl, *meshNode, cam );
 		meshNode->render();
 	}
 

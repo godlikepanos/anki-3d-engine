@@ -667,11 +667,13 @@ inline void Mat4::setIdentity()
 // combineTransformations
 inline Mat4 Mat4::combineTransformations( const Mat4& m0, const Mat4& m1 )
 {
-	/* the clean code is:
-	Mat3 rot = m0.getRotationPart() * m1.getRotationPart();  // combine the rotations
-	Vec3 tra = (m1.getTranslationPart()).Transformed( m0.getTranslationPart(), m0.getRotationPart(), 1.0 );
-	return Mat4( tra, rot );
-	and the optimized: */
+	/*
+	 * The clean code is:
+	 * Mat3 rot = m0.getRotationPart() * m1.getRotationPart();  // combine the rotations
+	 * Vec3 tra = (m1.getTranslationPart()).Transformed( m0.getTranslationPart(), m0.getRotationPart(), 1.0 );
+	 * return Mat4( tra, rot );
+	 * and the optimized:
+	 */
 	DEBUG_ERR( !isZero( m0(3,0)+m0(3,1)+m0(3,2)+m0(3,3)-1.0 ) ||
 	           !isZero( m1(3,0)+m1(3,1)+m1(3,2)+m1(3,3)-1.0 ) ); // one of the 2 mat4 doesnt represent transformation
 
