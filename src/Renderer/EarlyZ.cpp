@@ -1,4 +1,7 @@
 #include "Renderer.h"
+#include "App.h"
+#include "MeshNode.h"
+#include "Scene.h"
 
 
 //=====================================================================================================================================
@@ -6,9 +9,9 @@
 //=====================================================================================================================================
 void Renderer::Ms::EarlyZ::init()
 {
-	if( !enabled ) return;
-
-	// create FBO
+	//
+	// init FBO
+	//
 	fbo.create();
 	fbo.bind();
 
@@ -20,4 +23,32 @@ void Renderer::Ms::EarlyZ::init()
 		FATAL( "Cannot create shadowmapping FBO" );
 
 	fbo.unbind();
+}
+
+
+//=====================================================================================================================================
+// run                                                                                                                                =
+//=====================================================================================================================================
+void Renderer::Ms::EarlyZ::run()
+{
+	fbo.bind();
+
+	Renderer::setViewport( 0, 0, r.width, r.height );
+
+	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+	glEnable( GL_DEPTH_TEST );
+	glDisable( GL_BLEND );
+
+	for( Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++ )
+	{
+		MeshNode* meshNode = (*it);
+		if( meshNode->material->blends || meshNode->material->refracts ) continue;
+
+		DEBUG_ERR( meshNode->material->dpMtl == NULL );
+
+		r.setupMaterial( *meshNode->material->dpMtl, *meshNode, *r.cam );
+		meshNode->render();
+	}
+
+	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 }

@@ -29,6 +29,7 @@ Renderer::Renderer():
 void Renderer::init( const RendererInitializer& initializer )
 {
 	// set from the initializer
+	ms.earlyZ.enabled = initializer.ms.earlyZ.enabled;
 	is.sm.enabled = initializer.is.sm.enabled;
 	is.sm.pcfEnabled = initializer.is.sm.pcfEnabled;
 	is.sm.bilinearEnabled = initializer.is.sm.bilinearEnabled;

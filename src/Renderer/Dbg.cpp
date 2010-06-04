@@ -211,7 +211,7 @@ void Renderer::Dbg::renderCube( bool cols, float size )
 //=====================================================================================================================================
 void Renderer::Dbg::init()
 {
-	// create FBO
+	// create FBO Captain Blood
 	fbo.create();
 	fbo.bind();
 

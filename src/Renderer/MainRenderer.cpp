@@ -56,6 +56,8 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_BLEND );
 	glPolygonMode( GL_FRONT, GL_FILL );
+	glDepthMask( true );
+	glDepthFunc( GL_LESS );
 
 	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments );
 	sProg.customLoad( "shaders/final.glsl" );
