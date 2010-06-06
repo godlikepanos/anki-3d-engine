@@ -20,7 +20,8 @@ string ShaderProg::stdSourceCode(
 /**
  * Standard set uniform check
  */
-#define STD_SET_UNI_CHECK() DEBUG_ERR( getLoc() == -1 || ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() );
+#define STD_SET_UNI_CHECK() DEBUG_ERR( getLoc() == -1 ); \
+                            DEBUG_ERR( ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() );
 
 
 void ShaderProg::UniVar::setFloat( float f ) const
@@ -75,7 +76,7 @@ void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
 void ShaderProg::UniVar::setTexture( const Texture& tex, uint texUnit ) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_TEXTURE_2D );
+	DEBUG_ERR( getGlDataType() != GL_SAMPLER_2D && getGlDataType() != GL_SAMPLER_2D_SHADOW );
 	tex.bind( texUnit );
 	glUniform1i( getLoc(), texUnit );
 }
@@ -355,12 +356,12 @@ bool ShaderProg::attribVarExists( const char* name ) const
 //=====================================================================================================================================
 // locTexUnit                                                                                                                         =
 //=====================================================================================================================================
-void ShaderProg::locTexUnit( int loc, const Texture& tex, uint tex_unit ) const
+void ShaderProg::locTexUnit( int loc, const Texture& tex, uint texUnit ) const
 {
 	DEBUG_ERR( loc == -1 );
 	DEBUG_ERR( getCurrentProgramGlId() != glId );
-	tex.bind( tex_unit );
-	glUniform1i( loc, tex_unit );
+	tex.bind( texUnit );
+	glUniform1i( loc, texUnit );
 }
 
 void ShaderProg::locTexUnit( const char* loc, const Texture& tex, uint tex_unit ) const

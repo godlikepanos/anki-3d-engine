@@ -68,8 +68,8 @@ void Renderer::render( Camera& cam_ )
 
 	ms.run();
 	is.run();
-	pps.run();
-	dbg.run();
+	/*pps.run();
+	dbg.run();*/
 
 	++framesNum;
 }

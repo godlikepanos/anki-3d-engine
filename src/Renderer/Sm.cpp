@@ -78,15 +78,15 @@ void Renderer::Is::Sm::run( const Camera& cam )
 	glEnable( GL_POLYGON_OFFSET_FILL );
 
 	// render all meshes
-	for( uint i=0; i<app->getScene()->meshNodes.size(); i++ )
+	for( Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++ )
 	{
-		MeshNode* meshNode = app->getScene()->meshNodes[i];
+		MeshNode* meshNode = (*it);
 		if( meshNode->material->blends || meshNode->material->refracts ) continue;
 
 		DEBUG_ERR( meshNode->material->dpMtl == NULL );
 
 		r.setupMaterial( *meshNode->material->dpMtl, *meshNode, cam );
-		meshNode->render();
+		meshNode->renderDepth();
 	}
 
 	glDisable( GL_POLYGON_OFFSET_FILL );

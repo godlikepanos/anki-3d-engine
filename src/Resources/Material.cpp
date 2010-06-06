@@ -37,12 +37,12 @@ Material::StdVarInfo Material::stdUniVarInfos[ SUV_NUM ] =
 	{ "modelViewMat", GL_FLOAT_MAT4 },
 	{ "normalMat", GL_FLOAT_MAT3 },
 	{ "modelViewProjectionMat", GL_FLOAT_MAT4 },
-	{ "msNormalFai", GL_TEXTURE_2D },
-	{ "msDiffuseFai", GL_TEXTURE_2D },
-	{ "msSpecularFai", GL_TEXTURE_2D },
-	{ "msDepthFai", GL_TEXTURE_2D },
-	{ "isFai", GL_TEXTURE_2D },
-	{ "ppsFai", GL_TEXTURE_2D },
+	{ "msNormalFai", GL_SAMPLER_2D },
+	{ "msDiffuseFai", GL_SAMPLER_2D },
+	{ "msSpecularFai", GL_SAMPLER_2D },
+	{ "msDepthFai", GL_SAMPLER_2D },
+	{ "isFai", GL_SAMPLER_2D },
+	{ "ppsFai", GL_SAMPLER_2D },
 	{ "rendererSize", GL_FLOAT_VEC2 }
 };
 

@@ -34,6 +34,7 @@ void Renderer::Is::renderSMOUvS( const PointLight& light )
 	const float scale = 1.2;
 
 	/// @todo Replace the rendering code. Use shader prog
+	Renderer::noShaders();
 
 	r.multMatrix( Mat4( light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.radius*scale ) );
 	Renderer::noShaders();
@@ -58,16 +59,18 @@ void Renderer::Is::calcViewVector()
 
 	int w = r.width;
 	int h = r.height;
-	int pixels[4][2]={ {w,h}, {0,h}, { 0,0 }, {w,0} }; // from righ up and CC wise to right down, Just like we render the quad
+	int pixels[4][2]={ {w,h}, {0,h}, {0,0}, {w,0} }; // from right up and CC wise to right down, Just like we render the quad
 	int viewport[4]={ 0, 0, w, h };
 
 	for( int i=0; i<4; i++ )
 	{
-		/* Original Code:
-		R::UnProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
-		              view_vectors[i].x, view_vectors[i].y, view_vectors[i].z );
-		view_vectors[i] = cam.getViewMatrix() * view_vectors[i];
-		The original code is the above 3 lines. The optimized follows:*/
+		/*
+		 * Original Code:
+		 * Renderer::unProject( pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
+		 *                      viewVectors[i].x, viewVectors[i].y, viewVectors[i].z );
+		 * viewVectors[i] = cam.getViewMatrix() * viewVectors[i];
+		 * The original code is the above 3 lines. The optimized follows:
+		 */
 
 		Vec3 vec;
 		vec.x = (2.0*(pixels[i][0]-viewport[0]))/viewport[2] - 1.0;
@@ -324,7 +327,7 @@ void Renderer::Is::pointLightPass( const PointLight& light )
 	if( !cam.insideFrustum( sphere ) ) return;
 
 	// stencil optimization
-	setStencilMask( light );
+	//setStencilMask( light );
 
 	// bind the shader
 	const LightShaderProg& shader = pointLightSProg; // I dont want to type
@@ -342,6 +345,7 @@ void Renderer::Is::pointLightPass( const PointLight& light )
 	shader.uniVars.lightInvRadius->setFloat( 1.0/light.radius );
 	shader.uniVars.lightDiffuseCol->setVec3( &light.lightProps->getDiffuseColor() );
 	shader.uniVars.lightSpecularCol->setVec3( &light.lightProps->getSpecularColor() );
+
 
 	// render quad
 	glEnableVertexAttribArray( 0 );
@@ -506,6 +510,18 @@ void Renderer::Is::run()
 			{
 				const PointLight& pointl = static_cast<const PointLight&>(light);
 				pointLightPass( pointl );
+
+
+				/*pointLightSProg.bind();
+				pointLightSProg.findUniVar( "msNormalFai" )->setTexture( r.ms.diffuseFai, 1 );
+				glEnableVertexAttribArray( 0 );
+				glEnableVertexAttribArray( 1 );
+				glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &Renderer::quadVertCoords[0] );
+				glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &viewVectors[0] );
+				glDrawArrays( GL_QUADS, 0, 4 );
+				glDisableVertexAttribArray( 0 );
+				glDisableVertexAttribArray( 1 );*/
+
 				break;
 			}
 

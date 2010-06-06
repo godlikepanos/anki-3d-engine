@@ -76,7 +76,7 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 
 
 //=====================================================================================================================================
-//                                                                                                                                    =
+// render                                                                                                                             =
 //=====================================================================================================================================
 void MainRenderer::render( Camera& cam_ )
 {
@@ -89,7 +89,7 @@ void MainRenderer::render( Camera& cam_ )
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 	sProg.bind();
-	sProg.locTexUnit( sProg.findUniVar("rasterImage")->getLoc(), pps.fai, 0 );
+	sProg.findUniVar("rasterImage")->setTexture( is.fai, 0 );
 	drawQuad( 0 );
 }
 
