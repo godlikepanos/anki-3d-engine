@@ -43,9 +43,8 @@ void Renderer::Ms::init()
 	// unbind
 	fbo.unbind();
 
-#if defined( _EARLY_Z_ )
-	r.Ms::earlyz::init();
-#endif
+	if( earlyZ.enabled )
+		earlyZ.init();
 }
 
 
@@ -75,7 +74,7 @@ void Renderer::Ms::run()
 	app->getScene()->skybox.Render( cam.getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
-	// if earlyZ then change the default depth test and disable depth writting
+	// if earlyZ then change the default depth test and disable depth writing
 	if( earlyZ.enabled )
 	{
 		glDepthMask( false );
@@ -83,9 +82,9 @@ void Renderer::Ms::run()
 	}
 
 	// render the meshes
-	for( uint i=0; i<app->getScene()->meshNodes.size(); i++ )
+	for( Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++ )
 	{
-		MeshNode* meshNode = app->getScene()->meshNodes[i];
+		MeshNode* meshNode = (*it);
 		DEBUG_ERR( meshNode->material == NULL );
 		if( meshNode->material->blends || meshNode->material->refracts ) continue;
 

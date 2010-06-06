@@ -216,7 +216,7 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 	return _color;
 }
 
-
+uniform sampler2D tex;
 
 /*
 =======================================================================================================================================

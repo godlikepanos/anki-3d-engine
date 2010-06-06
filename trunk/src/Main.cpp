@@ -203,8 +203,8 @@ void init()
 	uint ticks = app->getTicks();
 
 	RendererInitializer initializer;
-	initializer.width = 1280;
-	initializer.height = 800;
+	initializer.width = app->getWindowWidth();
+	initializer.height = app->getWindowHeight();
 	initializer.ms.earlyZ.enabled = false;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
@@ -231,7 +231,7 @@ void init()
 	point_lights[0] = new PointLight();
 	point_lights[0]->init( "maps/temple/light0.light" );
 	point_lights[0]->setLocalTransform( Transform( Vec3( -1.0, 2.4, 1.0 ), Mat3::getIdentity(), 1.0 ) );
-	point_lights[1] = new PointLight();
+	/*point_lights[1] = new PointLight();
 	point_lights[1]->init( "maps/temple/light1.light" );
 	point_lights[1]->setLocalTransform( Transform( Vec3( 2.5, 1.4, 1.0 ), Mat3::getIdentity(), 1.0 ) );
 
@@ -240,7 +240,7 @@ void init()
 	spot_lights[0]->setLocalTransform( Transform( Vec3( 1.3, 4.3, 3.0 ), Mat3( Euler(toRad(-20), toRad(20), 0.0) ), 1.0 ) );
 	spot_lights[1] = new SpotLight();
 	spot_lights[1]->init( "maps/temple/light3.light" );
-	spot_lights[1]->setLocalTransform( Transform( Vec3( -2.3, 6.3, 2.9 ), Mat3( Euler(toRad(-70), toRad(-20), 0.0) ), 1.0 ) );
+	spot_lights[1]->setLocalTransform( Transform( Vec3( -2.3, 6.3, 2.9 ), Mat3( Euler(toRad(-70), toRad(-20), 0.0) ), 1.0 ) );*/
 
 	// horse
 	horse = new MeshNode();
@@ -297,8 +297,6 @@ void init()
 //=====================================================================================================================================
 int main( int argc, char* argv[] )
 {
-	App::printAppInfo();
-
 	app = new App( argc, argv );
 	init();
 

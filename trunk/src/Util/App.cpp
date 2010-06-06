@@ -8,10 +8,39 @@
 bool App::isCreated = false;
 
 //=====================================================================================================================================
+// parseCommandLineArgs                                                                                                               =
+//=====================================================================================================================================
+void App::parseCommandLineArgs( int argc, char* argv[] )
+{
+	for( int i=1; i<argc; i++ )
+	{
+		char* arg = argv[ i ];
+		if( strcmp( arg, "--terminal-coloring" ) == 0 )
+		{
+			terminalColoringEnabled = true;
+		}
+		else if( strcmp( arg, "--no-terminal-coloring" ) == 0 )
+		{
+			terminalColoringEnabled = false;
+		}
+		else
+		{
+			FATAL( "Incorrect command line argument \"" << arg << "\"" );
+		}
+	}
+
+}
+
+
+//=====================================================================================================================================
 // Constructor                                                                                                                        =
 //=====================================================================================================================================
-App::App( int /*argc*/, char* /*argv*/[] )
+App::App( int argc, char* argv[] )
 {
+	parseCommandLineArgs( argc, argv );
+
+	printAppInfo();
+
 	if( isCreated )
 		FATAL( "You cannot create a second App instance" )
 
@@ -28,7 +57,7 @@ App::App( int /*argc*/, char* /*argv*/[] )
 
 	fullScreenFlag = false;
 
-	terminalColoringEnabled = true;
+	terminalColoringEnabled = false;
 
 	timerTick = 1000/40; // in ms. 1000/Hz
 	time = 0;

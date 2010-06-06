@@ -18,7 +18,7 @@ void main()
 
 #pragma anki include "shaders/pack.glsl"
 
-uniform sampler2D diffuseMap, noise_map;
+uniform sampler2D isFai, noise_map;
 //varying vec2 texCoords_v2f;
 varying vec3 normal_v2f;
 uniform vec2 rendererSize;
@@ -29,8 +29,8 @@ void main()
 	_noise = _noise * 2 - 1;
 	_noise *= 7.0;*/
 
-	vec4 _texel = texture2D( diffuseMap, (gl_FragCoord.xy+(normal_v2f.z*50))*vec2( 1.0/rendererSize.x, 1.0/rendererSize.y ) ) * 0.75;
-	//vec4 _texel = texture2D( diffuseMap, gl_FragCoord.xy*vec2( 1.0/R_W, 1.0/R_H ) );
+	vec4 _texel = texture2D( isFai, (gl_FragCoord.xy+(normal_v2f.z*50))*vec2( 1.0/rendererSize.x, 1.0/rendererSize.y ) ) * 0.75;
+	//vec4 _texel = texture2D( isFai, gl_FragCoord.xy*vec2( 1.0/R_W, 1.0/R_H ) );
 
 	gl_FragData[0] = _texel;
 

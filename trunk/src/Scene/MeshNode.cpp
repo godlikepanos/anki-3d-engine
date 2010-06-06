@@ -19,9 +19,11 @@ void MeshNode::init( const char* filename )
 	material = Rsrc::materials.load( mesh->materialName.c_str() );
 
 	// sanity checks
-	if( material->stdAttribVars[Material::SAV_TEX_COORDS]==NULL && mesh->vbos.texCoords.getGlId() == 0 )
+	if( material->stdAttribVars[Material::SAV_TEX_COORDS]!=NULL && mesh->vbos.texCoords.getGlId()==0 )
 	{
-		ERROR( "The shader program needs information that the mesh do not have" );
+		ERROR( "The shader program (\"" << material->shaderProg->getRsrcName() <<
+		       "\") needs texture coord information that the mesh (\"" <<
+		       mesh->getRsrcName() << "\") doesn't have" );
 	}
 }
 

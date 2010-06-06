@@ -9,6 +9,8 @@
 //=====================================================================================================================================
 void Renderer::Ms::EarlyZ::init()
 {
+	DEBUG_ERR( !enabled );
+
 	//
 	// init FBO
 	//
@@ -31,6 +33,8 @@ void Renderer::Ms::EarlyZ::init()
 //=====================================================================================================================================
 void Renderer::Ms::EarlyZ::run()
 {
+	DEBUG_ERR( !enabled );
+
 	fbo.bind();
 
 	Renderer::setViewport( 0, 0, r.width, r.height );
@@ -47,7 +51,7 @@ void Renderer::Ms::EarlyZ::run()
 		DEBUG_ERR( meshNode->material->dpMtl == NULL );
 
 		r.setupMaterial( *meshNode->material->dpMtl, *meshNode, *r.cam );
-		meshNode->render();
+		meshNode->renderDepth();
 	}
 
 	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );

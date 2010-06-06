@@ -27,6 +27,8 @@ class App
 		SDL_Surface* iconImage;
 		bool fullScreenFlag;
 
+		void parseCommandLineArgs( int argc, char* argv[] );
+
 	public:
 		uint timerTick;
 
