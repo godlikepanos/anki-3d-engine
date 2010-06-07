@@ -43,8 +43,8 @@ void Renderer::Ms::init()
 	// unbind
 	fbo.unbind();
 
-	if( earlyZ.enabled )
-		earlyZ.init();
+	if( ez.enabled )
+		ez.init();
 }
 
 
@@ -55,14 +55,14 @@ void Renderer::Ms::run()
 {
 	const Camera& cam = *r.cam;
 
-	if( earlyZ.enabled )
+	if( ez.enabled )
 	{
-		earlyZ.run();
+		ez.run();
 	}
 
 	fbo.bind();
 
-	if( !earlyZ.enabled )
+	if( !ez.enabled )
 	{
 		glClear( GL_DEPTH_BUFFER_BIT );
 	}
@@ -74,8 +74,8 @@ void Renderer::Ms::run()
 	app->getScene()->skybox.Render( cam.getViewMatrix().getRotationPart() );
 	//glDepthFunc( GL_LEQUAL );
 
-	// if earlyZ then change the default depth test and disable depth writing
-	if( earlyZ.enabled )
+	// if ez then change the default depth test and disable depth writing
+	if( ez.enabled )
 	{
 		glDepthMask( false );
 		glDepthFunc( GL_EQUAL );
@@ -95,7 +95,7 @@ void Renderer::Ms::run()
 	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode
 
 	// restore depth
-	if( earlyZ.enabled )
+	if( ez.enabled )
 	{
 		glDepthMask( true );
 		glDepthFunc( GL_LESS );
