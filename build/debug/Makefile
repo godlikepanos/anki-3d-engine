@@ -4,8 +4,8 @@ PHFLAGS = -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -O0 -g3 -pg
 LFLAGS = -rdynamic -L../../../SDL-hg/build/.libs -L../../../glew/lib -L../../../bullet_svn/src/BulletSoftBody -L../../../bullet_svn/src/BulletDynamics -L../../../bullet_svn/src/BulletCollision -L../../../bullet_svn/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff
 EXECUTABLE = AnKi.bin
 INCPATH = -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../../bullet_svn/src/ -I../../../SDL-hg/include -I../../glew/include 
-SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//collision.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//memory.cpp ../../src/Misc//particles.cpp ../../src//Main.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//EarlyZ.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Scene.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Ui//Ui.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Texture.cpp ../../src/Resources//Resource.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Physics//PhyWorld.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Helpers//Image.cpp 
-OBJECTS = Scanner.o collision.o skybox.o map.o memory.o particles.o Main.o Dbg.o Sm.o Hdr.o Ssao.o EarlyZ.o Ms.o Pps.o MainRenderer.o Is.o Renderer.o SkelNode.o Light.o SkelModelNode.o Scene.o MeshNode.o Camera.o SceneNode.o ParticleEmitter.o Ui.o LightProps.o SkelAnim.o Mesh.o ShaderProg.o Material.o Extension.o Skeleton.o Texture.o Resource.o Input.o App.o Common.o Util.o SkelAnimCtrl.o Controller.o PhyWorld.o ShaderPrePreprocessor.o Image.o 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//collision.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//memory.cpp ../../src/Misc//particles.cpp ../../src//Main.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Scene.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Ui//Ui.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Texture.cpp ../../src/Resources//Resource.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Physics//PhyWorld.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Helpers//Image.cpp 
+OBJECTS = Scanner.o collision.o skybox.o map.o memory.o particles.o Main.o Ez.o Dbg.o Sm.o Hdr.o Ssao.o Ms.o Pps.o MainRenderer.o Is.o Renderer.o SkelNode.o Light.o SkelModelNode.o Scene.o MeshNode.o Camera.o SceneNode.o ParticleEmitter.o Ui.o LightProps.o SkelAnim.o Mesh.o ShaderProg.o Material.o Extension.o Skeleton.o Texture.o Resource.o Input.o App.o Common.o Util.o SkelAnimCtrl.o Controller.o PhyWorld.o ShaderPrePreprocessor.o Image.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -504,6 +504,187 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
 
+Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
+ ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Common.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
+ ../../../SDL-hg/include/SDL_stdinc.h \
+ ../../../SDL-hg/include/SDL_config.h \
+ ../../../SDL-hg/include/SDL_platform.h \
+ ../../../SDL-hg/include/begin_code.h \
+ ../../../SDL-hg/include/close_code.h \
+ ../../../SDL-hg/include/SDL_atomic.h ../../../SDL-hg/include/SDL_audio.h \
+ ../../../SDL-hg/include/SDL_error.h ../../../SDL-hg/include/SDL_endian.h \
+ ../../../SDL-hg/include/SDL_mutex.h ../../../SDL-hg/include/SDL_thread.h \
+ ../../../SDL-hg/include/SDL_rwops.h \
+ ../../../SDL-hg/include/SDL_cpuinfo.h \
+ ../../../SDL-hg/include/SDL_events.h ../../../SDL-hg/include/SDL_video.h \
+ ../../../SDL-hg/include/SDL_pixels.h ../../../SDL-hg/include/SDL_rect.h \
+ ../../../SDL-hg/include/SDL_surface.h \
+ ../../../SDL-hg/include/SDL_keyboard.h \
+ ../../../SDL-hg/include/SDL_keysym.h \
+ ../../../SDL-hg/include/SDL_scancode.h \
+ ../../../SDL-hg/include/SDL_mouse.h \
+ ../../../SDL-hg/include/SDL_joystick.h \
+ ../../../SDL-hg/include/SDL_quit.h ../../../SDL-hg/include/SDL_loadso.h \
+ ../../../SDL-hg/include/SDL_power.h ../../../SDL-hg/include/SDL_timer.h \
+ ../../../SDL-hg/include/SDL_version.h \
+ ../../../SDL-hg/include/SDL_revision.h \
+ ../../../SDL-hg/include/SDL_compat.h ../../src/Scene/MeshNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
+ ../../src/Resources/ShaderProg.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
+ ../../../bullet_svn/src/btBulletCollisionCommon.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../../bullet_svn/src/LinearMath/btVector3.h \
+ ../../../bullet_svn/src/LinearMath/btScalar.h \
+ ../../../bullet_svn/src/LinearMath/btMinMax.h \
+ ../../../bullet_svn/src/LinearMath/btTransform.h \
+ ../../../bullet_svn/src/LinearMath/btMatrix3x3.h \
+ ../../../bullet_svn/src/LinearMath/btVector3.h \
+ ../../../bullet_svn/src/LinearMath/btQuaternion.h \
+ ../../../bullet_svn/src/LinearMath/btQuadWord.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../../bullet_svn/src/LinearMath/btMotionState.h \
+ ../../../bullet_svn/src/LinearMath/btTransform.h \
+ ../../../bullet_svn/src/LinearMath/btAlignedAllocator.h \
+ ../../../bullet_svn/src/LinearMath/btAlignedObjectArray.h \
+ ../../../bullet_svn/src/LinearMath/btAlignedAllocator.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../../bullet_svn/src/LinearMath/btScalar.h \
+ ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../../bullet_svn/src/LinearMath/btTransformUtil.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../../bullet_svn/src/LinearMath/btMatrix3x3.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../../bullet_svn/src/LinearMath/btAabbUtil2.h \
+ ../../../bullet_svn/src/LinearMath/btMinMax.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../../bullet_svn/src/LinearMath/btHashMap.h \
+ ../../../bullet_svn/src/LinearMath/btAlignedObjectArray.h \
+ ../../../bullet_svn/src/LinearMath/btSerializer.h \
+ ../../../bullet_svn/src/LinearMath/btStackAlloc.h \
+ ../../../bullet_svn/src/LinearMath/btHashMap.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../../bullet_svn/src/LinearMath/btQuaternion.h \
+ ../../../bullet_svn/src/LinearMath/btTransform.h \
+ ../../../bullet_svn/src/LinearMath/btDefaultMotionState.h \
+ ../../../bullet_svn/src/LinearMath/btMotionState.h \
+ ../../../bullet_svn/src/LinearMath/btQuickprof.h \
+ ../../../bullet_svn/src/LinearMath/btIDebugDraw.h \
+ ../../../bullet_svn/src/LinearMath/btSerializer.h \
+ ../../../bullet_svn/src/btBulletDynamicsCommon.h \
+ ../../../bullet_svn/src/btBulletCollisionCommon.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../../bullet_svn/src/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../../bullet_svn/src/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../../bullet_svn/src/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../../bullet_svn/src/BulletDynamics/Character/btKinematicCharacterController.h \
+ ../../../bullet_svn/src/BulletDynamics/Character/btCharacterControllerInterface.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btGhostObject.h \
+ ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
+ ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h
+	@echo Compiling ../../src/Renderer//Ez.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ez.cpp -o Ez.o
+
 Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
@@ -904,187 +1085,6 @@ Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h
 	@echo Compiling ../../src/Renderer//Ssao.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ssao.cpp -o Ssao.o
-
-EarlyZ.o: ../../src/Renderer//EarlyZ.cpp ../../src/Renderer//Renderer.h \
- ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
- ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
- ../../../SDL-hg/include/SDL_stdinc.h \
- ../../../SDL-hg/include/SDL_config.h \
- ../../../SDL-hg/include/SDL_platform.h \
- ../../../SDL-hg/include/begin_code.h \
- ../../../SDL-hg/include/close_code.h \
- ../../../SDL-hg/include/SDL_atomic.h ../../../SDL-hg/include/SDL_audio.h \
- ../../../SDL-hg/include/SDL_error.h ../../../SDL-hg/include/SDL_endian.h \
- ../../../SDL-hg/include/SDL_mutex.h ../../../SDL-hg/include/SDL_thread.h \
- ../../../SDL-hg/include/SDL_rwops.h \
- ../../../SDL-hg/include/SDL_cpuinfo.h \
- ../../../SDL-hg/include/SDL_events.h ../../../SDL-hg/include/SDL_video.h \
- ../../../SDL-hg/include/SDL_pixels.h ../../../SDL-hg/include/SDL_rect.h \
- ../../../SDL-hg/include/SDL_surface.h \
- ../../../SDL-hg/include/SDL_keyboard.h \
- ../../../SDL-hg/include/SDL_keysym.h \
- ../../../SDL-hg/include/SDL_scancode.h \
- ../../../SDL-hg/include/SDL_mouse.h \
- ../../../SDL-hg/include/SDL_joystick.h \
- ../../../SDL-hg/include/SDL_quit.h ../../../SDL-hg/include/SDL_loadso.h \
- ../../../SDL-hg/include/SDL_power.h ../../../SDL-hg/include/SDL_timer.h \
- ../../../SDL-hg/include/SDL_version.h \
- ../../../SDL-hg/include/SDL_revision.h \
- ../../../SDL-hg/include/SDL_compat.h ../../src/Scene/MeshNode.h \
- ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
- ../../src/Physics/PhyCommon.h \
- ../../../bullet_svn/src/btBulletCollisionCommon.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../../bullet_svn/src/LinearMath/btVector3.h \
- ../../../bullet_svn/src/LinearMath/btScalar.h \
- ../../../bullet_svn/src/LinearMath/btMinMax.h \
- ../../../bullet_svn/src/LinearMath/btTransform.h \
- ../../../bullet_svn/src/LinearMath/btMatrix3x3.h \
- ../../../bullet_svn/src/LinearMath/btVector3.h \
- ../../../bullet_svn/src/LinearMath/btQuaternion.h \
- ../../../bullet_svn/src/LinearMath/btQuadWord.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../../bullet_svn/src/LinearMath/btMotionState.h \
- ../../../bullet_svn/src/LinearMath/btTransform.h \
- ../../../bullet_svn/src/LinearMath/btAlignedAllocator.h \
- ../../../bullet_svn/src/LinearMath/btAlignedObjectArray.h \
- ../../../bullet_svn/src/LinearMath/btAlignedAllocator.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../../bullet_svn/src/LinearMath/btScalar.h \
- ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../../bullet_svn/src/LinearMath/btTransformUtil.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../../bullet_svn/src/LinearMath/btMatrix3x3.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../../bullet_svn/src/LinearMath/btAabbUtil2.h \
- ../../../bullet_svn/src/LinearMath/btMinMax.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConeShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../../bullet_svn/src/LinearMath/btHashMap.h \
- ../../../bullet_svn/src/LinearMath/btAlignedObjectArray.h \
- ../../../bullet_svn/src/LinearMath/btSerializer.h \
- ../../../bullet_svn/src/LinearMath/btStackAlloc.h \
- ../../../bullet_svn/src/LinearMath/btHashMap.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../../bullet_svn/src/LinearMath/btQuaternion.h \
- ../../../bullet_svn/src/LinearMath/btTransform.h \
- ../../../bullet_svn/src/LinearMath/btDefaultMotionState.h \
- ../../../bullet_svn/src/LinearMath/btMotionState.h \
- ../../../bullet_svn/src/LinearMath/btQuickprof.h \
- ../../../bullet_svn/src/LinearMath/btIDebugDraw.h \
- ../../../bullet_svn/src/LinearMath/btSerializer.h \
- ../../../bullet_svn/src/btBulletDynamicsCommon.h \
- ../../../bullet_svn/src/btBulletCollisionCommon.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../../bullet_svn/src/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../../bullet_svn/src/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../../bullet_svn/src/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../../bullet_svn/src/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../../bullet_svn/src/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btActionInterface.h \
- ../../../bullet_svn/src/BulletDynamics/Dynamics/btRigidBody.h \
- ../../../bullet_svn/src/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../../bullet_svn/src/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../../bullet_svn/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../../bullet_svn/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h
-	@echo Compiling ../../src/Renderer//EarlyZ.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//EarlyZ.cpp -o EarlyZ.o
 
 Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \

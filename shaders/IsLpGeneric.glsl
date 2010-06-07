@@ -1,7 +1,7 @@
 #pragma anki vertShaderBegins
 
-#pragma anki attribute view_vector 1
-attribute vec3 view_vector;
+#pragma anki attribute viewVector 1
+attribute vec3 viewVector;
 #pragma anki attribute position 0
 attribute vec2 position;
 
@@ -10,7 +10,7 @@ varying vec3 vpos;
 
 void main()
 {
-	vpos = view_vector;
+	vpos = viewVector;
 	vec2 vert_pos = position; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
 	texCoords = vert_pos;
 	vec2 vert_pos_ndc = vert_pos*2.0 - 1.0;
@@ -37,13 +37,14 @@ varying vec2 texCoords;
 varying vec3 vpos; // for the calculation of frag pos in view space
 
 
-/*
-=======================================================================================================================================
-FragPosVSpace                                                                                                                         =
-return frag pos in view space                                                                                                         =
-=======================================================================================================================================
-*/
-vec3 FragPosVSpace()
+//======================================================================================================================
+// getFragPosVSpace                                                                                                    =
+//======================================================================================================================
+
+/**
+ * @return frag pos in view space
+ */
+vec3 getFragPosVSpace()
 {
 	float _depth = texture2D( msDepthFai, texCoords ).r;
 
@@ -57,34 +58,37 @@ vec3 FragPosVSpace()
 }
 
 
-/*
-=======================================================================================================================================
-Attenuation                                                                                                                           =
-return the attenuation factor fiven the distance from the frag to the light source                                                    =
-=======================================================================================================================================
-*/
-float Attenuation( in float _frag_light_dist )
+//======================================================================================================================
+// getAttenuation                                                                                                      =
+//======================================================================================================================
+
+/**
+ * @return The attenuation factor fiven the distance from the frag to the light
+ * source
+ */
+float getAttenuation( in float _frag_light_dist )
 {
 	return clamp(1.0 - lightInvRadius * sqrt(_frag_light_dist), 0.0, 1.0);
 	//return 1.0 - _frag_light_dist * _inv_light_radius;
 }
 
 
-/*
-=======================================================================================================================================
-PCF                                                                                                                                   =
-it returns a blured shadow                                                                                                            =
-=======================================================================================================================================
-*/
+//======================================================================================================================
+// Pcf                                                                                                                 =
+//======================================================================================================================
+
 #if defined(_SPOT_LIGHT_) && defined( _SHADOW_ )
 
-float PCF_Off( in vec3 _shadow_uv )
+/**
+ * @return The blured shadow
+ */
+float pcfOff( in vec3 _shadow_uv )
 {
 	return shadow2D(shadowMap, _shadow_uv ).r;
 }
 
 
-float PCF_Low( in vec3 _shadow_uv )
+float pcfLow( in vec3 _shadow_uv )
 {
 	float _shadow_col = shadow2D(shadowMap, _shadow_uv ).r;
 	const float _map_scale = 1.0 / SHADOWMAP_SIZE;
@@ -103,7 +107,7 @@ float PCF_Low( in vec3 _shadow_uv )
 }
 
 
-float PCF_Medium( in vec3 _shadow_uv )
+float pcfMedium( in vec3 _shadow_uv )
 {
 	float _shadow_col = shadow2D(shadowMap, _shadow_uv ).r;
 	float _map_scale = 1.0 / SHADOWMAP_SIZE;
@@ -133,7 +137,7 @@ float PCF_Medium( in vec3 _shadow_uv )
 }
 
 
-float PCF_High( in vec3 _shadow_uv )
+float pcfHigh( in vec3 _shadow_uv )
 {
 	float _shadow_col = shadow2D(shadowMap, _shadow_uv ).r;
 	float _map_scale = 1.0 / SHADOWMAP_SIZE;
@@ -174,19 +178,21 @@ float PCF_High( in vec3 _shadow_uv )
 
 
 
-/*
-=======================================================================================================================================
-Phong                                                                                                                                 =
-=======================================================================================================================================
-*/
-vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
+//======================================================================================================================
+// phong                                                                                                               =
+//======================================================================================================================
+vec3 phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 {
 	// get the lambert term
 	vec3 _lightPos_eyespace = lightPos;
 	vec3 _light_frag_vec = _lightPos_eyespace - _frag_pos_vspace;
 
-	_frag_light_dist = dot( _light_frag_vec, _light_frag_vec ); // instead of using normalize(_frag_light_dist) we brake the operation...
-	vec3 _light_dir = _light_frag_vec * inversesqrt(_frag_light_dist); // ...because we want frag_light_dist for the calc of the attenuation
+	/*
+	 * Instead of using normalize(_frag_light_dist) we brake the operation because we want frag_light_dist for the calc of
+	 * the attenuation
+	 */
+	_frag_light_dist = dot( _light_frag_vec, _light_frag_vec ); 
+	vec3 _light_dir = _light_frag_vec * inversesqrt(_frag_light_dist);
 
 	// read the normal
 	//vec3 _normal = texture2D( msNormalFai, texCoords ).rgb;
@@ -218,29 +224,31 @@ vec3 Phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 
 uniform sampler2D tex;
 
-/*
-=======================================================================================================================================
-main                                                                                                                                  =
-=======================================================================================================================================
-*/
+
+//======================================================================================================================
+// main                                                                                                                =
+//======================================================================================================================
 void main()
 {
 	// get frag pos in view space
-	vec3 _frag_pos_vspace = FragPosVSpace();
+	vec3 _frag_pos_vspace = getFragPosVSpace();
 
-	//===================================================================================================================================
-	// POINT LIGHT                                                                                                                      =
-	//===================================================================================================================================
+	//
+	// Point light
+	//
 	#if defined(_POINT_LIGHT_)
-		// The func Phong calculates the frag to light distance (_frag_light_dist) and be cause we need that distance
+		// The func phong calculates the frag to light distance (_frag_light_dist) and be cause we need that distance
 		// latter for other calculations we export it
 		float _frag_light_dist;
-		vec3 _color = Phong( _frag_pos_vspace, _frag_light_dist );
-		gl_FragData[0] = vec4( _color * Attenuation(_frag_light_dist), 1.0 );
+		vec3 _color = phong( _frag_pos_vspace, _frag_light_dist );
+		gl_FragData[0] = vec4( _color * getAttenuation(_frag_light_dist), 1.0 );
 
-	//===================================================================================================================================
-	// SPOT LIGHT                                                                                                                       =
-	//===================================================================================================================================
+		gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + texture2D( msDepthFai, texCoords );
+
+
+	//
+	// Spot light
+	//
 	#elif defined(_SPOT_LIGHT_)
 		vec4 _tex_coord2 = texProjectionMat * vec4(_frag_pos_vspace, 1.0);
 		vec3 _texCoords3 = _tex_coord2.xyz / _tex_coord2.w;
@@ -256,21 +264,21 @@ void main()
 		)
 		{
 			#if defined( _SHADOW_ )
-				#if defined( _SHADOW_MAPPING_PCF_ )
-					float _shadow_color = PCF_Low( _texCoords3 );
+				#if defined( _SHADOW_MAPPING_pcf )
+					float _shadow_color = pcfLow( _texCoords3 );
 					//float _shadow_color = MedianFilterPCF( shadowMap, _texCoords3 );
 				#else
-					float _shadow_color = PCF_Off( _texCoords3 );
+					float _shadow_color = pcfOff( _texCoords3 );
 				#endif
 
 				if( _shadow_color == 0.0 ) discard;
 			#endif // shadow
 
 			float _frag_light_dist;
-			vec3 _color = Phong( _frag_pos_vspace, _frag_light_dist );
+			vec3 _color = phong( _frag_pos_vspace, _frag_light_dist );
 
 			vec3 _texel = texture2DProj( lightTex, _tex_coord2.xyz ).rgb;
-			float _att = Attenuation(_frag_light_dist);
+			float _att = getAttenuation(_frag_light_dist);
 
 			#if defined( _SHADOW_ )
 				gl_FragData[0] = vec4(_texel * _color * (_shadow_color * _att), 1.0);
