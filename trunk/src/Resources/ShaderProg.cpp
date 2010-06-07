@@ -21,7 +21,8 @@ string ShaderProg::stdSourceCode(
  * Standard set uniform check
  */
 #define STD_SET_UNI_CHECK() DEBUG_ERR( getLoc() == -1 ); \
-                            DEBUG_ERR( ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() );
+                            DEBUG_ERR( ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() ); \
+                            DEBUG_ERR( glGetUniformLocation( fatherSProg->getGlId(), getName().c_str() ) != getLoc() );
 
 
 void ShaderProg::UniVar::setFloat( float f ) const
