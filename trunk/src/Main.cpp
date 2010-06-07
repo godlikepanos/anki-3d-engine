@@ -205,7 +205,7 @@ void init()
 	RendererInitializer initializer;
 	initializer.width = app->getWindowWidth();
 	initializer.height = app->getWindowHeight();
-	initializer.ms.earlyZ.enabled = false;
+	initializer.ms.ez.enabled = false;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;

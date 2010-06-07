@@ -116,7 +116,7 @@ class Material: public Resource
 		bool refracts;
 		bool depthTesting;
 		bool wireframe;
-		bool castsShadow; ///< Used in shadowmapping passes but not in EarlyZ
+		bool castsShadow; ///< Used in shadowmapping passes but not in Ez
 
 
 		/**

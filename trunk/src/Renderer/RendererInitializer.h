@@ -11,10 +11,10 @@ struct RendererInitializer
 	// Ms
 	struct Ms
 	{
-		struct EarlyZ
+		struct Ez
 		{
 			bool enabled;
-		} earlyZ;
+		} ez;
 	} ms;
 
 	// Is

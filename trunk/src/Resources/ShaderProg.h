@@ -41,7 +41,7 @@ class ShaderProg: public Resource
 			PROPERTY_R( Type, type, getType ) ///< @ref PROPERTY_R : @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 
 			protected:
-				const ShaderProg* fatherSProg;
+				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
 
 			public:
 				Var( GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_ ):

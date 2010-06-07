@@ -21,7 +21,7 @@ void Renderer::Is::initSMOUvS()
 	DEBUG_ERR( sMOUvSVboId != 0 );
 	glGenBuffers( 1, &sMOUvSVboId );
 	glBindBuffer( GL_ARRAY_BUFFER, sMOUvSVboId );
-	glBufferData( GL_ARRAY_BUFFER, sizeof(sMOUvSVboId), sMOUvSCoords, GL_STATIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW );
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
@@ -57,10 +57,10 @@ void Renderer::Is::calcViewVector()
 {
 	const Camera& cam = *r.cam;
 
-	int w = r.width;
-	int h = r.height;
-	int pixels[4][2]={ {w,h}, {0,h}, {0,0}, {w,0} }; // from right up and CC wise to right down, Just like we render the quad
-	int viewport[4]={ 0, 0, w, h };
+	const uint& w = r.width;
+	const uint& h = r.height;
+	uint pixels[4][2]={ {w,h}, {0,h}, {0,0}, {w,0} }; // from right up and CC wise to right down, Just like we render the quad
+	uint viewport[4]={ 0, 0, w, h };
 
 	for( int i=0; i<4; i++ )
 	{
@@ -134,14 +134,12 @@ void Renderer::Is::initFbo()
 //=====================================================================================================================================
 void Renderer::Is::init()
 {
-	/// @todo see what to do with the commented code
-
 	// load the shaders
-	ambientPassSProg.customLoad( "shaders/is_ap.glsl" );
+	ambientPassSProg.customLoad( "shaders/IsAp.glsl" );
 	ambientPassSProg.uniVars.ambientCol = ambientPassSProg.findUniVar("ambientCol");
 	ambientPassSProg.uniVars.sceneColMap = ambientPassSProg.findUniVar("sceneColMap");
 
-	pointLightSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _POINT_LIGHT_\n" );
+	pointLightSProg.customLoad( "shaders/IsLpGeneric.glsl", "#define _POINT_LIGHT_\n" );
 	pointLightSProg.uniVars.msNormalFai = pointLightSProg.findUniVar("msNormalFai");
 	pointLightSProg.uniVars.msDiffuseFai = pointLightSProg.findUniVar("msDiffuseFai");
 	pointLightSProg.uniVars.msSpecularFai = pointLightSProg.findUniVar("msSpecularFai");
@@ -152,7 +150,7 @@ void Renderer::Is::init()
 	pointLightSProg.uniVars.lightDiffuseCol = pointLightSProg.findUniVar("lightDiffuseCol");
 	pointLightSProg.uniVars.lightSpecularCol = pointLightSProg.findUniVar("lightSpecularCol");
 
-	spotLightNoShadowSProg.customLoad( "shaders/is_lp_generic.glsl", "#define _SPOT_LIGHT_\n" );
+	spotLightNoShadowSProg.customLoad( "shaders/IsLpGeneric.glsl", "#define _SPOT_LIGHT_\n" );
 	spotLightNoShadowSProg.uniVars.msNormalFai = spotLightNoShadowSProg.findUniVar("msNormalFai");
 	spotLightNoShadowSProg.uniVars.msDiffuseFai = spotLightNoShadowSProg.findUniVar("msDiffuseFai");
 	spotLightNoShadowSProg.uniVars.msSpecularFai = spotLightNoShadowSProg.findUniVar("msSpecularFai");
@@ -166,7 +164,7 @@ void Renderer::Is::init()
 	spotLightNoShadowSProg.uniVars.texProjectionMat = spotLightNoShadowSProg.findUniVar("texProjectionMat");
 
 	string pps = "#define SHADOWMAP_SIZE " + Util::intToStr( sm.resolution ) + "\n#define _SPOT_LIGHT_\n#define _SHADOW_\n";
-	spotLightShadowSProg.customLoad( "shaders/is_lp_generic.glsl", pps.c_str() );
+	spotLightShadowSProg.customLoad( "shaders/IsLpGeneric.glsl", pps.c_str() );
 	spotLightShadowSProg.uniVars.msNormalFai = spotLightShadowSProg.findUniVar("msNormalFai");
 	spotLightShadowSProg.uniVars.msDiffuseFai = spotLightShadowSProg.findUniVar("msDiffuseFai");
 	spotLightShadowSProg.uniVars.msSpecularFai = spotLightShadowSProg.findUniVar("msSpecularFai");
@@ -211,9 +209,9 @@ void Renderer::Is::ambientPass( const Vec3& color )
 
 
 //=====================================================================================================================================
-// setStencilMask [point light]                                                                                                       =
+// stencilOptPass [point light]                                                                                                       =
 //=====================================================================================================================================
-void Renderer::Is::setStencilMask( const PointLight& light )
+void Renderer::Is::stencilOptPass( const PointLight& light )
 {
 	glEnable( GL_STENCIL_TEST );
 	glClear( GL_STENCIL_BUFFER_BIT );
@@ -252,9 +250,9 @@ void Renderer::Is::setStencilMask( const PointLight& light )
 
 
 //=====================================================================================================================================
-// setStencilMask [spot light]                                                                                                        =
+// stencilOptPass [spot light]                                                                                                        =
 //=====================================================================================================================================
-void Renderer::Is::setStencilMask( const SpotLight& light )
+void Renderer::Is::stencilOptPass( const SpotLight& light )
 {
 	glEnable( GL_STENCIL_TEST );
 	glClear( GL_STENCIL_BUFFER_BIT );
@@ -327,10 +325,10 @@ void Renderer::Is::pointLightPass( const PointLight& light )
 	if( !cam.insideFrustum( sphere ) ) return;
 
 	// stencil optimization
-	//setStencilMask( light );
+	stencilOptPass( light );
 
 	// bind the shader
-	const LightShaderProg& shader = pointLightSProg; // I dont want to type
+	const LightShaderProg& shader = pointLightSProg; // ensure the const-ness
 	shader.bind();
 
 	// bind the material stage framebuffer attachable images
@@ -379,7 +377,7 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	//
 	// stencil optimization
 	//
-	setStencilMask( light );
+	stencilOptPass( light );
 
 	//
 	// generate the shadow map (if needed)

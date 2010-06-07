@@ -1,5 +1,5 @@
-#ifndef _RENDERER_HPP_
-#define _RENDERER_HPP_
+#ifndef _RENDERER_H_
+#define _RENDERER_H_
 
 #include "Common.h"
 #include "Math.h"
@@ -48,7 +48,7 @@ class Renderer
 				/**
 				 * EarlyZ pass
 				 */
-				class EarlyZ: public RenderingStage
+				class Ez: public RenderingStage
 				{
 					friend class Renderer;
 					friend class Ms;
@@ -62,7 +62,7 @@ class Renderer
 						void run();
 
 					public:
-						EarlyZ( Renderer& r_ ): RenderingStage( r_ ) {}
+						Ez( Renderer& r_ ): RenderingStage( r_ ) {}
 				};
 
 			private:
@@ -76,9 +76,9 @@ class Renderer
 				Texture diffuseFai;
 				Texture specularFai;
 				Texture depthFai;
-				EarlyZ earlyZ;
+				Ez ez;
 
-				Ms( Renderer& r_ ): RenderingStage( r_ ), earlyZ( r_ ) {}
+				Ms( Renderer& r_ ): RenderingStage( r_ ), ez( r_ ) {}
 		}; // end Ms
 
 		/**
@@ -166,8 +166,8 @@ class Renderer
 				void renderSMOUvS( const PointLight& light ); ///< Render the illumination stage stencil masking optimizations uv sphere
 				void calcViewVector(); ///< Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 				void calcPlanes(); ///< Calc the planes that we will use inside the shader to calculate the frag pos in view space
-				void setStencilMask( const PointLight& light );
-				void setStencilMask( const SpotLight& light );
+				void stencilOptPass( const PointLight& light );
+				void stencilOptPass( const SpotLight& light );
 				void ambientPass( const Vec3& color );
 				void pointLightPass( const PointLight& light );
 				void spotLightPass( const SpotLight& light );
