@@ -14,9 +14,9 @@
 using namespace std;
 
 
-//=====================================================================================================================================
-// misc types                                                                                                                         =
-//=====================================================================================================================================
+//======================================================================================================================
+// misc types                                                                                                          =
+//======================================================================================================================
 #ifndef uchar
 typedef unsigned char uchar;
 #endif
@@ -35,75 +35,56 @@ typedef unsigned long int ulong;
 
 
 
-//=====================================================================================================================================
-// MACROS                                                                                                                             =
-//=====================================================================================================================================
+//======================================================================================================================
+// MACROS                                                                                                              =
+//======================================================================================================================
 
-namespace Util {
-extern char*  cutPath( const char* path );
-extern string getFunctionFromPrettyFunction( const char* pretty_function );
-}
+enum MsgType
+{
+	MT_ERROR,
+	MT_WARNING,
+	MT_FATAL,
+	MT_DEBUG_ERR,
+	MT_INFO,
+	MT_NUM
+};
 
-#define __FILENAME__ Util::cutPath( __FILE__ )
+extern ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* func );
+extern ostream& msgSuffix( ostream& cs );
 
 #ifdef __GNUG__
-	#define __G_FUNCTION__ Util::getFunctionFromPrettyFunction( __PRETTY_FUNCTION__ )
+	#define FUNCTION __PRETTY_FUNCTION__
 #else
-	#define __G_FUNCTION__ __func__
+	#define FUNCTION __func__
 #endif
-
-#if defined( _TERMINAL_COLORING_ ) && defined( _PLATFORM_LINUX_ )
-		// for the colors and formating see http://www.dreamincode.net/forums/showtopic75171.htm
-    #define COL_ERROR "\033[6;31;6m"
-    #define COL_WARNING "\033[6;33;6m"
-    #define COL_INFO "\033[6;32;6m"
-    #define COL_FATAL "\033[1;31;6m"
-    #define COL_DEBUG_ERR "\033[6;31;6m"
-    #define COL_DEFAULT "\033[0;;m"
-#else
-    #define COL_ERROR ""
-    #define COL_WARNING ""
-    #define COL_INFO ""
-    #define COL_FATAL ""
-    #define COL_DEBUG_ERR ""
-    #define COL_DEFAULT ""
-#endif
-
-/// For internal use
-#define GENERAL_ERR( x, y, col ) \
-	cerr << col << x << " (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
-
-/// For internal use
-#define GENERAL_MSG( x, y, col ) \
-	cout << col << x << " (" << __FILENAME__ << ":" << __LINE__ << " " << __G_FUNCTION__ << "): " << y << COL_DEFAULT << endl;
 
 /// Use it like this: ERROR( "tralala" << 10 << ' ' )
-#define ERROR( x ) GENERAL_ERR( "Error", x, COL_ERROR )
+#define ERROR( x ) msgPrefix( MT_ERROR, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix;
 
 /// Show a warning
-#define WARNING( x ) GENERAL_ERR( "Warning", x, COL_WARNING )
+#define WARNING( x ) msgPrefix( MT_WARNING, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix;
 
 /// Show an error and exit application
-#define FATAL( x ) { GENERAL_ERR( "Fatal", x << ". Bye!", COL_FATAL ); ::exit( EXIT_FAILURE ); }
+#define FATAL( x ) { msgPrefix( MT_FATAL, __FILE__, __LINE__, FUNCTION ) << x << ". Bye!" << msgSuffix; ::exit( 1 ); }
 
 /// Show an info message
-#define INFO( x ) GENERAL_MSG( "Info", x, COL_INFO )
+#define INFO( x ) msgPrefix( MT_INFO, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix;
 
 /// Reverse assertion
-#ifdef _DEBUG_
+#ifdef DEBUG
 	#define DEBUG_ERR( x ) \
 		if( x ) \
-			GENERAL_ERR( "Debug Err", #x, COL_DEBUG_ERR )
+			msgPrefix( MT_DEBUG_ERR, __FILE__, __LINE__, FUNCTION ) << #x << msgSuffix;
 #else
-    #define DEBUG_ERR( x )
+	#define DEBUG_ERR( x )
 #endif
 
 
 /// code that executes on debug
-#ifdef _DEBUG_
-	#define DEBUG_CODE( x ) {x}
+#ifdef DEBUG
+	#define DEBUG_CODE if( true )
 #else
-	#define DEBUG_CODE( x ) {}
+	#define DEBUG_CODE if( false )
 #endif
 
 
@@ -115,8 +96,8 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
  * Read write property
  *
  * - It creates a unique type so it can work with pointers
- * - The get funcs are coming into two flavors, one const and one non-const. The property is read-write after all so the non-const is
- *   acceptable
+ * - The get funcs are coming into two flavors, one const and one non-const. The property is read-write after all so the
+ *   non-const is acceptable
  * - Dont use it with semicolon at the end (eg PROPERTY_RW( .... );) because of a doxygen bug
  */
 #define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
@@ -158,9 +139,9 @@ extern string getFunctionFromPrettyFunction( const char* pretty_function );
 #define BUFFER_OFFSET( i ) ((char *)NULL + (i))
 
 
-//=====================================================================================================================================
-// memZero                                                                                                                            =
-//=====================================================================================================================================
+//======================================================================================================================
+// memZero                                                                                                             =
+//======================================================================================================================
 /// sets memory to zero
 template <typename Type> inline void memZero( Type& t )
 {
@@ -168,9 +149,9 @@ template <typename Type> inline void memZero( Type& t )
 }
 
 
-//=====================================================================================================================================
-// Vec                                                                                                                                =
-//=====================================================================================================================================
+//======================================================================================================================
+// Vec                                                                                                                 =
+//======================================================================================================================
 /**
  * This is a wrapper of std::vector that adds new functionality
  */
@@ -200,9 +181,9 @@ template<typename Type> class Vec: public vector<Type>
 };
 
 
-//=====================================================================================================================================
-// Memory allocation information for Linux                                                                                            =
-//=====================================================================================================================================
+//======================================================================================================================
+// Memory allocation information for Linux                                                                             =
+//======================================================================================================================
 #if defined( _PLATFORM_LINUX_ )
 
 #include <malloc.h>
@@ -235,9 +216,9 @@ inline void printMallInfoDiff( const Mallinfo& prev, const Mallinfo& now )
 #endif
 
 
-//=====================================================================================================================================
-// Application                                                                                                                        =
-//=====================================================================================================================================
+//======================================================================================================================
+// Application                                                                                                         =
+//======================================================================================================================
 /**
  * The only public variable @see App
  */

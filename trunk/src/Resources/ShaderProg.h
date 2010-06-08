@@ -11,9 +11,9 @@
 /**
  * Shader program @ref Resource
  *
- * Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of uniform variables
- * and a vector of attribute variables. Every variable is a struct that contains the variable's name, location, OpenGL data type and
- * if it is a uniform or an attribute var.
+ * Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of
+ * uniform variables and a vector of attribute variables. Every variable is a struct that contains the variable's name,
+ * location, OpenGL data type and if it is a uniform or an attribute var.
  */
 class ShaderProg: public Resource
 {
@@ -170,19 +170,6 @@ class ShaderProg: public Resource
 
 		bool uniVarExists( const char* varName ) const;
 		bool attribVarExists( const char* varName ) const;
-
-		/**
-		 * The function's code is being used way to often so a function has to be made. It connects a location a texture and a texture unit
-		 * @param location Shader program variable location
-		 * @param tex The texture
-		 * @param texUnit The number of the texture unit
-		 */
-		void locTexUnit( int varLoc, const class Texture& tex, uint texUnit ) const;
-
-		/**
-		 * @see locTexUnit
-		 */
-		void locTexUnit( const char* varName, const class Texture& tex, uint texUnit ) const;
 }; 
 
 #endif

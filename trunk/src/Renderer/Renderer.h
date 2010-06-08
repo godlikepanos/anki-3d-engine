@@ -21,9 +21,9 @@ class SceneNode;
  */
 class Renderer
 {
-	//===================================================================================================================================
-	// The rendering stages                                                                                                             =
-	//===================================================================================================================================
+	//====================================================================================================================
+	// The rendering stages                                                                                              =
+	//====================================================================================================================
 	public:
 		/**
 		 * Rendering stage
@@ -160,7 +160,7 @@ class Renderer
 				Vec3 viewVectors[4];
 				Vec2 planes;
 				static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex coords
-				static uint  sMOUvSVboId; ///< Illumination stage stencil masking optimizations UV sphere VBO id
+				static uint sMOUvSVboId; ///< Illumination stage stencil masking optimizations UV sphere VBO id
 
 				static void initSMOUvS(); ///< Init the illumination stage stencil masking optimizations uv sphere (eg create the @ref sMOUvSVboId VBO)
 				void renderSMOUvS( const PointLight& light ); ///< Render the illumination stage stencil masking optimizations uv sphere
@@ -341,16 +341,15 @@ class Renderer
 		}; // end Dbg
 
 
-	//===================================================================================================================================
-	//                                                                                                                                  =
-	//===================================================================================================================================
+	//====================================================================================================================
+	//                                                                                                                   =
+	//====================================================================================================================
 	PROPERTY_R( uint, width, getWidth ) ///< Width of the rendering. Dont confuse with the window width
 	PROPERTY_R( uint, height, getHeight ) ///< Height of the rendering. Dont confuse with the window width
 	PROPERTY_R( uint, framesNum, getFramesNum )
 	PROPERTY_R( float, aspectRatio, getAspectRatio ) ///< Just a precalculated value
 
 	protected:
-		// the rest
 		const Camera* cam; ///< Current camera
 		static float quadVertCoords [][2];
 
@@ -386,7 +385,8 @@ class Renderer
 		 * @param view The view vector
 		 * @return The unprojected coords coords
 		 */
-		static Vec3 unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4] );
+		static Vec3 unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
+		                       const int view[4] );
 
 		/**
 		 * It returns an orthographic projection matrix

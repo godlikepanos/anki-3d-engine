@@ -10,12 +10,12 @@
 /**
  * Mesh material @ref Resource
  *
- * Every material keeps info of how to render a @ref MeshNode. Among this info it keeps the locations of attribute and uniform
- * variables. The variables can be standard or user defined. The standard variables have standard names inside the shader program and
- * we dont have to mention them in the .mtl files. The material init func scoops the shader program for standard variables and keeps
- * a pointer to the variable. The standard variables are like the GL build-in variables (that we cannot longer use on GL >3) with a few
- * additions. The user defined variables are defined and values inside the .mtl file. The attribute variables cannot be user defined,
- * the uniform on the other hand can.
+ * Every material keeps info of how to render a @ref MeshNode. Among this info it keeps the locations of attribute and
+ * uniform variables. The variables can be standard or user defined. The standard variables have standard names inside
+ * the shader program and we dont have to mention them in the .mtl files. The material init func scoops the shader
+ * program for standard variables and keeps a pointer to the variable. The standard variables are like the GL build-in
+ * variables (that we cannot longer use on GL >3) with a few additions. The user defined variables are defined and
+ * values inside the .mtl file. The attribute variables cannot be user defined, the uniform on the other hand can.
  */
 class Material: public Resource
 {
@@ -120,7 +120,8 @@ class Material: public Resource
 
 
 		/**
-		 * The func sweeps all the variables of the shader program to find standard shader program variables. It updates the stdAttribVars
+		 * The func sweeps all the variables of the shader program to find standard shader program variables. It updates the
+		 * stdAttribVars
 		 * and stdUniVars arrays.
 		 * @return True on success
 		 */

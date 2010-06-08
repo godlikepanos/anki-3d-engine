@@ -5,9 +5,9 @@
 #include "Util.h"
 
 
-//=====================================================================================================================================
-// printSourceLines                                                                                                                   =
-//=====================================================================================================================================
+//======================================================================================================================
+// printSourceLines                                                                                                    =
+//======================================================================================================================
 void ShaderPrePreprocessor::printSourceLines() const
 {
 	for( uint i=0; i<sourceLines.size(); ++i )
@@ -17,9 +17,9 @@ void ShaderPrePreprocessor::printSourceLines() const
 }
 
 
-//=====================================================================================================================================
-// printShaderVars                                                                                                                    =
-//=====================================================================================================================================
+//======================================================================================================================
+// printShaderVars                                                                                                     =
+//======================================================================================================================
 void ShaderPrePreprocessor::printShaderVars() const
 {
 	PRINT( "TYPE" << setw(20) << "NAME" << setw(4) << "LOC" );
@@ -30,10 +30,11 @@ void ShaderPrePreprocessor::printShaderVars() const
 }
 
 
-//=====================================================================================================================================
-// findShaderVar                                                                                                                      =
-//=====================================================================================================================================
-Vec<ShaderPrePreprocessor::ShaderVarPragma>::iterator ShaderPrePreprocessor::findShaderVar( Vec<ShaderVarPragma>& vec, const string& name ) const
+//======================================================================================================================
+// findShaderVar                                                                                                       =
+//======================================================================================================================
+Vec<ShaderPrePreprocessor::ShaderVarPragma>::iterator ShaderPrePreprocessor::findShaderVar( Vec<ShaderVarPragma>& vec,
+                                                                                            const string& name ) const
 {
 	Vec<ShaderVarPragma>::iterator it = vec.begin();
 	while( it != vec.end() && it->name != name )
@@ -44,9 +45,9 @@ Vec<ShaderPrePreprocessor::ShaderVarPragma>::iterator ShaderPrePreprocessor::fin
 }
 
 
-//=====================================================================================================================================
-// parseFileForPragmas                                                                                                                =
-//=====================================================================================================================================
+//======================================================================================================================
+// parseFileForPragmas                                                                                                 =
+//======================================================================================================================
 bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int depth )
 {
 	// first check the depth
@@ -122,7 +123,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						vertShaderBegins.definedInFile = filename;
 						vertShaderBegins.definedInLine = scanner.getLineNumber();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
+						                       Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
 						// stop play
 					}
 /* geomShaderBegins */
@@ -163,7 +165,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						geomShaderBegins.definedInFile = filename;
 						geomShaderBegins.definedInLine = scanner.getLineNumber();
 						geomShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
+						                       Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
 						// stop play
 					}
 /* fragShaderBegins */
@@ -195,7 +198,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 						fragShaderBegins.definedInFile = filename;
 						fragShaderBegins.definedInLine = scanner.getLineNumber();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
+						sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
+						                       Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1] );
 						// stop play
 					}
 /* include */
@@ -208,7 +212,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 							//int line = sourceLines.size();
 							sourceLines.push_back( string("#line 0 ") + Util::intToStr(depth+1) + " // " + lines[scanner.getLineNumber()-1] );
 							if( !parseFileForPragmas( token->getValue().getString(), depth+1 ) ) return false;
-							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' + Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNumber()-1] );
+							sourceLines.push_back( string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
+							                       Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNumber()-1] );
 							// stop play
 						}
 						else
@@ -239,7 +244,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 									}
 									else
 									{
-										PARSE_ERR( "Attribute \"" << varName << "\" already defined at " << attrib->definedInFile << ":" << attrib->definedInLine );
+										PARSE_ERR( "Attribute \"" << varName << "\" already defined at " << attrib->definedInFile << ":" <<
+										           attrib->definedInLine );
 									}
 									return false;
 								}
@@ -248,8 +254,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 								{
 									if( attrib->customLoc == loc )
 									{
-										PARSE_ERR( "The attributes \"" << attrib->name << "\" (" << attrib->definedInFile << ":" << attrib->definedInLine <<
-										           ") and \"" << varName << "\" share the same location" );
+										PARSE_ERR( "The attributes \"" << attrib->name << "\" (" << attrib->definedInFile << ":" <<
+										           attrib->definedInLine << ") and \"" << varName << "\" share the same location" );
 										return false;
 									}
 								}
@@ -313,9 +319,9 @@ bool ShaderPrePreprocessor::parseFileForPragmas( const string& filename, int dep
 }
 
 
-//=====================================================================================================================================
-// parseFile                                                                                                                          =
-//=====================================================================================================================================
+//======================================================================================================================
+// parseFile                                                                                                           =
+//======================================================================================================================
 bool ShaderPrePreprocessor::parseFile( const char* filename )
 {
 	// parse master file

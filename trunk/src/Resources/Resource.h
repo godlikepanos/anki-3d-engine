@@ -20,8 +20,8 @@ template< typename Type > class Container;
 
 
 /**
- * Every class that it is considered a resource should be derived by this one. This step is not necessary because of the Container
- * template but ensures that loading will be made by the resource manager and not the class itself
+ * Every class that it is considered a resource should be derived by this one. This step is not necessary because of the
+ * Container template but ensures that loading will be made by the resource manager and not the class itself
  */
 class Resource
 {
