@@ -68,8 +68,8 @@ void Renderer::render( Camera& cam_ )
 
 	ms.run();
 	is.run();
-	/*pps.run();
-	dbg.run();*/
+	pps.run();
+	//dbg.run();
 
 	++framesNum;
 }
@@ -252,7 +252,8 @@ void Renderer::setViewMatrix( const Camera& cam )
 //======================================================================================================================
 // unproject                                                                                                           =
 //======================================================================================================================
-Vec3 Renderer::unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4] )
+Vec3 Renderer::unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
+                          const int view[4] )
 {
 	Mat4 invPm = projectionMat * modelViewMat;
 	invPm.invert();

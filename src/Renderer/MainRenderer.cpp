@@ -55,6 +55,7 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 	glDisable( GL_LIGHTING );
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_BLEND );
+	glDisable( GL_STENCIL_TEST );
 	glPolygonMode( GL_FRONT, GL_FILL );
 	glDepthMask( true );
 	glDepthFunc( GL_LESS );
@@ -89,7 +90,7 @@ void MainRenderer::render( Camera& cam_ )
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 	sProg.bind();
-	sProg.findUniVar("rasterImage")->setTexture( is.fai, 0 );
+	sProg.findUniVar("rasterImage")->setTexture( pps.hdr.pass0Fai, 0 );
 	drawQuad( 0 );
 }
 

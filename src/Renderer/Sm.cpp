@@ -27,9 +27,10 @@ void Renderer::Is::Sm::init()
 	shadowMap.texParameter( GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
 	shadowMap.texParameter( GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
 	/*
-	 * If you dont want to use the FFP for comparing the shadwomap (the above two lines) then you can make the comparision inside the
-	 * glsl shader. The GL_LEQUAL means that: shadow = ( R <= Dt ) ? 1.0 : 0.0; . The R is given by: R = _tex_coord2.z/_tex_coord2.w;
-	 * and the Dt = shadow2D(shadow_depth_map, _shadow_uv ).r (see lp_generic.frag). Hardware filters like GL_LINEAR cannot be applied.
+	 * If you dont want to use the FFP for comparing the shadwomap (the above two lines) then you can make the comparison
+	 * inside the glsl shader. The GL_LEQUAL means that: shadow = ( R <= Dt ) ? 1.0 : 0.0; . The R is given by:
+	 * R = _tex_coord2.z/_tex_coord2.w; and the Dt = shadow2D(shadow_depth_map, _shadow_uv ).r (see lp_generic.frag).
+	 * Hardware filters like GL_LINEAR cannot be applied.
 	 */
 
 	// inform the we wont write to color buffers

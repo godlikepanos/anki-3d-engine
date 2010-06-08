@@ -22,19 +22,21 @@ void Renderer::Ms::init()
 	if( !normalFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA ) ||
 	    !diffuseFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA ) ||
 	    !specularFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA ) ||
-	    !depthFai.createEmpty2D( r.width, r.height, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT ) )
+	    //!depthFai.createEmpty2D( r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8 ) )
+	    !depthFai.createEmpty2D( r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ) )
 	{
 		FATAL( "Failed to create one MS FAI. See prev error" );
 	}
 
 
 	// attach the buffers to the FBO
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, normalFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, diffuseFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, specularFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0 );
 
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
+	//glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
 
 	// test if success
 	if( !fbo.isGood() )

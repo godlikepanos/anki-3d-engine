@@ -4,8 +4,7 @@
 
 
 // for the colors and formating see http://www.dreamincode.net/forums/showtopic75171.htm
-static const char* terminalColors [ MT_NUM + 1 ] =
-{
+static const char* terminalColors [ MT_NUM + 1 ] = {
 	"\033[1;31;6m", // error
 	"\033[1;33;6m", // warning
 	"\033[1;31;6m", // fatal
@@ -21,11 +20,9 @@ static const char* terminalColors [ MT_NUM + 1 ] =
 ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* func )
 {
 	if( app == NULL )
-		exit( 1 );
+		::exit( 1 );
 
-	//
 	// select c stream
-	//
 	ostream* cs;
 
 	switch( msgType )
@@ -46,18 +43,14 @@ ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* fun
 	}
 
 
-	//
 	// print terminal color
-	//
 	if( app->isTerminalColoringEnabled() )
 	{
 		(*cs) << terminalColors[ msgType ];
 	}
 
 
-	//
 	// print message info
-	//
 	switch( msgType )
 	{
 		case MT_ERROR:
@@ -84,9 +77,7 @@ ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* fun
 			break;
 	}
 
-	//
 	// print caller info
-	//
 	(*cs) << " (" << Util::cutPath( file ) << ":" << line << " " << Util::getFunctionFromPrettyFunction( func ) << "): ";
 
 	return (*cs);
@@ -98,6 +89,9 @@ ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* fun
 //======================================================================================================================
 ostream& msgSuffix( ostream& cs )
 {
+	if( app == NULL )
+		::exit( 1 );
+
 	if( app->isTerminalColoringEnabled() )
 		cs << terminalColors[ MT_NUM ];
 
