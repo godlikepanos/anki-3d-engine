@@ -5,13 +5,13 @@
 #include "BufferObject.h"
 
 /**
- * @brief This is a wrapper for Vertex Buffer Objects to prevent us from making idiotic errors
+ * This is a wrapper for Vertex Buffer Objects to prevent us from making idiotic errors
  */
 class Vbo: public BufferObject
 {
 	public:
 		/**
-		 * @brief It adds an extra check over @ref BufferObject::create. See @ref BufferObject::create for details
+		 * It adds an extra check over @ref BufferObject::create. See @ref BufferObject::create for details
 		 */
 		bool create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
 		{

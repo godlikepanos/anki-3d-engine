@@ -325,7 +325,7 @@ void Renderer::Is::pointLightPass( const PointLight& light )
 	if( !cam.insideFrustum( sphere ) ) return;
 
 	// stencil optimization
-	stencilOptPass( light );
+	//stencilOptPass( light );
 
 	// bind the shader
 	const LightShaderProg& shader = pointLightSProg; // ensure the const-ness
@@ -443,7 +443,7 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	static Mat4 biasMat4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 texProjectionMat;
 	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() *
-	                   Mat4::combineTransformations( light.camera.getViewMatrix(), Mat4(cam.getWorldTransform()) );
+	                   Mat4::combineTransformations( light.camera.getViewMatrix(), Mat4( cam.getWorldTransform() ) );
 	shdr->uniVars.texProjectionMat->setMat4( &texProjectionMat );
 
 	// the shadow stuff
@@ -511,18 +511,6 @@ void Renderer::Is::run()
 			{
 				const PointLight& pointl = static_cast<const PointLight&>(light);
 				pointLightPass( pointl );
-
-
-				/*pointLightSProg.bind();
-				pointLightSProg.findUniVar( "msNormalFai" )->setTexture( r.ms.diffuseFai, 1 );
-				glEnableVertexAttribArray( 0 );
-				glEnableVertexAttribArray( 1 );
-				glVertexAttribPointer( 0, 2, GL_FLOAT, false, 0, &Renderer::quadVertCoords[0] );
-				glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &viewVectors[0] );
-				glDrawArrays( GL_QUADS, 0, 4 );
-				glDisableVertexAttribArray( 0 );
-				glDisableVertexAttribArray( 1 );*/
-
 				break;
 			}
 

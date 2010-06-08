@@ -80,7 +80,7 @@ float getAttenuation( in float _frag_light_dist )
 #if defined(_SPOT_LIGHT_) && defined( _SHADOW_ )
 
 /**
- * @return The blured shadow
+ * @return The blurred shadow
  */
 float pcfOff( in vec3 _shadow_uv )
 {
@@ -243,7 +243,7 @@ void main()
 		vec3 _color = phong( _frag_pos_vspace, _frag_light_dist );
 		gl_FragData[0] = vec4( _color * getAttenuation(_frag_light_dist), 1.0 );
 
-		gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + texture2D( msDepthFai, texCoords );
+		//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + texture2D( msNormalFai, texCoords );
 
 
 	//
