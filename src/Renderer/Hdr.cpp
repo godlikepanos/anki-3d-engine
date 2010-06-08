@@ -1,9 +1,9 @@
 #include "Renderer.h"
 
 
-//=====================================================================================================================================
-// initFbos                                                                                                                           =
-//=====================================================================================================================================
+//======================================================================================================================
+// initFbos                                                                                                            =
+//======================================================================================================================
 void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 {
 	int width = renderingQuality * r.width;
@@ -34,9 +34,9 @@ void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 }
 
 
-//=====================================================================================================================================
-// init                                                                                                                               =
-//=====================================================================================================================================
+//======================================================================================================================
+// init                                                                                                                =
+//======================================================================================================================
 void Renderer::Pps::Hdr::init()
 {
 	//int width = renderingQuality * r.width;
@@ -49,11 +49,14 @@ void Renderer::Pps::Hdr::init()
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	// init shaders
-	//
 	const char* shaderFname = "shaders/PpsHdr.glsl";
 
-	if( !pass0SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n").c_str() ) )
+	if( !pass0SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " +
+	    Util::floatToStr(r.width) + "\n").c_str() ) )
+	{
 		FATAL( "See prev error" );
+	}
+
 	pass0SProg.uniVars.fai = pass0SProg.findUniVar("fai");
 
 	if( !pass1SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n").c_str() ) )
@@ -66,9 +69,9 @@ void Renderer::Pps::Hdr::init()
 }
 
 
-//=====================================================================================================================================
-// runPass                                                                                                                            =
-//=====================================================================================================================================
+//======================================================================================================================
+// runPass                                                                                                             =
+//======================================================================================================================
 void Renderer::Pps::Hdr::run()
 {
 	int w = renderingQuality * r.width;
@@ -78,26 +81,23 @@ void Renderer::Pps::Hdr::run()
 	glDisable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
 
-
 	// pass 0
 	pass0Fbo.bind();
 	pass0SProg.bind();
 	pass0SProg.uniVars.fai->setTexture( r.is.fai, 0 );
-	r.drawQuad( 0 );
-
+	Renderer::drawQuad( 0 );
 
 	// pass 1
 	pass1Fbo.bind();
 	pass1SProg.bind();
 	pass1SProg.uniVars.fai->setTexture( pass0Fai, 0 );
-	r.drawQuad( 0 );
-
+	Renderer::drawQuad( 0 );
 
 	// pass 2
 	pass2Fbo.bind();
 	pass2SProg.bind();
 	pass2SProg.uniVars.fai->setTexture( pass1Fai, 0 );
-	r.drawQuad( 0 );
+	Renderer::drawQuad( 0 );
 
 	// end
 	Fbo::unbind();

@@ -9,7 +9,7 @@
 
 /*
 =======================================================================================================================================
-CreateRoot                                                                                                                            =
+CreateRoot                                                                                                             =
 =======================================================================================================================================
 */
 void octree_t::CreateRoot( const Vec<Mesh*>& meshes )
@@ -72,7 +72,7 @@ void octree_t::CreateRoot( const Vec<Mesh*>& meshes )
 
 /*
 =======================================================================================================================================
-GetFacesNum                                                                                                                           =
+GetFacesNum                                                                                                            =
 =======================================================================================================================================
 */
 uint octree_t::node_t::GetFacesNum() const
@@ -88,9 +88,9 @@ uint octree_t::node_t::GetFacesNum() const
 
 /*
 =======================================================================================================================================
-IsSubdivHeuristicMet                                                                                                                  =
+IsSubdivHeuristicMet                                                                                                   =
 returns true when the used difined heuristic is met that sais that we can subdivide the node. Long story short it returns true when   =
-we can subdivide the node further                                                                                                     =
+we can subdivide the node further                                                                                      =
 =======================================================================================================================================
 */
 bool octree_t::IsSubdivHeuristicMet( node_t* node ) const
@@ -104,8 +104,8 @@ bool octree_t::IsSubdivHeuristicMet( node_t* node ) const
 
 /*
 =======================================================================================================================================
-SubdivideNode                                                                                                                         =
-subdivides the node and creates max 8 children and then subdivides the children                                                       =
+SubdivideNode                                                                                                          =
+subdivides the node and creates max 8 children and then subdivides the children                                        =
 =======================================================================================================================================
 */
 void octree_t::SubdivideNode( node_t* node )
@@ -124,7 +124,7 @@ void octree_t::SubdivideNode( node_t* node )
 
 /*
 =======================================================================================================================================
-CreateTree                                                                                                                            =
+CreateTree                                                                                                             =
 =======================================================================================================================================
 */
 void octree_t::CreateTree( const Vec<Mesh*>& meshes )
@@ -136,9 +136,9 @@ void octree_t::CreateTree( const Vec<Mesh*>& meshes )
 
 /*
 =======================================================================================================================================
-CheckNodeAgainstFrustum                                                                                                               =
+CheckNodeAgainstFrustum                                                                                                =
 the func checks the node and returns if its inside the cameras fruntum. It returns 0 if the cube is not inside, 1 if partialy         =
-inside and 2 if totaly inside                                                                                                         =
+inside and 2 if totaly inside                                                                                          =
 =======================================================================================================================================
 */
 uint octree_t::CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const
@@ -171,14 +171,14 @@ uint octree_t::CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const
 
 /*
 =======================================================================================================================================
-map                                                                                                                                   =
+map                                                                                                                    =
 =======================================================================================================================================
 */
 
 
 /*
 =======================================================================================================================================
-load                                                                                                                                  =
+load                                                                                                                   =
 =======================================================================================================================================
 */
 bool map_t::load( const char* filename )

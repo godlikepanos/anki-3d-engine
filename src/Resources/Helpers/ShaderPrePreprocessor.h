@@ -8,11 +8,12 @@
 /**
  * Helper class used for shader program loading
  *
- * The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to have all the
- * shaders in the same file. The file that includes all the shaders is called ShaderPrePreprocessor-compatible. The preprocessor pragmas are
- * four: include, vertShaderBegins, fragShaderBegins and attribute. The *ShaderBegins indicate where the shader code begins and must be
- * in certain order, first the vert shader then the optional geom and then the frag. The include is self-explanatory. The attribute is
- * used to bind custom locations to attributes.
+ * The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to
+ * have all the shaders in the same file. The file that includes all the shaders is called
+ * ShaderPrePreprocessor-compatible. The preprocessor pragmas are four: include, vertShaderBegins, fragShaderBegins and
+ * attribute. The *ShaderBegins indicate where the shader code begins and must be in certain order, first the vert
+ * shader then the optional geom and then the frag. The include is self-explanatory. The attribute is used to bind
+ * custom locations to attributes.
  */
 class ShaderPrePreprocessor
 {
@@ -40,8 +41,11 @@ class ShaderPrePreprocessor
 		{
 			string name;
 			uint   customLoc;
+
 			ShaderVarPragma( const string& definedInFile_, int definedInLine_, const string& name_, uint customLoc_ ):
-				Pragma( definedInFile_, definedInLine_ ), name(name_), customLoc(customLoc_)
+				Pragma( definedInFile_, definedInLine_ ),
+				name(name_),
+				customLoc(customLoc_)
 			{}
 		};
 	

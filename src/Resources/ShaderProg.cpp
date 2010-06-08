@@ -7,6 +7,11 @@
 #define SHADER_ERROR( x ) ERROR( "Shader (" << getRsrcName() << "): " << x )
 #define SHADER_WARNING( x ) WARNING( "Shader (" << getRsrcName() << "): " << x )
 
+
+//======================================================================================================================
+// Statics                                                                                                             =
+//======================================================================================================================
+
 string ShaderProg::stdSourceCode(
 	"#version 150 compatibility\n \
 	precision lowp float;\n \
@@ -14,11 +19,14 @@ string ShaderProg::stdSourceCode(
 	#pragma debug(off)\n"
 );
 
-//=====================================================================================================================================
-// set uniforms                                                                                                                       =
-//=====================================================================================================================================
+//======================================================================================================================
+// set uniforms                                                                                                        =
+//======================================================================================================================
 /**
- * Standard set uniform check
+ * Standard set uniform checks
+ * - Check if initialized
+ * - if the current shader program is the var's shader program
+ * - if the GL driver gives the same location as the one the var has
  */
 #define STD_SET_UNI_CHECK() DEBUG_ERR( getLoc() == -1 ); \
                             DEBUG_ERR( ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() ); \
@@ -83,9 +91,9 @@ void ShaderProg::UniVar::setTexture( const Texture& tex, uint texUnit ) const
 }
 
 
-//=====================================================================================================================================
-// createAndCompileShader                                                                                                             =
-//=====================================================================================================================================
+//======================================================================================================================
+// createAndCompileShader                                                                                              =
+//======================================================================================================================
 uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const
 {
 	uint glId = 0;
@@ -138,9 +146,9 @@ uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* pre
 }
 
 
-//=====================================================================================================================================
-// link                                                                                                                               =
-//=====================================================================================================================================
+//======================================================================================================================
+// link                                                                                                                =
+//======================================================================================================================
 bool ShaderProg::link()
 {
 	// link
@@ -169,9 +177,9 @@ bool ShaderProg::link()
 }
 
 
-//=====================================================================================================================================
-// getUniAndAttribVars                                                                                                                =
-//=====================================================================================================================================
+//======================================================================================================================
+// getUniAndAttribVars                                                                                                 =
+//======================================================================================================================
 void ShaderProg::getUniAndAttribVars()
 {
 	int num;
@@ -224,9 +232,9 @@ void ShaderProg::getUniAndAttribVars()
 }
 
 
-//=====================================================================================================================================
-// bindCustomAttribLocs                                                                                                               =
-//=====================================================================================================================================
+//======================================================================================================================
+// bindCustomAttribLocs                                                                                                =
+//======================================================================================================================
 bool ShaderProg::bindCustomAttribLocs( const ShaderPrePreprocessor& pars ) const
 {
 	for( uint i=0; i<pars.getOutput().getAttribLocs().size(); ++i )
@@ -239,7 +247,8 @@ bool ShaderProg::bindCustomAttribLocs( const ShaderPrePreprocessor& pars ) const
 		GLenum errId = glGetError();
 		if( errId != GL_NO_ERROR )
 		{
-			SHADER_ERROR( "Something went wrong for attrib \"" << name << "\" and location " << loc << " (" << gluErrorString( errId ) << ")" );
+			SHADER_ERROR( "Something went wrong for attrib \"" << name << "\" and location " << loc << " (" <<
+			              gluErrorString( errId ) << ")" );
 			return false;
 		}
 	}
@@ -247,9 +256,9 @@ bool ShaderProg::bindCustomAttribLocs( const ShaderPrePreprocessor& pars ) const
 }
 
 
-//=====================================================================================================================================
-// load                                                                                                                               =
-//=====================================================================================================================================
+//======================================================================================================================
+// load                                                                                                                =
+//======================================================================================================================
 bool ShaderProg::load( const char* filename )
 {
 	if( !customLoad( filename, "" ) ) return false;
@@ -257,9 +266,9 @@ bool ShaderProg::load( const char* filename )
 }
 
 
-//=====================================================================================================================================
-// customLoad                                                                                                                         =
-//=====================================================================================================================================
+//======================================================================================================================
+// customLoad                                                                                                          =
+//======================================================================================================================
 bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 {
 	if( getRsrcName().length() == 0 )
@@ -274,10 +283,12 @@ bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 
 	// 1) create and compile the shaders
 	string preprocSource = stdSourceCode + extraSource;
-	uint vertGlId = createAndCompileShader( pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(), GL_VERTEX_SHADER );
+	uint vertGlId = createAndCompileShader( pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
+	                                        GL_VERTEX_SHADER );
 	if( vertGlId == 0 ) return false;
 
-	uint fragGlId = createAndCompileShader( pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(), GL_FRAGMENT_SHADER );
+	uint fragGlId = createAndCompileShader( pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
+	                                        GL_FRAGMENT_SHADER );
 	if( fragGlId == 0 ) return false;
 
 	// 2) create program and attach shaders
@@ -304,9 +315,9 @@ bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 }
 
 
-//=====================================================================================================================================
-// findUniVar                                                                                                                          =
-//=====================================================================================================================================
+//======================================================================================================================
+// findUniVar                                                                                                          =
+//======================================================================================================================
 const ShaderProg::UniVar* ShaderProg::findUniVar( const char* name ) const
 {
 	NameToUniVarIterator it = uniNameToVar.find( name );
@@ -319,9 +330,9 @@ const ShaderProg::UniVar* ShaderProg::findUniVar( const char* name ) const
 }
 
 
-//=====================================================================================================================================
-// findAttribVar                                                                                                                       =
-//=====================================================================================================================================
+//======================================================================================================================
+// findAttribVar                                                                                                       =
+//======================================================================================================================
 const ShaderProg::AttribVar* ShaderProg::findAttribVar( const char* name ) const
 {
 	NameToAttribVarIterator it = attribNameToVar.find( name );
@@ -334,9 +345,9 @@ const ShaderProg::AttribVar* ShaderProg::findAttribVar( const char* name ) const
 }
 
 
-//=====================================================================================================================================
-// uniVarExists                                                                                                                       =
-//=====================================================================================================================================
+//======================================================================================================================
+// uniVarExists                                                                                                        =
+//======================================================================================================================
 bool ShaderProg::uniVarExists( const char* name ) const
 {
 	NameToUniVarIterator it = uniNameToVar.find( name );
@@ -344,30 +355,12 @@ bool ShaderProg::uniVarExists( const char* name ) const
 }
 
 
-//=====================================================================================================================================
-// attribVarExists                                                                                                                    =
-//=====================================================================================================================================
+//======================================================================================================================
+// attribVarExists                                                                                                     =
+//======================================================================================================================
 bool ShaderProg::attribVarExists( const char* name ) const
 {
 	NameToAttribVarIterator it = attribNameToVar.find( name );
 	return it != attribNameToVar.end();
 }
 
-
-//=====================================================================================================================================
-// locTexUnit                                                                                                                         =
-//=====================================================================================================================================
-void ShaderProg::locTexUnit( int loc, const Texture& tex, uint texUnit ) const
-{
-	DEBUG_ERR( loc == -1 );
-	DEBUG_ERR( getCurrentProgramGlId() != glId );
-	tex.bind( texUnit );
-	glUniform1i( loc, texUnit );
-}
-
-void ShaderProg::locTexUnit( const char* loc, const Texture& tex, uint tex_unit ) const
-{
-	DEBUG_ERR( getCurrentProgramGlId() != glId );
-	tex.bind( tex_unit );
-	glUniform1i( findUniVar(loc)->getLoc(), tex_unit );
-}

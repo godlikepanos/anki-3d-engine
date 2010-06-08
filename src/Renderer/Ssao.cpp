@@ -2,9 +2,9 @@
 #include "Camera.h"
 
 
-//=====================================================================================================================================
-// initBlurFbos                                                                                                                       =
-//=====================================================================================================================================
+//======================================================================================================================
+// initBlurFbos                                                                                                        =
+//======================================================================================================================
 void Renderer::Pps::Ssao::initBlurFbo( Fbo& fbo, Texture& fai )
 {
 	// create FBO
@@ -31,9 +31,9 @@ void Renderer::Pps::Ssao::initBlurFbo( Fbo& fbo, Texture& fai )
 }
 
 
-//=====================================================================================================================================
-// init                                                                                                                               =
-//=====================================================================================================================================
+//======================================================================================================================
+// init                                                                                                                =
+//======================================================================================================================
 void Renderer::Pps::Ssao::init()
 {
 	width = renderingQuality * r.width;
@@ -77,8 +77,10 @@ void Renderer::Pps::Ssao::init()
 	//
 
 	ssaoSProg.customLoad( "shaders/PpsSsao.glsl" );
-	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(width) + "\n").c_str() );
-	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bheight) + "\n").c_str() );
+	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " +
+	                      Util::floatToStr(width) + "\n").c_str() );
+	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " +
+	                       Util::floatToStr(bheight) + "\n").c_str() );
 
 	ssaoSProg.uniVars.camerarange = ssaoSProg.findUniVar("camerarange");
 	ssaoSProg.uniVars.msDepthFai = ssaoSProg.findUniVar("msDepthFai");
@@ -109,9 +111,9 @@ void Renderer::Pps::Ssao::init()
 }
 
 
-//=====================================================================================================================================
-// run                                                                                                                                =
-//=====================================================================================================================================
+//======================================================================================================================
+// run                                                                                                                 =
+//======================================================================================================================
 void Renderer::Pps::Ssao::run()
 {
 	const Camera& cam = *r.cam;
@@ -129,7 +131,7 @@ void Renderer::Pps::Ssao::run()
 	ssaoSProg.uniVars.msDepthFai->setTexture( r.ms.depthFai, 0 );
 	ssaoSProg.uniVars.noiseMap->setTexture( *noiseMap, 1 );
 	ssaoSProg.uniVars.msNormalFai->setTexture( r.ms.normalFai, 2 );
-	r.drawQuad( 0 );
+	Renderer::drawQuad( 0 );
 
 	// for 2nd and 3rd passes
 	Renderer::setViewport( 0, 0, bwidth, bheight );
@@ -138,13 +140,13 @@ void Renderer::Pps::Ssao::run()
 	pass1Fbo.bind();
 	blurSProg.bind();
 	blurSProg.uniVars.fai->setTexture( pass0Fai, 0 );
-	r.drawQuad( 0 );
+	Renderer::drawQuad( 0 );
 
 	// 3rd pass
 	pass2Fbo.bind();
 	blurSProg2.bind();
 	blurSProg2.uniVars.fai->setTexture( pass1Fai, 0 );
-	r.drawQuad( 0 );
+	Renderer::drawQuad( 0 );
 
 	// end
 	Fbo::unbind();

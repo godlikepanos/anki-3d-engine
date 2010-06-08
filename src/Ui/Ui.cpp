@@ -11,7 +11,7 @@ namespace Ui {
 
 /*
 =======================================================================================================================================
-data members                                                                                                                          =
+data members                                                                                                           =
 =======================================================================================================================================
 */
 static Texture* fontMap;
@@ -30,7 +30,7 @@ static float  crntY;
 
 /*
 =======================================================================================================================================
-static funcs                                                                                                                          =
+static funcs                                                                                                           =
 =======================================================================================================================================
 */
 
@@ -39,7 +39,7 @@ static funcs                                                                    
 static void SetGL()
 {
 	shader->bind();
-	shader->locTexUnit( shader->findUniVar("fontMap")->getLoc(), *fontMap, 0 );
+	shader->findUniVar( "fontMap" )->setTexture( *fontMap, 0 );
 
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -80,7 +80,7 @@ static void drawChar( char c )
 	// first check for special chars
 	if( c=='\n' ) // new line
 	{
-		//glTranslatef( initial_x, -font_h, 0.0f );
+		//glTranslatef( initial_x, -font_h, 0.0 );
 		crntX = initialX;
 		crntY -= fontH;
 		return;
@@ -100,8 +100,8 @@ static void drawChar( char c )
 	const int linesNum     = 8; // the lines of chars in font_map.tga
 
 	// the uvs
-	float charWidth = 1.0f/float(charsPerLine);
-	float charHeight = 1.0f/float(linesNum);
+	float charWidth = 1.0/float(charsPerLine);
+	float charHeight = 1.0/float(linesNum);
 	float uvTop = float(linesNum - (c-' ')/charsPerLine) / float(linesNum);
 	float uvLeft = float( (c-' ')%charsPerLine ) / float(charsPerLine);
 	float uvRight = uvLeft + charWidth;
@@ -109,15 +109,15 @@ static void drawChar( char c )
 	float uvs[4][2] = { {uvLeft, uvTop}, {uvLeft, uvBottom}, {uvRight, uvBottom}, {uvRight, uvTop} };
 
 	// the coords
-	float fwh = fontW/2.0f;
-	float fhh = fontH/2.0f;
+	float fwh = fontW/2.0;
+	float fhh = fontH/2.0;
 	float coords[4][2] = { {-fwh, fhh}, {-fwh, -fhh}, {fwh, -fhh}, {fwh, fhh} }; // fron top left counterclockwise
 
 
 	if( italic )
 	{
-		coords[0][0] += fontW/5.0f;
-		coords[3][0] += fontW/5.0f;
+		coords[0][0] += fontW/5.0;
+		coords[3][0] += fontW/5.0;
 	}
 
 	glBegin(GL_QUADS);
@@ -144,14 +144,14 @@ static void drawChar( char c )
 	glEnable( GL_TEXTURE_2D );*/
 	// end draw outline
 
-	crntX += fontW*0.8f;
+	crntX += fontW*0.8;
 	//glTranslatef( font_w*0.8f, 0.0, 0.0 ); // font_w*(float) to remove the space
 }
 
 
 /*
 =======================================================================================================================================
-non static funcs                                                                                                                      =
+non static funcs                                                                                                       =
 =======================================================================================================================================
 */
 
@@ -164,9 +164,9 @@ void init()
 	fontMap->texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	//font_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	shader = Rsrc::shaders.load( "shaders/txt.glsl" );
-	setPos( 0.0f, 0.0f );
-	setFontWidth( 0.05f );
-	setColor( Vec4(1.0f, 1.0f, 1.0f, 1.0f) );
+	setPos( 0.0, 0.0 );
+	setFontWidth( 0.05 );
+	setColor( Vec4(1.0, 1.0, 1.0, 1.0) );
 	italic = false;
 }
 
@@ -215,11 +215,11 @@ void printf( const char* format, ... )
 void print( const char* text )
 {
 	SetGL();
-	glTranslatef( crntX, crntY, 0.0f );
+	glTranslatef( crntX, crntY, 0.0 );
 	for( char* pc=const_cast<char*>(text); *pc!='\0'; pc++ )
 	{
 		glLoadIdentity();
-		glTranslatef( crntX, crntY, 0.0f );
+		glTranslatef( crntX, crntY, 0.0 );
 		drawChar( *pc );
 	}
 	RestoreGL();

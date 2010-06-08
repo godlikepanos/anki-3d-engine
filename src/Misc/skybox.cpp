@@ -28,7 +28,7 @@ static float coords [][4][3] =
 
 /*
 =======================================================================================================================================
-load                                                                                                                                  =
+load                                                                                                                   =
 =======================================================================================================================================
 */
 bool Skybox::load( const char* filenames[6] )
@@ -50,7 +50,7 @@ bool Skybox::load( const char* filenames[6] )
 
 /*
 =======================================================================================================================================
-render                                                                                                                                =
+render                                                                                                                 =
 =======================================================================================================================================
 */
 void Skybox::Render( const Mat3& rotation )
@@ -62,7 +62,7 @@ void Skybox::Render( const Mat3& rotation )
 
 	shader->bind();
 	glUniform1i( shader->findUniVar("colormap")->getLoc(), 0 );
-	shader->locTexUnit( shader->findUniVar("noisemap")->getLoc(), *noise, 1 );
+	shader->findUniVar("noisemap")->setTexture( *noise, 1 );
 	glUniform1f( shader->findUniVar("timer")->getLoc(), (rotation_ang/(2*PI))*100 );
 	glUniform3fv( shader->findUniVar("sceneAmbientCol")->getLoc(), 1, &(Vec3( 1.0, 1.0, 1.0 ) / app->getScene()->getAmbientCol())[0] );
 
