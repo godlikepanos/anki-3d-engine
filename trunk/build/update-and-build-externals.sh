@@ -12,6 +12,9 @@ hg pull
 make
 cd ../glew
 svn update
+cd auto
+make destroy
+cd ..
 make extensions
 make
 
