@@ -17,9 +17,9 @@ void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( width, height, internalFormat, GL_RGB );
+	fai.createEmpty2D( width, height, internalFormat, GL_RGB, GL_FLOAT, false );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	//fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	//fai_.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach
@@ -55,7 +55,6 @@ void Renderer::Pps::Hdr::init()
 	pps = "#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n";
 	if( !pass0SProg.customLoad( shaderFname, pps.c_str() ) )
 		FATAL( "See prev error" );
-
 	pass0SProg.uniVars.fai = pass0SProg.findUniVar("fai");
 
 	pps = "#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n";

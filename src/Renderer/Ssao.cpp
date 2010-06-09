@@ -15,7 +15,7 @@ void Renderer::Pps::Ssao::initBlurFbo( Fbo& fbo, Texture& fai )
 	fbo.setNumOfColorAttachements( 1 );
 
 	// create the texes
-	fai.createEmpty2D( bwidth, bheight, GL_ALPHA8, GL_ALPHA );
+	fai.createEmpty2D( bwidth, bheight, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false );
 	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
@@ -54,7 +54,7 @@ void Renderer::Pps::Ssao::init()
 	pass0Fbo.setNumOfColorAttachements(1);
 
 	// create the FAI
-	pass0Fai.createEmpty2D( width, height, GL_ALPHA8, GL_ALPHA );
+	pass0Fai.createEmpty2D( width, height, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false );
 	pass0Fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	pass0Fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 

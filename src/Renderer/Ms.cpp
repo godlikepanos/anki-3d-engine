@@ -19,11 +19,11 @@ void Renderer::Ms::init()
 
 	// create the FAIs
 	const int internal_format = GL_RGBA16F_ARB;
-	if( !normalFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA ) ||
-	    !diffuseFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA ) ||
-	    !specularFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA ) ||
+	if( !normalFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false ) ||
+	    !diffuseFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false ) ||
+	    !specularFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false ) ||
 	    //!depthFai.createEmpty2D( r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8 ) )
-	    !depthFai.createEmpty2D( r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ) )
+	    !depthFai.createEmpty2D( r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false ) )
 	{
 		FATAL( "Failed to create one MS FAI. See prev error" );
 	}

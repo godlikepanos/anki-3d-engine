@@ -12,10 +12,10 @@ varying vec2 texCoords;
 
 void main()
 {
-	vec2 vert_pos = position; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
-	texCoords = vert_pos;
-	vec2 vert_pos_ndc = vert_pos*2.0 - 1.0;
-	gl_Position = vec4( vert_pos_ndc, 0.0, 1.0 );
+	vec2 vertPos = position; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
+	texCoords = vertPos;
+	vec2 vertPosNdc = vertPos*2.0 - 1.0;
+	gl_Position = vec4( vertPosNdc, 0.0, 1.0 );
 }
 
 
