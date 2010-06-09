@@ -1,4 +1,10 @@
-//
+/**
+ * @file
+ *
+ * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write
+ * in all the buffers
+ */
+ 
 #if defined( _DIFFUSE_MAPPING_ ) || defined( _NORMAL_MAPPING_ ) || defined( _SPECULAR_MAPPING_ )
 	#define NEEDS_TEX_MAPPING 1
 #else
@@ -15,10 +21,6 @@
 
 #pragma anki vertShaderBegins
 
-/**
- * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write in all the
- * buffers.
- */
 #pragma anki include "shaders/hw_skinning.glsl"
 
 // attributes
@@ -28,9 +30,12 @@ attribute vec2 texCoords;
 attribute vec4 tangent;
 
 // uniforms
-uniform mat4 MVP_mat;
-uniform mat4 MV_mat;
-uniform mat3 N_mat;
+uniform mat4 modelMat;
+uniform mat4 viewMat;
+uniform mat4 projectionMat;
+uniform mat4 modelViewMat;
+uniform mat3 normalMat;
+uniform mat4 modelViewProjectionMat;
 
 // varyings
 varying vec3 normal_v2f;
@@ -41,9 +46,9 @@ varying vec3 vertPosEyeSpace_v2f; ///< For env mapping. AKA view_vector
 
 
 
-//=====================================================================================================================================
-// main                                                                                                                               =
-//=====================================================================================================================================
+//======================================================================================================================
+// main                                                                                                                =
+//======================================================================================================================
 void main()
 {
 	// calculate the vert pos, normal and tangent
@@ -55,24 +60,24 @@ void main()
 
 		HWSkinning( _rot, _tsl );
 
-		normal_v2f = gl_NormalMatrix * ( _rot * normal );
+		normal_v2f = normalMat * ( _rot * normal );
 
 		#if NEEDS_TANGENT
-			tangent_v2f = gl_NormalMatrix * ( _rot * vec3(tangent) );
+			tangent_v2f = normalMat * ( _rot * vec3(tangent) );
 		#endif
 
 		vec3 pos_lspace = ( _rot * position) + _tsl;
-		gl_Position =  gl_ModelViewProjectionMatrix * vec4(pos_lspace, 1.0);
+		gl_Position =  modelViewProjectionMat * vec4(pos_lspace, 1.0);
 
 	// if DONT have hardware skinning
 	#else
-		normal_v2f = gl_NormalMatrix * normal;
+		normal_v2f = normalMat * normal;
 
 		#if NEEDS_TANGENT
-			tangent_v2f = gl_NormalMatrix * vec3(tangent);
+			tangent_v2f = normalMat * vec3(tangent);
 		#endif
 
-		gl_Position = gl_ModelViewProjectionMatrix * vec4(position, 1.0);
+		gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 	#endif
 
 
@@ -89,7 +94,7 @@ void main()
 
 
 	#if defined( _ENVIRONMENT_MAPPING_ ) || defined( _PARALLAX_MAPPING_ )
-		vertPosEyeSpace_v2f = vec3( gl_ModelViewMatrix * vec4(position, 1.0) );
+		vertPosEyeSpace_v2f = vec3( modelViewMat * vec4(position, 1.0) );
 	#endif
 }
 
@@ -97,21 +102,16 @@ void main()
 #pragma anki fragShaderBegins
 
 /**
- * Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens before the
- * normal calculation and the other just after it. In the first part we read the texture (or the gl_Color) and we set the _diff_color.
- * In case of grass we discard. In the second part we calculate a SEM color and we combine it with the _diff_color. We cannot put
- * the second part before normal calculation because SEM needs the newNormal. Also we cannot put the first part after normal
- * calculation because in case of grass we will waste calculations for the normal. For that two reasons we split the diffuse
- * calculations in two parts
+ * Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens
+ * before the normal calculation and the other just after it. In the first part we read the texture (or the gl_Color)
+ * and we set the _diff_color. In case of grass we discard. In the second part we calculate a SEM color and we combine
+ * it with the _diff_color. We cannot put the second part before normal calculation because SEM needs the newNormal.
+ * Also we cannot put the first part after normal calculation because in case of grass we will waste calculations for
+ * the normal. For that two reasons we split the diffuse calculations in two parts
  */
 
 #pragma anki include "shaders/pack.glsl"
 
-/*
-=======================================================================================================================================
-VARS                                                                                                                                  =
-=======================================================================================================================================
-*/
 
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
@@ -126,22 +126,21 @@ varying vec3 normal_v2f;
 varying vec3 tangent_v2f;
 varying float w_v2f;
 varying vec2 texCoords_v2f;
-varying vec3 eye;
 varying vec3 vertPosEyeSpace_v2f;
+// @todo 
+varying vec3 eye;
 
 
 
-/*
-=======================================================================================================================================
-main                                                                                                                                  =
-=======================================================================================================================================
-*/
+//======================================================================================================================
+// main                                                                                                                =
+//======================================================================================================================
 void main()
 {
-	//===================================================================================================================================
-	// Paralax Mapping Calculations                                                                                                     =
-	// The code below reads the height map, makes some calculations and returns a new texCoords                                        =
-	//===================================================================================================================================
+	//====================================================================================================================
+	// Paralax Mapping Calculations                                                                                      =
+	// The code below reads the height map, makes some calculations and returns a new texCoords                          =
+	//====================================================================================================================
 	#if defined( _PARALLAX_MAPPING_ )
 		/*const float _scale = 0.04;
 		const float _bias = scale * 0.4;
@@ -179,10 +178,10 @@ void main()
 	#endif
 
 
-	//===================================================================================================================================
-	// Diffuse Calculations (Part I)                                                                                                    =
-	// Get the color from the diffuse map and discard if grass                                                                          =
-	//===================================================================================================================================
+	//====================================================================================================================
+	// Diffuse Calculations (Part I)                                                                                     =
+	// Get the color from the diffuse map and discard if grass                                                           =
+	//====================================================================================================================
 	vec3 _diff_color;
 	#if defined( _DIFFUSE_MAPPING_ )
 
@@ -200,10 +199,10 @@ void main()
 	#endif
 
 
-	//===================================================================================================================================
-	// Normal Calculations                                                                                                              =
-	// Either use a normap map and make some calculations or use the vertex normal                                                      =
-	//===================================================================================================================================
+	//====================================================================================================================
+	// Normal Calculations                                                                                               =
+	// Either use a normap map and make some calculations or use the vertex normal                                       =
+	//====================================================================================================================
 	#if defined( _NORMAL_MAPPING_ )
 		vec3 _n = normalize( normal_v2f );
 		vec3 _t = normalize( tangent_v2f );
@@ -219,16 +218,21 @@ void main()
 	#endif
 
 
-	//===================================================================================================================================
-	// Diffuse Calculations (Part II)                                                                                                   =
-	// If SEM is enabled make some calculations and combine colors of SEM and the _diff_color                                           =
-	//===================================================================================================================================
+	//====================================================================================================================
+	// Diffuse Calculations (Part II)                                                                                    =
+	// If SEM is enabled make some calculations and combine colors of SEM and the _diff_color                            =
+	//====================================================================================================================
 
 	// if SEM enabled make some aditional calculations using the vertPosEyeSpace_v2f, environmentMap and the newNormal
 	#if defined( _ENVIRONMENT_MAPPING_ )
 		vec3 _u = normalize( vertPosEyeSpace_v2f );
-		vec3 _r = reflect( _u, newNormal ); // In case of normal mapping I could play with vertex's normal but this gives better...
-		                                      // ...results and its allready computed
+		
+		/**
+		 * In case of normal mapping I could play with vertex's normal but this gives better results and its allready
+		 * computed
+		 */
+		vec3 _r = reflect( _u, newNormal ); 
+		
 		_r.z += 1.0;
 		float _m = 2.0 * length(_r);
 		vec2 _sem_texCoords = _r.xy/_m + 0.5;
@@ -238,9 +242,9 @@ void main()
 	#endif
 
 
-	//===================================================================================================================================
-	// Specular Calculations                                                                                                            =
-	//===================================================================================================================================
+	//====================================================================================================================
+	// Specular Calculations                                                                                             =
+	//====================================================================================================================
 
 	// has specular map
 	#if defined( _SPECULAR_MAPPING_ )
@@ -251,10 +255,9 @@ void main()
 	#endif
 
 
-	//===================================================================================================================================
-	// Final Stage. Write all data                                                                                                      =
-	//===================================================================================================================================
-	//gl_FragData[0].rgb = newNormal;
+	//====================================================================================================================
+	// Final Stage. Write all data                                                                                       =
+	//====================================================================================================================
 	gl_FragData[0].rg = PackNormal( newNormal );
 	gl_FragData[1].rgb = _diff_color;
 	gl_FragData[2] = _specular;

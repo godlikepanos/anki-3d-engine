@@ -41,7 +41,11 @@ class Material: public Resource
 
 		/**
 		 * Standard uniform variables
-		 * Changes here should update some statics and Renderer::setupMaterial
+		 *
+		 * After changing the enum update also:
+		 * - some statics in Material.cpp
+		 * - Renderer::setupMaterial
+		 * - the generic material shader
 		 */
 		enum StdUniVars
 		{
@@ -55,7 +59,7 @@ class Material: public Resource
 			SUV_MODELVIEW_MAT,
 			SUV_NORMAL_MAT,
 			SUV_MODELVIEWPROJECTION_MAT,
-			// FAIs
+			// FAIs (for materials in blending stage)
 			SUV_MS_NORMAL_FAI,
 			SUV_MS_DIFFUSE_FAI,
 			SUV_MS_SPECULAR_FAI,

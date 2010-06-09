@@ -34,10 +34,10 @@ class Mesh: public Resource
 		Vec<Vec3>         vertCoords;
 		Vec<Vec3>         vertNormals;
 		Vec<Vec4>         vertTangents;
-		Vec<Vec2>         texCoords;    ///< One for every vert so we can use vertex arrays
+		Vec<Vec2>         texCoords;    ///< One for every vert so we can use vertex arrays & VBOs
 		Vec<VertexWeight> vertWeights;
 		Vec<Triangle>     tris;
-		Vec<ushort>       vertIndeces; ///< Used for vertex arrays
+		Vec<ushort>       vertIndeces; ///< Used for vertex arrays & VBOs
 
 		struct
 		{

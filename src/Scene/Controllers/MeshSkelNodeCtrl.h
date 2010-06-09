@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Controller.h"
+#include "Vbo.h"
 
 
 class MeshNode;
@@ -20,11 +21,20 @@ class MeshSkelNodeCtrl: public Controller
 		SkelNode* skelNode;
 		MeshNode* meshNode;
 
+		struct
+		{
+			Vbo positions;
+			Vbo normals;
+			Vbo tangents;
+		} vbos;
+
+
 		MeshSkelNodeCtrl( SkelNode* skelNode_, MeshNode* meshNode_ ):
 			Controller( CT_SKEL ),
 			skelNode( skelNode_ ),
 			meshNode( meshNode_ )
 		{}
+
 		/**
 		 * Do nothing! We use HW skinning so its not necessary to update anything in the meshNode. 
 		 * The skelNode's controllers provide us with sufficient data to do the trick.

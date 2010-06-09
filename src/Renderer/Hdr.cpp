@@ -50,16 +50,16 @@ void Renderer::Pps::Hdr::init()
 
 	// init shaders
 	const char* shaderFname = "shaders/PpsHdr.glsl";
+	string pps;
 
-	if( !pass0SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " +
-	    Util::floatToStr(r.width) + "\n").c_str() ) )
-	{
+	pps = "#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n";
+	if( !pass0SProg.customLoad( shaderFname, pps.c_str() ) )
 		FATAL( "See prev error" );
-	}
 
 	pass0SProg.uniVars.fai = pass0SProg.findUniVar("fai");
 
-	if( !pass1SProg.customLoad( shaderFname, ("#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n").c_str() ) )
+	pps = "#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n";
+	if( !pass1SProg.customLoad( shaderFname, pps.c_str() ) )
 		FATAL( "See prev error" );
 	pass1SProg.uniVars.fai = pass1SProg.findUniVar("fai");
 

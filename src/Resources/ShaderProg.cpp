@@ -201,7 +201,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, name_);
 		if( loc == -1 ) // if -1 it means that its an FFP var
 		{
-			//SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
+			SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
 			continue;
 		}
 
@@ -222,7 +222,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, name_);
 		if( loc == -1 ) // if -1 it means that its an FFP var
 		{
-			//SHADER_WARNING( "You are using FFP uniforms (\"" << name_ << "\")" );
+			SHADER_WARNING( "You are using FFP uniforms (\"" << name_ << "\")" );
 			continue;
 		}
 
