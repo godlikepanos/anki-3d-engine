@@ -44,7 +44,7 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 	//
 	// Set GL
 	//
-	glClearColor( 0.1, 0.1, 0.1, 0.0 );
+	glClearColor( 0.1, 0.1, 0.1, 1.0 );
 	glClearDepth( 1.0 );
 	glClearStencil( 0 );
 	glDepthFunc( GL_LEQUAL );
@@ -86,11 +86,12 @@ void MainRenderer::render( Camera& cam_ )
 	//
 	// Render the PPS FAI to the framebuffer
 	//
+	Fbo::unbind();
 	setViewport( 0, 0, app->getWindowWidth(), app->getWindowHeight() );
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 	sProg.bind();
-	sProg.findUniVar("rasterImage")->setTexture( pps.hdr.pass0Fai, 0 );
+	sProg.findUniVar("rasterImage")->setTexture( pps.fai, 0 );
 	drawQuad( 0 );
 }
 

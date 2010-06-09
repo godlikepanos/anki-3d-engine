@@ -84,9 +84,10 @@ bool Texture::load( const char* filename )
 //======================================================================================================================
 // createEmpty2D                                                                                                       =
 //======================================================================================================================
-bool Texture::createEmpty2D( float width_, float height_, int internalFormat, int format_, GLenum type_ )
+bool Texture::createEmpty2D( float width_, float height_, int internalFormat, int format_, GLenum type_,
+                             bool mimapping )
 {
-	DEBUG_ERR( glGetError() != GL_NO_ERROR ); // dont enter the func holding an error
+	DEBUG_ERR( glGetError() != GL_NO_ERROR ); // dont enter the func with prev error
 
 	type = GL_TEXTURE_2D;
 	DEBUG_ERR( internalFormat>0 && internalFormat<=4 ); // deprecated internal format
@@ -96,7 +97,7 @@ bool Texture::createEmpty2D( float width_, float height_, int internalFormat, in
 	glGenTextures( 1, &glId );
 	bind();
 
-	if( mipmappingEnabled )
+	if( mimapping )
 		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	else
 		glTexParameteri( type, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
@@ -108,7 +109,7 @@ bool Texture::createEmpty2D( float width_, float height_, int internalFormat, in
 	// allocate to vram
 	glTexImage2D( type, 0, internalFormat, width_, height_, 0, format_, type_, NULL );
 
-	if( mipmappingEnabled )
+	if( mimapping )
 		glGenerateMipmap( type );
 
 	GLenum errid = glGetError();

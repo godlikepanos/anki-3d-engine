@@ -14,7 +14,7 @@ void Renderer::Pps::init()
 	fbo.setNumOfColorAttachements( 1 );
 
 	// create the texes
-	fai.createEmpty2D( r.width, r.height, GL_RGB, GL_RGB );
+	fai.createEmpty2D( r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT, false );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );

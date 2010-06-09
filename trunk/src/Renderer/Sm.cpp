@@ -14,7 +14,7 @@ void Renderer::Is::Sm::init()
 	fbo.bind();
 
 	// texture
-	shadowMap.createEmpty2D( resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT );
+	shadowMap.createEmpty2D( resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, true );
 	shadowMap.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	if( bilinearEnabled )
 	{

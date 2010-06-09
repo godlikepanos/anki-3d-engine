@@ -36,7 +36,7 @@ class Texture: public Resource
 
 		bool load( const char* filename );
 		void unload();
-		bool createEmpty2D( float width, float height, int internalFormat, int format, GLenum type_ = GL_FLOAT );
+		bool createEmpty2D( float width, float height, int internalFormat, int format, GLenum type_, bool mipmapping );
 		bool createEmpty2DMSAA( float width, float height, int samplesNum, int internalFormat );
 
 		void bind( uint unit=0 ) const;
