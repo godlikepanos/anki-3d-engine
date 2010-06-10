@@ -6,7 +6,7 @@
 
 
 /**
- * @brief A wrapper for OpenGL buffer objects ( vertex arrays, texture buffers etc ) to prevent us from making idiotic errors
+ * A wrapper for OpenGL buffer objects ( vertex arrays, texture buffers etc ) to prevent us from making idiotic errors
  */
 class BufferObject
 {
@@ -20,7 +20,7 @@ class BufferObject
 		virtual ~BufferObject() { if(glId!=0) deleteBuff(); }
 
 		/**
-		 * @brief Accessor. Throws an assertion error in BO is not created
+		 * Accessor. Throws an assertion error in BO is not created
 		 * @return The OpenGL ID of the buffer
 		 */
 		uint getGlId() const
@@ -30,7 +30,7 @@ class BufferObject
 		}
 
 		/**
-		 * @brief Accessor. Throws an assertion error in BO is not created
+		 * Accessor. Throws an assertion error in BO is not created
 		 * @return
 		 */
 		GLenum getBufferTarget() const
@@ -40,7 +40,7 @@ class BufferObject
 		}
 
 		/**
-		 * @brief Accessor. Throws an assertion error in BO is not created
+		 * Accessor. Throws an assertion error in BO is not created
 		 * @return GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 		 */
 		GLenum getBufferUsage() const
@@ -59,7 +59,7 @@ class BufferObject
 		}
 
 		/**
-		 * @brief Creates a new BO with the given params and checks if everything went OK
+		 * Creates a new BO with the given params and checks if everything went OK
 		 * @param target_ Depends on the BO
 		 * @param sizeInBytes The size of the buffer that we will allocate in bytes
 		 * @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
@@ -94,7 +94,7 @@ class BufferObject
 		}
 
 		/**
-		 * @brief Throws an assertion error in BO is not created
+		 * Throws an assertion error in BO is not created
 		 */
 		void bind() const
 		{
@@ -103,7 +103,7 @@ class BufferObject
 		}
 
 		/**
-		 * @brief Throws an assertion error in BO is not created
+		 * Throws an assertion error in BO is not created
 		 */
 		void unbind() const
 		{
@@ -112,7 +112,7 @@ class BufferObject
 		}
 
 		/**
-		 * @brief Self explanatory. Throws an assertion error in BO is not created
+		 * Self explanatory. Throws an assertion error in BO is not created
 		 */
 		void deleteBuff()
 		{

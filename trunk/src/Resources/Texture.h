@@ -20,7 +20,7 @@ class Texture: public Resource
 
 	protected:
 		uint   glId; ///< Identification for OGL
-		GLenum type; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+		GLenum target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
 		static int  textureUnitsNum; ///< This needs to be filled after the main renderer initialization
 		static bool mipmappingEnabled;
 		static bool compressionEnabled;
@@ -30,9 +30,9 @@ class Texture: public Resource
 		 Texture();
 		~Texture() {}
 
-		inline uint getGlId() const { DEBUG_ERR(glId==numeric_limits<uint>::max()); return glId; }
-		inline int  getWidth() const { bind(); int i; glGetTexLevelParameteriv( type, 0, GL_TEXTURE_WIDTH, &i ); return i; }
-		inline int  getHeight() const { bind(); int i; glGetTexLevelParameteriv( type, 0, GL_TEXTURE_HEIGHT, &i ); return i; }
+		uint getGlId() const { DEBUG_ERR(glId==numeric_limits<uint>::max()); return glId; }
+		int  getWidth() const { bind(); int i; glGetTexLevelParameteriv( target, 0, GL_TEXTURE_WIDTH, &i ); return i; }
+		int  getHeight() const { bind(); int i; glGetTexLevelParameteriv( target, 0, GL_TEXTURE_HEIGHT, &i ); return i; }
 
 		bool load( const char* filename );
 		void unload();
@@ -41,7 +41,8 @@ class Texture: public Resource
 
 		void bind( uint unit=0 ) const;
 
-		inline void texParameter( GLenum paramName, GLint value ) const { bind(); glTexParameteri( GL_TEXTURE_2D, paramName, value ); }
+		inline void texParameter( GLenum paramName, GLint value ) const { bind(); glTexParameteri( target, paramName, value ); }
+		inline void texParameter( GLenum paramName, GLfloat value ) const { bind(); glTexParameterf( target, paramName, value ); }
 };
 
 
