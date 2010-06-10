@@ -91,7 +91,7 @@ bool Texture::createEmpty2D( float width_, float height_, int internalFormat, in
 
 	target = GL_TEXTURE_2D;
 	DEBUG_ERR( internalFormat>0 && internalFormat<=4 ); // deprecated internal format
-	DEBUG_ERR( glId != numeric_limits<uint>::max() ) // Texture already loaded
+	DEBUG_ERR( glId != numeric_limits<uint>::max() ); // Texture already loaded
 
 	// GL stuff
 	glGenTextures( 1, &glId );

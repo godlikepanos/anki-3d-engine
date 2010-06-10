@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Illumination stage
+ */
+
 #include "Renderer.h"
 #include "Camera.h"
 #include "Light.h"
@@ -164,6 +170,8 @@ void Renderer::Is::init()
 	spotLightNoShadowSProg.uniVars.texProjectionMat = spotLightNoShadowSProg.findUniVar("texProjectionMat");
 
 	string pps = "#define SHADOWMAP_SIZE " + Util::intToStr( sm.resolution ) + "\n#define _SPOT_LIGHT_\n#define _SHADOW_\n";
+	if( sm.pcfEnabled )
+		pps += "#define PCF_ENABLED";
 	spotLightShadowSProg.customLoad( "shaders/IsLpGeneric.glsl", pps.c_str() );
 	spotLightShadowSProg.uniVars.msNormalFai = spotLightShadowSProg.findUniVar("msNormalFai");
 	spotLightShadowSProg.uniVars.msDiffuseFai = spotLightShadowSProg.findUniVar("msDiffuseFai");
@@ -374,11 +382,6 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	if( !cam.insideFrustum( light.camera ) ) return;
 
 	//
-	// stencil optimization
-	//
-	stencilOptPass( light );
-
-	//
 	// generate the shadow map (if needed)
 	//
 	if( light.castsShadow && sm.enabled )
@@ -395,6 +398,11 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	}
 
 	//
+	// stencil optimization
+	//
+	stencilOptPass( light );
+
+	//
 	// set the shader and uniforms
 	//
 	const LightShaderProg* shdr; // because of the huge name
@@ -406,14 +414,11 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 
 	shdr->bind();
 
-	// bind the framebuffer attachable images
+	// bind the FAIs
 	shdr->uniVars.msNormalFai->setTexture( r.ms.normalFai, 0 );
 	shdr->uniVars.msDiffuseFai->setTexture( r.ms.diffuseFai, 1 );
 	shdr->uniVars.msSpecularFai->setTexture( r.ms.specularFai, 2 );
 	shdr->uniVars.msDepthFai->setTexture( r.ms.depthFai, 3 );
-
-	if( light.lightProps->getTexture() == NULL )
-		ERROR( "No texture is attached to the light. lightProps name: " << light.lightProps->getRsrcName() );
 
 	// the planes
 	shdr->uniVars.planes->setVec2( &planes );
@@ -426,7 +431,10 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	shdr->uniVars.lightSpecularCol->setVec3( &light.lightProps->getSpecularColor() );
 
 	// set the light texture
-	shdr->uniVars.lightTex->setTexture( *light.lightProps->getTexture(), 3 );
+	if( light.lightProps->getTexture() == NULL )
+		ERROR( "No texture is attached to the light. lightProps name: " << light.lightProps->getRsrcName() );
+	else
+		shdr->uniVars.lightTex->setTexture( *light.lightProps->getTexture(), 4 );
 
 	/*
 	 * Before we render disable anisotropic in the light.texture because it produces artifacts.
@@ -443,8 +451,9 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	static Mat4 biasMat4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 texProjectionMat;
 	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() *
-	                   Mat4::combineTransformations( light.camera.getViewMatrix(), Mat4( cam.getWorldTransform() ) );
+	                   Mat4::combineTransformations( light.camera.getViewMatrix(), Mat4( cam.getWorldTransform() ) ) ;
 	shdr->uniVars.texProjectionMat->setMat4( &texProjectionMat );
+
 
 	// the shadow stuff
 	if( light.castsShadow && sm.enabled )
@@ -466,11 +475,8 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	glDisableVertexAttribArray( 0 );
 	glDisableVertexAttribArray( 1 );
 
-	// restore texture matrix
-	glMatrixMode( GL_TEXTURE );
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
 
+	// restore
 	glDisable( GL_STENCIL_TEST );
 }
 

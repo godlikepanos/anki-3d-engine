@@ -246,7 +246,7 @@ class aabb_t: public bvolume_t
 		// constructors & destractor
 		aabb_t(): bvolume_t(AABB) {}
 		aabb_t( const aabb_t& other ): bvolume_t(AABB) { (*this) = other; }
-		aabb_t( const Vec3& min_, const Vec3& max_ ): bvolume_t(AABB), min(min_), max(max_) { DEBUG_ERR( max.x<min.x || max.y<min.y || max.z<min.z ) }
+		aabb_t( const Vec3& min_, const Vec3& max_ ): bvolume_t(AABB), min(min_), max(max_) { DEBUG_ERR( max.x<min.x || max.y<min.y || max.z<min.z ); }
 
 		// operators
 		aabb_t& operator =( const aabb_t& other ) { min=other.min; max=other.max; return (*this); }
@@ -301,8 +301,8 @@ class obb_t: public bvolume_t
 		bool Intersects( const obb_t& obb ) const;
 		bool SeperationTest( const bvolume_t& bv, Vec3& normal, Vec3& impact_point, float& depth ) const;
 		bool SeperationTest( const bsphere_t& sphere, Vec3& normal, Vec3& impact_point, float& depth ) const;
-		bool SeperationTest( const aabb_t& /*aabb*/, Vec3& /*normal*/, Vec3& /*impact_point*/, float& /*depth*/ ) const { ERROR("ToDo") return false; }
-		bool SeperationTest( const obb_t& /*obb*/, Vec3& /*normal*/, Vec3& /*impact_point*/, float& /*depth*/ ) const { ERROR("ToDo") return false; }
+		bool SeperationTest( const aabb_t& /*aabb*/, Vec3& /*normal*/, Vec3& /*impact_point*/, float& /*depth*/ ) const { ERROR("ToDo"); return false; }
+		bool SeperationTest( const obb_t& /*obb*/, Vec3& /*normal*/, Vec3& /*impact_point*/, float& /*depth*/ ) const { ERROR("ToDo"); return false; }
 
 		// other funcs
 		void Set( const void* pointer, uint stride, int count ); ///< Set from vec3 array

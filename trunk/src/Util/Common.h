@@ -59,22 +59,22 @@ extern ostream& msgSuffix( ostream& cs );
 #endif
 
 /// Use it like this: ERROR( "tralala" << 10 << ' ' )
-#define ERROR( x ) msgPrefix( MT_ERROR, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix;
+#define ERROR( x ) msgPrefix( MT_ERROR, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix
 
 /// Show a warning
-#define WARNING( x ) msgPrefix( MT_WARNING, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix;
+#define WARNING( x ) msgPrefix( MT_WARNING, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix
 
 /// Show an error and exit application
 #define FATAL( x ) { msgPrefix( MT_FATAL, __FILE__, __LINE__, FUNCTION ) << x << ". Bye!" << msgSuffix; ::exit( 1 ); }
 
 /// Show an info message
-#define INFO( x ) msgPrefix( MT_INFO, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix;
+#define INFO( x ) msgPrefix( MT_INFO, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix
 
 /// Reverse assertion
 #ifdef DEBUG
 	#define DEBUG_ERR( x ) \
 		if( x ) \
-			msgPrefix( MT_DEBUG_ERR, __FILE__, __LINE__, FUNCTION ) << #x << msgSuffix;
+			msgPrefix( MT_DEBUG_ERR, __FILE__, __LINE__, FUNCTION ) << #x << msgSuffix
 #else
 	#define DEBUG_ERR( x )
 #endif
@@ -132,7 +132,7 @@ extern ostream& msgSuffix( ostream& cs );
 
 
 /// Just print
-#define PRINT( x ) cout << x << endl;
+#define PRINT( x ) cout << x << endl
 
 
 /// BUFFER_OFFSET

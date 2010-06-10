@@ -191,7 +191,7 @@ vec3 phong( in vec3 _frag_pos_vspace, out float _frag_light_dist )
 	 * Instead of using normalize(_frag_light_dist) we brake the operation because we want frag_light_dist for the calc of
 	 * the attenuation
 	 */
-	_frag_light_dist = dot( _light_frag_vec, _light_frag_vec ); 
+	_frag_light_dist = dot( _light_frag_vec, _light_frag_vec );
 	vec3 _light_dir = _light_frag_vec * inversesqrt(_frag_light_dist);
 
 	// read the normal
@@ -264,7 +264,7 @@ void main()
 		)
 		{
 			#if defined( _SHADOW_ )
-				#if defined( _SHADOW_MAPPING_pcf )
+				#if defined( PCF_ENABLED )
 					float _shadow_color = pcfLow( _texCoords3 );
 					//float _shadow_color = MedianFilterPCF( shadowMap, _texCoords3 );
 				#else
@@ -293,7 +293,7 @@ void main()
 	#endif // spot light
 
 	/*#if defined(_SPOT_LIGHT_)
-	gl_FragData[0] = vec4( UnpackNormal(texture2D( msNormalFai, texCoords ).rg), 1.0 );
+	gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4( texture2D( msDepthFai, texCoords ).r );
 	//gl_FragData[0] = vec4( texture2D( msDepthFai, texCoords ).rg), 1.0 );
 	#endif*/
 }

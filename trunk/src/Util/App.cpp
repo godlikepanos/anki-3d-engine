@@ -213,7 +213,7 @@ void App::printAppInfo()
 	msg << "build date " __DATE__ << ", ";
 	msg << "rev " << REVISION;
 
-	INFO( msg.str() )
+	INFO( msg.str() );
 }
 
 

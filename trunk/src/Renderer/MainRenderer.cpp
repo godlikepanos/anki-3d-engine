@@ -211,7 +211,10 @@ void MainRenderer::takeScreenshot( const char* filename )
 		ERROR( "File \"" << filename << "\": Unsupported extension. Watch for capital" );
 		return;
 	}
-	if( !ret ) ERROR( "In taking screenshot" )
-	else PRINT( "Screenshot \"" << filename << "\" saved" );
+
+	if( !ret )
+		ERROR( "In taking screenshot" );
+	else
+		INFO( "Screenshot \"" << filename << "\" saved" );
 }
 

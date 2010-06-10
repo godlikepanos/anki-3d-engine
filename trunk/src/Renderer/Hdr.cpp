@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Post-processing stage hight dynamic range lighting pass
+ */
+
 #include "Renderer.h"
 
 
