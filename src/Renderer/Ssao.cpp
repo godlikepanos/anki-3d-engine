@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Post-processing stage screen space ambient occlusion pass
+ */
+
 #include "Renderer.h"
 #include "Camera.h"
 

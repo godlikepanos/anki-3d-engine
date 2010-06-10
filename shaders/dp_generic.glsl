@@ -6,6 +6,8 @@
 attribute vec3 position;
 attribute vec2 texCoords;
 
+uniform mat4 modelViewProjectionMat;
+
 varying vec2 texCoords_v2f;
 
 void main()
@@ -21,9 +23,9 @@ void main()
 		HWSkinning( _rot, _tsl );
 		
 		vec3 pos_lspace = ( _rot * position) + _tsl;
-		gl_Position =  gl_ModelViewProjectionMatrix * vec4(pos_lspace, 1.0);
+		gl_Position =  modelViewProjectionMat * vec4(pos_lspace, 1.0);
 	#else
-	  gl_Position =  gl_ModelViewProjectionMatrix * vec4(position, 1.0);
+	  gl_Position =  modelViewProjectionMat * vec4(position, 1.0);
 	#endif
 }
 

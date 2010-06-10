@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Post-processing stage
+ */
+
 #include "Renderer.h"
 
 

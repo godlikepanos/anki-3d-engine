@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Debugging stage
+ */
+
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"

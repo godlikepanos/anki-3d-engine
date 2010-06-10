@@ -261,7 +261,7 @@ bool Scanner::loadIstream( istream& istream_, const char* scriptName_ )
 	inStream = &istream_;
 
 	// init globals
-	DEBUG_ERR( strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1 ) // Too big name
+	DEBUG_ERR( strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1 ); // Too big name
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
 	strcpy( scriptName, scriptName_ );

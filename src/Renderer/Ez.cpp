@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Material stage EarlyZ pass
+ */
+
 #include "Renderer.h"
 #include "App.h"
 #include "MeshNode.h"
