@@ -1,4 +1,28 @@
-For build info see build/README
+AnKi 3D engine
+Copyright (C) 2009, 2010 Christopoulos-Charitos Panagiotis
 
-Currently there are no assets (models, textures, materials etc) so even if you
-compile it, the application will fail to run
+www.ancient-ritual.com
+godlike@ancient-ritual.com
+
+
+1) Building
+
+  For build info see build/README
+
+
+2) Assets
+  
+  Currently there are no assets (models, textures, materials etc) so even if
+  you build it, the application will fail to run
+  
+  
+3) Submitting patches
+
+  If you want to update/patch the file README (this file), for example, do:
+
+  make changes to README
+	
+  $ svn diff README > /tmp/foo
+
+  E-mail the "foo" file with subject "[PATCH] README updates"
+

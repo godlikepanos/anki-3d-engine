@@ -6,74 +6,74 @@ build system that generates GNU makefiles.
 
 1) Required libraries
 
-	AnKi requires a few up to date versions of some libraries. The libraries are:
-	- Bullet Physics
-	- SDL ver 1.3
-	- GLEW
+  AnKi requires a few up to date versions of some libraries. The libraries are:
+  - Bullet Physics
+  - SDL ver 1.3
+  - GLEW
 
-	So before generating makefiles or building AnKi you have to download from
-	their repositories and build the above libraries. Instructions follow. You can
-	alternately use the script download-and-build-externals.sh
-	
+  So before generating makefiles or building AnKi you have to download from
+  their repositories and build the above libraries. Instructions follow. You can
+  alternately use the script download-and-build-externals.sh
+  
 
 1.1) Bullet Physics Library
 
-	From now on the AnKi requires the Bullet physics library. You need CMake and
-	SVN installed.
+  From now on the AnKi requires the Bullet physics library. You need CMake and
+  SVN installed.
 
-	1) Go to the root AnKi path (where src, shaders and blenderscripts are)
-	2) cd ..
-	3) svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
-	4) cd bullet_svn
-	5) cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
-	6) make
+  1) Go to the root AnKi path (where src, shaders and blenderscripts are)
+  2) cd ..
+  3) svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
+  4) cd bullet_svn
+  5) cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+  6) make
 
 
 1.2) SDL ver 1.3
 
-	We need SDL ver 1.3 for creating OpenGL 3.x context. You need to have the
-	Mercurial and autoconf installed.
+  We need SDL ver 1.3 for creating OpenGL 3.x context. You need to have the
+  Mercurial and autoconf installed.
 
-	1) Go to the root AnKi path (where src, shaders and blenderscripts are)
-	2) cd ..
-	3) hg clone http://hg.libsdl.org/SDL SDL-hg
-	4) cd SDL-hg
-	5) ./autogen.sh
-	6) ./configure
-	7) make
-	
+  1) Go to the root AnKi path (where src, shaders and blenderscripts are)
+  2) cd ..
+  3) hg clone http://hg.libsdl.org/SDL SDL-hg
+  4) cd SDL-hg
+  5) ./autogen.sh
+  6) ./configure
+  7) make
+  
 
 1.3) GLEW
 
-	The latest GLEW provides us with OpenGL 3 and 4 extensions. Needs SVN and a 
-	Unix environment (for step 5).
-	
-	1) Go to the root AnKi path (where src, shaders and blenderscripts are)
-	2) cd ..
-	3) svn co https://glew.svn.sourceforge.net/svnroot/glew/trunk/glew glew
-	4) cd glew
-	5) make extensions
-	6) make
+  The latest GLEW provides us with OpenGL 3 and 4 extensions. Needs SVN and a 
+  Unix environment (for step 5).
+  
+  1) Go to the root AnKi path (where src, shaders and blenderscripts are)
+  2) cd ..
+  3) svn co https://glew.svn.sourceforge.net/svnroot/glew/trunk/glew glew
+  4) cd glew
+  5) make extensions
+  6) make
 
 
 2) Generating makefiles and building AnKi
 
-	There are 4 build targets in this folder. There is also a build system that
-	generates GNU makefiles (it requires Python 3 installed). If you want to 
-	generate the makefile for the debug target (for example) do the following:
+  There are 4 build targets in this folder. There is also a build system that
+  generates GNU makefiles (it requires Python 3 installed). If you want to 
+  generate the makefile for the debug target (for example) do the following:
 
-	1) cd <path to anki>/build/debug
-	2) ../genmakefile.py
-	
-	Now there is an updated "Makefile". To build just type:
-	
-	3) make
+  1) cd <path to anki>/build/debug
+  2) ../genmakefile.py
+  
+  Now there is an updated "Makefile". To build just type:
+  
+  3) make
 
-	And the build process will begin. 
+  And the build process will begin. 
 
-	The gen.cfg.py files contain the build options of every target. Their format
-	is pretty straightforward and minimal.
+  The gen.cfg.py files contain the build options of every target. Their format
+  is pretty straightforward and minimal.
 
-	WARNING: Sometimes I forget to update all the targets. The debug is always
-	updated though.
-	
+  WARNING: Sometimes I forget to update all the targets. The debug is always
+  updated though.
+  

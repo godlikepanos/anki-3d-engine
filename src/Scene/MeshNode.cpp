@@ -47,9 +47,6 @@ void MeshNode::render( Material* mtl ) const
 	GLint locs[ 64 ];
 	int locsNum = 0;
 
-	glPushMatrix();
-	app->getMainRenderer()->multMatrix( Mat4(getWorldTransform()) );
-
 	// if we have skeleton controller
 	if( meshSkelCtrl )
 	{
@@ -128,5 +125,4 @@ void MeshNode::render( Material* mtl ) const
 	}
 
 	Vbo::unbindAllTargets();
-	glPopMatrix();
 }
