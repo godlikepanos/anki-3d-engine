@@ -22,7 +22,7 @@ class SceneNode;
 class Renderer
 {
 	//====================================================================================================================
-	// The rendering stages                                                                                              =
+	// nested                                                                                                            =
 	//====================================================================================================================
 	public:
 		/**
@@ -55,21 +55,15 @@ class Renderer
 
 					PROPERTY_R( bool, enabled, isEnabled )
 
+					public:
+						Ez( Renderer& r_ ): RenderingStage( r_ ) {}
+
 					private:
 						Fbo fbo;
 
 						void init();
 						void run();
-
-					public:
-						Ez( Renderer& r_ ): RenderingStage( r_ ) {}
 				};
-
-			private:
-				Fbo fbo;
-
-				void init();
-				void run();
 
 			public:
 				Texture normalFai;
@@ -79,6 +73,12 @@ class Renderer
 				Ez ez;
 
 				Ms( Renderer& r_ ): RenderingStage( r_ ), ez( r_ ) {}
+
+			private:
+				Fbo fbo;
+
+				void init();
+				void run();
 		}; // end Ms
 
 		/**
@@ -97,10 +97,13 @@ class Renderer
 					friend class Is;
 					friend class Renderer;
 
-					PROPERTY_R( bool, enabled, isEnabled ) ///< @ref PROPERTY_R : If false thene there is no shadowmapping at all
-					PROPERTY_R( bool, pcfEnabled, isPcfEnabled ) ///< @ref PROPERTY_R : Enable Percentage Closer Filtering
-					PROPERTY_R( bool, bilinearEnabled, isBilinearEnabled ) ///< @ref PROPERTY_R : Enable bilinear filtering in shadowMap. Better quality
-					PROPERTY_R( int, resolution, getResolution ) ///< Shadowmap resolution. The higher the more quality the shadows are
+					PROPERTY_R( bool, enabled, isEnabled ) ///< If false then disable
+					PROPERTY_R( bool, pcfEnabled, isPcfEnabled ) ///< Enable Percentage Closer Filtering
+					PROPERTY_R( bool, bilinearEnabled, isBilinearEnabled ) ///< Shadowmap bilinear filtering. Better quality
+					PROPERTY_R( int, resolution, getResolution ) ///< Shadowmap resolution. The higher the better
+
+					public:
+						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
 
 					private:
 						Fbo fbo; ///< Illumination stage shadowmapping FBO
@@ -113,9 +116,6 @@ class Renderer
 						 * @param cam The light camera
 						 */
 						void run( const Camera& cam );
-
-					public:
-						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
 				}; // end Sm
 
 			private:
@@ -151,6 +151,13 @@ class Renderer
 						} uniVars;
 				};
 
+			public:
+				Texture fai;
+				Sm sm;
+
+				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
+
+			private:
 				Fbo fbo; ///< This FBO writes to the Is::fai
 				uint stencilRb; ///< Illumination stage stencil buffer
 				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program
@@ -174,12 +181,6 @@ class Renderer
 				void initFbo();
 				void init();
 				void run();
-
-			public:
-				Texture fai;
-				Sm sm;
-
-				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
 		}; // end Is
 
 		/**
@@ -190,9 +191,6 @@ class Renderer
 		class Pps: private RenderingStage
 		{
 			friend class Renderer;
-
-			PROPERTY_R( bool, enabled, isEnabled )
-			PROPERTY_R( float, renderingQuality, getRenderingQuality )
 
 			public:
 				/**
@@ -285,32 +283,36 @@ class Renderer
 						Ssao( Renderer& r_ ): RenderingStage(r_) {}
 				}; // end Ssao
 
-				private:
-					class PpsShaderProg: public ShaderProg
-					{
-						public:
-							struct
-							{
-								const ShaderProg::UniVar* isFai;
-								const ShaderProg::UniVar* ppsSsaoFai;
-								const ShaderProg::UniVar* msNormalFai;
-								const ShaderProg::UniVar* hdrFai;
-								const ShaderProg::UniVar* lscattFai;
 
-							} uniVars;
-					};
-					PpsShaderProg sProg;
-					Fbo fbo;
+			PROPERTY_R( bool, enabled, isEnabled )
+			PROPERTY_R( float, renderingQuality, getRenderingQuality )
 
-					void init();
-					void run();
+			public:
+				Texture fai;
+				Hdr hdr;
+				Ssao ssao;
 
-				public:
-					Texture fai;
-					Hdr hdr;
-					Ssao ssao;
+				Pps( Renderer& r_ ): RenderingStage(r_), hdr(r_), ssao(r_) {}
 
-					Pps( Renderer& r_ ): RenderingStage(r_), hdr(r_), ssao(r_) {}
+			private:
+				class PpsShaderProg: public ShaderProg
+				{
+					public:
+						struct
+						{
+							const ShaderProg::UniVar* isFai;
+							const ShaderProg::UniVar* ppsSsaoFai;
+							const ShaderProg::UniVar* msNormalFai;
+							const ShaderProg::UniVar* hdrFai;
+							const ShaderProg::UniVar* lscattFai;
+
+						} uniVars;
+				};
+				PpsShaderProg sProg;
+				Fbo fbo;
+
+				void init();
+				void run();
 		}; // end Pps
 
 		/**
@@ -326,36 +328,31 @@ class Renderer
 			PROPERTY_RW( bool, showSkeletonsEnabled, setShowSkeletons, isShowSkeletonsEnabled )
 			PROPERTY_RW( bool, showCamerasEnabled, setShowCameras, isShowCamerasEnabled )
 
+			public:
+				Dbg( Renderer& r_ );
+				void renderGrid();
+				void renderSphere( float radius, int complexity );
+				void renderCube( bool cols = false, float size = 1.0 );
+
 			private:
 				Fbo fbo;
 				ShaderProg sProg; /// @todo move Dbg to GL 3
 
 				void init();
 				void run();
-
-			public:
-				Dbg( Renderer& r_ );
-				void renderGrid();
-				void renderSphere( float radius, int complexity );
-				void renderCube( bool cols = false, float size = 1.0 );
 		}; // end Dbg
 
-
 	//====================================================================================================================
-	//                                                                                                                   =
+	// Properties                                                                                                        =
 	//====================================================================================================================
 	PROPERTY_R( uint, width, getWidth ) ///< Width of the rendering. Dont confuse with the window width
 	PROPERTY_R( uint, height, getHeight ) ///< Height of the rendering. Dont confuse with the window width
-	PROPERTY_R( uint, framesNum, getFramesNum )
+	PROPERTY_R( uint, framesNum, getFramesNum ) ///< Frame number
 	PROPERTY_R( float, aspectRatio, getAspectRatio ) ///< Just a precalculated value
 
-	protected:
-		const Camera* cam; ///< Current camera
-		static float quadVertCoords [][2];
-
-		static void drawQuad( int vertCoordsUniLoc );
-		void setupMaterial( const Material& mtl, const SceneNode& sceneNode, const Camera& cam );
-
+	//====================================================================================================================
+	// Public                                                                                                            =
+	//====================================================================================================================
 	public:
 		// the stages as data members
 		Ms ms; ///< Material rendering stage
@@ -411,7 +408,28 @@ class Renderer
 		 */
 		static void printLastError();
 
+		/**
+		 * @name Funcs that control the FFP state
+		 */
+		/**@{*/
+		static void enableStencilTest();
+		static void disableStencilTest();
+		/**@}*/
+
+
+	//====================================================================================================================
+	// Protected                                                                                                         =
+	//====================================================================================================================
+	protected:
+		const Camera* cam; ///< Current camera
+		static float quadVertCoords [][2];
+		static int maxColorAtachments; ///< Max color attachments a FBO can accept
+
+		static void drawQuad( int vertCoordsUniLoc );
+		void setupMaterial( const Material& mtl, const SceneNode& sceneNode, const Camera& cam );
+
 		// to be removed
+	public:
 		static void color3( const Vec3& v ) { glColor3fv( &((Vec3&)v)[0] ); } ///< OpenGL wrapper
 		static void color4( const Vec4& v ) { glColor4fv( &((Vec4&)v)[0] ); } ///< OpenGL wrapper
 		static void setProjectionMatrix( const Camera& cam );

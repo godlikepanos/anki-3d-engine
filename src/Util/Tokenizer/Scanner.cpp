@@ -11,7 +11,7 @@
 
 
 //======================================================================================================================
-// Constructor                                                                                                         =
+// Constructor [Token]                                                                                                 =
 //======================================================================================================================
 Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
 {
@@ -35,14 +35,64 @@ Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
 
 
 //======================================================================================================================
-// data vars                                                                                                           =
+// getInfoStr                                                                                                          =
+//======================================================================================================================
+string Scanner::Token::getInfoStr() const
+{
+	char tokenInfoStr[256];
+	switch( code )
+	{
+		case TC_COMMENT:
+			return "comment";
+		case TC_NEWLINE:
+			return "newline";
+		case TC_EOF:
+			return "end of file";
+		case TC_STRING:
+			sprintf( tokenInfoStr, "string \"%s\"", value.string );
+			break;
+		case TC_CHAR:
+			sprintf( tokenInfoStr, "char '%c' (\"%s\")", value.char_, asString );
+			break;
+		case TC_NUMBER:
+			if( dataType == DT_FLOAT )
+				sprintf( tokenInfoStr, "float %f or %e (\"%s\")", value.float_, value.float_, asString );
+			else
+				sprintf( tokenInfoStr, "int %lu (\"%s\")", value.int_, asString );
+			break;
+		case TC_IDENTIFIER:
+			sprintf( tokenInfoStr, "identifier \"%s\"", value.string );
+			break;
+		case TC_ERROR:
+			return "scanner error";
+			break;
+		default:
+			if( code>=TC_KE && code<=TC_KEYWORD )
+				sprintf( tokenInfoStr, "reserved word \"%s\"", value.string );
+			else if( code>=TC_SCOPERESOLUTION && code<=TC_ASSIGNOR )
+				sprintf( tokenInfoStr, "operator no %d", code - TC_SCOPERESOLUTION );
+	}
+
+	return string(tokenInfoStr);
+}
+
+
+//======================================================================================================================
+// print                                                                                                               =
+//======================================================================================================================
+void Scanner::Token::print() const
+{
+	cout << "Token: " << getInfoStr() << endl;
+}
+
+
+//======================================================================================================================
+// statics                                                                                                             =
 //======================================================================================================================
 char Scanner::eofChar = 0x7F;
 
 
-//======================================================================================================================
-// reserved words grouped by length                                                                                    =
-//======================================================================================================================
+// reserved words grouped by length
 Scanner::ResWord Scanner::rw2 [] =
 {
 	{"ke", TC_KE}, {NULL, TC_ERROR}
@@ -78,12 +128,13 @@ Scanner::ResWord* Scanner::rwTable [] =  // reserved word table
 	NULL, NULL, rw2, rw3, rw4, rw5, rw6, rw7,
 };
 
-
-//======================================================================================================================
-// ascii map                                                                                                           =
-//======================================================================================================================
+// ascii table
 Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
 
+
+//======================================================================================================================
+// initAsciiMap                                                                                                        =
+//======================================================================================================================
 void Scanner::initAsciiMap()
 {
 	memset( &asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable) );
@@ -167,58 +218,6 @@ char Scanner::putBackChar()
 
 
 //======================================================================================================================
-// getTokenInfo                                                                                                        =
-//======================================================================================================================
-string Scanner::getTokenInfo( const Token& token )
-{
-	char tokenInfoStr[256];
-	switch( token.code )
-	{
-		case TC_COMMENT:
-			return "comment";
-		case TC_NEWLINE:
-			return "newline";
-		case TC_EOF:
-			return "end of file";
-		case TC_STRING:
-			sprintf( tokenInfoStr, "string \"%s\"", token.value.string );
-			break;
-		case TC_CHAR:
-			sprintf( tokenInfoStr, "char '%c' (\"%s\")", token.value.char_, token.asString );
-			break;
-		case TC_NUMBER:
-			if( token.dataType == DT_FLOAT )
-				sprintf( tokenInfoStr, "float %f or %e (\"%s\")", token.value.float_, token.value.float_, token.asString );
-			else
-				sprintf( tokenInfoStr, "int %lu (\"%s\")", token.value.int_, token.asString );
-			break;
-		case TC_IDENTIFIER:
-			sprintf( tokenInfoStr, "identifier \"%s\"", token.value.string );
-			break;
-		case TC_ERROR:
-			return "scanner error";
-			break;
-		default:
-			if( token.code>=TC_KE && token.code<=TC_KEYWORD )
-				sprintf( tokenInfoStr, "reserved word \"%s\"", token.value.string );
-			else if( token.code>=TC_SCOPERESOLUTION && token.code<=TC_ASSIGNOR )
-				sprintf( tokenInfoStr, "operator no %d", token.code - TC_SCOPERESOLUTION );
-	}
-
-	return string(tokenInfoStr);
-}
-
-
-//======================================================================================================================
-// printTokenInfo                                                                                                      =
-//======================================================================================================================
-void Scanner::printTokenInfo( const Token& token )
-{
-	cout << "Token: " << getTokenInfo(token) << endl;
-}
-
-
-//======================================================================================================================
 // getAllPrintAll                                                                                                      =
 //======================================================================================================================
 void Scanner::getAllPrintAll()
@@ -226,7 +225,7 @@ void Scanner::getAllPrintAll()
 	do
 	{
 		getNextToken();
-		cout << setw(3) << setfill('0') << getLineNumber() << ": " << getTokenInfo( crntToken ) << endl;
+		cout << setw(3) << setfill('0') << getLineNumber() << ": " << crntToken.getInfoStr() << endl;
 	} while( crntToken.code != TC_EOF );
 }
 
@@ -358,13 +357,6 @@ const Scanner::Token& Scanner::getNextToken()
 	
 	return crntToken;
 }
-
-
-/*
-=======================================================================================================================================
-CHECKERS (bellow only checkers)                                                                                        =
-=======================================================================================================================================
-*/
 
 //======================================================================================================================
 // checkWord                                                                                                           =
