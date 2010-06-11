@@ -1,0 +1,246 @@
+**AnKi 3D Engine**
+
+Copyright (C) 2009, 2010 Panagiotis Christopoulos-Charitos
+
+http://www.ancient-ritual.com
+godlike@ancient-ritual.com
+
+.. contents:: Table of Contents
+
+
+========
+Building
+========
+
+AnKi build system is very Linux specific (GNU make only) at the moment. It
+also requires a few extra development libraries. You can also find a custom
+build system that generates GNU makefiles.
+
+
+Required libraries
+------------------
+
+AnKi requires a few up to date versions of some libraries. The libraries are:
+  
+- Bullet Physics
+- SDL ver 1.3
+- GLEW
+
+So before generating makefiles or building AnKi you have to download from their
+repositories and build the above libraries. Instructions follow. You can
+alternately use the script download-and-build-externals.sh
+  
+
+Bullet Physics Library
+~~~~~~~~~~~~~~~~~~~~~~
+
+From now on the AnKi requires the Bullet physics library. You need CMake and
+SVN installed.
+
+#) $ Go to the root AnKi path (where src, shaders and blenderscripts are)
+#) $ cd ..
+#) $ svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
+#) $ cd bullet_svn
+#) $ cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+#) $ make
+
+
+SDL ver 1.3
+~~~~~~~~~~~
+
+We need SDL ver 1.3 for creating OpenGL 3.x context. You need to have the
+Mercurial and autoconf installed.
+
+#) $ Go to the root AnKi path (where src, shaders and blenderscripts are)
+#) $ cd ..
+#) $ hg clone http://hg.libsdl.org/SDL SDL-hg
+#) $ cd SDL-hg
+#) $ ./autogen.sh
+#) $ ./configure
+#) $ make
+  
+
+GLEW
+~~~~
+
+The latest GLEW provides us with OpenGL 3 and 4 extensions. Needs SVN and a 
+Unix environment (for step 5).
+
+#) $ Go to the root AnKi path (where src, shaders and blenderscripts are)
+#) $ cd ..
+#) $ svn co https://glew.svn.sourceforge.net/svnroot/glew/trunk/glew glew
+#) $ cd glew
+#) $ make extensions
+#) $ make
+
+
+Generating makefiles and building AnKi
+--------------------------------------
+
+There are 4 build targets in this folder. There is also a build system that
+generates GNU makefiles (it requires Python 3 installed). If you want to 
+generate the makefile for the debug target (for example) do the following:
+
+#) $ cd <path to anki>/build/debug
+#) $ ../genmakefile.py
+#) $ make
+
+And the build process will begin. 
+
+The gen.cfg.py files contain the build options of every target. Their format
+is pretty straightforward and minimal.
+
+**WARNING**: Sometimes I forget to update all the targets. The debug is always 
+updated though.
+  
+
+=========================================
+Generating source documentation (doxygen)
+=========================================
+
+The AnKi source code uses doxygen style comments inside the source. To generate
+the html documentation from a terminal do:
+
+#) $ cd docs
+#) $ doxygen doxyfile
+
+Then open doxygen.html to see it.
+
+
+======
+Assets
+======
+
+Currently there are no assets (models, textures, materials etc) so even if you
+build it, the application will fail to run.
+  
+
+============
+Coding style
+============
+
+Some things to remember while coding AnKi.
+
+
+Classes
+-------
+
+class 
+
+{
+
+  friends
+	
+  pre-nested (if necessary)
+	
+  nested
+	
+  properties
+	
+  public
+	
+  protected
+	
+  private 
+	
+}
+
+
+Material shader program naming
+------------------------------
+
+dnspgke:
+
+- diffuse mapping
+- normal mapping
+- specular mapping
+- parallax mapping
+- grass like
+- hardware skinning
+- environment mapping
+
+
+Naming shortcuts
+----------------
+
+This list contains some of the naming shortcuts we use in AnKi:
+
+- Array                        : arr
+- Animation                    : anim
+- Application                  : app
+- Buffer                       : buff
+- Camera                       : cam
+- Color                        : col
+- Controller                   : ctrl
+- Feature                      : feat
+- Fragment                     : frag
+- Framebuffer Attachable Image : fai
+- Geometry                     : geom
+- Location                     : loc
+- Material                     : mtl
+- Matrix                       : mat
+- Number                       : num
+- Physics                      : phy
+- Property                     : prop
+- Quadrilateral                : quad
+- Quaternion                   : quat
+- Resource                     : rsrc
+- Rotation                     : rot
+- Shader                       : shdr
+- Shader Program               : shaderProg or sProg
+- Skeletal Animation           : sAnim
+- Skeleton                     : skel
+- Text                         : txt
+- Texture                      : tex
+- Transformation               : trf
+- Translation                  : tsl
+- Triangle                     : tri
+- Utility                      : util
+- Variable                     : var
+- Vector                       : vec
+- Vertex                       : vert
+
+
+Controllers
+-----------
+
+The controllers are part of the scene node objects. They control the node's
+behaviour. 
+
+They have an input (script, animation, etc) and they control a scene node. The
+naming convention of the controllers is:
+
+<what the controller controls><the input of the contoller>Ctrl
+
+For Example:
+
+MeshSkelNodeCtrl A Mesh is controlled by a SkelNode
+
+
+Submitting patches
+------------------
+
+If you want to update/patch a file (for example Main.cpp) do:
+
+- Make the changes on that file
+- Save the differences in a file using "svn diff Main.cpp > /tmp/diff"
+- E-mail the "diff" file with subject "[PATCH] Main.cpp updates"
+
+
+=========
+ToDo list
+=========
+
+- Continue working on the new coding style in shaders
+- Changes in the blending objects problem. The BS will become one stage and the
+  PPS will be divided in two steps. The first will apply the SSAO and the EdgeAA
+  in the IS_FAI and the second will do the rest
+- The second Physics demo: Create a box that is geting moved by the user. It has
+  to interact with the other boxes
+- Set the gravity of a certain body to a lower value and see how it behaves
+- In the Ragdoll bullet demo try to change the distances of the bodies
+- Ask in the bullet forum:
+	- How to make floating particles like smoke. But first try with one body and
+	  manualy setting the gravity
+	- What the btCollisionObject::setActivationState takes as parameter?
+

@@ -17,8 +17,8 @@ namespace Parser {
 #define PARSE_WARN(x) WARNING( "Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x )
 
 // common parser errors
-#define PARSE_ERR_EXPECTED(x) PARSE_ERR( "Expected " << x << " and not " << Scanner::getTokenInfo(scanner.getCrntToken()) );
-#define PARSE_ERR_UNEXPECTED() PARSE_ERR( "Unexpected token " << Scanner::getTokenInfo(scanner.getCrntToken()) );
+#define PARSE_ERR_EXPECTED(x) PARSE_ERR( "Expected " << x << " and not " << scanner.getCrntToken().getInfoStr() );
+#define PARSE_ERR_UNEXPECTED() PARSE_ERR( "Unexpected token " << scanner.getCrntToken().getInfoStr() );
 
 
 //======================================================================================================================
@@ -27,8 +27,8 @@ namespace Parser {
 /**
  * This template func is used for a common operation of parsing arrays of numbers
  *
- * It parses expressions like this one: { 10 -0.2 123.e-10 -0x0FF } and stores the result in the arr array. The acceptable types
- * (typename Type) are integer or floating point types
+ * It parses expressions like this one: { 10 -0.2 123.e-10 -0x0FF } and stores the result in the arr array. The
+ * acceptable types (typename Type) are integer or floating point types
  *
  * @param scanner The scanner that we will use
  * @param bracket If true the array starts and ends with brackets eg { 10 0 -1 }

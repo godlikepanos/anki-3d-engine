@@ -5,6 +5,7 @@
 #include "App.h"
 #include "RendererInitializer.h"
 
+
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
@@ -12,6 +13,28 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 {
 	INFO( "Main renderer initializing..." );
 
+	initGl();
+
+	sProg.customLoad( "shaders/final.glsl" );
+
+	//
+	// init the offscreen Renderer
+	//
+	RendererInitializer initializer = initializer_;
+	renderingQuality = initializer.mainRendererQuality;
+	initializer.width = app->getWindowWidth() * renderingQuality;
+	initializer.height = app->getWindowHeight() * renderingQuality;
+	Renderer::init( initializer );
+
+	INFO( "Main renderer initialization ends" );
+}
+
+
+//======================================================================================================================
+// initGl                                                                                                              =
+//======================================================================================================================
+void MainRenderer::initGl()
+{
 	GLenum err = glewInit();
 	if( err != GLEW_OK )
 		FATAL( "GLEW initialization failed" );
@@ -41,9 +64,6 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 	// get max texture units
 	glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum );
 
-	//
-	// Set GL
-	//
 	glClearColor( 0.1, 0.1, 0.1, 1.0 );
 	glClearDepth( 1.0 );
 	glClearStencil( 0 );
@@ -61,18 +81,6 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 	glDepthFunc( GL_LESS );
 
 	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments );
-	sProg.customLoad( "shaders/final.glsl" );
-
-	//
-	// init the offscreen Renderer
-	//
-	RendererInitializer initializer = initializer_;
-	renderingQuality = initializer.mainRendererQuality;
-	initializer.width = app->getWindowWidth() * renderingQuality;
-	initializer.height = app->getWindowHeight() * renderingQuality;
-	Renderer::init( initializer );
-
-	INFO( "Main renderer initialization ends" );
 }
 
 
