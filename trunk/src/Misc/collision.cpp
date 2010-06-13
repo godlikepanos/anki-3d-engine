@@ -912,7 +912,7 @@ void bsphere_t::Render()
 
 	glColor4fv( &Vec4(1.0, 1.0, 1.0, 0.2)[0] );
 
-	app->getMainRenderer()->dbg.renderSphere( radius, 24 );
+	app->getMainRenderer()->dbg.renderSphere( radius, 24, Vec3(1.0) );
 
 	glPopMatrix();
 }

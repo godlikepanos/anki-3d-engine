@@ -8,6 +8,13 @@
 #include "App.h"
 #include "Scene.h"
 #include "SkelNode.h"
+#include "Camera.h"
+
+
+//======================================================================================================================
+// Statics                                                                                                             =
+//======================================================================================================================
+ShaderProg* Renderer::Dbg::sProg = NULL;
 
 
 //======================================================================================================================
@@ -18,7 +25,7 @@ Renderer::Dbg::Dbg( Renderer& r_ ):
 	showAxisEnabled( false ),
 	showLightsEnabled( false ),
 	showSkeletonsEnabled( false ),
-	showCamerasEnabled( false )
+	showCamerasEnabled( true )
 {
 }
 
@@ -69,7 +76,7 @@ void Renderer::Dbg::renderGrid()
 //======================================================================================================================
 // renderSphere                                                                                                        =
 //======================================================================================================================
-void Renderer::Dbg::renderSphere( float radius, int complexity )
+void Renderer::Dbg::renderSphere( float radius, int complexity, const Vec3& color )
 {
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
@@ -130,6 +137,17 @@ void Renderer::Dbg::renderSphere( float radius, int complexity )
 			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*i/(float)complexity) );
 		}
 	}
+
+	Vec<Vec3> colors( positions.size(), color );
+
+
+	glEnableVertexAttribArray( 0 );
+	glEnableVertexAttribArray( 1 );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, &(positions[0][0]) );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &(colors[0][0]) );
+	glDrawArrays( GL_TRIANGLES, 0, positions.size() );
+	glDisableVertexAttribArray( 0 );
+	glDisableVertexAttribArray( 1 );
 
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glEnableClientState( GL_NORMAL_ARRAY );
@@ -236,7 +254,12 @@ void Renderer::Dbg::init()
 	fbo.unbind();
 
 	// shader
-	sProg.customLoad( "shaders/Dbg.glsl" );
+	if( sProg == NULL )
+	{
+		sProg = new ShaderProg;
+		sProg->customLoad( "shaders/Dbg.glsl" );
+	}
+
 }
 
 
@@ -250,7 +273,7 @@ void Renderer::Dbg::run()
 	const Camera& cam = *r.cam;
 
 	fbo.bind();
-	sProg.bind();
+	sProg->bind();
 
 	// OGL stuff
 	r.setProjectionViewMatrices( cam );
@@ -262,22 +285,27 @@ void Renderer::Dbg::run()
 	//R::renderGrid();
 	for( uint i=0; i<app->getScene()->nodes.size(); i++ )
 	{
+		SceneNode* node = app->getScene()->nodes[i];
 		if
 		(
-			(app->getScene()->nodes[i]->type == SceneNode::NT_LIGHT && showLightsEnabled) ||
-			(app->getScene()->nodes[i]->type == SceneNode::NT_CAMERA && showCamerasEnabled) ||
-			app->getScene()->nodes[i]->type == SceneNode::NT_PARTICLE_EMITTER
+			/*(app->getScene()->nodes[i]->type == SceneNode::NT_LIGHT && showLightsEnabled) ||*/
+			(node->type == SceneNode::NT_CAMERA && showCamerasEnabled) /*||
+			app->getScene()->nodes[i]->type == SceneNode::NT_PARTICLE_EMITTER*/
 		)
 		{
-			app->getScene()->nodes[i]->render();
+			Mat4 modelMat = Mat4( node->getWorldTransform() );
+			Mat4 modelViewMat = Mat4::combineTransformations( cam.getViewMatrix(), modelMat );
+			Mat4 modelViewProjectionMat = cam.getProjectionMatrix() * modelViewMat;
+			sProg->findUniVar( "modelViewProjectionMat" )->setMat4( &modelViewProjectionMat );
+			node->render();
 		}
-		else if( app->getScene()->nodes[i]->type == SceneNode::NT_SKELETON && showSkeletonsEnabled )
+		/*else if( app->getScene()->nodes[i]->type == SceneNode::NT_SKELETON && showSkeletonsEnabled )
 		{
 			SkelNode* skel_node = static_cast<SkelNode*>( app->getScene()->nodes[i] );
 			glDisable( GL_DEPTH_TEST );
 			skel_node->render();
 			glEnable( GL_DEPTH_TEST );
-		}
+		}*/
 	}
 }
 

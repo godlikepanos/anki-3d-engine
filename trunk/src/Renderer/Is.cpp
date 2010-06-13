@@ -13,50 +13,6 @@
 
 
 //======================================================================================================================
-// STATICS                                                                                                             =
-//======================================================================================================================
-float Renderer::Is::sMOUvSCoords[] = { -0.000000, 0.000000, -1.000000, 0.500000, 0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.707107, 0.000000, 0.707107, -0.000000, 0.707107, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.000000, 0.707107, -0.707107, 0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.000000, 0.707107, 0.707107, -0.707107, -0.000000, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.707107, -0.000000, -0.707107, -0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, -0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.707107, -0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, -0.500000, -0.500000, -0.707107, -0.000000, 0.000000, -1.000000, 0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.707107, 0.000000, -0.707107, 0.500000, -0.500000, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 1.000000, 0.000000, -0.000000, 0.500000, -0.500000, -0.707107, 1.000000, 0.000000, -0.000000, 0.707107, -0.707107, 0.000000, 0.707107, -0.707107, 0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.000000, 0.707107, 0.707107, -0.707107, 0.000000, 0.707107, 0.000000, 0.707107, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.707107, -0.707107, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, -0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, -0.707107, 0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, 0.707107, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.500000, -0.500000, 0.707107, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, -0.707107, -0.707107, -0.707107, 0.000000, -0.707107, -0.000000, -0.707107, -0.707107, -0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -1.000000, -0.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.707107, -0.000000, 0.707107, -0.707107, 0.707107, 0.000000, -0.707107, -0.000000, 0.707107, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.707107, 0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 0.707107, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 1.000000, 0.000000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.707107, 0.707107, 0.000000, -0.000000, 0.707107, 0.707107, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.000000, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.500000, 0.500000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 1.000000, 0.000000, -0.000000 };
-uint Renderer::Is::sMOUvSVboId = 0;
-
-
-//======================================================================================================================
-// initSMOUvS                                                                                                          =
-//======================================================================================================================
-void Renderer::Is::initSMOUvS()
-{
-	DEBUG_ERR( sMOUvSVboId != 0 );
-	glGenBuffers( 1, &sMOUvSVboId );
-	glBindBuffer( GL_ARRAY_BUFFER, sMOUvSVboId );
-	glBufferData( GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW );
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
-}
-
-
-//======================================================================================================================
-// renderSMOUvS                                                                                                        =
-//======================================================================================================================
-void Renderer::Is::renderSMOUvS( const PointLight& light )
-{
-	const float scale = 1.2;
-
-	/// @todo Replace the rendering code. Use shader prog
-	Renderer::noShaders();
-
-	r.multMatrix( Mat4( light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.radius*scale ) );
-	Renderer::noShaders();
-
-	glBindBuffer( GL_ARRAY_BUFFER, sMOUvSVboId );
-	glEnableClientState( GL_VERTEX_ARRAY );
-
-	glVertexPointer( 3, GL_FLOAT, 0, 0 );
-	glDrawArrays( GL_TRIANGLES, 0, sizeof(sMOUvSCoords)/sizeof(float)/3 );
-
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
-}
-
-
-//======================================================================================================================
 // CalcViewVector                                                                                                      =
 //======================================================================================================================
 void Renderer::Is::calcViewVector()
@@ -189,8 +145,7 @@ void Renderer::Is::init()
 
 	// init the rest
 	initFbo();
-	if( sMOUvSVboId == 0 )
-		initSMOUvS();
+	smo.init();
 
 	if( sm.enabled )
 		sm.init();
@@ -217,129 +172,23 @@ void Renderer::Is::ambientPass( const Vec3& color )
 
 
 //======================================================================================================================
-// stencilOptPass [point light]                                                                                        =
-//======================================================================================================================
-void Renderer::Is::stencilOptPass( const PointLight& light )
-{
-	glEnable( GL_STENCIL_TEST );
-	glClear( GL_STENCIL_BUFFER_BIT );
-
-	glColorMask( false, false, false, false );
-	glStencilFunc( GL_ALWAYS, 0x1, 0x1 );
-	glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
-
-	glDisable( GL_CULL_FACE );
-
-	// set matrices
-	/// @todo opegnl 3.x
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	r.setProjectionViewMatrices( *r.cam );
-
-	// render sphere to stencil buffer
-	renderSMOUvS( light );
-
-	// restore matrices
-	glMatrixMode( GL_PROJECTION );
-	glPopMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-
-
-	glEnable( GL_CULL_FACE );
-	glColorMask( true, true, true, true );
-
-	// change the stencil func so that the light pass will only write in the masked area
-	glStencilFunc( GL_EQUAL, 0x1, 0x1 );
-	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-}
-
-
-//======================================================================================================================
-// stencilOptPass [spot light]                                                                                         =
-//======================================================================================================================
-void Renderer::Is::stencilOptPass( const SpotLight& light )
-{
-	glEnable( GL_STENCIL_TEST );
-	glClear( GL_STENCIL_BUFFER_BIT );
-
-	glColorMask( false, false, false, false );
-	glStencilFunc( GL_ALWAYS, 0x1, 0x1 );
-	glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
-
-	glDisable( GL_CULL_FACE );
-
-	// set matrices
-	/// @todo opengl 3.x
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	r.setProjectionViewMatrices( *r.cam );
-
-
-	// render camera's shape to stencil buffer
-	r.noShaders();
-	const Camera& lcam = light.camera;
-	float x = lcam.getZFar() / tan( (PI-lcam.getFovX())/2 );
-	float y = tan( lcam.getFovY()/2 ) * lcam.getZFar();
-	float z = -lcam.getZFar();
-
-	const int tris_num = 6;
-
-	float verts[tris_num][3][3] = {
-		{ { 0.0, 0.0, 0.0 }, { x, -y, z }, { x,  y, z } }, // right triangle
-		{ { 0.0, 0.0, 0.0 }, { x,  y, z }, {-x,  y, z } }, // top
-		{ { 0.0, 0.0, 0.0 }, {-x,  y, z }, {-x, -y, z } }, // left
-		{ { 0.0, 0.0, 0.0 }, {-x, -y, z }, { x, -y, z } }, // bottom
-		{ { x, -y, z }, {-x,  y, z }, { x,  y, z } }, // front up right
-		{ { x, -y, z }, {-x, -y, z }, {-x,  y, z } }, // front bottom left
-	};
-
-	r.multMatrix( Mat4(lcam.getWorldTransform()) );
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 3, GL_FLOAT, 0, verts );
-	glDrawArrays( GL_TRIANGLES, 0, tris_num*3 );
-	glDisableClientState( GL_VERTEX_ARRAY );
-
-
-	// restore matrices
-	glMatrixMode( GL_PROJECTION );
-	glPopMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-
-
-	glEnable( GL_CULL_FACE );
-	glColorMask( true, true, true, true );
-
-	// change the stencil func so that the light pass will only write in the masked area
-	glStencilFunc( GL_EQUAL, 0x1, 0x1 );
-	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-}
-
-
-//======================================================================================================================
 // pointLightPass                                                                                                      =
 //======================================================================================================================
 void Renderer::Is::pointLightPass( const PointLight& light )
 {
 	const Camera& cam = *r.cam;
 
-	// make a check weather the point light passes the frustum test
+	// frustum test
 	bsphere_t sphere( light.getWorldTransform().getOrigin(), light.radius );
 	if( !cam.insideFrustum( sphere ) ) return;
 
 	// stencil optimization
-	//stencilOptPass( light );
+	smo.run( light );
 
-	// bind the shader
+	// shader prog
 	const LightShaderProg& shader = pointLightSProg; // ensure the const-ness
 	shader.bind();
 
-	// set uniforms
 	shader.uniVars.msNormalFai->setTexture( r.ms.normalFai, 0 );
 	shader.uniVars.msDiffuseFai->setTexture( r.ms.diffuseFai, 1 );
 	shader.uniVars.msSpecularFai->setTexture( r.ms.specularFai, 2 );
@@ -363,9 +212,6 @@ void Renderer::Is::pointLightPass( const PointLight& light )
 
 	glDisableVertexAttribArray( 0 );
 	glDisableVertexAttribArray( 1 );
-
-	// cleanup
-	glDisable( GL_STENCIL_TEST );
 }
 
 
@@ -376,14 +222,10 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 {
 	const Camera& cam = *r.cam;
 
-	//
-	// first of all check if the light's camera is inside the frustum
-	//
+	// frustum test
 	if( !cam.insideFrustum( light.camera ) ) return;
 
-	//
-	// generate the shadow map (if needed)
-	//
+	// shadow mapping
 	if( light.castsShadow && sm.enabled )
 	{
 		sm.run( light.camera );
@@ -397,14 +239,10 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 		glDisable( GL_DEPTH_TEST );
 	}
 
-	//
 	// stencil optimization
-	//
-	stencilOptPass( light );
+	smo.run( light );
 
-	//
-	// set the shader and uniforms
-	//
+	// shader prog
 	const LightShaderProg* shdr; // because of the huge name
 
 	if( light.castsShadow && sm.enabled )
@@ -443,10 +281,7 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-
-	//
 	// set texture matrix for texture & shadowmap projection
-	//
 	// Bias * P_light * V_light * inv( V_cam )
 	static Mat4 biasMat4( 0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0 );
 	Mat4 texProjectionMat;
@@ -454,16 +289,13 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	                   Mat4::combineTransformations( light.camera.getViewMatrix(), Mat4( cam.getWorldTransform() ) ) ;
 	shdr->uniVars.texProjectionMat->setMat4( &texProjectionMat );
 
-
-	// the shadow stuff
+	// the shadowmap
 	if( light.castsShadow && sm.enabled )
 	{
 		shdr->uniVars.shadowMap->setTexture( sm.shadowMap, 5 );
 	}
 
-	//
 	// render quad
-	//
 	glEnableVertexAttribArray( 0 );
 	glEnableVertexAttribArray( 1 );
 
@@ -474,10 +306,6 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 
 	glDisableVertexAttribArray( 0 );
 	glDisableVertexAttribArray( 1 );
-
-
-	// restore
-	glDisable( GL_STENCIL_TEST );
 }
 
 
@@ -503,6 +331,7 @@ void Renderer::Is::run()
 	// light passes
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_ONE, GL_ONE );
+	glEnable( GL_STENCIL_TEST );
 
 	calcViewVector();
 	calcPlanes();
@@ -531,6 +360,8 @@ void Renderer::Is::run()
 				DEBUG_ERR( 1 );
 		}
 	}
+
+	glDisable( GL_STENCIL_TEST );
 
 	// FBO
 	fbo.unbind();

@@ -156,7 +156,7 @@ bool Mesh::load( const char* filename )
 	createAllNormals();
 	if( texCoords.size() > 0 ) createVertTangents();
 	createVertIndeces();
-	createVBOs();
+	createVbos();
 	calcBSphere();
 
 	return true;
@@ -300,9 +300,9 @@ void Mesh::createVertTangents()
 
 
 //======================================================================================================================
-// createVBOs                                                                                                          =
+// createVbos                                                                                                          =
 //======================================================================================================================
-void Mesh::createVBOs()
+void Mesh::createVbos()
 {
 	vbos.vertIndeces.create( GL_ELEMENT_ARRAY_BUFFER, vertIndeces.getSizeInBytes(), &vertIndeces[0], GL_STATIC_DRAW );
 	vbos.vertCoords.create( GL_ARRAY_BUFFER, vertCoords.getSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW );

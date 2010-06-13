@@ -37,7 +37,8 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -81,7 +82,8 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Resource.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Camera.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
  ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
@@ -345,10 +347,11 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
- ../../src/Util/Util.h ../../src/Resources/ShaderProg.h ../../src/Ui/Ui.h \
+ ../../src/Util/Util.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Ui/Ui.h \
  ../../src/Util/App.h ../../src/Misc/particles.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Light.h \
+ ../../src/Resources/Mesh.h ../../src/Scene/Light.h \
  ../../src/Scene/Camera.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Resource.h \
  ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
@@ -519,7 +522,8 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -685,7 +689,23 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
 	@echo Compiling ../../src/Renderer//Ez.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ez.cpp -o Ez.o
 
-Smo.o: ../../src/Renderer//Smo.cpp
+Smo.o: ../../src/Renderer//Smo.cpp ../../src/Renderer//Renderer.h \
+ ../../src/Util/Common.h ../../src/Misc/memory.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Common.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Renderer//Smo.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Smo.cpp -o Smo.o
 
@@ -704,7 +724,8 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -885,7 +906,8 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -1066,7 +1088,8 @@ Hdr.o: ../../src/Renderer//Hdr.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Renderer//Hdr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Hdr.cpp -o Hdr.o
 
@@ -1085,7 +1108,8 @@ Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Camera.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h
 	@echo Compiling ../../src/Renderer//Ssao.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ssao.cpp -o Ssao.o
@@ -1105,7 +1129,8 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -1287,7 +1312,8 @@ Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Renderer//Pps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Pps.cpp -o Pps.o
 
@@ -1308,7 +1334,8 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -1352,7 +1379,8 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Camera.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Scene/Light.h ../../src/Scene/Camera.h \
  ../../src/Resources/LightProps.h ../../src/Util/App.h \
@@ -1535,7 +1563,8 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Camera.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Renderer//RendererInitializer.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h
@@ -1586,7 +1615,9 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../../SDL-hg/include/SDL_revision.h \
  ../../../SDL-hg/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene//SkelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//SkelNode.cpp -o SkelNode.o
 
@@ -1632,7 +1663,8 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../../SDL-hg/include/SDL_revision.h \
  ../../../SDL-hg/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/ShaderProg.h
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene//Light.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Light.cpp -o Light.o
 
@@ -1891,8 +1923,10 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/App.h ../../../SDL-hg/include/SDL.h \
- ../../../SDL-hg/include/SDL_main.h ../../../SDL-hg/include/SDL_stdinc.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
+ ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
+ ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
  ../../../SDL-hg/include/SDL_platform.h \
  ../../../SDL-hg/include/begin_code.h \
@@ -1934,6 +1968,8 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Scene//Scene.h ../../src/Misc/skybox.h \
  ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
@@ -2254,8 +2290,10 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../src/Physics/PhyWorld.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/App.h ../../../SDL-hg/include/SDL.h \
- ../../../SDL-hg/include/SDL_main.h ../../../SDL-hg/include/SDL_stdinc.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
+ ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
+ ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
  ../../../SDL-hg/include/SDL_platform.h \
  ../../../SDL-hg/include/begin_code.h \
@@ -2298,7 +2336,8 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Util/Common.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL-hg/include/SDL.h ../../../SDL-hg/include/SDL_main.h \
  ../../../SDL-hg/include/SDL_stdinc.h \
  ../../../SDL-hg/include/SDL_config.h \
@@ -2404,6 +2443,8 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
  ../../src/Resources/Resource.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Helpers/ShaderPrePreprocessor.h \
  ../../src/Resources//Texture.h
 	@echo Compiling ../../src/Resources//ShaderProg.cpp...
@@ -2452,7 +2493,9 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../../SDL-hg/include/SDL_revision.h \
  ../../../SDL-hg/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Resources//Material.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Material.cpp -o Material.o
 
@@ -2500,7 +2543,9 @@ Texture.o: ../../src/Resources//Texture.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Resource.h ../../src/Resources/Helpers/Image.h
+ ../../src/Resources/Resource.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Helpers/Image.h
 	@echo Compiling ../../src/Resources//Texture.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Texture.cpp -o Texture.o
 
@@ -2567,7 +2612,9 @@ Input.o: ../../src/Util//Input.cpp ../../../SDL-hg/include/SDL.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Resources/ShaderProg.h
+ ../../src/Util/Common.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Util//Input.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//Input.cpp -o Input.o
 
@@ -2746,7 +2793,9 @@ App.o: ../../src/Util//App.cpp ../../../SDL-hg/include/SDL.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
  ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/ShaderProg.h
+ ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Util//App.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//App.cpp -o App.o
 
@@ -2828,7 +2877,9 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../../SDL-hg/include/SDL_revision.h \
  ../../../SDL-hg/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene/Controllers//SkelAnimCtrl.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers//SkelAnimCtrl.cpp -o SkelAnimCtrl.o
 

@@ -271,6 +271,8 @@ bool ShaderProg::load( const char* filename )
 //======================================================================================================================
 bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 {
+	DEBUG_ERR( glId != numeric_limits<uint>::max() );
+
 	if( getRsrcName().length() == 0 )
 	{
 		name = Util::cutPath( filename );

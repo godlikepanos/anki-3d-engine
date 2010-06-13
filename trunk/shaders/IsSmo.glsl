@@ -1,6 +1,8 @@
 #pragma anki vertShaderBegins
 
+#pragma anki attribute position 0
 attribute vec3 position;
+
 uniform mat4 modelViewProjectionMat;
 
 void main()

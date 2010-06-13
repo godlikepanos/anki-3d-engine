@@ -60,7 +60,7 @@ class Mesh: public Resource
 		void createAllNormals() { createFaceNormals(); createVertNormals(); }
 		void createVertTangents();
 		void createVertIndeces();
-		void createVBOs();
+		void createVbos();
 		void calcBSphere();
 
 	public:

@@ -6,6 +6,7 @@
 #include "Fbo.h"
 #include "Texture.h"
 #include "ShaderProg.h"
+#include "Vbo.h"
 
 class Camera;
 class PointLight;
@@ -118,6 +119,37 @@ class Renderer
 						void run( const Camera& cam );
 				}; // end Sm
 
+				/**
+				 * Stencil masking optimizations
+				 */
+				class Smo: public RenderingStage
+				{
+					friend class Is;
+					friend class Renderer;
+
+					private:
+						class SmoShaderProg: public ShaderProg
+						{
+							public:
+								struct
+								{
+									const ShaderProg::UniVar* modelViewProjectionMat;
+								} uniVars;
+						};
+
+					public:
+						Smo( Renderer& r_ ): RenderingStage( r_ ) {}
+
+					private:
+						static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
+						static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+						static SmoShaderProg sProg;
+
+						void init();
+						void run( const PointLight& light );
+						void run( const SpotLight& light );
+				}; // end Smo
+
 			private:
 				/// Illumination stage ambient pass shader program
 				class AmbientShaderProg: public ShaderProg
@@ -154,8 +186,9 @@ class Renderer
 			public:
 				Texture fai;
 				Sm sm;
+				Smo smo;
 
-				Is( Renderer& r_ ): RenderingStage( r_ ), sm(r) {}
+				Is( Renderer& r_ ): RenderingStage( r_ ), sm( r_ ), smo( r_ ) {}
 
 			private:
 				Fbo fbo; ///< This FBO writes to the Is::fai
@@ -166,15 +199,9 @@ class Renderer
 				LightShaderProg spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
 				Vec3 viewVectors[4];
 				Vec2 planes;
-				static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex coords
-				static uint sMOUvSVboId; ///< Illumination stage stencil masking optimizations UV sphere VBO id
 
-				static void initSMOUvS(); ///< Init the illumination stage stencil masking optimizations uv sphere (eg create the @ref sMOUvSVboId VBO)
-				void renderSMOUvS( const PointLight& light ); ///< Render the illumination stage stencil masking optimizations uv sphere
 				void calcViewVector(); ///< Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 				void calcPlanes(); ///< Calc the planes that we will use inside the shader to calculate the frag pos in view space
-				void stencilOptPass( const PointLight& light );
-				void stencilOptPass( const SpotLight& light );
 				void ambientPass( const Vec3& color );
 				void pointLightPass( const PointLight& light );
 				void spotLightPass( const SpotLight& light );
@@ -331,12 +358,12 @@ class Renderer
 			public:
 				Dbg( Renderer& r_ );
 				void renderGrid();
-				void renderSphere( float radius, int complexity );
+				void renderSphere( float radius, int complexity, const Vec3& color );
 				void renderCube( bool cols = false, float size = 1.0 );
 
 			private:
 				Fbo fbo;
-				ShaderProg sProg; /// @todo move Dbg to GL 3
+				static ShaderProg* sProg;
 
 				void init();
 				void run();

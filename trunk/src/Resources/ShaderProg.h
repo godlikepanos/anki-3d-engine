@@ -3,6 +3,7 @@
 
 #include <GL/glew.h>
 #include <map>
+#include <limits>
 #include "Common.h"
 #include "Resource.h"
 #include "Math.h"
@@ -17,10 +18,11 @@
  */
 class ShaderProg: public Resource
 {
-	PROPERTY_R( uint, glId, getGlId ) ///< @ref PROPERTY_R : The OpenGL ID of the shader program
-	
 	friend class Material;
 
+	//====================================================================================================================
+	// Nested                                                                                                            =
+	//====================================================================================================================
 	public:
 		/**
 		 * Shader program variable. The type is attribute or uniform
@@ -40,9 +42,6 @@ class ShaderProg: public Resource
 			PROPERTY_R( GLenum, glDataType, getGlDataType ) ///< @ref PROPERTY_R : GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
 			PROPERTY_R( Type, type, getType ) ///< @ref PROPERTY_R : @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 
-			protected:
-				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
-
 			public:
 				Var( GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_ ):
 					loc(loc_), name(name_), glDataType(glDataType_), type(type_), fatherSProg(fatherSProg_)
@@ -52,6 +51,9 @@ class ShaderProg: public Resource
 				Var( const Var& var ):
 					loc(var.loc), name(var.name), glDataType(var.glDataType), type(var.type), fatherSProg(var.fatherSProg)
 				{}
+
+			protected:
+				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
 		};
 
 		/**
@@ -94,29 +96,23 @@ class ShaderProg: public Resource
 					Var( var )
 				{}
 		};
-
-	private:
-		static string stdSourceCode;
-		Vec<UniVar> uniVars; ///< All the uniform variables
-		Vec<AttribVar> attribVars; ///< All the attribute variables
-		map<string,UniVar*> uniNameToVar;  ///< A map for quick variable searching
-		map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
-		typedef map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
-		typedef map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
-
-		void getUniAndAttribVars(); ///< After the linking of the shader prog is done gather all the vars in custom containers
-		bool bindCustomAttribLocs( const class ShaderPrePreprocessor& pars ) const; ///< Uses glBindAttribLocation for every parser attrib location
-		uint createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const; ///< @return Returns zero on failure
-		bool link(); ///< Link the shader prog
 		
+	//====================================================================================================================
+	// Public                                                                                                            =
+	//====================================================================================================================
 	public:
-		ShaderProg(): glId(0) {}
+		ShaderProg(): glId( numeric_limits<uint>::max() ) {}
 		virtual ~ShaderProg() {}
+
+		/**
+		 * Accessor to glId
+		 */
+		GLuint getGlId() const { DEBUG_ERR( glId==numeric_limits<uint>::max() ); return glId; }
 
 		/**
 		 * Bind the shader program
 		 */
-		inline void bind() const { DEBUG_ERR( glId==0 ); glUseProgram(glId); }
+		inline void bind() const { DEBUG_ERR( glId==numeric_limits<uint>::max() ); glUseProgram(glId); }
 		
 		/**
 		 * Unbind all shader programs
@@ -150,7 +146,7 @@ class ShaderProg: public Resource
 		/**
 		 * Accessor to uniform vars vector
 		 */
-		const Vec<UniVar>&    getUniVars() const { return uniVars; }
+		const Vec<UniVar>& getUniVars() const { return uniVars; }
 
 		/**
 		 * Accessor to attribute vars vector
@@ -170,6 +166,25 @@ class ShaderProg: public Resource
 
 		bool uniVarExists( const char* varName ) const;
 		bool attribVarExists( const char* varName ) const;
+
+	//====================================================================================================================
+	// Private                                                                                                           =
+	//====================================================================================================================
+	private:
+		GLuint glId; ///< The OpenGL ID of the shader program
+
+		static string stdSourceCode;
+		Vec<UniVar> uniVars; ///< All the uniform variables
+		Vec<AttribVar> attribVars; ///< All the attribute variables
+		map<string,UniVar*> uniNameToVar;  ///< A map for quick variable searching
+		map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
+		typedef map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
+		typedef map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
+
+		void getUniAndAttribVars(); ///< After the linking of the shader prog is done gather all the vars in custom containers
+		bool bindCustomAttribLocs( const class ShaderPrePreprocessor& pars ) const; ///< Uses glBindAttribLocation for every parser attrib location
+		uint createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const; ///< @return Returns zero on failure
+		bool link(); ///< Link the shader prog
 }; 
 
 #endif
