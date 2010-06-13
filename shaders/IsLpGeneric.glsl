@@ -292,6 +292,8 @@ void main()
 		}
 	#endif // spot light
 
+
+	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4( 1, 0, 1, 1 );
 	/*#if defined(_SPOT_LIGHT_)
 	gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4( texture2D( msDepthFai, texCoords ).r );
 	//gl_FragData[0] = vec4( texture2D( msDepthFai, texCoords ).rg), 1.0 );

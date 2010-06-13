@@ -82,8 +82,8 @@ void Renderer::render( Camera& cam_ )
 void Renderer::drawQuad( int vertCoordsUniLoc )
 {
 	DEBUG_ERR( vertCoordsUniLoc == -1 );
-	glVertexAttribPointer( vertCoordsUniLoc, 2, GL_FLOAT, false, 0, quadVertCoords );
 	glEnableVertexAttribArray( vertCoordsUniLoc );
+	glVertexAttribPointer( vertCoordsUniLoc, 2, GL_FLOAT, false, 0, quadVertCoords );
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableVertexAttribArray( vertCoordsUniLoc );
 }

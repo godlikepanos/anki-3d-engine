@@ -22,11 +22,8 @@ void Camera::setAll( float fovx_, float fovy_, float znear_, float zfar_ )
 //======================================================================================================================
 void Camera::render()
 {
-	glPushMatrix();
-	app->getMainRenderer()->multMatrix( Mat4( getWorldTransform() ) );
-
 	const float camLen = 1.0;
-	float tmp0 = camLen / tan( (PI - fovX)*0.5 ) + 0.001;
+	float tmp0 = camLen / tan( (M::PI - fovX)*0.5 ) + 0.001;
 	float tmp1 = camLen * tan(fovY*0.5) + 0.001;
 
 	float points [][3] = {
@@ -37,34 +34,19 @@ void Camera::render()
 		{tmp0, tmp1, -camLen}, // 4: top right
 	};
 
-	//glLineWidth( 2.0 );
+	const float colors [][3] = { { 1.0, 0.0, 1.0 }, { 1.0, 0.0, 1.0 }, { 1.0, 0.0, 1.0 }, { 1.0, 0.0, 1.0 },
+	                             { 1.0, 0.0, 1.0 } };
 
-	glColor3fv( &Vec3(1.0,0.0,1.0)[0] );
-	glBegin( GL_LINES );
-		glVertex3fv( &points[0][0] );
-		glVertex3fv( &points[1][0] );
-		glVertex3fv( &points[0][0] );
-		glVertex3fv( &points[2][0] );
-		glVertex3fv( &points[0][0] );
-		glVertex3fv( &points[3][0] );
-		glVertex3fv( &points[0][0] );
-		glVertex3fv( &points[4][0] );
-	glEnd();
-
-	glBegin( GL_LINE_STRIP );
-		glVertex3fv( &points[1][0] );
-		glVertex3fv( &points[2][0] );
-		glVertex3fv( &points[3][0] );
-		glVertex3fv( &points[4][0] );
-		glVertex3fv( &points[1][0] );
-	glEnd();
+	const ushort indeces [] = { 0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2, 3, 3, 4, 4, 1 };
 
 
-	glPopMatrix();
-
-//	if( !strcmp( camera_data_user_class_t::getName(), "mainCam") ) return;
-//	//for( uint i=0; i<2; i++ )
-//		wspaceFrustumPlanes[TOP].render();
+	glEnableVertexAttribArray( 0 );
+	glEnableVertexAttribArray( 1 );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, points );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, colors );
+	glDrawElements( GL_LINES, 16, GL_UNSIGNED_SHORT, indeces );
+	glDisableVertexAttribArray( 0 );
+	glDisableVertexAttribArray( 1 );
 }
 
 
