@@ -51,6 +51,7 @@ enum MsgType
 
 extern ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* func );
 extern ostream& msgSuffix( ostream& cs );
+extern ostream& msgSuffixFatal( ostream& cs );
 
 #ifdef __GNUG__
 	#define FUNCTION __PRETTY_FUNCTION__
@@ -65,13 +66,13 @@ extern ostream& msgSuffix( ostream& cs );
 #define WARNING( x ) msgPrefix( MT_WARNING, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix
 
 /// Show an error and exit application
-#define FATAL( x ) { msgPrefix( MT_FATAL, __FILE__, __LINE__, FUNCTION ) << x << ". Bye!" << msgSuffix; ::exit( 1 ); }
+#define FATAL( x ) msgPrefix( MT_FATAL, __FILE__, __LINE__, FUNCTION ) << x << ". Bye!" << msgSuffixFatal
 
 /// Show an info message
 #define INFO( x ) msgPrefix( MT_INFO, __FILE__, __LINE__, FUNCTION ) << x << msgSuffix
 
 /// Reverse assertion
-#ifdef DEBUG
+#if defined( DEBUG_ENABLED )
 	#define DEBUG_ERR( x ) \
 		if( x ) \
 			msgPrefix( MT_DEBUG_ERR, __FILE__, __LINE__, FUNCTION ) << #x << msgSuffix
@@ -81,7 +82,7 @@ extern ostream& msgSuffix( ostream& cs );
 
 
 /// code that executes on debug
-#ifdef DEBUG
+#ifdef DEBUG_ENABLED
 	#define DEBUG_CODE if( true )
 #else
 	#define DEBUG_CODE if( false )
@@ -101,7 +102,7 @@ extern ostream& msgSuffix( ostream& cs );
  * - Dont use it with semicolon at the end (eg PROPERTY_RW( .... );) because of a doxygen bug
  */
 #define PROPERTY_RW( __Type__, __varName__, __setFunc__, __getFunc__ ) \
-	private: \
+	protected: \
 		typedef __Type__ __Dummy__##__varName__; \
 		__Dummy__##__varName__ __varName__; \
 	public: \
@@ -122,7 +123,7 @@ extern ostream& msgSuffix( ostream& cs );
  * - Dont use it with semicolon at the end (eg PROPERTY_RW( .... );) because of a doxygen bug
  */
 #define PROPERTY_R( __Type__, __varName__, __getFunc__ ) \
-	private: \
+	protected: \
 		typedef __Type__ __Dummy__##__varName__; \
 		__Dummy__##__varName__ __varName__; \
 	public: \

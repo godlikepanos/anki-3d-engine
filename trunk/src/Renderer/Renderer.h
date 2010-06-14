@@ -358,8 +358,8 @@ class Renderer
 			public:
 				Dbg( Renderer& r_ );
 				void renderGrid();
-				void renderSphere( float radius, int complexity, const Vec3& color );
-				void renderCube( bool cols = false, float size = 1.0 );
+				void renderSphere( const Transform& trf, const Vec4& color, int complexity  );
+				void renderCube( const Transform& trf, const Vec4& color );
 
 			private:
 				Fbo fbo;

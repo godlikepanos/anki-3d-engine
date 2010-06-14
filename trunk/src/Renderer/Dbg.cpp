@@ -76,8 +76,11 @@ void Renderer::Dbg::renderGrid()
 //======================================================================================================================
 // renderSphere                                                                                                        =
 //======================================================================================================================
-void Renderer::Dbg::renderSphere( float radius, int complexity, const Vec3& color )
+void Renderer::Dbg::renderSphere( const Transform& trf, const Vec4& color, int complexity )
 {
+	sProg->findUniVar( "color" )->setVec4( &color );
+
+	const float radius = 1.0;
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
 
@@ -121,8 +124,8 @@ void Renderer::Dbg::renderSphere( float radius, int complexity, const Vec3& colo
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back( Vec3(px, py, pz) );
-			normals.push_back( Vec3(ex, ey, ez) );
+			positions.push_back( Vec3(px, py, pz).getTransformed( trf ) );
+			normals.push_back( trf.getRotation() * Vec3(ex, ey, ez) );
 			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity) );
 
 			ex = costheta1 * costheta3;
@@ -132,42 +135,30 @@ void Renderer::Dbg::renderSphere( float radius, int complexity, const Vec3& colo
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back( Vec3(px, py, pz) );
-			normals.push_back( Vec3(ex, ey, ez) );
+			positions.push_back( Vec3(px, py, pz).getTransformed( trf ) );
+			normals.push_back( trf.getRotation() * Vec3(ex, ey, ez) );
 			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*i/(float)complexity) );
 		}
 	}
 
-	Vec<Vec3> colors( positions.size(), color );
-
-
 	glEnableVertexAttribArray( 0 );
-	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, &(positions[0][0]) );
-	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, &(colors[0][0]) );
 	glDrawArrays( GL_TRIANGLES, 0, positions.size() );
 	glDisableVertexAttribArray( 0 );
-	glDisableVertexAttribArray( 1 );
-
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_NORMAL_ARRAY );
-	glVertexPointer( 3, GL_FLOAT, 0, &positions[0][0] );
-	glNormalPointer( GL_FLOAT, 0, &normals[0][0] );
-	glDrawArrays( GL_QUAD_STRIP, 0, positions.size() );
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableClientState( GL_NORMAL_ARRAY );
 }
 
 
 //======================================================================================================================
 // renderCube                                                                                                          =
 //======================================================================================================================
-void Renderer::Dbg::renderCube( bool cols, float size )
+void Renderer::Dbg::renderCube( const Transform& trf, const Vec4& color )
 {
-	Vec3 maxPos( 0.5 * size );
-	Vec3 minPos( -0.5 * size );
+	sProg->findUniVar( "color" )->setVec4( &color );
 
-	Vec3 vertPositions[] = {
+	Vec3 maxPos = Vec3( 0.5 ).getTransformed( trf );
+	Vec3 minPos = Vec3( -0.5 ).getTransformed( trf );
+
+	Vec3 points [] = {
 		Vec3( maxPos.x, maxPos.y, maxPos.z ),  // right top front
 		Vec3( minPos.x, maxPos.y, maxPos.z ),  // left top front
 		Vec3( minPos.x, minPos.y, maxPos.z ),  // left bottom front
@@ -178,55 +169,12 @@ void Renderer::Dbg::renderCube( bool cols, float size )
 		Vec3( maxPos.x, minPos.y, minPos.z )   // right bottom back
 	};
 
-	Vec3 bakedVertPositions[] = {
-		vertPositions[0], vertPositions[1], vertPositions[2], vertPositions[3], // front face
-		vertPositions[5], vertPositions[4], vertPositions[7], vertPositions[6], // back face
-		vertPositions[4], vertPositions[0], vertPositions[3], vertPositions[7], // right face
-		vertPositions[1], vertPositions[5], vertPositions[6], vertPositions[2], // left face
-		vertPositions[0], vertPositions[4], vertPositions[5], vertPositions[1], // top face
-		vertPositions[3], vertPositions[2], vertPositions[6], vertPositions[7]  // bottom face
-	};
+	const ushort indeces [] = { 0, 1, 2, 3, 4, 0, 3, 7, 1, 5, 6, 2, 5, 4, 7, 6, 0, 4, 5, 1, 3, 2, 6, 7 };
 
-	static Vec3 normals[] = {
-		Vec3( 0.0, 0.0, 1.0 ),  // front face
-		Vec3( 0.0, 0.0, -1.0 ), // back face
-		Vec3( 1.0, 0.0, 0.0 ),  // right face
-		Vec3( -1.0, 0.0, 0.0 ), // left face
-		Vec3( 0.0, 1.0, 0.0 ),  // top face
-		Vec3( 0.0, -1.0, 0.0 )  // bottom face
-	};
-
-	static Vec3 bakedNormals [] = {
-		normals[0], normals[0], normals[0], normals[0],
-		normals[1], normals[1], normals[1], normals[1],
-		normals[2], normals[2], normals[2], normals[2],
-		normals[3], normals[3], normals[3], normals[3],
-		normals[4], normals[4], normals[4], normals[4],
-		normals[5], normals[5], normals[5], normals[5]
-	};
-
-	static Vec3 colors [] = {
-		Vec3( 0.0, 0.0, 1.0 ),
-		Vec3( 0.0, 0.0, 0.5 ),
-		Vec3( 1.0, 0.0, 0.0 ),
-		Vec3( 0.5, 0.0, 1.0 ),
-		Vec3( 0.0, 1.0, 1.0 ),
-		Vec3( 0.0, 0.5, 1.0 )
-	};
-
-	static Vec3 bakedColors [] = {
-		colors[0], colors[0], colors[0], colors[0],
-		colors[1], colors[1], colors[1], colors[1],
-		colors[2], colors[2], colors[2], colors[2],
-		colors[3], colors[3], colors[3], colors[3],
-		colors[4], colors[4], colors[4], colors[4],
-		colors[5], colors[5], colors[5], colors[5]
-	};
-
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 3, GL_FLOAT, 0, bakedVertPositions );
-	glDrawArrays( GL_QUADS, 0, 24 );
-	glDisableClientState( GL_VERTEX_ARRAY );
+	glEnableVertexAttribArray( 0 );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, &(points[0][0]) );
+	glDrawElements( GL_QUADS, sizeof(indeces)/sizeof(ushort), GL_UNSIGNED_SHORT, indeces );
+	glDisableVertexAttribArray( 0 );
 }
 
 

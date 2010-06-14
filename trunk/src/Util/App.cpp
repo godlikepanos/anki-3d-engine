@@ -35,38 +35,26 @@ void App::parseCommandLineArgs( int argc, char* argv[] )
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-App::App():
+App::App( int argc, char* argv[] ):
 	windowW( 1280 ),
 	windowH( 720 ),
 	terminalColoringEnabled( true ),
 	fullScreenFlag( false )
 {
-}
+	app = this;
 
-
-//======================================================================================================================
-// init                                                                                                                =
-//======================================================================================================================
-void App::init( int argc, char* argv[] )
-{
 	parseCommandLineArgs( argc, argv );
 
 	printAppInfo();
 
 	if( isCreated )
-		FATAL( "You cannot init a second App instance" )
+		FATAL( "You cannot init a second App instance" );
 
 	isCreated = true;
 
 	scene = new Scene;
 	mainRenderer = new MainRenderer;
 	activeCam = NULL;
-
-
-	/*windowW = 1440;
-	windowH = 900;*/
-
-
 
 	timerTick = 1000/40; // in ms. 1000/Hz
 	time = 0;
@@ -194,7 +182,7 @@ void App::printAppInfo()
 {
 	stringstream msg;
 	msg << "App info: debugging ";
-	#if defined( DEBUG )
+	#if defined( DEBUG_ENABLED )
 		msg << "on, ";
 	#else
 		msg << "off, ";

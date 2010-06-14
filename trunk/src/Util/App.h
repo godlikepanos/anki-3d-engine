@@ -32,9 +32,8 @@ class App
 	public:
 		uint timerTick;
 
-		App();
+		App( int argc, char* argv[] );
 		~App() {}
-		void init( int argc, char* argv[] );
 		void initWindow();
 		void quitApp( int code );
 		void waitForNextFrame();
