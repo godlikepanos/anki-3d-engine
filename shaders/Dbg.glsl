@@ -2,24 +2,19 @@
 
 #pragma anki attribute position 0
 attribute vec3 position;
-#pragma anki attribute color 1
-attribute vec3 color;
 
 uniform mat4 modelViewProjectionMat;
 
-varying vec3 colorV2f;
-
 void main()
 {
-	colorV2f = color;
 	gl_Position = modelViewProjectionMat * vec4( position, 1.0 );
 }
 
 #pragma anki fragShaderBegins
 
-varying vec3 colorV2f;
+uniform vec4 color = vec4( 0.5 );
 
 void main()
 {
-	gl_FragData[0].rgb = colorV2f;
+	gl_FragData[0] = color;
 }

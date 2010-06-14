@@ -41,12 +41,9 @@ void Camera::render()
 
 
 	glEnableVertexAttribArray( 0 );
-	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, points );
-	glVertexAttribPointer( 1, 3, GL_FLOAT, false, 0, colors );
 	glDrawElements( GL_LINES, 16, GL_UNSIGNED_SHORT, indeces );
 	glDisableVertexAttribArray( 0 );
-	glDisableVertexAttribArray( 1 );
 }
 
 

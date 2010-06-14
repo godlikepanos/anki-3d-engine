@@ -37,7 +37,7 @@
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
 
-App* app = NULL;
+App* app = NULL; ///< The only global var. App constructor sets it
 
 // map (hard coded)
 MeshNode* floor__,* sarge,* horse,* crate;
@@ -296,8 +296,7 @@ void init()
 //======================================================================================================================
 int main( int argc, char* argv[] )
 {
-	app = new App;
-	app->init( argc, argv );
+	new App( argc, argv );
 
 	init();
 

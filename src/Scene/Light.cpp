@@ -41,26 +41,11 @@ void Light::deinit()
 
 
 //======================================================================================================================
-// renderSphere                                                                                                        =
-//======================================================================================================================
-static void renderSphere( const Mat4& tsl, const Vec3& col )
-{
-	glPushMatrix();
-
-	/// @todo move to GL 3.x
-	app->getMainRenderer()->multMatrix( tsl );
-	app->getMainRenderer()->dbg.renderSphere( 1.0/8.0, 8, col );
-
-	glPopMatrix();
-}
-
-
-//======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
 void PointLight::render()
 {
-	renderSphere( Mat4(getWorldTransform()), lightProps->getDiffuseColor() );
+	app->getMainRenderer()->dbg.renderSphere( getWorldTransform(), Vec4( lightProps->getDiffuseColor(), 1.0 ), 8 );
 }
 
 
@@ -69,5 +54,5 @@ void PointLight::render()
 //======================================================================================================================
 void SpotLight::render()
 {
-	renderSphere( Mat4(getWorldTransform()), lightProps->getDiffuseColor() );
+	app->getMainRenderer()->dbg.renderSphere( getWorldTransform(), Vec4( lightProps->getDiffuseColor(), 1.0 ), 8 );
 }

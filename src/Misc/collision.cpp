@@ -906,7 +906,8 @@ render                                                                          
 */
 void bsphere_t::Render()
 {
-	glPushMatrix();
+	/// @todo
+	/*glPushMatrix();
 
 	glTranslatef( center.x, center.y, center.z );
 
@@ -914,7 +915,7 @@ void bsphere_t::Render()
 
 	app->getMainRenderer()->dbg.renderSphere( radius, 24, Vec3(1.0) );
 
-	glPopMatrix();
+	glPopMatrix();*/
 }
 
 
@@ -1186,7 +1187,8 @@ render                                                                          
 */
 void aabb_t::Render()
 {
-	glPushMatrix();
+	/// @todo
+	/*glPushMatrix();
 
 	Vec3 sub( max-min );
 	Vec3 center( (max+min)*0.5 );
@@ -1205,7 +1207,7 @@ void aabb_t::Render()
 		glVertex3fv( &min[0] );
 		glColor3fv( &Vec3( 0.0, 1.0, 0.0 )[0] );
 		glVertex3fv( &max[0] );
-	glEnd();
+	glEnd();*/
 }
 
 
@@ -1637,7 +1639,8 @@ render                                                                          
 */
 void obb_t::Render()
 {
-	glPushMatrix();
+	/// @todo
+	/*glPushMatrix();
 
 	glTranslatef( center.x, center.y, center.z ); // translate
 	app->getMainRenderer()->multMatrix( Mat4(rotation) ); // rotate
@@ -1652,7 +1655,7 @@ void obb_t::Render()
 		glVertex3fv( &Vec3(1.0, 1.0, 1.0)[0] );
 	glEnd();
 
-	glPopMatrix();
+	glPopMatrix();*/
 }
 
 

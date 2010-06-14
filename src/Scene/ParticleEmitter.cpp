@@ -168,18 +168,8 @@ void ParticleEmitter::update()
 //======================================================================================================================
 void ParticleEmitter::render()
 {
-	glPushMatrix();
-	app->getMainRenderer()->multMatrix( getWorldTransform() );
-
-	app->getMainRenderer()->color3( Vec3(1.0) );
-
-	/*glEnableClientState( GL_VERTEX_ARRAY );
-	glVertexPointer( 3, GL_FLOAT, 0, vertPositions );
-	glDrawElements( GL_LINES, sizeof(vertIndices)/sizeof(uint), GL_UNSIGNED_INT, vertIndices );
-	glDisableClientState( GL_VERTEX_ARRAY );*/
 	glPolygonMode( GL_FRONT, GL_LINE );
-	app->getMainRenderer()->dbg.renderCube();
+	app->getMainRenderer()->dbg.renderCube( getWorldTransform(), Vec4(1.0) );
 	glPolygonMode( GL_FRONT, GL_FILL );
 
-	glPopMatrix();
 }
