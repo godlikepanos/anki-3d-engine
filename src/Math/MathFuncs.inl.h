@@ -61,7 +61,7 @@ inline static float polynomialSinQuadrant( float a )
 inline void sinCos( float a, float& sina, float& cosa )
 {
 	bool negative = false;
-	if (a < 0.0)
+	if( a < 0.0 )
 	{
 		a = -a;
 		negative = true;
@@ -100,13 +100,8 @@ inline void sinCos( float a, float& sina, float& cosa )
 	if( negative )
 		sina = -sina;
 
-	// a unit test
-	#if defined( DEBUG_ENABLED )
-		float sina_ = M::sin(a);
-		float cosa_ = M::cos(a);
-
-		DEBUG_ERR( isZero( sina_ - sina ) || isZero( cosa_ - cosa ) );
-	#endif
+	/*DEBUG_ERR( !isZero( M::sin(a) - sina ) );
+	DEBUG_ERR( !isZero( M::cos(a) - cosa ) );*/
 }
 
 
