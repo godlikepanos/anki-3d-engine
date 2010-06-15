@@ -37,6 +37,7 @@ class Light: public SceneNode
 		Light( Type type_ ): SceneNode(NT_LIGHT), type(type_) {}
 		//void init( const char* );
 		void deinit();
+		void render();
 };
 
 
@@ -48,7 +49,6 @@ class PointLight: public Light
 
 		PointLight(): Light(LT_POINT) {}
 		void init( const char* );
-		void render();
 };
 
 
@@ -61,9 +61,8 @@ class SpotLight: public Light
 
 		SpotLight(): Light(LT_SPOT), castsShadow(false) { addChild( &camera ); }
 		float getDistance() const { return camera.getZFar(); }
-		void  setDistance( float d ) { camera.setZFar(d); }
-		void  init( const char* );
-		void  render();
+		void setDistance( float d ) { camera.setZFar(d); }
+		void init( const char* );
 };
 
 

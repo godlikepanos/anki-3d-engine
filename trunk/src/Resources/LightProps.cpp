@@ -98,7 +98,7 @@ Scanner scanner;
 			}
 				
 			texture = Rsrc::textures.load( token->getValue().getString() );
-			texture->texParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
+			texture->setTexParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, 0 );
 		}
 		// end of file
 		else if( token->getCode() == Scanner::TC_EOF )

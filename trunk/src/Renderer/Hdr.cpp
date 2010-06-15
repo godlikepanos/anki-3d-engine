@@ -24,9 +24,9 @@ void Renderer::Pps::Hdr::initFbos( Fbo& fbo, Texture& fai, int internalFormat )
 
 	// create the texes
 	fai.createEmpty2D( width, height, internalFormat, GL_RGB, GL_FLOAT, false );
-	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	//fai_.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	fai.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	//fai_.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	fai.setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
@@ -52,7 +52,7 @@ void Renderer::Pps::Hdr::init()
 	initFbos( pass1Fbo, pass1Fai, GL_RGB );
 	initFbos( pass2Fbo, fai, GL_RGB );
 
-	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	fai.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	// init shaders
 	const char* shaderFname = "shaders/PpsHdr.glsl";

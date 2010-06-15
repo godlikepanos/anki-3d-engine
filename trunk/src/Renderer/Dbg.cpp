@@ -15,6 +15,7 @@
 // Statics                                                                                                             =
 //======================================================================================================================
 ShaderProg* Renderer::Dbg::sProg = NULL;
+Mat4 Renderer::Dbg::viewProjectionMat;
 
 
 //======================================================================================================================
@@ -76,11 +77,8 @@ void Renderer::Dbg::renderGrid()
 //======================================================================================================================
 // renderSphere                                                                                                        =
 //======================================================================================================================
-void Renderer::Dbg::renderSphere( const Transform& trf, const Vec4& color, int complexity )
+void Renderer::Dbg::renderSphere( int complexity, float radius )
 {
-	sProg->findUniVar( "color" )->setVec4( &color );
-
-	const float radius = 1.0;
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
 
@@ -124,8 +122,8 @@ void Renderer::Dbg::renderSphere( const Transform& trf, const Vec4& color, int c
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back( Vec3(px, py, pz).getTransformed( trf ) );
-			normals.push_back( trf.getRotation() * Vec3(ex, ey, ez) );
+			positions.push_back( Vec3(px, py, pz) );
+			normals.push_back( Vec3(ex, ey, ez) );
 			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity) );
 
 			ex = costheta1 * costheta3;
@@ -135,8 +133,8 @@ void Renderer::Dbg::renderSphere( const Transform& trf, const Vec4& color, int c
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back( Vec3(px, py, pz).getTransformed( trf ) );
-			normals.push_back( trf.getRotation() * Vec3(ex, ey, ez) );
+			positions.push_back( Vec3(px, py, pz) );
+			normals.push_back( Vec3(ex, ey, ez) );
 			texCoodrs.push_back( Vec2(-(j/(float)complexity), 2*i/(float)complexity) );
 		}
 	}
@@ -151,12 +149,10 @@ void Renderer::Dbg::renderSphere( const Transform& trf, const Vec4& color, int c
 //======================================================================================================================
 // renderCube                                                                                                          =
 //======================================================================================================================
-void Renderer::Dbg::renderCube( const Transform& trf, const Vec4& color )
+void Renderer::Dbg::renderCube( float size )
 {
-	sProg->findUniVar( "color" )->setVec4( &color );
-
-	Vec3 maxPos = Vec3( 0.5 ).getTransformed( trf );
-	Vec3 minPos = Vec3( -0.5 ).getTransformed( trf );
+	Vec3 maxPos = Vec3( 0.5 * size );
+	Vec3 minPos = Vec3( -0.5 * size );
 
 	Vec3 points [] = {
 		Vec3( maxPos.x, maxPos.y, maxPos.z ),  // right top front
@@ -222,11 +218,11 @@ void Renderer::Dbg::run()
 
 	fbo.bind();
 	sProg->bind();
+	viewProjectionMat = cam.getViewMatrix() * cam.getProjectionMatrix();
 
 	// OGL stuff
 	r.setProjectionViewMatrices( cam );
 	Renderer::setViewport( 0, 0, r.width, r.height );
-
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 
@@ -236,24 +232,39 @@ void Renderer::Dbg::run()
 		SceneNode* node = app->getScene()->nodes[i];
 		if
 		(
-			/*(app->getScene()->nodes[i]->type == SceneNode::NT_LIGHT && showLightsEnabled) ||*/
-			(node->type == SceneNode::NT_CAMERA && showCamerasEnabled) /*||
-			app->getScene()->nodes[i]->type == SceneNode::NT_PARTICLE_EMITTER*/
+			(node->type == SceneNode::NT_LIGHT && showLightsEnabled) ||
+			(node->type == SceneNode::NT_CAMERA && showCamerasEnabled) ||
+			node->type == SceneNode::NT_PARTICLE_EMITTER
 		)
 		{
-			Mat4 modelMat = Mat4( node->getWorldTransform() );
-			Mat4 modelViewMat = Mat4::combineTransformations( cam.getViewMatrix(), modelMat );
-			Mat4 modelViewProjectionMat = cam.getProjectionMatrix() * modelViewMat;
-			sProg->findUniVar( "modelViewProjectionMat" )->setMat4( &modelViewProjectionMat );
 			node->render();
 		}
-		/*else if( app->getScene()->nodes[i]->type == SceneNode::NT_SKELETON && showSkeletonsEnabled )
+		else if( app->getScene()->nodes[i]->type == SceneNode::NT_SKELETON && showSkeletonsEnabled )
 		{
-			SkelNode* skel_node = static_cast<SkelNode*>( app->getScene()->nodes[i] );
+			SkelNode* skelNode = static_cast<SkelNode*>( node );
 			glDisable( GL_DEPTH_TEST );
-			skel_node->render();
+			skelNode->render();
 			glEnable( GL_DEPTH_TEST );
-		}*/
+		}
 	}
+}
+
+
+//======================================================================================================================
+// setColor                                                                                                            =
+//======================================================================================================================
+void Renderer::Dbg::setColor( const Vec4& color )
+{
+	sProg->findUniVar( "color" )->setVec4( &color );
+}
+
+
+//======================================================================================================================
+// setModelMat                                                                                                         =
+//======================================================================================================================
+void Renderer::Dbg::setModelMat( const Mat4& modelMat )
+{
+	Mat4 pmv = viewProjectionMat * modelMat;
+	sProg->findUniVar( "modelViewProjectionMat" )->setMat4( &pmv );
 }
 

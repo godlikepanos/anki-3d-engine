@@ -40,25 +40,19 @@ void SkelNode::deinit()
 //======================================================================================================================
 void SkelNode::render()
 {
-	glPushMatrix();
-	app->getMainRenderer()->multMatrix( Mat4(getWorldTransform()) );
+	Renderer::Dbg::setModelMat( Mat4(getWorldTransform()) );
+	Renderer::Dbg::setColor( Vec4(1.0, 0.0, 0.0, 1.0) );
 
-	//glPointSize( 4.0f );
-	//glLineWidth( 2.0f );
+	Vec<Vec3> positions;
 
 	for( uint i=0; i<skeleton->bones.size(); i++ )
 	{
-		glColor3fv( &Vec3( 1.0, 1.0, 1.0 )[0] );
-		glBegin( GL_POINTS );
-			glVertex3fv( &skelAnimCtrl->heads[i][0] );
-		glEnd();
-
-		glBegin( GL_LINES );
-			glVertex3fv( &skelAnimCtrl->heads[i][0] );
-			glColor3fv( &Vec3( 1.0, 0.0, 0.0 )[0] );
-			glVertex3fv( &skelAnimCtrl->tails[i][0] );
-		glEnd();
+		positions.push_back( skelAnimCtrl->heads[i] );
+		positions.push_back( skelAnimCtrl->tails[i] );
 	}
 
-	glPopMatrix();
+	glEnableVertexAttribArray( 0 );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, &(positions[0][0]) );
+	glDrawArrays( GL_TRIANGLES, 0, positions.size() );
+	glDisableVertexAttribArray( 0 );
 }

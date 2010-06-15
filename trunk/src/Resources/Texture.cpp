@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include "Texture.h"
 #include "Renderer.h"
 #include "Image.h"
@@ -21,6 +22,7 @@ Texture::Texture():
 {
 }
 
+
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
@@ -42,20 +44,19 @@ bool Texture::load( const char* filename )
 	bind(0);
 	if( mipmappingEnabled )
 	{
-		texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+		setTexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	}
 	else
 	{
-		texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		setTexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	}
 
-	texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	setTexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	texParameter( GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel) );
 
 	// leave to GL_REPEAT. There is not real performance impact
-	texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-	texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
+	setRepeat( true );
 
 	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
 
@@ -98,13 +99,13 @@ bool Texture::createEmpty2D( float width_, float height_, int internalFormat, in
 	bind();
 
 	if( mimapping )
-		texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+		setTexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	else
-		texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		setTexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-	texParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-	texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
+	setTexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	setRepeat( true );
+
 
 	// allocate to vram
 	glTexImage2D( target, 0, internalFormat, width_, height_, 0, format_, type_, NULL );
@@ -160,3 +161,48 @@ void Texture::bind( uint unit ) const
 	glActiveTexture( GL_TEXTURE0+unit );
 	glBindTexture( target, glId );
 }
+
+
+//======================================================================================================================
+// getWidth                                                                                                            =
+//======================================================================================================================
+int Texture::getWidth() const
+{
+	bind();
+	int i;
+	glGetTexLevelParameteriv( target, 0, GL_TEXTURE_WIDTH, &i );
+	return i;
+}
+
+
+//======================================================================================================================
+// getHeight                                                                                                           =
+//======================================================================================================================
+int Texture::getHeight() const
+{
+	bind();
+	int i;
+	glGetTexLevelParameteriv( target, 0, GL_TEXTURE_HEIGHT, &i );
+	return i;
+}
+
+
+//======================================================================================================================
+// setTexParameter [int]                                                                                                  =
+//======================================================================================================================
+void Texture::setTexParameter( GLenum paramName, GLint value ) const
+{
+	bind();
+	glTexParameteri( target, paramName, value );
+}
+
+
+//======================================================================================================================
+// setTexParameter [float]                                                                                                =
+//======================================================================================================================
+void Texture::texParameter( GLenum paramName, GLfloat value ) const
+{
+	bind();
+	glTexParameterf( target, paramName, value );
+}
+
