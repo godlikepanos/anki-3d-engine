@@ -89,18 +89,21 @@ void Renderer::Pps::Hdr::run()
 	// pass 0
 	pass0Fbo.bind();
 	pass0SProg.bind();
+	r.is.fai.setRepeat( false );
 	pass0SProg.uniVars.fai->setTexture( r.is.fai, 0 );
 	Renderer::drawQuad( 0 );
 
 	// pass 1
 	pass1Fbo.bind();
 	pass1SProg.bind();
+	pass0Fai.setRepeat( false );
 	pass1SProg.uniVars.fai->setTexture( pass0Fai, 0 );
 	Renderer::drawQuad( 0 );
 
 	// pass 2
 	pass2Fbo.bind();
 	pass2SProg.bind();
+	pass1Fai.setRepeat( false );
 	pass2SProg.uniVars.fai->setTexture( pass1Fai, 0 );
 	Renderer::drawQuad( 0 );
 

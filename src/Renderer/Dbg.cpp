@@ -24,7 +24,7 @@ Mat4 Renderer::Dbg::viewProjectionMat;
 Renderer::Dbg::Dbg( Renderer& r_ ):
 	RenderingStage( r_ ),
 	showAxisEnabled( false ),
-	showLightsEnabled( false ),
+	showLightsEnabled( true ),
 	showSkeletonsEnabled( false ),
 	showCamerasEnabled( true )
 {
@@ -141,7 +141,7 @@ void Renderer::Dbg::renderSphere( int complexity, float radius )
 
 	glEnableVertexAttribArray( 0 );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, &(positions[0][0]) );
-	glDrawArrays( GL_TRIANGLES, 0, positions.size() );
+	glDrawArrays( GL_QUAD_STRIP, 0, positions.size() );
 	glDisableVertexAttribArray( 0 );
 }
 
@@ -218,7 +218,7 @@ void Renderer::Dbg::run()
 
 	fbo.bind();
 	sProg->bind();
-	viewProjectionMat = cam.getViewMatrix() * cam.getProjectionMatrix();
+	viewProjectionMat = cam.getProjectionMatrix() * cam.getViewMatrix();
 
 	// OGL stuff
 	r.setProjectionViewMatrices( cam );
@@ -229,6 +229,8 @@ void Renderer::Dbg::run()
 	//R::renderGrid();
 	for( uint i=0; i<app->getScene()->nodes.size(); i++ )
 	{
+		sProg->bind();
+
 		SceneNode* node = app->getScene()->nodes[i];
 		if
 		(

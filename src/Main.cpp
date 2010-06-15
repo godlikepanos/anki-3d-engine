@@ -298,11 +298,6 @@ int main( int argc, char* argv[] )
 {
 	new App( argc, argv );
 
-	Scanner scanner;
-	scanner.loadFile( "/users/panoscc/Desktop/Unsaved Document 2" );
-	scanner.getAllPrintAll();
-	return 0;
-
 	init();
 
 	INFO( "Entering main loop" );

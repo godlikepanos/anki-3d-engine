@@ -46,12 +46,7 @@ void Light::deinit()
 void Light::render()
 {
 	Renderer::Dbg::setColor( Vec4( lightProps->getDiffuseColor(), 1.0 ) );
-
-	Transform trf = getWorldTransform();
-	trf.setScale( 0.1 );
-	Mat4 mvp = Mat4( trf );
 	Renderer::Dbg::setModelMat( Mat4( getWorldTransform() ) );
-
-	Renderer::Dbg::renderSphere( 8 );
+	Renderer::Dbg::renderSphere( 8, 0.1 );
 }
 
