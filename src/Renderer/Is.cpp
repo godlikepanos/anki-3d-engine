@@ -242,6 +242,22 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	// stencil optimization
 	smo.run( light );
 
+	// set the texture
+	if( light.lightProps->getTexture() == NULL )
+	{
+		ERROR( "No texture is attached to the light. lightProps name: " << light.lightProps->getRsrcName() );
+		return;
+	}
+
+	light.lightProps->getTexture()->setRepeat( false );
+
+	/*
+	 * Before we render disable anisotropic in the light.texture because it produces artifacts.
+	 * todo see if this is necessary with future drivers
+	 */
+	light.lightProps->getTexture()->setTexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	light.lightProps->getTexture()->setTexParameter( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
 	// shader prog
 	const LightShaderProg* shdr; // because of the huge name
 
@@ -267,19 +283,7 @@ void Renderer::Is::spotLightPass( const SpotLight& light )
 	shdr->uniVars.lightInvRadius->setFloat( 1.0/light.getDistance() );
 	shdr->uniVars.lightDiffuseCol->setVec3( &light.lightProps->getDiffuseColor() );
 	shdr->uniVars.lightSpecularCol->setVec3( &light.lightProps->getSpecularColor() );
-
-	// set the light texture
-	if( light.lightProps->getTexture() == NULL )
-		ERROR( "No texture is attached to the light. lightProps name: " << light.lightProps->getRsrcName() );
-	else
-		shdr->uniVars.lightTex->setTexture( *light.lightProps->getTexture(), 4 );
-
-	/*
-	 * Before we render disable anisotropic in the light.texture because it produces artifacts.
-	 * todo see if this is necessary with future drivers
-	 */
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	shdr->uniVars.lightTex->setTexture( *light.lightProps->getTexture(), 4 );
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv( V_cam )

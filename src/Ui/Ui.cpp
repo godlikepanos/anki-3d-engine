@@ -161,8 +161,8 @@ non static funcs                                                                
 void init()
 {
 	fontMap = Rsrc::textures.load( "gfx/fontmapa.tga" );
-	fontMap->texParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	//font_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	fontMap->setTexParameter( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	//font_map->setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	shader = Rsrc::shaders.load( "shaders/txt.glsl" );
 	setPos( 0.0, 0.0 );
 	setFontWidth( 0.05 );

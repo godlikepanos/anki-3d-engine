@@ -358,12 +358,16 @@ class Renderer
 			public:
 				Dbg( Renderer& r_ );
 				void renderGrid();
-				void renderSphere( const Transform& trf, const Vec4& color, int complexity  );
-				void renderCube( const Transform& trf, const Vec4& color );
+				static void renderSphere( int complexity, float radius = 1.0 );
+				static void renderCube( float size = 1.0 );
+
+				static void setColor( const Vec4& color );
+				static void setModelMat( const Mat4& modelMat );
 
 			private:
 				Fbo fbo;
 				static ShaderProg* sProg;
+				static Mat4 viewProjectionMat;
 
 				void init();
 				void run();

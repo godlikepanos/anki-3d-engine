@@ -22,8 +22,8 @@ void Renderer::Pps::Ssao::initBlurFbo( Fbo& fbo, Texture& fai )
 
 	// create the texes
 	fai.createEmpty2D( bwidth, bheight, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false );
-	fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	fai.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	fai.setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
@@ -61,8 +61,8 @@ void Renderer::Pps::Ssao::init()
 
 	// create the FAI
 	pass0Fai.createEmpty2D( width, height, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false );
-	pass0Fai.texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	pass0Fai.texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	pass0Fai.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	pass0Fai.setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
 	// attach
 	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, pass0Fai.getGlId(), 0 );
@@ -107,10 +107,10 @@ void Renderer::Pps::Ssao::init()
 	Texture::compressionEnabled = false;
 	Texture::mipmappingEnabled = true;
 	noiseMap = Rsrc::textures.load( "gfx/noise3.tga" );
-	noiseMap->texParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-	noiseMap->texParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
-	//noise_map->texParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	//noise_map->texParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	noiseMap->setTexParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
+	noiseMap->setTexParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
+	//noise_map->setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	//noise_map->setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	Texture::compressionEnabled = texCompr;
 	Texture::mipmappingEnabled = mipmaping;
 

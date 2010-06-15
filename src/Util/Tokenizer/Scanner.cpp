@@ -293,7 +293,7 @@ const Scanner::Token& Scanner::getNextToken()
 	{
 		crntToken.code = TC_NEWLINE;
 		--commentedLines;
-		++lineNmbr; // the ultimate hack. I should remember not to do such crapp
+		++lineNmbr; // the ultimate hack. I should remember not to do such crap in the future
 	}
 	else if( *pchar == '/' )
 	{
@@ -406,30 +406,43 @@ bool Scanner::checkWord()
 //======================================================================================================================
 bool Scanner::checkComment()
 {
-	// begining
+	// Beginning
 	if( getNextChar()=='*' )
-		goto branchy_cmnt;
+	{
+		goto cStyleCmnt;
+	}
+	// C++ style comment
 	else if( *pchar=='/' )
 	{
-		// end
-		getLine();
-		crntToken.code = TC_COMMENT;
-		return true;
+		while( true )
+		{
+			char ch = getNextChar();
+			if( ch == '\0' )
+			{
+				crntToken.code = TC_COMMENT;
+				return true;
+			}
+			else if( ch == '\\' )
+			{
+				if( getNextChar() == '\0' )
+					getNextChar();
+			}
+		}
 	}
 	else
 		goto error;
 
-	// multi-line comment
-	branchy_cmnt:
+	// C style comment
+	cStyleCmnt:
 		if( getNextChar()=='*' )
-			goto finalizeBranchy;
+			goto finalizeCCmnt;
 		else if( *pchar==eofChar )
 			goto error;
 		else
-			goto branchy_cmnt;
+			goto cStyleCmnt;
 
-	// multi-line "branchy"
-	finalizeBranchy:
+	// C++ style comment
+	finalizeCCmnt:
 		if( getNextChar()=='/' )
 		{
 			crntToken.code = TC_COMMENT;
@@ -437,7 +450,7 @@ bool Scanner::checkComment()
 			return true;
 		}
 		else
-			goto branchy_cmnt;
+			goto cStyleCmnt;
 
 	//error
 	error:
@@ -705,23 +718,23 @@ bool Scanner::checkString()
 
 	for(;;)
 	{
-		//Error
+		// Error
 		if( ch=='\0' || ch==eofChar ) // if end of line or eof
 		{
 			crntToken.code = TC_ERROR;
 			*tmpStr = '\0';
-			SERROR( "Incorect string ending \"" << crntToken.asString );
+			SERROR( "Incorrect string ending \"" << crntToken.asString << '\"' );
 			return false;
 		}
-		//Escape Codes
+		// Escape Codes
 		else if( ch=='\\' )
 		{
 			ch = getNextChar();
-			if( ch=='\0' || ch==eofChar )
+			if( ch==eofChar )
 			{
 				crntToken.code = TC_ERROR;
 				*tmpStr = '\0';
-				SERROR( "Incorect string ending \"" << crntToken.asString << '\"' );
+				SERROR( "Incorrect string ending \"" << crntToken.asString << '\"' );
 				return false;
 			}
 
@@ -737,12 +750,13 @@ bool Scanner::checkString()
 				case '\'': *tmpStr++ = '\''; break;
 				case '\\': *tmpStr++ = '\\'; break;
 				case '\?': *tmpStr++ = '\?'; break;
+				case '\0': break; // not an escape char but works almost the same
 				default  :
-					SERROR( "Unrecognized escape charachter \'\\" << ch << '\'' );
+					SERROR( "Unrecognized escape character \'\\" << ch << '\'' );
 					*tmpStr++ = ch;
 			}
 		}
-		//End
+		// End
 		else if( ch=='\"' )
 		{
 			*tmpStr = '\0';
@@ -751,7 +765,7 @@ bool Scanner::checkString()
 			getNextChar();
 			return true;
 		}
-		//Build str( main loop )
+		// Build str( main loop )
 		else
 		{
 			*tmpStr++ = ch;
@@ -811,7 +825,7 @@ bool Scanner::checkChar()
 			case '\'': ch0 = '\''; break;
 			case '\\': ch0 = '\\'; break;
 			case '\?': ch0 = '\?'; break;
-			default  : ch0 = ch  ; SERROR( "Unrecognized escape charachter \'\\" << ch << '\'' );
+			default  : ch0 = ch  ; SERROR( "Unrecognized escape character \'\\" << ch << '\'' );
 		}
 		crntToken.value.char_ = ch0;
 	}

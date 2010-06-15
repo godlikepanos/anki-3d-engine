@@ -6,7 +6,7 @@
 
 
 //======================================================================================================================
-// init [PointLight]                                                                                                =
+// init [PointLight]                                                                                                  =
 //======================================================================================================================
 void PointLight::init( const char* filename )
 {
@@ -16,7 +16,7 @@ void PointLight::init( const char* filename )
 
 
 //======================================================================================================================
-// init [SpotLight]                                                                                                 =
+// init [SpotLight]                                                                                                    =
 //======================================================================================================================
 void SpotLight::init( const char* filename )
 {
@@ -43,16 +43,15 @@ void Light::deinit()
 //======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
-void PointLight::render()
+void Light::render()
 {
-	app->getMainRenderer()->dbg.renderSphere( getWorldTransform(), Vec4( lightProps->getDiffuseColor(), 1.0 ), 8 );
+	Renderer::Dbg::setColor( Vec4( lightProps->getDiffuseColor(), 1.0 ) );
+
+	Transform trf = getWorldTransform();
+	trf.setScale( 0.1 );
+	Mat4 mvp = Mat4( trf );
+	Renderer::Dbg::setModelMat( Mat4( getWorldTransform() ) );
+
+	Renderer::Dbg::renderSphere( 8 );
 }
 
-
-//======================================================================================================================
-// render                                                                                                              =
-//======================================================================================================================
-void SpotLight::render()
-{
-	app->getMainRenderer()->dbg.renderSphere( getWorldTransform(), Vec4( lightProps->getDiffuseColor(), 1.0 ), 8 );
-}
