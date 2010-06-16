@@ -19,28 +19,28 @@ class Controller;
  */
 class Scene
 {
-	PROPERTY_RW( Vec3, ambientCol, setAmbientCol, getAmbientCol ) ///< The global ambient color
-	PROPERTY_RW( Vec3, sunPos, setSunPos, getSunPos )
-	PROPERTY_RW( PhyWorld*, phyWorld, setPhyWorld, getPhyWorld ) ///< Connection with bullet
+	PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
+	PROPERTY_RW(Vec3, sunPos, setSunPos, getSunPos)
+	PROPERTY_RW(PhyWorld*, phyWorld, setPhyWorld, getPhyWorld) ///< Connection with bullet
 
 	private:
 		/**
 		 * @brief Adds a node in a container
 		 */
-		template<typename ContainerType, typename Type> void putBackNode( ContainerType& container, Type* x )
+		template<typename ContainerType, typename Type> void putBackNode(ContainerType& container, Type* x)
 		{
-			DEBUG_ERR( std::find( container.begin(), container.end(), x ) != container.end() );
-			container.push_back( x );
+			DEBUG_ERR(std::find(container.begin(), container.end(), x) != container.end());
+			container.push_back(x);
 		}
 
 		/**
 		 * @brief Removes a node from a container
 		 */
-		template<typename ContainerType, typename Type> void eraseNode( ContainerType& container, Type* x )
+		template<typename ContainerType, typename Type> void eraseNode(ContainerType& container, Type* x)
 		{
-			typename ContainerType::iterator it = std::find( container.begin(), container.end(), x );
-			DEBUG_ERR( it == container.end() );
-			container.erase( it );
+			typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
+			DEBUG_ERR(it == container.end());
+			container.erase(it);
 		}
 
 	public:
@@ -62,10 +62,10 @@ class Scene
 		// The funcs
 		Scene();
 
-		void registerNode( SceneNode* node ); ///< Put a node in the appropriate containers
-		void unregisterNode( SceneNode* node );
-		void registerController( Controller* controller );
-		void unregisterController( Controller* controller );
+		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers
+		void unregisterNode(SceneNode* node);
+		void registerController(Controller* controller);
+		void unregisterController(Controller* controller);
 
 		void updateAllWorldStuff();
 		void updateAllControllers();

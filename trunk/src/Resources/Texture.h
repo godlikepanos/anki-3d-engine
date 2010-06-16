@@ -26,15 +26,15 @@ class Texture: public Resource
 		int getWidth() const;
 		int getHeight() const;
 
-		bool load( const char* filename );
+		bool load(const char* filename);
 		void unload();
-		bool createEmpty2D( float width, float height, int internalFormat, int format, GLenum type_, bool mipmapping );
-		bool createEmpty2DMSAA( float width, float height, int samplesNum, int internalFormat );
+		bool createEmpty2D(float width, float height, int internalFormat, int format, GLenum type_, bool mipmapping);
+		bool createEmpty2DMSAA(float width, float height, int samplesNum, int internalFormat);
 
-		void bind( uint texUnit=0 ) const;
-		void setRepeat( bool repeat ) const;
-		void setTexParameter( GLenum paramName, GLint value ) const;
-		void texParameter( GLenum paramName, GLfloat value ) const;
+		void bind(uint texUnit=0) const;
+		void setRepeat(bool repeat) const;
+		void setTexParameter(GLenum paramName, GLint value) const;
+		void texParameter(GLenum paramName, GLfloat value) const;
 
 	protected:
 		GLuint glId; ///< Identification for OGL
@@ -52,17 +52,17 @@ inline GLuint Texture::getGlId() const
 }
 
 
-inline void Texture::setRepeat( bool repeat ) const
+inline void Texture::setRepeat(bool repeat) const
 {
-	if( repeat )
+	if(repeat)
 	{
-		setTexParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-		setTexParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
+		setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+		setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 	else
 	{
-		setTexParameter( GL_TEXTURE_WRAP_S, GL_CLAMP );
-		setTexParameter( GL_TEXTURE_WRAP_T, GL_CLAMP );
+		setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP);
+		setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
 }
 

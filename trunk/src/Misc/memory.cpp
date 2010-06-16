@@ -75,7 +75,7 @@ size_t free_size = buffer_size;
 
 // block stuff
 const int MAX_MEM_BLOCKS = 20*KILOBYTE;
-mem_block_t mem_blocks[ MAX_MEM_BLOCKS ]; // this is actualy a list
+mem_block_t mem_blocks[MAX_MEM_BLOCKS]; // this is actualy a list
 uint active_mem_blocks_num = 3;
 mem_block_t& head_node = mem_blocks[0];
 mem_block_t& tail_node = mem_blocks[1];
@@ -119,10 +119,10 @@ static int FreeBlocksNum()
 	int num = 0;
 	do
 	{
-		if( mb->free_space )
+		if(mb->free_space)
 			++num;
 		mb = mb->next;
-	} while( mb != &tail_node );
+	} while(mb != &tail_node);
 	return num;
 }
 
@@ -132,9 +132,9 @@ SetOwner                                                                        
 set the file,func,line to the given block                                                                              =
 =======================================================================================================================================
 */
-static inline void SetOwner( mem_block_t* mb, mblock_owner_t* owner )
+static inline void SetOwner(mem_block_t* mb, mblock_owner_t* owner)
 {
-	DEBUG_ERR( mb == &head_node || mb == &tail_node ); // shouldn't change the head_node or tail node
+	DEBUG_ERR(mb == &head_node || mb == &tail_node); // shouldn't change the head_node or tail node
 	mb->owner.file = owner->file;
 	mb->owner.line = owner->line;
 	mb->owner.func = owner->func;
@@ -149,39 +149,39 @@ SanityChecks                                                                    
 static bool SanityChecks()
 {
 	// the head_node
-	if( !(head_node.addr == NULL || head_node.size == 0 || head_node.prev == NULL || head_node.id == 0 ||
-	    head_node.active == true || head_node.free_space == false) )
-		MERROR( "In head_node" );
+	if(!(head_node.addr == NULL || head_node.size == 0 || head_node.prev == NULL || head_node.id == 0 ||
+	    head_node.active == true || head_node.free_space == false))
+		MERROR("In head_node");
 
 	// check the list
 	uint num = 0;
-	for( int i=0; i<MAX_MEM_BLOCKS; i++ )
-		if( mem_blocks[i].active ) ++num;
+	for(int i=0; i<MAX_MEM_BLOCKS; i++)
+		if(mem_blocks[i].active) ++num;
 
-	if( active_mem_blocks_num != num ) MERROR( "In mem_blocks list" );
+	if(active_mem_blocks_num != num) MERROR("In mem_blocks list");
 
 	// check the size
 	size_t size = 0;
 	mem_block_t* mb = head_node.next;
 	do
 	{
-		if( !mb->free_space )
+		if(!mb->free_space)
 			size += mb->size;
 
 		// the prev's next has to be ME and the next's prev has to show me also
-		if( mb->prev->next!=mb || mb->next->prev!=mb )
-			MERROR( "Chain is broken" );
+		if(mb->prev->next!=mb || mb->next->prev!=mb)
+			MERROR("Chain is broken");
 
-		if( mb->next!=&tail_node && ((char*)mb->addr)+mb->size!=mb->next->addr )
-			MERROR( "In crnt and next sizes cohisency" );
+		if(mb->next!=&tail_node && ((char*)mb->addr)+mb->size!=mb->next->addr)
+			MERROR("In crnt and next sizes cohisency");
 
-		if( mb->next == NULL || mb->prev==NULL )
-			MERROR( "Prev or next are NULL" );
+		if(mb->next == NULL || mb->prev==NULL)
+			MERROR("Prev or next are NULL");
 
 		mb = mb->next;
-	} while( mb!=&tail_node );
+	} while(mb!=&tail_node);
 
-	if( size != buffer_size-free_size ) MERROR( "In size" );
+	if(size != buffer_size-free_size) MERROR("In size");
 
 	return true;
 }
@@ -192,16 +192,16 @@ static bool SanityChecks()
 BytesStr                                                                                                               =
 =======================================================================================================================================
 */
-static char* BytesStr( size_t size )
+static char* BytesStr(size_t size)
 {
 	static char str[10];
 
-	if( size > MEGABYTE )
-		sprintf( str, "%dMB", (uint)(size/MEGABYTE) );
-	else if( size > KILOBYTE )
-		sprintf( str, "%dKB", (uint)(size/KILOBYTE) );
+	if(size > MEGABYTE)
+		sprintf(str, "%dMB", (uint)(size/MEGABYTE));
+	else if(size > KILOBYTE)
+		sprintf(str, "%dKB", (uint)(size/KILOBYTE));
 	else
-		sprintf( str, "%dB ", (uint)(size) );
+		sprintf(str, "%dB ", (uint)(size));
 	return str;
 }
 
@@ -211,13 +211,13 @@ static char* BytesStr( size_t size )
 printBlockInfo                                                                                                         =
 =======================================================================================================================================
 */
-static void printBlockInfo( const mem_block_t* mb )
+static void printBlockInfo(const mem_block_t* mb)
 {
 	const char cond = (mb->free_space) ? 'F' : 'U';
-	cout << setw(4) << setfill(' ') << mb->id << setw(0) << ' ' << cond << ' ' << setw(6) <<  BytesStr( mb->size ) << setw(0) << hex <<
+	cout << setw(4) << setfill(' ') << mb->id << setw(0) << ' ' << cond << ' ' << setw(6) <<  BytesStr(mb->size) << setw(0) << hex <<
 	     " 0x" << mb->addr << dec;
 
-	if( cond=='U' ) cout << " " << mb->owner.file << ' ' << mb->owner.line << ' ' << mb->owner.func;
+	if(cond=='U') cout << " " << mb->owner.file << ' ' << mb->owner.line << ' ' << mb->owner.func;
 
 	cout << endl;
 }
@@ -228,12 +228,12 @@ static void printBlockInfo( const mem_block_t* mb )
 printInfo                                                                                                              =
 =======================================================================================================================================
 */
-void printInfo( uint flags )
+void printInfo(uint flags)
 {
 	cout << "\n=========================== MEM REPORT =========================" << endl;
 
 	// header
-	if( (flags & PRINT_ALL)==PRINT_ALL || (flags & PRINT_HEADER)==PRINT_HEADER )
+	if((flags & PRINT_ALL)==PRINT_ALL || (flags & PRINT_HEADER)==PRINT_HEADER)
 	{
 		cout << "Used space: " << BytesStr(buffer_size-free_size) << "(" << buffer_size-free_size << ")";
 		cout << ", free: " << BytesStr(free_size) << " (" << free_size << ")";
@@ -248,12 +248,12 @@ void printInfo( uint flags )
 		mem_block_t* mb = &head_node;
 		do
 		{
-			if( tmp->free_space && tmp->size > mb->size )
+			if(tmp->free_space && tmp->size > mb->size)
 				mb = tmp;
 			tmp = tmp->next;
-		} while( tmp!=&tail_node );
+		} while(tmp!=&tail_node);
 
-		cout << "Block with max free space: " << mb->id << ", size: " << BytesStr( mb->size ) << " (" << mb->size << ")" << endl;
+		cout << "Block with max free space: " << mb->id << ", size: " << BytesStr(mb->size) << " (" << mb->size << ")" << endl;
 
 		// print how many times malloc,realloc etc have been called
 		cout << "Func calls: malloc:" << malloc_called_num << ", calloc:" << calloc_called_num << ", realloc:" << realloc_called_num <<
@@ -263,16 +263,16 @@ void printInfo( uint flags )
 	}
 
 	// blocks
-	if( (flags & PRINT_ALL)==PRINT_ALL || (flags & PRINT_BLOCKS)==PRINT_BLOCKS )
+	if((flags & PRINT_ALL)==PRINT_ALL || (flags & PRINT_BLOCKS)==PRINT_BLOCKS)
 	{
 		cout << "Block table (id, type, size [, file, line, func]):" << endl;
 
 		mem_block_t* mb = head_node.next;
 		do
 		{
-			printBlockInfo( mb );
+			printBlockInfo(mb);
 			mb = mb->next;
-		} while( mb!=&tail_node );
+		} while(mb!=&tail_node);
 	}
 
 	cout << "================================================================\n" << endl;
@@ -287,7 +287,7 @@ init                                                                            
 static void init()
 {
 #ifdef DEBUG_ENABLED
-	memset( buffer, (char)0xCC, buffer_size );
+	memset(buffer, (char)0xCC, buffer_size);
 #endif
 
 	// mem block stuff
@@ -320,8 +320,8 @@ static void init()
 	mem_blocks[2].free_space = true;
 
 	// set the rest
-	memset( &mem_blocks[3], 0, sizeof(mem_block_t)*(MAX_MEM_BLOCKS-3) );
-	for( int i=3; i<MAX_MEM_BLOCKS; i++ )
+	memset(&mem_blocks[3], 0, sizeof(mem_block_t)*(MAX_MEM_BLOCKS-3));
+	for(int i=3; i<MAX_MEM_BLOCKS; i++)
 	{
 		mem_blocks[i].id = i;
 	}
@@ -339,14 +339,14 @@ thread stuff                                                                    
 */
 static void Lock()
 {
-	if( SDL_SemWait(semaphore)==-1 )
-		MERROR( "Cant lock semaphore" );
+	if(SDL_SemWait(semaphore)==-1)
+		MERROR("Cant lock semaphore");
 }
 
 static void Unlock()
 {
-	if( SDL_SemPost(semaphore)==-1 )
-		MERROR( "Cant unlock semaphore" );
+	if(SDL_SemPost(semaphore)==-1)
+		MERROR("Cant unlock semaphore");
 }
 
 
@@ -355,19 +355,19 @@ static void Unlock()
 Enable                                                                                                                 =
 =======================================================================================================================================
 */
-void Enable( uint flags )
+void Enable(uint flags)
 {
-	if( (flags & THREADS)==THREADS )
+	if((flags & THREADS)==THREADS)
 	{
 		p_Lock = Lock;
 		p_Unlock = Unlock;
 	}
 
-	if( (flags & PRINT_ERRORS)==PRINT_ERRORS )
+	if((flags & PRINT_ERRORS)==PRINT_ERRORS)
 		print_errors = true;
 
 
-	if( (flags & PRINT_CALL_INFO)==PRINT_CALL_INFO )
+	if((flags & PRINT_CALL_INFO)==PRINT_CALL_INFO)
 		print_call_info = true;
 }
 
@@ -377,18 +377,18 @@ void Enable( uint flags )
 Disable                                                                                                                =
 =======================================================================================================================================
 */
-void Disable( uint flags )
+void Disable(uint flags)
 {
-	if( (flags & THREADS)==THREADS )
+	if((flags & THREADS)==THREADS)
 	{
 		p_Lock = DummyFunc;
 		p_Unlock = DummyFunc;
 	}
 
-	if( (flags & PRINT_ERRORS)==PRINT_ERRORS )
+	if((flags & PRINT_ERRORS)==PRINT_ERRORS)
 		print_errors = false;
 
-	if( (flags & PRINT_CALL_INFO)==PRINT_CALL_INFO )
+	if((flags & PRINT_CALL_INFO)==PRINT_CALL_INFO)
 		print_call_info = false;
 }
 
@@ -399,17 +399,17 @@ GetBlock                                                                        
 find the active block who has for addr the given ptr param. Func used by free and realloc                              =
 =======================================================================================================================================
 */
-static mem_block_t* GetBlock( void* ptr )
+static mem_block_t* GetBlock(void* ptr)
 {
-	//if( ptr<buffer || ptr>((char*)buffer+buffer_size) ) return &head_node;
+	//if(ptr<buffer || ptr>((char*)buffer+buffer_size)) return &head_node;
 
 	mem_block_t* mb = tail_node.prev;
 	do
 	{
-		if( mb->addr==ptr )
+		if(mb->addr==ptr)
 			return mb;
 		mb = mb->prev;
-	} while( mb!=&head_node );
+	} while(mb!=&head_node);
 
 	return NULL;
 
@@ -424,21 +424,21 @@ static mem_block_t* GetBlock( void* ptr )
 //		int tmp = (a+b)/2;
 //
 //		// move the mb to crnt_pos
-//		if( pos < tmp )
-//			for( int i=0; i<tmp-pos; i++ )
+//		if(pos < tmp)
+//			for(int i=0; i<tmp-pos; i++)
 //				mb = mb->next;
 //		else
-//			for( int i=0; i<pos-tmp; i++ )
+//			for(int i=0; i<pos-tmp; i++)
 //				mb = mb->prev;
 //		pos = tmp;
 //
-//		if( ptr < mb->addr )
+//		if(ptr < mb->addr)
 //			b = pos;
-//		else if( ptr > mb->addr )
+//		else if(ptr > mb->addr)
 //			a = pos;
 //		else
 //			return mb;
-//		if( b-a < 2 ) break;
+//		if(b-a < 2) break;
 //	}
 //
 //	return NULL;
@@ -453,13 +453,13 @@ get an inactive node/block                                                      
 */
 static mem_block_t* GetInactiveBlock()
 {
-	for( int i=2; i<MAX_MEM_BLOCKS; i++ )
+	for(int i=2; i<MAX_MEM_BLOCKS; i++)
 	{
-		if( !mem_blocks[i].active )
+		if(!mem_blocks[i].active)
 			return &mem_blocks[i];
 	}
 
-	FATAL( "Cannot find an inactive node. Inc the mem_blocks arr" );
+	FATAL("Cannot find an inactive node. Inc the mem_blocks arr");
 	return NULL;
 }
 
@@ -470,16 +470,16 @@ WorstFit                                                                        
 "worst fit" algorithm. It returns the block with the biger free space                                                  =
 =======================================================================================================================================
 */
-static mem_block_t* WorstFit( size_t size )
+static mem_block_t* WorstFit(size_t size)
 {
 	mem_block_t* tmp = tail_node.prev;
 	mem_block_t* candidate = &head_node;
 	do
 	{
-		if( tmp->size > candidate->size && tmp->free_space )
+		if(tmp->size > candidate->size && tmp->free_space)
 			candidate = tmp;
 		tmp = tmp->prev;
-	} while( tmp!=&head_node );
+	} while(tmp!=&head_node);
 
 	return candidate;
 }
@@ -490,7 +490,7 @@ static mem_block_t* WorstFit( size_t size )
 BestFit                                                                                                                =
 =======================================================================================================================================
 */
-static mem_block_t* BestFit( size_t size )
+static mem_block_t* BestFit(size_t size)
 {
 	mem_block_t* tmp = tail_node.prev;
 	mem_block_t* candidate = &head_node;
@@ -498,28 +498,28 @@ static mem_block_t* BestFit( size_t size )
 	// find a free block firstly
 	do
 	{
-		if( tmp->free_space )
+		if(tmp->free_space)
 		{
 			candidate = tmp;
 			break;
 		}
 		tmp = tmp->prev;
-	} while( tmp!=&head_node );
+	} while(tmp!=&head_node);
 
-	if( candidate == &head_node ) return candidate; // we failed to find free node
+	if(candidate == &head_node) return candidate; // we failed to find free node
 
 	// now run the real deal
 	do
 	{
-		if( tmp->free_space )
+		if(tmp->free_space)
 		{
-			if( (tmp->size < candidate->size) && (tmp->size > size) )
+			if((tmp->size < candidate->size) && (tmp->size > size))
 				candidate = tmp;
-			else if( tmp->size == size )
+			else if(tmp->size == size)
 				return tmp;
 		}
 		tmp = tmp->prev;
-	} while( tmp!=&head_node );
+	} while(tmp!=&head_node);
 
 	return candidate;
 }
@@ -530,15 +530,15 @@ static mem_block_t* BestFit( size_t size )
 BadFit                                                                                                                 =
 =======================================================================================================================================
 */
-static mem_block_t* BadFit( size_t size )
+static mem_block_t* BadFit(size_t size)
 {
 	mem_block_t* tmp = tail_node.prev;
 	do
 	{
-		if( tmp->size >= size && tmp->free_space )
+		if(tmp->size >= size && tmp->free_space)
 			return tmp;
 		tmp = tmp->prev;
-	} while( tmp!=&head_node );
+	} while(tmp!=&head_node);
 
 	return &head_node;
 }
@@ -550,14 +550,14 @@ NewBlock                                                                        
 just free the given block                                                                                              =
 =======================================================================================================================================
 */
-static mem_block_t* NewBlock( size_t size )
+static mem_block_t* NewBlock(size_t size)
 {
 	p_Init();
 
 	// a simple check
-	if( size < 1 )
+	if(size < 1)
 	{
-		MERROR( "Size is < 1" );
+		MERROR("Size is < 1");
 		return &head_node;
 	}
 
@@ -566,17 +566,17 @@ static mem_block_t* NewBlock( size_t size )
 
 	// use an algorithm to find the best candidate
 	mem_block_t* candidate = BestFit(size);
-	if( candidate==&head_node )
+	if(candidate==&head_node)
 	{
-		FATAL( "There are no free blocks" );
+		FATAL("There are no free blocks");
 		return &head_node;
 	}
 
 	// case 0: we have found a big enought free block
-	if( candidate->size > size )
+	if(candidate->size > size)
 	{
 		// reorganize the prev and the next of the 3 involved blocks
-		DEBUG_ERR( candidate->prev==NULL );
+		DEBUG_ERR(candidate->prev==NULL);
 		candidate->prev->next = newmb;
 		newmb->prev = candidate->prev;
 		newmb->next = candidate;
@@ -594,15 +594,15 @@ static mem_block_t* NewBlock( size_t size )
 		++active_mem_blocks_num;
 	}
 	// case 1: we have found a block with the exchact space
-	else if( candidate->size == size )
+	else if(candidate->size == size)
 	{
 		newmb = candidate;
 		newmb->free_space = false;
 	}
 	// case 2: we cannot find a block!!!
-	else // if( max_free_bytes < bytes )
+	else // if(max_free_bytes < bytes)
 	{
-		FATAL( "Cant find block with " << size << " free space. Inc buffer" );
+		FATAL("Cant find block with " << size << " free space. Inc buffer");
 		return &head_node;
 	}
 
@@ -616,21 +616,21 @@ static mem_block_t* NewBlock( size_t size )
 FreeBlock                                                                                                              =
 =======================================================================================================================================
 */
-static void FreeBlock( mem_block_t* crnt )
+static void FreeBlock(mem_block_t* crnt)
 {
-	DEBUG_ERR( crnt->free_space || !crnt->active || crnt==&head_node || crnt==&tail_node ); // self explanatory
+	DEBUG_ERR(crnt->free_space || !crnt->active || crnt==&head_node || crnt==&tail_node); // self explanatory
 
 	free_size += crnt->size;
 
 #ifdef DEBUG_ENABLED
-	memset( crnt->addr, (char)0xCC, crnt->size );
+	memset(crnt->addr, (char)0xCC, crnt->size);
 #endif
 
 	// rearange the blocks
 	mem_block_t* prev = crnt->prev;
 	mem_block_t* next = crnt->next;
 	// if we have a prev block with free space we resize the prev and then we remove the current one
-	if( prev != &head_node && prev->free_space )
+	if(prev != &head_node && prev->free_space)
 	{
 		prev->size += crnt->size;
 		prev->next = next;
@@ -646,7 +646,7 @@ static void FreeBlock( mem_block_t* crnt )
 	}
 
 	// if we have a next block with free space we resize the next and then we remove the crnt one
-	if( next != &tail_node && next->free_space )
+	if(next != &tail_node && next->free_space)
 	{
 		next->addr = crnt->addr;
 		next->size += crnt->size;
@@ -668,24 +668,24 @@ ReallocBlock                                                                    
 it gets the block we want to realloc and returns the reallocated (either the same or a new)                            =
 =======================================================================================================================================
 */
-static mem_block_t* ReallocBlock( mem_block_t* crnt, size_t size )
+static mem_block_t* ReallocBlock(mem_block_t* crnt, size_t size)
 {
-	DEBUG_ERR( crnt->free_space || !crnt->active || crnt==&head_node || crnt==&tail_node ); // self explanatory
+	DEBUG_ERR(crnt->free_space || !crnt->active || crnt==&head_node || crnt==&tail_node); // self explanatory
 
 
 	// case 0: If size is 0 and p points to an existing block of memory, the memory block pointed by ptr is deallocated and a NULL...
 	// ...pointer is returned.(ISO behaviour)
-	if( size==0 )
+	if(size==0)
 	{
-		FreeBlock( crnt );
+		FreeBlock(crnt);
 		crnt = &head_node;
 	}
 	// case 1: we want more space
-	else if( size > crnt->size )
+	else if(size > crnt->size)
 	{
 		mem_block_t* next = crnt->next;
 		// case 1.0: the next block has enough space. Then we eat from the next
-		if( next!=&tail_node && next->free_space && next->size >= size )
+		if(next!=&tail_node && next->free_space && next->size >= size)
 		{
 			free_size -= size - crnt->size;
 			next->addr = ((char*)next->addr) + (size - crnt->size); // shift right the addr
@@ -695,22 +695,22 @@ static mem_block_t* ReallocBlock( mem_block_t* crnt, size_t size )
 		// case 1.1: We cannot eat from the next. Create new block and move the crnt's data there
 		else
 		{
-			mem_block_t* mb = NewBlock( size );
-			memcpy( mb->addr, crnt->addr, crnt->size );
-			FreeBlock( crnt );
+			mem_block_t* mb = NewBlock(size);
+			memcpy(mb->addr, crnt->addr, crnt->size);
+			FreeBlock(crnt);
 			crnt = mb;
 		}
 	}
 	// case 2: we want less space
-	else if( size < crnt->size )
+	else if(size < crnt->size)
 	{
 		mem_block_t* next = crnt->next;
 		// case 2.0: we have next
-		if( next!=&tail_node )
+		if(next!=&tail_node)
 		{
 			// case 2.0.0: the next block is free space...
 			// ...resize next and crnt
-			if( next->free_space )
+			if(next->free_space)
 			{
 				free_size -= size - crnt->size;
 				next->addr = ((char*)next->addr) - (crnt->size - size); // shl
@@ -761,14 +761,14 @@ static mem_block_t* ReallocBlock( mem_block_t* crnt, size_t size )
 Malloc                                                                                                                 =
 =======================================================================================================================================
 */
-static void* Malloc( size_t size, mblock_owner_t* owner=&unknown_owner )
+static void* Malloc(size_t size, mblock_owner_t* owner=&unknown_owner)
 {
 	p_Lock();
 
-	PRINT_CALL_INFO( "caller: \"" << owner->file << ':' << owner->line << "\", size: " << size );
+	PRINT_CALL_INFO("caller: \"" << owner->file << ':' << owner->line << "\", size: " << size);
 
-	mem_block_t* mb = NewBlock( size );
-	SetOwner( mb, owner );
+	mem_block_t* mb = NewBlock(size);
+	SetOwner(mb, owner);
 	SANITY_CHECKS
 
 	p_Unlock();
@@ -781,16 +781,16 @@ static void* Malloc( size_t size, mblock_owner_t* owner=&unknown_owner )
 Calloc                                                                                                                 =
 =======================================================================================================================================
 */
-static void* Calloc( size_t num, size_t size, mblock_owner_t* owner=&unknown_owner )
+static void* Calloc(size_t num, size_t size, mblock_owner_t* owner=&unknown_owner)
 {
 	p_Lock();
 
 
-	PRINT_CALL_INFO( "caller: \"" << owner->file << ':' << owner->line << "size: " << size );
+	PRINT_CALL_INFO("caller: \"" << owner->file << ':' << owner->line << "size: " << size);
 
-	mem_block_t* mb = NewBlock( num*size );
-	SetOwner( mb, owner);
-	memset( mb->addr, 0x00000000, num*size );
+	mem_block_t* mb = NewBlock(num*size);
+	SetOwner(mb, owner);
+	memset(mb->addr, 0x00000000, num*size);
 	SANITY_CHECKS
 
 	p_Unlock();
@@ -803,38 +803,38 @@ static void* Calloc( size_t num, size_t size, mblock_owner_t* owner=&unknown_own
 Realloc                                                                                                                =
 =======================================================================================================================================
 */
-static void* Realloc( void* ptr, size_t size, mblock_owner_t* owner=&unknown_owner )
+static void* Realloc(void* ptr, size_t size, mblock_owner_t* owner=&unknown_owner)
 {
 	p_Lock();
 
 	// ISO beheviur
-	if( ptr==NULL )
+	if(ptr==NULL)
 	{
 		p_Unlock();
-		return Malloc( size, owner );
+		return Malloc(size, owner);
 	}
 
 	// find the block we want to realloc
-	mem_block_t* mb = GetBlock( ptr );
+	mem_block_t* mb = GetBlock(ptr);
 
-	PRINT_CALL_INFO( "caller: \"" << owner->file << ':' << owner->line << "\", user: \"" << mb->owner.file << ':' << mb->owner.line <<
-		"\", new size: " << size );
+	PRINT_CALL_INFO("caller: \"" << owner->file << ':' << owner->line << "\", user: \"" << mb->owner.file << ':' << mb->owner.line <<
+		"\", new size: " << size);
 
-	if( mb==NULL )
+	if(mb==NULL)
 	{
-		MERROR( "Addr 0x" << hex << ptr << dec << " not found" );
+		MERROR("Addr 0x" << hex << ptr << dec << " not found");
 		p_Unlock();
 		return NULL;
 	}
-	if( mb->free_space  )
+	if(mb->free_space)
 	{
-		MERROR( "Addr 0x" << hex << ptr << dec << " is free space" );
+		MERROR("Addr 0x" << hex << ptr << dec << " is free space");
 		p_Unlock();
 		return NULL;
 	}
 
-	mem_block_t* crnt = ReallocBlock( mb, size );
-	SetOwner( crnt, owner );
+	mem_block_t* crnt = ReallocBlock(mb, size);
+	SetOwner(crnt, owner);
 	SANITY_CHECKS
 
 	p_Unlock();
@@ -847,29 +847,29 @@ static void* Realloc( void* ptr, size_t size, mblock_owner_t* owner=&unknown_own
 Free                                                                                                                   =
 =======================================================================================================================================
 */
-static void Free( void* ptr, mblock_owner_t* owner=&unknown_owner )
+static void Free(void* ptr, mblock_owner_t* owner=&unknown_owner)
 {
 	p_Lock();
 
 	// find the block we want to delete
-	mem_block_t* mb = GetBlock( ptr );
-	if( mb==NULL )
+	mem_block_t* mb = GetBlock(ptr);
+	if(mb==NULL)
 	{
-		MERROR( "Addr 0x" << hex << ptr << dec << " not found" );
+		MERROR("Addr 0x" << hex << ptr << dec << " not found");
 		p_Unlock();
 		return;
 	}
-	if( mb->free_space  )
+	if(mb->free_space)
 	{
-		MERROR( "Addr 0x" << hex << ptr << dec << " is free space" );
+		MERROR("Addr 0x" << hex << ptr << dec << " is free space");
 		p_Unlock();
 		return;
 	}
 
-	PRINT_CALL_INFO( "caller: \"" << owner->file << ':' << owner->line << "\", user: \"" << mb->owner.file << ':' << mb->owner.line
-		<< "\", mb size: " << mb->size );
+	PRINT_CALL_INFO("caller: \"" << owner->file << ':' << owner->line << "\", user: \"" << mb->owner.file << ':' << mb->owner.line
+		<< "\", mb size: " << mb->size);
 
-	FreeBlock( mb );
+	FreeBlock(mb);
 	SANITY_CHECKS
 
 	p_Unlock();
@@ -884,56 +884,56 @@ overloaded stuff                                                                
 */
 
 // malloc
-void* malloc( size_t size ) throw()
+void* malloc(size_t size) throw()
 {
 	++mem::malloc_called_num;
-	return mem::Malloc( size );
+	return mem::Malloc(size);
 }
 
 // realloc
-void* realloc( void* p, size_t size ) throw()
+void* realloc(void* p, size_t size) throw()
 {
 	++mem::realloc_called_num;
-	return mem::Realloc( p, size );
+	return mem::Realloc(p, size);
 }
 
 // calloc
-void* calloc( size_t num, size_t size ) throw()
+void* calloc(size_t num, size_t size) throw()
 {
 	++mem::calloc_called_num;
-	return mem::Calloc( num, size );
+	return mem::Calloc(num, size);
 }
 
 // free
-void free( void* p ) throw()
+void free(void* p) throw()
 {
 	++mem::free_called_num;
-	mem::Free( p );
+	mem::Free(p);
 }
 
 // new
-void* operator new( size_t size ) throw(std::bad_alloc)
+void* operator new(size_t size) throw(std::bad_alloc)
 {
 	++mem::new_called_num;
-	return mem::Malloc( size );
+	return mem::Malloc(size);
 }
 
 // new[]
-void* operator new[]( size_t size ) throw(std::bad_alloc)
+void* operator new[](size_t size) throw(std::bad_alloc)
 {
 	++mem::new_called_num;
-	return mem::Malloc( size );
+	return mem::Malloc(size);
 }
 
 // delete
-void operator delete( void* p ) throw()
+void operator delete(void* p) throw()
 {
 	++mem::delete_called_num;
 	mem::Free(p);
 }
 
 // delete []
-void operator delete[]( void* p ) throw()
+void operator delete[](void* p) throw()
 {
 	++mem::delete_called_num;
 	mem::Free(p);
@@ -947,67 +947,67 @@ overloaded stuff with owner                                                     
 */
 
 // malloc
-void* malloc( size_t size, const char* file, int line, const char* func )
+void* malloc(size_t size, const char* file, int line, const char* func)
 {
 	++mem::malloc_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	return mem::Malloc( size, &owner );
+	return mem::Malloc(size, &owner);
 }
 
 // realloc
-void* realloc( void* p, size_t size, const char* file, int line, const char* func )
+void* realloc(void* p, size_t size, const char* file, int line, const char* func)
 {
 	++mem::realloc_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	return mem::Realloc( p, size, &owner );
+	return mem::Realloc(p, size, &owner);
 }
 
 // calloc
-void* calloc( size_t num, size_t size, const char* file, int line, const char* func )
+void* calloc(size_t num, size_t size, const char* file, int line, const char* func)
 {
 	++mem::calloc_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	return mem::Calloc( num, size, &owner );
+	return mem::Calloc(num, size, &owner);
 }
 
 // free
-void free( void* p, const char* file, int line, const char* func )
+void free(void* p, const char* file, int line, const char* func)
 {
 	++mem::free_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	mem::Free( p, &owner );
+	mem::Free(p, &owner);
 }
 
 // new
-void* operator new( size_t size, const char* file, int line, const char* func )
+void* operator new(size_t size, const char* file, int line, const char* func)
 {
 	++mem::new_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	return mem::Malloc( size, &owner );
+	return mem::Malloc(size, &owner);
 }
 
 // new[]
-void* operator new[]( size_t size, const char* file, int line, const char* func )
+void* operator new[](size_t size, const char* file, int line, const char* func)
 {
 	++mem::new_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	return mem::Malloc( size, &owner );
+	return mem::Malloc(size, &owner);
 }
 
 // delete
-void operator delete( void* p, const char* file, int line, const char* func )
+void operator delete(void* p, const char* file, int line, const char* func)
 {
 	++mem::delete_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	mem::Free( p, &owner );
+	mem::Free(p, &owner);
 }
 
 // delete []
-void operator delete[]( void* p, const char* file, int line, const char* func )
+void operator delete[](void* p, const char* file, int line, const char* func)
 {
 	++mem::delete_called_num;
 	mem::mblock_owner_t owner = {file, line, func};
-	mem::Free( p, &owner );
+	mem::Free(p, &owner);
 }
 
 #endif // _USE_MEM_MANAGER_

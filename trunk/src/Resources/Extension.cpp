@@ -2,21 +2,21 @@
 #include "Extension.h"
 
 
-bool Extension::load( const char* filename )
+bool Extension::load(const char* filename)
 {
 	// load libary
-	libHandle = dlopen( filename, RTLD_LAZY );
-	if( libHandle == NULL )
+	libHandle = dlopen(filename, RTLD_LAZY);
+	if(libHandle == NULL)
 	{
-		ERROR( "File \"" << filename << "\": " << dlerror() );
+		ERROR("File \"" << filename << "\": " << dlerror());
 		return false;
 	}
 	
 	// get FooBar
-	foobarPtr = (int(*)(void*))( dlsym(libHandle, "FooBar") );
-	if( foobarPtr == NULL )
+	foobarPtr = (int(*)(void*))(dlsym(libHandle, "FooBar"));
+	if(foobarPtr == NULL)
 	{
-		ERROR( "File \"" << filename << "\": \"FooBar\" entry symbol not found: " << dlerror() );
+		ERROR("File \"" << filename << "\": \"FooBar\" entry symbol not found: " << dlerror());
 		return false;
 	}
 	
@@ -26,8 +26,8 @@ bool Extension::load( const char* filename )
 
 void Extension::unload()
 {
-	DEBUG_ERR( libHandle==NULL || foobarPtr==NULL );
-	dlclose( libHandle );
+	DEBUG_ERR(libHandle==NULL || foobarPtr==NULL);
+	dlclose(libHandle);
 	libHandle = NULL;
 	foobarPtr = NULL;
 }

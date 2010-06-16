@@ -4,8 +4,8 @@
 #include "Texture.h"
 
 
-#define SHADER_ERROR( x ) ERROR( "Shader (" << getRsrcName() << "): " << x )
-#define SHADER_WARNING( x ) WARNING( "Shader (" << getRsrcName() << "): " << x )
+#define SHADER_ERROR(x) ERROR("Shader (" << getRsrcName() << "): " << x)
+#define SHADER_WARNING(x) WARNING("Shader (" << getRsrcName() << "): " << x)
 
 
 //======================================================================================================================
@@ -28,104 +28,104 @@ string ShaderProg::stdSourceCode(
  * - if the current shader program is the var's shader program
  * - if the GL driver gives the same location as the one the var has
  */
-#define STD_SET_UNI_CHECK() DEBUG_ERR( getLoc() == -1 ); \
-                            DEBUG_ERR( ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId() ); \
-                            DEBUG_ERR( glGetUniformLocation( fatherSProg->getGlId(), getName().c_str() ) != getLoc() );
+#define STD_SET_UNI_CHECK() DEBUG_ERR(getLoc() == -1); \
+                            DEBUG_ERR(ShaderProg::getCurrentProgramGlId() != fatherSProg->getGlId()); \
+                            DEBUG_ERR(glGetUniformLocation(fatherSProg->getGlId(), getName().c_str()) != getLoc());
 
 
-void ShaderProg::UniVar::setFloat( float f ) const
+void ShaderProg::UniVar::setFloat(float f) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT );
-	glUniform1f( getLoc(), f );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT);
+	glUniform1f(getLoc(), f);
 }
 
-void ShaderProg::UniVar::setFloatVec( float f[], uint size ) const
+void ShaderProg::UniVar::setFloatVec(float f[], uint size) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT );
-	glUniform1fv( getLoc(), size, f );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT);
+	glUniform1fv(getLoc(), size, f);
 }
 
-void ShaderProg::UniVar::setVec2( const Vec2 v2[], uint size ) const
+void ShaderProg::UniVar::setVec2(const Vec2 v2[], uint size) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT_VEC2 );
-	glUniform2fv( getLoc(), size, &( const_cast<Vec2&>(v2[0]) )[0] );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT_VEC2);
+	glUniform2fv(getLoc(), size, &(const_cast<Vec2&>(v2[0]))[0]);
 }
 
-void ShaderProg::UniVar::setVec3( const Vec3 v3[], uint size ) const
+void ShaderProg::UniVar::setVec3(const Vec3 v3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT_VEC3 );
-	glUniform3fv( getLoc(), size, &( const_cast<Vec3&>(v3[0]) )[0] );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT_VEC3);
+	glUniform3fv(getLoc(), size, &(const_cast<Vec3&>(v3[0]))[0]);
 }
 
-void ShaderProg::UniVar::setVec4( const Vec4 v4[], uint size ) const
+void ShaderProg::UniVar::setVec4(const Vec4 v4[], uint size) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT_VEC4 );
-	glUniform4fv( getLoc(), size, &( const_cast<Vec4&>(v4[0]) )[0] );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT_VEC4);
+	glUniform4fv(getLoc(), size, &(const_cast<Vec4&>(v4[0]))[0]);
 }
 
-void ShaderProg::UniVar::setMat3( const Mat3 m3[], uint size ) const
+void ShaderProg::UniVar::setMat3(const Mat3 m3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT_MAT3 );
-	glUniformMatrix3fv( getLoc(), size, true, &(m3[0])[0] );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT_MAT3);
+	glUniformMatrix3fv(getLoc(), size, true, &(m3[0])[0]);
 }
 
-void ShaderProg::UniVar::setMat4( const Mat4 m4[], uint size ) const
+void ShaderProg::UniVar::setMat4(const Mat4 m4[], uint size) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_FLOAT_MAT4 );
-	glUniformMatrix4fv( getLoc(), size, true, &(m4[0])[0] );
+	DEBUG_ERR(getGlDataType() != GL_FLOAT_MAT4);
+	glUniformMatrix4fv(getLoc(), size, true, &(m4[0])[0]);
 }
 
-void ShaderProg::UniVar::setTexture( const Texture& tex, uint texUnit ) const
+void ShaderProg::UniVar::setTexture(const Texture& tex, uint texUnit) const
 {
 	STD_SET_UNI_CHECK();
-	DEBUG_ERR( getGlDataType() != GL_SAMPLER_2D && getGlDataType() != GL_SAMPLER_2D_SHADOW );
-	tex.bind( texUnit );
-	glUniform1i( getLoc(), texUnit );
+	DEBUG_ERR(getGlDataType() != GL_SAMPLER_2D && getGlDataType() != GL_SAMPLER_2D_SHADOW);
+	tex.bind(texUnit);
+	glUniform1i(getLoc(), texUnit);
 }
 
 
 //======================================================================================================================
 // createAndCompileShader                                                                                              =
 //======================================================================================================================
-uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* preproc, int type ) const
+uint ShaderProg::createAndCompileShader(const char* sourceCode, const char* preproc, int type) const
 {
 	uint glId = 0;
 	const char* sourceStrs[2] = {NULL, NULL};
 
 	// create the shader
-	glId = glCreateShader( type );
+	glId = glCreateShader(type);
 
 	// attach the source
 	sourceStrs[1] = sourceCode;
 	sourceStrs[0] = preproc;
 
 	// compile
-	glShaderSource( glId, 2, sourceStrs, NULL );
-	glCompileShader( glId );
+	glShaderSource(glId, 2, sourceStrs, NULL);
+	glCompileShader(glId);
 
 	int success;
-	glGetShaderiv( glId, GL_COMPILE_STATUS, &success );
+	glGetShaderiv(glId, GL_COMPILE_STATUS, &success);
 
-	if( !success )
+	if(!success)
 	{
 		// print info log
 		int info_len = 0;
 		int charsWritten = 0;
 		char* infoLog = NULL;
 
-		glGetShaderiv( glId, GL_INFO_LOG_LENGTH, &info_len );
-		infoLog = (char*)malloc( (info_len+1)*sizeof(char) );
-		glGetShaderInfoLog( glId, info_len, &charsWritten, infoLog );
+		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &info_len);
+		infoLog = (char*)malloc((info_len+1)*sizeof(char));
+		glGetShaderInfoLog(glId, info_len, &charsWritten, infoLog);
 		
 		const char* shaderType;
-		switch( type )
+		switch(type)
 		{
 			case GL_VERTEX_SHADER:
 				shaderType = "Vertex shader";
@@ -134,11 +134,11 @@ uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* pre
 				shaderType = "Fragment shader";
 				break;
 			default:
-				DEBUG_ERR( 1 ); // Not supported
+				DEBUG_ERR(1); // Not supported
 		}
-		SHADER_ERROR( shaderType << " compiler log follows:\n" << infoLog );
+		SHADER_ERROR(shaderType << " compiler log follows:\n" << infoLog);
 		
-		free( infoLog );
+		free(infoLog);
 		return 0;
 	}
 
@@ -152,24 +152,24 @@ uint ShaderProg::createAndCompileShader( const char* sourceCode, const char* pre
 bool ShaderProg::link()
 {
 	// link
-	glLinkProgram( glId );
+	glLinkProgram(glId);
 
 	// check if linked correctly
 	int success;
-	glGetProgramiv( glId, GL_LINK_STATUS, &success );
+	glGetProgramiv(glId, GL_LINK_STATUS, &success);
 
-	if( !success )
+	if(!success)
 	{
 		int info_len = 0;
 		int chars_written = 0;
 		char* info_log_txt = NULL;
 
-		glGetProgramiv( glId, GL_INFO_LOG_LENGTH, &info_len );
+		glGetProgramiv(glId, GL_INFO_LOG_LENGTH, &info_len);
 
-		info_log_txt = (char*)malloc( (info_len+1)*sizeof(char) );
-		glGetProgramInfoLog( glId, info_len, &chars_written, info_log_txt );
-		SHADER_ERROR( "Link log follows:\n" << info_log_txt );
-		free( info_log_txt );
+		info_log_txt = (char*)malloc((info_len+1)*sizeof(char));
+		glGetProgramInfoLog(glId, info_len, &chars_written, info_log_txt);
+		SHADER_ERROR("Link log follows:\n" << info_log_txt);
+		free(info_log_txt);
 		return false;
 	}
 
@@ -190,44 +190,44 @@ void ShaderProg::getUniAndAttribVars()
 
 
 	// attrib locations
-	glGetProgramiv( glId, GL_ACTIVE_ATTRIBUTES, &num );
-	attribVars.reserve( num );
-	for( int i=0; i<num; i++ ) // loop all attributes
+	glGetProgramiv(glId, GL_ACTIVE_ATTRIBUTES, &num);
+	attribVars.reserve(num);
+	for(int i=0; i<num; i++) // loop all attributes
 	{
-		glGetActiveAttrib( glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_ );
-		name_[ length ] = '\0';
+		glGetActiveAttrib(glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_);
+		name_[length] = '\0';
 
 		// check if its FFP location
 		int loc = glGetAttribLocation(glId, name_);
-		if( loc == -1 ) // if -1 it means that its an FFP var
+		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			SHADER_WARNING( "You are using FFP vertex attributes (\"" << name_ << "\")" );
+			SHADER_WARNING("You are using FFP vertex attributes (\"" << name_ << "\")");
 			continue;
 		}
 
-		attribVars.push_back( AttribVar( loc, name_, type, this ) );
-		attribNameToVar[ name_ ] = &attribVars.back();
+		attribVars.push_back(AttribVar(loc, name_, type, this));
+		attribNameToVar[name_] = &attribVars.back();
 	}
 
 
 	// uni locations
-	glGetProgramiv( glId, GL_ACTIVE_UNIFORMS, &num );
-	uniVars.reserve( num );
-	for( int i=0; i<num; i++ ) // loop all uniforms
+	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
+	uniVars.reserve(num);
+	for(int i=0; i<num; i++) // loop all uniforms
 	{
-		glGetActiveUniform( glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_ );
-		name_[ length ] = '\0';
+		glGetActiveUniform(glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_);
+		name_[length] = '\0';
 
 		// check if its FFP location
 		int loc = glGetUniformLocation(glId, name_);
-		if( loc == -1 ) // if -1 it means that its an FFP var
+		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			SHADER_WARNING( "You are using FFP uniforms (\"" << name_ << "\")" );
+			SHADER_WARNING("You are using FFP uniforms (\"" << name_ << "\")");
 			continue;
 		}
 
-		uniVars.push_back( UniVar( loc, name_, type, this ) );
-		uniNameToVar[ name_ ] = &uniVars.back();
+		uniVars.push_back(UniVar(loc, name_, type, this));
+		uniNameToVar[name_] = &uniVars.back();
 	}
 }
 
@@ -235,20 +235,20 @@ void ShaderProg::getUniAndAttribVars()
 //======================================================================================================================
 // bindCustomAttribLocs                                                                                                =
 //======================================================================================================================
-bool ShaderProg::bindCustomAttribLocs( const ShaderPrePreprocessor& pars ) const
+bool ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 {
-	for( uint i=0; i<pars.getOutput().getAttribLocs().size(); ++i )
+	for(uint i=0; i<pars.getOutput().getAttribLocs().size(); ++i)
 	{
 		const string& name = pars.getOutput().getAttribLocs()[i].name;
 		int loc = pars.getOutput().getAttribLocs()[i].customLoc;
-		glBindAttribLocation( glId, loc, name.c_str() );
+		glBindAttribLocation(glId, loc, name.c_str());
 
 		// check for error
 		GLenum errId = glGetError();
-		if( errId != GL_NO_ERROR )
+		if(errId != GL_NO_ERROR)
 		{
-			SHADER_ERROR( "Something went wrong for attrib \"" << name << "\" and location " << loc << " (" <<
-			              gluErrorString( errId ) << ")" );
+			SHADER_ERROR("Something went wrong for attrib \"" << name << "\" and location " << loc << " (" <<
+			              gluErrorString(errId) << ")");
 			return false;
 		}
 	}
@@ -259,9 +259,9 @@ bool ShaderProg::bindCustomAttribLocs( const ShaderPrePreprocessor& pars ) const
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool ShaderProg::load( const char* filename )
+bool ShaderProg::load(const char* filename)
 {
-	if( !customLoad( filename, "" ) ) return false;
+	if(!customLoad(filename, "")) return false;
 	return true;
 }
 
@@ -269,45 +269,45 @@ bool ShaderProg::load( const char* filename )
 //======================================================================================================================
 // customLoad                                                                                                          =
 //======================================================================================================================
-bool ShaderProg::customLoad( const char* filename, const char* extraSource )
+bool ShaderProg::customLoad(const char* filename, const char* extraSource)
 {
-	DEBUG_ERR( glId != numeric_limits<uint>::max() );
+	DEBUG_ERR(glId != numeric_limits<uint>::max());
 
-	if( getRsrcName().length() == 0 )
+	if(getRsrcName().length() == 0)
 	{
-		name = Util::cutPath( filename );
-		path = Util::getPath( filename );
+		name = Util::cutPath(filename);
+		path = Util::getPath(filename);
 	}
 
 	ShaderPrePreprocessor pars;
 
-	if( !pars.parseFile( filename ) ) return false;
+	if(!pars.parseFile(filename)) return false;
 
 	// 1) create and compile the shaders
 	string preprocSource = stdSourceCode + extraSource;
-	uint vertGlId = createAndCompileShader( pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
-	                                        GL_VERTEX_SHADER );
-	if( vertGlId == 0 ) return false;
+	uint vertGlId = createAndCompileShader(pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
+	                                        GL_VERTEX_SHADER);
+	if(vertGlId == 0) return false;
 
-	uint fragGlId = createAndCompileShader( pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
-	                                        GL_FRAGMENT_SHADER );
-	if( fragGlId == 0 ) return false;
+	uint fragGlId = createAndCompileShader(pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
+	                                        GL_FRAGMENT_SHADER);
+	if(fragGlId == 0) return false;
 
 	// 2) create program and attach shaders
 	glId = glCreateProgram();
-	if( glId == 0 )
+	if(glId == 0)
 	{
-		ERROR( "glCreateProgram failed" );
+		ERROR("glCreateProgram failed");
 		return false;
 	}
-	glAttachShader( glId, vertGlId );
-	glAttachShader( glId, fragGlId );
+	glAttachShader(glId, vertGlId);
+	glAttachShader(glId, fragGlId);
 
 	// 3) bind the custom attrib locs
-	if( !bindCustomAttribLocs( pars ) ) return false;
+	if(!bindCustomAttribLocs(pars)) return false;
 
 	// 5) link
-	if( !link() ) return false;
+	if(!link()) return false;
 	
 
 	// init the rest
@@ -320,12 +320,12 @@ bool ShaderProg::customLoad( const char* filename, const char* extraSource )
 //======================================================================================================================
 // findUniVar                                                                                                          =
 //======================================================================================================================
-const ShaderProg::UniVar* ShaderProg::findUniVar( const char* name ) const
+const ShaderProg::UniVar* ShaderProg::findUniVar(const char* name) const
 {
-	NameToUniVarIterator it = uniNameToVar.find( name );
-	if( it == uniNameToVar.end() )
+	NameToUniVarIterator it = uniNameToVar.find(name);
+	if(it == uniNameToVar.end())
 	{
-		SHADER_ERROR( "Cannot get uniform loc \"" << name << '\"' );
+		SHADER_ERROR("Cannot get uniform loc \"" << name << '\"');
 		return NULL;
 	}
 	return it->second;
@@ -335,12 +335,12 @@ const ShaderProg::UniVar* ShaderProg::findUniVar( const char* name ) const
 //======================================================================================================================
 // findAttribVar                                                                                                       =
 //======================================================================================================================
-const ShaderProg::AttribVar* ShaderProg::findAttribVar( const char* name ) const
+const ShaderProg::AttribVar* ShaderProg::findAttribVar(const char* name) const
 {
-	NameToAttribVarIterator it = attribNameToVar.find( name );
-	if( it == attribNameToVar.end() )
+	NameToAttribVarIterator it = attribNameToVar.find(name);
+	if(it == attribNameToVar.end())
 	{
-		SHADER_ERROR( "Cannot get attribute loc \"" << name << '\"' );
+		SHADER_ERROR("Cannot get attribute loc \"" << name << '\"');
 		return NULL;
 	}
 	return it->second;
@@ -350,9 +350,9 @@ const ShaderProg::AttribVar* ShaderProg::findAttribVar( const char* name ) const
 //======================================================================================================================
 // uniVarExists                                                                                                        =
 //======================================================================================================================
-bool ShaderProg::uniVarExists( const char* name ) const
+bool ShaderProg::uniVarExists(const char* name) const
 {
-	NameToUniVarIterator it = uniNameToVar.find( name );
+	NameToUniVarIterator it = uniNameToVar.find(name);
 	return it != uniNameToVar.end();
 }
 
@@ -360,9 +360,9 @@ bool ShaderProg::uniVarExists( const char* name ) const
 //======================================================================================================================
 // attribVarExists                                                                                                     =
 //======================================================================================================================
-bool ShaderProg::attribVarExists( const char* name ) const
+bool ShaderProg::attribVarExists(const char* name) const
 {
-	NameToAttribVarIterator it = attribNameToVar.find( name );
+	NameToAttribVarIterator it = attribNameToVar.find(name);
 	return it != attribNameToVar.end();
 }
 

@@ -9,8 +9,8 @@
  */
 class PhyWorld
 {
-	PROPERTY_R( btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld )
-	PROPERTY_R( float, defaultContactProcessingThreshold, getDefaultContactProcessingThreshold )
+	PROPERTY_R(btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld)
+	PROPERTY_R(float, defaultContactProcessingThreshold, getDefaultContactProcessingThreshold)
 
 	public:
 		btDefaultCollisionConfiguration* collisionConfiguration;
@@ -30,14 +30,14 @@ class PhyWorld
 
 
 		PhyWorld() :
-			defaultContactProcessingThreshold( BT_LARGE_FLOAT )
+			defaultContactProcessingThreshold(BT_LARGE_FLOAT)
 		{
 			collisionConfiguration = new btDefaultCollisionConfiguration();
 			dispatcher = new	btCollisionDispatcher(collisionConfiguration);
 			broadphase = new btDbvtBroadphase();
 			sol = new btSequentialImpulseConstraintSolver;
-			dynamicsWorld = new btDiscreteDynamicsWorld( dispatcher, broadphase, sol, collisionConfiguration );
-			dynamicsWorld->setGravity( btVector3(0,-10,0) );
+			dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, sol, collisionConfiguration);
+			dynamicsWorld->setGravity(btVector3(0,-10, 0));
 		}
 
 		/**
@@ -50,8 +50,8 @@ class PhyWorld
 		 * @param mask The mask of the body. Leave it blank if there is no mask
 		 * @return A new rigid body
 		 */
-		btRigidBody* createNewRigidBody( float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node, int group=-1,
-		                                 int mask=-1 );
+		btRigidBody* createNewRigidBody(float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node, int group=-1,
+		                                 int mask=-1);
 };
 
 #endif

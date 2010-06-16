@@ -4,7 +4,7 @@
 
 
 // for the colors and formating see http://www.dreamincode.net/forums/showtopic75171.htm
-static const char* terminalColors [ MT_NUM + 1 ] = {
+static const char* terminalColors [MT_NUM + 1] = {
 	"\033[1;31;6m", // error
 	"\033[1;33;6m", // warning
 	"\033[1;31;6m", // fatal
@@ -17,15 +17,15 @@ static const char* terminalColors [ MT_NUM + 1 ] = {
 //======================================================================================================================
 // msgPrefix                                                                                                           =
 //======================================================================================================================
-ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* func )
+ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func)
 {
-	if( app == NULL )
-		::exit( 1 );
+	if(app == NULL)
+		::exit(1);
 
 	// select c stream
 	ostream* cs;
 
-	switch( msgType )
+	switch(msgType)
 	{
 		case MT_ERROR:
 		case MT_WARNING:
@@ -44,14 +44,14 @@ ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* fun
 
 
 	// print terminal color
-	if( app->isTerminalColoringEnabled() )
+	if(app->isTerminalColoringEnabled())
 	{
-		(*cs) << terminalColors[ msgType ];
+		(*cs) << terminalColors[msgType];
 	}
 
 
 	// print message info
-	switch( msgType )
+	switch(msgType)
 	{
 		case MT_ERROR:
 			(*cs) << "Error";
@@ -78,7 +78,7 @@ ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* fun
 	}
 
 	// print caller info
-	(*cs) << " (" << Util::cutPath( file ) << ":" << line << " " << Util::getFunctionFromPrettyFunction( func ) << "): ";
+	(*cs) << " (" << Util::cutPath(file) << ":" << line << " " << Util::getFunctionFromPrettyFunction(func) << "): ";
 
 	return (*cs);
 }
@@ -87,13 +87,13 @@ ostream& msgPrefix( MsgType msgType, const char* file, int line, const char* fun
 //======================================================================================================================
 // msgSuffix                                                                                                           =
 //======================================================================================================================
-ostream& msgSuffix( ostream& cs )
+ostream& msgSuffix(ostream& cs)
 {
-	if( app == NULL )
-		::exit( 1 );
+	if(app == NULL)
+		::exit(1);
 
-	if( app->isTerminalColoringEnabled() )
-		cs << terminalColors[ MT_NUM ];
+	if(app->isTerminalColoringEnabled())
+		cs << terminalColors[MT_NUM];
 
 	cs << endl;
 	return cs;
@@ -103,9 +103,9 @@ ostream& msgSuffix( ostream& cs )
 //======================================================================================================================
 // msgSuffixFatal                                                                                                      =
 //======================================================================================================================
-ostream& msgSuffixFatal( ostream& cs )
+ostream& msgSuffixFatal(ostream& cs)
 {
-	ostream& cs_ = msgSuffix( cs );
+	ostream& cs_ = msgSuffix(cs);
 	::exit(1);
 	return cs;
 }

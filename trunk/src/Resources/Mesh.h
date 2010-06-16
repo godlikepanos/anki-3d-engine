@@ -66,7 +66,7 @@ class Mesh: public Resource
 	public:
 		Mesh() {}
 		virtual ~Mesh() { /*ToDo*/ }
-		bool load( const char* filename );
+		bool load(const char* filename);
 		void unload();
 
 };

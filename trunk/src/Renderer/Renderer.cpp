@@ -2,12 +2,13 @@
 #include "Camera.h" /// @todo remove this
 #include "RendererInitializer.h"
 #include "Material.h"
+#include "App.h"
 
 
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
-float Renderer::quadVertCoords [][2] = { {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0} };
+float Renderer::quadVertCoords [][2] = { {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0} };
 int Renderer::maxColorAtachments = -1;
 
 
@@ -15,19 +16,19 @@ int Renderer::maxColorAtachments = -1;
 // Constructor                                                                                                         =
 //======================================================================================================================
 Renderer::Renderer():
-	width( 640 ),
-	height( 480 ),
-	ms( *this ),
-	is( *this ),
-	pps( *this ),
-	dbg( *this )
+	width(640),
+	height(480),
+	ms(*this),
+	is(*this),
+	pps(*this),
+	dbg(*this)
 {
 }
 
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::init( const RendererInitializer& initializer )
+void Renderer::init(const RendererInitializer& initializer)
 {
 	// set from the initializer
 	ms.ez.enabled = initializer.ms.ez.enabled;
@@ -47,9 +48,9 @@ void Renderer::init( const RendererInitializer& initializer )
 	aspectRatio = float(width)/height;
 
 	// a few sanity checks
-	if( width < 10 || height < 10 )
+	if(width < 10 || height < 10)
 	{
-		FATAL( "Incorrect width" );
+		FATAL("Incorrect width");
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
@@ -63,7 +64,7 @@ void Renderer::init( const RendererInitializer& initializer )
 //======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
-void Renderer::render( Camera& cam_ )
+void Renderer::render(Camera& cam_)
 {
 	cam = &cam_;
 
@@ -79,20 +80,20 @@ void Renderer::render( Camera& cam_ )
 //======================================================================================================================
 // drawQuad                                                                                                            =
 //======================================================================================================================
-void Renderer::drawQuad( int vertCoordsUniLoc )
+void Renderer::drawQuad(int vertCoordsUniLoc)
 {
-	DEBUG_ERR( vertCoordsUniLoc == -1 );
-	glEnableVertexAttribArray( vertCoordsUniLoc );
-	glVertexAttribPointer( vertCoordsUniLoc, 2, GL_FLOAT, false, 0, quadVertCoords );
-	glDrawArrays( GL_QUADS, 0, 4 );
-	glDisableVertexAttribArray( vertCoordsUniLoc );
+	DEBUG_ERR(vertCoordsUniLoc == -1);
+	glEnableVertexAttribArray(vertCoordsUniLoc);
+	glVertexAttribPointer(vertCoordsUniLoc, 2, GL_FLOAT, false, 0, quadVertCoords);
+	glDrawArrays(GL_QUADS, 0, 4);
+	glDisableVertexAttribArray(vertCoordsUniLoc);
 }
 
 
 //======================================================================================================================
 // setupMaterial                                                                                                       =
 //======================================================================================================================
-void Renderer::setupMaterial( const Material& mtl, const SceneNode& sceneNode, const Camera& cam )
+void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam)
 {
 	mtl.shaderProg->bind();
 	uint textureUnit = 0;
@@ -100,31 +101,31 @@ void Renderer::setupMaterial( const Material& mtl, const SceneNode& sceneNode, c
 	//
 	// FFP stuff
 	//
-	if( mtl.blends )
+	if(mtl.blends)
 	{
-		glEnable( GL_BLEND );
-		//glDisable( GL_BLEND );
-		glBlendFunc( mtl.blendingSfactor, mtl.blendingDfactor );
+		glEnable(GL_BLEND);
+		//glDisable(GL_BLEND);
+		glBlendFunc(mtl.blendingSfactor, mtl.blendingDfactor);
 	}
 	else
-		glDisable( GL_BLEND );
+		glDisable(GL_BLEND);
 
 
-	if( mtl.depthTesting )
-		glEnable( GL_DEPTH_TEST );
+	if(mtl.depthTesting)
+		glEnable(GL_DEPTH_TEST);
 	else
-		glDisable( GL_DEPTH_TEST );
+		glDisable(GL_DEPTH_TEST);
 
-	if( mtl.wireframe )
-		glPolygonMode( GL_FRONT, GL_LINE );
+	if(mtl.wireframe)
+		glPolygonMode(GL_FRONT, GL_LINE);
 	else
-		glPolygonMode( GL_FRONT, GL_FILL );
+		glPolygonMode(GL_FRONT, GL_FILL);
 
 
 	//
-	// matrices
+	// calc needed matrices
 	//
-	Mat4 modelMat( sceneNode.getWorldTransform() );
+	Mat4 modelMat(sceneNode.getWorldTransform());
 	const Mat4& projectionMat = cam.getProjectionMatrix();
 	const Mat4& viewMat = cam.getViewMatrix();
 	Mat4 modelViewMat;
@@ -132,98 +133,104 @@ void Renderer::setupMaterial( const Material& mtl, const SceneNode& sceneNode, c
 	Mat4 modelViewProjectionMat;
 
 	// should I calculate the modelViewMat ?
-	if( mtl.stdUniVars[ Material::SUV_MODELVIEW_MAT ] ||
-			mtl.stdUniVars[ Material::SUV_MODELVIEWPROJECTION_MAT ] ||
-			mtl.stdUniVars[ Material::SUV_NORMAL_MAT ] )
+	if(mtl.stdUniVars[Material::SUV_MODELVIEW_MAT] ||
+	   mtl.stdUniVars[Material::SUV_MODELVIEWPROJECTION_MAT] ||
+	   mtl.stdUniVars[Material::SUV_NORMAL_MAT])
 	{
-		modelViewMat = Mat4::combineTransformations( viewMat, modelMat );
+		modelViewMat = Mat4::combineTransformations(viewMat, modelMat);
 	}
 
-	// set all the matrices
-	if( mtl.stdUniVars[ Material::SUV_MODEL_MAT ] )
-		mtl.stdUniVars[ Material::SUV_MODEL_MAT ]->setMat4( &modelMat );
+	// set matrices
+	if(mtl.stdUniVars[Material::SUV_MODEL_MAT])
+		mtl.stdUniVars[Material::SUV_MODEL_MAT]->setMat4(&modelMat);
 
-	if( mtl.stdUniVars[ Material::SUV_VIEW_MAT ] )
-		mtl.stdUniVars[ Material::SUV_VIEW_MAT ]->setMat4( &viewMat );
+	if(mtl.stdUniVars[Material::SUV_VIEW_MAT])
+		mtl.stdUniVars[Material::SUV_VIEW_MAT]->setMat4(&viewMat);
 
-	if( mtl.stdUniVars[ Material::SUV_PROJECTION_MAT ] )
-		mtl.stdUniVars[ Material::SUV_PROJECTION_MAT ]->setMat4( &projectionMat );
+	if(mtl.stdUniVars[Material::SUV_PROJECTION_MAT])
+		mtl.stdUniVars[Material::SUV_PROJECTION_MAT]->setMat4(&projectionMat);
 
-	if( mtl.stdUniVars[ Material::SUV_MODELVIEW_MAT ] )
-		mtl.stdUniVars[ Material::SUV_MODELVIEW_MAT ]->setMat4( &modelViewMat );
+	if(mtl.stdUniVars[Material::SUV_MODELVIEW_MAT])
+		mtl.stdUniVars[Material::SUV_MODELVIEW_MAT]->setMat4(&modelViewMat);
 
-	if( mtl.stdUniVars[ Material::SUV_NORMAL_MAT ] )
+	if(mtl.stdUniVars[Material::SUV_NORMAL_MAT])
 	{
 		normalMat = modelViewMat.getRotationPart();
-		mtl.stdUniVars[ Material::SUV_NORMAL_MAT ]->setMat3( &normalMat );
+		mtl.stdUniVars[Material::SUV_NORMAL_MAT]->setMat3(&normalMat);
 	}
 
-	if( mtl.stdUniVars[ Material::SUV_MODELVIEWPROJECTION_MAT ] )
+	if(mtl.stdUniVars[Material::SUV_MODELVIEWPROJECTION_MAT])
 	{
 		modelViewProjectionMat = projectionMat * modelViewMat;
-		mtl.stdUniVars[ Material::SUV_MODELVIEWPROJECTION_MAT ]->setMat4( &modelViewProjectionMat );
+		mtl.stdUniVars[Material::SUV_MODELVIEWPROJECTION_MAT]->setMat4(&modelViewProjectionMat);
 	}
 
 
 	//
 	// FAis
 	//
-	if( mtl.stdUniVars[ Material::SUV_MS_NORMAL_FAI ] )
-		mtl.stdUniVars[ Material::SUV_MS_NORMAL_FAI ]->setTexture( ms.normalFai, textureUnit++ );
+	if(mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI])
+		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms.normalFai, textureUnit++);
 
-	if( mtl.stdUniVars[ Material::SUV_MS_DIFFUSE_FAI ] )
-		mtl.stdUniVars[ Material::SUV_MS_DIFFUSE_FAI ]->setTexture( ms.diffuseFai, textureUnit++ );
+	if(mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI])
+		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms.diffuseFai, textureUnit++);
 
-	if( mtl.stdUniVars[ Material::SUV_MS_SPECULAR_FAI ] )
-		mtl.stdUniVars[ Material::SUV_MS_SPECULAR_FAI ]->setTexture( ms.specularFai, textureUnit++ );
+	if(mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI])
+		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms.specularFai, textureUnit++);
 
-	if( mtl.stdUniVars[ Material::SUV_MS_DEPTH_FAI ] )
-		mtl.stdUniVars[ Material::SUV_MS_DEPTH_FAI ]->setTexture( ms.depthFai, textureUnit++ );
+	if(mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI])
+		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms.depthFai, textureUnit++);
 
-	if( mtl.stdUniVars[ Material::SUV_IS_FAI ] )
-		mtl.stdUniVars[ Material::SUV_IS_FAI ]->setTexture( is.fai, textureUnit++ );
+	if(mtl.stdUniVars[Material::SUV_IS_FAI])
+		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is.fai, textureUnit++);
 
-	if( mtl.stdUniVars[ Material::SUV_PPS_FAI ] )
-		mtl.stdUniVars[ Material::SUV_PPS_FAI ]->setTexture( pps.fai, textureUnit++ );
+	if(mtl.stdUniVars[Material::SUV_PPS_FAI])
+		mtl.stdUniVars[Material::SUV_PPS_FAI]->setTexture(pps.fai, textureUnit++);
 
 
 	//
 	// Other
 	//
-	if( mtl.stdUniVars[ Material::SUV_RENDERER_SIZE ] )
+	if(mtl.stdUniVars[Material::SUV_RENDERER_SIZE])
 	{
-		Vec2 v( width, height );
-		mtl.stdUniVars[ Material::SUV_RENDERER_SIZE ]->setVec2( &v );
+		Vec2 v(width, height);
+		mtl.stdUniVars[Material::SUV_RENDERER_SIZE]->setVec2(&v);
+	}
+
+	if(mtl.stdUniVars[Material::SUV_SCENE_AMBIENT_COLOR])
+	{
+		Vec3 col(app->getScene()->getAmbientCol());
+		mtl.stdUniVars[Material::SUV_SCENE_AMBIENT_COLOR]->setVec3(&col);
 	}
 
 
 	//
-	// now loop all the user defined vars and set them
+	// set user defined vars
 	//
-	for( uint i=0; i<mtl.userDefinedVars.size(); i++ )
+	for(uint i=0; i<mtl.userDefinedVars.size(); i++)
 	{
 		const Material::UserDefinedUniVar* udv = &mtl.userDefinedVars[i];
-		switch( udv->sProgVar->getGlDataType() )
+		switch(udv->sProgVar->getGlDataType())
 		{
 			// texture
 			case GL_SAMPLER_2D:
-				udv->sProgVar->setTexture( *udv->value.texture, textureUnit++ );
+				udv->sProgVar->setTexture(*udv->value.texture, textureUnit++);
 				break;
 			// float
 			case GL_FLOAT:
-				udv->sProgVar->setFloat( udv->value.float_ );
+				udv->sProgVar->setFloat(udv->value.float_);
 				break;
 			// vec2
 			case GL_FLOAT_VEC2:
-				udv->sProgVar->setVec2( &udv->value.vec2 );
+				udv->sProgVar->setVec2(&udv->value.vec2);
 				break;
 			// vec3
 			case GL_FLOAT_VEC3:
-				udv->sProgVar->setVec3( &udv->value.vec3 );
+				udv->sProgVar->setVec3(&udv->value.vec3);
 				break;
 			// vec4
 			case GL_FLOAT_VEC4:
-				udv->sProgVar->setVec4( &udv->value.vec4 );
+				udv->sProgVar->setVec4(&udv->value.vec4);
 				break;
 		}
 	}
@@ -233,28 +240,28 @@ void Renderer::setupMaterial( const Material& mtl, const SceneNode& sceneNode, c
 //======================================================================================================================
 // setProjectionMatrix                                                                                                 =
 //======================================================================================================================
-void Renderer::setProjectionMatrix( const Camera& cam )
+void Renderer::setProjectionMatrix(const Camera& cam)
 {
-	glMatrixMode( GL_PROJECTION );
-	loadMatrix( cam.getProjectionMatrix() );
+	glMatrixMode(GL_PROJECTION);
+	loadMatrix(cam.getProjectionMatrix());
 }
 
 
 //======================================================================================================================
 // setViewMatrix                                                                                                       =
 //======================================================================================================================
-void Renderer::setViewMatrix( const Camera& cam )
+void Renderer::setViewMatrix(const Camera& cam)
 {
-	glMatrixMode( GL_MODELVIEW );
-	loadMatrix( cam.getViewMatrix() );
+	glMatrixMode(GL_MODELVIEW);
+	loadMatrix(cam.getViewMatrix());
 }
 
 
 //======================================================================================================================
 // unproject                                                                                                           =
 //======================================================================================================================
-Vec3 Renderer::unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
-                          const int view[4] )
+Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
+                          const int view[4])
 {
 	Mat4 invPm = projectionMat * modelViewMat;
 	invPm.invert();
@@ -268,14 +275,14 @@ Vec3 Renderer::unproject( const Vec3& windowCoords, const Mat4& modelViewMat, co
 
 	Vec4 final = invPm * vec;
 	final /= final.w;
-	return Vec3( final );
+	return Vec3(final);
 }
 
 
 //======================================================================================================================
 // ortho                                                                                                               =
 //======================================================================================================================
-Mat4 Renderer::ortho( float left, float right, float bottom, float top, float near, float far )
+Mat4 Renderer::ortho(float left, float right, float bottom, float top, float near, float far)
 {
 	float difx = right-left;
 	float dify = top-bottom;
@@ -285,22 +292,22 @@ Mat4 Renderer::ortho( float left, float right, float bottom, float top, float ne
 	float tz = -(far+near) / difz;
 	Mat4 m;
 
-	m(0,0) = 2.0 / difx;
-	m(0,1) = 0.0;
-	m(0,2) = 0.0;
-	m(0,3) = tx;
-	m(1,0) = 0.0;
-	m(1,1) = 2.0 / dify;
-	m(1,2) = 0.0;
-	m(1,3) = ty;
-	m(2,0) = 0.0;
-	m(2,1) = 0.0;
-	m(2,2) = -2.0 / difz;
-	m(2,3) = tz;
-	m(3,0) = 0.0;
-	m(3,1) = 0.0;
-	m(3,2) = 0.0;
-	m(3,3) = 1.0;
+	m(0, 0) = 2.0 / difx;
+	m(0, 1) = 0.0;
+	m(0, 2) = 0.0;
+	m(0, 3) = tx;
+	m(1, 0) = 0.0;
+	m(1, 1) = 2.0 / dify;
+	m(1, 2) = 0.0;
+	m(1, 3) = ty;
+	m(2, 0) = 0.0;
+	m(2, 1) = 0.0;
+	m(2, 2) = -2.0 / difz;
+	m(2, 3) = tz;
+	m(3, 0) = 0.0;
+	m(3, 1) = 0.0;
+	m(3, 2) = 0.0;
+	m(3, 3) = 1.0;
 
 	return m;
 }
@@ -311,7 +318,7 @@ Mat4 Renderer::ortho( float left, float right, float bottom, float top, float ne
 //======================================================================================================================
 const uchar* Renderer::getLastError()
 {
-	return gluErrorString( glGetError() );
+	return gluErrorString(glGetError());
 }
 
 
@@ -321,7 +328,7 @@ const uchar* Renderer::getLastError()
 void Renderer::printLastError()
 {
 	GLenum errid = glGetError();
-	if( errid != GL_NO_ERROR )
-		ERROR( "OpenGL Error: " << gluErrorString( errid ) );
+	if(errid != GL_NO_ERROR)
+		ERROR("OpenGL Error: " << gluErrorString(errid));
 }
 

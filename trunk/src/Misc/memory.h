@@ -24,9 +24,9 @@ extern size_t free_size;
 extern const size_t buffer_size;
 extern uint errors_num;
 
-extern void printInfo( uint flags=PRINT_ALL );
-extern void Enable( uint flags );
-extern void Disable( uint flags );
+extern void printInfo(uint flags=PRINT_ALL);
+extern void Enable(uint flags);
+extern void Disable(uint flags);
 
 } // end namespace
 
@@ -36,20 +36,20 @@ extern void Disable( uint flags );
 // MACROS
 #ifdef _USE_MEM_MANAGER_
 
-extern void* malloc( size_t size, const char* file, int line, const char* func );
-extern void* realloc( void* p, size_t size, const char* file, int line, const char* func );
-extern void* calloc( size_t num, size_t size, const char* file, int line, const char* func );
-extern void  free( void* p, const char* file, int line, const char* func );
-extern void* operator new( size_t size, const char* file, int line, const char* func );
-extern void* operator new[]( size_t size, const char* file, int line, const char* func );
-extern void  operator delete( void* p, const char* file, int line, const char* func );
-extern void  operator delete[]( void* p, const char* file, int line, const char* func );
+extern void* malloc(size_t size, const char* file, int line, const char* func);
+extern void* realloc(void* p, size_t size, const char* file, int line, const char* func);
+extern void* calloc(size_t num, size_t size, const char* file, int line, const char* func);
+extern void  free(void* p, const char* file, int line, const char* func);
+extern void* operator new(size_t size, const char* file, int line, const char* func);
+extern void* operator new[](size_t size, const char* file, int line, const char* func);
+extern void  operator delete(void* p, const char* file, int line, const char* func);
+extern void  operator delete[](void* p, const char* file, int line, const char* func);
 
-#define new new( __FILENAME__, __LINE__, __FUNCTION__ )
-#define malloc( x ) malloc( x, __FILENAME__, __LINE__, __FUNCTION__ )
-#define realloc( x, y ) realloc( x, y, __FILENAME__, __LINE__, __FUNCTION__ )
-#define calloc( x, y ) calloc( x, y, __FILENAME__, __LINE__, __FUNCTION__ )
-#define free(x) free( x, __FILENAME__, __LINE__, __FUNCTION__ )
+#define new new(__FILENAME__, __LINE__, __FUNCTION__)
+#define malloc(x) malloc(x, __FILENAME__, __LINE__, __FUNCTION__)
+#define realloc(x, y) realloc(x, y, __FILENAME__, __LINE__, __FUNCTION__)
+#define calloc(x, y) calloc(x, y, __FILENAME__, __LINE__, __FUNCTION__)
+#define free(x) free(x, __FILENAME__, __LINE__, __FUNCTION__)
 
 
 #endif

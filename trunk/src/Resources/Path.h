@@ -17,7 +17,7 @@ class Path: public Resource
 
 		Path() {}
 		~Path() {}
-		bool load( const char* filename );
+		bool load(const char* filename);
 		void unload() { points.clear(); }
 };
 

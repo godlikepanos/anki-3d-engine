@@ -104,19 +104,19 @@ class Scanner
 		{
 			friend class Scanner;
 
-			PROPERTY_R( TokenCode, code, getCode ) ///< The first thing you should know about a token
-			PROPERTY_R( TokenDataType, dataType, getDataType ) ///< Additional info in case @ref code is @ref TC_NUMBER
-			PROPERTY_R( TokenDataVal, value, getValue ) ///< A value variant
+			PROPERTY_R(TokenCode, code, getCode) ///< The first thing you should know about a token
+			PROPERTY_R(TokenDataType, dataType, getDataType) ///< Additional info in case @ref code is @ref TC_NUMBER
+			PROPERTY_R(TokenDataVal, value, getValue) ///< A value variant
 
 			public:
-				Token(): code( TC_ERROR ) {}
-				Token( const Token& b );
+				Token(): code(TC_ERROR) {}
+				Token(const Token& b);
 				const char* getString() const { return asString; }
 				string getInfoStr() const; ///< Get a string with the info of the token
 				void print() const; ///< Print info of the token
 
 			private:
-				char asString[ 1024 ];
+				char asString[1024];
 		}; // end class Token
 
 
@@ -154,11 +154,11 @@ class Scanner
 		 * @param newlinesAsWhitespace If false the Scanner will return a newline @ref Token every time if finds a newline.
 		 * True is the default behavior
 		 */
-		Scanner( bool newlinesAsWhitespace = true );
+		Scanner(bool newlinesAsWhitespace = true);
 
 		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
 
-		bool loadFile( const char* filename ); ///< Load a file to extract tokens
+		bool loadFile(const char* filename); ///< Load a file to extract tokens
 
 		/**
 		 * Load a STL istream to extract tokens
@@ -166,7 +166,7 @@ class Scanner
 		 * @param scriptName_ The name of the stream. For error reporting
 		 * @return True on success
 		 */
-		bool loadIstream( istream& istream_, const char* scriptName_ = "unamed-istream" );
+		bool loadIstream(istream& istream_, const char* scriptName_ = "unamed-istream");
 
 		/**
 		 * Unloads the file
@@ -242,7 +242,7 @@ class Scanner
 		/**@{*/
 		ifstream inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
 		istream* inStream; ///< Points to either @ref inFstream or an external std::istream
-		char scriptName[ 512 ]; ///< The name of the input stream. Mainly used for the error messages
+		char scriptName[512]; ///< The name of the input stream. Mainly used for the error messages
 		/**@}*/
 
 		/**
@@ -279,11 +279,11 @@ class Scanner
 		static void initAsciiMap();
 
 		/**
-		 * To save us from typing for example asciiLookupTable[ (int)'a' ]
+		 * To save us from typing for example asciiLookupTable[(int)'a']
 		 */
-		inline AsciiFlag asciiLookup( char ch_ )
+		inline AsciiFlag asciiLookup(char ch_)
 		{
-			return asciiLookupTable[ (int)ch_ ];
+			return asciiLookupTable[(int)ch_];
 		}
 }; // end class Scanner
 

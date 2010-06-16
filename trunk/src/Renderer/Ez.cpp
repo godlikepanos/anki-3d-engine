@@ -15,7 +15,7 @@
 //======================================================================================================================
 void Renderer::Ms::Ez::init()
 {
-	DEBUG_ERR( !enabled );
+	DEBUG_ERR(!enabled);
 
 	//
 	// init FBO
@@ -23,12 +23,12 @@ void Renderer::Ms::Ez::init()
 	fbo.create();
 	fbo.bind();
 
-	fbo.setNumOfColorAttachements( 0 );
+	fbo.setNumOfColorAttachements(0);
 
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if( !fbo.isGood() )
-		FATAL( "Cannot create shadowmapping FBO" );
+	if(!fbo.isGood())
+		FATAL("Cannot create shadowmapping FBO");
 
 	fbo.unbind();
 }
@@ -39,26 +39,26 @@ void Renderer::Ms::Ez::init()
 //======================================================================================================================
 void Renderer::Ms::Ez::run()
 {
-	DEBUG_ERR( !enabled );
+	DEBUG_ERR(!enabled);
 
 	fbo.bind();
 
-	Renderer::setViewport( 0, 0, r.width, r.height );
+	Renderer::setViewport(0, 0, r.width, r.height);
 
-	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-	glEnable( GL_DEPTH_TEST );
-	glDisable( GL_BLEND );
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 
-	for( Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++ )
+	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if( meshNode->material->blends || meshNode->material->refracts ) continue;
+		if(meshNode->material->blends || meshNode->material->refracts) continue;
 
-		DEBUG_ERR( meshNode->material->dpMtl == NULL );
+		DEBUG_ERR(meshNode->material->dpMtl == NULL);
 
-		r.setupMaterial( *meshNode->material->dpMtl, *meshNode, *r.cam );
+		r.setupMaterial(*meshNode->material->dpMtl, *meshNode, *r.cam);
 		meshNode->renderDepth();
 	}
 
-	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }

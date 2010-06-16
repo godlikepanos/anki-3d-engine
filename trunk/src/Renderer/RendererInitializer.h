@@ -63,9 +63,9 @@ struct RendererInitializer
 	// funcs
 	RendererInitializer() {}
 
-	RendererInitializer( const RendererInitializer& initializer )
+	RendererInitializer(const RendererInitializer& initializer)
 	{
-		memcpy( this, &initializer, sizeof(RendererInitializer) );
+		memcpy(this, &initializer, sizeof(RendererInitializer));
 	}
 };
 

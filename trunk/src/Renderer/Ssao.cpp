@@ -11,26 +11,26 @@
 //======================================================================================================================
 // initBlurFbos                                                                                                        =
 //======================================================================================================================
-void Renderer::Pps::Ssao::initBlurFbo( Fbo& fbo, Texture& fai )
+void Renderer::Pps::Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
 {
 	// create FBO
 	fbo.create();
 	fbo.bind();
 
 	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements( 1 );
+	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D( bwidth, bheight, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false );
-	fai.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	fai.setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	fai.createEmpty2D(bwidth, bheight, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false);
+	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// attach
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	// test if success
-	if( !fbo.isGood() )
-		FATAL( "Cannot create deferred shading post-processing stage SSAO blur FBO" );
+	if(!fbo.isGood())
+		FATAL("Cannot create deferred shading post-processing stage SSAO blur FBO");
 
 	// unbind
 	fbo.unbind();
@@ -60,33 +60,33 @@ void Renderer::Pps::Ssao::init()
 	pass0Fbo.setNumOfColorAttachements(1);
 
 	// create the FAI
-	pass0Fai.createEmpty2D( width, height, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false );
-	pass0Fai.setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	pass0Fai.setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	pass0Fai.createEmpty2D(width, height, GL_ALPHA8, GL_ALPHA, GL_FLOAT, false);
+	pass0Fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	pass0Fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// attach
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, pass0Fai.getGlId(), 0 );
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, pass0Fai.getGlId(), 0);
 
 	// test if success
-	if( !pass0Fbo.isGood() )
-		FATAL( "Cannot create deferred shading post-processing stage SSAO pass FBO" );
+	if(!pass0Fbo.isGood())
+		FATAL("Cannot create deferred shading post-processing stage SSAO pass FBO");
 
 	// unbind
 	pass0Fbo.unbind();
 
-	initBlurFbo( pass1Fbo, pass1Fai );
-	initBlurFbo( pass2Fbo, fai );
+	initBlurFbo(pass1Fbo, pass1Fai);
+	initBlurFbo(pass2Fbo, fai);
 
 
 	//
 	// Shaders
 	//
 
-	ssaoSProg.customLoad( "shaders/PpsSsao.glsl" );
-	blurSProg.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " +
-	                      Util::floatToStr(width) + "\n").c_str() );
-	blurSProg2.customLoad( "shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " +
-	                       Util::floatToStr(bheight) + "\n").c_str() );
+	ssaoSProg.customLoad("shaders/PpsSsao.glsl");
+	blurSProg.customLoad("shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " +
+	                      Util::floatToStr(width) + "\n").c_str());
+	blurSProg2.customLoad("shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " +
+	                       Util::floatToStr(bheight) + "\n").c_str());
 
 	ssaoSProg.uniVars.camerarange = ssaoSProg.findUniVar("camerarange");
 	ssaoSProg.uniVars.msDepthFai = ssaoSProg.findUniVar("msDepthFai");
@@ -106,11 +106,11 @@ void Renderer::Pps::Ssao::init()
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
 	Texture::mipmappingEnabled = true;
-	noiseMap = Rsrc::textures.load( "gfx/noise3.tga" );
-	noiseMap->setTexParameter( GL_TEXTURE_WRAP_S, GL_REPEAT );
-	noiseMap->setTexParameter( GL_TEXTURE_WRAP_T, GL_REPEAT );
-	//noise_map->setTexParameter( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	//noise_map->setTexParameter( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	noiseMap = Rsrc::textures.load("gfx/noise3.tga");
+	noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+	noiseMap->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//noise_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
 	Texture::mipmappingEnabled = mipmaping;
 
@@ -124,35 +124,35 @@ void Renderer::Pps::Ssao::run()
 {
 	const Camera& cam = *r.cam;
 
-	glDisable( GL_BLEND );
-	glDisable( GL_DEPTH_TEST );
+	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
 
 
 	// 1st pass
-	Renderer::setViewport( 0, 0, width, height );
+	Renderer::setViewport(0, 0, width, height);
 	pass0Fbo.bind();
 	ssaoSProg.bind();
-	Vec2 camRange( cam.getZNear(), cam.getZFar() );
-	ssaoSProg.uniVars.camerarange->setVec2( &camRange );
-	ssaoSProg.uniVars.msDepthFai->setTexture( r.ms.depthFai, 0 );
-	ssaoSProg.uniVars.noiseMap->setTexture( *noiseMap, 1 );
-	ssaoSProg.uniVars.msNormalFai->setTexture( r.ms.normalFai, 2 );
-	Renderer::drawQuad( 0 );
+	Vec2 camRange(cam.getZNear(), cam.getZFar());
+	ssaoSProg.uniVars.camerarange->setVec2(&camRange);
+	ssaoSProg.uniVars.msDepthFai->setTexture(r.ms.depthFai, 0);
+	ssaoSProg.uniVars.noiseMap->setTexture(*noiseMap, 1);
+	ssaoSProg.uniVars.msNormalFai->setTexture(r.ms.normalFai, 2);
+	Renderer::drawQuad(0);
 
 	// for 2nd and 3rd passes
-	Renderer::setViewport( 0, 0, bwidth, bheight );
+	Renderer::setViewport(0, 0, bwidth, bheight);
 
 	// 2nd pass
 	pass1Fbo.bind();
 	blurSProg.bind();
-	blurSProg.uniVars.fai->setTexture( pass0Fai, 0 );
-	Renderer::drawQuad( 0 );
+	blurSProg.uniVars.fai->setTexture(pass0Fai, 0);
+	Renderer::drawQuad(0);
 
 	// 3rd pass
 	pass2Fbo.bind();
 	blurSProg2.bind();
-	blurSProg2.uniVars.fai->setTexture( pass1Fai, 0 );
-	Renderer::drawQuad( 0 );
+	blurSProg2.uniVars.fai->setTexture(pass1Fai, 0);
+	Renderer::drawQuad(0);
 
 	// end
 	Fbo::unbind();

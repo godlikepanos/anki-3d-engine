@@ -2,47 +2,47 @@
 #define _PHYCONVERSIONS_H_
 
 
-inline Vec3 toAnki( const btVector3& v )
+inline Vec3 toAnki(const btVector3& v)
 {
-	return Vec3( v.x(), v.y(), v.z() );
+	return Vec3(v.x(), v.y(), v.z());
 }
 
-inline Vec4 toAnki( const btVector4& v )
+inline Vec4 toAnki(const btVector4& v)
 {
-	return Vec4( v.x(), v.y(), v.z(), v.w() );
+	return Vec4(v.x(), v.y(), v.z(), v.w());
 }
 
-inline Mat3 toAnki( const btMatrix3x3& m )
+inline Mat3 toAnki(const btMatrix3x3& m)
 {
 	Mat3 m3;
-	m3.setRows( toAnki(m[0]), toAnki(m[1]), toAnki(m[2]) );
+	m3.setRows(toAnki(m[0]), toAnki(m[1]), toAnki(m[2]));
 	return m3;
 }
 
-inline Quat toAnki( const btQuaternion& q )
+inline Quat toAnki(const btQuaternion& q)
 {
-	return Quat( q.x(), q.y(), q.z(), q.w() );
+	return Quat(q.x(), q.y(), q.z(), q.w());
 }
 
-inline Mat4 toAnki( const btTransform& t )
+inline Mat4 toAnki(const btTransform& t)
 {
 	Mat4 m;
-	t.getOpenGLMatrix( &m[0] );
+	t.getOpenGLMatrix(&m[0]);
 	m.transpose();
 	return m;
 }
 
-inline btVector3 toBt( const Vec3& v )
+inline btVector3 toBt(const Vec3& v)
 {
-	return btVector3( v.x,  v.y, v.z );
+	return btVector3(v.x,  v.y, v.z);
 }
 
-inline btVector4 toBt( const Vec4& v )
+inline btVector4 toBt(const Vec4& v)
 {
-	return btVector4( v.x,  v.y, v.z, v.w );
+	return btVector4(v.x,  v.y, v.z, v.w);
 }
 
-inline btMatrix3x3 toBt( const Mat3 m )
+inline btMatrix3x3 toBt(const Mat3 m)
 {
 	btMatrix3x3 r;
 	r[0] = toBt(m.getRow(0));
@@ -51,23 +51,23 @@ inline btMatrix3x3 toBt( const Mat3 m )
 	return r;
 }
 
-inline btTransform toBt( const Mat4& m )
+inline btTransform toBt(const Mat4& m)
 {
 	btTransform r;
-	r.setFromOpenGLMatrix( &(m.getTransposed())[0] );
+	r.setFromOpenGLMatrix(&(m.getTransposed())[0]);
 	return r;
 }
 
-inline btQuaternion toBt( const Quat& q )
+inline btQuaternion toBt(const Quat& q)
 {
-	return btQuaternion( q.x, q.y, q.z, q.w );
+	return btQuaternion(q.x, q.y, q.z, q.w);
 }
 
-inline btTransform toBt( const Transform& trf )
+inline btTransform toBt(const Transform& trf)
 {
 	btTransform r;
-	r.setOrigin( toBt(trf.getOrigin()) );
-	r.setRotation( toBt( Quat(trf.getRotation()) ) );
+	r.setOrigin(toBt(trf.getOrigin()));
+	r.setRotation(toBt(Quat(trf.getRotation())));
 	return r;
 }
 

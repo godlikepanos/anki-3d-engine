@@ -10,22 +10,22 @@ bool App::isCreated = false;
 //======================================================================================================================
 // parseCommandLineArgs                                                                                                =
 //======================================================================================================================
-void App::parseCommandLineArgs( int argc, char* argv[] )
+void App::parseCommandLineArgs(int argc, char* argv[])
 {
-	for( int i=1; i<argc; i++ )
+	for(int i=1; i<argc; i++)
 	{
-		char* arg = argv[ i ];
-		if( strcmp( arg, "--terminal-coloring" ) == 0 )
+		char* arg = argv[i];
+		if(strcmp(arg, "--terminal-coloring") == 0)
 		{
 			terminalColoringEnabled = true;
 		}
-		else if( strcmp( arg, "--no-terminal-coloring" ) == 0 )
+		else if(strcmp(arg, "--no-terminal-coloring") == 0)
 		{
 			terminalColoringEnabled = false;
 		}
 		else
 		{
-			FATAL( "Incorrect command line argument \"" << arg << "\"" );
+			FATAL("Incorrect command line argument \"" << arg << "\"");
 		}
 	}
 
@@ -35,20 +35,20 @@ void App::parseCommandLineArgs( int argc, char* argv[] )
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-App::App( int argc, char* argv[] ):
-	windowW( 1280 ),
-	windowH( 720 ),
-	terminalColoringEnabled( true ),
-	fullScreenFlag( false )
+App::App(int argc, char* argv[]):
+	windowW(1280),
+	windowH(720),
+	terminalColoringEnabled(true),
+	fullScreenFlag(false)
 {
 	app = this;
 
-	parseCommandLineArgs( argc, argv );
+	parseCommandLineArgs(argc, argv);
 
 	printAppInfo();
 
-	if( isCreated )
-		FATAL( "You cannot init a second App instance" );
+	if(isCreated)
+		FATAL("You cannot init a second App instance");
 
 	isCreated = true;
 
@@ -66,54 +66,54 @@ App::App( int argc, char* argv[] ):
 //======================================================================================================================
 void App::initWindow()
 {
-	INFO( "SDL window initializing..." );
+	INFO("SDL window initializing...");
 
-	if( SDL_Init(SDL_INIT_VIDEO) < 0 )
-		FATAL( "Failed to init SDL_VIDEO" );
+	if(SDL_Init(SDL_INIT_VIDEO) < 0)
+		FATAL("Failed to init SDL_VIDEO");
 
 	// print driver name
 	const char* driverName = SDL_GetCurrentVideoDriver();
-	if( driverName != NULL )
+	if(driverName != NULL)
 	{
-		INFO( "Video driver name: " << driverName );
+		INFO("Video driver name: " << driverName);
 	}
 	else
 	{
-		ERROR( "Failed to obtain the video driver name" );
+		ERROR("Failed to obtain the video driver name");
 	}
 
 	// set GL attribs
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 8 ); // WARNING: Set this low only in deferred shading
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8); // WARNING: Set this low only in deferred shading
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
 	// OpenWindow
-	windowId = SDL_CreateWindow( "AnKi Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowW, windowH,
-	                             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+	windowId = SDL_CreateWindow("AnKi Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowW, windowH,
+	                             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
-	if( !windowId )
-		FATAL( "Cannot create main window" );
+	if(!windowId)
+		FATAL("Cannot create main window");
 
-	glContext = SDL_GL_CreateContext( windowId );
+	glContext = SDL_GL_CreateContext(windowId);
 
 
 	// the icon
 	iconImage = SDL_LoadBMP("gfx/icon.bmp");
-	if( iconImage == NULL )
+	if(iconImage == NULL)
 	{
-		ERROR( "Cannot load window icon" );
+		ERROR("Cannot load window icon");
 	}
 	else
 	{
-		Uint32 colorkey = SDL_MapRGB( iconImage->format, 255, 0, 255 );
-		SDL_SetColorKey( iconImage, SDL_SRCCOLORKEY, colorkey );
-		//SDL_WM_SetIcon( iconImage, NULL );
-		SDL_SetWindowIcon( windowId, iconImage );
+		Uint32 colorkey = SDL_MapRGB(iconImage->format, 255, 0, 255);
+		SDL_SetColorKey(iconImage, SDL_SRCCOLORKEY, colorkey);
+		//SDL_WM_SetIcon(iconImage, NULL);
+		SDL_SetWindowIcon(windowId, iconImage);
 	}
 
-	INFO( "SDL window initialization ends" );
+	INFO("SDL window initialization ends");
 }
 
 
@@ -122,8 +122,8 @@ void App::initWindow()
 //======================================================================================================================
 void App::togleFullScreen()
 {
-	//SDL_WM_ToggleFullScreen( mainSurf );
-	SDL_SetWindowFullscreen( windowId, fullScreenFlag );
+	//SDL_WM_ToggleFullScreen(mainSurf);
+	SDL_SetWindowFullscreen(windowId, fullScreenFlag);
 	fullScreenFlag = !fullScreenFlag;
 }
 
@@ -134,18 +134,18 @@ void App::togleFullScreen()
 void App::swapBuffers()
 {
 	//SDL_GL_SwapBuffers();
-	SDL_GL_SwapWindow( windowId );
+	SDL_GL_SwapWindow(windowId);
 }
 
 
 //======================================================================================================================
 // quitApp                                                                                                             =
 //======================================================================================================================
-void App::quitApp( int code )
+void App::quitApp(int code)
 {
-	SDL_FreeSurface( iconImage );
-	SDL_GL_DeleteContext( glContext );
-	SDL_DestroyWindow( windowId );
+	SDL_FreeSurface(iconImage);
+	SDL_GL_DeleteContext(glContext);
+	SDL_DestroyWindow(windowId);
 	SDL_Quit();
 	exit(code);
 }
@@ -158,12 +158,12 @@ void App::waitForNextFrame()
 {
 	uint now = SDL_GetTicks();
 
-	if( now - time < timerTick )
+	if(now - time < timerTick)
 	{
 		// the new time after the SDL_Delay will be...
 		time += timerTick;
 		// sleep a little
-		SDL_Delay( time - now);
+		SDL_Delay(time - now);
 	}
 	else
 		time = now;
@@ -174,7 +174,7 @@ void App::waitForNextFrame()
 //======================================================================================================================
 // printAppInfo                                                                                                        =
 //======================================================================================================================
-#if !defined( REVISION )
+#if !defined(REVISION)
 	#define REVISION "unknown"
 #endif
 
@@ -182,15 +182,15 @@ void App::printAppInfo()
 {
 	stringstream msg;
 	msg << "App info: debugging ";
-	#if defined( DEBUG_ENABLED )
+	#if defined(DEBUG_ENABLED)
 		msg << "on, ";
 	#else
 		msg << "off, ";
 	#endif
 	msg << "platform ";
-	#if defined( PLATFORM_LINUX )
+	#if defined(PLATFORM_LINUX)
 		msg << "Linux, ";
-	#elif defined( PLATFORM_WIN )
+	#elif defined(PLATFORM_WIN)
 		msg << "Windows, ";
 	#else
 		#error "See file"
@@ -201,7 +201,7 @@ void App::printAppInfo()
 	msg << "build date " __DATE__ << ", ";
 	msg << "rev " << REVISION;
 
-	INFO( msg.str() );
+	INFO(msg.str());
 }
 
 
@@ -211,7 +211,7 @@ void App::printAppInfo()
 uint App::getDesktopWidth() const
 {
 	SDL_DisplayMode mode;
-	SDL_GetDesktopDisplayMode( &mode );
+	SDL_GetDesktopDisplayMode(&mode);
 	return mode.w;
 }
 
@@ -222,7 +222,7 @@ uint App::getDesktopWidth() const
 uint App::getDesktopHeight() const
 {
 	SDL_DisplayMode mode;
-	SDL_GetDesktopDisplayMode( &mode );
+	SDL_GetDesktopDisplayMode(&mode);
 	return mode.h;
 }
 

@@ -6,7 +6,7 @@
 //======================================================================================================================
 // setAll                                                                                                              =
 //======================================================================================================================
-void Camera::setAll( float fovx_, float fovy_, float znear_, float zfar_ )
+void Camera::setAll(float fovx_, float fovy_, float znear_, float zfar_)
 {
 	fovX = fovx_;
 	fovY = fovy_;
@@ -22,11 +22,11 @@ void Camera::setAll( float fovx_, float fovy_, float znear_, float zfar_ )
 //======================================================================================================================
 void Camera::render()
 {
-	Renderer::Dbg::setColor( Vec4(1.0, 0.0, 1.0, 1.0) );
-	Renderer::Dbg::setModelMat( Mat4( getWorldTransform() ) );
+	Renderer::Dbg::setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+	Renderer::Dbg::setModelMat(Mat4(getWorldTransform()));
 
 	const float camLen = 1.0;
-	float tmp0 = camLen / tan( (M::PI - fovX)*0.5 ) + 0.001;
+	float tmp0 = camLen / tan((M::PI - fovX)*0.5) + 0.001;
 	float tmp1 = camLen * tan(fovY*0.5) + 0.001;
 
 	float points [][3] = {
@@ -40,23 +40,23 @@ void Camera::render()
 	const ushort indeces [] = { 0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2, 3, 3, 4, 4, 1 };
 
 
-	glEnableVertexAttribArray( 0 );
-	glVertexAttribPointer( 0, 3, GL_FLOAT, false, 0, points );
-	glDrawElements( GL_LINES, 16, GL_UNSIGNED_SHORT, indeces );
-	glDisableVertexAttribArray( 0 );
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, points);
+	glDrawElements(GL_LINES, 16, GL_UNSIGNED_SHORT, indeces);
+	glDisableVertexAttribArray(0);
 }
 
 
 //======================================================================================================================
 // lookAtPoint                                                                                                         =
 //======================================================================================================================
-void Camera::lookAtPoint( const Vec3& point )
+void Camera::lookAtPoint(const Vec3& point)
 {
-	const Vec3& j = Vec3( 0.0, 1.0, 0.0 );
+	const Vec3& j = Vec3(0.0, 1.0, 0.0);
 	Vec3 vdir = (point - getLocalTransform().getOrigin()).getNormalized();
 	Vec3 vup = j - vdir * j.dot(vdir);
-	Vec3 vside = vdir.cross( vup );
-	getLocalTransform().getRotation().setColumns( vside, vup, -vdir );
+	Vec3 vside = vdir.cross(vup);
+	getLocalTransform().getRotation().setColumns(vside, vup, -vdir);
 }
 
 
@@ -67,22 +67,22 @@ void Camera::calcLSpaceFrustumPlanes()
 {
 	float c, s; // cos & sine
 
-	sinCos( PI+fovX/2, s, c );
+	sinCos(PI+fovX/2, s, c);
 	// right
-	lspaceFrustumPlanes[FP_RIGHT] = plane_t( Vec3(c, 0.0, s), 0.0 );
+	lspaceFrustumPlanes[FP_RIGHT] = plane_t(Vec3(c, 0.0, s), 0.0);
 	// left
-	lspaceFrustumPlanes[FP_LEFT] = plane_t( Vec3(-c, 0.0, s), 0.0 );
+	lspaceFrustumPlanes[FP_LEFT] = plane_t(Vec3(-c, 0.0, s), 0.0);
 
-	sinCos( (3*PI-fovY)*0.5, s, c );
+	sinCos((3*PI-fovY)*0.5, s, c);
 	// top
-	lspaceFrustumPlanes[FP_TOP] = plane_t( Vec3(0.0, s, c), 0.0 );
+	lspaceFrustumPlanes[FP_TOP] = plane_t(Vec3(0.0, s, c), 0.0);
 	// bottom
-	lspaceFrustumPlanes[FP_BOTTOM] = plane_t( Vec3(0.0, -s, c), 0.0 );
+	lspaceFrustumPlanes[FP_BOTTOM] = plane_t(Vec3(0.0, -s, c), 0.0);
 
 	// near
-	lspaceFrustumPlanes[FP_NEAR] = plane_t( Vec3( 0.0, 0.0, -1.0 ), zNear );
+	lspaceFrustumPlanes[FP_NEAR] = plane_t(Vec3(0.0, 0.0, -1.0), zNear);
 	// far
-	lspaceFrustumPlanes[FP_FAR] = plane_t( Vec3( 0.0, 0.0, 1.0 ), -zFar );
+	lspaceFrustumPlanes[FP_FAR] = plane_t(Vec3(0.0, 0.0, 1.0), -zFar);
 }
 
 
@@ -91,9 +91,9 @@ void Camera::calcLSpaceFrustumPlanes()
 //======================================================================================================================
 void Camera::updateWSpaceFrustumPlanes()
 {
-	for( uint i=0; i<6; i++ )
+	for(uint i=0; i<6; i++)
 	{
-		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].Transformed( getWorldTransform().getOrigin(), getWorldTransform().getRotation(), getWorldTransform().getScale() );
+		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].Transformed(getWorldTransform().getOrigin(), getWorldTransform().getRotation(), getWorldTransform().getScale());
 	}
 }
 
@@ -102,10 +102,10 @@ void Camera::updateWSpaceFrustumPlanes()
 // insideFrustum                                                                                                       =
 //======================================================================================================================
 /// Check if the volume is inside the frustum cliping planes
-bool Camera::insideFrustum( const bvolume_t& bvol ) const
+bool Camera::insideFrustum(const bvolume_t& bvol) const
 {
-	for( uint i=0; i<6; i++ )
-		if( bvol.PlaneTest( wspaceFrustumPlanes[i] ) < 0.0 )
+	for(uint i=0; i<6; i++)
+		if(bvol.PlaneTest(wspaceFrustumPlanes[i]) < 0.0)
 			return false;
 
 	return true;
@@ -115,39 +115,39 @@ bool Camera::insideFrustum( const bvolume_t& bvol ) const
 //======================================================================================================================
 // insideFrustum                                                                                                       =
 //======================================================================================================================
-bool Camera::insideFrustum( const Camera& cam ) const
+bool Camera::insideFrustum(const Camera& cam) const
 {
 	//** get five points. These points are the tips of the given camera **
 	Vec3 points[5];
 
 	// get 3 sample floats
-	float x = cam.getZFar() / tan( (PI-cam.getFovX())/2 );
-	float y = tan( cam.getFovY()/2 ) * cam.getZFar();
+	float x = cam.getZFar() / tan((PI-cam.getFovX())/2);
+	float y = tan(cam.getFovY()/2) * cam.getZFar();
 	float z = -cam.getZFar();
 
 	// the actual points in local space
-	points[0] = Vec3( x, y, z ); // top right
-	points[1] = Vec3( -x, y, z ); // top left
-	points[2] = Vec3( -x, -y, z ); // bottom left
-	points[3] = Vec3( x, -y, z ); // bottom right
-	points[4] = Vec3( cam.getWorldTransform().getOrigin() ); // eye (already in world space)
+	points[0] = Vec3(x, y, z); // top right
+	points[1] = Vec3(-x, y, z); // top left
+	points[2] = Vec3(-x, -y, z); // bottom left
+	points[3] = Vec3(x, -y, z); // bottom right
+	points[4] = Vec3(cam.getWorldTransform().getOrigin()); // eye (already in world space)
 
 	// transform them to the given camera's world space (exept the eye)
-	for( uint i=0; i<4; i++ )
-		points[i].transform( getWorldTransform() );
+	for(uint i=0; i<4; i++)
+		points[i].transform(getWorldTransform());
 
 
 	//** the collision code **
-	for( uint i=0; i<6; i++ ) // for the 6 planes
+	for(uint i=0; i<6; i++) // for the 6 planes
 	{
 		int failed = 0;
 
-		for( uint j=0; j<5; j++ ) // for the 5 points
+		for(uint j=0; j<5; j++) // for the 5 points
 		{
-			if( wspaceFrustumPlanes[i].Test( points[j] ) < 0.0 )
+			if(wspaceFrustumPlanes[i].Test(points[j]) < 0.0)
 				++failed;
 		}
-		if( failed == 5 ) return false; // if all points are behind the plane then the cam is not in frustum
+		if(failed == 5) return false; // if all points are behind the plane then the cam is not in frustum
 	}
 
 	return true;
@@ -159,24 +159,24 @@ bool Camera::insideFrustum( const Camera& cam ) const
 //======================================================================================================================
 void Camera::calcProjectionMatrix()
 {
-	float f = 1.0/tan( fovY*0.5f ); // f = cot(fovY/2)
+	float f = 1.0/tan(fovY*0.5f); // f = cot(fovY/2)
 
-	projectionMat(0,0) = f*fovY/fovX; // = f/aspectRatio;
-	projectionMat(0,1) = 0.0;
-	projectionMat(0,2) = 0.0;
-	projectionMat(0,3) = 0.0;
-	projectionMat(1,0) = 0.0;
-	projectionMat(1,1) = f;
-	projectionMat(1,2) = 0.0;
-	projectionMat(1,3) = 0.0;
-	projectionMat(2,0) = 0.0;
-	projectionMat(2,1) = 0.0;
-	projectionMat(2,2) = (zFar+zNear) / (zNear-zFar);
-	projectionMat(2,3) = (2.0f*zFar*zNear) / (zNear-zFar);
-	projectionMat(3,0) = 0.0;
-	projectionMat(3,1) = 0.0;
-	projectionMat(3,2) = -1.0;
-	projectionMat(3,3) = 0.0;
+	projectionMat(0, 0) = f*fovY/fovX; // = f/aspectRatio;
+	projectionMat(0, 1) = 0.0;
+	projectionMat(0, 2) = 0.0;
+	projectionMat(0, 3) = 0.0;
+	projectionMat(1, 0) = 0.0;
+	projectionMat(1, 1) = f;
+	projectionMat(1, 2) = 0.0;
+	projectionMat(1, 3) = 0.0;
+	projectionMat(2, 0) = 0.0;
+	projectionMat(2, 1) = 0.0;
+	projectionMat(2, 2) = (zFar+zNear) / (zNear-zFar);
+	projectionMat(2, 3) = (2.0f*zFar*zNear) / (zNear-zFar);
+	projectionMat(3, 0) = 0.0;
+	projectionMat(3, 1) = 0.0;
+	projectionMat(3, 2) = -1.0;
+	projectionMat(3, 3) = 0.0;
 
 	invProjectionMat = projectionMat.getInverse();
 }
@@ -191,13 +191,13 @@ void Camera::updateViewMatrix()
 	 * The point at which the camera looks:
 	 * Vec3 viewpoint = translationLspace + z_axis;
 	 * as we know the up vector, we can easily use gluLookAt:
-	 * gluLookAt( translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x, y_axis.y, y_axis.z );
+	 * gluLookAt(translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x, y_axis.y, y_axis.z);
 	*/
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
 	Mat3 camInvertedRot = getWorldTransform().getRotation().getTransposed();
-	Vec3 camInvertedTsl = -( camInvertedRot * getWorldTransform().getOrigin() );
-	viewMat = Mat4( camInvertedTsl, camInvertedRot );
+	Vec3 camInvertedTsl = -(camInvertedRot * getWorldTransform().getOrigin());
+	viewMat = Mat4(camInvertedTsl, camInvertedRot);
 }
 
 

@@ -36,7 +36,7 @@ class SkelAnim: public Resource
 
 		SkelAnim() {}
 		~SkelAnim() {}
-		bool load( const char* filename );
+		bool load(const char* filename);
 		void unload() { keyframes.clear(); bones.clear(); framesNum=0; }
 };
 

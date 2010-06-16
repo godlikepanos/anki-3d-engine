@@ -15,6 +15,7 @@ class RendererInitializer;
 class SceneNode;
 
 
+
 /**
  * Offscreen renderer
  *
@@ -35,7 +36,7 @@ class Renderer
 				Renderer& r; ///< Just so that the stage can know the father class
 
 			public:
-				RenderingStage( Renderer& r_ ): r(r_) {}
+				RenderingStage(Renderer& r_): r(r_) {}
 		};
 
 		/**
@@ -54,10 +55,10 @@ class Renderer
 					friend class Renderer;
 					friend class Ms;
 
-					PROPERTY_R( bool, enabled, isEnabled )
+					PROPERTY_R(bool, enabled, isEnabled)
 
 					public:
-						Ez( Renderer& r_ ): RenderingStage( r_ ) {}
+						Ez(Renderer& r_): RenderingStage(r_) {}
 
 					private:
 						Fbo fbo;
@@ -73,7 +74,7 @@ class Renderer
 				Texture depthFai;
 				Ez ez;
 
-				Ms( Renderer& r_ ): RenderingStage( r_ ), ez( r_ ) {}
+				Ms(Renderer& r_): RenderingStage(r_), ez(r_) {}
 
 			private:
 				Fbo fbo;
@@ -98,13 +99,13 @@ class Renderer
 					friend class Is;
 					friend class Renderer;
 
-					PROPERTY_R( bool, enabled, isEnabled ) ///< If false then disable
-					PROPERTY_R( bool, pcfEnabled, isPcfEnabled ) ///< Enable Percentage Closer Filtering
-					PROPERTY_R( bool, bilinearEnabled, isBilinearEnabled ) ///< Shadowmap bilinear filtering. Better quality
-					PROPERTY_R( int, resolution, getResolution ) ///< Shadowmap resolution. The higher the better
+					PROPERTY_R(bool, enabled, isEnabled) ///< If false then disable
+					PROPERTY_R(bool, pcfEnabled, isPcfEnabled) ///< Enable Percentage Closer Filtering
+					PROPERTY_R(bool, bilinearEnabled, isBilinearEnabled) ///< Shadowmap bilinear filtering. Better quality
+					PROPERTY_R(int, resolution, getResolution) ///< Shadowmap resolution. The higher the better
 
 					public:
-						Sm( Renderer& r_ ): RenderingStage( r_ ) {}
+						Sm(Renderer& r_): RenderingStage(r_) {}
 
 					private:
 						Fbo fbo; ///< Illumination stage shadowmapping FBO
@@ -116,7 +117,7 @@ class Renderer
 						 * Render the scene only with depth and store the result in the shadowMap
 						 * @param cam The light camera
 						 */
-						void run( const Camera& cam );
+						void run(const Camera& cam);
 				}; // end Sm
 
 				/**
@@ -138,7 +139,7 @@ class Renderer
 						};
 
 					public:
-						Smo( Renderer& r_ ): RenderingStage( r_ ) {}
+						Smo(Renderer& r_): RenderingStage(r_) {}
 
 					private:
 						static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
@@ -146,8 +147,8 @@ class Renderer
 						static SmoShaderProg sProg;
 
 						void init();
-						void run( const PointLight& light );
-						void run( const SpotLight& light );
+						void run(const PointLight& light);
+						void run(const SpotLight& light);
 				}; // end Smo
 
 			private:
@@ -188,7 +189,7 @@ class Renderer
 				Sm sm;
 				Smo smo;
 
-				Is( Renderer& r_ ): RenderingStage( r_ ), sm( r_ ), smo( r_ ) {}
+				Is(Renderer& r_): RenderingStage(r_), sm(r_), smo(r_) {}
 
 			private:
 				Fbo fbo; ///< This FBO writes to the Is::fai
@@ -202,9 +203,9 @@ class Renderer
 
 				void calcViewVector(); ///< Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 				void calcPlanes(); ///< Calc the planes that we will use inside the shader to calculate the frag pos in view space
-				void ambientPass( const Vec3& color );
-				void pointLightPass( const PointLight& light );
-				void spotLightPass( const SpotLight& light );
+				void ambientPass(const Vec3& color);
+				void pointLightPass(const PointLight& light);
+				void spotLightPass(const SpotLight& light);
 				void initFbo();
 				void init();
 				void run();
@@ -228,8 +229,8 @@ class Renderer
 					friend class Pps;
 					friend class Renderer;
 
-					PROPERTY_R( bool, enabled, isEnabled )
-					PROPERTY_R( float, renderingQuality, getRenderingQuality )
+					PROPERTY_R(bool, enabled, isEnabled)
+					PROPERTY_R(float, renderingQuality, getRenderingQuality)
 
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
@@ -243,7 +244,7 @@ class Renderer
 						};
 						HdrShaderProg pass0SProg, pass1SProg, pass2SProg;
 
-						void initFbos( Fbo& fbo, Texture& fai, int internalFormat );
+						void initFbos(Fbo& fbo, Texture& fai, int internalFormat);
 						void init();
 						void run();
 
@@ -252,7 +253,7 @@ class Renderer
 						Texture pass1Fai; ///< pass0Fai with the horizontal blur FAI
 						Texture fai; ///< The final FAI
 
-						Hdr( Renderer& r_ ): RenderingStage(r_) {}
+						Hdr(Renderer& r_): RenderingStage(r_) {}
 				}; // end Hrd
 
 				/**
@@ -268,9 +269,9 @@ class Renderer
 					friend class Pps;
 					friend class Renderer;
 
-					PROPERTY_R( bool, enabled, isEnabled )
-					PROPERTY_R( float, renderingQuality, getRenderingQuality )
-					PROPERTY_R( float, bluringQuality, getBluringQuality )
+					PROPERTY_R(bool, enabled, isEnabled)
+					PROPERTY_R(float, renderingQuality, getRenderingQuality)
+					PROPERTY_R(float, bluringQuality, getBluringQuality)
 
 					private:
 						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
@@ -300,26 +301,26 @@ class Renderer
 						};
 						BlurSProg blurSProg, blurSProg2;
 
-						void initBlurFbo( Fbo& fbo, Texture& fai );
+						void initBlurFbo(Fbo& fbo, Texture& fai);
 						void init();
 						void run();
 
 					public:
 						Texture pass0Fai, pass1Fai, fai /** The final FAI */;
 
-						Ssao( Renderer& r_ ): RenderingStage(r_) {}
+						Ssao(Renderer& r_): RenderingStage(r_) {}
 				}; // end Ssao
 
 
-			PROPERTY_R( bool, enabled, isEnabled )
-			PROPERTY_R( float, renderingQuality, getRenderingQuality )
+			PROPERTY_R(bool, enabled, isEnabled)
+			PROPERTY_R(float, renderingQuality, getRenderingQuality)
 
 			public:
 				Texture fai;
 				Hdr hdr;
 				Ssao ssao;
 
-				Pps( Renderer& r_ ): RenderingStage(r_), hdr(r_), ssao(r_) {}
+				Pps(Renderer& r_): RenderingStage(r_), hdr(r_), ssao(r_) {}
 
 			private:
 				class PpsShaderProg: public ShaderProg
@@ -349,20 +350,20 @@ class Renderer
 		{
 			friend class Renderer;
 
-			PROPERTY_R( bool, enabled, isEnabled )
-			PROPERTY_RW( bool, showAxisEnabled, setShowAxis, isShowAxisEnabled )
-			PROPERTY_RW( bool, showLightsEnabled, setShowLights, isShowLightsEnabled )
-			PROPERTY_RW( bool, showSkeletonsEnabled, setShowSkeletons, isShowSkeletonsEnabled )
-			PROPERTY_RW( bool, showCamerasEnabled, setShowCameras, isShowCamerasEnabled )
+			PROPERTY_R(bool, enabled, isEnabled)
+			PROPERTY_RW(bool, showAxisEnabled, setShowAxis, isShowAxisEnabled)
+			PROPERTY_RW(bool, showLightsEnabled, setShowLights, isShowLightsEnabled)
+			PROPERTY_RW(bool, showSkeletonsEnabled, setShowSkeletons, isShowSkeletonsEnabled)
+			PROPERTY_RW(bool, showCamerasEnabled, setShowCameras, isShowCamerasEnabled)
 
 			public:
-				Dbg( Renderer& r_ );
+				Dbg(Renderer& r_);
 				void renderGrid();
-				static void renderSphere( int complexity, float radius = 1.0 );
-				static void renderCube( float size = 1.0 );
+				static void renderSphere(int complexity, float radius = 1.0);
+				static void renderCube(float size = 1.0);
 
-				static void setColor( const Vec4& color );
-				static void setModelMat( const Mat4& modelMat );
+				static void setColor(const Vec4& color);
+				static void setModelMat(const Mat4& modelMat);
 
 			private:
 				Fbo fbo;
@@ -376,10 +377,10 @@ class Renderer
 	//====================================================================================================================
 	// Properties                                                                                                        =
 	//====================================================================================================================
-	PROPERTY_R( uint, width, getWidth ) ///< Width of the rendering. Dont confuse with the window width
-	PROPERTY_R( uint, height, getHeight ) ///< Height of the rendering. Dont confuse with the window width
-	PROPERTY_R( uint, framesNum, getFramesNum ) ///< Frame number
-	PROPERTY_R( float, aspectRatio, getAspectRatio ) ///< Just a precalculated value
+	PROPERTY_R(uint, width, getWidth) ///< Width of the rendering. Dont confuse with the window width
+	PROPERTY_R(uint, height, getHeight) ///< Height of the rendering. Dont confuse with the window width
+	PROPERTY_R(uint, framesNum, getFramesNum) ///< Frame number
+	PROPERTY_R(float, aspectRatio, getAspectRatio) ///< Just a precalculated value
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -397,13 +398,13 @@ class Renderer
 		 * Init the renderer given an initialization class
 		 * @param initializer The initializer class
 		 */
-		void init( const RendererInitializer& initializer );
+		void init(const RendererInitializer& initializer);
 
 		/**
 		 * This function does all the rendering stages and produces a final FAI
 		 * @param cam The camera from where the rendering will be done
 		 */
-		void render( Camera& cam );
+		void render(Camera& cam);
 
 		/**
 		 * My version of gluUnproject
@@ -413,8 +414,8 @@ class Renderer
 		 * @param view The view vector
 		 * @return The unprojected coords coords
 		 */
-		static Vec3 unproject( const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
-		                       const int view[4] );
+		static Vec3 unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
+		                       const int view[4]);
 
 		/**
 		 * It returns an orthographic projection matrix
@@ -426,7 +427,7 @@ class Renderer
 		 * @param far farther distance of depth clipping plane
 		 * @return A 4x4 projection matrix
 		 */
-		static Mat4 ortho( float left, float right, float bottom, float top, float near, float far );
+		static Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
 
 		/**
 		 * Get last OpenGL error string
@@ -456,22 +457,22 @@ class Renderer
 		static float quadVertCoords [][2];
 		static int maxColorAtachments; ///< Max color attachments a FBO can accept
 
-		static void drawQuad( int vertCoordsUniLoc );
-		void setupMaterial( const Material& mtl, const SceneNode& sceneNode, const Camera& cam );
+		static void drawQuad(int vertCoordsUniLoc);
+		void setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam);
 
 		// to be removed
 	public:
-		static void color3( const Vec3& v ) { glColor3fv( &((Vec3&)v)[0] ); } ///< OpenGL wrapper
-		static void color4( const Vec4& v ) { glColor4fv( &((Vec4&)v)[0] ); } ///< OpenGL wrapper
-		static void setProjectionMatrix( const Camera& cam );
-		static void setViewMatrix( const Camera& cam );
+		static void color3(const Vec3& v) { glColor3fv(&((Vec3&)v)[0]); } ///< OpenGL wrapper
+		static void color4(const Vec4& v) { glColor4fv(&((Vec4&)v)[0]); } ///< OpenGL wrapper
+		static void setProjectionMatrix(const Camera& cam);
+		static void setViewMatrix(const Camera& cam);
 		static void noShaders() { ShaderProg::unbind(); } ///< unbind shaders @todo remove this. From now on there will be only shaders
-		static void setProjectionViewMatrices( const Camera& cam ) { setProjectionMatrix(cam); setViewMatrix(cam); }
-		static void setViewport( uint x, uint y, uint w, uint h ) { glViewport(x,y,w,h); }
-		static void multMatrix( const Mat4& m4 ) { glMultMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
-		static void multMatrix( const Transform& trf ) { glMultMatrixf( &(Mat4(trf).getTransposed())(0,0) ); } ///< OpenGL wrapper
-		static void loadMatrix( const Mat4& m4 ) { glLoadMatrixf( &(m4.getTransposed())(0,0) ); } ///< OpenGL wrapper
-		static void loadMatrix( const Transform& trf ) { glLoadMatrixf( &(Mat4(trf).getTransposed())(0,0) ); } ///< OpenGL wrapper
+		static void setProjectionViewMatrices(const Camera& cam) { setProjectionMatrix(cam); setViewMatrix(cam); }
+		static void setViewport(uint x, uint y, uint w, uint h) { glViewport(x,y,w,h); }
+		static void multMatrix(const Mat4& m4) { glMultMatrixf(&(m4.getTransposed())(0, 0)); } ///< OpenGL wrapper
+		static void multMatrix(const Transform& trf) { glMultMatrixf(&(Mat4(trf).getTransposed())(0, 0)); } ///< OpenGL wrapper
+		static void loadMatrix(const Mat4& m4) { glLoadMatrixf(&(m4.getTransposed())(0, 0)); } ///< OpenGL wrapper
+		static void loadMatrix(const Transform& trf) { glLoadMatrixf(&(Mat4(trf).getTransposed())(0, 0)); } ///< OpenGL wrapper
 };
 
 #endif

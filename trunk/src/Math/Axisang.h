@@ -17,10 +17,10 @@ class Axisang
 		Vec3 axis;
 		// constructors & distructors
 		explicit Axisang();
-		         Axisang( const Axisang& b );
-		explicit Axisang( float rad, const Vec3& axis_ );
-		explicit Axisang( const Quat& q );
-		explicit Axisang( const Mat3& m3 );
+		         Axisang(const Axisang& b);
+		explicit Axisang(float rad, const Vec3& axis_);
+		explicit Axisang(const Quat& q);
+		explicit Axisang(const Mat3& m3);
 };
 
 

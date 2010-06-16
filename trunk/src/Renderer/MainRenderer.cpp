@@ -9,13 +9,13 @@
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void MainRenderer::init( const RendererInitializer& initializer_ )
+void MainRenderer::init(const RendererInitializer& initializer_)
 {
-	INFO( "Main renderer initializing..." );
+	INFO("Main renderer initializing...");
 
 	initGl();
 
-	sProg.customLoad( "shaders/final.glsl" );
+	sProg.customLoad("shaders/final.glsl");
 
 	//
 	// init the offscreen Renderer
@@ -24,9 +24,9 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 	renderingQuality = initializer.mainRendererQuality;
 	initializer.width = app->getWindowWidth() * renderingQuality;
 	initializer.height = app->getWindowHeight() * renderingQuality;
-	Renderer::init( initializer );
+	Renderer::init(initializer);
 
-	INFO( "Main renderer initialization ends" );
+	INFO("Main renderer initialization ends");
 }
 
 
@@ -36,90 +36,90 @@ void MainRenderer::init( const RendererInitializer& initializer_ )
 void MainRenderer::initGl()
 {
 	GLenum err = glewInit();
-	if( err != GLEW_OK )
-		FATAL( "GLEW initialization failed" );
+	if(err != GLEW_OK)
+		FATAL("GLEW initialization failed");
 
 	// print GL info
-	INFO( "OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION) );
+	INFO("OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	if( !glewIsSupported("GL_VERSION_3_1") )
-		WARNING( "OpenGL ver 3.1 not supported. The application may crash (and burn)" );
+	if(!glewIsSupported("GL_VERSION_3_1"))
+		WARNING("OpenGL ver 3.1 not supported. The application may crash (and burn)");
 
-	if( !glewIsSupported("GL_EXT_framebuffer_object") )
-		WARNING( "Framebuffer objects not supported. The application may crash (and burn)" );
+	if(!glewIsSupported("GL_EXT_framebuffer_object"))
+		WARNING("Framebuffer objects not supported. The application may crash (and burn)");
 
-	if( !glewIsSupported("GL_EXT_packed_depth_stencil") )
-		WARNING( "GL_EXT_packed_depth_stencil not supported. The application may crash (and burn)" );
+	if(!glewIsSupported("GL_EXT_packed_depth_stencil"))
+		WARNING("GL_EXT_packed_depth_stencil not supported. The application may crash (and burn)");
 
-	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
-		WARNING( "Vertex buffer objects not supported. The application may crash (and burn)" );
+	if(!glewIsSupported("GL_ARB_vertex_buffer_object"))
+		WARNING("Vertex buffer objects not supported. The application may crash (and burn)");
 
-	if( !glewIsSupported("GL_ARB_texture_non_power_of_two") )
-		WARNING( "Textures of non power of two not supported. The application may crash (and burn)" );
+	if(!glewIsSupported("GL_ARB_texture_non_power_of_two"))
+		WARNING("Textures of non power of two not supported. The application may crash (and burn)");
 
-	if( !glewIsSupported("GL_ARB_vertex_buffer_object") )
-		WARNING( "Vertex Buffer Objects not supported. The application may crash (and burn)" );
+	if(!glewIsSupported("GL_ARB_vertex_buffer_object"))
+		WARNING("Vertex Buffer Objects not supported. The application may crash (and burn)");
 
 
 	// get max texture units
-	glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum );
+	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum);
 
-	glClearColor( 0.1, 0.1, 0.1, 1.0 );
-	glClearDepth( 1.0 );
-	glClearStencil( 0 );
-	glDepthFunc( GL_LEQUAL );
+	glClearColor(0.1, 0.1, 0.1, 1.0);
+	glClearDepth(1.0);
+	glClearStencil(0);
+	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
-	glCullFace( GL_BACK );
-	glEnable( GL_CULL_FACE );
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
 	// defaults
-	glDisable( GL_LIGHTING );
-	glDisable( GL_TEXTURE_2D );
-	glDisable( GL_BLEND );
-	glDisable( GL_STENCIL_TEST );
-	glPolygonMode( GL_FRONT, GL_FILL );
-	glDepthMask( true );
-	glDepthFunc( GL_LESS );
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glDisable(GL_STENCIL_TEST);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glDepthMask(true);
+	glDepthFunc(GL_LESS);
 
-	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments );
+	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments);
 }
 
 
 //======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
-void MainRenderer::render( Camera& cam_ )
+void MainRenderer::render(Camera& cam_)
 {
-	Renderer::render( cam_ );
+	Renderer::render(cam_);
 
 	//
 	// Render the PPS FAI to the framebuffer
 	//
 	Fbo::unbind();
-	setViewport( 0, 0, app->getWindowWidth(), app->getWindowHeight() );
-	glDisable( GL_DEPTH_TEST );
-	glDisable( GL_BLEND );
+	setViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 	sProg.bind();
-	sProg.findUniVar("rasterImage")->setTexture( pps.fai, 0 );
-	drawQuad( 0 );
+	sProg.findUniVar("rasterImage")->setTexture(pps.fai, 0);
+	drawQuad(0);
 }
 
 
 //======================================================================================================================
 // takeScreenshotTga                                                                                                   =
 //======================================================================================================================
-bool MainRenderer::takeScreenshotTga( const char* filename )
+bool MainRenderer::takeScreenshotTga(const char* filename)
 {
 	// open file and check
 	fstream fs;
-	fs.open( filename, ios::out|ios::binary );
-	if( !fs.good() )
+	fs.open(filename, ios::out|ios::binary);
+	if(!fs.good())
 	{
-		ERROR( "Cannot create screenshot. File \"" << filename << "\"" );
+		ERROR("Cannot create screenshot. File \"" << filename << "\"");
 		return false;
 	}
 
 	// write headers
-	unsigned char tgaHeaderUncompressed[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
+	unsigned char tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	unsigned char header[6];
 
 	header[1] = getWidth() / 256;
@@ -129,18 +129,18 @@ bool MainRenderer::takeScreenshotTga( const char* filename )
 	header[4] = 24;
 	header[5] = 0;
 
-	fs.write( (char*)tgaHeaderUncompressed, 12 );
-	fs.write( (char*)header, 6 );
+	fs.write((char*)tgaHeaderUncompressed, 12);
+	fs.write((char*)header, 6);
 
 	// write the buffer
-	char* buffer = (char*)calloc( getWidth()*getHeight()*3, sizeof(char) );
+	char* buffer = (char*)calloc(getWidth()*getHeight()*3, sizeof(char));
 
-	glReadPixels( 0, 0, getWidth(), getHeight(), GL_BGR, GL_UNSIGNED_BYTE, buffer );
-	fs.write( buffer, getWidth()*getHeight()*3 );
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_BGR, GL_UNSIGNED_BYTE, buffer);
+	fs.write(buffer, getWidth()*getHeight()*3);
 
 	// end
 	fs.close();
-	free( buffer );
+	free(buffer);
 	return true;
 }
 
@@ -148,14 +148,14 @@ bool MainRenderer::takeScreenshotTga( const char* filename )
 //======================================================================================================================
 // takeScreenshotJpeg                                                                                                  =
 //======================================================================================================================
-bool MainRenderer::takeScreenshotJpeg( const char* filename )
+bool MainRenderer::takeScreenshotJpeg(const char* filename)
 {
 	// open file
-	FILE* outfile = fopen( filename, "wb" );
+	FILE* outfile = fopen(filename, "wb");
 
-	if( !outfile )
+	if(!outfile)
 	{
-		ERROR( "Cannot open file \"" << filename << "\"" );
+		ERROR("Cannot open file \"" << filename << "\"");
 		return false;
 	}
 
@@ -163,36 +163,36 @@ bool MainRenderer::takeScreenshotJpeg( const char* filename )
 	jpeg_compress_struct cinfo;
 	jpeg_error_mgr       jerr;
 
-	cinfo.err = jpeg_std_error( &jerr );
-	jpeg_create_compress( &cinfo );
-	jpeg_stdio_dest( &cinfo, outfile );
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_compress(&cinfo);
+	jpeg_stdio_dest(&cinfo, outfile);
 
 	cinfo.image_width      = getWidth();
 	cinfo.image_height     = getHeight();
 	cinfo.input_components = 3;
 	cinfo.in_color_space   = JCS_RGB;
-	jpeg_set_defaults( &cinfo);
-	jpeg_set_quality ( &cinfo, screenshotJpegQuality, true );
-	jpeg_start_compress( &cinfo, true );
+	jpeg_set_defaults(&cinfo);
+	jpeg_set_quality (&cinfo, screenshotJpegQuality, true);
+	jpeg_start_compress(&cinfo, true);
 
 	// read from OGL
-	char* buffer = (char*)malloc( getWidth()*getHeight()*3*sizeof(char) );
-	glReadPixels( 0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer );
+	char* buffer = (char*)malloc(getWidth()*getHeight()*3*sizeof(char));
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
 
 	// write buffer to file
 	JSAMPROW row_pointer;
 
-	while( cinfo.next_scanline < cinfo.image_height )
+	while(cinfo.next_scanline < cinfo.image_height)
 	{
-		row_pointer = (JSAMPROW) &buffer[ (getHeight()-1-cinfo.next_scanline)*3*getWidth() ];
-		jpeg_write_scanlines( &cinfo, &row_pointer, 1 );
+		row_pointer = (JSAMPROW) &buffer[(getHeight()-1-cinfo.next_scanline)*3*getWidth()];
+		jpeg_write_scanlines(&cinfo, &row_pointer, 1);
 	}
 
 	jpeg_finish_compress(&cinfo);
 
 	// done
-	free( buffer );
-	fclose( outfile );
+	free(buffer);
+	fclose(outfile);
 	return true;
 }
 
@@ -200,29 +200,29 @@ bool MainRenderer::takeScreenshotJpeg( const char* filename )
 //======================================================================================================================
 // takeScreenshot                                                                                                      =
 //======================================================================================================================
-void MainRenderer::takeScreenshot( const char* filename )
+void MainRenderer::takeScreenshot(const char* filename)
 {
-	string ext = Util::getFileExtension( filename );
+	string ext = Util::getFileExtension(filename);
 	bool ret;
 
 	// exec from this extension
-	if( ext == "tga" )
+	if(ext == "tga")
 	{
-		ret = takeScreenshotTga( filename );
+		ret = takeScreenshotTga(filename);
 	}
-	else if( ext == "jpg" || ext == "jpeg" )
+	else if(ext == "jpg" || ext == "jpeg")
 	{
-		ret = takeScreenshotJpeg( filename );
+		ret = takeScreenshotJpeg(filename);
 	}
 	else
 	{
-		ERROR( "File \"" << filename << "\": Unsupported extension. Watch for capital" );
+		ERROR("File \"" << filename << "\": Unsupported extension. Watch for capital");
 		return;
 	}
 
-	if( !ret )
-		ERROR( "In taking screenshot" );
+	if(!ret)
+		ERROR("In taking screenshot");
 	else
-		INFO( "Screenshot \"" << filename << "\" saved" );
+		INFO("Screenshot \"" << filename << "\" saved");
 }
 

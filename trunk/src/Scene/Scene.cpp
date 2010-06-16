@@ -13,8 +13,8 @@
 //======================================================================================================================
 Scene::Scene()
 {
-	ambientCol = Vec3( 0.1, 0.05, 0.05 )*1;
-	sunPos = Vec3( 0.0, 1.0, -1.0 ) * 50.0;
+	ambientCol = Vec3(0.1, 0.05, 0.05)*1;
+	sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
 
 	phyWorld = new PhyWorld;
 }
@@ -23,23 +23,23 @@ Scene::Scene()
 //======================================================================================================================
 // registerNode                                                                                                        =
 //======================================================================================================================
-void Scene::registerNode( SceneNode* node )
+void Scene::registerNode(SceneNode* node)
 {
-	putBackNode( nodes, node );
+	putBackNode(nodes, node);
 	
-	switch( node->type )
+	switch(node->type)
 	{
 		case SceneNode::NT_LIGHT:
-			putBackNode( lights, static_cast<Light*>(node) );
+			putBackNode(lights, static_cast<Light*>(node));
 			break;
 		case SceneNode::NT_CAMERA:
-			putBackNode( cameras, static_cast<Camera*>(node) );
+			putBackNode(cameras, static_cast<Camera*>(node));
 			break;
 		case SceneNode::NT_MESH:
-			putBackNode( meshNodes, static_cast<MeshNode*>(node) );
+			putBackNode(meshNodes, static_cast<MeshNode*>(node));
 			break;
 		case SceneNode::NT_SKELETON:
-			putBackNode( skelNodes, static_cast<SkelNode*>(node) );
+			putBackNode(skelNodes, static_cast<SkelNode*>(node));
 			break;
 		case SceneNode::NT_SKEL_MODEL:
 			// ToDo
@@ -51,23 +51,23 @@ void Scene::registerNode( SceneNode* node )
 //======================================================================================================================
 // unregisterNode                                                                                                      =
 //======================================================================================================================
-void Scene::unregisterNode( SceneNode* node )
+void Scene::unregisterNode(SceneNode* node)
 {
-	eraseNode( nodes, node );
+	eraseNode(nodes, node);
 	
-	switch( node->type )
+	switch(node->type)
 	{
 		case SceneNode::NT_LIGHT:
-			eraseNode( lights, static_cast<Light*>(node) );
+			eraseNode(lights, static_cast<Light*>(node));
 			break;
 		case SceneNode::NT_CAMERA:
-			eraseNode( cameras, static_cast<Camera*>(node) );
+			eraseNode(cameras, static_cast<Camera*>(node));
 			break;
 		case SceneNode::NT_MESH:
-			eraseNode( meshNodes, static_cast<MeshNode*>(node) );
+			eraseNode(meshNodes, static_cast<MeshNode*>(node));
 			break;
 		case SceneNode::NT_SKELETON:
-			eraseNode( skelNodes, static_cast<SkelNode*>(node) );
+			eraseNode(skelNodes, static_cast<SkelNode*>(node));
 			break;
 		case SceneNode::NT_SKEL_MODEL:
 			// ToDo
@@ -79,17 +79,17 @@ void Scene::unregisterNode( SceneNode* node )
 //======================================================================================================================
 // Register and Unregister controllers                                                                                 =
 //======================================================================================================================
-void Scene::registerController( Controller* controller )
+void Scene::registerController(Controller* controller)
 {
-	DEBUG_ERR( std::find( controllers.begin(), controllers.end(), controller ) != controllers.end() );
-	controllers.push_back( controller );
+	DEBUG_ERR(std::find(controllers.begin(), controllers.end(), controller) != controllers.end());
+	controllers.push_back(controller);
 }
 
-void Scene::unregisterController( Controller* controller )
+void Scene::unregisterController(Controller* controller)
 {
-	Vec<Controller*>::iterator it = std::find( controllers.begin(), controllers.end(), controller );
-	DEBUG_ERR( it == controllers.end() );
-	controllers.erase( it );
+	Vec<Controller*>::iterator it = std::find(controllers.begin(), controllers.end(), controller);
+	DEBUG_ERR(it == controllers.end());
+	controllers.erase(it);
 }
 
 
@@ -98,30 +98,30 @@ void Scene::unregisterController( Controller* controller )
 //======================================================================================================================
 void Scene::updateAllWorldStuff()
 {
-	DEBUG_ERR( nodes.size() > 1024 );
+	DEBUG_ERR(nodes.size() > 1024);
 	SceneNode* queue [1024];
 	uint head = 0, tail = 0;
 	uint num = 0;
 
 
 	// put the roots
-	for( uint i=0; i<nodes.size(); i++ )
-		if( nodes[i]->parent == NULL )
+	for(uint i=0; i<nodes.size(); i++)
+		if(nodes[i]->parent == NULL)
 			queue[tail++] = nodes[i]; // queue push
 
 	// loop
-	while( head != tail ) // while queue not empty
+	while(head != tail) // while queue not empty
 	{
 		SceneNode* obj = queue[head++]; // queue pop
 
 		obj->updateWorldStuff();
 		++num;
 
-		for( uint i=0; i<obj->childs.size(); i++ )
+		for(uint i=0; i<obj->childs.size(); i++)
 			queue[tail++] = obj->childs[i];
 	}
 
-	DEBUG_ERR( num != nodes.size() );
+	DEBUG_ERR(num != nodes.size());
 }
 
 
@@ -130,8 +130,8 @@ void Scene::updateAllWorldStuff()
 //======================================================================================================================
 void Scene::updateAllControllers()
 {
-	for( Vec<Controller*>::iterator it=controllers.begin(); it!=controllers.end(); it++ )
+	for(Vec<Controller*>::iterator it=controllers.begin(); it!=controllers.end(); it++)
 	{
-		(*it)->update( 0.0 );
+		(*it)->update(0.0);
 	}
 }

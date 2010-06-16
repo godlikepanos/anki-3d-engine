@@ -29,8 +29,8 @@ class Skybox
 	public:
 		Skybox() { rotation_ang=0.0; }
 
-		bool load( const char* filenames[6] );
-		void Render( const Mat3& rotation );
+		bool load(const char* filenames[6]);
+		void Render(const Mat3& rotation);
 };
 
 

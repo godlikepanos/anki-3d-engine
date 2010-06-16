@@ -13,12 +13,12 @@ namespace Parser {
 //======================================================================================================================
 // Parser macros                                                                                                       =
 //======================================================================================================================
-#define PARSE_ERR(x) ERROR( "Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x )
-#define PARSE_WARN(x) WARNING( "Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x )
+#define PARSE_ERR(x) ERROR("Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x)
+#define PARSE_WARN(x) WARNING("Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x)
 
 // common parser errors
-#define PARSE_ERR_EXPECTED(x) PARSE_ERR( "Expected " << x << " and not " << scanner.getCrntToken().getInfoStr() );
-#define PARSE_ERR_UNEXPECTED() PARSE_ERR( "Unexpected token " << scanner.getCrntToken().getInfoStr() );
+#define PARSE_ERR_EXPECTED(x) PARSE_ERR("Expected " << x << " and not " << scanner.getCrntToken().getInfoStr());
+#define PARSE_ERR_UNEXPECTED() PARSE_ERR("Unexpected token " << scanner.getCrntToken().getInfoStr());
 
 
 //======================================================================================================================
@@ -37,46 +37,46 @@ namespace Parser {
  * @param arr The array that the func returns the numbers
  * @return True if the parsing was successful
 */
-template <typename Type> bool parseArrOfNumbers( Scanner& scanner, bool bracket, bool signs, uint size, Type* arr )
+template <typename Type> bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
 {
 	const Scanner::Token* token;
 
 	// first of all the left bracket
-	if( bracket )
+	if(bracket)
 	{
 		token = &scanner.getNextToken();
-		if( token->getCode() != Scanner::TC_LBRACKET )
+		if(token->getCode() != Scanner::TC_LBRACKET)
 		{
-			PARSE_ERR_EXPECTED( "{" );
+			PARSE_ERR_EXPECTED("{");
 			return false;
 		}
 	}
 
 	// loop to parse numbers
-	for( uint i=0; i<size; i++ )
+	for(uint i=0; i<size; i++)
 	{
 		token = &scanner.getNextToken();
 
 
 		// check if there is a sign in front of a number
 		bool sign = 0; // sign of the number. 0 for positive and 1 for negative
-		if( signs )
+		if(signs)
 		{
-			if( token->getCode() == Scanner::TC_MINUS )
+			if(token->getCode() == Scanner::TC_MINUS)
 			{
 				sign = 1;
 				token = &scanner.getNextToken();
 			}
-			else if( token->getCode() == Scanner::TC_PLUS )
+			else if(token->getCode() == Scanner::TC_PLUS)
 			{
 				sign = 0;
 				token = &scanner.getNextToken();
 			}
 
 			// check if not number
-			if( token->getCode() != Scanner::TC_NUMBER )
+			if(token->getCode() != Scanner::TC_NUMBER)
 			{
-				PARSE_ERR_EXPECTED( "number" );
+				PARSE_ERR_EXPECTED("number");
 				return false;
 			}
 		} // end if signs
@@ -84,21 +84,21 @@ template <typename Type> bool parseArrOfNumbers( Scanner& scanner, bool bracket,
 		// put the number in the arr and do typecasting from int to float
 		Type nmbr;
 
-		if( token->getDataType() == Scanner::DT_FLOAT )
-			nmbr = static_cast<Type>( token->getValue().getFloat() );
+		if(token->getDataType() == Scanner::DT_FLOAT)
+			nmbr = static_cast<Type>(token->getValue().getFloat());
 		else
-			nmbr = static_cast<Type>( token->getValue().getInt() );
+			nmbr = static_cast<Type>(token->getValue().getInt());
 
 		arr[i] = (sign==0) ? nmbr : -nmbr;
 	}
 
 	// the last thing is the right bracket
-	if( bracket )
+	if(bracket)
 	{
 		token = &scanner.getNextToken();
-		if( token->getCode() != Scanner::TC_RBRACKET )
+		if(token->getCode() != Scanner::TC_RBRACKET)
 		{
-			PARSE_ERR_EXPECTED( "}" );
+			PARSE_ERR_EXPECTED("}");
 			return false;
 		}
 	}

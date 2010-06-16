@@ -12,12 +12,12 @@ inline Transform::Transform()
 {}
 
 // constructor [Transform]
-inline Transform::Transform( const Transform& b ):
+inline Transform::Transform(const Transform& b):
 	rotation(b.rotation), origin(b.origin)
 {}
 
 // constructor [Mat4]
-inline Transform::Transform( const Mat4& m4 )
+inline Transform::Transform(const Mat4& m4)
 {
 	rotation = m4.getRotationPart();
 	origin = m4.getTranslationPart();
@@ -25,7 +25,7 @@ inline Transform::Transform( const Mat4& m4 )
 }
 
 // constructor [Vec3, Quat, float]
-inline Transform::Transform( const Vec3& origin, const Mat3& rotation_, float scale_ ):
+inline Transform::Transform(const Vec3& origin, const Mat3& rotation_, float scale_):
 	rotation(rotation_), origin(origin), scale(scale_)
 {}
 
@@ -38,15 +38,15 @@ inline void Transform::setIdentity()
 // getIdentity
 inline const Transform& Transform::getIdentity()
 {
-	static Transform ident( Vec3(0.0), Mat3::getIdentity(), 1.0 );
+	static Transform ident(Vec3(0.0), Mat3::getIdentity(), 1.0);
 	return ident;
 }
 
 // combineTransformations
-inline Transform Transform::combineTransformations( const Transform& a, const Transform& b )
+inline Transform Transform::combineTransformations(const Transform& a, const Transform& b)
 {
 	Transform out;
-	M::combineTransformations( a.origin, a.rotation, a.scale, b.origin, b.rotation, b.scale, out.origin, out.rotation, out.scale );
+	M::combineTransformations(a.origin, a.rotation, a.scale, b.origin, b.rotation, b.scale, out.origin, out.rotation, out.scale);
 	return out;
 }
 
