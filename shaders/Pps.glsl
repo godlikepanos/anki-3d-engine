@@ -166,6 +166,13 @@ void main (void)
 		color += hdr;
 	#endif
 
+	/*vec4 sample[9];
+	for(int i = 0; i < 9; i++)
+	{
+		sample[i] = texture2D(sampler0, gl_TexCoord[0].st + tc_offset[i]);
+	}
+	color = (sample[4] * 9.0) - (sample[0] + sample[1] + sample[2] + sample[3] + sample[5] + sample[6] + sample[7] + sample[8]);*/
+
 	color = BlendHardLight( vec3(0.6, 0.62, 0.4), color );
 
 	gl_FragData[0].rgb = color;

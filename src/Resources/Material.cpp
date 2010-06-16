@@ -35,6 +35,7 @@ Material::StdVarInfo Material::stdUniVarInfos[SUV_NUM] =
 	{ "viewMat", GL_FLOAT_MAT4 },
 	{ "projectionMat", GL_FLOAT_MAT4 },
 	{ "modelViewMat", GL_FLOAT_MAT4 },
+	{ "ViewProjectionMat", GL_FLOAT_MAT4 },
 	{ "normalMat", GL_FLOAT_MAT3 },
 	{ "modelViewProjectionMat", GL_FLOAT_MAT4 },
 	{ "msNormalFai", GL_SAMPLER_2D },
@@ -271,6 +272,8 @@ bool Material::load(const char* filename)
 						if(token->getCode() == Scanner::TC_STRING)
 						{
 							var.value.texture = Rsrc::textures.load(token->getValue().getString());
+							if(var.value.texture == NULL)
+								return false;
 						}
 						else
 						{

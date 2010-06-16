@@ -1,5 +1,5 @@
 #include "Renderer.h"
-#include "Camera.h" /// @todo remove this
+#include "Camera.h"
 #include "RendererInitializer.h"
 #include "Material.h"
 #include "App.h"
@@ -68,6 +68,8 @@ void Renderer::init(const RendererInitializer& initializer)
 void Renderer::render(Camera& cam_)
 {
 	cam = &cam_;
+
+	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
 	ms.run();
 	is.run();
@@ -153,6 +155,9 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 
 	if(mtl.stdUniVars[Material::SUV_MODELVIEW_MAT])
 		mtl.stdUniVars[Material::SUV_MODELVIEW_MAT]->setMat4(&modelViewMat);
+
+	if(mtl.stdUniVars[Material::SUV_VIEWPROJECTION_MAT])
+		mtl.stdUniVars[Material::SUV_VIEWPROJECTION_MAT]->setMat4(&viewProjectionMat);
 
 	if(mtl.stdUniVars[Material::SUV_NORMAL_MAT])
 	{

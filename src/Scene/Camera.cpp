@@ -93,7 +93,9 @@ void Camera::updateWSpaceFrustumPlanes()
 {
 	for(uint i=0; i<6; i++)
 	{
-		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].Transformed(getWorldTransform().getOrigin(), getWorldTransform().getRotation(), getWorldTransform().getScale());
+		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].Transformed(getWorldTransform().getOrigin(),
+		                                                            getWorldTransform().getRotation(),
+		                                                            getWorldTransform().getScale());
 	}
 }
 
@@ -191,7 +193,8 @@ void Camera::updateViewMatrix()
 	 * The point at which the camera looks:
 	 * Vec3 viewpoint = translationLspace + z_axis;
 	 * as we know the up vector, we can easily use gluLookAt:
-	 * gluLookAt(translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x, y_axis.y, y_axis.z);
+	 * gluLookAt(translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x,
+	 *           y_axis.y, y_axis.z);
 	*/
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
