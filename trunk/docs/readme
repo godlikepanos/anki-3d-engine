@@ -243,4 +243,6 @@ ToDo list
 	- How to make floating particles like smoke. But first try with one body and
 	  manualy setting the gravity
 	- What the btCollisionObject::setActivationState takes as parameter?
+- Enable depth test before skybox rendering to see what happens
+- Re-enable the stencil tex in Ms.cpp
 
