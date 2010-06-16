@@ -3,6 +3,7 @@
 #include "RendererInitializer.h"
 #include "Material.h"
 #include "App.h"
+#include "Scene.h"
 
 
 //======================================================================================================================
