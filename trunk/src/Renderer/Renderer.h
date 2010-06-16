@@ -142,7 +142,7 @@ class Renderer
 						Smo(Renderer& r_): RenderingStage(r_) {}
 
 					private:
-						static float sMOUvSCoords []; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
+						static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
 						static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
 						static SmoShaderProg sProg;
 
@@ -201,8 +201,15 @@ class Renderer
 				Vec3 viewVectors[4];
 				Vec2 planes;
 
-				void calcViewVector(); ///< Calc the view vector that we will use inside the shader to calculate the frag pos in view space
-				void calcPlanes(); ///< Calc the planes that we will use inside the shader to calculate the frag pos in view space
+				/**
+				 * Calc the view vector that we will use inside the shader to calculate the frag pos in view space
+				 */
+				void calcViewVector();
+
+				/**
+				 * Calc the planes that we will use inside the shader to calculate the frag pos in view space
+				 */
+				void calcPlanes();
 				void ambientPass(const Vec3& color);
 				void pointLightPass(const PointLight& light);
 				void spotLightPass(const SpotLight& light);
@@ -456,6 +463,7 @@ class Renderer
 		const Camera* cam; ///< Current camera
 		static float quadVertCoords [][2];
 		static int maxColorAtachments; ///< Max color attachments a FBO can accept
+		Mat4 viewProjectionMat; ///< In case anyone needs it
 
 		static void drawQuad(int vertCoordsUniLoc);
 		void setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam);
