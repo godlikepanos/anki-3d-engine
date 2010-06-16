@@ -11,7 +11,7 @@ class GhostNode: public SceneNode
 {
 	public:
 		GhostNode(): SceneNode(NT_GHOST) { }
-		void init( const char* ) {}
+		void init(const char*) {}
 		void render() {}
 		void deinit() {}
 };

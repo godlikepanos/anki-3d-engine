@@ -13,10 +13,10 @@ class Image
 		static unsigned char tgaHeaderUncompressed[12];
 		static unsigned char tgaHeaderCompressed[12];
 
-		bool loadUncompressedTGA( const char* filename, fstream& fs );
-		bool loadCompressedTGA( const char* filename, fstream& fs );
-		bool loadPNG( const char* filename );
-		bool loadTGA( const char* filename );
+		bool loadUncompressedTGA(const char* filename, fstream& fs);
+		bool loadCompressedTGA(const char* filename, fstream& fs);
+		bool loadPNG(const char* filename);
+		bool loadTGA(const char* filename);
 
 	public:
 		uint  width;
@@ -27,8 +27,8 @@ class Image
 		 Image(): data(NULL) {}
 		~Image() { unload(); }
 
-		bool load( const char* filename );
-		void unload() { if( data ) delete [] data; data=NULL; }
+		bool load(const char* filename);
+		void unload() { if(data) delete [] data; data=NULL; }
 };
 
 #endif

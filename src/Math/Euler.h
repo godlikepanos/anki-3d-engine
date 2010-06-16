@@ -15,8 +15,8 @@ class Euler
 		// data members
 		float x, y, z;
 		// accessors
-		float& operator []( uint i );
-		float  operator []( uint i ) const;
+		float& operator [](uint i);
+		float  operator [](uint i) const;
 		float& bank();
 		float  bank() const;
 		float& heading();
@@ -25,10 +25,10 @@ class Euler
 		float  attitude() const;
 		// constructors & distructors
 		explicit Euler();
-		explicit Euler( float x, float y, float z  );
-		         Euler( const Euler& b );
-		explicit Euler( const Quat& q );
-		explicit Euler( const Mat3& m3 );
+		explicit Euler(float x, float y, float z);
+		         Euler(const Euler& b);
+		explicit Euler(const Quat& q);
+		explicit Euler(const Mat3& m3);
 		// other
 		void print() const;
 };

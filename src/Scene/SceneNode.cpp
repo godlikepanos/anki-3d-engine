@@ -18,8 +18,8 @@ void SceneNode::commonConstructorCode()
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
 
-	DEBUG_ERR( app->getScene() == NULL );
-	app->getScene()->registerNode( this );
+	DEBUG_ERR(app->getScene() == NULL);
+	app->getScene()->registerNode(this);
 }
 
 
@@ -28,8 +28,8 @@ void SceneNode::commonConstructorCode()
 //======================================================================================================================
 SceneNode::~SceneNode()
 {
-	DEBUG_ERR( app->getScene() == NULL );
-	app->getScene()->unregisterNode( this );
+	DEBUG_ERR(app->getScene() == NULL);
+	app->getScene()->unregisterNode(this);
 }
 
 
@@ -38,9 +38,9 @@ SceneNode::~SceneNode()
 //======================================================================================================================
 void SceneNode::updateWorldTransform()
 {
-	if( parent )
+	if(parent)
 	{
-		worldTransform = Transform::combineTransformations( parent->getWorldTransform(), localTransform );
+		worldTransform = Transform::combineTransformations(parent->getWorldTransform(), localTransform);
 	}
 	else // else copy
 	{
@@ -49,35 +49,35 @@ void SceneNode::updateWorldTransform()
 
 
 	// transform the bvolume
-	/*if( bvolumeLspace != NULL )
+	/*if(bvolumeLspace != NULL)
 	{
-		DEBUG_ERR( bvolumeLspace->type!=bvolume_t::BSPHERE && bvolumeLspace->type!=bvolume_t::AABB && bvolumeLspace->type!=bvolume_t::OBB );
+		DEBUG_ERR(bvolumeLspace->type!=bvolume_t::BSPHERE && bvolumeLspace->type!=bvolume_t::AABB && bvolumeLspace->type!=bvolume_t::OBB);
 
-		switch( bvolumeLspace->type )
+		switch(bvolumeLspace->type)
 		{
 			case bvolume_t::BSPHERE:
 			{
-				bsphere_t sphere = static_cast<bsphere_t*>(bvolumeLspace)->Transformed( translationWspace, rotationWspace, scaleWspace );
+				bsphere_t sphere = static_cast<bsphere_t*>(bvolumeLspace)->Transformed(translationWspace, rotationWspace, scaleWspace);
 				*static_cast<bsphere_t*>(bvolumeLspace) = sphere;
 				break;
 			}
 
 			case bvolume_t::AABB:
 			{
-				aabb_t aabb = static_cast<aabb_t*>(bvolumeLspace)->Transformed( translationWspace, rotationWspace, scaleWspace );
+				aabb_t aabb = static_cast<aabb_t*>(bvolumeLspace)->Transformed(translationWspace, rotationWspace, scaleWspace);
 				*static_cast<aabb_t*>(bvolumeLspace) = aabb;
 				break;
 			}
 
 			case bvolume_t::OBB:
 			{
-				obb_t obb = static_cast<obb_t*>(bvolumeLspace)->Transformed( translationWspace, rotationWspace, scaleWspace );
+				obb_t obb = static_cast<obb_t*>(bvolumeLspace)->Transformed(translationWspace, rotationWspace, scaleWspace);
 				*static_cast<obb_t*>(bvolumeLspace) = obb;
 				break;
 			}
 
 			default:
-				FATAL( "What the fuck" );
+				FATAL("What the fuck");
 		}
 	}*/
 }
@@ -87,19 +87,19 @@ void SceneNode::updateWorldTransform()
 // Move(s)                                                                                                             =
 // Move the object according to it's local axis                                                                        =
 //======================================================================================================================
-void SceneNode::moveLocalX( float distance )
+void SceneNode::moveLocalX(float distance)
 {
 	Vec3 x_axis = localTransform.getRotation().getColumn(0);
 	getLocalTransform().getOrigin() += x_axis * distance;
 }
 
-void SceneNode::moveLocalY( float distance )
+void SceneNode::moveLocalY(float distance)
 {
 	Vec3 y_axis = localTransform.getRotation().getColumn(1);
 	getLocalTransform().getOrigin() += y_axis * distance;
 }
 
-void SceneNode::moveLocalZ( float distance )
+void SceneNode::moveLocalZ(float distance)
 {
 	Vec3 z_axis = localTransform.getRotation().getColumn(2);
 	getLocalTransform().getOrigin() += z_axis * distance;
@@ -109,31 +109,31 @@ void SceneNode::moveLocalZ( float distance )
 //======================================================================================================================
 // addChild                                                                                                            =
 //======================================================================================================================
-void SceneNode::addChild( SceneNode* node )
+void SceneNode::addChild(SceneNode* node)
 {
-	if( node->parent != NULL )
+	if(node->parent != NULL)
 	{
-		ERROR( "Node already has parent" );
+		ERROR("Node already has parent");
 		return;
 	}
 
 	node->parent = this;
-	childs.push_back( node );
+	childs.push_back(node);
 }
 
 
 //======================================================================================================================
 // removeChild                                                                                                         =
 //======================================================================================================================
-void SceneNode::removeChild( SceneNode* node )
+void SceneNode::removeChild(SceneNode* node)
 {
-	Vec<SceneNode*>::iterator it = find( childs.begin(), childs.end(), node );
-	if( it == childs.end() )
+	Vec<SceneNode*>::iterator it = find(childs.begin(), childs.end(), node);
+	if(it == childs.end())
 	{
-		ERROR( "Child not found" );
+		ERROR("Child not found");
 		return;
 	}
 
 	node->parent = NULL;
-	childs.erase( it );
+	childs.erase(it);
 }

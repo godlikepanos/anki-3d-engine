@@ -25,9 +25,9 @@ template< typename Type > class Container;
  */
 class Resource
 {
-	PROPERTY_R( string, path, getRsrcPath );
-	PROPERTY_R( string, name, getRsrcName );
-	PROPERTY_R( uint, usersNum, getRsrcUsersNum );
+	PROPERTY_R(string, path, getRsrcPath);
+	PROPERTY_R(string, name, getRsrcName);
+	PROPERTY_R(uint, usersNum, getRsrcUsersNum);
 
 	// friends
 	friend class Rsrc::Container<Texture>;
@@ -44,7 +44,7 @@ class Resource
 		 * @param filename The file to load
 		 * @return True on success
 		 */
-		virtual bool load( const char* filename ) = 0;
+		virtual bool load(const char* filename) = 0;
 		virtual void unload() = 0;
 
 		Resource(): usersNum(0) {}
@@ -77,12 +77,12 @@ template<typename Type> class Container: public Vec<Type*>
 		 * @param name The name of the resource
 		 * @return The iterator of the content end of vector if not found
 		 */
-		Iterator findByName( const char* name )
+		Iterator findByName(const char* name)
 		{
 			Iterator it = BaseClass::begin();
-			while( it != BaseClass::end() )
+			while(it != BaseClass::end())
 			{
-				if( (*it).name == name )
+				if((*it).name == name)
 					return it;
 				++it;
 			}
@@ -97,12 +97,12 @@ template<typename Type> class Container: public Vec<Type*>
 		 * @param path The path of the resource
 		 * @return The iterator of the content end of vector if not found
 		 */
-		Iterator findByNameAndPath( const char* name, const char* path )
+		Iterator findByNameAndPath(const char* name, const char* path)
 		{
 			Iterator it = BaseClass::begin();
-			while( it != BaseClass::end() )
+			while(it != BaseClass::end())
 			{
-				if( (*it)->name == name && (*it)->path == path )
+				if((*it)->name == name && (*it)->path == path)
 					return it;
 				++it;
 			}
@@ -116,12 +116,12 @@ template<typename Type> class Container: public Vec<Type*>
 		 * @param name The name of the resource object
 		 * @return The iterator of the content end of vector if not found
 		 */
-		Iterator findByPtr( Type* ptr )
+		Iterator findByPtr(Type* ptr)
 		{
 			Iterator it = BaseClass::begin();
-			while( it != BaseClass::end() )
+			while(it != BaseClass::end())
 			{
-				if( ptr == (*it) )
+				if(ptr == (*it))
 					return it;
 				++it;
 			}
@@ -135,14 +135,14 @@ template<typename Type> class Container: public Vec<Type*>
 		 * @param fname The filename that initializes the object
 		 * @return A pointer of a new resource or NULL on fail
 		 */
-		Type* load( const char* fname )
+		Type* load(const char* fname)
 		{
-			char* name = Util::cutPath( fname );
-			string path = Util::getPath( fname );
-			Iterator it = findByNameAndPath( name, path.c_str() );
+			char* name = Util::cutPath(fname);
+			string path = Util::getPath(fname);
+			Iterator it = findByNameAndPath(name, path.c_str());
 
 			// if already loaded then inc the users and return the pointer
-			if( it != BaseClass::end() )
+			if(it != BaseClass::end())
 			{
 				++ (*it)->usersNum;
 				return (*it);
@@ -154,13 +154,13 @@ template<typename Type> class Container: public Vec<Type*>
 			new_instance->path = path;
 			new_instance->usersNum = 1;
 
-			if( !new_instance->load( fname ) )
+			if(!new_instance->load(fname))
 			{
-				ERROR( "Cannot load \"" << fname << '\"' );
+				ERROR("Cannot load \"" << fname << '\"');
 				delete new_instance;
 				return NULL;
 			}
-			BaseClass::push_back( new_instance );
+			BaseClass::push_back(new_instance);
 
 			return new_instance;
 		}
@@ -170,26 +170,26 @@ template<typename Type> class Container: public Vec<Type*>
 		 * unload item. If nobody else uses it then delete it completely
 		 * @param x Pointer to the instance we want to unload
 		 */
-		void unload( Type* x )
+		void unload(Type* x)
 		{
-			Iterator it = findByPtr( x );
-			if( it == BaseClass::end() )
+			Iterator it = findByPtr(x);
+			if(it == BaseClass::end())
 			{
-				ERROR( "Cannot find resource with pointer 0x" << x );
+				ERROR("Cannot find resource with pointer 0x" << x);
 				return;
 			}
 
 			Type* del_ = (*it);
-			DEBUG_ERR( del_->usersNum < 1 ); // WTF?
+			DEBUG_ERR(del_->usersNum < 1); // WTF?
 
 			--del_->usersNum;
 
 			// if no other users then call unload and update the container
-			if( del_->usersNum == 0 )
+			if(del_->usersNum == 0)
 			{
 				del_->unload();
 				delete del_;
-				BaseClass::erase( it );
+				BaseClass::erase(it);
 			}
 		}
 }; // end class Container

@@ -11,8 +11,8 @@ class TrfScriptCtrl: public Controller
 	public:
 		SceneNode* node;
 	
-		TrfScriptCtrl( SceneNode* node_ ): Controller( CT_TRF ), node(node_) {}
-		void Update( float ) { /* ToDo */ }
+		TrfScriptCtrl(SceneNode* node_): Controller(CT_TRF), node(node_) {}
+		void Update(float) { /* ToDo */ }
 };
 
 #endif

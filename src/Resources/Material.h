@@ -68,6 +68,7 @@ class Material: public Resource
 			SUV_PPS_FAI,
 			// Other
 			SUV_RENDERER_SIZE,
+			SUV_SCENE_AMBIENT_COLOR,
 			// num
 			SUV_NUM ///< The number of standard uniform variables
 		};
@@ -107,10 +108,10 @@ class Material: public Resource
 		}; // end UserDefinedVar
 
 
-		static StdVarInfo stdAttribVarInfos[ SAV_NUM ];
-		static StdVarInfo stdUniVarInfos[ SUV_NUM ];
-		const ShaderProg::AttribVar* stdAttribVars[ SAV_NUM ];
-		const ShaderProg::UniVar* stdUniVars[ SUV_NUM ];
+		static StdVarInfo stdAttribVarInfos[SAV_NUM];
+		static StdVarInfo stdUniVarInfos[SUV_NUM];
+		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
+		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
 		ShaderProg* shaderProg; ///< The most important aspect of materials
 		Material* dpMtl; ///< The material for depth passes. To be removed when skinning is done using tranform feedback
 		Vec<UserDefinedUniVar> userDefinedVars;
@@ -131,12 +132,12 @@ class Material: public Resource
 		 */
 		bool initStdShaderVars();
 
-		bool hasHWSkinning() const { return stdAttribVars[ SAV_VERT_WEIGHT_BONES_NUM ] != NULL; }
-		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->stdAttribVars[ SAV_TEX_COORDS ] != NULL; }
+		bool hasHWSkinning() const { return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL; }
+		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL; }
 
 	public:
 		Material();
-		bool load( const char* filename );
+		bool load(const char* filename);
 		void unload();
 };
 

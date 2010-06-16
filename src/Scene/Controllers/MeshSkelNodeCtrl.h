@@ -29,17 +29,17 @@ class MeshSkelNodeCtrl: public Controller
 		} vbos;
 
 
-		MeshSkelNodeCtrl( SkelNode* skelNode_, MeshNode* meshNode_ ):
-			Controller( CT_SKEL ),
-			skelNode( skelNode_ ),
-			meshNode( meshNode_ )
+		MeshSkelNodeCtrl(SkelNode* skelNode_, MeshNode* meshNode_):
+			Controller(CT_SKEL),
+			skelNode(skelNode_),
+			meshNode(meshNode_)
 		{}
 
 		/**
 		 * Do nothing! We use HW skinning so its not necessary to update anything in the meshNode. 
 		 * The skelNode's controllers provide us with sufficient data to do the trick.
 		 */
-		void update( float ) {}
+		void update(float) {}
 };
 
 

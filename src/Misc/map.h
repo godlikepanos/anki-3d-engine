@@ -38,17 +38,17 @@ class octree_t
 
 	protected:
 		// funcs for the tree creation
-		bool IsSubdivHeuristicMet( node_t* node ) const;
-		void SubdivideNode( node_t* node );
-		void CreateRoot( const Vec<Mesh*>& meshes );
+		bool IsSubdivHeuristicMet(node_t* node) const;
+		void SubdivideNode(node_t* node);
+		void CreateRoot(const Vec<Mesh*>& meshes);
 
 		// frustum funcs
-		uint CheckNodeAgainstFrustum( node_t* node, const Camera& cam ) const;
+		uint CheckNodeAgainstFrustum(node_t* node, const Camera& cam) const;
 
 	public:
 		node_t* root;
 
-		void CreateTree( const Vec<Mesh*>& meshes );
+		void CreateTree(const Vec<Mesh*>& meshes);
 };
 
 
@@ -63,8 +63,8 @@ class map_t
 		Vec<Mesh*> meshes;
 		octree_t             octree;
 
-		bool load( const char* filename );
-		void CreateOctree() { DEBUG_ERR( meshes.size() < 1 ); octree.CreateTree(meshes); };
+		bool load(const char* filename);
+		void CreateOctree() { DEBUG_ERR(meshes.size() < 1); octree.CreateTree(meshes); };
 };
 
 

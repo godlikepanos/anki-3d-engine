@@ -8,8 +8,8 @@ Ambient intensity of material:  Am
 Defuse intensity:               Id = Dl * Dm * LambertTerm
 Defuse intensity of light:      Dl
 Defuse intensity of material:   Dm
-LambertTerm:                    max( Normal dot Light, 0.0 )
-Specular intensity:             Is = Sm x Sl x pow( max(R dot E, 0.0), f )
+LambertTerm:                    max(Normal dot Light, 0.0)
+Specular intensity:             Is = Sm x Sl x pow(max(R dot E, 0.0), f)
 Specular intensity of light:    Sl
 Specular intensity of material: Sm
 */
@@ -34,8 +34,8 @@ class Light: public SceneNode
 		Type type;
 		LightProps* lightProps; ///< Later we will add a controller
 	
-		Light( Type type_ ): SceneNode(NT_LIGHT), type(type_) {}
-		//void init( const char* );
+		Light(Type type_): SceneNode(NT_LIGHT), type(type_) {}
+		//void init(const char*);
 		void deinit();
 		void render();
 };
@@ -48,7 +48,7 @@ class PointLight: public Light
 		float radius;
 
 		PointLight(): Light(LT_POINT) {}
-		void init( const char* );
+		void init(const char*);
 };
 
 
@@ -59,10 +59,10 @@ class SpotLight: public Light
 		Camera camera;
 		bool castsShadow;
 
-		SpotLight(): Light(LT_SPOT), castsShadow(false) { addChild( &camera ); }
+		SpotLight(): Light(LT_SPOT), castsShadow(false) { addChild(&camera); }
 		float getDistance() const { return camera.getZFar(); }
-		void setDistance( float d ) { camera.setZFar(d); }
-		void init( const char* );
+		void setDistance(float d) { camera.setZFar(d); }
+		void init(const char*);
 };
 
 

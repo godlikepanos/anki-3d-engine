@@ -13,7 +13,7 @@ class Mesh;
 class MeshNode: public SceneNode
 {
 	private:
-		void render( Material* mtl ) const; ///< Common code for render() and renderDepth()
+		void render(Material* mtl) const; ///< Common code for render() and renderDepth()
 
 	public:
 		// resources
@@ -25,8 +25,8 @@ class MeshNode: public SceneNode
 		// funcs
 		MeshNode(): SceneNode(NT_MESH), material(NULL), dpMaterial(NULL), meshSkelCtrl(NULL) {}
 		virtual void render() { render(material); }
-		virtual void renderDepth() { render( material->dpMtl ); }
-		void init( const char* filename );
+		virtual void renderDepth() { render(material->dpMtl); }
+		void init(const char* filename);
 		void deinit();
 };
 

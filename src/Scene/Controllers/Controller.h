@@ -18,12 +18,12 @@ class Controller
 			CT_LIGHT
 		};
 	
-	PROPERTY_R( Type, type, getType ) ///< Once the type is set nothing can change it
+	PROPERTY_R(Type, type, getType) ///< Once the type is set nothing can change it
 
 	public:
-		Controller( Type type_ );
+		Controller(Type type_);
 		virtual ~Controller();
-		virtual void update( float time ) = 0;
+		virtual void update(float time) = 0;
 };
 
 

@@ -3,21 +3,21 @@
 #include "Util.h"
 
 
-unsigned char Image::tgaHeaderUncompressed[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
-unsigned char Image::tgaHeaderCompressed[12]   = {0,0,10,0,0,0,0,0,0,0,0,0};
+unsigned char Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+unsigned char Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
 //======================================================================================================================
 // loadUncompressedTGA                                                                                                 =
 //======================================================================================================================
-bool Image::loadUncompressedTGA( const char* filename, fstream& fs )
+bool Image::loadUncompressedTGA(const char* filename, fstream& fs)
 {
 	// read the info from header
 	unsigned char header6[6];
-	fs.read( (char*)&header6[0], sizeof(header6) );
-	if( fs.gcount() != sizeof(header6) )
+	fs.read((char*)&header6[0], sizeof(header6));
+	if(fs.gcount() != sizeof(header6))
 	{
-		ERROR( "File \"" << filename << "\": Cannot read info header" );
+		ERROR("File \"" << filename << "\": Cannot read info header");
 		return false;
 	}
 
@@ -25,26 +25,26 @@ bool Image::loadUncompressedTGA( const char* filename, fstream& fs )
 	height = header6[3] * 256 + header6[2];
 	bpp	= header6[4];
 
-	if( (width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)) )
+	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		ERROR( "File \"" << filename << "\": Invalid image information" );
+		ERROR("File \"" << filename << "\": Invalid image information");
 		return false;
 	}
 
 	// read the data
 	int bytes_per_pxl	= (bpp / 8);
 	int image_size = bytes_per_pxl * width * height;
-	data = new char [ image_size ];
+	data = new char [image_size];
 
-	fs.read( data, image_size );
-	if( fs.gcount() != image_size )
+	fs.read(data, image_size);
+	if(fs.gcount() != image_size)
 	{
-		ERROR( "File \"" << filename << "\": Cannot read image data" );
+		ERROR("File \"" << filename << "\": Cannot read image data");
 		return false;
 	}
 
 	// swap red with blue
-	for( int i=0; i<int(image_size); i+=bytes_per_pxl)
+	for(int i=0; i<int(image_size); i+=bytes_per_pxl)
 	{
 		uint temp = data[i];
 		data[i] = data[i + 2];
@@ -58,13 +58,13 @@ bool Image::loadUncompressedTGA( const char* filename, fstream& fs )
 //======================================================================================================================
 // loadCompressedTGA                                                                                                   =
 //======================================================================================================================
-bool Image::loadCompressedTGA( const char* filename, fstream& fs )
+bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 {
 	unsigned char header6[6];
-	fs.read( (char*)&header6[0], sizeof(header6) );
-	if( fs.gcount() != sizeof(header6) )
+	fs.read((char*)&header6[0], sizeof(header6));
+	if(fs.gcount() != sizeof(header6))
 	{
-		ERROR( "File \"" << filename << "\": Cannot read info header" );
+		ERROR("File \"" << filename << "\": Cannot read info header");
 		return false;
 	}
 
@@ -72,9 +72,9 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 	height = header6[3] * 256 + header6[2];
 	bpp	= header6[4];
 
-	if( (width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)) )
+	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		ERROR( "File \"" << filename << "\": Invalid texture information" );
+		ERROR("File \"" << filename << "\": Invalid texture information");
 		return false;
 	}
 
@@ -92,22 +92,22 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 	{
 		unsigned char chunkheader = 0;
 
-		fs.read( (char*)&chunkheader, sizeof(unsigned char) );
-		if( fs.gcount() != sizeof(unsigned char) )
+		fs.read((char*)&chunkheader, sizeof(unsigned char));
+		if(fs.gcount() != sizeof(unsigned char))
 		{
-			ERROR( "File \"" << filename << "\": Cannot read RLE header" );
+			ERROR("File \"" << filename << "\": Cannot read RLE header");
 			return false;
 		}
 
-		if( chunkheader < 128 )
+		if(chunkheader < 128)
 		{
 			chunkheader++;
-			for( int counter = 0; counter < chunkheader; counter++ )
+			for(int counter = 0; counter < chunkheader; counter++)
 			{
-				fs.read( (char*)&colorbuffer[0], bytes_per_pxl );
-				if( fs.gcount() != bytes_per_pxl )
+				fs.read((char*)&colorbuffer[0], bytes_per_pxl);
+				if(fs.gcount() != bytes_per_pxl)
 				{
-					ERROR( "File \"" << filename << "\": Cannot read image data" );
+					ERROR("File \"" << filename << "\": Cannot read image data");
 					return false;
 				}
 
@@ -115,7 +115,7 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 				data[currentbyte + 1] = colorbuffer[1];
 				data[currentbyte + 2] = colorbuffer[0];
 
-				if( bytes_per_pxl == 4 )
+				if(bytes_per_pxl == 4)
 				{
 					data[currentbyte + 3] = colorbuffer[3];
 				}
@@ -123,9 +123,9 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 				currentbyte += bytes_per_pxl;
 				currentpixel++;
 
-				if( currentpixel > pixelcount )
+				if(currentpixel > pixelcount)
 				{
-					ERROR( "File \"" << filename << "\": Too many pixels read" );
+					ERROR("File \"" << filename << "\": Too many pixels read");
 					return false;
 				}
 			}
@@ -133,20 +133,20 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 		else
 		{
 			chunkheader -= 127;
-			fs.read( (char*)&colorbuffer[0], bytes_per_pxl );
-			if( fs.gcount() != bytes_per_pxl )
+			fs.read((char*)&colorbuffer[0], bytes_per_pxl);
+			if(fs.gcount() != bytes_per_pxl)
 			{
-				ERROR( "File \"" << filename << "\": Cannot read from file" );
+				ERROR("File \"" << filename << "\": Cannot read from file");
 				return false;
 			}
 
-			for( int counter = 0; counter < chunkheader; counter++ )
+			for(int counter = 0; counter < chunkheader; counter++)
 			{
 				data[currentbyte] = colorbuffer[2];
 				data[currentbyte+1] = colorbuffer[1];
 				data[currentbyte+2] = colorbuffer[0];
 
-				if( bytes_per_pxl == 4 )
+				if(bytes_per_pxl == 4)
 				{
 					data[currentbyte + 3] = colorbuffer[3];
 				}
@@ -154,9 +154,9 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 				currentbyte += bytes_per_pxl;
 				currentpixel++;
 
-				if( currentpixel > pixelcount )
+				if(currentpixel > pixelcount)
 				{
-					ERROR( "File \"" << filename << "\": Too many pixels read" );
+					ERROR("File \"" << filename << "\": Too many pixels read");
 					return false;
 				}
 			}
@@ -170,38 +170,38 @@ bool Image::loadCompressedTGA( const char* filename, fstream& fs )
 //======================================================================================================================
 // loadTGA                                                                                                             =
 //======================================================================================================================
-bool Image::loadTGA( const char* filename )
+bool Image::loadTGA(const char* filename)
 {
 	fstream fs;
 	char my_tga_header[12];
-	fs.open( filename, ios::in|ios::binary );
+	fs.open(filename, ios::in|ios::binary);
 
-	if( !fs.good() )
+	if(!fs.good())
 	{
-		ERROR( "File \"" << filename << "\": Cannot open file" );
+		ERROR("File \"" << filename << "\": Cannot open file");
 		return false;
 	}
 
-	fs.read( &my_tga_header[0], sizeof(my_tga_header) );
-	if( fs.gcount() != sizeof(my_tga_header) )
+	fs.read(&my_tga_header[0], sizeof(my_tga_header));
+	if(fs.gcount() != sizeof(my_tga_header))
 	{
-		ERROR( "File \"" << filename << "\": Cannot read file header" );
+		ERROR("File \"" << filename << "\": Cannot read file header");
 		fs.close();
 		return false;
 	}
 
 	bool funcs_return;
-	if( memcmp(tgaHeaderUncompressed, &my_tga_header[0], sizeof(my_tga_header)) == 0 )
+	if(memcmp(tgaHeaderUncompressed, &my_tga_header[0], sizeof(my_tga_header)) == 0)
 	{
-		funcs_return = loadUncompressedTGA( filename, fs );
+		funcs_return = loadUncompressedTGA(filename, fs);
 	}
-	else if( memcmp(tgaHeaderCompressed, &my_tga_header[0], sizeof(my_tga_header)) == 0 )
+	else if(memcmp(tgaHeaderCompressed, &my_tga_header[0], sizeof(my_tga_header)) == 0)
 	{
-		funcs_return = loadCompressedTGA( filename, fs );
+		funcs_return = loadCompressedTGA(filename, fs);
 	}
 	else
 	{
-		ERROR( "File \"" << filename << "\": Invalid image header" );
+		ERROR("File \"" << filename << "\": Invalid image header");
 		funcs_return = false;
 	}
 
@@ -213,13 +213,13 @@ bool Image::loadTGA( const char* filename )
 //======================================================================================================================
 // loadPNG                                                                                                             =
 //======================================================================================================================
-bool Image::loadPNG( const char* filename )
+bool Image::loadPNG(const char* filename)
 {
 	SDL_Surface *sdli;
-	sdli = IMG_Load( filename );
-	if( !sdli )
+	sdli = IMG_Load(filename);
+	if(!sdli)
 	{
-		ERROR( "File \"" << filename << "\": " << IMG_GetError() );
+		ERROR("File \"" << filename << "\": " << IMG_GetError());
 		return false;
 	}
 
@@ -228,29 +228,29 @@ bool Image::loadPNG( const char* filename )
 
 	bpp = sdli->format->BitsPerPixel;
 
-	if( bpp != 24 && bpp != 32 )
+	if(bpp != 24 && bpp != 32)
 	{
-		ERROR( "File \"" << filename << "\": The image must be 24 or 32 bits" );
-		SDL_FreeSurface( sdli );
+		ERROR("File \"" << filename << "\": The image must be 24 or 32 bits");
+		SDL_FreeSurface(sdli);
 		return false;
 	}
 
 	int bytespp = bpp/8;
 	int bytes = width * height * bytespp;
-	data = new char [ bytes ];
+	data = new char [bytes];
 
 	// copy and flip height
-	for( uint w=0; w<width; w++ )
-		for( uint h=0; h<height; h++ )
+	for(uint w=0; w<width; w++)
+		for(uint h=0; h<height; h++)
 		{
 			memcpy(
-				&data[ (width*h+w) * bytespp ],
-				&((char*)sdli->pixels)[ ( width*(height-h-1)+w ) * bytespp ],
+				&data[(width*h+w) * bytespp],
+				&((char*)sdli->pixels)[(width*(height-h-1)+w) * bytespp],
 				bytespp
 			);
 		}
 
-	SDL_FreeSurface( sdli );
+	SDL_FreeSurface(sdli);
 	return true;
 }
 
@@ -258,23 +258,23 @@ bool Image::loadPNG( const char* filename )
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool Image::load( const char* filename )
+bool Image::load(const char* filename)
 {
 	// get the extension
-	string ext = Util::getFileExtension( filename );
+	string ext = Util::getFileExtension(filename);
 
 	// load from this extension
-	if( ext == "tga" )
+	if(ext == "tga")
 	{
-		if( !loadTGA( filename ) )
+		if(!loadTGA(filename))
 		{
 			unload();
 			return false;
 		}
 	}
-	else if( ext == "png" )
+	else if(ext == "png")
 	{
-		if( !loadPNG( filename ) )
+		if(!loadPNG(filename))
 		{
 			unload();
 			return false;
@@ -282,7 +282,7 @@ bool Image::load( const char* filename )
 	}
 	else
 	{
-		ERROR( "File \"" << filename << "\": Unsupported extension" );
+		ERROR("File \"" << filename << "\": Unsupported extension");
 		return false;
 	}
 	return true;

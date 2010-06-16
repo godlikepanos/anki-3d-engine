@@ -15,9 +15,9 @@ class Extension: public Resource
 	public:
 		Extension(): libHandle(NULL), foobarPtr(NULL) {}
 		~Extension() {}
-		bool load( const char* filename );
+		bool load(const char* filename);
 		void unload();
-		template<typename Type> int FooBar( Type* ptr ) { DEBUG_ERR(foobarPtr==NULL); return (*foobarPtr)( reinterpret_cast<Type*>(ptr) ); }
+		template<typename Type> int FooBar(Type* ptr) { DEBUG_ERR(foobarPtr==NULL); return (*foobarPtr)(reinterpret_cast<Type*>(ptr)); }
 };
 
 

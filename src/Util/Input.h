@@ -18,7 +18,7 @@ extern Vec<short> mouseBtns;    ///< Mouse btns. Supporting 3 btns & wheel. Work
 
 // mouse stuff
 extern Vec2 mousePosNdc; ///< The coords are in the NDC space
-extern Vec2 mousePos;     ///< The coords are in the window space. (0,0) is in the upper left corner
+extern Vec2 mousePos;     ///< The coords are in the window space. (0, 0) is in the upper left corner
 extern Vec2 mouseVelocity;
 extern bool warpMouse;
 extern bool hideCursor;

@@ -19,33 +19,33 @@ void Renderer::Ms::init()
 
 	// create the FAIs
 	const int internal_format = GL_RGBA16F_ARB;
-	if( !normalFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false ) ||
-	    !diffuseFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false ) ||
-	    !specularFai.createEmpty2D( r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false ) ||
-	    //!depthFai.createEmpty2D( r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8 ) )
-	    !depthFai.createEmpty2D( r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false ) )
+	if(!normalFai.createEmpty2D(r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false) ||
+	    !diffuseFai.createEmpty2D(r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false) ||
+	    !specularFai.createEmpty2D(r.width, r.height, internal_format, GL_RGBA, GL_FLOAT, false) ||
+	    //!depthFai.createEmpty2D(r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8))
+	    !depthFai.createEmpty2D(r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false))
 	{
-		FATAL( "Failed to create one MS FAI. See prev error" );
+		FATAL("Failed to create one MS FAI. See prev error");
 	}
 
 
 	// attach the buffers to the FBO
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0 );
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0);
 
-	//glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
-	glFramebufferTexture2DEXT( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0 );
+	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
 
 	// test if success
-	if( !fbo.isGood() )
-		FATAL( "Cannot create deferred shading material stage FBO" );
+	if(!fbo.isGood())
+		FATAL("Cannot create deferred shading material stage FBO");
 
 	// unbind
 	fbo.unbind();
 
-	if( ez.enabled )
+	if(ez.enabled)
 		ez.init();
 }
 
@@ -57,50 +57,50 @@ void Renderer::Ms::run()
 {
 	const Camera& cam = *r.cam;
 
-	if( ez.enabled )
+	if(ez.enabled)
 	{
 		ez.run();
 	}
 
 	fbo.bind();
 
-	if( !ez.enabled )
+	if(!ez.enabled)
 	{
-		glClear( GL_DEPTH_BUFFER_BIT );
+		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
-	r.setProjectionViewMatrices( cam );
-	Renderer::setViewport( 0, 0, r.width, r.height );
+	r.setProjectionViewMatrices(cam);
+	Renderer::setViewport(0, 0, r.width, r.height);
 
-	//glEnable( GL_DEPTH_TEST );
-	app->getScene()->skybox.Render( cam.getViewMatrix().getRotationPart() );
-	//glDepthFunc( GL_LEQUAL );
+	//glEnable(GL_DEPTH_TEST);
+	app->getScene()->skybox.Render(cam.getViewMatrix().getRotationPart());
+	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
-	if( ez.enabled )
+	if(ez.enabled)
 	{
-		glDepthMask( false );
-		glDepthFunc( GL_EQUAL );
+		glDepthMask(false);
+		glDepthFunc(GL_EQUAL);
 	}
 
 	// render the meshes
-	for( Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++ )
+	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		DEBUG_ERR( meshNode->material == NULL );
-		if( meshNode->material->blends || meshNode->material->refracts ) continue;
+		DEBUG_ERR(meshNode->material == NULL);
+		if(meshNode->material->blends || meshNode->material->refracts) continue;
 
-		r.setupMaterial( *meshNode->material, *meshNode, cam );
+		r.setupMaterial(*meshNode->material, *meshNode, cam);
 		meshNode->render();
 	}
 
-	glPolygonMode( GL_FRONT, GL_FILL ); // the rendering above fucks the polygon mode
+	glPolygonMode(GL_FRONT, GL_FILL); // the rendering above fucks the polygon mode
 
 	// restore depth
-	if( ez.enabled )
+	if(ez.enabled)
 	{
-		glDepthMask( true );
-		glDepthFunc( GL_LESS );
+		glDepthMask(true);
+		glDepthFunc(GL_LESS);
 	}
 
 	fbo.unbind();

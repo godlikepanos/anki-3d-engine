@@ -8,7 +8,7 @@
 
 
 /**
- * @brief Scene node that extends the @ref Skeleton resource
+ * Scene node that extends the @ref Skeleton resource
  */
 class SkelNode: public SceneNode
 {
@@ -18,7 +18,7 @@ class SkelNode: public SceneNode
 
 		SkelNode();
 		void render();
-		void init( const char* filename );
+		void init(const char* filename);
 		void deinit();
 };
 

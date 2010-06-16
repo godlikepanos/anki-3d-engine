@@ -8,9 +8,9 @@
 //======================================================================================================================
 // init [PointLight]                                                                                                  =
 //======================================================================================================================
-void PointLight::init( const char* filename )
+void PointLight::init(const char* filename)
 {
-	lightProps = Rsrc::lightProps.load( filename );
+	lightProps = Rsrc::lightProps.load(filename);
 	radius = lightProps->getRadius();
 }
 
@@ -18,14 +18,14 @@ void PointLight::init( const char* filename )
 //======================================================================================================================
 // init [SpotLight]                                                                                                    =
 //======================================================================================================================
-void SpotLight::init( const char* filename )
+void SpotLight::init(const char* filename)
 {
-	lightProps = Rsrc::lightProps.load( filename );
-	camera.setAll( lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance() );
+	lightProps = Rsrc::lightProps.load(filename);
+	camera.setAll(lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance());
 	castsShadow = lightProps->castsShadow();
-	if( lightProps->getTexture() == NULL )
+	if(lightProps->getTexture() == NULL)
 	{
-		ERROR( "Light properties \"" << lightProps->getRsrcName() << "\" do not have a texture" );
+		ERROR("Light properties \"" << lightProps->getRsrcName() << "\" do not have a texture");
 		return;
 	}
 }
@@ -36,7 +36,7 @@ void SpotLight::init( const char* filename )
 //======================================================================================================================
 void Light::deinit()
 {
-	Rsrc::lightProps.unload( lightProps );
+	Rsrc::lightProps.unload(lightProps);
 }
 
 
@@ -45,8 +45,8 @@ void Light::deinit()
 //======================================================================================================================
 void Light::render()
 {
-	Renderer::Dbg::setColor( Vec4( lightProps->getDiffuseColor(), 1.0 ) );
-	Renderer::Dbg::setModelMat( Mat4( getWorldTransform() ) );
-	Renderer::Dbg::renderSphere( 8, 0.1 );
+	Renderer::Dbg::setColor(Vec4(lightProps->getDiffuseColor(), 1.0));
+	Renderer::Dbg::setModelMat(Mat4(getWorldTransform()));
+	Renderer::Dbg::renderSphere(8, 0.1);
 }
 

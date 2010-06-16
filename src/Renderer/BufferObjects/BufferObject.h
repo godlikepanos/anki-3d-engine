@@ -6,13 +6,13 @@
 
 
 /**
- * A wrapper for OpenGL buffer objects ( vertex arrays, texture buffers etc ) to prevent us from making idiotic errors
+ * A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
  */
 class BufferObject
 {
 	protected:
 		uint glId; ///< The OpenGL id of the BO
-		GLenum target; ///< Used in glBindBuffer( target, glId ) and its for easy access so we wont have to query the GL driver
+		GLenum target; ///< Used in glBindBuffer(target, glId) and its for easy access so we wont have to query the GL driver
 		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 
 	public:
@@ -25,7 +25,7 @@ class BufferObject
 		 */
 		uint getGlId() const
 		{
-			DEBUG_ERR( !isCreated() );
+			DEBUG_ERR(!isCreated());
 			return glId;
 		}
 
@@ -35,7 +35,7 @@ class BufferObject
 		 */
 		GLenum getBufferTarget() const
 		{
-			DEBUG_ERR( !isCreated() );
+			DEBUG_ERR(!isCreated());
 			return target;
 		}
 
@@ -45,7 +45,7 @@ class BufferObject
 		 */
 		GLenum getBufferUsage() const
 		{
-			DEBUG_ERR( !isCreated() );
+			DEBUG_ERR(!isCreated());
 			return usage;
 		}
 
@@ -66,26 +66,26 @@ class BufferObject
 		 * @param usage_ It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
 		 * @return True on success
 		 */
-		bool create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
+		bool create(GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_)
 		{
-			DEBUG_ERR( isCreated() ); // BO already initialized
-			DEBUG_ERR( usage_!=GL_STREAM_DRAW && usage_!=GL_STATIC_DRAW && usage_!=GL_DYNAMIC_DRAW ); // unacceptable usage_
-			DEBUG_ERR( sizeInBytes < 1 ); // unacceptable sizeInBytes
+			DEBUG_ERR(isCreated()); // BO already initialized
+			DEBUG_ERR(usage_!=GL_STREAM_DRAW && usage_!=GL_STATIC_DRAW && usage_!=GL_DYNAMIC_DRAW); // unacceptable usage_
+			DEBUG_ERR(sizeInBytes < 1); // unacceptable sizeInBytes
 
 			usage = usage_;
 			target = target_;
 
-			glGenBuffers( 1, &glId );
+			glGenBuffers(1, &glId);
 			bind();
-			glBufferData( target, sizeInBytes, dataPtr, usage );
+			glBufferData(target, sizeInBytes, dataPtr, usage);
 
 			// make a check
 			int bufferSize = 0;
-			glGetBufferParameteriv( target, GL_BUFFER_SIZE, &bufferSize );
-			if( sizeInBytes != (uint)bufferSize )
+			glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
+			if(sizeInBytes != (uint)bufferSize)
 			{
 				deleteBuff();
-				ERROR( "Data size mismatch" );
+				ERROR("Data size mismatch");
 				return false;
 			}
 
@@ -98,8 +98,8 @@ class BufferObject
 		 */
 		void bind() const
 		{
-			DEBUG_ERR( !isCreated() );
-			glBindBuffer( target, glId );
+			DEBUG_ERR(!isCreated());
+			glBindBuffer(target, glId);
 		}
 
 		/**
@@ -107,8 +107,8 @@ class BufferObject
 		 */
 		void unbind() const
 		{
-			DEBUG_ERR( !isCreated() );
-			glBindBuffer( target, 0 );
+			DEBUG_ERR(!isCreated());
+			glBindBuffer(target, 0);
 		}
 
 		/**
@@ -116,8 +116,8 @@ class BufferObject
 		 */
 		void deleteBuff()
 		{
-			DEBUG_ERR( !isCreated() );
-			glDeleteBuffers( 1, &glId );
+			DEBUG_ERR(!isCreated());
+			glDeleteBuffers(1, &glId);
 			glId = 0;
 		}
 };

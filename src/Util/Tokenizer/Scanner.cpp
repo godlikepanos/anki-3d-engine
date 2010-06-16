@@ -7,15 +7,15 @@
 #include "Scanner.h"
 
 
-#define SERROR(x) ERROR( "Scanning Error (" << scriptName << ':' << lineNmbr << "): " << x )
+#define SERROR(x) ERROR("Scanning Error (" << scriptName << ':' << lineNmbr << "): " << x)
 
 
 //======================================================================================================================
 // Constructor [Token]                                                                                                 =
 //======================================================================================================================
-Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
+Scanner::Token::Token(const Token& b): code(b.code), dataType(b.dataType)
 {
-	switch( b.dataType )
+	switch(b.dataType)
 	{
 		case Scanner::DT_FLOAT:
 			value.float_ = b.value.float_;
@@ -30,7 +30,7 @@ Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
 			value.string = b.value.string;
 			break;	
 	}
-	memcpy( asString, b.asString, Scanner::MAX_SCRIPT_LINE_LEN*sizeof(char) );
+	memcpy(asString, b.asString, Scanner::MAX_SCRIPT_LINE_LEN*sizeof(char));
 }
 
 
@@ -40,7 +40,7 @@ Scanner::Token::Token( const Token& b ): code(b.code), dataType(b.dataType)
 string Scanner::Token::getInfoStr() const
 {
 	char tokenInfoStr[256];
-	switch( code )
+	switch(code)
 	{
 		case TC_COMMENT:
 			return "comment";
@@ -49,28 +49,28 @@ string Scanner::Token::getInfoStr() const
 		case TC_EOF:
 			return "end of file";
 		case TC_STRING:
-			sprintf( tokenInfoStr, "string \"%s\"", value.string );
+			sprintf(tokenInfoStr, "string \"%s\"", value.string);
 			break;
 		case TC_CHAR:
-			sprintf( tokenInfoStr, "char '%c' (\"%s\")", value.char_, asString );
+			sprintf(tokenInfoStr, "char '%c' (\"%s\")", value.char_, asString);
 			break;
 		case TC_NUMBER:
-			if( dataType == DT_FLOAT )
-				sprintf( tokenInfoStr, "float %f or %e (\"%s\")", value.float_, value.float_, asString );
+			if(dataType == DT_FLOAT)
+				sprintf(tokenInfoStr, "float %f or %e (\"%s\")", value.float_, value.float_, asString);
 			else
-				sprintf( tokenInfoStr, "int %lu (\"%s\")", value.int_, asString );
+				sprintf(tokenInfoStr, "int %lu (\"%s\")", value.int_, asString);
 			break;
 		case TC_IDENTIFIER:
-			sprintf( tokenInfoStr, "identifier \"%s\"", value.string );
+			sprintf(tokenInfoStr, "identifier \"%s\"", value.string);
 			break;
 		case TC_ERROR:
 			return "scanner error";
 			break;
 		default:
-			if( code>=TC_KE && code<=TC_KEYWORD )
-				sprintf( tokenInfoStr, "reserved word \"%s\"", value.string );
-			else if( code>=TC_SCOPERESOLUTION && code<=TC_ASSIGNOR )
-				sprintf( tokenInfoStr, "operator no %d", code - TC_SCOPERESOLUTION );
+			if(code>=TC_KE && code<=TC_KEYWORD)
+				sprintf(tokenInfoStr, "reserved word \"%s\"", value.string);
+			else if(code>=TC_SCOPERESOLUTION && code<=TC_ASSIGNOR)
+				sprintf(tokenInfoStr, "operator no %d", code - TC_SCOPERESOLUTION);
 	}
 
 	return string(tokenInfoStr);
@@ -137,10 +137,10 @@ Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
 //======================================================================================================================
 void Scanner::initAsciiMap()
 {
-	memset( &asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable) );
-	for( uint x='a'; x<='z'; x++) asciiLookupTable[x] = AC_LETTER;
-	for( uint x='A'; x<='Z'; x++) asciiLookupTable[x] = AC_LETTER;
-	for( uint x='0'; x<='9'; x++) asciiLookupTable[x] = AC_DIGIT;
+	memset(&asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable));
+	for(uint x='a'; x<='z'; x++) asciiLookupTable[x] = AC_LETTER;
+	for(uint x='A'; x<='Z'; x++) asciiLookupTable[x] = AC_LETTER;
+	for(uint x='0'; x<='9'; x++) asciiLookupTable[x] = AC_DIGIT;
 
 	asciiLookupTable[':'] = asciiLookupTable['['] = asciiLookupTable[']'] = asciiLookupTable['('] = AC_SPECIAL;
 	asciiLookupTable[')'] = asciiLookupTable['.'] = asciiLookupTable['{'] = asciiLookupTable['}'] = AC_SPECIAL;
@@ -163,14 +163,14 @@ void Scanner::initAsciiMap()
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Scanner::Scanner( bool newlinesAsWhitespace_ ):
+Scanner::Scanner(bool newlinesAsWhitespace_):
 	newlinesAsWhitespace(newlinesAsWhitespace_), commentedLines(0), inStream(NULL)
 {
-	if( asciiLookupTable['a'] != AC_LETTER )
+	if(asciiLookupTable['a'] != AC_LETTER)
 		initAsciiMap();
 
 	lineNmbr = 0;
-	memset( line, eofChar, sizeof(char)*MAX_SCRIPT_LINE_LEN );
+	memset(line, eofChar, sizeof(char)*MAX_SCRIPT_LINE_LEN);
 }
 
 
@@ -179,7 +179,7 @@ Scanner::Scanner( bool newlinesAsWhitespace_ ):
 //======================================================================================================================
 void Scanner::getLine()
 {
-	if( !inStream->getline( line, MAX_SCRIPT_LINE_LEN - 1, '\n' ) )
+	if(!inStream->getline(line, MAX_SCRIPT_LINE_LEN - 1, '\n'))
 		pchar = &eofChar;
 	else
 	{
@@ -187,7 +187,7 @@ void Scanner::getLine()
 		++lineNmbr;
 	}
 
-	DEBUG_ERR( inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10 ); // too big line
+	DEBUG_ERR(inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10); // too big line
 }
 
 
@@ -196,7 +196,7 @@ void Scanner::getLine()
 //======================================================================================================================
 char Scanner::getNextChar()
 {
-	if( *pchar=='\0' )
+	if(*pchar=='\0')
 		getLine();
 	else
 		++pchar;
@@ -210,7 +210,7 @@ char Scanner::getNextChar()
 //======================================================================================================================
 char Scanner::putBackChar()
 {
-	if( pchar != line && *pchar != eofChar )
+	if(pchar != line && *pchar != eofChar)
 		--pchar;
 
 	return *pchar;
@@ -226,44 +226,44 @@ void Scanner::getAllPrintAll()
 	{
 		getNextToken();
 		cout << setw(3) << setfill('0') << getLineNumber() << ": " << crntToken.getInfoStr() << endl;
-	} while( crntToken.code != TC_EOF );
+	} while(crntToken.code != TC_EOF);
 }
 
 
 //======================================================================================================================
 // loadFile                                                                                                            =
 //======================================================================================================================
-bool Scanner::loadFile( const char* filename_ )
+bool Scanner::loadFile(const char* filename_)
 {	
-	inFstream.open( filename_ );
-	if( !inFstream.good() )
+	inFstream.open(filename_);
+	if(!inFstream.good())
 	{
-		ERROR( "Cannot open file \"" << filename_ << '\"' );
+		ERROR("Cannot open file \"" << filename_ << '\"');
 		return false;
 	}
 	
-	return loadIstream( inFstream, filename_ );
+	return loadIstream(inFstream, filename_);
 }
 
 
 //======================================================================================================================
 // loadIstream                                                                                                        =
 //======================================================================================================================
-bool Scanner::loadIstream( istream& istream_, const char* scriptName_ )
+bool Scanner::loadIstream(istream& istream_, const char* scriptName_)
 {
-	if( inStream != NULL )
+	if(inStream != NULL)
 	{
-		ERROR( "Tokenizer already initialized" );
+		ERROR("Tokenizer already initialized");
 		return false;
 	}
 
 	inStream = &istream_;
 
 	// init globals
-	DEBUG_ERR( strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1 ); // Too big name
+	DEBUG_ERR(strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1); // Too big name
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
-	strcpy( scriptName, scriptName_ );
+	strcpy(scriptName, scriptName_);
 
 
 	getLine();
@@ -287,18 +287,18 @@ const Scanner::Token& Scanner::getNextToken()
 {
 	start:
 
-	//if( crntToken.code == TC_NEWLINE ) getNextChar();
+	//if(crntToken.code == TC_NEWLINE) getNextChar();
 
-	if( commentedLines>0 )
+	if(commentedLines>0)
 	{
 		crntToken.code = TC_NEWLINE;
 		--commentedLines;
 		++lineNmbr; // the ultimate hack. I should remember not to do such crap in the future
 	}
-	else if( *pchar == '/' )
+	else if(*pchar == '/')
 	{
 		char ch = getNextChar();
-		if( ch == '/' || ch == '*' )
+		if(ch == '/' || ch == '*')
 		{
 			putBackChar();
 			int line = getLineNumber();
@@ -313,18 +313,18 @@ const Scanner::Token& Scanner::getNextToken()
 			goto crappyLabel;
 		}
 	}
-	else if( *pchar == '.' )
+	else if(*pchar == '.')
 	{
 		uint asc = asciiLookup(getNextChar());
 		putBackChar();
-		if( asc == AC_DIGIT )
+		if(asc == AC_DIGIT)
 			checkNumber();
 		else
 			checkSpecial();
 	}
-	else if( *pchar=='\0' ) // if newline
+	else if(*pchar=='\0') // if newline
 	{
-		if( asciiLookup( getNextChar() ) == AC_EOF )
+		if(asciiLookup(getNextChar()) == AC_EOF)
 			crntToken.code = TC_EOF;
 		else
 			crntToken.code = TC_NEWLINE;
@@ -332,7 +332,7 @@ const Scanner::Token& Scanner::getNextToken()
 	else
 	{
 		crappyLabel:
-		switch( asciiLookup(*pchar) )
+		switch(asciiLookup(*pchar))
 		{
 			case AC_WHITESPACE : getNextChar();  goto start;
 			case AC_LETTER     : checkWord();    break;
@@ -345,15 +345,15 @@ const Scanner::Token& Scanner::getNextToken()
 				break;
 			case AC_ERROR:
 			default:
-				SERROR( "Unexpected character \'" << *pchar << '\'');
+				SERROR("Unexpected character \'" << *pchar << '\'');
 
 				getNextChar();
 				goto start;
 		}
 	}
 
-	if( crntToken.code == TC_COMMENT ) goto start; // skip comments
-	if( crntToken.code == TC_NEWLINE && newlinesAsWhitespace ) goto start;
+	if(crntToken.code == TC_COMMENT) goto start; // skip comments
+	if(crntToken.code == TC_NEWLINE && newlinesAsWhitespace) goto start;
 	
 	return crntToken;
 }
@@ -371,7 +371,7 @@ bool Scanner::checkWord()
 	{
 		*tmpStr++ = ch;
 		ch = getNextChar();
-	}while ( asciiLookup(ch)==AC_LETTER || asciiLookup(ch)==AC_DIGIT );
+	}while (asciiLookup(ch)==AC_LETTER || asciiLookup(ch)==AC_DIGIT);
 
 	*tmpStr = '\0'; // finalize it
 
@@ -381,14 +381,14 @@ bool Scanner::checkWord()
 	crntToken.value.string = crntToken.asString;
 	crntToken.dataType = DT_STR; // not important
 
-	if( len<=7 && len>=2 )
+	if(len<=7 && len>=2)
 	{
 		int x = 0;
 		for (;;)
 		{
-			if( rwTable[len][x].string == NULL ) break;
+			if(rwTable[len][x].string == NULL) break;
 
-			if( strcmp(rwTable[len][x].string, crntToken.asString ) == 0 )
+			if(strcmp(rwTable[len][x].string, crntToken.asString) == 0)
 			{
 				crntToken.code = rwTable[len][x].code;
 				break;
@@ -407,24 +407,24 @@ bool Scanner::checkWord()
 bool Scanner::checkComment()
 {
 	// Beginning
-	if( getNextChar()=='*' )
+	if(getNextChar()=='*')
 	{
 		goto cStyleCmnt;
 	}
 	// C++ style comment
-	else if( *pchar=='/' )
+	else if(*pchar=='/')
 	{
-		while( true )
+		while(true)
 		{
 			char ch = getNextChar();
-			if( ch == '\0' )
+			if(ch == '\0')
 			{
 				crntToken.code = TC_COMMENT;
 				return true;
 			}
-			else if( ch == '\\' )
+			else if(ch == '\\')
 			{
-				if( getNextChar() == '\0' )
+				if(getNextChar() == '\0')
 					getNextChar();
 			}
 		}
@@ -434,16 +434,16 @@ bool Scanner::checkComment()
 
 	// C style comment
 	cStyleCmnt:
-		if( getNextChar()=='*' )
+		if(getNextChar()=='*')
 			goto finalizeCCmnt;
-		else if( *pchar==eofChar )
+		else if(*pchar==eofChar)
 			goto error;
 		else
 			goto cStyleCmnt;
 
 	// C++ style comment
 	finalizeCCmnt:
-		if( getNextChar()=='/' )
+		if(getNextChar()=='/')
 		{
 			crntToken.code = TC_COMMENT;
 			getNextChar();
@@ -455,7 +455,7 @@ bool Scanner::checkComment()
 	//error
 	error:
 		crntToken.code = TC_ERROR;
-		SERROR( "Incorrect comment ending" );
+		SERROR("Incorrect comment ending");
 		return false;
 }
 
@@ -465,7 +465,7 @@ bool Scanner::checkComment()
 //======================================================================================================================
 bool Scanner::checkNumber()
 {
-	//DEBUG_ERR( sizeof(long) != 8 ); // ulong must be 64bit
+	//DEBUG_ERR(sizeof(long) != 8); // ulong must be 64bit
 	long num = 0;     // value of the number & part of the float num before '.'
 	long fnum = 0;    // part of the float num after '.'
 	long dad = 0;     // digits after dot (for floats)
@@ -476,14 +476,14 @@ bool Scanner::checkNumber()
 	uint asc;
 
 	// begin
-		if( *pchar == '0' )
+		if(*pchar == '0')
 			goto _0;
-		else if( asciiLookup(*pchar) == AC_DIGIT )
+		else if(asciiLookup(*pchar) == AC_DIGIT)
 		{
 			num = num*10 + *pchar-'0';
 			goto _0_9;
 		}
-		else if ( *pchar == '.' )
+		else if (*pchar == '.')
 			goto _float;
 		else
 			goto error;
@@ -493,18 +493,18 @@ bool Scanner::checkNumber()
 		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
-		if ( *pchar == 'x' || *pchar == 'X' )
+		if (*pchar == 'x' || *pchar == 'X')
 			goto _0x;
-		else if( *pchar == 'e' || *pchar == 'E' )
+		else if(*pchar == 'e' || *pchar == 'E')
 			goto _0_9_dot_0_9_e;
-		else if( asc == AC_DIGIT )
+		else if(asc == AC_DIGIT)
 		{
 			putBackChar();
 			goto _0_9;
 		}
-		else if( *pchar == '.' )
+		else if(*pchar == '.')
 			goto _float;
-		else if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
+		else if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
 		else
 			goto error;
@@ -514,14 +514,14 @@ bool Scanner::checkNumber()
 		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
-		if( (asc == AC_DIGIT)  ||
-				(*pchar >= 'a' && *pchar <= 'f' ) ||
-				(*pchar >= 'A' && *pchar <= 'F' ) )
+		if((asc == AC_DIGIT)  ||
+				(*pchar >= 'a' && *pchar <= 'f') ||
+				(*pchar >= 'A' && *pchar <= 'F'))
 		{
 			num <<= 4;
-			if( *pchar>='a' && *pchar<='f' )
+			if(*pchar>='a' && *pchar<='f')
 				num += *pchar - 'a' + 0xA;
-			else if( *pchar>='A' && *pchar<='F' )
+			else if(*pchar>='A' && *pchar<='F')
 				num += *pchar - 'A' + 0xA;
 			else
 				num += *pchar - '0';
@@ -536,21 +536,21 @@ bool Scanner::checkNumber()
 		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
-		if( (asc == AC_DIGIT)         ||
-				(*pchar >= 'a' && *pchar <= 'f' ) ||
-				(*pchar >= 'A' && *pchar <= 'F' ) )
+		if((asc == AC_DIGIT)         ||
+				(*pchar >= 'a' && *pchar <= 'f') ||
+				(*pchar >= 'A' && *pchar <= 'F'))
 		{
 			num <<= 4;
-			if( *pchar>='a' && *pchar<='f' )
+			if(*pchar>='a' && *pchar<='f')
 				num += *pchar - 'a' + 0xA;
-			else if( *pchar>='A' && *pchar<='F' )
+			else if(*pchar>='A' && *pchar<='F')
 				num += *pchar - 'A' + 0xA;
 			else
 				num += *pchar - '0';
 
 			goto _0x0_9orA_F;
 		}
-		else if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
+		else if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
 		else
 			goto error; // err
@@ -560,16 +560,16 @@ bool Scanner::checkNumber()
 		*tmpStr++ = *pchar;
 		getNextChar();
 		asc = asciiLookup(*pchar);
-		if( asc == AC_DIGIT )
+		if(asc == AC_DIGIT)
 		{
 			num = num * 10 + *pchar - '0';
 			goto _0_9;
 		}
-		else if( *pchar == 'e' || *pchar == 'E' )
+		else if(*pchar == 'e' || *pchar == 'E')
 			goto _0_9_dot_0_9_e;
-		else if( *pchar == '.' )
+		else if(*pchar == '.')
 			goto _float;
-		else if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
+		else if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
 		else
 			goto error; // err
@@ -580,25 +580,25 @@ bool Scanner::checkNumber()
 		getNextChar();
 		asc = asciiLookup(*pchar);
 		crntToken.dataType = DT_FLOAT;
-		if( asc == AC_DIGIT )
+		if(asc == AC_DIGIT)
 		{
 			fnum = fnum * 10 + *pchar - '0';
 			++dad;
 			goto _float;
 		}
-		else if( *pchar == '.' )
+		else if(*pchar == '.')
 		{
 			*tmpStr++ = *pchar;
 			getNextChar();
 			goto error;
 		}
-		else if( *pchar == 'f' || *pchar == 'F' )
+		else if(*pchar == 'f' || *pchar == 'F')
 		{
 			goto _0_9_dot_0_9_f;
 		}
-		else if( *pchar == 'e' || *pchar == 'E' )
+		else if(*pchar == 'e' || *pchar == 'E')
 			goto _0_9_dot_0_9_e;
-		else if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
+		else if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
 		else
 			goto error;
@@ -609,7 +609,7 @@ bool Scanner::checkNumber()
 		getNextChar();
 		asc = asciiLookup(*pchar);
 
-		if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
+		if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
 		else
 			goto error;
@@ -621,13 +621,13 @@ bool Scanner::checkNumber()
 		asc = asciiLookup(*pchar);
 		crntToken.dataType = DT_FLOAT;
 
-		if( *pchar == '+' || *pchar == '-' )
+		if(*pchar == '+' || *pchar == '-')
 		{
-			if( *pchar == '-' ) expSign = 1;
+			if(*pchar == '-') expSign = 1;
 			//*tmpStr++ = *pchar; getNextChar();
 			goto _0_9_dot_0_9_e_sign;
 		}
-		else if( asc == AC_DIGIT )
+		else if(asc == AC_DIGIT)
 		{
 			exp = exp * 10 + *pchar - '0';
 			goto _0_9_dot_0_9_e_sign_0_9;
@@ -642,7 +642,7 @@ bool Scanner::checkNumber()
 		getNextChar();
 		asc = asciiLookup(*pchar);
 
-		if( asc == AC_DIGIT )
+		if(asc == AC_DIGIT)
 		{
 			exp = exp * 10 + *pchar - '0';
 			goto _0_9_dot_0_9_e_sign_0_9;
@@ -657,12 +657,12 @@ bool Scanner::checkNumber()
 		getNextChar();
 		asc = asciiLookup(*pchar);
 
-		if( asc == AC_DIGIT )
+		if(asc == AC_DIGIT)
 		{
 			exp = exp * 10 + *pchar - '0';
 			goto _0_9_dot_0_9_e_sign_0_9;
 		}
-		else if( asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF )
+		else if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
 		else
 			goto error;
@@ -671,17 +671,17 @@ bool Scanner::checkNumber()
 	finalize:
 		crntToken.code = TC_NUMBER;
 
-		if( crntToken.dataType == DT_INT )
+		if(crntToken.dataType == DT_INT)
 		{
 			crntToken.value.int_ = num;
 		}
 		else
 		{
 			double dbl = (double)num + (double)(pow(10, -dad)*fnum);
-			if( exp != 0 ) // if we have exponent
+			if(exp != 0) // if we have exponent
 			{
-				if( expSign == 1 ) exp = -exp; // change the sign if necessary
-				dbl = dbl * pow( 10, exp );
+				if(expSign == 1) exp = -exp; // change the sign if necessary
+				dbl = dbl * pow(10, exp);
 			}
 
 			crntToken.value.float_ = dbl;
@@ -695,14 +695,14 @@ bool Scanner::checkNumber()
 
 		// run until white space or special
 		asc = asciiLookup(*pchar);
-		while( asc!=AC_WHITESPACE && asc!=AC_SPECIAL && asc!=AC_EOF )
+		while(asc!=AC_WHITESPACE && asc!=AC_SPECIAL && asc!=AC_EOF)
 		{
 			*tmpStr++ = *pchar;
 			asc = asciiLookup(getNextChar());
 		}
 
 		*tmpStr = '\0';
-		SERROR( "Bad number suffix \"" << crntToken.asString << '\"' );
+		SERROR("Bad number suffix \"" << crntToken.asString << '\"');
 
 	return false;
 }
@@ -719,26 +719,26 @@ bool Scanner::checkString()
 	for(;;)
 	{
 		// Error
-		if( ch=='\0' || ch==eofChar ) // if end of line or eof
+		if(ch=='\0' || ch==eofChar) // if end of line or eof
 		{
 			crntToken.code = TC_ERROR;
 			*tmpStr = '\0';
-			SERROR( "Incorrect string ending \"" << crntToken.asString << '\"' );
+			SERROR("Incorrect string ending \"" << crntToken.asString << '\"');
 			return false;
 		}
 		// Escape Codes
-		else if( ch=='\\' )
+		else if(ch=='\\')
 		{
 			ch = getNextChar();
-			if( ch==eofChar )
+			if(ch==eofChar)
 			{
 				crntToken.code = TC_ERROR;
 				*tmpStr = '\0';
-				SERROR( "Incorrect string ending \"" << crntToken.asString << '\"' );
+				SERROR("Incorrect string ending \"" << crntToken.asString << '\"');
 				return false;
 			}
 
-			switch( ch )
+			switch(ch)
 			{
 				case 'n' : *tmpStr++ = '\n'; break;
 				case 't' : *tmpStr++ = '\t'; break;
@@ -752,12 +752,12 @@ bool Scanner::checkString()
 				case '\?': *tmpStr++ = '\?'; break;
 				case '\0': break; // not an escape char but works almost the same
 				default  :
-					SERROR( "Unrecognized escape character \'\\" << ch << '\'' );
+					SERROR("Unrecognized escape character \'\\" << ch << '\'');
 					*tmpStr++ = ch;
 			}
 		}
 		// End
-		else if( ch=='\"' )
+		else if(ch=='\"')
 		{
 			*tmpStr = '\0';
 			crntToken.code = TC_STRING;
@@ -765,7 +765,7 @@ bool Scanner::checkString()
 			getNextChar();
 			return true;
 		}
-		// Build str( main loop )
+		// Build str(main loop)
 		else
 		{
 			*tmpStr++ = ch;
@@ -790,15 +790,15 @@ bool Scanner::checkChar()
 	crntToken.code = TC_ERROR;
 	*tmpStr++ = ch;
 
-	if( ch=='\0' || ch==eofChar ) // check char after '
+	if(ch=='\0' || ch==eofChar) // check char after '
 	{
-		SERROR( "Newline in constant" );
+		SERROR("Newline in constant");
 		return false;
 	}
 
 	if (ch=='\'') // if '
 	{
-		SERROR( "Empty constant" );
+		SERROR("Empty constant");
 		getNextChar();
 		return false;
 	}
@@ -807,9 +807,9 @@ bool Scanner::checkChar()
 	{
 		ch = getNextChar();
 		*tmpStr++ = ch;
-		if( ch=='\0' || ch==eofChar ) //check again after the \.
+		if(ch=='\0' || ch==eofChar) //check again after the \.
 		{
-			SERROR( "Newline in constant" );
+			SERROR("Newline in constant");
 			return false;
 		}
 
@@ -825,7 +825,7 @@ bool Scanner::checkChar()
 			case '\'': ch0 = '\''; break;
 			case '\\': ch0 = '\\'; break;
 			case '\?': ch0 = '\?'; break;
-			default  : ch0 = ch  ; SERROR( "Unrecognized escape character \'\\" << ch << '\'' );
+			default  : ch0 = ch  ; SERROR("Unrecognized escape character \'\\" << ch << '\'');
 		}
 		crntToken.value.char_ = ch0;
 	}
@@ -835,7 +835,7 @@ bool Scanner::checkChar()
 	}
 
 	ch = getNextChar();
-	if( ch=='\'' )    //end
+	if(ch=='\'')    //end
 	{
 		*tmpStr = '\0';
 		crntToken.code = TC_CHAR;
@@ -843,7 +843,7 @@ bool Scanner::checkChar()
 		return true;
 	}
 
-	SERROR( "Expected \'");
+	SERROR("Expected \'");
 	return false;
 }
 
@@ -856,7 +856,7 @@ bool Scanner::checkSpecial()
 	char ch = *pchar;
 	TokenCode code = TC_ERROR;
 
-	switch( ch )
+	switch(ch)
 	{
 		case '#': code = TC_SHARP; break;
 		case ',': code = TC_COMMA; break;
@@ -872,7 +872,7 @@ bool Scanner::checkSpecial()
 
 		case '.':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '*':
 					code = TC_POINTERTOMEMBER;
@@ -885,7 +885,7 @@ bool Scanner::checkSpecial()
 
 		case ':':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case ':':
 					code = TC_SCOPERESOLUTION;
@@ -898,7 +898,7 @@ bool Scanner::checkSpecial()
 
 		case '-':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '>':
 					code = TC_POINTERTOMEMBER;
@@ -917,7 +917,7 @@ bool Scanner::checkSpecial()
 
 		case '=':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_EQUAL;
@@ -930,7 +930,7 @@ bool Scanner::checkSpecial()
 
 		case '!':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_NOTEQUAL;
@@ -943,14 +943,14 @@ bool Scanner::checkSpecial()
 
 		case '<':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_LESSEQUAL;
 					break;
 				case '<':
 					ch = getNextChar();
-					switch( ch )
+					switch(ch)
 					{
 						case '=':
 							code = TC_ASSIGNSHL;
@@ -968,14 +968,14 @@ bool Scanner::checkSpecial()
 
 		case '>':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_GREATEREQUAL;
 					break;
 				case '>':
 					ch = getNextChar();
-					switch( ch )
+					switch(ch)
 					{
 						case '=':
 							code = TC_ASSIGNSHR;
@@ -993,7 +993,7 @@ bool Scanner::checkSpecial()
 
 		case '|':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '|':
 					code = TC_LOGICALOR;
@@ -1009,7 +1009,7 @@ bool Scanner::checkSpecial()
 
 		case '&':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '&':
 					code = TC_LOGICALAND;
@@ -1025,7 +1025,7 @@ bool Scanner::checkSpecial()
 
 		case '+':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '+':
 					code = TC_INC;
@@ -1041,7 +1041,7 @@ bool Scanner::checkSpecial()
 
 		case '*':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_ASSIGNMUL;
@@ -1054,7 +1054,7 @@ bool Scanner::checkSpecial()
 
 		case '/':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_ASSIGNDIV;
@@ -1067,7 +1067,7 @@ bool Scanner::checkSpecial()
 
 		case '%':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_ASSIGNMOD;
@@ -1080,7 +1080,7 @@ bool Scanner::checkSpecial()
 
 		case '^':
 			ch = getNextChar();
-			switch( ch )
+			switch(ch)
 			{
 				case '=':
 					code = TC_ASSIGNXOR;

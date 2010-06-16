@@ -20,7 +20,7 @@ class SkelModelNode: public SceneNode
 		SkelNode*   skelNode;
 		
 		SkelModelNode(): SceneNode(NT_SKEL_MODEL), skelNode(NULL) { isCompound = true; }
-		void init( const char* filename );
+		void init(const char* filename);
 		void deinit() {} ///< Do nothing because it loads no resources
 		void render() {} ///< Do nothing
 };

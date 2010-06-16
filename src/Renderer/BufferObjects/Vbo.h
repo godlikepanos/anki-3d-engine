@@ -13,11 +13,11 @@ class Vbo: public BufferObject
 		/**
 		 * It adds an extra check over @ref BufferObject::create. See @ref BufferObject::create for details
 		 */
-		bool create( GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_ )
+		bool create(GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_)
 		{
-			DEBUG_ERR( target_!=GL_ARRAY_BUFFER && target_!=GL_ELEMENT_ARRAY_BUFFER ); // unacceptable target_
+			DEBUG_ERR(target_!=GL_ARRAY_BUFFER && target_!=GL_ELEMENT_ARRAY_BUFFER); // unacceptable target_
 
-			return BufferObject::create( target_, sizeInBytes, dataPtr, usage_ );
+			return BufferObject::create(target_, sizeInBytes, dataPtr, usage_);
 		}
 
 		/**
@@ -25,8 +25,8 @@ class Vbo: public BufferObject
 		 */
 		static void unbindAllTargets()
 		{
-			glBindBufferARB( GL_ARRAY_BUFFER, 0 );
-			glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER, 0 );
+			glBindBufferARB(GL_ARRAY_BUFFER, 0);
+			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 };
 

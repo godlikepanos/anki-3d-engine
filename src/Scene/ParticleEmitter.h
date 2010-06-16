@@ -57,10 +57,10 @@ class ParticleEmitter: public SceneNode
 		uint timeOfPrevEmittion;
 
 		// funcs
-		ParticleEmitter(): SceneNode( NT_PARTICLE_EMITTER ) {}
+		ParticleEmitter(): SceneNode(NT_PARTICLE_EMITTER) {}
 		void render();
 		void renderDepth() {}
-		void init( const char* filename );
+		void init(const char* filename);
 		void deinit() {}
 		void update();
 };
