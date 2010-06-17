@@ -636,7 +636,7 @@ inline Mat4 Mat4::getInverse() const
 	det = ME(0, 0)*m4(0, 0)+ME(1, 0)*m4(0, 1)+ME(2, 0)*m4(0, 2)+ME(3, 0)*m4(0, 3);
 
 	DEBUG_ERR(isZero(det)); // Cannot invert, det == 0
-	det = 1/det;
+	det = 1.0/det;
 	m4 *= det;
 	return m4;
 }
@@ -674,7 +674,7 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	 * and the optimized:
 	 */
 	DEBUG_ERR(!isZero(m0(3, 0)+m0(3, 1)+m0(3, 2)+m0(3, 3)-1.0) ||
-	           !isZero(m1(3, 0)+m1(3, 1)+m1(3, 2)+m1(3, 3)-1.0)); // one of the 2 mat4 doesnt represent transformation
+	          !isZero(m1(3, 0)+m1(3, 1)+m1(3, 2)+m1(3, 3)-1.0)); // one of the 2 mat4 doesnt represent transformation
 
 	Mat4 m4;
 

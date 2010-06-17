@@ -350,6 +350,23 @@ class Renderer
 				void run();
 		}; // end Pps
 
+
+		/**
+		 * Blending stage
+		 */
+		class Bs: public RenderingStage
+		{
+			friend class Renderer;
+
+			public:
+				Bs(Renderer& r_): RenderingStage(r_) {}
+
+			private:
+				void init();
+				void run();
+		}; // end Bs
+
+
 		/**
 		 * Debugging stage
 		 */
@@ -435,17 +452,6 @@ class Renderer
 		 * @return A 4x4 projection matrix
 		 */
 		static Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
-
-		/**
-		 * Get last OpenGL error string
-		 * @return An error string or NULL if not error
-		 */
-		static const uchar* getLastError();
-
-		/**
-		 * Print last OpenGL error or nothing if there is no error
-		 */
-		static void printLastError();
 
 		/**
 		 * @name Funcs that control the FFP state

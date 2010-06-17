@@ -94,25 +94,40 @@ is pretty straightforward and minimal.
 updated though.
   
 
-=========================================
-Generating source documentation (doxygen)
-=========================================
-
-The AnKi source code uses doxygen style comments inside the source. To generate
-the html documentation from a terminal do:
-
-#) $ cd docs
-#) $ doxygen doxyfile
-
-Then open doxygen.html to see it.
-
-
 ======
 Assets
 ======
 
 Currently there are no assets (models, textures, materials etc) so even if you
 build it, the application will fail to run.
+
+
+===================
+System requirements
+===================
+
+The engine requires:
+
+- GPU with shader model 4
+- Linux OS
+- Proprietary GPU drivers (as far as Catalyst is concerned >= 9.12)
+
+Development rig: Ubuntu 9.10, AMD Radeon 4870. So it should be working on
+similar systems.
+
+
+=========================================
+Generating source documentation (doxygen)
+=========================================
+
+The AnKi source code utilises doxygen style comments. For that you need doxygen
+(http://www.doxygen.org/). To generate the html documentation from a terminal
+do:
+
+#) $ cd docs
+#) $ doxygen doxyfile
+
+Then open doxygen.html to see it.
   
 
 ============
@@ -243,6 +258,7 @@ ToDo list
 	- How to make floating particles like smoke. But first try with one body and
 	  manualy setting the gravity
 	- What the btCollisionObject::setActivationState takes as parameter?
-- Enable depth test before skybox rendering to see what happens
+- Enable depth test before skybox rendering to see what happens -> Forgot to
+  disable the test
 - Re-enable the stencil tex in Ms.cpp
 
