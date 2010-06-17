@@ -350,7 +350,6 @@ class Renderer
 				void run();
 		}; // end Pps
 
-
 		/**
 		 * Blending stage
 		 */
@@ -362,10 +361,16 @@ class Renderer
 				Bs(Renderer& r_): RenderingStage(r_) {}
 
 			private:
+				Fbo fbo;
+				Fbo refractFbo;
+				ShaderProg refractSProg;
+				Texture refractFai;
+
+				void createFbo();
+				void createRefractFbo();
 				void init();
 				void run();
 		}; // end Bs
-
 
 		/**
 		 * Debugging stage
