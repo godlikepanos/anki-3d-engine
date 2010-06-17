@@ -244,11 +244,9 @@ bool ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 		glBindAttribLocation(glId, loc, name.c_str());
 
 		// check for error
-		GLenum errId = glGetError();
-		if(errId != GL_NO_ERROR)
+		if(!GL_OK())
 		{
-			SHADER_ERROR("Something went wrong for attrib \"" << name << "\" and location " << loc << " (" <<
-			              gluErrorString(errId) << ")");
+			SHADER_ERROR("Something went wrong for attrib \"" << name << "\" and location " << loc);
 			return false;
 		}
 	}

@@ -22,6 +22,11 @@ class Material: public Resource
 	friend class Renderer;
 	friend class MeshNode;
 
+	public:
+		Material();
+		bool load(const char* filename);
+		void unload();
+
 	private:
 		/**
 		 * Standard attribute variables that are acceptable inside the @ref ShaderProg
@@ -124,22 +129,15 @@ class Material: public Resource
 		bool wireframe;
 		bool castsShadow; ///< Used in shadowmapping passes but not in Ez
 
-
 		/**
 		 * The func sweeps all the variables of the shader program to find standard shader program variables. It updates the
-		 * stdAttribVars
-		 * and stdUniVars arrays.
+		 * stdAttribVars and stdUniVars arrays.
 		 * @return True on success
 		 */
 		bool initStdShaderVars();
 
 		bool hasHWSkinning() const { return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL; }
 		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL; }
-
-	public:
-		Material();
-		bool load(const char* filename);
-		void unload();
 };
 
 

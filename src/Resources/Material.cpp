@@ -285,7 +285,9 @@ bool Material::load(const char* filename)
 					case GL_FLOAT:
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_FLOAT)
+						{
 							var.value.float_ = token->getValue().getFloat();
+						}
 						else
 						{
 							PARSE_ERR_EXPECTED("float");
@@ -294,15 +296,18 @@ bool Material::load(const char* filename)
 						break;
 					// vec2
 					case GL_FLOAT_VEC2:
-						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 2, &var.value.vec2[0])) return false;
+						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 2, &var.value.vec2[0]))
+							return false;
 						break;
 					// vec3
 					case GL_FLOAT_VEC3:
-						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 3, &var.value.vec3[0])) return false;
+						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 3, &var.value.vec3[0]))
+							return false;
 						break;
 					// vec4
 					case GL_FLOAT_VEC4:
-						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 4, &var.value.vec4[0])) return false;
+						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 4, &var.value.vec4[0]))
+							return false;
 						break;
 				};
 

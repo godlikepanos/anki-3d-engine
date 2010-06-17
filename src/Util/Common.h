@@ -52,6 +52,7 @@ enum MsgType
 extern ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func);
 extern ostream& msgSuffix(ostream& cs);
 extern ostream& msgSuffixFatal(ostream& cs);
+extern bool msgGlError(const char* file, int line, const char* func);
 
 #ifdef __GNUG__
 	#define FUNCTION __PRETTY_FUNCTION__
@@ -87,6 +88,9 @@ extern ostream& msgSuffixFatal(ostream& cs);
 #else
 	#define DEBUG_CODE if(false)
 #endif
+
+/// OpenGL check
+#define GL_OK() msgGlError(__FILE__, __LINE__, FUNCTION)
 
 
 /// a line so I dont have to write the same crap all the time

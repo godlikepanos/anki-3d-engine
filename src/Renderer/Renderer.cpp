@@ -318,23 +318,3 @@ Mat4 Renderer::ortho(float left, float right, float bottom, float top, float nea
 	return m;
 }
 
-
-//======================================================================================================================
-// getLastError                                                                                                        =
-//======================================================================================================================
-const uchar* Renderer::getLastError()
-{
-	return gluErrorString(glGetError());
-}
-
-
-//======================================================================================================================
-// printLastError                                                                                                      =
-//======================================================================================================================
-void Renderer::printLastError()
-{
-	GLenum errid = glGetError();
-	if(errid != GL_NO_ERROR)
-		ERROR("OpenGL Error: " << gluErrorString(errid));
-}
-

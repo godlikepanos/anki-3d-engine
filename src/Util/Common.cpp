@@ -1,3 +1,5 @@
+#include <GL/glew.h>
+#include <GL/glu.h>
 #include "Common.h"
 #include "App.h"
 #include "Util.h"
@@ -105,8 +107,20 @@ ostream& msgSuffix(ostream& cs)
 //======================================================================================================================
 ostream& msgSuffixFatal(ostream& cs)
 {
-	ostream& cs_ = msgSuffix(cs);
+	msgSuffix(cs);
 	::exit(1);
 	return cs;
+}
+
+
+//======================================================================================================================
+// msgGlError                                                                                                          =
+//======================================================================================================================
+bool msgGlError(const char* file, int line, const char* func)
+{
+	GLenum errId = glGetError();
+	if(errId == GL_NO_ERROR) return true;
+	msgPrefix(MT_ERROR, file, line, func) << "OpenGL Err: " << gluErrorString(errId) << msgSuffix;
+	return false;
 }
 

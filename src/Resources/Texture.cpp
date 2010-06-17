@@ -88,7 +88,7 @@ bool Texture::load(const char* filename)
 bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_,
                              bool mimapping)
 {
-	DEBUG_ERR(glGetError() != GL_NO_ERROR); // dont enter the func with prev error
+	GL_OK(); // dont enter the func with prev error
 
 	target = GL_TEXTURE_2D;
 	DEBUG_ERR(internalFormat>0 && internalFormat<=4); // deprecated internal format
