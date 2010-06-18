@@ -1,4 +1,7 @@
 #include "Renderer.h"
+#include "App.h"
+#include "Scene.h"
+#include "MeshNode.h"
 
 
 //======================================================================================================================
@@ -11,10 +14,10 @@ void Renderer::Bs::createFbo()
 
 	fbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r.pps.fai.getGlId(), 0); /// @todo the FAI will change
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if(!fbo.isGood()) FATAL( "Cannot create deferred shading blending stage FBO" );
+	if(!fbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
 
 	fbo.unbind();
 }
@@ -32,7 +35,7 @@ void Renderer::Bs::createRefractFbo()
 
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, refractFai.getGlId(), 0);
 
-	if(!fbo.isGood()) FATAL( "Cannot create deferred shading blending stage FBO" );
+	if(!fbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
 
 	fbo.unbind();
 }
@@ -66,7 +69,8 @@ void Renderer::Bs::run()
 		r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
 
 		// refracts
-		if(meshNode->material->stdUniVars[Material::SUV_PPS_FAI])
+		if(meshNode->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI] ||
+		   meshNode->material->stdUniVars[Material::SUV_PPS_POST_PASS_FAI])
 		{
 
 		}

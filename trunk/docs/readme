@@ -261,4 +261,6 @@ ToDo list
 - Enable depth test before skybox rendering to see what happens -> Forgot to
   disable the test
 - Re-enable the stencil tex in Ms.cpp
+- See if the restrictions in FBOs (all FAIs same size) still apply
+- Remove the EXT from some GL funcs
 

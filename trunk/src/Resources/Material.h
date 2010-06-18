@@ -48,9 +48,9 @@ class Material: public Resource
 		 * Standard uniform variables
 		 *
 		 * After changing the enum update also:
-		 * - some statics in Material.cpp
+		 * - Some statics in Material.cpp
 		 * - Renderer::setupMaterial
-		 * - the generic material shader (optional)
+		 * - The generic material shader (maybe)
 		 */
 		enum StdUniVars
 		{
@@ -71,7 +71,8 @@ class Material: public Resource
 			SUV_MS_SPECULAR_FAI,
 			SUV_MS_DEPTH_FAI,
 			SUV_IS_FAI,
-			SUV_PPS_FAI,
+			SUV_PPS_PRE_PASS_FAI,
+			SUV_PPS_POST_PASS_FAI,
 			// Other
 			SUV_RENDERER_SIZE,
 			SUV_SCENE_AMBIENT_COLOR,

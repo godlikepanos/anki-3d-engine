@@ -8,105 +8,132 @@
 
 
 //======================================================================================================================
-// init                                                                                                                =
+// initPassFbo                                                                                                         =
 //======================================================================================================================
-void Renderer::Pps::init()
+void Renderer::Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 {
-	// create FBO
 	fbo.create();
 	fbo.bind();
 
-	// inform in what buffers we draw
 	fbo.setNumOfColorAttachements(1);
 
-	// create the texes
 	fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT, false);
 
-	// attach
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0);
 
-	// test if success
 	if(!fbo.isGood())
-		FATAL("Cannot create post-processing stage FBO");
+		FATAL(msg);
 
 	fbo.unbind();
-
-
-	// init the shader and it's vars
-	string pps = "";
-	if(ssao.enabled)
-	{
-		pps += "#define _SSAO_\n";
-	}
-
-	if(hdr.enabled)
-	{
-		pps += "#define _HDR_\n";
-	}
-
-	sProg.customLoad("shaders/Pps.glsl", pps.c_str());
-	sProg.bind();
-
-	sProg.uniVars.isFai = sProg.findUniVar("isFai");
-
-	if(ssao.enabled)
-	{
-		ssao.init();
-		sProg.uniVars.ppsSsaoFai = sProg.findUniVar("ppsSsaoFai");
-	}
-
-	if(hdr.enabled)
-	{
-		hdr.init();
-		sProg.uniVars.hdrFai = sProg.findUniVar("ppsHdrFai");
-	}
-
-	/// @ todo enable lscatt
-	/*if(R::Pps::Lscatt::enabled)
-	{
-		R::Pps::Lscatt::init();
-		sProg.uniVars.lscattFai = sProg.findUniVar("ppsLscattFai")->getLoc();
-	}*/
-
 }
 
 
 //======================================================================================================================
-// run                                                                                                                 =
+// initPrePassSProg                                                                                                    =
 //======================================================================================================================
-void Renderer::Pps::run()
+void Renderer::Pps::initPrePassSProg()
+{
+	string pps = "";
+	if(ssao.enabled)
+		pps += "#define SSAO_ENABLED\n";
+
+	prePassSProg.customLoad("shaders/PpsPrePass.glsl", pps.c_str());
+	prePassSProg.bind();
+
+	if(ssao.enabled)
+	{
+		prePassSProg.uniVars.ppsSsaoFai = prePassSProg.findUniVar("ppsSsaoFai");
+	}
+
+	prePassSProg.uniVars.isFai = prePassSProg.findUniVar("isFai");
+}
+
+
+//======================================================================================================================
+// initPostPassSProg                                                                                                   =
+//======================================================================================================================
+void Renderer::Pps::initPostPassSProg()
+{
+	string pps = "";
+	if(hdr.enabled)
+		pps += "#define HDR_ENABLED\n";
+
+	postPassSProg.customLoad("shaders/PpsPostPass.glsl", pps.c_str());
+	postPassSProg.bind();
+
+	if(hdr.enabled)
+		postPassSProg.uniVars.ppsSsaoFai = postPassSProg.findUniVar("ppsHdrFai");
+
+	postPassSProg.uniVars.ppsPrePassFai = postPassSProg.findUniVar("ppsPrePassFai");
+}
+
+
+//======================================================================================================================
+// init                                                                                                                =
+//======================================================================================================================
+void Renderer::Pps::init()
+{
+	if(ssao.enabled)
+		ssao.init();
+
+	if(hdr.enabled)
+		hdr.init();
+
+	initPassFbo(prePassFbo, prePassFai, "Cannot create pre-pass post-processing stage FBO");
+	initPassFbo(postPassFbo, postPassFai, "Cannot create post-pass post-processing stage FBO");
+
+	initPrePassSProg();
+	initPostPassSProg();
+}
+
+
+//======================================================================================================================
+// runPrePass                                                                                                          =
+//======================================================================================================================
+void Renderer::Pps::runPrePass()
 {
 	if(ssao.enabled)
 		ssao.run();
 
+	prePassFbo.bind();
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	Renderer::setViewport(0, 0, r.width, r.height);
+
+	prePassSProg.bind();
+	prePassSProg.uniVars.isFai->setTexture(r.is.fai, 0);
+
+	if(ssao.enabled)
+		prePassSProg.uniVars.ppsSsaoFai->setTexture(ssao.fai, 1);
+
+	Renderer::drawQuad(0);
+
+	Fbo::unbind();
+}
+
+
+//======================================================================================================================
+// runPostPass                                                                                                         =
+//======================================================================================================================
+void Renderer::Pps::runPostPass()
+{
 	if(hdr.enabled)
 		hdr.run();
 
-	fbo.bind();
+	postPassFbo.bind();
 
-	// set GL
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
-
 	Renderer::setViewport(0, 0, r.width, r.height);
 
-	// set shader
-	sProg.bind();
-	sProg.uniVars.isFai->setTexture(r.is.fai, 0);
+	postPassSProg.bind();
+	postPassSProg.uniVars.ppsPrePassFai->setTexture(prePassFai, 0);
 
 	if(hdr.enabled)
-	{
-		sProg.uniVars.hdrFai->setTexture(hdr.fai, 1);
-	}
+		postPassSProg.uniVars.hdrFai->setTexture(hdr.fai, 1);
 
-	if(ssao.enabled)
-	{
-		sProg.uniVars.ppsSsaoFai->setTexture(ssao.fai, 2);
-	}
-
-	// draw quad
 	Renderer::drawQuad(0);
 
-	// unbind FBO
-	fbo.unbind();
+	Fbo::unbind();
 }

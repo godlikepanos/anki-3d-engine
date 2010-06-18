@@ -18,34 +18,35 @@
 //======================================================================================================================
 Material::StdVarInfo Material::stdAttribVarInfos[SAV_NUM] =
 {
-	{ "position", GL_FLOAT_VEC3 },
-	{ "tangent", GL_FLOAT_VEC4 },
-	{ "normal", GL_FLOAT_VEC3 },
-	{ "texCoords", GL_FLOAT_VEC2 },
-	{ "vertWeightBonesNum", GL_FLOAT },
-	{ "vertWeightBoneIds", GL_FLOAT_VEC4},
-	{ "vertWeightWeights", GL_FLOAT_VEC4 }
+	{"position", GL_FLOAT_VEC3},
+	{"tangent", GL_FLOAT_VEC4},
+	{"normal", GL_FLOAT_VEC3},
+	{"texCoords", GL_FLOAT_VEC2},
+	{"vertWeightBonesNum", GL_FLOAT},
+	{"vertWeightBoneIds", GL_FLOAT_VEC4},
+	{"vertWeightWeights", GL_FLOAT_VEC4}
 };
 
 Material::StdVarInfo Material::stdUniVarInfos[SUV_NUM] =
 {
-	{ "skinningRotations", GL_FLOAT_MAT3},
-	{ "skinningTranslations", GL_FLOAT_VEC3 },
-	{ "modelMat", GL_FLOAT_MAT4 },
-	{ "viewMat", GL_FLOAT_MAT4 },
-	{ "projectionMat", GL_FLOAT_MAT4 },
-	{ "modelViewMat", GL_FLOAT_MAT4 },
-	{ "ViewProjectionMat", GL_FLOAT_MAT4 },
-	{ "normalMat", GL_FLOAT_MAT3 },
-	{ "modelViewProjectionMat", GL_FLOAT_MAT4 },
-	{ "msNormalFai", GL_SAMPLER_2D },
-	{ "msDiffuseFai", GL_SAMPLER_2D },
-	{ "msSpecularFai", GL_SAMPLER_2D },
-	{ "msDepthFai", GL_SAMPLER_2D },
-	{ "isFai", GL_SAMPLER_2D },
-	{ "ppsFai", GL_SAMPLER_2D },
-	{ "rendererSize", GL_FLOAT_VEC2 },
-	{ "sceneAmbientColor", GL_FLOAT_VEC3 }
+	{"skinningRotations", GL_FLOAT_MAT3},
+	{"skinningTranslations", GL_FLOAT_VEC3},
+	{"modelMat", GL_FLOAT_MAT4},
+	{"viewMat", GL_FLOAT_MAT4},
+	{"projectionMat", GL_FLOAT_MAT4},
+	{"modelViewMat", GL_FLOAT_MAT4},
+	{"ViewProjectionMat", GL_FLOAT_MAT4},
+	{"normalMat", GL_FLOAT_MAT3},
+	{"modelViewProjectionMat", GL_FLOAT_MAT4},
+	{"msNormalFai", GL_SAMPLER_2D},
+	{"msDiffuseFai", GL_SAMPLER_2D},
+	{"msSpecularFai", GL_SAMPLER_2D},
+	{"msDepthFai", GL_SAMPLER_2D},
+	{"isFai", GL_SAMPLER_2D},
+	{"ppsPrePassFai", GL_SAMPLER_2D},
+	{"ppsPostPassFai", GL_SAMPLER_2D},
+	{"rendererSize", GL_FLOAT_VEC2},
+	{"sceneAmbientColor", GL_FLOAT_VEC3}
 };
 
 
@@ -58,7 +59,7 @@ struct BlendParam
 	const char* str;
 };
 
-static BlendParam blendingParams [] =
+static BlendParam blendingParams[] =
 {
 	{GL_ZERO, "GL_ZERO"},
 	{GL_ONE, "GL_ONE"},

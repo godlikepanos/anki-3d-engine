@@ -73,7 +73,8 @@ void Renderer::render(Camera& cam_)
 
 	ms.run();
 	is.run();
-	pps.run();
+	pps.runPrePass();
+	pps.runPostPass();
 	dbg.run();
 
 	++framesNum;
@@ -190,8 +191,11 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	if(mtl.stdUniVars[Material::SUV_IS_FAI])
 		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is.fai, textureUnit++);
 
-	if(mtl.stdUniVars[Material::SUV_PPS_FAI])
-		mtl.stdUniVars[Material::SUV_PPS_FAI]->setTexture(pps.fai, textureUnit++);
+	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
+		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps.prePassFai, textureUnit++);
+
+	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
+		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps.postPassFai, textureUnit++);
 
 
 	//
