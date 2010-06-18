@@ -226,6 +226,7 @@ class Renderer
 		class Pps: private RenderingStage
 		{
 			friend class Renderer;
+			friend class MainRenderer;
 
 			public:
 				/**
@@ -318,36 +319,42 @@ class Renderer
 						Ssao(Renderer& r_): RenderingStage(r_) {}
 				}; // end Ssao
 
-
-			PROPERTY_R(bool, enabled, isEnabled)
-			PROPERTY_R(float, renderingQuality, getRenderingQuality)
-
-			public:
-				Texture fai;
-				Hdr hdr;
-				Ssao ssao;
-
-				Pps(Renderer& r_): RenderingStage(r_), hdr(r_), ssao(r_) {}
-
-			private:
+				/// Custom ShaderProg
 				class PpsShaderProg: public ShaderProg
 				{
 					public:
 						struct
 						{
 							const ShaderProg::UniVar* isFai;
+							const ShaderProg::UniVar* ppsPrePassFai;
 							const ShaderProg::UniVar* ppsSsaoFai;
-							const ShaderProg::UniVar* msNormalFai;
 							const ShaderProg::UniVar* hdrFai;
-							const ShaderProg::UniVar* lscattFai;
-
 						} uniVars;
 				};
-				PpsShaderProg sProg;
-				Fbo fbo;
 
+			PROPERTY_R(bool, enabled, isEnabled)
+			PROPERTY_R(float, renderingQuality, getRenderingQuality)
+
+			public:
+				Hdr hdr;
+				Ssao ssao;
+
+				Pps(Renderer& r_): RenderingStage(r_), hdr(r_), ssao(r_) {}
+
+			private:
+				Texture prePassFai;
+				Texture postPassFai;
+				Fbo prePassFbo;
+				Fbo postPassFbo;
+				PpsShaderProg prePassSProg;
+				PpsShaderProg postPassSProg;
+
+				void initPassFbo(Fbo& fbo, Texture& fai, const char* msg);
+				void initPrePassSProg();
+				void initPostPassSProg();
 				void init();
-				void run();
+				void runPrePass();
+				void runPostPass();
 		}; // end Pps
 
 		/**
