@@ -43,7 +43,7 @@ void Renderer::Is::Sm::init()
 	fbo.setNumOfColorAttachements(0);
 
 	// attach the texture
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())
@@ -88,7 +88,7 @@ void Renderer::Is::Sm::run(const Camera& cam)
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->material->blends || meshNode->material->refracts) continue;
+		if(meshNode->material->blends) continue;
 
 		DEBUG_ERR(meshNode->material->dpMtl == NULL);
 

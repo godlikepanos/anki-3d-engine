@@ -127,7 +127,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						vertShaderBegins.definedInLine = scanner.getLineNumber();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
 						sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-						                       Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						                      Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 /* geomShaderBegins */
@@ -170,7 +170,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						geomShaderBegins.definedInLine = scanner.getLineNumber();
 						geomShaderBegins.globalLine = sourceLines.size() + 1;
 						sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-						                       Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						                      Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 /* fragShaderBegins */
@@ -217,9 +217,10 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 							//int line = sourceLines.size();
 							sourceLines.push_back(string("#line 0 ") + Util::intToStr(depth+1) + " // " +
 							                      lines[scanner.getLineNumber()-1]);
-							if(!parseFileForPragmas(token->getValue().getString(), depth+1)) return false;
+							if(!parseFileForPragmas(token->getValue().getString(), depth+1))
+								return false;
 							sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-							                       Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
+							                      Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
 							// stop play
 						}
 						else
@@ -235,7 +236,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_STRING)
 						{
-							ERROR( "todo" );
+							ERROR("todo");
 						}
 						else
 						{
@@ -266,7 +267,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 									else
 									{
 										PARSE_ERR("Attribute \"" << varName << "\" already defined at " << attrib->definedInFile << ":" <<
-										           attrib->definedInLine);
+										          attrib->definedInLine);
 									}
 									return false;
 								}
@@ -276,7 +277,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 									if(attrib->customLoc == loc)
 									{
 										PARSE_ERR("The attributes \"" << attrib->name << "\" (" << attrib->definedInFile << ":" <<
-										           attrib->definedInLine << ") and \"" << varName << "\" share the same location");
+										          attrib->definedInLine << ") and \"" << varName << "\" share the same location");
 										return false;
 									}
 								}

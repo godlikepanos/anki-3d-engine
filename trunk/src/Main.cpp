@@ -290,17 +290,11 @@ void init()
 }
 
 
-
-
 //======================================================================================================================
-// main                                                                                                                =
+//                                                                                                                     =
 //======================================================================================================================
-int main(int argc, char* argv[])
+void mainLoop()
 {
-	new App(argc, argv);
-
-	init();
-
 	INFO("Entering main loop");
 	int ticks = App::getTicks();
 	do
@@ -406,7 +400,18 @@ int main(int argc, char* argv[])
 			if(app->getMainRenderer()->getFramesNum() == 5000) break;
 	}while(true);
 	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
+}
 
+
+//======================================================================================================================
+// main                                                                                                                =
+//======================================================================================================================
+int main(int argc, char* argv[])
+{
+	new App(argc, argv);
+
+	init();
+	mainLoop();
 
 	INFO("Exiting...");
 	app->quitApp(EXIT_SUCCESS);

@@ -14,8 +14,8 @@ void Renderer::Bs::createFbo()
 
 	fbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	if(!fbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
 
@@ -28,16 +28,16 @@ void Renderer::Bs::createFbo()
 //======================================================================================================================
 void Renderer::Bs::createRefractFbo()
 {
-	fbo.create();
-	fbo.bind();
+	refractFbo.create();
+	refractFbo.bind();
 
-	fbo.setNumOfColorAttachements(1);
+	refractFbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, refractFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
 
-	if(!fbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
+	if(!refractFbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
 
-	fbo.unbind();
+	refractFbo.unbind();
 }
 
 
@@ -58,6 +58,8 @@ void Renderer::Bs::run()
 {
 	Renderer::setViewport(0, 0, r.width, r.height);
 
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(false);
 
 	// render the meshes
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
@@ -69,17 +71,18 @@ void Renderer::Bs::run()
 		r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
 
 		// refracts
-		if(meshNode->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI] ||
-		   meshNode->material->stdUniVars[Material::SUV_PPS_POST_PASS_FAI])
+		if(meshNode->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
 		{
 
 		}
 		else
 		{
-
+			fbo.bind();
+			meshNode->render();
 		}
 	}
 
-	Fbo::unbind();
+	glDepthMask(true);
 	glPolygonMode(GL_FRONT, GL_FILL); // the rendering above fucks the polygon mode
+	Fbo::unbind();
 }

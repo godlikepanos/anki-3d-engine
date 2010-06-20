@@ -141,17 +141,6 @@ bool Material::load(const char* filename)
 			}
 			blends = token->getValue().getInt();
 		}
-		//** REFRACTS **
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "REFRACTS"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				PARSE_ERR_EXPECTED("number");
-				return false;
-			}
-			refracts = token->getValue().getInt();
-		}
 		//** BLENDING_SFACTOR **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDING_SFACTOR"))
 		{
@@ -391,7 +380,6 @@ bool Material::initStdShaderVars()
 		}
 	}
 
-
 	return true;
 }
 
@@ -408,7 +396,6 @@ Material::Material()
 	depthTesting = true;
 	wireframe = false;
 	castsShadow = true;
-	refracts = false;
 	dpMtl = NULL;
 }
 

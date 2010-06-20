@@ -110,10 +110,10 @@ The engine requires:
 
 - GPU with shader model 4
 - Linux OS
-- Proprietary GPU drivers (as far as Catalyst is concerned >= 9.12)
+- Proprietary GPU drivers
 
-Development rig: Ubuntu 9.10, AMD Radeon 4870. So it should be working on
-similar systems.
+Development rig: Ubuntu 9.10, AMD Radeon 4870 w/ Catalyst 10.6. So it should be
+working on similar systems.
 
 
 =========================================
@@ -262,5 +262,5 @@ ToDo list
   disable the test
 - Re-enable the stencil tex in Ms.cpp
 - See if the restrictions in FBOs (all FAIs same size) still apply
-- Remove the EXT from some GL funcs
+- Remove the EXT from some GL funcs -> done
 

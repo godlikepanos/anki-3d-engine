@@ -29,7 +29,7 @@ void Renderer::Pps::Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
 	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// attach
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())

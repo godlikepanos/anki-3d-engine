@@ -19,7 +19,7 @@ void Renderer::Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 
 	fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT, false);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	if(!fbo.isGood())
 		FATAL(msg);
@@ -62,7 +62,7 @@ void Renderer::Pps::initPostPassSProg()
 	postPassSProg.bind();
 
 	if(hdr.enabled)
-		postPassSProg.uniVars.ppsSsaoFai = postPassSProg.findUniVar("ppsHdrFai");
+		postPassSProg.uniVars.ppsHdrFai = postPassSProg.findUniVar("ppsHdrFai");
 
 	postPassSProg.uniVars.ppsPrePassFai = postPassSProg.findUniVar("ppsPrePassFai");
 }
@@ -131,7 +131,7 @@ void Renderer::Pps::runPostPass()
 	postPassSProg.uniVars.ppsPrePassFai->setTexture(prePassFai, 0);
 
 	if(hdr.enabled)
-		postPassSProg.uniVars.hdrFai->setTexture(hdr.fai, 1);
+		postPassSProg.uniVars.ppsHdrFai->setTexture(hdr.fai, 1);
 
 	Renderer::drawQuad(0);
 
