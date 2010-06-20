@@ -29,7 +29,7 @@ class Texture: public Resource
 		bool load(const char* filename);
 		void unload();
 		bool createEmpty2D(float width, float height, int internalFormat, int format, GLenum type_, bool mipmapping);
-		bool createEmpty2DMSAA(float width, float height, int samplesNum, int internalFormat);
+		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
 
 		void bind(uint texUnit=0) const;
 		void setRepeat(bool repeat) const;

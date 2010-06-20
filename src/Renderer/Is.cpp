@@ -80,7 +80,7 @@ void Renderer::Is::initFbo()
 		FATAL("Cannot create deferred shading illumination stage FAI");
 
 	// attach
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())

@@ -99,6 +99,7 @@ Scanner scanner;
 				
 			texture = Rsrc::textures.load(token->getValue().getString());
 			texture->setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, 0);
+			texture->setRepeat(false);
 		}
 		// end of file
 		else if(token->getCode() == Scanner::TC_EOF)

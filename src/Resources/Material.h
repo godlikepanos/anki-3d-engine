@@ -125,7 +125,6 @@ class Material: public Resource
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
 		int blendingSfactor;
 		int blendingDfactor;
-		bool refracts;
 		bool depthTesting;
 		bool wireframe;
 		bool castsShadow; ///< Used in shadowmapping passes but not in Ez

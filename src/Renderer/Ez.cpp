@@ -25,7 +25,7 @@ void Renderer::Ms::Ez::init()
 
 	fbo.setNumOfColorAttachements(0);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	if(!fbo.isGood())
 		FATAL("Cannot create shadowmapping FBO");
@@ -52,7 +52,7 @@ void Renderer::Ms::Ez::run()
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->material->blends || meshNode->material->refracts) continue;
+		if(meshNode->material->blends) continue;
 
 		DEBUG_ERR(meshNode->material->dpMtl == NULL);
 

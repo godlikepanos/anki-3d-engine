@@ -328,7 +328,7 @@ class Renderer
 							const ShaderProg::UniVar* isFai;
 							const ShaderProg::UniVar* ppsPrePassFai;
 							const ShaderProg::UniVar* ppsSsaoFai;
-							const ShaderProg::UniVar* hdrFai;
+							const ShaderProg::UniVar* ppsHdrFai;
 						} uniVars;
 				};
 

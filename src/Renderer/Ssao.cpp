@@ -26,7 +26,7 @@ void Renderer::Pps::Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
 	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// attach
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, fai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())
@@ -65,7 +65,7 @@ void Renderer::Pps::Ssao::init()
 	pass0Fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// attach
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, pass0Fai.getGlId(), 0);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pass0Fai.getGlId(), 0);
 
 	// test if success
 	if(!pass0Fbo.isGood())

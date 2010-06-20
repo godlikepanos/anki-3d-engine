@@ -63,7 +63,7 @@ bool Texture::load(const char* filename)
 	int intFormat; // the internal format of the image
 	if(compressionEnabled)
 	{
-		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1 : GL_COMPRESSED_RGB_S3TC_DXT1;
 		intFormat = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
 	}
 	else
@@ -86,10 +86,8 @@ bool Texture::load(const char* filename)
 // createEmpty2D                                                                                                       =
 //======================================================================================================================
 bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_,
-                             bool mimapping)
+                            bool mimapping)
 {
-	GL_OK(); // dont enter the func with prev error
-
 	target = GL_TEXTURE_2D;
 	DEBUG_ERR(internalFormat>0 && internalFormat<=4); // deprecated internal format
 	DEBUG_ERR(glId != numeric_limits<uint>::max()); // Texture already loaded
@@ -113,31 +111,28 @@ bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int
 	if(mimapping)
 		glGenerateMipmap(target);
 
-	GLenum errid = glGetError();
-	if(errid != GL_NO_ERROR)
-	{
-		ERROR("OpenGL Error: " << gluErrorString(errid));
-		return false;
-	}
-	return true;
+	return GL_OK();
 }
 
 
 //======================================================================================================================
 // createEmpty2DMSAA                                                                                                   =
 //======================================================================================================================
-bool Texture::createEmpty2DMSAA(float width, float height, int samples_num, int internal_format)
+bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
 {
-	/*type = GL_TEXTURE_2D_MULTISAMPLE;
-	DEBUG_ERR(internal_format>0 && internal_format<=4); // deprecated internal format
-	DEBUG_ERR(glId != numeric_limits<uint>::max()) // Texture already loaded
+	target = GL_TEXTURE_2D_MULTISAMPLE;
+	DEBUG_ERR(glId != numeric_limits<uint>::max()); // Texture already loaded
 
 	glGenTextures(1, &glId);
 	bind();
 	
 	// allocate
-	glTexImage2DMultisample(type, samples_num, internal_format, width, height, false);*/
-	return true;
+	glTexImage2DMultisample(target, samplesNum, internalFormat, width_, height_, false);
+
+	if(mimapping)
+		glGenerateMipmap(target);
+
+	return GL_OK();
 }
 
 

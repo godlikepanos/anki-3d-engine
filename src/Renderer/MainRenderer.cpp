@@ -45,22 +45,6 @@ void MainRenderer::initGl()
 	if(!glewIsSupported("GL_VERSION_3_1"))
 		WARNING("OpenGL ver 3.1 not supported. The application may crash (and burn)");
 
-	if(!glewIsSupported("GL_EXT_framebuffer_object"))
-		WARNING("Framebuffer objects not supported. The application may crash (and burn)");
-
-	if(!glewIsSupported("GL_EXT_packed_depth_stencil"))
-		WARNING("GL_EXT_packed_depth_stencil not supported. The application may crash (and burn)");
-
-	if(!glewIsSupported("GL_ARB_vertex_buffer_object"))
-		WARNING("Vertex buffer objects not supported. The application may crash (and burn)");
-
-	if(!glewIsSupported("GL_ARB_texture_non_power_of_two"))
-		WARNING("Textures of non power of two not supported. The application may crash (and burn)");
-
-	if(!glewIsSupported("GL_ARB_vertex_buffer_object"))
-		WARNING("Vertex Buffer Objects not supported. The application may crash (and burn)");
-
-
 	// get max texture units
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum);
 
@@ -80,7 +64,7 @@ void MainRenderer::initGl()
 	glDepthMask(true);
 	glDepthFunc(GL_LESS);
 
-	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAtachments);
+	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
 }
 
 

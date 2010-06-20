@@ -1,5 +1,5 @@
-#ifndef _EXTENSION_H_
-#define _EXTENSION_H_
+#ifndef ENSION_H_
+#define ENSION_H_
 
 #include "Common.h"
 #include "Resource.h"
