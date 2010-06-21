@@ -126,12 +126,12 @@ void initPhysics()
 
 
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-					MeshNode* crate = new MeshNode;
+					/*MeshNode* crate = new MeshNode;
 					crate->init("models/crate0/crate0.mesh");
 					crate->getLocalTransform().setScale(1.11);
 
 					Transform trf(SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0);
-					body = app->getScene()->getPhyWorld()->createNewRigidBody(mass, trf, colShape, crate);
+					body = app->getScene()->getPhyWorld()->createNewRigidBody(mass, trf, colShape, crate);*/
 
 					/*MotionState* myMotionState = new MotionState(startTransform, crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);

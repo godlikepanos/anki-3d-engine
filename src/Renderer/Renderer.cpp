@@ -22,6 +22,7 @@ Renderer::Renderer():
 	ms(*this),
 	is(*this),
 	pps(*this),
+	bs(*this),
 	dbg(*this)
 {
 }
@@ -58,6 +59,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	ms.init();
 	is.init();
 	pps.init();
+	bs.init();
 	dbg.init();
 }
 
@@ -74,6 +76,7 @@ void Renderer::render(Camera& cam_)
 	ms.run();
 	is.run();
 	pps.runPrePass();
+	bs.run();
 	pps.runPostPass();
 	dbg.run();
 

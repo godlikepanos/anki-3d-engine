@@ -108,8 +108,8 @@ static void drawChar(char c)
 	float uvs[4][2] = {{uvLeft, uvTop}, {uvLeft, uvBottom}, {uvRight, uvBottom}, {uvRight, uvTop}};
 
 	// the coords
-	float fwh = fontW/2.0 + crntX;
-	float fhh = fontH/2.0 + crntY;
+	float fwh = fontW/2.0 - crntX;
+	float fhh = fontH/2.0 - crntY;
 	float coords[4][2] = {{-fwh, fhh}, {-fwh, -fhh}, {fwh, -fhh}, {fwh, fhh}}; // from top left counterclockwise
 
 

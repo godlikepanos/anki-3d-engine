@@ -83,7 +83,7 @@ void MainRenderer::render(Camera& cam_)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	sProg.bind();
-	sProg.findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
+	sProg.findUniVar("rasterImage")->setTexture(bs.refractFai, 0);
 	drawQuad(0);
 }
 

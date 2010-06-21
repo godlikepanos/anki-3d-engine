@@ -14,9 +14,8 @@ void Renderer::Bs::createFbo()
 
 	fbo.setNumOfColorAttachements(1);
 
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r.is.stencilRb);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	if(!fbo.isGood())
 		FATAL("Cannot create deferred shading blending stage FBO");
@@ -30,14 +29,15 @@ void Renderer::Bs::createFbo()
 //======================================================================================================================
 void Renderer::Bs::createRefractFbo()
 {
+	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT, false);
+
 	refractFbo.create();
 	refractFbo.bind();
 
 	refractFbo.setNumOfColorAttachements(1);
 
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r.is.stencilRb);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	if(!refractFbo.isGood())
 		FATAL("Cannot create deferred shading blending stage FBO");
@@ -74,8 +74,6 @@ void Renderer::Bs::run()
 		DEBUG_ERR(meshNode->material == NULL);
 		if(!meshNode->material->blends) continue;
 
-		r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
-
 		// refracts
 		if(meshNode->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
 		{
@@ -83,9 +81,9 @@ void Renderer::Bs::run()
 			refractFbo.bind();
 
 			glEnable(GL_STENCIL_TEST);
+			glClear(GL_STENCIL_BUFFER_BIT);
 			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-			glClear(GL_STENCIL_BUFFER_BIT);
 
 			r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
 			glDisable(GL_BLEND); // a hack
