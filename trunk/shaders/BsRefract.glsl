@@ -4,7 +4,7 @@
 
 #pragma anki fragShaderBegins
 
-uniform sampler2D fbo;
+uniform sampler2D fai;
 
 varying vec2 texCoords;
 

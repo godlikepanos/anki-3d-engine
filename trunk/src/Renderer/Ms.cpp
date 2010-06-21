@@ -21,8 +21,8 @@ void Renderer::Ms::init()
 	if(!normalFai.createEmpty2D(r.width, r.height, GL_RG16F, GL_RG, GL_FLOAT, false) ||
 	   !diffuseFai.createEmpty2D(r.width, r.height, GL_RGB16F, GL_RGB, GL_FLOAT, false) ||
 	   !specularFai.createEmpty2D(r.width, r.height, GL_RGBA16F, GL_RGBA, GL_FLOAT, false) ||
-	   //!depthFai.createEmpty2D(r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8))
-	   !depthFai.createEmpty2D(r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false))
+	   !depthFai.createEmpty2D(r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, false))
+	   //!depthFai.createEmpty2D(r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false))
 	{
 		FATAL("Failed to create one MS FAI. See prev error");
 	}
@@ -33,9 +33,9 @@ void Renderer::Ms::init()
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0);
 
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
 	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())

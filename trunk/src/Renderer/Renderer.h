@@ -363,6 +363,7 @@ class Renderer
 		class Bs: public RenderingStage
 		{
 			friend class Renderer;
+			friend class MainRenderer;
 
 			public:
 				Bs(Renderer& r_): RenderingStage(r_) {}
@@ -426,6 +427,7 @@ class Renderer
 		Ms ms; ///< Material rendering stage
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
+		Bs bs; ///< Blending stage
 		Dbg dbg; ///< Debugging rendering stage
 
 		Renderer();
