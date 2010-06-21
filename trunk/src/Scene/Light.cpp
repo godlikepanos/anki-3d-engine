@@ -10,7 +10,7 @@
 //======================================================================================================================
 void PointLight::init(const char* filename)
 {
-	lightProps = Rsrc::lightProps.load(filename);
+	lightProps = Resource::lightProps.load(filename);
 	radius = lightProps->getRadius();
 }
 
@@ -20,7 +20,7 @@ void PointLight::init(const char* filename)
 //======================================================================================================================
 void SpotLight::init(const char* filename)
 {
-	lightProps = Rsrc::lightProps.load(filename);
+	lightProps = Resource::lightProps.load(filename);
 	camera.setAll(lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance());
 	castsShadow = lightProps->castsShadow();
 	if(lightProps->getTexture() == NULL)
@@ -36,7 +36,7 @@ void SpotLight::init(const char* filename)
 //======================================================================================================================
 void Light::deinit()
 {
-	Rsrc::lightProps.unload(lightProps);
+	Resource::lightProps.unload(lightProps);
 }
 
 

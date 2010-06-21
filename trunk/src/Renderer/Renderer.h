@@ -370,7 +370,7 @@ class Renderer
 			private:
 				Fbo fbo;
 				Fbo refractFbo;
-				ShaderProg refractSProg;
+				ShaderProg* refractSProg;
 				Texture refractFai;
 
 				void createFbo();
@@ -451,7 +451,7 @@ class Renderer
 		 * @return The unprojected coords coords
 		 */
 		static Vec3 unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
-		                       const int view[4]);
+		                      const int view[4]);
 
 		/**
 		 * It returns an orthographic projection matrix
@@ -465,14 +465,6 @@ class Renderer
 		 */
 		static Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
 
-		/**
-		 * @name Funcs that control the FFP state
-		 */
-		/**@{*/
-		static void enableStencilTest();
-		static void disableStencilTest();
-		/**@}*/
-
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
@@ -485,6 +477,7 @@ class Renderer
 
 		static void drawQuad(int vertCoordsUniLoc);
 		void setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam);
+		static void setViewport(uint x, uint y, uint w, uint h) { glViewport(x,y,w,h); }
 
 		// to be removed
 	public:
@@ -494,7 +487,6 @@ class Renderer
 		static void setViewMatrix(const Camera& cam);
 		static void noShaders() { ShaderProg::unbind(); } ///< unbind shaders @todo remove this. From now on there will be only shaders
 		static void setProjectionViewMatrices(const Camera& cam) { setProjectionMatrix(cam); setViewMatrix(cam); }
-		static void setViewport(uint x, uint y, uint w, uint h) { glViewport(x,y,w,h); }
 		static void multMatrix(const Mat4& m4) { glMultMatrixf(&(m4.getTransposed())(0, 0)); } ///< OpenGL wrapper
 		static void multMatrix(const Transform& trf) { glMultMatrixf(&(Mat4(trf).getTransposed())(0, 0)); } ///< OpenGL wrapper
 		static void loadMatrix(const Mat4& m4) { glLoadMatrixf(&(m4.getTransposed())(0, 0)); } ///< OpenGL wrapper

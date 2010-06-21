@@ -196,7 +196,7 @@ bool map_t::load(const char* filename)
 		// strings is what we want in this case... please let it be G-Strings
 		if(token->getCode() == Scanner::TC_STRING)
 		{
-			Mesh* mesh = Rsrc::meshes.load(token->getValue().getString());
+			Mesh* mesh = Resource::meshes.load(token->getValue().getString());
 			if(!mesh) return false;
 
 			meshes.push_back(mesh);

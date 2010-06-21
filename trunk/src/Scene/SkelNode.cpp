@@ -21,7 +21,7 @@ SkelNode::SkelNode():
 //======================================================================================================================
 void SkelNode::init(const char* filename)
 {
-	skeleton = Rsrc::skeletons.load(filename);
+	skeleton = Resource::skeletons.load(filename);
 	skelAnimCtrl = new SkelAnimCtrl(this);
 }
 
@@ -31,7 +31,7 @@ void SkelNode::init(const char* filename)
 //======================================================================================================================
 void SkelNode::deinit()
 {
-	Rsrc::skeletons.unload(skeleton);
+	Resource::skeletons.unload(skeleton);
 }
 
 

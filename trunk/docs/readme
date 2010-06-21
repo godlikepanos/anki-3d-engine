@@ -258,9 +258,8 @@ ToDo list
 	- How to make floating particles like smoke. But first try with one body and
 	  manualy setting the gravity
 	- What the btCollisionObject::setActivationState takes as parameter?
-- Enable depth test before skybox rendering to see what happens -> Forgot to
   disable the test
-- Re-enable the stencil tex in Ms.cpp
+- Re-enable the stencil tex in Ms.cpp and replace all the stencil buffers with
+  that (Smo, Bs) to save memory
 - See if the restrictions in FBOs (all FAIs same size) still apply
-- Remove the EXT from some GL funcs -> done
 

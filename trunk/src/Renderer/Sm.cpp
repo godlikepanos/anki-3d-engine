@@ -43,7 +43,7 @@ void Renderer::Is::Sm::init()
 	fbo.setNumOfColorAttachements(0);
 
 	// attach the texture
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())

@@ -15,8 +15,8 @@
 //======================================================================================================================
 void MeshNode::init(const char* filename)
 {
-	mesh = Rsrc::meshes.load(filename);
-	material = Rsrc::materials.load(mesh->materialName.c_str());
+	mesh = Resource::meshes.load(filename);
+	material = Resource::materials.load(mesh->materialName.c_str());
 
 	// sanity checks
 	if(material->stdAttribVars[Material::SAV_TEX_COORDS]!=NULL && mesh->vbos.texCoords.getGlId()==0)
@@ -33,8 +33,8 @@ void MeshNode::init(const char* filename)
 //======================================================================================================================
 void MeshNode::deinit()
 {
-	Rsrc::meshes.unload(mesh);
-	Rsrc::materials.unload(material);
+	Resource::meshes.unload(mesh);
+	Resource::materials.unload(material);
 }
 
 
