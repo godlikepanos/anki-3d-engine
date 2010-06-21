@@ -19,7 +19,7 @@ void Renderer::Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 
 	fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT, false);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	if(!fbo.isGood())
 		FATAL(msg);

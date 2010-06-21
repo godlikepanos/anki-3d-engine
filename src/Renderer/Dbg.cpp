@@ -187,8 +187,8 @@ void Renderer::Dbg::init()
 	fbo.setNumOfColorAttachements(1);
 
 	// attach the textures
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.postPassFai.getGlId(), 0);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.postPassFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())

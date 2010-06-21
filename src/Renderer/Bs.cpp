@@ -14,10 +14,12 @@ void Renderer::Bs::createFbo()
 
 	fbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r.is.stencilRb);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if(!fbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
+	if(!fbo.isGood())
+		FATAL("Cannot create deferred shading blending stage FBO");
 
 	fbo.unbind();
 }
@@ -33,9 +35,12 @@ void Renderer::Bs::createRefractFbo()
 
 	refractFbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r.is.stencilRb);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if(!refractFbo.isGood()) FATAL("Cannot create deferred shading blending stage FBO");
+	if(!refractFbo.isGood())
+		FATAL("Cannot create deferred shading blending stage FBO");
 
 	refractFbo.unbind();
 }
@@ -48,6 +53,8 @@ void Renderer::Bs::init()
 {
 	createFbo();
 	createRefractFbo();
+
+	refractSProg = Resource::shaders.load("shaders/BsRefract.glsl");
 }
 
 
@@ -58,7 +65,6 @@ void Renderer::Bs::run()
 {
 	Renderer::setViewport(0, 0, r.width, r.height);
 
-	glEnable(GL_DEPTH_TEST);
 	glDepthMask(false);
 
 	// render the meshes
@@ -73,11 +79,44 @@ void Renderer::Bs::run()
 		// refracts
 		if(meshNode->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
 		{
+			// render to the temp FAI
+			refractFbo.bind();
 
+			glEnable(GL_STENCIL_TEST);
+			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+			glClear(GL_STENCIL_BUFFER_BIT);
+
+			r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
+			glDisable(GL_BLEND); // a hack
+			meshNode->render();
+
+			// render the temp FAI to prePassFai
+			fbo.bind();
+
+			glStencilFunc(GL_EQUAL, 0x1, 0x1);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+			if(meshNode->material->blends)
+			{
+				glEnable(GL_BLEND);
+				glBlendFunc(meshNode->material->blendingSfactor, meshNode->material->blendingDfactor);
+			}
+			else
+				glDisable(GL_BLEND);
+
+			refractSProg->bind();
+			refractSProg->findUniVar("fai")->setTexture(refractFai, 0);
+
+			Renderer::drawQuad(0);
+
+			// cleanup
+			glDisable(GL_STENCIL_TEST);
 		}
 		else
 		{
 			fbo.bind();
+			r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
 			meshNode->render();
 		}
 	}

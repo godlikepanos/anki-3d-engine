@@ -97,9 +97,11 @@ Scanner scanner;
 				return false;
 			}
 				
-			texture = Rsrc::textures.load(token->getValue().getString());
-			texture->setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, 0);
+			texture = Resource::textures.load(token->getValue().getString());
 			texture->setRepeat(false);
+			texture->setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, 0);
+			texture->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			texture->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 		// end of file
 		else if(token->getCode() == Scanner::TC_EOF)
@@ -125,5 +127,5 @@ Scanner scanner;
 void LightProps::unload()
 {
 	if(texture != NULL)
-		Rsrc::textures.unload(texture);
+		Resource::textures.unload(texture);
 }

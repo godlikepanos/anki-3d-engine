@@ -43,7 +43,6 @@ static void SetGL()
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_LIGHTING);
 	glDisable(GL_DEPTH_TEST);
 	glColor4fv(color);
 
@@ -96,22 +95,22 @@ static void drawChar(char c)
 		c = '~'+1;
 	}
 
-	const int charsPerLine = 16; // the chars that font_map.tga has per line
-	const int linesNum     = 8; // the lines of chars in font_map.tga
+	const int CHARS_PER_LINE = 16; // the chars that font_map.tga has per line
+	const int LINES_NUM      = 8; // the lines of chars in font_map.tga
 
 	// the uvs
-	float charWidth = 1.0/float(charsPerLine);
-	float charHeight = 1.0/float(linesNum);
-	float uvTop = float(linesNum - (c-' ')/charsPerLine) / float(linesNum);
-	float uvLeft = float((c-' ')%charsPerLine) / float(charsPerLine);
+	float charWidth = 1.0/float(CHARS_PER_LINE);
+	float charHeight = 1.0/float(LINES_NUM);
+	float uvTop = float(LINES_NUM - (c-' ')/CHARS_PER_LINE) / float(LINES_NUM);
+	float uvLeft = float((c-' ')%CHARS_PER_LINE) / float(CHARS_PER_LINE);
 	float uvRight = uvLeft + charWidth;
 	float uvBottom = uvTop - charHeight;
-	float uvs[4][2] = { {uvLeft, uvTop}, {uvLeft, uvBottom}, {uvRight, uvBottom}, {uvRight, uvTop} };
+	float uvs[4][2] = {{uvLeft, uvTop}, {uvLeft, uvBottom}, {uvRight, uvBottom}, {uvRight, uvTop}};
 
 	// the coords
-	float fwh = fontW/2.0;
-	float fhh = fontH/2.0;
-	float coords[4][2] = { {-fwh, fhh}, {-fwh, -fhh}, {fwh, -fhh}, {fwh, fhh} }; // fron top left counterclockwise
+	float fwh = fontW/2.0 + crntX;
+	float fhh = fontH/2.0 + crntY;
+	float coords[4][2] = {{-fwh, fhh}, {-fwh, -fhh}, {fwh, -fhh}, {fwh, fhh}}; // from top left counterclockwise
 
 
 	if(italic)
@@ -160,10 +159,10 @@ non static funcs                                                                
 // exec after init SDL
 void init()
 {
-	fontMap = Rsrc::textures.load("gfx/fontmapa.tga");
+	fontMap = Resource::textures.load("gfx/fontmapa.tga");
 	fontMap->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//font_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	shader = Rsrc::shaders.load("shaders/txt.glsl");
+	shader = Resource::shaders.load("shaders/txt.glsl");
 	setPos(0.0, 0.0);
 	setFontWidth(0.05);
 	setColor(Vec4(1.0, 1.0, 1.0, 1.0));
@@ -215,11 +214,11 @@ void printf(const char* format, ...)
 void print(const char* text)
 {
 	SetGL();
-	glTranslatef(crntX, crntY, 0.0);
+	//glTranslatef(crntX, crntY, 0.0);
 	for(char* pc=const_cast<char*>(text); *pc!='\0'; pc++)
 	{
 		glLoadIdentity();
-		glTranslatef(crntX, crntY, 0.0);
+		//glTranslatef(crntX, crntY, 0.0);
 		drawChar(*pc);
 	}
 	RestoreGL();

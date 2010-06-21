@@ -4,16 +4,11 @@
 
 #pragma anki fragShaderBegins
 
-uniform sampler2D fai;
+uniform sampler2D fbo;
 
 varying vec2 texCoords;
 
-
-
 void main()
 {
-	vec4 _color = texture2D( fai, texCoords );
-	if( _color.a == 0.0 ) discard;
-
-	gl_FragData[0].rgb = _color.rgb;
+	gl_FragData[0].rgb = texture2D(fai, texCoords).rgb;
 }

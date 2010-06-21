@@ -115,7 +115,7 @@ bool Material::load(const char* filename)
 				PARSE_ERR_EXPECTED("string");
 				return false;
 			}
-			shaderProg = Rsrc::shaders.load(token->getValue().getString());
+			shaderProg = Resource::shaders.load(token->getValue().getString());
 		}
 		//** DEPTH_MATERIAL **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DEPTH_PASS_MATERIAL"))
@@ -128,7 +128,7 @@ bool Material::load(const char* filename)
 				PARSE_ERR_EXPECTED("string");
 				return false;
 			}
-			dpMtl = Rsrc::materials.load(token->getValue().getString());
+			dpMtl = Resource::materials.load(token->getValue().getString());
 		}
 		//** BLENDS **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDS"))
@@ -261,7 +261,7 @@ bool Material::load(const char* filename)
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_STRING)
 						{
-							var.value.texture = Rsrc::textures.load(token->getValue().getString());
+							var.value.texture = Resource::textures.load(token->getValue().getString());
 							if(var.value.texture == NULL)
 								return false;
 						}
@@ -404,12 +404,12 @@ Material::Material()
 //======================================================================================================================
 void Material::unload()
 {
-	Rsrc::shaders.unload(shaderProg);
+	Resource::shaders.unload(shaderProg);
 
 	// loop all user defined vars and unload the textures
 	for(uint i=0; i<userDefinedVars.size(); i++)
 	{
-		Rsrc::textures.unload(userDefinedVars[i].value.texture);
+		Resource::textures.unload(userDefinedVars[i].value.texture);
 	}
 }
 

@@ -70,7 +70,7 @@ void Renderer::Is::initFbo()
 	glGenRenderbuffers(1, &stencilRb);
 	glBindRenderbuffer(GL_RENDERBUFFER, stencilRb);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, r.width, r.height);
-	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb);
 
 	// inform in what buffers we draw
 	fbo.setNumOfColorAttachements(1);
@@ -80,7 +80,7 @@ void Renderer::Is::initFbo()
 		FATAL("Cannot create deferred shading illumination stage FAI");
 
 	// attach
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())
@@ -251,13 +251,6 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 
 	light.lightProps->getTexture()->setRepeat(false);
 
-	/*
-	 * Before we render disable anisotropic in the light.texture because it produces artifacts.
-	 * todo see if this is necessary with future drivers
-	 */
-	light.lightProps->getTexture()->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	light.lightProps->getTexture()->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
 	// shader prog
 	const LightShaderProg* shdr; // because of the huge name
 
@@ -290,7 +283,7 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 	static Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 	Mat4 texProjectionMat;
 	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() *
-	                   Mat4::combineTransformations(light.camera.getViewMatrix(), Mat4(cam.getWorldTransform())) ;
+	                   Mat4::combineTransformations(light.camera.getViewMatrix(), Mat4(cam.getWorldTransform()));
 	shdr->uniVars.texProjectionMat->setMat4(&texProjectionMat);
 
 	// the shadowmap

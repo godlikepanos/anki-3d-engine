@@ -7,20 +7,14 @@
 #include "LightProps.h"
 
 
-namespace Rsrc {
+//======================================================================================================================
+// Statics                                                                                                             =
+//======================================================================================================================
+ResourceContainer<Texture>    Resource::textures;
+ResourceContainer<ShaderProg> Resource::shaders;
+ResourceContainer<Material>   Resource::materials;
+ResourceContainer<Mesh>       Resource::meshes;
+ResourceContainer<Skeleton>   Resource::skeletons;
+ResourceContainer<SkelAnim>   Resource::skelAnims;
+ResourceContainer<LightProps> Resource::lightProps;
 
-
-/*
-=======================================================================================================================================
-DATA OBJECTS                                                                                                           =
-=======================================================================================================================================
-*/
-Container<Texture>    textures;
-Container<ShaderProg> shaders;
-Container<Material>   materials;
-Container<Mesh>       meshes;
-Container<Skeleton>   skeletons;
-Container<SkelAnim>   skelAnims;
-Container<LightProps> lightProps;
-
-} // end namespace

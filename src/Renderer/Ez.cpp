@@ -25,7 +25,7 @@ void Renderer::Ms::Ez::init()
 
 	fbo.setNumOfColorAttachements(0);
 
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	if(!fbo.isGood())
 		FATAL("Cannot create shadowmapping FBO");
