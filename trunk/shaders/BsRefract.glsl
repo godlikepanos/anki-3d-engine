@@ -10,5 +10,5 @@ varying vec2 texCoords;
 
 void main()
 {
-	gl_FragData[0].rgb = texture2D(fai, texCoords).rgb;
+	gl_FragData[0] = texture2D(fai, texCoords);
 }

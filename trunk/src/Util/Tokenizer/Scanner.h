@@ -89,10 +89,10 @@ class Scanner
 				 * @name Accessors
 				 */
 				/**@{*/
-				char        getChar()   const { return char_; }  ///< Access the data as C char
-				ulong       getInt()    const { return int_; }   ///< Access the data as unsigned int
-				float       getFloat()  const { return float_; } ///< Access the data as double
-				const char* getString() const { return string; } ///< Access the data as C string
+				char getChar() const; ///< Access the data as C char
+				ulong getInt() const; ///< Access the data as unsigned int
+				float getFloat() const; ///< Access the data as double
+				const char* getString() const; ///< Access the data as C string
 				/**@}*/
 		}; // end class TokenDataVal
 
@@ -111,7 +111,7 @@ class Scanner
 			public:
 				Token(): code(TC_ERROR) {}
 				Token(const Token& b);
-				const char* getString() const { return asString; }
+				const char* getString() const;
 				string getInfoStr() const; ///< Get a string with the info of the token
 				void print() const; ///< Print info of the token
 
@@ -185,19 +185,18 @@ class Scanner
 
 		/**
 		 * Accessor for the current token
-		 * @return
 		 */
-		const Token& getCrntToken() const { return crntToken; }
+		const Token& getCrntToken() const;
 
 		/**
 		 * Get the name of the input stream
 		 */
-		const char* getScriptName() const { return scriptName; }
+		const char* getScriptName() const;
 
 		/**
 		 * Get the current line the Scanner is processing
 		 */
-		int getLineNumber() const { return lineNmbr; }
+		int getLineNumber() const;
 
 
 	//====================================================================================================================
@@ -206,20 +205,20 @@ class Scanner
 	protected:
 		static char eofChar; ///< Special end of file character
 
-		static AsciiFlag asciiLookupTable []; ///< The array contains one AsciiFlag for every symbol of the ASCII table
+		static AsciiFlag asciiLookupTable[]; ///< The array contains one AsciiFlag for every symbol of the ASCII table
 
 		/**
 		 * @name Reserved words
 		 * Groups of ResWord grouped by the length of the ResWord::string
 		 */
 		/**@{*/
-		static ResWord rw2 [], rw3 [], rw4 [], rw5 [], rw6 [], rw7 [];
+		static ResWord rw2[], rw3[], rw4[], rw5[], rw6[], rw7[];
 		/**@}*/
 
-		static ResWord* rwTable []; ///< The array contains all the groups of ResWord
+		static ResWord* rwTable[]; ///< The array contains all the groups of ResWord
 
 		Token crntToken; ///< The current token
-		char  line [MAX_SCRIPT_LINE_LEN]; ///< In contains the current line's text
+		char  line[MAX_SCRIPT_LINE_LEN]; ///< In contains the current line's text
 		char* pchar; ///< Points somewhere to @ref line
 		int   lineNmbr; ///< The number of the current line
 
@@ -286,5 +285,57 @@ class Scanner
 			return asciiLookupTable[(int)ch_];
 		}
 }; // end class Scanner
+
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
+
+inline char Scanner::TokenDataVal::getChar() const
+{
+	return char_;
+}
+
+
+inline ulong Scanner::TokenDataVal::getInt() const
+{
+	return int_;
+}
+
+
+inline float Scanner::TokenDataVal::getFloat() const
+{
+	return float_;
+}
+
+
+inline const char* Scanner::TokenDataVal::getString() const
+{
+	return string;
+}
+
+
+inline const Scanner::Token& Scanner::getCrntToken() const
+{
+	return crntToken;
+}
+
+
+inline const char* Scanner::getScriptName() const
+{
+	return scriptName;
+}
+
+
+inline int Scanner::getLineNumber() const
+{
+	return lineNmbr;
+}
+
+
+inline const char* Scanner::Token::getString() const
+{
+	return asString;
+}
 
 #endif

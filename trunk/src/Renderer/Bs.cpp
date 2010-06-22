@@ -29,8 +29,6 @@ void Renderer::Bs::createFbo()
 //======================================================================================================================
 void Renderer::Bs::createRefractFbo()
 {
-	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT, false);
-
 	refractFbo.create();
 	refractFbo.bind();
 
@@ -52,6 +50,7 @@ void Renderer::Bs::createRefractFbo()
 void Renderer::Bs::init()
 {
 	createFbo();
+	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT, false);
 	createRefractFbo();
 
 	refractSProg = Resource::shaders.load("shaders/BsRefract.glsl");
