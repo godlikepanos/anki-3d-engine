@@ -36,7 +36,7 @@ void ShaderPrePreprocessor::printShaderVars() const
 // findShaderVar                                                                                                       =
 //======================================================================================================================
 Vec<ShaderPrePreprocessor::ShaderVarPragma>::iterator ShaderPrePreprocessor::findShaderVar(Vec<ShaderVarPragma>& vec,
-                                                                                            const string& name) const
+                                                                                           const string& name) const
 {
 	Vec<ShaderVarPragma>::iterator it = vec.begin();
 	while(it != vec.end() && it->name != name)
