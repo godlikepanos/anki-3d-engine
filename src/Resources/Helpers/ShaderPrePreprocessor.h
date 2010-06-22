@@ -29,11 +29,8 @@ class ShaderPrePreprocessor
 			
 			string definedInFile;
 			int    definedInLine;
-			Pragma(): definedInLine(-1) {}
-			Pragma(const string& definedInFile_, int definedInLine_):
-				definedInFile(definedInFile_),
-				definedInLine(definedInLine_)
-			{}
+			Pragma();
+			Pragma(const string& definedInFile_, int definedInLine_);
 		};
 		
 		struct IncludePragma: Pragma
@@ -46,18 +43,22 @@ class ShaderPrePreprocessor
 			string name;
 			uint   customLoc;
 
-			ShaderVarPragma(const string& definedInFile_, int definedInLine_, const string& name_, uint customLoc_):
-				Pragma(definedInFile_, definedInLine_),
-				name(name_),
-				customLoc(customLoc_)
-			{}
+			ShaderVarPragma(const string& definedInFile_, int definedInLine_, const string& name_, uint customLoc_);
+		};
+
+		struct TrffbVaryingPragma: Pragma
+		{
+			string name;
+			uint   id;
+
+			TrffbVaryingPragma(const string& definedInFile_, int definedInLine_, const string& name_, uint id_);
 		};
 	
 		struct CodeBeginningPragma: Pragma
 		{
 			int globalLine; ///< The line number in the ShaderPrePreprocessor-compatible file
 
-			CodeBeginningPragma(): globalLine(-1) {}
+			CodeBeginningPragma();
 		};
 
 		/**
@@ -68,10 +69,19 @@ class ShaderPrePreprocessor
 			friend class ShaderPrePreprocessor;
 
 			PROPERTY_R(Vec<ShaderVarPragma>, attributes, getAttribLocs) ///< It holds the name and the custom location
+			/**
+			 * Names and and ids for transform feedback varyings
+			 */
+			PROPERTY_R(Vec<TrffbVaryingPragma>, trffbVaryings, getTrffbVaryings)
 			PROPERTY_R(string, vertShaderSource, getVertShaderSource) ///< The vert shader source
 			PROPERTY_R(string, geomShaderSource, getGeomShaderSource) ///< The geom shader source
 			PROPERTY_R(string, fragShaderSource, getFragShaderSource) ///< The frag shader source
 		};
+
+	//====================================================================================================================
+	// Properties                                                                                                        =
+	//====================================================================================================================
+	PROPERTY_R(Output, output, getOutput) ///< The one and only public property
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -86,12 +96,6 @@ class ShaderPrePreprocessor
 		 * @return True on success
 		 */
 		bool parseFile(const char* fname);
-
-		/**
-		 * Accessor func to get the output. Use it after calling parseFile
-		 * @return The output
-		 */
-		const Output& getOutput() const { return output; }
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
@@ -119,11 +123,65 @@ class ShaderPrePreprocessor
 		 */
 		Vec<ShaderVarPragma>::iterator findShaderVar(Vec<ShaderVarPragma>& vec, const string& name) const;
 
+		/**
+		 * Searches inside the Output::attributes or  vectors
+		 * @param vec Output::uniforms or Output::attributes
+		 * @param name The name of the location
+		 * @return Iterator to the vector
+		 */
+		template<typename Type> typename Vec<Type>::iterator findNamed(const Vec<Type>& vec, const string& what) const;
+
 		void printSourceLines() const;  ///< For debugging
 		void printShaderVars() const;  ///< For debugging
-
-		Output output; ///< The output of the parser. parseFile fills it
 };
+
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
+inline ShaderPrePreprocessor::Pragma::Pragma():
+	definedInLine(-1)
+{}
+
+
+inline ShaderPrePreprocessor::Pragma::Pragma(const string& definedInFile_, int definedInLine_):
+	definedInFile(definedInFile_),
+	definedInLine(definedInLine_)
+{}
+
+
+inline ShaderPrePreprocessor::ShaderVarPragma::ShaderVarPragma(const string& definedInFile_, int definedInLine_,
+                                                               const string& name_, uint customLoc_):
+	Pragma(definedInFile_, definedInLine_),
+	name(name_),
+	customLoc(customLoc_)
+{}
+
+
+inline ShaderPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(const string& definedInFile_,
+                                                                         int definedInLine_,
+                                                                         const string& name_, uint id_):
+	Pragma(definedInFile_, definedInLine_),
+	name(name_),
+	id(id_)
+{}
+
+
+inline ShaderPrePreprocessor::CodeBeginningPragma::CodeBeginningPragma():
+	globalLine(-1)
+{}
+
+
+template<typename Type> typename Vec<Type>::iterator ShaderPrePreprocessor::findNamed(const Vec<Type>& vec,
+                                                                                      const string& what) const
+{
+	typename Vec<Type>::iterator it = vec.begin();
+	while(it != vec.end() && it->name != what)
+	{
+		++it;
+	}
+	return it;
+}
 
 
 #endif

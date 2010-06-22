@@ -208,6 +208,7 @@ This list contains some of the naming shortcuts we use in AnKi:
 - Text                         : txt
 - Texture                      : tex
 - Transformation               : trf
+- Transform Feedback           : trffb
 - Translation                  : tsl
 - Triangle                     : tri
 - Utility                      : util
