@@ -204,7 +204,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						fragShaderBegins.definedInLine = scanner.getLineNumber();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
 						sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-						                       Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						                      Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 /* include */
@@ -234,13 +234,32 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 					        strcmp(token->getValue().getString(), "transformFeedbackVarying") == 0)
 					{
 						token = &scanner.getNextToken();
-						if(token->getCode() == Scanner::TC_STRING)
+						if(token->getCode() == Scanner::TC_IDENTIFIER)
 						{
-							ERROR("todo");
+							string varName = token->getValue().getString();
+							// check if already defined and for circular includance
+							Vec<TrffbVaryingPragma>::const_iterator var = findNamed(output.trffbVaryings, varName);
+							if(var != output.trffbVaryings.end())
+							{
+								if(var->definedInLine==scanner.getLineNumber() && var->definedInFile==filename)
+								{
+									PARSE_ERR("\"" << varName << "\"" << MULTIPLE_DEF_MSG);
+								}
+								else
+								{
+									PARSE_ERR("Varying \"" << varName << "\" already defined at " << var->definedInFile << ":" <<
+														var->definedInLine);
+								}
+								return false;
+							}
+
+							// all ok, push it back
+							output.trffbVaryings.push_back(TrffbVaryingPragma(filename, scanner.getLineNumber(), varName));
+							sourceLines.push_back(lines[scanner.getLineNumber()-1]);
 						}
 						else
 						{
-							PARSE_ERR_EXPECTED("string");
+							PARSE_ERR_EXPECTED("identifier");
 							return false;
 						}
 					}
@@ -257,7 +276,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 								uint loc = token->getValue().getInt();
 
 								// check if already defined and for circular includance
-								Vec<ShaderVarPragma>::iterator attrib = findShaderVar(output.attributes, varName);
+								Vec<ShaderVarPragma>::const_iterator attrib = findNamed(output.attributes, varName);
 								if(attrib != output.attributes.end())
 								{
 									if(attrib->definedInLine==scanner.getLineNumber() && attrib->definedInFile==filename)
@@ -348,6 +367,8 @@ bool ShaderPrePreprocessor::parseFile(const char* filename)
 {
 	// parse master file
 	if(!parseFileForPragmas(filename)) return false;
+
+	// rearrange the trffbVaryings
 
 	// sanity checks
 	if(vertShaderBegins.globalLine == -1)

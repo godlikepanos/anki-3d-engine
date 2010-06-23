@@ -10,10 +10,18 @@
  *
  * The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to
  * have all the shaders in the same file. The file that includes all the shaders is called
- * ShaderPrePreprocessor-compatible. The preprocessor pragmas are four: include, vertShaderBegins, fragShaderBegins and
- * attribute. The *ShaderBegins indicate where the shader code begins and must be in certain order, first the vert
- * shader then the optional geom and then the frag. The include is self-explanatory. The attribute is used to bind
- * custom locations to attributes.
+ * ShaderPrePreprocessor-compatible.
+ *
+ * The preprocessor pragmas are:
+ *
+ * - #pragma anki vertShaderBegins
+ * - #pragma anki geomShaderBegins
+ * - #pragma anki fragShaderBegins
+ * - #pragma anki attribute <varName> <customLocation>
+ * - #pragma anki include "<filename>"
+ * - #pragma anki transformFeedbackVarying <varName>
+ *
+ * @note The order of the *ShaderBegins is important
  */
 class ShaderPrePreprocessor
 {
@@ -26,7 +34,6 @@ class ShaderPrePreprocessor
 		 */
 		struct Pragma
 		{
-			
 			string definedInFile;
 			int    definedInLine;
 			Pragma();
@@ -49,9 +56,8 @@ class ShaderPrePreprocessor
 		struct TrffbVaryingPragma: Pragma
 		{
 			string name;
-			uint   id;
 
-			TrffbVaryingPragma(const string& definedInFile_, int definedInLine_, const string& name_, uint id_);
+			TrffbVaryingPragma(const string& definedInFile_, int definedInLine_, const string& name_);
 		};
 	
 		struct CodeBeginningPragma: Pragma
@@ -124,12 +130,13 @@ class ShaderPrePreprocessor
 		Vec<ShaderVarPragma>::iterator findShaderVar(Vec<ShaderVarPragma>& vec, const string& name) const;
 
 		/**
-		 * Searches inside the Output::attributes or  vectors
-		 * @param vec Output::uniforms or Output::attributes
-		 * @param name The name of the location
+		 * Searches inside the Output::attributes or Output::trffbVaryings vectors
+		 * @param vec Output::uniforms or Output::trffbVaryings
+		 * @param what The name of the varying or attrib
 		 * @return Iterator to the vector
 		 */
-		template<typename Type> typename Vec<Type>::iterator findNamed(const Vec<Type>& vec, const string& what) const;
+		template<typename Type>
+		typename Vec<Type>::const_iterator findNamed(const Vec<Type>& vec, const string& what) const;
 
 		void printSourceLines() const;  ///< For debugging
 		void printShaderVars() const;  ///< For debugging
@@ -159,11 +166,10 @@ inline ShaderPrePreprocessor::ShaderVarPragma::ShaderVarPragma(const string& def
 
 
 inline ShaderPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(const string& definedInFile_,
-                                                                         int definedInLine_,
-                                                                         const string& name_, uint id_):
+                                                                     int definedInLine_,
+                                                                     const string& name_):
 	Pragma(definedInFile_, definedInLine_),
-	name(name_),
-	id(id_)
+	name(name_)
 {}
 
 
@@ -172,10 +178,10 @@ inline ShaderPrePreprocessor::CodeBeginningPragma::CodeBeginningPragma():
 {}
 
 
-template<typename Type> typename Vec<Type>::iterator ShaderPrePreprocessor::findNamed(const Vec<Type>& vec,
-                                                                                      const string& what) const
+template<typename Type>
+typename Vec<Type>::const_iterator ShaderPrePreprocessor::findNamed(const Vec<Type>& vec, const string& what) const
 {
-	typename Vec<Type>::iterator it = vec.begin();
+	typename Vec<Type>::const_iterator it = vec.begin();
 	while(it != vec.end() && it->name != what)
 	{
 		++it;

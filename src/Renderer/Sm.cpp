@@ -62,18 +62,9 @@ void Renderer::Is::Sm::run(const Camera& cam)
 	// FBO
 	fbo.bind();
 
-	// push attribs
-	/// @todo remove the matrices
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glPushAttrib(GL_VIEWPORT_BIT);
-
-
-	glClear(GL_DEPTH_BUFFER_BIT);
-	r.setProjectionViewMatrices(cam);
+	// set GL
 	Renderer::setViewport(0, 0, resolution, resolution);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// disable color & blend & enable depth test
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -96,16 +87,10 @@ void Renderer::Is::Sm::run(const Camera& cam)
 		meshNode->renderDepth();
 	}
 
+	// restore GL
 	glDisable(GL_POLYGON_OFFSET_FILL);
-
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	// restore attribs
-	glPopAttrib();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
 
 	// FBO
 	fbo.unbind();

@@ -19,6 +19,7 @@ string ShaderProg::stdSourceCode(
 	#pragma debug(off)\n"
 );
 
+
 //======================================================================================================================
 // set uniforms                                                                                                        =
 //======================================================================================================================
@@ -284,11 +285,11 @@ bool ShaderProg::customLoad(const char* filename, const char* extraSource)
 	// 1) create and compile the shaders
 	string preprocSource = stdSourceCode + extraSource;
 	uint vertGlId = createAndCompileShader(pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
-	                                        GL_VERTEX_SHADER);
+	                                       GL_VERTEX_SHADER);
 	if(vertGlId == 0) return false;
 
 	uint fragGlId = createAndCompileShader(pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
-	                                        GL_FRAGMENT_SHADER);
+	                                       GL_FRAGMENT_SHADER);
 	if(fragGlId == 0) return false;
 
 	// 2) create program and attach shaders
@@ -304,7 +305,18 @@ bool ShaderProg::customLoad(const char* filename, const char* extraSource)
 	// 3) bind the custom attrib locs
 	if(!bindCustomAttribLocs(pars)) return false;
 
-	// 5) link
+	// 5) set the TRFFB varyings
+	if(pars.getOutput().getTrffbVaryings().size() > 1)
+	{
+		const char* varsArr[128];
+		for(uint i=0; i<pars.getOutput().getTrffbVaryings().size(); i++)
+		{
+			varsArr[i] = pars.getOutput().getTrffbVaryings()[i].name.c_str();
+		}
+		glTransformFeedbackVaryings(glId, pars.getOutput().getTrffbVaryings().size(), varsArr, GL_SEPARATE_ATTRIBS);
+	}
+
+	// 6) link
 	if(!link()) return false;
 	
 

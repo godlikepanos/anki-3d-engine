@@ -2,6 +2,7 @@
 #define _APP_H_
 
 #include <SDL.h>
+#include <boost/filesystem.hpp>
 #include "Common.h"
 
 
@@ -14,6 +15,8 @@ class App
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< @ref PROPERTY_R : The main window width
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< @ref PROPERTY_R : The main window height
 	PROPERTY_R(bool, terminalColoringEnabled, isTerminalColoringEnabled) ///< @ref PROPERTY_R : Terminal coloring for Unix terminals. Default is enabled
+	PROPERTY_R(boost::filesystem::path, settingsPath, getSettingsPath)
+	PROPERTY_R(boost::filesystem::path, cachePath, getCachePath)
 
 	PROPERTY_RW(class Scene*, scene, setScene, getScene) ///< @ref PROPERTY_RW : Pointer to the current scene
 	PROPERTY_RW(class MainRenderer*, mainRenderer, setMainRenderer, getMainRenderer) ///< @ref PROPERTY_RW : Pointer to the main renderer
