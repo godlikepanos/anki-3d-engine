@@ -1,11 +1,11 @@
 #! /bin/bash
 
 set -x
-cd ../../bullet_svn
+cd ../../bullet
 svn update
 cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
 make
-cd ../SDL-hg
+cd ../SDL
 hg pull
 ./autogen.sh
 ./configure

@@ -2,13 +2,13 @@
 
 set -x
 cd ../../
-svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
-cd bullet_svn
+svn checkout http://bullet.googlecode.com/svn/trunk/ bullet
+cd bullet
 cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
 make
 cd ..
-hg clone http://hg.libsdl.org/SDL SDL-hg
-cd SDL-hg
+hg clone http://hg.libsdl.org/SDL SDL
+cd SDL
 ./autogen.sh
 ./configure
 make
