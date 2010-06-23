@@ -237,6 +237,7 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ONE);
 		glDisable(GL_DEPTH_TEST);
+		Renderer::setViewport(0, 0, r.width, r.height);
 	}
 
 	// stencil optimization

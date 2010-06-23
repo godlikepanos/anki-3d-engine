@@ -187,6 +187,7 @@ This list contains some of the naming shortcuts we use in AnKi:
 - Camera                       : cam
 - Color                        : col
 - Controller                   : ctrl
+- Current                      : crnt
 - Feature                      : feat
 - Fragment                     : frag
 - Framebuffer Attachable Image : fai
@@ -196,6 +197,7 @@ This list contains some of the naming shortcuts we use in AnKi:
 - Matrix                       : mat
 - Number                       : num
 - Physics                      : phy
+- Position                     : pos
 - Property                     : prop
 - Quadrilateral                : quad
 - Quaternion                   : quat

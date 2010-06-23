@@ -43,14 +43,8 @@ class ShaderProg: public Resource
 			PROPERTY_R(Type, type, getType) ///< @ref PROPERTY_R : @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 
 			public:
-				Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_):
-					loc(loc_), name(name_), glDataType(glDataType_), type(type_), fatherSProg(fatherSProg_)
-				{}
-
-				/// copy constructor
-				Var(const Var& var):
-					loc(var.loc), name(var.name), glDataType(var.glDataType), type(var.type), fatherSProg(var.fatherSProg)
-				{}
+				Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_);
+				Var(const Var& var);
 
 			protected:
 				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
@@ -62,14 +56,8 @@ class ShaderProg: public Resource
 		class UniVar: public Var
 		{
 			public:
-				UniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_):
-					Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
-				{}
-
-				/// copy constructor
-				UniVar(const UniVar& var):
-					Var(var)
-				{}
+				UniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
+				UniVar(const UniVar& var);
 
 				void setFloat(float f) const;
 				void setFloatVec(float f[], uint size = 1) const;
@@ -87,21 +75,15 @@ class ShaderProg: public Resource
 		class AttribVar: public Var
 		{
 			public:
-				AttribVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_):
-					Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
-				{}
-
-				/// copy constructor
-				AttribVar(const UniVar& var):
-					Var(var)
-				{}
+				AttribVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
+				AttribVar(const UniVar& var);
 		};
 		
 	//====================================================================================================================
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		ShaderProg(): glId(numeric_limits<uint>::max()) {}
+		ShaderProg();
 		virtual ~ShaderProg() {}
 
 		/**
@@ -167,6 +149,8 @@ class ShaderProg: public Resource
 		bool uniVarExists(const char* varName) const;
 		bool attribVarExists(const char* varName) const;
 
+		static bool writeSrcCodeToCache(const char* filename, const char* extraSource);
+
 	//====================================================================================================================
 	// Private                                                                                                           =
 	//====================================================================================================================
@@ -181,10 +165,71 @@ class ShaderProg: public Resource
 		typedef map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
 		typedef map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
 
-		void getUniAndAttribVars(); ///< After the linking of the shader prog is done gather all the vars in custom containers
-		bool bindCustomAttribLocs(const class ShaderPrePreprocessor& pars) const; ///< Uses glBindAttribLocation for every parser attrib location
-		uint createAndCompileShader(const char* sourceCode, const char* preproc, int type) const; ///< @return Returns zero on failure
+		/**
+		 * After the linking of the shader prog is done gather all the vars in custom containers
+		 */
+		void getUniAndAttribVars();
+
+		/**
+		 * Uses glBindAttribLocation for every parser attrib location
+		 */
+		bool bindCustomAttribLocs(const class ShaderPrePreprocessor& pars) const;
+
+		/**
+		 * @return Returns zero on failure
+		 */
+		uint createAndCompileShader(const char* sourceCode, const char* preproc, int type) const;
 		bool link(); ///< Link the shader prog
 }; 
+
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
+
+inline ShaderProg::Var::Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_,
+                            const ShaderProg* fatherSProg_):
+	loc(loc_),
+	name(name_),
+	glDataType(glDataType_),
+	type(type_),
+	fatherSProg(fatherSProg_)
+{}
+
+
+inline ShaderProg::Var::Var(const Var& var):
+	loc(var.loc),
+	name(var.name),
+	glDataType(var.glDataType),
+	type(var.type),
+	fatherSProg(var.fatherSProg)
+{}
+
+
+inline ShaderProg::UniVar::UniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_):
+	Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
+{}
+
+
+inline ShaderProg::UniVar::UniVar(const UniVar& var):
+	Var(var)
+{}
+
+
+inline ShaderProg::AttribVar::AttribVar(int loc_, const char* name_, GLenum glDataType_,
+                                        const ShaderProg* fatherSProg_):
+	Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
+{}
+
+
+inline ShaderProg::AttribVar::AttribVar(const UniVar& var):
+	Var(var)
+{}
+
+
+inline ShaderProg::ShaderProg():
+	glId(numeric_limits<uint>::max())
+{}
+
 
 #endif

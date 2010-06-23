@@ -4,8 +4,10 @@
 #include "App.h"
 #include "Scene.h"
 #include "MainRenderer.h"
+#include <boost/filesystem.hpp>
 
 bool App::isCreated = false;
+
 
 //======================================================================================================================
 // parseCommandLineArgs                                                                                                =
@@ -51,6 +53,24 @@ App::App(int argc, char* argv[]):
 		FATAL("You cannot init a second App instance");
 
 	isCreated = true;
+
+	// dirs
+	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
+	if(!boost::filesystem::exists(settingsPath))
+	{
+		INFO("Creating settings dir \"" << settingsPath << "\"");
+		boost::filesystem::create_directory(settingsPath);
+	}
+
+	cachePath = settingsPath / "cache";
+	if(boost::filesystem::exists(cachePath))
+	{
+		boost::filesystem::remove_all(cachePath);
+	}
+
+	INFO("Creating cache dir \"" << cachePath << "\"");
+	boost::filesystem::create_directory(cachePath);
+
 
 	scene = new Scene;
 	mainRenderer = new MainRenderer;
