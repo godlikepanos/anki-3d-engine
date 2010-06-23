@@ -411,6 +411,9 @@ int main(int argc, char* argv[])
 	new App(argc, argv);
 
 	init();
+
+	ShaderProg* a = Resource::shaders.load("shaders/HwSkinningTrffbGeneric.glsl");
+
 	mainLoop();
 
 	INFO("Exiting...");

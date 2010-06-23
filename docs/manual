@@ -25,22 +25,24 @@ AnKi requires a few up to date versions of some libraries. The libraries are:
 - Bullet Physics
 - SDL ver 1.3
 - GLEW
+- boost
 
-So before generating makefiles or building AnKi you have to download from their
-repositories and build the above libraries. Instructions follow. You can
-alternately use the script download-and-build-externals.sh
+So before generating makefiles and building AnKi you have to download (from
+the revision control repositories) and build some of the above libraries.
+Instructions follow. You can alternately use the script
+download-and-build-externals.sh
   
 
-Bullet Physics Library
-~~~~~~~~~~~~~~~~~~~~~~
+Bullet Physics
+~~~~~~~~~~~~~~
 
 From now on the AnKi requires the Bullet physics library. You need CMake and
 SVN installed.
 
 #) $ Go to the root AnKi path (where src, shaders and blenderscripts are)
 #) $ cd ..
-#) $ svn checkout http://bullet.googlecode.com/svn/trunk/ bullet_svn
-#) $ cd bullet_svn
+#) $ svn checkout http://bullet.googlecode.com/svn/trunk/ bullet
+#) $ cd bullet
 #) $ cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
 #) $ make
 
@@ -53,8 +55,8 @@ Mercurial and autoconf installed.
 
 #) $ Go to the root AnKi path (where src, shaders and blenderscripts are)
 #) $ cd ..
-#) $ hg clone http://hg.libsdl.org/SDL SDL-hg
-#) $ cd SDL-hg
+#) $ hg clone http://hg.libsdl.org/SDL SDL
+#) $ cd SDL
 #) $ ./autogen.sh
 #) $ ./configure
 #) $ make
@@ -72,6 +74,16 @@ Unix environment (for step 5).
 #) $ cd glew
 #) $ make extensions
 #) $ make
+
+
+boost
+~~~~~
+
+Boost is pretty big to download and build from SVN, also it doesnt need to be in
+the lattest version. The Linux distribution's version will do the trick so
+install it using the packet manager of your choice.
+
+In Ubuntu type: $ sudo apt-get install libboost<version>-dev-all
 
 
 Generating makefiles and building AnKi
@@ -134,11 +146,52 @@ Then open doxygen.html to see it.
 Coding style
 ============
 
-Some things to remember while coding AnKi.
+Every project has some rules and here are some things to remember while coding
+AnKi.
 
 
-Classes
--------
+Types
+-----
+
+The classes, structs, typedefs, enums etc must be capitalized eg *ThisIsAClass*
+
+
+Functions & variables
+---------------------
+
+All functions (including class methods) and all variables are mixed case.
+
+All functions should have a verb inside them eg *doSomething()*
+
+All variables should not have verbs eg *oneVariable*
+
+
+Constants, macros & enumerators
+-------------------------------
+
+All constants, macros and enumerators are capital with undercores eg *#define 
+MACRO(x)* or *const int ONE_INT = 10;*
+
+All the constants should be defined without using the preprocessor eg dont write
+*#define ONE_INT 10*
+
+All enumerators have the first letters of the enum as prefix eg
+*enum CarColors { CC_BLUE, CC_GREEN };*
+
+
+Parenthesis, braces, comas & operators
+--------------------------------------
+
+After opening parenthesis and before closing it there is no spaces, same for
+square brackets. Before and after an operator there is always spaces
+
+eg *((mat1 * 10) + 10)* or *setWidth(100)* or *int arr[100 + 1];*
+
+After a coma there is a space eg *setSize(10, 20)*
+
+
+Order in class definitions
+--------------------------
 
 class 
 
@@ -146,7 +199,7 @@ class
 
   friends
 	
-  pre-nested (if necessary)
+  pre-nested (very rare)
 	
   nested
 	
@@ -159,6 +212,8 @@ class
   private 
 	
 }
+
+inlines
 
 
 Material shader program naming
@@ -261,7 +316,6 @@ ToDo list
 	- How to make floating particles like smoke. But first try with one body and
 	  manualy setting the gravity
 	- What the btCollisionObject::setActivationState takes as parameter?
-  disable the test
 - Re-enable the stencil tex in Ms.cpp and replace all the stencil buffers with
   that (Smo, Bs) to save memory
 - See if the restrictions in FBOs (all FAIs same size) still apply
