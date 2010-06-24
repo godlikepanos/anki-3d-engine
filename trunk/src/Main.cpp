@@ -291,7 +291,7 @@ void init()
 
 
 //======================================================================================================================
-//                                                                                                                     =
+// mainLoop                                                                                                            =
 //======================================================================================================================
 void mainLoop()
 {
@@ -402,7 +402,7 @@ void mainLoop()
 	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
 }
 
-
+#include "ShaderPrePreprocessor.h"
 //======================================================================================================================
 // main                                                                                                                =
 //======================================================================================================================
@@ -410,9 +410,15 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
-	init();
+	ShaderPrePreprocessor s;
+	s.parseFile("shaders/HwSkinningTrffbGeneric.glsl");
+	for(uint i=0; i<s.getOutput().getTrffbVaryings().size(); i++)
+	{
+		INFO(s.getOutput().getTrffbVaryings()[i].name);
+	}
+	return 0;
 
-	ShaderProg* a = Resource::shaders.load("shaders/HwSkinningTrffbGeneric.glsl");
+	init();
 
 	mainLoop();
 

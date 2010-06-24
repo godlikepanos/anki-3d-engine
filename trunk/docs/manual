@@ -319,4 +319,5 @@ ToDo list
 - Re-enable the stencil tex in Ms.cpp and replace all the stencil buffers with
   that (Smo, Bs) to save memory
 - See if the restrictions in FBOs (all FAIs same size) still apply
-
+- See what happens if I write *#pragma anki attribute <randName> 10* where
+  randName does not exist. Do the same for tranform feedback varyings

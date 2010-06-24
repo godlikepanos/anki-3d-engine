@@ -117,13 +117,13 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode, const char* prep
 	if(!success)
 	{
 		// print info log
-		int info_len = 0;
+		int infoLen = 0;
 		int charsWritten = 0;
 		char* infoLog = NULL;
 
-		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &info_len);
-		infoLog = (char*)malloc((info_len+1)*sizeof(char));
-		glGetShaderInfoLog(glId, info_len, &charsWritten, infoLog);
+		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
+		infoLog = (char*)malloc((infoLen+1)*sizeof(char));
+		glGetShaderInfoLog(glId, infoLen, &charsWritten, infoLog);
 		
 		const char* shaderType;
 		switch(type)
@@ -162,15 +162,15 @@ bool ShaderProg::link()
 	if(!success)
 	{
 		int info_len = 0;
-		int chars_written = 0;
-		char* info_log_txt = NULL;
+		int charsWritten = 0;
+		char* infoLogTxt = NULL;
 
 		glGetProgramiv(glId, GL_INFO_LOG_LENGTH, &info_len);
 
-		info_log_txt = (char*)malloc((info_len+1)*sizeof(char));
-		glGetProgramInfoLog(glId, info_len, &chars_written, info_log_txt);
-		SHADER_ERROR("Link log follows:\n" << info_log_txt);
-		free(info_log_txt);
+		infoLogTxt = (char*)malloc((info_len+1)*sizeof(char));
+		glGetProgramInfoLog(glId, info_len, &charsWritten, infoLogTxt);
+		SHADER_ERROR("Link log follows:\n" << infoLogTxt);
+		free(infoLogTxt);
 		return false;
 	}
 
@@ -260,8 +260,7 @@ bool ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 //======================================================================================================================
 bool ShaderProg::load(const char* filename)
 {
-	if(!customLoad(filename, "")) return false;
-	return true;
+	return customLoad(filename, "");
 }
 
 

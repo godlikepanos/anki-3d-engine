@@ -319,7 +319,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 					}
 					else
 					{
-						PARSE_WARN("Ignoring incorrect #pragma anki");
+						PARSE_ERR("#pragma anki followed by incorrect " << token->getInfoStr());
+						return false;
 					}
 				} // end if anki
 				
