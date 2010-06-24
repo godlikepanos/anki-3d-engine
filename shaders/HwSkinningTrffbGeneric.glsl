@@ -11,11 +11,11 @@ const int MAX_BONES_PER_MESH = 60;
 uniform mat3 skinningRotations[MAX_BONES_PER_MESH];
 uniform vec3 skinningTranslations[MAX_BONES_PER_MESH];
 
-#pragma anki tranformFeedbackVarying outPosition
+#pragma anki transformFeedbackVarying outPosition
 varying vec3 outPosition;
-#pragma anki tranformFeedbackVarying outNormal
+#pragma anki transformFeedbackVarying outNormal
 varying vec3 outNormal;
-#pragma anki tranformFeedbackVarying outTangent
+#pragma anki transformFeedbackVarying outTangent
 varying vec4 outTangent;
 
 
