@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "Common.h"
+#include "Vec.h"
 #include "Math.h"
 
 
