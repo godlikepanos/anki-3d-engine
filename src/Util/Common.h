@@ -3,12 +3,10 @@
 
 #include <cstdlib>
 #include <cstdio>
-#include <memory.h>
-#include <string.h>
+#include <cstring>
 #include <fstream>
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
-#include <time.h>
 #include <vector>
 
 using namespace std;
@@ -152,38 +150,6 @@ template <typename Type> inline void memZero(Type& t)
 {
 	memset(&t, 0, sizeof(Type));
 }
-
-
-//======================================================================================================================
-// Vec                                                                                                                 =
-//======================================================================================================================
-/**
- * This is a wrapper of std::vector that adds new functionality
- */
-template<typename Type> class Vec: public vector<Type>
-{
-	public:
-		Vec(): vector<Type>() {}
-		Vec(size_t size): vector<Type>(size) {}
-		Vec(size_t size, Type val): vector<Type>(size,val) {}
-
-		Type& operator[](size_t n)
-		{
-			DEBUG_ERR(n >= vector<Type>::size());
-			return vector<Type>::operator [](n);
-		}
-
-		const Type& operator[](size_t n) const
-		{
-			DEBUG_ERR(n >= vector<Type>::size());
-			return vector<Type>::operator [](n);
-		}
-
-		size_t getSizeInBytes() const
-		{
-			return vector<Type>::size() * sizeof(Type);
-		}
-};
 
 
 //======================================================================================================================

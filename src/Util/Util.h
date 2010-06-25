@@ -2,6 +2,7 @@
 #define _UTIL_H_
 
 #include "Common.h"
+#include "Vec.h"
 
 /**
  * The namespace contains a few useful functions

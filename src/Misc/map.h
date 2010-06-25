@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "collision.h"
+#include "Vec.h"
 
 class Mesh;
 class Camera;

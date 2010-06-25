@@ -2,6 +2,7 @@
 #define _SKEL_ANIM_CTRL_H_
 
 #include "Common.h"
+#include "Vec.h"
 #include "Controller.h"
 #include "Math.h"
 

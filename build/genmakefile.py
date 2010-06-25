@@ -145,7 +145,7 @@ for header in precompiledHeaders:
 	sFile = SourceFile()
 	(fnameWoExt, ext) = os.path.splitext(header)
 	sFile.cppFile = header
-	sFile.objFile = os.path.basename(fnameWoExt) + ".gch"
+	sFile.objFile = os.path.basename(fnameWoExt) + ".h.gch "
 	phFiles.append(sFile)
 
 
@@ -187,16 +187,15 @@ masterStr += "\t@$(CXX) $(OBJECTS) $(LFLAGS) -o $(EXECUTABLE)\n"
 masterStr += "\t@echo All Done!\n\n"
 
 
-for header in phFiles:
-  #            getCommandOutput(compiler + " -MM " + compilerFlags + " " + source_file.cppFile + " -MT " + source_file.objFile)
+for header in phFiles:  
 	dependStr = getCommandOutput(compiler + " -MM " + compilerFlags + " " + header.cppFile + " -MT " + header.objFile)
 	masterStr += dependStr
 	masterStr += "\t@echo Pre-compiling header " + header.cppFile + "...\n"
-	masterStr += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.objFile + "\n\n"
+	masterStr += "\t@$(CXX) $(INCPATH) $(PHFLAGS) " + header.cppFile + " -x c++-header " + header.objFile + "\n\n"
 
 
 # write source file target
-threadsNum = os.sysconf('SC_NPROCESSORS_ONLN')
+threadsNum = os.sysconf('SC_NPROCESSORS_ONLN') + 1
 print("I will invoke %d threads to make the dependencies..." % threadsNum)
 num = len(sourceFiles);
 itemsPerThread = num // threadsNum;

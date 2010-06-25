@@ -3,6 +3,7 @@
 
 #include <limits>
 #include "Common.h"
+#include "Vec.h"
 
 
 /**
