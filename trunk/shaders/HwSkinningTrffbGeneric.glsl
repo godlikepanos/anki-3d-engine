@@ -21,8 +21,8 @@ varying vec4 outTangent;
 
 void main()
 {
-	rot = mat3(0.0);
-	tsl = vec3(0.0);
+	mat3 rot = mat3(0.0);
+	vec3 tsl = vec3(0.0);
 
 	for(int i=0; i<int(vertWeightBonesNum); i++)
 	{

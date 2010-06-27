@@ -108,6 +108,9 @@ void Renderer::Bs::run()
 			Renderer::drawQuad(0);
 
 			// cleanup
+			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+			glClear(GL_STENCIL_BUFFER_BIT);
 			glDisable(GL_STENCIL_TEST);
 		}
 		else

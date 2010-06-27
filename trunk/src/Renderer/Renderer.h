@@ -89,6 +89,7 @@ class Renderer
 		class Is: private RenderingStage
 		{
 			friend class Renderer;
+			friend class MainRenderer;
 
 			public:
 				/**
@@ -185,13 +186,13 @@ class Renderer
 				};
 
 			public:
-				Texture fai;
 				Sm sm;
 				Smo smo;
 
 				Is(Renderer& r_): RenderingStage(r_), sm(r_), smo(r_) {}
 
 			private:
+				Texture fai;
 				Fbo fbo; ///< This FBO writes to the Is::fai
 				uint stencilRb; ///< Illumination stage stencil buffer
 				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program

@@ -81,6 +81,7 @@ void Renderer::Is::initFbo()
 
 	// attach
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
 	// test if success
 	if(!fbo.isGood())
@@ -101,7 +102,7 @@ void Renderer::Is::init()
 	ambientPassSProg.uniVars.ambientCol = ambientPassSProg.findUniVar("ambientCol");
 	ambientPassSProg.uniVars.sceneColMap = ambientPassSProg.findUniVar("sceneColMap");
 
-	pointLightSProg.customLoad("shaders/IsLpGeneric.glsl", "#define _POINT_LIGHT_\n");
+	pointLightSProg.customLoad("shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n");
 	pointLightSProg.uniVars.msNormalFai = pointLightSProg.findUniVar("msNormalFai");
 	pointLightSProg.uniVars.msDiffuseFai = pointLightSProg.findUniVar("msDiffuseFai");
 	pointLightSProg.uniVars.msSpecularFai = pointLightSProg.findUniVar("msSpecularFai");
@@ -112,7 +113,7 @@ void Renderer::Is::init()
 	pointLightSProg.uniVars.lightDiffuseCol = pointLightSProg.findUniVar("lightDiffuseCol");
 	pointLightSProg.uniVars.lightSpecularCol = pointLightSProg.findUniVar("lightSpecularCol");
 
-	spotLightNoShadowSProg.customLoad("shaders/IsLpGeneric.glsl", "#define _SPOT_LIGHT_\n");
+	spotLightNoShadowSProg.customLoad("shaders/IsLpGeneric.glsl", "#define SPOT_LIGHT_ENABLED\n");
 	spotLightNoShadowSProg.uniVars.msNormalFai = spotLightNoShadowSProg.findUniVar("msNormalFai");
 	spotLightNoShadowSProg.uniVars.msDiffuseFai = spotLightNoShadowSProg.findUniVar("msDiffuseFai");
 	spotLightNoShadowSProg.uniVars.msSpecularFai = spotLightNoShadowSProg.findUniVar("msSpecularFai");
@@ -125,7 +126,7 @@ void Renderer::Is::init()
 	spotLightNoShadowSProg.uniVars.lightTex = spotLightNoShadowSProg.findUniVar("lightTex");
 	spotLightNoShadowSProg.uniVars.texProjectionMat = spotLightNoShadowSProg.findUniVar("texProjectionMat");
 
-	string pps = "#define SHADOWMAP_SIZE " + Util::intToStr(sm.resolution) + "\n#define _SPOT_LIGHT_\n#define _SHADOW_\n";
+	string pps = "#define SHADOWMAP_SIZE " + Util::intToStr(sm.resolution) + "\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n";
 	if(sm.pcfEnabled)
 		pps += "#define PCF_ENABLED";
 	spotLightShadowSProg.customLoad("shaders/IsLpGeneric.glsl", pps.c_str());

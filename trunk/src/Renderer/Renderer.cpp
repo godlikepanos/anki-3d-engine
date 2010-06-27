@@ -197,8 +197,8 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
 		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps.prePassFai, textureUnit++);
 
-	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
-		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps.postPassFai, textureUnit++);
+	if(mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI])
+		mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI]->setTexture(pps.postPassFai, textureUnit++);
 
 
 	//

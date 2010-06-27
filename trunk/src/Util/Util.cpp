@@ -1,5 +1,8 @@
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
+#include <fstream>
 #include "Util.h"
-#include <math.h>
 
 
 namespace Util {

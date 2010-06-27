@@ -410,13 +410,6 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
-	MALLINFO_BEGIN
-	Arr<int, 1000> arr;
-	arr[1000] = 100;
-	MALLINFO_END
-
-	return 0;
-
 	init();
 
 	mainLoop();

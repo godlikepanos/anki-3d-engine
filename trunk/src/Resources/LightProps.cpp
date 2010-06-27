@@ -1,3 +1,4 @@
+#include <cstring>
 #include "LightProps.h"
 #include "Parser.h"
 #include "Texture.h"

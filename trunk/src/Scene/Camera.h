@@ -1,6 +1,8 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
+#include <fstream>
+#include <cstring>
 #include "Common.h"
 #include "collision.h"
 #include "SceneNode.h"

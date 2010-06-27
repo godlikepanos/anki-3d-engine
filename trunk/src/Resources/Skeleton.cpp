@@ -1,3 +1,4 @@
+#include <cstring>
 #include "Skeleton.h"
 #include "Scanner.h"
 #include "Parser.h"
@@ -57,7 +58,7 @@ bool Skeleton::load(const char* filename)
 		// parent
 		token = &scanner.getNextToken();
 		if((token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT) &&
-		    (token->getCode() != Scanner::TC_IDENTIFIER || strcmp(token->getValue().getString(), "NULL")!=0))
+		   (token->getCode() != Scanner::TC_IDENTIFIER || strcmp(token->getValue().getString(), "NULL")!=0))
 		{
 			PARSE_ERR_EXPECTED("integer or NULL");
 			return false;

@@ -33,12 +33,15 @@ void main()
 	_noise = _noise * 2 - 1;
 	_noise *= 7.0;*/
 
-	//vec4 col = texture2D(ppsPrePassFai, (gl_FragCoord.xy+(normalV2f.z*50))*vec2(1.0/rendererSize.x, 1.0/rendererSize.y)) * 0.75;
 	//vec4 _texel = texture2D(isFai, gl_FragCoord.xy*vec2(1.0/R_W, 1.0/R_H));
 
-	gl_FragData[0] = texture2D(ppsPrePassFai, gl_FragCoord.xy * vec2(1.0/rendererSize.x, 1.0/rendererSize.y));
+	vec3 z = vec3(0.0, 0.0, 1.0);
 
-	//if(normalV2f.z > 0.5) discard;
-
-	//gl_FragData[0] = vec4(normalV2f.z);
+	float factor = normalV2f.z*3.0;
+	factor = pow(factor, 6);
+	vec3 col = texture2D(ppsPrePassFai, (gl_FragCoord.xy+(factor*20))*vec2(1.0/rendererSize.x, 1.0/rendererSize.y)).rgb * 0.75;
+	col.r *= factor;
+	col.b *= cos(factor*3.14);
+	gl_FragData[0] = vec4(col, factor);
+	//gl_FragData[0] = vec4(vec3(1), factor);
 }

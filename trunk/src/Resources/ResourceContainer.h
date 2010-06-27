@@ -51,6 +51,7 @@ template<typename Type> class ResourceContainer: public Vec<Type*>
 		Iterator findByPtr(Type* ptr);
 }; // end class ResourceContainer
 
+
 #include "ResourceContainer.inl.h"
 
 #endif
