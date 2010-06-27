@@ -1,13 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <cstdio>
 #include <iostream>
-#include <vector>
 
 using namespace std;
 
@@ -150,41 +144,6 @@ template <typename Type> inline void memZero(Type& t)
 {
 	memset(&t, 0, sizeof(Type));
 }
-
-
-//======================================================================================================================
-// Memory allocation information for Linux                                                                             =
-//======================================================================================================================
-#if defined(PLATFORM_LINUX)
-
-#include <malloc.h>
-
-typedef struct mallinfo Mallinfo; 
-
-inline Mallinfo GetMallInfo()
-{
-	return mallinfo();
-}
-
-inline void printMallInfo(const Mallinfo& minfo)
-{
-	PRINT("used:" << minfo.uordblks << " free:" << minfo.fordblks << " total:" << minfo.arena);
-}
-
-inline void printMallInfoDiff(const Mallinfo& prev, const Mallinfo& now)
-{
-	Mallinfo diff;
-	diff.uordblks = now.uordblks-prev.uordblks;
-	diff.fordblks = now.fordblks-prev.fordblks;
-	diff.arena = now.arena-prev.arena;
-	printMallInfo(diff);
-}
-
-#define MALLINFO_BEGIN Mallinfo __m__ = GetMallInfo();
-
-#define MALLINFO_END printMallInfoDiff(__m__, GetMallInfo()); 
-
-#endif
 
 
 //======================================================================================================================

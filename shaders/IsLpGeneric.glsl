@@ -77,7 +77,7 @@ float getAttenuation( in float _frag_light_dist )
 // Pcf                                                                                                                 =
 //======================================================================================================================
 
-#if defined(_SPOT_LIGHT_) && defined( _SHADOW_ )
+#if defined(SPOT_LIGHT_ENABLED) && defined( SHADOW_ENABLED )
 
 /**
  * @return The blurred shadow
@@ -236,7 +236,7 @@ void main()
 	//
 	// Point light
 	//
-	#if defined(_POINT_LIGHT_)
+	#if defined(POINT_LIGHT_ENABLED)
 		// The func phong calculates the frag to light distance (_frag_light_dist) and be cause we need that distance
 		// latter for other calculations we export it
 		float _frag_light_dist;
@@ -249,7 +249,7 @@ void main()
 	//
 	// Spot light
 	//
-	#elif defined(_SPOT_LIGHT_)
+	#elif defined(SPOT_LIGHT_ENABLED)
 		vec4 _tex_coord2 = texProjectionMat * vec4(_frag_pos_vspace, 1.0);
 		vec3 _texCoords3 = _tex_coord2.xyz / _tex_coord2.w;
 
@@ -263,7 +263,7 @@ void main()
 			_tex_coord2.w < 1.0/lightInvRadius
 		)
 		{
-			#if defined( _SHADOW_ )
+			#if defined( SHADOW_ENABLED )
 				#if defined( PCF_ENABLED )
 					float _shadow_color = pcfLow( _texCoords3 );
 					//float _shadow_color = MedianFilterPCF( shadowMap, _texCoords3 );
@@ -280,7 +280,7 @@ void main()
 			vec3 _texel = texture2DProj( lightTex, _tex_coord2.xyz ).rgb;
 			float _att = getAttenuation(_frag_light_dist);
 
-			#if defined( _SHADOW_ )
+			#if defined( SHADOW_ENABLED )
 				gl_FragData[0] = vec4(_texel * _color * (_shadow_color * _att), 1.0);
 			#else
 				gl_FragData[0] = vec4( _color * _texel * _att, 1.0 );
@@ -293,8 +293,13 @@ void main()
 	#endif // spot light
 
 
+
+	/*#if defined(POINT_LIGHT_ENABLED)
+		gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4( 1, 0, 1, 1 );
+	#endif*/
+	
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4( 1, 0, 1, 1 );
-	/*#if defined(_SPOT_LIGHT_)
+	/*#if defined(SPOT_LIGHT_ENABLED)
 	gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4( texture2D( msDepthFai, texCoords ).r );
 	//gl_FragData[0] = vec4( texture2D( msDepthFai, texCoords ).rg), 1.0 );
 	#endif*/

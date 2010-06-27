@@ -90,7 +90,7 @@ void Renderer::Pps::Hdr::run()
 	pass0Fbo.bind();
 	pass0SProg.bind();
 	r.is.fai.setRepeat(false);
-	pass0SProg.uniVars.fai->setTexture(r.is.fai, 0);
+	pass0SProg.uniVars.fai->setTexture(r.pps.prePassFai, 0);
 	Renderer::drawQuad(0);
 
 	// pass 1

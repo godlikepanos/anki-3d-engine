@@ -27,6 +27,11 @@ void Renderer::Ms::init()
 		FATAL("Failed to create one MS FAI. See prev error");
 	}
 
+	normalFai.setRepeat(false);
+	diffuseFai.setRepeat(false);
+	specularFai.setRepeat(false);
+	depthFai.setRepeat(true);
+
 
 	// attach the buffers to the FBO
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0);

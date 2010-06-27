@@ -4,7 +4,8 @@
 //======================================================================================================================
 // findByName                                                                                                          =
 //======================================================================================================================
-template<typename Type> typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByName(const char* name)
+template<typename Type>
+typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByName(const char* name)
 {
 	Iterator it = BaseClass::begin();
 	while(it != BaseClass::end())
@@ -21,7 +22,9 @@ template<typename Type> typename ResourceContainer<Type>::Iterator ResourceConta
 //======================================================================================================================
 // findByNameAndPath                                                                                                   =
 //======================================================================================================================
-template<typename Type> typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByNameAndPath(const char* name, const char* path)
+template<typename Type>
+typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByNameAndPath(const char* name,
+                                                                                      const char* path)
 {
 	Iterator it = BaseClass::begin();
 	while(it != BaseClass::end())
@@ -38,7 +41,8 @@ template<typename Type> typename ResourceContainer<Type>::Iterator ResourceConta
 //======================================================================================================================
 // findByPtr                                                                                                           =
 //======================================================================================================================
-template<typename Type> typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByPtr(Type* ptr)
+template<typename Type>
+typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByPtr(Type* ptr)
 {
 	Iterator it = BaseClass::begin();
 	while(it != BaseClass::end())
@@ -55,7 +59,8 @@ template<typename Type> typename ResourceContainer<Type>::Iterator ResourceConta
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-template<typename Type> Type* ResourceContainer<Type>::load(const char* fname)
+template<typename Type>
+Type* ResourceContainer<Type>::load(const char* fname)
 {
 	char* name = Util::cutPath(fname);
 	string path = Util::getPath(fname);
@@ -89,7 +94,8 @@ template<typename Type> Type* ResourceContainer<Type>::load(const char* fname)
 //======================================================================================================================
 // unload                                                                                                              =
 //======================================================================================================================
-template<typename Type> void ResourceContainer<Type>::unload(Type* x)
+template<typename Type>
+void ResourceContainer<Type>::unload(Type* x)
 {
 	Iterator it = findByPtr(x);
 	if(it == BaseClass::end())

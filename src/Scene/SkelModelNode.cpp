@@ -1,3 +1,4 @@
+#include <cstring>
 #include "SkelModelNode.h"
 #include "Parser.h"
 #include "SkelNode.h"

@@ -2,8 +2,8 @@
 #define _SHADER_PROG_H_
 
 #include <GL/glew.h>
-#include <map>
 #include <limits>
+#include <boost/unordered_map.hpp>
 #include "Common.h"
 #include "Resource.h"
 #include "Math.h"
@@ -160,10 +160,10 @@ class ShaderProg: public Resource
 		static string stdSourceCode;
 		Vec<UniVar> uniVars; ///< All the uniform variables
 		Vec<AttribVar> attribVars; ///< All the attribute variables
-		map<string,UniVar*> uniNameToVar;  ///< A map for quick variable searching
-		map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
-		typedef map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
-		typedef map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
+		boost::unordered_map<string,UniVar*> uniNameToVar;  ///< A UnorderedMap for quick variable searching
+		boost::unordered_map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
+		typedef boost::unordered_map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
+		typedef boost::unordered_map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
 
 		/**
 		 * After the linking of the shader prog is done gather all the vars in custom containers

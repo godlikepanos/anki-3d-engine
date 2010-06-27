@@ -1,7 +1,7 @@
 #include <fstream>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include <iostream>
+#include <cstring>
+#include <cmath>
 #include <sstream>
 #include <iomanip>
 #include "Scanner.h"

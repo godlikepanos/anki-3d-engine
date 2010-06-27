@@ -2,6 +2,7 @@
 #define _SCANNER_H_
 
 #include <sstream>
+#include <fstream>
 #include "Common.h"
 
 

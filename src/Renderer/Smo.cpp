@@ -35,11 +35,10 @@ void Renderer::Is::Smo::init()
 void Renderer::Is::Smo::run(const PointLight& light)
 {
 	// set GL
-	glClear(GL_STENCIL_BUFFER_BIT);
 	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glColorMask(false, false, false, false);
-
+	glClear(GL_STENCIL_BUFFER_BIT);
 
 	glDisable(GL_CULL_FACE);
 

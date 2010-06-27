@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <cstring>
 #include "ShaderPrePreprocessor.h"
 #include "Scanner.h"
 #include "Parser.h"

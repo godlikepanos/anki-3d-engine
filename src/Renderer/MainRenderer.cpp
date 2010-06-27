@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <jpeglib.h>
+#include <fstream>
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
@@ -83,7 +84,8 @@ void MainRenderer::render(Camera& cam_)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	sProg.bind();
-	sProg.findUniVar("rasterImage")->setTexture(bs.refractFai, 0);
+	//sProg.findUniVar("rasterImage")->setTexture(is.fai, 0);
+	sProg.findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
 	drawQuad(0);
 }
 

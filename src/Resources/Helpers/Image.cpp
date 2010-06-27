@@ -1,4 +1,5 @@
 #include <SDL/SDL_image.h>
+#include <fstream>
 #include "Image.h"
 #include "Util.h"
 
