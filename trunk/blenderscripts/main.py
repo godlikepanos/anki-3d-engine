@@ -1,45 +1,44 @@
 print( "\n\n\n\n\n\n\n---- STARTING EXPORTER ----" )
 
 import sys
+import Blender
 
-from common import *
-reload( sys.modules["common"] )
+"""from common import *
+reload( sys.modules["common"] )"""
 
-from mesh import *
-reload( sys.modules["mesh"] )
+import mesh
+reload(sys.modules["mesh"])
 
-from skeleton import *
-reload( sys.modules["skeleton"] )
+import skeleton
+reload(sys.modules["skeleton"])
 
 from material import *
-reload( sys.modules["material"] )
+reload(sys.modules["material"])
 
 
-cmnts = true
-path = "/home/godlike/src/3d_engine/models/imp/"
-epath = "/home/godlike/src/3d_engine/"
+def foo(m):
+	print(m.blMesh)
+
 
 objs = Blender.Object.GetSelected()
 
 if len(objs) < 1:
-	ERROR( "Not selected objs" )
+	raise RuntimeError("Not selected objs")
 
 for obj in objs:
-	mi = mesh_init_t()
+	mi = mesh.Initializer()
 	
-	mi.mesh = GetMesh( obj )
-	mi.skeleton = GetSkeleton( obj )
-	mi.save_path = path
-	mi.write_comments = true
-	mtl = GetMaterial( mi.mesh )
-	mi.material_filename = "models/imp/" + mtl.getName() + ".mtl"
-	
+	mi.blMesh = mesh.getBlMeshFromBlObj(obj)
+	mi.blSkeleton = skeleton.GetSkeleton(obj)
+	mi.saveDir = "/home/godlike/src/anki/models/imp/"
+	#mtl = GetMaterial( mi.mesh )
+	mi.mtlName = "models/imp/imp.mtl"
 	
 	
-	ExportMesh( mi )
+	mesh.export(mi)
 	#ExportSkeleton( path, skel, cmnts )
 	#ExportVWeights( path, mesh, skel, cmnts )
 	#ExportMaterial( path, epath, mtl, cmnts )
 
 
-print( "---- ENDING EXPORTER ----" )
+print("---- ENDING EXPORTER ----")
