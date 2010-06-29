@@ -1,4 +1,6 @@
 import sys
+import common
+import os
 from copy import copy
 from Blender import Mathutils
 from Blender.Mathutils import *
@@ -6,32 +8,35 @@ from Numeric import *
 
 
 #=======================================================================================================================
-# MeshInitializer                                                                                                      =
+# Initializer                                                                                                      =
 #=======================================================================================================================
-class MeshInitializer:
-	blMesh = 0  # Blender Mesh
-	blSkeleton = 0 # Blender Armature
-	mtlName = "" # Material name
-	saveDir = "" # the name of the saved file
+class Initializer:
+	def __init__(self):
+		self.blMesh = None  # Blender Mesh
+		self.blSkeleton = None # Blender Armature
+		self.mtlName = "" # Material name
+		self.saveDir = "" # the name of the saved file
 	
 
 #=======================================================================================================================
 # Vert                                                                                                                 =
 #=======================================================================================================================
 class Vert:
-	x = 0.0
-	y = 0.0
-	z = 0.0
-	s = 0.0
-	t = 0.0
-	nextId = -1 # shows the next vertId. Is != -1 if the vert is problematic
+	def __init__(self):
+		self.x = 0.0
+		self.y = 0.0
+		self.z = 0.0
+		self.s = 0.0
+		self.t = 0.0
+		self.nextId = -1 # shows the next vertId. Is != -1 if the vert is problematic
 
 
 #=======================================================================================================================
 # Tri                                                                                                                  =
 #=======================================================================================================================
 class Tri:
-	vertIds[3]
+	def __init__(self):
+		self.vertIds = [-1, -1, -1]
 
 
 #=======================================================================================================================
@@ -117,7 +122,7 @@ def getAnkiVertWeights(mesh, skeleton):
 #=======================================================================================================================
 # getAnkiMeshScript                                                                                                    =
 #=======================================================================================================================
-def	getAnkiMeshScript(mesh, skeleton, mtlName)
+def	getAnkiMeshScript(mesh, skeleton, mtlName):
 	# check verts number
 	vertsNum = len(mesh.verts)
 	if vertsNum < 3:
@@ -125,7 +130,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 	
 	# declare some vars
 	ankiVerts = {}
-	ankiTris = {}
+	ankiTris = [Tri() for tri in range(len(mesh.faces))]
 	hasUvs = 0
 
 
@@ -139,14 +144,14 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 			if len(face.verts) != 3:
 				raise RuntimeError("Only triangles are accepted")
 			
-			ankiTris[i] = Tris() # create new tri
+			ankiTris[i] = Tri() # create new tri
 			
 			# for verts in the face
 			for j in [0, 1, 2]:
 				vertId = face.verts[j].index
 			
 				# vert does not exist
-				if not ankiVerts.has_key(vertId)
+				if not ankiVerts.has_key(vertId):
 					ankiVerts[vertId] = Vert()
 					ankiVerts[vertId].x = mesh.verts[vertId].co.x
 					ankiVerts[vertId].y = mesh.verts[vertId].co.y
@@ -157,15 +162,16 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 				
 					ankiTris[i].vertIds[j] = vertId
 				else:
+					prevId = -1
 					while 1:
 						# if in end of the list, create new vert and link list
 						if vertId == -1:
-							ankiVerts[vertsNum] = copy(ankiVerts[vertId])
+							ankiVerts[vertsNum] = copy.copy(ankiVerts[prevId])
 							ankiVerts[vertsNum].s = face.uv[j].x
 							ankiVerts[vertsNum].t = face.uv[j].y
 							ankiVerts[vertsNum].nextId = -1
 	
-							ankiVerts[vertId].nextId = vertsNum
+							ankiVerts[prevId].nextId = vertsNum
 						
 							ankiTris[i].vertIds[j] = vertsNum
 						
@@ -177,6 +183,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 							break;
 						# move to next node
 						else:
+							prevId = vertId
 							vertId = ankiVerts[vertId].nextId
 	# no UVs
 	else:
@@ -197,13 +204,11 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 			
 			if len(face.verts) != 3:
 				raise RuntimeError("Only triangles are accepted")
-			
-			ankiTris[i] = Tri()
-			
+		
 			for j in [0, 1, 2]:
 				ankiTris[i].vertIds[j] = face.verts[j].index
-	
-	
+		
+		
 	# write to ftxt
 	
 	# write mtl name
@@ -211,7 +216,8 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 	
 	# write verts
 	ftxt += str(len(ankiVerts)) + "\n"
-	for ankiVert in ankiVerts:
+	for i in range(len(ankiVerts)):
+		ankiVert = ankiVerts[i]
 		ftxt += str(ankiVert.x) + " " + str(ankiVert.y) + " " + str(ankiVert.z) + "\n"
 		
 	# write the tris
@@ -222,38 +228,37 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName)
 	# write the UVs
 	if hasUvs:
 		ftxt += str(len(ankiVerts)) + "\n"
-		for ankiVert in ankiVerts:
-			ftxt += str(ankiVert.s) + " " + str(ankiVert.t) + "\n"
+		for i in range(len(ankiVerts)):
+			ftxt += str(ankiVerts[i].s) + " " + str(ankiVerts[i].t) + "\n"
 	else:
 		ftxt += "0\n"
 	
 	# write the vert weights
-	if skeleton != 0:
-		ftxt += getAnkiVertWeights(meshInit)
+	if skeleton != None:
+		ftxt += getAnkiVertWeights(mesh, skeleton)
 	else:
 		ftxt += "0\n"
+
+	return ftxt
 			
 		
 #=======================================================================================================================
-# exportMesh                                                                                                           =
+# export                                                                                                               =
 #=======================================================================================================================
-def exportMesh(meshInit):
-	mesh = meshInit.mesh
-	skeleton = meshInit.skeleton
+def export(meshInit):
+	mesh = meshInit.blMesh
+	skeleton = meshInit.blSkeleton
 	
 	#check if mesh is the correct class
 	if mesh.__class__.__name__ != "Blender Mesh":
 		raise RuntimeError("The given func param is not a \"Blender Mesh\" class but a \"" + mesh.__class__.__name__ + "\"")
-		return false
 	
-	if skeleton != 0:
+	if skeleton != None:
 		#check if skeleton is the correct class
 		if(skeleton.__class__.__name__ != "Armature"):
 			raise RuntimeError("The given func param is not a \"Armature\" class but a \"" + skeleton.__class__.__name__ + "\"")
-			return false
 	
 	print("Trying to export mesh \"" + mesh.name + "\"")
 	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
-	WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName))
+	common.WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName))
 	print("Mesh exported!! \"" + filename + "\"")	
-
