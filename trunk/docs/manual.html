@@ -298,29 +298,30 @@ ul.auto-toc {
 <li><a class="reference internal" href="#required-libraries" id="id2">Required libraries</a><ul>
 <li><a class="reference internal" href="#bullet-physics" id="id3">Bullet Physics</a></li>
 <li><a class="reference internal" href="#sdl-ver-1-3" id="id4">SDL ver 1.3</a></li>
-<li><a class="reference internal" href="#glew" id="id5">GLEW</a></li>
-<li><a class="reference internal" href="#boost" id="id6">boost</a></li>
+<li><a class="reference internal" href="#sdl-image" id="id5">SDL_image</a></li>
+<li><a class="reference internal" href="#glew" id="id6">GLEW</a></li>
+<li><a class="reference internal" href="#boost" id="id7">boost</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#generating-makefiles-and-building-anki" id="id7">Generating makefiles and building AnKi</a></li>
+<li><a class="reference internal" href="#generating-makefiles-and-building-anki" id="id8">Generating makefiles and building AnKi</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#assets" id="id8">Assets</a></li>
-<li><a class="reference internal" href="#system-requirements" id="id9">System requirements</a></li>
-<li><a class="reference internal" href="#generating-source-documentation-doxygen" id="id10">Generating source documentation (doxygen)</a></li>
-<li><a class="reference internal" href="#coding-style" id="id11">Coding style</a><ul>
-<li><a class="reference internal" href="#types" id="id12">Types</a></li>
-<li><a class="reference internal" href="#functions-variables" id="id13">Functions &amp; variables</a></li>
-<li><a class="reference internal" href="#constants-macros-enumerators" id="id14">Constants, macros &amp; enumerators</a></li>
-<li><a class="reference internal" href="#parenthesis-braces-comas-operators" id="id15">Parenthesis, braces, comas &amp; operators</a></li>
-<li><a class="reference internal" href="#order-in-class-definitions" id="id16">Order in class definitions</a></li>
-<li><a class="reference internal" href="#material-shader-program-naming" id="id17">Material shader program naming</a></li>
-<li><a class="reference internal" href="#naming-shortcuts" id="id18">Naming shortcuts</a></li>
-<li><a class="reference internal" href="#controllers" id="id19">Controllers</a></li>
-<li><a class="reference internal" href="#submitting-patches" id="id20">Submitting patches</a></li>
+<li><a class="reference internal" href="#assets" id="id9">Assets</a></li>
+<li><a class="reference internal" href="#system-requirements" id="id10">System requirements</a></li>
+<li><a class="reference internal" href="#generating-source-code-documentation-doxygen" id="id11">Generating source code documentation (doxygen)</a></li>
+<li><a class="reference internal" href="#coding-style" id="id12">Coding style</a><ul>
+<li><a class="reference internal" href="#types" id="id13">Types</a></li>
+<li><a class="reference internal" href="#functions-variables" id="id14">Functions &amp; variables</a></li>
+<li><a class="reference internal" href="#constants-macros-enumerators" id="id15">Constants, macros &amp; enumerators</a></li>
+<li><a class="reference internal" href="#parenthesis-braces-comas-operators" id="id16">Parenthesis, braces, comas &amp; operators</a></li>
+<li><a class="reference internal" href="#order-in-class-definitions" id="id17">Order in class definitions</a></li>
+<li><a class="reference internal" href="#material-shader-program-naming" id="id18">Material shader program naming</a></li>
+<li><a class="reference internal" href="#naming-shortcuts" id="id19">Naming shortcuts</a></li>
+<li><a class="reference internal" href="#controllers" id="id20">Controllers</a></li>
+<li><a class="reference internal" href="#submitting-patches" id="id21">Submitting patches</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#todo-list" id="id21">ToDo list</a></li>
+<li><a class="reference internal" href="#todo-list" id="id22">ToDo list</a></li>
 </ul>
 </div>
 <div class="section" id="building">
@@ -334,6 +335,7 @@ build system that generates GNU makefiles.</p>
 <ul class="simple">
 <li>Bullet Physics</li>
 <li>SDL ver 1.3</li>
+<li>SDL_image</li>
 <li>GLEW</li>
 <li>boost</li>
 </ul>
@@ -368,8 +370,22 @@ Mercurial and autoconf installed.</p>
 <li>$ make</li>
 </ol>
 </div>
+<div class="section" id="sdl-image">
+<h3><a class="toc-backref" href="#id5">SDL_image</a></h3>
+<p>SDL_image automates the loading of images (png, jpeg etc). Just like SDL,
+SDL_image needs Mercurial and autoconf installed.</p>
+<ol class="arabic simple">
+<li>$ Go to the root AnKi path (where src, shaders and blenderscripts are)</li>
+<li>$ cd ..</li>
+<li>$ hg clone <a class="reference external" href="http://hg.libsdl.org/SDL_image">http://hg.libsdl.org/SDL_image</a> SDL_image</li>
+<li>$ cd SDL_image</li>
+<li>$ ./autogen.sh</li>
+<li>$ ./configure</li>
+<li>$ make</li>
+</ol>
+</div>
 <div class="section" id="glew">
-<h3><a class="toc-backref" href="#id5">GLEW</a></h3>
+<h3><a class="toc-backref" href="#id6">GLEW</a></h3>
 <p>The latest GLEW provides us with OpenGL 3 and 4 extensions. Needs SVN and a
 Unix environment (for step 5).</p>
 <ol class="arabic simple">
@@ -382,7 +398,7 @@ Unix environment (for step 5).</p>
 </ol>
 </div>
 <div class="section" id="boost">
-<h3><a class="toc-backref" href="#id6">boost</a></h3>
+<h3><a class="toc-backref" href="#id7">boost</a></h3>
 <p>Boost is pretty big to download and build from SVN, also it doesnt need to be in
 the lattest version. The Linux distribution's version will do the trick so
 install it using the packet manager of your choice.</p>
@@ -390,9 +406,9 @@ install it using the packet manager of your choice.</p>
 </div>
 </div>
 <div class="section" id="generating-makefiles-and-building-anki">
-<h2><a class="toc-backref" href="#id7">Generating makefiles and building AnKi</a></h2>
-<p>There are 4 build targets in this folder. There is also a build system that
-generates GNU makefiles (it requires Python 3 installed). If you want to
+<h2><a class="toc-backref" href="#id8">Generating makefiles and building AnKi</a></h2>
+<p>There are 4 build targets in the build directory. There is also a build system
+that generates GNU makefiles (it requires Python 3 installed). If you want to
 generate the makefile for the debug target (for example) do the following:</p>
 <ol class="arabic simple">
 <li>$ cd &lt;path to anki&gt;/build/debug</li>
@@ -407,12 +423,12 @@ updated though.</p>
 </div>
 </div>
 <div class="section" id="assets">
-<h1><a class="toc-backref" href="#id8">Assets</a></h1>
+<h1><a class="toc-backref" href="#id9">Assets</a></h1>
 <p>Currently there are no assets (models, textures, materials etc) so even if you
 build it, the application will fail to run.</p>
 </div>
 <div class="section" id="system-requirements">
-<h1><a class="toc-backref" href="#id9">System requirements</a></h1>
+<h1><a class="toc-backref" href="#id10">System requirements</a></h1>
 <p>The engine requires:</p>
 <ul class="simple">
 <li>GPU with shader model 4</li>
@@ -422,11 +438,11 @@ build it, the application will fail to run.</p>
 <p>Development rig: Ubuntu 9.10, AMD Radeon 4870 w/ Catalyst 10.6. So it should be
 working on similar systems.</p>
 </div>
-<div class="section" id="generating-source-documentation-doxygen">
-<h1><a class="toc-backref" href="#id10">Generating source documentation (doxygen)</a></h1>
-<p>The AnKi source code utilises doxygen style comments. For that you need doxygen
-(<a class="reference external" href="http://www.doxygen.org/">http://www.doxygen.org/</a>). To generate the html documentation from a terminal
-do:</p>
+<div class="section" id="generating-source-code-documentation-doxygen">
+<h1><a class="toc-backref" href="#id11">Generating source code documentation (doxygen)</a></h1>
+<p>The AnKi source code uses doxygen style comments in almost every file. To
+generate the documentation you need doxygen (<a class="reference external" href="http://www.doxygen.org/">http://www.doxygen.org/</a>). From a
+terminal type:</p>
 <ol class="arabic simple">
 <li>$ cd docs</li>
 <li>$ doxygen doxyfile</li>
@@ -434,21 +450,21 @@ do:</p>
 <p>Then open doxygen.html to see it.</p>
 </div>
 <div class="section" id="coding-style">
-<h1><a class="toc-backref" href="#id11">Coding style</a></h1>
+<h1><a class="toc-backref" href="#id12">Coding style</a></h1>
 <p>Every project has some rules and here are some things to remember while coding
 AnKi.</p>
 <div class="section" id="types">
-<h2><a class="toc-backref" href="#id12">Types</a></h2>
+<h2><a class="toc-backref" href="#id13">Types</a></h2>
 <p>The classes, structs, typedefs, enums etc must be capitalized eg <em>ThisIsAClass</em></p>
 </div>
 <div class="section" id="functions-variables">
-<h2><a class="toc-backref" href="#id13">Functions &amp; variables</a></h2>
+<h2><a class="toc-backref" href="#id14">Functions &amp; variables</a></h2>
 <p>All functions (including class methods) and all variables are mixed case.</p>
 <p>All functions should have a verb inside them eg <em>doSomething()</em></p>
 <p>All variables should not have verbs eg <em>oneVariable</em></p>
 </div>
 <div class="section" id="constants-macros-enumerators">
-<h2><a class="toc-backref" href="#id14">Constants, macros &amp; enumerators</a></h2>
+<h2><a class="toc-backref" href="#id15">Constants, macros &amp; enumerators</a></h2>
 <p>All constants, macros and enumerators are capital with undercores eg <em>#define
 MACRO(x)</em> or <em>const int ONE_INT = 10;</em></p>
 <p>All the constants should be defined without using the preprocessor eg dont write
@@ -457,14 +473,14 @@ MACRO(x)</em> or <em>const int ONE_INT = 10;</em></p>
 <em>enum CarColors { CC_BLUE, CC_GREEN };</em></p>
 </div>
 <div class="section" id="parenthesis-braces-comas-operators">
-<h2><a class="toc-backref" href="#id15">Parenthesis, braces, comas &amp; operators</a></h2>
+<h2><a class="toc-backref" href="#id16">Parenthesis, braces, comas &amp; operators</a></h2>
 <p>After opening parenthesis and before closing it there is no spaces, same for
-square brackets. Before and after an operator there is always spaces</p>
+square brackets. Before and after an operator there is always a space</p>
 <p>eg <em>((mat1 * 10) + 10)</em> or <em>setWidth(100)</em> or <em>int arr[100 + 1];</em></p>
 <p>After a coma there is a space eg <em>setSize(10, 20)</em></p>
 </div>
 <div class="section" id="order-in-class-definitions">
-<h2><a class="toc-backref" href="#id16">Order in class definitions</a></h2>
+<h2><a class="toc-backref" href="#id17">Order in class definitions</a></h2>
 <p>class</p>
 <p>{</p>
 <blockquote>
@@ -480,7 +496,7 @@ square brackets. Before and after an operator there is always spaces</p>
 <p>inlines</p>
 </div>
 <div class="section" id="material-shader-program-naming">
-<h2><a class="toc-backref" href="#id17">Material shader program naming</a></h2>
+<h2><a class="toc-backref" href="#id18">Material shader program naming</a></h2>
 <p>dnspgke:</p>
 <ul class="simple">
 <li>diffuse mapping</li>
@@ -493,8 +509,9 @@ square brackets. Before and after an operator there is always spaces</p>
 </ul>
 </div>
 <div class="section" id="naming-shortcuts">
-<h2><a class="toc-backref" href="#id18">Naming shortcuts</a></h2>
-<p>This list contains some of the naming shortcuts we use in AnKi:</p>
+<h2><a class="toc-backref" href="#id19">Naming shortcuts</a></h2>
+<p>This list contains some of the naming shortcuts we use in AnKi. This is because
+we are bored to type:</p>
 <ul class="simple">
 <li>Array                        : arr</li>
 <li>Animation                    : anim</li>
@@ -534,9 +551,10 @@ square brackets. Before and after an operator there is always spaces</p>
 <li>Vector                       : vec</li>
 <li>Vertex                       : vert</li>
 </ul>
+<p>Anything else should be typed full.</p>
 </div>
 <div class="section" id="controllers">
-<h2><a class="toc-backref" href="#id19">Controllers</a></h2>
+<h2><a class="toc-backref" href="#id20">Controllers</a></h2>
 <p>The controllers are part of the scene node objects. They control the node's
 behaviour.</p>
 <p>They have an input (script, animation, etc) and they control a scene node. The
@@ -546,7 +564,7 @@ naming convention of the controllers is:</p>
 <p>MeshSkelNodeCtrl A Mesh is controlled by a SkelNode</p>
 </div>
 <div class="section" id="submitting-patches">
-<h2><a class="toc-backref" href="#id20">Submitting patches</a></h2>
+<h2><a class="toc-backref" href="#id21">Submitting patches</a></h2>
 <p>If you want to update/patch a file (for example Main.cpp) do:</p>
 <ul class="simple">
 <li>Make the changes on that file</li>
@@ -556,7 +574,7 @@ naming convention of the controllers is:</p>
 </div>
 </div>
 <div class="section" id="todo-list">
-<h1><a class="toc-backref" href="#id21">ToDo list</a></h1>
+<h1><a class="toc-backref" href="#id22">ToDo list</a></h1>
 <ul>
 <li><p class="first">Continue working on the new coding style in shaders</p>
 </li>
@@ -585,6 +603,9 @@ manualy setting the gravity</li>
 that (Smo, Bs) to save memory</p>
 </li>
 <li><p class="first">See if the restrictions in FBOs (all FAIs same size) still apply</p>
+</li>
+<li><p class="first">See what happens if I write <em>#pragma anki attribute &lt;randName&gt; 10</em> where
+randName does not exist. Do the same for tranform feedback varyings</p>
 </li>
 </ul>
 </div>

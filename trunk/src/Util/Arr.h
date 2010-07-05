@@ -6,10 +6,10 @@
 
 
 /**
- * This is a wrapper of boost::array that adds new functionality
+ * This is a wrapper of array that adds new functionality
  */
 template<typename Type, size_t nn>
-class Arr: public boost::array<Type, nn>
+class Arr: public array<Type, nn>
 {
 	public:
 		Type& operator[](size_t n);
@@ -24,7 +24,7 @@ template<typename Type, size_t nn>
 Type& Arr<Type, nn>::operator[](size_t n)
 {
 	DEBUG_ERR(n >= nn);
-	return boost::array<Type, nn>::operator [](n);
+	return array<Type, nn>::operator [](n);
 }
 
 
@@ -35,7 +35,7 @@ template<typename Type, size_t nn>
 const Type& Arr<Type, nn>::operator[](size_t n) const
 {
 	DEBUG_ERR(n >= nn);
-	return boost::array<Type, nn>::operator [](n);
+	return array<Type, nn>::operator [](n);
 }
 
 #endif

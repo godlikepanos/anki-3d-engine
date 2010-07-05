@@ -102,7 +102,7 @@ void handleEvents()
 			}
 
 			case SDL_QUIT:
-				app->quitApp(1);
+				app->quit(1);
 				break;
 		}
 	}

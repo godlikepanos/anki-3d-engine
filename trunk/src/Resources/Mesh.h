@@ -8,10 +8,11 @@
 #include "collision.h"
 
 
-/// Mesh @ref Resource
+/**
+ * Mesh @ref Resource
+ */
 class Mesh: public Resource
 {
-	// data
 	public:
 		class VertexWeight
 		{
@@ -31,13 +32,6 @@ class Mesh: public Resource
 				Vec3 normal;
 		};
 
-		Vec<Vec3>         vertCoords;
-		Vec<Vec3>         vertNormals;
-		Vec<Vec4>         vertTangents;
-		Vec<Vec2>         texCoords;    ///< One for every vert so we can use vertex arrays & VBOs
-		Vec<VertexWeight> vertWeights;
-		Vec<Triangle>     tris;
-		Vec<ushort>       vertIndeces; ///< Used for vertex arrays & VBOs
 
 		struct
 		{
@@ -49,9 +43,6 @@ class Mesh: public Resource
 			Vbo vertWeights;
 		} vbos;
 
-		string materialName;
-
-		bsphere_t bsphere;
 
 	// funcs
 	protected:
@@ -64,6 +55,16 @@ class Mesh: public Resource
 		void calcBSphere();
 
 	public:
+		Vec<Vec3>         vertCoords;
+		Vec<Vec3>         vertNormals;
+		Vec<Vec4>         vertTangents;
+		Vec<Vec2>         texCoords;    ///< One for every vert so we can use vertex arrays & VBOs
+		Vec<VertexWeight> vertWeights;
+		Vec<Triangle>     tris;
+		Vec<ushort>       vertIndeces; ///< Used for vertex arrays & VBOs
+		string            materialName;
+		bsphere_t         bsphere;
+
 		Mesh() {}
 		virtual ~Mesh() { /*ToDo*/ }
 		bool load(const char* filename);

@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <sstream>
 #include <SDL.h>
+#include <SDL_image.h>
 #include "App.h"
 #include "Scene.h"
 #include "MainRenderer.h"
@@ -55,21 +56,21 @@ App::App(int argc, char* argv[]):
 	isCreated = true;
 
 	// dirs
-	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
-	if(!boost::filesystem::exists(settingsPath))
+	settingsPath = filesystem::path(getenv("HOME")) / ".anki";
+	if(!filesystem::exists(settingsPath))
 	{
 		INFO("Creating settings dir \"" << settingsPath << "\"");
-		boost::filesystem::create_directory(settingsPath);
+		filesystem::create_directory(settingsPath);
 	}
 
 	cachePath = settingsPath / "cache";
-	if(boost::filesystem::exists(cachePath))
+	if(filesystem::exists(cachePath))
 	{
-		boost::filesystem::remove_all(cachePath);
+		filesystem::remove_all(cachePath);
 	}
 
 	INFO("Creating cache dir \"" << cachePath << "\"");
-	boost::filesystem::create_directory(cachePath);
+	filesystem::create_directory(cachePath);
 
 
 	scene = new Scene;
@@ -159,9 +160,9 @@ void App::swapBuffers()
 
 
 //======================================================================================================================
-// quitApp                                                                                                             =
+// quit                                                                                                             =
 //======================================================================================================================
-void App::quitApp(int code)
+void App::quit(int code)
 {
 	SDL_FreeSurface(iconImage);
 	SDL_GL_DeleteContext(glContext);
@@ -218,6 +219,8 @@ void App::printAppInfo()
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
 	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch) << ", ";
+	v = IMG_Linked_Version();
+	msg << "SDL_image " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch) << ", ";
 	msg << "build date " __DATE__ << ", ";
 	msg << "rev " << REVISION;
 

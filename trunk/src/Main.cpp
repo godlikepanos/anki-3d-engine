@@ -296,6 +296,7 @@ void init()
 void mainLoop()
 {
 	INFO("Entering main loop");
+
 	int ticks = App::getTicks();
 	do
 	{
@@ -399,6 +400,7 @@ void mainLoop()
 		else
 			if(app->getMainRenderer()->getFramesNum() == 5000) break;
 	}while(true);
+
 	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
 }
 
@@ -415,6 +417,6 @@ int main(int argc, char* argv[])
 	mainLoop();
 
 	INFO("Exiting...");
-	app->quitApp(EXIT_SUCCESS);
+	app->quit(EXIT_SUCCESS);
 	return 0;
 }
