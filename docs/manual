@@ -24,6 +24,7 @@ AnKi requires a few up to date versions of some libraries. The libraries are:
   
 - Bullet Physics
 - SDL ver 1.3
+- SDL_image
 - GLEW
 - boost
 
@@ -60,7 +61,22 @@ Mercurial and autoconf installed.
 #) $ ./autogen.sh
 #) $ ./configure
 #) $ make
-  
+ 
+
+SDL_image
+~~~~~~~~~
+
+SDL_image automates the loading of images (png, jpeg etc). Just like SDL,
+SDL_image needs Mercurial and autoconf installed.
+
+#) $ Go to the root AnKi path (where src, shaders and blenderscripts are)
+#) $ cd ..
+#) $ hg clone http://hg.libsdl.org/SDL_image SDL_image
+#) $ cd SDL_image
+#) $ ./autogen.sh
+#) $ ./configure
+#) $ make
+
 
 GLEW
 ~~~~
@@ -89,8 +105,8 @@ In Ubuntu type: $ sudo apt-get install libboost<version>-dev-all
 Generating makefiles and building AnKi
 --------------------------------------
 
-There are 4 build targets in this folder. There is also a build system that
-generates GNU makefiles (it requires Python 3 installed). If you want to 
+There are 4 build targets in the build directory. There is also a build system
+that generates GNU makefiles (it requires Python 3 installed). If you want to 
 generate the makefile for the debug target (for example) do the following:
 
 #) $ cd <path to anki>/build/debug
@@ -128,13 +144,13 @@ Development rig: Ubuntu 9.10, AMD Radeon 4870 w/ Catalyst 10.6. So it should be
 working on similar systems.
 
 
-=========================================
-Generating source documentation (doxygen)
-=========================================
+==============================================
+Generating source code documentation (doxygen)
+==============================================
 
-The AnKi source code utilises doxygen style comments. For that you need doxygen
-(http://www.doxygen.org/). To generate the html documentation from a terminal
-do:
+The AnKi source code uses doxygen style comments in almost every file. To
+generate the documentation you need doxygen (http://www.doxygen.org/). From a
+terminal type:
 
 #) $ cd docs
 #) $ doxygen doxyfile
@@ -183,7 +199,7 @@ Parenthesis, braces, comas & operators
 --------------------------------------
 
 After opening parenthesis and before closing it there is no spaces, same for
-square brackets. Before and after an operator there is always spaces
+square brackets. Before and after an operator there is always a space
 
 eg *((mat1 * 10) + 10)* or *setWidth(100)* or *int arr[100 + 1];*
 
@@ -233,7 +249,8 @@ dnspgke:
 Naming shortcuts
 ----------------
 
-This list contains some of the naming shortcuts we use in AnKi:
+This list contains some of the naming shortcuts we use in AnKi. This is because
+we are bored to type:
 
 - Array                        : arr
 - Animation                    : anim
@@ -272,6 +289,8 @@ This list contains some of the naming shortcuts we use in AnKi:
 - Variable                     : var
 - Vector                       : vec
 - Vertex                       : vert
+
+Anything else should be typed full.
 
 
 Controllers
@@ -321,3 +340,4 @@ ToDo list
 - See if the restrictions in FBOs (all FAIs same size) still apply
 - See what happens if I write *#pragma anki attribute <randName> 10* where
   randName does not exist. Do the same for tranform feedback varyings
+  

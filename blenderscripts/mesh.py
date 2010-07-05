@@ -28,6 +28,9 @@ class Vert:
 		self.z = 0.0
 		self.s = 0.0
 		self.t = 0.0
+		self.bonesNum = 0
+		self.boneIds = [-1, -1, -1, -1]
+		self.weights = [-1.0, -1.0, -1.0, -1.0]
 		self.nextId = -1 # shows the next vertId. Is != -1 if the vert is problematic
 
 
@@ -54,9 +57,9 @@ def getBlMeshFromBlObj(obj):
 
 
 #=======================================================================================================================
-# getAnkiVertWeights                                                                                                   =
+# updateAnkiVertsWithBoneWeights                                                                                       =
 #=======================================================================================================================
-def getAnkiVertWeights(mesh, skeleton):
+def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 	boneNames = skeleton.bones.keys()
 	boneNames.sort()
 	
@@ -80,11 +83,9 @@ def getAnkiVertWeights(mesh, skeleton):
 		vgroup2boneId[vgroupName] = boneId
 
 
-	# vert weights num
-	ftxt += str(len(mesh.verts)) + "\n"
-	
-	# for every vert do some shit
-	for vert in mesh.verts:
+	# for every non problematic vert do some shit
+	for i in range(len(mesh.verts))
+		vert = mesh.verts[i]
 		influences = mesh.getVertexInfluences(vert.index)
 		
 		influencesNum = 0
@@ -99,24 +100,45 @@ def getAnkiVertWeights(mesh, skeleton):
 				sumw = sumw + weight
 		
 		# a check
-		if(influencesNum > 4):
+		if influencesNum > 4:
 			raise RuntimeError("Cannot have more than 4 bones per vert")
 	
 		# write influences num
-		ftxt += str(influencesNum) + "\n"
-				
-		for influence in influences:
+		ankiVerts[i].bonesNum = str(influencesNum)
+		
+		for j in range(len(influences)):
+			influence = influences[j]
 			vgroup = influence[0]
 			weight = influence[1]
 			
 			if vgroup2boneId[vgroup] != -1:	
 				# write bone id
-				ftxt += str(vgroup2boneId[vgroup]) + " "
+				ankiVerts[i].boneIds[j] = vgroup2boneId[vgroup]
 				# write weight for that bone
-				ftxt += str(weight/sumw) + "\n"
-	# end for all verts
+				ankiVerts[i].weights[j] = weight/sumw
+	# end for all non problematic verts
 	
-	return ftxt
+	
+	# for every canonical ankiVert fill the problematics
+	for i in range(len(mesh.verts)):
+		ankiVert = ankiVerts[i]
+		
+		cid = i # current id
+		nid = ankiVert.nextId # next id
+		
+		if nid == -1:
+			continue
+		
+		while nid != -1:
+			# copy vert weight data
+			ankiVerts[nid].bonesNum = ankiVerts[cid].bonesNum
+			ankiVerts[nid].boneIds = copy.copy(ankiVerts[cid].boneIds)
+			ankiVerts[nid].weights = copy.copy(ankiVerts[cid].weights)
+			
+			cid = nid
+			nid = ankiVerts[nid].nextId
+				
+		
 	
 
 #=======================================================================================================================
@@ -235,7 +257,15 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName):
 	
 	# write the vert weights
 	if skeleton != None:
-		ftxt += getAnkiVertWeights(mesh, skeleton)
+		updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts)
+		
+		ftxt += str(len(ankiVerts))
+		
+		for i in range(len(ankiVerts)):
+			ankiVert = ankiVerts[i]
+			ftxt += str(ankiVert.bonesNum) + "\n"
+			for j in range(ankiVerts.bonesNum):
+				ftxt += str(ankiVerts.boneIds[j]) + " " + str(ankiVerts.weights[j]) + "\n"
 	else:
 		ftxt += "0\n"
 
@@ -262,3 +292,4 @@ def export(meshInit):
 	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
 	common.WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName))
 	print("Mesh exported!! \"" + filename + "\"")	
+

@@ -1,7 +1,10 @@
+#include <boost/filesystem.hpp>
+#include <fstream>
 #include "ShaderProg.h"
 #include "Renderer.h"
 #include "ShaderPrePreprocessor.h"
 #include "Texture.h"
+#include "App.h"
 
 
 #define SHADER_ERROR(x) ERROR("Shader (" << getRsrcName() << "): " << x)
@@ -375,3 +378,31 @@ bool ShaderProg::attribVarExists(const char* name) const
 	return it != attribNameToVar.end();
 }
 
+
+//======================================================================================================================
+// writeSrcCodeToCache                                                                                                 =
+//======================================================================================================================
+bool ShaderProg::writeSrcCodeToCache(const char* filename, const char* extraSource, const char* newFName)
+{
+	filesystem::path fName_ = app->getCachePath() / newFName;
+
+	if(filesystem::exists(fName_))
+	{
+		return true;
+	}
+
+	string src_ = Util::readFile(filename);
+	DEBUG_ERR(src_ == "");
+	string src = extraSource + src_;
+
+	ofstream f(fName_.file_string().c_str());
+	if(!f.good())
+	{
+		ERROR("Cannot open file for writing \"" << fName_.file_string() << "\"");
+		return false;
+	}
+
+	f.write(src.c_str(), src.length());
+
+	return false;
+}

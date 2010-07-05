@@ -3,6 +3,11 @@
 
 #include <iostream>
 
+// dummy define just to use namespace
+namespace boost
+{}
+
+using namespace boost;
 using namespace std;
 
 

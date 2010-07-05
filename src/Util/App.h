@@ -15,8 +15,8 @@ class App
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
 	PROPERTY_R(bool, terminalColoringEnabled, isTerminalColoringEnabled) ///< Terminal coloring for Unix terminals. Default on
-	PROPERTY_R(boost::filesystem::path, settingsPath, getSettingsPath)
-	PROPERTY_R(boost::filesystem::path, cachePath, getCachePath)
+	PROPERTY_R(filesystem::path, settingsPath, getSettingsPath)
+	PROPERTY_R(filesystem::path, cachePath, getCachePath)
 
 	PROPERTY_RW(class Scene*, scene, setScene, getScene) ///< Pointer to the current scene
 	PROPERTY_RW(class MainRenderer*, mainRenderer, setMainRenderer, getMainRenderer) ///< Pointer to the main renderer
@@ -38,7 +38,7 @@ class App
 		App(int argc, char* argv[]);
 		~App() {}
 		void initWindow();
-		void quitApp(int code);
+		void quit(int code);
 		void waitForNextFrame();
 		void togleFullScreen();
 		void swapBuffers();

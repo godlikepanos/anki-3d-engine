@@ -37,10 +37,10 @@ class ShaderProg: public Resource
 					SVT_UNIFORM    ///< SVT_UNIFORM
 				};
 
-			PROPERTY_R(GLint, loc, getLoc) ///< @ref PROPERTY_R : GL location
-			PROPERTY_R(string, name, getName) ///< @ref PROPERTY_R : The name inside the shader program
-			PROPERTY_R(GLenum, glDataType, getGlDataType) ///< @ref PROPERTY_R : GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
-			PROPERTY_R(Type, type, getType) ///< @ref PROPERTY_R : @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
+			PROPERTY_R(GLint, loc, getLoc) ///< GL location
+			PROPERTY_R(string, name, getName) ///< The name inside the shader program
+			PROPERTY_R(GLenum, glDataType, getGlDataType) ///< GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
+			PROPERTY_R(Type, type, getType) ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 
 			public:
 				Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_);
@@ -79,6 +79,10 @@ class ShaderProg: public Resource
 				AttribVar(const UniVar& var);
 		};
 		
+	private:
+		typedef unordered_map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
+		typedef unordered_map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
+
 	//====================================================================================================================
 	// Public                                                                                                            =
 	//====================================================================================================================
@@ -89,23 +93,23 @@ class ShaderProg: public Resource
 		/**
 		 * Accessor to glId
 		 */
-		GLuint getGlId() const { DEBUG_ERR(glId==numeric_limits<uint>::max()); return glId; }
+		GLuint getGlId() const;
 
 		/**
 		 * Bind the shader program
 		 */
-		inline void bind() const { DEBUG_ERR(glId==numeric_limits<uint>::max()); glUseProgram(glId); }
+		void bind() const;
 		
 		/**
 		 * Unbind all shader programs
 		 */
-		static void unbind() { glUseProgram(0); }
+		static void unbind();
 
 		/**
 		 * Query the GL driver for the current shader program GL ID
 		 * @return Shader program GL id
 		 */
-		static uint getCurrentProgramGlId() { int i; glGetIntegerv(GL_CURRENT_PROGRAM, &i); return i; }
+		static uint getCurrentProgramGlId();
 
 		/**
 		 * Resource load
@@ -149,21 +153,18 @@ class ShaderProg: public Resource
 		bool uniVarExists(const char* varName) const;
 		bool attribVarExists(const char* varName) const;
 
-		static bool writeSrcCodeToCache(const char* filename, const char* extraSource);
+		static bool writeSrcCodeToCache(const char* filename, const char* extraSource, const char* newFName);
 
 	//====================================================================================================================
 	// Private                                                                                                           =
 	//====================================================================================================================
 	private:
 		GLuint glId; ///< The OpenGL ID of the shader program
-
 		static string stdSourceCode;
 		Vec<UniVar> uniVars; ///< All the uniform variables
 		Vec<AttribVar> attribVars; ///< All the attribute variables
-		boost::unordered_map<string,UniVar*> uniNameToVar;  ///< A UnorderedMap for quick variable searching
-		boost::unordered_map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
-		typedef boost::unordered_map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
-		typedef boost::unordered_map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
+		unordered_map<string,UniVar*> uniNameToVar;  ///< A UnorderedMap for quick variable searching
+		unordered_map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
 
 		/**
 		 * After the linking of the shader prog is done gather all the vars in custom containers
@@ -179,7 +180,12 @@ class ShaderProg: public Resource
 		 * @return Returns zero on failure
 		 */
 		uint createAndCompileShader(const char* sourceCode, const char* preproc, int type) const;
-		bool link(); ///< Link the shader prog
+
+		/**
+		 * Link the shader prog
+		 * @return True on success
+		 */
+		bool link();
 }; 
 
 
@@ -231,5 +237,32 @@ inline ShaderProg::ShaderProg():
 	glId(numeric_limits<uint>::max())
 {}
 
+
+inline GLuint ShaderProg::getGlId() const
+{
+	DEBUG_ERR(glId==numeric_limits<uint>::max());
+	return glId;
+}
+
+
+inline void ShaderProg::bind() const
+{
+	DEBUG_ERR(glId==numeric_limits<uint>::max());
+	glUseProgram(glId);
+}
+
+
+inline void ShaderProg::unbind()
+{
+	glUseProgram(0);
+}
+
+
+inline uint ShaderProg::getCurrentProgramGlId()
+{
+	int i;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
+	return i;
+}
 
 #endif

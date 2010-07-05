@@ -22,11 +22,6 @@ class Material: public Resource
 	friend class Renderer;
 	friend class MeshNode;
 
-	public:
-		Material();
-		bool load(const char* filename);
-		void unload();
-
 	private:
 		/**
 		 * Standard attribute variables that are acceptable inside the @ref ShaderProg
@@ -120,7 +115,7 @@ class Material: public Resource
 		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
 		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
 		ShaderProg* shaderProg; ///< The most important aspect of materials
-		Material* dpMtl; ///< The material for depth passes. To be removed when skinning is done using tranform feedback
+		Material* dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
 		Vec<UserDefinedUniVar> userDefinedVars;
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
 		int blendingSfactor;
@@ -136,9 +131,26 @@ class Material: public Resource
 		 */
 		bool initStdShaderVars();
 
-		bool hasHWSkinning() const { return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL; }
-		bool hasAlphaTesting() const { return dpMtl!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL; }
+		bool hasHWSkinning() const;
+		bool hasAlphaTesting() const;
+
+	public:
+		Material();
+		bool load(const char* filename);
+		void unload();
 };
+
+
+inline bool Material::hasHWSkinning() const
+{
+	return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;
+}
+
+
+inline bool Material::hasAlphaTesting() const
+{
+	return dpMtl!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL;
+}
 
 
 #endif
