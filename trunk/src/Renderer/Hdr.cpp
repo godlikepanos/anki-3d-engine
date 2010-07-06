@@ -57,20 +57,25 @@ void Renderer::Pps::Hdr::init()
 	// init shaders
 	const char* shaderFname = "shaders/PpsHdr.glsl";
 	string pps;
+	string prefix;
 
 	pps = "#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n";
-	if(!pass0SProg.customLoad(shaderFname, pps.c_str()))
-		FATAL("See prev error");
-	pass0SProg.uniVars.fai = pass0SProg.findUniVar("fai");
+	prefix = "Pass0IsFaiWidth" + Util::floatToStr(r.width);
+	pass0SProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
+	                                                                         prefix.c_str()).c_str()));
+	pass0SProgFaiUniVar = pass0SProg->findUniVar("fai");
 
 	pps = "#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n";
-	if(!pass1SProg.customLoad(shaderFname, pps.c_str()))
-		FATAL("See prev error");
-	pass1SProg.uniVars.fai = pass1SProg.findUniVar("fai");
+	prefix = "Pass1Pass0Height" + Util::floatToStr(height);
+	pass1SProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
+	                                                                         prefix.c_str()).c_str()));
+	pass1SProgFaiUniVar = pass1SProg->findUniVar("fai");
 
-	if(!pass2SProg.customLoad(shaderFname, "#define _PPS_HDR_PASS_2_\n"))
-		FATAL("See prev error");
-	pass2SProg.uniVars.fai = pass2SProg.findUniVar("fai");
+	pps = "#define _PPS_HDR_PASS_2_\n";
+	prefix = "Pass2";
+	pass2SProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
+	                                                                         prefix.c_str()).c_str()));
+	pass2SProgFaiUniVar = pass2SProg->findUniVar("fai");
 }
 
 
@@ -88,23 +93,23 @@ void Renderer::Pps::Hdr::run()
 
 	// pass 0
 	pass0Fbo.bind();
-	pass0SProg.bind();
+	pass0SProg->bind();
 	r.is.fai.setRepeat(false);
-	pass0SProg.uniVars.fai->setTexture(r.pps.prePassFai, 0);
+	pass0SProgFaiUniVar->setTexture(r.pps.prePassFai, 0);
 	Renderer::drawQuad(0);
 
 	// pass 1
 	pass1Fbo.bind();
-	pass1SProg.bind();
+	pass1SProg->bind();
 	pass0Fai.setRepeat(false);
-	pass1SProg.uniVars.fai->setTexture(pass0Fai, 0);
+	pass1SProgFaiUniVar->setTexture(pass0Fai, 0);
 	Renderer::drawQuad(0);
 
 	// pass 2
 	pass2Fbo.bind();
-	pass2SProg.bind();
+	pass2SProg->bind();
 	pass1Fai.setRepeat(false);
-	pass2SProg.uniVars.fai->setTexture(pass1Fai, 0);
+	pass2SProgFaiUniVar->setTexture(pass1Fai, 0);
 	Renderer::drawQuad(0);
 
 	// end

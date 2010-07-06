@@ -82,18 +82,25 @@ void Renderer::Pps::Ssao::init()
 	// Shaders
 	//
 
-	ssaoSProg.customLoad("shaders/PpsSsao.glsl");
-	blurSProg.customLoad("shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " +
-	                      Util::floatToStr(width) + "\n").c_str());
-	blurSProg2.customLoad("shaders/PpsSsaoBlur.glsl", ("#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " +
-	                       Util::floatToStr(bheight) + "\n").c_str());
+	ssaoSProg = Resource::shaders.load("shaders/PpsSsao.glsl");
 
-	ssaoSProg.uniVars.camerarange = ssaoSProg.findUniVar("camerarange");
-	ssaoSProg.uniVars.msDepthFai = ssaoSProg.findUniVar("msDepthFai");
-	ssaoSProg.uniVars.noiseMap = ssaoSProg.findUniVar("noiseMap");
-	ssaoSProg.uniVars.msNormalFai = ssaoSProg.findUniVar("msNormalFai");
-	blurSProg.uniVars.fai = blurSProg.findUniVar("tex"); /// @todo rename the tex in the shader
-	blurSProg2.uniVars.fai = blurSProg2.findUniVar("tex"); /// @todo rename the tex in the shader
+	string pps = "#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(width) + "\n";
+	string prefix = "Pass0Width" + Util::floatToStr(width);
+	blurSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
+	                                                                    prefix.c_str()).c_str());
+
+
+	pps = "#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bheight) + "\n";
+	prefix = "Pass1Height" + Util::floatToStr(bheight);
+	blurSProg2 = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
+	                                                                    prefix.c_str()).c_str());
+
+	camerarangeUniVar = ssaoSProg->findUniVar("camerarange");
+	msDepthFaiUniVar = ssaoSProg->findUniVar("msDepthFai");
+	noiseMapUniVar = ssaoSProg->findUniVar("noiseMap");
+	msNormalFaiUniVar = ssaoSProg->findUniVar("msNormalFai");
+	blurSProgFaiUniVar = blurSProg->findUniVar("tex"); /// @todo rename the tex in the shader
+	blurSProg2FaiUniVar = blurSProg2->findUniVar("tex"); /// @todo rename the tex in the shader
 
 
 	//
@@ -131,12 +138,12 @@ void Renderer::Pps::Ssao::run()
 	// 1st pass
 	Renderer::setViewport(0, 0, width, height);
 	pass0Fbo.bind();
-	ssaoSProg.bind();
+	ssaoSProg->bind();
 	Vec2 camRange(cam.getZNear(), cam.getZFar());
-	ssaoSProg.uniVars.camerarange->setVec2(&camRange);
-	ssaoSProg.uniVars.msDepthFai->setTexture(r.ms.depthFai, 0);
-	ssaoSProg.uniVars.noiseMap->setTexture(*noiseMap, 1);
-	ssaoSProg.uniVars.msNormalFai->setTexture(r.ms.normalFai, 2);
+	camerarangeUniVar->setVec2(&camRange);
+	msDepthFaiUniVar->setTexture(r.ms.depthFai, 0);
+	noiseMapUniVar->setTexture(*noiseMap, 1);
+	msNormalFaiUniVar->setTexture(r.ms.normalFai, 2);
 	Renderer::drawQuad(0);
 
 	// for 2nd and 3rd passes
@@ -144,14 +151,14 @@ void Renderer::Pps::Ssao::run()
 
 	// 2nd pass
 	pass1Fbo.bind();
-	blurSProg.bind();
-	blurSProg.uniVars.fai->setTexture(pass0Fai, 0);
+	blurSProg->bind();
+	blurSProgFaiUniVar->setTexture(pass0Fai, 0);
 	Renderer::drawQuad(0);
 
 	// 3rd pass
 	pass2Fbo.bind();
-	blurSProg2.bind();
-	blurSProg2.uniVars.fai->setTexture(pass1Fai, 0);
+	blurSProg2->bind();
+	blurSProg2FaiUniVar->setTexture(pass1Fai, 0);
 	Renderer::drawQuad(0);
 
 	// end

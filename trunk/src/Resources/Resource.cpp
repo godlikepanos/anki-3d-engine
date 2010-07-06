@@ -17,4 +17,3 @@ ResourceContainer<Mesh>       Resource::meshes;
 ResourceContainer<Skeleton>   Resource::skeletons;
 ResourceContainer<SkelAnim>   Resource::skelAnims;
 ResourceContainer<LightProps> Resource::lightProps;
-
