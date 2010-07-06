@@ -1,5 +1,5 @@
-#ifndef _SCANNER_H_
-#define _SCANNER_H_
+#ifndef SCANNER_H
+#define SCANNER_H
 
 #include <sstream>
 #include <fstream>
@@ -40,7 +40,7 @@ class Scanner
 			TC_KEYWOR,
 			TC_KEYWORD,
 
-			// operators
+			// operators (in 5s)
 			TC_SCOPERESOLUTION, TC_LSQBRACKET, TC_RSQBRACKET, TC_LPAREN, TC_RPAREN,
 			TC_DOT, TC_POINTERTOMEMBER, TC_LBRACKET, TC_RBRACKET, TC_COMMA,
 			TC_PERIOD, TC_UPDOWNDOT, TC_QUESTIONMARK, TC_SHARP, TC_EQUAL,

@@ -129,23 +129,14 @@ class Renderer
 					friend class Is;
 					friend class Renderer;
 
-					private:
-						class SmoShaderProg: public ShaderProg
-						{
-							public:
-								struct
-								{
-									const ShaderProg::UniVar* modelViewProjectionMat;
-								} uniVars;
-						};
-
 					public:
 						Smo(Renderer& r_): RenderingStage(r_) {}
 
 					private:
 						static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
 						static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
-						static SmoShaderProg sProg;
+						ShaderProg* sProg;
+						const ShaderProg::UniVar* modelViewProjectionMatUniVar;
 
 						void init();
 						void run(const PointLight& light);
@@ -153,36 +144,21 @@ class Renderer
 				}; // end Smo
 
 			private:
-				/// Illumination stage ambient pass shader program
-				class AmbientShaderProg: public ShaderProg
+				/// Illumination stage light pass uniform variables (opt)
+				struct UniVars
 				{
-					public:
-						struct
-						{
-							const ShaderProg::UniVar* ambientCol;
-							const ShaderProg::UniVar* sceneColMap;
-						} uniVars;
-				};
-
-				/// Illumination stage light pass shader program
-				class LightShaderProg: public ShaderProg
-				{
-					public:
-						struct
-						{
-							const ShaderProg::UniVar* msNormalFai;
-							const ShaderProg::UniVar* msDiffuseFai;
-							const ShaderProg::UniVar* msSpecularFai;
-							const ShaderProg::UniVar* msDepthFai;
-							const ShaderProg::UniVar* planes;
-							const ShaderProg::UniVar* lightPos;
-							const ShaderProg::UniVar* lightInvRadius;
-							const ShaderProg::UniVar* lightDiffuseCol;
-							const ShaderProg::UniVar* lightSpecularCol;
-							const ShaderProg::UniVar* lightTex;
-							const ShaderProg::UniVar* texProjectionMat;
-							const ShaderProg::UniVar* shadowMap;
-						} uniVars;
+					const ShaderProg::UniVar* msNormalFai;
+					const ShaderProg::UniVar* msDiffuseFai;
+					const ShaderProg::UniVar* msSpecularFai;
+					const ShaderProg::UniVar* msDepthFai;
+					const ShaderProg::UniVar* planes;
+					const ShaderProg::UniVar* lightPos;
+					const ShaderProg::UniVar* lightInvRadius;
+					const ShaderProg::UniVar* lightDiffuseCol;
+					const ShaderProg::UniVar* lightSpecularCol;
+					const ShaderProg::UniVar* lightTex;
+					const ShaderProg::UniVar* texProjectionMat;
+					const ShaderProg::UniVar* shadowMap;
 				};
 
 			public:
@@ -195,10 +171,15 @@ class Renderer
 				Texture fai;
 				Fbo fbo; ///< This FBO writes to the Is::fai
 				uint stencilRb; ///< Illumination stage stencil buffer
-				AmbientShaderProg ambientPassSProg; ///< Illumination stage ambient pass shader program
-				LightShaderProg pointLightSProg; ///< Illumination stage point light shader program
-				LightShaderProg spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
-				LightShaderProg spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
+				ShaderProg* ambientPassSProg; ///< Illumination stage ambient pass shader program
+				ShaderProg* pointLightSProg; ///< Illumination stage point light shader program
+				ShaderProg* spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
+				ShaderProg* spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
+				const ShaderProg::UniVar* ambientColUniVar;
+				const ShaderProg::UniVar* sceneColMapUniVar;
+				UniVars pointLightSProgUniVars;
+				UniVars spotLightNoShadowSProgUniVars;
+				UniVars spotLightShadowSProgUniVars;
 				Vec3 viewVectors[4];
 				Vec2 planes;
 

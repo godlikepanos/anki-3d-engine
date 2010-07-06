@@ -380,29 +380,31 @@ bool ShaderProg::attribVarExists(const char* name) const
 
 
 //======================================================================================================================
-// writeSrcCodeToCache                                                                                                 =
+// createSrcCodeToCache                                                                                                =
 //======================================================================================================================
-bool ShaderProg::writeSrcCodeToCache(const char* filename, const char* extraSource, const char* newFName)
+string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
+                                        const char* newFNamePrefix)
 {
-	filesystem::path fName_ = app->getCachePath() / newFName;
+	filesystem::path newfPathName = app->getCachePath() /
+	                                (string(newFNamePrefix) + "_" + filesystem::path(sProgFPathName).filename());
 
-	if(filesystem::exists(fName_))
+	if(filesystem::exists(newfPathName))
 	{
-		return true;
+		return newfPathName.string();
 	}
 
-	string src_ = Util::readFile(filename);
+	string src_ = Util::readFile(sProgFPathName);
 	DEBUG_ERR(src_ == "");
-	string src = extraSource + src_;
+	string src = preAppendedSrcCode + src_;
 
-	ofstream f(fName_.file_string().c_str());
+	ofstream f(newfPathName.string().c_str());
 	if(!f.good())
 	{
-		ERROR("Cannot open file for writing \"" << fName_.file_string() << "\"");
-		return false;
+		ERROR("Cannot open file for writing \"" << newfPathName.string() << "\"");
+		return newfPathName.string();
 	}
 
 	f.write(src.c_str(), src.length());
 
-	return false;
+	return newfPathName.string();
 }
