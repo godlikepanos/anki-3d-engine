@@ -202,8 +202,6 @@ void init()
 	uint ticks = app->getTicks();
 
 	RendererInitializer initializer;
-	initializer.width = app->getWindowWidth();
-	initializer.height = app->getWindowHeight();
 	initializer.ms.ez.enabled = false;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
@@ -244,6 +242,7 @@ void init()
 	// horse
 	horse = new MeshNode();
 	horse->init("meshes/horse/horse.mesh");
+	//horse->init("models/head/head.mesh");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));
 	
 	// sarge
@@ -412,8 +411,6 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
-	INFO(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", "miafora k enan kairo\n", "Prefix"));
-	return 0;
 	init();
 
 	mainLoop();

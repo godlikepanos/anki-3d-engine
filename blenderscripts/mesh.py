@@ -84,7 +84,7 @@ def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 
 
 	# for every non problematic vert do some shit
-	for i in range(len(mesh.verts))
+	for i in range(len(mesh.verts)):
 		vert = mesh.verts[i]
 		influences = mesh.getVertexInfluences(vert.index)
 		
@@ -104,7 +104,7 @@ def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 			raise RuntimeError("Cannot have more than 4 bones per vert")
 	
 		# write influences num
-		ankiVerts[i].bonesNum = str(influencesNum)
+		ankiVerts[i].bonesNum = influencesNum
 		
 		for j in range(len(influences)):
 			influence = influences[j]
@@ -259,13 +259,13 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName):
 	if skeleton != None:
 		updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts)
 		
-		ftxt += str(len(ankiVerts))
+		ftxt += str(len(ankiVerts)) + "\n"
 		
 		for i in range(len(ankiVerts)):
 			ankiVert = ankiVerts[i]
 			ftxt += str(ankiVert.bonesNum) + "\n"
-			for j in range(ankiVerts.bonesNum):
-				ftxt += str(ankiVerts.boneIds[j]) + " " + str(ankiVerts.weights[j]) + "\n"
+			for j in range(ankiVert.bonesNum):
+				ftxt += str(ankiVert.boneIds[j]) + " " + str(ankiVert.weights[j]) + "\n"
 	else:
 		ftxt += "0\n"
 
@@ -292,4 +292,3 @@ def export(meshInit):
 	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
 	common.WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName))
 	print("Mesh exported!! \"" + filename + "\"")	
-

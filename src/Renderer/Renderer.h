@@ -223,16 +223,15 @@ class Renderer
 					PROPERTY_R(float, renderingQuality, getRenderingQuality)
 
 					private:
-						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
-						class HdrShaderProg: public ShaderProg
-						{
-							public:
-								struct
-								{
-									const ShaderProg::UniVar* fai;
-								} uniVars;
-						};
-						HdrShaderProg pass0SProg, pass1SProg, pass2SProg;
+						Fbo pass0Fbo;
+						Fbo pass1Fbo;
+						Fbo pass2Fbo;
+						auto_ptr<ShaderProg> pass0SProg;
+						auto_ptr<ShaderProg> pass1SProg;
+						auto_ptr<ShaderProg> pass2SProg;
+						const ShaderProg::UniVar* pass0SProgFaiUniVar;
+						const ShaderProg::UniVar* pass1SProgFaiUniVar;
+						const ShaderProg::UniVar* pass2SProgFaiUniVar;
 
 						void initFbos(Fbo& fbo, Texture& fai, int internalFormat);
 						void init();
@@ -264,32 +263,20 @@ class Renderer
 					PROPERTY_R(float, bluringQuality, getBluringQuality)
 
 					private:
-						Fbo pass0Fbo, pass1Fbo, pass2Fbo;
+						Fbo pass0Fbo;
+						Fbo pass1Fbo;
+						Fbo pass2Fbo;
 						uint width, height, bwidth, bheight;
 						Texture* noiseMap;
-
-						class SsaoShaderProg: public ShaderProg
-						{
-							public:
-								struct
-								{
-									const ShaderProg::UniVar* camerarange;
-									const ShaderProg::UniVar* msDepthFai;
-									const ShaderProg::UniVar* noiseMap;
-									const ShaderProg::UniVar* msNormalFai;
-								} uniVars;
-						};
-						SsaoShaderProg ssaoSProg;
-
-						class BlurSProg: public ShaderProg
-						{
-							public:
-								struct
-								{
-									const ShaderProg::UniVar* fai;
-								} uniVars;
-						};
-						BlurSProg blurSProg, blurSProg2;
+						ShaderProg* ssaoSProg;
+						ShaderProg* blurSProg;
+						ShaderProg* blurSProg2;
+						const ShaderProg::UniVar* camerarangeUniVar;
+						const ShaderProg::UniVar* msDepthFaiUniVar;
+						const ShaderProg::UniVar* noiseMapUniVar;
+						const ShaderProg::UniVar* msNormalFaiUniVar;
+						const ShaderProg::UniVar* blurSProgFaiUniVar;
+						const ShaderProg::UniVar* blurSProg2FaiUniVar;
 
 						void initBlurFbo(Fbo& fbo, Texture& fai);
 						void init();

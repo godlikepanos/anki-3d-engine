@@ -49,9 +49,31 @@ class Resource
 		 * @return True on success
 		 */
 		virtual bool load(const char* filename) = 0;
-		virtual void unload() = 0;
 
-		Resource(): usersNum(0) {}
-		virtual ~Resource() {};
+		/**
+		 * Dont make it pure virtual because the destructor calls it
+		 */
+		virtual void unload();
+
+		Resource();
+		virtual ~Resource();
 };
+
+
+inline Resource::Resource():
+	usersNum(0)
+{}
+
+
+inline Resource::~Resource()
+{
+	unload();
+}
+
+
+inline void Resource::unload()
+{
+	FATAL("You have to reimplement this");
+}
+
 #endif

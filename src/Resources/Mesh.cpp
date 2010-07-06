@@ -262,8 +262,13 @@ void Mesh::createVertTangents()
 
 
 		float det = (uvedge01.y * uvedge02.x) - (uvedge01.x * uvedge02.y);
-		DEBUG_ERR(isZero(det));
-		det = 1.0f / det;
+		if(isZero(det))
+		{
+			ERROR("det == " << fixed << det);
+			det = 0.0001;
+		}
+		else
+			det = 1.0 / det;
 
 		Vec3 t = (edge02 * uvedge01.y - edge01 * uvedge02.y) * det;
 		Vec3 b = (edge02 * uvedge01.x - edge01 * uvedge02.x) * det;
