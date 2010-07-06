@@ -153,7 +153,15 @@ class ShaderProg: public Resource
 		bool uniVarExists(const char* varName) const;
 		bool attribVarExists(const char* varName) const;
 
-		static bool writeSrcCodeToCache(const char* filename, const char* extraSource, const char* newFName);
+		/**
+		 * @todo
+		 * @param sProgFPathName The file pathname of the shader prog
+		 * @param preAppendedSrcCode The source code we want to write on top of the shader prog
+		 * @param newFNamePrefix The prefix of the new shader prog
+		 * @return The file pathname of the new shader prog. Its $HOME/.anki/cache/newFNamePrefix_fName
+		 */
+		static string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
+		                                   const char* newFNamePrefix);
 
 	//====================================================================================================================
 	// Private                                                                                                           =

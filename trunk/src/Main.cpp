@@ -412,6 +412,8 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
+	INFO(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", "miafora k enan kairo\n", "Prefix"));
+	return 0;
 	init();
 
 	mainLoop();
