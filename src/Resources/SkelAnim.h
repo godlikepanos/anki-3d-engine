@@ -34,12 +34,15 @@ class SkelAnim: public Resource
 
 		Vec<BoneAnim> bones;
 
-		SkelAnim() {}
+		SkelAnim();
 		~SkelAnim() {}
 		bool load(const char* filename);
 		void unload() { keyframes.clear(); bones.clear(); framesNum=0; }
 };
 
 
+inline SkelAnim::SkelAnim():
+	Resource(RT_SKEL_ANIM)
+{}
 
 #endif

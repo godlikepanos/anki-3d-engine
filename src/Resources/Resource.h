@@ -29,11 +29,24 @@ class Resource
 	friend class ResourceContainer<Skeleton>;
 	friend class ResourceContainer<SkelAnim>;
 	friend class ResourceContainer<LightProps>;
-	friend class ShaderProg;
+
+	public:
+		enum ResourceType
+		{
+			RT_TEXTURE,
+			RT_SHADER_PROG,
+			RT_MATERIAL,
+			RT_MESH,
+			RT_SKELETON,
+			RT_SKEL_ANIM,
+			RT_LIGHT_PROPS,
+			RT_EXTENSION
+		};
 
 	PROPERTY_R(string, path, getRsrcPath);
 	PROPERTY_R(string, name, getRsrcName);
-	PROPERTY_R(uint, usersNum, getRsrcUsersNum);
+	PROPERTY_R(uint, referenceCounter, getRsrcReferencesNum);
+	PROPERTY_R(ResourceType, type, getRsrcType);
 
 	public:
 		static ResourceContainer<Texture>    textures;
@@ -44,6 +57,11 @@ class Resource
 		static ResourceContainer<SkelAnim>   skelAnims;
 		static ResourceContainer<LightProps> lightProps;
 
+		Resource(const ResourceType& type_);
+		virtual ~Resource();
+
+
+	private:
 		/**
 		 * @param filename The file to load
 		 * @return True on success
@@ -54,20 +72,18 @@ class Resource
 		 * Dont make it pure virtual because the destructor calls it
 		 */
 		virtual void unload();
-
-		Resource();
-		virtual ~Resource();
 };
 
 
-inline Resource::Resource():
-	usersNum(0)
+inline Resource::Resource(const ResourceType& type_):
+	referenceCounter(0),
+	type(type_)
 {}
 
 
 inline Resource::~Resource()
 {
-	unload();
+	DEBUG_ERR(referenceCounter != 0);
 }
 
 

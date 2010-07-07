@@ -263,29 +263,14 @@ bool ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 //======================================================================================================================
 bool ShaderProg::load(const char* filename)
 {
-	return customLoad(filename, "");
-}
-
-
-//======================================================================================================================
-// customLoad                                                                                                          =
-//======================================================================================================================
-bool ShaderProg::customLoad(const char* filename, const char* extraSource)
-{
 	DEBUG_ERR(glId != numeric_limits<uint>::max());
-
-	if(getRsrcName().length() == 0)
-	{
-		name = Util::cutPath(filename);
-		path = Util::getPath(filename);
-	}
 
 	ShaderPrePreprocessor pars;
 
 	if(!pars.parseFile(filename)) return false;
 
 	// 1) create and compile the shaders
-	string preprocSource = stdSourceCode + extraSource;
+	string preprocSource = stdSourceCode;
 	uint vertGlId = createAndCompileShader(pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
 	                                       GL_VERTEX_SHADER);
 	if(vertGlId == 0) return false;
@@ -321,7 +306,6 @@ bool ShaderProg::customLoad(const char* filename, const char* extraSource)
 	// 6) link
 	if(!link()) return false;
 	
-
 	// init the rest
 	getUniAndAttribVars();
 

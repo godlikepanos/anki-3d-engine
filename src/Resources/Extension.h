@@ -13,12 +13,18 @@ class Extension: public Resource
 		int(*foobarPtr)(void*);
 	
 	public:
-		Extension(): libHandle(NULL), foobarPtr(NULL) {}
+		Extension();
 		~Extension() {}
 		bool load(const char* filename);
 		void unload();
 		template<typename Type> int FooBar(Type* ptr) { DEBUG_ERR(foobarPtr==NULL); return (*foobarPtr)(reinterpret_cast<Type*>(ptr)); }
 };
 
+
+inline Extension::Extension():
+	Resource(RT_EXTENSION),
+	libHandle(NULL),
+	foobarPtr(NULL)
+{}
 
 #endif

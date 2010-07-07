@@ -35,6 +35,7 @@ class LightProps: public Resource
 
 
 inline LightProps::LightProps():
+	Resource(RT_LIGHT_PROPS),
 	diffuseCol(0.5),
 	specularCol(0.5),
 	radius(1.0),

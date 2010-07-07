@@ -69,7 +69,7 @@ Type* ResourceContainer<Type>::load(const char* fname)
 	// if already loaded then inc the users and return the pointer
 	if(it != BaseClass::end())
 	{
-		++ (*it)->usersNum;
+		++ (*it)->referenceCounter;
 		return (*it);
 	}
 
@@ -77,7 +77,7 @@ Type* ResourceContainer<Type>::load(const char* fname)
 	Type* newInstance = new Type();
 	newInstance->name = name;
 	newInstance->path = path;
-	newInstance->usersNum = 1;
+	newInstance->referenceCounter = 1;
 
 	if(!newInstance->load(fname))
 	{
@@ -100,17 +100,17 @@ void ResourceContainer<Type>::unload(Type* x)
 	Iterator it = findByPtr(x);
 	if(it == BaseClass::end())
 	{
-		ERROR("Cannot find resource with pointer 0x" << x);
+		ERROR("Cannot find resource with pointer 0x" << hex << x);
 		return;
 	}
 
 	Type* del_ = (*it);
-	DEBUG_ERR(del_->usersNum < 1); // WTF?
+	DEBUG_ERR(del_->referenceCounter < 1); // WTF?
 
-	--del_->usersNum;
+	--del_->referenceCounter;
 
 	// if no other users then call unload and update the container
-	if(del_->usersNum == 0)
+	if(del_->referenceCounter == 0)
 	{
 		del_->unload();
 		delete del_;

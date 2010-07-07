@@ -53,7 +53,7 @@ void Renderer::Bs::init()
 	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT, false);
 	createRefractFbo();
 
-	refractSProg = Resource::shaders.load("shaders/BsRefract.glsl");
+	refractSProg.reset(Resource::shaders.load("shaders/BsRefract.glsl"));
 }
 
 

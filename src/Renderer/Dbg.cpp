@@ -200,8 +200,7 @@ void Renderer::Dbg::init()
 	// shader
 	if(sProg == NULL)
 	{
-		sProg = new ShaderProg;
-		sProg->customLoad("shaders/Dbg.glsl");
+		sProg = Resource::shaders.load("shaders/Dbg.glsl");
 	}
 
 }

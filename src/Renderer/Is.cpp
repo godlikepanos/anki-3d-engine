@@ -21,7 +21,10 @@ void Renderer::Is::calcViewVector()
 
 	const uint& w = r.width;
 	const uint& h = r.height;
-	uint pixels[4][2]={ {w,h}, {0,h}, {0, 0}, {w, 0} }; // From right up and CC wise to right down, Just like we render the quad
+
+	// From right up and CC wise to right down, Just like we render the quad
+	uint pixels[4][2]={{w,h}, {0,h}, {0, 0}, {w, 0}};
+
 	uint viewport[4]={ 0, 0, w, h };
 
 	for(int i=0; i<4; i++)
@@ -29,7 +32,7 @@ void Renderer::Is::calcViewVector()
 		/*
 		 * Original Code:
 		 * Renderer::unProject(pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
-		 *                      viewVectors[i].x, viewVectors[i].y, viewVectors[i].z);
+		 *                     viewVectors[i].x, viewVectors[i].y, viewVectors[i].z);
 		 * viewVectors[i] = cam.getViewMatrix() * viewVectors[i];
 		 * The original code is the above 3 lines. The optimized follows:
 		 */
@@ -52,8 +55,8 @@ void Renderer::Is::calcPlanes()
 {
 	const Camera& cam = *r.cam;
 
-	planes.x = -cam.getZFar() / (cam.getZFar() - cam.getZNear());
-	planes.y = -cam.getZFar() * cam.getZNear() / (cam.getZFar() - cam.getZNear());
+	planes.x = cam.getZFar() / (cam.getZNear() - cam.getZFar());
+	planes.y = (cam.getZFar() * cam.getZNear()) / (cam.getZNear() -cam.getZFar());
 }
 
 
@@ -98,14 +101,14 @@ void Renderer::Is::initFbo()
 void Renderer::Is::init()
 {
 	// load the shaders
-	ambientPassSProg = Resource::shaders.load("shaders/IsAp.glsl");
+	ambientPassSProg.reset(Resource::shaders.load("shaders/IsAp.glsl"));
 	ambientColUniVar = ambientPassSProg->findUniVar("ambientCol");
 	sceneColMapUniVar = ambientPassSProg->findUniVar("sceneColMap");
 
 	// point light
-	pointLightSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                          "#define POINT_LIGHT_ENABLED\n",
-	                                                                          "Point").c_str());
+	pointLightSProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	                                                                             "#define POINT_LIGHT_ENABLED\n",
+	                                                                             "Point").c_str()));
 	pointLightSProgUniVars.msNormalFai = pointLightSProg->findUniVar("msNormalFai");
 	pointLightSProgUniVars.msDiffuseFai = pointLightSProg->findUniVar("msDiffuseFai");
 	pointLightSProgUniVars.msSpecularFai = pointLightSProg->findUniVar("msSpecularFai");
@@ -118,9 +121,9 @@ void Renderer::Is::init()
 
 
 	// spot light no shadow
-	spotLightNoShadowSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                                 "#define SPOT_LIGHT_ENABLED\n",
-	                                                                                 "SpotNoShadow").c_str());
+	spotLightNoShadowSProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	                                                                                     "#define SPOT_LIGHT_ENABLED\n",
+	                                                                                     "SpotNoShadow").c_str()));
 	spotLightNoShadowSProgUniVars.msNormalFai = spotLightNoShadowSProg->findUniVar("msNormalFai");
 	spotLightNoShadowSProgUniVars.msDiffuseFai = spotLightNoShadowSProg->findUniVar("msDiffuseFai");
 	spotLightNoShadowSProgUniVars.msSpecularFai = spotLightNoShadowSProg->findUniVar("msSpecularFai");
@@ -143,9 +146,9 @@ void Renderer::Is::init()
 		pps += "#define PCF_ENABLED\n";
 		prefix += "Pcf";
 	}
-	spotLightShadowSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                               pps.c_str(),
-	                                                                               prefix.c_str()).c_str());
+	spotLightShadowSProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	                                                                                   pps.c_str(),
+	                                                                                   prefix.c_str()).c_str()));
 	spotLightShadowSProgUniVars.msNormalFai = spotLightShadowSProg->findUniVar("msNormalFai");
 	spotLightShadowSProgUniVars.msDiffuseFai = spotLightShadowSProg->findUniVar("msDiffuseFai");
 	spotLightShadowSProgUniVars.msSpecularFai = spotLightShadowSProg->findUniVar("msSpecularFai");
@@ -275,12 +278,12 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 
 	if(light.castsShadow && sm.enabled)
 	{
-		shdr = spotLightShadowSProg;
+		shdr = spotLightShadowSProg.get();
 		uniVars = &spotLightShadowSProgUniVars;
 	}
 	else
 	{
-		shdr = spotLightNoShadowSProg;
+		shdr = spotLightNoShadowSProg.get();
 		uniVars = &spotLightNoShadowSProgUniVars;
 	}
 
