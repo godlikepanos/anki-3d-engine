@@ -22,7 +22,7 @@ class MainRenderer: public Renderer
 	PROPERTY_R(float, renderingQuality, getRenderingQuality)
 
 	public:
-		MainRenderer(): screenshotJpegQuality(90) {}
+		MainRenderer();
 
 		/**
 		 * The same as Renderer::init but with additional initialization. @see Renderer::init
@@ -42,11 +42,16 @@ class MainRenderer: public Renderer
 		void takeScreenshot(const char* filename);
 
 	private:
-		ShaderProg sProg; ///< Final pass' shader program
+		auto_ptr<ShaderProg> sProg; ///< Final pass' shader program
 
 		bool takeScreenshotTga(const char* filename);
 		bool takeScreenshotJpeg(const char* filename);
 		static void initGl();
 };
+
+
+inline MainRenderer::MainRenderer():
+	screenshotJpegQuality(90)
+{}
 
 #endif

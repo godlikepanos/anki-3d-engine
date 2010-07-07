@@ -35,18 +35,25 @@ void Renderer::Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 void Renderer::Pps::initPrePassSProg()
 {
 	string pps = "";
-	if(ssao.enabled)
-		pps += "#define SSAO_ENABLED\n";
-
-	prePassSProg.customLoad("shaders/PpsPrePass.glsl", pps.c_str());
-	prePassSProg.bind();
+	string prefix = "";
 
 	if(ssao.enabled)
 	{
-		prePassSProg.uniVars.ppsSsaoFai = prePassSProg.findUniVar("ppsSsaoFai");
+		pps += "#define SSAO_ENABLED\n";
+		prefix += "Ssao";
 	}
 
-	prePassSProg.uniVars.isFai = prePassSProg.findUniVar("isFai");
+	prePassSProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl",
+	                                                                           pps.c_str(),
+	                                                                           prefix.c_str()).c_str()));
+	prePassSProg->bind();
+
+	if(ssao.enabled)
+	{
+		prePassSProgUniVars.ppsSsaoFai = prePassSProg->findUniVar("ppsSsaoFai");
+	}
+
+	prePassSProgUniVars.isFai = prePassSProg->findUniVar("isFai");
 }
 
 
@@ -56,16 +63,23 @@ void Renderer::Pps::initPrePassSProg()
 void Renderer::Pps::initPostPassSProg()
 {
 	string pps = "";
+	string prefix = "";
+
 	if(hdr.enabled)
+	{
 		pps += "#define HDR_ENABLED\n";
+		prefix += "Hdr";
+	}
 
-	postPassSProg.customLoad("shaders/PpsPostPass.glsl", pps.c_str());
-	postPassSProg.bind();
+	postPassSProg.reset(Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl",
+	                                                                            pps.c_str(),
+	                                                                            prefix.c_str()).c_str()));
+	postPassSProg->bind();
 
 	if(hdr.enabled)
-		postPassSProg.uniVars.ppsHdrFai = postPassSProg.findUniVar("ppsHdrFai");
+		postPassSProgUniVars.ppsHdrFai = postPassSProg->findUniVar("ppsHdrFai");
 
-	postPassSProg.uniVars.ppsPrePassFai = postPassSProg.findUniVar("ppsPrePassFai");
+	postPassSProgUniVars.ppsPrePassFai = postPassSProg->findUniVar("ppsPrePassFai");
 }
 
 
@@ -102,11 +116,13 @@ void Renderer::Pps::runPrePass()
 	glDisable(GL_BLEND);
 	Renderer::setViewport(0, 0, r.width, r.height);
 
-	prePassSProg.bind();
-	prePassSProg.uniVars.isFai->setTexture(r.is.fai, 0);
+	prePassSProg->bind();
+	prePassSProgUniVars.isFai->setTexture(r.is.fai, 0);
 
 	if(ssao.enabled)
-		prePassSProg.uniVars.ppsSsaoFai->setTexture(ssao.fai, 1);
+	{
+		prePassSProgUniVars.ppsSsaoFai->setTexture(ssao.fai, 1);
+	}
 
 	Renderer::drawQuad(0);
 
@@ -128,11 +144,13 @@ void Renderer::Pps::runPostPass()
 	glDisable(GL_BLEND);
 	Renderer::setViewport(0, 0, r.width, r.height);
 
-	postPassSProg.bind();
-	postPassSProg.uniVars.ppsPrePassFai->setTexture(prePassFai, 0);
+	postPassSProg->bind();
+	postPassSProgUniVars.ppsPrePassFai->setTexture(prePassFai, 0);
 
 	if(hdr.enabled)
-		postPassSProg.uniVars.ppsHdrFai->setTexture(hdr.fai, 1);
+	{
+		postPassSProgUniVars.ppsHdrFai->setTexture(hdr.fai, 1);
+	}
 
 	Renderer::drawQuad(0);
 

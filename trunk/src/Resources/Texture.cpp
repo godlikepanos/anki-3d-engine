@@ -17,6 +17,7 @@ int Texture::anisotropyLevel = 8;
 // Constructor                                                                                                         =
 //======================================================================================================================
 Texture::Texture():
+	Resource(RT_MATERIAL),
 	glId(numeric_limits<uint>::max()),
 	target(GL_TEXTURE_2D)
 {

@@ -16,7 +16,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	initGl();
 
-	sProg.customLoad("shaders/final.glsl");
+	sProg.reset(Resource::shaders.load("shaders/final.glsl"));
 
 	//
 	// init the offscreen Renderer
@@ -83,9 +83,9 @@ void MainRenderer::render(Camera& cam_)
 	setViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
-	sProg.bind();
-	//sProg.findUniVar("rasterImage")->setTexture(is.fai, 0);
-	sProg.findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
+	sProg->bind();
+	//sProg->findUniVar("rasterImage")->setTexture(is.fai, 0);
+	sProg->findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
 	drawQuad(0);
 }
 

@@ -47,11 +47,16 @@ class Skeleton: public Resource
 	
 		Vec<Bone> bones;
 
-		 Skeleton() {}
+		 Skeleton();
 		~Skeleton() {}
 		bool load(const char* filename);
 		void unload() { bones.clear(); }
 };
+
+
+inline Skeleton::Skeleton():
+	Resource(RT_SKELETON)
+{}
 
 
 #endif

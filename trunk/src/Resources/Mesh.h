@@ -65,12 +65,16 @@ class Mesh: public Resource
 		string            materialName;
 		bsphere_t         bsphere;
 
-		Mesh() {}
+		Mesh();
 		virtual ~Mesh() { /*ToDo*/ }
 		bool load(const char* filename);
 		void unload();
-
 };
+
+
+inline Mesh::Mesh():
+	Resource(RT_MESH)
+{}
 
 
 #endif

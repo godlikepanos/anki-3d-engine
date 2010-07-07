@@ -7,7 +7,8 @@
 /**
  * Resource container template class
  */
-template<typename Type> class ResourceContainer: public Vec<Type*>
+template<typename Type>
+class ResourceContainer: public Vec<Type*>
 {
 	private:
 		typedef typename ResourceContainer<Type>::iterator Iterator; ///< Just to save me time from typing

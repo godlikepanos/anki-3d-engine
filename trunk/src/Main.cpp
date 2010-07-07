@@ -403,7 +403,26 @@ void mainLoop()
 	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
 }
 
-#include "Arr.h"
+
+template<typename Type>
+class ResourcePtr
+{
+	friend class
+
+	public:
+		ResourcePtr():
+			p(NULL)
+		{}
+
+		ResourcePtr(const ResourcePtr<Type>& a):
+			p(a.p)
+		{}
+
+
+	private:
+		Type* p;
+};
+
 //======================================================================================================================
 // main                                                                                                                =
 //======================================================================================================================

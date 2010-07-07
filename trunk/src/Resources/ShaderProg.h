@@ -19,6 +19,7 @@
 class ShaderProg: public Resource
 {
 	friend class Material;
+	friend class ResourceContainer<ShaderProg>;
 
 	//====================================================================================================================
 	// Nested                                                                                                            =
@@ -112,24 +113,6 @@ class ShaderProg: public Resource
 		static uint getCurrentProgramGlId();
 
 		/**
-		 * Resource load
-		 */
-		bool load(const char* filename);
-
-		/**
-		 * Used by the renderer's shader programs
-		 * @param filename
-		 * @param extraSource Extra source code on top of the file's source
-		 * @return True on success
-		 */
-		bool customLoad(const char* filename, const char* extraSource = "");
-
-		/**
-		 * Free GL program
-		 */
-		void unload() { /** @todo add code */ }
-
-		/**
 		 * Accessor to uniform vars vector
 		 */
 		const Vec<UniVar>& getUniVars() const { return uniVars; }
@@ -194,6 +177,16 @@ class ShaderProg: public Resource
 		 * @return True on success
 		 */
 		bool link();
+
+		/**
+		 * Resource load
+		 */
+		bool load(const char* filename);
+
+		/**
+		 * Free GL program
+		 */
+		void unload() { /** @todo add code */ }
 }; 
 
 
@@ -242,6 +235,7 @@ inline ShaderProg::AttribVar::AttribVar(const UniVar& var):
 
 
 inline ShaderProg::ShaderProg():
+	Resource(RT_SHADER_PROG),
 	glId(numeric_limits<uint>::max())
 {}
 
