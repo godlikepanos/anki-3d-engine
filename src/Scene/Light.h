@@ -21,6 +21,8 @@ Specular intensity of material: Sm
 #include "Texture.h"
 #include "SceneNode.h"
 #include "Camera.h"
+#include "RsrcPtr.h"
+
 
 class LightProps;
 
@@ -32,7 +34,7 @@ class Light: public SceneNode
 		enum Type { LT_POINT, LT_SPOT };
 
 		Type type;
-		LightProps* lightProps; ///< Later we will add a controller
+		RsrcPtr<LightProps> lightProps; ///< Later we will add a controller
 	
 		Light(Type type_): SceneNode(NT_LIGHT), type(type_) {}
 		//void init(const char*);

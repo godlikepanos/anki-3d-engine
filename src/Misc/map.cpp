@@ -1,3 +1,4 @@
+/*
 #include <limits>
 #include "map.h"
 #include "Mesh.h"
@@ -7,11 +8,11 @@
 #include "Camera.h"
 
 
-/*
+
 =======================================================================================================================================
 CreateRoot                                                                                                             =
 =======================================================================================================================================
-*/
+
 void octree_t::CreateRoot(const Vec<Mesh*>& meshes)
 {
 	DEBUG_ERR(root); // root should be NULL
@@ -70,11 +71,11 @@ void octree_t::CreateRoot(const Vec<Mesh*>& meshes)
 
 
 
-/*
+
 =======================================================================================================================================
 GetFacesNum                                                                                                            =
 =======================================================================================================================================
-*/
+
 uint octree_t::node_t::GetFacesNum() const
 {
 	int count = 0;
@@ -86,13 +87,13 @@ uint octree_t::node_t::GetFacesNum() const
 }
 
 
-/*
+
 =======================================================================================================================================
 IsSubdivHeuristicMet                                                                                                   =
 returns true when the used difined heuristic is met that sais that we can subdivide the node. Long story short it returns true when   =
 we can subdivide the node further                                                                                      =
 =======================================================================================================================================
-*/
+
 bool octree_t::IsSubdivHeuristicMet(node_t* node) const
 {
 	if(node->GetFacesNum() < 100) return false;
@@ -102,12 +103,12 @@ bool octree_t::IsSubdivHeuristicMet(node_t* node) const
 
 
 
-/*
+
 =======================================================================================================================================
 SubdivideNode                                                                                                          =
 subdivides the node and creates max 8 children and then subdivides the children                                        =
 =======================================================================================================================================
-*/
+
 void octree_t::SubdivideNode(node_t* node)
 {
 	if(!IsSubdivHeuristicMet(node)) return;
@@ -122,11 +123,11 @@ void octree_t::SubdivideNode(node_t* node)
 }
 
 
-/*
+
 =======================================================================================================================================
 CreateTree                                                                                                             =
 =======================================================================================================================================
-*/
+
 void octree_t::CreateTree(const Vec<Mesh*>& meshes)
 {
 	CreateRoot(meshes);
@@ -134,13 +135,13 @@ void octree_t::CreateTree(const Vec<Mesh*>& meshes)
 }
 
 
-/*
+
 =======================================================================================================================================
 CheckNodeAgainstFrustum                                                                                                =
 the func checks the node and returns if its inside the cameras fruntum. It returns 0 if the cube is not inside, 1 if partialy         =
 inside and 2 if totaly inside                                                                                          =
 =======================================================================================================================================
-*/
+
 uint octree_t::CheckNodeAgainstFrustum(node_t* node, const Camera& cam) const
 {
 	int points_outside_frustum_num = 0;
@@ -169,18 +170,18 @@ uint octree_t::CheckNodeAgainstFrustum(node_t* node, const Camera& cam) const
 
 
 
-/*
+
 =======================================================================================================================================
 map                                                                                                                    =
 =======================================================================================================================================
-*/
 
 
-/*
+
+
 =======================================================================================================================================
 load                                                                                                                   =
 =======================================================================================================================================
-*/
+
 bool map_t::load(const char* filename)
 {
 	DEBUG_ERR(meshes.size() != 0); // meshes vector should be empty
@@ -196,8 +197,8 @@ bool map_t::load(const char* filename)
 		// strings is what we want in this case... please let it be G-Strings
 		if(token->getCode() == Scanner::TC_STRING)
 		{
-			Mesh* mesh = Resource::meshes.load(token->getValue().getString());
-			if(!mesh) return false;
+			RsrcPtr<Mesh> mesh = Resource::meshes.load(token->getValue().getString());
+			if(!mesh.get()) return false;
 
 			meshes.push_back(mesh);
 		}
@@ -218,3 +219,4 @@ bool map_t::load(const char* filename)
 	return true;
 }
 
+*/

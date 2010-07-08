@@ -4,6 +4,7 @@
 #include "Common.h"
 #include "Texture.h"
 #include "Math.h"
+#include "RsrcPtr.h"
 
 class ShaderProg;
 
@@ -20,9 +21,9 @@ class Skybox
 			DOWN
 		};
 
-		Texture* textures[6];
-		Texture* noise;
-		ShaderProg* shader;
+		RsrcPtr<Texture> textures[6];
+		RsrcPtr<Texture> noise;
+		RsrcPtr<ShaderProg> shader;
 
 		float rotation_ang;
 

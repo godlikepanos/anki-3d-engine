@@ -14,7 +14,7 @@
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
-ShaderProg* Renderer::Dbg::sProg = NULL;
+RsrcPtr<ShaderProg> Renderer::Dbg::sProg;
 Mat4 Renderer::Dbg::viewProjectionMat;
 
 
@@ -198,7 +198,7 @@ void Renderer::Dbg::init()
 	fbo.unbind();
 
 	// shader
-	if(sProg == NULL)
+	if(sProg.get() == NULL)
 	{
 		sProg = Resource::shaders.load("shaders/Dbg.glsl");
 	}

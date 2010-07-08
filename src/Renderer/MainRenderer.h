@@ -42,7 +42,7 @@ class MainRenderer: public Renderer
 		void takeScreenshot(const char* filename);
 
 	private:
-		auto_ptr<ShaderProg> sProg; ///< Final pass' shader program
+		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program
 
 		bool takeScreenshotTga(const char* filename);
 		bool takeScreenshotJpeg(const char* filename);

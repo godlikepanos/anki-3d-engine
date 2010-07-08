@@ -58,10 +58,10 @@ typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByPtr(Ty
 
 
 //======================================================================================================================
-// load                                                                                                                =
+// load2                                                                                                               =
 //======================================================================================================================
 template<typename Type>
-Type* ResourceContainer<Type>::load(const char* fname)
+Type* ResourceContainer<Type>::load2(const char* fname)
 {
 	filesystem::path fpathname = filesystem::path(fname);
 	string name = fpathname.filename();
@@ -97,9 +97,9 @@ Type* ResourceContainer<Type>::load(const char* fname)
 // load                                                                                                                =
 //======================================================================================================================
 template<typename Type>
-RsrcPtr<Type> ResourceContainer<Type>::load_(const char* fname)
+RsrcPtr<Type> ResourceContainer<Type>::load(const char* fname)
 {
-	Type* p = load(fname);
+	Type* p = load2(fname);
 
 	if(!p)
 	{

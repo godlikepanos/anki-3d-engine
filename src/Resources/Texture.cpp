@@ -17,7 +17,7 @@ int Texture::anisotropyLevel = 8;
 // Constructor                                                                                                         =
 //======================================================================================================================
 Texture::Texture():
-	Resource(RT_MATERIAL),
+	Resource(RT_TEXTURE),
 	glId(numeric_limits<uint>::max()),
 	target(GL_TEXTURE_2D)
 {
@@ -143,6 +143,7 @@ bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, 
 void Texture::unload()
 {
 	glDeleteTextures(1, &glId);
+	INFO("ASFD");
 }
 
 

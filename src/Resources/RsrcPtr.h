@@ -27,9 +27,10 @@ class RsrcPtr
 
 		~RsrcPtr();
 
-		RsrcPtr<Type>& operator=(RsrcPtr<Type>& a);
+		RsrcPtr<Type>& operator=(const RsrcPtr<Type>& a);
 		Type& operator*();
 		Type* operator->();
+		Type* get();
 
 	private:
 		/**
@@ -74,12 +75,13 @@ RsrcPtr<Type>::~RsrcPtr()
 
 
 template<typename Type>
-RsrcPtr<Type>& RsrcPtr<Type>::operator=(RsrcPtr<Type>& a)
+RsrcPtr<Type>& RsrcPtr<Type>::operator=(const RsrcPtr<Type>& a)
 {
 	DEBUG_ERR(p != NULL);
 	p = a.p;
 	return *this;
 }
+
 
 template<typename Type>
 Type& RsrcPtr<Type>::operator*()
@@ -94,5 +96,10 @@ Type* RsrcPtr<Type>::operator->()
 	return p;
 }
 
+template<typename Type>
+Type* RsrcPtr<Type>::get()
+{
+	return p;
+}
 
 #endif

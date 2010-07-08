@@ -5,6 +5,10 @@
 #include "SceneNode.h"
 #include "Controller.h"
 #include "Math.h"
+#include "RsrcPtr.h"
+
+
+class SkelAnimCtrl;
 
 
 /**
@@ -14,7 +18,7 @@ class SkelNode: public SceneNode
 {
 	public:
 		class Skeleton* skeleton; ///< The skeleton resource
-		class SkelAnimCtrl* skelAnimCtrl; ///< Hold the controller here as well
+		RsrcPtr<SkelAnimCtrl> skelAnimCtrl; ///< Hold the controller here as well
 
 		SkelNode();
 		void render();
