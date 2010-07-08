@@ -7,6 +7,8 @@
 #include "Texture.h"
 #include "ShaderProg.h"
 #include "Vbo.h"
+#include "RsrcPtr.h"
+
 
 class Camera;
 class PointLight;
@@ -135,7 +137,7 @@ class Renderer
 					private:
 						static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
 						static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
-						auto_ptr<ShaderProg> sProg;
+						RsrcPtr<ShaderProg> sProg;
 						const ShaderProg::UniVar* modelViewProjectionMatUniVar;
 
 						void init();
@@ -171,10 +173,10 @@ class Renderer
 				Texture fai;
 				Fbo fbo; ///< This FBO writes to the Is::fai
 				uint stencilRb; ///< Illumination stage stencil buffer
-				auto_ptr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
-				auto_ptr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program
-				auto_ptr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
-				auto_ptr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
+				RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
+				RsrcPtr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program
+				RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
+				RsrcPtr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
 				const ShaderProg::UniVar* ambientColUniVar;
 				const ShaderProg::UniVar* sceneColMapUniVar;
 				UniVars pointLightSProgUniVars;
@@ -226,9 +228,9 @@ class Renderer
 						Fbo pass0Fbo;
 						Fbo pass1Fbo;
 						Fbo pass2Fbo;
-						auto_ptr<ShaderProg> pass0SProg;
-						auto_ptr<ShaderProg> pass1SProg;
-						auto_ptr<ShaderProg> pass2SProg;
+						RsrcPtr<ShaderProg> pass0SProg;
+						RsrcPtr<ShaderProg> pass1SProg;
+						RsrcPtr<ShaderProg> pass2SProg;
 						const ShaderProg::UniVar* pass0SProgFaiUniVar;
 						const ShaderProg::UniVar* pass1SProgFaiUniVar;
 						const ShaderProg::UniVar* pass2SProgFaiUniVar;
@@ -267,10 +269,10 @@ class Renderer
 						Fbo pass1Fbo;
 						Fbo pass2Fbo;
 						uint width, height, bwidth, bheight;
-						auto_ptr<Texture> noiseMap;
-						auto_ptr<ShaderProg> ssaoSProg;
-						auto_ptr<ShaderProg> blurSProg;
-						auto_ptr<ShaderProg> blurSProg2;
+						RsrcPtr<Texture> noiseMap;
+						RsrcPtr<ShaderProg> ssaoSProg;
+						RsrcPtr<ShaderProg> blurSProg;
+						RsrcPtr<ShaderProg> blurSProg2;
 						const ShaderProg::UniVar* camerarangeUniVar;
 						const ShaderProg::UniVar* msDepthFaiUniVar;
 						const ShaderProg::UniVar* noiseMapUniVar;
@@ -312,8 +314,8 @@ class Renderer
 				Texture postPassFai;
 				Fbo prePassFbo;
 				Fbo postPassFbo;
-				auto_ptr<ShaderProg> prePassSProg;
-				auto_ptr<ShaderProg> postPassSProg;
+				RsrcPtr<ShaderProg> prePassSProg;
+				RsrcPtr<ShaderProg> postPassSProg;
 				UniVars prePassSProgUniVars;
 				UniVars postPassSProgUniVars;
 
@@ -339,7 +341,7 @@ class Renderer
 			private:
 				Fbo fbo;
 				Fbo refractFbo;
-				auto_ptr<ShaderProg> refractSProg;
+				RsrcPtr<ShaderProg> refractSProg;
 				Texture refractFai;
 
 				void createFbo();
@@ -372,7 +374,7 @@ class Renderer
 
 			private:
 				Fbo fbo;
-				static ShaderProg* sProg;
+				static RsrcPtr<ShaderProg> sProg;
 				static Mat4 viewProjectionMat;
 
 				void init();

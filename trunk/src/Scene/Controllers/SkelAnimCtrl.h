@@ -5,6 +5,7 @@
 #include "Vec.h"
 #include "Controller.h"
 #include "Math.h"
+#include "RsrcPtr.h"
 
 class Skeleton;
 class SkelAnim;
@@ -21,7 +22,7 @@ class SkelAnimCtrl: public Controller
 		void deform();  ///< Now with HW skinning it deforms only the debug skeleton
 
 	public:
-		SkelAnim* skelAnim; ///< Skeleton animation resource
+		RsrcPtr<SkelAnim> skelAnim; ///< Skeleton animation resource
 		SkelNode* skelNode;
 		Vec<Vec3> heads;
 		Vec<Vec3> tails;

@@ -18,15 +18,15 @@ class ResourceContainer: public Vec<Type*>
 		typedef typename BaseClass::iterator Iterator; ///< Just to save me time from typing
 
 	public:
-		RsrcPtr<Type> load_(const char* fname);
+		RsrcPtr<Type> load(const char* fname);
 
-	public:
+	private:
 		/**
 		 * load an object and register it. If its already loaded return its pointer
 		 * @param fname The filename that initializes the object
 		 * @return A pointer of a new resource or NULL on fail
 		 */
-		Type* load(const char* fname);
+		Type* load2(const char* fname);
 
 		/**
 		 * unload item. If nobody else uses it then delete it completely

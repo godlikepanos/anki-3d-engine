@@ -16,7 +16,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	initGl();
 
-	sProg.reset(Resource::shaders.load("shaders/final.glsl"));
+	sProg = Resource::shaders.load("shaders/final.glsl");
 
 	//
 	// init the offscreen Renderer

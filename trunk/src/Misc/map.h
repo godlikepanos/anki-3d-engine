@@ -1,19 +1,21 @@
+/*
 #ifndef _MAP_H_
 #define _MAP_H_
 
 #include "Common.h"
 #include "collision.h"
 #include "Vec.h"
+#include "RsrcPtr.h"
 
 class Mesh;
 class Camera;
 
 
-/*
+
 =======================================================================================================================================
 octree_t                                                                                                               =
 =======================================================================================================================================
-*/
+
 class octree_t
 {
 	public:
@@ -25,12 +27,12 @@ class octree_t
 				node_t* childs[8];
 				aabb_t  bounding_box;
 
-				Vec<Mesh*>   meshes;
+				Vec<RsrcPtr<Mesh> >   meshes;
 				Vec< Vec<uint> > vertIds;
 				Vec< Vec<uint> > face_ids;
 
 				node_t() {}
-				~node_t() { /*ToDo: when class is finalized add code*/ }
+				~node_t() { ToDo: when class is finalized add code }
 
 				uint GetMeshesNum() const { return meshes.size(); }
 				uint GetFacesNum() const;
@@ -53,11 +55,11 @@ class octree_t
 };
 
 
-/*
+
 =======================================================================================================================================
 map_t                                                                                                                  =
 =======================================================================================================================================
-*/
+
 class map_t
 {
 	public:
@@ -70,3 +72,4 @@ class map_t
 
 
 #endif
+*/

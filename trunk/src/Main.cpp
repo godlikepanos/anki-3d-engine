@@ -411,14 +411,6 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
-	{
-		RsrcPtr<LightProps> t(Resource::lightProps.load_("/users/panoscc/Desktop/"));
-		{
-			RsrcPtr<LightProps> t2(Resource::lightProps.load_("/users/panoscc/Desktop/"));
-			INFO("lala");
-		}
-	}
-
 	init();
 
 	mainLoop();

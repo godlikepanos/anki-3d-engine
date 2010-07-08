@@ -19,7 +19,7 @@ Vbo Renderer::Is::Smo::sMOUvSVbo;
 //======================================================================================================================
 void Renderer::Is::Smo::init()
 {
-	sProg.reset(Resource::shaders.load("shaders/IsSmo.glsl"));
+	sProg = Resource::shaders.load("shaders/IsSmo.glsl");
 	modelViewProjectionMatUniVar = sProg->findUniVar("modelViewProjectionMat");
 
 	if(!sMOUvSVbo.isCreated())
