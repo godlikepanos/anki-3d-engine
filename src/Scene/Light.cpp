@@ -36,7 +36,7 @@ void SpotLight::init(const char* filename)
 //======================================================================================================================
 void Light::deinit()
 {
-	Resource::lightProps.unload(lightProps);
+	//Resource::lightProps.unload(lightProps);
 }
 
 

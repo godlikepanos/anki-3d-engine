@@ -404,31 +404,20 @@ void mainLoop()
 }
 
 
-template<typename Type>
-class ResourcePtr
-{
-	friend class
-
-	public:
-		ResourcePtr():
-			p(NULL)
-		{}
-
-		ResourcePtr(const ResourcePtr<Type>& a):
-			p(a.p)
-		{}
-
-
-	private:
-		Type* p;
-};
-
 //======================================================================================================================
 // main                                                                                                                =
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
 	new App(argc, argv);
+
+	{
+		RsrcPtr<LightProps> t(Resource::lightProps.load_("/users/panoscc/Desktop/"));
+		{
+			RsrcPtr<LightProps> t2(Resource::lightProps.load_("/users/panoscc/Desktop/"));
+			INFO("lala");
+		}
+	}
 
 	init();
 

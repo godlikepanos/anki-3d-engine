@@ -33,8 +33,8 @@ void MeshNode::init(const char* filename)
 //======================================================================================================================
 void MeshNode::deinit()
 {
-	Resource::meshes.unload(mesh);
-	Resource::materials.unload(material);
+	//Resource::meshes.unload(mesh);
+	//Resource::materials.unload(material);
 }
 
 

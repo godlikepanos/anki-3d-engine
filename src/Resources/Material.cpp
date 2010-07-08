@@ -405,12 +405,12 @@ Material::Material():
 //======================================================================================================================
 void Material::unload()
 {
-	Resource::shaders.unload(shaderProg);
+	//Resource::shaders.unload(shaderProg);
 
 	// loop all user defined vars and unload the textures
-	for(uint i=0; i<userDefinedVars.size(); i++)
+	/*for(uint i=0; i<userDefinedVars.size(); i++)
 	{
 		Resource::textures.unload(userDefinedVars[i].value.texture);
-	}
+	}*/
 }
 
