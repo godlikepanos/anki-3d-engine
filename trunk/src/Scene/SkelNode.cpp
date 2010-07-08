@@ -31,7 +31,7 @@ void SkelNode::init(const char* filename)
 //======================================================================================================================
 void SkelNode::deinit()
 {
-	Resource::skeletons.unload(skeleton);
+	//Resource::skeletons.unload(skeleton);
 }
 
 

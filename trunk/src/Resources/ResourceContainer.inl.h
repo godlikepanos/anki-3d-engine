@@ -1,3 +1,4 @@
+#include <boost/filesystem.hpp>
 #include "ResourceContainer.h"
 
 
@@ -62,9 +63,10 @@ typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByPtr(Ty
 template<typename Type>
 Type* ResourceContainer<Type>::load(const char* fname)
 {
-	char* name = Util::cutPath(fname);
-	string path = Util::getPath(fname);
-	Iterator it = findByNameAndPath(name, path.c_str());
+	filesystem::path fpathname = filesystem::path(fname);
+	string name = fpathname.filename();
+	string path = fpathname.parent_path().string();
+	Iterator it = findByNameAndPath(name.c_str(), path.c_str());
 
 	// if already loaded then inc the users and return the pointer
 	if(it != BaseClass::end())
@@ -88,6 +90,24 @@ Type* ResourceContainer<Type>::load(const char* fname)
 	BaseClass::push_back(newInstance);
 
 	return newInstance;
+}
+
+
+//======================================================================================================================
+// load                                                                                                                =
+//======================================================================================================================
+template<typename Type>
+RsrcPtr<Type> ResourceContainer<Type>::load_(const char* fname)
+{
+	Type* p = load(fname);
+
+	if(!p)
+	{
+		ERROR("See prev error");
+		return RsrcPtr<Type>(static_cast<Type*>(NULL));
+	}
+
+	return RsrcPtr<Type>(p);
 }
 
 

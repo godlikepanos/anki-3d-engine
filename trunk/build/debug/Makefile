@@ -25,7 +25,8 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -184,17 +185,17 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
- ../../src/Renderer/Renderer.h
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src/Misc//skybox.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//skybox.cpp -o skybox.o
 
@@ -206,16 +207,16 @@ memory.o: ../../src/Misc//memory.cpp ../../src/Misc//memory.h \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Misc//memory.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//memory.cpp -o memory.o
 
@@ -238,7 +239,8 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -247,15 +249,16 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Misc//collision.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//collision.cpp -o collision.o
 
@@ -279,7 +282,8 @@ map.o: ../../src/Misc//map.cpp ../../src/Misc//map.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Misc/collision.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Misc/collision.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Resources/Resource.h \
  ../../src/Scene/Camera.h ../../src/Scene/SceneNode.h
@@ -296,19 +300,19 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -323,7 +327,8 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Ui/Ui.h \
  ../../src/Util/App.h ../../src/Resources/Mesh.h ../../src/Scene/Light.h \
  ../../src/Scene/Camera.h ../../src/Resources/Material.h \
@@ -477,8 +482,7 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
  ../../src/Physics/PhyCharacter.h \
  ../../src/Renderer/RendererInitializer.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Util/Arr.h
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
 
@@ -500,7 +504,8 @@ Smo.o: ../../src/Renderer//Smo.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Light.h \
  ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h
@@ -525,7 +530,8 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -534,20 +540,20 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/MeshNode.h ../../src/Scene/SceneNode.h \
- ../../src/Util/Vec.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
- ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/MeshNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -703,7 +709,8 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -712,17 +719,18 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -882,7 +890,8 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -891,17 +900,18 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -1060,7 +1070,8 @@ Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Renderer//Pps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Pps.cpp -o Pps.o
@@ -1083,7 +1094,8 @@ Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Util/Vec.h
@@ -1109,7 +1121,8 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Util/Vec.h ../../src/Renderer//RendererInitializer.h \
@@ -1121,18 +1134,18 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
- ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
+ ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -1288,7 +1301,8 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Util/Vec.h ../../src/Scene/Light.h ../../src/Scene/Camera.h \
@@ -1300,17 +1314,18 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -1467,7 +1482,8 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -1476,15 +1492,16 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h \
  ../../src/Renderer//RendererInitializer.h
 	@echo Compiling ../../src/Renderer//MainRenderer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//MainRenderer.cpp -o MainRenderer.o
@@ -1507,7 +1524,8 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -1516,17 +1534,18 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -1685,7 +1704,8 @@ Hdr.o: ../../src/Renderer//Hdr.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Renderer//Hdr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Hdr.cpp -o Hdr.o
@@ -1708,7 +1728,8 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -1717,17 +1738,18 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -1885,9 +1907,9 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../../glew/include/GL/glew.h \
- ../../src/Resources/Resource.h ../../src/Resources/Mesh.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../../glew/include/GL/glew.h ../../src/Resources/Resource.h \
+ ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Scene//SkelNode.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/Skeleton.h \
@@ -1901,18 +1923,18 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h
 	@echo Compiling ../../src/Scene//MeshNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//MeshNode.cpp -o MeshNode.o
 
@@ -1935,7 +1957,8 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Scene//Scene.h ../../src/Misc/skybox.h \
@@ -2081,16 +2104,16 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Scene//SceneNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//SceneNode.cpp -o SceneNode.o
 
@@ -2112,7 +2135,7 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/Skeleton.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/Skeleton.h \
  ../../src/Scene/Controllers/SkelAnimCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
@@ -2122,19 +2145,19 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../../glew/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene//SkelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//SkelNode.cpp -o SkelNode.o
@@ -2144,7 +2167,8 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Scene//SceneNode.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Scene//SceneNode.h \
  ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
@@ -2165,18 +2189,19 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene//Light.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Light.cpp -o Light.o
@@ -2199,9 +2224,10 @@ SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../../glew/include/GL/glew.h \
- ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
- ../../src/Scene//SkelNode.h ../../src/Scene/Controllers/Controller.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../../glew/include/GL/glew.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Scene//SkelNode.h \
+ ../../src/Scene/Controllers/Controller.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
@@ -2229,7 +2255,8 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -2238,15 +2265,16 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Scene//Camera.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Camera.cpp -o Camera.o
 
@@ -2269,8 +2297,9 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../../glew/include/GL/glew.h \
- ../../src/Scene//GhostNode.h ../../src/Physics/PhyCommon.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../../glew/include/GL/glew.h ../../src/Scene//GhostNode.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -2417,17 +2446,17 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene//Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene//Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h
 	@echo Compiling ../../src/Scene//ParticleEmitter.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//ParticleEmitter.cpp -o ParticleEmitter.o
 
@@ -2437,7 +2466,8 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2611,7 +2641,8 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Util/Common.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -2620,16 +2651,16 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Util/Common.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Resources/Resource.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Resources/Resource.h
 	@echo Compiling ../../src/Ui//Ui.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui//Ui.cpp -o Ui.o
 
@@ -2638,7 +2669,8 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Util/Common.h ../../src/Resources//Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
- ../../src/Resources//ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources//ResourceContainer.inl.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2655,7 +2687,24 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Helpers/ShaderPrePreprocessor.h ../../src/Util/Vec.h \
- ../../src/Resources//Texture.h
+ ../../src/Resources//Texture.h ../../src/Util/App.h \
+ ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
+ ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
+ ../../../SDL/include/SDL_platform.h ../../../SDL/include/begin_code.h \
+ ../../../SDL/include/close_code.h ../../../SDL/include/SDL_atomic.h \
+ ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
+ ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
+ ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Resources//ShaderProg.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//ShaderProg.cpp -o ShaderProg.o
 
@@ -2676,17 +2725,18 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
  ../../src/Resources//ResourceContainer.inl.h \
- ../../src/Resources//ShaderProg.h ../../../glew/include/GL/glew.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Resources//Texture.h \
- ../../src/Util/App.h ../../../SDL/include/SDL.h \
- ../../../SDL/include/SDL_main.h ../../../SDL/include/SDL_stdinc.h \
- ../../../SDL/include/SDL_config.h ../../../SDL/include/SDL_platform.h \
- ../../../SDL/include/begin_code.h ../../../SDL/include/close_code.h \
- ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
- ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
- ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Resources//ShaderProg.h \
+ ../../../glew/include/GL/glew.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Resources//Texture.h ../../src/Util/App.h \
+ ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
+ ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
+ ../../../SDL/include/SDL_platform.h ../../../SDL/include/begin_code.h \
+ ../../../SDL/include/close_code.h ../../../SDL/include/SDL_atomic.h \
+ ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
+ ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
+ ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
  ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
  ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
  ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
@@ -2709,10 +2759,11 @@ Texture.o: ../../src/Resources//Texture.cpp \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
  ../../src/Resources//ResourceContainer.inl.h \
- ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2733,7 +2784,8 @@ SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
  ../../src/Resources//Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
- ../../src/Resources//ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources//ResourceContainer.inl.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2754,7 +2806,8 @@ Extension.o: ../../src/Resources//Extension.cpp \
  ../../src/Resources//Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
- ../../src/Resources//ResourceContainer.inl.h
+ ../../src/Resources//ResourceContainer.inl.h \
+ ../../src/Resources//RsrcPtr.h
 	@echo Compiling ../../src/Resources//Extension.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Extension.cpp -o Extension.o
 
@@ -2775,8 +2828,8 @@ Skeleton.o: ../../src/Resources//Skeleton.cpp \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
  ../../src/Resources//ResourceContainer.inl.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
- ../../src/Util/Tokenizer/Scanner.h
+ ../../src/Resources//RsrcPtr.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//Skeleton.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Skeleton.cpp -o Skeleton.o
 
@@ -2785,11 +2838,12 @@ Resource.o: ../../src/Resources//Resource.cpp \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
  ../../src/Resources//ResourceContainer.inl.h \
- ../../src/Resources//Texture.h ../../../glew/include/GL/glew.h \
- ../../src/Resources//Material.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Resources//Texture.h \
+ ../../../glew/include/GL/glew.h ../../src/Resources//Material.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2810,7 +2864,8 @@ LightProps.o: ../../src/Resources//LightProps.cpp \
  ../../src/Resources//Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
- ../../src/Resources//ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources//ResourceContainer.inl.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2844,7 +2899,8 @@ Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
  ../../../glew/include/GL/glew.h ../../src/Resources//Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources//ResourceContainer.h \
- ../../src/Resources//ResourceContainer.inl.h ../../src/Misc/collision.h \
+ ../../src/Resources//ResourceContainer.inl.h \
+ ../../src/Resources//RsrcPtr.h ../../src/Misc/collision.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
  ../../src/Resources/ShaderProg.h ../../src/Util/Tokenizer/Scanner.h \
@@ -2859,19 +2915,19 @@ Input.o: ../../src/Util//Input.cpp ../../../SDL/include/SDL.h \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h ../../src/Util//Input.h \
- ../../../SDL/include/SDL_scancode.h ../../src/Util//Common.h \
- ../../src/Util//Vec.h ../../src/Util//App.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Util/Common.h \
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
+ ../../src/Util//Input.h ../../../SDL/include/SDL_scancode.h \
+ ../../src/Util//Common.h ../../src/Util//Vec.h ../../src/Util//App.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Util/Common.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2888,7 +2944,8 @@ Input.o: ../../src/Util//Input.cpp ../../../SDL/include/SDL.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
  ../../src/Resources/ResourceContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Util//Input.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//Input.cpp -o Input.o
@@ -2901,21 +2958,25 @@ App.o: ../../src/Util//App.cpp ../../../glew/include/GL/glew.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Util//App.h ../../src/Util//Common.h ../../src/Scene/Scene.h \
- ../../src/Util/Common.h ../../src/Misc/skybox.h \
- ../../src/Resources/Texture.h ../../src/Resources/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../../SDL_image/SDL_image.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/begin_code.h \
+ ../../../SDL/include/close_code.h ../../src/Util//App.h \
+ ../../src/Util//Common.h ../../src/Scene/Scene.h ../../src/Util/Common.h \
+ ../../src/Misc/skybox.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3078,16 +3139,17 @@ Common.o: ../../src/Util//Common.cpp ../../../glew/include/GL/glew.h \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Util//Util.h ../../src/Util//Vec.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Util//Util.h \
+ ../../src/Util//Vec.h
 	@echo Compiling ../../src/Util//Common.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//Common.cpp -o Common.o
 
@@ -3103,7 +3165,8 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
  ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3258,15 +3321,16 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Scene/Controllers//Controller.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers//Controller.cpp -o Controller.o
 
@@ -3287,7 +3351,8 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../src/Math/Transform.inl.h ../../src/Resources/SkelAnim.h \
  ../../src/Resources/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ResourceContainer.h \
- ../../src/Resources/ResourceContainer.inl.h ../../src/Scene/SkelNode.h \
+ ../../src/Resources/ResourceContainer.inl.h \
+ ../../src/Resources/RsrcPtr.h ../../src/Scene/SkelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Resources/Skeleton.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
@@ -3297,19 +3362,19 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
  ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
  ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../../glew/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene/Controllers//SkelAnimCtrl.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers//SkelAnimCtrl.cpp -o SkelAnimCtrl.o
@@ -3473,19 +3538,20 @@ Image.o: ../../src/Resources/Helpers//Image.cpp \
  ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
  ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
  ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_cpuinfo.h \
- ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
- ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
- ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
- ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
- ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
- ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
- ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
- ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/begin_code.h ../../../SDL/include/close_code.h \
- ../../src/Resources/Helpers//Image.h ../../src/Util/Common.h \
- ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h
+ ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
+ ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
+ ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
+ ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
+ ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
+ ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
+ ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
+ ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
+ ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
+ ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/begin_code.h \
+ ../../../SDL/include/close_code.h ../../src/Resources/Helpers//Image.h \
+ ../../src/Util/Common.h ../../src/Util/Util.h ../../src/Util/Common.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources/Helpers//Image.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Helpers//Image.cpp -o Image.o
 

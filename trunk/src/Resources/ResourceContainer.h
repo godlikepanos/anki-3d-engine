@@ -2,6 +2,7 @@
 #define RESOURCECONTAINER_H
 
 #include "Common.h"
+#include "RsrcPtr.h"
 
 
 /**
@@ -10,9 +11,14 @@
 template<typename Type>
 class ResourceContainer: public Vec<Type*>
 {
+	friend class Resource;
+
 	private:
-		typedef typename ResourceContainer<Type>::iterator Iterator; ///< Just to save me time from typing
 		typedef Vec<Type*> BaseClass;
+		typedef typename BaseClass::iterator Iterator; ///< Just to save me time from typing
+
+	public:
+		RsrcPtr<Type> load_(const char* fname);
 
 	public:
 		/**
@@ -28,7 +34,6 @@ class ResourceContainer: public Vec<Type*>
 		 */
 		void unload(Type* x);
 
-	private:
 		/**
 		 * Search inside the container by name
 		 * @param name The name of the resource
@@ -50,7 +55,7 @@ class ResourceContainer: public Vec<Type*>
 		 * @return The iterator of the content end of vector if not found
 		 */
 		Iterator findByPtr(Type* ptr);
-}; // end class ResourceContainer
+};
 
 
 #include "ResourceContainer.inl.h"

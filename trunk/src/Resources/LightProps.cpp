@@ -9,7 +9,7 @@
 //======================================================================================================================
 bool LightProps::load(const char* filename)
 {
-Scanner scanner;
+	Scanner scanner;
 	if(!scanner.loadFile(filename)) return false;
 
 	const Scanner::Token* token;
@@ -127,6 +127,6 @@ Scanner scanner;
 //======================================================================================================================
 void LightProps::unload()
 {
-	if(texture != NULL)
-		Resource::textures.unload(texture);
+	/*if(texture != NULL)
+		Resource::textures.unload(texture);*/
 }

@@ -6,7 +6,6 @@
 #include "ResourceContainer.h"
 
 
-// forward decls
 class Texture;
 class Material;
 class ShaderProg;
@@ -15,6 +14,9 @@ class Skeleton;
 class SkelAnim;
 class LightProps;
 
+template<typename Type>
+class Rsrc;
+
 
 /**
  * Every class that it is considered a resource should be derived by this one. This step is not necessary because of the
@@ -22,13 +24,12 @@ class LightProps;
  */
 class Resource
 {
-	friend class ResourceContainer<Texture>;
-	friend class ResourceContainer<ShaderProg>;
-	friend class ResourceContainer<Material>;
-	friend class ResourceContainer<Mesh>;
-	friend class ResourceContainer<Skeleton>;
-	friend class ResourceContainer<SkelAnim>;
-	friend class ResourceContainer<LightProps>;
+	template<typename Type>
+	friend class ResourceContainer;
+
+	// to be able to call tryToUnoadMe
+	template<typename Type>
+	friend class RsrcPtr;
 
 	public:
 		enum ResourceType
@@ -60,7 +61,6 @@ class Resource
 		Resource(const ResourceType& type_);
 		virtual ~Resource();
 
-
 	private:
 		/**
 		 * @param filename The file to load
@@ -68,10 +68,12 @@ class Resource
 		 */
 		virtual bool load(const char* filename) = 0;
 
+		virtual void unload() = 0;
+
 		/**
-		 * Dont make it pure virtual because the destructor calls it
+		 * The func sees the resource type and calls the unload func of the appropriate container. Used by RsrcPtr
 		 */
-		virtual void unload();
+		void tryToUnoadMe();
 };
 
 
@@ -84,12 +86,6 @@ inline Resource::Resource(const ResourceType& type_):
 inline Resource::~Resource()
 {
 	DEBUG_ERR(referenceCounter != 0);
-}
-
-
-inline void Resource::unload()
-{
-	FATAL("You have to reimplement this");
 }
 
 #endif
