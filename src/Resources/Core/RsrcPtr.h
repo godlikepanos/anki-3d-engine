@@ -2,21 +2,15 @@
 #define RSRCPTR_H
 
 #include "Common.h"
-#include "Resource.h"
-
-
-template <typename T>
-class ResourceContainer;
 
 
 /**
- * @todo
+ * This is a special pointer to a resource. Its not smart or anything, the only difference is that when its out of scope
+ * it tries to unload the resource
  */
 template<typename Type>
 class RsrcPtr
 {
-	friend class ResourceContainer<Type>;
-
 	public:
 		RsrcPtr();
 
@@ -25,18 +19,23 @@ class RsrcPtr
 		 */
 		RsrcPtr(const RsrcPtr& a);
 
-		~RsrcPtr();
-
-		RsrcPtr<Type>& operator=(const RsrcPtr<Type>& a);
-		Type& operator*();
-		Type* operator->();
-		Type* get();
-
-	private:
 		/**
 		 * This constructor is for resource container only
 		 */
 		RsrcPtr(Type* p_);
+
+		~RsrcPtr();
+
+		RsrcPtr<Type>& operator=(const RsrcPtr<Type>& a);
+		Type& operator*();
+		const Type& operator*() const;
+		Type* operator->();
+		const Type* operator->() const;
+		Type* get();
+		const Type* get() const;
+
+	private:
+
 
 		Type* p;
 };
@@ -91,13 +90,35 @@ Type& RsrcPtr<Type>::operator*()
 
 
 template<typename Type>
+const Type& RsrcPtr<Type>::operator*() const
+{
+	return *p;
+}
+
+
+template<typename Type>
 Type* RsrcPtr<Type>::operator->()
 {
 	return p;
 }
 
+
+template<typename Type>
+const Type* RsrcPtr<Type>::operator->() const
+{
+	return p;
+}
+
+
 template<typename Type>
 Type* RsrcPtr<Type>::get()
+{
+	return p;
+}
+
+
+template<typename Type>
+const Type* RsrcPtr<Type>::get() const
 {
 	return p;
 }

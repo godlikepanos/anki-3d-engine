@@ -135,7 +135,7 @@ void SkelAnimCtrl::updateBoneTransforms()
 //======================================================================================================================
 void SkelAnimCtrl::deform()
 {
-	Skeleton* skeleton = skelNode->skeleton;
+	Skeleton* skeleton = skelNode->skeleton.get();
 
 	for(uint i=0; i<skeleton->bones.size(); i++)
 	{
@@ -159,7 +159,7 @@ void SkelAnimCtrl::update(float)
 		frame = 0.0;
 	}
 
-	interpolate(skelAnim, frame);
+	interpolate(skelAnim.get(), frame);
 	updateBoneTransforms();
 	if(app->getMainRenderer()->dbg.isShowSkeletonsEnabled())
 	{

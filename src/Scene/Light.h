@@ -22,22 +22,23 @@ Specular intensity of material: Sm
 #include "SceneNode.h"
 #include "Camera.h"
 #include "RsrcPtr.h"
-
-
-class LightProps;
+#include "LightProps.h"
 
 
 /// Light scene node (Abstract)
 class Light: public SceneNode
 {
 	public:
-		enum Type { LT_POINT, LT_SPOT };
+		enum Type
+		{
+			LT_POINT,
+			LT_SPOT
+		};
 
 		Type type;
 		RsrcPtr<LightProps> lightProps; ///< Later we will add a controller
 	
-		Light(Type type_): SceneNode(NT_LIGHT), type(type_) {}
-		//void init(const char*);
+		Light(Type type_);
 		void deinit();
 		void render();
 };
@@ -46,10 +47,10 @@ class Light: public SceneNode
 /// PointLight scene node
 class PointLight: public Light
 {
-	public:
-		float radius;
+	PROPERTY_RW(float, radius, setRadius, getRadius)
 
-		PointLight(): Light(LT_POINT) {}
+	public:
+		PointLight();
 		void init(const char*);
 };
 
@@ -61,11 +62,45 @@ class SpotLight: public Light
 		Camera camera;
 		bool castsShadow;
 
-		SpotLight(): Light(LT_SPOT), castsShadow(false) { addChild(&camera); }
-		float getDistance() const { return camera.getZFar(); }
-		void setDistance(float d) { camera.setZFar(d); }
+		SpotLight();
+		float getDistance() const;
+		void setDistance(float d);
 		void init(const char*);
 };
 
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
+
+inline Light::Light(Type type_):
+	SceneNode(NT_LIGHT),
+	type(type_)
+{}
+
+
+inline PointLight::PointLight():
+	Light(LT_POINT)
+{}
+
+
+inline SpotLight::SpotLight():
+	Light(LT_SPOT),
+	castsShadow(false)
+{
+	addChild(&camera);
+}
+
+
+inline float SpotLight::getDistance() const
+{
+	return camera.getZFar();
+}
+
+
+inline void SpotLight::setDistance(float d)
+{
+	camera.setZFar(d);
+}
 
 #endif

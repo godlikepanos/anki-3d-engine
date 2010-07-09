@@ -3,16 +3,8 @@
 
 #include "Common.h"
 #include "Util.h"
-#include "ResourceContainer.h"
+#include "RsrcContainer.h"
 
-
-class Texture;
-class Material;
-class ShaderProg;
-class Mesh;
-class Skeleton;
-class SkelAnim;
-class LightProps;
 
 template<typename Type>
 class Rsrc;
@@ -20,12 +12,12 @@ class Rsrc;
 
 /**
  * Every class that it is considered a resource should be derived by this one. This step is not necessary because of the
- * ResourceContainer template but ensures that loading will be made by the resource manager and not the class itself
+ * RsrcContainer template but ensures that loading will be made by the resource manager and not the class itself
  */
 class Resource
 {
 	template<typename Type>
-	friend class ResourceContainer;
+	friend class RsrcContainer;
 
 	// to be able to call tryToUnoadMe
 	template<typename Type>
@@ -50,14 +42,6 @@ class Resource
 	PROPERTY_R(ResourceType, type, getRsrcType);
 
 	public:
-		static ResourceContainer<Texture>    textures;
-		static ResourceContainer<ShaderProg> shaders;
-		static ResourceContainer<Material>   materials;
-		static ResourceContainer<Mesh>       meshes;
-		static ResourceContainer<Skeleton>   skeletons;
-		static ResourceContainer<SkelAnim>   skelAnims;
-		static ResourceContainer<LightProps> lightProps;
-
 		Resource(const ResourceType& type_);
 		virtual ~Resource();
 

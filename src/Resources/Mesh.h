@@ -32,7 +32,6 @@ class Mesh: public Resource
 				Vec3 normal;
 		};
 
-
 		struct
 		{
 			Vbo vertCoords;
@@ -42,17 +41,6 @@ class Mesh: public Resource
 			Vbo vertIndeces;
 			Vbo vertWeights;
 		} vbos;
-
-
-	// funcs
-	protected:
-		void createFaceNormals();
-		void createVertNormals();
-		void createAllNormals() { createFaceNormals(); createVertNormals(); }
-		void createVertTangents();
-		void createVertIndeces();
-		void createVbos();
-		void calcBSphere();
 
 	public:
 		Vec<Vec3>         vertCoords;
@@ -66,9 +54,18 @@ class Mesh: public Resource
 		bsphere_t         bsphere;
 
 		Mesh();
-		virtual ~Mesh() { /*ToDo*/ }
+		~Mesh() {}
 		bool load(const char* filename);
 		void unload();
+
+	protected:
+		void createFaceNormals();
+		void createVertNormals();
+		void createAllNormals() { createFaceNormals(); createVertNormals(); }
+		void createVertTangents();
+		void createVertIndeces();
+		void createVbos();
+		void calcBSphere();
 };
 
 

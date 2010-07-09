@@ -8,6 +8,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "MeshNode.h"
+#include "LightProps.h"
 
 
 //======================================================================================================================
@@ -81,7 +82,7 @@ void Renderer::Is::Sm::run(const Camera& cam)
 		MeshNode* meshNode = (*it);
 		if(meshNode->material->blends) continue;
 
-		DEBUG_ERR(meshNode->material->dpMtl == NULL);
+		DEBUG_ERR(meshNode->material->dpMtl.get() == NULL);
 
 		r.setupMaterial(*meshNode->material->dpMtl, *meshNode, cam);
 		meshNode->renderDepth();

@@ -2,6 +2,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "MeshNode.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -53,7 +54,7 @@ void Renderer::Bs::init()
 	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT, false);
 	createRefractFbo();
 
-	refractSProg = Resource::shaders.load("shaders/BsRefract.glsl");
+	refractSProg = RsrcMngr::shaders.load("shaders/BsRefract.glsl");
 }
 
 
@@ -70,7 +71,13 @@ void Renderer::Bs::run()
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		DEBUG_ERR(meshNode->material == NULL);
+
+		if(meshNode->material.get() == NULL)
+		{
+			ERROR("Mesh \"" << meshNode->mesh->getRsrcName() << "\" doesnt have material" );
+			continue;
+		}
+
 		if(!meshNode->material->blends) continue;
 
 		// refracts

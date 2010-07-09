@@ -4,6 +4,7 @@
 #include "SkelAnimCtrl.h"
 #include "App.h"
 #include "MainRenderer.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -21,7 +22,7 @@ SkelNode::SkelNode():
 //======================================================================================================================
 void SkelNode::init(const char* filename)
 {
-	skeleton = Resource::skeletons.load(filename);
+	skeleton = RsrcMngr::skeletons.load(filename);
 	skelAnimCtrl = new SkelAnimCtrl(this);
 }
 
@@ -31,7 +32,7 @@ void SkelNode::init(const char* filename)
 //======================================================================================================================
 void SkelNode::deinit()
 {
-	//Resource::skeletons.unload(skeleton);
+	//RsrcMngr::skeletons.unload(skeleton);
 }
 
 

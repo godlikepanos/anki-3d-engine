@@ -5,6 +5,9 @@
 #include "App.h"
 #include "Texture.h"
 #include "Resource.h"
+#include "RsrcPtr.h"
+#include "RsrcMngr.h"
+
 
 namespace Ui {
 
@@ -14,9 +17,9 @@ namespace Ui {
 data members                                                                                                           =
 =======================================================================================================================================
 */
-static Texture* fontMap;
+static RsrcPtr<Texture> fontMap;
 
-static ShaderProg* shader;
+static RsrcPtr<ShaderProg> shader;
 
 static float  initialX;
 static float  fontW;
@@ -159,10 +162,10 @@ non static funcs                                                                
 // exec after init SDL
 void init()
 {
-	fontMap = Resource::textures.load("gfx/fontmapa.tga");
+	fontMap = RsrcMngr::textures.load("gfx/fontmapa.tga");
 	fontMap->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//font_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	shader = Resource::shaders.load("shaders/txt.glsl");
+	shader = RsrcMngr::shaders.load("shaders/txt.glsl");
 	setPos(0.0, 0.0);
 	setFontWidth(0.05);
 	setColor(Vec4(1.0, 1.0, 1.0, 1.0));

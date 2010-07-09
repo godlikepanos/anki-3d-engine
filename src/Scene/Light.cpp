@@ -3,6 +3,7 @@
 #include "LightProps.h"
 #include "App.h"
 #include "MainRenderer.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -10,7 +11,7 @@
 //======================================================================================================================
 void PointLight::init(const char* filename)
 {
-	lightProps = Resource::lightProps.load(filename);
+	lightProps = RsrcMngr::lightProps.load(filename);
 	radius = lightProps->getRadius();
 }
 
@@ -20,7 +21,7 @@ void PointLight::init(const char* filename)
 //======================================================================================================================
 void SpotLight::init(const char* filename)
 {
-	lightProps = Resource::lightProps.load(filename);
+	lightProps = RsrcMngr::lightProps.load(filename);
 	camera.setAll(lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance());
 	castsShadow = lightProps->castsShadow();
 	if(lightProps->getTexture() == NULL)
@@ -36,7 +37,7 @@ void SpotLight::init(const char* filename)
 //======================================================================================================================
 void Light::deinit()
 {
-	//Resource::lightProps.unload(lightProps);
+	//RsrcMngr::lightProps.unload(lightProps);
 }
 
 

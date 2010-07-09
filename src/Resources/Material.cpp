@@ -1,4 +1,4 @@
-#include <string.h>
+#include <cstring>
 #include "Material.h"
 #include "Resource.h"
 #include "Scanner.h"
@@ -7,6 +7,7 @@
 #include "ShaderProg.h"
 #include "App.h"
 #include "MainRenderer.h"
+#include "RsrcMngr.h"
 
 
 /// Customized @ref ERROR used in @ref Material class
@@ -107,7 +108,8 @@ bool Material::load(const char* filename)
 		//** SHADER_PROG **
 		if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SHADER_PROG"))
 		{
-			if(shaderProg) ERROR("Shader program already loaded");
+			if(shaderProg.get())
+				ERROR("Shader program already loaded");
 
 			token = &scanner.getNextToken();
 			if(token->getCode() != Scanner::TC_STRING)
@@ -115,12 +117,13 @@ bool Material::load(const char* filename)
 				PARSE_ERR_EXPECTED("string");
 				return false;
 			}
-			shaderProg = Resource::shaders.load(token->getValue().getString());
+			shaderProg = RsrcMngr::shaders.load(token->getValue().getString());
 		}
 		//** DEPTH_MATERIAL **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DEPTH_PASS_MATERIAL"))
 		{
-			if(dpMtl) ERROR("Depth material already loaded");
+			if(dpMtl.get())
+				ERROR("Depth material already loaded");
 
 			token = &scanner.getNextToken();
 			if(token->getCode() != Scanner::TC_STRING)
@@ -128,7 +131,7 @@ bool Material::load(const char* filename)
 				PARSE_ERR_EXPECTED("string");
 				return false;
 			}
-			dpMtl = Resource::materials.load(token->getValue().getString());
+			dpMtl = RsrcMngr::materials.load(token->getValue().getString());
 		}
 		//** BLENDS **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDS"))
@@ -212,7 +215,7 @@ bool Material::load(const char* filename)
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "USER_DEFINED_VARS"))
 		{
 			// first check if the shader is defined
-			if(shaderProg == NULL)
+			if(shaderProg.get() == NULL)
 			{
 				PARSE_ERR("You have to define the shader program before the user defined vars");
 				return false;
@@ -261,8 +264,8 @@ bool Material::load(const char* filename)
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_STRING)
 						{
-							var.value.texture = Resource::textures.load(token->getValue().getString());
-							if(var.value.texture == NULL)
+							var.value.texture = RsrcMngr::textures.load(token->getValue().getString());
+							if(var.value.texture.get() == NULL)
 								return false;
 						}
 						else
@@ -328,7 +331,7 @@ bool Material::load(const char* filename)
 bool Material::initStdShaderVars()
 {
 	// sanity checks
-	if(!shaderProg)
+	if(!shaderProg.get())
 	{
 		MTL_ERROR("Without shader is like cake without sugar (missing SHADER_PROG)");
 		return false;
@@ -390,27 +393,11 @@ bool Material::initStdShaderVars()
 Material::Material():
 	Resource(RT_MATERIAL)
 {
-	shaderProg = NULL;
 	blends = false;
 	blendingSfactor = GL_ONE;
 	blendingDfactor = GL_ZERO;
 	depthTesting = true;
 	wireframe = false;
 	castsShadow = true;
-	dpMtl = NULL;
-}
-
-//======================================================================================================================
-// unload                                                                                                              =
-//======================================================================================================================
-void Material::unload()
-{
-	//Resource::shaders.unload(shaderProg);
-
-	// loop all user defined vars and unload the textures
-	/*for(uint i=0; i<userDefinedVars.size(); i++)
-	{
-		Resource::textures.unload(userDefinedVars[i].value.texture);
-	}*/
 }
 

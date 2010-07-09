@@ -8,6 +8,7 @@
 #include "SkelAnimCtrl.h"
 #include "App.h"
 #include "MainRenderer.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -15,8 +16,8 @@
 //======================================================================================================================
 void MeshNode::init(const char* filename)
 {
-	mesh = Resource::meshes.load(filename);
-	material = Resource::materials.load(mesh->materialName.c_str());
+	mesh = RsrcMngr::meshes.load(filename);
+	material = RsrcMngr::materials.load(mesh->materialName.c_str());
 
 	// sanity checks
 	if(material->stdAttribVars[Material::SAV_TEX_COORDS]!=NULL && mesh->vbos.texCoords.getGlId()==0)
@@ -33,8 +34,8 @@ void MeshNode::init(const char* filename)
 //======================================================================================================================
 void MeshNode::deinit()
 {
-	//Resource::meshes.unload(mesh);
-	//Resource::materials.unload(material);
+	//RsrcMngr::meshes.unload(mesh);
+	//RsrcMngr::materials.unload(material);
 }
 
 

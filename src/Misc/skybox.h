@@ -5,8 +5,7 @@
 #include "Texture.h"
 #include "Math.h"
 #include "RsrcPtr.h"
-
-class ShaderProg;
+#include "ShaderProg.h"
 
 class Skybox
 {

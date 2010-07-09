@@ -1,12 +1,12 @@
 #include <boost/filesystem.hpp>
-#include "ResourceContainer.h"
+#include "RsrcContainer.h"
 
 
 //======================================================================================================================
 // findByName                                                                                                          =
 //======================================================================================================================
 template<typename Type>
-typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByName(const char* name)
+typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByName(const char* name)
 {
 	Iterator it = BaseClass::begin();
 	while(it != BaseClass::end())
@@ -24,7 +24,7 @@ typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByName(c
 // findByNameAndPath                                                                                                   =
 //======================================================================================================================
 template<typename Type>
-typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByNameAndPath(const char* name,
+typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByNameAndPath(const char* name,
                                                                                       const char* path)
 {
 	Iterator it = BaseClass::begin();
@@ -43,7 +43,7 @@ typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByNameAn
 // findByPtr                                                                                                           =
 //======================================================================================================================
 template<typename Type>
-typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByPtr(Type* ptr)
+typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByPtr(Type* ptr)
 {
 	Iterator it = BaseClass::begin();
 	while(it != BaseClass::end())
@@ -61,7 +61,7 @@ typename ResourceContainer<Type>::Iterator ResourceContainer<Type>::findByPtr(Ty
 // load2                                                                                                               =
 //======================================================================================================================
 template<typename Type>
-Type* ResourceContainer<Type>::load2(const char* fname)
+Type* RsrcContainer<Type>::load2(const char* fname)
 {
 	filesystem::path fpathname = filesystem::path(fname);
 	string name = fpathname.filename();
@@ -97,7 +97,7 @@ Type* ResourceContainer<Type>::load2(const char* fname)
 // load                                                                                                                =
 //======================================================================================================================
 template<typename Type>
-RsrcPtr<Type> ResourceContainer<Type>::load(const char* fname)
+RsrcPtr<Type> RsrcContainer<Type>::load(const char* fname)
 {
 	Type* p = load2(fname);
 
@@ -115,7 +115,7 @@ RsrcPtr<Type> ResourceContainer<Type>::load(const char* fname)
 // unload                                                                                                              =
 //======================================================================================================================
 template<typename Type>
-void ResourceContainer<Type>::unload(Type* x)
+void RsrcContainer<Type>::unload(Type* x)
 {
 	Iterator it = findByPtr(x);
 	if(it == BaseClass::end())

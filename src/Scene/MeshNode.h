@@ -4,9 +4,9 @@
 #include "Common.h"
 #include "SceneNode.h"
 #include "Material.h"
-
-class MeshSkelNodeCtrl;
-class Mesh;
+#include "RsrcPtr.h"
+#include "Mesh.h"
+#include "MeshSkelNodeCtrl.h"
 
 
 /// Mesh scene node
@@ -17,18 +17,24 @@ class MeshNode: public SceneNode
 
 	public:
 		// resources
-		Mesh* mesh;
-		Material* material;
-		Material* dpMaterial; ///< Depth pass material
+		RsrcPtr<Mesh> mesh;
+		RsrcPtr<Material> material;
+		RsrcPtr<Material> dpMaterial; ///< Depth pass material
 		// controllers
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
-		MeshNode(): SceneNode(NT_MESH), material(NULL), dpMaterial(NULL), meshSkelCtrl(NULL) {}
-		virtual void render() { render(material); }
-		virtual void renderDepth() { render(material->dpMtl); }
+		MeshNode();
+		virtual void render() { render(material.get()); }
+		virtual void renderDepth() { render(material->dpMtl.get()); }
 		void init(const char* filename);
 		void deinit();
 };
+
+
+inline MeshNode::MeshNode():
+	SceneNode(NT_MESH),
+	meshSkelCtrl(NULL)
+{}
 
 
 #endif

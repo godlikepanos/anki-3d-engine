@@ -5,6 +5,7 @@
  */
 
 #include "Renderer.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -43,7 +44,7 @@ void Renderer::Pps::initPrePassSProg()
 		prefix += "Ssao";
 	}
 
-	prePassSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
+	prePassSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
 	                                                                       prefix.c_str()).c_str());
 	prePassSProg->bind();
 
@@ -70,7 +71,7 @@ void Renderer::Pps::initPostPassSProg()
 		prefix += "Hdr";
 	}
 
-	postPassSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
+	postPassSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
 	                                                                         prefix.c_str()).c_str());
 	postPassSProg->bind();
 

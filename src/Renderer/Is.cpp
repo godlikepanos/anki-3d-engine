@@ -10,6 +10,8 @@
 #include "LightProps.h"
 #include "App.h"
 #include "Scene.h"
+#include "LightProps.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -101,12 +103,12 @@ void Renderer::Is::initFbo()
 void Renderer::Is::init()
 {
 	// load the shaders
-	ambientPassSProg = Resource::shaders.load("shaders/IsAp.glsl");
+	ambientPassSProg = RsrcMngr::shaders.load("shaders/IsAp.glsl");
 	ambientColUniVar = ambientPassSProg->findUniVar("ambientCol");
 	sceneColMapUniVar = ambientPassSProg->findUniVar("sceneColMap");
 
 	// point light
-	pointLightSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	pointLightSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
 	                                                                          "#define POINT_LIGHT_ENABLED\n",
 	                                                                          "Point").c_str());
 	pointLightSProgUniVars.msNormalFai = pointLightSProg->findUniVar("msNormalFai");
@@ -121,7 +123,7 @@ void Renderer::Is::init()
 
 
 	// spot light no shadow
-	spotLightNoShadowSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	spotLightNoShadowSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
 	                                                                                 "#define SPOT_LIGHT_ENABLED\n",
 	                                                                                 "SpotNoShadow").c_str());
 	spotLightNoShadowSProgUniVars.msNormalFai = spotLightNoShadowSProg->findUniVar("msNormalFai");
@@ -146,7 +148,7 @@ void Renderer::Is::init()
 		pps += "#define PCF_ENABLED\n";
 		prefix += "Pcf";
 	}
-	spotLightShadowSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	spotLightShadowSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
 	                                                                                pps.c_str(),
 	                                                                                prefix.c_str()).c_str());
 	spotLightShadowSProgUniVars.msNormalFai = spotLightShadowSProg->findUniVar("msNormalFai");
@@ -199,7 +201,7 @@ void Renderer::Is::pointLightPass(const PointLight& light)
 	const Camera& cam = *r.cam;
 
 	// frustum test
-	bsphere_t sphere(light.getWorldTransform().getOrigin(), light.radius);
+	bsphere_t sphere(light.getWorldTransform().getOrigin(), light.getRadius());
 	if(!cam.insideFrustum(sphere)) return;
 
 	// stencil optimization
@@ -216,7 +218,8 @@ void Renderer::Is::pointLightPass(const PointLight& light)
 	pointLightSProgUniVars.planes->setVec2(&planes);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	pointLightSProgUniVars.lightPos->setVec3(&lightPosEyeSpace);
-	pointLightSProgUniVars.lightInvRadius->setFloat(1.0/light.radius);
+	pointLightSProgUniVars.lightInvRadius->setFloat(1.0/light.getRadius());
+	Vec3 ll = light.lightProps->getDiffuseColor();
 	pointLightSProgUniVars.lightDiffuseCol->setVec3(&light.lightProps->getDiffuseColor());
 	pointLightSProgUniVars.lightSpecularCol->setVec3(&light.lightProps->getSpecularColor());
 

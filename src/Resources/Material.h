@@ -5,6 +5,8 @@
 #include "Math.h"
 #include "Resource.h"
 #include "ShaderProg.h"
+#include "Texture.h"
+#include "RsrcPtr.h"
 
 
 /**
@@ -96,13 +98,11 @@ class Material: public Resource
 			 */
 			struct Value
 			{
-				Texture* texture;
+				RsrcPtr<Texture> texture;
 				float float_;
 				Vec2 vec2;
 				Vec3 vec3;
 				Vec4 vec4;
-
-				Value(): texture(NULL) {}
 			};
 
 			Value value;
@@ -114,8 +114,8 @@ class Material: public Resource
 		static StdVarInfo stdUniVarInfos[SUV_NUM];
 		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
 		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
-		ShaderProg* shaderProg; ///< The most important aspect of materials
-		Material* dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
+		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
+		RsrcPtr<Material> dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
 		Vec<UserDefinedUniVar> userDefinedVars;
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
 		int blendingSfactor;
@@ -137,7 +137,7 @@ class Material: public Resource
 	public:
 		Material();
 		bool load(const char* filename);
-		void unload();
+		void unload() {};
 };
 
 
@@ -149,7 +149,7 @@ inline bool Material::hasHWSkinning() const
 
 inline bool Material::hasAlphaTesting() const
 {
-	return dpMtl!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL;
+	return dpMtl.get()!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL;
 }
 
 

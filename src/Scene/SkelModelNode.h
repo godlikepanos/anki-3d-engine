@@ -17,7 +17,7 @@ class SkelModelNode: public SceneNode
 {
 	public:
 		Vec<MeshNode*> meshNodes;
-		SkelNode*   skelNode;
+		SkelNode* skelNode;
 		
 		SkelModelNode(): SceneNode(NT_SKEL_MODEL), skelNode(NULL) { isCompound = true; }
 		void init(const char* filename);

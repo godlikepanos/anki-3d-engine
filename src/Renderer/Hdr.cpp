@@ -1,10 +1,11 @@
 /**
  * @file
  *
- * Post-processing stage hight dynamic range lighting pass
+ * Post-processing stage high dynamic range lighting pass
  */
 
 #include "Renderer.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -61,19 +62,19 @@ void Renderer::Pps::Hdr::init()
 
 	pps = "#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + Util::floatToStr(r.width) + "\n";
 	prefix = "Pass0IsFaiWidth" + Util::floatToStr(r.width);
-	pass0SProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
+	pass0SProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
 	                                                                     prefix.c_str()).c_str());
 	pass0SProgFaiUniVar = pass0SProg->findUniVar("fai");
 
 	pps = "#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + Util::floatToStr(height) + "\n";
 	prefix = "Pass1Pass0Height" + Util::floatToStr(height);
-	pass1SProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
+	pass1SProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
 	                                                                     prefix.c_str()).c_str());
 	pass1SProgFaiUniVar = pass1SProg->findUniVar("fai");
 
 	pps = "#define _PPS_HDR_PASS_2_\n";
 	prefix = "Pass2";
-	pass2SProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
+	pass2SProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
 	                                                                     prefix.c_str()).c_str());
 	pass2SProgFaiUniVar = pass2SProg->findUniVar("fai");
 }

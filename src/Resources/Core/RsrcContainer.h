@@ -2,6 +2,7 @@
 #define RESOURCECONTAINER_H
 
 #include "Common.h"
+#include "Vec.h"
 #include "RsrcPtr.h"
 
 
@@ -9,7 +10,7 @@
  * Resource container template class
  */
 template<typename Type>
-class ResourceContainer: public Vec<Type*>
+class RsrcContainer: public Vec<Type*>
 {
 	friend class Resource;
 
@@ -58,6 +59,6 @@ class ResourceContainer: public Vec<Type*>
 };
 
 
-#include "ResourceContainer.inl.h"
+#include "RsrcContainer.inl.h"
 
 #endif
