@@ -9,6 +9,7 @@
 #include "Math.h"
 
 
+
 /**
  * Shader program @ref Resource
  *
@@ -19,7 +20,7 @@
 class ShaderProg: public Resource
 {
 	friend class Material;
-	friend class ResourceContainer<ShaderProg>;
+	friend class RsrcContainer<ShaderProg>;
 
 	//====================================================================================================================
 	// Nested                                                                                                            =
@@ -67,7 +68,7 @@ class ShaderProg: public Resource
 				void setVec4(const Vec4 v4[], uint size = 1) const;
 				void setMat3(const Mat3 m3[], uint size = 1) const;
 				void setMat4(const Mat4 m4[], uint size = 1) const;
-				void setTexture(const Texture& tex, uint texUnit) const;
+				void setTexture(const class Texture& tex, uint texUnit) const;
 		};
 
 		/**

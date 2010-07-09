@@ -1,5 +1,5 @@
-#ifndef _TEXTURE_H_
-#define _TEXTURE_H_
+#ifndef TEXTURE_H
+#define TEXTURE_H
 
 #include <GL/glew.h>
 #include <limits>
@@ -43,12 +43,13 @@ class Texture: public Resource
 		static bool mipmappingEnabled;
 		static bool compressionEnabled;
 		static int  anisotropyLevel;
-}; // end class Texture
+};
 
 
 inline GLuint Texture::getGlId() const
 {
-	DEBUG_ERR(glId==numeric_limits<uint>::max()); return glId;
+	DEBUG_ERR(glId==numeric_limits<uint>::max());
+	return glId;
 }
 
 

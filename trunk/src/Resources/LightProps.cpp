@@ -2,6 +2,7 @@
 #include "LightProps.h"
 #include "Parser.h"
 #include "Texture.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -38,7 +39,8 @@ bool LightProps::load(const char* filename)
 				return false;
 			}
 
-			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
+			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+			                                                       float(token->getValue().getInt());
 		}
 		//** CASTS_SHADOW **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "CASTS_SHADOW"))
@@ -62,7 +64,8 @@ bool LightProps::load(const char* filename)
 				return false;
 			}
 
-			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
+			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+			                                                         float(token->getValue().getInt());
 		}
 		//** FOV_X **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_X"))
@@ -74,7 +77,8 @@ bool LightProps::load(const char* filename)
 				return false;
 			}
 
-			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
+			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+			                                                     float(token->getValue().getInt());
 		}
 		//** FOV_Y **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_Y"))
@@ -86,7 +90,8 @@ bool LightProps::load(const char* filename)
 				return false;
 			}
 
-			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() : float(token->getValue().getInt());
+			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+			                                                     float(token->getValue().getInt());
 		}
 		//** TEXTURE **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "TEXTURE"))
@@ -98,7 +103,7 @@ bool LightProps::load(const char* filename)
 				return false;
 			}
 				
-			texture = Resource::textures.load(token->getValue().getString());
+			texture = RsrcMngr::textures.load(token->getValue().getString());
 			texture->setRepeat(false);
 			texture->setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, 0);
 			texture->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -119,14 +124,4 @@ bool LightProps::load(const char* filename)
 	}while(true);
 	
 	return true;
-}
-
-
-//======================================================================================================================
-// unload                                                                                                              =
-//======================================================================================================================
-void LightProps::unload()
-{
-	/*if(texture != NULL)
-		Resource::textures.unload(texture);*/
 }

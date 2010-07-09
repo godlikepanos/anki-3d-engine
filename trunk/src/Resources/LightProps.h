@@ -4,13 +4,12 @@
 #include "Common.h"
 #include "Resource.h"
 #include "Math.h"
-
-
-class Texture;
+#include "RsrcPtr.h"
+#include "Texture.h"
 
 
 /**
- * Light properties @ref Resource resource
+ * Light properties @ref Resource
  */
 class LightProps: public Resource
 {
@@ -24,13 +23,13 @@ class LightProps: public Resource
 		
 	public:
 		LightProps();
-		virtual ~LightProps() { /* ToDo */ }
+		virtual ~LightProps() {}
 		bool load(const char* filename);
-		void unload();
+		void unload() {};
 		const Texture* getTexture() const;
 
 	private:
-		Texture* texture; ///< For spot lights
+		RsrcPtr<Texture> texture; ///< For spot lights
 };
 
 
@@ -42,14 +41,14 @@ inline LightProps::LightProps():
 	castsShadow_(false),
 	distance(3.0),
 	fovX(M::PI/4.0),
-	fovY(M::PI/4.0),
-	texture(NULL)
+	fovY(M::PI/4.0)
 {}
 
 
 inline const Texture* LightProps::getTexture() const
 {
-	DEBUG_ERR(texture==NULL); return texture;
+	DEBUG_ERR(texture.get() == NULL);
+	return texture.get();
 }
 
 #endif

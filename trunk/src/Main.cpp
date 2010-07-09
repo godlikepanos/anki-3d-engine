@@ -35,6 +35,7 @@
 #include "Renderer.h"
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
+#include "RsrcMngr.h"
 
 App* app = NULL; ///< The only global var. App constructor sets it
 
@@ -260,7 +261,7 @@ void init()
 	imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
-	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = Resource::skelAnims.load("models/imp/walk.imp.anim");
+	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = RsrcMngr::skelAnims.load("models/imp/walk.imp.anim");
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 	// particle emitter
@@ -276,7 +277,7 @@ void init()
 
 	//
 	//floor_ = new floor_t;
-	//floor_->material = Resource::materials.load("materials/default.mtl");
+	//floor_->material = RsrcMngr::materials.load("materials/default.mtl");
 
 	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };

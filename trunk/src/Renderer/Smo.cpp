@@ -5,6 +5,8 @@
  */
 #include "Renderer.h"
 #include "Light.h"
+#include "LightProps.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -19,7 +21,7 @@ Vbo Renderer::Is::Smo::sMOUvSVbo;
 //======================================================================================================================
 void Renderer::Is::Smo::init()
 {
-	sProg = Resource::shaders.load("shaders/IsSmo.glsl");
+	sProg = RsrcMngr::shaders.load("shaders/IsSmo.glsl");
 	modelViewProjectionMatUniVar = sProg->findUniVar("modelViewProjectionMat");
 
 	if(!sMOUvSVbo.isCreated())
@@ -45,7 +47,7 @@ void Renderer::Is::Smo::run(const PointLight& light)
 	// set shared prog
 	const float scale = 1.2; // we scale the sphere a little
 	sProg->bind();
-	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.radius*scale);
+	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.getRadius()*scale);
 	Mat4 trf = r.cam->getProjectionMatrix() * Mat4::combineTransformations(r.cam->getViewMatrix(), modelMat);
 	modelViewProjectionMatUniVar->setMat4(&trf);
 

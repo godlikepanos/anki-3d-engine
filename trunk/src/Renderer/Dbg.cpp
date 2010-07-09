@@ -9,6 +9,8 @@
 #include "Scene.h"
 #include "SkelNode.h"
 #include "Camera.h"
+#include "LightProps.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -200,7 +202,7 @@ void Renderer::Dbg::init()
 	// shader
 	if(sProg.get() == NULL)
 	{
-		sProg = Resource::shaders.load("shaders/Dbg.glsl");
+		sProg = RsrcMngr::shaders.load("shaders/Dbg.glsl");
 	}
 
 }

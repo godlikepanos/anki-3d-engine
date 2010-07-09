@@ -5,6 +5,7 @@
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -16,7 +17,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	initGl();
 
-	sProg = Resource::shaders.load("shaders/final.glsl");
+	sProg = RsrcMngr::shaders.load("shaders/final.glsl");
 
 	//
 	// init the offscreen Renderer

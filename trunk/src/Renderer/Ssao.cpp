@@ -6,6 +6,7 @@
 
 #include "Renderer.h"
 #include "Camera.h"
+#include "RsrcMngr.h"
 
 
 //======================================================================================================================
@@ -82,17 +83,17 @@ void Renderer::Pps::Ssao::init()
 	// Shaders
 	//
 
-	ssaoSProg = Resource::shaders.load("shaders/PpsSsao.glsl");
+	ssaoSProg = RsrcMngr::shaders.load("shaders/PpsSsao.glsl");
 
 	string pps = "#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(width) + "\n";
 	string prefix = "Pass0Width" + Util::floatToStr(width);
-	blurSProg = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
+	blurSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
 	                                                                     prefix.c_str()).c_str());
 
 
 	pps = "#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bheight) + "\n";
 	prefix = "Pass1Height" + Util::floatToStr(bheight);
-	blurSProg2 = Resource::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
+	blurSProg2 = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
 	                                                                      prefix.c_str()).c_str());
 
 	camerarangeUniVar = ssaoSProg->findUniVar("camerarange");
@@ -113,7 +114,7 @@ void Renderer::Pps::Ssao::init()
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
 	Texture::mipmappingEnabled = true;
-	noiseMap = Resource::textures.load("gfx/noise3.tga");
+	noiseMap = RsrcMngr::textures.load("gfx/noise3.tga");
 	noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
 	noiseMap->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 	//noise_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);

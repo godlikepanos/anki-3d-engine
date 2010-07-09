@@ -3,12 +3,9 @@
 
 #include "Common.h"
 #include "SceneNode.h"
-#include "Controller.h"
-#include "Math.h"
+#include "SkelAnimCtrl.h"
 #include "RsrcPtr.h"
-
-
-class SkelAnimCtrl;
+#include "Skeleton.h"
 
 
 /**
@@ -17,8 +14,8 @@ class SkelAnimCtrl;
 class SkelNode: public SceneNode
 {
 	public:
-		class Skeleton* skeleton; ///< The skeleton resource
-		RsrcPtr<SkelAnimCtrl> skelAnimCtrl; ///< Hold the controller here as well
+		RsrcPtr<Skeleton> skeleton; ///< The skeleton resource
+		SkelAnimCtrl* skelAnimCtrl; ///< Hold the controller here as well @todo make it reference
 
 		SkelNode();
 		void render();

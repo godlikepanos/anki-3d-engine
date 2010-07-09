@@ -91,7 +91,11 @@ void Renderer::Ms::run()
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		DEBUG_ERR(meshNode->material == NULL);
+		if(meshNode->material.get() == NULL)
+		{
+			ERROR("Mesh \"" << meshNode->mesh->getRsrcName() << "\" doesnt have material" );
+			continue;
+		}
 		if(meshNode->material->blends) continue;
 
 		r.setupMaterial(*meshNode->material, *meshNode, cam);

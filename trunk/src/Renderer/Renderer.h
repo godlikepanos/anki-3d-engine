@@ -448,7 +448,7 @@ class Renderer
 		Mat4 viewProjectionMat; ///< In case anyone needs it
 
 		static void drawQuad(int vertCoordsUniLoc);
-		void setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam);
+		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam);
 		static void setViewport(uint x, uint y, uint w, uint h) { glViewport(x,y,w,h); }
 
 		// to be removed

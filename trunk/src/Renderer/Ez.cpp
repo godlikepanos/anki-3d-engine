@@ -54,7 +54,7 @@ void Renderer::Ms::Ez::run()
 		MeshNode* meshNode = (*it);
 		if(meshNode->material->blends) continue;
 
-		DEBUG_ERR(meshNode->material->dpMtl == NULL);
+		DEBUG_ERR(meshNode->material->dpMtl.get() == NULL);
 
 		r.setupMaterial(*meshNode->material->dpMtl, *meshNode, *r.cam);
 		meshNode->renderDepth();
