@@ -12,21 +12,23 @@ template<typename Type>
 class RsrcPtr
 {
 	public:
-		RsrcPtr();
-
 		/**
-		 * This constructor doesn't transfer ownership just like auto_ptr
+		 * This constructor transfers ownership just like auto_ptr
 		 */
-		RsrcPtr(const RsrcPtr& a);
+		template<typename Type1>
+		RsrcPtr(RsrcPtr<Type1>& a);
 
 		/**
 		 * This constructor is for resource container only
 		 */
-		RsrcPtr(Type* p_);
+		explicit RsrcPtr(Type* p_ = NULL);
 
 		~RsrcPtr();
 
-		RsrcPtr<Type>& operator=(const RsrcPtr<Type>& a);
+
+		template<typename Type1>
+		RsrcPtr<Type1>& operator=(RsrcPtr<Type1>& a);
+
 		Type& operator*();
 		const Type& operator*() const;
 		Type* operator->();
@@ -35,8 +37,6 @@ class RsrcPtr
 		const Type* get() const;
 
 	private:
-
-
 		Type* p;
 };
 
@@ -46,16 +46,11 @@ class RsrcPtr
 //======================================================================================================================
 
 template<typename Type>
-RsrcPtr<Type>::RsrcPtr():
-	p(NULL)
-{}
-
-
-template<typename Type>
-RsrcPtr<Type>::RsrcPtr(const RsrcPtr& a):
-	p(a.p)
+template<typename Type1>
+RsrcPtr<Type>::RsrcPtr(RsrcPtr<Type1>& a)
 {
-	DEBUG_ERR(a.p == NULL);
+	p = a.p;
+	a.p = NULL;
 }
 
 
@@ -68,16 +63,18 @@ RsrcPtr<Type>::RsrcPtr(Type* p_):
 template<typename Type>
 RsrcPtr<Type>::~RsrcPtr()
 {
-	if(p == NULL) return;
-	p->tryToUnoadMe();
+	if(p != NULL)
+		p->tryToUnoadMe();
 }
 
 
 template<typename Type>
-RsrcPtr<Type>& RsrcPtr<Type>::operator=(const RsrcPtr<Type>& a)
+template<typename Type1>
+RsrcPtr<Type1>& RsrcPtr<Type>::operator=(RsrcPtr<Type1>& a)
 {
 	DEBUG_ERR(p != NULL);
 	p = a.p;
+	a.p = NULL;
 	return *this;
 }
 
