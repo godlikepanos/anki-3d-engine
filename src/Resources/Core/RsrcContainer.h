@@ -17,9 +17,20 @@ class RsrcContainer: public Vec<Type*>
 	private:
 		typedef Vec<Type*> BaseClass;
 		typedef typename BaseClass::iterator Iterator; ///< Just to save me time from typing
+		typedef RsrcPtr<Type> RsrcPtrType;
 
 	public:
-		RsrcPtr<Type> load(const char* fname);
+		RsrcPtrType load(const char* fname)
+		{
+			Type* p = load2(fname);
+
+			if(!p)
+			{
+				ERROR("See prev error");
+			}
+
+			return RsrcPtrType(p);
+		}
 
 	private:
 		/**

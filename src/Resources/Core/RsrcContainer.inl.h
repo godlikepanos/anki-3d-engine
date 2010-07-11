@@ -24,8 +24,7 @@ typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByName(const cha
 // findByNameAndPath                                                                                                   =
 //======================================================================================================================
 template<typename Type>
-typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByNameAndPath(const char* name,
-                                                                                      const char* path)
+typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByNameAndPath(const char* name, const char* path)
 {
 	Iterator it = BaseClass::begin();
 	while(it != BaseClass::end())
@@ -96,19 +95,18 @@ Type* RsrcContainer<Type>::load2(const char* fname)
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-template<typename Type>
-RsrcPtr<Type> RsrcContainer<Type>::load(const char* fname)
+/*template<typename Type>
+RsrcPtrType RsrcContainer<Type>::load(const char* fname)
 {
 	Type* p = load2(fname);
 
 	if(!p)
 	{
 		ERROR("See prev error");
-		return RsrcPtr<Type>(static_cast<Type*>(NULL));
 	}
 
 	return RsrcPtr<Type>(p);
-}
+}*/
 
 
 //======================================================================================================================
