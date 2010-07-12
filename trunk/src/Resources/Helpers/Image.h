@@ -1,6 +1,7 @@
-#ifndef _IMAGE_H_
-#define _IMAGE_H_
+#ifndef IMAGE_H
+#define IMAGE_H
 
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "Common.h"
 
 
@@ -9,26 +10,23 @@
  */
 class Image
 {
-	protected:
-		static unsigned char tgaHeaderUncompressed[12];
-		static unsigned char tgaHeaderCompressed[12];
-
-		bool loadUncompressedTGA(const char* filename, fstream& fs);
-		bool loadCompressedTGA(const char* filename, fstream& fs);
-		bool loadPNG(const char* filename);
-		bool loadTGA(const char* filename);
-
 	public:
 		uint  width;
 		uint  height;
 		uint  bpp;
-		char* data;
-
-		 Image(): data(NULL) {}
-		~Image() { unload(); }
+		ptr_vector<char> data;
 
 		bool load(const char* filename);
-		void unload() { if(data) delete [] data; data=NULL; }
+
+	private:
+		static uchar tgaHeaderUncompressed[12];
+		static uchar tgaHeaderCompressed[12];
+
+		bool loadUncompressedTga(const char* filename, fstream& fs);
+		bool loadCompressedTga(const char* filename, fstream& fs);
+		bool loadPng(const char* filename);
+		bool loadTga(const char* filename);
 };
+
 
 #endif

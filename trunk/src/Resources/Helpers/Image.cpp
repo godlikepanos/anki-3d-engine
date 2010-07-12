@@ -1,17 +1,19 @@
 #include <SDL_image.h>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <fstream>
 #include "Image.h"
 #include "Util.h"
 
 
-unsigned char Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-unsigned char Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
 //======================================================================================================================
-// loadUncompressedTGA                                                                                                 =
+// loadUncompressedTga                                                                                                 =
 //======================================================================================================================
-bool Image::loadUncompressedTGA(const char* filename, fstream& fs)
+bool Image::loadUncompressedTga(const char* filename, fstream& fs)
 {
 	// read the info from header
 	unsigned char header6[6];
@@ -33,19 +35,19 @@ bool Image::loadUncompressedTGA(const char* filename, fstream& fs)
 	}
 
 	// read the data
-	int bytes_per_pxl	= (bpp / 8);
-	int image_size = bytes_per_pxl * width * height;
-	data = new char [image_size];
+	int bytesPerPxl	= (bpp / 8);
+	int imageSize = bytesPerPxl * width * height;
+	data.reserve(imageSize);
 
-	fs.read(data, image_size);
-	if(fs.gcount() != image_size)
+	fs.read(&data[0], imageSize);
+	if(fs.gcount() != imageSize)
 	{
 		ERROR("File \"" << filename << "\": Cannot read image data");
 		return false;
 	}
 
 	// swap red with blue
-	for(int i=0; i<int(image_size); i+=bytes_per_pxl)
+	for(int i=0; i<int(imageSize); i+=bytesPerPxl)
 	{
 		uint temp = data[i];
 		data[i] = data[i + 2];
@@ -57,9 +59,9 @@ bool Image::loadUncompressedTGA(const char* filename, fstream& fs)
 
 
 //======================================================================================================================
-// loadCompressedTGA                                                                                                   =
+// loadCompressedTga                                                                                                   =
 //======================================================================================================================
-bool Image::loadCompressedTGA(const char* filename, fstream& fs)
+bool Image::loadCompressedTga(const char* filename, fstream& fs)
 {
 	unsigned char header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
@@ -80,9 +82,9 @@ bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 	}
 
 
-	int bytes_per_pxl = (bpp / 8);
-	int image_size = bytes_per_pxl * width * height;
-	data = new char [image_size];
+	int bytesPerPxl = (bpp / 8);
+	int image_size = bytesPerPxl * width * height;
+	data.reserve(image_size);
 
 	uint pixelcount = height * width;
 	uint currentpixel = 0;
@@ -105,8 +107,8 @@ bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 			chunkheader++;
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
-				fs.read((char*)&colorbuffer[0], bytes_per_pxl);
-				if(fs.gcount() != bytes_per_pxl)
+				fs.read((char*)&colorbuffer[0], bytesPerPxl);
+				if(fs.gcount() != bytesPerPxl)
 				{
 					ERROR("File \"" << filename << "\": Cannot read image data");
 					return false;
@@ -116,12 +118,12 @@ bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 				data[currentbyte + 1] = colorbuffer[1];
 				data[currentbyte + 2] = colorbuffer[0];
 
-				if(bytes_per_pxl == 4)
+				if(bytesPerPxl == 4)
 				{
 					data[currentbyte + 3] = colorbuffer[3];
 				}
 
-				currentbyte += bytes_per_pxl;
+				currentbyte += bytesPerPxl;
 				currentpixel++;
 
 				if(currentpixel > pixelcount)
@@ -134,8 +136,8 @@ bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 		else
 		{
 			chunkheader -= 127;
-			fs.read((char*)&colorbuffer[0], bytes_per_pxl);
-			if(fs.gcount() != bytes_per_pxl)
+			fs.read((char*)&colorbuffer[0], bytesPerPxl);
+			if(fs.gcount() != bytesPerPxl)
 			{
 				ERROR("File \"" << filename << "\": Cannot read from file");
 				return false;
@@ -147,12 +149,12 @@ bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 				data[currentbyte+1] = colorbuffer[1];
 				data[currentbyte+2] = colorbuffer[0];
 
-				if(bytes_per_pxl == 4)
+				if(bytesPerPxl == 4)
 				{
 					data[currentbyte + 3] = colorbuffer[3];
 				}
 
-				currentbyte += bytes_per_pxl;
+				currentbyte += bytesPerPxl;
 				currentpixel++;
 
 				if(currentpixel > pixelcount)
@@ -169,12 +171,12 @@ bool Image::loadCompressedTGA(const char* filename, fstream& fs)
 
 
 //======================================================================================================================
-// loadTGA                                                                                                             =
+// loadTga                                                                                                             =
 //======================================================================================================================
-bool Image::loadTGA(const char* filename)
+bool Image::loadTga(const char* filename)
 {
 	fstream fs;
-	char my_tga_header[12];
+	char myTgaHeader[12];
 	fs.open(filename, ios::in|ios::binary);
 
 	if(!fs.good())
@@ -183,38 +185,38 @@ bool Image::loadTGA(const char* filename)
 		return false;
 	}
 
-	fs.read(&my_tga_header[0], sizeof(my_tga_header));
-	if(fs.gcount() != sizeof(my_tga_header))
+	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
+	if(fs.gcount() != sizeof(myTgaHeader))
 	{
 		ERROR("File \"" << filename << "\": Cannot read file header");
 		fs.close();
 		return false;
 	}
 
-	bool funcs_return;
-	if(memcmp(tgaHeaderUncompressed, &my_tga_header[0], sizeof(my_tga_header)) == 0)
+	bool funcsReturn;
+	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		funcs_return = loadUncompressedTGA(filename, fs);
+		funcsReturn = loadUncompressedTga(filename, fs);
 	}
-	else if(memcmp(tgaHeaderCompressed, &my_tga_header[0], sizeof(my_tga_header)) == 0)
+	else if(memcmp(tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		funcs_return = loadCompressedTGA(filename, fs);
+		funcsReturn = loadCompressedTga(filename, fs);
 	}
 	else
 	{
 		ERROR("File \"" << filename << "\": Invalid image header");
-		funcs_return = false;
+		funcsReturn = false;
 	}
 
 	fs.close();
-	return funcs_return;
+	return funcsReturn;
 }
 
 
 //======================================================================================================================
-// loadPNG                                                                                                             =
+// loadPng                                                                                                             =
 //======================================================================================================================
-bool Image::loadPNG(const char* filename)
+bool Image::loadPng(const char* filename)
 {
 	SDL_Surface *sdli;
 	sdli = IMG_Load(filename);
@@ -236,20 +238,19 @@ bool Image::loadPNG(const char* filename)
 		return false;
 	}
 
-	int bytespp = bpp/8;
+	int bytespp = bpp / 8;
 	int bytes = width * height * bytespp;
-	data = new char [bytes];
+	data.reserve(bytes);
 
 	// copy and flip height
 	for(uint w=0; w<width; w++)
+	{
 		for(uint h=0; h<height; h++)
 		{
-			memcpy(
-				&data[(width*h+w) * bytespp],
-				&((char*)sdli->pixels)[(width*(height-h-1)+w) * bytespp],
-				bytespp
-			);
+			memcpy( &data[(width * h + w) * bytespp], &((char*)sdli->pixels)[(width * (height -h - 1) + w) * bytespp],
+			        bytespp);
 		}
+	}
 
 	SDL_FreeSurface(sdli);
 	return true;
@@ -262,22 +263,22 @@ bool Image::loadPNG(const char* filename)
 bool Image::load(const char* filename)
 {
 	// get the extension
-	string ext = Util::getFileExtension(filename);
+	string ext = filesystem::path(filename).extension();
+	to_lower(ext);
+
 
 	// load from this extension
 	if(ext == "tga")
 	{
-		if(!loadTGA(filename))
+		if(!loadTga(filename))
 		{
-			unload();
 			return false;
 		}
 	}
 	else if(ext == "png")
 	{
-		if(!loadPNG(filename))
+		if(!loadPng(filename))
 		{
-			unload();
 			return false;
 		}
 	}

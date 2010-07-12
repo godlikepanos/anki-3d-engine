@@ -105,7 +105,7 @@ class Renderer
 					PROPERTY_R(bool, enabled, isEnabled) ///< If false then disable
 					PROPERTY_R(bool, pcfEnabled, isPcfEnabled) ///< Enable Percentage Closer Filtering
 					PROPERTY_R(bool, bilinearEnabled, isBilinearEnabled) ///< Shadowmap bilinear filtering. Better quality
-					PROPERTY_R(int, resolution, getResolution) ///< Shadowmap resolution. The higher the better
+					PROPERTY_R(int, resolution, getResolution) ///< Shadowmap resolution. The higher the better but slower
 
 					public:
 						Sm(Renderer& r_): RenderingStage(r_) {}
@@ -138,7 +138,7 @@ class Renderer
 						static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
 						static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
 						RsrcPtr<ShaderProg> sProg;
-						const ShaderProg::UniVar* modelViewProjectionMatUniVar;
+						const ShaderProg::UniVar* modelViewProjectionMatUniVar; ///< Opt
 
 						void init();
 						void run(const PointLight& light);
@@ -177,11 +177,18 @@ class Renderer
 				RsrcPtr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program
 				RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
 				RsrcPtr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
+
+				/**
+				 * @name Ptrs to uniform variables
+				 */
+				//*@{*/
 				const ShaderProg::UniVar* ambientColUniVar;
 				const ShaderProg::UniVar* sceneColMapUniVar;
 				UniVars pointLightSProgUniVars;
 				UniVars spotLightNoShadowSProgUniVars;
 				UniVars spotLightShadowSProgUniVars;
+				//*@}*/
+
 				Vec3 viewVectors[4];
 				Vec2 planes;
 
@@ -393,12 +400,16 @@ class Renderer
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		// the stages as data members
+		/**
+		 * @name Rendering stages
+		 */
+		/**@{*/
 		Ms ms; ///< Material rendering stage
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
 		Bs bs; ///< Blending stage
 		Dbg dbg; ///< Debugging rendering stage
+		/**@}*/
 
 		Renderer();
 
