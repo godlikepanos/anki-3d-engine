@@ -152,6 +152,9 @@ class ShaderProg: public Resource
 	//====================================================================================================================
 	private:
 		GLuint glId; ///< The OpenGL ID of the shader program
+		GLuint vertShaderGlId;
+		GLuint geomShaderGlId;
+		GLuint fragShaderGlId;
 		static string stdSourceCode;
 		Vec<UniVar> uniVars; ///< All the uniform variables
 		Vec<AttribVar> attribVars; ///< All the attribute variables

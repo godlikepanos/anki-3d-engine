@@ -30,7 +30,7 @@ Texture::Texture():
 bool Texture::load(const char* filename)
 {
 	target = GL_TEXTURE_2D;
-	if(glId != numeric_limits<uint>::max())
+	if(isLoaded())
 	{
 		ERROR("Texture already loaded");
 		return false;
@@ -72,13 +72,12 @@ bool Texture::load(const char* filename)
 		intFormat = (img.bpp==32) ? GL_RGBA : GL_RGB;
 	}
 
-	glTexImage2D(target, 0, intFormat, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, img.data);
+	glTexImage2D(target, 0, intFormat, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, &img.data[0]);
 	if(mipmappingEnabled)
 	{
 		glGenerateMipmap(target);
 	}
 
-	img.unload();
 	return true;
 }
 
@@ -86,12 +85,11 @@ bool Texture::load(const char* filename)
 //======================================================================================================================
 // createEmpty2D                                                                                                       =
 //======================================================================================================================
-bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_,
-                            bool mimapping)
+bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_, bool mimapping)
 {
 	target = GL_TEXTURE_2D;
 	DEBUG_ERR(internalFormat>0 && internalFormat<=4); // deprecated internal format
-	DEBUG_ERR(glId != numeric_limits<uint>::max()); // Texture already loaded
+	DEBUG_ERR(isLoaded());
 
 	// GL stuff
 	glGenTextures(1, &glId);
@@ -122,7 +120,7 @@ bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int
 bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
 {
 	target = GL_TEXTURE_2D_MULTISAMPLE;
-	DEBUG_ERR(glId != numeric_limits<uint>::max()); // Texture already loaded
+	DEBUG_ERR(isLoaded());
 
 	glGenTextures(1, &glId);
 	bind();
@@ -142,8 +140,8 @@ bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, 
 //======================================================================================================================
 void Texture::unload()
 {
-	glDeleteTextures(1, &glId);
-	INFO("ASFD");
+	if(isLoaded())
+		glDeleteTextures(1, &glId);
 }
 
 
@@ -156,7 +154,7 @@ void Texture::bind(uint unit) const
 		WARNING("Max tex units passed");
 
 	glActiveTexture(GL_TEXTURE0+unit);
-	glBindTexture(target, glId);
+	glBindTexture(target, getGlId());
 }
 
 
@@ -185,7 +183,7 @@ int Texture::getHeight() const
 
 
 //======================================================================================================================
-// setTexParameter [int]                                                                                                  =
+// setTexParameter [int]                                                                                               =
 //======================================================================================================================
 void Texture::setTexParameter(GLenum paramName, GLint value) const
 {
@@ -195,7 +193,7 @@ void Texture::setTexParameter(GLenum paramName, GLint value) const
 
 
 //======================================================================================================================
-// setTexParameter [float]                                                                                                =
+// setTexParameter [float]                                                                                             =
 //======================================================================================================================
 void Texture::texParameter(GLenum paramName, GLfloat value) const
 {
@@ -203,3 +201,21 @@ void Texture::texParameter(GLenum paramName, GLfloat value) const
 	glTexParameterf(target, paramName, value);
 }
 
+
+//======================================================================================================================
+// setRepeat                                                                                                           =
+//======================================================================================================================
+void Texture::setRepeat(bool repeat) const
+{
+	bind();
+	if(repeat)
+	{
+		setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+		setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+	}
+	else
+	{
+		setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP);
+		setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
+}

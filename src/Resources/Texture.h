@@ -39,33 +39,25 @@ class Texture: public Resource
 	protected:
 		GLuint glId; ///< Identification for OGL
 		GLenum target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-		static int  textureUnitsNum; ///< This needs to be filled after the main renderer initialization
+		static int  textureUnitsNum; ///< This needs to be filled in OpenGL initialization
 		static bool mipmappingEnabled;
 		static bool compressionEnabled;
 		static int  anisotropyLevel;
+
+		bool isLoaded() const;
 };
 
 
 inline GLuint Texture::getGlId() const
 {
-	DEBUG_ERR(glId==numeric_limits<uint>::max());
+	DEBUG_ERR(!isLoaded());
 	return glId;
 }
 
 
-inline void Texture::setRepeat(bool repeat) const
+inline bool Texture::isLoaded() const
 {
-	if(repeat)
-	{
-		setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
-		setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
-	}
-	else
-	{
-		setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP);
-		setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP);
-	}
+	return glId != numeric_limits<uint>::max();
 }
-
 
 #endif

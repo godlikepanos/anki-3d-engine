@@ -3,8 +3,8 @@
 
 <cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 <storageModule moduleId="org.eclipse.cdt.core.settings">
-<cconfiguration id="cdt.managedbuild.toolchain.gnu.cross.base.278686394">
-<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.cross.base.278686394" moduleId="org.eclipse.cdt.core.settings" name="Default">
+<cconfiguration id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304">
+<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304" moduleId="org.eclipse.cdt.core.settings" name="Default">
 <externalSettings/>
 <extensions>
 <extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -14,18 +14,18 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactName="anki" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.278686394" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
-<folderInfo id="cdt.managedbuild.toolchain.gnu.cross.base.278686394.1132339411" name="/" resourcePath="">
-<toolChain id="cdt.managedbuild.toolchain.gnu.cross.base.960312399" name="cdt.managedbuild.toolchain.gnu.cross.base" superClass="cdt.managedbuild.toolchain.gnu.cross.base">
-<option id="cdt.managedbuild.option.gnu.cross.prefix.880759701" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
-<option id="cdt.managedbuild.option.gnu.cross.path.51123088" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path"/>
-<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.671560961" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
-<builder arguments="make -j3" buildPath="${workspace_loc:/anki/build/debug}" command="nice" id="cdt.managedbuild.toolchain.gnu.cross.base.278686394.1477991022" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
-<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.65387374" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
-<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2094020625" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+<configuration artifactName="anki" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+<folderInfo id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304.1771284297" name="/" resourcePath="">
+<toolChain id="cdt.managedbuild.toolchain.gnu.cross.base.652528495" name="cdt.managedbuild.toolchain.gnu.cross.base" superClass="cdt.managedbuild.toolchain.gnu.cross.base">
+<option id="cdt.managedbuild.option.gnu.cross.prefix.124248385" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
+<option id="cdt.managedbuild.option.gnu.cross.path.568633506" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path"/>
+<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.2099631" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
+<builder arguments="make -j3" buildPath="${workspace_loc:/anki/build/debug}" command="nice" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304.618553305" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
+<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.454660912" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
+<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.264866474" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
-<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.1101033180" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
-<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2069070912" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.628710088" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
+<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.444788722" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
 </inputType>
@@ -116,13 +116,31 @@
 <parser enabled="true"/>
 </scannerInfoProvider>
 </profile>
+<profile id="org.eclipse.cdt.managedbuilder.xlc.core.XLCManagedMakePerProjectProfile">
+<buildOutputProvider>
+<openAction enabled="false" filePath=""/>
+<parser enabled="false"/>
+</buildOutputProvider>
+<scannerInfoProvider id="specsFile">
+<runAction arguments="-E -v ${plugin_state_location}/${specs_file}" command="${XL_compilerRoot}/xlc" useDefault="true"/>
+<parser enabled="true"/>
+</scannerInfoProvider>
+</profile>
+<profile id="org.eclipse.cdt.managedbuilder.xlc.core.XLCManagedMakePerProjectProfileCPP">
+<buildOutputProvider>
+<openAction enabled="false" filePath=""/>
+<parser enabled="false"/>
+</buildOutputProvider>
+<scannerInfoProvider id="specsFile">
+<runAction arguments="-E -v ${plugin_state_location}/${specs_file}" command="${XL_compilerRoot}/xlC" useDefault="true"/>
+<parser enabled="true"/>
+</scannerInfoProvider>
+</profile>
 </storageModule>
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
-<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
-<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cconfiguration>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<project id="anki.null.1990650523" name="anki"/>
+<project id="anki.null.323176720" name="anki"/>
 </storageModule>
 </cproject>
