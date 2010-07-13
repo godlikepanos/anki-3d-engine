@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <jpeglib.h>
 #include <fstream>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
@@ -189,21 +191,22 @@ bool MainRenderer::takeScreenshotJpeg(const char* filename)
 //======================================================================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	string ext = Util::getFileExtension(filename);
+	string ext = filesystem::path(filename).extension();
+	to_lower(ext);
 	bool ret;
 
 	// exec from this extension
-	if(ext == "tga")
+	if(ext == ".tga")
 	{
 		ret = takeScreenshotTga(filename);
 	}
-	else if(ext == "jpg" || ext == "jpeg")
+	else if(ext == ".jpg" || ext == ".jpeg")
 	{
 		ret = takeScreenshotJpeg(filename);
 	}
 	else
 	{
-		ERROR("File \"" << filename << "\": Unsupported extension. Watch for capital");
+		ERROR("File \"" << filename << "\": Unsupported extension");
 		return;
 	}
 

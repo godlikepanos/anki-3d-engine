@@ -4,6 +4,7 @@
  * Post-processing stage screen space ambient occlusion pass
  */
 
+#include <boost/lexical_cast.hpp>
 #include "Renderer.h"
 #include "Camera.h"
 #include "RsrcMngr.h"
@@ -85,14 +86,16 @@ void Renderer::Pps::Ssao::init()
 
 	ssaoSProg = RsrcMngr::shaders.load("shaders/PpsSsao.glsl");
 
-	string pps = "#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + Util::floatToStr(width) + "\n";
-	string prefix = "Pass0Width" + Util::floatToStr(width);
+	string pps = "#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + lexical_cast<string>(static_cast<float>(width)) +
+	             "\n";
+	string prefix = "Pass0Width" + lexical_cast<string>(width);
 	blurSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
 	                                                                     prefix.c_str()).c_str());
 
 
-	pps = "#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + Util::floatToStr(bheight) + "\n";
-	prefix = "Pass1Height" + Util::floatToStr(bheight);
+	pps = "#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + lexical_cast<string>(static_cast<float>(bheight)) +
+	      "\n";
+	prefix = "Pass1Height" + lexical_cast<string>(bheight);
 	blurSProg2 = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
 	                                                                      prefix.c_str()).c_str());
 

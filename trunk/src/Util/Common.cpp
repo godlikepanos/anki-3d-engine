@@ -1,6 +1,7 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GL/glu.h>
+#include <boost/filesystem.hpp>
 #include "Common.h"
 #include "App.h"
 #include "Util.h"
@@ -15,6 +16,29 @@ static const char* terminalColors [MT_NUM + 1] = {
 	"\033[1;32;6m", // info
 	"\033[0;;m" // default color
 };
+
+
+//======================================================================================================================
+// getFunctionFromPrettyFunction                                                                                       =
+//======================================================================================================================
+/**
+ * The function gets __PRETTY_FUNCTION__ and strips it to get only the function name with its namespace
+ */
+static string getFunctionFromPrettyFunction(const char* prettyFunction)
+{
+	string ret(prettyFunction);
+
+	size_t index = ret.find("(");
+
+	if (index != string::npos)
+		ret.erase(index);
+
+	index = ret.rfind(" ");
+	if (index != string::npos)
+		ret.erase(0, index + 1);
+
+	return ret;
+}
 
 
 //======================================================================================================================
@@ -81,7 +105,8 @@ ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func
 	}
 
 	// print caller info
-	(*cs) << " (" << Util::cutPath(file) << ":" << line << " " << Util::getFunctionFromPrettyFunction(func) << "): ";
+	(*cs) << " (" << filesystem::path(file).filename() << ":" << line << " " << getFunctionFromPrettyFunction(func) <<
+	         "): ";
 
 	return (*cs);
 }

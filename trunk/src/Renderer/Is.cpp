@@ -4,6 +4,7 @@
  * Illumination stage
  */
 
+#include <boost/lexical_cast.hpp>
 #include "Renderer.h"
 #include "Camera.h"
 #include "Light.h"
@@ -141,8 +142,8 @@ void Renderer::Is::init()
 
 	// spot light w/t shadow
 	string pps = string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	             "#define SHADOWMAP_SIZE " + Util::intToStr(sm.resolution) + "\n";
-	string prefix = "SpotShadowSms" + Util::intToStr(sm.resolution);
+	             "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.resolution) + "\n";
+	string prefix = "SpotShadowSms" + lexical_cast<string>(sm.resolution);
 	if(sm.pcfEnabled)
 	{
 		pps += "#define PCF_ENABLED\n";

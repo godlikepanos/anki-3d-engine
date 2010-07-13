@@ -1,5 +1,6 @@
 #include <iomanip>
 #include <cstring>
+#include <boost/lexical_cast.hpp>
 #include "ShaderPrePreprocessor.h"
 #include "Scanner.h"
 #include "Parser.h"
@@ -127,8 +128,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						vertShaderBegins.definedInFile = filename;
 						vertShaderBegins.definedInLine = scanner.getLineNumber();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-						                      Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+						                      lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 /* geomShaderBegins */
@@ -170,8 +171,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						geomShaderBegins.definedInFile = filename;
 						geomShaderBegins.definedInLine = scanner.getLineNumber();
 						geomShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-						                      Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+						                      lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 /* fragShaderBegins */
@@ -204,8 +205,8 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						fragShaderBegins.definedInFile = filename;
 						fragShaderBegins.definedInLine = scanner.getLineNumber();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-						                      Util::intToStr(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+						                      lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 /* include */
@@ -216,12 +217,12 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 						{
 							// play
 							//int line = sourceLines.size();
-							sourceLines.push_back(string("#line 0 ") + Util::intToStr(depth+1) + " // " +
+							sourceLines.push_back("#line 0 " + lexical_cast<string>(depth+1) + " // " +
 							                      lines[scanner.getLineNumber()-1]);
 							if(!parseFileForPragmas(token->getValue().getString(), depth+1))
 								return false;
-							sourceLines.push_back(string("#line ") + Util::intToStr(scanner.getLineNumber()) + ' ' +
-							                      Util::intToStr(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
+							sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+							                      lexical_cast<string>(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
 							// stop play
 						}
 						else
