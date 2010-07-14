@@ -46,9 +46,6 @@ static string getFunctionFromPrettyFunction(const char* prettyFunction)
 //======================================================================================================================
 ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func)
 {
-	if(app == NULL)
-		::exit(1);
-
 	// select c stream
 	ostream* cs;
 
@@ -71,7 +68,7 @@ ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func
 
 
 	// print terminal color
-	if(app->isTerminalColoringEnabled())
+	if(app && app->isTerminalColoringEnabled())
 	{
 		(*cs) << terminalColors[msgType];
 	}
@@ -117,10 +114,7 @@ ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func
 //======================================================================================================================
 ostream& msgSuffix(ostream& cs)
 {
-	if(app == NULL)
-		::exit(1);
-
-	if(app->isTerminalColoringEnabled())
+	if(app && app->isTerminalColoringEnabled())
 		cs << terminalColors[MT_NUM];
 
 	cs << endl;

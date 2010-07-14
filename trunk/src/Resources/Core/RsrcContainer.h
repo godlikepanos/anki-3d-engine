@@ -17,20 +17,17 @@ class RsrcContainer: public Vec<Type*>
 	private:
 		typedef Vec<Type*> BaseClass;
 		typedef typename BaseClass::iterator Iterator; ///< Just to save me time from typing
-		typedef RsrcPtr<Type> RsrcPtrType;
 
 	public:
-		RsrcPtrType load(const char* fname)
-		{
-			Type* p = load2(fname);
+		RsrcContainer() {}
+		~RsrcContainer();
 
-			if(!p)
-			{
-				ERROR("See prev error");
-			}
-
-			return RsrcPtrType(p);
-		}
+		/**
+		 * The one and only public func
+		 * @param fname The file to load
+		 * @return A new resource ptr
+		 */
+		RsrcPtr<Type> load(const char* fname);
 
 	private:
 		/**

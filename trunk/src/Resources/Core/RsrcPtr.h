@@ -5,36 +5,39 @@
 
 
 /**
- * This is a special pointer to a resource. Its not smart or anything, the only difference is that when its out of scope
- * it tries to unload the resource
+ * This is a special smart pointer that points to Resource derivatives. It looks like auto_ptr but the main difference
+ * is that when its out of scope it tries to unload the resource. The bad thing about this pointer it contains an ugly
+ * hack. Without this hack we should have build our own version of auto_ptr
  */
 template<typename Type>
 class RsrcPtr
 {
 	public:
 		/**
-		 * This constructor transfers ownership just like auto_ptr
+		 * This constructor transfers ownership just like auto_ptr despite the const reference (hack)
 		 */
-		template<typename Type1>
-		RsrcPtr(RsrcPtr<Type1>& a);
+		RsrcPtr(const RsrcPtr& a);
 
 		/**
 		 * This constructor is for resource container only
 		 */
 		explicit RsrcPtr(Type* p_ = NULL);
 
+		/**
+		 * It unloads the resource or it decreases its reference counter
+		 */
 		~RsrcPtr();
 
+		Type* release();
 
-		template<typename Type1>
-		RsrcPtr<Type1>& operator=(RsrcPtr<Type1>& a);
+		/**
+		 * It transfers ownership despite the const reference (hack)
+		 */
+		RsrcPtr& operator=(const RsrcPtr& a);
 
-		Type& operator*();
-		const Type& operator*() const;
-		Type* operator->();
-		const Type* operator->() const;
-		Type* get();
-		const Type* get() const;
+		Type& operator*() const;
+		Type* operator->() const;
+		Type* get() const;
 
 	private:
 		Type* p;
@@ -46,12 +49,9 @@ class RsrcPtr
 //======================================================================================================================
 
 template<typename Type>
-template<typename Type1>
-RsrcPtr<Type>::RsrcPtr(RsrcPtr<Type1>& a)
-{
-	p = a.p;
-	a.p = NULL;
-}
+RsrcPtr<Type>::RsrcPtr(const RsrcPtr& a):
+	p(const_cast<RsrcPtr&>(a).release())
+{}
 
 
 template<typename Type>
@@ -64,60 +64,49 @@ template<typename Type>
 RsrcPtr<Type>::~RsrcPtr()
 {
 	if(p != NULL)
+	{
 		p->tryToUnoadMe();
+		release();
+	}
 }
 
 
 template<typename Type>
-template<typename Type1>
-RsrcPtr<Type1>& RsrcPtr<Type>::operator=(RsrcPtr<Type1>& a)
+RsrcPtr<Type>& RsrcPtr<Type>::operator=(const RsrcPtr<Type>& a)
 {
 	DEBUG_ERR(p != NULL);
-	p = a.p;
-	a.p = NULL;
+	p = const_cast<RsrcPtr&>(a).release();
 	return *this;
 }
 
 
 template<typename Type>
-Type& RsrcPtr<Type>::operator*()
+Type& RsrcPtr<Type>::operator*() const
 {
 	return *p;
 }
 
 
 template<typename Type>
-const Type& RsrcPtr<Type>::operator*() const
-{
-	return *p;
-}
-
-
-template<typename Type>
-Type* RsrcPtr<Type>::operator->()
+Type* RsrcPtr<Type>::operator->() const
 {
 	return p;
 }
 
 
 template<typename Type>
-const Type* RsrcPtr<Type>::operator->() const
+Type* RsrcPtr<Type>::get() const
 {
 	return p;
 }
 
 
 template<typename Type>
-Type* RsrcPtr<Type>::get()
+Type* RsrcPtr<Type>::release()
 {
-	return p;
-}
-
-
-template<typename Type>
-const Type* RsrcPtr<Type>::get() const
-{
-	return p;
+	Type* p_ = p;
+	p = NULL;
+	return p_;
 }
 
 #endif

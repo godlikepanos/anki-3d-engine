@@ -412,6 +412,19 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
+	/*{
+		RsrcPtr<LightProps> l(RsrcMngr::lightProps.load("/users/panoscc/Desktop/test.txt"));
+		//l = RsrcMngr::lightProps.load("/users/panoscc/Desktop/test.txt");
+		INFO(l->getRsrcReferencesNum());
+		{
+			RsrcPtr<LightProps> l2 = RsrcMngr::lightProps.load("/users/panoscc/Desktop/test.txt");
+			INFO(l->getRsrcReferencesNum());
+		}
+		INFO(l->getRsrcReferencesNum());
+	}
+
+	return 0;*/
+
 	init();
 
 	mainLoop();
