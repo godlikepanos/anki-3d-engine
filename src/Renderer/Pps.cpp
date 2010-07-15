@@ -44,8 +44,8 @@ void Renderer::Pps::initPrePassSProg()
 		prefix += "Ssao";
 	}
 
-	prePassSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
-	                                                                       prefix.c_str()).c_str());
+	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
+	                                                       prefix.c_str()).c_str());
 	prePassSProg->bind();
 
 	if(ssao.enabled)
@@ -71,8 +71,8 @@ void Renderer::Pps::initPostPassSProg()
 		prefix += "Hdr";
 	}
 
-	postPassSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
-	                                                                         prefix.c_str()).c_str());
+	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
+	                                                        prefix.c_str()).c_str());
 	postPassSProg->bind();
 
 	if(hdr.enabled)

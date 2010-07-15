@@ -3,6 +3,7 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "Common.h"
+#include "Vec.h"
 
 
 /**
@@ -14,7 +15,7 @@ class Image
 		uint  width;
 		uint  height;
 		uint  bpp;
-		ptr_vector<char> data;
+		Vec<char> data;
 
 		bool load(const char* filename);
 

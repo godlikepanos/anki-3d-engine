@@ -84,20 +84,19 @@ void Renderer::Pps::Ssao::init()
 	// Shaders
 	//
 
-	ssaoSProg = RsrcMngr::shaders.load("shaders/PpsSsao.glsl");
+	ssaoSProg.loadRsrc("shaders/PpsSsao.glsl");
 
 	string pps = "#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + lexical_cast<string>(static_cast<float>(width)) +
 	             "\n";
 	string prefix = "Pass0Width" + lexical_cast<string>(width);
-	blurSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
-	                                                                     prefix.c_str()).c_str());
+	blurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(), prefix.c_str()).c_str());
 
 
 	pps = "#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + lexical_cast<string>(static_cast<float>(bheight)) +
 	      "\n";
 	prefix = "Pass1Height" + lexical_cast<string>(bheight);
-	blurSProg2 = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
-	                                                                      prefix.c_str()).c_str());
+	blurSProg2.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
+	                                                     prefix.c_str()).c_str());
 
 	camerarangeUniVar = ssaoSProg->findUniVar("camerarange");
 	msDepthFaiUniVar = ssaoSProg->findUniVar("msDepthFai");
@@ -117,7 +116,7 @@ void Renderer::Pps::Ssao::init()
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
 	Texture::mipmappingEnabled = true;
-	noiseMap = RsrcMngr::textures.load("gfx/noise3.tga");
+	noiseMap.loadRsrc("gfx/noise3.tga");
 	noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
 	noiseMap->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 	//noise_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);

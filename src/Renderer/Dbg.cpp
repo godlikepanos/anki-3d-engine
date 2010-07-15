@@ -202,7 +202,7 @@ void Renderer::Dbg::init()
 	// shader
 	if(sProg.get() == NULL)
 	{
-		sProg = RsrcMngr::shaders.load("shaders/Dbg.glsl");
+		sProg.loadRsrc("shaders/Dbg.glsl");
 	}
 
 }

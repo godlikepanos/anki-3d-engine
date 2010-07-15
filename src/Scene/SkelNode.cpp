@@ -22,7 +22,7 @@ SkelNode::SkelNode():
 //======================================================================================================================
 void SkelNode::init(const char* filename)
 {
-	skeleton = RsrcMngr::skeletons.load(filename);
+	skeleton.loadRsrc(filename);
 	skelAnimCtrl = new SkelAnimCtrl(this);
 }
 

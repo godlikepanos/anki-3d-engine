@@ -261,7 +261,7 @@ void init()
 	imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
-	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim = RsrcMngr::skelAnims.load("models/imp/walk.imp.anim");
+	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 	// particle emitter
@@ -383,7 +383,6 @@ void mainLoop()
 		if(I::keys[SDL_SCANCODE_ESCAPE]) break;
 		if(I::keys[SDL_SCANCODE_F11]) app->togleFullScreen();
 		if(I::keys[SDL_SCANCODE_F12] == 1)  app->getMainRenderer()->takeScreenshot("gfx/screenshot.jpg");
-
 
 		/*char str[128];
 		sprintf(str, "capt/%06d.jpg", R::framesNum);

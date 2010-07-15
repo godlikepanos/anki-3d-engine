@@ -1,6 +1,7 @@
 #ifndef _MATERIAL_H_
 #define _MATERIAL_H_
 
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "Common.h"
 #include "Math.h"
 #include "Resource.h"
@@ -39,7 +40,6 @@ class Material: public Resource
 			SAV_VERT_WEIGHT_WEIGHTS,
 			SAV_NUM
 		};
-
 
 		/**
 		 * Standard uniform variables
@@ -116,7 +116,7 @@ class Material: public Resource
 		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
 		RsrcPtr<Material> dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
-		Vec<UserDefinedUniVar> userDefinedVars;
+		ptr_vector<UserDefinedUniVar> userDefinedVars;
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
 		int blendingSfactor;
 		int blendingDfactor;

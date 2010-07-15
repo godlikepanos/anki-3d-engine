@@ -219,7 +219,7 @@ memory.o: ../../src/Misc//memory.cpp ../../src/Misc//memory.h \
  ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
  ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
  ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
-	@echo Compiling ../../src/Misc//memory.cpp...
+	@echo Compiling ../../src/Misc//memory.cpp... >$2
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//memory.cpp -o memory.o
 
 collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \

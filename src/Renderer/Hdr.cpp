@@ -63,20 +63,17 @@ void Renderer::Pps::Hdr::init()
 
 	pps = "#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + lexical_cast<string>(r.width) + "\n";
 	prefix = "Pass0IsFaiWidth" + lexical_cast<string>(r.width);
-	pass0SProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
-	                                                                     prefix.c_str()).c_str());
+	pass0SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
 	pass0SProgFaiUniVar = pass0SProg->findUniVar("fai");
 
 	pps = "#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + lexical_cast<string>(height) + "\n";
 	prefix = "Pass1Pass0Height" + lexical_cast<string>(height);
-	pass1SProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
-	                                                                     prefix.c_str()).c_str());
+	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
 	pass1SProgFaiUniVar = pass1SProg->findUniVar("fai");
 
 	pps = "#define _PPS_HDR_PASS_2_\n";
 	prefix = "Pass2";
-	pass2SProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(),
-	                                                                     prefix.c_str()).c_str());
+	pass2SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
 	pass2SProgFaiUniVar = pass2SProg->findUniVar("fai");
 }
 
