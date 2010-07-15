@@ -36,14 +36,14 @@ bool Skybox::load(const char* filenames[6])
 {
 	for(int i=0; i<6; i++)
 	{
-		textures[i] = RsrcMngr::textures.load(filenames[i]);
+		textures[i].loadRsrc(filenames[i]);
 	}
 
-	noise = RsrcMngr::textures.load("gfx/noise2.tga");
+	noise.loadRsrc("gfx/noise2.tga");
 	noise->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
 	noise->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	shader = RsrcMngr::shaders.load("shaders/ms_mp_skybox.glsl");
+	shader.loadRsrc("shaders/ms_mp_skybox.glsl");
 
 	return true;
 }

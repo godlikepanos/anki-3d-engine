@@ -19,7 +19,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	initGl();
 
-	sProg = RsrcMngr::shaders.load("shaders/final.glsl");
+	sProg.loadRsrc("shaders/final.glsl");
 
 	//
 	// init the offscreen Renderer

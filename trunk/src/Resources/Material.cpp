@@ -117,7 +117,7 @@ bool Material::load(const char* filename)
 				PARSE_ERR_EXPECTED("string");
 				return false;
 			}
-			shaderProg = RsrcMngr::shaders.load(token->getValue().getString());
+			shaderProg.loadRsrc(token->getValue().getString());
 		}
 		//** DEPTH_MATERIAL **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DEPTH_PASS_MATERIAL"))
@@ -131,7 +131,7 @@ bool Material::load(const char* filename)
 				PARSE_ERR_EXPECTED("string");
 				return false;
 			}
-			dpMtl = RsrcMngr::materials.load(token->getValue().getString());
+			dpMtl.loadRsrc(token->getValue().getString());
 		}
 		//** BLENDS **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDS"))
@@ -244,7 +244,7 @@ bool Material::load(const char* filename)
 				string varName;
 				varName = token->getValue().getString();
 
-				userDefinedVars.push_back(UserDefinedUniVar()); // create new var
+				userDefinedVars.push_back(new UserDefinedUniVar); // create new var
 				UserDefinedUniVar& var = userDefinedVars.back();
 
 				// check if the uniform exists
@@ -264,7 +264,7 @@ bool Material::load(const char* filename)
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_STRING)
 						{
-							var.value.texture = RsrcMngr::textures.load(token->getValue().getString());
+							var.value.texture.loadRsrc(token->getValue().getString());
 							if(var.value.texture.get() == NULL)
 								return false;
 						}

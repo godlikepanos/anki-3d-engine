@@ -162,10 +162,10 @@ non static funcs                                                                
 // exec after init SDL
 void init()
 {
-	fontMap = RsrcMngr::textures.load("gfx/fontmapa.tga");
+	fontMap.loadRsrc("gfx/fontmapa.tga");
 	fontMap->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//font_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	shader = RsrcMngr::shaders.load("shaders/txt.glsl");
+	shader.loadRsrc("shaders/txt.glsl");
 	setPos(0.0, 0.0);
 	setFontWidth(0.05);
 	setColor(Vec4(1.0, 1.0, 1.0, 1.0));

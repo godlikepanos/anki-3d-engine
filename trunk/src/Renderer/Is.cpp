@@ -104,14 +104,13 @@ void Renderer::Is::initFbo()
 void Renderer::Is::init()
 {
 	// load the shaders
-	ambientPassSProg = RsrcMngr::shaders.load("shaders/IsAp.glsl");
+	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
 	ambientColUniVar = ambientPassSProg->findUniVar("ambientCol");
 	sceneColMapUniVar = ambientPassSProg->findUniVar("sceneColMap");
 
 	// point light
-	pointLightSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                          "#define POINT_LIGHT_ENABLED\n",
-	                                                                          "Point").c_str());
+	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n",
+	                                                          "Point").c_str());
 	pointLightSProgUniVars.msNormalFai = pointLightSProg->findUniVar("msNormalFai");
 	pointLightSProgUniVars.msDiffuseFai = pointLightSProg->findUniVar("msDiffuseFai");
 	pointLightSProgUniVars.msSpecularFai = pointLightSProg->findUniVar("msSpecularFai");
@@ -124,9 +123,9 @@ void Renderer::Is::init()
 
 
 	// spot light no shadow
-	spotLightNoShadowSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                                 "#define SPOT_LIGHT_ENABLED\n",
-	                                                                                 "SpotNoShadow").c_str());
+	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	                                                                 "#define SPOT_LIGHT_ENABLED\n",
+	                                                                 "SpotNoShadow").c_str());
 	spotLightNoShadowSProgUniVars.msNormalFai = spotLightNoShadowSProg->findUniVar("msNormalFai");
 	spotLightNoShadowSProgUniVars.msDiffuseFai = spotLightNoShadowSProg->findUniVar("msDiffuseFai");
 	spotLightNoShadowSProgUniVars.msSpecularFai = spotLightNoShadowSProg->findUniVar("msSpecularFai");
@@ -149,9 +148,8 @@ void Renderer::Is::init()
 		pps += "#define PCF_ENABLED\n";
 		prefix += "Pcf";
 	}
-	spotLightShadowSProg = RsrcMngr::shaders.load(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                                pps.c_str(),
-	                                                                                prefix.c_str()).c_str());
+	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", pps.c_str(),
+	                                                               prefix.c_str()).c_str());
 	spotLightShadowSProgUniVars.msNormalFai = spotLightShadowSProg->findUniVar("msNormalFai");
 	spotLightShadowSProgUniVars.msDiffuseFai = spotLightShadowSProg->findUniVar("msDiffuseFai");
 	spotLightShadowSProgUniVars.msSpecularFai = spotLightShadowSProg->findUniVar("msSpecularFai");

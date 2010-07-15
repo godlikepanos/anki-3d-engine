@@ -37,7 +37,7 @@ bool Image::loadUncompressedTga(const char* filename, fstream& fs)
 	// read the data
 	int bytesPerPxl	= (bpp / 8);
 	int imageSize = bytesPerPxl * width * height;
-	data.reserve(imageSize);
+	data.resize(imageSize);
 
 	fs.read(&data[0], imageSize);
 	if(fs.gcount() != imageSize)
@@ -84,7 +84,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 
 	int bytesPerPxl = (bpp / 8);
 	int image_size = bytesPerPxl * width * height;
-	data.reserve(image_size);
+	data.resize(image_size);
 
 	uint pixelcount = height * width;
 	uint currentpixel = 0;
@@ -240,7 +240,7 @@ bool Image::loadPng(const char* filename)
 
 	int bytespp = bpp / 8;
 	int bytes = width * height * bytespp;
-	data.reserve(bytes);
+	data.resize(bytes);
 
 	// copy and flip height
 	for(uint w=0; w<width; w++)
@@ -268,14 +268,14 @@ bool Image::load(const char* filename)
 
 
 	// load from this extension
-	if(ext == "tga")
+	if(ext == ".tga")
 	{
 		if(!loadTga(filename))
 		{
 			return false;
 		}
 	}
-	else if(ext == "png")
+	else if(ext == ".png")
 	{
 		if(!loadPng(filename))
 		{

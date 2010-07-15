@@ -3,11 +3,10 @@
 
 #include "Common.h"
 #include "Util.h"
-#include "RsrcContainer.h"
 
 
 template<typename Type>
-class Rsrc;
+class RsrcContainer;
 
 
 /**
@@ -17,11 +16,7 @@ class Rsrc;
 class Resource
 {
 	template<typename Type>
-	friend class RsrcContainer;
-
-	// to be able to call tryToUnoadMe
-	template<typename Type>
-	friend class RsrcPtr;
+	friend class RsrcContainer; ///< Cause it calls Resource::load and Resource::unload
 
 	public:
 		enum ResourceType
@@ -53,11 +48,6 @@ class Resource
 		virtual bool load(const char* filename) = 0;
 
 		virtual void unload() = 0;
-
-		/**
-		 * The func sees the resource type and calls the unload func of the appropriate container. Used by RsrcPtr
-		 */
-		void tryToUnoadMe();
 };
 
 

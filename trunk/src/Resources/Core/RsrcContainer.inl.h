@@ -49,28 +49,10 @@ typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByNameAndPath(co
 
 
 //======================================================================================================================
-// findByPtr                                                                                                           =
+// load                                                                                                                =
 //======================================================================================================================
 template<typename Type>
-typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByPtr(Type* ptr)
-{
-	Iterator it = BaseClass::begin();
-	while(it != BaseClass::end())
-	{
-		if(ptr == (*it))
-			return it;
-		++it;
-	}
-
-	return it;
-}
-
-
-//======================================================================================================================
-// load2                                                                                                               =
-//======================================================================================================================
-template<typename Type>
-Type* RsrcContainer<Type>::load2(const char* fname)
+Type* RsrcContainer<Type>::load(const char* fname)
 {
 	filesystem::path fpathname = filesystem::path(fname);
 	string name = fpathname.filename();
@@ -99,23 +81,6 @@ Type* RsrcContainer<Type>::load2(const char* fname)
 	BaseClass::push_back(newInstance);
 
 	return newInstance;
-}
-
-
-//======================================================================================================================
-// load                                                                                                                =
-//======================================================================================================================
-template<typename Type>
-RsrcPtr<Type> RsrcContainer<Type>::load(const char* fname)
-{
-	Type* p = load2(fname);
-
-	if(!p)
-	{
-		ERROR("See prev error");
-	}
-
-	return RsrcPtr<Type>(p);
 }
 
 

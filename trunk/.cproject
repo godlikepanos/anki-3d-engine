@@ -20,7 +20,7 @@
 <option id="cdt.managedbuild.option.gnu.cross.prefix.124248385" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
 <option id="cdt.managedbuild.option.gnu.cross.path.568633506" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path"/>
 <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.2099631" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
-<builder arguments="make -j3" buildPath="${workspace_loc:/anki/build/debug}" command="nice" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304.618553305" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
+<builder arguments="make -j1" buildPath="${workspace_loc:/anki/build/debug}" command="nice" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304.618553305" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
 <tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.454660912" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.264866474" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -138,6 +138,8 @@
 </profile>
 </storageModule>
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cconfiguration>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">

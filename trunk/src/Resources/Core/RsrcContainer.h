@@ -3,7 +3,10 @@
 
 #include "Common.h"
 #include "Vec.h"
-#include "RsrcPtr.h"
+
+
+/*template<typename Type>
+class RsrcPtr;*/
 
 
 /**
@@ -12,7 +15,8 @@
 template<typename Type>
 class RsrcContainer: public Vec<Type*>
 {
-	friend class Resource;
+	/*template<Type>
+	friend class RsrcPtr; ///< So it can access load, unload*/
 
 	private:
 		typedef Vec<Type*> BaseClass;
@@ -22,20 +26,13 @@ class RsrcContainer: public Vec<Type*>
 		RsrcContainer() {}
 		~RsrcContainer();
 
-		/**
-		 * The one and only public func
-		 * @param fname The file to load
-		 * @return A new resource ptr
-		 */
-		RsrcPtr<Type> load(const char* fname);
-
-	private:
+	public:
 		/**
 		 * load an object and register it. If its already loaded return its pointer
 		 * @param fname The filename that initializes the object
 		 * @return A pointer of a new resource or NULL on fail
 		 */
-		Type* load2(const char* fname);
+		Type* load(const char* fname);
 
 		/**
 		 * unload item. If nobody else uses it then delete it completely

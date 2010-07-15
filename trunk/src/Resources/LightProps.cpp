@@ -103,7 +103,7 @@ bool LightProps::load(const char* filename)
 				return false;
 			}
 				
-			texture = RsrcMngr::textures.load(token->getValue().getString());
+			texture.loadRsrc(token->getValue().getString());
 			texture->setRepeat(false);
 			texture->setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, 0);
 			texture->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
