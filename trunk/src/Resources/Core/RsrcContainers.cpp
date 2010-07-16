@@ -1,4 +1,3 @@
-#include "RsrcMngr.h"
 #include "RsrcContainer.h"
 #include "Texture.h"
 #include "Material.h"
@@ -9,10 +8,10 @@
 #include "LightProps.h"
 
 
-namespace RsrcMngr {
+namespace RsrcContainers {
 
 RsrcContainer<Texture>    textures;
-RsrcContainer<ShaderProg> shaders;
+RsrcContainer<ShaderProg> shaderProgs;
 RsrcContainer<Material>   materials;
 RsrcContainer<Mesh>       meshes;
 RsrcContainer<Skeleton>   skeletons;

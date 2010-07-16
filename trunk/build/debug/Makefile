@@ -4,8 +4,8 @@ PHFLAGS = -DDEBUG_ENABLED -DPLATFORM_LINUX -DREVISION=\"`svnversion -c ../..`\" 
 LFLAGS = -rdynamic -L../../../SDL/build/.libs -L../../../SDL_image/.libs -L../../../glew/lib -L../../../bullet/src/BulletSoftBody -L../../../bullet/src/BulletDynamics -L../../../bullet/src/BulletCollision -L../../../bullet/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -lboost_system -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff -pg
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../src/Resources/Core/ -I../../../bullet/src/ -I../../../SDL/include -I../../../glew/include -I../../../SDL_image 
-SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//Scene.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//Resource.cpp ../../src/Resources/Core//RsrcMngr.cpp 
-OBJECTS = Scanner.o skybox.o memory.o collision.o map.o Main.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o Ui.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o Image.o ShaderPrePreprocessor.o Resource.o RsrcMngr.o 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src//Main.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//Scene.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//PhyWorld.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp 
+OBJECTS = Scanner.o skybox.o memory.o collision.o map.o Main.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o Ui.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o LightProps.o Mesh.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o PhyWorld.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -24,12 +24,10 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Util/Common.h ../../src/Resources/Texture.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -43,7 +41,7 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Util/Vec.h ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
  ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
@@ -196,8 +194,7 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
  ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
  ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src/Misc//skybox.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//skybox.cpp -o skybox.o
 
@@ -219,7 +216,7 @@ memory.o: ../../src/Misc//memory.cpp ../../src/Misc//memory.h \
  ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
  ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
  ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
-	@echo Compiling ../../src/Misc//memory.cpp... >$2
+	@echo Compiling ../../src/Misc//memory.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//memory.cpp -o memory.o
 
 collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
@@ -239,9 +236,6 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -304,10 +298,8 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Util/Vec.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Util.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Ui/Ui.h \
  ../../src/Util/App.h ../../src/Resources/Mesh.h ../../src/Scene/Light.h \
@@ -461,8 +453,7 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
  ../../src/Physics/PhyCharacter.h \
  ../../src/Renderer/RendererInitializer.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
 
@@ -482,15 +473,12 @@ Smo.o: ../../src/Renderer//Smo.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/Light.h \
- ../../src/Scene/SceneNode.h ../../src/Scene/Camera.h \
- ../../src/Misc/collision.h ../../src/Resources/LightProps.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Scene/Camera.h ../../src/Misc/collision.h \
+ ../../src/Resources/LightProps.h ../../src/Resources/Texture.h
 	@echo Compiling ../../src/Renderer//Smo.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Smo.cpp -o Smo.o
 
@@ -510,9 +498,6 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -533,9 +518,10 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
  ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
  ../../../SDL/include/SDL_compat.h ../../src/Scene/MeshNode.h \
- ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Resources/Mesh.h ../../src/Misc/collision.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
+ ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
@@ -693,9 +679,6 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -851,11 +834,12 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Scene/Camera.h ../../src/Misc/collision.h \
- ../../src/Scene/SceneNode.h ../../src/Scene/MeshNode.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Scene/Camera.h \
+ ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
+ ../../src/Scene/MeshNode.h ../../src/Resources/Material.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Mesh.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h
 	@echo Compiling ../../src/Renderer//Ms.cpp...
@@ -877,9 +861,6 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -1035,11 +1016,11 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Scene/MeshNode.h ../../src/Scene/SceneNode.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
- ../../src/Misc/collision.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Scene/MeshNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Mesh.h ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h \
  ../../src/Resources/LightProps.h
@@ -1062,12 +1043,9 @@ Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Resources/Core/RsrcPtr.h
 	@echo Compiling ../../src/Renderer//Pps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Pps.cpp -o Pps.o
 
@@ -1087,14 +1065,11 @@ Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Renderer//Ssao.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ssao.cpp -o Ssao.o
 
@@ -1115,34 +1090,32 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
- ../../src/Renderer//RendererInitializer.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Util/App.h ../../../SDL/include/SDL.h \
- ../../../SDL/include/SDL_main.h ../../../SDL/include/SDL_stdinc.h \
- ../../../SDL/include/SDL_config.h ../../../SDL/include/SDL_platform.h \
- ../../../SDL/include/begin_code.h ../../../SDL/include/close_code.h \
- ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
- ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
- ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/PhyWorld.h ../../src/Physics/PhyCommon.h \
+ ../../src/Util/Vec.h ../../src/Renderer//RendererInitializer.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Texture.h ../../src/Util/App.h \
+ ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
+ ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
+ ../../../SDL/include/SDL_platform.h ../../../SDL/include/begin_code.h \
+ ../../../SDL/include/close_code.h ../../../SDL/include/SDL_atomic.h \
+ ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
+ ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
+ ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/PhyWorld.h \
+ ../../src/Physics/PhyCommon.h \
  ../../../bullet/src/btBulletCollisionCommon.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../../bullet/src/LinearMath/btVector3.h \
@@ -1296,14 +1269,11 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/Light.h ../../src/Scene/Camera.h \
+ ../../src/Util/Vec.h ../../src/Scene/Light.h ../../src/Scene/Camera.h \
  ../../src/Resources/LightProps.h ../../src/Resources/Texture.h \
  ../../src/Util/App.h ../../../SDL/include/SDL.h \
  ../../../SDL/include/SDL_main.h ../../../SDL/include/SDL_stdinc.h \
@@ -1457,8 +1427,7 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h
 	@echo Compiling ../../src/Renderer//Is.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Is.cpp -o Is.o
 
@@ -1479,9 +1448,6 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -1502,8 +1468,7 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
  ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
  ../../../SDL/include/SDL_compat.h \
- ../../src/Renderer//RendererInitializer.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Renderer//RendererInitializer.h
 	@echo Compiling ../../src/Renderer//MainRenderer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//MainRenderer.cpp -o MainRenderer.o
 
@@ -1523,9 +1488,6 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -1681,13 +1643,12 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Scene/SkelNode.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/Controllers/SkelAnimCtrl.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Scene/SkelNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Scene/Controllers/SkelAnimCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/Skeleton.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h \
- ../../src/Resources/LightProps.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Resources/LightProps.h ../../src/Resources/Texture.h
 	@echo Compiling ../../src/Renderer//Dbg.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Dbg.cpp -o Dbg.o
 
@@ -1707,12 +1668,9 @@ Hdr.o: ../../src/Renderer//Hdr.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Resources/Core/RsrcPtr.h
 	@echo Compiling ../../src/Renderer//Hdr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Hdr.cpp -o Hdr.o
 
@@ -1732,9 +1690,6 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -1890,14 +1845,13 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Scene/MeshNode.h ../../src/Scene/SceneNode.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
- ../../src/Misc/collision.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Scene/MeshNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Mesh.h ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
- ../../src/Scene/Controllers/Controller.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Scene/Controllers/Controller.h
 	@echo Compiling ../../src/Renderer//Bs.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Bs.cpp -o Bs.o
 
@@ -1916,12 +1870,10 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../../glew/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
+ ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
@@ -1946,8 +1898,7 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
  ../../../SDL/include/SDL_compat.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h
 	@echo Compiling ../../src/Scene//MeshNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//MeshNode.cpp -o MeshNode.o
 
@@ -1968,9 +1919,6 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Misc/collision.h \
@@ -2149,10 +2097,7 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../src/Scene/Controllers/Controller.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Resources/SkelAnim.h ../../src/Util/App.h \
+ ../../src/Util/Vec.h ../../src/Resources/SkelAnim.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
  ../../../SDL/include/SDL_platform.h ../../../SDL/include/begin_code.h \
@@ -2173,8 +2118,7 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene//SkelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//SkelNode.cpp -o SkelNode.o
 
@@ -2182,13 +2126,10 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../src/Util/Common.h ../../src/Resources/Texture.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Scene//SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Scene//SceneNode.h ../../src/Util/Vec.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2219,8 +2160,7 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/ShaderProg.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Scene//Light.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Light.cpp -o Light.o
 
@@ -2240,12 +2180,10 @@ SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Resources/ShaderProg.h ../../../glew/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
+ ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
@@ -2274,9 +2212,6 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -2317,9 +2252,6 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../src/Math/Transform.inl.h ../../src/Scene//MeshNode.h \
  ../../src/Resources/Material.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
@@ -2491,10 +2423,7 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Util/Common.h ../../src/Misc/skybox.h \
  ../../src/Resources/Texture.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2641,9 +2570,9 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Scene//SkelNode.h ../../src/Scene//SceneNode.h \
- ../../src/Scene/Controllers/SkelAnimCtrl.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Scene//SkelNode.h \
+ ../../src/Scene//SceneNode.h ../../src/Scene/Controllers/SkelAnimCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/Skeleton.h \
  ../../src/Scene//Camera.h ../../src/Misc/collision.h \
  ../../src/Scene//MeshNode.h ../../src/Resources/Material.h \
@@ -2673,9 +2602,6 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Util/Common.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/App.h \
@@ -2695,7 +2621,7 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Util/Common.h \
  ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
  ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
  ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
- ../../../SDL/include/SDL_compat.h ../../src/Resources/Core/RsrcMngr.h
+ ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Ui//Ui.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui//Ui.cpp -o Ui.o
 
@@ -2703,12 +2629,10 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Resources//ShaderProg.h ../../../glew/include/GL/glew.h \
  ../../src/Util/Common.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2721,7 +2645,7 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Helpers/ShaderPrePreprocessor.h \
+ ../../src/Resources/Helpers/ShaderPrePreprocessor.h ../../src/Util/Vec.h \
  ../../src/Resources//Texture.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
  ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
@@ -2758,9 +2682,6 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources//ShaderProg.h ../../../glew/include/GL/glew.h \
  ../../src/Resources//Texture.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
@@ -2785,8 +2706,7 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Resources//Material.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Material.cpp -o Material.o
 
@@ -2794,9 +2714,6 @@ Texture.o: ../../src/Resources//Texture.cpp \
  ../../../glew/include/GL/glew.h ../../src/Resources//Texture.h \
  ../../src/Util/Common.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
@@ -2812,17 +2729,15 @@ Texture.o: ../../src/Resources//Texture.cpp \
  ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Helpers/Image.h
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Helpers/Image.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources//Texture.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Texture.cpp -o Texture.o
 
 SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
  ../../src/Resources//SkelAnim.h ../../src/Util/Common.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2841,10 +2756,7 @@ SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
 Extension.o: ../../src/Resources//Extension.cpp \
  ../../src/Resources//Extension.h ../../src/Util/Common.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h
+ ../../src/Util/Common.h ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources//Extension.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Extension.cpp -o Extension.o
 
@@ -2863,9 +2775,6 @@ Skeleton.o: ../../src/Resources//Skeleton.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
  ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//Skeleton.cpp...
@@ -2874,10 +2783,7 @@ Skeleton.o: ../../src/Resources//Skeleton.cpp \
 LightProps.o: ../../src/Resources//LightProps.cpp \
  ../../src/Resources//LightProps.h ../../src/Util/Common.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2890,8 +2796,7 @@ LightProps.o: ../../src/Resources//LightProps.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources//Texture.h ../../../glew/include/GL/glew.h \
- ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
- ../../src/Resources/Core/RsrcMngr.h
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//LightProps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//LightProps.cpp -o LightProps.o
 
@@ -2911,13 +2816,11 @@ Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../../glew/include/GL/glew.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Misc/collision.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Tokenizer/Scanner.h \
- ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h
+ ../../src/Misc/collision.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h
 	@echo Compiling ../../src/Resources//Mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Mesh.cpp -o Mesh.o
 
@@ -2955,9 +2858,6 @@ Input.o: ../../src/Util//Input.cpp ../../../SDL/include/SDL.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h \
  ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h
@@ -2987,10 +2887,7 @@ App.o: ../../src/Util//App.cpp ../../../glew/include/GL/glew.h \
  ../../src/Util//Common.h ../../src/Scene/Scene.h ../../src/Util/Common.h \
  ../../src/Misc/skybox.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3137,9 +3034,9 @@ App.o: ../../src/Util//App.cpp ../../../glew/include/GL/glew.h \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
 	@echo Compiling ../../src/Util//App.cpp...
@@ -3178,10 +3075,7 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
  ../../src/Resources/Texture.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Common.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Math/Math.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3328,24 +3222,25 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../../bullet/src/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
  ../../../bullet/src/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../src/Physics/PhyConversions.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/PhyWorld.h \
- ../../src/Util/App.h ../../../SDL/include/SDL.h \
- ../../../SDL/include/SDL_main.h ../../../SDL/include/SDL_stdinc.h \
- ../../../SDL/include/SDL_config.h ../../../SDL/include/SDL_platform.h \
- ../../../SDL/include/begin_code.h ../../../SDL/include/close_code.h \
- ../../../SDL/include/SDL_atomic.h ../../../SDL/include/SDL_audio.h \
- ../../../SDL/include/SDL_error.h ../../../SDL/include/SDL_endian.h \
- ../../../SDL/include/SDL_mutex.h ../../../SDL/include/SDL_thread.h \
- ../../../SDL/include/SDL_rwops.h ../../../SDL/include/SDL_clipboard.h \
- ../../../SDL/include/SDL_cpuinfo.h ../../../SDL/include/SDL_events.h \
- ../../../SDL/include/SDL_video.h ../../../SDL/include/SDL_pixels.h \
- ../../../SDL/include/SDL_rect.h ../../../SDL/include/SDL_surface.h \
- ../../../SDL/include/SDL_keyboard.h ../../../SDL/include/SDL_keysym.h \
- ../../../SDL/include/SDL_scancode.h ../../../SDL/include/SDL_mouse.h \
- ../../../SDL/include/SDL_joystick.h ../../../SDL/include/SDL_quit.h \
- ../../../SDL/include/SDL_loadso.h ../../../SDL/include/SDL_power.h \
- ../../../SDL/include/SDL_timer.h ../../../SDL/include/SDL_version.h \
- ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics/PhyWorld.h ../../src/Util/App.h \
+ ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
+ ../../../SDL/include/SDL_stdinc.h ../../../SDL/include/SDL_config.h \
+ ../../../SDL/include/SDL_platform.h ../../../SDL/include/begin_code.h \
+ ../../../SDL/include/close_code.h ../../../SDL/include/SDL_atomic.h \
+ ../../../SDL/include/SDL_audio.h ../../../SDL/include/SDL_error.h \
+ ../../../SDL/include/SDL_endian.h ../../../SDL/include/SDL_mutex.h \
+ ../../../SDL/include/SDL_thread.h ../../../SDL/include/SDL_rwops.h \
+ ../../../SDL/include/SDL_clipboard.h ../../../SDL/include/SDL_cpuinfo.h \
+ ../../../SDL/include/SDL_events.h ../../../SDL/include/SDL_video.h \
+ ../../../SDL/include/SDL_pixels.h ../../../SDL/include/SDL_rect.h \
+ ../../../SDL/include/SDL_surface.h ../../../SDL/include/SDL_keyboard.h \
+ ../../../SDL/include/SDL_keysym.h ../../../SDL/include/SDL_scancode.h \
+ ../../../SDL/include/SDL_mouse.h ../../../SDL/include/SDL_joystick.h \
+ ../../../SDL/include/SDL_quit.h ../../../SDL/include/SDL_loadso.h \
+ ../../../SDL/include/SDL_power.h ../../../SDL/include/SDL_timer.h \
+ ../../../SDL/include/SDL_version.h ../../../SDL/include/SDL_revision.h \
+ ../../../SDL/include/SDL_compat.h
 	@echo Compiling ../../src/Scene/Controllers//Controller.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers//Controller.cpp -o Controller.o
 
@@ -3365,10 +3260,7 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcContainer.inl.h ../../src/Scene/SkelNode.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Scene/SkelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Scene/Controllers/SkelAnimCtrl.h \
  ../../src/Resources/Skeleton.h ../../src/Util/App.h \
  ../../../SDL/include/SDL.h ../../../SDL/include/SDL_main.h \
@@ -3566,8 +3458,8 @@ Image.o: ../../src/Resources/Helpers//Image.cpp \
  ../../../SDL/include/SDL_revision.h ../../../SDL/include/SDL_compat.h \
  ../../../SDL/include/SDL_version.h ../../../SDL/include/begin_code.h \
  ../../../SDL/include/close_code.h ../../src/Resources/Helpers//Image.h \
- ../../src/Util/Common.h ../../src/Util/Util.h ../../src/Util/Common.h \
- ../../src/Util/Vec.h
+ ../../src/Util/Common.h ../../src/Util/Vec.h ../../src/Util/Common.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources/Helpers//Image.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Helpers//Image.cpp -o Image.o
 
@@ -3581,14 +3473,13 @@ ShaderPrePreprocessor.o: \
 	@echo Compiling ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp -o ShaderPrePreprocessor.o
 
-Resource.o: ../../src/Resources/Core//Resource.cpp \
- ../../src/Resources/Core//Resource.h ../../src/Util/Common.h \
- ../../src/Util/Util.h ../../src/Util/Common.h ../../src/Util/Vec.h \
+RsrcPtr.o: ../../src/Resources/Core//RsrcPtr.cpp \
+ ../../src/Resources/Core//RsrcPtr.h ../../src/Util/Common.h \
  ../../src/Resources/Core//RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core//RsrcPtr.h \
- ../../src/Resources/Core//RsrcContainer.inl.h \
+ ../../src/Util/Common.h ../../src/Resources/Core//RsrcContainer.inl.h \
  ../../src/Resources/Texture.h ../../../glew/include/GL/glew.h \
- ../../src/Resources/Core/Resource.h ../../src/Resources/Material.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Resources/Material.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
@@ -3606,23 +3497,21 @@ Resource.o: ../../src/Resources/Core//Resource.cpp \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Resources/Skeleton.h \
- ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h \
- ../../src/Resources/Core//RsrcMngr.h
-	@echo Compiling ../../src/Resources/Core//Resource.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core//Resource.cpp -o Resource.o
+ ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h
+	@echo Compiling ../../src/Resources/Core//RsrcPtr.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core//RsrcPtr.cpp -o RsrcPtr.o
 
-RsrcMngr.o: ../../src/Resources/Core//RsrcMngr.cpp \
- ../../src/Resources/Core//RsrcMngr.h ../../src/Util/Common.h \
- ../../src/Resources/Core//RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Util/Common.h ../../src/Resources/Core//RsrcPtr.h \
+RsrcContainers.o: ../../src/Resources/Core//RsrcContainers.cpp \
+ ../../src/Resources/Core//RsrcContainer.h ../../src/Util/Common.h \
+ ../../src/Util/Vec.h ../../src/Util/Common.h \
  ../../src/Resources/Core//RsrcContainer.inl.h \
  ../../src/Resources/Texture.h ../../../glew/include/GL/glew.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Resources/Core/RsrcContainer.h \
- ../../src/Resources/Material.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Util/Vec.h ../../src/Resources/Material.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3637,8 +3526,8 @@ RsrcMngr.o: ../../src/Resources/Core//RsrcMngr.cpp \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h
-	@echo Compiling ../../src/Resources/Core//RsrcMngr.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core//RsrcMngr.cpp -o RsrcMngr.o
+	@echo Compiling ../../src/Resources/Core//RsrcContainers.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core//RsrcContainers.cpp -o RsrcContainers.o
 
 clean:
 	rm -f *.o

@@ -6,7 +6,6 @@
 #include "Texture.h"
 #include "Resource.h"
 #include "RsrcPtr.h"
-#include "RsrcMngr.h"
 
 
 namespace Ui {

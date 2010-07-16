@@ -8,7 +8,6 @@
 #include "SkelAnimCtrl.h"
 #include "App.h"
 #include "MainRenderer.h"
-#include "RsrcMngr.h"
 
 
 //======================================================================================================================

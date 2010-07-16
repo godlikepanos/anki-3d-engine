@@ -49,6 +49,24 @@ typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByNameAndPath(co
 
 
 //======================================================================================================================
+// findByPtr                                                                                                           =
+//======================================================================================================================
+template<typename Type>
+typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByPtr(Type* ptr)
+{
+	Iterator it = BaseClass::begin();
+	while(it != BaseClass::end())
+	{
+		if(ptr == (*it)) return it;
+		++it;
+	}
+
+	return it;
+}
+
+
+
+//======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
 template<typename Type>

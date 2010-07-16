@@ -7,7 +7,6 @@
 #include "ShaderProg.h"
 #include "App.h"
 #include "MainRenderer.h"
-#include "RsrcMngr.h"
 
 
 /// Customized @ref ERROR used in @ref Material class

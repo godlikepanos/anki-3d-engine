@@ -7,7 +7,6 @@
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
-#include "RsrcMngr.h"
 
 
 //======================================================================================================================

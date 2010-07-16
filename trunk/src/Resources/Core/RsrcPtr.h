@@ -1,9 +1,7 @@
 #ifndef RSRCPTR_H
 #define RSRCPTR_H
 
-#include <boost/type_traits.hpp>
 #include "Common.h"
-#include "RsrcMngr.h"
 
 
 /**
@@ -15,9 +13,6 @@ template<typename Type>
 class RsrcPtr
 {
 	public:
-		/**
-		 * @todo
-		 */
 		RsrcPtr();
 
 		/**
@@ -26,9 +21,10 @@ class RsrcPtr
 		~RsrcPtr();
 
 		/**
-		 * @todo
+		 * Loads a resource and sets the RsrcPtr::p. The implementation of the function is different for every Resource (see
+		 * RsrcPtr.cpp)
 		 * @param filename
-		 * @return
+		 * @return True on success
 		 */
 		bool loadRsrc(const char* filename);
 
@@ -41,6 +37,11 @@ class RsrcPtr
 		 * Non copyable
 		 */
 		RsrcPtr(const RsrcPtr& a) {}
+
+		/**
+		 * Unloads the resource @see loadRsrc
+		 */
+		void unload();
 
 		Type* p; ///< Pointer to the Resource derivative
 };
@@ -60,10 +61,7 @@ RsrcPtr<Type>::RsrcPtr():
 template<typename Type>
 RsrcPtr<Type>::~RsrcPtr()
 {
-	if(p != NULL)
-	{
-		///@todo
-	}
+	unload();
 }
 
 
@@ -85,50 +83,6 @@ template<typename Type>
 Type* RsrcPtr<Type>::get() const
 {
 	return p;
-}
-
-
-template<typename Type>
-bool RsrcPtr<Type>::loadRsrc(const char* filename)
-{
-	if(is_same<Type, Texture>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::textures.load(filename));
-	}
-	else if(is_same<Type, ShaderProg>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::shaders.load(filename));
-	}
-	else if(is_same<Type, Material>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::materials.load(filename));
-	}
-	else if(is_same<Type, Mesh>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::meshes.load(filename));
-	}
-	else if(is_same<Type, Skeleton>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::skeletons.load(filename));
-	}
-	else if(is_same<Type, SkelAnim>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::skelAnims.load(filename));
-	}
-	else if(is_same<Type, LightProps>::value)
-	{
-		p = reinterpret_cast<Type*>(RsrcMngr::lightProps.load(filename));
-	}
-	/*else if(is_same<Type, Extension>::value)
-	{
-
-	}*/
-	else
-	{
-		FATAL("Unsupported class");
-	}
-
-	return p != NULL;
 }
 
 #endif

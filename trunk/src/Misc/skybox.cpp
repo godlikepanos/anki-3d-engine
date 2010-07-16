@@ -6,7 +6,6 @@
 #include "Scene.h"
 #include "App.h"
 #include "MainRenderer.h"
-#include "RsrcMngr.h"
 
 
 static float coords [][4][3] =
