@@ -5,8 +5,8 @@
 #include "Vec.h"
 
 
-/*template<typename Type>
-class RsrcPtr;*/
+template<typename Type>
+class RsrcPtr;
 
 
 /**
@@ -15,8 +15,7 @@ class RsrcPtr;*/
 template<typename Type>
 class RsrcContainer: public Vec<Type*>
 {
-	/*template<Type>
-	friend class RsrcPtr; ///< So it can access load, unload*/
+	friend class RsrcPtr<Type>; ///< So it can access load, unload
 
 	private:
 		typedef Vec<Type*> BaseClass;
@@ -26,7 +25,7 @@ class RsrcContainer: public Vec<Type*>
 		RsrcContainer() {}
 		~RsrcContainer();
 
-	public:
+	private:
 		/**
 		 * load an object and register it. If its already loaded return its pointer
 		 * @param fname The filename that initializes the object

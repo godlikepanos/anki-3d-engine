@@ -3,7 +3,6 @@
 #include "LightProps.h"
 #include "App.h"
 #include "MainRenderer.h"
-#include "RsrcMngr.h"
 
 
 //======================================================================================================================

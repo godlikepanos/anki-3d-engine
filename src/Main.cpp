@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include <typeinfo>
 #include "Common.h"
 
 #include "Input.h"
@@ -35,7 +34,6 @@
 #include "Renderer.h"
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
-#include "RsrcMngr.h"
 
 App* app = NULL; ///< The only global var. App constructor sets it
 
@@ -411,12 +409,13 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
-	/*{
-		RsrcPtr<LightProps> l(RsrcMngr::lightProps.load("/users/panoscc/Desktop/test.txt"));
-		//l = RsrcMngr::lightProps.load("/users/panoscc/Desktop/test.txt");
+/*	{
+		RsrcPtr<LightProps> l;
+		l.loadRsrc("/users/panoscc/Desktop/test.txt");
 		INFO(l->getRsrcReferencesNum());
 		{
-			RsrcPtr<LightProps> l2 = RsrcMngr::lightProps.load("/users/panoscc/Desktop/test.txt");
+			RsrcPtr<LightProps> ll;
+			ll.loadRsrc("/users/panoscc/Desktop/test.txt");
 			INFO(l->getRsrcReferencesNum());
 		}
 		INFO(l->getRsrcReferencesNum());

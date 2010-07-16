@@ -1,8 +1,0 @@
-#include "Texture.h"
-#include "Material.h"
-#include "ShaderProg.h"
-#include "Mesh.h"
-#include "Skeleton.h"
-#include "SkelAnim.h"
-#include "LightProps.h"
-#include "RsrcMngr.h"

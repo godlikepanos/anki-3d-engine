@@ -7,7 +7,6 @@
 #include <boost/lexical_cast.hpp>
 #include "Renderer.h"
 #include "Camera.h"
-#include "RsrcMngr.h"
 
 
 //======================================================================================================================
