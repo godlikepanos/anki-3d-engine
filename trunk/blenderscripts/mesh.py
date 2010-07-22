@@ -16,6 +16,7 @@ class Initializer:
 		self.blSkeleton = None # Blender Armature
 		self.mtlName = "" # Material name
 		self.saveDir = "" # the name of the saved file
+		self.flipYZ = 0
 	
 
 #=======================================================================================================================
@@ -144,7 +145,7 @@ def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 #=======================================================================================================================
 # getAnkiMeshScript                                                                                                    =
 #=======================================================================================================================
-def	getAnkiMeshScript(mesh, skeleton, mtlName):
+def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 	# check verts number
 	vertsNum = len(mesh.verts)
 	if vertsNum < 3:
@@ -240,7 +241,10 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName):
 	ftxt += str(len(ankiVerts)) + "\n"
 	for i in range(len(ankiVerts)):
 		ankiVert = ankiVerts[i]
-		ftxt += str(ankiVert.x) + " " + str(ankiVert.y) + " " + str(ankiVert.z) + "\n"
+		if flipYZ == 0:
+			ftxt += str(ankiVert.x) + " " + str(ankiVert.y) + " " + str(ankiVert.z) + "\n"
+		else:
+			ftxt += str(ankiVert.x) + " " + str(ankiVert.z) + " " + str(ankiVert.y) + "\n"
 		
 	# write the tris
 	ftxt += str(len(ankiTris)) + "\n"
@@ -290,5 +294,5 @@ def export(meshInit):
 	
 	print("Trying to export mesh \"" + mesh.name + "\"")
 	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
-	common.WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName))
+	common.WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	

@@ -35,6 +35,7 @@
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
 #include "DebugDrawer.h"
+#include <boost/lexical_cast.hpp>
 
 App* app = NULL; ///< The only global var. App constructor sets it
 
@@ -99,7 +100,7 @@ void initPhysics()
 		btCollisionShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
 		//btCollisionShape* colShape = new btSphereShape(btScalar(1.));
 
-		/// Create Dynamic Objects
+		// Create Dynamic Objects
 		btTransform startTransform;
 		startTransform.setIdentity();
 
@@ -119,21 +120,21 @@ void initPhysics()
 			{
 				for(int j = 0;j<ARRAY_SIZE_Z;j++)
 				{
-					/*startTransform.setOrigin(SCALING*btVector3(
+					startTransform.setOrigin(SCALING*btVector3(
 										btScalar(2.0*i + start_x),
 										btScalar(20+2.0*k + start_y),
-										btScalar(2.0*j + start_z)));*/
+										btScalar(2.0*j + start_z)));
 
 
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-					/*MeshNode* crate = new MeshNode;
+					MeshNode* crate = new MeshNode;
 					crate->init("models/crate0/crate0.mesh");
 					crate->getLocalTransform().setScale(1.11);
 
 					Transform trf(SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0);
-					body = app->getScene()->getPhyWorld()->createNewRigidBody(mass, trf, colShape, crate);*/
+					body = app->getScene()->getPhyWorld()->createNewRigidBody(mass, trf, colShape, crate);
 
-					/*MotionState* myMotionState = new MotionState(startTransform, crate);
+					MotionState* myMotionState = new MotionState(startTransform, crate);
 					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					//btRigidBody* body = new btRigidBody(rbInfo);
 					body = new btRigidBody(rbInfo);
@@ -144,7 +145,7 @@ void initPhysics()
 
 
 					dynamicsWorld->addRigidBody(body);
-					//body->setGravity(toBt(Vec3(Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0))));*/
+					//body->setGravity(toBt(Vec3(Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0))));
 					boxes.push_back(body);
 				}
 			}
@@ -262,6 +263,14 @@ void init()
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
+
+	// cave map
+	for(int i=1; i<21; i++)
+	{
+		MeshNode* node = new MeshNode();
+		node->init(("maps/cave/rock." + lexical_cast<string>(i) + ".mesh").c_str());
+		node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
+	}
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;

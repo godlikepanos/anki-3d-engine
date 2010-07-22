@@ -2,6 +2,7 @@
 #define _MATERIAL_H_
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/variant.hpp>
 #include "Common.h"
 #include "Math.h"
 #include "Resource.h"

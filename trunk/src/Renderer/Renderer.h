@@ -373,7 +373,7 @@ class Renderer
 			public:
 				Dbg(Renderer& r_);
 				void renderGrid();
-				static void renderSphere(int complexity, float radius = 1.0);
+				static void drawSphere(int complexity, float radius = 1.0, const Vec3& pos = Vec3(0.0));
 				static void renderCube(float size = 1.0);
 
 				static void setColor(const Vec4& color);

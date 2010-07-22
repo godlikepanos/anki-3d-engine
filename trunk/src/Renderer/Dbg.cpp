@@ -93,9 +93,9 @@ void Renderer::Dbg::renderGrid()
 
 
 //======================================================================================================================
-// renderSphere                                                                                                        =
+// drawSphere                                                                                                        =
 //======================================================================================================================
-void Renderer::Dbg::renderSphere(int complexity, float radius)
+void Renderer::Dbg::drawSphere(int complexity, float radius, const Vec3& pos)
 {
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
@@ -140,7 +140,7 @@ void Renderer::Dbg::renderSphere(int complexity, float radius)
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back(Vec3(px, py, pz));
+			positions.push_back(Vec3(px, py, pz) + pos);
 			normals.push_back(Vec3(ex, ey, ez));
 			texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity));
 
@@ -151,7 +151,7 @@ void Renderer::Dbg::renderSphere(int complexity, float radius)
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back(Vec3(px, py, pz));
+			positions.push_back(Vec3(px, py, pz) + pos);
 			normals.push_back(Vec3(ex, ey, ez));
 			texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*i/(float)complexity));
 		}
