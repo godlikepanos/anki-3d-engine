@@ -1,5 +1,5 @@
-#ifndef _MOTIONSTATE_H_
-#define _MOTIONSTATE_H_
+#ifndef MOTIONSTATE_H
+#define MOTIONSTATE_H
 
 #include "Common.h"
 #include "PhyCommon.h"

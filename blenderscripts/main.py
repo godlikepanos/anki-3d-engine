@@ -29,10 +29,11 @@ for obj in objs:
 	mi = mesh.Initializer()
 	
 	mi.blMesh = mesh.getBlMeshFromBlObj(obj)
-	mi.blSkeleton = skeleton.GetSkeleton(obj)
-	mi.saveDir = "/home/godlike/src/anki/models/imp/"
+	#mi.blSkeleton = skeleton.GetSkeleton(obj)
+	mi.saveDir = "/home/godlike/src/anki/maps/cave/"
 	#mtl = GetMaterial( mi.mesh )
-	mi.mtlName = "models/imp/imp.mtl"
+	mi.mtlName = "maps/cave/cave.mtl"
+	mi.flipYZ = 1
 	
 	
 	mesh.export(mi)

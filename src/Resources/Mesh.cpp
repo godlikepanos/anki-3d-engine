@@ -264,7 +264,7 @@ void Mesh::createVertTangents()
 		float det = (uvedge01.y * uvedge02.x) - (uvedge01.x * uvedge02.y);
 		if(isZero(det))
 		{
-			ERROR("det == " << fixed << det);
+			WARNING(getRsrcName() << ": det == " << fixed << det);
 			det = 0.0001;
 		}
 		else

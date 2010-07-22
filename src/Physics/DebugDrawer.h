@@ -18,6 +18,8 @@ class DebugDrawer: public btIDebugDraw
 		void drawContactPoint(const btVector3& pointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime,
 		                      const btVector3& color);
 
+		void drawSphere(btScalar radius, const btTransform& transform, const btVector3& color);
+
 		void reportErrorWarning(const char* warningString);
 
 		void draw3dText(const btVector3& location, const char* textString);
@@ -34,6 +36,12 @@ class DebugDrawer: public btIDebugDraw
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
+
+inline void DebugDrawer::drawSphere(btScalar radius, const btTransform& transform, const btVector3& color)
+{
+	Renderer::Dbg::drawSphere(8, radius, toAnki(transform.getOrigin()));
+}
+
 
 inline void DebugDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
 {
