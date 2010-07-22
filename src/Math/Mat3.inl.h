@@ -499,10 +499,13 @@ inline void Mat3::setRotationZ(float rad)
 }
 
 // rotateXAxis
-/* the slow code is in comments and above the comments the optimized one
-If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in mat's colomns.
-This means that: mat3.colomn[0] == i*mat3. rotateXAxis() rotates rad angle not from i vector (aka x axis) but
-from the vector from colomn 0*/
+/*
+ * the slow code is in comments and above the comments the optimized one
+ * If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in mat's
+ * columns. This means that: mat3.colomn[0] == i*mat3. rotateXAxis() rotates rad angle not from i vector (aka x axis)
+ * but
+ * from the vector from colomn 0
+ */
 inline void Mat3::rotateXAxis(float rad)
 {
 	float sina, cosa;

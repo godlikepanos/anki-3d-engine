@@ -378,6 +378,7 @@ class Renderer
 
 				static void setColor(const Vec4& color);
 				static void setModelMat(const Mat4& modelMat);
+				static void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
 			private:
 				Fbo fbo;
@@ -431,7 +432,7 @@ class Renderer
 		 * @param modelViewMat The modelview matrix
 		 * @param projectionMat The projection matrix
 		 * @param view The view vector
-		 * @return The unprojected coords coords
+		 * @return The unprojected coords
 		 */
 		static Vec3 unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
 		                      const int view[4]);

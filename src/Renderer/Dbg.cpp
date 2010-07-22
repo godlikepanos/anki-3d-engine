@@ -33,6 +33,23 @@ Renderer::Dbg::Dbg(Renderer& r_):
 
 
 //======================================================================================================================
+// drawLine                                                                                                            =
+//======================================================================================================================
+void Renderer::Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
+{
+	float posBuff [] = {from.x, from.y, from.z, to.x, to.y, to.z};
+
+	setColor(color);
+	setModelMat(Mat4::getIdentity());
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, posBuff);
+	glDrawArrays(GL_LINES, 0, 2);
+	glDisableVertexAttribArray(0);
+}
+
+
+//======================================================================================================================
 // renderGrid                                                                                                          =
 //======================================================================================================================
 void Renderer::Dbg::renderGrid()

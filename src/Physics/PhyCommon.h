@@ -8,7 +8,7 @@
 
 #include "Common.h"
 #include "Math.h"
-#include "PhyConversions.h"
+#include "BtAndAnkiConversions.h"
 #include "MotionState.h"
 #include "PhyWorld.h"
 

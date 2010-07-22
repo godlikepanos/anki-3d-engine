@@ -34,6 +34,7 @@
 #include "Renderer.h"
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
+#include "DebugDrawer.h"
 
 App* app = NULL; ///< The only global var. App constructor sets it
 

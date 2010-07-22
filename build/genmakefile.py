@@ -13,7 +13,7 @@ compiler = ""
 compilerFlags = ""
 precompiledHeadersFlags = ""
 linkerFlags = ""
-sourceFilesRegExpr = r".*\.[c++|cpp|cc|cxx|C|c]"
+sourceFilesRegExpr = r"^.*\.(c\+\+|cpp|cc|cxx|C|c)$"
 includePaths = []
 
 
