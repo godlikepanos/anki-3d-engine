@@ -129,7 +129,7 @@ void ParticleEmitter::update()
 			if(minGravity != maxGravity)
 			{
 				grav = Vec3(Util::randRange(minGravity.x,maxGravity.x), Util::randRange(minGravity.y,maxGravity.y),
-			               Util::randRange(minGravity.z,maxGravity.z));
+			              Util::randRange(minGravity.z,maxGravity.z));
 			}
 			else
 			{

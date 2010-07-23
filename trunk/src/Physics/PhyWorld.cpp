@@ -24,7 +24,7 @@ btRigidBody* PhyWorld::createNewRigidBody(float mass, const Transform& startTran
 	btRigidBody* body = new btRigidBody(cInfo);
 	body->setContactProcessingThreshold(defaultContactProcessingThreshold);
 
-	if(mask==-1 & group==-1)
+	if(mask==-1 && group==-1)
 		dynamicsWorld->addRigidBody(body);
 	else
 		dynamicsWorld->addRigidBody(body, group, mask);
