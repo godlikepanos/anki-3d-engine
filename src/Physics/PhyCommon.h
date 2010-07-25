@@ -8,8 +8,8 @@
 
 #include "Common.h"
 #include "Math.h"
-#include "BtAndAnkiConversions.h"
+#include "BtAndAnkiConvertors.h"
 #include "MotionState.h"
-#include "PhyWorld.h"
+#include "Physics.h"
 
 #endif

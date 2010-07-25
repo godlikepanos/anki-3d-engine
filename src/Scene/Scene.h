@@ -3,7 +3,7 @@
 
 #include "Common.h"
 #include "skybox.h"
-#include "PhyWorld.h"
+#include "Physics.h"
 
 
 class SceneNode;
@@ -21,7 +21,7 @@ class Scene
 {
 	PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
 	PROPERTY_RW(Vec3, sunPos, setSunPos, getSunPos)
-	PROPERTY_RW(PhyWorld*, phyWorld, setPhyWorld, getPhyWorld) ///< Connection with bullet
+	PROPERTY_RW(Physics*, phyWorld, setPhysics, getPhysics) ///< Connection with bullet
 
 	private:
 		/**

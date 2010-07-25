@@ -1,5 +1,5 @@
-#ifndef PHYCONVERSIONS_H
-#define PHYCONVERSIONS_H
+#ifndef PHYCONVERTORS_H
+#define PHYCONVERTORS_H
 
 
 inline Vec3 toAnki(const btVector3& v)

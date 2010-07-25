@@ -15,7 +15,7 @@ class PhyCharacter
 		btCapsuleShape* capsule;
 		btKinematicCharacterController* character;
 
-		PhyCharacter(PhyWorld* world, float charHeight, float charWidth, float stepHeight, float maxJumpHeight)
+		PhyCharacter(Physics* world, float charHeight, float charWidth, float stepHeight, float maxJumpHeight)
 		{
 			ghostObject = new btPairCachingGhostObject();
 			world->broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
