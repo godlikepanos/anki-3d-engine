@@ -52,12 +52,12 @@ void ParticleEmitter::init(const char* filename)
 	{
 		particles[i] = new Particle;
 		float mass = Util::randRange(minParticleMass, maxParticleMass);
-		btRigidBody* body = app->getScene()->getPhyWorld()->createNewRigidBody(mass, Transform::getIdentity(), colShape, particles[i],
-		                                                                        PhyWorld::CG_PARTICLE, PhyWorld::CG_MAP);
+		btRigidBody* body = app->getScene()->getPhysics()->createNewRigidBody(mass, Transform::getIdentity(), colShape, particles[i],
+		                                                                        Physics::CG_PARTICLE, Physics::CG_MAP);
 		//body->forceActivationState(DISABLE_SIMULATION);
 	}
 
-	/*btDiscreteDynamicsWorld* btWorld = app->getScene()->getPhyWorld()->getDynamicsWorld();
+	/*btDiscreteDynamicsWorld* btWorld = app->getScene()->getPhysics()->getDynamicsWorld();
 	btWorld->getBroadphase()->resetPool(btWorld->getDispatcher());
 	btWorld->getConstraintSolver()->reset();*/
 }

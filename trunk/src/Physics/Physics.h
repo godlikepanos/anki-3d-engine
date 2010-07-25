@@ -3,11 +3,14 @@
 
 #include "Common.h"
 #include "PhyCommon.h"
+#include "BtAndAnkiConvertors.h"
+#include "DebugDrawer.h"
+
 
 /**
- *
+ * The master container for all physics related stuff.
  */
-class PhyWorld
+class Physics
 {
 	PROPERTY_R(btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld)
 	PROPERTY_R(float, defaultContactProcessingThreshold, getDefaultContactProcessingThreshold)
@@ -17,6 +20,7 @@ class PhyWorld
 		btCollisionDispatcher* dispatcher;
 		btDbvtBroadphase* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
+		DebugDrawer* debugDrawer;
 
 		/**
 		 * Collision groups
@@ -28,20 +32,11 @@ class PhyWorld
 			CG_PARTICLE = 2
 		};
 
-
-		PhyWorld() :
-			defaultContactProcessingThreshold(BT_LARGE_FLOAT)
-		{
-			collisionConfiguration = new btDefaultCollisionConfiguration();
-			dispatcher = new	btCollisionDispatcher(collisionConfiguration);
-			broadphase = new btDbvtBroadphase();
-			sol = new btSequentialImpulseConstraintSolver;
-			dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, sol, collisionConfiguration);
-			dynamicsWorld->setGravity(btVector3(0,-10, 0));
-		}
+		Physics();
 
 		/**
-		 * Creates a new rigid body and adds it to the @ref dynamicsWorld. It allocates memory so the caller is responsible for cleaning up
+		 * Creates a new rigid body and adds it to the @ref dynamicsWorld. It allocates memory so the caller is responsible
+		 * for cleaning up
 		 * @param mass The mass of the rigid body. Put zero for static unmovable objects
 		 * @param startTransform The initial position and orientation
 		 * @param shape The collision shape
@@ -50,8 +45,8 @@ class PhyWorld
 		 * @param mask The mask of the body. Leave it blank if there is no mask
 		 * @return A new rigid body
 		 */
-		btRigidBody* createNewRigidBody(float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node, int group=-1,
-		                                 int mask=-1);
+		btRigidBody* createNewRigidBody(float mass, const Transform& startTransform, btCollisionShape* shape,
+		                                SceneNode* node, int group = -1, int mask = -1);
 };
 
 #endif

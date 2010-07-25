@@ -64,7 +64,7 @@ Vec<btRigidBody*> boxes;
 
 void initPhysics()
 {
-	btDiscreteDynamicsWorld* dynamicsWorld = app->getScene()->getPhyWorld()->getDynamicsWorld();
+	btDiscreteDynamicsWorld* dynamicsWorld = app->getScene()->getPhysics()->getDynamicsWorld();
 
 	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
 
@@ -132,21 +132,21 @@ void initPhysics()
 					crate->getLocalTransform().setScale(1.11);
 
 					Transform trf(SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0);
-					body = app->getScene()->getPhyWorld()->createNewRigidBody(mass, trf, colShape, crate);
+					body = app->getScene()->getPhysics()->createNewRigidBody(mass, trf, colShape, crate);
 
-					MotionState* myMotionState = new MotionState(startTransform, crate);
-					btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
+					//MotionState* myMotionState = new MotionState(startTransform, *crate);
+					//btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
 					//btRigidBody* body = new btRigidBody(rbInfo);
-					body = new btRigidBody(rbInfo);
+					//body = new btRigidBody(rbInfo);
 
 					//if(i=2) body->setActivationState(ISLAND_SLEEPING);
 
 					//body->setActivationState(ISLAND_SLEEPING);
 
 
-					dynamicsWorld->addRigidBody(body);
+					//dynamicsWorld->addRigidBody(body);
 					//body->setGravity(toBt(Vec3(Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0))));
-					boxes.push_back(body);
+					//boxes.push_back(body);
 				}
 			}
 		}
@@ -157,9 +157,9 @@ void initPhysics()
 
 
 
-	/*for(int i=0; i<app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray().size();i++)
+	/*for(int i=0; i<app->getScene()->getPhysics()->getDynamicsWorld()->getCollisionObjectArray().size();i++)
 	{
-		btCollisionObject* colObj = app->getScene()->getPhyWorld()->getDynamicsWorld()->getCollisionObjectArray()[i];
+		btCollisionObject* colObj = app->getScene()->getPhysics()->getDynamicsWorld()->getCollisionObjectArray()[i];
 		btRigidBody* body = btRigidBody::upcast(colObj);
 		if(body)
 		{
@@ -372,8 +372,7 @@ void mainLoop()
 
 		//partEmitter->update();
 
-		app->getScene()->getPhyWorld()->getDynamicsWorld()->stepSimulation(app->timerTick);
-		app->getScene()->getPhyWorld()->getDynamicsWorld()->debugDrawWorld();
+		app->getScene()->getPhysics()->getDynamicsWorld()->stepSimulation(app->timerTick);
 
 		app->getMainRenderer()->render(*app->getActiveCam());
 

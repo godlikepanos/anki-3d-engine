@@ -4,7 +4,7 @@
 #include <LinearMath/btIDebugDraw.h>
 #include "Common.h"
 #include "Renderer.h"
-#include "BtAndAnkiConversions.h"
+#include "BtAndAnkiConvertors.h"
 
 
 /**
@@ -39,7 +39,7 @@ class DebugDrawer: public btIDebugDraw
 
 inline void DebugDrawer::drawSphere(btScalar radius, const btTransform& transform, const btVector3& color)
 {
-	Renderer::Dbg::drawSphere(8, radius, toAnki(transform.getOrigin()));
+	Renderer::Dbg::drawSphere(radius, Transform(toAnki(transform)), Vec4(toAnki(color), 1.0));
 }
 
 

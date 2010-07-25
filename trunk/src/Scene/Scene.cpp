@@ -16,7 +16,7 @@ Scene::Scene()
 	ambientCol = Vec3(0.1, 0.05, 0.05)*4;
 	sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
 
-	phyWorld = new PhyWorld;
+	phyWorld = new Physics;
 }
 
 

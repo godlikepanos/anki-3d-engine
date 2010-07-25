@@ -11,45 +11,58 @@
  */
 class MotionState: public btMotionState
 {
-	protected:
-		btTransform worldTransform;
-		SceneNode* node;
-
 	public:
-		MotionState(const btTransform& initialTransform, SceneNode* node_):
-			worldTransform(initialTransform),
-			node(node_)
-		{
-			DEBUG_ERR(node_==NULL);
-		}
+		MotionState(const btTransform& initialTransform, SceneNode& node_);
 
-		virtual ~MotionState()
-		{}
+		~MotionState() {}
 
-		virtual void getWorldTransform(btTransform& worldTrans) const
-		{
-			worldTrans = worldTransform;
-		}
+		void getWorldTransform(btTransform& worldTrans) const;
 
-		const btTransform& getWorldTransform() const
-		{
-			return worldTransform;
-		}
+		const btTransform& getWorldTransform() const;
 
-		virtual void setWorldTransform(const btTransform& worldTrans)
-		{
-			float originalScale = node->getLocalTransform().getScale();
-			worldTransform = worldTrans;
+		void setWorldTransform(const btTransform& worldTrans);
 
-			node->setLocalTransform(Transform(toAnki(worldTrans)));
-			node->getLocalTransform().setScale(originalScale);
-
-			/*btQuaternion rot = worldTrans.getRotation();
-			node->rotationLspace = Mat3(Quat(toAnki(rot)));
-			btVector3 pos = worldTrans.getOrigin();
-			node->translationLspace = Vec3(toAnki(pos));*/
-		}
+	private:
+		btTransform worldTransform;
+		SceneNode& node;
 };
+
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
+
+inline MotionState::MotionState(const btTransform& initialTransform, SceneNode& node_):
+	worldTransform(initialTransform),
+	node(node_)
+{}
+
+
+inline void MotionState::getWorldTransform(btTransform& worldTrans) const
+{
+	worldTrans = worldTransform;
+}
+
+
+inline const btTransform& MotionState::getWorldTransform() const
+{
+	return worldTransform;
+}
+
+
+inline void MotionState::setWorldTransform(const btTransform& worldTrans)
+{
+	float originalScale = node.getLocalTransform().getScale();
+	worldTransform = worldTrans;
+
+	node.setLocalTransform(Transform(toAnki(worldTrans)));
+	node.getLocalTransform().setScale(originalScale);
+
+	/*btQuaternion rot = worldTrans.getRotation();
+	node.rotationLspace = Mat3(Quat(toAnki(rot)));
+	btVector3 pos = worldTrans.getOrigin();
+	node.translationLspace = Vec3(toAnki(pos));*/
+}
 
 
 

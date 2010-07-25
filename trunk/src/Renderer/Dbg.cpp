@@ -17,6 +17,8 @@
 //======================================================================================================================
 RsrcPtr<ShaderProg> Renderer::Dbg::sProg;
 Mat4 Renderer::Dbg::viewProjectionMat;
+const ShaderProg::UniVar* Renderer::Dbg::colorUniVar;
+const ShaderProg::UniVar* Renderer::Dbg::modelViewProjectionMat;
 
 
 //======================================================================================================================
@@ -95,8 +97,10 @@ void Renderer::Dbg::renderGrid()
 //======================================================================================================================
 // drawSphere                                                                                                        =
 //======================================================================================================================
-void Renderer::Dbg::drawSphere(int complexity, float radius, const Vec3& pos)
+void Renderer::Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity)
 {
+	setColor(col);
+
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
 
@@ -140,7 +144,7 @@ void Renderer::Dbg::drawSphere(int complexity, float radius, const Vec3& pos)
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back(Vec3(px, py, pz) + pos);
+			positions.push_back(Vec3(px, py, pz));
 			normals.push_back(Vec3(ex, ey, ez));
 			texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity));
 
@@ -151,11 +155,13 @@ void Renderer::Dbg::drawSphere(int complexity, float radius, const Vec3& pos)
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back(Vec3(px, py, pz) + pos);
+			positions.push_back(Vec3(px, py, pz));
 			normals.push_back(Vec3(ex, ey, ez));
 			texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*i/(float)complexity));
 		}
 	}
+
+	setModelMat(Mat4(trf));
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &(positions[0][0]));
@@ -219,6 +225,8 @@ void Renderer::Dbg::init()
 	if(sProg.get() == NULL)
 	{
 		sProg.loadRsrc("shaders/Dbg.glsl");
+		colorUniVar = sProg->findUniVar("color");
+		modelViewProjectionMat = sProg->findUniVar("modelViewProjectionMat");
 	}
 
 }
@@ -238,16 +246,15 @@ void Renderer::Dbg::run()
 	viewProjectionMat = cam.getProjectionMatrix() * cam.getViewMatrix();
 
 	// OGL stuff
-	r.setProjectionViewMatrices(cam);
 	Renderer::setViewport(0, 0, r.width, r.height);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
+	sProg->bind();
+
 	//R::renderGrid();
 	for(uint i=0; i<app->getScene()->nodes.size(); i++)
 	{
-		sProg->bind();
-
 		SceneNode* node = app->getScene()->nodes[i];
 		if
 		(
@@ -266,6 +273,10 @@ void Renderer::Dbg::run()
 			glEnable(GL_DEPTH_TEST);
 		}
 	}
+
+	// Physics
+	setModelMat(Mat4::getIdentity());
+	app->getScene()->getPhysics()->getDynamicsWorld()->debugDrawWorld();
 }
 
 
@@ -274,7 +285,7 @@ void Renderer::Dbg::run()
 //======================================================================================================================
 void Renderer::Dbg::setColor(const Vec4& color)
 {
-	sProg->findUniVar("color")->setVec4(&color);
+	colorUniVar->setVec4(&color);
 }
 
 
@@ -284,6 +295,6 @@ void Renderer::Dbg::setColor(const Vec4& color)
 void Renderer::Dbg::setModelMat(const Mat4& modelMat)
 {
 	Mat4 pmv = viewProjectionMat * modelMat;
-	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
+	modelViewProjectionMat->setMat4(&pmv);
 }
 
