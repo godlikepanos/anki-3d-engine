@@ -72,7 +72,6 @@ class Mat4
 		Vec3  getTranslationPart() const;
 		void  transpose();
 		Mat4  getTransposed() const;
-		void  print() const;
 		float getDet() const;
 		void  invert();
 		Mat4  getInverse() const;
@@ -90,6 +89,7 @@ extern Mat4 operator +(float f, const Mat4& m4);
 extern Mat4 operator -(float f, const Mat4& m4);
 extern Mat4 operator *(float f, const Mat4& m4);
 extern Mat4 operator /(float f, const Mat4& m4);
+extern ostream& operator<<(ostream& s, const Mat4& m);
 
 
 } // end namespace

@@ -665,18 +665,6 @@ inline void Mat3::reorthogonalize()
 	setColumns(xAxis, yAxis, zAxis);
 }
 
-// print
-inline void Mat3::print() const
-{
-	for(int i=0; i<3; i++)
-	{
-		for(int j=0; j<3; j++)
-			cout << fixed << ME(i, j) << " ";
-		cout << endl;
-	}
-	cout << endl;
-}
-
 // Determinant
 inline float Mat3::getDet() const
 {
@@ -744,6 +732,20 @@ inline const Mat3& Mat3::getIdentity()
 {
 	static Mat3 ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 	return ident;
+}
+
+// print
+inline ostream& operator<<(ostream& s, const Mat3& m)
+{
+	for(int i=0; i<3; i++)
+	{
+		for(int j=0; j<3; j++)
+			s << m(i, j) << ' ';
+
+		if(i != 2)
+			s << "\n";
+	}
+	return s;
 }
 
 } // end namespace

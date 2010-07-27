@@ -40,7 +40,6 @@ class Quat
 		Quat  getConjugated() const;
 		void  normalize();
 		Quat  getNormalized() const;
-		void  print() const;
 		float dot(const Quat& b) const;
 		Quat  slerp(const Quat& q1, float t) const; ///< returns slerp(this, q1, t)
 		Quat  getRotated(const Quat& b) const; ///< The same as Quat * Quat
@@ -48,6 +47,10 @@ class Quat
 		void  setIdentity();
 		static const Quat& getIdentity();
 };
+
+
+// other operators
+extern ostream& operator<<(ostream& s, const Quat& q);
 
 
 } // end namespace

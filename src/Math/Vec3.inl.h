@@ -278,14 +278,6 @@ inline void Vec3::rotate(const Quat& q)
 	ME = getRotated(q);
 }
 
-// print
-inline void Vec3::print() const
-{
-	for(int i=0; i<3; i++)
-		cout << fixed << ME[i] << " ";
-	cout << "\n" << endl;
-}
-
 // lerp
 inline Vec3 Vec3::lerp(const Vec3& v1, float t) const
 {
@@ -356,5 +348,11 @@ inline void Vec3::transform(const Transform& transform)
 	ME = getTransformed(transform);
 }
 
+// print
+inline ostream& operator<<(ostream& s, const Vec3& v)
+{
+	s << v.x << ' ' << v.y << ' ' << v.z;
+	return s;
+}
 
 } // end namespace

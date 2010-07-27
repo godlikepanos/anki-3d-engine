@@ -29,9 +29,11 @@ class Euler
 		         Euler(const Euler& b);
 		explicit Euler(const Quat& q);
 		explicit Euler(const Mat3& m3);
-		// other
-		void print() const;
 };
+
+
+// other operators
+extern ostream& operator<<(ostream& s, const Euler& e);
 
 
 } // end namespace

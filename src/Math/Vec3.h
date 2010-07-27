@@ -61,8 +61,12 @@ class Vec3
 		Vec3  getRotated(const Quat& q) const; ///< Returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		void  rotate(const Quat& q);
 		Vec3  lerp(const Vec3& v1, float t) const; ///< return lerp(this, v1, t)
-		void  print() const;
-		// transformations. The faster way is by far the mat4 * vec3 or the Transformed(Vec3, Mat3)
+
+		/**
+		 * @name Transformations
+		 * The faster way is by far the mat4 * vec3 or the getTransformed(Vec3, Mat3)
+		 */
+		/**@{*/
 		Vec3  getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const;
 		void  transform(const Vec3& translate, const Mat3& rotate, float scale);
 		Vec3  getTransformed(const Vec3& translate, const Mat3& rotate) const;
@@ -75,6 +79,7 @@ class Vec3
 		void  transform(const Mat4& transform);
 		Vec3  getTransformed(const Transform& transform) const;
 		void  transform(const Transform& transform);
+		/**@}*/
 };
 
 
@@ -83,6 +88,7 @@ extern Vec3 operator +(float f, const Vec3& v);
 extern Vec3 operator -(float f, const Vec3& v);
 extern Vec3 operator *(float f, const Vec3& v);
 extern Vec3 operator /(float f, const Vec3& v);
+extern ostream& operator<<(ostream& s, const Vec3& v);
 
 
 } // end namespace
