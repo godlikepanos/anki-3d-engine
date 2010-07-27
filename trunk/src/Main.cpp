@@ -411,26 +411,18 @@ void mainLoop()
 }
 
 
+ostream& operator<<(ostream& s, const Vec3& v)
+{
+	s << fixed << v.x << ' ' << v.y << ' ' << v.z;
+	return s;
+}
+
 //======================================================================================================================
 // main                                                                                                                =
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
 	new App(argc, argv);
-
-/*	{
-		RsrcPtr<LightProps> l;
-		l.loadRsrc("/users/panoscc/Desktop/test.txt");
-		INFO(l->getRsrcReferencesNum());
-		{
-			RsrcPtr<LightProps> ll;
-			ll.loadRsrc("/users/panoscc/Desktop/test.txt");
-			INFO(l->getRsrcReferencesNum());
-		}
-		INFO(l->getRsrcReferencesNum());
-	}
-
-	return 0;*/
 
 	init();
 

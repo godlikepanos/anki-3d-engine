@@ -248,12 +248,10 @@ inline void Vec4::normalize()
 }
 
 // print
-inline void Vec4::print() const
+inline ostream& operator<<(ostream& s, const Vec4& v)
 {
-	for(int i=0; i<4; i++)
-		cout << fixed << ME[i] << " ";
-	cout << "\n" << endl;
+	s << v.x << ' ' << v.y << ' ' << v.z << ' ' << v.w;
+	return s;
 }
-
 
 } // end namespace

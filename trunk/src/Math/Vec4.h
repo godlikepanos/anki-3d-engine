@@ -53,7 +53,6 @@ class Vec4
 		float getLength() const;
 		Vec4  getNormalized() const;
 		void  normalize();
-		void  print() const;
 		float dot(const Vec4& b) const;
 };
 
@@ -63,6 +62,7 @@ extern Vec4 operator +(float f, const Vec4& v4);
 extern Vec4 operator -(float f, const Vec4& v4);
 extern Vec4 operator *(float f, const Vec4& v4);
 extern Vec4 operator /(float f, const Vec4& v4);
+extern ostream& operator<<(ostream& s, const Vec4& v);
 
 
 } // end namespace

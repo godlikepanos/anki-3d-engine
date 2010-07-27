@@ -56,7 +56,6 @@ class Vec2
 		void   normalize();
 		Vec2   getNormalized() const;
 		float  dot(const Vec2& b) const;
-		void   print() const;
 };
 
 
@@ -65,6 +64,7 @@ extern Vec2 operator +(float f, const Vec2& v2);
 extern Vec2 operator -(float f, const Vec2& v2);
 extern Vec2 operator *(float f, const Vec2& v2);
 extern Vec2 operator /(float f, const Vec2& v2);
+extern ostream& operator<<(ostream& s, const Vec2& v);
 
 
 } // end namespace

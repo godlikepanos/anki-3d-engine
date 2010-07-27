@@ -236,11 +236,10 @@ inline Vec2 Vec2::getOne()
 }
 
 // print
-inline void Vec2::print() const
+inline ostream& operator<<(ostream& s, const Vec2& v)
 {
-	for(int i=0; i<2; i++)
-		cout << fixed << ME[i] << ' ';
-	cout << "\n" << endl;
+	s << v.x << ' ' << v.y;
+	return s;
 }
 
 

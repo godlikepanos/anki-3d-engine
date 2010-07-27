@@ -521,24 +521,6 @@ inline const Mat4& Mat4::getZero()
 	return zero;
 }
 
-// print
-inline void Mat4::print() const
-{
-	cout << fixed;
-	for(int i=0; i<4; i++)
-	{
-		for(int j=0; j<4; j++)
-		{
-			if(ME(i, j) < 0.0)
-				cout << ME(i, j) << " ";
-			else
-				cout << " " << ME(i, j) << " ";
-		}
-		cout << endl;
-	}
-	cout << endl;
-}
-
 // Determinant
 inline float Mat4::getDet() const
 {
@@ -699,5 +681,18 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	return m4;
 }
 
+// print
+inline ostream& operator<<(ostream& s, const Mat4& m)
+{
+	for(int i=0; i<4; i++)
+	{
+		for(int j=0; j<4; j++)
+			s << m(i, j) << ' ';
+
+		if(i != 3)
+			s << "\n";
+	}
+	return s;
+}
 
 } // end namespace

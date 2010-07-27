@@ -206,12 +206,6 @@ inline void Quat::invert()
 	ME = getInverted();
 }
 
-// print
-inline void Quat::print() const
-{
-	cout << fixed << "(w,x,y,z) = " << w << ' ' << x << ' ' << y << ' ' << z  << '\n' << endl;
-}
-
 // CalcFromVecVec
 inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 {
@@ -293,6 +287,13 @@ inline const Quat::Quat& getIdentity()
 {
 	static Quat ident(0.0, 0.0, 0.0, 1.0);
 	return ident;
+}
+
+// print
+inline ostream& operator<<(ostream& s, const Quat& q)
+{
+	s << q.w << ' ' << q.x << ' ' << q.y << ' ' << q.z;
+	return s;
 }
 
 } // end namespace

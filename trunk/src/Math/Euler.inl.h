@@ -119,5 +119,11 @@ inline Euler::Euler(const Mat3& m3)
 	x = atan2f(sx, cx);
 }
 
+// print
+inline ostream& operator<<(ostream& s, const Euler& e)
+{
+	s << e.x << ' ' << e.y << ' ' << e.z;
+	return s;
+}
 
 } // end namespace

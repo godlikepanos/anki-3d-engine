@@ -96,6 +96,7 @@ extern Mat3 operator +(float f, const Mat3& m3);
 extern Mat3 operator -(float f, const Mat3& m3);
 extern Mat3 operator *(float f, const Mat3& m3);
 extern Mat3 operator /(float f, const Mat3& m3);
+extern ostream& operator<<(ostream& s, const Mat3& m);
 
 
 } // end namespace
