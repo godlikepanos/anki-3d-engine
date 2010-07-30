@@ -26,8 +26,7 @@ Building
 ========
 
 AnKi build system is very Linux specific (GNU make only) at the moment. It
-also requires a few extra development libraries. You can also find a custom
-build system that generates GNU makefiles.
+also requires a few extra development libraries.
 
 To download the latest release from the SVN repository type:
 
@@ -119,24 +118,38 @@ install it using the packet manager of your choice.
 In Ubuntu type: $ sudo apt-get install libboost<version>-dev-all
 
 
-Generating makefiles and building AnKi
---------------------------------------
+Building AnKi and optionally generating makefiles
+-------------------------------------------------
 
-There are 4 build targets in the build directory. There is also a build system
-that generates GNU makefiles (it requires Python 3 installed). If you want to 
-generate the makefile for the debug target (for example) do the following:
-
-#) $ cd <path to anki>/build/debug
-#) $ ../genmakefile.py
-#) $ make
-
-And the build process will begin. 
-
-The gen.cfg.py files contain the build options of every target. Their format
-is pretty straightforward and minimal.
+Inside the build directory you can find 4 build targets containing GNU
+makefiles. If you want to build AnKi just type "make".
 
 **WARNING**: Sometimes I forget to update all the targets. The debug is always 
 updated though.
+
+AnKi uses a build system that generates the above makefiles. This build system
+is no longer part of AnKi and its located in a different repository. This tool
+is called gBuildSystem and you can find it in
+http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem. Downloaded it
+using SVN:
+
+$ svn checkout http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem
+
+
+gBuildSystem only purpose is to re-generate these makefiles in case you have
+made changes in code structure (renaming/moving/deleting/adding files) or in the
+includes (#include) or your have the external libs in different paths.
+gBuildSystem requires the gen.cfg.py files (something like CMakeLists.txt).
+gen.cfg.py format is pretty straightforward and minimal.
+
+If you want to generate the makefile for the debug target (for example) do the
+following:
+
+#) $ cd <path to anki>/build/debug
+#) $ <path to gBuildSystem>/gbs.py
+#) $ make
+
+And the build process will begin. 
   
 
 ======
@@ -157,8 +170,8 @@ The engine requires:
 - Linux OS
 - Proprietary GPU drivers
 
-Development rig: Ubuntu 9.10, AMD Radeon 4870 w/ Catalyst 10.6. So it should be
-working on similar systems.
+Development rig: Ubuntu 10.04, AMD Radeon 4870 w/ Catalyst 10.04. So it should
+be working on similar systems.
 
 
 ==============================================

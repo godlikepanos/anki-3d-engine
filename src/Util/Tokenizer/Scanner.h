@@ -242,7 +242,7 @@ class Scanner
 		/**@{*/
 		ifstream inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
 		istream* inStream; ///< Points to either @ref inFstream or an external std::istream
-		char scriptName[512]; ///< The name of the input stream. Mainly used for the error messages
+		char scriptName[512]; ///< The name of the input stream. Mainly used for error messaging
 		/**@}*/
 
 		/**
@@ -281,10 +281,7 @@ class Scanner
 		/**
 		 * To save us from typing for example asciiLookupTable[(int)'a']
 		 */
-		inline AsciiFlag asciiLookup(char ch_)
-		{
-			return asciiLookupTable[(int)ch_];
-		}
+		AsciiFlag lookupAscii(char ch_);
 }; // end class Scanner
 
 
@@ -337,6 +334,12 @@ inline int Scanner::getLineNumber() const
 inline const char* Scanner::Token::getString() const
 {
 	return asString;
+}
+
+
+inline Scanner::AsciiFlag Scanner::lookupAscii(char ch_)
+{
+	return asciiLookupTable[(int)ch_];
 }
 
 #endif

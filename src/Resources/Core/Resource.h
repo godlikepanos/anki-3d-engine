@@ -1,5 +1,5 @@
-#ifndef _RESOURCE_H_
-#define _RESOURCE_H_
+#ifndef RESOURCE_H
+#define RESOURCE_H
 
 #include "Common.h"
 #include "Util.h"
@@ -28,7 +28,8 @@ class Resource
 			RT_SKELETON,
 			RT_SKEL_ANIM,
 			RT_LIGHT_PROPS,
-			RT_EXTENSION
+			RT_EXTENSION,
+			RT_PARTICLE_EMITTER_PROPS
 		};
 
 	PROPERTY_R(string, path, getRsrcPath);
@@ -47,6 +48,9 @@ class Resource
 		 */
 		virtual bool load(const char* filename) = 0;
 
+		/**
+		 * Special unload func for stuff that the destructor cannot cleanup (eg OpenGL stuff)
+		 */
 		virtual void unload() = 0;
 };
 
