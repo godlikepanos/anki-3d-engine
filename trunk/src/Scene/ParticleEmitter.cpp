@@ -10,7 +10,7 @@
 //======================================================================================================================
 void ParticleEmitter::Particle::render()
 {
-	if(lifeTillDeath < 0) return;
+	/*if(lifeTillDeath < 0) return;
 
 	glPushMatrix();
 	app->getMainRenderer()->multMatrix(getWorldTransform());
@@ -19,7 +19,7 @@ void ParticleEmitter::Particle::render()
 		glVertex3fv(&(Vec3(0.0))[0]);
 	glEnd();
 
-	glPopMatrix();
+	glPopMatrix();*/
 }
 
 
@@ -28,38 +28,10 @@ void ParticleEmitter::Particle::render()
 //======================================================================================================================
 void ParticleEmitter::init(const char* filename)
 {
-	// dummy props init
-	maxParticleLife = 400;
-	minParticleLife = 100;
-	minDirection = Vec3(-0.1, 1.0, 0.0);
-	maxDirection = Vec3(0.1, 1.0, 0.0);
-	minForceMagnitude = 1.0;
-	maxForceMagnitude = 2.0;
-	minParticleMass = 1.0;
-	maxParticleMass = 2.0;
-	minGravity = Vec3(0.0, 0.0, 0.0);
-	minGravity = Vec3(0.0, -1.0, 0.0);
-	minStartingPos = Vec3(-1.0, -1.0, -1.0);
-	maxStartingPos = Vec3(1.0, 1.0, 1.0);
-	maxNumOfParticles = 5;
-	emittionPeriod = 1000;
+	ParticleEmitterProps props;
+	//ParticleEmitterProps* me = this;
+	//(*this) = props;
 
-	// init the particles
-	btCollisionShape* colShape = new btSphereShape(0.1);
-
-	particles.resize(maxNumOfParticles);
-	for(uint i=0; i<maxNumOfParticles; i++)
-	{
-		particles[i] = new Particle;
-		float mass = Util::randRange(minParticleMass, maxParticleMass);
-		btRigidBody* body = app->getScene()->getPhysics()->createNewRigidBody(mass, Transform::getIdentity(), colShape, particles[i],
-		                                                                        Physics::CG_PARTICLE, Physics::CG_MAP);
-		//body->forceActivationState(DISABLE_SIMULATION);
-	}
-
-	/*btDiscreteDynamicsWorld* btWorld = app->getScene()->getPhysics()->getDynamicsWorld();
-	btWorld->getBroadphase()->resetPool(btWorld->getDispatcher());
-	btWorld->getConstraintSolver()->reset();*/
 }
 
 
@@ -68,98 +40,7 @@ void ParticleEmitter::init(const char* filename)
 //======================================================================================================================
 void ParticleEmitter::update()
 {
-	uint crntTime = app->getTicks();
 
-	// decrease particle life and deactivate the dead particles
-	for(Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it)
-	{
-		Particle* part = *it;
-		if(part->lifeTillDeath < 0) continue; // its already dead so dont deactivate it again
-
-		part->lifeTillDeath -= crntTime-timeOfPrevUpdate;
-		if(part->lifeTillDeath < 1)
-		{
-			part->body->setActivationState(DISABLE_SIMULATION);
-		}
-	}
-
-	// emit new particles
-	DEBUG_ERR(particlesPerEmittion == 0);
-	if((crntTime - timeOfPrevEmittion) > emittionPeriod)
-	{
-		uint partNum = 0;
-		for(Vec<Particle*>::iterator it=particles.begin(); it!=particles.end(); ++it)
-		{
-			Particle* part = *it;
-			if(part->lifeTillDeath > 0) continue; // its alive so skip it
-
-			// reinit a dead particle
-			//
-
-			// activate it (Bullet stuff)
-			part->body->forceActivationState(ACTIVE_TAG);
-			part->body->clearForces();
-
-			// life
-			if(minParticleLife != maxParticleLife)
-				part->lifeTillDeath = Util::randRange(minParticleLife, maxParticleLife);
-			else
-				part->lifeTillDeath = minParticleLife;
-
-			// force
-			Vec3 forceDir;
-			if(minDirection != maxDirection)
-			{
-				forceDir = Vec3(Util::randRange(minDirection.x , maxDirection.x), Util::randRange(minDirection.y , maxDirection.y),
-			                                    Util::randRange(minDirection.z , maxDirection.z));
-			}
-			else
-			{
-				forceDir = minDirection;
-			}
-			forceDir.normalize();
-
-			if(minForceMagnitude != maxForceMagnitude)
-				part->body->applyCentralForce(toBt(forceDir * Util::randRange(minForceMagnitude, maxForceMagnitude)));
-			else
-				part->body->applyCentralForce(toBt(forceDir * minForceMagnitude));
-
-			// gravity
-			Vec3 grav;
-			if(minGravity != maxGravity)
-			{
-				grav = Vec3(Util::randRange(minGravity.x,maxGravity.x), Util::randRange(minGravity.y,maxGravity.y),
-			              Util::randRange(minGravity.z,maxGravity.z));
-			}
-			else
-			{
-				grav = minGravity;
-			}
-			part->body->setGravity(toBt(grav));
-
-			// starting pos
-			Vec3 pos;
-			if(minStartingPos != maxStartingPos)
-			{
-				pos = Vec3(Util::randRange(minStartingPos.x,maxStartingPos.x), Util::randRange(minStartingPos.y,maxStartingPos.y),
-			              Util::randRange(minStartingPos.z,maxStartingPos.z));
-			}
-			else
-			{
-				pos = minStartingPos;
-			}
-			pos += getWorldTransform().getOrigin();
-			part->body->setWorldTransform(toBt(Mat4(pos, Mat3::getIdentity(), 1.0)));
-
-			// do the rest
-			++partNum;
-			if(partNum >= particlesPerEmittion) break;
-		} // end for all particles
-
-		timeOfPrevEmittion = crntTime;
-	} // end if can emit
-
-	timeOfPrevUpdate = crntTime;
 }
 
 

@@ -150,7 +150,7 @@ void Scanner::initAsciiMap()
 	asciiLookupTable['/'] = asciiLookupTable['~'] = asciiLookupTable['%'] = asciiLookupTable['#'] = AC_SPECIAL;
 	asciiLookupTable['^'] = AC_SPECIAL;
 
-	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] = asciiLookupTable['\r'] = AC_WHITESPACE;
+	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] = AC_WHITESPACE;
 	asciiLookupTable['\n'] = AC_ERROR; // newline is unacceptable char
 	                   
 	asciiLookupTable['\"']         = AC_DOUBLEQUOTE;
@@ -200,6 +200,15 @@ char Scanner::getNextChar()
 		getLine();
 	else
 		++pchar;
+
+	if(*pchar == '\r') // windows crap
+	{
+		*pchar = '\0';
+	}
+	else if(lookupAscii(*pchar) == AC_ERROR)
+	{
+		ERROR("Unacceptable char 0x" << int(*pchar));
+	}
 
 	return *pchar;
 }
@@ -315,7 +324,7 @@ const Scanner::Token& Scanner::getNextToken()
 	}
 	else if(*pchar == '.')
 	{
-		uint asc = asciiLookup(getNextChar());
+		uint asc = lookupAscii(getNextChar());
 		putBackChar();
 		if(asc == AC_DIGIT)
 			checkNumber();
@@ -324,7 +333,7 @@ const Scanner::Token& Scanner::getNextToken()
 	}
 	else if(*pchar=='\0') // if newline
 	{
-		if(asciiLookup(getNextChar()) == AC_EOF)
+		if(lookupAscii(getNextChar()) == AC_EOF)
 			crntToken.code = TC_EOF;
 		else
 			crntToken.code = TC_NEWLINE;
@@ -332,7 +341,7 @@ const Scanner::Token& Scanner::getNextToken()
 	else
 	{
 		crappyLabel:
-		switch(asciiLookup(*pchar))
+		switch(lookupAscii(*pchar))
 		{
 			case AC_WHITESPACE : getNextChar();  goto start;
 			case AC_LETTER     : checkWord();    break;
@@ -371,7 +380,7 @@ bool Scanner::checkWord()
 	{
 		*tmpStr++ = ch;
 		ch = getNextChar();
-	}while (asciiLookup(ch)==AC_LETTER || asciiLookup(ch)==AC_DIGIT);
+	}while (lookupAscii(ch)==AC_LETTER || lookupAscii(ch)==AC_DIGIT);
 
 	*tmpStr = '\0'; // finalize it
 
@@ -478,7 +487,7 @@ bool Scanner::checkNumber()
 	// begin
 		if(*pchar == '0')
 			goto _0;
-		else if(asciiLookup(*pchar) == AC_DIGIT)
+		else if(lookupAscii(*pchar) == AC_DIGIT)
 		{
 			num = num*10 + *pchar-'0';
 			goto _0_9;
@@ -492,7 +501,7 @@ bool Scanner::checkNumber()
 	_0:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		if (*pchar == 'x' || *pchar == 'X')
 			goto _0x;
 		else if(*pchar == 'e' || *pchar == 'E')
@@ -513,7 +522,7 @@ bool Scanner::checkNumber()
 	_0x:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		if((asc == AC_DIGIT)  ||
 				(*pchar >= 'a' && *pchar <= 'f') ||
 				(*pchar >= 'A' && *pchar <= 'F'))
@@ -535,7 +544,7 @@ bool Scanner::checkNumber()
 	_0x0_9orA_F:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		if((asc == AC_DIGIT)         ||
 				(*pchar >= 'a' && *pchar <= 'f') ||
 				(*pchar >= 'A' && *pchar <= 'F'))
@@ -559,7 +568,7 @@ bool Scanner::checkNumber()
 	_0_9:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		if(asc == AC_DIGIT)
 		{
 			num = num * 10 + *pchar - '0';
@@ -578,7 +587,7 @@ bool Scanner::checkNumber()
 	_float:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		crntToken.dataType = DT_FLOAT;
 		if(asc == AC_DIGIT)
 		{
@@ -607,7 +616,7 @@ bool Scanner::checkNumber()
 	_0_9_dot_0_9_f:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 
 		if(asc == AC_SPECIAL || asc == AC_WHITESPACE || asc == AC_EOF)
 			goto finalize;
@@ -618,7 +627,7 @@ bool Scanner::checkNumber()
 	_0_9_dot_0_9_e:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		crntToken.dataType = DT_FLOAT;
 
 		if(*pchar == '+' || *pchar == '-')
@@ -640,7 +649,7 @@ bool Scanner::checkNumber()
 	_0_9_dot_0_9_e_sign:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 
 		if(asc == AC_DIGIT)
 		{
@@ -655,7 +664,7 @@ bool Scanner::checkNumber()
 	_0_9_dot_0_9_e_sign_0_9:
 		*tmpStr++ = *pchar;
 		getNextChar();
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 
 		if(asc == AC_DIGIT)
 		{
@@ -694,11 +703,11 @@ bool Scanner::checkNumber()
 		crntToken.code = TC_ERROR;
 
 		// run until white space or special
-		asc = asciiLookup(*pchar);
+		asc = lookupAscii(*pchar);
 		while(asc!=AC_WHITESPACE && asc!=AC_SPECIAL && asc!=AC_EOF)
 		{
 			*tmpStr++ = *pchar;
-			asc = asciiLookup(getNextChar());
+			asc = lookupAscii(getNextChar());
 		}
 
 		*tmpStr = '\0';

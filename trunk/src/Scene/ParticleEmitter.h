@@ -1,68 +1,52 @@
 #ifndef _PARTICLEEMITTER_H_
 #define _PARTICLEEMITTER_H_
 
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "Common.h"
 #include "SceneNode.h"
 #include "MeshNode.h"
 #include "GhostNode.h"
 #include "PhyCommon.h"
+#include "ParticleEmitterProps.h"
 
 
 /**
- * @brief The particle emitter scene node
- *
- * This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
+ * The particle emitter scene node. This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
  */
-class ParticleEmitter: public SceneNode
+class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 {
 	public:
 
 		/**
-		 * @brief The scene node particle class
+		 * The scene node particle class
 		 */
 		class Particle: public GhostNode
 		{
 			public:
-				int lifeTillDeath; ///< Life till death. If < 0 then dead. In ms
+				float timeOfDeath; ///< Life till death. If < 0 then dead. In seconds
 				btRigidBody* body;
 
-				Particle(): lifeTillDeath(-1) {}
+				Particle(): timeOfDeath(-1.0) {}
 				void render();
 				void renderDepth() {};
 		};
 
-		// the particle properties
-		uint minParticleLife;
-		uint maxParticleLife;
-		Vec3 minDirection;
-		Vec3 maxDirection;
-		float minForceMagnitude;
-		float maxForceMagnitude;
-		float minParticleMass;
-		float maxParticleMass;
-		Vec3 minGravity;
-		Vec3 maxGravity;
-		Vec3 minStartingPos;
-		Vec3 maxStartingPos;
-
-		// the emittion properties
-		uint maxNumOfParticles; ///< The size of the particles vector
-		uint emittionPeriod; ///< How often the emitter emits new particles. In ms
-		uint particlesPerEmittion; ///< How many particles are emitted every emittion
-
-
 		// the changeable vars
-		Vec<Particle*> particles;
-		uint timeOfPrevUpdate;
-		uint timeOfPrevEmittion;
+		ptr_vector<Particle> particles;
+		float timeOfPrevUpdate;
+		float timeOfPrevEmittion;
 
 		// funcs
-		ParticleEmitter(): SceneNode(NT_PARTICLE_EMITTER) {}
+		ParticleEmitter();
 		void render();
-		void renderDepth() {}
 		void init(const char* filename);
 		void deinit() {}
 		void update();
 };
+
+
+inline ParticleEmitter::ParticleEmitter():
+	SceneNode(NT_PARTICLE_EMITTER)
+{}
 
 #endif
