@@ -1,5 +1,5 @@
-#ifndef _PARTICLEEMITTER_H_
-#define _PARTICLEEMITTER_H_
+#ifndef PARTICLEEMITTER_H
+#define PARTICLEEMITTER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "Common.h"
@@ -16,25 +16,24 @@
 class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 {
 	public:
-
 		/**
 		 * The scene node particle class
 		 */
 		class Particle: public GhostNode
 		{
 			public:
-				float timeOfDeath; ///< Life till death. If < 0 then dead. In seconds
+				float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
 				btRigidBody* body;
 
-				Particle(): timeOfDeath(-1.0) {}
+				Particle();
 				void render();
-				void renderDepth() {};
 		};
 
 		// the changeable vars
 		ptr_vector<Particle> particles;
 		float timeOfPrevUpdate;
 		float timeOfPrevEmittion;
+		RsrcPtr<ParticleEmitterProps> particleEmitterProps;
 
 		// funcs
 		ParticleEmitter();
@@ -45,8 +44,14 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 };
 
 
+inline ParticleEmitter::Particle::Particle():
+	timeOfDeath(-1.0)
+{}
+
+
 inline ParticleEmitter::ParticleEmitter():
 	SceneNode(NT_PARTICLE_EMITTER)
 {}
+
 
 #endif

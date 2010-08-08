@@ -29,7 +29,8 @@ class Physics
 		{
 			CG_NOTHING = 0,
 			CG_MAP = 1,
-			CG_PARTICLE = 2
+			CG_PARTICLE = 2,
+			CG_ALL = CG_MAP | CG_PARTICLE
 		};
 
 		Physics();

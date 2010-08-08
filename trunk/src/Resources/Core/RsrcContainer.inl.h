@@ -72,6 +72,7 @@ typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByPtr(Type* ptr)
 template<typename Type>
 Type* RsrcContainer<Type>::load(const char* fname)
 {
+	DEBUG_ERR(fname == NULL);
 	filesystem::path fpathname = filesystem::path(fname);
 	string name = fpathname.filename();
 	string path = fpathname.parent_path().string();

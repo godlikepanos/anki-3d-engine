@@ -134,7 +134,8 @@ class Scanner
 			AC_SPECIAL = 8,
 			AC_WHITESPACE = 16,
 			AC_QUOTE = 32,
-			AC_DOUBLEQUOTE = 64
+			AC_DOUBLEQUOTE = 64,
+			AC_ACCEPTABLE_IN_COMMENTS = 128 ///< Only accepted in comments
 		};
 
 		/**

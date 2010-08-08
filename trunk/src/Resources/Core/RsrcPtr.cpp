@@ -7,6 +7,7 @@
 #include "Skeleton.h"
 #include "SkelAnim.h"
 #include "LightProps.h"
+#include "ParticleEmitterProps.h"
 
 
 namespace RsrcContainers {
@@ -18,6 +19,7 @@ extern RsrcContainer<Mesh>       meshes;
 extern RsrcContainer<Skeleton>   skeletons;
 extern RsrcContainer<SkelAnim>   skelAnims;
 extern RsrcContainer<LightProps> lightProps;
+extern RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 
 }
 
@@ -106,6 +108,16 @@ bool RsrcPtr<LightProps>::loadRsrc(const char* filename)
 
 
 //======================================================================================================================
+// loadRsrc <ParticleEmitterProps>                                                                                     =
+//======================================================================================================================
+template<>
+bool RsrcPtr<ParticleEmitterProps>::loadRsrc(const char* filename)
+{
+	LOAD_RSRC(particleEmitterProps);
+}
+
+
+//======================================================================================================================
 // unload <Texture>                                                                                                    =
 //======================================================================================================================
 template<>
@@ -173,4 +185,14 @@ template<>
 void RsrcPtr<LightProps>::unload()
 {
 	UNLOAD_RSRC(lightProps);
+}
+
+
+//======================================================================================================================
+// unload <ParticleEmitterProps>                                                                                       =
+//======================================================================================================================
+template<>
+void RsrcPtr<ParticleEmitterProps>::unload()
+{
+	UNLOAD_RSRC(particleEmitterProps);
 }

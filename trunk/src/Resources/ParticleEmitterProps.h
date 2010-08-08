@@ -17,15 +17,15 @@ class ParticleEmitterPropsStruct
 		 * @name Particle properties
 		 */
 		/**@{*/
-		float particleLife; ///< Required
+		float particleLife; ///< Required and > 0.0
 		float particleLifeMargin;
 
-		Vec3 forceDirection; ///< Required
+		Vec3 forceDirection;
 		Vec3 forceDirectionMargin;
-		float forceMagnitude; ///< Required
+		float forceMagnitude; ///< Default 0.0
 		float forceMagnitudeMargin;
 
-		float particleMass; ///< Required
+		float particleMass; ///< Required and > 0.0
 		float particleMassMargin;
 
 		Vec3 gravity; ///< If not set then it uses the world's default
@@ -46,9 +46,12 @@ class ParticleEmitterPropsStruct
 
 		ParticleEmitterPropsStruct();
 		ParticleEmitterPropsStruct(const ParticleEmitterPropsStruct& a);
+		ParticleEmitterPropsStruct& operator=(const ParticleEmitterPropsStruct& a);
+		~ParticleEmitterPropsStruct() {}
 
 	protected:
 		bool usingWorldGrav; ///< This flag indicates if we should use the default world gravity or to override it
+		bool hasForce; ///< False if all force stuff are zero
 };
 
 
@@ -60,9 +63,10 @@ class ParticleEmitterProps: public ParticleEmitterPropsStruct, public Resource
 {
 	public:
 		ParticleEmitterProps();
+		~ParticleEmitterProps() {}
 
 		bool load(const char* filename);
-		void unload();
+		void unload() {} ///< Do nothing
 };
 
 
@@ -70,8 +74,5 @@ inline ParticleEmitterProps::ParticleEmitterProps():
 	Resource(RT_PARTICLE_EMITTER_PROPS)
 {}
 
-
-inline void ParticleEmitterProps::unload()
-{}
 
 #endif
