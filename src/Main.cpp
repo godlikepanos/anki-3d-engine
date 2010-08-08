@@ -274,7 +274,7 @@ void init()
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;
-	partEmitter->init(NULL);
+	partEmitter->init("asdf");
 	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
 
 	// crate

@@ -152,6 +152,8 @@ void Scanner::initAsciiMap()
 
 	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] = AC_WHITESPACE;
 	asciiLookupTable['\n'] = AC_ERROR; // newline is unacceptable char
+
+	asciiLookupTable['@'] = asciiLookupTable['`'] = asciiLookupTable['$'] = AC_ACCEPTABLE_IN_COMMENTS;
 	                   
 	asciiLookupTable['\"']         = AC_DOUBLEQUOTE;
 	asciiLookupTable['\'']         = AC_QUOTE;
@@ -207,7 +209,7 @@ char Scanner::getNextChar()
 	}
 	else if(lookupAscii(*pchar) == AC_ERROR)
 	{
-		ERROR("Unacceptable char 0x" << int(*pchar));
+		SERROR("Unacceptable char '" << *pchar << "' 0x" << int(*pchar));
 	}
 
 	return *pchar;

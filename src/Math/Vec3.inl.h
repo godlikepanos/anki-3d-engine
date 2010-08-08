@@ -34,7 +34,7 @@ inline Vec3::Vec3(float f)
 	: x(f), y(f), z(f)
 {}
 
-// constructor [vec3]
+// constructor [Vec3]
 inline Vec3::Vec3(const Vec3& b)
 	: x(b.x), y(b.y), z(b.z)
 {}
@@ -132,76 +132,76 @@ inline bool Vec3::operator !=(const Vec3& b) const
 	return (isZero(x-b.x) && isZero(y-b.y) && isZero(z-b.z)) ? false : true;
 }
 
-// vec3 + float
+// Vec3 + float
 inline Vec3 Vec3::operator +(float f) const
 {
 	return ME + Vec3(f);
 }
 
-// float + vec3
+// float + Vec3
 inline Vec3 operator +(float f, const Vec3& v)
 {
 	return v+f;
 }
 
-// vec3 += float
+// Vec3 += float
 inline Vec3& Vec3::operator +=(float f)
 {
 	ME += Vec3(f);
 	return ME;
 }
 
-// vec3 - float
+// Vec3 - float
 inline Vec3 Vec3::operator -(float f) const
 {
 	return ME - Vec3(f);
 }
 
-// float - vec3
+// float - Vec3
 inline Vec3 operator -(float f, const Vec3& v)
 {
 	return Vec3(f-v.x, f-v.y, f-v.z);
 }
 
-// vec3 -= float
+// Vec3 -= float
 inline Vec3& Vec3::operator -=(float f)
 {
 	ME -= Vec3(f);
 	return ME;
 }
 
-// vec3 * float
+// Vec3 * float
 inline Vec3 Vec3::operator *(float f) const
 {
 	return ME * Vec3(f);
 }
 
-// float * vec3
+// float * Vec3
 inline Vec3 operator *(float f, const Vec3& v)
 {
 	return v*f;
 }
 
-// vec3 *= float
+// Vec3 *= float
 inline Vec3& Vec3::operator *=(float f)
 {
 	ME *= Vec3(f);
 	return ME;
 }
 
-// vec3 / float
+// Vec3 / float
 inline Vec3 Vec3::operator /(float f) const
 {
 	return ME / Vec3(f);
 }
 
-// float / vec3
+// float / Vec3
 inline Vec3 operator /(float f, const Vec3& v)
 {
 	return Vec3(f/v.x, f/v.y, f/v.z);
 }
 
-// vec3 /= float
+// Vec3 /= float
 inline Vec3& Vec3::operator /=(float f)
 {
 	ME /= Vec3(f);
