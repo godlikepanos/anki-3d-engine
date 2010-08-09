@@ -2282,7 +2282,9 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Resources/Mesh.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h ../../src/Scene//Light.h \
  ../../src/Resources/LightProps.h \
- ../../src/Scene/Controllers/Controller.h
+ ../../src/Scene/Controllers/Controller.h \
+ ../../src/Scene//ParticleEmitter.h ../../src/Scene//GhostNode.h \
+ ../../src/Physics/PhyCommon.h ../../src/Resources/ParticleEmitterProps.h
 	@echo Compiling ../../src/Scene//Scene.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Scene.cpp -o Scene.o
 

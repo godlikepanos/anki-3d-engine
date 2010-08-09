@@ -35,6 +35,28 @@ void ParticleEmitter::init(const char* filename)
 	ParticleEmitterPropsStruct& me = *this;
 	ParticleEmitterPropsStruct& other = *particleEmitterProps.get();
 	me = other;
+
+	// create the particles
+	btCollisionShape* colShape = new btSphereShape(0.5);
+	btTransform startTransform;
+	startTransform.setIdentity();
+
+	particles.resize(maxNumOfParticles);
+	for(uint i = 0; i < maxNumOfParticles; i++)
+	{
+		particles[i] = new Particle;
+		float mass = particleMass + randFloat(particleMassMargin) * 2.0 - particleMassMargin;
+
+		/*btVector3 origin = startTransform.getOrigin();
+		 origin.setX( origin.getX() + 0.6*2.0);
+		 startTransform.setOrigin(origin);*/
+
+		btRigidBody* body = physics->createNewRigidBody(mass, startTransform, colShape, Physics::CG_PARTICLE, Physics::CG_ALL
+		    ^ Physics::CG_PARTICLE);
+		body->forceActivationState(DISABLE_SIMULATION);
+		//body->setActivationState(ISLAND_SLEEPING);
+		particles[i]->body = body;
+	}
 }
 
 
@@ -80,6 +102,8 @@ void ParticleEmitter::update()
 		{
 			Particle& p = particles[i];
 			if(p.timeOfDeath > 0.0) continue; // its alive so skip it
+
+			INFO("Reiniting " << i);
 
 			// life
 			if(particleLifeMargin != 0.0)
