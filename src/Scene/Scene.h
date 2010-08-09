@@ -12,6 +12,7 @@ class Camera;
 class MeshNode;
 class SkelNode;
 class Controller;
+class ParticleEmitter;
 
 
 /**
@@ -57,6 +58,7 @@ class Scene
 		Container<MeshNode>   meshNodes;
 		Container<SkelNode>   skelNodes;
 		Container<Controller> controllers;
+		Container<ParticleEmitter> particleEmitters;
 		Skybox                skybox; // ToDo to be removed
 
 		// The funcs
