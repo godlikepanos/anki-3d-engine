@@ -29,17 +29,19 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 				void render();
 		};
 
-		// the changeable vars
+	public:
+		ParticleEmitter();
+		void render();
+		void init(const char* filename);
+		void deinit() {}
+		void updateWorldStuff();
+
+	private:
 		ptr_vector<Particle> particles;
 		float timeOfPrevUpdate;
 		float timeOfPrevEmittion;
 		RsrcPtr<ParticleEmitterProps> particleEmitterProps;
 
-		// funcs
-		ParticleEmitter();
-		void render();
-		void init(const char* filename);
-		void deinit() {}
 		void update();
 };
 

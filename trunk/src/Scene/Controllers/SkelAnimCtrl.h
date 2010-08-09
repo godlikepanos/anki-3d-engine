@@ -1,5 +1,5 @@
-#ifndef _SKEL_ANIM_CTRL_H_
-#define _SKEL_ANIM_CTRL_H_
+#ifndef SKEL_ANIM_CTRL_H
+#define SKEL_ANIM_CTRL_H
 
 #include "Common.h"
 #include "Vec.h"

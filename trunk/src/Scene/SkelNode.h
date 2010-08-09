@@ -1,5 +1,5 @@
-#ifndef _SKEL_NODE_H_
-#define _SKEL_NODE_H_
+#ifndef SKEL_NODE_H
+#define SKEL_NODE_H
 
 #include "Common.h"
 #include "SceneNode.h"

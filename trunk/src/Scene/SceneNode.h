@@ -15,12 +15,8 @@ class Controller;
 /// Scene node
 class SceneNode
 {
-	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform); ///< The transformation in local space
-	PROPERTY_RW(Transform, worldTransform, setWorldTransform, getWorldTransform); ///< The transformation in world space (local combined with parent transformation)
-
-	// data
 	public:
-		enum Type
+		enum NodeType
 		{
 			NT_GHOST,
 			NT_LIGHT,
@@ -31,33 +27,19 @@ class SceneNode
 			NT_PARTICLE_EMITTER
 		};
 
-		/*Vec3  translationLspace;
-		Mat3  rotationLspace;
-		float scaleLspace;
+	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform); ///< The transformation in local space
+	PROPERTY_RW(Transform, worldTransform, setWorldTransform, getWorldTransform); ///< The transformation in world space (local combined with parent transformation)
 
-		Vec3  translationWspace;
-		Mat3  rotationWspace;
-		float scaleWspace;
-
-		Mat4 transformationWspace;*/
-
+	public:
 		SceneNode* parent;
 		Vec<SceneNode*> childs;
-
-		Type type;
-
+		NodeType type;
 		bvolume_t* bvolumeLspace;
 		bvolume_t* bvolumeWspace;
-
 		bool isCompound;
-
-	// funcs
-	private:
-		void commonConstructorCode(); ///< Cause we cannot call constructor from other constructor
 		
-	public:
-		SceneNode(Type type_): type(type_) { commonConstructorCode(); }
-		SceneNode(Type type_, SceneNode* parent): type(type_) { commonConstructorCode(); parent->addChild(this); }
+		SceneNode(NodeType type_);
+		SceneNode(NodeType type_, SceneNode* parent);
 		virtual ~SceneNode();
 		virtual void render() = 0;
 		virtual void init(const char*) = 0; ///< init using a script
@@ -72,7 +54,25 @@ class SceneNode
 		void moveLocalZ(float distance);
 		void addChild(SceneNode* node);
 		void removeChild(SceneNode* node);
+
+	private:
+		void commonConstructorCode(); ///< Cause we cannot call constructor from other constructor
 };
+
+
+inline SceneNode::SceneNode(NodeType type_):
+	type(type_)
+{
+	commonConstructorCode();
+}
+
+
+inline SceneNode::SceneNode(NodeType type_, SceneNode* parent):
+	type(type_)
+{
+	commonConstructorCode();
+	parent->addChild(this);
+}
 
 
 #endif
