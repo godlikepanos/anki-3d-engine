@@ -39,11 +39,24 @@ void ParticleEmitter::init(const char* filename)
 
 
 //======================================================================================================================
+// updateWorldStuff                                                                                                    =
+//======================================================================================================================
+void ParticleEmitter::updateWorldStuff()
+{
+	updateWorldTransform();
+	update();
+}
+
+
+//======================================================================================================================
 // update                                                                                                              =
 //======================================================================================================================
 void ParticleEmitter::update()
 {
-	float crntTime = SDL_GetTicks() / 1000.0;
+	float crntTime = app->getTicks() / 1000.0;
+
+	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
+	bool identRot = (worldTransform.getRotation() == Mat3::getIdentity()) ? true : false;
 
 	// deactivate the dead particles
 	for(uint i=0; i<particles.size(); i++)
@@ -102,7 +115,10 @@ void ParticleEmitter::update()
 					forceDir = forceDirection;
 				}
 				forceDir.normalize();
-				forceDir = worldTransform.getRotation() * forceDir; // the forceDir depends on the particle emitter rotation
+
+				if(!identRot)
+					forceDir = worldTransform.getRotation() * forceDir; // the forceDir depends on the particle emitter rotation
+
 				Vec3 force;
 
 				if(forceMagnitudeMargin != 0.0)
@@ -144,7 +160,12 @@ void ParticleEmitter::update()
 			{
 				pos = startingPos;
 			}
-			pos.transform(worldTransform);
+
+			if(identRot)
+				pos += worldTransform.getOrigin();
+			else
+				pos.transform(worldTransform);
+
 			btTransform trf;
 			trf.setIdentity();
 			trf.setOrigin(toBt(pos));
@@ -152,7 +173,8 @@ void ParticleEmitter::update()
 
 			// do the rest
 			++partNum;
-			if(partNum >= particlesPerEmittion) break;
+			if(partNum >= particlesPerEmittion)
+				break;
 		} // end for all particles
 
 		timeOfPrevEmittion = crntTime;
