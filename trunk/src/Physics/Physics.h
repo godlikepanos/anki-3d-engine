@@ -1,5 +1,5 @@
-#ifndef _PHYWORLD_H_
-#define _PHYWORLD_H_
+#ifndef PHYSICS_H
+#define PHYSICS_H
 
 #include "Common.h"
 #include "PhyCommon.h"
@@ -12,6 +12,18 @@
  */
 class Physics
 {
+	public:
+		/**
+		 * Collision groups
+		 */
+		enum CollisionGroup
+		{
+			CG_NOTHING = 0,
+			CG_MAP = 1,
+			CG_PARTICLE = 2,
+			CG_ALL = CG_MAP | CG_PARTICLE
+		};
+
 	PROPERTY_R(btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld)
 	PROPERTY_R(float, defaultContactProcessingThreshold, getDefaultContactProcessingThreshold)
 
@@ -21,17 +33,6 @@ class Physics
 		btDbvtBroadphase* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
 		DebugDrawer* debugDrawer;
-
-		/**
-		 * Collision groups
-		 */
-		enum
-		{
-			CG_NOTHING = 0,
-			CG_MAP = 1,
-			CG_PARTICLE = 2,
-			CG_ALL = CG_MAP | CG_PARTICLE
-		};
 
 		Physics();
 
@@ -48,6 +49,11 @@ class Physics
 		 */
 		btRigidBody* createNewRigidBody(float mass, const Transform& startTransform, btCollisionShape* shape,
 		                                SceneNode* node, int group = -1, int mask = -1);
+
+		/**
+		 * Removes the body from the world, deletes its motion state and deletes it
+		 */
+		void deleteRigidBody(btRigidBody* body);
 };
 
 #endif
