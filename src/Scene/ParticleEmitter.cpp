@@ -38,24 +38,21 @@ void ParticleEmitter::init(const char* filename)
 
 	// create the particles
 	btCollisionShape* colShape = new btSphereShape(0.5);
-	btTransform startTransform;
+	Transform startTransform;
 	startTransform.setIdentity();
 
-	particles.resize(maxNumOfParticles);
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		particles[i] = new Particle;
-		float mass = particleMass + randFloat(particleMassMargin) * 2.0 - particleMassMargin;
+		particles.push_back(new Particle);
+		Particle* particle = &particles.back();
+		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
 
-		/*btVector3 origin = startTransform.getOrigin();
-		 origin.setX( origin.getX() + 0.6*2.0);
-		 startTransform.setOrigin(origin);*/
-
-		btRigidBody* body = physics->createNewRigidBody(mass, startTransform, colShape, Physics::CG_PARTICLE, Physics::CG_ALL
-		    ^ Physics::CG_PARTICLE);
+		btRigidBody* body = app->getScene()->getPhysics()->createNewRigidBody(mass, startTransform, colShape, particle,
+		                                                                      Physics::CG_PARTICLE,
+		                                                                      Physics::CG_ALL ^ Physics::CG_PARTICLE);
 		body->forceActivationState(DISABLE_SIMULATION);
-		//body->setActivationState(ISLAND_SLEEPING);
-		particles[i]->body = body;
+
+		particle->body = body;
 	}
 }
 
@@ -78,7 +75,7 @@ void ParticleEmitter::update()
 	float crntTime = app->getTicks() / 1000.0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
-	bool identRot = (worldTransform.getRotation() == Mat3::getIdentity()) ? true : false;
+	bool identRot = worldTransform.getRotation() == Mat3::getIdentity();
 
 	// deactivate the dead particles
 	for(uint i=0; i<particles.size(); i++)

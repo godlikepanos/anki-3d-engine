@@ -20,6 +20,7 @@ Physics::Physics():
 	dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 }
 
+
 //======================================================================================================================
 // createNewRigidBody                                                                                                  =
 //======================================================================================================================
@@ -35,12 +36,14 @@ btRigidBody* Physics::createNewRigidBody(float mass, const Transform& startTrans
 	if(isDynamic)
 		shape->calculateLocalInertia(mass,localInertia);
 
-
-	MotionState* myMotionState = new MotionState(toBt(startTransform), *node);
-
-	btRigidBody::btRigidBodyConstructionInfo cInfo(mass, myMotionState, shape, localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo(mass, NULL, shape, localInertia);
 
 	btRigidBody* body = new btRigidBody(cInfo);
+
+	MotionState* myMotionState = new MotionState(toBt(startTransform), *node/*, body*/);
+
+	body->setMotionState(myMotionState);
+
 	body->setContactProcessingThreshold(defaultContactProcessingThreshold);
 
 	if(mask==-1 || group==-1)
@@ -51,3 +54,38 @@ btRigidBody* Physics::createNewRigidBody(float mass, const Transform& startTrans
 	return body;
 }
 
+
+//======================================================================================================================
+// deleteRigidBody                                                                                                     =
+//======================================================================================================================
+void Physics::deleteRigidBody(btRigidBody* body)
+{
+	/*// find the body
+	btRigidBody* body1 = NULL;
+	btCollisionObject* obj;
+	int i;
+	for(i=0; i<dynamicsWorld->getNumCollisionObjects(); i++)
+	{
+		obj = dynamicsWorld->getCollisionObjectArray()[i];
+		body1 = btRigidBody::upcast(obj);
+
+		if(body1 == body)
+			break;
+	}
+
+	// check
+	if(body1 == NULL)
+	{
+		ERROR("Cannot find body 0x" << hex << body);
+		return;
+	}
+
+	// remove it from world
+	dynamicsWorld->removeCollisionObject(obj);
+
+	// delete motion state
+	if (body && body->getMotionState())
+	{
+		delete body->getMotionState();
+	}*/
+}
