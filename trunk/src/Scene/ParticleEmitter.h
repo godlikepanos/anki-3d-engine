@@ -6,8 +6,8 @@
 #include "SceneNode.h"
 #include "MeshNode.h"
 #include "GhostNode.h"
-#include "PhyCommon.h"
 #include "ParticleEmitterProps.h"
+#include "RigidBody.h"
 
 
 /**
@@ -23,7 +23,7 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		{
 			public:
 				float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
-				btRigidBody* body;
+				RigidBody* body;
 
 				Particle();
 				void render();

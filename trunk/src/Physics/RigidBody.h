@@ -1,35 +1,43 @@
 #ifndef MY_RIGIDBODY_H // Watch the naming cause Bullet uses the same
 #define MY_RIGIDBODY_H
 
+#include <memory>
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
 #include "Common.h"
-#include "Object.h"
 #include "Math.h"
 
 
 class SceneNode;
+class MotionState;
 
 
 /**
  * Wrapper for rigid body
  */
-class RigidBody: public btRigidBody, public Object
+class RigidBody: public btRigidBody
 {
+	private:
+		auto_ptr<MotionState> motionState; ///< Keep it here as well for garbage collection
+
 	public:
 		/**
-		 *
+		 * Create and register
 		 * @param mass
-		 * @param startTransform
+		 * @param startTransform Initial pos
 		 * @param shape
 		 * @param node
-		 * @param group
-		 * @param mask
-		 * @param parent
-		 * @return
+		 * @param group -1 if not used
+		 * @param mask -1 if not used
+		 * @param parent Object stuff
 		 */
 		RigidBody(float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node,
-		          int group = -1, int mask = -1, Object* parent = NULL);
+		          int group = -1, int mask = -1);
+
+		/**
+		 * Unregister it
+		 */
+		~RigidBody();
 };
 
 

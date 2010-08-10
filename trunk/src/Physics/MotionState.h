@@ -4,16 +4,15 @@
 #include "Common.h"
 #include "PhyCommon.h"
 #include "SceneNode.h"
-#include "Object.h"
 
 
 /**
  * A custom motion state
  */
-class MotionState: public btMotionState, public Object
+class MotionState: public btMotionState
 {
 	public:
-		MotionState(const btTransform& initialTransform, SceneNode& node_, Object* parent = NULL);
+		MotionState(const btTransform& initialTransform, SceneNode& node_);
 
 		~MotionState() {}
 
@@ -33,8 +32,7 @@ class MotionState: public btMotionState, public Object
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline MotionState::MotionState(const btTransform& initialTransform, SceneNode& node_, Object* parent):
-	Object(parent),
+inline MotionState::MotionState(const btTransform& initialTransform, SceneNode& node_):
 	worldTransform(initialTransform),
 	node(node_)
 {}
@@ -60,8 +58,6 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 	node.setLocalTransform(Transform(toAnki(worldTrans)));
 	node.getLocalTransform().setScale(originalScale);
 }
-
-
 
 
 #endif

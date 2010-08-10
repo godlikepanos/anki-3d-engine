@@ -265,12 +265,12 @@ void init()
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 	// cave map
-	for(int i=1; i<21; i++)
+	/*for(int i=1; i<21; i++)
 	{
 		MeshNode* node = new MeshNode();
 		node->init(("maps/cave/rock." + lexical_cast<string>(i) + ".mesh").c_str());
 		node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
-	}
+	}*/
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;
