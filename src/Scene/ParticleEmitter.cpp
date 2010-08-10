@@ -47,9 +47,8 @@ void ParticleEmitter::init(const char* filename)
 		Particle* particle = &particles.back();
 		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
 
-		btRigidBody* body = app->getScene()->getPhysics()->createNewRigidBody(mass, startTransform, colShape, particle,
-		                                                                      Physics::CG_PARTICLE,
-		                                                                      Physics::CG_ALL ^ Physics::CG_PARTICLE);
+		RigidBody* body = new RigidBody(mass, startTransform, colShape, particle, Physics::CG_PARTICLE,
+		                                Physics::CG_ALL ^ Physics::CG_PARTICLE); ///@todo add parent
 		body->forceActivationState(DISABLE_SIMULATION);
 
 		particle->body = body;
