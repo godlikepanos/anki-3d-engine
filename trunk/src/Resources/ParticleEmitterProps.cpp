@@ -2,7 +2,7 @@
 #include "ParticleEmitterProps.h"
 
 
-static const char* errMsg = "Incorrect value ";
+static const char* errMsg = "Incorrect or missing value ";
 
 
 //======================================================================================================================
@@ -21,6 +21,7 @@ ParticleEmitterPropsStruct::ParticleEmitterPropsStruct():
 	gravityMargin(0.0),
 	startingPos(0.0),
 	startingPosMargin(0.0),
+	size(0.0),
 	usingWorldGrav(true),
 	hasForce(false)
 {}
@@ -66,6 +67,7 @@ bool ParticleEmitterProps::load(const char* filename)
 
 	startingPos = Vec3(0.0, 1.0, 0.0);
 	startingPosMargin = Vec3(0.0, 0.0, 0.0);
+	size = 0.5;
 	maxNumOfParticles = 50;
 	emittionPeriod = 0.05;
 	particlesPerEmittion = 2;
@@ -79,7 +81,7 @@ bool ParticleEmitterProps::load(const char* filename)
 	else
 		hasForce = true;
 
-	usingWorldGrav = M::isZero(gravity.getLength()) ? true : false;
+	usingWorldGrav = M::isZero(gravity.getLength());
 
 
 	// sanity checks
@@ -95,6 +97,29 @@ bool ParticleEmitterProps::load(const char* filename)
 		return false;
 	}
 
+	if(size <= 0.0)
+	{
+		ERROR(errMsg << "size");
+		return false;
+	}
+
+	if(maxNumOfParticles < 1)
+	{
+		ERROR(errMsg << "maxNumOfParticles");
+		return false;
+	}
+
+	if(emittionPeriod <= 0.0)
+	{
+		ERROR(errMsg << "emittionPeriod");
+		return false;
+	}
+
+	if(particlesPerEmittion < 1)
+	{
+		ERROR(errMsg << "particlesPerEmittion");
+		return false;
+	}
 
 	return true;
 }

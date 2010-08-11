@@ -17,19 +17,15 @@ class MotionState;
  */
 class RigidBody: public btRigidBody
 {
-	private:
-		auto_ptr<MotionState> motionState; ///< Keep it here as well for garbage collection
-
 	public:
 		/**
-		 * Create and register
-		 * @param mass
+		 * Init and register
+		 * @param mass S/E
 		 * @param startTransform Initial pos
-		 * @param shape
-		 * @param node
+		 * @param shape Collision shape
+		 * @param node SceneNode to move
 		 * @param group -1 if not used
 		 * @param mask -1 if not used
-		 * @param parent Object stuff
 		 */
 		RigidBody(float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node,
 		          int group = -1, int mask = -1);
@@ -38,6 +34,9 @@ class RigidBody: public btRigidBody
 		 * Unregister it
 		 */
 		~RigidBody();
+
+	private:
+		auto_ptr<MotionState> motionState; ///< Keep it here as well for garbage collection
 };
 
 

@@ -20,7 +20,7 @@ class ParticleEmitterPropsStruct
 		float particleLife; ///< Required and > 0.0
 		float particleLifeMargin;
 
-		Vec3 forceDirection;
+		Vec3 forceDirection; ///< Not-required, any value, If not set only the gravity applies
 		Vec3 forceDirectionMargin;
 		float forceMagnitude; ///< Default 0.0
 		float forceMagnitudeMargin;
@@ -28,11 +28,13 @@ class ParticleEmitterPropsStruct
 		float particleMass; ///< Required and > 0.0
 		float particleMassMargin;
 
-		Vec3 gravity; ///< If not set then it uses the world's default
+		Vec3 gravity; ///< Not-required, any value. If not set then it uses the world's default
 		Vec3 gravityMargin;
 
 		Vec3 startingPos; ///< If not set the default is zero
 		Vec3 startingPosMargin;
+
+		float size; ///< The size of the collision shape. Required and > 0.0
 		/**@}*/
 
 		/**
@@ -40,7 +42,7 @@ class ParticleEmitterPropsStruct
 		 */
 		/**@{*/
 		uint maxNumOfParticles; ///< The size of the particles vector. Required
-		float emittionPeriod; ///< How often the emitter emits new particles. In ms. Required
+		float emittionPeriod; ///< How often the emitter emits new particles. In secs. Required
 		uint particlesPerEmittion; ///< How many particles are emitted every emittion. Required
 		/**@}*/
 
