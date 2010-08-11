@@ -1,6 +1,7 @@
-#ifndef _SCENE_H_
-#define _SCENE_H_
+#ifndef SCENE_H
+#define SCENE_H
 
+#include <memory>
 #include "Common.h"
 #include "skybox.h"
 #include "Physics.h"
@@ -22,27 +23,7 @@ class Scene
 {
 	PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
 	PROPERTY_RW(Vec3, sunPos, setSunPos, getSunPos)
-	PROPERTY_RW(Physics*, phyWorld, setPhysics, getPhysics) ///< Connection with bullet
-
-	private:
-		/**
-		 * @brief Adds a node in a container
-		 */
-		template<typename ContainerType, typename Type> void putBackNode(ContainerType& container, Type* x)
-		{
-			DEBUG_ERR(std::find(container.begin(), container.end(), x) != container.end());
-			container.push_back(x);
-		}
-
-		/**
-		 * @brief Removes a node from a container
-		 */
-		template<typename ContainerType, typename Type> void eraseNode(ContainerType& container, Type* x)
-		{
-			typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
-			DEBUG_ERR(it == container.end());
-			container.erase(it);
-		}
+	PROPERTY_R(auto_ptr<Physics>, phyWorld, getPhysics) ///< Connection with bullet
 
 	public:
 		/**
@@ -71,6 +52,26 @@ class Scene
 
 		void updateAllWorldStuff();
 		void updateAllControllers();
+
+	private:
+		/**
+		 * @brief Adds a node in a container
+		 */
+		template<typename ContainerType, typename Type> void putBackNode(ContainerType& container, Type* x)
+		{
+			DEBUG_ERR(std::find(container.begin(), container.end(), x) != container.end());
+			container.push_back(x);
+		}
+
+		/**
+		 * @brief Removes a node from a container
+		 */
+		template<typename ContainerType, typename Type> void eraseNode(ContainerType& container, Type* x)
+		{
+			typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
+			DEBUG_ERR(it == container.end());
+			container.erase(it);
+		}
 };
 
 #endif

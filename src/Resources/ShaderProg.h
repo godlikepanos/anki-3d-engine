@@ -90,7 +90,7 @@ class ShaderProg: public Resource
 	//====================================================================================================================
 	public:
 		ShaderProg();
-		virtual ~ShaderProg() {}
+		~ShaderProg() {}
 
 		/**
 		 * Accessor to glId

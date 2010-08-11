@@ -15,9 +15,11 @@ RigidBody::RigidBody(float mass, const Transform& startTransform, btCollisionSha
 
 	bool isDynamic = (mass != 0.0);
 
-	btVector3 localInertia(0.0, 0.0, 0.0);
+	btVector3 localInertia;
 	if(isDynamic)
-		shape->calculateLocalInertia(mass,localInertia);
+		shape->calculateLocalInertia(mass, localInertia);
+	else
+		localInertia = btVector3(0.0, 0.0, 0.0);
 
 	motionState.reset(new MotionState(toBt(startTransform), *node));
 
@@ -35,7 +37,7 @@ RigidBody::RigidBody(float mass, const Transform& startTransform, btCollisionSha
 
 
 //======================================================================================================================
-// RigidBody                                                                                                           =
+// Destructor                                                                                                          =
 //======================================================================================================================
 RigidBody::~RigidBody()
 {

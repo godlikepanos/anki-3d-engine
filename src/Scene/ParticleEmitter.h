@@ -23,7 +23,7 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		{
 			public:
 				float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
-				RigidBody* body;
+				auto_ptr<RigidBody> body;
 
 				Particle();
 				void render();
@@ -37,10 +37,11 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		void updateWorldStuff();
 
 	private:
+		auto_ptr<btCollisionShape> collShape;
 		ptr_vector<Particle> particles;
 		float timeOfPrevUpdate;
 		float timeOfPrevEmittion;
-		RsrcPtr<ParticleEmitterProps> particleEmitterProps;
+		RsrcPtr<ParticleEmitterProps> particleEmitterProps; ///< The resource
 
 		void update();
 };

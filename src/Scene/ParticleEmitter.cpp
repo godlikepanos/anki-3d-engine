@@ -37,21 +37,22 @@ void ParticleEmitter::init(const char* filename)
 	me = other;
 
 	// create the particles
-	btCollisionShape* colShape = new btSphereShape(0.5);
+	collShape.reset(new btSphereShape(size));
 	Transform startTransform;
 	startTransform.setIdentity();
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		particles.push_back(new Particle);
-		Particle* particle = &particles.back();
+		Particle* particle = new Particle;
+		particles.push_back(particle);
+
 		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
 
-		RigidBody* body = new RigidBody(mass, startTransform, colShape, particle, Physics::CG_PARTICLE,
+		RigidBody* body = new RigidBody(mass, startTransform, collShape.get(), particle, Physics::CG_PARTICLE,
 		                                Physics::CG_ALL ^ Physics::CG_PARTICLE); ///@todo add parent
 		body->forceActivationState(DISABLE_SIMULATION);
 
-		particle->body = body;
+		particle->body.reset(body);
 	}
 }
 
