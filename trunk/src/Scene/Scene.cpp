@@ -30,22 +30,22 @@ void Scene::registerNode(SceneNode* node)
 	
 	switch(node->type)
 	{
-		case SceneNode::NT_LIGHT:
+		case SceneNode::SNT_LIGHT:
 			putBackNode(lights, static_cast<Light*>(node));
 			break;
-		case SceneNode::NT_CAMERA:
+		case SceneNode::SNT_CAMERA:
 			putBackNode(cameras, static_cast<Camera*>(node));
 			break;
-		case SceneNode::NT_MESH:
+		case SceneNode::SNT_MESH:
 			putBackNode(meshNodes, static_cast<MeshNode*>(node));
 			break;
-		case SceneNode::NT_SKELETON:
+		case SceneNode::SNT_SKELETON:
 			putBackNode(skelNodes, static_cast<SkelNode*>(node));
 			break;
-		case SceneNode::NT_SKEL_MODEL:
+		case SceneNode::SNT_SKEL_MODEL:
 			// ToDo
 			break;
-		case SceneNode::NT_PARTICLE_EMITTER:
+		case SceneNode::SNT_PARTICLE_EMITTER:
 			putBackNode(particleEmitters, static_cast<ParticleEmitter*>(node));
 			break;
 	};
@@ -61,22 +61,22 @@ void Scene::unregisterNode(SceneNode* node)
 	
 	switch(node->type)
 	{
-		case SceneNode::NT_LIGHT:
+		case SceneNode::SNT_LIGHT:
 			eraseNode(lights, static_cast<Light*>(node));
 			break;
-		case SceneNode::NT_CAMERA:
+		case SceneNode::SNT_CAMERA:
 			eraseNode(cameras, static_cast<Camera*>(node));
 			break;
-		case SceneNode::NT_MESH:
+		case SceneNode::SNT_MESH:
 			eraseNode(meshNodes, static_cast<MeshNode*>(node));
 			break;
-		case SceneNode::NT_SKELETON:
+		case SceneNode::SNT_SKELETON:
 			eraseNode(skelNodes, static_cast<SkelNode*>(node));
 			break;
-		case SceneNode::NT_SKEL_MODEL:
+		case SceneNode::SNT_SKEL_MODEL:
 			// ToDo
 			break;
-		case SceneNode::NT_PARTICLE_EMITTER:
+		case SceneNode::SNT_PARTICLE_EMITTER:
 			eraseNode(particleEmitters, static_cast<ParticleEmitter*>(node));
 			break;
 	};
@@ -121,7 +121,8 @@ void Scene::updateAllWorldStuff()
 	{
 		SceneNode* obj = queue[head++]; // queue pop
 
-		obj->updateWorldStuff();
+		obj->updateWorldTransform();
+		obj->update();
 		++num;
 
 		for(uint i=0; i<obj->childs.size(); i++)

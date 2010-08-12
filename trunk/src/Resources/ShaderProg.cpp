@@ -271,13 +271,15 @@ bool ShaderProg::load(const char* filename)
 
 	// 1) create and compile the shaders
 	string preprocSource = stdSourceCode;
-	uint vertGlId = createAndCompileShader(pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
-	                                       GL_VERTEX_SHADER);
-	if(vertGlId == 0) return false;
+	vertShaderGlId = createAndCompileShader(pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
+	                                        GL_VERTEX_SHADER);
+	if(vertShaderGlId == 0)
+		return false;
 
-	uint fragGlId = createAndCompileShader(pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
-	                                       GL_FRAGMENT_SHADER);
-	if(fragGlId == 0) return false;
+	fragShaderGlId = createAndCompileShader(pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
+	                                        GL_FRAGMENT_SHADER);
+	if(fragShaderGlId == 0)
+		return false;
 
 	// 2) create program and attach shaders
 	glId = glCreateProgram();
@@ -286,8 +288,8 @@ bool ShaderProg::load(const char* filename)
 		ERROR("glCreateProgram failed");
 		return false;
 	}
-	glAttachShader(glId, vertGlId);
-	glAttachShader(glId, fragGlId);
+	glAttachShader(glId, vertShaderGlId);
+	glAttachShader(glId, fragShaderGlId);
 
 	// 3) bind the custom attrib locs
 	if(!bindCustomAttribLocs(pars)) return false;

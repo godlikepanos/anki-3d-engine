@@ -54,17 +54,14 @@ class Camera: public SceneNode
 
 	public:
 		// constructors and destuctors
-		Camera(float fovx_, float fovy_, float znear_, float zfar_): SceneNode(NT_CAMERA), fovX(fovx_), fovY(fovy_), zNear(znear_), zFar(zfar_)
-		{
-			calcLSpaceFrustumPlanes();
-			updateWSpaceFrustumPlanes();
-			calcProjectionMatrix();
-		}
-		Camera(const Camera& c): SceneNode(NT_CAMERA) { memcpy(this, &c, sizeof(Camera)); }
-		Camera(): SceneNode(NT_CAMERA) {}
+		Camera(float fovx_, float fovy_, float znear_, float zfar_);
+		Camera(): SceneNode(SNT_CAMERA) {}
 		~Camera() {}
 
-		// Sets & Gets
+		/**
+		 * @name Accessors
+		 */
+		/**@{*/
 		void setFovX (float fovx_)  { fovX=fovx_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
 		void setFovY (float fovy_)  { fovY=fovy_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
 		void setZNear(float znear_) { zNear=znear_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
@@ -77,18 +74,19 @@ class Camera: public SceneNode
 		const Mat4& getProjectionMatrix() const { return projectionMat; }
 		const Mat4& getViewMatrix() const { return viewMat; }
 		const Mat4& getInvProjectionMatrix() const { return invProjectionMat; } ///< See the declaration of invProjectionMat for info
+		/**@}*/
 
 		// misc
 		void lookAtPoint(const Vec3& point);
-		void updateWorldStuff();
+		void updateTrf();
 		void render();
 		void init(const char*) {}
-		void deinit() {}
 
 		// frustum stuff
 
 		/**
-		 * Check if the given camera is inside the frustum clipping planes. This is used mainly to test if the projected lights are visible
+		 * Check if the given camera is inside the frustum clipping planes. This is used mainly to test if the projected
+		 * lights are visible
 		 */
 		bool insideFrustum(const bvolume_t& vol) const;
 
@@ -97,6 +95,19 @@ class Camera: public SceneNode
 		 */
 		bool insideFrustum(const Camera& cam) const;
 };
+
+
+inline Camera::Camera(float fovx_, float fovy_, float znear_, float zfar_):
+	SceneNode(SNT_CAMERA),
+	fovX(fovx_),
+	fovY(fovy_),
+	zNear(znear_),
+	zFar(zfar_)
+{
+	calcLSpaceFrustumPlanes();
+	updateWSpaceFrustumPlanes();
+	calcProjectionMatrix();
+}
 
 
 #endif

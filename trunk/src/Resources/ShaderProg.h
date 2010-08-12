@@ -138,7 +138,7 @@ class ShaderProg: public Resource
 		bool attribVarExists(const char* varName) const;
 
 		/**
-		 * @todo
+		 * Used by @ref Material and @ref Renderer to create custom shaders in the cache
 		 * @param sProgFPathName The file pathname of the shader prog
 		 * @param preAppendedSrcCode The source code we want to write on top of the shader prog
 		 * @param newFNamePrefix The prefix of the new shader prog

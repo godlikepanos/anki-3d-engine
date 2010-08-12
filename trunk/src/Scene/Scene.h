@@ -55,23 +55,33 @@ class Scene
 
 	private:
 		/**
-		 * @brief Adds a node in a container
+		 * Adds a node in a container
 		 */
-		template<typename ContainerType, typename Type> void putBackNode(ContainerType& container, Type* x)
-		{
-			DEBUG_ERR(std::find(container.begin(), container.end(), x) != container.end());
-			container.push_back(x);
-		}
+		template<typename ContainerType, typename Type>
+		void putBackNode(ContainerType& container, Type* x);
 
 		/**
-		 * @brief Removes a node from a container
+		 * Removes a node from a container
 		 */
-		template<typename ContainerType, typename Type> void eraseNode(ContainerType& container, Type* x)
-		{
-			typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
-			DEBUG_ERR(it == container.end());
-			container.erase(it);
-		}
+		template<typename ContainerType, typename Type>
+		void eraseNode(ContainerType& container, Type* x);
 };
+
+
+template<typename ContainerType, typename Type>
+inline void Scene::putBackNode(ContainerType& container, Type* x)
+{
+	DEBUG_ERR(std::find(container.begin(), container.end(), x) != container.end());
+	container.push_back(x);
+}
+
+
+template<typename ContainerType, typename Type>
+inline void Scene::eraseNode(ContainerType& container, Type* x)
+{
+	typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
+	DEBUG_ERR(it == container.end());
+	container.erase(it);
+}
 
 #endif

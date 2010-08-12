@@ -33,8 +33,6 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		ParticleEmitter();
 		void render();
 		void init(const char* filename);
-		void deinit() {}
-		void updateWorldStuff();
 
 	private:
 		auto_ptr<btCollisionShape> collShape;
@@ -53,7 +51,7 @@ inline ParticleEmitter::Particle::Particle():
 
 
 inline ParticleEmitter::ParticleEmitter():
-	SceneNode(NT_PARTICLE_EMITTER)
+	SceneNode(SNT_PARTICLE_EMITTER)
 {}
 
 

@@ -51,8 +51,35 @@ Material::StdVarInfo Material::stdUniVarInfos[SUV_NUM] =
 
 
 //======================================================================================================================
+// Stuff for custom material stage shader prgs                                                                         =
+//======================================================================================================================
+
+struct MsSwitch
+{
+	const char* switchName;
+	const char prefix;
+};
+
+/**
+ * See the docs for info about the switches
+ */
+static MsSwitch msSwitches [] =
+{
+	{"DIFFUSE_MAPPING", 'd'},
+	{"NORMAL_MAPPING", 'n'},
+	{"SPECULAR_MAPPING", 's'},
+	{"PARALLAX_MAPPING", 'p'},
+	{"ENVIRONMENT_MAPPING", 'e'},
+	{"ALPHA_TESTING", 'a'},
+	{"HARDWARE_SKINNING", 'h'},
+	{NULL, NULL}
+};
+
+
+//======================================================================================================================
 // Blending stuff                                                                                                      =
 //======================================================================================================================
+
 struct BlendParam
 {
 	int glEnum;
@@ -100,7 +127,7 @@ bool Material::load(const char* filename)
 
 	const Scanner::Token* token;
 
-	do
+	while(true)
 	{
 		token = &scanner.getNextToken();
 
@@ -108,15 +135,84 @@ bool Material::load(const char* filename)
 		if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SHADER_PROG"))
 		{
 			if(shaderProg.get())
-				ERROR("Shader program already loaded");
-
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_STRING)
 			{
-				PARSE_ERR_EXPECTED("string");
+				ERROR("Shader program already loaded");
 				return false;
 			}
-			shaderProg.loadRsrc(token->getValue().getString());
+
+			token = &scanner.getNextToken();
+			string shaderFilename;
+			if(token->getCode() == Scanner::TC_STRING)
+			{
+				shaderFilename = token->getValue().getString();
+			}
+			// build custom shader
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getString(), "buildMsSProg"))
+			{
+				// paren
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_LPAREN)
+				{
+					PARSE_ERR_EXPECTED("(");
+					return false;
+				}
+
+				// shader prog
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_STRING)
+				{
+					PARSE_ERR_EXPECTED("string");
+					return false;
+				}
+				string sProgFilename = token->getValue().getString();
+
+				// get the switches
+				string source;
+				string prefix;
+				while(true)
+				{
+					token = &scanner.getNextToken();
+
+					if(token->getCode() == Scanner::TC_RPAREN)
+						break;
+
+					if(token->getCode() != Scanner::TC_IDENTIFIER)
+					{
+						PARSE_ERR_EXPECTED("identifier");
+						return false;
+					}
+
+					// check if acceptable value
+					MsSwitch* mss = msSwitches;
+					while(mss->prefix != NULL)
+					{
+						if(!strcmp(mss->switchName, token->getString()))
+							break;
+
+						++mss;
+					}
+
+					if(mss->prefix == NULL)
+					{
+						PARSE_ERR("Incorrect switch " << token->getString());
+						return false;
+					}
+
+					source += string("#define ") + token->getString() + "\n";
+					prefix.push_back(mss->prefix);
+				} // end get the switches
+
+				std::sort(prefix.begin(), prefix.end());
+
+				shaderFilename = ShaderProg::createSrcCodeToCache(sProgFilename.c_str(), source.c_str(), prefix.c_str());
+			}
+			else
+			{
+				PARSE_ERR_EXPECTED("string or buildMsSProg");
+				return false;
+			}
+
+			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		//** DEPTH_MATERIAL **
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DEPTH_PASS_MATERIAL"))
@@ -318,7 +414,7 @@ bool Material::load(const char* filename)
 			return false;
 		}
 
-	}while(true);
+	}
 
 	return initStdShaderVars();
 }

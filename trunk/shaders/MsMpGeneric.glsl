@@ -5,14 +5,14 @@
  * in all the buffers
  */
  
-#if defined( _DIFFUSE_MAPPING_ ) || defined( _NORMAL_MAPPING_ ) || defined( _SPECULAR_MAPPING_ )
+#if defined( DIFFUSE_MAPPING ) || defined( NORMAL_MAPPING ) || defined( SPECULAR_MAPPING )
 	#define NEEDS_TEX_MAPPING 1
 #else
 	#define NEEDS_TEX_MAPPING 0
 #endif
 
 
-#if defined( _NORMAL_MAPPING_ ) || defined( _PARALLAX_MAPPING_ )
+#if defined( NORMAL_MAPPING ) || defined( PARALLAX_MAPPING )
 	#define NEEDS_TANGENT 1
 #else
 	#define NEEDS_TANGENT 0
@@ -54,7 +54,7 @@ void main()
 	// calculate the vert pos, normal and tangent
 
 	// if we have hardware skinning then:
-	#if defined( _HARDWARE_SKINNING_ )
+	#if defined( HARDWARE_SKINNING )
 		mat3 _rot;
 		vec3 _tsl;
 
@@ -93,7 +93,7 @@ void main()
 	#endif
 
 
-	#if defined( _ENVIRONMENT_MAPPING_ ) || defined( _PARALLAX_MAPPING_ )
+	#if defined( ENVIRONMENT_MAPPING ) || defined( PARALLAX_MAPPING )
 		vertPosEyeSpace_v2f = vec3( modelViewMat * vec4(position, 1.0) );
 	#endif
 }
@@ -141,7 +141,7 @@ void main()
 	// Paralax Mapping Calculations                                                                                      =
 	// The code below reads the height map, makes some calculations and returns a new texCoords                          =
 	//====================================================================================================================
-	#if defined( _PARALLAX_MAPPING_ )
+	#if defined( PARALLAX_MAPPING )
 		/*const float _scale = 0.04;
 		const float _bias = scale * 0.4;
 
@@ -183,9 +183,9 @@ void main()
 	// Get the color from the diffuse map and discard if grass                                                           =
 	//====================================================================================================================
 	vec3 _diff_color;
-	#if defined( _DIFFUSE_MAPPING_ )
+	#if defined( DIFFUSE_MAPPING )
 
-		#if defined( _GRASS_LIKE_ )
+		#if defined( ALPHA_TESTING )
 			vec4 _diff_color4 = texture2D( diffuseMap, superTexCoords );
 			if( _diff_color4.a == 0.0 ) discard;
 			_diff_color = _diff_color4.rgb;
@@ -203,7 +203,7 @@ void main()
 	// Normal Calculations                                                                                               =
 	// Either use a normap map and make some calculations or use the vertex normal                                       =
 	//====================================================================================================================
-	#if defined( _NORMAL_MAPPING_ )
+	#if defined( NORMAL_MAPPING )
 		vec3 _n = normalize( normal_v2f );
 		vec3 _t = normalize( tangent_v2f );
 		vec3 _b = cross(_n, _t) * w_v2f;
@@ -224,7 +224,7 @@ void main()
 	//====================================================================================================================
 
 	// if SEM enabled make some aditional calculations using the vertPosEyeSpace_v2f, environmentMap and the newNormal
-	#if defined( _ENVIRONMENT_MAPPING_ )
+	#if defined( ENVIRONMENT_MAPPING )
 		vec3 _u = normalize( vertPosEyeSpace_v2f );
 		
 		/**
@@ -247,7 +247,7 @@ void main()
 	//====================================================================================================================
 
 	// has specular map
-	#if defined( _SPECULAR_MAPPING_ )
+	#if defined( SPECULAR_MAPPING )
 		vec4 _specular = vec4(texture2D( specularMap, superTexCoords ).rgb * specularCol, shininess);
 	// no specular map
 	#else
@@ -262,7 +262,7 @@ void main()
 	gl_FragData[1].rgb = _diff_color;
 	gl_FragData[2] = _specular;
 
-	/*#if defined( _HARDWARE_SKINNING_ )
+	/*#if defined( HARDWARE_SKINNING )
 		gl_FragData[1] = gl_Color;
 	#endif*/
 }

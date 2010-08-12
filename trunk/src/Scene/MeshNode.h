@@ -27,12 +27,11 @@ class MeshNode: public SceneNode
 		virtual void render() { render(material.get()); }
 		virtual void renderDepth() { render(material->dpMtl.get()); }
 		void init(const char* filename);
-		void deinit();
 };
 
 
 inline MeshNode::MeshNode():
-	SceneNode(NT_MESH),
+	SceneNode(SNT_MESH),
 	meshSkelCtrl(NULL)
 {}
 

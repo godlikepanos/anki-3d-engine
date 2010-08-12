@@ -258,14 +258,14 @@ void Renderer::Dbg::run()
 		SceneNode* node = app->getScene()->nodes[i];
 		if
 		(
-			(node->type == SceneNode::NT_LIGHT && showLightsEnabled) ||
-			(node->type == SceneNode::NT_CAMERA && showCamerasEnabled) ||
-			node->type == SceneNode::NT_PARTICLE_EMITTER
+			(node->type == SceneNode::SNT_LIGHT && showLightsEnabled) ||
+			(node->type == SceneNode::SNT_CAMERA && showCamerasEnabled) ||
+			node->type == SceneNode::SNT_PARTICLE_EMITTER
 		)
 		{
 			node->render();
 		}
-		else if(app->getScene()->nodes[i]->type == SceneNode::NT_SKELETON && showSkeletonsEnabled)
+		else if(app->getScene()->nodes[i]->type == SceneNode::SNT_SKELETON && showSkeletonsEnabled)
 		{
 			SkelNode* skelNode = static_cast<SkelNode*>(node);
 			glDisable(GL_DEPTH_TEST);
