@@ -10,7 +10,7 @@
 // SkelNode                                                                                                         =
 //======================================================================================================================
 SkelNode::SkelNode(): 
-	SceneNode(NT_SKELETON),
+	SceneNode(SNT_SKELETON),
 	skelAnimCtrl(NULL)
 {
 }
@@ -23,15 +23,6 @@ void SkelNode::init(const char* filename)
 {
 	skeleton.loadRsrc(filename);
 	skelAnimCtrl = new SkelAnimCtrl(this);
-}
-
-
-//======================================================================================================================
-// deinit                                                                                                              =
-//======================================================================================================================
-void SkelNode::deinit()
-{
-	//RsrcMngr::skeletons.unload(skeleton);
 }
 
 

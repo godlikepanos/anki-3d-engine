@@ -17,16 +17,18 @@ class Controller;
  */
 class SceneNode
 {
+	friend class Scene;
+
 	public:
-		enum Type
+		enum SceneNodeType
 		{
-			NT_GHOST,
-			NT_LIGHT,
-			NT_CAMERA,
-			NT_MESH,
-			NT_SKELETON,
-			NT_SKEL_MODEL,
-			NT_PARTICLE_EMITTER
+			SNT_GHOST,
+			SNT_LIGHT,
+			SNT_CAMERA,
+			SNT_MESH,
+			SNT_SKELETON,
+			SNT_SKEL_MODEL,
+			SNT_PARTICLE_EMITTER
 		};
 
 	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform); ///< The transformation in local space
@@ -35,22 +37,29 @@ class SceneNode
 	public:
 		SceneNode* parent;
 		Vec<SceneNode*> childs;
-		Type type;
+		SceneNodeType type;
 		bvolume_t* bvolumeLspace;
 		bvolume_t* bvolumeWspace;
 		bool isCompound;
 		
-		SceneNode(Type type_);
-		SceneNode(Type type_, SceneNode* parent);
+		SceneNode(SceneNodeType type_);
+		SceneNode(SceneNodeType type_, SceneNode* parent);
 		virtual ~SceneNode();
 		virtual void render() = 0;
 		virtual void init(const char*) = 0; ///< init using a script
-		virtual void deinit() = 0;
-		virtual void updateWorldStuff() { updateWorldTransform(); } ///< This update happens only when the object gets moved. Override it if you want more
-		void updateWorldTransform();
 
 		/**
-		 * @name Local transform
+		 * @name Updates
+		 * Two separate updates happen every loop. The update happens anyway and the updateTrf only when the node is being
+		 * moved
+		 */
+		/**@{*/
+		virtual void update() {};
+		virtual void updateTrf() {};
+		/**@}*/
+
+		/**
+		 * @name Mess with the local transform
 		 */
 		/**@{*/
 		void rotateLocalX(float angDegrees);
@@ -66,17 +75,18 @@ class SceneNode
 
 	private:
 		void commonConstructorCode(); ///< Cause we cannot call constructor from other constructor
+		void updateWorldTransform(); ///< This update happens only when the object gets moved
 };
 
 
-inline SceneNode::SceneNode(Type type_):
+inline SceneNode::SceneNode(SceneNodeType type_):
 	type(type_)
 {
 	commonConstructorCode();
 }
 
 
-inline SceneNode::SceneNode(Type type_, SceneNode* parent):
+inline SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
 	type(type_)
 {
 	commonConstructorCode();

@@ -1,5 +1,5 @@
-#ifndef RESOURCECONTAINER_H
-#define RESOURCECONTAINER_H
+#ifndef RSRC_CONTAINER_H
+#define RSRC_CONTAINER_H
 
 #include "Common.h"
 #include "Vec.h"

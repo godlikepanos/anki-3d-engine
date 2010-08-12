@@ -39,7 +39,6 @@ class Light: public SceneNode
 		RsrcPtr<LightProps> lightProps; ///< Later we will add a controller
 	
 		Light(Type type_);
-		void deinit();
 		void render();
 };
 
@@ -74,7 +73,7 @@ class SpotLight: public Light
 //======================================================================================================================
 
 inline Light::Light(Type type_):
-	SceneNode(NT_LIGHT),
+	SceneNode(SNT_LIGHT),
 	type(type_)
 {}
 

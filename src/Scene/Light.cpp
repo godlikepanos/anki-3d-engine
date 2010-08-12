@@ -23,20 +23,12 @@ void SpotLight::init(const char* filename)
 	lightProps.loadRsrc(filename);
 	camera.setAll(lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance());
 	castsShadow = lightProps->castsShadow();
+
 	if(lightProps->getTexture() == NULL)
 	{
 		ERROR("Light properties \"" << lightProps->getRsrcName() << "\" do not have a texture");
 		return;
 	}
-}
-
-
-//======================================================================================================================
-// deinit                                                                                                              =
-//======================================================================================================================
-void Light::deinit()
-{
-	//RsrcMngr::lightProps.unload(lightProps);
 }
 
 

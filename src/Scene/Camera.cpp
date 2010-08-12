@@ -205,11 +205,10 @@ void Camera::updateViewMatrix()
 
 
 //======================================================================================================================
-// updateWorldStuff                                                                                                    =
+// updateTrf                                                                                                           =
 //======================================================================================================================
-void Camera::updateWorldStuff()
+void Camera::updateTrf()
 {
-	updateWorldTransform();
 	updateViewMatrix();
 	updateWSpaceFrustumPlanes();
 }

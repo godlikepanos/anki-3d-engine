@@ -424,6 +424,10 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
+	RsrcPtr<Material> mtl;
+	mtl.loadRsrc("/users/panoscc/Desktop/temp.txt");
+	return 0;
+
 	init();
 
 	mainLoop();
