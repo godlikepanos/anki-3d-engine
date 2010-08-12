@@ -292,7 +292,7 @@ void init()
 	app->getScene()->skybox.load(skybox_fnames);
 
 
-	initPhysics();
+	//initPhysics();
 
 	INFO("Engine initialization ends (" << App::getTicks()-ticks << ")");
 }
@@ -423,10 +423,6 @@ ostream& operator<<(ostream& s, const Vec3& v)
 int main(int argc, char* argv[])
 {
 	new App(argc, argv);
-
-	RsrcPtr<Material> mtl;
-	mtl.loadRsrc("/users/panoscc/Desktop/temp.txt");
-	return 0;
 
 	init();
 

@@ -122,6 +122,7 @@ void Scene::updateAllWorldStuff()
 		SceneNode* obj = queue[head++]; // queue pop
 
 		obj->updateWorldTransform();
+		obj->updateTrf();
 		obj->update();
 		++num;
 
