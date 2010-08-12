@@ -90,7 +90,7 @@ void ParticleEmitter::update()
 			Particle& p = particles[i];
 			if(p.timeOfDeath > 0.0) continue; // its alive so skip it
 
-			INFO("Reiniting " << i);
+			//INFO("Reiniting " << i);
 
 			// life
 			if(particleLifeMargin != 0.0)

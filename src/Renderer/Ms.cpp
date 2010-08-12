@@ -73,7 +73,7 @@ void Renderer::Ms::run()
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
-	r.setProjectionViewMatrices(cam);
+	r.setProjectionViewMatrices(cam); ///< @todo remove this
 	Renderer::setViewport(0, 0, r.width, r.height);
 
 	//glEnable(GL_DEPTH_TEST);
