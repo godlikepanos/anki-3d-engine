@@ -173,7 +173,7 @@ void Renderer::Dbg::drawSphere(float radius, const Transform& trf, const Vec4& c
 //======================================================================================================================
 // renderCube                                                                                                          =
 //======================================================================================================================
-void Renderer::Dbg::renderCube(float size)
+void Renderer::Dbg::drawCube(float size)
 {
 	Vec3 maxPos = Vec3(0.5 * size);
 	Vec3 minPos = Vec3(-0.5 * size);

@@ -374,7 +374,7 @@ class Renderer
 				Dbg(Renderer& r_);
 				void renderGrid();
 				static void drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity = 8);
-				static void renderCube(float size = 1.0);
+				static void drawCube(float size = 1.0);
 
 				static void setColor(const Vec4& color);
 				static void setModelMat(const Mat4& modelMat);
