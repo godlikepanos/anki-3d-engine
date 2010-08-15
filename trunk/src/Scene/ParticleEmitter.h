@@ -40,6 +40,7 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		float timeOfPrevUpdate;
 		float timeOfPrevEmittion;
 		RsrcPtr<ParticleEmitterProps> particleEmitterProps; ///< The resource
+		static btTransform startingTrf;
 
 		void update();
 };

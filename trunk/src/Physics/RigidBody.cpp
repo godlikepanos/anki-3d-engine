@@ -21,7 +21,7 @@ RigidBody::RigidBody(float mass, const Transform& startTransform, btCollisionSha
 	else
 		localInertia = btVector3(0.0, 0.0, 0.0);
 
-	motionState.reset(new MotionState(toBt(startTransform), *node));
+	motionState.reset(new MotionState(toBt(startTransform), node));
 
 	btRigidBody::btRigidBodyConstructionInfo cInfo(mass, motionState.get(), shape, localInertia);
 

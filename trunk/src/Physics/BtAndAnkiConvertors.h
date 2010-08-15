@@ -28,12 +28,13 @@ inline Quat toAnki(const btQuaternion& q)
 }
 
 
-inline Mat4 toAnki(const btTransform& t)
+inline Transform toAnki(const btTransform& t)
 {
-	Mat4 m;
-	t.getOpenGLMatrix(&m[0]);
-	m.transpose();
-	return m;
+	Transform out;
+	out.setRotation(toAnki(t.getBasis()));
+	out.setOrigin(toAnki(t.getOrigin()));
+	out.setScale(1.0);
+	return out;
 }
 
 

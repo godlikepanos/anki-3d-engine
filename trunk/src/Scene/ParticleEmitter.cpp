@@ -6,6 +6,9 @@
 #include "Util.h"
 
 
+btTransform ParticleEmitter::startingTrf(toBt(Mat3::getIdentity()), btVector3(10000000.0, 10000000.0, 10000000.0));
+
+
 //======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
@@ -38,8 +41,6 @@ void ParticleEmitter::init(const char* filename)
 
 	// create the particles
 	collShape.reset(new btSphereShape(size));
-	Transform startTransform;
-	startTransform.setIdentity();
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
@@ -48,7 +49,7 @@ void ParticleEmitter::init(const char* filename)
 
 		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
 
-		RigidBody* body = new RigidBody(mass, startTransform, collShape.get(), particle, Physics::CG_PARTICLE,
+		RigidBody* body = new RigidBody(mass, toAnki(startingTrf), collShape.get(), particle, Physics::CG_PARTICLE,
 		                                Physics::CG_ALL ^ Physics::CG_PARTICLE); ///@todo add parent
 		body->forceActivationState(DISABLE_SIMULATION);
 
@@ -77,6 +78,7 @@ void ParticleEmitter::update()
 		{
 			//cout << "Killing " << i << " " << p.timeOfDeath << endl;
 			p.body->setActivationState(DISABLE_SIMULATION);
+			p.body->setWorldTransform(startingTrf);
 			p.timeOfDeath = -1.0;
 		}
 	}

@@ -68,123 +68,37 @@ void initPhysics()
 
 	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
 
-	btTransform groundTransform;
+	Transform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(0,-50, 0));
+	groundTransform.setOrigin(Vec3(0,-50, 0));
 
-	//We can also use DemoApplication::localCreateRigidBody, but for clarity it is provided here:
-	{
-		btScalar mass(0.);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			groundShape->calculateLocalInertia(mass,localInertia);
-
-		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
-
-		//add the body to the dynamics world
-		dynamicsWorld->addRigidBody(body);
-	}
+	new RigidBody(0.0, groundTransform, groundShape, NULL, Physics::CG_MAP, Physics::CG_ALL);
 
 
 	{
-		//create a few dynamic rigidbodies
-		// Re-using the same collision is better for memory usage and performance
-
 		btCollisionShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
-		//btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-
-		// Create Dynamic Objects
-		btTransform startTransform;
-		startTransform.setIdentity();
-
-		btScalar	mass(1.0);
-
-		btVector3 localInertia(0, 0, 0);
-		colShape->calculateLocalInertia(mass,localInertia);
 
 		float start_x = START_POS_X - ARRAY_SIZE_X/2;
 		float start_y = START_POS_Y;
 		float start_z = START_POS_Z - ARRAY_SIZE_Z/2;
 
-		btRigidBody* body;
 		for (int k=0;k<ARRAY_SIZE_Y;k++)
 		{
 			for (int i=0;i<ARRAY_SIZE_X;i++)
 			{
 				for(int j = 0;j<ARRAY_SIZE_Z;j++)
 				{
-					startTransform.setOrigin(SCALING*btVector3(
-										btScalar(2.0*i + start_x),
-										btScalar(20+2.0*k + start_y),
-										btScalar(2.0*j + start_z)));
-
-
 					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 					MeshNode* crate = new MeshNode;
 					crate->init("models/crate0/crate0.mesh");
 					crate->getLocalTransform().setScale(1.11);
 
 					Transform trf(SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0);
-					body = app->getScene()->getPhysics()->createNewRigidBody(mass, trf, colShape, crate);
-
-					//MotionState* myMotionState = new MotionState(startTransform, *crate);
-					//btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
-					//btRigidBody* body = new btRigidBody(rbInfo);
-					//body = new btRigidBody(rbInfo);
-
-					//if(i=2) body->setActivationState(ISLAND_SLEEPING);
-
-					//body->setActivationState(ISLAND_SLEEPING);
-
-
-					//dynamicsWorld->addRigidBody(body);
-					//body->setGravity(toBt(Vec3(Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0), Util::randRange(-1.0, 1.0))));
-					//boxes.push_back(body);
+					new RigidBody(1.0, trf, colShape, crate, Physics::CG_MAP, Physics::CG_ALL);
 				}
 			}
 		}
 	}
-
-
-	//dynamicsWorld->setDebugDrawer(&debugDrawer);
-
-
-
-	/*for(int i=0; i<app->getScene()->getPhysics()->getDynamicsWorld()->getCollisionObjectArray().size();i++)
-	{
-		btCollisionObject* colObj = app->getScene()->getPhysics()->getDynamicsWorld()->getCollisionObjectArray()[i];
-		btRigidBody* body = btRigidBody::upcast(colObj);
-		if(body)
-		{
-			if(body->getMotionState())
-			{
-				MotionState* myMotionState = (MotionState*)body->getMotionState();
-				myMotionState->m_graphicsWorldTrans = myMotionState->m_startWorldTrans;
-				body->setCenterOfMassTransform(myMotionState->m_graphicsWorldTrans);
-				colObj->setInterpolationWorldTransform(myMotionState->m_startWorldTrans);
-				colObj->forceActivationState(ACTIVE_TAG);
-				colObj->activate();
-				colObj->setDeactivationTime(0);
-				//colObj->setActivationState(WANTS_DEACTIVATION);
-			}
-			//removed cached contact points (this is not necessary if all objects have been removed from the dynamics world)
-			//m_dynamicsWorld->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(colObj->getBroadphaseHandle(),getDynamicsWorld()->getDispatcher());
-
-			btRigidBody* body = btRigidBody::upcast(colObj);
-			if (body && !body->isStaticObject())
-			{
-				btRigidBody::upcast(colObj)->setLinearVelocity(btVector3(0, 0, 0));
-				btRigidBody::upcast(colObj)->setAngularVelocity(btVector3(0, 0, 0));
-			}
-		}
-	}*/
 }
 
 
@@ -241,7 +155,7 @@ void init()
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
 	// horse
-	horse = new MeshNode();
+	/*horse = new MeshNode();
 	horse->init("meshes/horse/horse.mesh");
 	//horse->init("models/head/head.mesh");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));
@@ -250,7 +164,7 @@ void init()
 	sarge = new MeshNode();
 	sarge->init("meshes/sphere/sphere16.mesh");
 	//sarge->setLocalTransform(Vec3(0, -2.8, 1.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 1.1);
-	sarge->setLocalTransform(Transform(Vec3(0, 2.0, 2.0), Mat3::getIdentity(), 0.4));
+	sarge->setLocalTransform(Transform(Vec3(0, 2.0, 2.0), Mat3::getIdentity(), 0.4));*/
 	
 	// floor
 	floor__ = new MeshNode();
@@ -258,11 +172,11 @@ void init()
 	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.8));
 
 	// imp	
-	imp = new SkelModelNode();
+	/*imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
-	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
+	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;*/
 
 	// cave map
 	/*for(int i=1; i<21; i++)
@@ -306,6 +220,7 @@ void mainLoop()
 	INFO("Entering main loop");
 
 	int ticks = App::getTicks();
+	float secs = 0.0;
 	do
 	{
 		int ticks_ = App::getTicks();
@@ -367,12 +282,12 @@ void mainLoop()
 		//static_cast<btRigidBody*>(dynamicsWorld->getCollisionObjectArray()[1])->getMotionState()->setWorldTransform(toBt(point_lights[0]->transformationWspace));
 		//dynamicsWorld->getCollisionObjectArray()[3]->setWorldTransform(toBt(point_lights[0]->transformationWspace));
 
+		secs = app->getTicks() / 1000.0 - secs;
+
+		app->getScene()->getPhysics()->getDynamicsWorld()->stepSimulation(secs);
+
 		app->getScene()->updateAllControllers();
 		app->getScene()->updateAllWorldStuff();
-
-		//partEmitter->update();
-
-		app->getScene()->getPhysics()->getDynamicsWorld()->stepSimulation(app->timerTick);
 
 		app->getMainRenderer()->render(*app->getActiveCam());
 
@@ -392,8 +307,9 @@ void mainLoop()
 		if(I::keys[SDL_SCANCODE_F12] == 1)  app->getMainRenderer()->takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
-		sprintf(str, "capt/%06d.jpg", R::framesNum);
-		R::takeScreenshot(str);*/
+		static string scrFile = (app->getSettingsPath() / "capt" / "%06d.jpg").string();
+		sprintf(str, scrFile.c_str(), app->getMainRenderer()->getFramesNum());
+		app->getMainRenderer()->takeScreenshot(str);*/
 
 		// std stuff follow
 		app->swapBuffers();
@@ -410,12 +326,6 @@ void mainLoop()
 	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
 }
 
-
-ostream& operator<<(ostream& s, const Vec3& v)
-{
-	s << fixed << v.x << ' ' << v.y << ' ' << v.z;
-	return s;
-}
 
 //======================================================================================================================
 // main                                                                                                                =

@@ -12,7 +12,7 @@
 class MotionState: public btMotionState
 {
 	public:
-		MotionState(const btTransform& initialTransform, SceneNode& node_);
+		MotionState(const btTransform& initialTransform, SceneNode* node_);
 
 		~MotionState() {}
 
@@ -24,7 +24,7 @@ class MotionState: public btMotionState
 
 	private:
 		btTransform worldTransform;
-		SceneNode& node;
+		SceneNode* node;
 };
 
 
@@ -32,7 +32,7 @@ class MotionState: public btMotionState
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline MotionState::MotionState(const btTransform& initialTransform, SceneNode& node_):
+inline MotionState::MotionState(const btTransform& initialTransform, SceneNode* node_):
 	worldTransform(initialTransform),
 	node(node_)
 {}
@@ -52,11 +52,14 @@ inline const btTransform& MotionState::getWorldTransform() const
 
 inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 {
-	float originalScale = node.getLocalTransform().getScale();
 	worldTransform = worldTrans;
 
-	node.setLocalTransform(Transform(toAnki(worldTrans)));
-	node.getLocalTransform().setScale(originalScale);
+	if(node)
+	{
+		float originalScale = node->getLocalTransform().getScale();
+		node->setLocalTransform(Transform(toAnki(worldTrans)));
+		node->getLocalTransform().setScale(originalScale);
+	}
 }
 
 
