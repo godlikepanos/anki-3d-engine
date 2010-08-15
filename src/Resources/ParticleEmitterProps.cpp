@@ -69,7 +69,7 @@ bool ParticleEmitterProps::load(const char* filename)
 	startingPosMargin = Vec3(0.0, 0.0, 0.0);
 	size = 0.5;
 	maxNumOfParticles = 50;
-	emittionPeriod = 0.5;
+	emittionPeriod = 1.5;
 	particlesPerEmittion = 2;
 
 	// set some values

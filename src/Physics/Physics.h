@@ -35,25 +35,6 @@ class Physics
 		DebugDrawer* debugDrawer;
 
 		Physics();
-
-		/**
-		 * Creates a new rigid body and adds it to the @ref dynamicsWorld. It allocates memory so the caller is responsible
-		 * for cleaning up
-		 * @param mass The mass of the rigid body. Put zero for static unmovable objects
-		 * @param startTransform The initial position and orientation
-		 * @param shape The collision shape
-		 * @param node The scene node the body moves
-		 * @param group The group of the body. Leave it blank if there is no group
-		 * @param mask The mask of the body. Leave it blank if there is no mask
-		 * @return A new rigid body
-		 */
-		btRigidBody* createNewRigidBody(float mass, const Transform& startTransform, btCollisionShape* shape,
-		                                SceneNode* node, int group = -1, int mask = -1);
-
-		/**
-		 * Removes the body from the world, deletes its motion state and deletes it
-		 */
-		void deleteRigidBody(btRigidBody* body);
 };
 
 #endif
