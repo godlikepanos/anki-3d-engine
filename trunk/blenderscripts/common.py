@@ -3,7 +3,6 @@ import string
 import os.path
 from Blender import Mathutils
 from Blender.Mathutils import *
-from Numeric import *
 
 
 #===================================================================================================

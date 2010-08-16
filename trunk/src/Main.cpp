@@ -186,6 +186,11 @@ void init()
 		node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 	}*/
 
+	// sponza map
+	MeshNode* node = new MeshNode();
+	node->init("maps/sponza/sponza.mesh");
+	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
+
 	// particle emitter
 	partEmitter = new ParticleEmitter;
 	partEmitter->init("asdf");
