@@ -155,7 +155,7 @@ void init()
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
 	// horse
-	/*horse = new MeshNode();
+	horse = new MeshNode();
 	horse->init("meshes/horse/horse.mesh");
 	//horse->init("models/head/head.mesh");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));
@@ -164,7 +164,7 @@ void init()
 	sarge = new MeshNode();
 	sarge->init("meshes/sphere/sphere16.mesh");
 	//sarge->setLocalTransform(Vec3(0, -2.8, 1.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 1.1);
-	sarge->setLocalTransform(Transform(Vec3(0, 2.0, 2.0), Mat3::getIdentity(), 0.4));*/
+	sarge->setLocalTransform(Transform(Vec3(0, 2.0, 2.0), Mat3::getIdentity(), 0.4));
 	
 	// floor
 	floor__ = new MeshNode();
@@ -172,11 +172,11 @@ void init()
 	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.8));
 
 	// imp	
-	/*imp = new SkelModelNode();
+	imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
-	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;*/
+	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
 	// cave map
 	/*for(int i=1; i<21; i++)
