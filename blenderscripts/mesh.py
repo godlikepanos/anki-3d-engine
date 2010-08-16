@@ -1,10 +1,9 @@
 import sys
 import common
 import os
-from copy import copy
+import copy
 from Blender import Mathutils
 from Blender.Mathutils import *
-from Numeric import *
 
 
 #=======================================================================================================================
@@ -170,7 +169,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 			ankiTris[i] = Tri() # create new tri
 			
 			# for verts in the face
-			for j in [0, 1, 2]:
+			for j in [2, 1, 0]:
 				vertId = face.verts[j].index
 			
 				# vert does not exist
