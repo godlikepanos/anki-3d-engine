@@ -1,7 +1,7 @@
 import sys
 import common
 import os
-import copy
+from copy import deepcopy
 from Blender import Mathutils
 from Blender.Mathutils import *
 
@@ -169,7 +169,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 			ankiTris[i] = Tri() # create new tri
 			
 			# for verts in the face
-			for j in [2, 1, 0]:
+			for j in [0, 1, 2]:
 				vertId = face.verts[j].index
 			
 				# vert does not exist
@@ -188,7 +188,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 					while 1:
 						# if in end of the list, create new vert and link list
 						if vertId == -1:
-							ankiVerts[vertsNum] = copy.copy(ankiVerts[prevId])
+							ankiVerts[vertsNum] = deepcopy(ankiVerts[prevId])
 							ankiVerts[vertsNum].s = face.uv[j].x
 							ankiVerts[vertsNum].t = face.uv[j].y
 							ankiVerts[vertsNum].nextId = -1
