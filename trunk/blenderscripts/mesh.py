@@ -1,5 +1,4 @@
 import sys
-import common
 import os
 from copy import deepcopy
 from Blender import Mathutils
@@ -32,6 +31,17 @@ class Vert:
 		self.boneIds = [-1, -1, -1, -1]
 		self.weights = [-1.0, -1.0, -1.0, -1.0]
 		self.nextId = -1 # shows the next vertId. Is != -1 if the vert is problematic
+
+	"""def __init__(self, v):
+		self.x = v.x
+		self.y = v.y
+		self.z = v.z
+		self.s = v.s
+		self.t = v.t
+		self.bonesNum = v.bonesNum
+		self.boneIds = [v.boneIds[0], v.boneIds[1], v.boneIds[2], v.boneIds[3]]
+		self.weights = [v.weights[0], v.weights[1], v.weights[2], v.weights[3]]
+		self.nextId = v.nextId # shows the next vertId. Is != -1 if the vert is problematic"""
 
 
 #=======================================================================================================================
@@ -243,7 +253,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 		if flipYZ == 0:
 			ftxt += str(ankiVert.x) + " " + str(ankiVert.y) + " " + str(ankiVert.z) + "\n"
 		else:
-			ftxt += str(ankiVert.x) + " " + str(ankiVert.z) + " " + str(ankiVert.y) + "\n"
+			ftxt += str(ankiVert.x) + " " + str(ankiVert.z) + " " + str(-ankiVert.y) + "\n"
 		
 	# write the tris
 	ftxt += str(len(ankiTris)) + "\n"
@@ -293,5 +303,6 @@ def export(meshInit):
 	
 	print("Trying to export mesh \"" + mesh.name + "\"")
 	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
-	common.WriteFile(filename, getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, meshInit.flipYZ))
+	file = open(filename, "w")
+	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	
