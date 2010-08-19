@@ -30,9 +30,9 @@ for obj in objs:
 	
 	mi.blMesh = mesh.getBlMeshFromBlObj(obj)
 	#mi.blSkeleton = skeleton.GetSkeleton(obj)
-	mi.saveDir = "/home/godlike/src/anki/maps/cave/"
+	mi.saveDir = "/home/godlike/src/anki/maps/sponza/"
 	#mtl = GetMaterial( mi.mesh )
-	mi.mtlName = "maps/cave/cave.mtl"
+	mi.mtlName = "maps/sponza/sponza.mtl"
 	mi.flipYZ = 1
 	
 	
