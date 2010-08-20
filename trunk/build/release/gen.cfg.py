@@ -3,8 +3,9 @@ sourcePaths = ["../../src/Math/", "../../src/Util/Tokenizer/", "../../src/Misc/"
 includePaths = []
 includePaths.append("./")
 includePaths.extend(list(sourcePaths))
-includePaths.extend(["../../../bullet/src/", "../../../SDL/include", "../../../glew/include", "../../../SDL_image"])
+includePaths.extend(["../../extern/include", "../../extern/include/bullet"])
 
+#precompiledHeaders = ["../../src/Util/Common.h", "/usr/include/boost/filesystem.hpp", "/usr/include/boost/ptr_container/ptr_vector.hpp"]
 precompiledHeaders = []
 
 executableName = "anki"
@@ -17,4 +18,4 @@ precompiledHeadersFlags = defines__ + " -c -pedantic-errors -pedantic -ansi -Wal
 
 compilerFlags = precompiledHeadersFlags + " -fsingle-precision-constant"
 
-linkerFlags = "-rdynamic -L../../../SDL/build/.libs -L../../../SDL_image/.libs -L../../../glew/lib -L../../../bullet/src/BulletSoftBody -L../../../bullet/src/BulletDynamics -L../../../bullet/src/BulletCollision -L../../../bullet/src/LinearMath -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -lboost_system -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff"
+linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -lboost_system -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff"

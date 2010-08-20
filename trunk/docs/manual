@@ -28,13 +28,13 @@ Building
 AnKi build system is very Linux specific (GNU make only) at the moment. It
 also requires a few extra development libraries.
 
-To download the latest release from the SVN repository type:
+To download the latest version of AnKi from the SVN repository type:
 
 $ svn checkout http://anki-3d-engine.googlecode.com/svn/trunk/ anki
 
 
-Required libraries
-------------------
+Required external libraries
+---------------------------
 
 AnKi requires a few up to date versions of some libraries. The libraries are:
   
@@ -44,76 +44,21 @@ AnKi requires a few up to date versions of some libraries. The libraries are:
 - GLEW
 - boost
 
-So before generating makefiles and building AnKi you have to download (from
-the revision control repositories) and build some of the above libraries.
-Instructions follow. You can alternately use the script
-*download-and-build-externals.sh*
-  
-
-Bullet Physics
-~~~~~~~~~~~~~~
-
-From now on the AnKi requires the Bullet physics library. You need CMake and
-SVN installed.
-
-#) $ cd <path to anki>
-#) $ cd ..
-#) $ svn checkout http://bullet.googlecode.com/svn/trunk/ bullet
-#) $ cd bullet
-#) $ cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
-#) $ make
-
-
-SDL ver 1.3
-~~~~~~~~~~~
-
-We need SDL ver 1.3 for creating OpenGL 3.x context. You need to have the
-Mercurial and autoconf installed.
-
-#) $ cd <path to anki>
-#) $ cd ..
-#) $ hg clone http://hg.libsdl.org/SDL SDL
-#) $ cd SDL
-#) $ ./autogen.sh
-#) $ ./configure
-#) $ make
- 
-
-SDL_image
-~~~~~~~~~
-
-SDL_image automates the loading of images (png, jpeg etc). Just like SDL,
-SDL_image needs Mercurial and autoconf installed.
-
-#) $ cd <path to anki>
-#) $ cd ..
-#) $ hg clone http://hg.libsdl.org/SDL_image SDL_image
-#) $ cd SDL_image
-#) $ ./autogen.sh
-#) $ ./configure
-#) $ make
-
-
-GLEW
-~~~~
-
-The latest GLEW provides us with OpenGL 3 and 4 extensions. Needs SVN and a 
-Unix environment (for step 5).
-
-#) $ cd <path to anki>
-#) $ cd ..
-#) $ svn co https://glew.svn.sourceforge.net/svnroot/glew/trunk/glew glew
-#) $ cd glew
-#) $ make extensions
-#) $ make
-
-
-boost
-~~~~~
+Normally in order to build AnKi you have to download (from the revision control
+repositories) and build some of the above libraries. To ease the building
+process and to save you some time some of the above libraries are already backed
+and installed in the extern directory. The backed libraries are for Linux and 
+for x86-64 architecture. If you dont trust my binaries and/or you want to build
+the libs yourselves you have to download, build and install the libs in the 
+extern directory manually. The script *download-externs.sh* downloads the
+libraries (it requires SVN, mercurial, CMake, autoconf) and the *do-externs.sh*
+builds the libraries and installs them in the extern directory. Open the files
+and see how it is done.
 
 Boost is pretty big to download and build from SVN, also it doesnt need to be in
-the lattest version. The Linux distribution's version will do the trick so
-install it using the packet manager of your choice.
+the lattest version. That's why you wont find it inside the extern. The version
+provided by your Linux distribution's will do the trick so install it using the
+packet manager.
 
 In Ubuntu type: $ sudo apt-get install libboost<version>-dev-all
 
@@ -122,7 +67,7 @@ Building AnKi and optionally generating makefiles
 -------------------------------------------------
 
 Inside the build directory you can find 4 build targets containing GNU
-makefiles. If you want to build AnKi just type "make".
+makefiles. If you want to build AnKi just type "make" from inside a target.
 
 **WARNING**: Sometimes I forget to update all the targets. The debug is always 
 updated though.
@@ -260,20 +205,6 @@ class
 }
 
 inlines
-
-
-Material shader program naming
-------------------------------
-
-dnspgke:
-
-- diffuse mapping
-- normal mapping
-- specular mapping
-- parallax mapping
-- grass like
-- hardware skinning
-- environment mapping
 
 
 Naming shortcuts
