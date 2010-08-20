@@ -1,7 +1,7 @@
 #include <GL/glew.h>
 #include <sstream>
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_image.h>
 #include "App.h"
 #include "Scene.h"
 #include "MainRenderer.h"

@@ -1,7 +1,7 @@
-#ifndef _INPUT_H_
-#define _INPUT_H_
+#ifndef INPUT_H
+#define INPUT_H
 
-#include <SDL_scancode.h>
+#include <SDL/SDL_scancode.h>
 #include "Common.h"
 #include "Vec.h"
 #include "App.h"

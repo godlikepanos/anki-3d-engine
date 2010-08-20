@@ -1,4 +1,4 @@
-#include <SDL_image.h>
+#include <SDL/SDL_image.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <fstream>
