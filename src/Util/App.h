@@ -1,7 +1,7 @@
-#ifndef _APP_H_
-#define _APP_H_
+#ifndef APP_H
+#define APP_H
 
-#include <SDL.h>
+#include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
 #include "Common.h"
 
