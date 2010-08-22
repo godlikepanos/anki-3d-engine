@@ -1,6 +1,6 @@
 # sdl pkg-config source file
 
-prefix=/users/panoscc/src/SDL/install
+prefix=/home/godlike/src/SDL/install
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
