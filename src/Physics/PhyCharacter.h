@@ -1,32 +1,57 @@
-#ifndef _PHYCHARACTER_H_
-#define _PHYCHARACTER_H_
+#ifndef PHYCHARACTER_H
+#define PHYCHARACTER_H
 
 #include "Common.h"
-#include "PhyCommon.h"
+#include "Physics.h"
+
+
+class Physics;
+class btPairCachingGhostObject;
+class btConvexShape;
+class btKinematicCharacterController;
+class btGhostPairCallback;
 
 
 /**
- * @todo write docs
+ * Its basically a wrapper around bullet character
  */
 class PhyCharacter
 {
 	public:
-		btPairCachingGhostObject* ghostObject;
-		btCapsuleShape* capsule;
-		btKinematicCharacterController* character;
-
-		PhyCharacter(Physics* world, float charHeight, float charWidth, float stepHeight, float maxJumpHeight)
+		/**
+		 * Initializer class
+		 */
+		struct Initializer
 		{
-			ghostObject = new btPairCachingGhostObject();
-			world->broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-			capsule = new btCapsuleShape(charWidth, charHeight);
-			ghostObject->setCollisionShape(capsule);
-			ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
-			character = new btKinematicCharacterController(ghostObject, capsule, stepHeight);
-			character->setMaxJumpHeight(maxJumpHeight);
-		}
+			float characterHeight;
+			float characterWidth;
+			float stepHeight;
+			float jumpSpeed;
+			float maxJumpHeight;
 
+			Initializer();
+		};
 
+		PhyCharacter(Physics& physics, const Initializer& init);
+		~PhyCharacter();
+		void rotate(float angle);
+		void moveForward(float distance);
+		void jump();
+
+	private:
+		btPairCachingGhostObject* ghostObject;
+		btConvexShape* convexShape;
+		btKinematicCharacterController* character;
+		btGhostPairCallback* ghostPairCallback;
 };
+
+
+inline PhyCharacter::Initializer::Initializer():
+	characterHeight(2.0),
+	characterWidth(0.75),
+	stepHeight(1.0),
+	jumpSpeed(10.0),
+	maxJumpHeight(.0)
+{}
 
 #endif
