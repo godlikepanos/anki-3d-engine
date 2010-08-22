@@ -1,4 +1,4 @@
-prefix=/users/panoscc/src/SDL_image/install
+prefix=/home/godlike/src/SDL_image/install
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
