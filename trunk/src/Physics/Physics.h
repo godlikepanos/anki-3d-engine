@@ -12,6 +12,8 @@
  */
 class Physics
 {
+	friend class PhyCharacter;
+
 	public:
 		/**
 		 * Collision groups
