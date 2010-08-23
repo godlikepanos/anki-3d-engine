@@ -4,14 +4,18 @@
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
 #include "PhyCharacter.h"
 #include "Physics.h"
+#include "MotionState.h"
 
 
 //======================================================================================================================
 // Contructor                                                                                                          =
 //======================================================================================================================
-PhyCharacter::PhyCharacter(Physics& physics, const Initializer& init)
+PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init):
+	physics(physics_)
 {
 	ghostObject = new btPairCachingGhostObject();
+
+	motionState = new MotionState(toBt(init.startTrf), init.sceneNode);
 
 	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(physics.broadphase);
 	DEBUG_ERR(sweepBp == NULL);
@@ -23,10 +27,7 @@ PhyCharacter::PhyCharacter(Physics& physics, const Initializer& init)
 
 	ghostObject->setCollisionShape(convexShape);
 	//ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
-	btTransform trf;
-	trf.setIdentity();
-	trf.setOrigin(btVector3(0.0, 40.0, 0.0));
-	ghostObject->setWorldTransform(trf);
+	ghostObject->setWorldTransform(toBt(init.startTrf));
 
 	character = new btKinematicCharacterController(ghostObject, convexShape, init.stepHeight);
 
@@ -38,4 +39,23 @@ PhyCharacter::PhyCharacter(Physics& physics, const Initializer& init)
 																						btBroadphaseProxy::StaticFilter|btBroadphaseProxy::DefaultFilter);
 
 	physics.dynamicsWorld->addAction(character);
+
+	physics.characters.push_back(this);
+}
+
+
+//======================================================================================================================
+// Destructor                                                                                                          =
+//======================================================================================================================
+PhyCharacter::~PhyCharacter()
+{
+	physics.characters.erase(std::find(physics.characters.begin(), physics.characters.end(), this));
+	physics.dynamicsWorld->removeAction(character);
+	physics.dynamicsWorld->removeCollisionObject(ghostObject);
+
+	delete character;
+	delete convexShape;
+	delete ghostPairCallback;
+	delete ghostObject;
+	delete motionState;
 }

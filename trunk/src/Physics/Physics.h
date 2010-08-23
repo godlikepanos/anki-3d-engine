@@ -7,12 +7,15 @@
 #include "DebugDrawer.h"
 
 
+class PhyCharacter;
+
+
 /**
  * The master container for all physics related stuff.
  */
 class Physics
 {
-	friend class PhyCharacter;
+	friend class PhyCharacter; ///< For registering and unregistering
 
 	public:
 		/**
@@ -37,6 +40,11 @@ class Physics
 		DebugDrawer* debugDrawer;
 
 		Physics();
+		void update(float crntTime);
+
+	private:
+		Vec<PhyCharacter*> characters;
+		float time; ///< Time of prev update
 };
 
 #endif

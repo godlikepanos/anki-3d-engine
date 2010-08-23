@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Physics.h"
+#include "Math.h"
 
 
 class Physics;
@@ -10,6 +11,7 @@ class btPairCachingGhostObject;
 class btConvexShape;
 class btKinematicCharacterController;
 class btGhostPairCallback;
+class MotionState;
 
 
 /**
@@ -17,6 +19,8 @@ class btGhostPairCallback;
  */
 class PhyCharacter
 {
+	friend class Physics;
+
 	public:
 		/**
 		 * Initializer class
@@ -28,21 +32,25 @@ class PhyCharacter
 			float stepHeight;
 			float jumpSpeed;
 			float maxJumpHeight;
+			SceneNode* sceneNode;
+			Transform startTrf;
 
 			Initializer();
 		};
 
-		PhyCharacter(Physics& physics, const Initializer& init);
+		PhyCharacter(Physics& physics_, const Initializer& init);
 		~PhyCharacter();
 		void rotate(float angle);
 		void moveForward(float distance);
 		void jump();
 
 	private:
+		Physics& physics;
 		btPairCachingGhostObject* ghostObject;
 		btConvexShape* convexShape;
 		btKinematicCharacterController* character;
 		btGhostPairCallback* ghostPairCallback;
+		MotionState* motionState;
 };
 
 
@@ -51,7 +59,10 @@ inline PhyCharacter::Initializer::Initializer():
 	characterWidth(0.75),
 	stepHeight(1.0),
 	jumpSpeed(10.0),
-	maxJumpHeight(.0)
+	maxJumpHeight(0.0),
+	sceneNode(NULL),
+	startTrf(Transform::getIdentity())
 {}
+
 
 #endif
