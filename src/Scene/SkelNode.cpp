@@ -33,17 +33,12 @@ void SkelNode::render()
 {
 	Renderer::Dbg::setModelMat(Mat4(getWorldTransform()));
 	Renderer::Dbg::setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+	Renderer::Dbg::setModelMat(Mat4(getWorldTransform()));
 
 	Vec<Vec3> positions;
 
 	for(uint i=0; i<skeleton->bones.size(); i++)
 	{
-		positions.push_back(skelAnimCtrl->heads[i]);
-		positions.push_back(skelAnimCtrl->tails[i]);
+		Renderer::Dbg::drawLine(skelAnimCtrl->heads[i], skelAnimCtrl->tails[i], Vec4(1.0));
 	}
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &(positions[0][0]));
-	glDrawArrays(GL_TRIANGLES, 0, positions.size());
-	glDisableVertexAttribArray(0);
 }

@@ -35,7 +35,7 @@ class Physics
 	public:
 		btDefaultCollisionConfiguration* collisionConfiguration;
 		btCollisionDispatcher* dispatcher;
-		btDbvtBroadphase* broadphase;
+		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
 		DebugDrawer* debugDrawer;
 

@@ -9,7 +9,6 @@
 #include "Renderer.h"
 #include "Ui.h"
 #include "App.h"
-#include "Texture.h"
 #include "Mesh.h"
 #include "Light.h"
 #include "collision.h"
@@ -35,7 +34,7 @@
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
 #include "DebugDrawer.h"
-#include <boost/lexical_cast.hpp>
+#include "PhyCharacter.h"
 
 App* app = NULL; ///< The only global var. App constructor sets it
 
@@ -45,6 +44,7 @@ SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 ParticleEmitter* partEmitter;
+PhyCharacter* character;
 
 
 // Physics
@@ -72,10 +72,10 @@ void initPhysics()
 	groundTransform.setIdentity();
 	groundTransform.setOrigin(Vec3(0,-50, 0));
 
-	new RigidBody(0.0, groundTransform, groundShape, NULL, Physics::CG_MAP, Physics::CG_ALL);
+	new RigidBody(0.0, groundTransform, groundShape, NULL/*, Physics::CG_MAP, Physics::CG_ALL*/);
 
 
-	{
+	/*{
 		btCollisionShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
 
 		float start_x = START_POS_X - ARRAY_SIZE_X/2;
@@ -98,7 +98,7 @@ void initPhysics()
 				}
 			}
 		}
-	}
+	}*/
 }
 
 
@@ -174,7 +174,7 @@ void init()
 	// imp	
 	imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
-	imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
+	//imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
 	imp->meshNodes[0]->meshSkelCtrl->skelNode->skelAnimCtrl->step = 0.8;
 
@@ -187,14 +187,20 @@ void init()
 	}*/
 
 	// sponza map
-	MeshNode* node = new MeshNode();
-	node->init("maps/sponza/sponza.mesh");
+	/*MeshNode* node = new MeshNode();
+	node->init("maps/sponza/sponza.mesh");*/
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;
 	partEmitter->init("asdf");
 	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
+
+	// character
+	PhyCharacter::Initializer init;
+	init.sceneNode = imp;
+	init.startTrf = Transform(Vec3(0, 40, 0), Mat3::getIdentity(), 1.0);
+	character = new PhyCharacter(*app->getScene()->getPhysics(), init);
 
 	// crate
 	/*crate = new MeshNode;
@@ -211,7 +217,7 @@ void init()
 	app->getScene()->skybox.load(skybox_fnames);
 
 
-	//initPhysics();
+	initPhysics();
 
 	INFO("Engine initialization ends (" << App::getTicks()-ticks << ")");
 }
@@ -225,7 +231,6 @@ void mainLoop()
 	INFO("Entering main loop");
 
 	int ticks = App::getTicks();
-	float secs = 0.0;
 	do
 	{
 		float crntTime = App::getTicks() / 1000.0;
@@ -271,6 +276,9 @@ void mainLoop()
 		if(I::keys[SDL_SCANCODE_PAGEDOWN]) mover->getLocalTransform().getScale() -= scale ;
 
 		if(I::keys[SDL_SCANCODE_K]) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
+
+		if(I::keys[SDL_SCANCODE_I])
+			character->moveForward(0.1);
 
 
 		if(I::keys[SDL_SCANCODE_O] == 1)
