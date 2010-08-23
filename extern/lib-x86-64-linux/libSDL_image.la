@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/home/godlike/src/SDL_image/install/lib'
+libdir='/users/panoscc/src/SDL_image/install/lib'

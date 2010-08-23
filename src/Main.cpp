@@ -228,7 +228,7 @@ void mainLoop()
 	float secs = 0.0;
 	do
 	{
-		int ticks_ = App::getTicks();
+		float crntTime = App::getTicks() / 1000.0;
 		I::handleEvents();
 
 		float dist = 0.2;
@@ -284,12 +284,7 @@ void mainLoop()
 
 		mover->getLocalTransform().getRotation().reorthogonalize();
 
-		//static_cast<btRigidBody*>(dynamicsWorld->getCollisionObjectArray()[1])->getMotionState()->setWorldTransform(toBt(point_lights[0]->transformationWspace));
-		//dynamicsWorld->getCollisionObjectArray()[3]->setWorldTransform(toBt(point_lights[0]->transformationWspace));
-
-		secs = app->getTicks() / 1000.0 - secs;
-
-		app->getScene()->getPhysics()->getDynamicsWorld()->stepSimulation(secs);
+		app->getScene()->getPhysics()->update(crntTime);
 
 		app->getScene()->updateAllControllers();
 		app->getScene()->updateAllWorldStuff();
@@ -302,7 +297,7 @@ void mainLoop()
 		Ui::setColor(Vec4(1.0, 1.0, 1.0, 1.0));
 		Ui::setPos(-0.98, 0.95);
 		Ui::setFontWidth(0.03);
-		Ui::printf("frame:%d fps:%dms\n", app->getMainRenderer()->getFramesNum(), (App::getTicks()-ticks_));
+		//Ui::printf("frame:%d fps:%dms\n", app->getMainRenderer()->getFramesNum(), (App::getTicks()-ticks_));
 		//Ui::print("Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n");
 		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z));*/
