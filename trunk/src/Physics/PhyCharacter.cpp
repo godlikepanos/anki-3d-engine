@@ -59,3 +59,33 @@ PhyCharacter::~PhyCharacter()
 	delete ghostObject;
 	delete motionState;
 }
+
+
+//======================================================================================================================
+// rotate                                                                                                              =
+//======================================================================================================================
+void PhyCharacter::rotate(float angle)
+{
+	btMatrix3x3 rot = ghostObject->getWorldTransform().getBasis();
+	rot *= btMatrix3x3(btQuaternion(btVector3(0, 1, 0), angle));
+	ghostObject->getWorldTransform().setBasis(rot);
+}
+
+
+//======================================================================================================================
+// moveForward                                                                                                         =
+//======================================================================================================================
+void PhyCharacter::moveForward(float distance)
+{
+	btVector3 forward = -ghostObject->getWorldTransform().getBasis().getColumn(2);
+	character->setWalkDirection(forward * distance);
+}
+
+
+//======================================================================================================================
+// jump                                                                                                                =
+//======================================================================================================================
+void PhyCharacter::jump()
+{
+	character->jump();
+}

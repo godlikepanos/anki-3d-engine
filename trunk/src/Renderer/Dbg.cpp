@@ -28,7 +28,7 @@ Renderer::Dbg::Dbg(Renderer& r_):
 	RenderingStage(r_),
 	showAxisEnabled(false),
 	showLightsEnabled(true),
-	showSkeletonsEnabled(false),
+	showSkeletonsEnabled(true),
 	showCamerasEnabled(true)
 {
 }
