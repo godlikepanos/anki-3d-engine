@@ -1,7 +1,6 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include <boost/ptr_container/ptr_vector.hpp>
 #include "Common.h"
 #include "Vec.h"
 

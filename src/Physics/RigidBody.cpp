@@ -1,38 +1,40 @@
 #include "RigidBody.h"
-#include "App.h"
 #include "Physics.h"
 #include "Scene.h"
+#include "MotionState.h"
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-RigidBody::RigidBody(float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node,
-                     int group, int mask):
-  btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL, btVector3(0.0, 0.0, 0.0))) // dummy init
+RigidBody::RigidBody(Physics& physics_, const Initializer& init):
+  btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL, btVector3(0.0, 0.0, 0.0))), // dummy init
+  physics(physics_)
 {
-	DEBUG_ERR(shape==NULL || shape->getShapeType()==INVALID_SHAPE_PROXYTYPE);
+	DEBUG_ERR(init.shape==NULL || init.shape->getShapeType()==INVALID_SHAPE_PROXYTYPE);
 
-	bool isDynamic = (mass != 0.0);
+	bool isDynamic = (init.mass != 0.0);
 
 	btVector3 localInertia;
 	if(isDynamic)
-		shape->calculateLocalInertia(mass, localInertia);
+		init.shape->calculateLocalInertia(init.mass, localInertia);
 	else
 		localInertia = btVector3(0.0, 0.0, 0.0);
 
-	motionState.reset(new MotionState(toBt(startTransform), node));
+	motionState.reset(new MotionState(toBt(init.startTrf), init.sceneNode));
 
-	btRigidBody::btRigidBodyConstructionInfo cInfo(mass, motionState.get(), shape, localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState.get(), init.shape, localInertia);
 
 	setupRigidBody(cInfo);
 
-	setContactProcessingThreshold(app->getScene()->getPhysics()->getDefaultContactProcessingThreshold());
+	setContactProcessingThreshold(physics.defaultContactProcessingThreshold);
 
-	if(mask==-1 || group==-1)
-		app->getScene()->getPhysics()->getDynamicsWorld()->addRigidBody(this);
+	forceActivationState(ISLAND_SLEEPING);
+
+	if(init.mask==-1 || init.group==-1)
+		physics.dynamicsWorld->addRigidBody(this);
 	else
-		app->getScene()->getPhysics()->getDynamicsWorld()->addRigidBody(this, group, mask);
+		physics.dynamicsWorld->addRigidBody(this, init.group, init.mask);
 }
 
 
@@ -41,29 +43,5 @@ RigidBody::RigidBody(float mass, const Transform& startTransform, btCollisionSha
 //======================================================================================================================
 RigidBody::~RigidBody()
 {
-	// find the body
-	RigidBody* body = NULL;
-	btCollisionObject* obj;
-	int i;
-	for(i=0; i<app->getScene()->getPhysics()->getDynamicsWorld()->getNumCollisionObjects(); i++)
-	{
-		obj = app->getScene()->getPhysics()->getDynamicsWorld()->getCollisionObjectArray()[i];
-		RigidBody* body1 = static_cast<RigidBody*>(btRigidBody::upcast(obj)); // from btCollisionShapt to RigidBody
-
-		if(body1 == this)
-		{
-			body = body1;
-			break;
-		}
-	}
-
-	// check
-	if(body == NULL)
-	{
-		ERROR("Cannot find body 0x" << hex << body);
-		return;
-	}
-
-	// remove it from world
-	app->getScene()->getPhysics()->getDynamicsWorld()->removeCollisionObject(obj);
+	physics.dynamicsWorld->removeRigidBody(this);
 }

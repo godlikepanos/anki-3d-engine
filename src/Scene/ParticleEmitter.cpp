@@ -1,6 +1,8 @@
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 #include "ParticleEmitter.h"
+#include "RigidBody.h"
 #include "MainRenderer.h"
-#include "PhyCommon.h"
 #include "App.h"
 #include "Scene.h"
 #include "Util.h"
@@ -49,8 +51,15 @@ void ParticleEmitter::init(const char* filename)
 
 		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
 
-		RigidBody* body = new RigidBody(mass, toAnki(startingTrf), collShape.get(), particle, Physics::CG_PARTICLE,
-		                                Physics::CG_ALL ^ Physics::CG_PARTICLE); ///@todo add parent
+		RigidBody::Initializer init;
+		init.mass = mass;
+		init.startTrf = toAnki(startingTrf);
+		init.shape = collShape.get();
+		init.sceneNode = particle;
+		init.group = Physics::CG_PARTICLE;
+		init.mask = Physics::CG_ALL ^ Physics::CG_PARTICLE;
+		RigidBody* body = new RigidBody(*app->getScene()->getPhysics(), init);
+
 		body->forceActivationState(DISABLE_SIMULATION);
 
 		particle->body.reset(body);

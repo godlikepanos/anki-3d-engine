@@ -7,7 +7,9 @@
 #include "MeshNode.h"
 #include "GhostNode.h"
 #include "ParticleEmitterProps.h"
-#include "RigidBody.h"
+
+
+class RigidBody;
 
 
 /**
