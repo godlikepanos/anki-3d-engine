@@ -1,6 +1,11 @@
 #ifndef PHYCONVERTORS_H
 #define PHYCONVERTORS_H
 
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#include "Common.h"
+#include "Math.h"
+
 
 inline Vec3 toAnki(const btVector3& v)
 {

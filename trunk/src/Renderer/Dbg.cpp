@@ -277,7 +277,7 @@ void Renderer::Dbg::run()
 	// Physics
 	glPolygonMode(GL_FRONT, GL_LINE);
 	setModelMat(Mat4::getIdentity());
-	app->getScene()->getPhysics()->getDynamicsWorld()->debugDrawWorld();
+	app->getScene()->getPhysics()->debugDraw();
 	glPolygonMode(GL_FRONT, GL_FILL);
 }
 

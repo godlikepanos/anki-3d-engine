@@ -10,6 +10,7 @@
 
 class SceneNode;
 class MotionState;
+class Physics;
 
 
 /**
@@ -19,25 +20,43 @@ class RigidBody: public btRigidBody
 {
 	public:
 		/**
-		 * Init and register
-		 * @param mass S/E
-		 * @param startTransform Initial pos
-		 * @param shape Collision shape
-		 * @param node SceneNode to move
-		 * @param group -1 if not used
-		 * @param mask -1 if not used
+		 * Initializer class
 		 */
-		RigidBody(float mass, const Transform& startTransform, btCollisionShape* shape, SceneNode* node,
-		          int group = -1, int mask = -1);
+		struct Initializer
+		{
+			float mass;
+			Transform startTrf;
+			btCollisionShape* shape;
+			SceneNode* sceneNode;
+		  int group;
+		  int mask;
+
+		  Initializer();
+		};
 
 		/**
-		 * Unregister it
+		 * Init and register
+		 */
+		RigidBody(Physics& physics, const Initializer& init);
+
+		/**
+		 * Unregister
 		 */
 		~RigidBody();
 
 	private:
+		Physics& physics; ///< Know your father
 		auto_ptr<MotionState> motionState; ///< Keep it here as well for garbage collection
 };
 
+
+inline RigidBody::Initializer::Initializer():
+	mass(0.0),
+	startTrf(Transform::getIdentity()),
+	shape(NULL),
+	sceneNode(NULL),
+	group(-1),
+	mask(-1)
+{}
 
 #endif

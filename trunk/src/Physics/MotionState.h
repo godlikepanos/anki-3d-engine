@@ -1,8 +1,8 @@
 #ifndef MOTIONSTATE_H
 #define MOTIONSTATE_H
 
+#include <LinearMath/btMotionState.h>
 #include "Common.h"
-#include "PhyCommon.h"
 #include "SceneNode.h"
 
 

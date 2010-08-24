@@ -1,6 +1,7 @@
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include "Physics.h"
 #include "PhyCharacter.h"
-
+#include "MotionState.h"
 
 
 //======================================================================================================================

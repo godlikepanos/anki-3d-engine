@@ -26,7 +26,6 @@
 #include "SkelAnimCtrl.h"
 #include "SkelNode.h"
 #include "LightProps.h"
-#include "PhyCommon.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
 #include "PhyCharacter.h"
@@ -35,6 +34,8 @@
 #include "MainRenderer.h"
 #include "DebugDrawer.h"
 #include "PhyCharacter.h"
+#include "RigidBody.h"
+
 
 App* app = NULL; ///< The only global var. App constructor sets it
 
@@ -64,15 +65,17 @@ Vec<btRigidBody*> boxes;
 
 void initPhysics()
 {
-	btDiscreteDynamicsWorld* dynamicsWorld = app->getScene()->getPhysics()->getDynamicsWorld();
-
 	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
 
 	Transform groundTransform;
 	groundTransform.setIdentity();
 	groundTransform.setOrigin(Vec3(0,-50, 0));
 
-	new RigidBody(0.0, groundTransform, groundShape, NULL/*, Physics::CG_MAP, Physics::CG_ALL*/);
+	RigidBody::Initializer init;
+	init.mass = 0.0;
+	init.shape = groundShape;
+
+	new RigidBody(*app->getScene()->getPhysics(), init);
 
 
 	/*{

@@ -1,13 +1,15 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 #include "Common.h"
-#include "PhyCommon.h"
 #include "BtAndAnkiConvertors.h"
 #include "DebugDrawer.h"
 
 
 class PhyCharacter;
+class RigidBody;
 
 
 /**
@@ -16,6 +18,7 @@ class PhyCharacter;
 class Physics
 {
 	friend class PhyCharacter; ///< For registering and unregistering
+	friend class RigidBody;  ///< For registering and unregistering
 
 	public:
 		/**
@@ -29,22 +32,27 @@ class Physics
 			CG_ALL = CG_MAP | CG_PARTICLE
 		};
 
-	PROPERTY_R(btDiscreteDynamicsWorld*, dynamicsWorld, getDynamicsWorld)
-	PROPERTY_R(float, defaultContactProcessingThreshold, getDefaultContactProcessingThreshold)
-
 	public:
+		Physics();
+		void update(float crntTime);
+		void debugDraw();
+
+	private:
+		btDiscreteDynamicsWorld* dynamicsWorld;
 		btDefaultCollisionConfiguration* collisionConfiguration;
 		btCollisionDispatcher* dispatcher;
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
 		DebugDrawer* debugDrawer;
-
-		Physics();
-		void update(float crntTime);
-
-	private:
+		float defaultContactProcessingThreshold;
 		Vec<PhyCharacter*> characters;
 		float time; ///< Time of prev update
 };
+
+
+inline void Physics::debugDraw()
+{
+	dynamicsWorld->debugDrawWorld();
+}
 
 #endif

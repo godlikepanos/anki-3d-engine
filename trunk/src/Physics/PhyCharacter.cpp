@@ -5,6 +5,7 @@
 #include "PhyCharacter.h"
 #include "Physics.h"
 #include "MotionState.h"
+#include "RigidBody.h"
 
 
 //======================================================================================================================
