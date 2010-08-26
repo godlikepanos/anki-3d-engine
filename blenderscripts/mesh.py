@@ -142,8 +142,8 @@ def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 		while nid != -1:
 			# copy vert weight data
 			ankiVerts[nid].bonesNum = ankiVerts[cid].bonesNum
-			ankiVerts[nid].boneIds = copy.copy(ankiVerts[cid].boneIds)
-			ankiVerts[nid].weights = copy.copy(ankiVerts[cid].weights)
+			ankiVerts[nid].boneIds = deepcopy(ankiVerts[cid].boneIds)
+			ankiVerts[nid].weights = deepcopy(ankiVerts[cid].weights)
 			
 			cid = nid
 			nid = ankiVerts[nid].nextId

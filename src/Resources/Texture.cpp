@@ -82,6 +82,9 @@ bool Texture::load(const char* filename)
 			format = GL_RGBA;
 			type = GL_UNSIGNED_BYTE;
 			break;
+
+		default:
+			FATAL("See file");
 	}
 
 	glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);

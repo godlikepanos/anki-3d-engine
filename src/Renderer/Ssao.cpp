@@ -48,7 +48,6 @@ void Renderer::Pps::Ssao::init()
 	bwidth = height * bluringQuality;
 	bheight = height * bluringQuality;
 
-
 	//
 	// init FBOs
 	//
@@ -111,6 +110,7 @@ void Renderer::Pps::Ssao::init()
 
 	/// @todo fix this crap
 	// load noise map and disable temporally the texture compression and enable mipmapping
+	GL_OK();
 	bool texCompr = Texture::compressionEnabled;
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
@@ -122,7 +122,7 @@ void Renderer::Pps::Ssao::init()
 	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
 	Texture::mipmappingEnabled = mipmaping;
-
+	GL_OK();
 }
 
 
