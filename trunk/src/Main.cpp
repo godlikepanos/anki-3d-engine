@@ -74,6 +74,7 @@ void initPhysics()
 	RigidBody::Initializer init;
 	init.mass = 0.0;
 	init.shape = groundShape;
+	init.startTrf = groundTransform;
 
 	new RigidBody(*app->getScene()->getPhysics(), init);
 

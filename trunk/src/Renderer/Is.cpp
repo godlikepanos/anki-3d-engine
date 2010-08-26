@@ -140,7 +140,7 @@ void Renderer::Is::init()
 
 	// spot light w/t shadow
 	string pps = string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	             "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.resolution) + "\n";
+	                    "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.resolution) + "\n";
 	string prefix = "SpotShadowSms" + lexical_cast<string>(sm.resolution);
 	if(sm.pcfEnabled)
 	{

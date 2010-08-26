@@ -214,9 +214,9 @@ bool Image::loadTga(const char* filename)
 	}
 
 	if(bpp == 32)
-		type == T_RGBA;
+		type = T_RGBA;
 	else
-		type == T_RGB;
+		type = T_RGB;
 
 	fs.close();
 	return funcsReturn;
