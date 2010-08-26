@@ -59,20 +59,32 @@ bool Texture::load(const char* filename)
 	// leave to GL_REPEAT. There is not real performance impact
 	setRepeat(true);
 
-	int format = (img.bpp==32) ? GL_RGBA : GL_RGB;
-
-	int intFormat; // the internal format of the image
-	if(compressionEnabled)
+	// chose formats
+	GLint internalFormat;
+	GLint format;
+	GLint type;
+	switch(img.getType())
 	{
-		//int_format = (img.bpp==32) ? GL_COMPRESSED_RGBA_S3TC_DXT1 : GL_COMPRESSED_RGB_S3TC_DXT1;
-		intFormat = (img.bpp==32) ? GL_COMPRESSED_RGBA : GL_COMPRESSED_RGB;
-	}
-	else
-	{
-		intFormat = (img.bpp==32) ? GL_RGBA : GL_RGB;
+		case Image::T_R:
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
+			format = GL_RED;
+			type = GL_UNSIGNED_BYTE;
+			break;
+
+		case Image::T_RGB:
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+			format = GL_RGB;
+			type = GL_UNSIGNED_BYTE;
+			break;
+
+		case Image::T_RGBA:
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
+			format = GL_RGBA;
+			type = GL_UNSIGNED_BYTE;
+			break;
 	}
 
-	glTexImage2D(target, 0, intFormat, img.width, img.height, 0, format, GL_UNSIGNED_BYTE, &img.data[0]);
+	glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
 	if(mipmappingEnabled)
 	{
 		glGenerateMipmap(target);

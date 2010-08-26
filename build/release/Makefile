@@ -3,11 +3,11 @@
 CXX = g++
 CFLAGS = -DPLATFORM_LINUX -DREVISION=\"`svnversion -c ../..`\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -s -msse3 -O3 -mtune=core2 -ffast-math -fsingle-precision-constant
 PHFLAGS = -DPLATFORM_LINUX -DREVISION=\"`svnversion -c ../..`\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -pipe -s -msse3 -O3 -mtune=core2 -ffast-math
-LFLAGS = -rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lSDL_image -lGLU -lSDL -lboost_system -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lpng -ltiff
+LFLAGS = -rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -lboost_system -lboost_filesystem -Wl,-Bdynamic -lSDL -lGL -ljpeg -lpng -ltiff
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../src/Resources/Core/ -I../../extern/include -I../../extern/include/bullet 
-SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//Scene.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp 
-OBJECTS = Scanner.o skybox.o memory.o collision.o map.o TestHeader.o Main.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o Ui.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o LightProps.o Mesh.o ParticleEmitterProps.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//skybox.cpp ../../src/Misc//memory.cpp ../../src/Misc//collision.cpp ../../src/Misc//map.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//Scene.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Util//Input.cpp ../../src/Util//App.cpp ../../src/Util//Common.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp 
+OBJECTS = Scanner.o skybox.o memory.o collision.o map.o TestHeader.o Main.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o Ui.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o LightProps.o Mesh.o ParticleEmitterProps.o Input.o App.o Common.o Util.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o PhyCharacter.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -44,7 +44,7 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
  ../../src/Util/Vec.h ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/Physics.h ../../src/Physics/PhyCommon.h \
+ ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -173,14 +173,7 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/Physics.h \
- ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/App.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
@@ -519,7 +512,6 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Resources/Texture.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -648,14 +640,7 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/Physics.h \
- ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Misc/map.h \
  ../../src/Scene/MeshNode.h \
@@ -663,14 +648,13 @@ Main.o: ../../src//Main.cpp ../../src/Util/Common.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene/SkelModelNode.h \
  ../../src/Scene/MeshNode.h ../../src/Resources/SkelAnim.h \
  ../../src/Scene/Controllers/SkelAnimCtrl.h ../../src/Scene/SkelNode.h \
- ../../src/Resources/Skeleton.h ../../src/Physics/PhyCommon.h \
- ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
- ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Physics/RigidBody.h \
- ../../src/Physics/PhyCharacter.h \
+ ../../src/Resources/Skeleton.h ../../src/Util/Tokenizer/Parser.h \
+ ../../src/Util/Tokenizer/Scanner.h ../../src/Scene/ParticleEmitter.h \
+ ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
+ ../../src/Physics/PhyCharacter.h ../../src/Physics/Physics.h \
  ../../src/Renderer/RendererInitializer.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Physics/DebugDrawer.h
+ ../../src/Physics/DebugDrawer.h ../../src/Physics/RigidBody.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
 
@@ -757,7 +741,6 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -886,14 +869,7 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/Physics.h \
- ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src/Renderer//Ez.cpp...
@@ -951,7 +927,6 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1080,20 +1055,13 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Scene/Camera.h \
  ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/MeshNode.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Resources/Mesh.h \
+ ../../src/Util/Vec.h ../../src/Scene/MeshNode.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h
 	@echo Compiling ../../src/Renderer//Ms.cpp...
@@ -1151,7 +1119,6 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1280,19 +1247,13 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Scene/MeshNode.h \
- ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Resources/Mesh.h ../../src/Misc/collision.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
+ ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h \
  ../../src/Resources/LightProps.h
@@ -1402,7 +1363,6 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1531,14 +1491,7 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/Physics.h \
- ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src/Renderer//Renderer.cpp...
@@ -1600,7 +1553,6 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1729,14 +1681,7 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/Physics.h \
- ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src/Renderer//Is.cpp...
@@ -1850,7 +1795,6 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1979,17 +1923,11 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Scene/SkelNode.h \
- ../../src/Scene/SceneNode.h ../../src/Scene/Controllers/SkelAnimCtrl.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Scene/Controllers/SkelAnimCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/Skeleton.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h \
  ../../src/Resources/LightProps.h ../../src/Resources/Texture.h
@@ -2070,7 +2008,6 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -2199,19 +2136,13 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Scene/MeshNode.h \
- ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Resources/Mesh.h ../../src/Misc/collision.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
+ ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h
 	@echo Compiling ../../src/Renderer//Bs.cpp...
@@ -2301,7 +2232,6 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene//Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -2430,14 +2360,7 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Physics/Physics.h \
- ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/App.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
@@ -2677,31 +2600,6 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Camera.cpp -o Camera.o
 
 ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
- ../../src/Scene//ParticleEmitter.h ../../src/Util/Common.h \
- ../../src/Scene//SceneNode.h ../../src/Util/Vec.h \
- ../../src/Util/Common.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Scene//MeshNode.h \
- ../../src/Resources/Material.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Misc/collision.h \
- ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
- ../../src/Scene/Controllers/Controller.h ../../src/Scene//GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Physics/RigidBody.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -2765,7 +2663,7 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../extern/include/bullet/LinearMath/btSerializer.h \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../src/Misc/memory.h \
+ ../../src/Misc/memory.h ../../src/Util/Common.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -2794,6 +2692,8 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../extern/include/bullet/LinearMath/btQuickprof.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
@@ -2828,20 +2728,32 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../src/Scene//ParticleEmitter.h ../../src/Scene//SceneNode.h \
+ ../../src/Util/Vec.h ../../src/Util/Common.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Scene//MeshNode.h \
+ ../../src/Resources/Material.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h \
+ ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Misc/collision.h \
+ ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
+ ../../src/Scene/Controllers/Controller.h ../../src/Scene//GhostNode.h \
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Physics/RigidBody.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Physics/PhyCommon.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Physics/PhyCommon.h ../../src/Scene/SceneNode.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Renderer/Renderer.h ../../src/Util/App.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
@@ -2874,7 +2786,10 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene//Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/Physics.h
+ ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Renderer/Renderer.h
 	@echo Compiling ../../src/Scene//ParticleEmitter.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//ParticleEmitter.cpp -o ParticleEmitter.o
 
@@ -2895,7 +2810,6 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -3024,20 +2938,13 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Scene//SkelNode.h ../../src/Scene//SceneNode.h \
- ../../src/Scene/Controllers/SkelAnimCtrl.h \
+ ../../src/Util/Vec.h ../../src/Scene/Controllers/SkelAnimCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/Skeleton.h \
  ../../src/Scene//Camera.h ../../src/Misc/collision.h \
  ../../src/Scene//MeshNode.h ../../src/Resources/Material.h \
@@ -3047,7 +2954,7 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Resources/LightProps.h \
  ../../src/Scene/Controllers/Controller.h \
  ../../src/Scene//ParticleEmitter.h ../../src/Scene//GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Physics/RigidBody.h
+ ../../src/Resources/ParticleEmitterProps.h
 	@echo Compiling ../../src/Scene//Scene.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Scene.cpp -o Scene.o
 
@@ -3460,7 +3367,6 @@ App.o: ../../src/Util//App.cpp ../../extern/include/GL/glew.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -3589,14 +3495,7 @@ App.o: ../../src/Util//App.cpp ../../extern/include/GL/glew.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
@@ -3666,7 +3565,6 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../src/Physics/Physics.h \
- ../../src/Physics/PhyCommon.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -3795,14 +3693,7 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
- ../../src/Physics/Physics.h ../../src/Physics/DebugDrawer.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
@@ -3900,25 +3791,29 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
 	@echo Compiling ../../src/Scene/Controllers//SkelAnimCtrl.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers//SkelAnimCtrl.cpp -o SkelAnimCtrl.o
 
-Physics.o: ../../src/Physics//Physics.cpp ../../src/Physics//Physics.h \
- ../../src/Util/Common.h ../../src/Physics//PhyCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+Physics.o: ../../src/Physics//Physics.cpp \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
  ../../extern/include/bullet/LinearMath/btScalar.h \
  ../../extern/include/bullet/LinearMath/btMinMax.h \
  ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
  ../../extern/include/bullet/LinearMath/btQuaternion.h \
  ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
  ../../extern/include/bullet/LinearMath/btMotionState.h \
  ../../extern/include/bullet/LinearMath/btTransform.h \
  ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
  ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
  ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
  ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
  ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
@@ -3928,10 +3823,9 @@ Physics.o: ../../src/Physics//Physics.cpp ../../src/Physics//Physics.h \
  ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
  ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../src/Physics//Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
@@ -3965,7 +3859,7 @@ Physics.o: ../../src/Physics//Physics.cpp ../../src/Physics//Physics.h \
  ../../extern/include/bullet/LinearMath/btSerializer.h \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../src/Misc/memory.h \
+ ../../src/Misc/memory.h ../../src/Util/Common.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -4030,15 +3924,10 @@ Physics.o: ../../src/Physics//Physics.cpp ../../src/Physics//Physics.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Physics//BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -4046,18 +3935,17 @@ Physics.o: ../../src/Physics//Physics.cpp ../../src/Physics//Physics.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Physics//BtAndAnkiConvertors.h \
- ../../src/Physics//MotionState.h ../../src/Scene/SceneNode.h \
- ../../src/Util/Vec.h ../../src/Util/Common.h \
- ../../src/Physics//DebugDrawer.h \
+ ../../src/Math/Transform.inl.h ../../src/Physics//DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcPtr.h
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Physics//PhyCharacter.h \
+ ../../src/Physics//MotionState.h ../../src/Scene/SceneNode.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Physics//Physics.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics//Physics.cpp -o Physics.o
 
@@ -4202,94 +4090,184 @@ RigidBody.o: ../../src/Physics//RigidBody.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_loadso.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_revision.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Common.h \
- ../../src/Physics//Physics.h ../../src/Physics//PhyCommon.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../src/Math/Transform.inl.h ../../src/Physics//Physics.h \
  ../../src/Physics//BtAndAnkiConvertors.h \
- ../../src/Physics//MotionState.h ../../src/Scene/SceneNode.h \
- ../../src/Util/Vec.h ../../src/Physics//DebugDrawer.h \
+ ../../src/Physics//DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/Physics.h
+ ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
+ ../../src/Physics//MotionState.h ../../src/Scene/SceneNode.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Physics//RigidBody.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics//RigidBody.cpp -o RigidBody.o
 
+PhyCharacter.o: ../../src/Physics//PhyCharacter.cpp \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../src/Misc/memory.h ../../src/Util/Common.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
+ ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
+ ../../src/Physics//PhyCharacter.h ../../src/Physics//Physics.h \
+ ../../src/Physics//BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Physics//DebugDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Common.h ../../src/Util/Vec.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Physics//MotionState.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Physics//RigidBody.h
+	@echo Compiling ../../src/Physics//PhyCharacter.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics//PhyCharacter.cpp -o PhyCharacter.o
+
 Image.o: ../../src/Resources/Helpers//Image.cpp \
- ../../extern/include/SDL/SDL_image.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_loadso.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_revision.h \
- ../../extern/include/SDL/SDL_compat.h \
  ../../src/Resources/Helpers//Image.h ../../src/Util/Common.h \
  ../../src/Util/Vec.h ../../src/Util/Common.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h

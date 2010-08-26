@@ -18,4 +18,4 @@ precompiledHeadersFlags = defines__ + " -c -pedantic-errors -pedantic -ansi -Wal
 
 compilerFlags = precompiledHeadersFlags + " -fsingle-precision-constant"
 
-linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -lboost_system -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lSDL_image -lSDL -pg"
+linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -lboost_system -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -pg"

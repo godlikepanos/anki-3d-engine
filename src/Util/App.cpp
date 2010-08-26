@@ -219,8 +219,6 @@ void App::printAppInfo()
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
 	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch) << ", ";
-	v = IMG_Linked_Version();
-	msg << "SDL_image " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch) << ", ";
 	msg << "build date " __DATE__ << ", ";
 	msg << "rev " << REVISION;
 
