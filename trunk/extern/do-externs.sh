@@ -23,16 +23,6 @@ cd $EXTERN_DIR
 rsync -avuzb --exclude .hg ../../SDL/install/include/* include
 rsync -avuzb --exclude .hg ../../SDL/install/lib/* lib-x86-64-linux
 
-
-cd ../../SDL_image
-hg pull
-./autogen.sh
-./configure --prefix=$PWD/install
-nice make -j `cat /proc/cpuinfo | grep processor | wc -l`
-cd $EXTERN_DIR
-rsync -avuzb --exclude .hg ../../SDL_image/install/include/* include
-rsync -avuzb --exclude .hg ../../SDL_image/install/lib/* lib-x86-64-linux
-
 cd ../../glew
 svn update
 cd auto

@@ -1,9 +1,13 @@
-#include <SDL/SDL_image.h>
+#include <png.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include "Image.h"
 #include "Util.h"
+
+
+#define IMG_ERROR(x) ERROR("File \"" << filename << "\": " << x)
+#define IMG_WARNING(x) WARNING("File \"" << filename << "\": " << x)
 
 
 uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -13,24 +17,24 @@ uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //======================================================================================================================
 // loadUncompressedTga                                                                                                 =
 //======================================================================================================================
-bool Image::loadUncompressedTga(const char* filename, fstream& fs)
+bool Image::loadUncompressedTga(const char* filename, fstream& fs, uint& bpp)
 {
 	// read the info from header
-	unsigned char header6[6];
+	uchar header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		ERROR("File \"" << filename << "\": Cannot read info header");
+		IMG_ERROR("Cannot read info header");
 		return false;
 	}
 
 	width  = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
-	bpp	= header6[4];
+	bpp = header6[4];
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		ERROR("File \"" << filename << "\": Invalid image information");
+		IMG_ERROR("Invalid image information");
 		return false;
 	}
 
@@ -39,10 +43,10 @@ bool Image::loadUncompressedTga(const char* filename, fstream& fs)
 	int imageSize = bytesPerPxl * width * height;
 	data.resize(imageSize);
 
-	fs.read(&data[0], imageSize);
+	fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
 	if(fs.gcount() != imageSize)
 	{
-		ERROR("File \"" << filename << "\": Cannot read image data");
+		IMG_ERROR("Cannot read image data");
 		return false;
 	}
 
@@ -61,13 +65,13 @@ bool Image::loadUncompressedTga(const char* filename, fstream& fs)
 //======================================================================================================================
 // loadCompressedTga                                                                                                   =
 //======================================================================================================================
-bool Image::loadCompressedTga(const char* filename, fstream& fs)
+bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 {
 	unsigned char header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		ERROR("File \"" << filename << "\": Cannot read info header");
+		IMG_ERROR("Cannot read info header");
 		return false;
 	}
 
@@ -77,7 +81,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		ERROR("File \"" << filename << "\": Invalid texture information");
+		IMG_ERROR("Invalid texture information");
 		return false;
 	}
 
@@ -98,7 +102,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 		fs.read((char*)&chunkheader, sizeof(unsigned char));
 		if(fs.gcount() != sizeof(unsigned char))
 		{
-			ERROR("File \"" << filename << "\": Cannot read RLE header");
+			IMG_ERROR("Cannot read RLE header");
 			return false;
 		}
 
@@ -110,7 +114,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 				fs.read((char*)&colorbuffer[0], bytesPerPxl);
 				if(fs.gcount() != bytesPerPxl)
 				{
-					ERROR("File \"" << filename << "\": Cannot read image data");
+					IMG_ERROR("Cannot read image data");
 					return false;
 				}
 
@@ -128,7 +132,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 
 				if(currentpixel > pixelcount)
 				{
-					ERROR("File \"" << filename << "\": Too many pixels read");
+					IMG_ERROR("Too many pixels read");
 					return false;
 				}
 			}
@@ -139,7 +143,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 			fs.read((char*)&colorbuffer[0], bytesPerPxl);
 			if(fs.gcount() != bytesPerPxl)
 			{
-				ERROR("File \"" << filename << "\": Cannot read from file");
+				IMG_ERROR("Cannot read from file");
 				return false;
 			}
 
@@ -159,7 +163,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs)
 
 				if(currentpixel > pixelcount)
 				{
-					ERROR("File \"" << filename << "\": Too many pixels read");
+					IMG_ERROR("Too many pixels read");
 					return false;
 				}
 			}
@@ -178,17 +182,18 @@ bool Image::loadTga(const char* filename)
 	fstream fs;
 	char myTgaHeader[12];
 	fs.open(filename, ios::in|ios::binary);
+	uint bpp;
 
 	if(!fs.good())
 	{
-		ERROR("File \"" << filename << "\": Cannot open file");
+		IMG_ERROR("Cannot open file");
 		return false;
 	}
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
 	if(fs.gcount() != sizeof(myTgaHeader))
 	{
-		ERROR("File \"" << filename << "\": Cannot read file header");
+		IMG_ERROR("Cannot read file header");
 		fs.close();
 		return false;
 	}
@@ -196,17 +201,22 @@ bool Image::loadTga(const char* filename)
 	bool funcsReturn;
 	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		funcsReturn = loadUncompressedTga(filename, fs);
+		funcsReturn = loadUncompressedTga(filename, fs, bpp);
 	}
 	else if(memcmp(tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		funcsReturn = loadCompressedTga(filename, fs);
+		funcsReturn = loadCompressedTga(filename, fs, bpp);
 	}
 	else
 	{
-		ERROR("File \"" << filename << "\": Invalid image header");
+		IMG_ERROR("Invalid image header");
 		funcsReturn = false;
 	}
+
+	if(bpp == 32)
+		type == T_RGBA;
+	else
+		type == T_RGB;
 
 	fs.close();
 	return funcsReturn;
@@ -218,42 +228,197 @@ bool Image::loadTga(const char* filename)
 //======================================================================================================================
 bool Image::loadPng(const char* filename)
 {
-	SDL_Surface *sdli;
-	sdli = IMG_Load(filename);
-	if(!sdli)
+	/*
+	 * Data
+	 */
+	const uint PNG_SIG_SIZE = 8;
+	FILE* file = NULL;
+	png_structp pngPtr = NULL;
+	png_infop infoPtr = NULL;
+	bool ok = false;
+	size_t charsRead;
+	uint bitDepth;
+	uint channels;
+	uint rowbytes;
+	uint colorType;
+	vector<png_bytep> rowPointers;
+
+	/*
+	 * Open file
+	 */
+	file = fopen(filename, "rb");
+	if(file == NULL)
 	{
-		ERROR("File \"" << filename << "\": " << IMG_GetError());
-		return false;
+		IMG_ERROR("Cannot open file");
+		goto cleanup;
 	}
 
-	width = sdli->w;
-	height = sdli->h;
-
-	bpp = sdli->format->BitsPerPixel;
-
-	if(bpp != 24 && bpp != 32)
+	/*
+	 * Validate PNG header
+	 */
+	png_byte pngsig[PNG_SIG_SIZE];
+	charsRead = fread(pngsig, 1, PNG_SIG_SIZE, file);
+	if(charsRead != PNG_SIG_SIZE)
 	{
-		ERROR("File \"" << filename << "\": The image must be 24 or 32 bits");
-		SDL_FreeSurface(sdli);
-		return false;
+		IMG_ERROR("Cannot read PNG header");
+		goto cleanup;
 	}
 
-	int bytespp = bpp / 8;
-	int bytes = width * height * bytespp;
-	data.resize(bytes);
-
-	// copy and flip height
-	for(uint w=0; w<width; w++)
+	if(png_sig_cmp(pngsig, 0, PNG_SIG_SIZE) != 0)
 	{
-		for(uint h=0; h<height; h++)
+		IMG_ERROR("File not PNG image");
+		goto cleanup;
+	}
+
+	/*
+	 * Crete some PNG structs
+	 */
+	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!pngPtr)
+	{
+		IMG_ERROR("png_create_read_struct failed");
+		goto cleanup;
+	}
+
+	infoPtr = png_create_info_struct(pngPtr);
+	if(!infoPtr)
+	{
+		IMG_ERROR("png_create_info_struct failed");
+		goto cleanup;
+	}
+
+	/*
+	 * Set error handling
+	 */
+	if(setjmp(png_jmpbuf(pngPtr)))
+	{
+		IMG_ERROR("Reading PNG file failed");
+		goto cleanup;
+	}
+
+	/*
+	 * Init io
+	 */
+	png_init_io(pngPtr, file);
+	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE); // PNG lib knows that we allready have read the header
+
+	/*
+	 * Read info and make conversions
+	 * This loop reads info, if not acceptable it calls libpng funcs to change them and re-runs the loop
+	 */
+	png_read_info(pngPtr, infoPtr);
+	while(true)
+	{
+		width = png_get_image_width(pngPtr, infoPtr);
+		height = png_get_image_height(pngPtr, infoPtr);
+		bitDepth = png_get_bit_depth(pngPtr, infoPtr);
+		channels = png_get_channels(pngPtr, infoPtr);
+		colorType = png_get_color_type(pngPtr, infoPtr);
+
+		// 1) Convert the color types
+		switch(colorType)
 		{
-			memcpy( &data[(width * h + w) * bytespp], &((char*)sdli->pixels)[(width * (height -h - 1) + w) * bytespp],
-			        bytespp);
+			case PNG_COLOR_TYPE_PALETTE:
+				IMG_WARNING("Converting PNG_COLOR_TYPE_PALETTE to PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA");
+				png_set_palette_to_rgb(pngPtr);
+				goto again;
+				break;
+			case PNG_COLOR_TYPE_GRAY:
+				// do nothing
+				break;
+			case PNG_COLOR_TYPE_GRAY_ALPHA:
+				IMG_WARNING("Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. Converting to PNG_COLOR_TYPE_GRAY");
+				png_set_strip_alpha(pngPtr);
+				goto again;
+				break;
+			case PNG_COLOR_TYPE_RGB:
+				// do nothing
+				break;
+			case PNG_COLOR_TYPE_RGBA:
+				// do nothing
+				break;
+			default:
+				FATAL("Forgot to handle a color type");
+				break;
 		}
+
+		// 2) Convert the bit depths
+		if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+		{
+			IMG_WARNING("Converting bit depth");
+			png_set_gray_1_2_4_to_8(pngPtr);
+			goto again;
+		}
+
+		if(bitDepth > 8)
+		{
+			IMG_WARNING("Converting bit depth");
+			png_set_strip_16(pngPtr);
+		}
+
+		break;
+
+		again:
+			png_read_update_info(pngPtr, infoPtr);
 	}
 
-	SDL_FreeSurface(sdli);
-	return true;
+	// Sanity checks
+	if((bitDepth != 8) ||
+		 (colorType != PNG_COLOR_TYPE_GRAY && colorType != PNG_COLOR_TYPE_RGB && colorType != PNG_COLOR_TYPE_RGBA))
+	{
+		IMG_ERROR("Sanity checks failed");
+		goto cleanup;
+	}
+
+	/*
+	 * Read this sucker
+	 */
+	rowbytes = png_get_rowbytes(pngPtr, infoPtr);
+
+	rowPointers.resize(height * sizeof(png_bytep));
+
+	data.resize(rowbytes * height);
+
+	for (uint i = 0; i < height; ++i)
+		rowPointers[height - 1 - i] = &data[i * rowbytes];
+
+	png_read_image(pngPtr, &rowPointers[0]);
+
+	/*
+	 * Finalize
+	 */
+	switch(colorType)
+	{
+		case PNG_COLOR_TYPE_GRAY:
+			type = T_R;
+			break;
+		case PNG_COLOR_TYPE_RGB:
+			type = T_RGB;
+			break;
+		case PNG_COLOR_TYPE_RGBA:
+			type = T_RGBA;
+			break;
+	}
+
+	ok = true;
+
+	/*
+	 * Cleanup
+	 */
+	cleanup:
+
+	if(pngPtr)
+	{
+		if(infoPtr)
+			png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
+		else
+			png_destroy_read_struct(&pngPtr, NULL, NULL);
+	}
+
+	if(file)
+		fclose(file);
+
+	return ok;
 }
 
 
@@ -284,7 +449,7 @@ bool Image::load(const char* filename)
 	}
 	else
 	{
-		ERROR("File \"" << filename << "\": Unsupported extension");
+		IMG_ERROR("Unsupported extension");
 		return false;
 	}
 	return true;
