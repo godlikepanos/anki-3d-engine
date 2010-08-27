@@ -44,19 +44,15 @@ bool Texture::load(const char* filename)
 	glGenTextures(1, &glId);
 	bind(0);
 	if(mipmappingEnabled)
-	{
 		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	}
 	else
-	{
 		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	}
 
 	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	texParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
 
-	// leave to GL_REPEAT. There is not real performance impact
+	// leave to GL_REPEAT. There is not real performance hit
 	setRepeat(true);
 
 	// chose formats
@@ -89,11 +85,9 @@ bool Texture::load(const char* filename)
 
 	glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
 	if(mipmappingEnabled)
-	{
 		glGenerateMipmap(target);
-	}
 
-	return true;
+	return GL_OK();
 }
 
 

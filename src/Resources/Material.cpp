@@ -149,7 +149,7 @@ bool Material::load(const char* filename)
 			// build custom shader
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getString(), "buildMsSProg"))
 			{
-				// paren
+				// (
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_LPAREN)
 				{

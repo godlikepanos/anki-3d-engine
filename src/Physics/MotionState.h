@@ -12,15 +12,17 @@
 class MotionState: public btMotionState
 {
 	public:
-		MotionState(const btTransform& initialTransform, SceneNode* node_);
-
+		MotionState(const Transform& initialTransform, SceneNode* node_);
 		~MotionState() {}
 
+		/**
+		 * @name Bullet implementation of virtuals
+		 */
+		/**@{*/
 		void getWorldTransform(btTransform& worldTrans) const;
-
 		const btTransform& getWorldTransform() const;
-
 		void setWorldTransform(const btTransform& worldTrans);
+		/**@}*/
 
 	private:
 		btTransform worldTransform;
@@ -32,8 +34,8 @@ class MotionState: public btMotionState
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline MotionState::MotionState(const btTransform& initialTransform, SceneNode* node_):
-	worldTransform(initialTransform),
+inline MotionState::MotionState(const Transform& initialTransform, SceneNode* node_):
+	worldTransform(toBt(initialTransform)),
 	node(node_)
 {}
 
@@ -56,9 +58,10 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 
 	if(node)
 	{
-		float originalScale = node->getLocalTransform().getScale();
-		node->setLocalTransform(Transform(toAnki(worldTrans)));
-		node->getLocalTransform().setScale(originalScale);
+		Transform& nodeTrf = node->getLocalTransform();
+		float originalScale = nodeTrf.getScale();
+		nodeTrf = toAnki(worldTrans);
+		nodeTrf.setScale(originalScale);
 	}
 }
 

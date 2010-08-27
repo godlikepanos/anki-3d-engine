@@ -21,7 +21,7 @@ RigidBody::RigidBody(Physics& physics_, const Initializer& init):
 	else
 		localInertia = btVector3(0.0, 0.0, 0.0);
 
-	motionState.reset(new MotionState(toBt(init.startTrf), init.sceneNode));
+	motionState.reset(new MotionState(init.startTrf, init.sceneNode));
 
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState.get(), init.shape, localInertia);
 

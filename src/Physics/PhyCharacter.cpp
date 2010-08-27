@@ -16,7 +16,7 @@ PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init):
 {
 	ghostObject = new btPairCachingGhostObject();
 
-	motionState = new MotionState(toBt(init.startTrf), init.sceneNode);
+	motionState = new MotionState(init.startTrf, init.sceneNode);
 
 	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(physics.broadphase);
 	DEBUG_ERR(sweepBp == NULL);
