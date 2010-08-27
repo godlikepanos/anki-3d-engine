@@ -45,7 +45,7 @@ class PhyCharacter
 		void jump();
 
 	private:
-		Physics& physics;
+		Physics& physics; ///< Know your father
 		btPairCachingGhostObject* ghostObject;
 		btConvexShape* convexShape;
 		btKinematicCharacterController* character;

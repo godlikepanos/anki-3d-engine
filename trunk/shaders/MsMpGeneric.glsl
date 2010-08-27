@@ -3,7 +3,15 @@
  *
  * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write
  * in all the buffers
+ *
+ * Control defines:
+ * DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING,
+ * HARDWARE_SKINNING
  */
+ 
+#if defined(ALPHA_TESTING) && !defined(DIFFUSE_MAPPING)
+	#error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
+#endif
  
 #if defined(DIFFUSE_MAPPING) || defined(NORMAL_MAPPING) || defined(SPECULAR_MAPPING)
 	#define NEEDS_TEX_MAPPING 1
@@ -25,13 +33,21 @@
 	#pragma anki include "shaders/hw_skinning.glsl"
 #endif
 
-// attributes
+/*
+ * Attributes
+ */
 attribute vec3 position;
 attribute vec3 normal;
-attribute vec2 texCoords;
-attribute vec4 tangent;
+#if NEEDS_TEX_MAPPING
+	attribute vec2 texCoords;
+#endif
+#if NEEDS_TANGENT
+	attribute vec4 tangent;
+#endif
 
-// uniforms
+/*
+ * Uniforms
+ */
 uniform mat4 modelMat;
 uniform mat4 viewMat;
 uniform mat4 projectionMat;
@@ -39,7 +55,9 @@ uniform mat4 modelViewMat;
 uniform mat3 normalMat;
 uniform mat4 modelViewProjectionMat;
 
-// varyings
+/*
+ * Varyings
+ */
 varying vec3 normal_v2f;
 varying vec2 texCoords_v2f;
 varying vec3 tangent_v2f;
@@ -115,13 +133,23 @@ void main()
 #pragma anki include "shaders/pack.glsl"
 
 
-uniform sampler2D diffuseMap;
-uniform sampler2D normalMap;
-uniform sampler2D specularMap;
-uniform sampler2D heightMap;
-uniform sampler2D environmentMap;
-uniform vec3 diffuseCol = vec3(1.0, 1.0, 1.0);
-uniform vec3 specularCol = vec3(1.0, 1.0, 1.0);
+#if defined(DIFFUSE_MAPPING)
+	uniform sampler2D diffuseMap;
+#endif
+#if defined(NORMAL_MAPPING)
+	uniform sampler2D normalMap;
+#endif
+#if defined(SPECULAR_MAPPING)
+	uniform sampler2D specularMap;
+#endif
+#if defined(PARALLAX_MAPPING)
+	uniform sampler2D heightMap;
+#endif
+#if defined(ENVIRONMENT_MAPPING)
+	uniform sampler2D environmentMap;
+#endif
+uniform vec3 diffuseCol = vec3(1.0, 0.0, 1.0);
+uniform vec3 specularCol = vec3(1.0, 0.0, 1.0);
 uniform float shininess = 50.0;
 
 varying vec3 normal_v2f;
@@ -139,10 +167,10 @@ varying vec3 eye;
 //======================================================================================================================
 void main()
 {
-	//====================================================================================================================
-	// Paralax Mapping Calculations                                                                                      =
-	// The code below reads the height map, makes some calculations and returns a new texCoords                          =
-	//====================================================================================================================
+	/*
+	 * Paralax Mapping Calculations
+	 * The code below reads the height map, makes some calculations and returns a new texCoords
+	 */
 	#if defined(PARALLAX_MAPPING)
 		/*const float _scale = 0.04;
 		const float _bias = scale * 0.4;
@@ -180,16 +208,17 @@ void main()
 	#endif
 
 
-	//====================================================================================================================
-	// Diffuse Calculations (Part I)                                                                                     =
-	// Get the color from the diffuse map and discard if grass                                                           =
-	//====================================================================================================================
+	/*
+	 * Diffuse Calculations (Part I)
+	 * Get the color from the diffuse map and discard if alpha is zero
+	 */
 	vec3 _diff_color;
 	#if defined(DIFFUSE_MAPPING)
 
 		#if defined(ALPHA_TESTING)
 			vec4 _diff_color4 = texture2D(diffuseMap, superTexCoords);
-			if(_diff_color4.a == 0.0) discard;
+			if(_diff_color4.a == 0.0)
+				discard;
 			_diff_color = _diff_color4.rgb;
 		#else
 			_diff_color = texture2D(diffuseMap, superTexCoords).rgb;
@@ -201,10 +230,10 @@ void main()
 	#endif
 
 
-	//====================================================================================================================
-	// Normal Calculations                                                                                               =
-	// Either use a normap map and make some calculations or use the vertex normal                                       =
-	//====================================================================================================================
+	/*
+	 * Normal Calculations
+	 * Either use a normap map and make some calculations or use the vertex normal
+	 */
 	#if defined(NORMAL_MAPPING)
 		vec3 _n = normalize(normal_v2f);
 		vec3 _t = normalize(tangent_v2f);
@@ -220,16 +249,15 @@ void main()
 	#endif
 
 
-	//====================================================================================================================
-	// Diffuse Calculations (Part II)                                                                                    =
-	// If SEM is enabled make some calculations and combine colors of SEM and the _diff_color                            =
-	//====================================================================================================================
-
+	/*
+	 * Diffuse Calculations (Part II)
+	 * If SEM is enabled make some calculations and combine colors of SEM and the _diff_color
+	 */
 	// if SEM enabled make some aditional calculations using the vertPosEyeSpace_v2f, environmentMap and the newNormal
 	#if defined(ENVIRONMENT_MAPPING)
 		vec3 _u = normalize(vertPosEyeSpace_v2f);
 		
-		/**
+		/*
 		 * In case of normal mapping I could play with vertex's normal but this gives better results and its allready
 		 * computed
 		 */
@@ -244,10 +272,9 @@ void main()
 	#endif
 
 
-	//====================================================================================================================
-	// Specular Calculations                                                                                             =
-	//====================================================================================================================
-
+	/*
+	 * Specular Calculations
+	 */
 	// has specular map
 	#if defined(SPECULAR_MAPPING)
 		vec4 _specular = vec4(texture2D(specularMap, superTexCoords).rgb * specularCol, shininess);
@@ -257,9 +284,9 @@ void main()
 	#endif
 
 
-	//====================================================================================================================
-	// Final Stage. Write all data                                                                                       =
-	//====================================================================================================================
+	/*
+	 * Final Stage. Write all data
+	 */
 	gl_FragData[0].rg = PackNormal(newNormal);
 	gl_FragData[1].rgb = _diff_color;
 	gl_FragData[2] = _specular;
