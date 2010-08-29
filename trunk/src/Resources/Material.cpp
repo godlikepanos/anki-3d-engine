@@ -184,7 +184,7 @@ bool Material::load(const char* filename)
 
 					// check if acceptable value
 					MsSwitch* mss = msSwitches;
-					while(mss->prefix != NULL)
+					while(mss->switchName != NULL)
 					{
 						if(!strcmp(mss->switchName, token->getString()))
 							break;
@@ -192,7 +192,7 @@ bool Material::load(const char* filename)
 						++mss;
 					}
 
-					if(mss->prefix == NULL)
+					if(mss->switchName == NULL)
 					{
 						PARSE_ERR("Incorrect switch " << token->getString());
 						return false;

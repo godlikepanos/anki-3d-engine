@@ -346,6 +346,10 @@ int main(int argc, char* argv[])
 {
 	new App(argc, argv);
 
+/*	Mat3 m(Axisang(-PI/2, Vec3(1,0,0)));
+	PRINT(fixed << m);
+	return 0;*/
+
 	init();
 
 	mainLoop();

@@ -29,6 +29,9 @@ bool Skeleton::load(const char* filename)
 		Bone& bone = bones[i];
 		bone.id = i;
 
+		Mat3 m3_(Axisang(-PI/2, Vec3(1,0,0)));
+		Mat4 m4_(Vec3(0), m3_, 1.0);
+
 		// NAME
 		token = &scanner.getNextToken();
 		if(token->getCode() != Scanner::TC_STRING)
@@ -39,14 +42,23 @@ bool Skeleton::load(const char* filename)
 		bone.name = token->getValue().getString();
 
 		// head
-		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &bone.head[0])) return false;
+		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &bone.head[0]))
+			return false;
+
+		//bone.head = m3_ * bone.head;
 
 		// tail
-		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &bone.tail[0])) return false;
+		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &bone.tail[0]))
+			return false;
+
+		//bone.tail = m3_ * bone.tail;
 
 		// matrix
 		Mat4 m4;
-		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 16, &m4[0])) return false;
+		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 16, &m4[0]))
+			return false;
+
+		//m4 = m4_ * m4;
 
 		// matrix for real
 		bone.rotSkelSpace = m4.getRotationPart();
@@ -58,7 +70,7 @@ bool Skeleton::load(const char* filename)
 		// parent
 		token = &scanner.getNextToken();
 		if((token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT) &&
-		   (token->getCode() != Scanner::TC_IDENTIFIER || strcmp(token->getValue().getString(), "NULL")!=0))
+		   (token->getCode() != Scanner::TC_IDENTIFIER || strcmp(token->getValue().getString(), "NULL") != 0))
 		{
 			PARSE_ERR_EXPECTED("integer or NULL");
 			return false;
