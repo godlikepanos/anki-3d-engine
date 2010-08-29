@@ -6,7 +6,7 @@ from Blender.Mathutils import *
 
 
 #=======================================================================================================================
-# Initializer                                                                                                      =
+# Initializer                                                                                                          =
 #=======================================================================================================================
 class Initializer:
 	def __init__(self):
@@ -14,7 +14,7 @@ class Initializer:
 		self.blSkeleton = None # Blender Armature
 		self.mtlName = "" # Material name
 		self.saveDir = "" # the name of the saved file
-		self.flipYZ = 0
+		self.flipYZ = 0 #convert from bl to right handed coord system
 	
 
 #=======================================================================================================================
@@ -31,17 +31,6 @@ class Vert:
 		self.boneIds = [-1, -1, -1, -1]
 		self.weights = [-1.0, -1.0, -1.0, -1.0]
 		self.nextId = -1 # shows the next vertId. Is != -1 if the vert is problematic
-
-	"""def __init__(self, v):
-		self.x = v.x
-		self.y = v.y
-		self.z = v.z
-		self.s = v.s
-		self.t = v.t
-		self.bonesNum = v.bonesNum
-		self.boneIds = [v.boneIds[0], v.boneIds[1], v.boneIds[2], v.boneIds[3]]
-		self.weights = [v.weights[0], v.weights[1], v.weights[2], v.weights[3]]
-		self.nextId = v.nextId # shows the next vertId. Is != -1 if the vert is problematic"""
 
 
 #=======================================================================================================================
@@ -306,3 +295,4 @@ def export(meshInit):
 	file = open(filename, "w")
 	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	
+	

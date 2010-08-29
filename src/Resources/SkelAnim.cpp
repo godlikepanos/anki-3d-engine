@@ -9,10 +9,10 @@
 bool SkelAnim::load(const char* filename)
 {
 	Scanner scanner;
-	if(!scanner.loadFile(filename)) return false;
+	if(!scanner.loadFile(filename))
+		return false;
 
 	const Scanner::Token* token;
-
 
 	// keyframes
 	token = &scanner.getNextToken();
@@ -23,7 +23,8 @@ bool SkelAnim::load(const char* filename)
 	}
 	keyframes.resize(token->getValue().getInt());
 
-	if(!Parser::parseArrOfNumbers(scanner, false, false, keyframes.size(), &keyframes[0])) return false;
+	if(!Parser::parseArrOfNumbers(scanner, false, false, keyframes.size(), &keyframes[0]))
+		return false;
 
 	// bones num
 	token = &scanner.getNextToken();
@@ -54,11 +55,13 @@ bool SkelAnim::load(const char* filename)
 			{
 				// parse the quat
 				float tmp[4];
-				if(!Parser::parseArrOfNumbers(scanner, false, true, 4, &tmp[0])) return false;
+				if(!Parser::parseArrOfNumbers(scanner, false, true, 4, &tmp[0]))
+					return false;
 				bones[i].keyframes[j].rotation = Quat(tmp[1], tmp[2], tmp[3], tmp[0]);
 
 				// parse the vec3
-				if(!Parser::parseArrOfNumbers(scanner, false, true, 3, &bones[i].keyframes[j].translation[0])) return false;
+				if(!Parser::parseArrOfNumbers(scanner, false, true, 3, &bones[i].keyframes[j].translation[0]))
+					return false;
 			}
 		}
 	} // end for all bones

@@ -1,16 +1,18 @@
-#ifndef _SKEL_ANIM_H_
-#define _SKEL_ANIM_H_
+#ifndef SKELANIM_H
+#define SKELANIM_H
 
 #include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 
 
-/// Skeleton animation
+/// Skeleton animation resource
 class SkelAnim: public Resource
 {
 	public:
-		/// BonePose
+		/**
+		 * Bone pose
+		 */
 		class BonePose
 		{
 			public:
@@ -18,26 +20,26 @@ class SkelAnim: public Resource
 				Vec3 translation;
 		};
 
-
-		/// BoneAnim
+		/**
+		 * Bone animation
+		 */
 		class BoneAnim
 		{
 			public:
 				Vec<BonePose> keyframes; ///< The poses for every keyframe. Its empty if the bone doesnt have any animation
 
 				BoneAnim() {}
-				~BoneAnim() { if(keyframes.size()) keyframes.clear();}
+				~BoneAnim() {}
 		};
 		
 		Vec<uint> keyframes;
 		uint framesNum;
-
 		Vec<BoneAnim> bones;
 
 		SkelAnim();
 		~SkelAnim() {}
 		bool load(const char* filename);
-		void unload() { keyframes.clear(); bones.clear(); framesNum=0; }
+		void unload() {}
 };
 
 
