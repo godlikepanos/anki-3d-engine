@@ -16,8 +16,9 @@ class Skeleton: public Resource
 		 * Skeleton bone
 		 *
 		 * @note The rotation and translation that transform the bone from bone space to armature space. Meaning that if
-		 * MA = TRS(rotSkelSpace, tslSkelSpace) then head = MA * Vec3(0.0, length, 0.0) and tail = MA * Vec3(0.0, 0.0, 0.0)
-		 * We also keep the inverted ones for fast calculations. rotSkelSpaceInv = MA.Inverted().getRotationPart() and NOT
+		 * MA = TRS(rotSkelSpace, tslSkelSpace) then head = MA * Vec3(0.0, length, 0.0) and tail = MA * Vec3(0.0, 0.0, 0.0).
+		 * We need the MA because the animation rotations and translations are in bone space. We also keep the inverted ones
+		 * for fast calculations. rotSkelSpaceInv = MA.Inverted().getRotationPart() and NOT
 		 * rotSkelSpaceInv = rotSkelSpace.getInverted()
 		 */
 		class Bone
