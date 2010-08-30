@@ -139,7 +139,8 @@ ostream& msgSuffixFatal(ostream& cs)
 bool msgGlError(const char* file, int line, const char* func)
 {
 	GLenum errId = glGetError();
-	if(errId == GL_NO_ERROR) return true;
+	if(errId == GL_NO_ERROR)
+		return true;
 	msgPrefix(MT_ERROR, file, line, func) << "OpenGL Err: " << gluErrorString(errId) << msgSuffix;
 	return false;
 }

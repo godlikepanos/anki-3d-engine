@@ -13,11 +13,13 @@ class Initializer:
 	def __init__(self):
 		self.obj = None
 		self.saveDir = "" # the name of the saved file
-		self.flipYZ = 0 #convert from bl to right handed coord system
+		self.flipYZ = 0 # convert from bl to right handed coord system. NOT USED
 
 
-# MulMatrix
-def MulMatrix(m, b):
+#=======================================================================================================================
+# multMatrix                                                                                                           =
+#=======================================================================================================================
+def multMatrix(m, b):
 	c = Matrix()
 	c[0][0] = m[0][0]*b[0][0] + m[0][1]*b[1][0] + m[0][2]*b[2][0] + m[0][3]*b[3][0]
 	c[0][1] = m[0][0]*b[0][1] + m[0][1]*b[1][1] + m[0][2]*b[2][1] + m[0][3]*b[3][1]
@@ -38,7 +40,9 @@ def MulMatrix(m, b):
 	return c
 
 
-
+#=======================================================================================================================
+# A few classes                                                                                                        =
+#=======================================================================================================================
 class BonePose:
 	def __init__(self):
 		self.rotation = Quaternion(1.0, 0.0, 0.0, 0.0)
@@ -62,8 +66,6 @@ class SkelAnim:
 #=======================================================================================================================
 def getAnkiScript(obj, flipYZ, action):
 	skeleton = obj.getData(0, 0) 	
-	
-	b_cmnts = 1
 	
 	# init and populate the instances
 	skelAnim = SkelAnim()
@@ -103,8 +105,8 @@ def getAnkiScript(obj, flipYZ, action):
 			for m in range(0, 3):
 				tra[m][3] = poseBone.loc[m]
 			# bone matris at armature space aka MA
-			MA = Matrix(bone.matrix["ARMATURESPACE"])
-			MAi = Matrix(MA)
+			MA = bone.matrix["ARMATURESPACE"].copy()
+			MAi = MA.copy()
 			MAi.invert()
 			
 			# calc the m4 = MA * tra * rot * MAi
@@ -113,9 +115,9 @@ def getAnkiScript(obj, flipYZ, action):
 			MA.transpose()
 			MAi.transpose()
 			
-			m4 = MulMatrix(rot, MAi)
-			m4 = MulMatrix(tra, m4)
-			m4 = MulMatrix(MA, m4)
+			m4 = multMatrix(rot, MAi)
+			m4 = multMatrix(tra, m4)
+			m4 = multMatrix(MA, m4)
 			
 			m4.transpose()
 			
@@ -191,7 +193,6 @@ def getAnkiScript(obj, flipYZ, action):
 			ftxt += "0\n"
 	
 	return ftxt
-
 
 
 #=======================================================================================================================

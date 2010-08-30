@@ -61,19 +61,19 @@ bool Texture::load(const char* filename)
 	GLint type;
 	switch(img.getType())
 	{
-		case Image::T_R:
+		case Image::CT_R:
 			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
 			format = GL_RED;
 			type = GL_UNSIGNED_BYTE;
 			break;
 
-		case Image::T_RGB:
+		case Image::CT_RGB:
 			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
 			format = GL_RGB;
 			type = GL_UNSIGNED_BYTE;
 			break;
 
-		case Image::T_RGBA:
+		case Image::CT_RGBA:
 			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
 			format = GL_RGBA;
 			type = GL_UNSIGNED_BYTE;

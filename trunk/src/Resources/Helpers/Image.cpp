@@ -214,9 +214,11 @@ bool Image::loadTga(const char* filename)
 	}
 
 	if(bpp == 32)
-		type = T_RGBA;
+		type = CT_RGBA;
+	else if(bpp == 24)
+		type = CT_RGB;
 	else
-		type = T_RGB;
+		FATAL("See file");
 
 	fs.close();
 	return funcsReturn;
@@ -229,7 +231,7 @@ bool Image::loadTga(const char* filename)
 bool Image::loadPng(const char* filename)
 {
 	/*
-	 * Data
+	 * All locals
 	 */
 	const uint PNG_SIG_SIZE = 8;
 	FILE* file = NULL;
@@ -390,13 +392,13 @@ bool Image::loadPng(const char* filename)
 	switch(colorType)
 	{
 		case PNG_COLOR_TYPE_GRAY:
-			type = T_R;
+			type = CT_R;
 			break;
 		case PNG_COLOR_TYPE_RGB:
-			type = T_RGB;
+			type = CT_RGB;
 			break;
 		case PNG_COLOR_TYPE_RGBA:
-			type = T_RGBA;
+			type = CT_RGBA;
 			break;
 	}
 

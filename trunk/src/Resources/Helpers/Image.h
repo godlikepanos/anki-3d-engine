@@ -11,16 +11,19 @@
 class Image
 {
 	public:
-		enum Type
+		/**
+		 * The acceptable color types of AnKi
+		 */
+		enum ColorType
 		{
-			T_R,
-			T_RGB,
-			T_RGBA
+			CT_R,
+			CT_RGB,
+			CT_RGBA
 		};
 
 	PROPERTY_R(uint, width, getWidth)
 	PROPERTY_R(uint, height, getHeight)
-	PROPERTY_R(Type, type, getType)
+	PROPERTY_R(ColorType, type, getType)
 	PROPERTY_R(Vec<uchar>, data, getData)
 
 	public:
