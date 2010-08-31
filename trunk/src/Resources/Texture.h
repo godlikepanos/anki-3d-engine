@@ -31,10 +31,13 @@ class Texture: public Resource
 		bool createEmpty2D(float width, float height, int internalFormat, int format, GLenum type_, bool mipmapping);
 		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
 
-		void bind(uint texUnit=0) const;
+		void bind(uint texUnit = 0) const;
 		void setRepeat(bool repeat) const;
 		void setTexParameter(GLenum paramName, GLint value) const;
 		void texParameter(GLenum paramName, GLfloat value) const;
+		int getBaseLevel() const;
+		static uint getActiveTexUnit();
+		static uint getBindedTexId(uint unit);
 
 	protected:
 		GLuint glId; ///< Identification for OGL

@@ -50,11 +50,11 @@ void MeshNode::render(Material* mtl) const
 		DEBUG_ERR(!mtl->hasHWSkinning()); // it has skel controller but no skinning
 
 		// first the uniforms
-		mtl->stdUniVars[Material::SUV_SKINNING_ROTATIONS]->setMat3(&meshSkelCtrl->skelNode->skelAnimCtrl->boneRotations[0],
-		                                                              meshSkelCtrl->skelNode->skeleton->bones.size());
+		mtl->stdUniVars[Material::SUV_SKINNING_ROTATIONS]->setMat3(&meshSkelCtrl->skelNode->boneRotations[0],
+		                                                           meshSkelCtrl->skelNode->skeleton->bones.size());
 
-		mtl->stdUniVars[Material::SUV_SKINNING_TRANSLATIONS]->setVec3(&meshSkelCtrl->skelNode->skelAnimCtrl->boneTranslations[0],
-		                                                                 meshSkelCtrl->skelNode->skeleton->bones.size());
+		mtl->stdUniVars[Material::SUV_SKINNING_TRANSLATIONS]->setVec3(&meshSkelCtrl->skelNode->boneTranslations[0],
+		                                                              meshSkelCtrl->skelNode->skeleton->bones.size());
 
 		// then the attributes
 		mesh->vbos.vertWeights.bind();

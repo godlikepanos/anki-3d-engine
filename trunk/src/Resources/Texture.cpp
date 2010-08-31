@@ -4,6 +4,11 @@
 #include "Image.h"
 
 
+#define STD_CHECKS \
+	DEBUG_ERR(lastBindTexUnit != getActiveTexUnit()); \
+	DEBUG_ERR(glId != getBindedTexId(getActiveTexUnit())); ///@todo
+
+
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
@@ -20,8 +25,7 @@ Texture::Texture():
 	Resource(RT_TEXTURE),
 	glId(numeric_limits<uint>::max()),
 	target(GL_TEXTURE_2D)
-{
-}
+{}
 
 
 //======================================================================================================================
@@ -162,7 +166,7 @@ void Texture::bind(uint unit) const
 	if(unit >= static_cast<uint>(textureUnitsNum))
 		WARNING("Max tex units passed");
 
-	glActiveTexture(GL_TEXTURE0+unit);
+	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(target, getGlId());
 }
 
@@ -227,4 +231,36 @@ void Texture::setRepeat(bool repeat) const
 		setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP);
 		setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
+}
+
+
+//======================================================================================================================
+// getBaseLevel                                                                                                        =
+//======================================================================================================================
+int Texture::getBaseLevel() const
+{
+
+}
+
+
+//======================================================================================================================
+// getActiveTexUnit                                                                                                    =
+//======================================================================================================================
+uint Texture::getActiveTexUnit()
+{
+	GLint unit;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &unit);
+	return unit - GL_TEXTURE0;
+}
+
+
+//======================================================================================================================
+// getBindedTexId                                                                                                      =
+//======================================================================================================================
+uint Texture::getBindedTexId(uint unit)
+{
+	GLint id;
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
+	return id;
 }
