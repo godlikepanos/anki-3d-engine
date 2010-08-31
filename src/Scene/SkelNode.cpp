@@ -10,10 +10,8 @@
 // SkelNode                                                                                                         =
 //======================================================================================================================
 SkelNode::SkelNode(): 
-	SceneNode(SNT_SKELETON),
-	skelAnimCtrl(NULL)
-{
-}
+	SceneNode(SNT_SKELETON)
+{}
 
 
 //======================================================================================================================
@@ -22,7 +20,10 @@ SkelNode::SkelNode():
 void SkelNode::init(const char* filename)
 {
 	skeleton.loadRsrc(filename);
-	skelAnimCtrl = new SkelAnimCtrl(this);
+	heads.resize(skeleton->bones.size());
+	tails.resize(skeleton->bones.size());
+	boneRotations.resize(skeleton->bones.size());
+	boneTranslations.resize(skeleton->bones.size());
 }
 
 
@@ -39,6 +40,6 @@ void SkelNode::render()
 
 	for(uint i=0; i<skeleton->bones.size(); i++)
 	{
-		Renderer::Dbg::drawLine(skelAnimCtrl->heads[i], skelAnimCtrl->tails[i], Vec4(1.0));
+		Renderer::Dbg::drawLine(heads[i], tails[i], Vec4(1.0));
 	}
 }
