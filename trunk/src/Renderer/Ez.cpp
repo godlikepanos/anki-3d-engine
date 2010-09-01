@@ -52,11 +52,12 @@ void Renderer::Ms::Ez::run()
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->material->blends) continue;
+		if(meshNode->mesh->material->blends)
+			continue;
 
-		DEBUG_ERR(meshNode->material->dpMtl.get() == NULL);
+		DEBUG_ERR(meshNode->mesh->material->dpMtl.get() == NULL);
 
-		r.setupMaterial(*meshNode->material->dpMtl, *meshNode, *r.cam);
+		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, *r.cam);
 		meshNode->renderDepth();
 	}
 

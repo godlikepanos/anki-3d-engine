@@ -81,7 +81,7 @@ void Renderer::Is::initFbo()
 	fbo.setNumOfColorAttachements(1);
 
 	// create the txtrs
-	if(!fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT, false))
+	if(!fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT))
 		FATAL("Cannot create deferred shading illumination stage FAI");
 
 	// attach

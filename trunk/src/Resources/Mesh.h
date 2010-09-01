@@ -1,19 +1,26 @@
-#ifndef _MESH_H_
-#define _MESH_H_
+#ifndef MESH_H
+#define MESH_H
 
 #include "Common.h"
 #include "Math.h"
 #include "Vbo.h"
 #include "Resource.h"
 #include "collision.h"
+#include "RsrcPtr.h"
+
+
+class Material;
 
 
 /**
- * Mesh @ref Resource
+ * Mesh @ref Resource. If the material name is empty then the mesh wont be rendered and no VBOs will be created
  */
 class Mesh: public Resource
 {
 	public:
+		/**
+		 * Vertex weight for skeletan animation
+		 */
 		class VertexWeight
 		{
 			public:
@@ -25,6 +32,9 @@ class Mesh: public Resource
 				float weights[MAX_BONES_PER_VERT];
 		};
 
+		/**
+		 * Triangle
+		 */
 		class Triangle
 		{
 			public:
@@ -32,7 +42,10 @@ class Mesh: public Resource
 				Vec3 normal;
 		};
 
-		struct
+		/**
+		 * The VBOs in a structure
+		 */
+		struct Vbos
 		{
 			Vbo vertCoords;
 			Vbo vertNormals;
@@ -40,28 +53,34 @@ class Mesh: public Resource
 			Vbo texCoords;
 			Vbo vertIndeces;
 			Vbo vertWeights;
-		} vbos;
+		};
 
 	public:
-		Vec<Vec3>         vertCoords;
-		Vec<Vec3>         vertNormals;
-		Vec<Vec4>         vertTangents;
-		Vec<Vec2>         texCoords;    ///< One for every vert so we can use vertex arrays & VBOs
-		Vec<VertexWeight> vertWeights;
-		Vec<Triangle>     tris;
-		Vec<ushort>       vertIndeces; ///< Used for vertex arrays & VBOs
-		string            materialName;
-		bsphere_t         bsphere;
+		Vec<Vec3>         vertCoords; ///< Required
+		Vec<Vec3>         vertNormals; ///< Generated if renderable
+		Vec<Vec4>         vertTangents; ///< Generated if renderable
+		Vec<Vec2>         texCoords;    ///< Optional. One for every vert so we can use vertex arrays & VBOs
+		Vec<VertexWeight> vertWeights; ///< Optional
+		Vec<Triangle>     tris; ///< Required
+		Vec<ushort>       vertIndeces; ///< Generated if renderable. Used for vertex arrays & VBOs
+		Vbos              vbos; ///< Generated if renderable
+		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
+		bsphere_t         bsphere; ///< @todo
 
 		Mesh();
 		~Mesh() {}
 		bool load(const char* filename);
 		void unload();
 
-	protected:
+		/**
+		 * The mesh is renderable when the material is loaded
+		 */
+		bool isRenderable() const;
+
+	private:
 		void createFaceNormals();
 		void createVertNormals();
-		void createAllNormals() { createFaceNormals(); createVertNormals(); }
+		void createAllNormals();
 		void createVertTangents();
 		void createVertIndeces();
 		void createVbos();
@@ -73,5 +92,11 @@ inline Mesh::Mesh():
 	Resource(RT_MESH)
 {}
 
+
+inline void Mesh::createAllNormals()
+{
+	createFaceNormals();
+	createVertNormals();
+}
 
 #endif

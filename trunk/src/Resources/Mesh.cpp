@@ -3,6 +3,7 @@
 #include "Resource.h"
 #include "Scanner.h"
 #include "Parser.h"
+#include "Material.h"
 
 
 //======================================================================================================================
@@ -11,30 +12,26 @@
 bool Mesh::load(const char* filename)
 {
 	Scanner scanner;
-	if(!scanner.loadFile(filename)) return false;
+	if(!scanner.loadFile(filename))
+		return false;
 
 	const Scanner::Token* token;
 
-
-	//** MATERIAL **
+	/*
+	 * Material
+	 */
 	token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_STRING)
 	{
 		PARSE_ERR_EXPECTED("string");
 		return false;
 	}
-	materialName = token->getValue().getString();
+	if(strlen(token->getValue().getString()) > 0)
+		material.loadRsrc(token->getValue().getString());
 
-	//** DP_MATERIAL **
-	/*token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_STRING)
-	{
-		PARSE_ERR_EXPECTED("string");
-		return false;
-	}
-	dp_materialName = token->getValue().getString();*/
-
-	//** VERTS **
+	/*
+	 * Verts
+	 */
 	// verts num
 	token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
@@ -47,10 +44,13 @@ bool Mesh::load(const char* filename)
 	// read the verts
 	for(uint i=0; i<vertCoords.size(); i++)
 	{
-		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &vertCoords[i][0])) return false;
+		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &vertCoords[i][0]))
+			return false;
 	}
 
-	//** FACES **
+	/*
+	 * Faces
+	 */
 	// faces num
 	token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
@@ -62,10 +62,13 @@ bool Mesh::load(const char* filename)
 	// read the faces
 	for(uint i=0; i<tris.size(); i++)
 	{
-		if(!Parser::parseArrOfNumbers<uint>(scanner, false, true, 3, tris[i].vertIds)) return false;
+		if(!Parser::parseArrOfNumbers<uint>(scanner, false, true, 3, tris[i].vertIds))
+			return false;
 	}
 
-	//** UVS **
+	/*
+	 * Tex coords
+	 */
 	// UVs num
 	token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
@@ -77,10 +80,13 @@ bool Mesh::load(const char* filename)
 	// read the texCoords
 	for(uint i=0; i<texCoords.size(); i++)
 	{
-		if(!Parser::parseArrOfNumbers(scanner, false, true, 2, &texCoords[i][0])) return false;
+		if(!Parser::parseArrOfNumbers(scanner, false, true, 2, &texCoords[i][0]))
+			return false;
 	}
 
-	//** VERTEX WEIGHTS **
+	/*
+	 * Vert weights
+	 */
 	token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
 	{
@@ -153,11 +159,32 @@ bool Mesh::load(const char* filename)
 		return false;
 	}
 
-	createAllNormals();
-	if(texCoords.size() > 0) createVertTangents();
-	createVertIndeces();
-	createVbos();
-	calcBSphere();
+	if(isRenderable())
+	{
+		createAllNormals();
+		if(texCoords.size() > 0)
+			createVertTangents();
+		createVertIndeces();
+		createVbos();
+		calcBSphere();
+
+		/*
+		 * Sanity checks continued
+		 */
+		if(material->stdAttribVars[Material::SAV_TEX_COORDS] != NULL && !vbos.texCoords.isCreated())
+		{
+			ERROR("The shader program (\"" << material->shaderProg->getRsrcName() <<
+						 "\") needs texture coord information that the mesh (\"" <<
+						 getRsrcName() << "\") doesn't have");
+		}
+
+		if(material->hasHWSkinning() && !vbos.vertWeights.isCreated())
+		{
+			ERROR("The shader program (\"" << material->shaderProg->getRsrcName() <<
+						 "\") needs vertex weights that the mesh (\"" <<
+						 getRsrcName() << "\") doesn't have");
+		}
+	}
 
 	return true;
 }
@@ -299,8 +326,6 @@ void Mesh::createVertTangents()
 
 		vertTangents[i] = Vec4(t, w);
 	}
-
-	bitagents.clear();
 }
 
 
@@ -327,4 +352,13 @@ void Mesh::createVbos()
 void Mesh::calcBSphere()
 {
 	bsphere.Set(&vertCoords[0], 0, vertCoords.size());
+}
+
+
+//======================================================================================================================
+// isRenderable                                                                                                        =
+//======================================================================================================================
+bool Mesh::isRenderable() const
+{
+	return material.get() != NULL;
 }

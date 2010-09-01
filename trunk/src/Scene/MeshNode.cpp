@@ -16,22 +16,6 @@
 void MeshNode::init(const char* filename)
 {
 	mesh.loadRsrc(filename);
-	material.loadRsrc(mesh->materialName.c_str());
-
-	// sanity checks
-	if(material->stdAttribVars[Material::SAV_TEX_COORDS]!=NULL && !mesh->vbos.texCoords.isCreated())
-	{
-		ERROR("The shader program (\"" << material->shaderProg->getRsrcName() <<
-		       "\") needs texture coord information that the mesh (\"" <<
-		       mesh->getRsrcName() << "\") doesn't have");
-	}
-
-	if(material->hasHWSkinning() && !mesh->vbos.vertWeights.isCreated())
-	{
-		ERROR("The shader program (\"" << material->shaderProg->getRsrcName() <<
-		       "\") needs vertex weights that the mesh (\"" <<
-		       mesh->getRsrcName() << "\") doesn't have");
-	}
 }
 
 

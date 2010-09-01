@@ -50,7 +50,7 @@ void Renderer::Bs::createRefractFbo()
 void Renderer::Bs::init()
 {
 	createFbo();
-	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT, false);
+	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT);
 	createRefractFbo();
 
 	refractSProg.loadRsrc("shaders/BsRefract.glsl");
@@ -71,16 +71,16 @@ void Renderer::Bs::run()
 	{
 		MeshNode* meshNode = (*it);
 
-		if(meshNode->material.get() == NULL)
+		if(meshNode->mesh->material.get() == NULL)
 		{
 			ERROR("Mesh \"" << meshNode->mesh->getRsrcName() << "\" doesnt have material" );
 			continue;
 		}
 
-		if(!meshNode->material->blends) continue;
+		if(!meshNode->mesh->material->blends) continue;
 
 		// refracts
-		if(meshNode->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
+		if(meshNode->mesh->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
 		{
 			// render to the temp FAI
 			refractFbo.bind();
@@ -90,7 +90,7 @@ void Renderer::Bs::run()
 			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-			r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
+			r.setupMaterial(*meshNode->mesh->material, *meshNode, *r.cam);
 			glDisable(GL_BLEND); // a hack
 			meshNode->render();
 
@@ -100,10 +100,10 @@ void Renderer::Bs::run()
 			glStencilFunc(GL_EQUAL, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-			if(meshNode->material->blends)
+			if(meshNode->mesh->material->blends)
 			{
 				glEnable(GL_BLEND);
-				glBlendFunc(meshNode->material->blendingSfactor, meshNode->material->blendingDfactor);
+				glBlendFunc(meshNode->mesh->material->blendingSfactor, meshNode->mesh->material->blendingDfactor);
 			}
 			else
 				glDisable(GL_BLEND);
@@ -122,7 +122,7 @@ void Renderer::Bs::run()
 		else
 		{
 			fbo.bind();
-			r.setupMaterial(*meshNode->material, *meshNode, *r.cam);
+			r.setupMaterial(*meshNode->mesh->material, *meshNode, *r.cam);
 			meshNode->render();
 		}
 	}

@@ -12,12 +12,12 @@
 
 namespace RsrcContainers {
 
-extern RsrcContainer<Texture>    textures;
+extern RsrcContainer<Texture> textures;
 extern RsrcContainer<ShaderProg> shaderProgs;
-extern RsrcContainer<Material>   materials;
-extern RsrcContainer<Mesh>       meshes;
-extern RsrcContainer<Skeleton>   skeletons;
-extern RsrcContainer<SkelAnim>   skelAnims;
+extern RsrcContainer<Material> materials;
+extern RsrcContainer<Mesh> meshes;
+extern RsrcContainer<Skeleton> skeletons;
+extern RsrcContainer<SkelAnim> skelAnims;
 extern RsrcContainer<LightProps> lightProps;
 extern RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 

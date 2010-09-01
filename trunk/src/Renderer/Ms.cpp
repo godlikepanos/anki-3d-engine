@@ -18,10 +18,10 @@ void Renderer::Ms::init()
 	fbo.setNumOfColorAttachements(3);
 
 	// create the FAIs
-	if(!normalFai.createEmpty2D(r.width, r.height, GL_RG16F, GL_RG, GL_FLOAT, false) ||
-	   !diffuseFai.createEmpty2D(r.width, r.height, GL_RGB16F, GL_RGB, GL_FLOAT, false) ||
-	   !specularFai.createEmpty2D(r.width, r.height, GL_RGBA16F, GL_RGBA, GL_FLOAT, false) ||
-	   !depthFai.createEmpty2D(r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, false))
+	if(!normalFai.createEmpty2D(r.width, r.height, GL_RG16F, GL_RG, GL_FLOAT) ||
+	   !diffuseFai.createEmpty2D(r.width, r.height, GL_RGB16F, GL_RGB, GL_FLOAT) ||
+	   !specularFai.createEmpty2D(r.width, r.height, GL_RGBA16F, GL_RGBA, GL_FLOAT) ||
+	   !depthFai.createEmpty2D(r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8))
 	   //!depthFai.createEmpty2D(r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false))
 	{
 		FATAL("Failed to create one MS FAI. See prev error");
@@ -91,14 +91,14 @@ void Renderer::Ms::run()
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->material.get() == NULL)
+		if(meshNode->mesh->material.get() == NULL)
 		{
 			ERROR("Mesh \"" << meshNode->mesh->getRsrcName() << "\" doesnt have material" );
 			continue;
 		}
-		if(meshNode->material->blends) continue;
+		if(meshNode->mesh->material->blends) continue;
 
-		r.setupMaterial(*meshNode->material, *meshNode, cam);
+		r.setupMaterial(*meshNode->mesh->material, *meshNode, cam);
 		meshNode->render();
 	}
 

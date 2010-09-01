@@ -1,13 +1,12 @@
-#ifndef RSRCPTR_H
-#define RSRCPTR_H
+#ifndef RSRC_PTR_H
+#define RSRC_PTR_H
 
 #include "Common.h"
 
 
 /**
  * This is a special smart pointer that points to Resource derivatives. It looks like auto_ptr but the main difference
- * is that when its out of scope it tries to unload the resource. The bad thing about this pointer it contains an ugly
- * hack. Without this hack we should have build our own version of auto_ptr
+ * is that when its out of scope it tries to unload the resource.
  */
 template<typename Type>
 class RsrcPtr
@@ -68,6 +67,7 @@ RsrcPtr<Type>::~RsrcPtr()
 template<typename Type>
 Type& RsrcPtr<Type>::operator*() const
 {
+	DEBUG_ERR(p == NULL);
 	return *p;
 }
 
@@ -75,6 +75,7 @@ Type& RsrcPtr<Type>::operator*() const
 template<typename Type>
 Type* RsrcPtr<Type>::operator->() const
 {
+	DEBUG_ERR(p == NULL);
 	return p;
 }
 

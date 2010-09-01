@@ -17,7 +17,7 @@ void Renderer::Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 
 	fbo.setNumOfColorAttachements(1);
 
-	fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT, false);
+	fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT);
 	fai.setRepeat(false);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
