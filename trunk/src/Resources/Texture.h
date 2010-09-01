@@ -38,6 +38,7 @@ class Texture: public Resource
 		void setTexParameter(GLenum paramName, GLint value) const;
 		void texParameter(GLenum paramName, GLfloat value) const;
 		int getBaseLevel() const;
+		int getMaxLevel() const;
 		static uint getActiveTexUnit();
 		static uint getBindedTexId(uint unit);
 

@@ -123,7 +123,7 @@ def getAnkiSkeletonScript(skeleton, flipYZ):
 		m4 = bone.matrix["ARMATURESPACE"].copy()
 		
 		if flipYZ:
-			m4 = multMatrix(rotMat, m4)
+			m4 = multMatrix(m4, rotMat)
 		
 		for i_ in range(0, 4):
 			for j_ in range(0, 4):

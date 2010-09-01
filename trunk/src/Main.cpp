@@ -164,6 +164,10 @@ void init()
 	//horse->init("models/head/head.mesh");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));
 	
+	RsrcPtr<Texture> ttex;
+	ttex.loadRsrc("gfx/stone.diff.png");
+	INFO(ttex->getMaxLevel());
+
 	// sarge
 	sarge = new MeshNode();
 	sarge->init("meshes/sphere/sphere16.mesh");

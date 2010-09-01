@@ -112,7 +112,7 @@ inline Mat3::Mat3(const Euler& e)
 // constructor [axisang]
 inline Mat3::Mat3(const Axisang& axisang)
 {
-	DEBUG_ERR(!isZero(1.0-axisang.axis.getLength())); // Not normalized axis
+	DEBUG_ERR(!isZero(1.0 - axisang.axis.getLength())); // Not normalized axis
 
 	float c, s;
 	sinCos(axisang.ang, s, c);

@@ -257,3 +257,15 @@ uint Texture::getBindedTexId(uint unit)
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
 	return id;
 }
+
+
+//======================================================================================================================
+// getMaxLevel                                                                                                         =
+//======================================================================================================================
+int Texture::getMaxLevel() const
+{
+	bind(LAST_TEX_UNIT);
+	int level;
+	glGetTexParameteriv(target, GL_TEXTURE_MAX_LEVEL, &level);
+	return level;
+}
