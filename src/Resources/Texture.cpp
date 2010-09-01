@@ -4,9 +4,7 @@
 #include "Image.h"
 
 
-#define STD_CHECKS \
-	DEBUG_ERR(lastBindTexUnit != getActiveTexUnit()); \
-	DEBUG_ERR(glId != getBindedTexId(getActiveTexUnit())); ///@todo
+#define LAST_TEX_UNIT (textureUnitsNum - 1)
 
 
 //======================================================================================================================
@@ -41,12 +39,12 @@ bool Texture::load(const char* filename)
 	}
 
 	Image img;
-	if(!img.load(filename)) return false;
-
+	if(!img.load(filename))
+		return false;
 
 	// bind the texture
 	glGenTextures(1, &glId);
-	bind(0);
+	bind(LAST_TEX_UNIT);
 	if(mipmappingEnabled)
 		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	else
@@ -98,30 +96,22 @@ bool Texture::load(const char* filename)
 //======================================================================================================================
 // createEmpty2D                                                                                                       =
 //======================================================================================================================
-bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_, bool mimapping)
+bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_)
 {
 	target = GL_TEXTURE_2D;
-	DEBUG_ERR(internalFormat>0 && internalFormat<=4); // deprecated internal format
+	DEBUG_ERR(internalFormat > 0 && internalFormat <= 4); // deprecated internal format
 	DEBUG_ERR(isLoaded());
 
 	// GL stuff
 	glGenTextures(1, &glId);
-	bind();
+	bind(LAST_TEX_UNIT);
 
-	if(mimapping)
-		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	else
-		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
+	setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	setRepeat(true);
 
-
 	// allocate to vram
 	glTexImage2D(target, 0, internalFormat, width_, height_, 0, format_, type_, NULL);
-
-	if(mimapping)
-		glGenerateMipmap(target);
 
 	return GL_OK();
 }
@@ -136,7 +126,7 @@ bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, 
 	DEBUG_ERR(isLoaded());
 
 	glGenTextures(1, &glId);
-	bind();
+	bind(LAST_TEX_UNIT);
 	
 	// allocate
 	glTexImage2DMultisample(target, samplesNum, internalFormat, width_, height_, false);
@@ -176,7 +166,7 @@ void Texture::bind(uint unit) const
 //======================================================================================================================
 int Texture::getWidth() const
 {
-	bind();
+	bind(LAST_TEX_UNIT);
 	int i;
 	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &i);
 	return i;
@@ -188,7 +178,7 @@ int Texture::getWidth() const
 //======================================================================================================================
 int Texture::getHeight() const
 {
-	bind();
+	bind(LAST_TEX_UNIT);
 	int i;
 	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &i);
 	return i;
@@ -200,7 +190,7 @@ int Texture::getHeight() const
 //======================================================================================================================
 void Texture::setTexParameter(GLenum paramName, GLint value) const
 {
-	bind();
+	bind(LAST_TEX_UNIT);
 	glTexParameteri(target, paramName, value);
 }
 
@@ -210,7 +200,7 @@ void Texture::setTexParameter(GLenum paramName, GLint value) const
 //======================================================================================================================
 void Texture::texParameter(GLenum paramName, GLfloat value) const
 {
-	bind();
+	bind(LAST_TEX_UNIT);
 	glTexParameterf(target, paramName, value);
 }
 
@@ -220,7 +210,7 @@ void Texture::texParameter(GLenum paramName, GLfloat value) const
 //======================================================================================================================
 void Texture::setRepeat(bool repeat) const
 {
-	bind();
+	bind(LAST_TEX_UNIT);
 	if(repeat)
 	{
 		setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -239,7 +229,10 @@ void Texture::setRepeat(bool repeat) const
 //======================================================================================================================
 int Texture::getBaseLevel() const
 {
-
+	bind(LAST_TEX_UNIT);
+	int level;
+	glGetTexParameteriv(target, GL_TEXTURE_BASE_LEVEL, &level);
+	return level;
 }
 
 

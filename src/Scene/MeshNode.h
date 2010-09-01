@@ -18,14 +18,12 @@ class MeshNode: public SceneNode
 	public:
 		// resources
 		RsrcPtr<Mesh> mesh;
-		RsrcPtr<Material> material;
-		RsrcPtr<Material> dpMaterial; ///< Depth pass material
 		// controllers
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
 		MeshNode();
-		virtual void render() { render(material.get()); }
-		virtual void renderDepth() { render(material->dpMtl.get()); }
+		virtual void render() { render(mesh->material.get()); }
+		virtual void renderDepth() { render(mesh->material->dpMtl.get()); }
 		void init(const char* filename);
 };
 

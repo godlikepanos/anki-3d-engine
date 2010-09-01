@@ -21,7 +21,7 @@ void Renderer::Is::Sm::init()
 	fbo.bind();
 
 	// texture
-	shadowMap.createEmpty2D(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, true);
+	shadowMap.createEmpty2D(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
 	shadowMap.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	if(bilinearEnabled)
 	{
@@ -80,11 +80,11 @@ void Renderer::Is::Sm::run(const Camera& cam)
 	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->material->blends) continue;
+		if(meshNode->mesh->material->blends) continue;
 
-		DEBUG_ERR(meshNode->material->dpMtl.get() == NULL);
+		DEBUG_ERR(meshNode->mesh->material->dpMtl.get() == NULL);
 
-		r.setupMaterial(*meshNode->material->dpMtl, *meshNode, cam);
+		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, cam);
 		meshNode->renderDepth();
 	}
 

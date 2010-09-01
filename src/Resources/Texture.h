@@ -12,6 +12,8 @@
  *
  * It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and
  * uncompressed TGAs and all formats of PNG (PNG loading comes through SDL_image)
+ *
+ * @note The last texture unit is reserved and you cannot use it
  */
 class Texture: public Resource
 {
@@ -28,7 +30,7 @@ class Texture: public Resource
 
 		bool load(const char* filename);
 		void unload();
-		bool createEmpty2D(float width, float height, int internalFormat, int format, GLenum type_, bool mipmapping);
+		bool createEmpty2D(float width, float height, int internalFormat, int format, GLenum type_);
 		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
 
 		void bind(uint texUnit = 0) const;
@@ -39,13 +41,20 @@ class Texture: public Resource
 		static uint getActiveTexUnit();
 		static uint getBindedTexId(uint unit);
 
-	protected:
+	private:
 		GLuint glId; ///< Identification for OGL
 		GLenum target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-		static int  textureUnitsNum; ///< This needs to be filled in OpenGL initialization
+
+		/**
+		 * @name Variables set by the renderer
+		 * Set upon OpenGL initialization
+		 */
+		/**@{*/
+		static int  textureUnitsNum;
 		static bool mipmappingEnabled;
 		static bool compressionEnabled;
 		static int  anisotropyLevel;
+		/**@}*/
 
 		bool isLoaded() const;
 };
