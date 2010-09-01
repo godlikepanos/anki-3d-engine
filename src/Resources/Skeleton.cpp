@@ -29,8 +29,9 @@ bool Skeleton::load(const char* filename)
 		Bone& bone = bones[i];
 		bone.id = i;
 
-		Mat3 m3_(Axisang(-PI/2, Vec3(1,0,0)));
-		Mat4 m4_(Vec3(0), m3_, 1.0);
+		///@todo clean
+		/*Mat3 m3_(Axisang(-PI/2, Vec3(1,0,0)));
+		Mat4 m4_(Vec3(0), m3_, 1.0);*/
 
 		// NAME
 		token = &scanner.getNextToken();
