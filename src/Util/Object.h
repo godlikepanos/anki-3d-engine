@@ -18,13 +18,13 @@ class Object
 		 * @name Accessors
 		 */
 		/**@{*/
-		const Object* getParent() const;
-		const Vec<Object*> getChilds() const; ///< Get the childs Vec
+		const Object* getObjParent() const;
+		const Vec<Object*> getObjChilds() const; ///< Get the childs Vec
 		/**@}*/
 
 	private:
-		Object* parent;
-		Vec<Object*> childs;
+		Object* objParent;
+		Vec<Object*> objChilds;
 
 		void addChild(Object* child);
 };
@@ -43,32 +43,32 @@ inline Object::Object(Object* parent)
 
 inline Object::~Object()
 {
-	for(Vec<Object*>::iterator it=childs.begin(); it!=childs.end(); it++)
+	for(Vec<Object*>::iterator it=objChilds.begin(); it!=objChilds.end(); it++)
 	{
 		delete *it;
 	}
 }
 
 
-inline const Object* Object::getParent() const
+inline const Object* Object::getObjParent() const
 {
-	return parent;
+	return objParent;
 }
 
 
-inline const Vec<Object*> Object::getChilds() const
+inline const Vec<Object*> Object::getObjChilds() const
 {
-	return childs;
+	return objChilds;
 }
 
 
 inline void Object::addChild(Object* child)
 {
 	DEBUG_ERR(child == NULL);
-	DEBUG_ERR(child->parent != NULL); // Child already has parent
+	DEBUG_ERR(child->objParent != NULL); // Child already has parent
 
-	child->parent = this;
-	childs.push_back(child);
+	child->objParent = this;
+	objChilds.push_back(child);
 }
 
 
