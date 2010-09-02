@@ -37,7 +37,8 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-App::App(int argc, char* argv[]):
+App::App(int argc, char* argv[], Object* parent):
+	Object(parent),
 	windowW(1280),
 	windowH(720),
 	terminalColoringEnabled(true),

@@ -4,13 +4,14 @@
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
 #include "Common.h"
+#include "Object.h"
 
 
 /**
  * This class holds all the global objects of the application and its also responsible for some of the SDL stuff.
  * It should be singleton
  */
-class App
+class App: public Object
 {
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
@@ -35,7 +36,7 @@ class App
 	public:
 		uint timerTick;
 
-		App(int argc, char* argv[]);
+		App(int argc, char* argv[], Object* parent = NULL);
 		~App() {}
 		void initWindow();
 		void quit(int code);
