@@ -35,6 +35,7 @@
 #include "DebugDrawer.h"
 #include "PhyCharacter.h"
 #include "RigidBody.h"
+#include "ScriptingEngine.h"
 
 
 App* app = NULL; ///< The only global var. App constructor sets it
@@ -299,6 +300,13 @@ void mainLoop()
 			body->forceActivationState(ACTIVE_TAG);
 		}
 
+		if(I::keys[SDL_SCANCODE_Y] == 1)
+		{
+			INFO("Exec script");
+			app->getScriptingEngine().exposeVar("app", app);
+			app->getScriptingEngine().execScript("#from Anki import *\nAnki.app.getScene().setAmbientCol(Anki.Vec3(0.5))");
+		}
+
 		mover->getLocalTransform().getRotation().reorthogonalize();
 
 		app->getScene()->getPhysics()->update(crntTime);
@@ -350,10 +358,6 @@ void mainLoop()
 int main(int argc, char* argv[])
 {
 	new App(argc, argv);
-
-/*	Mat3 m(Axisang(-PI/2, Vec3(1,0,0)));
-	PRINT(fixed << m);
-	return 0;*/
 
 	init();
 

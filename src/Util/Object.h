@@ -12,6 +12,10 @@ class Object
 {
 	public:
 		Object(Object* parent = NULL);
+
+		/**
+		 * Delete childs from the last entered to the first
+		 */
 		virtual ~Object();
 
 		/**
@@ -34,16 +38,17 @@ class Object
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline Object::Object(Object* parent)
+inline Object::Object(Object* parent):
+	objParent(NULL)
 {
-	if(parent)
+	if(parent != NULL)
 		parent->addChild(this);
 }
 
 
 inline Object::~Object()
 {
-	for(Vec<Object*>::iterator it=objChilds.begin(); it!=objChilds.end(); it++)
+	for(Vec<Object*>::reverse_iterator it=objChilds.rbegin(); it!=objChilds.rend(); it++)
 	{
 		delete *it;
 	}
