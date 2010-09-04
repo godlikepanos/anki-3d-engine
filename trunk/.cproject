@@ -20,7 +20,7 @@
 <option id="cdt.managedbuild.option.gnu.cross.prefix.124248385" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
 <option id="cdt.managedbuild.option.gnu.cross.path.568633506" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path"/>
 <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.2099631" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
-<builder arguments="make -j 4" autoBuildTarget="all" buildPath="${workspace_loc:/anki/build/debug}" cleanBuildTarget="clean" command="nice" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304.618553305" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelizationNumber="1" superClass="org.eclipse.cdt.build.core.settings.default.builder">
+<builder arguments="make -j 3" autoBuildTarget="all" buildPath="${workspace_loc:/anki/build/debug}" cleanBuildTarget="clean" command="nice" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cdt.managedbuild.toolchain.gnu.cross.base.1593777304.618553305" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelizationNumber="1" superClass="org.eclipse.cdt.build.core.settings.default.builder">
 <outputEntries>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="build/debug"/>
 </outputEntries>

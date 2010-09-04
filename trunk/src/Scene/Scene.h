@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "Common.h"
+#include "Object.h"
 #include "skybox.h"
 #include "Physics.h"
 
@@ -17,13 +18,13 @@ class ParticleEmitter;
 
 
 /**
- * @brief The Scene contains all the dynamic entities
+ * The Scene contains all the dynamic entities
  */
-class Scene
+class Scene: public Object
 {
 	PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
 	PROPERTY_RW(Vec3, sunPos, setSunPos, getSunPos)
-	PROPERTY_R(auto_ptr<Physics>, phyWorld, getPhysics) ///< Connection with bullet
+	PROPERTY_R(Physics*, phyWorld, getPhysics) ///< Connection with bullet
 
 	public:
 		/**
@@ -33,17 +34,18 @@ class Scene
 		{};
 
 		// Containers of scene's data
-		Container<SceneNode>       nodes;
-		Container<Light>      lights;
-		Container<Camera>     cameras;
-		Container<MeshNode>   meshNodes;
-		Container<SkelNode>   skelNodes;
+		Container<SceneNode> nodes;
+		Container<Light> lights;
+		Container<Camera> cameras;
+		Container<MeshNode> meshNodes;
+		Container<SkelNode> skelNodes;
 		Container<Controller> controllers;
 		Container<ParticleEmitter> particleEmitters;
-		Skybox                skybox; // ToDo to be removed
+		Skybox skybox; // ToDo to be removed
 
 		// The funcs
-		Scene();
+		Scene(Object* parent = NULL);
+		~Scene() {}
 
 		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers
 		void unregisterNode(SceneNode* node);
@@ -83,5 +85,6 @@ inline void Scene::eraseNode(ContainerType& container, Type* x)
 	DEBUG_ERR(it == container.end());
 	container.erase(it);
 }
+
 
 #endif

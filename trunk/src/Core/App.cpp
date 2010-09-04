@@ -4,6 +4,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "MainRenderer.h"
+#include "ScriptingEngine.h"
 #include <boost/filesystem.hpp>
 
 bool App::isCreated = false;
@@ -73,8 +74,9 @@ App::App(int argc, char* argv[], Object* parent):
 	filesystem::create_directory(cachePath);
 
 
-	scene = new Scene;
+	scene = new Scene(this);
 	mainRenderer = new MainRenderer;
+	scriptingEngine = new ScriptingEngine(this);
 	activeCam = NULL;
 
 	timerTick = 1000/40; // in ms. 1000/Hz
