@@ -29,7 +29,8 @@ class Resource
 			RT_SKEL_ANIM,
 			RT_LIGHT_PROPS,
 			RT_EXTENSION,
-			RT_PARTICLE_EMITTER_PROPS
+			RT_PARTICLE_EMITTER_PROPS,
+			RT_SCRIPT
 		};
 
 	PROPERTY_R(string, path, getRsrcPath);
@@ -51,7 +52,7 @@ class Resource
 		/**
 		 * Special unload func for stuff that the destructor cannot cleanup (eg OpenGL stuff)
 		 */
-		virtual void unload() = 0;
+		virtual void unload();
 };
 
 

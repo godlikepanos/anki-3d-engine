@@ -6,8 +6,8 @@ PHFLAGS = -DDEBUG_ENABLED -DPLATFORM_LINUX -DREVISION=\"`svnversion -c ../..`\" 
 LFLAGS = -rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -lboost_system -lboost_python -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -pg
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../src/Resources/Core/ -I../../src/Core/ -I../../src/Scripting/ -I../../src/Scripting/Math -I../../src/Scripting/Util -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//collision.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//memory.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ez.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Scene.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Texture.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Material.cpp ../../src/Util//Input.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp ../../src/Core//App.cpp ../../src/Core//Common.cpp ../../src/Scripting//ScriptingEngine.cpp ../../src/Scripting//BoostPythonInterfaces.cpp 
-OBJECTS = Scanner.o collision.o skybox.o map.o memory.o TestHeader.o Main.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o MeshNode.o Camera.o SkelModelNode.o SkelNode.o Light.o Scene.o SceneNode.o ParticleEmitter.o Ui.o ShaderProg.o Mesh.o SkelAnim.o Skeleton.o ParticleEmitterProps.o LightProps.o Texture.o Extension.o Material.o Input.o Util.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o PhyCharacter.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o App.o Common.o ScriptingEngine.o BoostPythonInterfaces.o 
+SOURCES = ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//collision.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//memory.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ez.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Scene.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Script.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Resources//LightProps.cpp ../../src/Resources//Texture.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Material.cpp ../../src/Util//Input.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp ../../src/Core//App.cpp ../../src/Core//Common.cpp ../../src/Scripting//ScriptingEngine.cpp ../../src/Scripting//BoostPythonInterfaces.cpp 
+OBJECTS = Scanner.o collision.o skybox.o map.o memory.o TestHeader.o Main.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o MeshNode.o Camera.o SkelModelNode.o SkelNode.o Light.o Scene.o SceneNode.o ParticleEmitter.o Ui.o ShaderProg.o Mesh.o SkelAnim.o Script.o Skeleton.o ParticleEmitterProps.o LightProps.o Texture.o Extension.o Material.o Input.o Util.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o PhyCharacter.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o App.o Common.o ScriptingEngine.o BoostPythonInterfaces.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -3129,6 +3129,12 @@ SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
 	@echo Compiling ../../src/Resources//SkelAnim.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//SkelAnim.cpp -o SkelAnim.o
 
+Script.o: ../../src/Resources//Script.cpp ../../src/Resources//Script.h \
+ ../../src/Core/Common.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h
+	@echo Compiling ../../src/Resources//Script.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Script.cpp -o Script.o
+
 Skeleton.o: ../../src/Resources//Skeleton.cpp \
  ../../src/Resources//Skeleton.h ../../src/Core/Common.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h \
@@ -4100,7 +4106,7 @@ RsrcPtr.o: ../../src/Resources/Core//RsrcPtr.cpp \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h \
- ../../src/Resources/ParticleEmitterProps.h
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h
 	@echo Compiling ../../src/Resources/Core//RsrcPtr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core//RsrcPtr.cpp -o RsrcPtr.o
 
@@ -4128,7 +4134,7 @@ RsrcContainers.o: ../../src/Resources/Core//RsrcContainers.cpp \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h \
- ../../src/Resources/ParticleEmitterProps.h
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h
 	@echo Compiling ../../src/Resources/Core//RsrcContainers.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core//RsrcContainers.cpp -o RsrcContainers.o
 
