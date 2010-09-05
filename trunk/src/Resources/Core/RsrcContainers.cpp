@@ -7,6 +7,7 @@
 #include "SkelAnim.h"
 #include "LightProps.h"
 #include "ParticleEmitterProps.h"
+#include "Script.h"
 
 
 namespace RsrcContainers {
@@ -19,5 +20,6 @@ RsrcContainer<Skeleton>   skeletons;
 RsrcContainer<SkelAnim>   skelAnims;
 RsrcContainer<LightProps> lightProps;
 RsrcContainer<ParticleEmitterProps> particleEmitterProps;
+RsrcContainer<Script> scripts;
 
 }
