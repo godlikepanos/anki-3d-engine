@@ -77,7 +77,7 @@ void Renderer::Is::Sm::run(const Camera& cam)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// render all meshes
-	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
+	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material->blends) continue;

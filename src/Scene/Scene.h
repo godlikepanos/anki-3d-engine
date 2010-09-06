@@ -44,7 +44,7 @@ class Scene: public Object
 		Skybox skybox; // ToDo to be removed
 
 		// The funcs
-		Scene(Object* parent = NULL);
+		Scene(Object* parent);
 		~Scene() {}
 
 		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers

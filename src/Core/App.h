@@ -18,11 +18,9 @@ class App: public Object
 {
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
-	//PROPERTY_R(bool, terminalColoringEnabled, isTerminalColoringEnabled)
 	PROPERTY_R(filesystem::path, settingsPath, getSettingsPath)
 	PROPERTY_R(filesystem::path, cachePath, getCachePath)
 
-	//PROPERTY_RW(class Scene*, scene, setScene, getScene) ///< Pointer to the current scene
 	PROPERTY_RW(class MainRenderer*, mainRenderer, setMainRenderer, getMainRenderer) ///< Pointer to the main renderer
 	PROPERTY_RW(class Camera*, activeCam, setActiveCam, getActiveCam) ///< Pointer to the current camera
 
@@ -59,7 +57,7 @@ class App: public Object
 		 */
 		/**@{*/
 		bool isTerminalColoringEnabled() const;
-		Scene* getScene();
+		Scene& getScene();
 		ScriptingEngine& getScriptingEngine();
 		/**@}*/
 
@@ -76,10 +74,10 @@ inline bool App::isTerminalColoringEnabled() const
 }
 
 
-inline Scene* App::getScene()
+inline Scene& App::getScene()
 {
 	DEBUG_ERR(scene == NULL);
-	return scene;
+	return *scene;
 }
 
 

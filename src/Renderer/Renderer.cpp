@@ -16,7 +16,8 @@ int Renderer::maxColorAtachments = -1;
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Renderer::Renderer():
+Renderer::Renderer(Object* parent):
+	Object(parent),
 	width(640),
 	height(480),
 	ms(*this),
@@ -212,7 +213,7 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 
 	if(mtl.stdUniVars[Material::SUV_SCENE_AMBIENT_COLOR])
 	{
-		Vec3 col(app->getScene()->getAmbientCol());
+		Vec3 col(app->getScene().getAmbientCol());
 		mtl.stdUniVars[Material::SUV_SCENE_AMBIENT_COLOR]->setVec3(&col);
 	}
 

@@ -34,7 +34,7 @@ class Physics: public Object
 		};
 
 	public:
-		Physics(Object* parent = NULL);
+		Physics(Object* parent);
 		void update(float crntTime);
 		void debugDraw();
 

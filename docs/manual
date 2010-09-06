@@ -38,27 +38,31 @@ Required external libraries
 
 AnKi requires a few up to date versions of some libraries. The libraries are:
   
-- Bullet Physics
-- SDL ver 1.3
-- GLEW
-- boost
-- libpng
-- libjpeg
+- Bullet Physics 2.77
+- SDL 1.3
+- GLEW 1.5.5
+- boost 1.4
+- libpng 1.2
+- libjpeg 6b
+- libpython 2.6
 
-Normally, in order to build AnKi you have to download (from the revision control
-repositories) and build some of the above libraries because they are not
-provided in most Linux distros or they are old versions. To ease the building
-process and to save you some time some of the above libraries are already backed
-and placed inside the extern directory. The backed libraries are for Linux and
-for x86-64 architecture. If you dont trust my binaries and/or you want to build
-the libs yourselves you have to download, build and install the libs in the
-extern directory manually. The script *download-externs.sh* downloads the
-libraries (it requires SVN, mercurial, CMake, autoconf) and the *do-externs.sh*
-builds the libraries and installs them in the extern directory. Open the files
-and see how it is done.
+Normally, in order to build AnKi you need to have all of the above libraries. 
+Some of them are not provided from the most Linux distros or they are older
+versions. The libraries you have to download and build for yourself are Bullet,
+SDL and GLEW. The other are pretty common and you can find them almost anywhere.
 
-You wont find any development files for boost, libpng and libjpeg inside the
-extern dir. Get them using your Linux distribution's packet manager.
+
+To ease the building process and to save you some time **some** of the above
+libraries are already backed and placed inside the extern directory. The backed
+libraries are for Linux and for x86-64 architecture. If you dont trust my
+binaries and/or you want to build the libs yourselves you have to download,
+build and install the libs in the extern directory manually. The script
+*download-externs.sh* downloads the libraries (it requires SVN, mercurial,
+CMake, autoconf) and the *do-externs.sh* builds the libraries and installs them
+in the extern directory. Open the files and see how it is done.
+
+You wont find any development files for boost, libpng, libjpeg and libpython
+inside the extern dir. Get them using your Linux distribution's packet manager.
 
 
 Building AnKi and optionally generating makefiles
@@ -80,10 +84,10 @@ $ svn checkout http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem
 
 
 gBuildSystem only purpose is to re-generate these makefiles in case you have
-made changes in code structure (renaming/moving/deleting/adding files) or in the
-includes (#include) or your have the external libs in different paths.
-gBuildSystem requires the gen.cfg.py files (something like CMakeLists.txt).
-gen.cfg.py format is pretty straightforward and minimal.
+made changes in the code structure (renaming/moving/deleting/adding files) or in
+the included header files (#include) or your have the external libs in different
+paths. gBuildSystem requires the gen.cfg.py files (something like
+CMakeLists.txt). gen.cfg.py format is pretty straightforward and minimal.
 
 If you want to generate the makefile for the debug target (for example) do the
 following:

@@ -22,7 +22,7 @@ class MainRenderer: public Renderer
 	PROPERTY_R(float, renderingQuality, getRenderingQuality)
 
 	public:
-		MainRenderer();
+		MainRenderer(Object* parent);
 
 		/**
 		 * The same as Renderer::init but with additional initialization. @see Renderer::init
@@ -50,7 +50,8 @@ class MainRenderer: public Renderer
 };
 
 
-inline MainRenderer::MainRenderer():
+inline MainRenderer::MainRenderer(Object* parent):
+	Renderer(parent),
 	screenshotJpegQuality(90)
 {}
 

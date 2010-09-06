@@ -8,6 +8,7 @@
 #include "ShaderProg.h"
 #include "Vbo.h"
 #include "RsrcPtr.h"
+#include "Object.h"
 
 
 class Camera;
@@ -23,7 +24,7 @@ class SceneNode;
  *
  * It is a class and not a namespace because we may need external renderers for security cameras for example
  */
-class Renderer
+class Renderer: public Object
 {
 	//====================================================================================================================
 	// nested                                                                                                            =
@@ -414,7 +415,7 @@ class Renderer
 		Dbg dbg; ///< Debugging rendering stage
 		/**@}*/
 
-		Renderer();
+		Renderer(Object* parent);
 
 		/**
 		 * Init the renderer given an initialization class

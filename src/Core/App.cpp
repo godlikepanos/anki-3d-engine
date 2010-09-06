@@ -73,10 +73,10 @@ App::App(int argc, char* argv[], Object* parent):
 	INFO("Creating cache dir \"" << cachePath << "\"");
 	filesystem::create_directory(cachePath);
 
-
-	scene = new Scene(this);
-	mainRenderer = new MainRenderer;
+	// create the subsystems. WATCH THE ORDER
 	scriptingEngine = new ScriptingEngine(this);
+	mainRenderer = new MainRenderer(this);
+	scene = new Scene(this);
 	activeCam = NULL;
 
 	timerTick = 1000/40; // in ms. 1000/Hz

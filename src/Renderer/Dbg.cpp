@@ -253,9 +253,9 @@ void Renderer::Dbg::run()
 	sProg->bind();
 
 	//R::renderGrid();
-	for(uint i=0; i<app->getScene()->nodes.size(); i++)
+	for(uint i=0; i<app->getScene().nodes.size(); i++)
 	{
-		SceneNode* node = app->getScene()->nodes[i];
+		SceneNode* node = app->getScene().nodes[i];
 		if
 		(
 			(node->type == SceneNode::SNT_LIGHT && showLightsEnabled) ||
@@ -265,7 +265,7 @@ void Renderer::Dbg::run()
 		{
 			node->render();
 		}
-		else if(app->getScene()->nodes[i]->type == SceneNode::SNT_SKELETON && showSkeletonsEnabled)
+		else if(app->getScene().nodes[i]->type == SceneNode::SNT_SKELETON && showSkeletonsEnabled)
 		{
 			SkelNode* skelNode = static_cast<SkelNode*>(node);
 			glDisable(GL_DEPTH_TEST);
@@ -277,7 +277,7 @@ void Renderer::Dbg::run()
 	// Physics
 	glPolygonMode(GL_FRONT, GL_LINE);
 	setModelMat(Mat4::getIdentity());
-	app->getScene()->getPhysics()->debugDraw();
+	app->getScene().getPhysics()->debugDraw();
 	glPolygonMode(GL_FRONT, GL_FILL);
 }
 
