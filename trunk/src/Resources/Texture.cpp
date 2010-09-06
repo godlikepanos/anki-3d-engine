@@ -52,15 +52,15 @@ bool Texture::load(const char* filename)
 
 	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	texParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
+	setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
 
 	// leave to GL_REPEAT. There is not real performance hit
 	setRepeat(true);
 
 	// chose formats
-	GLint internalFormat;
-	GLint format;
-	GLint type;
+	int internalFormat;
+	int format;
+	int type;
 	switch(img.getType())
 	{
 		case Image::CT_R:
@@ -89,6 +89,9 @@ bool Texture::load(const char* filename)
 	if(mipmappingEnabled)
 		glGenerateMipmap(target);
 
+
+	setMipmapLevel(3);
+
 	return GL_OK();
 }
 
@@ -96,7 +99,7 @@ bool Texture::load(const char* filename)
 //======================================================================================================================
 // createEmpty2D                                                                                                       =
 //======================================================================================================================
-bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, GLenum type_)
+bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, uint type_)
 {
 	target = GL_TEXTURE_2D;
 	DEBUG_ERR(internalFormat > 0 && internalFormat <= 4); // deprecated internal format
@@ -188,7 +191,7 @@ int Texture::getHeight() const
 //======================================================================================================================
 // setTexParameter [int]                                                                                               =
 //======================================================================================================================
-void Texture::setTexParameter(GLenum paramName, GLint value) const
+void Texture::setTexParameter(uint paramName, int value) const
 {
 	bind(LAST_TEX_UNIT);
 	glTexParameteri(target, paramName, value);
@@ -198,7 +201,7 @@ void Texture::setTexParameter(GLenum paramName, GLint value) const
 //======================================================================================================================
 // setTexParameter [float]                                                                                             =
 //======================================================================================================================
-void Texture::texParameter(GLenum paramName, GLfloat value) const
+void Texture::setTexParameter(uint paramName, float value) const
 {
 	bind(LAST_TEX_UNIT);
 	glTexParameterf(target, paramName, value);
@@ -241,7 +244,7 @@ int Texture::getBaseLevel() const
 //======================================================================================================================
 uint Texture::getActiveTexUnit()
 {
-	GLint unit;
+	int unit;
 	glGetIntegerv(GL_ACTIVE_TEXTURE, &unit);
 	return unit - GL_TEXTURE0;
 }
@@ -252,7 +255,7 @@ uint Texture::getActiveTexUnit()
 //======================================================================================================================
 uint Texture::getBindedTexId(uint unit)
 {
-	GLint id;
+	int id;
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
 	return id;
@@ -268,4 +271,24 @@ int Texture::getMaxLevel() const
 	int level;
 	glGetTexParameteriv(target, GL_TEXTURE_MAX_LEVEL, &level);
 	return level;
+}
+
+
+//======================================================================================================================
+// setAnisotropy                                                                                                       =
+//======================================================================================================================
+void Texture::setAnisotropy(uint level)
+{
+	bind(LAST_TEX_UNIT);
+	setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, int(level));
+}
+
+
+//======================================================================================================================
+// setMipmapLevel                                                                                                      =
+//======================================================================================================================
+void Texture::setMipmapLevel(uint level)
+{
+	bind(LAST_TEX_UNIT);
+	setTexParameter(GL_TEXTURE_BASE_LEVEL, int(level));
 }

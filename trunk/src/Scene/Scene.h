@@ -22,9 +22,9 @@ class ParticleEmitter;
  */
 class Scene: public Object
 {
-	PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
+	//PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
 	PROPERTY_RW(Vec3, sunPos, setSunPos, getSunPos)
-	PROPERTY_R(Physics*, phyWorld, getPhysics) ///< Connection with bullet
+	//PROPERTY_R(Physics*, phyWorld, getPhysics) ///< Connection with bullet
 
 	public:
 		/**
@@ -55,7 +55,19 @@ class Scene: public Object
 		void updateAllWorldStuff();
 		void updateAllControllers();
 
+		/**
+		 * @name Accessors
+		 */
+		/**@{*/
+		Vec3& getAmbientCol() {return ambientCol;}
+		void setAmbientCol(const Vec3& col) {ambientCol = col;}
+		Physics& getPhysics();
+		/**@}*/
+
 	private:
+		Vec3 ambientCol; ///< The global ambient color
+		Physics* physics; ///< Connection with Bullet wrapper
+
 		/**
 		 * Adds a node in a container
 		 */
@@ -84,6 +96,13 @@ inline void Scene::eraseNode(ContainerType& container, Type* x)
 	typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
 	DEBUG_ERR(it == container.end());
 	container.erase(it);
+}
+
+
+inline Physics& Scene::getPhysics()
+{
+	DEBUG_ERR(physics == NULL);
+	return *physics;
 }
 
 

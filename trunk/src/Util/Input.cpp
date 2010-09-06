@@ -29,8 +29,8 @@ void reset(void)
 	DEBUG_ERR(mouseBtns.size() < 1);
 	memset(&keys[0], 0, keys.size()*sizeof(short));
 	memset(&mouseBtns[0], 0, mouseBtns.size()*sizeof(short));
-	mousePosNdc.setZero();
-	mouseVelocity.setZero();
+	mousePosNdc = Vec2(0.0);
+	mouseVelocity = Vec2(0.0);
 }
 
 
@@ -55,7 +55,7 @@ void handleEvents()
 	}
 
 
-	mouseVelocity.setZero();
+	mouseVelocity = Vec2(0.0);
 
 	SDL_Event event_;
 	while(SDL_PollEvent(&event_))
@@ -92,7 +92,8 @@ void handleEvents()
 				{
 					// the SDL_WarpMouse pushes an event in the event queue. This check is so we wont process the event of the...
 					// ...SDL_WarpMouse function
-					if(mousePosNdc == Vec2::getZero()) break;
+					if(mousePosNdc == Vec2(0.0))
+						break;
 
 					SDL_WarpMouse(app->getWindowWidth()/2, app->getWindowHeight()/2);
 				}

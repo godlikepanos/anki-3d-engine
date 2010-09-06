@@ -1,4 +1,5 @@
 #include <cstring>
+#include <GL/glew.h>
 #include "LightProps.h"
 #include "Parser.h"
 #include "Texture.h"
@@ -104,7 +105,7 @@ bool LightProps::load(const char* filename)
 				
 			texture.loadRsrc(token->getValue().getString());
 			texture->setRepeat(false);
-			texture->setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, 0);
+			texture->setAnisotropy(0);
 			texture->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			texture->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}

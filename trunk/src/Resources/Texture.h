@@ -1,7 +1,6 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include <GL/glew.h>
 #include <limits>
 #include "Common.h"
 #include "Resource.h"
@@ -24,27 +23,34 @@ class Texture: public Resource
 		 Texture();
 		~Texture() {}
 
-		GLuint getGlId() const;
-		int getWidth() const;
-		int getHeight() const;
+		uint getGlId() const;
 
+		/**
+		 * @name Create tex funcs
+		 */
+		/**@{*/
 		bool load(const char* filename);
 		void unload();
-		bool createEmpty2D(float width, float height, int internalFormat, int format, GLenum type_);
+		bool createEmpty2D(float width, float height, int internalFormat, int format, uint type_);
 		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
+		/**@}*/
 
 		void bind(uint texUnit = 0) const;
 		void setRepeat(bool repeat) const;
-		void setTexParameter(GLenum paramName, GLint value) const;
-		void texParameter(GLenum paramName, GLfloat value) const;
+		void setTexParameter(uint paramName, int value) const;
+		void setTexParameter(uint paramName, float value) const;
+		void setAnisotropy(uint level);
+		void setMipmapLevel(uint level);
+		int getWidth() const;
+		int getHeight() const;
 		int getBaseLevel() const;
 		int getMaxLevel() const;
 		static uint getActiveTexUnit();
 		static uint getBindedTexId(uint unit);
 
 	private:
-		GLuint glId; ///< Identification for OGL
-		GLenum target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+		uint glId; ///< Identification for OGL
+		uint target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
 
 		/**
 		 * @name Variables set by the renderer
@@ -61,7 +67,7 @@ class Texture: public Resource
 };
 
 
-inline GLuint Texture::getGlId() const
+inline uint Texture::getGlId() const
 {
 	DEBUG_ERR(!isLoaded());
 	return glId;

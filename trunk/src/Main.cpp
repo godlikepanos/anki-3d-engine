@@ -77,7 +77,7 @@ void initPhysics()
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new RigidBody(*app->getScene().getPhysics(), init);
+	new RigidBody(app->getScene().getPhysics(), init);
 
 
 	/*{
@@ -210,7 +210,7 @@ void init()
 	PhyCharacter::Initializer init;
 	init.sceneNode = imp;
 	init.startTrf = Transform(Vec3(0, 40, 0), Mat3::getIdentity(), 1.0);
-	character = new PhyCharacter(*app->getScene().getPhysics(), init);
+	character = new PhyCharacter(app->getScene().getPhysics(), init);
 
 	// crate
 	/*crate = new MeshNode;
@@ -304,12 +304,12 @@ void mainLoop()
 		{
 			INFO("Exec script");
 			app->getScriptingEngine().exposeVar("app", app);
-			app->getScriptingEngine().execScript("#from Anki import *\nAnki.app.getScene().setAmbientCol(Anki.Vec3(0.5))");
+			app->getScriptingEngine().execScript(Util::readFile("test.py").c_str());
 		}
 
 		mover->getLocalTransform().getRotation().reorthogonalize();
 
-		app->getScene().getPhysics()->update(crntTime);
+		app->getScene().getPhysics().update(crntTime);
 
 		app->getScene().updateAllControllers();
 		app->getScene().updateAllWorldStuff();

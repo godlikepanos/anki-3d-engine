@@ -1,3 +1,4 @@
+//
 #pragma anki vertShaderBegins
 
 #pragma anki attribute viewVector 1
@@ -253,11 +254,13 @@ void main()
 		vec4 _tex_coord2 = texProjectionMat * vec4(_frag_pos_vspace, 1.0);
 		vec3 _texCoords3 = _tex_coord2.xyz / _tex_coord2.w;
 
+		const float theshold = 0.01;
+
 		if
 		(
 			_tex_coord2.w > 0.0 &&
-			_texCoords3.x > 0.0 &&
-			_texCoords3.x < 1.0 &&
+			_texCoords3.x > 0.0 + theshold &&
+			_texCoords3.x < 1.0 - theshold &&
 			_texCoords3.y > 0.0 &&
 			_texCoords3.y < 1.0 &&
 			_tex_coord2.w < 1.0/lightInvRadius
