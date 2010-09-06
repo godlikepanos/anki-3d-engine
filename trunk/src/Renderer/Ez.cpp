@@ -49,7 +49,7 @@ void Renderer::Ms::Ez::run()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
+	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material->blends)

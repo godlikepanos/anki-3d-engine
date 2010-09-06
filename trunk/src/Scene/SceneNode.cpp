@@ -18,8 +18,7 @@ void SceneNode::commonConstructorCode()
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
 
-	DEBUG_ERR(app->getScene() == NULL);
-	app->getScene()->registerNode(this);
+	app->getScene().registerNode(this);
 }
 
 
@@ -28,8 +27,7 @@ void SceneNode::commonConstructorCode()
 //======================================================================================================================
 SceneNode::~SceneNode()
 {
-	DEBUG_ERR(app->getScene() == NULL);
-	app->getScene()->unregisterNode(this);
+	app->getScene().unregisterNode(this);
 }
 
 

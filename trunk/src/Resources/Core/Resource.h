@@ -50,9 +50,9 @@ class Resource
 		virtual bool load(const char* filename) = 0;
 
 		/**
-		 * Special unload func for stuff that the destructor cannot cleanup (eg OpenGL stuff)
+		 * Special unload func for stuff that the destructor cannot cleanup (eg OpenGL stuff).
 		 */
-		virtual void unload();
+		virtual void unload() {}
 };
 
 

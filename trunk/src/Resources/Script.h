@@ -21,7 +21,7 @@ class Script: public Resource
 };
 
 
-Script::Script():
+inline Script::Script():
 	Resource(RT_SCRIPT)
 {}
 

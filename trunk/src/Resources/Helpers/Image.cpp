@@ -233,7 +233,7 @@ bool Image::loadPng(const char* filename)
 	/*
 	 * All locals
 	 */
-	const uint PNG_SIG_SIZE = 8;
+	const uint PNG_SIG_SIZE = 8; // PNG header size
 	FILE* file = NULL;
 	png_structp pngPtr = NULL;
 	png_infop infoPtr = NULL;

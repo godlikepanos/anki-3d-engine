@@ -335,26 +335,28 @@ also requires a few extra development libraries.</p>
 <h2><a class="toc-backref" href="#id3">Required external libraries</a></h2>
 <p>AnKi requires a few up to date versions of some libraries. The libraries are:</p>
 <ul class="simple">
-<li>Bullet Physics</li>
-<li>SDL ver 1.3</li>
-<li>GLEW</li>
-<li>boost</li>
-<li>libpng</li>
-<li>libjpeg</li>
+<li>Bullet Physics 2.77</li>
+<li>SDL 1.3</li>
+<li>GLEW 1.5.5</li>
+<li>boost 1.4</li>
+<li>libpng 1.2</li>
+<li>libjpeg 6b</li>
+<li>libpython 2.6</li>
 </ul>
-<p>Normally, in order to build AnKi you have to download (from the revision control
-repositories) and build some of the above libraries because they are not
-provided in most Linux distros or they are old versions. To ease the building
-process and to save you some time some of the above libraries are already backed
-and placed inside the extern directory. The backed libraries are for Linux and
-for x86-64 architecture. If you dont trust my binaries and/or you want to build
-the libs yourselves you have to download, build and install the libs in the
-extern directory manually. The script <em>download-externs.sh</em> downloads the
-libraries (it requires SVN, mercurial, CMake, autoconf) and the <em>do-externs.sh</em>
-builds the libraries and installs them in the extern directory. Open the files
-and see how it is done.</p>
-<p>You wont find any development files for boost, libpng and libjpeg inside the
-extern dir. Get them using your Linux distribution's packet manager.</p>
+<p>Normally, in order to build AnKi you need to have all of the above libraries.
+Some of them are not provided from the most Linux distros or they are older
+versions. The libraries you have to download and build for yourself are Bullet,
+SDL and GLEW. The other are pretty common and you can find them almost anywhere.</p>
+<p>To ease the building process and to save you some time <strong>some</strong> of the above
+libraries are already backed and placed inside the extern directory. The backed
+libraries are for Linux and for x86-64 architecture. If you dont trust my
+binaries and/or you want to build the libs yourselves you have to download,
+build and install the libs in the extern directory manually. The script
+<em>download-externs.sh</em> downloads the libraries (it requires SVN, mercurial,
+CMake, autoconf) and the <em>do-externs.sh</em> builds the libraries and installs them
+in the extern directory. Open the files and see how it is done.</p>
+<p>You wont find any development files for boost, libpng, libjpeg and libpython
+inside the extern dir. Get them using your Linux distribution's packet manager.</p>
 </div>
 <div class="section" id="building-anki-and-optionally-generating-makefiles">
 <h2><a class="toc-backref" href="#id4">Building AnKi and optionally generating makefiles</a></h2>

@@ -77,7 +77,7 @@ void Renderer::Ms::run()
 	Renderer::setViewport(0, 0, r.width, r.height);
 
 	//glEnable(GL_DEPTH_TEST);
-	app->getScene()->skybox.Render(cam.getViewMatrix().getRotationPart());
+	app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
 	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
@@ -88,7 +88,7 @@ void Renderer::Ms::run()
 	}
 
 	// render the meshes
-	for(Vec<MeshNode*>::iterator it=app->getScene()->meshNodes.begin(); it!=app->getScene()->meshNodes.end(); it++)
+	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material.get() == NULL)
