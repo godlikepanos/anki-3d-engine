@@ -58,7 +58,7 @@ void ParticleEmitter::init(const char* filename)
 		init.sceneNode = particle;
 		init.group = Physics::CG_PARTICLE;
 		init.mask = Physics::CG_ALL ^ Physics::CG_PARTICLE;
-		RigidBody* body = new RigidBody(*app->getScene().getPhysics(), init);
+		RigidBody* body = new RigidBody(app->getScene().getPhysics(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 

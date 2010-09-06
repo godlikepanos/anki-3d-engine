@@ -199,12 +199,6 @@ inline float Vec2::getLength() const
 	return M::sqrt(x*x + y*y);
 }
 
-// set to zero
-inline void Vec2::setZero()
-{
-	x = y = 0.0;
-}
-
 // normalize
 inline void Vec2::normalize()
 {
@@ -221,18 +215,6 @@ inline Vec2 Vec2::getNormalized() const
 inline float Vec2::dot(const Vec2& b) const
 {
 	return x*b.x + y*b.y;
-}
-
-// getZero
-inline Vec2 Vec2::getZero()
-{
-	return Vec2(0.0);
-}
-
-// getOne
-inline Vec2 Vec2::getOne()
-{
-	return Vec2(1.0);
 }
 
 // print

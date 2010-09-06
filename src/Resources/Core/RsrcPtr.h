@@ -50,7 +50,6 @@ class RsrcPtr
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-
 template<typename Type>
 RsrcPtr<Type>::RsrcPtr():
 	p(NULL)
@@ -85,5 +84,6 @@ Type* RsrcPtr<Type>::get() const
 {
 	return p;
 }
+
 
 #endif
