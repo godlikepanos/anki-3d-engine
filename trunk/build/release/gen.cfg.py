@@ -11,4 +11,4 @@ compiler = "g++"
 
 compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -s -msse4 -O3 -mtune=core2 -ffast-math -fsingle-precision-constant"
 
-linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -lboost_system -lboost_python -lboost_filesystem -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6"
+linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem"

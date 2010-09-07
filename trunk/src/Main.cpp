@@ -36,6 +36,7 @@
 #include "PhyCharacter.h"
 #include "RigidBody.h"
 #include "ScriptingEngine.h"
+#include "StdinListener.h"
 
 
 App* app = NULL; ///< The only global var. App constructor sets it
@@ -309,6 +310,13 @@ void mainLoop()
 
 		mover->getLocalTransform().getRotation().reorthogonalize();
 
+		string cmd = app->getStdinLintener().getLine();
+		while(cmd.length() > 0)
+		{
+			app->getScriptingEngine().execScript(cmd.c_str());
+			cmd = app->getStdinLintener().getLine();
+		}
+
 		app->getScene().getPhysics().update(crntTime);
 
 		app->getScene().updateAllControllers();
@@ -358,6 +366,7 @@ void mainLoop()
 int main(int argc, char* argv[])
 {
 	new App(argc, argv);
+	thread thr(&StdinListener::workingFunc, &app->getStdinLintener());
 
 	init();
 

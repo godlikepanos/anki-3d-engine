@@ -8,6 +8,8 @@
 
 
 class ScriptingEngine;
+class StdinListener;
+class Scene;
 
 
 /**
@@ -23,19 +25,6 @@ class App: public Object
 
 	PROPERTY_RW(class MainRenderer*, mainRenderer, setMainRenderer, getMainRenderer) ///< Pointer to the main renderer
 	PROPERTY_RW(class Camera*, activeCam, setActiveCam, getActiveCam) ///< Pointer to the current camera
-
-	private:
-		static bool isCreated; ///< A flag to ensure one @ref App instance
-		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
-		class Scene* scene;
-		ScriptingEngine* scriptingEngine;
-		uint time;
-		SDL_WindowID windowId;
-		SDL_GLContext glContext;
-		SDL_Surface* iconImage;
-		bool fullScreenFlag;
-
-		void parseCommandLineArgs(int argc, char* argv[]);
 
 	public:
 		uint timerTick;
@@ -59,12 +48,27 @@ class App: public Object
 		bool isTerminalColoringEnabled() const;
 		Scene& getScene();
 		ScriptingEngine& getScriptingEngine();
+		StdinListener& getStdinLintener();
 		/**@}*/
 
 		/**
 		 * @return Returns the number of milliseconds since SDL library initialization
 		 */
 		static uint getTicks();
+
+	private:
+		static bool isCreated; ///< A flag to ensure one @ref App instance
+		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
+		Scene* scene;
+		ScriptingEngine* scriptingEngine;
+		uint time;
+		SDL_WindowID windowId;
+		SDL_GLContext glContext;
+		SDL_Surface* iconImage;
+		bool fullScreenFlag;
+		StdinListener* stdinListener;
+
+		void parseCommandLineArgs(int argc, char* argv[]);
 };
 
 
@@ -85,6 +89,13 @@ inline ScriptingEngine& App::getScriptingEngine()
 {
 	DEBUG_ERR(scriptingEngine == NULL);
 	return *scriptingEngine;
+}
+
+
+inline StdinListener& App::getStdinLintener()
+{
+	DEBUG_ERR(stdinListener == NULL);
+	return *stdinListener;
 }
 
 
