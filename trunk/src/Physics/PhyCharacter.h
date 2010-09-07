@@ -1,9 +1,10 @@
-#ifndef PHYCHARACTER_H
-#define PHYCHARACTER_H
+#ifndef PHY_CHARACTER_H
+#define PHY_CHARACTER_H
 
 #include "Common.h"
 #include "Physics.h"
 #include "Math.h"
+#include "Object.h"
 
 
 class Physics;
@@ -17,7 +18,7 @@ class MotionState;
 /**
  * Its basically a wrapper around bullet character
  */
-class PhyCharacter
+class PhyCharacter: public Object
 {
 	friend class Physics;
 
@@ -32,13 +33,13 @@ class PhyCharacter
 			float stepHeight;
 			float jumpSpeed;
 			float maxJumpHeight;
-			SceneNode* sceneNode;
+			SceneNode* sceneNode; ///< For the MotionState
 			Transform startTrf;
 
 			Initializer();
 		};
 
-		PhyCharacter(Physics& physics_, const Initializer& init);
+		PhyCharacter(Physics& physics_, const Initializer& init, Object* parent = NULL);
 		~PhyCharacter();
 		void rotate(float angle);
 		void moveForward(float distance);

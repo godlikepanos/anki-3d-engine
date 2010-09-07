@@ -38,6 +38,13 @@ class Physics: public Object
 		void update(float crntTime);
 		void debugDraw();
 
+		/**
+		 * @name Accessors
+		 */
+		/**@{*/
+		btDiscreteDynamicsWorld& getWorld() {return *dynamicsWorld;}
+		/**@}*/
+
 	private:
 		btDiscreteDynamicsWorld* dynamicsWorld;
 		btDefaultCollisionConfiguration* collisionConfiguration;

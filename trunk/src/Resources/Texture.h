@@ -21,7 +21,7 @@ class Texture: public Resource
 
 	public:
 		 Texture();
-		~Texture() {}
+		~Texture();
 
 		uint getGlId() const;
 
@@ -30,7 +30,6 @@ class Texture: public Resource
 		 */
 		/**@{*/
 		bool load(const char* filename);
-		void unload();
 		bool createEmpty2D(float width, float height, int internalFormat, int format, uint type_);
 		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
 		/**@}*/

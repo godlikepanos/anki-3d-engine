@@ -68,7 +68,6 @@ class ParticleEmitterProps: public ParticleEmitterPropsStruct, public Resource
 		~ParticleEmitterProps() {}
 
 		bool load(const char* filename);
-		void unload() {} ///< Do nothing
 };
 
 

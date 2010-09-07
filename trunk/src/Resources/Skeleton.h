@@ -51,7 +51,6 @@ class Skeleton: public Resource
 		 Skeleton();
 		~Skeleton() {}
 		bool load(const char* filename);
-		void unload() {}
 };
 
 

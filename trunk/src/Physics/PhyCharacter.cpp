@@ -11,12 +11,13 @@
 //======================================================================================================================
 // Contructor                                                                                                          =
 //======================================================================================================================
-PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init):
+PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init, Object* parent):
+	Object(parent),
 	physics(physics_)
 {
 	ghostObject = new btPairCachingGhostObject();
 
-	motionState = new MotionState(init.startTrf, init.sceneNode);
+	motionState = new MotionState(init.startTrf, init.sceneNode, this);
 
 	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(physics.broadphase);
 	DEBUG_ERR(sweepBp == NULL);
@@ -58,7 +59,6 @@ PhyCharacter::~PhyCharacter()
 	delete convexShape;
 	delete ghostPairCallback;
 	delete ghostObject;
-	delete motionState;
 }
 
 

@@ -30,7 +30,7 @@ namespace mem {
 #endif
 
 
-#ifdef DEBUG_ENABLED
+#if DEBUG_ENABLED == 1
 	#define SANITY_CHECKS SanityChecks();
 	#define PRINT_CALL_INFO(x) { if(mem::print_call_info) INFO(x) }
 #else
@@ -286,7 +286,7 @@ init                                                                            
 */
 static void init()
 {
-#ifdef DEBUG_ENABLED
+#if DEBUG_ENABLED == 1
 	memset(buffer, (char)0xCC, buffer_size);
 #endif
 
@@ -622,7 +622,7 @@ static void FreeBlock(mem_block_t* crnt)
 
 	free_size += crnt->size;
 
-#ifdef DEBUG_ENABLED
+#if DEBUG_ENABLED == 1
 	memset(crnt->addr, (char)0xCC, crnt->size);
 #endif
 

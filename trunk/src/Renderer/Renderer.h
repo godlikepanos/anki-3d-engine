@@ -58,13 +58,13 @@ class Renderer: public Object
 					friend class Renderer;
 					friend class Ms;
 
-					PROPERTY_R(bool, enabled, isEnabled)
-
 					public:
 						Ez(Renderer& r_): RenderingStage(r_) {}
+						bool isEnabled() const {return enabled;}
 
 					private:
 						Fbo fbo;
+						bool enabled;
 
 						void init();
 						void run();

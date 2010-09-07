@@ -25,7 +25,6 @@ class LightProps: public Resource
 		LightProps();
 		virtual ~LightProps() {}
 		bool load(const char* filename);
-		void unload() {}
 		const Texture* getTexture() const;
 
 	private:

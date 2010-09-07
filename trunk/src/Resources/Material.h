@@ -139,7 +139,6 @@ class Material: public Resource
 	public:
 		Material();
 		bool load(const char* filename);
-		void unload() {};
 };
 
 

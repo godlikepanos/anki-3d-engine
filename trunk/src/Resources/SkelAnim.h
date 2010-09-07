@@ -39,7 +39,6 @@ class SkelAnim: public Resource
 		SkelAnim();
 		~SkelAnim() {}
 		bool load(const char* filename);
-		void unload() {}
 };
 
 
