@@ -90,7 +90,7 @@ class ShaderProg: public Resource
 	//====================================================================================================================
 	public:
 		ShaderProg();
-		~ShaderProg() {}
+		~ShaderProg() {/** @todo add code */}
 
 		/**
 		 * Accessor to glId
@@ -186,11 +186,6 @@ class ShaderProg: public Resource
 		 * Resource load
 		 */
 		bool load(const char* filename);
-
-		/**
-		 * Free GL program
-		 */
-		void unload() { /** @todo add code */ }
 }; 
 
 

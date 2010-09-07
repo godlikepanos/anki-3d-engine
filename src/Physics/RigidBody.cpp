@@ -7,8 +7,9 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-RigidBody::RigidBody(Physics& physics_, const Initializer& init):
+RigidBody::RigidBody(Physics& physics_, const Initializer& init, Object* parent):
   btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL, btVector3(0.0, 0.0, 0.0))), // dummy init
+  Object(parent),
   physics(physics_)
 {
 	DEBUG_ERR(init.shape==NULL || init.shape->getShapeType()==INVALID_SHAPE_PROXYTYPE);
@@ -21,9 +22,9 @@ RigidBody::RigidBody(Physics& physics_, const Initializer& init):
 	else
 		localInertia = btVector3(0.0, 0.0, 0.0);
 
-	motionState.reset(new MotionState(init.startTrf, init.sceneNode));
+	motionState = new MotionState(init.startTrf, init.sceneNode, this);
 
-	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState.get(), init.shape, localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState, init.shape, localInertia);
 
 	setupRigidBody(cInfo);
 
@@ -31,6 +32,7 @@ RigidBody::RigidBody(Physics& physics_, const Initializer& init):
 
 	forceActivationState(ISLAND_SLEEPING);
 
+	// register
 	if(init.mask==-1 || init.group==-1)
 		physics.dynamicsWorld->addRigidBody(this);
 	else

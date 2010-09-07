@@ -4,15 +4,16 @@
 #include <LinearMath/btMotionState.h>
 #include "Common.h"
 #include "SceneNode.h"
+#include "Object.h"
 
 
 /**
  * A custom motion state
  */
-class MotionState: public btMotionState
+class MotionState: public btMotionState, public Object
 {
 	public:
-		MotionState(const Transform& initialTransform, SceneNode* node_);
+		MotionState(const Transform& initialTransform, SceneNode* node_, Object* parent);
 		~MotionState() {}
 
 		/**
@@ -26,7 +27,7 @@ class MotionState: public btMotionState
 
 	private:
 		btTransform worldTransform;
-		SceneNode* node;
+		SceneNode* node; ///< Pointer cause it may be NULL
 };
 
 
@@ -34,7 +35,8 @@ class MotionState: public btMotionState
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline MotionState::MotionState(const Transform& initialTransform, SceneNode* node_):
+inline MotionState::MotionState(const Transform& initialTransform, SceneNode* node_, Object* parent):
+	Object(parent),
 	worldTransform(toBt(initialTransform)),
 	node(node_)
 {}

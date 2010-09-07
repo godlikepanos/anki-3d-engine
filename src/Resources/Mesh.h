@@ -70,7 +70,6 @@ class Mesh: public Resource
 		Mesh();
 		~Mesh() {}
 		bool load(const char* filename);
-		void unload();
 
 		/**
 		 * The mesh is renderable when the material is loaded

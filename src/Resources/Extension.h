@@ -14,9 +14,8 @@ class Extension: public Resource
 	
 	public:
 		Extension();
-		~Extension() {}
+		~Extension();
 		bool load(const char* filename);
-		void unload();
 		template<typename Type> int FooBar(Type* ptr) { DEBUG_ERR(foobarPtr==NULL); return (*foobarPtr)(reinterpret_cast<Type*>(ptr)); }
 };
 

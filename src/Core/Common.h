@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-// dummy define just to use namespace
+// dummy define just to use the namespace
 namespace boost
 {}
 
@@ -12,22 +12,36 @@ using namespace std;
 
 
 //======================================================================================================================
+// Defines sanity checks                                                                                               =
+//======================================================================================================================
+#if !defined(DEBUG_ENABLED)
+	#error "DEBUG_ENABLED is not defined"
+#endif
+
+#if !defined(PLATFORM_LINUX)
+	#if !defined(PLATFORM_WIN)
+		#error "PLATFORM not defined"
+	#endif
+#endif
+
+
+//======================================================================================================================
 // misc types                                                                                                          =
 //======================================================================================================================
 #ifndef uchar
-typedef unsigned char uchar;
+	typedef unsigned char uchar;
 #endif
 
 #ifndef uint
-typedef unsigned int uint;
+	typedef unsigned int uint;
 #endif
 
 #ifndef ushort
-typedef unsigned short int ushort;
+	typedef unsigned short int ushort;
 #endif
 
 #ifndef ulong
-typedef unsigned long int ulong;
+	typedef unsigned long int ulong;
 #endif
 
 
@@ -70,7 +84,7 @@ extern bool msgGlError(const char* file, int line, const char* func);
 #define INFO(x) msgPrefix(MT_INFO, __FILE__, __LINE__, FUNCTION) << x << msgSuffix
 
 /// Reverse assertion
-#if defined(DEBUG_ENABLED)
+#if DEBUG_ENABLED == 1
 	#define DEBUG_ERR(x) \
 		if(x) \
 			msgPrefix(MT_DEBUG_ERR, __FILE__, __LINE__, FUNCTION) << #x << msgSuffix
@@ -80,7 +94,7 @@ extern bool msgGlError(const char* file, int line, const char* func);
 
 
 /// code that executes on debug
-#ifdef DEBUG_ENABLED
+#if DEBUG_ENABLED == 1
 	#define DEBUG_CODE if(true)
 #else
 	#define DEBUG_CODE if(false)

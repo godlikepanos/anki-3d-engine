@@ -59,8 +59,7 @@ inline Mat3::Mat3(const Mat3& b)
 // constructor [quat]
 inline Mat3::Mat3(const Quat& q)
 {
-	const float tolerance = 0.002;
-	DEBUG_ERR(fabs(1.0 - q.getLength()) > tolerance); // Not normalized quat
+	DEBUG_ERR(fabs(1.0 - q.getLength()) > 0.002); // If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 

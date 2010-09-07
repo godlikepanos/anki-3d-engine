@@ -13,7 +13,6 @@ class Script: public Resource
 	public:
 		Script();
 		~Script() {}
-
 		bool load(const char* filename);
 
 	private:

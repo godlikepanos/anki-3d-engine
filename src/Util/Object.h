@@ -22,8 +22,8 @@ class Object
 		 * @name Accessors
 		 */
 		/**@{*/
-		const Object* getObjParent() const;
-		const Vec<Object*> getObjChilds() const; ///< Get the childs Vec
+		const Object* getObjParent() const {return objParent;}
+		const Vec<Object*> getObjChilds() const {return objChilds;} ///< Get the childs Vec
 		/**@}*/
 
 	private:
@@ -52,18 +52,6 @@ inline Object::~Object()
 	{
 		delete *it;
 	}
-}
-
-
-inline const Object* Object::getObjParent() const
-{
-	return objParent;
-}
-
-
-inline const Vec<Object*> Object::getObjChilds() const
-{
-	return objChilds;
 }
 
 

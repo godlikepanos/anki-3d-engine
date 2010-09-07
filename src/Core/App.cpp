@@ -205,7 +205,7 @@ void App::printAppInfo()
 {
 	stringstream msg;
 	msg << "App info: debugging ";
-	#if defined(DEBUG_ENABLED)
+	#if DEBUG_ENABLED == 1
 		msg << "on, ";
 	#else
 		msg << "off, ";

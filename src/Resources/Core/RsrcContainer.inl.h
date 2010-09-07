@@ -124,7 +124,6 @@ void RsrcContainer<Type>::unload(Type* x)
 	// if no other users then call unload and update the container
 	if(del_->referenceCounter == 0)
 	{
-		del_->unload();
 		delete del_;
 		BaseClass::erase(it);
 	}

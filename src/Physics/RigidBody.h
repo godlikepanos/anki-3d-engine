@@ -6,6 +6,7 @@
 #include <btBulletCollisionCommon.h>
 #include "Common.h"
 #include "Math.h"
+#include "Object.h"
 
 
 class SceneNode;
@@ -16,7 +17,7 @@ class Physics;
 /**
  * Wrapper for rigid body
  */
-class RigidBody: public btRigidBody
+class RigidBody: public btRigidBody, public Object
 {
 	public:
 		/**
@@ -37,7 +38,7 @@ class RigidBody: public btRigidBody
 		/**
 		 * Init and register
 		 */
-		RigidBody(Physics& physics, const Initializer& init);
+		RigidBody(Physics& physics, const Initializer& init, Object* parent = NULL);
 
 		/**
 		 * Unregister
@@ -46,7 +47,7 @@ class RigidBody: public btRigidBody
 
 	private:
 		Physics& physics; ///< Know your father
-		auto_ptr<MotionState> motionState; ///< Keep it here as well for garbage collection
+		MotionState* motionState; ///< Keep it here as well for garbage collection
 };
 
 
