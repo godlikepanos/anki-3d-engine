@@ -1,11 +1,12 @@
 #include <GL/glew.h>
 #include <sstream>
 #include <SDL/SDL.h>
+#include <boost/filesystem.hpp>
 #include "App.h"
 #include "Scene.h"
 #include "MainRenderer.h"
 #include "ScriptingEngine.h"
-#include <boost/filesystem.hpp>
+#include "StdinListener.h"
 
 bool App::isCreated = false;
 
@@ -77,6 +78,7 @@ App::App(int argc, char* argv[], Object* parent):
 	scriptingEngine = new ScriptingEngine(this);
 	mainRenderer = new MainRenderer(this);
 	scene = new Scene(this);
+	stdinListener = new StdinListener(this);
 	activeCam = NULL;
 
 	timerTick = 1000/40; // in ms. 1000/Hz
