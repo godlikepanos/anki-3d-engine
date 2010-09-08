@@ -130,7 +130,7 @@ void main()
  * the normal. For that two reasons we split the diffuse calculations in two parts
  */
 
-#pragma anki include "shaders/pack.glsl"
+#pragma anki include "shaders/Pack.glsl"
 
 
 #if defined(DIFFUSE_MAPPING)
@@ -287,7 +287,7 @@ void main()
 	/*
 	 * Final Stage. Write all data
 	 */
-	gl_FragData[0].rg = PackNormal(newNormal);
+	gl_FragData[0].rg = packNormal(newNormal);
 	gl_FragData[1].rgb = _diff_color;
 	gl_FragData[2] = _specular;
 

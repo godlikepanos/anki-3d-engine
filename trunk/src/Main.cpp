@@ -310,15 +310,8 @@ void mainLoop()
 
 		mover->getLocalTransform().getRotation().reorthogonalize();
 
-		string cmd = app->getStdinLintener().getLine();
-		while(cmd.length() > 0)
-		{
-			app->getScriptingEngine().execScript(cmd.c_str());
-			cmd = app->getStdinLintener().getLine();
-		}
-
+		app->execStdinScpripts();
 		app->getScene().getPhysics().update(crntTime);
-
 		app->getScene().updateAllControllers();
 		app->getScene().updateAllWorldStuff();
 
