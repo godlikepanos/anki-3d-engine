@@ -36,6 +36,13 @@ class App: public Object
 		void waitForNextFrame();
 		void togleFullScreen();
 		void swapBuffers();
+
+		/**
+		 * The func pools the stdinListener for string in the console, if there are any it executes them with
+		 * scriptingEngine
+		 */
+		void execStdinScpripts();
+
 		static void printAppInfo();
 
 		uint getDesktopWidth() const;

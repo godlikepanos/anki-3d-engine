@@ -260,3 +260,19 @@ uint App::getTicks()
 	return SDL_GetTicks();
 }
 
+
+//======================================================================================================================
+// execStdinScpripts                                                                                                   =
+//======================================================================================================================
+void App::execStdinScpripts()
+{
+	while(1)
+	{
+		string cmd = app->getStdinLintener().getLine();
+
+		if(cmd.length() < 1)
+			break;
+
+		app->getScriptingEngine().execScript(cmd.c_str());
+	}
+}
