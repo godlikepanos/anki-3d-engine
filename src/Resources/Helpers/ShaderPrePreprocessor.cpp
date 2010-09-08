@@ -57,7 +57,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 	// first check the depth
 	if(depth > 99)
 	{
-		ERROR("The include depth is too high. Probably circular includance (Im in file \"" << filename << "\")");
+		ERROR("File \"" << filename << "\": The include depth is too high. Probably circular includance");
 		return false;
 	}
 
@@ -65,7 +65,7 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 	Vec<string> lines = Util::getFileLines(filename.c_str());
 	if(lines.size() < 1)
 	{
-		ERROR("Cannot parse file \"" << filename << "\"");
+		ERROR("File \"" << filename << "\": Cannot open or empty");
 		return false;
 	}
 

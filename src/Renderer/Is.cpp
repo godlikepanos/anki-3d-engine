@@ -116,7 +116,7 @@ void Renderer::Is::init()
 	pointLightSProgUniVars.msDepthFai = pointLightSProg->findUniVar("msDepthFai");
 	pointLightSProgUniVars.planes = pointLightSProg->findUniVar("planes");
 	pointLightSProgUniVars.lightPos = pointLightSProg->findUniVar("lightPos");
-	pointLightSProgUniVars.lightInvRadius = pointLightSProg->findUniVar("lightInvRadius");
+	pointLightSProgUniVars.lightRadius = pointLightSProg->findUniVar("lightRadius");
 	pointLightSProgUniVars.lightDiffuseCol = pointLightSProg->findUniVar("lightDiffuseCol");
 	pointLightSProgUniVars.lightSpecularCol = pointLightSProg->findUniVar("lightSpecularCol");
 
@@ -131,7 +131,7 @@ void Renderer::Is::init()
 	spotLightNoShadowSProgUniVars.msDepthFai = spotLightNoShadowSProg->findUniVar("msDepthFai");
 	spotLightNoShadowSProgUniVars.planes = spotLightNoShadowSProg->findUniVar("planes");
 	spotLightNoShadowSProgUniVars.lightPos = spotLightNoShadowSProg->findUniVar("lightPos");
-	spotLightNoShadowSProgUniVars.lightInvRadius = spotLightNoShadowSProg->findUniVar("lightInvRadius");
+	spotLightNoShadowSProgUniVars.lightRadius = spotLightNoShadowSProg->findUniVar("lightRadius");
 	spotLightNoShadowSProgUniVars.lightDiffuseCol = spotLightNoShadowSProg->findUniVar("lightDiffuseCol");
 	spotLightNoShadowSProgUniVars.lightSpecularCol = spotLightNoShadowSProg->findUniVar("lightSpecularCol");
 	spotLightNoShadowSProgUniVars.lightTex = spotLightNoShadowSProg->findUniVar("lightTex");
@@ -155,7 +155,7 @@ void Renderer::Is::init()
 	spotLightShadowSProgUniVars.msDepthFai = spotLightShadowSProg->findUniVar("msDepthFai");
 	spotLightShadowSProgUniVars.planes = spotLightShadowSProg->findUniVar("planes");
 	spotLightShadowSProgUniVars.lightPos = spotLightShadowSProg->findUniVar("lightPos");
-	spotLightShadowSProgUniVars.lightInvRadius = spotLightShadowSProg->findUniVar("lightInvRadius");
+	spotLightShadowSProgUniVars.lightRadius = spotLightShadowSProg->findUniVar("lightRadius");
 	spotLightShadowSProgUniVars.lightDiffuseCol = spotLightShadowSProg->findUniVar("lightDiffuseCol");
 	spotLightShadowSProgUniVars.lightSpecularCol = spotLightShadowSProg->findUniVar("lightSpecularCol");
 	spotLightShadowSProgUniVars.lightTex = spotLightShadowSProg->findUniVar("lightTex");
@@ -216,7 +216,7 @@ void Renderer::Is::pointLightPass(const PointLight& light)
 	pointLightSProgUniVars.planes->setVec2(&planes);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	pointLightSProgUniVars.lightPos->setVec3(&lightPosEyeSpace);
-	pointLightSProgUniVars.lightInvRadius->setFloat(1.0/light.getRadius());
+	pointLightSProgUniVars.lightRadius->setFloat(1.0/light.getRadius());
 	Vec3 ll = light.lightProps->getDiffuseColor();
 	pointLightSProgUniVars.lightDiffuseCol->setVec3(&light.lightProps->getDiffuseColor());
 	pointLightSProgUniVars.lightSpecularCol->setVec3(&light.lightProps->getSpecularColor());
@@ -302,7 +302,7 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 	// the light params
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	uniVars->lightPos->setVec3(&lightPosEyeSpace);
-	uniVars->lightInvRadius->setFloat(1.0/light.getDistance());
+	uniVars->lightRadius->setFloat(light.getDistance());
 	uniVars->lightDiffuseCol->setVec3(&light.lightProps->getDiffuseColor());
 	uniVars->lightSpecularCol->setVec3(&light.lightProps->getSpecularColor());
 	uniVars->lightTex->setTexture(*light.lightProps->getTexture(), 4);

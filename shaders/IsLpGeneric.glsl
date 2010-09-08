@@ -11,8 +11,8 @@ attribute vec3 viewVector;
 #pragma anki attribute position 0
 attribute vec2 position; ///< the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
 
-varying vec2 texCoords;
-varying vec3 vpos;
+varying vec2 vTexCoords;
+varying vec3 vPosition;
 
 
 //======================================================================================================================
@@ -20,8 +20,8 @@ varying vec3 vpos;
 //======================================================================================================================
 void main()
 {
-	vpos = viewVector;
-	texCoords = position;
+	vPosition = viewVector;
+	vTexCoords = position;
 	vec2 _vertPosNdc_ = position * 2.0 - 1.0;
 	gl_Position = vec4(_vertPosNdc_, 0.0, 1.0);
 }
@@ -37,7 +37,7 @@ void main()
 uniform sampler2D msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai;
 uniform vec2 planes; ///< for the calculation of frag pos in view space	
 uniform vec3 lightPos; ///< Light pos in eye space
-uniform float lightInvRadius; ///< An opt
+uniform float lightRadius;
 uniform vec3 lightDiffuseCol;
 uniform vec3 lightSpecularCol;
 #if defined(SPOT_LIGHT_ENABLED)
@@ -51,8 +51,8 @@ uniform vec3 lightSpecularCol;
 /*
  * Varyings
  */
-varying vec2 texCoords;
-varying vec3 vpos; ///< for the calculation of frag pos in view space
+varying vec2 vTexCoords;
+varying vec3 vPosition; ///< for the calculation of frag pos in view space
 
 
 //======================================================================================================================
@@ -63,13 +63,13 @@ varying vec3 vpos; ///< for the calculation of frag pos in view space
  */
 vec3 getFragPosVSpace()
 {
-	float _depth_ = texture2D(msDepthFai, texCoords).r;
+	float _depth_ = texture2D(msDepthFai, vTexCoords).r;
 
 	if(_depth_ == 1.0)
 		discard;
 
 	vec3 _fragPosVspace_;
-	vec3 _vposn_ = normalize(vpos);
+	vec3 _vposn_ = normalize(vPosition);
 	_fragPosVspace_.z = -planes.y / (planes.x + _depth_);
 	_fragPosVspace_.xy = _vposn_.xy * (_fragPosVspace_.z / _vposn_.z);
 	return _fragPosVspace_;
@@ -85,7 +85,7 @@ vec3 getFragPosVSpace()
  */
 float getAttenuation(in float _fragLightDist_)
 {
-	return clamp(1.0 - lightInvRadius * sqrt(_fragLightDist_), 0.0, 1.0);
+	return clamp(1.0 - sqrt(_fragLightDist_) / lightRadius, 0.0, 1.0);
 	//return 1.0 - _fragLightDist_ * _inv_light_radius;
 }
 
@@ -153,7 +153,7 @@ vec3 doPhong(in vec3 _fragPosVspace_, out float _fragLightDist_)
 	/*
 	 * Read the normal
 	 */
-	vec3 _normal_ = unpackNormal(texture2D(msNormalFai, texCoords).rg);
+	vec3 _normal_ = unpackNormal(texture2D(msNormalFai, vTexCoords).rg);
 
 	/*
 	 * Lambert term
@@ -167,14 +167,14 @@ vec3 doPhong(in vec3 _fragPosVspace_, out float _fragLightDist_)
 	/*
 	 * Diffuce
 	 */
-	vec3 _diffuse_ = texture2D(msDiffuseFai, texCoords).rgb;
-	_diffuse_ = (_diffuse * lightDiffuseCol);
+	vec3 _diffuse_ = texture2D(msDiffuseFai, vTexCoords).rgb;
+	_diffuse_ *= lightDiffuseCol;
 	vec3 _color_ = _diffuse_ * _lambertTerm_;
 
 	/*
 	 * Specular
 	 */
-	vec4 _specularMix_ = texture2D(msSpecularFai, texCoords); // the MS specular FAI has the color and the shininess
+	vec4 _specularMix_ = texture2D(msSpecularFai, vTexCoords); // the MS specular FAI has the color and the shininess
 	vec3 _specular_ = _specularMix_.xyz;
 	float _shininess_ = _specularMix_.w;
 
@@ -214,24 +214,24 @@ void main()
 	 * Spot light
 	 */
 	#elif defined(SPOT_LIGHT_ENABLED)
-		vec4 _texCoords2_ = texProjectionMat * vec4(fragPosVspace, 1.0);
-		vec3 _texCoords3_ = _texCoords2_.xyz / _texCoords2_.w;
+		vec4 _vTexCoords2_ = texProjectionMat * vec4(fragPosVspace, 1.0);
+		vec3 _vTexCoords3_ = _vTexCoords2_.xyz / _vTexCoords2_.w;
 
-		if(_texCoords2_.w > 0.0 &&
-		   _texCoords3_.x > 0.0 &&
-		   _texCoords3_.x < 1.0 &&
-		   _texCoords3_.y > 0.0 &&
-		   _texCoords3_.y < 1.0 &&
-		   _texCoords2_.w < 1.0/lightInvRadius)
+		if(_vTexCoords2_.w > 0.0 &&
+		   _vTexCoords3_.x > 0.0 &&
+		   _vTexCoords3_.x < 1.0 &&
+		   _vTexCoords3_.y > 0.0 &&
+		   _vTexCoords3_.y < 1.0 &&
+		   _vTexCoords2_.w < lightRadius)
 		{
 			/*
 			 * Get shadow
 			 */
 			#if defined(SHADOW_ENABLED)
 				#if defined(PCF_ENABLED)
-					float _shadowCol_ =  shadow2D(shadowMap, _texCoords3_).r;
+					float _shadowCol_ = pcfLow(_vTexCoords3_);
 				#else
-					float _shadowCol_ = pcfOff(_texCoords3_);
+					float _shadowCol_ = shadow2D(shadowMap, _vTexCoords3_).r;
 				#endif
 
 				if(_shadowCol_ == 0.0)
@@ -241,13 +241,13 @@ void main()
 			float _fragLightDist_;
 			vec3 _color_ = doPhong(fragPosVspace, _fragLightDist_);
 
-			vec3 _lightTexCol_ = texture2DProj(lightTex, _texCoords2_.xyz).rgb;
+			vec3 _lightTexCol_ = texture2DProj(lightTex, _vTexCoords2_.xyz).rgb;
 			float _att_ = getAttenuation(_fragLightDist_);
 
 			#if defined(SHADOW_ENABLED)
 				gl_FragData[0] = vec4(_lightTexCol_ * _color_ * (_shadowCol_ * _att_), 1.0);
 			#else
-				gl_FragData[0] = vec4(_color_ * _texel_ * _att_, 1.0);
+				gl_FragData[0] = vec4(_lightTexCol_ * _color_ * _att_, 1.0);
 			#endif
 		}
 		else
@@ -264,7 +264,7 @@ void main()
 	
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
 	/*#if defined(SPOT_LIGHT_ENABLED)
-	gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(texture2D(msDepthFai, texCoords).r);
-	//gl_FragData[0] = vec4(texture2D(msDepthFai, texCoords).rg), 1.0);
+	gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(texture2D(msDepthFai, vTexCoords).r);
+	//gl_FragData[0] = vec4(texture2D(msDepthFai, vTexCoords).rg), 1.0);
 	#endif*/
 }

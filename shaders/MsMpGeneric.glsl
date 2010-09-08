@@ -58,11 +58,11 @@ uniform mat4 modelViewProjectionMat;
 /*
  * Varyings
  */
-varying vec3 normal_v2f;
-varying vec2 texCoords_v2f;
-varying vec3 tangent_v2f;
-varying float w_v2f;
-varying vec3 vertPosEyeSpace_v2f; ///< For env mapping. AKA view_vector
+varying vec3 vNormal;
+varying vec2 vTexCoords;
+varying vec3 vTangent;
+varying float vTangentW;
+varying vec3 vVertPosViewSpace; ///< For env mapping. AKA view_vector
 
 
 
@@ -75,26 +75,26 @@ void main()
 
 	// if we have hardware skinning then:
 	#if defined(HARDWARE_SKINNING)
-		mat3 _rot;
-		vec3 _tsl;
+		mat3 _rot_;
+		vec3 _tsl_;
 
-		HWSkinning(_rot, _tsl);
+		HWSkinning(_rot_, _tsl_);
 
-		normal_v2f = normalMat * (_rot * normal);
+		vNormal = normalMat * (_rot_ * normal);
 
 		#if NEEDS_TANGENT
-			tangent_v2f = normalMat * (_rot * vec3(tangent));
+			vTangent = normalMat * (_rot_ * vec3(tangent));
 		#endif
 
-		vec3 pos_lspace = (_rot * position) + _tsl;
-		gl_Position =  modelViewProjectionMat * vec4(pos_lspace, 1.0);
+		vec3 _posLocalSpace_ = (_rot_ * position) + _tsl_;
+		gl_Position =  modelViewProjectionMat * vec4(_posLocalSpace_, 1.0);
 
 	// if DONT have hardware skinning
 	#else
-		normal_v2f = normalMat * normal;
+		vNormal = normalMat * normal;
 
 		#if NEEDS_TANGENT
-			tangent_v2f = normalMat * vec3(tangent);
+			vTangent = normalMat * vec3(tangent);
 		#endif
 
 		gl_Position = modelViewProjectionMat * vec4(position, 1.0);
@@ -104,17 +104,17 @@ void main()
 	// calculate the rest
 
 	#if NEEDS_TEX_MAPPING
-		texCoords_v2f = texCoords;
+		vTexCoords = texCoords;
 	#endif
 
 
 	#if NEEDS_TANGENT
-		w_v2f = tangent.w;
+		vTangentW = tangent.w;
 	#endif
 
 
 	#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
-		vertPosEyeSpace_v2f = vec3(modelViewMat * vec4(position, 1.0));
+		vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
 	#endif
 }
 
@@ -152,11 +152,11 @@ uniform vec3 diffuseCol = vec3(1.0, 0.0, 1.0);
 uniform vec3 specularCol = vec3(1.0, 0.0, 1.0);
 uniform float shininess = 50.0;
 
-varying vec3 normal_v2f;
-varying vec3 tangent_v2f;
-varying float w_v2f;
-varying vec2 texCoords_v2f;
-varying vec3 vertPosEyeSpace_v2f;
+varying vec3 vNormal;
+varying vec3 vTangent;
+varying float vTangentW;
+varying vec2 vTexCoords;
+varying vec3 vVertPosViewSpace;
 // @todo 
 varying vec3 eye;
 
@@ -177,16 +177,16 @@ void main()
 
 		vec3 _norm_eye = normalize(eye);
 
-		float _h = texture2D(heightMap, texCoords_v2f).r;
+		float _h = texture2D(heightMap, vTexCoords).r;
 		float _height = _scale * _h - _bias;
 
-		vec2 superTexCoords_v2f = _height * _norm_eye.xy + texCoords_v2f;*/
+		vec2 superTexCoords_v2f = _height * _norm_eye.xy + vTexCoords;*/
 
-		vec2 superTexCoords = texCoords_v2f;
+		vec2 superTexCoords = vTexCoords;
 		const float maxStepCount = 100.0;
 		float nSteps = maxStepCount * length(superTexCoords);
 
-		vec3 dir = vertPosEyeSpace_v2f;
+		vec3 dir = vVertPosViewSpace;
 		dir.xy /= 8.0;
 		dir /= -nSteps * dir.z;
 
@@ -204,7 +204,7 @@ void main()
 			superTexCoords.xy += (diff1 / (diff0 - diff1)) * dir.xy;
 		}
 	#else
-		#define superTexCoords texCoords_v2f
+		#define superTexCoords vTexCoords
 	#endif
 
 
@@ -235,9 +235,9 @@ void main()
 	 * Either use a normap map and make some calculations or use the vertex normal
 	 */
 	#if defined(NORMAL_MAPPING)
-		vec3 _n = normalize(normal_v2f);
-		vec3 _t = normalize(tangent_v2f);
-		vec3 _b = cross(_n, _t) * w_v2f;
+		vec3 _n = normalize(vNormal);
+		vec3 _t = normalize(vTangent);
+		vec3 _b = cross(_n, _t) * vTangentW;
 
 		mat3 tbnMat = mat3(_t,_b,_n);
 
@@ -245,7 +245,7 @@ void main()
 
 		vec3 newNormal = normalize(tbnMat * nAtTangentspace);
 	#else
-		vec3 newNormal = normalize(normal_v2f);
+		vec3 newNormal = normalize(vNormal);
 	#endif
 
 
@@ -253,9 +253,9 @@ void main()
 	 * Diffuse Calculations (Part II)
 	 * If SEM is enabled make some calculations and combine colors of SEM and the _diff_color
 	 */
-	// if SEM enabled make some aditional calculations using the vertPosEyeSpace_v2f, environmentMap and the newNormal
+	// if SEM enabled make some aditional calculations using the vVertPosViewSpace, environmentMap and the newNormal
 	#if defined(ENVIRONMENT_MAPPING)
-		vec3 _u = normalize(vertPosEyeSpace_v2f);
+		vec3 _u = normalize(vVertPosViewSpace);
 		
 		/*
 		 * In case of normal mapping I could play with vertex's normal but this gives better results and its allready

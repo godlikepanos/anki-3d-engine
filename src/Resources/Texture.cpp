@@ -99,9 +99,6 @@ bool Texture::load(const char* filename)
 	if(mipmappingEnabled)
 		glGenerateMipmap(target);
 
-
-	setMipmapLevel(3);
-
 	return GL_OK();
 }
 
@@ -291,4 +288,14 @@ void Texture::setMipmapLevel(uint level)
 {
 	bind(LAST_TEX_UNIT);
 	setTexParameter(GL_TEXTURE_BASE_LEVEL, int(level));
+}
+
+
+//======================================================================================================================
+// genMipmap                                                                                                           =
+//======================================================================================================================
+void Texture::genMipmap()
+{
+	bind(LAST_TEX_UNIT);
+	glGenerateMipmap(target);
 }

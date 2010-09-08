@@ -19,8 +19,6 @@ void main()
 
 #pragma anki fragShaderBegins
 
-#pragma anki include "shaders/pack.glsl"
-
 uniform sampler2D ppsPrePassFai;
 uniform sampler2D noiseMap;
 //varying vec2 texCoords_v2f;

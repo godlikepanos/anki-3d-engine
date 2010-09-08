@@ -125,6 +125,8 @@ void Renderer::Pps::runPrePass()
 	Renderer::drawQuad(0);
 
 	Fbo::unbind();
+
+	prePassFai.genMipmap();
 }
 
 

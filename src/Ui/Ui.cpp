@@ -55,7 +55,7 @@ static void SetGL()
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	app->getMainRenderer()->loadMatrix(Renderer::ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0));
+	app->getMainRenderer().loadMatrix(Renderer::ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0));
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
@@ -179,7 +179,7 @@ void setFontWidth(float w_)
 	// width
 	fontW = w_;
 	// height
-	fontH = fontW * app->getMainRenderer()->getAspectRatio();
+	fontH = fontW * app->getMainRenderer().getAspectRatio();
 }
 
 

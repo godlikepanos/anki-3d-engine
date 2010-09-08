@@ -69,7 +69,7 @@ void Skybox::Render(const Mat3& rotation)
 	// set the rotation matrix
 	Mat3 tmp(rotation);
 	tmp.rotateYAxis(rotation_ang);
-	app->getMainRenderer()->loadMatrix(Mat4(tmp));
+	app->getMainRenderer().loadMatrix(Mat4(tmp));
 
 	rotation_ang += 0.0001;
 	if(rotation_ang >= 2*PI) rotation_ang = 0.0;

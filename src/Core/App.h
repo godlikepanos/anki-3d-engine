@@ -10,6 +10,7 @@
 class ScriptingEngine;
 class StdinListener;
 class Scene;
+class MainRenderer;
 
 
 /**
@@ -23,7 +24,6 @@ class App: public Object
 	PROPERTY_R(filesystem::path, settingsPath, getSettingsPath)
 	PROPERTY_R(filesystem::path, cachePath, getCachePath)
 
-	PROPERTY_RW(class MainRenderer*, mainRenderer, setMainRenderer, getMainRenderer) ///< Pointer to the main renderer
 	PROPERTY_RW(class Camera*, activeCam, setActiveCam, getActiveCam) ///< Pointer to the current camera
 
 	public:
@@ -56,6 +56,7 @@ class App: public Object
 		Scene& getScene();
 		ScriptingEngine& getScriptingEngine();
 		StdinListener& getStdinLintener();
+		MainRenderer& getMainRenderer();
 		/**@}*/
 
 		/**
@@ -66,14 +67,21 @@ class App: public Object
 	private:
 		static bool isCreated; ///< A flag to ensure one @ref App instance
 		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
-		Scene* scene;
-		ScriptingEngine* scriptingEngine;
 		uint time;
 		SDL_WindowID windowId;
 		SDL_GLContext glContext;
 		SDL_Surface* iconImage;
 		bool fullScreenFlag;
+
+		/**
+		 * @name Pointers to serious subsystems
+		 */
+		/**@{*/
+		Scene* scene;
+		ScriptingEngine* scriptingEngine;
+		MainRenderer* mainRenderer;
 		StdinListener* stdinListener;
+		/**@}*/
 
 		void parseCommandLineArgs(int argc, char* argv[]);
 };
@@ -103,6 +111,13 @@ inline StdinListener& App::getStdinLintener()
 {
 	DEBUG_ERR(stdinListener == NULL);
 	return *stdinListener;
+}
+
+
+inline MainRenderer& App::getMainRenderer()
+{
+	DEBUG_ERR(mainRenderer == NULL);
+	return *mainRenderer;
 }
 
 
