@@ -156,7 +156,7 @@ class Renderer: public Object
 					const ShaderProg::UniVar* msDepthFai;
 					const ShaderProg::UniVar* planes;
 					const ShaderProg::UniVar* lightPos;
-					const ShaderProg::UniVar* lightInvRadius;
+					const ShaderProg::UniVar* lightRadius;
 					const ShaderProg::UniVar* lightDiffuseCol;
 					const ShaderProg::UniVar* lightSpecularCol;
 					const ShaderProg::UniVar* lightTex;

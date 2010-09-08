@@ -25,9 +25,8 @@ void Renderer::Pps::Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
 
 	// create the texes
 	fai.createEmpty2D(width, height, internalFormat, GL_RGB, GL_FLOAT);
-	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//fai_.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	// attach
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);

@@ -40,6 +40,7 @@ class Texture: public Resource
 		void setTexParameter(uint paramName, float value) const;
 		void setAnisotropy(uint level);
 		void setMipmapLevel(uint level);
+		void genMipmap();
 		int getWidth() const;
 		int getHeight() const;
 		int getBaseLevel() const;

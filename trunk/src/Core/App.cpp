@@ -8,6 +8,7 @@
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
 
+
 bool App::isCreated = false;
 
 
@@ -32,7 +33,6 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 			FATAL("Incorrect command line argument \"" << arg << "\"");
 		}
 	}
-
 }
 
 
@@ -76,11 +76,14 @@ App::App(int argc, char* argv[], Object* parent):
 
 	// create the subsystems. WATCH THE ORDER
 	scriptingEngine = new ScriptingEngine(this);
+	scriptingEngine->exposeVar("app", this);
+	scriptingEngine->execScript("from Anki import *");
 	mainRenderer = new MainRenderer(this);
 	scene = new Scene(this);
 	stdinListener = new StdinListener(this);
-	activeCam = NULL;
 
+	// other
+	activeCam = NULL;
 	timerTick = 1000/40; // in ms. 1000/Hz
 	time = 0;
 }
@@ -273,6 +276,6 @@ void App::execStdinScpripts()
 		if(cmd.length() < 1)
 			break;
 
-		app->getScriptingEngine().execScript(cmd.c_str());
+		app->getScriptingEngine().execScript(cmd.c_str(), "command line input");
 	}
 }

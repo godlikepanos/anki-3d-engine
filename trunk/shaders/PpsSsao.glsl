@@ -5,7 +5,7 @@
 #pragma anki fragShaderBegins
 
 #pragma anki include "shaders/linear_depth.glsl"
-#pragma anki include "shaders/pack.glsl"
+#pragma anki include "shaders/Pack.glsl"
 
 uniform vec2 camerarange;  // = vec2( znear, zfar )
 uniform sampler2D msDepthFai;
@@ -49,7 +49,7 @@ void main(void)
 	// current fragment coords in screen space
 	vec3 ep = vec3( texCoords.xy, currentPixelDepth );
 	// get the normal of current fragment
-	vec3 norm = UnpackNormal(currentPixelSample.xy);
+	vec3 norm = unpackNormal(currentPixelSample.xy);
 
 	float bl = 0.0;
 	// adjust for the depth ( not shure if this is good..)
@@ -70,7 +70,7 @@ void main(void)
 		vec4 occluderFragment = texture2D(msNormalFai,se.xy);
 
 		// get the normal of the occluder fragment
-		occNorm = UnpackNormal(occluderFragment.xy);
+		occNorm = unpackNormal(occluderFragment.xy);
 
 		// if depthDifference is negative = occluder is behind current fragment
 		depthDifference = currentPixelDepth - ReadFromTexAndLinearizeDepth( msDepthFai, se.xy, camerarange.x, camerarange.y );;

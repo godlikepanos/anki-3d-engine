@@ -657,7 +657,7 @@ Main.o: ../../src//Main.cpp ../../src/Core/Common.h \
  ../../src/Renderer/RendererInitializer.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Physics/DebugDrawer.h ../../src/Physics/RigidBody.h \
- ../../src/Scripting/ScriptingEngine.h
+ ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h
 	@echo Compiling ../../src//Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src//Main.cpp -o Main.o
 
