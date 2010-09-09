@@ -46,7 +46,7 @@ void Renderer::Pps::Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
 void Renderer::Pps::Hdr::init()
 {
 	//int width = renderingQuality * r.width;
-	int height = renderingQuality * r.height;
+	//int height = renderingQuality * r.height;
 
 	initFbos(pass0Fbo, pass0Fai, GL_RGB);
 	initFbos(pass1Fbo, pass1Fai, GL_RGB);
@@ -54,25 +54,22 @@ void Renderer::Pps::Hdr::init()
 
 	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	// init shaders
-	const char* shaderFname = "shaders/PpsHdr.glsl";
-	string pps;
-	string prefix;
 
-	pps = "#define _PPS_HDR_PASS_0_\n#define IS_FAI_WIDTH " + lexical_cast<string>(r.width) + "\n";
-	prefix = "Pass0IsFaiWidth" + lexical_cast<string>(r.width);
-	pass0SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
+	// init shaders
+	pass0SProg.loadRsrc("shaders/PpsHdr.glsl");
 	pass0SProgFaiUniVar = pass0SProg->findUniVar("fai");
 
-	pps = "#define _PPS_HDR_PASS_1_\n#define PASS0_HEIGHT " + lexical_cast<string>(height) + "\n";
-	prefix = "Pass1Pass0Height" + lexical_cast<string>(height);
-	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
-	pass1SProgFaiUniVar = pass1SProg->findUniVar("fai");
+	const char* shaderFname = "shaders/GaussianBlurGeneric.glsl";
 
-	pps = "#define _PPS_HDR_PASS_2_\n";
-	prefix = "Pass2";
-	pass2SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
-	pass2SProgFaiUniVar = pass2SProg->findUniVar("fai");
+	string pps = "#define HPASS\n#define COL_RGB";
+	string prefix = "HRGB";
+	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
+	pass1SProgFaiUniVar = pass1SProg->findUniVar("img");
+
+	pps = "#define VPASS\n#define COL_RGB";
+	prefix = "VRGB";
+	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
+	pass1SProgFaiUniVar = pass1SProg->findUniVar("img");
 }
 
 
