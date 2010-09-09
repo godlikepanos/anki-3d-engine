@@ -48,7 +48,7 @@ void Renderer::Pps::Hdr::init()
 	//int width = renderingQuality * r.width;
 	//int height = renderingQuality * r.height;
 
-	initFbos(pass0Fbo, pass0Fai, GL_RGB);
+	initFbos(toneFbo, pass0Fai, GL_RGB);
 	initFbos(pass1Fbo, pass1Fai, GL_RGB);
 	initFbos(pass2Fbo, fai, GL_RGB);
 
@@ -56,22 +56,23 @@ void Renderer::Pps::Hdr::init()
 
 
 	// init shaders
-	pass0SProg.loadRsrc("shaders/PpsHdr.glsl");
-	pass0SProgFaiUniVar = pass0SProg->findUniVar("fai");
+	toneSProg.loadRsrc("shaders/PpsHdr.glsl");
+	toneProgFaiUniVar = toneSProg->findUniVar("fai");
 
-	const char* shaderFname = "shaders/GaussianBlurGeneric.glsl";
+	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	string pps = "#define HPASS\n#define COL_RGB";
+	string pps = "#define HPASS\n#define COL_RGB\n";
 	string prefix = "HRGB";
-	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
+	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
 	pass1SProgFaiUniVar = pass1SProg->findUniVar("img");
 
-	pps = "#define VPASS\n#define COL_RGB";
+	pps = "#define VPASS\n#define COL_RGB\n";
 	prefix = "VRGB";
-	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(shaderFname, pps.c_str(), prefix.c_str()).c_str());
-	pass1SProgFaiUniVar = pass1SProg->findUniVar("img");
+	pass2SProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
+	pass2SProgFaiUniVar = pass2SProg->findUniVar("img");
 }
 
+#include "App.h"
 
 //======================================================================================================================
 // runPass                                                                                                             =
@@ -86,25 +87,39 @@ void Renderer::Pps::Hdr::run()
 	glDisable(GL_DEPTH_TEST);
 
 	// pass 0
-	pass0Fbo.bind();
-	pass0SProg->bind();
+	toneFbo.bind();
+	toneSProg->bind();
 	r.is.fai.setRepeat(false);
-	pass0SProgFaiUniVar->setTexture(r.pps.prePassFai, 0);
+	toneProgFaiUniVar->setTexture(r.pps.prePassFai, 0);
 	Renderer::drawQuad(0);
 
-	// pass 1
-	pass1Fbo.bind();
-	pass1SProg->bind();
-	pass0Fai.setRepeat(false);
-	pass1SProgFaiUniVar->setTexture(pass0Fai, 0);
-	Renderer::drawQuad(0);
+	Vec2 imgSize(w, h);
 
-	// pass 2
-	pass2Fbo.bind();
-	pass2SProg->bind();
-	pass1Fai.setRepeat(false);
-	pass2SProgFaiUniVar->setTexture(pass1Fai, 0);
-	Renderer::drawQuad(0);
+	for(uint i=0; i<2; i++)
+	{
+		// hpass
+		pass1Fbo.bind();
+		pass1SProg->bind();
+		if(i == 0)
+		{
+			pass1SProgFaiUniVar->setTexture(pass0Fai, 0);
+		}
+		else
+		{
+			pass1SProgFaiUniVar->setTexture(fai, 0);
+		}
+		pass1SProg->findUniVar("imgSize")->setVec2(&imgSize);
+		pass1SProg->findUniVar("blurringDist")->setFloat(blurringDist);
+		Renderer::drawQuad(0);
+
+		// vpass
+		pass2Fbo.bind();
+		pass2SProg->bind();
+		pass2SProgFaiUniVar->setTexture(pass1Fai, 0);
+		pass2SProg->findUniVar("imgSize")->setVec2(&imgSize);
+		pass2SProg->findUniVar("blurringDist")->setFloat(blurringDist);
+		Renderer::drawQuad(0);
+	}
 
 	// end
 	Fbo::unbind();

@@ -38,6 +38,7 @@ struct RendererInitializer
 		{
 			bool enabled;
 			float renderingQuality;
+			float blurringDist;
 		} hdr;
 
 		// Ssao

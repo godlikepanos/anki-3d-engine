@@ -130,7 +130,8 @@ void init()
 	initializer.is.sm.pcfEnabled = true;
 	initializer.is.sm.resolution = 512;
 	initializer.pps.hdr.enabled = true;
-	initializer.pps.hdr.renderingQuality = 0.5;
+	initializer.pps.hdr.renderingQuality = 0.25;
+	initializer.pps.hdr.blurringDist = 2.0;
 	initializer.pps.ssao.bluringQuality = 1.0;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.renderingQuality = 0.5;
@@ -168,7 +169,6 @@ void init()
 	
 	RsrcPtr<Texture> ttex;
 	ttex.loadRsrc("gfx/stone.diff.png");
-	INFO(ttex->getMaxLevel());
 
 	// sarge
 	sarge = new MeshNode();
@@ -328,9 +328,12 @@ void mainLoop()
 		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z));*/
 
-		if(I::keys[SDL_SCANCODE_ESCAPE]) break;
-		if(I::keys[SDL_SCANCODE_F11]) app->togleFullScreen();
-		if(I::keys[SDL_SCANCODE_F12] == 1)  app->getMainRenderer().takeScreenshot("gfx/screenshot.jpg");
+		if(I::keys[SDL_SCANCODE_ESCAPE])
+			break;
+		if(I::keys[SDL_SCANCODE_F11])
+			app->togleFullScreen();
+		if(I::keys[SDL_SCANCODE_F12] == 1)
+			app->getMainRenderer().takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
 		static string scrFile = (app->getSettingsPath() / "capt" / "%06d.jpg").string();
@@ -340,9 +343,9 @@ void mainLoop()
 		// std stuff follow
 		app->swapBuffers();
 		GL_OK();
-		if(0)
+		if(1)
 		{
-			if(app->getMainRenderer().getFramesNum() == 100) app->getMainRenderer().takeScreenshot("gfx/screenshot.tga");
+			//if(app->getMainRenderer().getFramesNum() == 100) app->getMainRenderer().takeScreenshot("gfx/screenshot.tga");
 			app->waitForNextFrame();
 		}
 		else

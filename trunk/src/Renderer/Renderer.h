@@ -232,27 +232,30 @@ class Renderer: public Object
 					PROPERTY_R(bool, enabled, isEnabled)
 					PROPERTY_R(float, renderingQuality, getRenderingQuality)
 
-					private:
-						Fbo pass0Fbo;
-						Fbo pass1Fbo;
-						Fbo pass2Fbo;
-						RsrcPtr<ShaderProg> pass0SProg;
-						RsrcPtr<ShaderProg> pass1SProg;
-						RsrcPtr<ShaderProg> pass2SProg;
-						const ShaderProg::UniVar* pass0SProgFaiUniVar;
-						const ShaderProg::UniVar* pass1SProgFaiUniVar;
-						const ShaderProg::UniVar* pass2SProgFaiUniVar;
-
-						void initFbos(Fbo& fbo, Texture& fai, int internalFormat);
-						void init();
-						void run();
-
 					public:
 						Texture pass0Fai; ///< Vertical blur pass FAI
 						Texture pass1Fai; ///< pass0Fai with the horizontal blur FAI
 						Texture fai; ///< The final FAI
+						float getBlurringDist() const {return blurringDist;}
+						void setBlurringDist(float f) {blurringDist = f;}
 
 						Hdr(Renderer& r_): RenderingStage(r_) {}
+
+					private:
+						Fbo toneFbo;
+						Fbo pass1Fbo;
+						Fbo pass2Fbo;
+						RsrcPtr<ShaderProg> toneSProg;
+						RsrcPtr<ShaderProg> pass1SProg;
+						RsrcPtr<ShaderProg> pass2SProg;
+						const ShaderProg::UniVar* toneProgFaiUniVar;
+						const ShaderProg::UniVar* pass1SProgFaiUniVar;
+						const ShaderProg::UniVar* pass2SProgFaiUniVar;
+						float blurringDist;
+
+						void initFbos(Fbo& fbo, Texture& fai, int internalFormat);
+						void init();
+						void run();
 				}; // end Hrd
 
 				/**
@@ -397,7 +400,6 @@ class Renderer: public Object
 	//====================================================================================================================
 	PROPERTY_R(uint, width, getWidth) ///< Width of the rendering. Dont confuse with the window width
 	PROPERTY_R(uint, height, getHeight) ///< Height of the rendering. Dont confuse with the window width
-	PROPERTY_R(uint, framesNum, getFramesNum) ///< Frame number
 	PROPERTY_R(float, aspectRatio, getAspectRatio) ///< Just a precalculated value
 
 	//====================================================================================================================
@@ -430,6 +432,13 @@ class Renderer: public Object
 		void render(Camera& cam);
 
 		/**
+		 * @name Setters & getters
+		 */
+		/**@{*/
+		uint getFramesNum() const {return framesNum;}
+		/**@}*/
+
+		/**
 		 * My version of gluUnproject
 		 * @param windowCoords Window screen coords
 		 * @param modelViewMat The modelview matrix
@@ -457,6 +466,7 @@ class Renderer: public Object
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	protected:
+		uint framesNum; ///< Frame number
 		const Camera* cam; ///< Current camera
 		static float quadVertCoords [][2];
 		static int maxColorAtachments; ///< Max color attachments a FBO can accept

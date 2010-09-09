@@ -41,6 +41,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	is.sm.resolution = initializer.is.sm.resolution;
 	pps.hdr.enabled = initializer.pps.hdr.enabled;
 	pps.hdr.renderingQuality = initializer.pps.hdr.renderingQuality;
+	pps.hdr.blurringDist = initializer.pps.hdr.blurringDist;
 	pps.ssao.enabled = initializer.pps.ssao.enabled;
 	pps.ssao.renderingQuality = initializer.pps.ssao.renderingQuality;
 	pps.ssao.bluringQuality = initializer.pps.ssao.bluringQuality;
