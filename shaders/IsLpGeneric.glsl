@@ -122,7 +122,7 @@ float pcfLow(in vec3 _shadowUv_)
 		_shadowCol_ += shadow2D(shadowMap, _uvCoord_).r;
 	}
 	
-	_shadowCol_ *= 1.0/9.0;
+	_shadowCol_ *= (1.0/9.0);
 	return _shadowCol_;
 }
 
@@ -203,12 +203,12 @@ void main()
 	 */
 	#if defined(POINT_LIGHT_ENABLED)
 		/*
-		 * The func phong calculates the frag to light distance (_fragLightDist_) and be cause we need that distance
+		 * The func doPhong calculates the frag to light distance (_fragLightDist_) and be cause we need that distance
 		 * latter for other calculations we export it
 		 */
 		float _fragLightDist_;
 		vec3 _color_ = doPhong(fragPosVspace, _fragLightDist_);
-		gl_FragData[0] = vec4(_color_ * getAttenuation(_fragLightDist_), 1.0);
+		gl_FragData[0].rgb = _color_ * getAttenuation(_fragLightDist_);
 
 	/*
 	 * Spot light
@@ -245,9 +245,9 @@ void main()
 			float _att_ = getAttenuation(_fragLightDist_);
 
 			#if defined(SHADOW_ENABLED)
-				gl_FragData[0] = vec4(_lightTexCol_ * _color_ * (_shadowCol_ * _att_), 1.0);
+				gl_FragData[0].rgb = _lightTexCol_ * _color_ * (_shadowCol_ * _att_);
 			#else
-				gl_FragData[0] = vec4(_lightTexCol_ * _color_ * _att_, 1.0);
+				gl_FragData[0].rgb = _lightTexCol_ * _color_ * _att_;
 			#endif
 		}
 		else

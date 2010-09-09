@@ -124,8 +124,8 @@ void main()
 /**
  * Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens
  * before the normal calculation and the other just after it. In the first part we read the texture (or the gl_Color)
- * and we set the _diff_color. In case of grass we discard. In the second part we calculate a SEM color and we combine
- * it with the _diff_color. We cannot put the second part before normal calculation because SEM needs the newNormal.
+ * and we set the _diffColl_. In case of grass we discard. In the second part we calculate a SEM color and we combine
+ * it with the _diffColl_. We cannot put the second part before normal calculation because SEM needs the _normal_.
  * Also we cannot put the first part after normal calculation because in case of grass we will waste calculations for
  * the normal. For that two reasons we split the diffuse calculations in two parts
  */
@@ -180,53 +180,53 @@ void main()
 		float _h = texture2D(heightMap, vTexCoords).r;
 		float _height = _scale * _h - _bias;
 
-		vec2 superTexCoords_v2f = _height * _norm_eye.xy + vTexCoords;*/
+		vec2 _superTexCoords__v2f = _height * _norm_eye.xy + vTexCoords;*/
 
-		vec2 superTexCoords = vTexCoords;
+		vec2 _superTexCoords_ = vTexCoords;
 		const float maxStepCount = 100.0;
-		float nSteps = maxStepCount * length(superTexCoords);
+		float nSteps = maxStepCount * length(_superTexCoords_);
 
 		vec3 dir = vVertPosViewSpace;
 		dir.xy /= 8.0;
 		dir /= -nSteps * dir.z;
 
-		float diff0, diff1 = 1.0 - texture2D(heightMap, superTexCoords).a;
+		float diff0, diff1 = 1.0 - texture2D(heightMap, _superTexCoords_).a;
 		if(diff1 > 0.0)
 		{
 			do 
 			{
-				superTexCoords += dir.xy;
+				_superTexCoords_ += dir.xy;
 
 				diff0 = diff1;
-				diff1 = texture2D(heightMap, superTexCoords).w;
+				diff1 = texture2D(heightMap, _superTexCoords_).w;
 			} while(diff1 > 0.0);
 
-			superTexCoords.xy += (diff1 / (diff0 - diff1)) * dir.xy;
+			_superTexCoords_.xy += (diff1 / (diff0 - diff1)) * dir.xy;
 		}
 	#else
-		#define superTexCoords vTexCoords
+		#define _superTexCoords_ vTexCoords
 	#endif
 
 
 	/*
 	 * Diffuse Calculations (Part I)
-	 * Get the color from the diffuse map and discard if alpha is zero
+	 * Get the color from the diffuse map and discard if alpha testing is on and alpha is zero
 	 */
-	vec3 _diff_color;
+	vec3 _diffColl_;
 	#if defined(DIFFUSE_MAPPING)
 
 		#if defined(ALPHA_TESTING)
-			vec4 _diff_color4 = texture2D(diffuseMap, superTexCoords);
-			if(_diff_color4.a == 0.0)
+			vec4 _diffCol4_ = texture2D(diffuseMap, _superTexCoords_);
+			if(_diffCol4_.a == 0.0)
 				discard;
-			_diff_color = _diff_color4.rgb;
-		#else
-			_diff_color = texture2D(diffuseMap, superTexCoords).rgb;
+			_diffColl_ = _diffCol4_.rgb;
+		#else // no alpha
+			_diffColl_ = texture2D(diffuseMap, _superTexCoords_).rgb;
 		#endif
 
-		_diff_color *= diffuseCol.rgb;
-	#else
-		_diff_color = diffuseCol.rgb;
+		_diffColl_ *= diffuseCol.rgb;
+	#else // no diff mapping
+		_diffColl_ = diffuseCol.rgb;
 	#endif
 
 
@@ -235,61 +235,57 @@ void main()
 	 * Either use a normap map and make some calculations or use the vertex normal
 	 */
 	#if defined(NORMAL_MAPPING)
-		vec3 _n = normalize(vNormal);
-		vec3 _t = normalize(vTangent);
-		vec3 _b = cross(_n, _t) * vTangentW;
+		vec3 _n_ = normalize(vNormal);
+		vec3 _t_ = normalize(vTangent);
+		vec3 _b_ = cross(_n_, _t_) * vTangentW;
 
-		mat3 tbnMat = mat3(_t,_b,_n);
+		mat3 _tbnMat_ = mat3(_t_, _b_, _n_);
 
-		vec3 nAtTangentspace = (texture2D(normalMap, superTexCoords).rgb - 0.5) * 2.0;
+		vec3 _nAtTangentspace_ = (texture2D(normalMap, _superTexCoords_).rgb - 0.5) * 2.0;
 
-		vec3 newNormal = normalize(tbnMat * nAtTangentspace);
+		vec3 _normal_ = normalize(_tbnMat_ * _nAtTangentspace_);
 	#else
-		vec3 newNormal = normalize(vNormal);
+		vec3 _normal_ = normalize(vNormal);
 	#endif
 
 
 	/*
 	 * Diffuse Calculations (Part II)
-	 * If SEM is enabled make some calculations and combine colors of SEM and the _diff_color
+	 * If SEM is enabled make some calculations (using the vVertPosViewSpace, environmentMap and the _normal_) and combine
+	 * colors of SEM and the _diffColl_
 	 */
-	// if SEM enabled make some aditional calculations using the vVertPosViewSpace, environmentMap and the newNormal
 	#if defined(ENVIRONMENT_MAPPING)
-		vec3 _u = normalize(vVertPosViewSpace);
-		
 		/*
 		 * In case of normal mapping I could play with vertex's normal but this gives better results and its allready
 		 * computed
 		 */
-		vec3 _r = reflect(_u, newNormal); 
-		
-		_r.z += 1.0;
-		float _m = 2.0 * length(_r);
-		vec2 _sem_texCoords = _r.xy/_m + 0.5;
+		vec3 _u_ = normalize(vVertPosViewSpace);
+		vec3 _r_ = reflect(_u_, _normal_);
+		_r_.z += 1.0;
+		float _m_ = 2.0 * length(_r_);
+		vec2 _semTexCoords_ = _r_.xy / _m_ + 0.5;
 
-		vec3 _sem_col = texture2D(environmentMap, _sem_texCoords).rgb;
-		_diff_color = _diff_color + _sem_col; // blend existing color with the SEM texture map
+		vec3 _semCol_ = texture2D(environmentMap, _semTexCoords_).rgb;
+		_diffColl_ += _semCol_; // blend existing color with the SEM texture map
 	#endif
 
 
 	/*
 	 * Specular Calculations
 	 */
-	// has specular map
 	#if defined(SPECULAR_MAPPING)
-		vec4 _specular = vec4(texture2D(specularMap, superTexCoords).rgb * specularCol, shininess);
-	// no specular map
-	#else
-		vec4 _specular = vec4(specularCol, shininess);
+		vec4 _specularCol_ = vec4(texture2D(specularMap, _superTexCoords_).rgb * specularCol, shininess);
+	#else // no specular map
+		vec4 _specularCol_ = vec4(specularCol, shininess);
 	#endif
 
 
 	/*
 	 * Final Stage. Write all data
 	 */
-	gl_FragData[0].rg = packNormal(newNormal);
-	gl_FragData[1].rgb = _diff_color;
-	gl_FragData[2] = _specular;
+	gl_FragData[0].rg = packNormal(_normal_);
+	gl_FragData[1].rgb = _diffColl_;
+	gl_FragData[2] = _specularCol_;
 
 	/*#if defined(HARDWARE_SKINNING)
 		gl_FragData[1] = gl_Color;
