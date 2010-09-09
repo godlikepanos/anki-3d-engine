@@ -30,7 +30,8 @@ void main()
 
 
 uniform sampler2D img; ///< Input FAI
-uniform vec2 imgSize = vec2(100.0, 100.0);
+uniform vec2 imgSize = vec2(200.0, 200.0);
+uniform float blurringDist = 1.0;
 
 varying vec2 texCoords;
 
@@ -63,18 +64,19 @@ void main()
 	const float _offset_[3] = float[](0.0, 1.3846153846, 3.2307692308);
 	const float _weight_[3] = float[](0.2255859375, 0.314208984375, 0.06982421875);
 
-	COL_TYPE _col_ = texture2D(img, gl_FragCoord.xy / imgSize).TEX_FETCH * weight[0];
+	COL_TYPE _col_ = texture2D(img, gl_FragCoord.xy / imgSize).TEX_FETCH * _weight_[0];
 
 	for(int i=1; i<3; i++)
 	{
 		#if defined(HPASS)
-			_col_ += texture2D(img, (gl_FragCoord.xy + vec2(0.0, offset[i])) / imgSize.x).TEX_FETCH * weight[i];
-			_col_ += texture2D(img, (gl_FragCoord.xy - vec2(0.0, offset[i])) / imgSize.x).TEX_FETCH * weight[i];
+			vec2 _vecOffs_ = vec2(_offset_[i] + blurringDist, 0.0);
 		#elif defined(VPASS)
-			_col_ += texture2D(img, (gl_FragCoord.xy + vec2(offset[i], 0.0)) / imgSize.y).TEX_FETCH * weight[i];
-			_col_ += texture2D(img, (gl_FragCoord.xy - vec2(offset[i], 0.0)) / imgSize.y).TEX_FETCH * weight[i];
+			vec2 _vecOffs_ = vec2(0.0, _offset_[i] + blurringDist);
 		#endif
+
+		_col_ += texture2D(img, (gl_FragCoord.xy + _vecOffs_) / imgSize).TEX_FETCH * _weight_[i];
+		_col_ += texture2D(img, (gl_FragCoord.xy - _vecOffs_) / imgSize).TEX_FETCH * _weight_[i];
 	}
 
-	gl_FragColor[0].TEX_FETCH = _col_;
+	gl_FragData[0].TEX_FETCH = _col_;
 }
