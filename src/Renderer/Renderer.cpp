@@ -34,18 +34,6 @@ Renderer::Renderer(Object* parent):
 void Renderer::init(const RendererInitializer& initializer)
 {
 	// set from the initializer
-	ms.ez.enabled = initializer.ms.ez.enabled;
-	is.sm.enabled = initializer.is.sm.enabled;
-	is.sm.pcfEnabled = initializer.is.sm.pcfEnabled;
-	is.sm.bilinearEnabled = initializer.is.sm.bilinearEnabled;
-	is.sm.resolution = initializer.is.sm.resolution;
-	pps.hdr.enabled = initializer.pps.hdr.enabled;
-	pps.hdr.renderingQuality = initializer.pps.hdr.renderingQuality;
-	pps.hdr.blurringDist = initializer.pps.hdr.blurringDist;
-	pps.ssao.enabled = initializer.pps.ssao.enabled;
-	pps.ssao.renderingQuality = initializer.pps.ssao.renderingQuality;
-	pps.ssao.bluringQuality = initializer.pps.ssao.bluringQuality;
-	dbg.enabled = initializer.dbg.enabled;
 	width = initializer.width;
 	height = initializer.height;
 
@@ -59,11 +47,11 @@ void Renderer::init(const RendererInitializer& initializer)
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
-	ms.init();
-	is.init();
-	pps.init();
-	bs.init();
-	dbg.init();
+	ms.init(initializer);
+	is.init(initializer);
+	pps.init(initializer);
+	bs.init(initializer);
+	dbg.init(initializer);
 }
 
 

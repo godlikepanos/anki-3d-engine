@@ -1,30 +1,26 @@
-/**
- * @file
- *
- * Debugging stage
- */
-
+#include "Dbg.h"
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
 #include "SkelNode.h"
 #include "Camera.h"
 #include "LightProps.h"
+#include "RendererInitializer.h"
 
 
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
-RsrcPtr<ShaderProg> Renderer::Dbg::sProg;
-Mat4 Renderer::Dbg::viewProjectionMat;
-const ShaderProg::UniVar* Renderer::Dbg::colorUniVar;
-const ShaderProg::UniVar* Renderer::Dbg::modelViewProjectionMat;
+RsrcPtr<ShaderProg> Dbg::sProg;
+Mat4 Dbg::viewProjectionMat;
+const ShaderProg::UniVar* Dbg::colorUniVar;
+const ShaderProg::UniVar* Dbg::modelViewProjectionMat;
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Renderer::Dbg::Dbg(Renderer& r_):
+Dbg::Dbg(Renderer& r_):
 	RenderingStage(r_),
 	showAxisEnabled(false),
 	showLightsEnabled(true),
@@ -37,7 +33,7 @@ Renderer::Dbg::Dbg(Renderer& r_):
 //======================================================================================================================
 // drawLine                                                                                                            =
 //======================================================================================================================
-void Renderer::Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
+void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
 	float posBuff [] = {from.x, from.y, from.z, to.x, to.y, to.z};
 
@@ -54,7 +50,7 @@ void Renderer::Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color
 //======================================================================================================================
 // renderGrid                                                                                                          =
 //======================================================================================================================
-void Renderer::Dbg::renderGrid()
+void Dbg::renderGrid()
 {
 	float col0[] = { 0.5, 0.5, 0.5 };
 	float col1[] = { 0.0, 0.0, 1.0 };
@@ -97,7 +93,7 @@ void Renderer::Dbg::renderGrid()
 //======================================================================================================================
 // drawSphere                                                                                                        =
 //======================================================================================================================
-void Renderer::Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity)
+void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity)
 {
 	setColor(col);
 
@@ -173,7 +169,7 @@ void Renderer::Dbg::drawSphere(float radius, const Transform& trf, const Vec4& c
 //======================================================================================================================
 // renderCube                                                                                                          =
 //======================================================================================================================
-void Renderer::Dbg::drawCube(float size)
+void Dbg::drawCube(float size)
 {
 	Vec3 maxPos = Vec3(0.5 * size);
 	Vec3 minPos = Vec3(-0.5 * size);
@@ -201,8 +197,10 @@ void Renderer::Dbg::drawCube(float size)
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Dbg::init()
+void Dbg::init(const RendererInitializer& initializer)
 {
+	enabled = initializer.dbg.enabled;
+
 	// create FBO Captain Blood
 	fbo.create();
 	fbo.bind();
@@ -235,18 +233,19 @@ void Renderer::Dbg::init()
 //======================================================================================================================
 // runStage                                                                                                            =
 //======================================================================================================================
-void Renderer::Dbg::run()
+void Dbg::run()
 {
-	if(!enabled) return;
+	if(!enabled)
+		return;
 
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
 	fbo.bind();
 	sProg->bind();
 	viewProjectionMat = cam.getProjectionMatrix() * cam.getViewMatrix();
 
 	// OGL stuff
-	Renderer::setViewport(0, 0, r.width, r.height);
+	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
@@ -285,7 +284,7 @@ void Renderer::Dbg::run()
 //======================================================================================================================
 // setColor                                                                                                            =
 //======================================================================================================================
-void Renderer::Dbg::setColor(const Vec4& color)
+void Dbg::setColor(const Vec4& color)
 {
 	colorUniVar->setVec4(&color);
 }
@@ -294,7 +293,7 @@ void Renderer::Dbg::setColor(const Vec4& color)
 //======================================================================================================================
 // setModelMat                                                                                                         =
 //======================================================================================================================
-void Renderer::Dbg::setModelMat(const Mat4& modelMat)
+void Dbg::setModelMat(const Mat4& modelMat)
 {
 	Mat4 pmv = viewProjectionMat * modelMat;
 	modelViewProjectionMat->setMat4(&pmv);

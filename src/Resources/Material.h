@@ -24,6 +24,10 @@
 class Material: public Resource
 {
 	friend class Renderer; ///< For the setupMaterial
+	friend class Ez;
+	friend class Sm;
+	friend class Ms;
+	friend class Bs;
 	friend class Mesh;
 	friend class MeshNode;
 

@@ -1,21 +1,27 @@
-/**
- * @file
- *
- * Illumination stage shadowmapping pass
- */
-
+#include "Sm.h"
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
 #include "MeshNode.h"
 #include "LightProps.h"
+#include "Camera.h"
+#include "RendererInitializer.h"
 
 
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Is::Sm::init()
+void Sm::init(const RendererInitializer& initializer)
 {
+	enabled = initializer.is.sm.enabled;
+
+	if(!enabled)
+		return;
+
+	pcfEnabled = initializer.is.sm.pcfEnabled;
+	bilinearEnabled = initializer.is.sm.bilinearEnabled;
+	resolution = initializer.is.sm.resolution;
+
 	// create FBO
 	fbo.create();
 	fbo.bind();
@@ -58,8 +64,10 @@ void Renderer::Is::Sm::init()
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Renderer::Is::Sm::run(const Camera& cam)
+void Sm::run(const Camera& cam)
 {
+	DEBUG_ERR(!enabled);
+
 	// FBO
 	fbo.bind();
 
@@ -80,7 +88,8 @@ void Renderer::Is::Sm::run(const Camera& cam)
 	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->mesh->material->blends) continue;
+		if(meshNode->mesh->material->blends)
+			continue;
 
 		DEBUG_ERR(meshNode->mesh->material->dpMtl.get() == NULL);
 

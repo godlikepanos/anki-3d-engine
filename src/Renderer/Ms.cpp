@@ -1,3 +1,4 @@
+#include "Ms.h"
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
@@ -8,7 +9,7 @@
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Ms::init()
+void Ms::init(const RendererInitializer& initializer)
 {
 	// create FBO
 	fbo.create();
@@ -18,11 +19,11 @@ void Renderer::Ms::init()
 	fbo.setNumOfColorAttachements(3);
 
 	// create the FAIs
-	if(!normalFai.createEmpty2D(r.width, r.height, GL_RG16F, GL_RG, GL_FLOAT) ||
-	   !diffuseFai.createEmpty2D(r.width, r.height, GL_RGB16F, GL_RGB, GL_FLOAT) ||
-	   !specularFai.createEmpty2D(r.width, r.height, GL_RGBA16F, GL_RGBA, GL_FLOAT) ||
-	   !depthFai.createEmpty2D(r.width, r.height, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8))
-	   //!depthFai.createEmpty2D(r.width, r.height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false))
+	if(!normalFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RG16F, GL_RG, GL_FLOAT) ||
+	   !diffuseFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT) ||
+	   !specularFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA16F, GL_RGBA, GL_FLOAT) ||
+	   !depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8))
+	   //!depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, false))
 	{
 		FATAL("Failed to create one MS FAI. See prev error");
 	}
@@ -49,39 +50,38 @@ void Renderer::Ms::init()
 	// unbind
 	fbo.unbind();
 
-	if(ez.enabled)
-		ez.init();
+	ez.init(initializer);
 }
 
 
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Renderer::Ms::run()
+void Ms::run()
 {
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
-	if(ez.enabled)
+	if(ez.isEnabled())
 	{
 		ez.run();
 	}
 
 	fbo.bind();
 
-	if(!ez.enabled)
+	if(!ez.isEnabled())
 	{
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
 	r.setProjectionViewMatrices(cam); ///< @todo remove this
-	Renderer::setViewport(0, 0, r.width, r.height);
+	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	//glEnable(GL_DEPTH_TEST);
 	app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
 	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
-	if(ez.enabled)
+	if(ez.isEnabled())
 	{
 		glDepthMask(false);
 		glDepthFunc(GL_EQUAL);
@@ -105,7 +105,7 @@ void Renderer::Ms::run()
 	glPolygonMode(GL_FRONT, GL_FILL); // the rendering above fucks the polygon mode
 
 	// restore depth
-	if(ez.enabled)
+	if(ez.isEnabled())
 	{
 		glDepthMask(true);
 		glDepthFunc(GL_LESS);

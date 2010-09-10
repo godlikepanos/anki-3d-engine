@@ -17,6 +17,7 @@
 class Texture: public Resource
 {
 	friend class Renderer; /// @todo Remove this when remove the SSAO load noise map crap
+	friend class Ssao;
 	friend class MainRenderer;
 
 	public:

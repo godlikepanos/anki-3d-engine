@@ -1,10 +1,5 @@
-/**
- * @file
- *
- * Illumination stage
- */
-
 #include <boost/lexical_cast.hpp>
+#include "Is.h"
 #include "Renderer.h"
 #include "Camera.h"
 #include "Light.h"
@@ -17,12 +12,12 @@
 //======================================================================================================================
 // CalcViewVector                                                                                                      =
 //======================================================================================================================
-void Renderer::Is::calcViewVector()
+void Is::calcViewVector()
 {
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
-	const uint& w = r.width;
-	const uint& h = r.height;
+	const uint& w = r.getWidth();
+	const uint& h = r.getHeight();
 
 	// From right up and CC wise to right down, Just like we render the quad
 	uint pixels[4][2]={{w,h}, {0,h}, {0, 0}, {w, 0}};
@@ -53,9 +48,9 @@ void Renderer::Is::calcViewVector()
 //======================================================================================================================
 // calcPlanes                                                                                                          =
 //======================================================================================================================
-void Renderer::Is::calcPlanes()
+void Is::calcPlanes()
 {
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
 	planes.x = cam.getZFar() / (cam.getZNear() - cam.getZFar());
 	planes.y = (cam.getZFar() * cam.getZNear()) / (cam.getZNear() -cam.getZFar());
@@ -65,7 +60,7 @@ void Renderer::Is::calcPlanes()
 //======================================================================================================================
 // initFbo                                                                                                             =
 //======================================================================================================================
-void Renderer::Is::initFbo()
+void Is::initFbo()
 {
 	// create FBO
 	fbo.create();
@@ -74,14 +69,14 @@ void Renderer::Is::initFbo()
 	// init the stencil render buffer
 	glGenRenderbuffers(1, &stencilRb);
 	glBindRenderbuffer(GL_RENDERBUFFER, stencilRb);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, r.width, r.height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, r.getWidth(), r.getHeight());
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb);
 
 	// inform in what buffers we draw
 	fbo.setNumOfColorAttachements(1);
 
 	// create the txtrs
-	if(!fai.createEmpty2D(r.width, r.height, GL_RGB, GL_RGB, GL_FLOAT))
+	if(!fai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT))
 		FATAL("Cannot create deferred shading illumination stage FAI");
 
 	// attach
@@ -100,7 +95,7 @@ void Renderer::Is::initFbo()
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Is::init()
+void Is::init(const RendererInitializer& initializer)
 {
 	// load the shaders
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
@@ -140,9 +135,9 @@ void Renderer::Is::init()
 
 	// spot light w/t shadow
 	string pps = string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	                    "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.resolution) + "\n";
-	string prefix = "SpotShadowSms" + lexical_cast<string>(sm.resolution);
-	if(sm.pcfEnabled)
+	                    "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.getResolution()) + "\n";
+	string prefix = "SpotShadowSms" + lexical_cast<string>(sm.getResolution());
+	if(sm.isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
 		prefix += "Pcf";
@@ -165,17 +160,14 @@ void Renderer::Is::init()
 
 	// init the rest
 	initFbo();
-	smo.init();
-
-	if(sm.enabled)
-		sm.init();
+	smo.init(initializer);
 }
 
 
 //======================================================================================================================
 // ambientPass                                                                                                         =
 //======================================================================================================================
-void Renderer::Is::ambientPass(const Vec3& color)
+void Is::ambientPass(const Vec3& color)
 {
 	glDisable(GL_BLEND);
 
@@ -194,9 +186,9 @@ void Renderer::Is::ambientPass(const Vec3& color)
 //======================================================================================================================
 // pointLightPass                                                                                                      =
 //======================================================================================================================
-void Renderer::Is::pointLightPass(const PointLight& light)
+void Is::pointLightPass(const PointLight& light)
 {
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
 	// frustum test
 	bsphere_t sphere(light.getWorldTransform().getOrigin(), light.getRadius());
@@ -239,15 +231,15 @@ void Renderer::Is::pointLightPass(const PointLight& light)
 //======================================================================================================================
 // spotLightPass                                                                                                       =
 //======================================================================================================================
-void Renderer::Is::spotLightPass(const SpotLight& light)
+void Is::spotLightPass(const SpotLight& light)
 {
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
 	// frustum test
 	if(!cam.insideFrustum(light.camera)) return;
 
 	// shadow mapping
-	if(light.castsShadow && sm.enabled)
+	if(light.castsShadow && sm.isEnabled())
 	{
 		sm.run(light.camera);
 
@@ -258,7 +250,7 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ONE);
 		glDisable(GL_DEPTH_TEST);
-		Renderer::setViewport(0, 0, r.width, r.height);
+		Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 	}
 
 	// stencil optimization
@@ -277,7 +269,7 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 	const ShaderProg* shdr; // because of the huge name
 	const UniVars* uniVars;
 
-	if(light.castsShadow && sm.enabled)
+	if(light.castsShadow && sm.isEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
 		uniVars = &spotLightShadowSProgUniVars;
@@ -316,7 +308,7 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 	uniVars->texProjectionMat->setMat4(&texProjectionMat);
 
 	// the shadowmap
-	if(light.castsShadow && sm.enabled)
+	if(light.castsShadow && sm.isEnabled())
 	{
 		uniVars->shadowMap->setTexture(sm.shadowMap, 5);
 	}
@@ -338,20 +330,20 @@ void Renderer::Is::spotLightPass(const SpotLight& light)
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Renderer::Is::run()
+void Is::run()
 {
 	// FBO
 	fbo.bind();
 
 	// OGL stuff
-	Renderer::setViewport(0, 0, r.width, r.height);
+	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	glDisable(GL_DEPTH_TEST);
 
-	// ambient pass
+	// ambient passstatic float quadVertCoords [][2];
 	ambientPass(app->getScene().getAmbientCol());
 
 	// light passes
