@@ -1,7 +1,9 @@
-#ifndef _RENDERERINITIALIZER_H_
-#define _RENDERERINITIALIZER_H_
+#ifndef RENDERER_INITIALIZER_H
+#define RENDERER_INITIALIZER_H
 
+#include <cstring>
 #include "Common.h"
+
 
 /**
  * A struct to initialize the renderer. It contains a few extra params for the MainRenderer

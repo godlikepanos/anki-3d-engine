@@ -1,3 +1,4 @@
+#include "Bs.h"
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
@@ -7,7 +8,7 @@
 //======================================================================================================================
 // createFbo                                                                                                           =
 //======================================================================================================================
-void Renderer::Bs::createFbo()
+void Bs::createFbo()
 {
 	fbo.create();
 	fbo.bind();
@@ -27,7 +28,7 @@ void Renderer::Bs::createFbo()
 //======================================================================================================================
 // createRefractFbo                                                                                                    =
 //======================================================================================================================
-void Renderer::Bs::createRefractFbo()
+void Bs::createRefractFbo()
 {
 	refractFbo.create();
 	refractFbo.bind();
@@ -47,10 +48,10 @@ void Renderer::Bs::createRefractFbo()
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Bs::init()
+void Bs::init(const RendererInitializer& /*initializer*/)
 {
 	createFbo();
-	refractFai.createEmpty2D(r.width, r.height, GL_RGBA8, GL_RGBA, GL_FLOAT);
+	refractFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA8, GL_RGBA, GL_FLOAT);
 	createRefractFbo();
 
 	refractSProg.loadRsrc("shaders/BsRefract.glsl");
@@ -60,9 +61,9 @@ void Renderer::Bs::init()
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Renderer::Bs::run()
+void Bs::run()
 {
-	Renderer::setViewport(0, 0, r.width, r.height);
+	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	glDepthMask(false);
 
@@ -90,7 +91,7 @@ void Renderer::Bs::run()
 			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-			r.setupMaterial(*meshNode->mesh->material, *meshNode, *r.cam);
+			r.setupMaterial(*meshNode->mesh->material, *meshNode, r.getCamera());
 			glDisable(GL_BLEND); // a hack
 			meshNode->render();
 
@@ -122,7 +123,7 @@ void Renderer::Bs::run()
 		else
 		{
 			fbo.bind();
-			r.setupMaterial(*meshNode->mesh->material, *meshNode, *r.cam);
+			r.setupMaterial(*meshNode->mesh->material, *meshNode, r.getCamera());
 			meshNode->render();
 		}
 	}

@@ -1,18 +1,14 @@
-/**
- * @file
- *
- * Post-processing stage screen space ambient occlusion pass
- */
-
 #include <boost/lexical_cast.hpp>
+#include "Ssao.h"
 #include "Renderer.h"
 #include "Camera.h"
+#include "RendererInitializer.h"
 
 
 //======================================================================================================================
 // initBlurFbos                                                                                                        =
 //======================================================================================================================
-void Renderer::Pps::Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
+void Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
 {
 	// create FBO
 	fbo.create();
@@ -41,10 +37,18 @@ void Renderer::Pps::Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Pps::Ssao::init()
+void Ssao::init(const RendererInitializer& initializer)
 {
-	width = renderingQuality * r.width;
-	height = renderingQuality * r.height;
+	enabled = initializer.pps.ssao.enabled;
+
+	if(!enabled)
+		return;
+
+	renderingQuality = initializer.pps.ssao.renderingQuality;
+	bluringQuality = initializer.pps.ssao.bluringQuality;
+
+	width = renderingQuality * r.getWidth();
+	height = renderingQuality * r.getHeight();
 	bwidth = height * bluringQuality;
 	bheight = height * bluringQuality;
 
@@ -129,9 +133,9 @@ void Renderer::Pps::Ssao::init()
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Renderer::Pps::Ssao::run()
+void Ssao::run()
 {
-	const Camera& cam = *r.cam;
+	const Camera& cam = r.getCamera();
 
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);

@@ -1,21 +1,20 @@
-/**
- * @file
- *
- * Material stage EarlyZ pass
- */
-
+#include "Ez.h"
 #include "Renderer.h"
 #include "App.h"
 #include "MeshNode.h"
 #include "Scene.h"
+#include "RendererInitializer.h"
 
 
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Ms::Ez::init()
+void Ez::init(const RendererInitializer& initializer)
 {
-	DEBUG_ERR(!enabled);
+	enabled = initializer.ms.ez.enabled;
+
+	if(!enabled)
+		return;
 
 	//
 	// init FBO
@@ -37,13 +36,13 @@ void Renderer::Ms::Ez::init()
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Renderer::Ms::Ez::run()
+void Ez::run()
 {
 	DEBUG_ERR(!enabled);
 
 	fbo.bind();
 
-	Renderer::setViewport(0, 0, r.width, r.height);
+	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glEnable(GL_DEPTH_TEST);
@@ -57,7 +56,7 @@ void Renderer::Ms::Ez::run()
 
 		DEBUG_ERR(meshNode->mesh->material->dpMtl.get() == NULL);
 
-		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, *r.cam);
+		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, r.getCamera());
 		meshNode->renderDepth();
 	}
 

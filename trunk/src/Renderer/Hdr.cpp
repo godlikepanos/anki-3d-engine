@@ -1,20 +1,16 @@
-/**
- * @file
- *
- * Post-processing stage high dynamic range lighting pass
- */
-
 #include <boost/lexical_cast.hpp>
+#include "Hdr.h"
 #include "Renderer.h"
+#include "RendererInitializer.h"
 
 
 //======================================================================================================================
 // initFbos                                                                                                            =
 //======================================================================================================================
-void Renderer::Pps::Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
+void Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
 {
-	int width = renderingQuality * r.width;
-	int height = renderingQuality * r.height;
+	int width = renderingQuality * r.getWidth();
+	int height = renderingQuality * r.getHeight();
 
 	// create FBO
 	fbo.create();
@@ -43,10 +39,15 @@ void Renderer::Pps::Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Renderer::Pps::Hdr::init()
+void Hdr::init(const RendererInitializer& initializer)
 {
-	//int width = renderingQuality * r.width;
-	//int height = renderingQuality * r.height;
+	enabled = initializer.pps.hdr.enabled;
+
+	if(!enabled)
+		return;
+
+	renderingQuality = initializer.pps.hdr.renderingQuality;
+	blurringDist = initializer.pps.hdr.blurringDist;
 
 	initFbos(toneFbo, pass0Fai, GL_RGB);
 	initFbos(pass1Fbo, pass1Fai, GL_RGB);
@@ -77,10 +78,10 @@ void Renderer::Pps::Hdr::init()
 //======================================================================================================================
 // runPass                                                                                                             =
 //======================================================================================================================
-void Renderer::Pps::Hdr::run()
+void Hdr::run()
 {
-	int w = renderingQuality * r.width;
-	int h = renderingQuality * r.height;
+	int w = renderingQuality * r.getWidth();
+	int h = renderingQuality * r.getHeight();
 	Renderer::setViewport(0, 0, w, h);
 
 	glDisable(GL_BLEND);
