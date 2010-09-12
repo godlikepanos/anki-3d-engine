@@ -13,6 +13,7 @@ class btConvexShape;
 class btKinematicCharacterController;
 class btGhostPairCallback;
 class MotionState;
+class SceneNode;
 
 
 /**

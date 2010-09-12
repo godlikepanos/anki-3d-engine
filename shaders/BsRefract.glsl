@@ -6,9 +6,9 @@
 
 uniform sampler2D fai;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 void main()
 {
-	gl_FragData[0] = texture2D(fai, texCoords);
+	gl_FragData[0] = texture2D(fai, vTexCoords);
 }

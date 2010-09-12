@@ -68,6 +68,7 @@ App::App(int argc, char* argv[], Object* parent):
 	cachePath = settingsPath / "cache";
 	if(filesystem::exists(cachePath))
 	{
+		INFO("Deleting dir \"" << cachePath << "\"");
 		filesystem::remove_all(cachePath);
 	}
 

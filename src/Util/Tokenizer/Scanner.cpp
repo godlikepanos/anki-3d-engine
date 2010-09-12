@@ -209,7 +209,7 @@ char Scanner::getNextChar()
 	}
 	else if(lookupAscii(*pchar) == AC_ERROR)
 	{
-		SERROR("Unacceptable char '" << *pchar << "' 0x" << int(*pchar));
+		SERROR("Unacceptable char '" << *pchar << "' 0x" << uint(*pchar));
 	}
 
 	return *pchar;

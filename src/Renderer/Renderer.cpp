@@ -23,8 +23,7 @@ Renderer::Renderer(Object* parent):
 	ms(*this),
 	is(*this),
 	pps(*this),
-	bs(*this),
-	dbg(*this)
+	bs(*this)
 {
 }
 
@@ -51,7 +50,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	is.init(initializer);
 	pps.init(initializer);
 	bs.init(initializer);
-	dbg.init(initializer);
 }
 
 
@@ -69,7 +67,6 @@ void Renderer::render(Camera& cam_)
 	pps.runPrePass();
 	bs.run();
 	pps.runPostPass();
-	dbg.run();
 
 	++framesNum;
 }

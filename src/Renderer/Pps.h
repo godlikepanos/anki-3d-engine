@@ -44,7 +44,15 @@ class Pps: private RenderingStage
 		UniVars postPassSProgUniVars;
 
 		void initPassFbo(Fbo& fbo, Texture& fai, const char* msg);
+
+		/**
+		 * before BS pass
+		 */
 		void initPrePassSProg();
+
+		/**
+		 * after BS pass
+		 */
 		void initPostPassSProg();
 };
 

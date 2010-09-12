@@ -28,6 +28,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	initializer.width = app->getWindowWidth() * renderingQuality;
 	initializer.height = app->getWindowHeight() * renderingQuality;
 	Renderer::init(initializer);
+	dbg.init(initializer);
 
 	INFO("Main renderer initialization ends");
 }
@@ -77,6 +78,7 @@ void MainRenderer::initGl()
 void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
+	dbg.run();
 
 	//
 	// Render the PPS FAI to the framebuffer
@@ -87,6 +89,7 @@ void MainRenderer::render(Camera& cam_)
 	glDisable(GL_BLEND);
 	sProg->bind();
 	//sProg->findUniVar("rasterImage")->setTexture(pps.hdr.fai, 0);
+	//sProg->findUniVar("rasterImage")->setTexture(pps.ssao.fai, 0);
 	sProg->findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
 	drawQuad(0);
 }

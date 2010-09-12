@@ -15,8 +15,8 @@
 class Hdr: private RenderingStage
 {
 	public:
-		Texture pass0Fai; ///< Vertical blur pass FAI
-		Texture pass1Fai; ///< pass0Fai with the horizontal blur FAI
+		Texture toneFai; ///< Vertical blur pass FAI
+		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 		Texture fai; ///< The final FAI
 
 		Hdr(Renderer& r_): RenderingStage(r_) {}
@@ -27,27 +27,31 @@ class Hdr: private RenderingStage
 		 * Setters & getters
 		 */
 		/**@{*/
-		float& getBlurringDist() {return blurringDist;}
+		float getBlurringDist() {return blurringDist;}
 		void setBlurringDist(float f) {blurringDist = f;}
+		uint getBlurringIterations() {return blurringIterations;}
+		void setBlurringIterations(uint i) {blurringIterations = i;}
 		bool isEnabled() const {return enabled;}
 		float getRenderingQuality() const {return renderingQuality;}
 		/**@}*/
 
 	private:
 		Fbo toneFbo;
-		Fbo pass1Fbo;
-		Fbo pass2Fbo;
+		Fbo hblurFbo;
+		Fbo vblurFbo;
 		RsrcPtr<ShaderProg> toneSProg;
-		RsrcPtr<ShaderProg> pass1SProg;
-		RsrcPtr<ShaderProg> pass2SProg;
+		RsrcPtr<ShaderProg> hblurSProg;
+		RsrcPtr<ShaderProg> vblurSProg;
 		const ShaderProg::UniVar* toneProgFaiUniVar;
-		const ShaderProg::UniVar* pass1SProgFaiUniVar;
-		const ShaderProg::UniVar* pass2SProgFaiUniVar;
+		const ShaderProg::UniVar* hblurSProgFaiUniVar;
+		const ShaderProg::UniVar* vblurSProgFaiUniVar;
 		float blurringDist;
+		uint blurringIterations;
+		float overExposure; ///< @todo
 		bool enabled;
 		float renderingQuality;
 
-		void initFbos(Fbo& fbo, Texture& fai, int internalFormat);
+		void initFbo(Fbo& fbo, Texture& fai);
 };
 
 

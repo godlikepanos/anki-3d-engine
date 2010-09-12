@@ -13,16 +13,16 @@
  * Screen space ambient occlusion pass
  *
  * Three passes:
- * - Calc ssao factor
- * - Blur vertically
- * - Blur horizontally
+ * 1) Calc ssao factor
+ * 2) Blur vertically
+ * 3) Blur horizontally repeat 2, 3
  */
 class Ssao: private RenderingStage
 {
 	public:
-		Texture pass0Fai;
-		Texture pass1Fai;
-		Texture fai;  ///< The final FAI
+		Texture ssaoFai; ///< It contains the unblurred SSAO factor
+		Texture hblurFai;
+		Texture fai;  ///< AKA vblurFai The final FAI
 
 		Ssao(Renderer& r_): RenderingStage(r_) {}
 		void init(const RendererInitializer& initializer);
@@ -34,29 +34,35 @@ class Ssao: private RenderingStage
 		/**@{*/
 		bool isEnabled() const {return enabled;}
 		float getRenderingQuality() const {return renderingQuality;}
-		float getBluringQuality() const {return bluringQuality;}
 		/**@}*/
 
 	private:
 		bool enabled;
 		float renderingQuality;
-		float bluringQuality;
-		Fbo pass0Fbo;
-		Fbo pass1Fbo;
-		Fbo pass2Fbo;
-		uint width, height, bwidth, bheight;
+		float blurringIterations;
+		Fbo ssaoFbo;
+		Fbo hblurFbo;
+		Fbo vblurFbo;
 		RsrcPtr<Texture> noiseMap;
 		RsrcPtr<ShaderProg> ssaoSProg;
-		RsrcPtr<ShaderProg> blurSProg;
-		RsrcPtr<ShaderProg> blurSProg2;
+		RsrcPtr<ShaderProg> hblurSProg;
+		RsrcPtr<ShaderProg> vblurSProg;
+
+		/**
+		 * Pointers to some uniforms
+		 */
+		/**@{*/
 		const ShaderProg::UniVar* camerarangeUniVar;
 		const ShaderProg::UniVar* msDepthFaiUniVar;
 		const ShaderProg::UniVar* noiseMapUniVar;
 		const ShaderProg::UniVar* msNormalFaiUniVar;
-		const ShaderProg::UniVar* blurSProgFaiUniVar;
-		const ShaderProg::UniVar* blurSProg2FaiUniVar;
+		const ShaderProg::UniVar* imgHblurSProgUniVar;
+		const ShaderProg::UniVar* dimensionHblurSProgUniVar;
+		const ShaderProg::UniVar* imgVblurSProgUniVar;
+		const ShaderProg::UniVar* dimensionVblurSProgUniVar;
+		/**@}*/
 
-		void initBlurFbo(Fbo& fbo, Texture& fai);
+		void createFbo(Fbo& fbo, Texture& fai);
 };
 
 

@@ -37,7 +37,7 @@ void SpotLight::init(const char* filename)
 //======================================================================================================================
 void Light::render()
 {
-	Dbg::drawSphere(0.1, getWorldTransform(), Vec4(lightProps->getDiffuseColor(), 1.0));
+	app->getMainRenderer().dbg.drawSphere(0.1, getWorldTransform(), Vec4(lightProps->getDiffuseColor(), 1.0));
 	//Dbg::drawSphere(0.1, Transform::getIdentity(), Vec4(lightProps->getDiffuseColor(), 1.0));
 }
 

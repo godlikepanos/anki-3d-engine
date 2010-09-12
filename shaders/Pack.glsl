@@ -1,4 +1,4 @@
-/*
+/**
  * Pack 3D normal to 2D vector
  */
 vec2 packNormal( in vec3 _normal )
@@ -16,7 +16,7 @@ vec2 packNormal( in vec3 _normal )
 }
 
 
-/*
+/**
  * Reverse the packNormal
  */
 vec3 unpackNormal(in vec2 _enc_)

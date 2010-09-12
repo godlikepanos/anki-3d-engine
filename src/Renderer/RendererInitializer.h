@@ -41,6 +41,7 @@ struct RendererInitializer
 			bool enabled;
 			float renderingQuality;
 			float blurringDist;
+			float blurringIterations;
 		} hdr;
 
 		// Ssao
@@ -48,7 +49,7 @@ struct RendererInitializer
 		{
 			bool enabled;
 			float renderingQuality;
-			float bluringQuality;
+			float blurringIterations;
 		} ssao;
 	} pps;
 

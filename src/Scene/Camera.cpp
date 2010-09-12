@@ -22,8 +22,8 @@ void Camera::setAll(float fovx_, float fovy_, float znear_, float zfar_)
 //======================================================================================================================
 void Camera::render()
 {
-	Dbg::setColor(Vec4(1.0, 0.0, 1.0, 1.0));
-	Dbg::setModelMat(Mat4(getWorldTransform()));
+	app->getMainRenderer().dbg.setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+	app->getMainRenderer().dbg.setModelMat(Mat4(getWorldTransform()));
 
 	const float camLen = 1.0;
 	float tmp0 = camLen / tan((M::PI - fovX)*0.5) + 0.001;
