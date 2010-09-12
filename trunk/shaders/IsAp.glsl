@@ -7,9 +7,9 @@
 uniform vec3 ambientCol;
 uniform sampler2D sceneColMap;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 void main()
 {
-	gl_FragData[0].rgb = texture2D( sceneColMap, texCoords ).rgb * ambientCol;
+	gl_FragData[0].rgb = texture2D( sceneColMap, vTexCoords ).rgb * ambientCol;
 }

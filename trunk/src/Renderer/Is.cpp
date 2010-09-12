@@ -97,6 +97,10 @@ void Is::initFbo()
 //======================================================================================================================
 void Is::init(const RendererInitializer& initializer)
 {
+	// init passes
+	smo.init(initializer);
+	sm.init(initializer);
+
 	// load the shaders
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
 	ambientColUniVar = ambientPassSProg->findUniVar("ambientCol");
@@ -136,7 +140,7 @@ void Is::init(const RendererInitializer& initializer)
 	// spot light w/t shadow
 	string pps = string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
 	                    "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.getResolution()) + "\n";
-	string prefix = "SpotShadowSms" + lexical_cast<string>(sm.getResolution());
+	string prefix = "SpotShadowSmSize" + lexical_cast<string>(sm.getResolution());
 	if(sm.isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
@@ -160,7 +164,6 @@ void Is::init(const RendererInitializer& initializer)
 
 	// init the rest
 	initFbo();
-	smo.init(initializer);
 }
 
 
@@ -208,7 +211,7 @@ void Is::pointLightPass(const PointLight& light)
 	pointLightSProgUniVars.planes->setVec2(&planes);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	pointLightSProgUniVars.lightPos->setVec3(&lightPosEyeSpace);
-	pointLightSProgUniVars.lightRadius->setFloat(1.0/light.getRadius());
+	pointLightSProgUniVars.lightRadius->setFloat(light.getRadius());
 	Vec3 ll = light.lightProps->getDiffuseColor();
 	pointLightSProgUniVars.lightDiffuseCol->setVec3(&light.lightProps->getDiffuseColor());
 	pointLightSProgUniVars.lightSpecularCol->setVec3(&light.lightProps->getSpecularColor());

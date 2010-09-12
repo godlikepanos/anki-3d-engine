@@ -5,14 +5,16 @@
 #pragma anki fragShaderBegins
 
 uniform sampler2D rasterImage;
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 void main()
 {
 	//if( gl_FragCoord.x > 0.5 ) discard;
 
-	gl_FragColor.rgb = texture2D( rasterImage, texCoords ).rgb;
+	gl_FragColor.rgb = texture2D(rasterImage, vTexCoords).rgb;
 
+
+	//gl_FragColor.rgb = vec3(texture2D(rasterImage, vTexCoords).r);
 	/*vec4 c = texture2D( rasterImage, texCoords );
 	if( c.r == 0.0 && c.g == 0.0 && c.b==0.0 && c.a != 0.0 )*/
 		//gl_FragColor.rgb = vec3( texture2D( rasterImage, texCoords ).a );

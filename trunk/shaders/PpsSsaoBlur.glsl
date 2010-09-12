@@ -6,7 +6,7 @@
 
 #pragma anki include "shaders/median_filter.glsl"
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 uniform sampler2D tex;
 
@@ -30,9 +30,9 @@ void main()
 	for( int i=0; i<KERNEL_SIZE; i++ )
 	{
 		#if defined( _PPS_SSAO_PASS_0_ )
-			factor += texture2D( tex, texCoords + vec2(kernel[i], 0.0) ).a;
+			factor += texture2D( tex, vTexCoords + vec2(kernel[i], 0.0) ).a;
 		#else
-			factor += texture2D( tex, texCoords + vec2(0.0, kernel[i]) ).a;
+			factor += texture2D( tex, vTexCoords + vec2(0.0, kernel[i]) ).a;
 		#endif		
 	}
 	gl_FragData[0].a = factor / float(KERNEL_SIZE);

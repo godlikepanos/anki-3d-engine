@@ -5,9 +5,9 @@
 
 
 //======================================================================================================================
-// initFbos                                                                                                            =
+// initFbo                                                                                                            =
 //======================================================================================================================
-void Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
+void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
 	int width = renderingQuality * r.getWidth();
 	int height = renderingQuality * r.getHeight();
@@ -20,7 +20,7 @@ void Hdr::initFbos(Fbo& fbo, Texture& fai, int internalFormat)
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D(width, height, internalFormat, GL_RGB, GL_FLOAT);
+	fai.createEmpty2D(width, height, GL_RGB, GL_RGB, GL_FLOAT);
 	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -48,10 +48,11 @@ void Hdr::init(const RendererInitializer& initializer)
 
 	renderingQuality = initializer.pps.hdr.renderingQuality;
 	blurringDist = initializer.pps.hdr.blurringDist;
+	blurringIterations = initializer.pps.hdr.blurringIterations;
 
-	initFbos(toneFbo, pass0Fai, GL_RGB);
-	initFbos(pass1Fbo, pass1Fai, GL_RGB);
-	initFbos(pass2Fbo, fai, GL_RGB);
+	initFbo(toneFbo, toneFai);
+	initFbo(hblurFbo, hblurFai);
+	initFbo(vblurFbo, fai);
 
 	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -63,14 +64,14 @@ void Hdr::init(const RendererInitializer& initializer)
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
 	string pps = "#define HPASS\n#define COL_RGB\n";
-	string prefix = "HRGB";
-	pass1SProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
-	pass1SProgFaiUniVar = pass1SProg->findUniVar("img");
+	string prefix = "HorizontalRgb";
+	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
+	hblurSProgFaiUniVar = hblurSProg->findUniVar("img");
 
 	pps = "#define VPASS\n#define COL_RGB\n";
-	prefix = "VRGB";
-	pass2SProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
-	pass2SProgFaiUniVar = pass2SProg->findUniVar("img");
+	prefix = "VerticalRgb";
+	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
+	vblurSProgFaiUniVar = vblurSProg->findUniVar("img");
 }
 
 #include "App.h"
@@ -90,35 +91,36 @@ void Hdr::run()
 	// pass 0
 	toneFbo.bind();
 	toneSProg->bind();
-	r.is.fai.setRepeat(false);
 	toneProgFaiUniVar->setTexture(r.pps.prePassFai, 0);
 	Renderer::drawQuad(0);
 
-	Vec2 imgSize(w, h);
 
-	for(uint i=0; i<2; i++)
+	// blurring passes
+	hblurFai.setRepeat(false);
+	fai.setRepeat(false);
+	for(uint i=0; i<blurringIterations; i++)
 	{
 		// hpass
-		pass1Fbo.bind();
-		pass1SProg->bind();
+		hblurFbo.bind();
+		hblurSProg->bind();
 		if(i == 0)
 		{
-			pass1SProgFaiUniVar->setTexture(pass0Fai, 0);
+			hblurSProgFaiUniVar->setTexture(toneFai, 0);
 		}
 		else
 		{
-			pass1SProgFaiUniVar->setTexture(fai, 0);
+			hblurSProgFaiUniVar->setTexture(fai, 0);
 		}
-		pass1SProg->findUniVar("imgSize")->setVec2(&imgSize);
-		pass1SProg->findUniVar("blurringDist")->setFloat(blurringDist);
+		hblurSProg->findUniVar("imgDimension")->setFloat(w);
+		hblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / w);
 		Renderer::drawQuad(0);
 
 		// vpass
-		pass2Fbo.bind();
-		pass2SProg->bind();
-		pass2SProgFaiUniVar->setTexture(pass1Fai, 0);
-		pass2SProg->findUniVar("imgSize")->setVec2(&imgSize);
-		pass2SProg->findUniVar("blurringDist")->setFloat(blurringDist);
+		vblurFbo.bind();
+		vblurSProg->bind();
+		vblurSProgFaiUniVar->setTexture(hblurFai, 0);
+		vblurSProg->findUniVar("imgDimension")->setFloat(h);
+		vblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / h);
 		Renderer::drawQuad(0);
 	}
 

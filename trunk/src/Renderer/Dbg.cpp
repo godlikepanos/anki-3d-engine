@@ -9,15 +9,6 @@
 
 
 //======================================================================================================================
-// Statics                                                                                                             =
-//======================================================================================================================
-RsrcPtr<ShaderProg> Dbg::sProg;
-Mat4 Dbg::viewProjectionMat;
-const ShaderProg::UniVar* Dbg::colorUniVar;
-const ShaderProg::UniVar* Dbg::modelViewProjectionMat;
-
-
-//======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
 Dbg::Dbg(Renderer& r_):
@@ -26,8 +17,7 @@ Dbg::Dbg(Renderer& r_):
 	showLightsEnabled(true),
 	showSkeletonsEnabled(true),
 	showCamerasEnabled(true)
-{
-}
+{}
 
 
 //======================================================================================================================
@@ -40,10 +30,10 @@ void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 	setColor(color);
 	setModelMat(Mat4::getIdentity());
 
-	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(POSITION_ATTRIBUTE_ID);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, posBuff);
 	glDrawArrays(GL_LINES, 0, 2);
-	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);
 }
 
 
@@ -52,41 +42,44 @@ void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 //======================================================================================================================
 void Dbg::renderGrid()
 {
-	float col0[] = { 0.5, 0.5, 0.5 };
-	float col1[] = { 0.0, 0.0, 1.0 };
-	float col2[] = { 1.0, 0.0, 0.0 };
+	Vec4 col0(0.5, 0.5, 0.5, 1.0);
+	Vec4 col1(0.0, 0.0, 1.0, 1.0);
+	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LINE_STIPPLE);
-	//glLineWidth(1.0);
-	glColor3fv(col0);
+	const float SPACE = 1.0; // space between lines
+	const int NUM = 57;  // lines number. must be odd
 
-	const float space = 1.0; // space between lines
-	const int num = 57;  // lines number. must be odd
+	float OPT = ((NUM - 1) * SPACE / 2);
 
-	float opt = ((num-1)*space/2);
-	glBegin(GL_LINES);
-		for(int x=0; x<num; x++)
-		{
-			if(x==num/2) // if the middle line then change color
-				glColor3fv(col1);
-			else if(x==(num/2)+1) // if the next line after the middle one change back to default col
-				glColor3fv(col0);
+	Vec<Vec3> positions;
+	Vec<Vec4> colors;
 
-			float opt1 = (x*space);
-			// line in z
-			glVertex3f(opt1-opt, 0.0, -opt);
-			glVertex3f(opt1-opt, 0.0, opt);
+	for(int x=0; x<NUM; x++)
+	{
+		if(x == NUM / 2) // if the middle line then change color
+			colors.push_back(col1);
+		else if(x == (NUM / 2) + 1) // if the next line after the middle one change back to default col
+			colors.push_back(col0);
 
-			if(x==num/2) // if middle line change col so you can highlight the x-axis
-				glColor3fv(col2);
+		float opt1 = x * SPACE;
+		// line in z
+		positions.push_back(Vec3(opt1 - OPT, 0.0, -OPT));
+		positions.push_back(Vec3(opt1 - OPT, 0.0, OPT));
 
-			// line in the x
-			glVertex3f(-opt, 0.0, opt1-opt);
-			glVertex3f(opt, 0.0, opt1-opt);
-		}
-	glEnd();
+		if(x==NUM/2) // if middle line change col so you can highlight the x-axis
+			colors.push_back(col2);
+
+		// line in the x
+		positions.push_back(Vec3(-OPT, 0.0, opt1 - OPT));
+		positions.push_back(Vec3(OPT, 0.0, opt1 - OPT));
+	}
+
+	// render
+	setColor(col0);
+	glEnableVertexAttribArray(POSITION_ATTRIBUTE_ID);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &positions[0]);
+	glDrawArrays(GL_LINES, 0, positions.size());
+	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);
 }
 
 
@@ -220,13 +213,9 @@ void Dbg::init(const RendererInitializer& initializer)
 	fbo.unbind();
 
 	// shader
-	if(sProg.get() == NULL)
-	{
-		sProg.loadRsrc("shaders/Dbg.glsl");
-		colorUniVar = sProg->findUniVar("color");
-		modelViewProjectionMat = sProg->findUniVar("modelViewProjectionMat");
-	}
-
+	sProg.loadRsrc("shaders/Dbg.glsl");
+	colorUniVar = sProg->findUniVar("color");
+	modelViewProjectionMatUniVar = sProg->findUniVar("modelViewProjectionMat");
 }
 
 
@@ -296,6 +285,6 @@ void Dbg::setColor(const Vec4& color)
 void Dbg::setModelMat(const Mat4& modelMat)
 {
 	Mat4 pmv = viewProjectionMat * modelMat;
-	modelViewProjectionMat->setMat4(&pmv);
+	modelViewProjectionMatUniVar->setMat4(&pmv);
 }
 

@@ -15,14 +15,14 @@ uniform vec2 lightPosScreenSpace = vec2(0.5, 0.5);
 uniform sampler2D msDepthFai;
 uniform sampler2D isFai;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 
 
 void main()
 {
-	vec2 delta_tex_coord = texCoords - lightPosScreenSpace;
-	vec2 texCoords2 = texCoords;
+	vec2 delta_tex_coord = vTexCoords - lightPosScreenSpace;
+	vec2 texCoords2 = vTexCoords;
 	delta_tex_coord *= 1.0 / float(SAMPLES_NUM) * density;
 	float illumination_decay = 1.0;
 

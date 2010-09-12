@@ -84,9 +84,9 @@ void Smo::run(const SpotLight& light)
 	float y = tan(lcam.getFovY()/2) * lcam.getZFar();
 	float z = -lcam.getZFar();
 
-	const int trisNum = 6;
+	const int TRIS_NUM = 6;
 
-	float verts[trisNum][3][3] = {
+	float verts[TRIS_NUM][3][3] = {
 		{{0.0, 0.0, 0.0}, {x, -y, z}, {x,  y, z}}, // right triangle
 		{{0.0, 0.0, 0.0}, {x,  y, z}, {-x,  y, z}}, // top
 		{{0.0, 0.0, 0.0}, {-x,  y, z}, {-x, -y, z}}, // left
@@ -105,7 +105,7 @@ void Smo::run(const SpotLight& light)
 	const int loc = 0;
 	glEnableVertexAttribArray(loc);
 	glVertexAttribPointer(loc, 3, GL_FLOAT, false, 0, verts);
-	glDrawArrays(GL_TRIANGLES, 0, trisNum*3);
+	glDrawArrays(GL_TRIANGLES, 0, TRIS_NUM * 3);
 	glDisableVertexAttribArray(loc);
 
 	// restore GL state

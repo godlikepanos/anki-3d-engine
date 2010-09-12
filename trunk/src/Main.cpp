@@ -131,10 +131,11 @@ void init()
 	initializer.is.sm.resolution = 512;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 2.0;
-	initializer.pps.ssao.bluringQuality = 1.0;
+	initializer.pps.hdr.blurringDist = 0.0;
+	initializer.pps.hdr.blurringIterations = 2;
+	initializer.pps.ssao.blurringIterations = 2;
 	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.renderingQuality = 0.5;
+	initializer.pps.ssao.renderingQuality = 0.25;
 	initializer.mainRendererQuality = 1.0;
 	app->getMainRenderer().init(initializer);
 	Ui::init();
@@ -198,8 +199,8 @@ void init()
 	}*/
 
 	// sponza map
-	/*MeshNode* node = new MeshNode();
-	node->init("maps/sponza/sponza.mesh");*/
+	MeshNode* node = new MeshNode();
+	node->init("maps/sponza/sponza.mesh");
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
 	// particle emitter

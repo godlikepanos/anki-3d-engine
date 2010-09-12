@@ -8,14 +8,14 @@
 #pragma anki attribute position 0
 attribute vec2 position;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 void main()
 {
 	vec2 vertPos = position; // the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
-	texCoords = vertPos;
-	vec2 vertPosNdc = vertPos*2.0 - 1.0;
-	gl_Position = vec4( vertPosNdc, 0.0, 1.0 );
+	vTexCoords = vertPos;
+	vec2 vertPosNdc = vertPos * 2.0 - 1.0;
+	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
 }
 
 

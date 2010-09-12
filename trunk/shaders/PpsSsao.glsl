@@ -12,7 +12,7 @@ uniform sampler2D msDepthFai;
 uniform sampler2D noiseMap;
 uniform sampler2D msNormalFai;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 const float totStrength = 1.7;
 const float strength = 0.07;
 const float offset = 18.0;
@@ -33,21 +33,21 @@ void main(void)
 	// grab a normal for reflecting the sample rays later on
 
 
-	float currentPixelDepth = ReadFromTexAndLinearizeDepth( msDepthFai, texCoords, camerarange.x, camerarange.y );
+	float currentPixelDepth = ReadFromTexAndLinearizeDepth( msDepthFai, vTexCoords, camerarange.x, camerarange.y );
 	/*if( currentPixelDepth * camerarange.y > MAX_SSAO_DISTANCE )
 	{
 		gl_FragColor.a = 1.0;
 		return;
 	}*/
 
-	vec3 fres = normalize((texture2D(noiseMap,texCoords*offset).xyz*2.0) - vec3(1.0));
+	vec3 fres = normalize((texture2D(noiseMap,vTexCoords*offset).xyz*2.0) - vec3(1.0));
 
-	vec4 currentPixelSample = texture2D(msNormalFai,texCoords);
+	vec4 currentPixelSample = texture2D(msNormalFai,vTexCoords);
 
 
 
 	// current fragment coords in screen space
-	vec3 ep = vec3( texCoords.xy, currentPixelDepth );
+	vec3 ep = vec3( vTexCoords.xy, currentPixelDepth );
 	// get the normal of current fragment
 	vec3 norm = unpackNormal(currentPixelSample.xy);
 
@@ -84,5 +84,5 @@ void main(void)
 
 	// output the result
 	float ao = 1.0-totStrength*bl*invSamples;
-	gl_FragColor.a = ao /** MAX_SSAO_DISTANCE*/;
+	gl_FragColor.r = ao /** MAX_SSAO_DISTANCE*/;
 }

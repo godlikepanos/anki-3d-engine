@@ -1,5 +1,5 @@
-#ifndef _MAINRENDERER_H_
-#define _MAINRENDERER_H_
+#ifndef MAIN_RENDERER_H
+#define MAIN_RENDERER_H
 
 #include "Common.h"
 #include "Renderer.h"
@@ -10,19 +10,19 @@
  */
 class MainRenderer: public Renderer
 {
-	/**
-	 * The quality of the JPEG screenshots. From 0 to 100
-	 */
-	PROPERTY_RW(int, screenshotJpegQuality, setScreenshotJpegQuality, getScreenshotJpegQuality)
-
-	/**
-	 * The global rendering quality of the raster image. Its a percentage of the application's window size. From 0.0(low)
-	 * to 1.0(high)
-	 */
-	PROPERTY_R(float, renderingQuality, getRenderingQuality)
-
 	public:
-		MainRenderer(Object* parent);
+		Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
+
+		MainRenderer(Object* parent); ///< The quality of the JPEG screenshots. From 0 to 100
+
+		/**
+		 * @name Setters & getters
+		 */
+		/**@{*/
+		int& getScreenshotJpegQuality() {return screenshotJpegQuality;}
+		void setScreenshotJpegQuality(int i) {screenshotJpegQuality = i;}
+		float getRenderingQuality() const {return renderingQuality;}
+		/**@}*/
 
 		/**
 		 * The same as Renderer::init but with additional initialization. @see Renderer::init
@@ -43,6 +43,13 @@ class MainRenderer: public Renderer
 
 	private:
 		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program
+		int screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
+
+		/**
+		 * The global rendering quality of the raster image. Its a percentage of the application's window size. From
+		 * 0.0(low) to 1.0(high)
+		 */
+		float renderingQuality;
 
 		bool takeScreenshotTga(const char* filename);
 		bool takeScreenshotJpeg(const char* filename);
@@ -52,6 +59,7 @@ class MainRenderer: public Renderer
 
 inline MainRenderer::MainRenderer(Object* parent):
 	Renderer(parent),
+	dbg(*this),
 	screenshotJpegQuality(90)
 {}
 

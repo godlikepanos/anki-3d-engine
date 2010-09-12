@@ -4,9 +4,11 @@
 #include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
-#include "ShaderProg.h"
 #include "RsrcPtr.h"
 #include "Texture.h"
+
+
+class ShaderProg;
 
 
 /**
@@ -20,8 +22,8 @@ class Bs: public RenderingStage
 		void run();
 
 	private:
-		Fbo fbo;
-		Fbo refractFbo;
+		Fbo fbo; ///< Writes to pps.prePassFai
+		Fbo refractFbo; ///< Writes to refractFai
 		RsrcPtr<ShaderProg> refractSProg;
 		Texture refractFai;
 

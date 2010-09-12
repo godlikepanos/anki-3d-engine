@@ -6,11 +6,14 @@
 
 
 //======================================================================================================================
-// initBlurFbos                                                                                                        =
+// createFbo                                                                                                           =
 //======================================================================================================================
-void Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
+void Ssao::createFbo(Fbo& fbo, Texture& fai)
 {
-	// create FBO
+	int width = renderingQuality * r.getWidth();
+	int height = renderingQuality * r.getHeight();
+
+	// create
 	fbo.create();
 	fbo.bind();
 
@@ -18,9 +21,10 @@ void Ssao::initBlurFbo(Fbo& fbo, Texture& fai)
 	fbo.setNumOfColorAttachements(1);
 
 	// create the texes
-	fai.createEmpty2D(bwidth, bheight, GL_ALPHA8, GL_ALPHA, GL_FLOAT);
-	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	fai.createEmpty2D(width, height, GL_RED, GL_RED, GL_FLOAT);
+	fai.setRepeat(false);
+	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	// attach
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
@@ -45,68 +49,38 @@ void Ssao::init(const RendererInitializer& initializer)
 		return;
 
 	renderingQuality = initializer.pps.ssao.renderingQuality;
-	bluringQuality = initializer.pps.ssao.bluringQuality;
+	blurringIterations = initializer.pps.ssao.blurringIterations;
 
-	width = renderingQuality * r.getWidth();
-	height = renderingQuality * r.getHeight();
-	bwidth = height * bluringQuality;
-	bheight = height * bluringQuality;
-
-	//
-	// init FBOs
-	//
-
-	// create FBO
-	pass0Fbo.create();
-	pass0Fbo.bind();
-
-	// inform in what buffers we draw
-	pass0Fbo.setNumOfColorAttachements(1);
-
-	// create the FAI
-	pass0Fai.createEmpty2D(width, height, GL_ALPHA8, GL_ALPHA, GL_FLOAT);
-	pass0Fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	pass0Fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	// attach
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pass0Fai.getGlId(), 0);
-
-	// test if success
-	if(!pass0Fbo.isGood())
-		FATAL("Cannot create deferred shading post-processing stage SSAO pass FBO");
-
-	// unbind
-	pass0Fbo.unbind();
-
-	initBlurFbo(pass1Fbo, pass1Fai);
-	initBlurFbo(pass2Fbo, fai);
-
+	// create FBOs
+	createFbo(ssaoFbo, ssaoFai);
+	createFbo(hblurFbo, hblurFai);
+	createFbo(vblurFbo, fai);
 
 	//
 	// Shaders
 	//
 
+	// first pass prog
 	ssaoSProg.loadRsrc("shaders/PpsSsao.glsl");
-
-	string pps = "#define _PPS_SSAO_PASS_0_\n#define PASS0_FAI_WIDTH " + lexical_cast<string>(static_cast<float>(width)) +
-	             "\n";
-	string prefix = "Pass0Width" + lexical_cast<string>(width);
-	blurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(), prefix.c_str()).c_str());
-
-
-	pps = "#define _PPS_SSAO_PASS_1_\n#define PASS1_FAI_HEIGHT " + lexical_cast<string>(static_cast<float>(bheight)) +
-	      "\n";
-	prefix = "Pass1Height" + lexical_cast<string>(bheight);
-	blurSProg2.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsSsaoBlur.glsl", pps.c_str(),
-	                                                     prefix.c_str()).c_str());
-
 	camerarangeUniVar = ssaoSProg->findUniVar("camerarange");
 	msDepthFaiUniVar = ssaoSProg->findUniVar("msDepthFai");
 	noiseMapUniVar = ssaoSProg->findUniVar("noiseMap");
 	msNormalFaiUniVar = ssaoSProg->findUniVar("msNormalFai");
-	blurSProgFaiUniVar = blurSProg->findUniVar("tex"); /// @todo rename the tex in the shader
-	blurSProg2FaiUniVar = blurSProg2->findUniVar("tex"); /// @todo rename the tex in the shader
 
+	// blurring progs
+	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
+
+	string pps = "#define HPASS\n#define COL_R\n";
+	string prefix = "HorizontalR";
+	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
+	imgHblurSProgUniVar = hblurSProg->findUniVar("img");
+	dimensionHblurSProgUniVar = hblurSProg->findUniVar("imgDimension");
+
+	pps = "#define VPASS\n#define COL_R\n";
+	prefix = "VerticalR";
+	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
+	imgVblurSProgUniVar = vblurSProg->findUniVar("img");
+	dimensionVblurSProgUniVar = vblurSProg->findUniVar("imgDimension");
 
 	//
 	// noise map
@@ -135,15 +109,18 @@ void Ssao::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Ssao::run()
 {
+	int width = renderingQuality * r.getWidth();
+	int height = renderingQuality * r.getHeight();
 	const Camera& cam = r.getCamera();
 
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 
 
-	// 1st pass
 	Renderer::setViewport(0, 0, width, height);
-	pass0Fbo.bind();
+
+	// 1st pass
+	ssaoFbo.bind();
 	ssaoSProg->bind();
 	Vec2 camRange(cam.getZNear(), cam.getZFar());
 	camerarangeUniVar->setVec2(&camRange);
@@ -152,20 +129,33 @@ void Ssao::run()
 	msNormalFaiUniVar->setTexture(r.ms.normalFai, 2);
 	Renderer::drawQuad(0);
 
-	// for 2nd and 3rd passes
-	Renderer::setViewport(0, 0, bwidth, bheight);
 
-	// 2nd pass
-	pass1Fbo.bind();
-	blurSProg->bind();
-	blurSProgFaiUniVar->setTexture(pass0Fai, 0);
-	Renderer::drawQuad(0);
+	// blurring passes
+	hblurFai.setRepeat(false);
+	fai.setRepeat(false);
+	for(uint i=0; i<blurringIterations; i++)
+	{
+		// hpass
+		hblurFbo.bind();
+		hblurSProg->bind();
+		if(i == 0)
+		{
+			imgHblurSProgUniVar->setTexture(ssaoFai, 0);
+		}
+		else
+		{
+			imgHblurSProgUniVar->setTexture(fai, 0);
+		}
+		dimensionHblurSProgUniVar->setFloat(width);
+		Renderer::drawQuad(0);
 
-	// 3rd pass
-	pass2Fbo.bind();
-	blurSProg2->bind();
-	blurSProg2FaiUniVar->setTexture(pass1Fai, 0);
-	Renderer::drawQuad(0);
+		// vpass
+		vblurFbo.bind();
+		vblurSProg->bind();
+		imgVblurSProgUniVar->setTexture(hblurFai, 0);
+		dimensionVblurSProgUniVar->setFloat(height);
+		Renderer::drawQuad(0);
+	}
 
 	// end
 	Fbo::unbind();

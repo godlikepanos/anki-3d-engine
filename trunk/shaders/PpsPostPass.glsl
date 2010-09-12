@@ -10,7 +10,7 @@
 uniform sampler2D ppsPrePassFai;
 uniform sampler2D ppsHdrFai;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 
 //======================================================================================================================
@@ -40,7 +40,7 @@ vec3 saturation(in vec3 col, in float factor)
 //======================================================================================================================
 void main(void)
 {
-	vec3 color = texture2D(ppsPrePassFai, texCoords).rgb;
+	vec3 color = texture2D(ppsPrePassFai, vTexCoords).rgb;
 
 	/*const float gamma = 0.7;
 	color.r = pow(color.r, 1.0 / gamma);
@@ -48,7 +48,7 @@ void main(void)
 	color.b = pow(color.b, 1.0 / gamma);*/
 
 	#if defined(HDR_ENABLED)
-		vec3 hdr = texture2D(ppsHdrFai, texCoords).rgb;
+		vec3 hdr = texture2D(ppsHdrFai, vTexCoords).rgb;
 		color += hdr;
 	#endif
 

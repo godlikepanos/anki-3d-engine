@@ -11,12 +11,12 @@
 
 uniform sampler2D fai; ///< Its the IS FAI
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 
 void main()
 {
-	vec3 _color_ = texture2D(fai, texCoords).rgb;
+	vec3 _color_ = texture2D(fai, vTexCoords).rgb;
 	float _luminance_ = dot(vec3(0.30, 0.59, 0.11), _color_); // AKA luminance
 	const float _exposure_ = 4.0;
 	const float _brightMax_ = 4.0;

@@ -7,7 +7,7 @@
 uniform sampler2D isFai;
 uniform sampler2D ppsSsaoFai;
 
-varying vec2 texCoords;
+varying vec2 vTexCoords;
 
 
 //======================================================================================================================
@@ -15,10 +15,10 @@ varying vec2 texCoords;
 //======================================================================================================================
 void main(void)
 {
-	vec3 color = texture2D(isFai, texCoords).rgb;
+	vec3 color = texture2D(isFai, vTexCoords).rgb;
 
 	#if defined(SSAO_ENABLED)
-		float ssaoFactor = texture2D(ppsSsaoFai, texCoords).a;
+		float ssaoFactor = texture2D(ppsSsaoFai, vTexCoords).r;
 		color *= ssaoFactor;
 	#endif
 

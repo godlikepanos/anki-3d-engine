@@ -47,7 +47,6 @@ class Renderer: public Object
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
 		Bs bs; ///< Blending stage
-		Dbg dbg; ///< Debugging rendering stage
 		/**@}*/
 
 		static float quadVertCoords [][2];

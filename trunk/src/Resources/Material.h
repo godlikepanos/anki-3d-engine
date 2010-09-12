@@ -83,7 +83,6 @@ class Material: public Resource
 			SUV_NUM ///< The number of standard uniform variables
 		};
 
-
 		/**
 		 * Information for the standard shader program variables
 		 */
@@ -92,7 +91,6 @@ class Material: public Resource
 			const char* varName;
 			GLenum dataType; ///< aka GL data type
 		};
-
 
 		/**
 		 * Class for user defined material variables that will be passes in to the shader
