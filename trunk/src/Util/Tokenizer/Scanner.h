@@ -90,10 +90,10 @@ class Scanner
 				 * @name Accessors
 				 */
 				/**@{*/
-				char getChar() const; ///< Access the data as C char
-				ulong getInt() const; ///< Access the data as unsigned int
-				float getFloat() const; ///< Access the data as double
-				const char* getString() const; ///< Access the data as C string
+				char getChar() const {return char_;} ///< Access the data as C char
+				ulong getInt() const {return int_;} ///< Access the data as unsigned int
+				double getFloat() const {return float_;} ///< Access the data as double
+				const char* getString() const {return string;} ///< Access the data as C string
 				/**@}*/
 		}; // end class TokenDataVal
 
@@ -112,7 +112,7 @@ class Scanner
 			public:
 				Token(): code(TC_ERROR) {}
 				Token(const Token& b);
-				const char* getString() const;
+				const char* getString() const {return asString;}
 				string getInfoStr() const; ///< Get a string with the info of the token
 				void print() const; ///< Print info of the token
 
@@ -188,17 +188,17 @@ class Scanner
 		/**
 		 * Accessor for the current token
 		 */
-		const Token& getCrntToken() const;
+		const Token& getCrntToken() const {return crntToken;}
 
 		/**
 		 * Get the name of the input stream
 		 */
-		const char* getScriptName() const;
+		const char* getScriptName() const {return scriptName;}
 
 		/**
 		 * Get the current line the Scanner is processing
 		 */
-		int getLineNumber() const;
+		int getLineNumber() const {return lineNmbr;}
 
 
 	//====================================================================================================================
@@ -284,58 +284,6 @@ class Scanner
 		 */
 		AsciiFlag lookupAscii(char ch_);
 }; // end class Scanner
-
-
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
-
-inline char Scanner::TokenDataVal::getChar() const
-{
-	return char_;
-}
-
-
-inline ulong Scanner::TokenDataVal::getInt() const
-{
-	return int_;
-}
-
-
-inline float Scanner::TokenDataVal::getFloat() const
-{
-	return float_;
-}
-
-
-inline const char* Scanner::TokenDataVal::getString() const
-{
-	return string;
-}
-
-
-inline const Scanner::Token& Scanner::getCrntToken() const
-{
-	return crntToken;
-}
-
-
-inline const char* Scanner::getScriptName() const
-{
-	return scriptName;
-}
-
-
-inline int Scanner::getLineNumber() const
-{
-	return lineNmbr;
-}
-
-
-inline const char* Scanner::Token::getString() const
-{
-	return asString;
-}
 
 
 inline Scanner::AsciiFlag Scanner::lookupAscii(char ch_)

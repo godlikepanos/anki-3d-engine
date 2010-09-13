@@ -37,7 +37,8 @@ namespace Parser {
  * @param arr The array that the func returns the numbers
  * @return True if the parsing was successful
 */
-template <typename Type> bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
+template <typename Type>
+bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
 {
 	const Scanner::Token* token;
 
@@ -104,6 +105,22 @@ template <typename Type> bool parseArrOfNumbers(Scanner& scanner, bool bracket, 
 	}
 
 	return true;
+}
+
+
+//======================================================================================================================
+// parseSignedNumber                                                                                                   =
+//======================================================================================================================
+/**
+ * Parse a single number
+ * @param scanner The scanner that we will use
+ * @param out The output number
+ * @return True on success
+ */
+template <typename Type>
+bool parseSignedNumber(Scanner& scanner, Type& out)
+{
+	return parseArrOfNumbers(scanner, false, true, 1, &out);
 }
 
 
