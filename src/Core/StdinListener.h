@@ -15,22 +15,19 @@
 class StdinListener: public Object
 {
 	public:
-		StdinListener(Object* parent = NULL);
+		StdinListener(Object* parent = NULL): Object(parent) {}
 		~StdinListener() {}
-		void workingFunc(); ///< The thread function
 		string getLine();
+		void start();
 
 	private:
 		queue<string> q;
 		mutex mtx;
+		thread thrd;
 
-		StdinListener(const StdinListener&): Object(NULL) {} ///< Non copyable
+		StdinListener(const StdinListener&); ///< Non copyable
+		void workingFunc(); ///< The thread function
 };
-
-
-inline StdinListener::StdinListener(Object* parent):
-	Object(parent)
-{}
 
 
 #endif

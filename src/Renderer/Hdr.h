@@ -31,6 +31,8 @@ class Hdr: private RenderingStage
 		void setBlurringDist(float f) {blurringDist = f;}
 		uint getBlurringIterations() {return blurringIterations;}
 		void setBlurringIterations(uint i) {blurringIterations = i;}
+		float getExposure() const {return exposure;}
+		void setExposure(float f) {exposure = f;}
 		bool isEnabled() const {return enabled;}
 		float getRenderingQuality() const {return renderingQuality;}
 		/**@}*/
@@ -42,12 +44,9 @@ class Hdr: private RenderingStage
 		RsrcPtr<ShaderProg> toneSProg;
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
-		const ShaderProg::UniVar* toneProgFaiUniVar;
-		const ShaderProg::UniVar* hblurSProgFaiUniVar;
-		const ShaderProg::UniVar* vblurSProgFaiUniVar;
 		float blurringDist;
 		uint blurringIterations;
-		float overExposure; ///< @todo
+		float exposure; ///< @todo
 		bool enabled;
 		float renderingQuality;
 

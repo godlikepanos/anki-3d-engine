@@ -31,7 +31,7 @@ void Ms::init(const RendererInitializer& initializer)
 	normalFai.setRepeat(false);
 	diffuseFai.setRepeat(false);
 	specularFai.setRepeat(false);
-	depthFai.setRepeat(true);
+	depthFai.setRepeat(false);
 
 
 	// attach the buffers to the FBO

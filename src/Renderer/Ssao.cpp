@@ -89,17 +89,17 @@ void Ssao::init(const RendererInitializer& initializer)
 	/// @todo fix this crap
 	// load noise map and disable temporally the texture compression and enable mipmapping
 	GL_OK();
-	bool texCompr = Texture::compressionEnabled;
+	/*bool texCompr = Texture::compressionEnabled;
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
-	Texture::mipmappingEnabled = true;
+	Texture::mipmappingEnabled = true;*/
 	noiseMap.loadRsrc("gfx/noise3.tga");
-	noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+	/*noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
 	noiseMap->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 	//noise_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
-	Texture::mipmappingEnabled = mipmaping;
+	Texture::mipmappingEnabled = mipmaping;*/
 	GL_OK();
 }
 

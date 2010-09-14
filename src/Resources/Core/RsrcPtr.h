@@ -35,7 +35,7 @@ class RsrcPtr
 		/**
 		 * Non copyable
 		 */
-		RsrcPtr(const RsrcPtr& a) {}
+		RsrcPtr(const RsrcPtr& a);
 
 		/**
 		 * Unloads the resource @see loadRsrc

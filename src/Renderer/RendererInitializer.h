@@ -42,6 +42,7 @@ struct RendererInitializer
 			float renderingQuality;
 			float blurringDist;
 			float blurringIterations;
+			float exposure;
 		} hdr;
 
 		// Ssao
