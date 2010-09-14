@@ -49,6 +49,7 @@ void Hdr::init(const RendererInitializer& initializer)
 	renderingQuality = initializer.pps.hdr.renderingQuality;
 	blurringDist = initializer.pps.hdr.blurringDist;
 	blurringIterations = initializer.pps.hdr.blurringIterations;
+	exposure = initializer.pps.hdr.exposure;
 
 	initFbo(toneFbo, toneFai);
 	initFbo(hblurFbo, hblurFai);
@@ -59,19 +60,16 @@ void Hdr::init(const RendererInitializer& initializer)
 
 	// init shaders
 	toneSProg.loadRsrc("shaders/PpsHdr.glsl");
-	toneProgFaiUniVar = toneSProg->findUniVar("fai");
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
 	string pps = "#define HPASS\n#define COL_RGB\n";
 	string prefix = "HorizontalRgb";
 	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
-	hblurSProgFaiUniVar = hblurSProg->findUniVar("img");
 
 	pps = "#define VPASS\n#define COL_RGB\n";
 	prefix = "VerticalRgb";
 	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
-	vblurSProgFaiUniVar = vblurSProg->findUniVar("img");
 }
 
 #include "App.h"
@@ -91,7 +89,8 @@ void Hdr::run()
 	// pass 0
 	toneFbo.bind();
 	toneSProg->bind();
-	toneProgFaiUniVar->setTexture(r.pps.prePassFai, 0);
+	toneSProg->findUniVar("exposure")->setFloat(exposure);
+	toneSProg->findUniVar("fai")->setTexture(r.pps.prePassFai, 0);
 	Renderer::drawQuad(0);
 
 
@@ -105,11 +104,11 @@ void Hdr::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProgFaiUniVar->setTexture(toneFai, 0);
+			hblurSProg->findUniVar("img")->setTexture(toneFai, 0);
 		}
 		else
 		{
-			hblurSProgFaiUniVar->setTexture(fai, 0);
+			hblurSProg->findUniVar("img")->setTexture(fai, 0);
 		}
 		hblurSProg->findUniVar("imgDimension")->setFloat(w);
 		hblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / w);
@@ -118,7 +117,7 @@ void Hdr::run()
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
-		vblurSProgFaiUniVar->setTexture(hblurFai, 0);
+		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
 		vblurSProg->findUniVar("imgDimension")->setFloat(h);
 		vblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / h);
 		Renderer::drawQuad(0);

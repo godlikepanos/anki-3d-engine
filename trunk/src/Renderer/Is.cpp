@@ -10,9 +10,9 @@
 
 
 //======================================================================================================================
-// CalcViewVector                                                                                                      =
+// calcViewVectors                                                                                                     =
 //======================================================================================================================
-void Is::calcViewVector()
+void Is::calcViewVectors()
 {
 	const Camera& cam = r.getCamera();
 
@@ -20,9 +20,8 @@ void Is::calcViewVector()
 	const uint& h = r.getHeight();
 
 	// From right up and CC wise to right down, Just like we render the quad
-	uint pixels[4][2]={{w,h}, {0,h}, {0, 0}, {w, 0}};
-
-	uint viewport[4]={ 0, 0, w, h };
+	uint pixels[4][2]={{w, h}, {0, h}, {0, 0}, {w, 0}};
+	uint viewport[4]={0, 0, w, h};
 
 	for(int i=0; i<4; i++)
 	{
@@ -35,8 +34,8 @@ void Is::calcViewVector()
 		 */
 
 		Vec3 vec;
-		vec.x = (2.0*(pixels[i][0]-viewport[0]))/viewport[2] - 1.0;
-		vec.y = (2.0*(pixels[i][1]-viewport[1]))/viewport[3] - 1.0;
+		vec.x = (2.0 * (pixels[i][0] - viewport[0])) / viewport[2] - 1.0;
+		vec.y = (2.0 * (pixels[i][1] - viewport[1])) / viewport[3] - 1.0;
 		vec.z = 1.0;
 
 		viewVectors[i] = vec.getTransformed(cam.getInvProjectionMatrix());
@@ -346,7 +345,7 @@ void Is::run()
 
 	glDisable(GL_DEPTH_TEST);
 
-	// ambient passstatic float quadVertCoords [][2];
+	// ambient pass
 	ambientPass(app->getScene().getAmbientCol());
 
 	// light passes
@@ -354,7 +353,7 @@ void Is::run()
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_STENCIL_TEST);
 
-	calcViewVector();
+	calcViewVectors();
 	calcPlanes();
 
 	// for all lights

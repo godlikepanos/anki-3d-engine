@@ -82,8 +82,10 @@ class ShaderProg: public Resource
 		};
 		
 	private:
-		typedef unordered_map<string,UniVar*>::const_iterator NameToUniVarIterator; ///< Uniform variable name to variable iterator
-		typedef unordered_map<string,AttribVar*>::const_iterator NameToAttribVarIterator; ///< Attribute variable name to variable iterator
+		/// Uniform variable name to variable iterator
+		typedef unordered_map<string, UniVar*>::const_iterator NameToUniVarIterator;
+		/// Attribute variable name to variable iterator
+		typedef unordered_map<string, AttribVar*>::const_iterator NameToAttribVarIterator;
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -158,8 +160,8 @@ class ShaderProg: public Resource
 		static string stdSourceCode;
 		Vec<UniVar> uniVars; ///< All the uniform variables
 		Vec<AttribVar> attribVars; ///< All the attribute variables
-		unordered_map<string,UniVar*> uniNameToVar;  ///< A UnorderedMap for quick variable searching
-		unordered_map<string,AttribVar*> attribNameToVar; ///< @see uniNameToVar
+		unordered_map<string, UniVar*> uniNameToVar;  ///< A UnorderedMap for quick variable searching
+		unordered_map<string, AttribVar*> attribNameToVar; ///< @see uniNameToVar
 
 		/**
 		 * After the linking of the shader prog is done gather all the vars in custom containers

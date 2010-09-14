@@ -82,6 +82,7 @@ App::App(int argc, char* argv[], Object* parent):
 	mainRenderer = new MainRenderer(this);
 	scene = new Scene(this);
 	stdinListener = new StdinListener(this);
+	stdinListener->start();
 
 	// other
 	activeCam = NULL;

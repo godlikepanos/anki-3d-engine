@@ -70,7 +70,7 @@ class Is: private RenderingStage
 		/**
 		 * Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 		 */
-		void calcViewVector();
+		void calcViewVectors();
 
 		/**
 		 * Calc the planes that we will use inside the shader to calculate the frag pos in view space
