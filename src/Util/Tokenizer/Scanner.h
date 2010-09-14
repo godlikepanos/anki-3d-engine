@@ -105,19 +105,21 @@ class Scanner
 		{
 			friend class Scanner;
 
-			PROPERTY_R(TokenCode, code, getCode) ///< The first thing you should know about a token
-			PROPERTY_R(TokenDataType, dataType, getDataType) ///< Additional info in case @ref code is @ref TC_NUMBER
-			PROPERTY_R(TokenDataVal, value, getValue) ///< A value variant
-
 			public:
 				Token(): code(TC_ERROR) {}
 				Token(const Token& b);
 				const char* getString() const {return asString;}
+				TokenCode getCode() const {return code;}
+				TokenDataType getDataType() const {return dataType;}
+				const TokenDataVal& getValue() const {return value;}
 				string getInfoStr() const; ///< Get a string with the info of the token
 				void print() const; ///< Print info of the token
 
 			private:
 				char asString[1024];
+				TokenCode code; ///< The first thing you should know about a token
+				TokenDataType dataType; ///< Additional info in case @ref code is @ref TC_NUMBER
+				TokenDataVal value; ///< A value variant
 		}; // end class Token
 
 

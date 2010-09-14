@@ -275,6 +275,27 @@ For Example:
 MeshSkelNodeCtrl A Mesh is controlled by a SkelNode
 
 
+GLSL shaders
+------------
+
+The same rules apply to GLSL shaders but with a few changes:
+
+All the vars you can find in a GLSL shader program are either attributes,
+uniforms or in/out vars (varyings) and everything else. The attributes and
+uniforms are mixed case. The in/out vars are mixed case as well but they have a
+prefix string that indicates their output. For example if a var is output from
+the vertex shader it will have a 'v' before its name. The In detail:
+
+v: Vertex shader
+tc: Tessellation control shader
+te: Tessellation evaluation shader
+g: Geometry shader
+f: Fragment shader
+
+All the other variables (locals and globals) inside the code are mixed case but
+with a leading and a following underscore. 
+
+
 Submitting patches
 ------------------
 
