@@ -1,4 +1,4 @@
-sourcePaths = ["../../src/Math/", "../../src/Util/Tokenizer/", "../../src/Misc/", "../../src/", "../../src/Renderer/", "../../src/Scene/", "../../src/Ui/", "../../src/Resources/", "../../src/Util/", "../../src/Scene/Controllers/", "../../src/Physics/", "../../src/Renderer/BufferObjects/", "../../src/Resources/Helpers/", "../../src/Resources/Core/", "../../src/Core/", "../../src/Scripting/", "../../src/Scripting/Math", "../../src/Scripting/Util", "../../src/Scripting/Core", "../../src/Scripting/Scene"]
+sourcePaths = ["../../src/Math/", "../../src/Util/Tokenizer/", "../../src/Misc/", "../../src/", "../../src/Renderer/", "../../src/Scene/", "../../src/Ui/", "../../src/Resources/", "../../src/Util/", "../../src/Scene/Controllers/", "../../src/Physics/", "../../src/Renderer/BufferObjects/", "../../src/Resources/Helpers/", "../../src/Resources/Core/", "../../src/Core/", "../../src/Scripting/", "../../src/Scripting/Math", "../../src/Scripting/Util", "../../src/Scripting/Core", "../../src/Scripting/Scene", "../../src/Scripting/Renderer"]
 
 includePaths = []
 includePaths.append("./")
@@ -9,6 +9,6 @@ executableName = "anki"
 
 compiler = "g++"
 
-compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -s -msse4 -O3 -mtune=core2 -ffast-math -fsingle-precision-constant"
+compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -DREVISION=\\\"`svnversion -c ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -s -msse4 -O3 -mtune=core2 -ffast-math -fsingle-precision-constant"
 
 linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread"
