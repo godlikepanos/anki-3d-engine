@@ -210,7 +210,7 @@ void ShaderProg::getUniAndAttribVars()
 		}
 
 		attribVars.push_back(AttribVar(loc, name_, type, this));
-		attribNameToVar[name_] = &attribVars.back();
+		attribNameToVar[attribVars.back().getName().c_str()] = &attribVars.back();
 	}
 
 
@@ -231,7 +231,7 @@ void ShaderProg::getUniAndAttribVars()
 		}
 
 		uniVars.push_back(UniVar(loc, name_, type, this));
-		uniNameToVar[name_] = &uniVars.back();
+		uniNameToVar[uniVars.back().getName().c_str()] = &uniVars.back();
 	}
 }
 

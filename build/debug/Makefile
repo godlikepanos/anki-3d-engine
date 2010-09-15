@@ -39,7 +39,7 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -98,7 +98,8 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -515,7 +516,7 @@ Main.o: ../../src//Main.cpp ../../src/Core/Common.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
  ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
@@ -692,7 +693,7 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//RenderingStage.h \
@@ -889,8 +890,8 @@ Hdr.o: ../../src/Renderer//Hdr.cpp ../../src/Renderer//Hdr.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Renderer//Renderer.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer//Renderer.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
  ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
@@ -951,7 +952,7 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Bs.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
  ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
@@ -1148,7 +1149,7 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Sm.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
@@ -1346,9 +1347,9 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Dbg.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer//Renderer.h ../../src/Resources/Texture.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer//Renderer.h \
+ ../../src/Resources/Texture.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
  ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
@@ -1545,14 +1546,15 @@ Smo.o: ../../src/Renderer//Smo.cpp ../../src/Renderer//Smo.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer//Renderer.h ../../src/Resources/Texture.h \
- ../../src/Util/Object.h ../../src/Renderer//Ms.h \
- ../../src/Renderer//Ez.h ../../src/Renderer//Is.h \
- ../../src/Renderer//Sm.h ../../src/Renderer//Pps.h \
- ../../src/Renderer//Hdr.h ../../src/Renderer//Ssao.h \
- ../../src/Renderer//Bs.h ../../src/Renderer//Dbg.h \
- ../../src/Scene/Light.h ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer//Renderer.h \
+ ../../src/Resources/Texture.h ../../src/Util/Object.h \
+ ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
+ ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
+ ../../src/Renderer//Pps.h ../../src/Renderer//Hdr.h \
+ ../../src/Renderer//Ssao.h ../../src/Renderer//Bs.h \
+ ../../src/Renderer//Dbg.h ../../src/Scene/Light.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h \
  ../../src/Scene/Camera.h ../../src/Misc/collision.h \
  ../../src/Resources/LightProps.h ../../src/Resources/Texture.h \
  ../../src/Scene/Camera.h
@@ -1576,8 +1578,9 @@ Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Pps.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Renderer//Ssao.h \
- ../../src/Renderer//Renderer.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer//Ssao.h ../../src/Renderer//Renderer.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
  ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
@@ -1604,7 +1607,7 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Ms.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
@@ -1802,7 +1805,7 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//RenderingStage.h \
@@ -1866,17 +1869,17 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Is.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer//Renderer.h ../../src/Util/Object.h \
- ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
- ../../src/Renderer//Pps.h ../../src/Renderer//Hdr.h \
- ../../src/Renderer//Ssao.h ../../src/Renderer//Bs.h \
- ../../src/Renderer//Dbg.h ../../src/Scene/Camera.h \
- ../../src/Misc/collision.h ../../src/Scene/SceneNode.h \
- ../../src/Util/Vec.h ../../src/Scene/Light.h ../../src/Scene/Camera.h \
- ../../src/Resources/LightProps.h ../../src/Resources/Texture.h \
- ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer//Renderer.h \
+ ../../src/Util/Object.h ../../src/Renderer//Ms.h \
+ ../../src/Renderer//Ez.h ../../src/Renderer//Pps.h \
+ ../../src/Renderer//Hdr.h ../../src/Renderer//Ssao.h \
+ ../../src/Renderer//Bs.h ../../src/Renderer//Dbg.h \
+ ../../src/Scene/Camera.h ../../src/Misc/collision.h \
+ ../../src/Scene/SceneNode.h ../../src/Util/Vec.h ../../src/Scene/Light.h \
+ ../../src/Scene/Camera.h ../../src/Resources/LightProps.h \
+ ../../src/Resources/Texture.h ../../src/Core/App.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -2059,8 +2062,9 @@ Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ssao.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer//Renderer.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer//Renderer.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Ez.h \
  ../../src/Renderer//Is.h ../../src/Renderer//Sm.h \
@@ -2089,7 +2093,7 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Ez.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer//Ms.h ../../src/Renderer//Is.h \
@@ -2286,9 +2290,9 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
@@ -2356,7 +2360,7 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -2416,9 +2420,9 @@ SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
  ../../src/Math/Transform.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
@@ -2483,7 +2487,8 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../src/Util/Object.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Renderer/Ms.h \
  ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
@@ -2547,7 +2552,7 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../src/Util/Object.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../extern/include/GL/glew.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Renderer/Ms.h \
  ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
@@ -2574,7 +2579,7 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Physics/Physics.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -2737,7 +2742,8 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -3059,8 +3065,9 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../src/Resources/Material.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
@@ -3130,7 +3137,7 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Core/Common.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -3187,9 +3194,10 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -3252,15 +3260,16 @@ Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Misc/collision.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/Object.h \
- ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Renderer/Smo.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Resources//Material.h \
- ../../src/Resources//ShaderProg.h ../../src/Resources//Texture.h
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Util/Object.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Resources//Material.h ../../src/Resources//ShaderProg.h \
+ ../../src/Resources//Texture.h
 	@echo Compiling ../../src/Resources//Mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Mesh.cpp -o Mesh.o
 
@@ -3364,7 +3373,7 @@ Texture.o: ../../src/Resources//Texture.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -3399,10 +3408,11 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources//ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Resources//Texture.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
- ../../src/Util/Tokenizer/Scanner.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources//Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Util/Tokenizer/Parser.h ../../src/Util/Tokenizer/Scanner.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -3497,7 +3507,7 @@ Input.o: ../../src/Util//Input.cpp ../../extern/include/SDL/SDL.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
  ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
@@ -3531,7 +3541,7 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Physics/Physics.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -3752,7 +3762,8 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../src/Util/Object.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Renderer/Ms.h \
  ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
@@ -4064,8 +4075,9 @@ RigidBody.o: ../../src/Physics//RigidBody.cpp \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Physics/Physics.h ../../src/Physics//MotionState.h \
- ../../src/Scene/SceneNode.h ../../src/Util/Vec.h
+ ../../src/Util/CharPtrHashMap.h ../../src/Physics/Physics.h \
+ ../../src/Physics//MotionState.h ../../src/Scene/SceneNode.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Physics//RigidBody.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics//RigidBody.cpp -o RigidBody.o
 
@@ -4096,7 +4108,7 @@ DebugDrawer.o: ../../src/Physics//DebugDrawer.cpp \
  ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Object.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
@@ -4448,9 +4460,10 @@ RsrcPtr.o: ../../src/Resources/Core//RsrcPtr.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h \
@@ -4475,9 +4488,10 @@ RsrcContainers.o: ../../src/Resources/Core//RsrcContainers.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Misc/collision.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightProps.h \
@@ -4533,7 +4547,8 @@ App.o: ../../src/Core//App.cpp ../../extern/include/GL/glew.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/ShaderProg.h ../../src/Physics/Physics.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -4776,7 +4791,7 @@ BoostPythonInterfaces.o: ../../src/Scripting//BoostPythonInterfaces.cpp \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Physics/Physics.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
