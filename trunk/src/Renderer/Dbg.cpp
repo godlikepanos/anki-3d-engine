@@ -214,8 +214,6 @@ void Dbg::init(const RendererInitializer& initializer)
 
 	// shader
 	sProg.loadRsrc("shaders/Dbg.glsl");
-	colorUniVar = sProg->findUniVar("color");
-	modelViewProjectionMatUniVar = sProg->findUniVar("modelViewProjectionMat");
 }
 
 
@@ -275,7 +273,7 @@ void Dbg::run()
 //======================================================================================================================
 void Dbg::setColor(const Vec4& color)
 {
-	colorUniVar->setVec4(&color);
+	sProg->findUniVar("color")->setVec4(&color);
 }
 
 
@@ -285,6 +283,6 @@ void Dbg::setColor(const Vec4& color)
 void Dbg::setModelMat(const Mat4& modelMat)
 {
 	Mat4 pmv = viewProjectionMat * modelMat;
-	modelViewProjectionMatUniVar->setMat4(&pmv);
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
 }
 

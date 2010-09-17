@@ -16,15 +16,6 @@
 class Pps: private RenderingStage
 {
 	public:
-		struct UniVars
-		{
-			const ShaderProg::UniVar* isFai;
-			const ShaderProg::UniVar* ppsPrePassFai;
-			const ShaderProg::UniVar* ppsSsaoFai;
-			const ShaderProg::UniVar* ppsHdrFai;
-		};
-
-	public:
 		Hdr hdr;
 		Ssao ssao;
 		Texture prePassFai;
@@ -40,8 +31,6 @@ class Pps: private RenderingStage
 		Fbo postPassFbo;
 		RsrcPtr<ShaderProg> prePassSProg;
 		RsrcPtr<ShaderProg> postPassSProg;
-		UniVars prePassSProgUniVars;
-		UniVars postPassSProgUniVars;
 
 		void initPassFbo(Fbo& fbo, Texture& fai, const char* msg);
 

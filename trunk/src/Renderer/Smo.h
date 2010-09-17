@@ -28,7 +28,6 @@ class Smo: public RenderingStage
 		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
 		static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
 		RsrcPtr<ShaderProg> sProg;
-		const ShaderProg::UniVar* modelViewProjectionMatUniVar; ///< Opt
 };
 
 

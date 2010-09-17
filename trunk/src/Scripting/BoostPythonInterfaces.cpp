@@ -21,6 +21,7 @@ BOOST_PYTHON_MODULE(Anki)
 	#include "Hdr.bpi.h"
 	#include "Pps.bpi.h"
 	#include "Renderer.bpi.h"
+	#include "Dbg.bpi.h"
 	#include "MainRenderer.bpi.h"
 
 	#include "App.bpi.h"

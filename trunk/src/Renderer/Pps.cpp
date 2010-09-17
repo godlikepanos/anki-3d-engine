@@ -41,13 +41,6 @@ void Pps::initPrePassSProg()
 	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
 	                                                       prefix.c_str()).c_str());
 	prePassSProg->bind();
-
-	if(ssao.isEnabled())
-	{
-		prePassSProgUniVars.ppsSsaoFai = prePassSProg->findUniVar("ppsSsaoFai");
-	}
-
-	prePassSProgUniVars.isFai = prePassSProg->findUniVar("isFai");
 }
 
 
@@ -68,11 +61,6 @@ void Pps::initPostPassSProg()
 	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
 	                                                        prefix.c_str()).c_str());
 	postPassSProg->bind();
-
-	if(hdr.isEnabled())
-		postPassSProgUniVars.ppsHdrFai = postPassSProg->findUniVar("ppsHdrFai");
-
-	postPassSProgUniVars.ppsPrePassFai = postPassSProg->findUniVar("ppsPrePassFai");
 }
 
 
@@ -107,11 +95,11 @@ void Pps::runPrePass()
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
-	prePassSProgUniVars.isFai->setTexture(r.is.fai, 0);
+	prePassSProg->findUniVar("isFai")->setTexture(r.is.fai, 0);
 
 	if(ssao.isEnabled())
 	{
-		prePassSProgUniVars.ppsSsaoFai->setTexture(ssao.fai, 1);
+		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao.fai, 1);
 	}
 
 	Renderer::drawQuad(0);
@@ -135,11 +123,11 @@ void Pps::runPostPass()
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();
-	postPassSProgUniVars.ppsPrePassFai->setTexture(prePassFai, 0);
+	postPassSProg->findUniVar("ppsPrePassFai")->setTexture(prePassFai, 0);
 
 	if(hdr.isEnabled())
 	{
-		postPassSProgUniVars.ppsHdrFai->setTexture(hdr.fai, 1);
+		postPassSProg->findUniVar("ppsHdrFai")->setTexture(hdr.fai, 1);
 	}
 
 	Renderer::drawQuad(0);

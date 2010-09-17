@@ -18,7 +18,6 @@ Vbo Smo::sMOUvSVbo;
 void Smo::init(const RendererInitializer& /*initializer*/)
 {
 	sProg.loadRsrc("shaders/IsSmo.glsl");
-	modelViewProjectionMatUniVar = sProg->findUniVar("modelViewProjectionMat");
 
 	if(!sMOUvSVbo.isCreated())
 	{
@@ -45,7 +44,7 @@ void Smo::run(const PointLight& light)
 	sProg->bind();
 	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.getRadius() * scale);
 	Mat4 trf = r.getCamera().getProjectionMatrix() * Mat4::combineTransformations(r.getCamera().getViewMatrix(), modelMat);
-	modelViewProjectionMatUniVar->setMat4(&trf);
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
 
 	// render sphere to the stencil buffer
 	sMOUvSVbo.bind();
@@ -99,7 +98,7 @@ void Smo::run(const SpotLight& light)
 	sProg->bind();
 	Mat4 modelMat = Mat4(lcam.getWorldTransform());
 	Mat4 trf = r.getCamera().getProjectionMatrix() * Mat4::combineTransformations(r.getCamera().getViewMatrix(), modelMat);
-	modelViewProjectionMatUniVar->setMat4(&trf);
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
 
 	// render camera shape to stencil buffer
 	const int loc = 0;

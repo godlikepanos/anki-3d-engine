@@ -45,8 +45,6 @@ class Dbg: public RenderingStage
 		bool showCamerasEnabled;
 		Fbo fbo;
 		RsrcPtr<ShaderProg> sProg;
-		const ShaderProg::UniVar* colorUniVar;
-		const ShaderProg::UniVar* modelViewProjectionMatUniVar;
 		Mat4 viewProjectionMat;
 };
 

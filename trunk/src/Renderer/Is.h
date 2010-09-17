@@ -18,24 +18,6 @@ class SpotLight;
  */
 class Is: private RenderingStage
 {
-	private:
-		/// Illumination stage light pass uniform variables (opt)
-		struct UniVars
-		{
-			const ShaderProg::UniVar* msNormalFai;
-			const ShaderProg::UniVar* msDiffuseFai;
-			const ShaderProg::UniVar* msSpecularFai;
-			const ShaderProg::UniVar* msDepthFai;
-			const ShaderProg::UniVar* planes;
-			const ShaderProg::UniVar* lightPos;
-			const ShaderProg::UniVar* lightRadius;
-			const ShaderProg::UniVar* lightDiffuseCol;
-			const ShaderProg::UniVar* lightSpecularCol;
-			const ShaderProg::UniVar* lightTex;
-			const ShaderProg::UniVar* texProjectionMat;
-			const ShaderProg::UniVar* shadowMap;
-		};
-
 	public:
 		Sm sm;
 		Smo smo;
@@ -59,9 +41,6 @@ class Is: private RenderingStage
 		/**@{*/
 		const ShaderProg::UniVar* ambientColUniVar;
 		const ShaderProg::UniVar* sceneColMapUniVar;
-		UniVars pointLightSProgUniVars;
-		UniVars spotLightNoShadowSProgUniVars;
-		UniVars spotLightShadowSProgUniVars;
 		/**@}*/
 
 		Vec3 viewVectors[4];
