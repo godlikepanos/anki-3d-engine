@@ -48,20 +48,6 @@ class Ssao: private RenderingStage
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
 
-		/**
-		 * Pointers to some uniforms
-		 */
-		/**@{*/
-		const ShaderProg::UniVar* camerarangeUniVar;
-		const ShaderProg::UniVar* msDepthFaiUniVar;
-		const ShaderProg::UniVar* noiseMapUniVar;
-		const ShaderProg::UniVar* msNormalFaiUniVar;
-		const ShaderProg::UniVar* imgHblurSProgUniVar;
-		const ShaderProg::UniVar* dimensionHblurSProgUniVar;
-		const ShaderProg::UniVar* imgVblurSProgUniVar;
-		const ShaderProg::UniVar* dimensionVblurSProgUniVar;
-		/**@}*/
-
 		void createFbo(Fbo& fbo, Texture& fai);
 };
 

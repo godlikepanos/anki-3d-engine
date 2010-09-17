@@ -62,10 +62,6 @@ void Ssao::init(const RendererInitializer& initializer)
 
 	// first pass prog
 	ssaoSProg.loadRsrc("shaders/PpsSsao.glsl");
-	camerarangeUniVar = ssaoSProg->findUniVar("camerarange");
-	msDepthFaiUniVar = ssaoSProg->findUniVar("msDepthFai");
-	noiseMapUniVar = ssaoSProg->findUniVar("noiseMap");
-	msNormalFaiUniVar = ssaoSProg->findUniVar("msNormalFai");
 
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
@@ -73,14 +69,10 @@ void Ssao::init(const RendererInitializer& initializer)
 	string pps = "#define HPASS\n#define COL_R\n";
 	string prefix = "HorizontalR";
 	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
-	imgHblurSProgUniVar = hblurSProg->findUniVar("img");
-	dimensionHblurSProgUniVar = hblurSProg->findUniVar("imgDimension");
 
 	pps = "#define VPASS\n#define COL_R\n";
 	prefix = "VerticalR";
 	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
-	imgVblurSProgUniVar = vblurSProg->findUniVar("img");
-	dimensionVblurSProgUniVar = vblurSProg->findUniVar("imgDimension");
 
 	//
 	// noise map
@@ -123,10 +115,10 @@ void Ssao::run()
 	ssaoFbo.bind();
 	ssaoSProg->bind();
 	Vec2 camRange(cam.getZNear(), cam.getZFar());
-	camerarangeUniVar->setVec2(&camRange);
-	msDepthFaiUniVar->setTexture(r.ms.depthFai, 0);
-	noiseMapUniVar->setTexture(*noiseMap, 1);
-	msNormalFaiUniVar->setTexture(r.ms.normalFai, 2);
+	ssaoSProg->findUniVar("camerarange")->setVec2(&camRange);
+	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 0);
+	ssaoSProg->findUniVar("noiseMap")->setTexture(*noiseMap, 1);
+	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 2);
 	Renderer::drawQuad(0);
 
 
@@ -140,20 +132,20 @@ void Ssao::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			imgHblurSProgUniVar->setTexture(ssaoFai, 0);
+			hblurSProg->findUniVar("img")->setTexture(ssaoFai, 0);
 		}
 		else
 		{
-			imgHblurSProgUniVar->setTexture(fai, 0);
+			hblurSProg->findUniVar("img")->setTexture(fai, 0);
 		}
-		dimensionHblurSProgUniVar->setFloat(width);
+		hblurSProg->findUniVar("imgDimension")->setFloat(width);
 		Renderer::drawQuad(0);
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
-		imgVblurSProgUniVar->setTexture(hblurFai, 0);
-		dimensionVblurSProgUniVar->setFloat(height);
+		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
+		vblurSProg->findUniVar("imgDimension")->setFloat(height);
 		Renderer::drawQuad(0);
 	}
 

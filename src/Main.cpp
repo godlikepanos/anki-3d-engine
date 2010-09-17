@@ -357,7 +357,6 @@ void mainLoop()
 	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
 }
 
-#include <boost/unordered_map.hpp>
 
 //======================================================================================================================
 // main                                                                                                                =

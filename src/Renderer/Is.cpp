@@ -108,33 +108,11 @@ void Is::init(const RendererInitializer& initializer)
 	// point light
 	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n",
 	                                                          "Point").c_str());
-	pointLightSProgUniVars.msNormalFai = pointLightSProg->findUniVar("msNormalFai");
-	pointLightSProgUniVars.msDiffuseFai = pointLightSProg->findUniVar("msDiffuseFai");
-	pointLightSProgUniVars.msSpecularFai = pointLightSProg->findUniVar("msSpecularFai");
-	pointLightSProgUniVars.msDepthFai = pointLightSProg->findUniVar("msDepthFai");
-	pointLightSProgUniVars.planes = pointLightSProg->findUniVar("planes");
-	pointLightSProgUniVars.lightPos = pointLightSProg->findUniVar("lightPos");
-	pointLightSProgUniVars.lightRadius = pointLightSProg->findUniVar("lightRadius");
-	pointLightSProgUniVars.lightDiffuseCol = pointLightSProg->findUniVar("lightDiffuseCol");
-	pointLightSProgUniVars.lightSpecularCol = pointLightSProg->findUniVar("lightSpecularCol");
-
 
 	// spot light no shadow
 	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
 	                                                                 "#define SPOT_LIGHT_ENABLED\n",
 	                                                                 "SpotNoShadow").c_str());
-	spotLightNoShadowSProgUniVars.msNormalFai = spotLightNoShadowSProg->findUniVar("msNormalFai");
-	spotLightNoShadowSProgUniVars.msDiffuseFai = spotLightNoShadowSProg->findUniVar("msDiffuseFai");
-	spotLightNoShadowSProgUniVars.msSpecularFai = spotLightNoShadowSProg->findUniVar("msSpecularFai");
-	spotLightNoShadowSProgUniVars.msDepthFai = spotLightNoShadowSProg->findUniVar("msDepthFai");
-	spotLightNoShadowSProgUniVars.planes = spotLightNoShadowSProg->findUniVar("planes");
-	spotLightNoShadowSProgUniVars.lightPos = spotLightNoShadowSProg->findUniVar("lightPos");
-	spotLightNoShadowSProgUniVars.lightRadius = spotLightNoShadowSProg->findUniVar("lightRadius");
-	spotLightNoShadowSProgUniVars.lightDiffuseCol = spotLightNoShadowSProg->findUniVar("lightDiffuseCol");
-	spotLightNoShadowSProgUniVars.lightSpecularCol = spotLightNoShadowSProg->findUniVar("lightSpecularCol");
-	spotLightNoShadowSProgUniVars.lightTex = spotLightNoShadowSProg->findUniVar("lightTex");
-	spotLightNoShadowSProgUniVars.texProjectionMat = spotLightNoShadowSProg->findUniVar("texProjectionMat");
-
 
 	// spot light w/t shadow
 	string pps = string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
@@ -147,19 +125,6 @@ void Is::init(const RendererInitializer& initializer)
 	}
 	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", pps.c_str(),
 	                                                               prefix.c_str()).c_str());
-	spotLightShadowSProgUniVars.msNormalFai = spotLightShadowSProg->findUniVar("msNormalFai");
-	spotLightShadowSProgUniVars.msDiffuseFai = spotLightShadowSProg->findUniVar("msDiffuseFai");
-	spotLightShadowSProgUniVars.msSpecularFai = spotLightShadowSProg->findUniVar("msSpecularFai");
-	spotLightShadowSProgUniVars.msDepthFai = spotLightShadowSProg->findUniVar("msDepthFai");
-	spotLightShadowSProgUniVars.planes = spotLightShadowSProg->findUniVar("planes");
-	spotLightShadowSProgUniVars.lightPos = spotLightShadowSProg->findUniVar("lightPos");
-	spotLightShadowSProgUniVars.lightRadius = spotLightShadowSProg->findUniVar("lightRadius");
-	spotLightShadowSProgUniVars.lightDiffuseCol = spotLightShadowSProg->findUniVar("lightDiffuseCol");
-	spotLightShadowSProgUniVars.lightSpecularCol = spotLightShadowSProg->findUniVar("lightSpecularCol");
-	spotLightShadowSProgUniVars.lightTex = spotLightShadowSProg->findUniVar("lightTex");
-	spotLightShadowSProgUniVars.texProjectionMat = spotLightShadowSProg->findUniVar("texProjectionMat");
-	spotLightShadowSProgUniVars.shadowMap = spotLightShadowSProg->findUniVar("shadowMap");
-
 
 	// init the rest
 	initFbo();
@@ -177,8 +142,8 @@ void Is::ambientPass(const Vec3& color)
 	ambientPassSProg->bind();
 
 	// set the uniforms
-	ambientColUniVar->setVec3(&color);
-	sceneColMapUniVar->setTexture(r.ms.diffuseFai, 0);
+	ambientPassSProg->findUniVar("ambientCol")->setVec3(&color);
+	ambientPassSProg->findUniVar("sceneColMap")->setTexture(r.ms.diffuseFai, 0);
 
 	// Draw quad
 	Renderer::drawQuad(0);
@@ -203,18 +168,16 @@ void Is::pointLightPass(const PointLight& light)
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
 	shader.bind();
 
-	pointLightSProgUniVars.msNormalFai->setTexture(r.ms.normalFai, 0);
-	pointLightSProgUniVars.msDiffuseFai->setTexture(r.ms.diffuseFai, 1);
-	pointLightSProgUniVars.msSpecularFai->setTexture(r.ms.specularFai, 2);
-	pointLightSProgUniVars.msDepthFai->setTexture(r.ms.depthFai, 3);
-	pointLightSProgUniVars.planes->setVec2(&planes);
+	shader.findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 0);
+	shader.findUniVar("msDiffuseFai")->setTexture(r.ms.diffuseFai, 1);
+	shader.findUniVar("msSpecularFai")->setTexture(r.ms.specularFai, 2);
+	shader.findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 3);
+	shader.findUniVar("planes")->setVec2(&planes);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
-	pointLightSProgUniVars.lightPos->setVec3(&lightPosEyeSpace);
-	pointLightSProgUniVars.lightRadius->setFloat(light.getRadius());
-	Vec3 ll = light.lightProps->getDiffuseColor();
-	pointLightSProgUniVars.lightDiffuseCol->setVec3(&light.lightProps->getDiffuseColor());
-	pointLightSProgUniVars.lightSpecularCol->setVec3(&light.lightProps->getSpecularColor());
-
+	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
+	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
+	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightProps->getDiffuseColor());
+	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightProps->getSpecularColor());
 
 	// render quad
 	glEnableVertexAttribArray(0);
@@ -268,38 +231,35 @@ void Is::spotLightPass(const SpotLight& light)
 	light.lightProps->getTexture()->setRepeat(false);
 
 	// shader prog
-	const ShaderProg* shdr; // because of the huge name
-	const UniVars* uniVars;
+	const ShaderProg* shdr;
 
 	if(light.castsShadow && sm.isEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
-		uniVars = &spotLightShadowSProgUniVars;
 	}
 	else
 	{
 		shdr = spotLightNoShadowSProg.get();
-		uniVars = &spotLightNoShadowSProgUniVars;
 	}
 
 	shdr->bind();
 
 	// bind the FAIs
-	uniVars->msNormalFai->setTexture(r.ms.normalFai, 0);
-	uniVars->msDiffuseFai->setTexture(r.ms.diffuseFai, 1);
-	uniVars->msSpecularFai->setTexture(r.ms.specularFai, 2);
-	uniVars->msDepthFai->setTexture(r.ms.depthFai, 3);
+	shdr->findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 0);
+	shdr->findUniVar("msDiffuseFai")->setTexture(r.ms.diffuseFai, 1);
+	shdr->findUniVar("msSpecularFai")->setTexture(r.ms.specularFai, 2);
+	shdr->findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 3);
 
 	// the planes
-	uniVars->planes->setVec2(&planes);
+	shdr->findUniVar("planes")->setVec2(&planes);
 
 	// the light params
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
-	uniVars->lightPos->setVec3(&lightPosEyeSpace);
-	uniVars->lightRadius->setFloat(light.getDistance());
-	uniVars->lightDiffuseCol->setVec3(&light.lightProps->getDiffuseColor());
-	uniVars->lightSpecularCol->setVec3(&light.lightProps->getSpecularColor());
-	uniVars->lightTex->setTexture(*light.lightProps->getTexture(), 4);
+	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
+	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
+	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightProps->getDiffuseColor());
+	shdr->findUniVar("lightSpecularCol")->setVec3(&light.lightProps->getSpecularColor());
+	shdr->findUniVar("lightTex")->setTexture(*light.lightProps->getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)
@@ -307,12 +267,12 @@ void Is::spotLightPass(const SpotLight& light)
 	Mat4 texProjectionMat;
 	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() *
 	                   Mat4::combineTransformations(light.camera.getViewMatrix(), Mat4(cam.getWorldTransform()));
-	uniVars->texProjectionMat->setMat4(&texProjectionMat);
+	shdr->findUniVar("texProjectionMat")->setMat4(&texProjectionMat);
 
 	// the shadowmap
 	if(light.castsShadow && sm.isEnabled())
 	{
-		uniVars->shadowMap->setTexture(sm.shadowMap, 5);
+		shdr->findUniVar("shadowMap")->setTexture(sm.shadowMap, 5);
 	}
 
 	// render quad
