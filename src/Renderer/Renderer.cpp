@@ -103,18 +103,28 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 		glBlendFunc(mtl.blendingSfactor, mtl.blendingDfactor);
 	}
 	else
+	{
 		glDisable(GL_BLEND);
+	}
 
 
 	if(mtl.depthTesting)
+	{
 		glEnable(GL_DEPTH_TEST);
+	}
 	else
+	{
 		glDisable(GL_DEPTH_TEST);
+	}
 
 	if(mtl.wireframe)
+	{
 		glPolygonMode(GL_FRONT, GL_LINE);
+	}
 	else
+	{
 		glPolygonMode(GL_FRONT, GL_FILL);
+	}
 
 
 	//

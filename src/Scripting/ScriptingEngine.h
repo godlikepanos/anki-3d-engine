@@ -31,9 +31,9 @@ class ScriptingEngine: public Object
 		void exposeVar(const char* varName, Type* var);
 
 	private:
-		boost::python::object mainModule;
-		boost::python::object ankiModule;
-		boost::python::object mainNamespace;
+		python::object mainModule;
+		python::object ankiModule;
+		python::object mainNamespace;
 
 		/**
 		 * Init python and modules

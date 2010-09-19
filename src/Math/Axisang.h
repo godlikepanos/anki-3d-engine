@@ -1,5 +1,5 @@
-#ifndef _AXISANG_H_
-#define _AXISANG_H_
+#ifndef AXISANG_H
+#define AXISANG_H
 
 #include "Common.h"
 #include "MathForwardDecls.h"
@@ -12,10 +12,9 @@ namespace M {
 class Axisang
 {
 	public:
-		// data members
 		float ang;
 		Vec3 axis;
-		// constructors & distructors
+
 		explicit Axisang();
 		         Axisang(const Axisang& b);
 		explicit Axisang(float rad, const Vec3& axis_);

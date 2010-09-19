@@ -1,5 +1,5 @@
-#ifndef _TRANSFORM_H_
-#define _TRANSFORM_H_
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 
 #include "Common.h"
 #include "MathForwardDecls.h"
@@ -11,20 +11,28 @@ namespace M {
 /// For transformations
 class Transform
 {
-	PROPERTY_RW(Mat3, rotation, setRotation, getRotation) ///< @ref PROPERTY_RW : The rotation
-	PROPERTY_RW(Vec3, origin, setOrigin, getOrigin) ///< @ref PROPERTY_RW : The translation
-	PROPERTY_RW(float, scale, setScale, getScale) ///< @ref PROPERTY_RW : The uniform scaling
-
 	public:
-		// constructors
+		/// @name Data
+		/// @{
+		Vec3 origin; ///< The rotation
+		Mat3 rotation; ///< The translation
+		float scale; ///< The uniform scaling
+		/// @}
+
+		/// @name Constructors
+		/// @{
 		explicit Transform();
 		         Transform(const Transform& b);
 		explicit Transform(const Mat4& m4);
 		explicit Transform(const Vec3& origin, const Mat3& rotation_, float scale_);
-		// funcs
+		/// @}
+
+		/// @name Other
+		/// @{
 		void setIdentity();
 		static const Transform& getIdentity();
 		static Transform combineTransformations(const Transform& a, const Transform& b); ///< @see M::combineTransformations
+		/// @}
 };
 
 

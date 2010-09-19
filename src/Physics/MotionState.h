@@ -7,23 +7,19 @@
 #include "Object.h"
 
 
-/**
- * A custom motion state
- */
+/// A custom motion state
 class MotionState: public btMotionState, public Object
 {
 	public:
 		MotionState(const Transform& initialTransform, SceneNode* node_, Object* parent);
 		~MotionState() {}
 
-		/**
-		 * @name Bullet implementation of virtuals
-		 */
-		/**@{*/
+		/// @name Bullet implementation of virtuals
+		/// @{
 		void getWorldTransform(btTransform& worldTrans) const;
 		const btTransform& getWorldTransform() const;
 		void setWorldTransform(const btTransform& worldTrans);
-		/**@}*/
+		/// @}
 
 	private:
 		btTransform worldTransform;
@@ -61,9 +57,9 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 	if(node)
 	{
 		Transform& nodeTrf = node->getLocalTransform();
-		float originalScale = nodeTrf.getScale();
+		float originalScale = nodeTrf.scale;
 		nodeTrf = toAnki(worldTrans);
-		nodeTrf.setScale(originalScale);
+		nodeTrf.scale = originalScale;
 	}
 }
 

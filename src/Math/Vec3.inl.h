@@ -339,7 +339,7 @@ inline void Vec3::transform(const Mat4& transform)
 // getTransformed [Transform]
 inline Vec3 Vec3::getTransformed(const Transform& transform) const
 {
-	return (transform.getRotation() * (ME * transform.getScale())) + transform.getOrigin();
+	return (transform.rotation * (ME * transform.scale)) + transform.origin;
 }
 
 // getTransformed [Transform]

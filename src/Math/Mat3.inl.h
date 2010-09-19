@@ -93,9 +93,9 @@ inline Mat3::Mat3(const Quat& q)
 inline Mat3::Mat3(const Euler& e)
 {
 	float ch, sh, ca, sa, cb, sb;
-  sinCos(e.heading(), sh, ch);
-  sinCos(e.attitude(), sa, ca);
-  sinCos(e.bank(), sb, cb);
+  sinCos(e.getHeading(), sh, ch);
+  sinCos(e.getAttitude(), sa, ca);
+  sinCos(e.getBank(), sb, cb);
 
   ME(0, 0) = ch * ca;
   ME(0, 1) = sh*sb - ch*sa*cb;

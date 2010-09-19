@@ -15,32 +15,32 @@ inline float Euler::operator [](uint i) const
 	return (&x)[i];
 }
 
-inline float& Euler::bank()
+inline float& Euler::getBank()
 {
 	return x;
 }
 
-inline float Euler::bank() const
+inline float Euler::getBank() const
 {
 	return x;
 }
 
-inline float& Euler::heading()
+inline float& Euler::getHeading()
 {
 	return y;
 }
 
-inline float Euler::heading() const
+inline float Euler::getHeading() const
 {
 	return y;
 }
 
-inline float& Euler::attitude()
+inline float& Euler::getAttitude()
 {
 	return z;
 }
 
-inline float Euler::attitude() const
+inline float Euler::getAttitude() const
 {
 	return z;
 }
@@ -66,25 +66,25 @@ inline Euler::Euler(const Quat& q)
 	float test = q.x*q.y + q.z*q.w;
 	if(test > 0.499)
 	{
-		heading() = 2.0 * atan2(q.x, q.w);
-		attitude() = PI/2.0;
-		bank() = 0.0;
+		getHeading() = 2.0 * atan2(q.x, q.w);
+		getAttitude() = PI/2.0;
+		getBank() = 0.0;
 		return;
 	}
 	if(test < -0.499)
 	{
-		heading() = -2.0 * atan2(q.x, q.w);
-		attitude() = -PI/2.0;
-		bank() = 0.0;
+		getHeading() = -2.0 * atan2(q.x, q.w);
+		getAttitude() = -PI/2.0;
+		getBank() = 0.0;
 		return;
 	}
 
 	float sqx = q.x*q.x;
 	float sqy = q.y*q.y;
 	float sqz = q.z*q.z;
-	heading() = atan2(2.0*q.y*q.w-2.0*q.x*q.z, 1.0-2.0*sqy-2.0*sqz);
-	attitude() = asin(2.0f*test);
-	bank() = atan2(2.0*q.x*q.w-2.0*q.y*q.z, 1.0-2.0*sqx-2.0*sqz);
+	getHeading() = atan2(2.0*q.y*q.w-2.0*q.x*q.z, 1.0-2.0*sqy-2.0*sqz);
+	getAttitude() = asin(2.0f*test);
+	getBank() = atan2(2.0*q.x*q.w-2.0*q.y*q.z, 1.0-2.0*sqx-2.0*sqz);
 }
 
 // constructor [mat3]

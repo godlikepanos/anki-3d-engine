@@ -71,7 +71,7 @@ void initPhysics()
 
 	Transform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.setOrigin(Vec3(0,-50, 0));
+	groundTransform.origin = Vec3(0,-50, 0);
 
 	RigidBody::Initializer init;
 	init.mass = 0.0;
@@ -124,7 +124,7 @@ void init()
 
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = false;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
@@ -201,13 +201,19 @@ void init()
 
 	// sponza map
 	MeshNode* node = new MeshNode();
-	node->init("maps/sponza/sponza.mesh");
+	node->init("maps/sponza/floor.mesh");
+	node = new MeshNode();
+	node->init("maps/sponza/walls.mesh");
+	node = new MeshNode();
+	node->init("maps/sponza/light-marbles.mesh");
+	node = new MeshNode();
+	node->init("maps/sponza/dark-marbles.mesh");
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;
 	partEmitter->init("asdf");
-	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
+	partEmitter->getLocalTransform().origin = Vec3(3.0, 0.0, 0.0);
 
 	// character
 	PhyCharacter::Initializer init;
@@ -285,10 +291,10 @@ void mainLoop()
 		}
 		if(I::keys[SDL_SCANCODE_Q]) mover->rotateLocalZ(ang);
 		if(I::keys[SDL_SCANCODE_E]) mover->rotateLocalZ(-ang);
-		if(I::keys[SDL_SCANCODE_PAGEUP]) mover->getLocalTransform().getScale() += scale ;
-		if(I::keys[SDL_SCANCODE_PAGEDOWN]) mover->getLocalTransform().getScale() -= scale ;
+		if(I::keys[SDL_SCANCODE_PAGEUP]) mover->getLocalTransform().scale += scale ;
+		if(I::keys[SDL_SCANCODE_PAGEDOWN]) mover->getLocalTransform().scale -= scale ;
 
-		if(I::keys[SDL_SCANCODE_K]) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
+		if(I::keys[SDL_SCANCODE_K]) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
 
 		if(I::keys[SDL_SCANCODE_I])
 			character->moveForward(0.1);
@@ -310,7 +316,7 @@ void mainLoop()
 			app->getScriptingEngine().execScript(Util::readFile("test.py").c_str());
 		}
 
-		mover->getLocalTransform().getRotation().reorthogonalize();
+		mover->getLocalTransform().rotation.reorthogonalize();
 
 		app->execStdinScpripts();
 		app->getScene().getPhysics().update(crntTime);
