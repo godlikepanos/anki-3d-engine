@@ -53,10 +53,10 @@ void Camera::render()
 void Camera::lookAtPoint(const Vec3& point)
 {
 	const Vec3& j = Vec3(0.0, 1.0, 0.0);
-	Vec3 vdir = (point - getLocalTransform().getOrigin()).getNormalized();
+	Vec3 vdir = (point - getLocalTransform().origin).getNormalized();
 	Vec3 vup = j - vdir * j.dot(vdir);
 	Vec3 vside = vdir.cross(vup);
-	getLocalTransform().getRotation().setColumns(vside, vup, -vdir);
+	getLocalTransform().rotation.setColumns(vside, vup, -vdir);
 }
 
 
@@ -93,9 +93,9 @@ void Camera::updateWSpaceFrustumPlanes()
 {
 	for(uint i=0; i<6; i++)
 	{
-		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].Transformed(getWorldTransform().getOrigin(),
-		                                                            getWorldTransform().getRotation(),
-		                                                            getWorldTransform().getScale());
+		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].Transformed(getWorldTransform().origin,
+		                                                            getWorldTransform().rotation,
+		                                                            getWorldTransform().scale);
 	}
 }
 
@@ -132,7 +132,7 @@ bool Camera::insideFrustum(const Camera& cam) const
 	points[1] = Vec3(-x, y, z); // top left
 	points[2] = Vec3(-x, -y, z); // bottom left
 	points[3] = Vec3(x, -y, z); // bottom right
-	points[4] = Vec3(cam.getWorldTransform().getOrigin()); // eye (already in world space)
+	points[4] = Vec3(cam.getWorldTransform().origin); // eye (already in world space)
 
 	// transform them to the given camera's world space (exept the eye)
 	for(uint i=0; i<4; i++)
@@ -198,8 +198,8 @@ void Camera::updateViewMatrix()
 	*/
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
-	Mat3 camInvertedRot = getWorldTransform().getRotation().getTransposed();
-	Vec3 camInvertedTsl = -(camInvertedRot * getWorldTransform().getOrigin());
+	Mat3 camInvertedRot = getWorldTransform().rotation.getTransposed();
+	Vec3 camInvertedTsl = -(camInvertedRot * getWorldTransform().origin);
 	viewMat = Mat4(camInvertedTsl, camInvertedRot);
 }
 

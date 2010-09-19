@@ -42,7 +42,7 @@ void Smo::run(const PointLight& light)
 	// set shared prog
 	const float scale = 1.2; // we scale the sphere a little
 	sProg->bind();
-	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.getRadius() * scale);
+	Mat4 modelMat = Mat4(light.getWorldTransform().origin, Mat3::getIdentity(), light.getRadius() * scale);
 	Mat4 trf = r.getCamera().getProjectionMatrix() * Mat4::combineTransformations(r.getCamera().getViewMatrix(), modelMat);
 	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
 

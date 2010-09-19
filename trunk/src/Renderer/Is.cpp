@@ -158,7 +158,7 @@ void Is::pointLightPass(const PointLight& light)
 	const Camera& cam = r.getCamera();
 
 	// frustum test
-	bsphere_t sphere(light.getWorldTransform().getOrigin(), light.getRadius());
+	bsphere_t sphere(light.getWorldTransform().origin, light.getRadius());
 	if(!cam.insideFrustum(sphere)) return;
 
 	// stencil optimization
@@ -173,7 +173,7 @@ void Is::pointLightPass(const PointLight& light)
 	shader.findUniVar("msSpecularFai")->setTexture(r.ms.specularFai, 2);
 	shader.findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 3);
 	shader.findUniVar("planes")->setVec2(&planes);
-	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
+	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
 	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightProps->getDiffuseColor());
@@ -254,7 +254,7 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->findUniVar("planes")->setVec2(&planes);
 
 	// the light params
-	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
+	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
 	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightProps->getDiffuseColor());

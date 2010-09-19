@@ -13,7 +13,9 @@ inline Transform::Transform()
 
 // constructor [Transform]
 inline Transform::Transform(const Transform& b):
-	rotation(b.rotation), origin(b.origin)
+	origin(b.origin),
+	rotation(b.rotation),
+	scale(b.scale)
 {}
 
 // constructor [Mat4]
@@ -26,7 +28,9 @@ inline Transform::Transform(const Mat4& m4)
 
 // constructor [Vec3, Quat, float]
 inline Transform::Transform(const Vec3& origin, const Mat3& rotation_, float scale_):
-	rotation(rotation_), origin(origin), scale(scale_)
+	origin(origin),
+	rotation(rotation_),
+	scale(scale_)
 {}
 
 // setIdentity

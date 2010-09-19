@@ -87,13 +87,13 @@ inline Quat::Quat(const Mat3& m3)
 inline Quat::Quat(const Euler& eu)
 {
 	float cx, sx;
-	sinCos(eu.heading()*0.5, sx, cx);
+	sinCos(eu.getHeading()*0.5, sx, cx);
 
 	float cy, sy;
-	sinCos(eu.attitude()*0.5, sy, cy);
+	sinCos(eu.getAttitude()*0.5, sy, cy);
 
 	float cz, sz;
-	sinCos(eu.bank()*0.5, sz, cz);
+	sinCos(eu.getBank()*0.5, sz, cz);
 
 	float cxcy = cx*cy;
 	float sxsy = sx*sy;

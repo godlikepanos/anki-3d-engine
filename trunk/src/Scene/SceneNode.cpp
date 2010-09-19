@@ -87,20 +87,20 @@ void SceneNode::updateWorldTransform()
 //======================================================================================================================
 void SceneNode::moveLocalX(float distance)
 {
-	Vec3 x_axis = localTransform.getRotation().getColumn(0);
-	getLocalTransform().getOrigin() += x_axis * distance;
+	Vec3 x_axis = localTransform.rotation.getColumn(0);
+	getLocalTransform().origin += x_axis * distance;
 }
 
 void SceneNode::moveLocalY(float distance)
 {
-	Vec3 y_axis = localTransform.getRotation().getColumn(1);
-	getLocalTransform().getOrigin() += y_axis * distance;
+	Vec3 y_axis = localTransform.rotation.getColumn(1);
+	getLocalTransform().origin += y_axis * distance;
 }
 
 void SceneNode::moveLocalZ(float distance)
 {
-	Vec3 z_axis = localTransform.getRotation().getColumn(2);
-	getLocalTransform().getOrigin() += z_axis * distance;
+	Vec3 z_axis = localTransform.rotation.getColumn(2);
+	getLocalTransform().origin += z_axis * distance;
 }
 
 

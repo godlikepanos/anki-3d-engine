@@ -96,19 +96,19 @@ inline SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
 
 inline void SceneNode::rotateLocalX(float angDegrees)
 {
-	localTransform.getRotation().rotateXAxis(angDegrees);
+	localTransform.rotation.rotateXAxis(angDegrees);
 }
 
 
 inline void SceneNode::rotateLocalY(float angDegrees)
 {
-	localTransform.getRotation().rotateYAxis(angDegrees);
+	localTransform.rotation.rotateYAxis(angDegrees);
 }
 
 
 inline void SceneNode::rotateLocalZ(float angDegrees)
 {
-	localTransform.getRotation().rotateZAxis(angDegrees);
+	localTransform.rotation.rotateZAxis(angDegrees);
 }
 
 
