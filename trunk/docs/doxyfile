@@ -1260,7 +1260,7 @@ SEARCH_INCLUDES        = YES
 # contain include files that are not input files but should be processed by 
 # the preprocessor.
 
-INCLUDE_PATH           = ../src/Util
+INCLUDE_PATH           = ../src/Scripting/ ../src/Math/ ../src/Util/Tokenizer/ ../src/Misc/ ../src/ ../src/Renderer/ ../src/Scene/ ../src/Ui/ ../src/Resources/ ../src/Util/ ../src/Scene/Controllers/ ../src/Physics/ ../src/Renderer/BufferObjects/ ../src/Resources/Helpers/ ../src/Resources/Core/ ../src/Core/ ../src/Scripting/Math ../src/Scripting/Util ../src/Scripting/Core ../src/Scripting/Scene ../src/Scripting/Renderer
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard 
 # patterns (like *.h and *.hpp) to filter out the header-files in the 

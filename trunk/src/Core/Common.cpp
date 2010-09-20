@@ -128,7 +128,7 @@ ostream& msgSuffix(ostream& cs)
 ostream& msgSuffixFatal(ostream& cs)
 {
 	msgSuffix(cs);
-	::exit(1);
+	::abort();
 	return cs;
 }
 

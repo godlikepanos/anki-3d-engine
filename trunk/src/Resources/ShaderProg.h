@@ -10,13 +10,12 @@
 
 
 
-/**
- * Shader program @ref Resource
- *
- * Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of
- * uniform variables and a vector of attribute variables. Every variable is a struct that contains the variable's name,
- * location, OpenGL data type and if it is a uniform or an attribute var.
- */
+
+/// Shader program @ref Resource
+///
+/// Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of
+/// uniform variables and a vector of attribute variables. Every variable is a struct that contains the variable's name,
+/// location, OpenGL data type and if it is a uniform or an attribute var.
 class ShaderProg: public Resource
 {
 	friend class Material;
@@ -26,9 +25,7 @@ class ShaderProg: public Resource
 	// Nested                                                                                                            =
 	//====================================================================================================================
 	public:
-		/**
-		 * Shader program variable. The type is attribute or uniform
-		 */
+		/// Shader program variable. The type is attribute or uniform
 		class Var
 		{
 			public:
@@ -39,16 +36,18 @@ class ShaderProg: public Resource
 					SVT_UNIFORM    ///< SVT_UNIFORM
 				};
 
-			PROPERTY_R(GLint, loc, getLoc) ///< GL location
-			PROPERTY_R(string, name, getName) ///< The name inside the shader program
-			PROPERTY_R(GLenum, glDataType, getGlDataType) ///< GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
-			PROPERTY_R(Type, type, getType) ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
-
-			public:
 				Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_);
 				Var(const Var& var);
+				GLint getLoc() const {return loc;}
+				const string& getName() const {return name;}
+				GLenum getGlDataType() const {return glDataType;}
+				Type getType() const {return type;}
 
 			protected:
+				GLint loc; ///< GL location
+				string name; ///< The name inside the shader program
+				GLenum glDataType; ///< GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
+				Type type; ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
 		};
 
@@ -59,7 +58,7 @@ class ShaderProg: public Resource
 		{
 			public:
 				UniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
-				UniVar(const UniVar& var);
+				UniVar(const UniVar& var): Var(var) {}
 
 				void setFloat(float f) const;
 				void setFloatVec(float f[], uint size = 1) const;
@@ -78,7 +77,7 @@ class ShaderProg: public Resource
 		{
 			public:
 				AttribVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
-				AttribVar(const UniVar& var);
+				AttribVar(const AttribVar& var): Var(var) {}
 		};
 		
 	private:
@@ -219,19 +218,9 @@ inline ShaderProg::UniVar::UniVar(int loc_, const char* name_, GLenum glDataType
 {}
 
 
-inline ShaderProg::UniVar::UniVar(const UniVar& var):
-	Var(var)
-{}
-
-
 inline ShaderProg::AttribVar::AttribVar(int loc_, const char* name_, GLenum glDataType_,
                                         const ShaderProg* fatherSProg_):
 	Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
-{}
-
-
-inline ShaderProg::AttribVar::AttribVar(const UniVar& var):
-	Var(var)
 {}
 
 
