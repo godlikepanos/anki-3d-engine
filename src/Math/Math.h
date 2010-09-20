@@ -1,6 +1,5 @@
-#ifndef _MATH_H_
-#define _MATH_H_
-
+#ifndef MATH_H
+#define MATH_H
 
 #include <math.h>
 #include "Vec2.h"
@@ -13,6 +12,7 @@
 #include "Mat4.h"
 #include "MathFuncs.h"
 #include "Transform.h"
+
 
 using namespace M;
 

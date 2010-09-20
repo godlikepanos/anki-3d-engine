@@ -1,5 +1,5 @@
-#ifndef _MAT4_H_
-#define _MAT4_H_
+#ifndef MAT4_H
+#define MAT4_H
 
 #include "Common.h"
 #include "MathForwardDecls.h"
