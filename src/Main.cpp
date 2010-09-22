@@ -124,7 +124,7 @@ void init()
 
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = false;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;

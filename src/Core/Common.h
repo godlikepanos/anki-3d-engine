@@ -116,20 +116,13 @@ extern bool msgGlError(const char* file, int line, const char* func);
  *   non-const is acceptable
  * - Dont use it with semicolon at the end (eg PROPERTY_RW(....);) because of a doxygen bug
  */
-#define PROPERTY_RW(__Type__, __varName__, __setFunc__, __getFunc__) \
-	protected: \
-		typedef __Type__ __Dummy__##__varName__; \
-		__Dummy__##__varName__ __varName__; \
+#define PROPERTY_RW(Type__, varName__, setFunc__, getFunc__) \
+	private: \
+		Type__ varName__; \
 	public: \
-		void __setFunc__(const __Dummy__##__varName__& __x__) { \
-			__varName__ = __x__; \
-		} \
-		const __Dummy__##__varName__& __getFunc__() const { \
-			return __varName__; \
-		} \
-		__Dummy__##__varName__& __getFunc__() { \
-			return __varName__; \
-		}
+		void setFunc__(const Type__& x__) {varName__ = x__;} \
+		const Type__& getFunc__() const {return varName__;} \
+		Type__& getFunc__() {return varName__;}
 
 /**
  * Read only property
@@ -137,14 +130,11 @@ extern bool msgGlError(const char* file, int line, const char* func);
  * - It creates a unique type so it can work with pointers
  * - Dont use it with semicolon at the end (eg PROPERTY_RW(....);) because of a doxygen bug
  */
-#define PROPERTY_R(__Type__, __varName__, __getFunc__) \
-	protected: \
-		typedef __Type__ __Dummy__##__varName__; \
-		__Dummy__##__varName__ __varName__; \
+#define PROPERTY_R(Type__, varName__, getFunc__) \
+	private: \
+		Type__ varName__; \
 	public: \
-		const __Dummy__##__varName__& __getFunc__() const { \
-			return __varName__; \
-		}
+		const Type__& getFunc__() const { return varName__; }
 
 
 /// Just print

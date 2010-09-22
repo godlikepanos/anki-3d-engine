@@ -1,5 +1,5 @@
-#ifndef _LIGHTPROPS_H_
-#define _LIGHTPROPS_H_
+#ifndef LIGHT_PROPS_H
+#define LIGHT_PROPS_H
 
 #include "Common.h"
 #include "Resource.h"
@@ -8,9 +8,28 @@
 #include "Texture.h"
 
 
-/**
- * Light properties @ref Resource
- */
+/// Light data
+class LightData
+{
+	PROPERTY_R(Vec3, diffuseCol, getDiffuseColor)
+	PROPERTY_R(Vec3, specularCol, getSpecularColor)
+	PROPERTY_R(float, radius, getRadius) ///< For point lights
+	PROPERTY_R(bool, castsShadow_, castsShadow) ///< For spot lights
+	PROPERTY_R(float, distance, getDistance) ///< For spot lights. A.K.A.: camera's zFar
+	PROPERTY_R(float, fovX, getFovX) ///< For spot lights
+	PROPERTY_R(float, fovY, getFovY) ///< For spot lights
+
+	public:
+		LightData() {}
+		virtual ~LightData() {}
+		bool load(const char* filename);
+		const Texture* getTexture() const;
+
+	private:
+		RsrcPtr<Texture> texture; ///< For spot lights
+};
+
+/// Light properties Resource
 class LightProps: public Resource
 {
 	PROPERTY_R(Vec3, diffuseCol, getDiffuseColor)
@@ -30,18 +49,6 @@ class LightProps: public Resource
 	private:
 		RsrcPtr<Texture> texture; ///< For spot lights
 };
-
-
-inline LightProps::LightProps():
-	Resource(RT_LIGHT_PROPS),
-	diffuseCol(0.5),
-	specularCol(0.5),
-	radius(1.0),
-	castsShadow_(false),
-	distance(3.0),
-	fovX(M::PI/4.0),
-	fovY(M::PI/4.0)
-{}
 
 
 inline const Texture* LightProps::getTexture() const
