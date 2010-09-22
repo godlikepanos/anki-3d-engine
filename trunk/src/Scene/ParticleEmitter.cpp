@@ -75,7 +75,7 @@ void ParticleEmitter::update()
 	float crntTime = app->getTicks() / 1000.0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
-	bool identRot = worldTransform.rotation == Mat3::getIdentity();
+	bool identRot = getWorldTransform().rotation == Mat3::getIdentity();
 
 	// deactivate the dead particles
 	for(uint i=0; i<particles.size(); i++)
@@ -140,7 +140,7 @@ void ParticleEmitter::update()
 
 				if(!identRot)
 				{
-					forceDir = worldTransform.rotation * forceDir; // the forceDir depends on the particle emitter rotation
+					forceDir = getWorldTransform().rotation * forceDir; // the forceDir depends on the particle emitter rotation
 				}
 
 				Vec3 force;
@@ -186,9 +186,9 @@ void ParticleEmitter::update()
 			}
 
 			if(identRot)
-				pos += worldTransform.origin;
+				pos += getWorldTransform().origin;
 			else
-				pos.transform(worldTransform);
+				pos.transform(getWorldTransform());
 
 			btTransform trf;
 			trf.setIdentity();

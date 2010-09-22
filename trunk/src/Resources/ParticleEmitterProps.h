@@ -1,22 +1,18 @@
-#ifndef PARTICLEEMITTERPROPS_H
-#define PARTICLEEMITTERPROPS_H
+#ifndef PARTICLE_EMITTER_PROPS_H
+#define PARTICLE_EMITTER_PROPS_H
 
 #include "Common.h"
 #include "Math.h"
 #include "Resource.h"
 
 
-/**
- * This is the properties of the particle emitter resource. Its a separate class from ParticleEmitterProps cause
- * ParticleEmitter SceneNode subclass it.
- */
+/// This is the properties of the particle emitter resource. Its a separate class from ParticleEmitterProps cause
+/// ParticleEmitter SceneNode subclass it.
 class ParticleEmitterPropsStruct
 {
 	public:
-		/**
-		 * @name Particle properties
-		 */
-		/**@{*/
+		/// @name Particle properties
+		/// @{
 		float particleLife; ///< Required and > 0.0
 		float particleLifeMargin;
 
@@ -35,16 +31,14 @@ class ParticleEmitterPropsStruct
 		Vec3 startingPosMargin;
 
 		float size; ///< The size of the collision shape. Required and > 0.0
-		/**@}*/
+		/// @}
 
-		/**
-		 * @name Emitter properties
-		 */
-		/**@{*/
+		/// @name Emitter properties
+		/// @{
 		uint maxNumOfParticles; ///< The size of the particles vector. Required
 		float emittionPeriod; ///< How often the emitter emits new particles. In secs. Required
 		uint particlesPerEmittion; ///< How many particles are emitted every emittion. Required
-		/**@}*/
+		/// @}
 
 		ParticleEmitterPropsStruct();
 		ParticleEmitterPropsStruct(const ParticleEmitterPropsStruct& a);
@@ -57,23 +51,15 @@ class ParticleEmitterPropsStruct
 };
 
 
-
-/**
- * The actual particle emitter resource
- */
+/// The actual particle emitter resource
 class ParticleEmitterProps: public ParticleEmitterPropsStruct, public Resource
 {
 	public:
-		ParticleEmitterProps();
+		ParticleEmitterProps(): Resource(RT_PARTICLE_EMITTER_PROPS) {}
 		~ParticleEmitterProps() {}
 
 		bool load(const char* filename);
 };
-
-
-inline ParticleEmitterProps::ParticleEmitterProps():
-	Resource(RT_PARTICLE_EMITTER_PROPS)
-{}
 
 
 #endif

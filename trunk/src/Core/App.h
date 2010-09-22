@@ -11,6 +11,7 @@ class ScriptingEngine;
 class StdinListener;
 class Scene;
 class MainRenderer;
+class Camera;
 
 
 /**
@@ -23,8 +24,6 @@ class App: public Object
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
 	PROPERTY_R(filesystem::path, settingsPath, getSettingsPath)
 	PROPERTY_R(filesystem::path, cachePath, getCachePath)
-
-	PROPERTY_RW(class Camera*, activeCam, setActiveCam, getActiveCam) ///< Pointer to the current camera
 
 	public:
 		uint timerTick;
@@ -57,6 +56,8 @@ class App: public Object
 		ScriptingEngine& getScriptingEngine();
 		StdinListener& getStdinLintener();
 		MainRenderer& getMainRenderer();
+		Camera* getActiveCam() {return activeCam;}
+		void setActiveCam(Camera* cam) {activeCam = cam;}
 		/**@}*/
 
 		/**
@@ -72,6 +73,7 @@ class App: public Object
 		SDL_GLContext glContext;
 		SDL_Surface* iconImage;
 		bool fullScreenFlag;
+		Camera* activeCam; ///< Pointer to the current camera
 
 		/**
 		 * @name Pointers to serious subsystems
