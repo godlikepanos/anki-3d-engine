@@ -5,6 +5,7 @@
 #include "Common.h"
 #include "Vec.h"
 #include "Math.h"
+#include "Object.h"
 
 
 class bvolume_t;
@@ -12,10 +13,8 @@ class Material;
 class Controller;
 
 
-/**
- * The backbone of scene
- */
-class SceneNode
+/// The backbone of scene. It is also an Object for memory management reasons
+class SceneNode: public Object
 {
 	friend class Scene;
 
@@ -42,33 +41,28 @@ class SceneNode
 		bvolume_t* bvolumeWspace;
 		bool isCompound;
 		
-		SceneNode(SceneNodeType type_);
-		SceneNode(SceneNodeType type_, SceneNode* parent);
+		SceneNode(SceneNodeType type_, SceneNode* parent = NULL);
 		virtual ~SceneNode();
 		virtual void render() = 0;
 		virtual void init(const char*) = 0; ///< init using a script
 
-		/**
-		 * @name Updates
-		 * Two separate updates happen every loop. The update happens anyway and the updateTrf only when the node is being
-		 * moved
-		 */
-		/**@{*/
+		/// @name Updates
+		/// Two separate updates happen every loop. The update happens anyway and the updateTrf only when the node is being
+		/// moved
+		/// @{
 		virtual void update() {};
 		virtual void updateTrf() {};
-		/**@}*/
+		/// @}
 
-		/**
-		 * @name Mess with the local transform
-		 */
-		/**@{*/
+		/// @name Mess with the local transform
+		/// @{
 		void rotateLocalX(float angDegrees);
 		void rotateLocalY(float angDegrees);
 		void rotateLocalZ(float angDegrees);
 		void moveLocalX(float distance);
 		void moveLocalY(float distance);
 		void moveLocalZ(float distance);
-		/**@}*/
+		/// @}
 
 		void addChild(SceneNode* node);
 		void removeChild(SceneNode* node);
@@ -79,18 +73,15 @@ class SceneNode
 };
 
 
-inline SceneNode::SceneNode(SceneNodeType type_):
-	type(type_)
-{
-	commonConstructorCode();
-}
-
-
 inline SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
+	Object(parent),
 	type(type_)
 {
 	commonConstructorCode();
-	parent->addChild(this);
+	if(parent != NULL)
+	{
+		parent->addChild(this);
+	}
 }
 
 

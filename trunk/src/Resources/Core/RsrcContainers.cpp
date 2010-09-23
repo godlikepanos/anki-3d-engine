@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "Skeleton.h"
 #include "SkelAnim.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "ParticleEmitterProps.h"
 #include "Script.h"
 
@@ -18,7 +18,7 @@ RsrcContainer<Material>   materials;
 RsrcContainer<Mesh>       meshes;
 RsrcContainer<Skeleton>   skeletons;
 RsrcContainer<SkelAnim>   skelAnims;
-RsrcContainer<LightProps> lightProps;
+RsrcContainer<LightData> lightProps;
 RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 RsrcContainer<Script> scripts;
 

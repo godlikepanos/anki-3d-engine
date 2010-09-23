@@ -3,7 +3,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "MeshNode.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "Camera.h"
 #include "RendererInitializer.h"
 

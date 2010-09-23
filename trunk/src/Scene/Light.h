@@ -22,24 +22,29 @@ Specular intensity of material: Sm
 #include "SceneNode.h"
 #include "Camera.h"
 #include "RsrcPtr.h"
-#include "LightProps.h"
+#include "LightData.h"
 
 
 /// Light scene node (Abstract)
 class Light: public SceneNode
 {
 	public:
-		enum Type
+		enum LightType
 		{
 			LT_POINT,
 			LT_SPOT
 		};
 
-		Type type;
-		RsrcPtr<LightProps> lightProps; ///< Later we will add a controller
+	PROPERTY_R(LightType, type, getType) ///< Light type
+
+	public:
+		RsrcPtr<LightData> lightData;
 	
-		Light(Type type_);
+		Light(LightType type_);
 		void render();
+
+	private:
+
 };
 
 
@@ -58,7 +63,7 @@ class PointLight: public Light
 class SpotLight: public Light
 {
 	public:
-		Camera camera;
+		Camera* camera;
 		bool castsShadow;
 
 		SpotLight();
@@ -72,7 +77,7 @@ class SpotLight: public Light
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline Light::Light(Type type_):
+inline Light::Light(LightType type_):
 	SceneNode(SNT_LIGHT),
 	type(type_)
 {}
@@ -85,21 +90,20 @@ inline PointLight::PointLight():
 
 inline SpotLight::SpotLight():
 	Light(LT_SPOT),
+	camera(new Camera(this)),
 	castsShadow(false)
-{
-	addChild(&camera);
-}
+{}
 
 
 inline float SpotLight::getDistance() const
 {
-	return camera.getZFar();
+	return camera->getZFar();
 }
 
 
 inline void SpotLight::setDistance(float d)
 {
-	camera.setZFar(d);
+	camera->setZFar(d);
 }
 
 #endif

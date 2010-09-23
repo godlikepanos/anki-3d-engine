@@ -25,7 +25,7 @@
 #include "MeshSkelNodeCtrl.h"
 #include "SkelAnimCtrl.h"
 #include "SkelNode.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
 #include "PhyCharacter.h"

@@ -3,10 +3,10 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "Light.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "App.h"
 #include "Scene.h"
-#include "LightProps.h"
+#include "LightData.h"
 
 
 //======================================================================================================================
@@ -176,8 +176,8 @@ void Is::pointLightPass(const PointLight& light)
 	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
-	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightProps->getDiffuseColor());
-	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightProps->getSpecularColor());
+	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseColor());
+	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularColor());
 
 	// render quad
 	glEnableVertexAttribArray(0);
@@ -222,13 +222,13 @@ void Is::spotLightPass(const SpotLight& light)
 	smo.run(light);
 
 	// set the texture
-	if(light.lightProps->getTexture() == NULL)
+	if(light.lightData->getTexture() == NULL)
 	{
-		ERROR("No texture is attached to the light. lightProps name: " << light.lightProps->getRsrcName());
+		ERROR("No texture is attached to the light. lightProps name: " << light.lightData->getRsrcName());
 		return;
 	}
 
-	light.lightProps->getTexture()->setRepeat(false);
+	light.lightData->getTexture()->setRepeat(false);
 
 	// shader prog
 	const ShaderProg* shdr;
@@ -257,16 +257,16 @@ void Is::spotLightPass(const SpotLight& light)
 	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
-	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightProps->getDiffuseColor());
-	shdr->findUniVar("lightSpecularCol")->setVec3(&light.lightProps->getSpecularColor());
-	shdr->findUniVar("lightTex")->setTexture(*light.lightProps->getTexture(), 4);
+	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseColor());
+	shdr->findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularColor());
+	shdr->findUniVar("lightTex")->setTexture(*light.lightData->getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)
 	static Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 	Mat4 texProjectionMat;
-	texProjectionMat = biasMat4 * light.camera.getProjectionMatrix() *
-	                   Mat4::combineTransformations(light.camera.getViewMatrix(), Mat4(cam.getWorldTransform()));
+	texProjectionMat = biasMat4 * light.camera->getProjectionMatrix() *
+	                   Mat4::combineTransformations(light.camera->getViewMatrix(), Mat4(cam.getWorldTransform()));
 	shdr->findUniVar("texProjectionMat")->setMat4(&texProjectionMat);
 
 	// the shadowmap
@@ -320,7 +320,7 @@ void Is::run()
 	for(uint i=0; i<app->getScene().lights.size(); i++)
 	{
 		const Light& light = *app->getScene().lights[i];
-		switch(light.type)
+		switch(light.getType())
 		{
 			case Light::LT_POINT:
 			{
