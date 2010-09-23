@@ -71,9 +71,7 @@ class Mesh: public Resource
 		~Mesh() {}
 		bool load(const char* filename);
 
-		/**
-		 * The mesh is renderable when the material is loaded
-		 */
+		/// The mesh is renderable when the material is loaded
 		bool isRenderable() const;
 
 	private:
@@ -97,5 +95,6 @@ inline void Mesh::createAllNormals()
 	createFaceNormals();
 	createVertNormals();
 }
+
 
 #endif

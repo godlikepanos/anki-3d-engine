@@ -16,7 +16,7 @@ class ParticleEmitterPropsStruct
 		float particleLife; ///< Required and > 0.0
 		float particleLifeMargin;
 
-		Vec3 forceDirection; ///< Not-required, any value, If not set only the gravity applies
+		Vec3 forceDirection; ///< Not-required, any value, Default 0.0, If not set only the gravity applies
 		Vec3 forceDirectionMargin;
 		float forceMagnitude; ///< Default 0.0
 		float forceMagnitudeMargin;
@@ -44,10 +44,8 @@ class ParticleEmitterPropsStruct
 		ParticleEmitterPropsStruct(const ParticleEmitterPropsStruct& a);
 		ParticleEmitterPropsStruct& operator=(const ParticleEmitterPropsStruct& a);
 		~ParticleEmitterPropsStruct() {}
-
-	protected:
-		bool usingWorldGrav; ///< This flag indicates if we should use the default world gravity or to override it
-		bool hasForce; ///< False if all force stuff are zero
+		bool hasForce() const; ///< Dont call it offten. Its slow
+		bool usingWorldGrav() const; ///< @return True if gravity is derived
 };
 
 

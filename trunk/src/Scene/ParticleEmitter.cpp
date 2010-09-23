@@ -92,6 +92,9 @@ void ParticleEmitter::update()
 		}
 	}
 
+	// pre calculate
+	bool forceFlag = hasForce();
+	bool worldGravFlag = usingWorldGrav();
 
 	if((crntTime - timeOfPrevEmittion) > emittionPeriod)
 	{
@@ -122,7 +125,7 @@ void ParticleEmitter::update()
 			//cout << p.body->internalGetDeltaAngularVelocity() << endl;
 
 			// force
-			if(hasForce)
+			if(forceFlag)
 			{
 				Vec3 forceDir;
 				if(forceDirectionMargin != Vec3(0.0))
@@ -154,10 +157,10 @@ void ParticleEmitter::update()
 			}
 
 			// gravity
-			if(!usingWorldGrav)
+			if(!worldGravFlag)
 			{
 				Vec3 grav;
-				if(gravityMargin != Vec3(0.0, 0.0, 0.0))
+				if(gravityMargin != Vec3(0.0))
 				{
 					for(int i=0; i<3; i++)
 					{
