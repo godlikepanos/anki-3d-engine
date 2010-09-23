@@ -21,9 +21,7 @@ ParticleEmitterPropsStruct::ParticleEmitterPropsStruct():
 	gravityMargin(0.0),
 	startingPos(0.0),
 	startingPosMargin(0.0),
-	size(0.0),
-	usingWorldGrav(true),
-	hasForce(false)
+	size(0.0)
 {}
 
 
@@ -42,13 +40,33 @@ ParticleEmitterPropsStruct::ParticleEmitterPropsStruct(const ParticleEmitterProp
 ParticleEmitterPropsStruct& ParticleEmitterPropsStruct::operator=(const ParticleEmitterPropsStruct& a)
 {
 	memcpy(this, &(const_cast<ParticleEmitterPropsStruct&>(a)), sizeof(ParticleEmitterPropsStruct));
+	return *this;
+}
+
+
+//======================================================================================================================
+// hasForce                                                                                                            =
+//======================================================================================================================
+bool ParticleEmitterPropsStruct::hasForce() const
+{
+	return (!M::isZero(forceDirection.getLengthSquared()) || !M::isZero(forceDirectionMargin.getLengthSquared())) &&
+	       (forceMagnitude != 0.0 || forceMagnitudeMargin != 0.0);
+}
+
+
+//======================================================================================================================
+// usingWorldGrav                                                                                                      =
+//======================================================================================================================
+bool ParticleEmitterPropsStruct::usingWorldGrav() const
+{
+	return M::isZero(gravity.getLengthSquared());
 }
 
 
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool ParticleEmitterProps::load(const char* filename)
+bool ParticleEmitterProps::load(const char* /*filename*/)
 {
 	// dummy load
 	particleLife = 7.0;
@@ -71,18 +89,6 @@ bool ParticleEmitterProps::load(const char* filename)
 	maxNumOfParticles = 50;
 	emittionPeriod = 1.5;
 	particlesPerEmittion = 2;
-
-	// set some values
-	if((M::isZero(forceDirection.getLength()) && M::isZero(forceDirectionMargin.getLength())) ||
-	   (forceMagnitude == 0.0 && forceMagnitudeMargin == 0.0))
-	{
-		hasForce = false;
-	}
-	else
-		hasForce = true;
-
-	usingWorldGrav = M::isZero(gravity.getLength());
-
 
 	// sanity checks
 	if(particleLife <= 0.0)

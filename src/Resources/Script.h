@@ -5,9 +5,7 @@
 #include "Resource.h"
 
 
-/**
- * Python script resource
- */
+/// Python script resource
 class Script: public Resource
 {
 	public:
