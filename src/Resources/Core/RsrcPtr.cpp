@@ -6,7 +6,7 @@
 #include "Mesh.h"
 #include "Skeleton.h"
 #include "SkelAnim.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "ParticleEmitterProps.h"
 #include "Script.h"
 
@@ -19,7 +19,7 @@ extern RsrcContainer<Material> materials;
 extern RsrcContainer<Mesh> meshes;
 extern RsrcContainer<Skeleton> skeletons;
 extern RsrcContainer<SkelAnim> skelAnims;
-extern RsrcContainer<LightProps> lightProps;
+extern RsrcContainer<LightData> lightProps;
 extern RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 extern RsrcContainer<Script> scripts;
 
@@ -103,7 +103,7 @@ bool RsrcPtr<SkelAnim>::loadRsrc(const char* filename)
 // loadRsrc <LightProp>                                                                                                =
 //======================================================================================================================
 template<>
-bool RsrcPtr<LightProps>::loadRsrc(const char* filename)
+bool RsrcPtr<LightData>::loadRsrc(const char* filename)
 {
 	LOAD_RSRC(lightProps);
 }
@@ -194,7 +194,7 @@ void RsrcPtr<SkelAnim>::unload()
 // unload <LightProps>                                                                                                 =
 //======================================================================================================================
 template<>
-void RsrcPtr<LightProps>::unload()
+void RsrcPtr<LightData>::unload()
 {
 	UNLOAD_RSRC(lightProps);
 }

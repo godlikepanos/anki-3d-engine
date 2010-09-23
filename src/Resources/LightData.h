@@ -9,7 +9,7 @@
 
 
 /// Light properties Resource
-class LightProps: public Resource
+class LightData: public Resource
 {
 	PROPERTY_R(Vec3, diffuseCol, getDiffuseColor)
 	PROPERTY_R(Vec3, specularCol, getSpecularColor)
@@ -20,8 +20,8 @@ class LightProps: public Resource
 	PROPERTY_R(float, fovY, getFovY) ///< For spot lights
 		
 	public:
-		LightProps();
-		virtual ~LightProps() {}
+		LightData();
+		~LightData() {}
 		bool load(const char* filename);
 		const Texture* getTexture() const;
 
@@ -30,7 +30,7 @@ class LightProps: public Resource
 };
 
 
-inline const Texture* LightProps::getTexture() const
+inline const Texture* LightData::getTexture() const
 {
 	DEBUG_ERR(texture.get() == NULL);
 	return texture.get();

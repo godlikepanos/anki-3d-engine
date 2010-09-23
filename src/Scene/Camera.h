@@ -54,8 +54,8 @@ class Camera: public SceneNode
 
 	public:
 		// constructors and destuctors
-		Camera(float fovx_, float fovy_, float znear_, float zfar_);
-		Camera(): SceneNode(SNT_CAMERA) {}
+		Camera(float fovx_, float fovy_, float znear_, float zfar_, SceneNode* parent = NULL);
+		Camera(SceneNode* parent = NULL): SceneNode(SNT_CAMERA, parent) {}
 		~Camera() {}
 
 		/**
@@ -97,8 +97,8 @@ class Camera: public SceneNode
 };
 
 
-inline Camera::Camera(float fovx_, float fovy_, float znear_, float zfar_):
-	SceneNode(SNT_CAMERA),
+inline Camera::Camera(float fovx_, float fovy_, float znear_, float zfar_, SceneNode* parent):
+	SceneNode(SNT_CAMERA, parent),
 	fovX(fovx_),
 	fovY(fovy_),
 	zNear(znear_),

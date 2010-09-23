@@ -4,7 +4,7 @@
 #include "Scene.h"
 #include "SkelNode.h"
 #include "Camera.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "RendererInitializer.h"
 
 

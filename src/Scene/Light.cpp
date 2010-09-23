@@ -1,6 +1,6 @@
 #include "Light.h"
 #include "collision.h"
-#include "LightProps.h"
+#include "LightData.h"
 #include "App.h"
 #include "MainRenderer.h"
 
@@ -10,8 +10,8 @@
 //======================================================================================================================
 void PointLight::init(const char* filename)
 {
-	lightProps.loadRsrc(filename);
-	radius = lightProps->getRadius();
+	lightData.loadRsrc(filename);
+	radius = lightData->getRadius();
 }
 
 
@@ -20,13 +20,13 @@ void PointLight::init(const char* filename)
 //======================================================================================================================
 void SpotLight::init(const char* filename)
 {
-	lightProps.loadRsrc(filename);
-	camera.setAll(lightProps->getFovX(), lightProps->getFovY(), 0.2, lightProps->getDistance());
-	castsShadow = lightProps->castsShadow();
+	lightData.loadRsrc(filename);
+	camera->setAll(lightData->getFovX(), lightData->getFovY(), 0.2, lightData->getDistance());
+	castsShadow = lightData->castsShadow();
 
-	if(lightProps->getTexture() == NULL)
+	if(lightData->getTexture() == NULL)
 	{
-		ERROR("Light properties \"" << lightProps->getRsrcName() << "\" do not have a texture");
+		ERROR("Light properties \"" << lightData->getRsrcName() << "\" do not have a texture");
 		return;
 	}
 }
@@ -37,7 +37,7 @@ void SpotLight::init(const char* filename)
 //======================================================================================================================
 void Light::render()
 {
-	app->getMainRenderer().dbg.drawSphere(0.1, getWorldTransform(), Vec4(lightProps->getDiffuseColor(), 1.0));
+	app->getMainRenderer().dbg.drawSphere(0.1, getWorldTransform(), Vec4(lightData->getDiffuseColor(), 1.0));
 	//Dbg::drawSphere(0.1, Transform::getIdentity(), Vec4(lightProps->getDiffuseColor(), 1.0));
 }
 
