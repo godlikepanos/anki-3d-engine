@@ -37,6 +37,17 @@ class Light: public SceneNode
 
 	PROPERTY_R(LightType, type, getType) ///< Light type
 
+	/// @name Copies of some of the resource properties
+	/// @{
+	PROPERTY_RW(Vec3, diffuseCol, setDiffuseColor, getDiffuseColor)
+	PROPERTY_RW(Vec3, specularCol, setSpecularColor, getSpecularColor)
+	PROPERTY_RW(float, radius, setRadius, getRadius)
+	PROPERTY_RW(bool, castsShadow_, setCastsShadow, castsShadow)
+	PROPERTY_RW(float, distance, setDistance, getDistance)
+	PROPERTY_RW(float, fovX, setFovX, getFovX)
+	PROPERTY_RW(float, fovY, setFovY, getFovY)
+	/// @}
+
 	public:
 		RsrcPtr<LightData> lightData;
 	
@@ -44,7 +55,7 @@ class Light: public SceneNode
 		void render();
 
 	private:
-
+		Camera* camera;
 };
 
 

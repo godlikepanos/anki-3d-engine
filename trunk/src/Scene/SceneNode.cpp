@@ -123,15 +123,15 @@ void SceneNode::addChild(SceneNode* node)
 //======================================================================================================================
 // removeChild                                                                                                         =
 //======================================================================================================================
-void SceneNode::removeChild(SceneNode* node)
+void SceneNode::removeChild(SceneNode* child)
 {
-	Vec<SceneNode*>::iterator it = find(childs.begin(), childs.end(), node);
+	Vec<SceneNode*>::iterator it = std::find(childs.begin(), childs.end(), child);
 	if(it == childs.end())
 	{
 		ERROR("Child not found");
 		return;
 	}
 
-	node->parent = NULL;
+	child->parent = NULL;
 	childs.erase(it);
 }

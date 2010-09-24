@@ -6,9 +6,7 @@
 #include "Common.h"
 
 
-/**
- * The hash function
- */
+/// The hash function
 struct CreateCharPtrHashMapKey
 {
   size_t operator()(const char* str) const
@@ -23,9 +21,7 @@ struct CreateCharPtrHashMapKey
 };
 
 
-/**
- * The collision evaluation function
- */
+/// The collision evaluation function
 struct CompareCharPtrHashMapKeys
 {
   bool operator()(const char* a, const char* b) const
@@ -35,10 +31,8 @@ struct CompareCharPtrHashMapKeys
 };
 
 
-/**
- * The hash map that has as key an old school C string. When inserting the char MUST NOT point to a temporary or the
- * evaluation function will fail.
- */
+/// The hash map that has as key an old school C string. When inserting the char MUST NOT point to a temporary or the
+/// evaluation function will fail.
 template<typename Type>
 class CharPtrHashMap: public unordered_map<const char*, Type, CreateCharPtrHashMapKey, CompareCharPtrHashMapKeys>
 {};
