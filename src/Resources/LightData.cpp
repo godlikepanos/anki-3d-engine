@@ -33,6 +33,8 @@ bool LightData::load(const char* filename)
 
 	const Scanner::Token* token;
 
+	type = LT_POINT;
+
 	while(true)
 	{
 		token = &scanner.getNextToken();
@@ -84,6 +86,7 @@ bool LightData::load(const char* filename)
 
 			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
 			                                                         float(token->getValue().getInt());
+			type = LT_SPOT;
 		}
 		// FOV_X
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_X"))
@@ -97,6 +100,7 @@ bool LightData::load(const char* filename)
 
 			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
 			                                                     float(token->getValue().getInt());
+			type = LT_SPOT;
 		}
 		// FOV_Y
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_Y"))
@@ -110,6 +114,7 @@ bool LightData::load(const char* filename)
 
 			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
 			                                                     float(token->getValue().getInt());
+			type = LT_SPOT;
 		}
 		// TEXTURE
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "TEXTURE"))
@@ -126,6 +131,7 @@ bool LightData::load(const char* filename)
 			texture->setAnisotropy(0);
 			texture->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			texture->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			type = LT_SPOT;
 		}
 		// end of file
 		else if(token->getCode() == Scanner::TC_EOF)
@@ -140,5 +146,12 @@ bool LightData::load(const char* filename)
 		}
 	}
 	
+	// sanity checks
+	if(type == LT_SPOT && texture.get() == NULL)
+	{
+		ERROR("Spot light should have texture");
+		return false;
+	}
+
 	return true;
 }

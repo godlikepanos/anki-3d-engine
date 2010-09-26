@@ -3,6 +3,8 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "Light.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 #include "LightData.h"
 #include "App.h"
 #include "Scene.h"
@@ -159,7 +161,10 @@ void Is::pointLightPass(const PointLight& light)
 
 	// frustum test
 	bsphere_t sphere(light.getWorldTransform().origin, light.getRadius());
-	if(!cam.insideFrustum(sphere)) return;
+	if(!cam.insideFrustum(sphere))
+	{
+		return;
+	}
 
 	// stencil optimization
 	smo.run(light);
@@ -176,8 +181,8 @@ void Is::pointLightPass(const PointLight& light)
 	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
-	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseColor());
-	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularColor());
+	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseCol());
+	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularCol());
 
 	// render quad
 	glEnableVertexAttribArray(0);
@@ -201,12 +206,15 @@ void Is::spotLightPass(const SpotLight& light)
 	const Camera& cam = r.getCamera();
 
 	// frustum test
-	if(!cam.insideFrustum(light.camera)) return;
+	if(!cam.insideFrustum(light.getCamera()))
+	{
+		return;
+	}
 
 	// shadow mapping
-	if(light.castsShadow && sm.isEnabled())
+	if(light.castsShadow() && sm.isEnabled())
 	{
-		sm.run(light.camera);
+		sm.run(light.getCamera());
 
 		// restore the IS FBO
 		fbo.bind();
@@ -222,18 +230,12 @@ void Is::spotLightPass(const SpotLight& light)
 	smo.run(light);
 
 	// set the texture
-	if(light.lightData->getTexture() == NULL)
-	{
-		ERROR("No texture is attached to the light. lightProps name: " << light.lightData->getRsrcName());
-		return;
-	}
-
-	light.lightData->getTexture()->setRepeat(false);
+	light.lightData->getTexture().setRepeat(false);
 
 	// shader prog
 	const ShaderProg* shdr;
 
-	if(light.castsShadow && sm.isEnabled())
+	if(light.castsShadow() && sm.isEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
 	}
@@ -257,20 +259,20 @@ void Is::spotLightPass(const SpotLight& light)
 	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
-	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseColor());
-	shdr->findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularColor());
-	shdr->findUniVar("lightTex")->setTexture(*light.lightData->getTexture(), 4);
+	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseCol());
+	shdr->findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularCol());
+	shdr->findUniVar("lightTex")->setTexture(light.lightData->getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)
 	static Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 	Mat4 texProjectionMat;
-	texProjectionMat = biasMat4 * light.camera->getProjectionMatrix() *
-	                   Mat4::combineTransformations(light.camera->getViewMatrix(), Mat4(cam.getWorldTransform()));
+	texProjectionMat = biasMat4 * light.getCamera().getProjectionMatrix() *
+	                   Mat4::combineTransformations(light.getCamera().getViewMatrix(), Mat4(cam.getWorldTransform()));
 	shdr->findUniVar("texProjectionMat")->setMat4(&texProjectionMat);
 
 	// the shadowmap
-	if(light.castsShadow && sm.isEnabled())
+	if(light.castsShadow() && sm.isEnabled())
 	{
 		shdr->findUniVar("shadowMap")->setTexture(sm.shadowMap, 5);
 	}

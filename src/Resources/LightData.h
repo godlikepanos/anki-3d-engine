@@ -11,29 +11,51 @@
 /// Light properties Resource
 class LightData: public Resource
 {
-	PROPERTY_R(Vec3, diffuseCol, getDiffuseColor)
-	PROPERTY_R(Vec3, specularCol, getSpecularColor)
-	PROPERTY_R(float, radius, getRadius) ///< For point lights
-	PROPERTY_R(bool, castsShadow_, castsShadow) ///< For spot lights
-	PROPERTY_R(float, distance, getDistance) ///< For spot lights. A.K.A.: camera's zFar
-	PROPERTY_R(float, fovX, getFovX) ///< For spot lights
-	PROPERTY_R(float, fovY, getFovY) ///< For spot lights
+	public:
+		enum LightType
+		{
+			LT_POINT,
+			LT_SPOT
+		};
+
+	/// @name Common light properties
+	/// @{
+	PROPERTY_R(Vec3, diffuseCol, getDiffuseCol)
+	PROPERTY_R(Vec3, specularCol, getSpecularCol)
+	PROPERTY_R(bool, castsShadow_, castsShadow) ///< Currently only for spot lights
+	PROPERTY_R(LightType, type, getType)
+	/// @}
+
+	/// @name Point light properties
+	/// @{
+	PROPERTY_R(float, radius, getRadius) ///< Sphere radius
+	/// @}
+
+	/// @name Spot light properties
+	/// @{
+	PROPERTY_R(float, distance, getDistance) ///< AKA camera's zFar
+	PROPERTY_R(float, fovX, getFovX)
+	PROPERTY_R(float, fovY, getFovY)
+	/// @}
 		
 	public:
 		LightData();
 		~LightData() {}
 		bool load(const char* filename);
-		const Texture* getTexture() const;
+		const Texture& getTexture() const;
 
 	private:
-		RsrcPtr<Texture> texture; ///< For spot lights
+		/// @name Spot light properties
+		/// @{
+		RsrcPtr<Texture> texture;
+		/// @}
 };
 
 
-inline const Texture* LightData::getTexture() const
+inline const Texture& LightData::getTexture() const
 {
 	DEBUG_ERR(texture.get() == NULL);
-	return texture.get();
+	return *texture;
 }
 
 

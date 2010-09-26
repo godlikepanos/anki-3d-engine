@@ -11,6 +11,8 @@
 #include "App.h"
 #include "Mesh.h"
 #include "Light.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 #include "collision.h"
 #include "Material.h"
 #include "Resource.h"
