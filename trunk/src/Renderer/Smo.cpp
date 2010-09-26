@@ -2,6 +2,8 @@
 #include "Renderer.h"
 #include "Light.h"
 #include "LightData.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 #include "Camera.h"
 
 
@@ -78,7 +80,7 @@ void Smo::run(const SpotLight& light)
 	glDisable(GL_CULL_FACE);
 
 	// calc camera shape
-	const Camera& lcam = light.camera;
+	const Camera& lcam = light.getCamera();
 	float x = lcam.getZFar() / tan((PI-lcam.getFovX())/2);
 	float y = tan(lcam.getFovY()/2) * lcam.getZFar();
 	float z = -lcam.getZFar();

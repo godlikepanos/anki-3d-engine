@@ -6,14 +6,12 @@
 #include "Resource.h"
 
 
-/**
- * Texture resource class
- *
- * It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and
- * uncompressed TGAs and all formats of PNG (PNG loading comes through SDL_image)
- *
- * @note The last texture unit is reserved and you cannot use it
- */
+/// Texture resource class
+///
+/// It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and
+/// uncompressed TGAs and all formats of PNG (PNG loading comes through SDL_image)
+///
+/// @note The last texture unit is reserved and you cannot use it
 class Texture: public Resource
 {
 	friend class Renderer; /// @todo Remove this when remove the SSAO load noise map crap
@@ -21,22 +19,27 @@ class Texture: public Resource
 	friend class MainRenderer;
 
 	public:
-		 Texture();
-		~Texture();
+		enum TextureFilteringType
+		{
+			TFT_NEAREST,
+			TFT_LINEAR,
+			TFT_TRILINEAR
+		};
 
+		Texture();
+		~Texture();
 		uint getGlId() const;
 
-		/**
-		 * @name Create tex funcs
-		 */
-		/**@{*/
+		/// @name Create tex funcs
+		/// @{
 		bool load(const char* filename);
 		bool createEmpty2D(float width, float height, int internalFormat, int format, uint type_);
 		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
-		/**@}*/
+		/// @}
 
 		void bind(uint texUnit = 0) const;
 		void setRepeat(bool repeat) const;
+		void setFiltering(TextureFilteringType filterType);
 		void setTexParameter(uint paramName, int value) const;
 		void setTexParameter(uint paramName, float value) const;
 		void setAnisotropy(uint level);
@@ -53,16 +56,14 @@ class Texture: public Resource
 		uint glId; ///< Identification for OGL
 		uint target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
 
-		/**
-		 * @name Variables set by the renderer
-		 * Set upon OpenGL initialization
-		 */
-		/**@{*/
+		/// @name Variables set by the renderer
+		/// Set upon OpenGL initialization
+		/// @{
 		static int  textureUnitsNum;
 		static bool mipmappingEnabled;
 		static bool compressionEnabled;
 		static int  anisotropyLevel;
-		/**@}*/
+		/// @}
 
 		bool isLoaded() const;
 };

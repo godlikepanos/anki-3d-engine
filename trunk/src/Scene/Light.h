@@ -14,8 +14,8 @@ Specular intensity of light:    Sl
 Specular intensity of material: Sm
 */
 
-#ifndef _LIGHT_H_
-#define _LIGHT_H_
+#ifndef LIGHT_H
+#define LIGHT_H
 
 #include "Common.h"
 #include "Texture.h"
@@ -25,7 +25,7 @@ Specular intensity of material: Sm
 #include "LightData.h"
 
 
-/// Light scene node (Abstract)
+/// Light scene node. It can be spot or point
 class Light: public SceneNode
 {
 	public:
@@ -37,84 +37,27 @@ class Light: public SceneNode
 
 	PROPERTY_R(LightType, type, getType) ///< Light type
 
-	/// @name Copies of some of the resource properties
+	/// @name Copies of some of the resource properties. The others are camera properties or not changeable
 	/// @{
-	PROPERTY_RW(Vec3, diffuseCol, setDiffuseColor, getDiffuseColor)
-	PROPERTY_RW(Vec3, specularCol, setSpecularColor, getSpecularColor)
-	PROPERTY_RW(float, radius, setRadius, getRadius)
+	PROPERTY_RW(Vec3, diffuseCol, setDiffuseCo, getDiffuseCol)
+	PROPERTY_RW(Vec3, specularCol, setSpecularCol, getSpecularCol)
 	PROPERTY_RW(bool, castsShadow_, setCastsShadow, castsShadow)
-	PROPERTY_RW(float, distance, setDistance, getDistance)
-	PROPERTY_RW(float, fovX, setFovX, getFovX)
-	PROPERTY_RW(float, fovY, setFovY, getFovY)
 	/// @}
 
 	public:
 		RsrcPtr<LightData> lightData;
 	
-		Light(LightType type_);
+		Light(LightType type, SceneNode* parent = NULL);
+		~Light() {}
 		void render();
-
-	private:
-		Camera* camera;
+		void init(const char* filename);
 };
 
 
-/// PointLight scene node
-class PointLight: public Light
-{
-	PROPERTY_RW(float, radius, setRadius, getRadius)
-
-	public:
-		PointLight();
-		void init(const char*);
-};
-
-
-/// SpotLight scene node
-class SpotLight: public Light
-{
-	public:
-		Camera* camera;
-		bool castsShadow;
-
-		SpotLight();
-		float getDistance() const;
-		void setDistance(float d);
-		void init(const char*);
-};
-
-
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
-
-inline Light::Light(LightType type_):
-	SceneNode(SNT_LIGHT),
+inline Light::Light(LightType type_, SceneNode* parent):
+	SceneNode(SNT_LIGHT, parent),
 	type(type_)
 {}
 
-
-inline PointLight::PointLight():
-	Light(LT_POINT)
-{}
-
-
-inline SpotLight::SpotLight():
-	Light(LT_SPOT),
-	camera(new Camera(this)),
-	castsShadow(false)
-{}
-
-
-inline float SpotLight::getDistance() const
-{
-	return camera->getZFar();
-}
-
-
-inline void SpotLight::setDistance(float d)
-{
-	camera->setZFar(d);
-}
 
 #endif
