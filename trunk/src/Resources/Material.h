@@ -11,16 +11,14 @@
 #include "RsrcPtr.h"
 
 
-/**
- * Mesh material @ref Resource
- *
- * Every material keeps info of how to render a @ref MeshNode. Among this info it keeps the locations of attribute and
- * uniform variables. The variables can be standard or user defined. The standard variables have standard names inside
- * the shader program and we dont have to mention them in the .mtl files. The material init func scoops the shader
- * program for standard variables and keeps a pointer to the variable. The standard variables are like the GL build-in
- * variables (that we cannot longer use on GL >3) with a few additions. The user defined variables are defined and
- * values inside the .mtl file. The attribute variables cannot be user defined, the uniform on the other hand can.
- */
+/// Mesh material Resource
+///
+/// Every material keeps info of how to render a MeshNode. Among this info it keeps the locations of attribute and
+/// uniform variables. The variables can be standard or user defined. The standard variables have standard names inside
+/// the shader program and we dont have to mention them in the .mtl files. The material init func scoops the shader
+/// program for standard variables and keeps a pointer to the variable. The standard variables are like the GL build-in
+/// variables (that we cannot longer use on GL >3) with a few additions. The user defined variables are defined and
+/// values inside the .mtl file. The attribute variables cannot be user defined, the uniform on the other hand can.
 class Material: public Resource
 {
 	friend class Renderer; ///< For the setupMaterial
@@ -32,9 +30,7 @@ class Material: public Resource
 	friend class MeshNode;
 
 	private:
-		/**
-		 * Standard attribute variables that are acceptable inside the @ref ShaderProg
-		 */
+		/// Standard attribute variables that are acceptable inside the @ref ShaderProg
 		enum StdAttribVars
 		{
 			SAV_POSITION,
@@ -47,14 +43,11 @@ class Material: public Resource
 			SAV_NUM
 		};
 
-		/**
-		 * Standard uniform variables
-		 *
-		 * After changing the enum update also:
-		 * - Some statics in Material.cpp
-		 * - Renderer::setupMaterial
-		 * - The generic material shader (maybe)
-		 */
+		/// Standard uniform variables. The Renderer sees what are applicable and sets them
+		/// After changing the enum update also:
+		/// - Some statics in Material.cpp
+		/// - Renderer::setupMaterial
+		/// - The generic material shader (maybe)
 		enum StdUniVars
 		{
 			// Skinning
@@ -83,23 +76,17 @@ class Material: public Resource
 			SUV_NUM ///< The number of standard uniform variables
 		};
 
-		/**
-		 * Information for the standard shader program variables
-		 */
-		struct StdVarInfo
+		/// Information for the standard shader program variables
+		struct StdVarNameAndGlDataTypePair
 		{
 			const char* varName;
 			GLenum dataType; ///< aka GL data type
 		};
 
-		/**
-		 * Class for user defined material variables that will be passes in to the shader
-		 */
+		/// Class for user defined material variables that will be passes in to the shader
 		struct UserDefinedUniVar
 		{
-			/**
-			 * Unfortunately we cannot use union because of complex classes (Vec2, Vec3 etc)
-			 */
+			/// Unfortunately we cannot use union because of complex classes (Vec2, Vec3 etc)
 			struct Value
 			{
 				RsrcPtr<Texture> texture;
@@ -114,8 +101,8 @@ class Material: public Resource
 		}; // end UserDefinedVar
 
 
-		static StdVarInfo stdAttribVarInfos[SAV_NUM];
-		static StdVarInfo stdUniVarInfos[SUV_NUM];
+		static StdVarNameAndGlDataTypePair stdAttribVarInfos[SAV_NUM];
+		static StdVarNameAndGlDataTypePair stdUniVarInfos[SUV_NUM];
 		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
 		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
@@ -128,32 +115,18 @@ class Material: public Resource
 		bool wireframe;
 		bool castsShadow; ///< Used in shadowmapping passes but not in Ez
 
-		/**
-		 * The func sweeps all the variables of the shader program to find standard shader program variables. It updates the
-		 * stdAttribVars and stdUniVars arrays.
-		 * @return True on success
-		 */
+		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates the
+		/// stdAttribVars and stdUniVars arrays.
+		/// @return True on success
 		bool initStdShaderVars();
 
-		bool hasHWSkinning() const;
-		bool hasAlphaTesting() const;
+		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
+		bool hasAlphaTesting() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
 
 	public:
 		Material();
 		bool load(const char* filename);
 };
-
-
-inline bool Material::hasHWSkinning() const
-{
-	return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;
-}
-
-
-inline bool Material::hasAlphaTesting() const
-{
-	return dpMtl.get()!=NULL && dpMtl->stdAttribVars[SAV_TEX_COORDS] != NULL;
-}
 
 
 #endif

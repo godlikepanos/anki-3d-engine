@@ -16,7 +16,7 @@
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
-Material::StdVarInfo Material::stdAttribVarInfos[SAV_NUM] =
+Material::StdVarNameAndGlDataTypePair Material::stdAttribVarInfos[SAV_NUM] =
 {
 	{"position", GL_FLOAT_VEC3},
 	{"tangent", GL_FLOAT_VEC4},
@@ -27,7 +27,7 @@ Material::StdVarInfo Material::stdAttribVarInfos[SAV_NUM] =
 	{"vertWeightWeights", GL_FLOAT_VEC4}
 };
 
-Material::StdVarInfo Material::stdUniVarInfos[SUV_NUM] =
+Material::StdVarNameAndGlDataTypePair Material::stdUniVarInfos[SUV_NUM] =
 {
 	{"skinningRotations", GL_FLOAT_MAT3},
 	{"skinningTranslations", GL_FLOAT_VEC3},
