@@ -31,13 +31,13 @@ for obj in objs:
 	mi.flipYZ = 1
 	mesh.export(mi)
 	
-	si = skeleton.Initializer()
+	"""si = skeleton.Initializer()
 	si.skeleton = skeleton.getBlSkeletonFromBlObj(obj)
 	si.saveDir = "/home/godlike/src/anki/models/imp/"
 	si.flipYZ = 1
 	skeleton.export(si)
 	
-	"""ai = skelanim.Initializer()
+	ai = skelanim.Initializer()
 	ai.obj = obj
 	ai.saveDir = "/home/godlike/src/anki/models/imp/"
 	ai.flipYZ = 1

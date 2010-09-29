@@ -1,9 +1,10 @@
+#include <fstream>
 #include "Mesh.h"
-#include "Renderer.h"
-#include "Resource.h"
-#include "Scanner.h"
-#include "Parser.h"
 #include "Material.h"
+
+
+#define MESH_ERR(x) \
+	ERROR("File \"" << filename << "\": " << x)
 
 
 //======================================================================================================================
@@ -11,138 +12,170 @@
 //======================================================================================================================
 bool Mesh::load(const char* filename)
 {
-	Scanner scanner;
-	if(!scanner.loadFile(filename))
-		return false;
+	fstream file(filename, fstream::in | fstream::binary);
 
-	const Scanner::Token* token;
-
-	/*
-	 * Material
-	 */
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_STRING)
+	if(!file.is_open())
 	{
-		PARSE_ERR_EXPECTED("string");
+		ERROR("Cannot open file \"" << filename << "\"");
 		return false;
 	}
-	if(strlen(token->getValue().getString()) > 0)
-		material.loadRsrc(token->getValue().getString());
 
-	/*
-	 * Verts
-	 */
-	// verts num
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+	// Magic word
+	char magic[8];
+	file.readsome(magic, 8);
+	if(file.fail() || memcmp(magic, "ANKIMESH", 8))
 	{
-		PARSE_ERR_EXPECTED("integer");
+		MESH_ERR("Incorrect file type");
 		return false;
 	}
-	vertCoords.resize(token->getValue().getInt());
 
-	// read the verts
+	// Mesh name
+	string meshName;
+	if(!Util::readStringFromBinaryStream(file, meshName))
+	{
+		MESH_ERR("Cannot read mesh name");
+		return false;
+	}
+
+	// Material
+	string materialName;
+	if(!Util::readStringFromBinaryStream(file, materialName))
+	{
+		MESH_ERR("Cannot read material name");
+		return false;
+	}
+	if(materialName.length() > 0)
+	{
+		material.loadRsrc(materialName.c_str());
+	}
+
+	// Verts num
+	uint vertsNum;
+	if(!Util::readUintFromBinaryStream(file, vertsNum))
+	{
+		MESH_ERR("Cannot read verts num");
+		return false;
+	}
+	vertCoords.resize(vertsNum);
+
+	// Verts
 	for(uint i=0; i<vertCoords.size(); i++)
 	{
-		if(!Parser::parseMathVector(scanner, vertCoords[i]))
+		for(uint j=0; j<3; j++)
 		{
-			return false;
+			if(!Util::readFloatFromBinaryStream(file, vertCoords[i][j]))
+			{
+				MESH_ERR("Cannot read vert coord");
+				return false;
+			}
 		}
 	}
 
-	/*
-	 * Faces
-	 */
-	// faces num
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+	// Faces num
+	uint facesNum;
+	if(!Util::readUintFromBinaryStream(file, facesNum))
 	{
-		PARSE_ERR_EXPECTED("integer");
+		MESH_ERR("Cannot read faces num");
 		return false;
 	}
-	tris.resize(token->getValue().getInt());
+	tris.resize(facesNum);
+
 	// read the faces
 	for(uint i=0; i<tris.size(); i++)
 	{
-		if(!Parser::parseArrOfNumbers<uint>(scanner, false, true, 3, tris[i].vertIds))
+		for(uint j=0; j<3; j++)
 		{
-			return false;
+			if(!Util::readUintFromBinaryStream(file, tris[i].vertIds[j]))
+			{
+				MESH_ERR("Cannot read vert index");
+				return false;
+			}
+
+			if(tris[i].vertIds[j] >= vertCoords.size())
+			{
+				MESH_ERR("Incorrect vert index " << tris[i].vertIds[j] << " (" << i << ", " << j << ")");
+				return false;
+			}
 		}
 	}
 
-	/*
-	 * Tex coords
-	 */
-	// UVs num
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+	// Tex coords num
+	uint texCoordsNum;
+	if(!Util::readUintFromBinaryStream(file, texCoordsNum))
 	{
-		PARSE_ERR_EXPECTED("integer");
+		MESH_ERR("Cannot read tex coords num");
 		return false;
 	}
-	texCoords.resize(token->getValue().getInt());
-	// read the texCoords
+	texCoords.resize(texCoordsNum);
+
+	// Tex coords
 	for(uint i=0; i<texCoords.size(); i++)
 	{
-		if(!Parser::parseArrOfNumbers(scanner, false, true, 2, &texCoords[i][0]))
-			return false;
+		for(uint j=0; j<2; j++)
+		{
+			if(!Util::readFloatFromBinaryStream(file, texCoords[i][j]))
+			{
+				MESH_ERR("Cannot read tex coord");
+				return false;
+			}
+		}
 	}
 
-	/*
-	 * Vert weights
-	 */
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+	// Vert weights num
+	uint vertWeightsNum;
+	if(!Util::readUintFromBinaryStream(file, vertWeightsNum))
 	{
-		PARSE_ERR_EXPECTED("integer");
+		MESH_ERR("Cannot read vert weights num");
 		return false;
 	}
-	vertWeights.resize(token->getValue().getInt());
+	vertWeights.resize(vertWeightsNum);
+
+	// Vert weights
 	for(uint i=0; i<vertWeights.size(); i++)
 	{
 		// get the bone connections num
-		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+		uint boneConnections;
+		if(!Util::readUintFromBinaryStream(file, boneConnections))
 		{
-			PARSE_ERR_EXPECTED("integer");
+			MESH_ERR("Cannot read vert weight bone connections num");
 			return false;
 		}
 
 		// we treat as error if one vert doesnt have a bone
-		if(token->getValue().getInt() < 1)
+		if(boneConnections < 1)
 		{
-			ERROR("Vert \"" << i << "\" doesnt have at least one bone");
+			MESH_ERR("Vert \"" << i << "\" sould have have at least one bone");
 			return false;
 		}
 
 		// and here is another possible error
-		if(token->getValue().getInt() > VertexWeight::MAX_BONES_PER_VERT)
+		if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 		{
-			ERROR("Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex");
+			MESH_ERR("Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex");
 			return false;
 		}
-		vertWeights[i].bonesNum = token->getValue().getInt();
+		vertWeights[i].bonesNum = boneConnections;
 
 		// for all the weights of the current vertes
 		for(uint j=0; j<vertWeights[i].bonesNum; j++)
 		{
 			// read bone id
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+			uint boneId;
+			if(!Util::readUintFromBinaryStream(file, boneId))
 			{
-				PARSE_ERR_EXPECTED("integer");
+				MESH_ERR("Cannot read bone ID");
 				return false;
 			}
-			vertWeights[i].boneIds[j] = token->getValue().getInt();
+			vertWeights[i].boneIds[j] = boneId;
 
 			// read the weight of that bone
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_FLOAT)
+			float weight;
+			if(!Util::readFloatFromBinaryStream(file, weight))
 			{
-				PARSE_ERR_EXPECTED("float");
+				MESH_ERR("Cannot read weight");
 				return false;
 			}
-			vertWeights[i].weights[j] = token->getValue().getFloat();
+			vertWeights[i].weights[j] = weight;
 		}
 	}
 
