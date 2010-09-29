@@ -42,12 +42,18 @@ bool LightData::load(const char* filename)
 		// DIFFUSE_COL
 		if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DIFFUSE_COLOR"))
 		{
-			Parser::parseArrOfNumbers<float>(scanner, true, true, 3, &diffuseCol[0]);
+			if(!Parser::parseMathVector(scanner, diffuseCol))
+			{
+				return false;
+			}
 		}
 		// SPECULAR_COL
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SPECULAR_COLOR"))
 		{
-			Parser::parseArrOfNumbers<float>(scanner, true, true, 3, &specularCol[0]);
+			if(!Parser::parseMathVector(scanner, specularCol))
+			{
+				return false;
+			}
 		}
 		// RADIUS
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "RADIUS"))

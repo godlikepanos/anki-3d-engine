@@ -7,6 +7,43 @@
 
 
 /// Skeleton animation resource
+///
+/// The format will be changed to:
+///
+/// skeletonAnimation
+/// {
+/// 	name <same-as-file>
+/// 	keyframes {<val> <val> ... <val>}
+/// 	bones
+/// 	{
+/// 		num <val>
+/// 		boneAnims
+/// 		{
+/// 			boneAnim
+/// 			{
+/// 				hasAnim <true | false>
+/// 				[bonePoses
+/// 				{
+/// 					bonePose
+/// 					{
+/// 						quat {<val> <val> <val> <val>}
+/// 						trf {<val> <val> <val>}
+/// 					}
+/// 					...
+/// 					bonePose
+/// 					{
+/// 						...
+/// 					}
+/// 				}]
+/// 			}
+/// 			...
+/// 			boneAnim
+/// 			{
+/// 				...
+/// 			}
+/// 		}
+/// 	}
+/// }
 class SkelAnim: public Resource
 {
 	public:

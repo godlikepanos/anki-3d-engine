@@ -371,6 +371,15 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
+	Scanner scanner;
+	stringstream ss;
+	ss << "{-10.1 0101}";
+	scanner.loadIstream(ss);
+	Vec2 v;
+	Parser::parseMathVector(scanner, v);
+	cout << v << endl;
+	return false;
+
 	new App(argc, argv);
 	init();
 
