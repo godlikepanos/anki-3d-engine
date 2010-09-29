@@ -44,8 +44,10 @@ bool Mesh::load(const char* filename)
 	// read the verts
 	for(uint i=0; i<vertCoords.size(); i++)
 	{
-		if(!Parser::parseArrOfNumbers<float>(scanner, false, true, 3, &vertCoords[i][0]))
+		if(!Parser::parseMathVector(scanner, vertCoords[i]))
+		{
 			return false;
+		}
 	}
 
 	/*
@@ -63,7 +65,9 @@ bool Mesh::load(const char* filename)
 	for(uint i=0; i<tris.size(); i++)
 	{
 		if(!Parser::parseArrOfNumbers<uint>(scanner, false, true, 3, tris[i].vertIds))
+		{
 			return false;
+		}
 	}
 
 	/*

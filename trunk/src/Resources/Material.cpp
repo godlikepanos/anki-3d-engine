@@ -384,18 +384,24 @@ bool Material::load(const char* filename)
 						break;
 					// vec2
 					case GL_FLOAT_VEC2:
-						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 2, &var.value.vec2[0]))
+						if(!Parser::parseMathVector(scanner, var.value.vec2))
+						{
 							return false;
+						}
 						break;
 					// vec3
 					case GL_FLOAT_VEC3:
-						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 3, &var.value.vec3[0]))
+						if(!Parser::parseMathVector(scanner, var.value.vec3))
+						{
 							return false;
+						}
 						break;
 					// vec4
 					case GL_FLOAT_VEC4:
-						if(!Parser::parseArrOfNumbers<float>(scanner, true, true, 4, &var.value.vec4[0]))
+						if(!Parser::parseMathVector(scanner, var.value.vec4))
+						{
 							return false;
+						}
 						break;
 				};
 

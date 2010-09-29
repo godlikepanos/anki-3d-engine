@@ -108,22 +108,24 @@ bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Ty
 }
 
 
-//======================================================================================================================
-// parseSignedNumber                                                                                                   =
-//======================================================================================================================
-/**
- * Parse a single number
- * @param scanner The scanner that we will use
- * @param out The output number
- * @return True on success
- */
+/// Parse a single number
+/// @param scanner The scanner that we will use
+/// @param sign If true expect sign or not
+/// @param out The output number
+/// @return True on success
 template <typename Type>
-bool parseSignedNumber(Scanner& scanner, Type& out)
-{
-	return parseArrOfNumbers(scanner, false, true, 1, &out);
-}
+bool parseNumber(Scanner& scanner, bool sign, Type& out);
+
+
+///
+template <typename Type>
+bool parseMathVector(Scanner& scanner, Type& out);
 
 
 } // end namespace Parser
+
+
+#include "Parser.inl.h"
+
 
 #endif
