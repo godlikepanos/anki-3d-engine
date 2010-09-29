@@ -1,5 +1,6 @@
 import sys
 import os
+from struct import pack
 from copy import deepcopy
 from Blender import Mathutils
 from Blender.Mathutils import *
@@ -233,16 +234,17 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 	# write to ftxt
 	
 	# write mtl name
-	ftxt = "\"" + mtlName + "\"\n"
+	"""ftxt = "mesh\n{\n"
+	ftxt += "\tmaterial \"" + mtlName + "\"\n"
 	
 	# write verts
-	ftxt += str(len(ankiVerts)) + "\n"
+	ftxt += "\tvertsNum " + str(len(ankiVerts)) + "\n\tverts\n\t{\n"
 	for i in range(len(ankiVerts)):
 		ankiVert = ankiVerts[i]
 		if flipYZ == 0:
-			ftxt += str(ankiVert.x) + " " + str(ankiVert.y) + " " + str(ankiVert.z) + "\n"
+			ftxt += "\t\tvert {" + str(ankiVert.x) + " " + str(ankiVert.y) + " " + str(ankiVert.z) + "}\n"
 		else:
-			ftxt += str(ankiVert.x) + " " + str(ankiVert.z) + " " + str(-ankiVert.y) + "\n"
+			ftxt += "\t\tvert {" + str(ankiVert.x) + " " + str(ankiVert.z) + " " + str(-ankiVert.y) + "}\n"
 		
 	# write the tris
 	ftxt += str(len(ankiTris)) + "\n"
@@ -271,7 +273,60 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 	else:
 		ftxt += "0\n"
 
-	return ftxt
+	return ftxt"""
+	
+	# Magic
+	buff = pack("8s", "ANKIMESH")
+	
+	# Mesh name
+	str_ = "meshname"
+	buff += pack("I" + str(len(str_)) + "s", len(str_), str_)
+	
+	# Mtl name
+	str_ = mtlName
+	buff += pack("I" + str(len(str_)) + "s", len(str_), str_)
+	
+	# Verts num
+	buff += pack("I", len(ankiVerts))
+	
+	# Verts
+	for i in range(len(ankiVerts)):
+		ankiVert = ankiVerts[i]
+		if flipYZ == 0:
+			buff += pack("fff", ankiVert.x, ankiVert.y, ankiVert.z)
+		else:
+			buff += pack("fff", ankiVert.x, ankiVert.z, -ankiVert.y)
+	
+	# Tris num
+	buff += pack("I", len(ankiTris))
+	
+	# Tris
+	for ankiTri in ankiTris:
+		buff += pack("III", int(ankiTri.vertIds[0]), int(ankiTri.vertIds[1]), int(ankiTri.vertIds[2]))
+		
+	# Tex coords
+	if hasUvs:
+		buff += pack("I", len(ankiVerts))
+		for i in range(len(ankiVerts)):
+			buff += pack("ff", ankiVerts[i].s, ankiVerts[i].t)
+	else:
+		buff += pack("I", 0)
+		
+	# Bone weights
+	if skeleton != None:
+		updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts)
+		
+		buff += pack("I", len(ankiVerts))
+		
+		for i in range(len(ankiVerts)):
+			ankiVert = ankiVerts[i]
+			buff += pack("I", ankiVert.bonesNum)
+			for j in range(ankiVert.bonesNum):
+				buff += pack("If", ankiVert.boneIds[j], ankiVert.weights[j])
+	else:
+		buff += pack("I", 0)
+	
+	return buff
 			
 		
 #=======================================================================================================================
@@ -292,7 +347,7 @@ def export(meshInit):
 	
 	print("Trying to export mesh \"" + mesh.name + "\"")
 	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
-	file = open(filename, "w")
+	file = open(filename, "wb")
 	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	
 	

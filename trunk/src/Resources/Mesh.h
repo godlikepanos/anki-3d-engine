@@ -12,9 +12,12 @@
 class Material;
 
 
-/**
- * Mesh @ref Resource. If the material name is empty then the mesh wont be rendered and no VBOs will be created
- */
+/// Mesh Resource. If the material name is empty then the mesh wont be rendered and no VBOs will be created
+///
+/// File format:
+///
+/// <magic:ANKIMESH> <string:meshName> <string:material> <uint:vertsNum> <float:vert[0].x> <float:vert[0].y>
+/// <float:vert[0].y> ... <float:vert[n].x> <float:vert[n].y> <float:vert[n].z>
 class Mesh: public Resource
 {
 	public:

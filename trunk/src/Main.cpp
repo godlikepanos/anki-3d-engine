@@ -165,17 +165,18 @@ void init()
 	spot_lights[1]->init("maps/temple/light3.light");
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
+	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
+																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
+	app->getScene().skybox.load(skybox_fnames);
+
 	// horse
-	horse = new MeshNode();
+	/*horse = new MeshNode();
 	horse->init("meshes/horse/horse.mesh");
 	//horse->init("models/head/head.mesh");
-	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));
-	
-	RsrcPtr<Texture> ttex;
-	ttex.loadRsrc("gfx/stone.diff.png");
+	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));*/
 
 	// sarge
-	sarge = new MeshNode();
+	/*sarge = new MeshNode();
 	sarge->init("meshes/sphere/sphere16.mesh");
 	//sarge->setLocalTransform(Vec3(0, -2.8, 1.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 1.1);
 	sarge->setLocalTransform(Transform(Vec3(0, 2.0, 2.0), Mat3::getIdentity(), 0.4));
@@ -183,7 +184,7 @@ void init()
 	// floor
 	floor__ = new MeshNode();
 	floor__->init("maps/temple/Cube.019.mesh");
-	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.8));
+	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.8));*/
 
 	// imp	
 	imp = new SkelModelNode();
@@ -192,6 +193,8 @@ void init()
 	SkelAnimCtrl* ctrl = new SkelAnimCtrl(*imp->meshNodes[0]->meshSkelCtrl->skelNode);
 	ctrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
 	ctrl->step = 0.8;
+
+	return;
 
 	// cave map
 	/*for(int i=1; i<21; i++)
@@ -232,10 +235,6 @@ void init()
 	//
 	//floor_ = new floor_t;
 	//floor_->material = RsrcMngr::materials.load("materials/default.mtl");
-
-	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
-																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	app->getScene().skybox.load(skybox_fnames);
 
 
 	initPhysics();
@@ -371,15 +370,6 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	Scanner scanner;
-	stringstream ss;
-	ss << "{-10.1 0101}";
-	scanner.loadIstream(ss);
-	Vec2 v;
-	Parser::parseMathVector(scanner, v);
-	cout << v << endl;
-	return false;
-
 	new App(argc, argv);
 	init();
 
