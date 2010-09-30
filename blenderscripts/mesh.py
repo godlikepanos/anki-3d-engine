@@ -144,7 +144,7 @@ def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 #=======================================================================================================================
 # getAnkiMeshScript                                                                                                    =
 #=======================================================================================================================
-def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
+def	getAnkiMeshScript(mesh, skeleton, mtlName, meshName, flipYZ):
 	# check verts number
 	vertsNum = len(mesh.verts)
 	if vertsNum < 3:
@@ -279,7 +279,7 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, flipYZ):
 	buff = pack("8s", "ANKIMESH")
 	
 	# Mesh name
-	str_ = "meshname"
+	str_ = meshName
 	buff += pack("I" + str(len(str_)) + "s", len(str_), str_)
 	
 	# Mtl name
@@ -346,8 +346,8 @@ def export(meshInit):
 			raise RuntimeError("The given func param is not a \"Armature\" class but a \"" + skeleton.__class__.__name__ + "\"")
 	
 	print("Trying to export mesh \"" + mesh.name + "\"")
-	filename = os.path.abspath(meshInit.saveDir + mesh.name + ".mesh")
+	filename = os.path.abspath(meshInit.saveDir + mesh.name)
 	file = open(filename, "wb")
-	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, meshInit.flipYZ))
+	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, mesh.name, meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	
 	

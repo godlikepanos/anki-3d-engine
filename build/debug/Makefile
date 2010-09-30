@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src/Scripting/ -I../../src/Math/ -I../../src/Util/Tokenizer/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../src/Resources/Core/ -I../../src/Core/ -I../../src/Scripting/Math -I../../src/Scripting/Util -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Scripting//ScriptingEngine.cpp ../../src/Scripting//BoostPythonInterfaces.cpp ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//collision.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//memory.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ez.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//SpotLight.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Scene.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//LightData.cpp ../../src/Resources//Script.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Resources//Texture.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Material.cpp ../../src/Util//Object.cpp ../../src/Util//Input.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//DebugDrawer.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp ../../src/Core//App.cpp ../../src/Core//Common.cpp ../../src/Core//StdinListener.cpp 
-OBJECTS = ScriptingEngine.o BoostPythonInterfaces.o Scanner.o collision.o skybox.o map.o memory.o TestHeader.o Main.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o MeshNode.o Camera.o SpotLight.o SkelModelNode.o SkelNode.o Light.o Scene.o SceneNode.o ParticleEmitter.o Ui.o ShaderProg.o Mesh.o SkelAnim.o LightData.o Script.o Skeleton.o ParticleEmitterProps.o Texture.o Extension.o Material.o Object.o Input.o Util.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o DebugDrawer.o PhyCharacter.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o App.o Common.o StdinListener.o 
+SOURCES = ../../src/Scripting//ScriptingEngine.cpp ../../src/Scripting//BoostPythonInterfaces.cpp ../../src/Util/Tokenizer//Scanner.cpp ../../src/Misc//collision.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//memory.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ez.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//SpotLight.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//Scene.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//LightData.cpp ../../src/Resources//Script.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Resources//Texture.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Material.cpp ../../src/Util//Object.cpp ../../src/Util//BinaryStream.cpp ../../src/Util//Input.cpp ../../src/Util//Util.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//DebugDrawer.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp ../../src/Core//App.cpp ../../src/Core//Common.cpp ../../src/Core//StdinListener.cpp 
+OBJECTS = ScriptingEngine.o BoostPythonInterfaces.o Scanner.o collision.o skybox.o map.o memory.o TestHeader.o Main.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o MeshNode.o Camera.o SpotLight.o SkelModelNode.o SkelNode.o Light.o Scene.o SceneNode.o ParticleEmitter.o Ui.o ShaderProg.o Mesh.o SkelAnim.o LightData.o Script.o Skeleton.o ParticleEmitterProps.o Texture.o Extension.o Material.o Object.o BinaryStream.o Input.o Util.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o DebugDrawer.o PhyCharacter.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o App.o Common.o StdinListener.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -51,15 +51,16 @@ ScriptingEngine.o: ../../src/Scripting//ScriptingEngine.cpp \
  /usr/include/python2.6/code.h /usr/include/python2.6/eval.h \
  /usr/include/python2.6/pystrtod.h /usr/include/python2.6/pystrcmp.h \
  /usr/include/python2.6/pyfpe.h ../../src/Scripting//ScriptingEngine.h \
- ../../src/Core/Common.h ../../src/Util/Object.h ../../src/Util/Vec.h
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Util/Object.h ../../src/Util/Vec.h
 	@echo Compiling ../../src/Scripting//ScriptingEngine.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting//ScriptingEngine.cpp -o ScriptingEngine.o
 
 BoostPythonInterfaces.o: ../../src/Scripting//BoostPythonInterfaces.cpp \
- ../../src/Core/Common.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -257,15 +258,16 @@ BoostPythonInterfaces.o: ../../src/Scripting//BoostPythonInterfaces.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting//BoostPythonInterfaces.cpp -o BoostPythonInterfaces.o
 
 Scanner.o: ../../src/Util/Tokenizer//Scanner.cpp \
- ../../src/Util/Tokenizer//Scanner.h ../../src/Core/Common.h
+ ../../src/Util/Tokenizer//Scanner.h ../../src/Core/Common.h \
+ ../../src/Core/StdTypes.h
 	@echo Compiling ../../src/Util/Tokenizer//Scanner.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Tokenizer//Scanner.cpp -o Scanner.o
 
 collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
- ../../src/Core/Common.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -322,12 +324,12 @@ collision.o: ../../src/Misc//collision.cpp ../../src/Misc//collision.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//collision.cpp -o collision.o
 
 skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
- ../../src/Core/Common.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -521,8 +523,8 @@ map.o: ../../src/Misc//map.cpp
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//map.cpp -o map.o
 
 memory.o: ../../src/Misc//memory.cpp ../../src/Misc//memory.h \
- ../../src/Core/Common.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -624,6 +626,7 @@ TestHeader.o: ../../src/Misc//TestHeader.cpp \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
  ../../src/Misc/memory.h ../../src/Core/Common.h \
+ ../../src/Core/StdTypes.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -704,7 +707,8 @@ TestHeader.o: ../../src/Misc//TestHeader.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//TestHeader.cpp -o TestHeader.o
 
 Main.o: ../../src//Main.cpp ../../src/Core/Common.h \
- ../../src/Util/Input.h ../../extern/include/SDL/SDL_scancode.h \
+ ../../src/Core/StdTypes.h ../../src/Util/Input.h \
+ ../../extern/include/SDL/SDL_scancode.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -919,7 +923,7 @@ Main.o: ../../src//Main.cpp ../../src/Core/Common.h \
 
 Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../src/Renderer//Renderer.h ../../src/Core/Common.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/StdTypes.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -1115,7 +1119,8 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Renderer.cpp -o Renderer.o
 
 Hdr.o: ../../src/Renderer//Hdr.cpp ../../src/Renderer//Hdr.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
@@ -1176,7 +1181,8 @@ Hdr.o: ../../src/Renderer//Hdr.cpp ../../src/Renderer//Hdr.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Hdr.cpp -o Hdr.o
 
 Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Bs.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
@@ -1374,7 +1380,8 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Bs.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Bs.cpp -o Bs.o
 
 Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Sm.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
@@ -1573,7 +1580,8 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Sm.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Sm.cpp -o Sm.o
 
 Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Dbg.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Math/Math.h \
@@ -1770,7 +1778,8 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Dbg.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Dbg.cpp -o Dbg.o
 
 Smo.o: ../../src/Renderer//Smo.cpp ../../src/Renderer//Smo.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
@@ -1803,7 +1812,8 @@ Smo.o: ../../src/Renderer//Smo.cpp ../../src/Renderer//Smo.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Smo.cpp -o Smo.o
 
 Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Pps.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Renderer//Hdr.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
@@ -1831,15 +1841,15 @@ Pps.o: ../../src/Renderer//Pps.cpp ../../src/Renderer//Pps.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Pps.cpp -o Pps.o
 
 Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Ms.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
- ../../src/Renderer//Ez.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Renderer//Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h ../../src/Renderer//Ez.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h \
+ ../../src/Renderer//Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2031,10 +2041,11 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Ms.h \
 
 MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../src/Renderer//MainRenderer.h ../../src/Core/Common.h \
- ../../src/Renderer//Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/StdTypes.h ../../src/Renderer//Renderer.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2092,7 +2103,8 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//MainRenderer.cpp -o MainRenderer.o
 
 Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Is.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Renderer//Sm.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
@@ -2289,7 +2301,8 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Is.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Is.cpp -o Is.o
 
 Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ssao.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
@@ -2319,7 +2332,8 @@ Ssao.o: ../../src/Renderer//Ssao.cpp ../../src/Renderer//Ssao.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ssao.cpp -o Ssao.o
 
 Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Ez.h \
- ../../src/Core/Common.h ../../src/Renderer//RenderingStage.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer//RenderingStage.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Renderer//Renderer.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
@@ -2517,11 +2531,11 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Ez.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer//Ez.cpp -o Ez.o
 
 MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
- ../../src/Core/Common.h ../../src/Scene//SceneNode.h \
- ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Scene//SceneNode.h ../../src/Util/Vec.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2586,10 +2600,11 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//MeshNode.cpp -o MeshNode.o
 
 Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
- ../../src/Core/Common.h ../../src/Misc/collision.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Misc/collision.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2647,10 +2662,11 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Camera.cpp -o Camera.o
 
 SpotLight.o: ../../src/Scene//SpotLight.cpp ../../src/Scene//SpotLight.h \
- ../../src/Core/Common.h ../../src/Scene//Light.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Scene//SceneNode.h \
- ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Scene//Light.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Scene//SceneNode.h ../../src/Util/Vec.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2670,11 +2686,11 @@ SpotLight.o: ../../src/Scene//SpotLight.cpp ../../src/Scene//SpotLight.h \
 
 SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
  ../../src/Scene//SkelModelNode.h ../../src/Core/Common.h \
- ../../src/Scene//MeshNode.h ../../src/Scene//SceneNode.h \
- ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/StdTypes.h ../../src/Scene//MeshNode.h \
+ ../../src/Scene//SceneNode.h ../../src/Util/Vec.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2701,11 +2717,11 @@ SkelModelNode.o: ../../src/Scene//SkelModelNode.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//SkelModelNode.cpp -o SkelModelNode.o
 
 SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
- ../../src/Core/Common.h ../../src/Scene//SceneNode.h \
- ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Scene//SceneNode.h ../../src/Util/Vec.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2765,10 +2781,10 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//SkelNode.cpp -o SkelNode.o
 
 Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
- ../../src/Core/Common.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Scene//SceneNode.h ../../src/Util/Vec.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Scene//SceneNode.h \
+ ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2829,10 +2845,10 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Light.cpp -o Light.o
 
 Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
- ../../src/Core/Common.h ../../src/Util/Object.h ../../src/Util/Vec.h \
- ../../src/Misc/skybox.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Util/Object.h ../../src/Util/Vec.h ../../src/Misc/skybox.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2992,10 +3008,11 @@ Scene.o: ../../src/Scene//Scene.cpp ../../src/Scene//Scene.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//Scene.cpp -o Scene.o
 
 SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
- ../../src/Core/Common.h ../../src/Util/Vec.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Util/Vec.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3249,6 +3266,7 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
  ../../src/Misc/memory.h ../../src/Core/Common.h \
+ ../../src/Core/StdTypes.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -3385,11 +3403,11 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene//ParticleEmitter.cpp -o ParticleEmitter.o
 
 Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Core/Common.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/StdTypes.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3446,11 +3464,12 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h ../../src/Core/Common.h \
 
 ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../src/Resources//ShaderProg.h ../../extern/include/GL/glew.h \
- ../../src/Core/Common.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3507,10 +3526,10 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//ShaderProg.cpp -o ShaderProg.o
 
 Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
- ../../src/Core/Common.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3524,17 +3543,18 @@ Mesh.o: ../../src/Resources//Mesh.cpp ../../src/Resources//Mesh.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Misc/collision.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources//Material.h \
  ../../src/Resources//ShaderProg.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources//Texture.h
+ ../../src/Resources//Texture.h ../../src/Util/BinaryStream.h \
+ ../../src/Core/Exception.h ../../src/Core/StdTypes.h
 	@echo Compiling ../../src/Resources//Mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Mesh.cpp -o Mesh.o
 
 SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
  ../../src/Resources//SkelAnim.h ../../src/Core/Common.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/StdTypes.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3550,11 +3570,12 @@ SkelAnim.o: ../../src/Resources//SkelAnim.cpp \
 
 LightData.o: ../../src/Resources//LightData.cpp \
  ../../extern/include/GL/glew.h ../../src/Resources//LightData.h \
- ../../src/Core/Common.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3570,14 +3591,15 @@ LightData.o: ../../src/Resources//LightData.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//LightData.cpp -o LightData.o
 
 Script.o: ../../src/Resources//Script.cpp ../../src/Resources//Script.h \
- ../../src/Core/Common.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources//Script.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Script.cpp -o Script.o
 
 Skeleton.o: ../../src/Resources//Skeleton.cpp \
  ../../src/Resources//Skeleton.h ../../src/Core/Common.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/StdTypes.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3598,7 +3620,7 @@ Skeleton.o: ../../src/Resources//Skeleton.cpp \
 
 ParticleEmitterProps.o: ../../src/Resources//ParticleEmitterProps.cpp \
  ../../src/Resources//ParticleEmitterProps.h ../../src/Core/Common.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/StdTypes.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3616,12 +3638,12 @@ ParticleEmitterProps.o: ../../src/Resources//ParticleEmitterProps.cpp \
 
 Texture.o: ../../src/Resources//Texture.cpp \
  ../../extern/include/GL/glew.h ../../src/Resources//Texture.h \
- ../../src/Core/Common.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3645,14 +3667,14 @@ Texture.o: ../../src/Resources//Texture.cpp \
 
 Extension.o: ../../src/Resources//Extension.cpp \
  ../../src/Resources//Extension.h ../../src/Core/Common.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h
+ ../../src/Core/StdTypes.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources//Extension.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Extension.cpp -o Extension.o
 
 Material.o: ../../src/Resources//Material.cpp \
  ../../src/Resources//Material.h ../../src/Core/Common.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/StdTypes.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3717,9 +3739,15 @@ Material.o: ../../src/Resources//Material.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources//Material.cpp -o Material.o
 
 Object.o: ../../src/Util//Object.cpp ../../src/Util//Object.h \
- ../../src/Core/Common.h ../../src/Util//Vec.h
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Util//Vec.h
 	@echo Compiling ../../src/Util//Object.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//Object.cpp -o Object.o
+
+BinaryStream.o: ../../src/Util//BinaryStream.cpp \
+ ../../src/Util//BinaryStream.h ../../src/Core/Exception.h \
+ ../../src/Core/StdTypes.h
+	@echo Compiling ../../src/Util//BinaryStream.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//BinaryStream.cpp -o BinaryStream.o
 
 Input.o: ../../src/Util//Input.cpp ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
@@ -3755,11 +3783,12 @@ Input.o: ../../src/Util//Input.cpp ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Util//Input.h \
  ../../extern/include/SDL/SDL_scancode.h ../../src/Core/Common.h \
- ../../src/Util//Vec.h ../../src/Core/App.h ../../src/Core/Common.h \
- ../../src/Util/Object.h ../../src/Util/Vec.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/StdTypes.h ../../src/Util//Vec.h ../../src/Core/App.h \
+ ../../src/Core/Common.h ../../src/Util/Object.h ../../src/Util/Vec.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -3783,16 +3812,16 @@ Input.o: ../../src/Util//Input.cpp ../../extern/include/SDL/SDL.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//Input.cpp -o Input.o
 
 Util.o: ../../src/Util//Util.cpp ../../src/Util//Util.h \
- ../../src/Core/Common.h ../../src/Util//Vec.h
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Util//Vec.h
 	@echo Compiling ../../src/Util//Util.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util//Util.cpp -o Util.o
 
 Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../src/Scene/Controllers//Controller.h ../../src/Core/Common.h \
- ../../src/Scene/Scene.h ../../src/Util/Object.h ../../src/Util/Vec.h \
- ../../src/Misc/skybox.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Core/StdTypes.h ../../src/Scene/Scene.h \
+ ../../src/Util/Object.h ../../src/Util/Vec.h ../../src/Misc/skybox.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
+ ../../src/Util/Util.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3974,11 +4003,11 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
 
 SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../src/Scene/Controllers//SkelAnimCtrl.h ../../src/Core/Common.h \
- ../../src/Util/Vec.h ../../src/Scene/Controllers//Controller.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/StdTypes.h ../../src/Util/Vec.h \
+ ../../src/Scene/Controllers//Controller.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -4106,6 +4135,7 @@ Physics.o: ../../src/Physics//Physics.cpp \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
  ../../src/Misc/memory.h ../../src/Core/Common.h \
+ ../../src/Core/StdTypes.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -4256,6 +4286,7 @@ RigidBody.o: ../../src/Physics//RigidBody.cpp \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
  ../../src/Misc/memory.h ../../src/Core/Common.h \
+ ../../src/Core/StdTypes.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -4356,11 +4387,12 @@ DebugDrawer.o: ../../src/Physics//DebugDrawer.cpp \
  ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
  ../../extern/include/bullet/LinearMath/btQuaternion.h \
  ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../src/Core/Common.h ../../src/Renderer/MainRenderer.h \
- ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathForwardDecls.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathDfltHeader.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathDfltHeader.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -4601,6 +4633,7 @@ PhyCharacter.o: ../../src/Physics//PhyCharacter.cpp \
  ../../extern/include/bullet/LinearMath/btStackAlloc.h \
  ../../extern/include/bullet/LinearMath/btHashMap.h \
  ../../src/Misc/memory.h ../../src/Core/Common.h \
+ ../../src/Core/StdTypes.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
  ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
@@ -4692,14 +4725,15 @@ PhyCharacter.o: ../../src/Physics//PhyCharacter.cpp \
 
 Image.o: ../../src/Resources/Helpers//Image.cpp \
  ../../src/Resources/Helpers//Image.h ../../src/Core/Common.h \
- ../../src/Util/Vec.h ../../src/Util/Util.h ../../src/Util/Vec.h
+ ../../src/Core/StdTypes.h ../../src/Util/Vec.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources/Helpers//Image.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Helpers//Image.cpp -o Image.o
 
 ShaderPrePreprocessor.o: \
  ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp \
  ../../src/Resources/Helpers//ShaderPrePreprocessor.h \
- ../../src/Core/Common.h ../../src/Util/Vec.h \
+ ../../src/Core/Common.h ../../src/Core/StdTypes.h ../../src/Util/Vec.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.h \
  ../../src/Util/Tokenizer/Scanner.h ../../src/Util/Tokenizer/Parser.inl.h \
  ../../src/Util/Tokenizer/Parser.h ../../src/Util/Util.h \
@@ -4709,8 +4743,8 @@ ShaderPrePreprocessor.o: \
 
 RsrcPtr.o: ../../src/Resources/Core//RsrcPtr.cpp \
  ../../src/Resources/Core//RsrcPtr.h ../../src/Core/Common.h \
- ../../src/Resources/Core//RsrcContainer.h ../../src/Util/Vec.h \
- ../../src/Resources/Core//RsrcContainer.inl.h \
+ ../../src/Core/StdTypes.h ../../src/Resources/Core//RsrcContainer.h \
+ ../../src/Util/Vec.h ../../src/Resources/Core//RsrcContainer.inl.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/Material.h ../../src/Math/Math.h \
@@ -4738,7 +4772,8 @@ RsrcPtr.o: ../../src/Resources/Core//RsrcPtr.cpp \
 
 RsrcContainers.o: ../../src/Resources/Core//RsrcContainers.cpp \
  ../../src/Resources/Core//RsrcContainer.h ../../src/Core/Common.h \
- ../../src/Util/Vec.h ../../src/Resources/Core//RsrcContainer.inl.h \
+ ../../src/Core/StdTypes.h ../../src/Util/Vec.h \
+ ../../src/Resources/Core//RsrcContainer.inl.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h \
  ../../src/Resources/Material.h ../../src/Math/Math.h \
@@ -4797,8 +4832,9 @@ App.o: ../../src/Core//App.cpp ../../extern/include/GL/glew.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core//App.h \
- ../../src/Core//Common.h ../../src/Util/Object.h ../../src/Core/Common.h \
- ../../src/Util/Vec.h ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Core//Common.h ../../src/Core//StdTypes.h \
+ ../../src/Util/Object.h ../../src/Core/Common.h ../../src/Util/Vec.h \
+ ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
  ../../src/Util/Util.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathForwardDecls.h ../../src/Math/Vec2.inl.h \
@@ -4958,8 +4994,9 @@ App.o: ../../src/Core//App.cpp ../../extern/include/GL/glew.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core//App.cpp -o App.o
 
 Common.o: ../../src/Core//Common.cpp ../../extern/include/GL/glew.h \
- ../../src/Core//Common.h ../../src/Core//App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Core//Common.h ../../src/Core//StdTypes.h \
+ ../../src/Core//App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -4997,7 +5034,8 @@ Common.o: ../../src/Core//Common.cpp ../../extern/include/GL/glew.h \
 
 StdinListener.o: ../../src/Core//StdinListener.cpp \
  ../../src/Core//StdinListener.h ../../src/Core//Common.h \
- ../../src/Util/Object.h ../../src/Core/Common.h ../../src/Util/Vec.h
+ ../../src/Core//StdTypes.h ../../src/Util/Object.h \
+ ../../src/Core/Common.h ../../src/Util/Vec.h
 	@echo Compiling ../../src/Core//StdinListener.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core//StdinListener.cpp -o StdinListener.o
 

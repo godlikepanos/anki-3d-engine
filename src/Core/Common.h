@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <iostream>
+#include "StdTypes.h"
 
 // dummy define just to use the namespace
 namespace boost
@@ -23,27 +24,6 @@ using namespace std;
 		#error "PLATFORM not defined"
 	#endif
 #endif
-
-
-//======================================================================================================================
-// misc types                                                                                                          =
-//======================================================================================================================
-#ifndef uchar
-	typedef unsigned char uchar;
-#endif
-
-#ifndef uint
-	typedef unsigned int uint;
-#endif
-
-#ifndef ushort
-	typedef unsigned short int ushort;
-#endif
-
-#ifndef ulong
-	typedef unsigned long int ulong;
-#endif
-
 
 
 //======================================================================================================================

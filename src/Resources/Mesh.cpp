@@ -1,6 +1,7 @@
 #include <fstream>
 #include "Mesh.h"
 #include "Material.h"
+#include "BinaryStream.h"
 
 
 #define MESH_ERR(x) \
@@ -20,163 +21,118 @@ bool Mesh::load(const char* filename)
 		return false;
 	}
 
-	// Magic word
-	char magic[8];
-	file.readsome(magic, 8);
-	if(file.fail() || memcmp(magic, "ANKIMESH", 8))
-	{
-		MESH_ERR("Incorrect file type");
-		return false;
-	}
+	BinaryStream bs(file.rdbuf());
 
-	// Mesh name
-	string meshName;
-	if(!Util::readStringFromBinaryStream(file, meshName))
+	// Try loading the file
+	try
 	{
-		MESH_ERR("Cannot read mesh name");
-		return false;
-	}
-
-	// Material
-	string materialName;
-	if(!Util::readStringFromBinaryStream(file, materialName))
-	{
-		MESH_ERR("Cannot read material name");
-		return false;
-	}
-	if(materialName.length() > 0)
-	{
-		material.loadRsrc(materialName.c_str());
-	}
-
-	// Verts num
-	uint vertsNum;
-	if(!Util::readUintFromBinaryStream(file, vertsNum))
-	{
-		MESH_ERR("Cannot read verts num");
-		return false;
-	}
-	vertCoords.resize(vertsNum);
-
-	// Verts
-	for(uint i=0; i<vertCoords.size(); i++)
-	{
-		for(uint j=0; j<3; j++)
+		// Magic word
+		char magic[8];
+		bs.read(magic, 8);
+		if(bs.fail() || memcmp(magic, "ANKIMESH", 8))
 		{
-			if(!Util::readFloatFromBinaryStream(file, vertCoords[i][j]))
-			{
-				MESH_ERR("Cannot read vert coord");
-				return false;
-			}
-		}
-	}
-
-	// Faces num
-	uint facesNum;
-	if(!Util::readUintFromBinaryStream(file, facesNum))
-	{
-		MESH_ERR("Cannot read faces num");
-		return false;
-	}
-	tris.resize(facesNum);
-
-	// read the faces
-	for(uint i=0; i<tris.size(); i++)
-	{
-		for(uint j=0; j<3; j++)
-		{
-			if(!Util::readUintFromBinaryStream(file, tris[i].vertIds[j]))
-			{
-				MESH_ERR("Cannot read vert index");
-				return false;
-			}
-
-			if(tris[i].vertIds[j] >= vertCoords.size())
-			{
-				MESH_ERR("Incorrect vert index " << tris[i].vertIds[j] << " (" << i << ", " << j << ")");
-				return false;
-			}
-		}
-	}
-
-	// Tex coords num
-	uint texCoordsNum;
-	if(!Util::readUintFromBinaryStream(file, texCoordsNum))
-	{
-		MESH_ERR("Cannot read tex coords num");
-		return false;
-	}
-	texCoords.resize(texCoordsNum);
-
-	// Tex coords
-	for(uint i=0; i<texCoords.size(); i++)
-	{
-		for(uint j=0; j<2; j++)
-		{
-			if(!Util::readFloatFromBinaryStream(file, texCoords[i][j]))
-			{
-				MESH_ERR("Cannot read tex coord");
-				return false;
-			}
-		}
-	}
-
-	// Vert weights num
-	uint vertWeightsNum;
-	if(!Util::readUintFromBinaryStream(file, vertWeightsNum))
-	{
-		MESH_ERR("Cannot read vert weights num");
-		return false;
-	}
-	vertWeights.resize(vertWeightsNum);
-
-	// Vert weights
-	for(uint i=0; i<vertWeights.size(); i++)
-	{
-		// get the bone connections num
-		uint boneConnections;
-		if(!Util::readUintFromBinaryStream(file, boneConnections))
-		{
-			MESH_ERR("Cannot read vert weight bone connections num");
+			MESH_ERR("Incorrect magic word");
 			return false;
 		}
 
-		// we treat as error if one vert doesnt have a bone
-		if(boneConnections < 1)
+		// Mesh name
+		string meshName = bs.readString();
+
+		// Material name
+		string materialName = bs.readString();
+		if(materialName.length() > 0)
 		{
-			MESH_ERR("Vert \"" << i << "\" sould have have at least one bone");
-			return false;
+			material.loadRsrc(materialName.c_str());
 		}
 
-		// and here is another possible error
-		if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
-		{
-			MESH_ERR("Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex");
-			return false;
-		}
-		vertWeights[i].bonesNum = boneConnections;
+		// Verts num
+		uint vertsNum = bs.readUint();
+		vertCoords.resize(vertsNum);
 
-		// for all the weights of the current vertes
-		for(uint j=0; j<vertWeights[i].bonesNum; j++)
+		// Vert coords
+		for(uint i=0; i<vertCoords.size(); i++)
 		{
-			// read bone id
-			uint boneId;
-			if(!Util::readUintFromBinaryStream(file, boneId))
+			for(uint j=0; j<3; j++)
 			{
-				MESH_ERR("Cannot read bone ID");
+				vertCoords[i][j] = bs.readFloat();
+			}
+		}
+
+		// Faces num
+		uint facesNum = bs.readUint();
+		tris.resize(facesNum);
+
+		// Faces IDs
+		for(uint i=0; i<tris.size(); i++)
+		{
+			for(uint j=0; j<3; j++)
+			{
+				tris[i].vertIds[j] = bs.readUint();
+
+				// a sanity check
+				if(tris[i].vertIds[j] >= vertCoords.size())
+				{
+					MESH_ERR("Incorrect vert index " << tris[i].vertIds[j] << " (" << i << ", " << j << ")");
+					return false;
+				}
+			}
+		}
+
+		// Tex coords num
+		uint texCoordsNum = bs.readUint();
+		texCoords.resize(texCoordsNum);
+
+		// Tex coords
+		for(uint i=0; i<texCoords.size(); i++)
+		{
+			for(uint j=0; j<2; j++)
+			{
+				texCoords[i][j] = bs.readFloat();
+			}
+		}
+
+		// Vert weights num
+		uint vertWeightsNum = bs.readUint();
+		vertWeights.resize(vertWeightsNum);
+
+		// Vert weights
+		for(uint i=0; i<vertWeights.size(); i++)
+		{
+			// get the bone connections num
+			uint boneConnections = bs.readUint();
+
+			// we treat as error if one vert doesnt have a bone
+			if(boneConnections < 1)
+			{
+				MESH_ERR("Vert \"" << i << "\" sould have have at least one bone");
 				return false;
 			}
-			vertWeights[i].boneIds[j] = boneId;
 
-			// read the weight of that bone
-			float weight;
-			if(!Util::readFloatFromBinaryStream(file, weight))
+			// and here is another possible error
+			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
-				MESH_ERR("Cannot read weight");
+				MESH_ERR("Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex");
 				return false;
 			}
-			vertWeights[i].weights[j] = weight;
+			vertWeights[i].bonesNum = boneConnections;
+
+			// for all the weights of the current vertes
+			for(uint j=0; j<vertWeights[i].bonesNum; j++)
+			{
+				// read bone id
+				uint boneId = bs.readUint();
+				vertWeights[i].boneIds[j] = boneId;
+
+				// read the weight of that bone
+				float weight = bs.readFloat();
+				vertWeights[i].weights[j] = weight;
+			}
 		}
+	}
+	catch(Exception& e)
+	{
+		MESH_ERR("Cannot read mesh: " << e.what());
+		return false;
 	}
 
 	// Sanity checks
