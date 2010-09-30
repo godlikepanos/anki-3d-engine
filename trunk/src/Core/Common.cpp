@@ -102,7 +102,7 @@ ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func
 	}
 
 	// print caller info
-	(*cs) << " (" << filesystem::path(file).filename() << ":" << line << " " << getFunctionFromPrettyFunction(func) <<
+	(*cs) << " (" << filesystem::path(file).filename() << ":" << line << " " << func <<
 	         "): ";
 
 	return (*cs);

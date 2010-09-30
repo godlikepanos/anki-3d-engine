@@ -16,8 +16,15 @@ class Material;
 ///
 /// File format:
 ///
-/// <magic:ANKIMESH> <string:meshName> <string:material> <uint:vertsNum> <float:vert[0].x> <float:vert[0].y>
-/// <float:vert[0].y> ... <float:vert[n].x> <float:vert[n].y> <float:vert[n].z>
+/// <magic:ANKIMESH>
+/// <string:meshName>
+/// <string:material>
+/// <uint:vertsNum>
+/// <float:vert[0].x> <float:vert[0].y> <float:vert[0].z> ...
+/// <float:vert[vertsNum-1].x> <float:vert[vertsNum-1].y> <float:vert[vertsNum-1].z>
+/// <uint:facesNum>
+/// <uint:tri[0].vertIds[0]> <uint:tri[0].vertIds[1]> <uint:tri[0].vertIds[2]> ...
+/// <uint:tri[facesNum-1].vertIds[0]> <uint:tri[facesNum-1].vertIds[1]> <uint:tri[facesNum-1].vertIds[2]>
 class Mesh: public Resource
 {
 	public:
