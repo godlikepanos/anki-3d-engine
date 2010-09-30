@@ -170,10 +170,10 @@ void init()
 	app->getScene().skybox.load(skybox_fnames);
 
 	// horse
-	/*horse = new MeshNode();
+	horse = new MeshNode();
 	horse->init("meshes/horse/horse.mesh");
 	//horse->init("models/head/head.mesh");
-	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.5));*/
+	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
 
 	// sarge
 	/*sarge = new MeshNode();
