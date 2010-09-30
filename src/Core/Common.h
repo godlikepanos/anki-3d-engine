@@ -66,7 +66,7 @@ extern ostream& msgSuffixFatal(ostream& cs);
 extern bool msgGlError(const char* file, int line, const char* func);
 
 #ifdef __GNUG__
-	#define FUNCTION __PRETTY_FUNCTION__
+	#define FUNCTION __func__
 #else
 	#define FUNCTION __func__
 #endif
