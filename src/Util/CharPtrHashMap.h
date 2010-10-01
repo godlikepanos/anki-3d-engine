@@ -3,7 +3,6 @@
 
 #include <boost/unordered_map.hpp>
 #include <cstring>
-#include "Common.h"
 
 
 /// The hash function

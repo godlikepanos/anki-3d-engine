@@ -2,14 +2,12 @@
 #define VEC_H
 
 #include <vector>
-#include "Common.h"
+#include "Exception.h"
 
 
-/**
- * This is a wrapper of std::vector that adds new functionality
- */
+/// This is a wrapper of std::std::vector that adds new functionality
 template<typename Type>
-class Vec: public vector<Type>
+class Vec: public std::vector<Type>
 {
 	public:
 		Vec();
@@ -26,7 +24,7 @@ class Vec: public vector<Type>
 //======================================================================================================================
 template<typename Type>
 Vec<Type>::Vec():
-	vector<Type>()
+	std::vector<Type>()
 {}
 
 
@@ -35,7 +33,7 @@ Vec<Type>::Vec():
 //======================================================================================================================
 template<typename Type>
 Vec<Type>::Vec(size_t size):
-	vector<Type>(size)
+	std::vector<Type>(size)
 {}
 
 
@@ -44,7 +42,7 @@ Vec<Type>::Vec(size_t size):
 //======================================================================================================================
 template<typename Type>
 Vec<Type>::Vec(size_t size, Type val):
-	vector<Type>(size,val)
+	std::vector<Type>(size,val)
 {}
 
 
@@ -54,8 +52,8 @@ Vec<Type>::Vec(size_t size, Type val):
 template<typename Type>
 Type& Vec<Type>::operator[](size_t n)
 {
-	DEBUG_ERR(n >= vector<Type>::size());
-	return vector<Type>::operator [](n);
+	RASSERT_THROW_EXCEPTION(n >= std::vector<Type>::size());
+	return std::vector<Type>::operator [](n);
 }
 
 
@@ -65,8 +63,8 @@ Type& Vec<Type>::operator[](size_t n)
 template<typename Type>
 const Type& Vec<Type>::operator[](size_t n) const
 {
-	DEBUG_ERR(n >= vector<Type>::size());
-	return vector<Type>::operator [](n);
+	RASSERT_THROW_EXCEPTION(n >= std::vector<Type>::size());
+	return std::vector<Type>::operator [](n);
 }
 
 
@@ -76,7 +74,8 @@ const Type& Vec<Type>::operator[](size_t n) const
 template<typename Type>
 size_t Vec<Type>::getSizeInBytes() const
 {
-	return vector<Type>::size() * sizeof(Type);
+	return std::vector<Type>::size() * sizeof(Type);
 }
+
 
 #endif
