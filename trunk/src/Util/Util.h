@@ -16,22 +16,6 @@ extern float randFloat(float max);
 extern string      readFile(const char* filename); ///< Open a text file and return its contents into a string
 extern Vec<string> getFileLines(const char* filename); ///< Open a text file and return its lines into a string vector
 
-
-/// @name Binary file reading
-/// @{
-
-/// Byte order for reading binary files
-enum ByteOrder
-{
-	BO_LITTLE_ENDIAN, ///< The default
-	BO_BIG_ENDIAN
-};
-
-extern bool readStringFromBinaryStream(istream& s, string& out, ByteOrder byteOrder = BO_LITTLE_ENDIAN);
-extern bool readUintFromBinaryStream(istream& s, uint& out, ByteOrder byteOrder = BO_LITTLE_ENDIAN);
-extern bool readFloatFromBinaryStream(istream& s, float& out);
-/// @}
-
 }
 
 #endif

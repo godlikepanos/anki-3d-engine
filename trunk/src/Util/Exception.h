@@ -27,7 +27,16 @@ inline Exception::Exception(const char* err_, const char* file, int line, const 
 }
 
 
-#define THROW_EXCEPTION(x) throw Exception((x), __FILE__, __LINE__, __func__);
+#define THROW_EXCEPTION(x) throw Exception((x), __FILE__, __LINE__, __func__)
+
+#if DEBUG_ENABLED == 1
+	#define RASSERT_THROW_EXCEPTION(x) \
+		if(x) \
+			THROW_EXCEPTION("Reverse assertion failed: " #x)
+#else
+	#define RASSERT_THROW_EXCEPTION(x)
+#endif
+
 
 
 #endif

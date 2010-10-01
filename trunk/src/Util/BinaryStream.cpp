@@ -68,7 +68,7 @@ string BinaryStream::readString()
 	}
 	catch(Exception& e)
 	{
-		THROW_EXCEPTION("Failed to read size")
+		THROW_EXCEPTION("Failed to read size");
 	}
 
 	const uint buffSize = 1024;
