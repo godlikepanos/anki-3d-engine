@@ -1,5 +1,4 @@
 #include <cstring>
-#include <GL/glew.h>
 #include "LightData.h"
 #include "Parser.h"
 #include "Texture.h"
@@ -12,8 +11,8 @@ LightData::LightData():
 	Resource(RT_LIGHT_PROPS),
 	diffuseCol(0.5),
 	specularCol(0.5),
-	radius(1.0),
 	castsShadow_(false),
+	radius(1.0),
 	distance(3.0),
 	fovX(M::PI/4.0),
 	fovY(M::PI/4.0)
@@ -25,131 +24,152 @@ LightData::LightData():
 //======================================================================================================================
 bool LightData::load(const char* filename)
 {
-	Scanner scanner;
-	if(!scanner.loadFile(filename))
+	try
 	{
-		return false;
-	}
+		Scanner scanner(filename);
+		const Scanner::Token* token;
 
-	const Scanner::Token* token;
-
-	type = LT_POINT;
-
-	while(true)
-	{
+		// First of all get the type
 		token = &scanner.getNextToken();
-
-		// DIFFUSE_COL
-		if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DIFFUSE_COLOR"))
+		if(token->getCode() != Scanner::TC_IDENTIFIER || strcmp(token->getValue().getString(), "type"))
 		{
-			if(!Parser::parseMathVector(scanner, diffuseCol))
-			{
-				return false;
-			}
-		}
-		// SPECULAR_COL
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SPECULAR_COLOR"))
-		{
-			if(!Parser::parseMathVector(scanner, specularCol))
-			{
-				return false;
-			}
-		}
-		// RADIUS
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "RADIUS"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				PARSE_ERR_EXPECTED("number");
-				return false;
-			}
-
-			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                       float(token->getValue().getInt());
-		}
-		// CASTS_SHADOW
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "CASTS_SHADOW"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
-			{
-				PARSE_ERR_EXPECTED("number");
-				return false;
-			}
-
-			castsShadow_ = token->getValue().getInt();
-		}
-		// DISTANCE
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DISTANCE"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				PARSE_ERR_EXPECTED("number");
-				return false;
-			}
-
-			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                         float(token->getValue().getInt());
-			type = LT_SPOT;
-		}
-		// FOV_X
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_X"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				PARSE_ERR_EXPECTED("number");
-				return false;
-			}
-
-			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                     float(token->getValue().getInt());
-			type = LT_SPOT;
-		}
-		// FOV_Y
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_Y"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				PARSE_ERR_EXPECTED("number");
-				return false;
-			}
-
-			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                     float(token->getValue().getInt());
-			type = LT_SPOT;
-		}
-		// TEXTURE
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "TEXTURE"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_STRING)
-			{
-				PARSE_ERR_EXPECTED("string");
-				return false;
-			}
-				
-			texture.loadRsrc(token->getValue().getString());
-			texture->setRepeat(false);
-			texture->setAnisotropy(0);
-			texture->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			texture->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			type = LT_SPOT;
-		}
-		// end of file
-		else if(token->getCode() == Scanner::TC_EOF)
-		{
-			break;
-		}
-		// other crap
-		else
-		{
-			PARSE_ERR_UNEXPECTED();
+			PARSE_ERR_EXPECTED("type");
 			return false;
 		}
+
+		token = &scanner.getNextToken();
+		if(token->getCode() != Scanner::TC_IDENTIFIER)
+		{
+			if(!strcmp(token->getValue().getString(), "LT_SPOT"))
+			{
+				type = LT_SPOT;
+			}
+			else if(!strcmp(token->getValue().getString(), "LT_POINT"))
+			{
+				type = LT_POINT;
+			}
+			else
+			{
+				PARSE_ERR_EXPECTED("LT_SPOT or LT_POINT");
+				return false;
+			}
+		}
+
+
+		while(true)
+		{
+			token = &scanner.getNextToken();
+
+			// diffuseCol
+			if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "diffuseCol"))
+			{
+				Parser::parseMathVector(scanner, diffuseCol);
+			}
+			// SPECULAR_COL
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SPECULAR_COLOR"))
+			{
+				Parser::parseMathVector(scanner, specularCol);
+			}
+			// RADIUS
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "RADIUS"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_NUMBER)
+				{
+					PARSE_ERR_EXPECTED("number");
+					return false;
+				}
+
+				radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+																															 float(token->getValue().getInt());
+			}
+			// CASTS_SHADOW
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "CASTS_SHADOW"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+				{
+					PARSE_ERR_EXPECTED("number");
+					return false;
+				}
+
+				castsShadow_ = token->getValue().getInt();
+			}
+			// DISTANCE
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DISTANCE"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_NUMBER)
+				{
+					PARSE_ERR_EXPECTED("number");
+					return false;
+				}
+
+				distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+																																 float(token->getValue().getInt());
+				type = LT_SPOT;
+			}
+			// FOV_X
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_X"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_NUMBER)
+				{
+					PARSE_ERR_EXPECTED("number");
+					return false;
+				}
+
+				fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+																														 float(token->getValue().getInt());
+				type = LT_SPOT;
+			}
+			// FOV_Y
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_Y"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_NUMBER)
+				{
+					PARSE_ERR_EXPECTED("number");
+					return false;
+				}
+
+				fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
+																														 float(token->getValue().getInt());
+				type = LT_SPOT;
+			}
+			// TEXTURE
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "TEXTURE"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_STRING)
+				{
+					PARSE_ERR_EXPECTED("string");
+					return false;
+				}
+
+				texture.loadRsrc(token->getValue().getString());
+				texture->setRepeat(false);
+				texture->setAnisotropy(0);
+				texture->setFiltering(Texture::TFT_LINEAR);
+				type = LT_SPOT;
+			}
+			// end of file
+			else if(token->getCode() == Scanner::TC_EOF)
+			{
+				break;
+			}
+			// other crap
+			else
+			{
+				PARSE_ERR_UNEXPECTED();
+				return false;
+			}
+		} // end while
+	}
+	catch(std::exception& e)
+	{
+		ERROR(e.what());
+		return false;
 	}
 	
 	// sanity checks

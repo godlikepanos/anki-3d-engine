@@ -1,12 +1,13 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include <boost/lexical_cast.hpp>
 #include "Common.h"
+#include "Exception.h"
 #include "Scanner.h"
 
-/**
- * @brief It contains some functions and macros that include code commonly used in parsing
- */
+
+/// @brief It contains some functions and macros that include code commonly used in parsing
 namespace Parser {
 
 
@@ -15,6 +16,16 @@ namespace Parser {
 //======================================================================================================================
 #define PARSE_ERR(x) ERROR("Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x)
 #define PARSE_WARN(x) WARNING("Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x)
+
+#define PARSER_THROW_EXCEPTION(x) \
+	THROW_EXCEPTION("Parser failed (" + scanner.getScriptName() + ':' + \
+	                lexical_cast<string>(scanner.getLineNumber()) + "): " + x)
+
+#define PARSER_THROW_EXCEPTION_EXPECTED(x) \
+	PARSER_THROW_EXCEPTION("Expected " + x + " and not " + scanner.getCrntToken().getInfoStr())
+
+#define PARSER_THROW_EXCEPTION_UNEXPECTED(x) \
+	PARSER_THROW_EXCEPTION("Unexpected token " + scanner.getCrntToken().getInfoStr())
 
 // common parser errors
 #define PARSE_ERR_EXPECTED(x) PARSE_ERR("Expected " << x << " and not " << scanner.getCrntToken().getInfoStr());
@@ -112,14 +123,13 @@ bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Ty
 /// @param scanner The scanner that we will use
 /// @param sign If true expect sign or not
 /// @param out The output number
-/// @return True on success
 template <typename Type>
-bool parseNumber(Scanner& scanner, bool sign, Type& out);
+void parseNumber(Scanner& scanner, bool sign, Type& out);
 
 
-///
+/// Parses a math structure (Vec3, Vec4, Mat3 etc) with leading and following brackets
 template <typename Type>
-bool parseMathVector(Scanner& scanner, Type& out);
+void parseMathVector(Scanner& scanner, Type& out);
 
 
 } // end namespace Parser

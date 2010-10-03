@@ -346,8 +346,8 @@ def export(meshInit):
 			raise RuntimeError("The given func param is not a \"Armature\" class but a \"" + skeleton.__class__.__name__ + "\"")
 	
 	print("Trying to export mesh \"" + mesh.name + "\"")
-	filename = os.path.abspath(meshInit.saveDir + mesh.name)
+	filename = os.path.abspath(meshInit.saveDir + "/" + mesh.name + ".mesh")
 	file = open(filename, "wb")
-	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.mtlName, mesh.name, meshInit.flipYZ))
+	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.saveDir + "/" + mesh.name + ".mtl", mesh.name + ".mesh", meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	
 	

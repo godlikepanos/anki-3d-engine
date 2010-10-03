@@ -5,9 +5,16 @@
 #include <sstream>
 #include <iomanip>
 #include "Scanner.h"
+#include "Exception.h"
+#include <boost/lexical_cast.hpp>
 
 
-#define SERROR(x) ERROR("Scanning Error (" << scriptName << ':' << lineNmbr << "): " << x)
+using namespace std;
+using namespace boost;
+
+
+#define SCANNER_THROW_EXCEPTION(x) \
+	THROW_EXCEPTION(string("Scanner failed (") + scriptName + ':' + lexical_cast<string>(lineNmbr) + "): " + x)
 
 
 //======================================================================================================================
@@ -167,18 +174,21 @@ void Scanner::initAsciiMap()
 
 
 //======================================================================================================================
-// Constructor                                                                                                         =
+// init                                                                                                                =
 //======================================================================================================================
-Scanner::Scanner(bool newlinesAsWhitespace_):
-	newlinesAsWhitespace(newlinesAsWhitespace_), commentedLines(0), inStream(NULL)
+void Scanner::init(bool newlinesAsWhitespace_)
 {
+	newlinesAsWhitespace = newlinesAsWhitespace_;
+	commentedLines = 0;
+	inStream = NULL;
+
 	if(asciiLookupTable['a'] != AC_LETTER)
 	{
 		initAsciiMap();
 	}
 
 	lineNmbr = 0;
-	memset(line, eofChar, sizeof(char)*MAX_SCRIPT_LINE_LEN);
+	memset(line, eofChar, sizeof(char) * MAX_SCRIPT_LINE_LEN);
 }
 
 
@@ -197,7 +207,7 @@ void Scanner::getLine()
 		++lineNmbr;
 	}
 
-	DEBUG_ERR(inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10); // too big line
+	RASSERT_THROW_EXCEPTION(inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10); // too big line
 }
 
 
@@ -221,7 +231,7 @@ char Scanner::getNextChar()
 	}
 	else if(lookupAscii(*pchar) == AC_ERROR)
 	{
-		SERROR("Unacceptable char '" << *pchar << "' 0x" << uint(*pchar));
+		SCANNER_THROW_EXCEPTION("Unacceptable char '" + *pchar + "' 0x" + lexical_cast<string>(static_cast<uint>(*pchar)));
 	}
 
 	return *pchar;
@@ -234,7 +244,9 @@ char Scanner::getNextChar()
 char Scanner::putBackChar()
 {
 	if(pchar != line && *pchar != eofChar)
+	{
 		--pchar;
+	}
 
 	return *pchar;
 }
@@ -256,41 +268,37 @@ void Scanner::getAllPrintAll()
 //======================================================================================================================
 // loadFile                                                                                                            =
 //======================================================================================================================
-bool Scanner::loadFile(const char* filename_)
+void Scanner::loadFile(const char* filename_)
 {	
 	inFstream.open(filename_);
 	if(!inFstream.good())
 	{
-		ERROR("Cannot open file \"" << filename_ << '\"');
-		return false;
+		THROW_EXCEPTION("Cannot open file \"" + filename_ + '\"');
 	}
 	
-	return loadIstream(inFstream, filename_);
+	loadIstream(inFstream, filename_);
 }
 
 
 //======================================================================================================================
 // loadIstream                                                                                                        =
 //======================================================================================================================
-bool Scanner::loadIstream(istream& istream_, const char* scriptName_)
+void Scanner::loadIstream(istream& istream_, const char* scriptName_)
 {
 	if(inStream != NULL)
 	{
-		ERROR("Tokenizer already initialized");
-		return false;
+		THROW_EXCEPTION("Tokenizer already initialized");
 	}
 
 	inStream = &istream_;
 
 	// init globals
-	DEBUG_ERR(strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1); // Too big name
+	RASSERT_THROW_EXCEPTION(strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1); // Too big name
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
 	strcpy(scriptName, scriptName_);
 
-
 	getLine();
-	return true;
 }
 
 
@@ -388,7 +396,7 @@ const Scanner::Token& Scanner::getNextToken()
 				break;
 			case AC_ERROR:
 			default:
-				SERROR("Unexpected character \'" << *pchar << '\'');
+				SCANNER_THROW_EXCEPTION("Unexpected character \'" + *pchar + '\'');
 				getNextChar();
 				goto start;
 		}
@@ -411,7 +419,7 @@ const Scanner::Token& Scanner::getNextToken()
 //======================================================================================================================
 // checkWord                                                                                                           =
 //======================================================================================================================
-bool Scanner::checkWord()
+void Scanner::checkWord()
 {
 	char* tmpStr = crntToken.asString;
 	char ch = *pchar;
@@ -449,15 +457,13 @@ bool Scanner::checkWord()
 			++x;
 		}
 	}
-
-	return true;
 }
 
 
 //======================================================================================================================
 // checkComment                                                                                                        =
 //======================================================================================================================
-bool Scanner::checkComment()
+void Scanner::checkComment()
 {
 	// Beginning
 	if(getNextChar()=='*')
@@ -473,7 +479,7 @@ bool Scanner::checkComment()
 			if(ch == '\0')
 			{
 				crntToken.code = TC_COMMENT;
-				return true;
+				return;
 			}
 			else if(ch == '\\')
 			{
@@ -510,7 +516,7 @@ bool Scanner::checkComment()
 		{
 			crntToken.code = TC_COMMENT;
 			getNextChar();
-			return true;
+			return;
 		}
 		else
 		{
@@ -520,19 +526,18 @@ bool Scanner::checkComment()
 	//error
 	error:
 		crntToken.code = TC_ERROR;
-		SERROR("Incorrect comment ending");
-		return false;
+		SCANNER_THROW_EXCEPTION("Incorrect comment ending");
 }
 
 
 //======================================================================================================================
 // checkNumber                                                                                                         =
 //======================================================================================================================
-bool Scanner::checkNumber()
+void Scanner::checkNumber()
 {
 	// This func is working great, dont try to understand it and dont even think to try touching it.
 
-	//DEBUG_ERR(sizeof(long) != 8); // ulong must be 64bit
+	//RASSERT_THROW_EXCEPTION(sizeof(long) != 8); // ulong must be 64bit
 	long num = 0;     // value of the number & part of the float num before '.'
 	long fnum = 0;    // part of the float num after '.'
 	long dad = 0;     // digits after dot (for floats)
@@ -812,7 +817,7 @@ bool Scanner::checkNumber()
 			crntToken.value.float_ = dbl;
 		}
 		*tmpStr = '\0';
-		return true;
+		return;
 
 	//error
 	error:
@@ -827,16 +832,14 @@ bool Scanner::checkNumber()
 		}
 
 		*tmpStr = '\0';
-		SERROR("Bad number suffix \"" << crntToken.asString << '\"');
-
-	return false;
+		SCANNER_THROW_EXCEPTION("Bad number suffix \"" + crntToken.asString + '\"');
 }
 
 
 //======================================================================================================================
 // checkString                                                                                                         =
 //======================================================================================================================
-bool Scanner::checkString()
+void Scanner::checkString()
 {
 	char* tmpStr = crntToken.asString;
 	char ch = getNextChar();
@@ -848,8 +851,8 @@ bool Scanner::checkString()
 		{
 			crntToken.code = TC_ERROR;
 			*tmpStr = '\0';
-			SERROR("Incorrect string ending \"" << crntToken.asString << '\"');
-			return false;
+			SCANNER_THROW_EXCEPTION("Incorrect string ending \"" + crntToken.asString + '\"');
+			return;
 		}
 		// Escape Codes
 		else if(ch == '\\')
@@ -859,8 +862,8 @@ bool Scanner::checkString()
 			{
 				crntToken.code = TC_ERROR;
 				*tmpStr = '\0';
-				SERROR("Incorrect string ending \"" << crntToken.asString << '\"');
-				return false;
+				SCANNER_THROW_EXCEPTION("Incorrect string ending \"" + crntToken.asString + '\"');
+				return;
 			}
 
 			switch(ch)
@@ -898,7 +901,7 @@ bool Scanner::checkString()
 				case '\0':
 					break; // not an escape char but works almost the same
 				default:
-					SERROR("Unrecognized escape character \'\\" << ch << '\'');
+					SCANNER_THROW_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
 					*tmpStr++ = ch;
 			}
 		}
@@ -909,7 +912,7 @@ bool Scanner::checkString()
 			crntToken.code = TC_STRING;
 			crntToken.value.string = crntToken.asString;
 			getNextChar();
-			return true;
+			return;
 		}
 		// Build str(main loop)
 		else
@@ -919,15 +922,13 @@ bool Scanner::checkString()
 
 		ch = getNextChar();
 	}
-
-	return false;
 }
 
 
 //======================================================================================================================
 // checkChar                                                                                                           =
 //======================================================================================================================
-bool Scanner::checkChar()
+void Scanner::checkChar()
 {
 	char ch = getNextChar();
 	char ch0 = ch;
@@ -938,15 +939,15 @@ bool Scanner::checkChar()
 
 	if(ch=='\0' || ch==eofChar) // check char after '
 	{
-		SERROR("Newline in constant");
-		return false;
+		SCANNER_THROW_EXCEPTION("Newline in constant");
+		return;
 	}
 
 	if (ch=='\'') // if '
 	{
-		SERROR("Empty constant");
+		SCANNER_THROW_EXCEPTION("Empty constant");
 		getNextChar();
-		return false;
+		return;
 	}
 
 	if (ch=='\\')                // if \ then maybe escape char
@@ -955,8 +956,8 @@ bool Scanner::checkChar()
 		*tmpStr++ = ch;
 		if(ch=='\0' || ch==eofChar) //check again after the \.
 		{
-			SERROR("Newline in constant");
-			return false;
+			SCANNER_THROW_EXCEPTION("Newline in constant");
+			return;
 		}
 
 		switch (ch)
@@ -993,7 +994,7 @@ bool Scanner::checkChar()
 				break;
 			default:
 				ch0 = ch;
-				SERROR("Unrecognized escape character \'\\" << ch << '\'');
+				SCANNER_THROW_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
 		}
 		crntToken.value.char_ = ch0;
 	}
@@ -1008,18 +1009,18 @@ bool Scanner::checkChar()
 		*tmpStr = '\0';
 		crntToken.code = TC_CHAR;
 		getNextChar();
-		return true;
+		return;
 	}
 
-	SERROR("Expected \'");
-	return false;
+	SCANNER_THROW_EXCEPTION("Expected \'");
+	return;
 }
 
 
 //======================================================================================================================
 // checkSpecial                                                                                                        =
 //======================================================================================================================
-bool Scanner::checkSpecial()
+void Scanner::checkSpecial()
 {
 	char ch = *pchar;
 	TokenCode code = TC_ERROR;
@@ -1283,6 +1284,4 @@ bool Scanner::checkSpecial()
 
 	getNextChar();
 	crntToken.code = code;
-
-	return true;
 }

@@ -194,8 +194,6 @@ void init()
 	ctrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
 	ctrl->step = 0.8;
 
-	return;
-
 	// cave map
 	/*for(int i=1; i<21; i++)
 	{
@@ -214,6 +212,8 @@ void init()
 	node = new MeshNode();
 	node->init("maps/sponza/dark-marbles.mesh");
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
+
+	return;
 
 	// particle emitter
 	partEmitter = new ParticleEmitter;

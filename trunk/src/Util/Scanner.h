@@ -1,17 +1,14 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#include <sstream>
 #include <fstream>
-#include "Common.h"
+#include "StdTypes.h"
 
 
-/**
- * C++ Tokenizer
- *
- * The Scanner loads a file or an already loaded iostream and extracts the tokens. The script must be in C++ format. The
- * class does not make any kind of memory allocations so it can be fast.
- */
+/// C++ Tokenizer
+///
+/// The Scanner loads a file or an already loaded iostream and extracts the tokens. The script must be in C++ format.
+/// The class does not make any kind of memory allocations so it can be fast.
 class Scanner
 {
 	//====================================================================================================================
@@ -24,9 +21,7 @@ class Scanner
 	// Nested                                                                                                            =
 	//====================================================================================================================
 	public:
-		/**
-		 * The TokenCode is an enum that defines the Token type
-		 */
+		/// The TokenCode is an enum that defines the Token type
 		enum TokenCode
 		{
 			// general codes
@@ -54,9 +49,7 @@ class Scanner
 		}; // end enum TokenCode
 
 
-		/**
-		 * The value of @ref Token::dataType
-		 */
+		/// The value of @ref Token::dataType
 		enum TokenDataType
 		{
 			DT_FLOAT,
@@ -65,18 +58,14 @@ class Scanner
 			DT_STR
 		};
 
-		/**
-		 * Used inside the @ref Token, its a variant that holds the data of the Token
-		 */
+		/// Used inside the @ref Token, its a variant that holds the data of the Token
 		class TokenDataVal
 		{
 			friend class Scanner;
 			friend class Token;
 
 			private:
-				/**
-				 * The data as unamed union
-				 */
+				/// The data as unamed union
 				union
 				{
 					char   char_;
@@ -86,21 +75,17 @@ class Scanner
 				};
 
 			public:
-				/**
-				 * @name Accessors
-				 */
-				/**@{*/
+				/// @name Accessors
+				/// @{
 				char getChar() const {return char_;} ///< Access the data as C char
 				ulong getInt() const {return int_;} ///< Access the data as unsigned int
 				double getFloat() const {return float_;} ///< Access the data as double
 				const char* getString() const {return string;} ///< Access the data as C string
-				/**@}*/
+				/// @}
 		}; // end class TokenDataVal
 
 
-		/**
-		 * The Token class
-		 */
+		/// The Token class
 		struct Token
 		{
 			friend class Scanner;
@@ -112,7 +97,7 @@ class Scanner
 				TokenCode getCode() const {return code;}
 				TokenDataType getDataType() const {return dataType;}
 				const TokenDataVal& getValue() const {return value;}
-				string getInfoStr() const; ///< Get a string with the info of the token
+				std::string getInfoStr() const; ///< Get a string with the info of the token
 				void print() const; ///< Print info of the token
 
 			private:
@@ -124,9 +109,7 @@ class Scanner
 
 
 	protected:
-		/**
-		 * Every char in the Ascii table is binded with one characteristic code type. This helps the scanning
-		 */
+		/// Every char in the Ascii table is binded with one characteristic code type. This helps the scanning
 		enum AsciiFlag
 		{
 			AC_ERROR = 0,
@@ -140,9 +123,7 @@ class Scanner
 			AC_ACCEPTABLE_IN_COMMENTS = 128 ///< Only accepted in comments
 		};
 
-		/**
-		 * Reserved words like "int" "const" etc. Currently the reserved words list is being populated with dummy data
-		 */
+		/// Reserved words like "int" "const" etc. Currently the reserved words list is being populated with dummy data
 		struct ResWord
 		{
 			const char* string;
@@ -153,53 +134,32 @@ class Scanner
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		/**
-		 * The one and only constructor
-		 * @param newlinesAsWhitespace If false the Scanner will return a newline @ref Token every time if finds a newline.
-		 * True is the default behavior
-		 */
-		Scanner(bool newlinesAsWhitespace = true);
+		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		Scanner(bool newlinesAsWhitespace = true) {init(newlinesAsWhitespace);}
 
-		~Scanner() { /* The destructor does NOTHING. The class does not make any mem allocations */ }
+		/// @see loadFile
+		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		Scanner(const char* filename, bool newlinesAsWhitespace = true);
 
-		bool loadFile(const char* filename); ///< Load a file to extract tokens
+		/// @see loadIstream
+		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		Scanner(std::istream& istream_, const char* scriptName_ = "unamed-istream", bool newlinesAsWhitespace = true);
 
-		/**
-		 * Load a STL istream to extract tokens
-		 * @param istream_ The stream from where to read
-		 * @param scriptName_ The name of the stream. For error reporting
-		 * @return True on success
-		 */
-		bool loadIstream(istream& istream_, const char* scriptName_ = "unamed-istream");
+		~Scanner() {void unload();}
 
-		/**
-		 * Unloads the file
-		 */
-		void unload();
-
-		/**
-		 * Extracts all tokens and prints them. Used for debugging
-		 */
+		/// Extracts all tokens and prints them. Used for debugging
 		void getAllPrintAll();
 
-		/**
-		 * Get the next token from the stream
-		 */
+		/// Get the next token from the stream
 		const Token& getNextToken();
 
-		/**
-		 * Accessor for the current token
-		 */
+		/// Accessor for the current token
 		const Token& getCrntToken() const {return crntToken;}
 
-		/**
-		 * Get the name of the input stream
-		 */
+		/// Get the name of the input stream
 		const char* getScriptName() const {return scriptName;}
 
-		/**
-		 * Get the current line the Scanner is processing
-		 */
+		/// Get the current line the Scanner is processing
 		int getLineNumber() const {return lineNmbr;}
 
 
@@ -211,13 +171,11 @@ class Scanner
 
 		static AsciiFlag asciiLookupTable[]; ///< The array contains one AsciiFlag for every symbol of the ASCII table
 
-		/**
-		 * @name Reserved words
-		 * Groups of ResWord grouped by the length of the ResWord::string
-		 */
-		/**@{*/
+		/// @name Reserved words
+		/// Groups of ResWord grouped by the length of the ResWord::string
+		/// @{
 		static ResWord rw2[], rw3[], rw4[], rw5[], rw6[], rw7[];
-		/**@}*/
+		/// @}
 
 		static ResWord* rwTable[]; ///< The array contains all the groups of ResWord
 
@@ -226,71 +184,76 @@ class Scanner
 		char* pchar; ///< Points somewhere to @ref line
 		int   lineNmbr; ///< The number of the current line
 
-		/**
-		 * Treat newlines as whitespace. If false means that the Scanner returns (among others) newline tokens
-		 */
+		/// Treat newlines as whitespace. If false means that the Scanner returns (among others) newline tokens
 		bool newlinesAsWhitespace;
 
-		/**
-		 * Commented lines number
-		 *
-		 * Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines in
-		 * case of newlinesAsWhitespace is false
-		 */
+		/// Commented lines number
+		/// Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines in
+		/// case of newlinesAsWhitespace is false
 		int commentedLines;
 
-		/**
-		 * @name Input
-		 */
-		/**@{*/
-		ifstream inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
-		istream* inStream; ///< Points to either @ref inFstream or an external std::istream
+		/// @name Input
+		/// @{
+		std::ifstream inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
+		std::istream* inStream; ///< Points to either @ref inFstream or an external std::istream
 		char scriptName[512]; ///< The name of the input stream. Mainly used for error messaging
-		/**@}*/
+		/// @}
 
-		/**
-		 * @name Checkers
-		 */
-		/**@{*/
-		bool checkWord();
-		bool checkComment();
-		bool checkNumber();
-		bool checkString();
-		bool checkChar();
-		bool checkSpecial();
-		/**@}*/
+		/// @name Checkers
+		/// @{
+		void checkWord();
+		void checkComment();
+		void checkNumber();
+		void checkString();
+		void checkChar();
+		void checkSpecial();
+		/// @}
 
-		/**
-		 * It reads a new line from the iostream and it points @ref pchar to the beginning of that line
-		 */
+		/// It reads a new line from the iostream and it points @ref pchar to the beginning of that line
 		void getLine();
 
-		/**
-		 * Get the next char from the @ref line. If @ref line empty then get new line. It returns '\\0' if we are in the
-		 * end of the line
-		 */
+		/// Get the next char from the @ref line. If @ref line empty then get new line. It returns '\\0' if we are in the
+		/// end of the line
 		char getNextChar();
 
-		/**
-		 * Put the char that Scanner::GetNextChar got back to the current line
-		 */
+		/// Put the char that Scanner::GetNextChar got back to the current line
 		char putBackChar();
 
-		/**
-		 * Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner @see Scanner()
-		 */
+		/// Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner @see Scanner()
 		static void initAsciiMap();
 
-		/**
-		 * To save us from typing for example asciiLookupTable[(int)'a']
-		 */
-		AsciiFlag lookupAscii(char ch_);
+		/// To save us from typing
+		AsciiFlag lookupAscii(char ch_) {return asciiLookupTable[(int)ch_];}
+
+		/// Common initialization code
+		void init(bool newlinesAsWhitespace_);
+
+		/// Load a file to extract tokens
+		/// @param filename The filename of the file to read
+		void loadFile(const char* filename);
+
+		/// Load a STL istream to extract tokens
+		/// @param istream_ The stream from where to read
+		/// @param scriptName_ The name of the stream. For error reporting
+		void loadIstream(std::istream& istream_, const char* scriptName_);
+
+		/// Unloads the file
+		void unload();
 }; // end class Scanner
 
 
-inline Scanner::AsciiFlag Scanner::lookupAscii(char ch_)
+inline Scanner::Scanner(const char* filename, bool newlinesAsWhitespace)
 {
-	return asciiLookupTable[(int)ch_];
+	init(newlinesAsWhitespace);
+	loadFile(filename);
 }
+
+
+inline Scanner::Scanner(std::istream& istream_, const char* scriptName_, bool newlinesAsWhitespace)
+{
+	init(newlinesAsWhitespace);
+	loadIstream(istream_, scriptName_);
+}
+
 
 #endif
