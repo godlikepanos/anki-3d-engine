@@ -70,294 +70,317 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 	}
 
 	// scanner
-	Scanner scanner(false);
-	if(!scanner.loadFile(filename.c_str())) return false;
-	const Scanner::Token* token;
-
-	
-	do
+	try
 	{
-		token = &scanner.getNextToken();
+		Scanner scanner(filename.c_str(), false);
+		const Scanner::Token* token;
 
-		if(token->getCode() == Scanner::TC_SHARP)
+		while(true)
 		{
 			token = &scanner.getNextToken();
-			if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "pragma") == 0)
+
+			if(token->getCode() == Scanner::TC_SHARP)
 			{
 				token = &scanner.getNextToken();
-				if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "anki") == 0)
+				if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "pragma") == 0)
 				{
 					token = &scanner.getNextToken();
-/* vertShaderBegins */
-					if(token->getCode() == Scanner::TC_IDENTIFIER &&
-					   strcmp(token->getValue().getString(), "vertShaderBegins") == 0)
-					{
-						// play
-
-						// its defined in same place so there is probable circular includance
-						if(vertShaderBegins.definedInLine==scanner.getLineNumber() && vertShaderBegins.definedInFile==filename)
-						{
-							PARSE_ERR("vertShaderBegins" << MULTIPLE_DEF_MSG);
-							return false;
-						}
-
-						// already defined elsewhere => error
-						if(vertShaderBegins.definedInLine != -1)
-						{
-							PARSE_ERR("vertShaderBegins already defined at " << vertShaderBegins.definedInFile << ":" <<
-							           vertShaderBegins.definedInLine);
-							return false;
-						}
-
-						// vert shader should be before frag
-						if(fragShaderBegins.definedInLine != -1)
-						{
-							PARSE_ERR("vertShaderBegins must precede fragShaderBegins defined at " <<
-							          fragShaderBegins.definedInFile << ":" << fragShaderBegins.definedInLine);
-							return false;
-						}
-						
-						// vert shader should be before geom
-						if(geomShaderBegins.definedInLine != -1)
-						{
-							PARSE_ERR("vertShaderBegins must precede geomShaderBegins defined at " <<
-							          geomShaderBegins.definedInFile << ":" << geomShaderBegins.definedInLine);
-							return false;
-						}
-
-						vertShaderBegins.definedInFile = filename;
-						vertShaderBegins.definedInLine = scanner.getLineNumber();
-						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
-						                      lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
-						// stop play
-					}
-/* geomShaderBegins */
-					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
-					        strcmp(token->getValue().getString(), "geomShaderBegins") == 0)
-					{
-						// play
-
-						// its defined in same place so there is probable circular includance
-						if(geomShaderBegins.definedInLine==scanner.getLineNumber() && geomShaderBegins.definedInFile==filename)
-						{
-							PARSE_ERR("geomShaderBegins" << MULTIPLE_DEF_MSG);
-							return false;
-						}
-
-						// already defined elsewhere => error
-						if(geomShaderBegins.definedInLine != -1)
-						{
-							PARSE_ERR("geomShaderBegins already defined at " << geomShaderBegins.definedInFile << ":" <<
-							           geomShaderBegins.definedInLine);
-							return false;
-						}
-
-						// vert shader entry point not defined => error
-						if(vertShaderBegins.definedInLine == -1)
-						{
-							PARSE_ERR("geomShaderBegins must follow vertShaderBegins");
-							return false;
-						}
-
-						// frag shader entry point defined => error
-						if(fragShaderBegins.definedInLine != -1)
-						{
-							PARSE_ERR("geomShaderBegins must precede fragShaderBegins defined at " <<
-							          fragShaderBegins.definedInFile << ":" << fragShaderBegins.definedInLine);
-							return false;
-						}
-
-						geomShaderBegins.definedInFile = filename;
-						geomShaderBegins.definedInLine = scanner.getLineNumber();
-						geomShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
-						                      lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
-						// stop play
-					}
-/* fragShaderBegins */
-					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
-					        strcmp(token->getValue().getString(), "fragShaderBegins") == 0)
-					{
-						// play
-
-						// its defined in same place so there is probable circular includance
-						if(fragShaderBegins.definedInLine==scanner.getLineNumber() && fragShaderBegins.definedInFile==filename)
-						{
-							PARSE_ERR("fragShaderBegins" << MULTIPLE_DEF_MSG);
-							return false;
-						}
-
-						if(fragShaderBegins.definedInLine != -1) // if already defined elsewhere throw error
-						{
-							PARSE_ERR("fragShaderBegins already defined at " << fragShaderBegins.definedInFile << ":" <<
-							           fragShaderBegins.definedInLine);
-							return false;
-						}
-						
-						// vert shader entry point not defined
-						if(vertShaderBegins.definedInLine == -1)
-						{
-							PARSE_ERR("fragShaderBegins must follow vertShaderBegins");
-							return false;
-						}
-
-						fragShaderBegins.definedInFile = filename;
-						fragShaderBegins.definedInLine = scanner.getLineNumber();
-						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
-						                      lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
-						// stop play
-					}
-/* include */
-					else if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "include") == 0)
+					if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "anki") == 0)
 					{
 						token = &scanner.getNextToken();
-						if(token->getCode() == Scanner::TC_STRING)
+						//
+						// vertShaderBegins
+						//
+						if(token->getCode() == Scanner::TC_IDENTIFIER &&
+							 strcmp(token->getValue().getString(), "vertShaderBegins") == 0)
 						{
 							// play
-							//int line = sourceLines.size();
-							sourceLines.push_back("#line 0 " + lexical_cast<string>(depth+1) + " // " +
-							                      lines[scanner.getLineNumber()-1]);
-							if(!parseFileForPragmas(token->getValue().getString(), depth+1))
-								return false;
-							sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
-							                      lexical_cast<string>(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
-							// stop play
-						}
-						else
-						{
-							PARSE_ERR_EXPECTED("string");
-							return false;
-						}
-					}
-/* transformFeedbackVarying */
-					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
-					        strcmp(token->getValue().getString(), "transformFeedbackVarying") == 0)
-					{
-						token = &scanner.getNextToken();
-						if(token->getCode() == Scanner::TC_IDENTIFIER)
-						{
-							string varName = token->getValue().getString();
-							// check if already defined and for circular includance
-							Vec<TrffbVaryingPragma>::const_iterator var = findNamed(output.trffbVaryings, varName);
-							if(var != output.trffbVaryings.end())
+
+							// its defined in same place so there is probable circular includance
+							if(vertShaderBegins.definedInLine==scanner.getLineNumber() && vertShaderBegins.definedInFile==filename)
 							{
-								if(var->definedInLine==scanner.getLineNumber() && var->definedInFile==filename)
-								{
-									PARSE_ERR("\"" << varName << "\"" << MULTIPLE_DEF_MSG);
-								}
-								else
-								{
-									PARSE_ERR("Varying \"" << varName << "\" already defined at " << var->definedInFile << ":" <<
-														var->definedInLine);
-								}
+								PARSE_ERR("vertShaderBegins" << MULTIPLE_DEF_MSG);
 								return false;
 							}
 
-							// all ok, push it back
-							output.trffbVaryings.push_back(TrffbVaryingPragma(filename, scanner.getLineNumber(), varName));
-							sourceLines.push_back(lines[scanner.getLineNumber()-1]);
-						}
-						else
-						{
-							PARSE_ERR_EXPECTED("identifier");
-							return false;
-						}
-					}
-/* attribute */
-					else if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "attribute") == 0)
-					{
-						token = &scanner.getNextToken();
-						if(token->getCode() == Scanner::TC_IDENTIFIER)
-						{
-							string varName = token->getValue().getString();
-							token = &scanner.getNextToken();
-							if(token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_INT)
+							// already defined elsewhere => error
+							if(vertShaderBegins.definedInLine != -1)
 							{
-								uint loc = token->getValue().getInt();
+								PARSE_ERR("vertShaderBegins already defined at " << vertShaderBegins.definedInFile << ":" <<
+													 vertShaderBegins.definedInLine);
+								return false;
+							}
 
+							// vert shader should be before frag
+							if(fragShaderBegins.definedInLine != -1)
+							{
+								PARSE_ERR("vertShaderBegins must precede fragShaderBegins defined at " <<
+													fragShaderBegins.definedInFile << ":" << fragShaderBegins.definedInLine);
+								return false;
+							}
+
+							// vert shader should be before geom
+							if(geomShaderBegins.definedInLine != -1)
+							{
+								PARSE_ERR("vertShaderBegins must precede geomShaderBegins defined at " <<
+													geomShaderBegins.definedInFile << ":" << geomShaderBegins.definedInLine);
+								return false;
+							}
+
+							vertShaderBegins.definedInFile = filename;
+							vertShaderBegins.definedInLine = scanner.getLineNumber();
+							vertShaderBegins.globalLine = sourceLines.size() + 1;
+							sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+																		lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
+							// stop play
+						}
+						//
+						// geomShaderBegins
+						//
+						else if(token->getCode() == Scanner::TC_IDENTIFIER &&
+										strcmp(token->getValue().getString(), "geomShaderBegins") == 0)
+						{
+							// play
+
+							// its defined in same place so there is probable circular includance
+							if(geomShaderBegins.definedInLine==scanner.getLineNumber() && geomShaderBegins.definedInFile==filename)
+							{
+								PARSE_ERR("geomShaderBegins" << MULTIPLE_DEF_MSG);
+								return false;
+							}
+
+							// already defined elsewhere => error
+							if(geomShaderBegins.definedInLine != -1)
+							{
+								PARSE_ERR("geomShaderBegins already defined at " << geomShaderBegins.definedInFile << ":" <<
+													 geomShaderBegins.definedInLine);
+								return false;
+							}
+
+							// vert shader entry point not defined => error
+							if(vertShaderBegins.definedInLine == -1)
+							{
+								PARSE_ERR("geomShaderBegins must follow vertShaderBegins");
+								return false;
+							}
+
+							// frag shader entry point defined => error
+							if(fragShaderBegins.definedInLine != -1)
+							{
+								PARSE_ERR("geomShaderBegins must precede fragShaderBegins defined at " <<
+													fragShaderBegins.definedInFile << ":" << fragShaderBegins.definedInLine);
+								return false;
+							}
+
+							geomShaderBegins.definedInFile = filename;
+							geomShaderBegins.definedInLine = scanner.getLineNumber();
+							geomShaderBegins.globalLine = sourceLines.size() + 1;
+							sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+																		lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
+							// stop play
+						}
+						//
+						// fragShaderBegins
+						//
+						else if(token->getCode() == Scanner::TC_IDENTIFIER &&
+										strcmp(token->getValue().getString(), "fragShaderBegins") == 0)
+						{
+							// play
+
+							// its defined in same place so there is probable circular includance
+							if(fragShaderBegins.definedInLine==scanner.getLineNumber() && fragShaderBegins.definedInFile==filename)
+							{
+								PARSE_ERR("fragShaderBegins" << MULTIPLE_DEF_MSG);
+								return false;
+							}
+
+							if(fragShaderBegins.definedInLine != -1) // if already defined elsewhere throw error
+							{
+								PARSE_ERR("fragShaderBegins already defined at " << fragShaderBegins.definedInFile << ":" <<
+													 fragShaderBegins.definedInLine);
+								return false;
+							}
+
+							// vert shader entry point not defined
+							if(vertShaderBegins.definedInLine == -1)
+							{
+								PARSE_ERR("fragShaderBegins must follow vertShaderBegins");
+								return false;
+							}
+
+							fragShaderBegins.definedInFile = filename;
+							fragShaderBegins.definedInLine = scanner.getLineNumber();
+							fragShaderBegins.globalLine = sourceLines.size() + 1;
+							sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+																		lexical_cast<string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
+							// stop play
+						}
+						//
+						// include
+						//
+						else if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "include") == 0)
+						{
+							token = &scanner.getNextToken();
+							if(token->getCode() == Scanner::TC_STRING)
+							{
+								// play
+								//int line = sourceLines.size();
+								sourceLines.push_back("#line 0 " + lexical_cast<string>(depth+1) + " // " +
+																			lines[scanner.getLineNumber()-1]);
+								if(!parseFileForPragmas(token->getValue().getString(), depth+1))
+									return false;
+								sourceLines.push_back("#line " + lexical_cast<string>(scanner.getLineNumber()) + ' ' +
+																			lexical_cast<string>(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
+								// stop play
+							}
+							else
+							{
+								PARSE_ERR_EXPECTED("string");
+								return false;
+							}
+						}
+						//
+						// transformFeedbackVarying
+						//
+						else if(token->getCode() == Scanner::TC_IDENTIFIER &&
+										strcmp(token->getValue().getString(), "transformFeedbackVarying") == 0)
+						{
+							token = &scanner.getNextToken();
+							if(token->getCode() == Scanner::TC_IDENTIFIER)
+							{
+								string varName = token->getValue().getString();
 								// check if already defined and for circular includance
-								Vec<ShaderVarPragma>::const_iterator attrib = findNamed(output.attributes, varName);
-								if(attrib != output.attributes.end())
+								Vec<TrffbVaryingPragma>::const_iterator var = findNamed(output.trffbVaryings, varName);
+								if(var != output.trffbVaryings.end())
 								{
-									if(attrib->definedInLine==scanner.getLineNumber() && attrib->definedInFile==filename)
+									if(var->definedInLine==scanner.getLineNumber() && var->definedInFile==filename)
 									{
 										PARSE_ERR("\"" << varName << "\"" << MULTIPLE_DEF_MSG);
 									}
 									else
 									{
-										PARSE_ERR("Attribute \"" << varName << "\" already defined at " << attrib->definedInFile << ":" <<
-										          attrib->definedInLine);
+										PARSE_ERR("Varying \"" << varName << "\" already defined at " << var->definedInFile << ":" <<
+															var->definedInLine);
 									}
 									return false;
 								}
-								// search if another var has the same loc
-								for(attrib = output.attributes.begin(); attrib!=output.attributes.end(); ++attrib)
-								{
-									if(attrib->customLoc == loc)
-									{
-										PARSE_ERR("The attributes \"" << attrib->name << "\" (" << attrib->definedInFile << ":" <<
-										          attrib->definedInLine << ") and \"" << varName << "\" share the same location");
-										return false;
-									}
-								}
-								
+
 								// all ok, push it back
-								output.attributes.push_back(ShaderVarPragma(filename, scanner.getLineNumber(), varName, loc));
+								output.trffbVaryings.push_back(TrffbVaryingPragma(filename, scanner.getLineNumber(), varName));
 								sourceLines.push_back(lines[scanner.getLineNumber()-1]);
 							}
 							else
 							{
-								PARSE_ERR_EXPECTED("integer");
+								PARSE_ERR_EXPECTED("identifier");
+								return false;
+							}
+						}
+						//
+						// attribute
+						//
+						else if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "attribute") == 0)
+						{
+							token = &scanner.getNextToken();
+							if(token->getCode() == Scanner::TC_IDENTIFIER)
+							{
+								string varName = token->getValue().getString();
+								token = &scanner.getNextToken();
+								if(token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_INT)
+								{
+									uint loc = token->getValue().getInt();
+
+									// check if already defined and for circular includance
+									Vec<ShaderVarPragma>::const_iterator attrib = findNamed(output.attributes, varName);
+									if(attrib != output.attributes.end())
+									{
+										if(attrib->definedInLine==scanner.getLineNumber() && attrib->definedInFile==filename)
+										{
+											PARSE_ERR("\"" << varName << "\"" << MULTIPLE_DEF_MSG);
+										}
+										else
+										{
+											PARSE_ERR("Attribute \"" << varName << "\" already defined at " << attrib->definedInFile << ":" <<
+																attrib->definedInLine);
+										}
+										return false;
+									}
+									// search if another var has the same loc
+									for(attrib = output.attributes.begin(); attrib!=output.attributes.end(); ++attrib)
+									{
+										if(attrib->customLoc == loc)
+										{
+											PARSE_ERR("The attributes \"" << attrib->name << "\" (" << attrib->definedInFile << ":" <<
+																attrib->definedInLine << ") and \"" << varName << "\" share the same location");
+											return false;
+										}
+									}
+
+									// all ok, push it back
+									output.attributes.push_back(ShaderVarPragma(filename, scanner.getLineNumber(), varName, loc));
+									sourceLines.push_back(lines[scanner.getLineNumber()-1]);
+								}
+								else
+								{
+									PARSE_ERR_EXPECTED("integer");
+									return false;
+								}
+							}
+							else
+							{
+								PARSE_ERR_EXPECTED("identifier");
 								return false;
 							}
 						}
 						else
 						{
-							PARSE_ERR_EXPECTED("identifier");
+							PARSE_ERR("#pragma anki followed by incorrect " << token->getInfoStr());
 							return false;
 						}
-					}
-					else
+					} // end if anki
+
+					token = &scanner.getNextToken();
+					if(token->getCode()!=Scanner::TC_NEWLINE && token->getCode()!=Scanner::TC_EOF)
 					{
-						PARSE_ERR("#pragma anki followed by incorrect " << token->getInfoStr());
+						PARSE_ERR_EXPECTED("newline or end of file");
 						return false;
 					}
-				} // end if anki
-				
-				token = &scanner.getNextToken();
-				if(token->getCode()!=Scanner::TC_NEWLINE && token->getCode()!=Scanner::TC_EOF)
-				{
-					PARSE_ERR_EXPECTED("newline or end of file");
-					return false;
-				}
-				
-				if(token->getCode() == Scanner::TC_EOF)
-					break;
-				
-			} // end if pragma
-		} // end if #
-/* newline */		
-		else if(token->getCode() == Scanner::TC_NEWLINE)
-		{
-			sourceLines.push_back(lines[scanner.getLineNumber() - 2]);
-			//PRINT(lines[scanner.getLineNmbr() - 2])
-		}
-/* EOF */
-		else if(token->getCode() == Scanner::TC_EOF)
-		{
-			sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
-			//PRINT(lines[scanner.getLineNmbr() - 1])
-			break;
-		}
-/* error */
-		else if(token->getCode() == Scanner::TC_ERROR)
-		{
-			return false;
-		}
 
-	} while(true);
+					if(token->getCode() == Scanner::TC_EOF)
+						break;
+
+				} // end if pragma
+			} // end if #
+			//
+			// newline
+			//
+			else if(token->getCode() == Scanner::TC_NEWLINE)
+			{
+				sourceLines.push_back(lines[scanner.getLineNumber() - 2]);
+				//PRINT(lines[scanner.getLineNmbr() - 2])
+			}
+			//
+			// EOF
+			//
+			else if(token->getCode() == Scanner::TC_EOF)
+			{
+				sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
+				//PRINT(lines[scanner.getLineNmbr() - 1])
+				break;
+			}
+			//
+			// error
+			//
+			else if(token->getCode() == Scanner::TC_ERROR)
+			{
+				return false;
+			}
+		} // end while
+	}
+	catch(Exception& e)
+	{
+		ERROR(e.what());
+		return false;
+	}
 	
 	return true;
 }
@@ -369,7 +392,10 @@ bool ShaderPrePreprocessor::parseFileForPragmas(const string& filename, int dept
 bool ShaderPrePreprocessor::parseFile(const char* filename)
 {
 	// parse master file
-	if(!parseFileForPragmas(filename)) return false;
+	if(!parseFileForPragmas(filename))
+	{
+		return false;
+	}
 
 	// rearrange the trffbVaryings
 

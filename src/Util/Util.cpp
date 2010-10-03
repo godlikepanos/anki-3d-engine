@@ -3,9 +3,14 @@
 #include <cstring>
 #include <fstream>
 #include "Util.h"
+#include "Exception.h"
+
+
+using namespace std;
 
 
 namespace Util {
+
 
 //======================================================================================================================
 // randRange                                                                                                           =
@@ -41,8 +46,7 @@ string readFile(const char* filename)
 	ifstream file(filename);
 	if (!file.is_open())
 	{
-		ERROR("Cannot open file \"" << filename << "\"");
-		return string();
+		THROW_EXCEPTION(string("Cannot open file \"") + filename + "\"");
 	}
 
 	return string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
@@ -58,8 +62,7 @@ Vec<string> getFileLines(const char* filename)
 	ifstream ifs(filename);
 	if(!ifs.is_open())
 	{
-		ERROR("Cannot open file \"" << filename << "\"");
-		return lines;
+		THROW_EXCEPTION(string("Cannot open file \"") + filename + "\"");
 	}
 
   string temp;

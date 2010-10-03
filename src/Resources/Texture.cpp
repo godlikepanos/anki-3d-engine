@@ -299,3 +299,25 @@ void Texture::genMipmap()
 	bind(LAST_TEX_UNIT);
 	glGenerateMipmap(target);
 }
+
+
+//======================================================================================================================
+// setFiltering                                                                                                        =
+//======================================================================================================================
+void Texture::setFiltering(TextureFilteringType filterType)
+{
+	switch(filterType)
+	{
+		case TFT_NEAREST:
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			break;
+		case TFT_LINEAR:
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			break;
+		case TFT_TRILINEAR:
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+}
