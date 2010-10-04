@@ -15,7 +15,8 @@ class LightData: public Resource
 		enum LightType
 		{
 			LT_POINT,
-			LT_SPOT
+			LT_SPOT,
+			LT_NUM
 		};
 
 	/// @name Common light properties

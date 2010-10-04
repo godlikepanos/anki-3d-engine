@@ -28,50 +28,45 @@ bool LightData::load(const char* filename)
 	{
 		Scanner scanner(filename);
 		const Scanner::Token* token;
-
-		// First of all get the type
-		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_IDENTIFIER || strcmp(token->getValue().getString(), "type"))
-		{
-			PARSE_ERR_EXPECTED("type");
-			return false;
-		}
-
-		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_IDENTIFIER)
-		{
-			if(!strcmp(token->getValue().getString(), "LT_SPOT"))
-			{
-				type = LT_SPOT;
-			}
-			else if(!strcmp(token->getValue().getString(), "LT_POINT"))
-			{
-				type = LT_POINT;
-			}
-			else
-			{
-				PARSE_ERR_EXPECTED("LT_SPOT or LT_POINT");
-				return false;
-			}
-		}
-
+		type = LT_NUM;
 
 		while(true)
 		{
 			token = &scanner.getNextToken();
 
+			// type
+			if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "type"))
+			{
+				token = &scanner.getNextToken();
+				if(token->getCode() != Scanner::TC_IDENTIFIER)
+				{
+					if(!strcmp(token->getValue().getString(), "LT_SPOT"))
+					{
+						type = LT_SPOT;
+					}
+					else if(!strcmp(token->getValue().getString(), "LT_POINT"))
+					{
+						type = LT_POINT;
+					}
+					else
+					{
+						PARSE_ERR_EXPECTED("LT_SPOT or LT_POINT");
+						return false;
+					}
+				}
+			}
 			// diffuseCol
-			if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "diffuseCol"))
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "diffuseCol"))
 			{
 				Parser::parseMathVector(scanner, diffuseCol);
 			}
-			// SPECULAR_COL
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SPECULAR_COLOR"))
+			// specularCol
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "specularCol"))
 			{
 				Parser::parseMathVector(scanner, specularCol);
 			}
-			// RADIUS
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "RADIUS"))
+			// radius
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "radius"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
@@ -83,20 +78,34 @@ bool LightData::load(const char* filename)
 				radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
 																															 float(token->getValue().getInt());
 			}
-			// CASTS_SHADOW
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "CASTS_SHADOW"))
+			// castsShadow
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "castsShadow"))
 			{
 				token = &scanner.getNextToken();
-				if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+				if(token->getCode() == Scanner::TC_IDENTIFIER)
 				{
-					PARSE_ERR_EXPECTED("number");
+					if(!strcmp(token->getValue().getString(), "true"))
+					{
+						castsShadow_ = true;
+					}
+					else if(!strcmp(token->getValue().getString(), "false"))
+					{
+						castsShadow_ = false;
+					}
+					else
+					{
+						PARSE_ERR_EXPECTED("true or false");
+						return false;
+					}
+				}
+				else
+				{
+					PARSE_ERR_EXPECTED("true or false");
 					return false;
 				}
-
-				castsShadow_ = token->getValue().getInt();
 			}
-			// DISTANCE
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DISTANCE"))
+			// distance
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "distance"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
@@ -109,8 +118,8 @@ bool LightData::load(const char* filename)
 																																 float(token->getValue().getInt());
 				type = LT_SPOT;
 			}
-			// FOV_X
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_X"))
+			// fovX
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "fovX"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
@@ -123,8 +132,8 @@ bool LightData::load(const char* filename)
 																														 float(token->getValue().getInt());
 				type = LT_SPOT;
 			}
-			// FOV_Y
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "FOV_Y"))
+			// fovY
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "fovY"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
@@ -137,8 +146,8 @@ bool LightData::load(const char* filename)
 																														 float(token->getValue().getInt());
 				type = LT_SPOT;
 			}
-			// TEXTURE
-			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "TEXTURE"))
+			// texture
+			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "texture"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_STRING)
@@ -173,9 +182,9 @@ bool LightData::load(const char* filename)
 	}
 	
 	// sanity checks
-	if(type == LT_SPOT && texture.get() == NULL)
+	if(type == LT_NUM)
 	{
-		ERROR("Spot light should have texture");
+		ERROR("Forgot to set type");
 		return false;
 	}
 
