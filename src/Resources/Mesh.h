@@ -14,8 +14,8 @@ class Material;
 
 /// Mesh Resource. If the material name is empty then the mesh wont be rendered and no VBOs will be created
 ///
-/// File format:
-///
+/// Binary file format:
+/// @code
 /// <magic:ANKIMESH>
 /// <string:meshName>
 /// <string:material>
@@ -25,6 +25,7 @@ class Material;
 /// <uint:facesNum>
 /// <uint:tri[0].vertIds[0]> <uint:tri[0].vertIds[1]> <uint:tri[0].vertIds[2]> ...
 /// <uint:tri[facesNum-1].vertIds[0]> <uint:tri[facesNum-1].vertIds[1]> <uint:tri[facesNum-1].vertIds[2]>
+/// @endcode
 class Mesh: public Resource
 {
 	public:

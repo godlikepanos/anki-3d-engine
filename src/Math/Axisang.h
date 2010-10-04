@@ -1,8 +1,7 @@
 #ifndef AXISANG_H
 #define AXISANG_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {

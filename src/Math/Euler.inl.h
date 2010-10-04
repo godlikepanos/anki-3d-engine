@@ -1,4 +1,4 @@
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 namespace M {
@@ -120,7 +120,7 @@ inline Euler::Euler(const Mat3& m3)
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Euler& e)
+inline std::ostream& operator<<(std::ostream& s, const Euler& e)
 {
 	s << e.x << ' ' << e.y << ' ' << e.z;
 	return s;

@@ -1,4 +1,5 @@
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
+
 
 namespace M {
 
@@ -38,7 +39,8 @@ inline Axisang::Axisang(const Mat3& m3)
 	if((fabs(m3(0, 1)-m3(1, 0))< EPSILON)  && (fabs(m3(0, 2)-m3(2, 0))< EPSILON)  && (fabs(m3(1, 2)-m3(2, 1))< EPSILON))
 	{
 
-		if((fabs(m3(0, 1)+m3(1, 0)) < 0.1) && (fabs(m3(0, 2)+m3(2, 0)) < 0.1) && (fabs(m3(1, 2)+m3(2, 1)) < 0.1) && (fabs(m3(0, 0)+m3(1, 1)+m3(2, 2))-3) < 0.1)
+		if((fabs(m3(0, 1)+m3(1, 0)) < 0.1) && (fabs(m3(0, 2)+m3(2, 0)) < 0.1) && (fabs(m3(1, 2)+m3(2, 1)) < 0.1) &&
+		   (fabs(m3(0, 0)+m3(1, 1)+m3(2, 2))-3) < 0.1)
 		{
 			axis = Vec3(1.0, 0.0, 0.0);
 			ang = 0.0;

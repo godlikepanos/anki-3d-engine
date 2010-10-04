@@ -1,8 +1,7 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {

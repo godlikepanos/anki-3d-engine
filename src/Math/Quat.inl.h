@@ -1,5 +1,4 @@
-#include <iostream>
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)
@@ -194,7 +193,7 @@ inline Quat Quat::getInverted() const
 {
 	float norm = w*w + x*x + y*y + z*z;
 
-	DEBUG_ERR(isZero(norm)); // Norm is zero
+	RASSERT_THROW_EXCEPTION(isZero(norm)); // Norm is zero
 
 	float normi = 1.0 / norm;
 	return Quat(-normi*x, -normi*y, -normi*z, normi*w);
@@ -290,7 +289,7 @@ inline const Quat::Quat& getIdentity()
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Quat& q)
+inline std::ostream& operator<<(std::ostream& s, const Quat& q)
 {
 	s << q.w << ' ' << q.x << ' ' << q.y << ' ' << q.z;
 	return s;

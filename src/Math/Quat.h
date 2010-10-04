@@ -1,8 +1,7 @@
 #ifndef QUAT_H
 #define QUAT_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {
@@ -61,7 +60,7 @@ class Quat
 
 /// @name Other operators
 /// @{
-extern ostream& operator<<(ostream& s, const Quat& q);
+extern std::ostream& operator<<(std::ostream& s, const Quat& q);
 /// @}
 
 

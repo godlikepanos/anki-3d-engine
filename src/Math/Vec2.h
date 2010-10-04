@@ -1,8 +1,7 @@
 #ifndef VEC2_H
 #define VEC2_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {
@@ -77,7 +76,7 @@ extern Vec2 operator +(float f, const Vec2& v2);
 extern Vec2 operator -(float f, const Vec2& v2);
 extern Vec2 operator *(float f, const Vec2& v2);
 extern Vec2 operator /(float f, const Vec2& v2);
-extern ostream& operator<<(ostream& s, const Vec2& v);
+extern std::ostream& operator<<(std::ostream& s, const Vec2& v);
 /// @}
 
 

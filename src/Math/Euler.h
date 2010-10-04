@@ -1,8 +1,7 @@
 #ifndef EULER_H
 #define EULER_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {
@@ -42,7 +41,7 @@ class Euler
 
 /// @name Other operators
 /// @{
-extern ostream& operator<<(ostream& s, const Euler& e);
+extern std::ostream& operator<<(std::ostream& s, const Euler& e);
 /// @}
 
 

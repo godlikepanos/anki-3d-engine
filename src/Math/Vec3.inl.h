@@ -1,5 +1,4 @@
-#include <iostream>
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)
@@ -259,7 +258,7 @@ inline Vec3 Vec3::getProjection(const Vec3& toThis) const
 // Rotated
 inline Vec3 Vec3::getRotated(const Quat& q) const
 {
-	DEBUG_ERR(!isZero(1.0-q.getLength())); // Not normalized quat
+	RASSERT_THROW_EXCEPTION(!isZero(1.0-q.getLength())); // Not normalized quat
 
 	/*float vmult = 2.0f*(q.x*x + q.y*y + q.z*z);
 	float crossmult = 2.0*q.w;
@@ -349,7 +348,7 @@ inline void Vec3::transform(const Transform& transform)
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Vec3& v)
+inline std::ostream& operator<<(std::ostream& s, const Vec3& v)
 {
 	s << v.x << ' ' << v.y << ' ' << v.z;
 	return s;

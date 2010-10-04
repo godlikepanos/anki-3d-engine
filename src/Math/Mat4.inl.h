@@ -1,5 +1,4 @@
-#include <iostream>
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)
@@ -369,7 +368,7 @@ inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c, const Vec
 // setRow
 inline void Mat4::setRow(uint i, const Vec4& v)
 {
-	DEBUG_ERR(i > 3);
+	RASSERT_THROW_EXCEPTION(i > 3);
 	ME(i, 0) = v.x;
 	ME(i, 1) = v.y;
 	ME(i, 2) = v.z;
@@ -400,7 +399,7 @@ inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c, const 
 // setColumn
 inline void Mat4::setColumn(uint i, const Vec4& v)
 {
-	DEBUG_ERR(i > 3);
+	RASSERT_THROW_EXCEPTION(i > 3);
 	ME(0,i) = v.x;
 	ME(1,i) = v.y;
 	ME(2,i) = v.z;
@@ -618,7 +617,7 @@ inline Mat4 Mat4::getInverse() const
 
 	det = ME(0, 0)*m4(0, 0)+ME(1, 0)*m4(0, 1)+ME(2, 0)*m4(0, 2)+ME(3, 0)*m4(0, 3);
 
-	DEBUG_ERR(isZero(det)); // Cannot invert, det == 0
+	RASSERT_THROW_EXCEPTION(isZero(det)); // Cannot invert, det == 0
 	det = 1.0/det;
 	m4 *= det;
 	return m4;
@@ -656,7 +655,7 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	 * return Mat4(tra, rot);
 	 * and the optimized:
 	 */
-	DEBUG_ERR(!isZero(m0(3, 0)+m0(3, 1)+m0(3, 2)+m0(3, 3)-1.0) ||
+	RASSERT_THROW_EXCEPTION(!isZero(m0(3, 0)+m0(3, 1)+m0(3, 2)+m0(3, 3)-1.0) ||
 	          !isZero(m1(3, 0)+m1(3, 1)+m1(3, 2)+m1(3, 3)-1.0)); // one of the 2 mat4 doesnt represent transformation
 
 	Mat4 m4;
@@ -682,7 +681,7 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Mat4& m)
+inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 {
 	for(int i=0; i<4; i++)
 	{

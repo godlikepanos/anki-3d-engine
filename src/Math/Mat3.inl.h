@@ -1,5 +1,4 @@
-#include <iostream>
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)
@@ -59,7 +58,7 @@ inline Mat3::Mat3(const Mat3& b)
 // constructor [quat]
 inline Mat3::Mat3(const Quat& q)
 {
-	DEBUG_ERR(fabs(1.0 - q.getLength()) > 0.002); // If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
+	RASSERT_THROW_EXCEPTION(fabs(1.0 - q.getLength()) > 0.002); // If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
@@ -111,7 +110,7 @@ inline Mat3::Mat3(const Euler& e)
 // constructor [axisang]
 inline Mat3::Mat3(const Axisang& axisang)
 {
-	DEBUG_ERR(!isZero(1.0 - axisang.axis.getLength())); // Not normalized axis
+	RASSERT_THROW_EXCEPTION(!isZero(1.0 - axisang.axis.getLength())); // Not normalized axis
 
 	float c, s;
 	sinCos(axisang.ang, s, c);
@@ -686,7 +685,7 @@ inline Mat3 Mat3::getInverse() const
 	float cofactor6 = ME(0, 1)*ME(1, 2) - ME(0, 2)*ME(1, 1);
 	float det = ME(0, 0)*cofactor0 + ME(1, 0)*cofactor3 + ME(2, 0)*cofactor6;
 
-	DEBUG_ERR(isZero(det)); // Cannot invert det == 0
+	RASSERT_THROW_EXCEPTION(isZero(det)); // Cannot invert det == 0
 
 	// create adjoint matrix and multiply by 1/det to get inverse
 	float invDet = 1.0f/det;
@@ -733,7 +732,7 @@ inline const Mat3& Mat3::getIdentity()
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Mat3& m)
+inline std::ostream& operator<<(std::ostream& s, const Mat3& m)
 {
 	for(int i=0; i<3; i++)
 	{

@@ -1,10 +1,11 @@
-#include <iostream>
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)
 
+
 namespace M {
+
 
 // accessors
 inline float& Vec2::operator [](uint i)
@@ -218,7 +219,7 @@ inline float Vec2::dot(const Vec2& b) const
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Vec2& v)
+inline std::ostream& operator<<(std::ostream& s, const Vec2& v)
 {
 	s << v.x << ' ' << v.y;
 	return s;
