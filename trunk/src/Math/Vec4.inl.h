@@ -1,5 +1,4 @@
-#include <iostream>
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)
@@ -248,10 +247,11 @@ inline void Vec4::normalize()
 }
 
 // print
-inline ostream& operator<<(ostream& s, const Vec4& v)
+inline std::ostream& operator<<(std::ostream& s, const Vec4& v)
 {
 	s << v.x << ' ' << v.y << ' ' << v.z << ' ' << v.w;
 	return s;
 }
+
 
 } // end namespace

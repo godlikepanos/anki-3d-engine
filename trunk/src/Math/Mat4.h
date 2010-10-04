@@ -1,8 +1,7 @@
 #ifndef MAT4_H
 #define MAT4_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {
@@ -110,7 +109,7 @@ extern Mat4 operator +(float f, const Mat4& m4);
 extern Mat4 operator -(float f, const Mat4& m4);
 extern Mat4 operator *(float f, const Mat4& m4);
 extern Mat4 operator /(float f, const Mat4& m4);
-extern ostream& operator<<(ostream& s, const Mat4& m);
+extern std::ostream& operator<<(std::ostream& s, const Mat4& m);
 /// @}
 
 

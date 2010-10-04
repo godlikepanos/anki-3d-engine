@@ -1,4 +1,4 @@
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 namespace M {
@@ -11,7 +11,7 @@ inline void mathSanityChecks()
 	if(sizeof(Vec2)!=fs*2 || sizeof(Vec3)!=fs*3 || sizeof(Vec4)!=fs*4 || sizeof(Quat)!=fs*4 ||
 	   sizeof(Euler)!=fs*3 || sizeof(Mat3)!=fs*9 || sizeof(Mat4)!=fs*16)
 	{
-		FATAL("Your compiler does class alignment");
+		THROW_EXCEPTION("Your compiler does class alignment");
 	}
 }
 
@@ -100,8 +100,8 @@ inline void sinCos(float a, float& sina, float& cosa)
 	if(negative)
 		sina = -sina;
 
-	/*DEBUG_ERR(!isZero(M::sin(a) - sina));
-	DEBUG_ERR(!isZero(M::cos(a) - cosa));*/
+	/*RASSERT_THROW_EXCEPTION(!isZero(M::sin(a) - sina));
+	RASSERT_THROW_EXCEPTION(!isZero(M::cos(a) - cosa));*/
 }
 
 

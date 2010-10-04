@@ -39,9 +39,9 @@ class Light: public SceneNode
 
 	/// @name Copies of some of the resource properties. The others are camera properties or not changeable
 	/// @{
-	PROPERTY_RW(Vec3, diffuseCol, setDiffuseCo, getDiffuseCol)
-	PROPERTY_RW(Vec3, specularCol, setSpecularCol, getSpecularCol)
-	PROPERTY_RW(bool, castsShadow_, setCastsShadow, castsShadow)
+	PROPERTY_RW(Vec3, diffuseCol, setDiffuseCol, getDiffuseCol) ///< Diffuse color
+	PROPERTY_RW(Vec3, specularCol, setSpecularCol, getSpecularCol) ///< Specular color
+	PROPERTY_RW(bool, castsShadow_, setCastsShadow, castsShadow) ///< Casts shadow
 	/// @}
 
 	public:

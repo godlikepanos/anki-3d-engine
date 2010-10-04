@@ -1,4 +1,4 @@
-#include "MathDfltHeader.h"
+#include "MathCommon.inl.h"
 
 
 #define ME (*this)

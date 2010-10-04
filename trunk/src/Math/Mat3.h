@@ -1,8 +1,7 @@
 #ifndef MAT3_H
 #define MAT3_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {
@@ -115,7 +114,7 @@ extern Mat3 operator +(float f, const Mat3& m3);
 extern Mat3 operator -(float f, const Mat3& m3);
 extern Mat3 operator *(float f, const Mat3& m3);
 extern Mat3 operator /(float f, const Mat3& m3);
-extern ostream& operator<<(ostream& s, const Mat3& m);
+extern std::ostream& operator<<(std::ostream& s, const Mat3& m);
 /// @}
 
 

@@ -1,8 +1,7 @@
 #ifndef MATH_FUNCS_H
 #define MATH_FUNCS_H
 
-#include "Common.h"
-#include "MathForwardDecls.h"
+#include "MathCommon.h"
 
 
 namespace M {

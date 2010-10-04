@@ -14,7 +14,4 @@
 #include "Transform.h"
 
 
-using namespace M;
-
-
 #endif

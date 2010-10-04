@@ -9,10 +9,10 @@
 /// Skeleton animation resource
 ///
 /// The format will be changed to:
-///
+/// @code
 /// skeletonAnimation
 /// {
-/// 	name <same-as-file>
+/// 	name same-as-file
 /// 	keyframes {<val> <val> ... <val>}
 /// 	bones
 /// 	{
@@ -44,6 +44,7 @@
 /// 		}
 /// 	}
 /// }
+/// @endcode
 class SkelAnim: public Resource
 {
 	public:
