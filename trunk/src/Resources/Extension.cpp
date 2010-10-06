@@ -5,25 +5,21 @@
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool Extension::load(const char* filename)
+void Extension::load(const char* filename)
 {
 	// load libary
 	libHandle = dlopen(filename, RTLD_LAZY);
 	if(libHandle == NULL)
 	{
-		ERROR("File \"" << filename << "\": " << dlerror());
-		return false;
+		THROW_EXCEPTION("File \"" + filename + "\": " + dlerror());
 	}
 	
 	// get FooBar
 	foobarPtr = (int(*)(void*))(dlsym(libHandle, "FooBar"));
 	if(foobarPtr == NULL)
 	{
-		ERROR("File \"" << filename << "\": \"FooBar\" entry symbol not found: " << dlerror());
-		return false;
+		THROW_EXCEPTION("File \"" + filename + "\": \"FooBar\" entry symbol not found: " + dlerror());
 	}
-	
-	return true;
 }
 
 

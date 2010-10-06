@@ -4,6 +4,7 @@
 #include <iostream>
 #include "StdTypes.h"
 #include "Properties.h"
+#include "Exception.h"
 
 // dummy define just to use the namespace
 namespace boost
