@@ -38,7 +38,7 @@ bool LightData::load(const char* filename)
 			if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "type"))
 			{
 				token = &scanner.getNextToken();
-				if(token->getCode() != Scanner::TC_IDENTIFIER)
+				if(token->getCode() == Scanner::TC_IDENTIFIER)
 				{
 					if(!strcmp(token->getValue().getString(), "LT_SPOT"))
 					{

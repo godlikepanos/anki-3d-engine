@@ -9,10 +9,8 @@ template<typename Type>
 class RsrcContainer;
 
 
-/**
- * Every class that it is considered a resource should be derived by this one. This step is not necessary because of the
- * RsrcContainer template but ensures that loading will be made by the resource manager and not the class itself
- */
+/// Every class that it is considered a resource should be derived by this one. This step is not necessary because of
+/// the RsrcContainer template but ensures that loading will be made by the resource manager and not the class itself
 class Resource
 {
 	template<typename Type>
@@ -43,11 +41,10 @@ class Resource
 		virtual ~Resource();
 
 	private:
-		/**
-		 * @param filename The file to load
-		 * @return True on success
-		 */
-		virtual bool load(const char* filename) = 0;
+		/// Load the resource
+		/// @param filename The file to load
+		/// @exception Exception
+		virtual void load(const char* filename) = 0;
 };
 
 
