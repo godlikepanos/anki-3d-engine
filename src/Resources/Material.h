@@ -19,6 +19,10 @@
 /// program for standard variables and keeps a pointer to the variable. The standard variables are like the GL build-in
 /// variables (that we cannot longer use on GL >3) with a few additions. The user defined variables are defined and
 /// values inside the .mtl file. The attribute variables cannot be user defined, the uniform on the other hand can.
+///
+/// File format:
+/// @code
+/// @endcode
 class Material: public Resource
 {
 	friend class Renderer; ///< For the setupMaterial
@@ -28,6 +32,12 @@ class Material: public Resource
 	friend class Bs;
 	friend class Mesh;
 	friend class MeshNode;
+
+	public:
+		Material();
+
+		/// @see Resource::load
+		void load(const char* filename);
 
 	private:
 		/// Standard attribute variables that are acceptable inside the @ref ShaderProg
@@ -115,17 +125,13 @@ class Material: public Resource
 		bool wireframe;
 		bool castsShadow; ///< Used in shadowmapping passes but not in Ez
 
-		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates the
-		/// stdAttribVars and stdUniVars arrays.
-		/// @return True on success
-		bool initStdShaderVars();
+		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates
+		/// the stdAttribVars and stdUniVars arrays.
+		/// @exception Exception
+		void initStdShaderVars();
 
 		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
 		bool hasAlphaTesting() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
-
-	public:
-		Material();
-		bool load(const char* filename);
 };
 
 

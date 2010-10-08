@@ -3,11 +3,11 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include "Image.h"
-#include "Util.h"
+#include "Exception.h"
 
 
-#define IMG_ERROR(x) ERROR("File \"" << filename << "\": " << x)
-#define IMG_WARNING(x) WARNING("File \"" << filename << "\": " << x)
+using namespace std;
+using namespace boost;
 
 
 uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -17,15 +17,14 @@ uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //======================================================================================================================
 // loadUncompressedTga                                                                                                 =
 //======================================================================================================================
-bool Image::loadUncompressedTga(const char* filename, fstream& fs, uint& bpp)
+void Image::loadUncompressedTga(fstream& fs, uint& bpp)
 {
 	// read the info from header
 	uchar header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		IMG_ERROR("Cannot read info header");
-		return false;
+		THROW_EXCEPTION("Cannot read info header");
 	}
 
 	width  = header6[1] * 256 + header6[0];
@@ -34,8 +33,7 @@ bool Image::loadUncompressedTga(const char* filename, fstream& fs, uint& bpp)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		IMG_ERROR("Invalid image information");
-		return false;
+		THROW_EXCEPTION("Invalid image information");
 	}
 
 	// read the data
@@ -46,8 +44,7 @@ bool Image::loadUncompressedTga(const char* filename, fstream& fs, uint& bpp)
 	fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
 	if(fs.gcount() != imageSize)
 	{
-		IMG_ERROR("Cannot read image data");
-		return false;
+		THROW_EXCEPTION("Cannot read image data");
 	}
 
 	// swap red with blue
@@ -57,22 +54,19 @@ bool Image::loadUncompressedTga(const char* filename, fstream& fs, uint& bpp)
 		data[i] = data[i + 2];
 		data[i + 2] = temp;
 	}
-
-	return true;
 }
 
 
 //======================================================================================================================
 // loadCompressedTga                                                                                                   =
 //======================================================================================================================
-bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
+void Image::loadCompressedTga(fstream& fs, uint& bpp)
 {
 	unsigned char header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		IMG_ERROR("Cannot read info header");
-		return false;
+		THROW_EXCEPTION("Cannot read info header");
 	}
 
 	width  = header6[1] * 256 + header6[0];
@@ -81,8 +75,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		IMG_ERROR("Invalid texture information");
-		return false;
+		THROW_EXCEPTION("Invalid texture information");
 	}
 
 
@@ -102,8 +95,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 		fs.read((char*)&chunkheader, sizeof(unsigned char));
 		if(fs.gcount() != sizeof(unsigned char))
 		{
-			IMG_ERROR("Cannot read RLE header");
-			return false;
+			THROW_EXCEPTION("Cannot read RLE header");
 		}
 
 		if(chunkheader < 128)
@@ -114,8 +106,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 				fs.read((char*)&colorbuffer[0], bytesPerPxl);
 				if(fs.gcount() != bytesPerPxl)
 				{
-					IMG_ERROR("Cannot read image data");
-					return false;
+					THROW_EXCEPTION("Cannot read image data");
 				}
 
 				data[currentbyte		] = colorbuffer[2];
@@ -132,8 +123,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 
 				if(currentpixel > pixelcount)
 				{
-					IMG_ERROR("Too many pixels read");
-					return false;
+					THROW_EXCEPTION("Too many pixels read");
 				}
 			}
 		}
@@ -143,8 +133,7 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 			fs.read((char*)&colorbuffer[0], bytesPerPxl);
 			if(fs.gcount() != bytesPerPxl)
 			{
-				IMG_ERROR("Cannot read from file");
-				return false;
+				THROW_EXCEPTION("Cannot read from file");
 			}
 
 			for(int counter = 0; counter < chunkheader; counter++)
@@ -163,21 +152,18 @@ bool Image::loadCompressedTga(const char* filename, fstream& fs, uint& bpp)
 
 				if(currentpixel > pixelcount)
 				{
-					IMG_ERROR("Too many pixels read");
-					return false;
+					THROW_EXCEPTION("Too many pixels read");
 				}
 			}
 		}
 	} while(currentpixel < pixelcount);
-
-	return true;
 }
 
 
 //======================================================================================================================
 // loadTga                                                                                                             =
 //======================================================================================================================
-bool Image::loadTga(const char* filename)
+void Image::loadTga(const char* filename)
 {
 	fstream fs;
 	char myTgaHeader[12];
@@ -186,53 +172,54 @@ bool Image::loadTga(const char* filename)
 
 	if(!fs.good())
 	{
-		IMG_ERROR("Cannot open file");
-		return false;
+		THROW_EXCEPTION("Cannot open file");
 	}
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
 	if(fs.gcount() != sizeof(myTgaHeader))
 	{
-		IMG_ERROR("Cannot read file header");
 		fs.close();
-		return false;
+		THROW_EXCEPTION("Cannot read file header");
 	}
 
-	bool funcsReturn;
 	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		funcsReturn = loadUncompressedTga(filename, fs, bpp);
+		loadUncompressedTga(fs, bpp);
 	}
 	else if(memcmp(tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		funcsReturn = loadCompressedTga(filename, fs, bpp);
+		loadCompressedTga(fs, bpp);
 	}
 	else
 	{
-		IMG_ERROR("Invalid image header");
-		funcsReturn = false;
+		THROW_EXCEPTION("Invalid image header");
 	}
 
 	if(bpp == 32)
+	{
 		type = CT_RGBA;
+	}
 	else if(bpp == 24)
+	{
 		type = CT_RGB;
+	}
 	else
-		FATAL("See file");
+	{
+		THROW_EXCEPTION("Invalid bps");
+	}
 
 	fs.close();
-	return funcsReturn;
 }
 
 
 //======================================================================================================================
 // loadPng                                                                                                             =
 //======================================================================================================================
-bool Image::loadPng(const char* filename)
+bool Image::loadPng(const char* filename, string& err) throw()
 {
-	/*
-	 * All locals
-	 */
+	//
+	// All locals
+	//
 	const uint PNG_SIG_SIZE = 8; // PNG header size
 	FILE* file = NULL;
 	png_structp pngPtr = NULL;
@@ -245,69 +232,69 @@ bool Image::loadPng(const char* filename)
 	uint colorType;
 	vector<png_bytep> rowPointers;
 
-	/*
-	 * Open file
-	 */
+	//
+	// Open file
+	//
 	file = fopen(filename, "rb");
 	if(file == NULL)
 	{
-		IMG_ERROR("Cannot open file");
+		err = "Cannot open file";
 		goto cleanup;
 	}
 
-	/*
-	 * Validate PNG header
-	 */
+	//
+	// Validate PNG header
+	//
 	png_byte pngsig[PNG_SIG_SIZE];
 	charsRead = fread(pngsig, 1, PNG_SIG_SIZE, file);
 	if(charsRead != PNG_SIG_SIZE)
 	{
-		IMG_ERROR("Cannot read PNG header");
+		err = "Cannot read PNG header";
 		goto cleanup;
 	}
 
 	if(png_sig_cmp(pngsig, 0, PNG_SIG_SIZE) != 0)
 	{
-		IMG_ERROR("File not PNG image");
+		err = "File not PNG image";
 		goto cleanup;
 	}
 
-	/*
-	 * Crete some PNG structs
-	 */
+	//
+	// Crete some PNG structs
+	//
 	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!pngPtr)
 	{
-		IMG_ERROR("png_create_read_struct failed");
+		THROW_EXCEPTION("png_create_read_struct failed");
 		goto cleanup;
 	}
 
 	infoPtr = png_create_info_struct(pngPtr);
 	if(!infoPtr)
 	{
-		IMG_ERROR("png_create_info_struct failed");
+		err = "png_create_info_struct failed";
 		goto cleanup;
 	}
 
-	/*
-	 * Set error handling
-	 */
+	//
+	// Set error handling
+	//
 	if(setjmp(png_jmpbuf(pngPtr)))
 	{
-		IMG_ERROR("Reading PNG file failed");
+		err = "Reading PNG file failed";
 		goto cleanup;
 	}
 
-	/*
-	 * Init io
-	 */
+	//
+	// Init io
+	//
 	png_init_io(pngPtr, file);
 	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE); // PNG lib knows that we allready have read the header
 
-	/*
-	 * Read info and make conversions
-	 * This loop reads info, if not acceptable it calls libpng funcs to change them and re-runs the loop
-	 */
+	//
+	// Read info and make conversions
+	// This loop reads info, if not acceptable it calls libpng funcs to change them and re-runs the loop
+	//
 	png_read_info(pngPtr, infoPtr);
 	while(true)
 	{
@@ -321,7 +308,7 @@ bool Image::loadPng(const char* filename)
 		switch(colorType)
 		{
 			case PNG_COLOR_TYPE_PALETTE:
-				IMG_WARNING("Converting PNG_COLOR_TYPE_PALETTE to PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA");
+				err = "Converting PNG_COLOR_TYPE_PALETTE to PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA";
 				png_set_palette_to_rgb(pngPtr);
 				goto again;
 				break;
@@ -329,7 +316,7 @@ bool Image::loadPng(const char* filename)
 				// do nothing
 				break;
 			case PNG_COLOR_TYPE_GRAY_ALPHA:
-				IMG_WARNING("Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. Converting to PNG_COLOR_TYPE_GRAY");
+				err = "Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. Converting to PNG_COLOR_TYPE_GRAY";
 				png_set_strip_alpha(pngPtr);
 				goto again;
 				break;
@@ -340,21 +327,21 @@ bool Image::loadPng(const char* filename)
 				// do nothing
 				break;
 			default:
-				FATAL("Forgot to handle a color type");
+				THROW_EXCEPTION("Forgot to handle a color type");
 				break;
 		}
 
 		// 2) Convert the bit depths
 		if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
 		{
-			IMG_WARNING("Converting bit depth");
+			err = "Converting bit depth";
 			png_set_gray_1_2_4_to_8(pngPtr);
 			goto again;
 		}
 
 		if(bitDepth > 8)
 		{
-			IMG_WARNING("Converting bit depth");
+			err = "Converting bit depth";
 			png_set_strip_16(pngPtr);
 		}
 
@@ -368,13 +355,13 @@ bool Image::loadPng(const char* filename)
 	if((bitDepth != 8) ||
 		 (colorType != PNG_COLOR_TYPE_GRAY && colorType != PNG_COLOR_TYPE_RGB && colorType != PNG_COLOR_TYPE_RGBA))
 	{
-		IMG_ERROR("Sanity checks failed");
+		err = "Sanity checks failed";
 		goto cleanup;
 	}
 
-	/*
-	 * Read this sucker
-	 */
+	//
+	// Read this sucker
+	//
 	rowbytes = png_get_rowbytes(pngPtr, infoPtr);
 
 	rowPointers.resize(height * sizeof(png_bytep));
@@ -386,9 +373,9 @@ bool Image::loadPng(const char* filename)
 
 	png_read_image(pngPtr, &rowPointers[0]);
 
-	/*
-	 * Finalize
-	 */
+	//
+	// Finalize
+	//
 	switch(colorType)
 	{
 		case PNG_COLOR_TYPE_GRAY:
@@ -404,21 +391,27 @@ bool Image::loadPng(const char* filename)
 
 	ok = true;
 
-	/*
-	 * Cleanup
-	 */
+	//
+	// Cleanup
+	//
 	cleanup:
 
 	if(pngPtr)
 	{
 		if(infoPtr)
+		{
 			png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
+		}
 		else
+		{
 			png_destroy_read_struct(&pngPtr, NULL, NULL);
+		}
 	}
 
 	if(file)
+	{
 		fclose(file);
+	}
 
 	return ok;
 }
@@ -427,7 +420,7 @@ bool Image::loadPng(const char* filename)
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool Image::load(const char* filename)
+void Image::load(const char* filename)
 {
 	// get the extension
 	string ext = filesystem::path(filename).extension();
@@ -435,25 +428,28 @@ bool Image::load(const char* filename)
 
 
 	// load from this extension
-	if(ext == ".tga")
+	try
 	{
-		if(!loadTga(filename))
+		if(ext == ".tga")
 		{
-			return false;
+			loadTga(filename);
+		}
+		else if(ext == ".png")
+		{
+			string err;
+			if(!loadPng(filename, err))
+			{
+				THROW_EXCEPTION(err);
+			}
+		}
+		else
+		{
+			THROW_EXCEPTION("Unsupported extension");
 		}
 	}
-	else if(ext == ".png")
+	catch(std::exception& e)
 	{
-		if(!loadPng(filename))
-		{
-			return false;
-		}
+		THROW_EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
-	else
-	{
-		IMG_ERROR("Unsupported extension");
-		return false;
-	}
-	return true;
 }
 

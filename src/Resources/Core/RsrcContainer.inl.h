@@ -91,14 +91,18 @@ Type* RsrcContainer<Type>::load(const char* fname)
 	newInstance->path = path;
 	newInstance->referenceCounter = 1;
 
-	if(!newInstance->load(fname))
+	try
 	{
-		ERROR("Cannot load \"" << fname << '\"');
+		newInstance->load(fname);
+	}
+	catch(exception& e)
+	{
 		delete newInstance;
 		return NULL;
+		THROW_EXCEPTION("Cannot load \"" << fname << '\"');
 	}
-	BaseClass::push_back(newInstance);
 
+	BaseClass::push_back(newInstance);
 	return newInstance;
 }
 
