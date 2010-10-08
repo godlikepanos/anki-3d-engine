@@ -38,7 +38,7 @@ class Resource
 
 	public:
 		Resource(const ResourceType& type_);
-		virtual ~Resource();
+		virtual ~Resource() {DEBUG_ERR(referenceCounter != 0);}
 
 	private:
 		/// Load the resource
@@ -54,9 +54,8 @@ inline Resource::Resource(const ResourceType& type_):
 {}
 
 
-inline Resource::~Resource()
-{
-	DEBUG_ERR(referenceCounter != 0);
-}
+/// Special throwing exception macro for the resources
+#define RSRC_THROW_EXCEPTION(x) THROW_EXCEPTION("File \"" + getRsrcPath() + "/" + getRsrcName() + "\: " + x)
+
 
 #endif

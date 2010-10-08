@@ -42,7 +42,7 @@ class LightData: public Resource
 	public:
 		LightData();
 		~LightData() {}
-		bool load(const char* filename);
+		void load(const char* filename);
 		const Texture& getTexture() const;
 
 	private:

@@ -4,28 +4,27 @@
 #include "BinaryStream.h"
 
 
-#define MESH_ERR(x) \
-	ERROR("File \"" << filename << "\": " << x)
+#define MESH_THROW_EXCEPTION(x) THROW_EXCEPTION("File \"" + filename + "\": " + x)
 
 
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool Mesh::load(const char* filename)
+void Mesh::load(const char* filename)
 {
-	fstream file(filename, fstream::in | fstream::binary);
-
-	if(!file.is_open())
-	{
-		ERROR("Cannot open file \"" << filename << "\"");
-		return false;
-	}
-
-	BinaryStream bs(file.rdbuf());
-
-	// Try loading the file
+	// Try
 	try
 	{
+		// Open the file
+		fstream file(filename, fstream::in | fstream::binary);
+
+		if(!file.is_open())
+		{
+			THROW_EXCEPTION("Cannot open file \"" << filename << "\"");
+		}
+
+		BinaryStream bs(file.rdbuf());
+
 		// Magic word
 		char magic[8];
 		bs.read(magic, 8);
@@ -72,8 +71,7 @@ bool Mesh::load(const char* filename)
 				// a sanity check
 				if(tris[i].vertIds[j] >= vertCoords.size())
 				{
-					MESH_ERR("Incorrect vert index " << tris[i].vertIds[j] << " (" << i << ", " << j << ")");
-					return false;
+					THROW_EXCEPTION("Vert index out of bounds" + tris[i].vertIds[j] + " (" + i + ", " + j + ")");
 				}
 			}
 		}
@@ -104,15 +102,13 @@ bool Mesh::load(const char* filename)
 			// we treat as error if one vert doesnt have a bone
 			if(boneConnections < 1)
 			{
-				MESH_ERR("Vert \"" << i << "\" sould have have at least one bone");
-				return false;
+				THROW_EXCEPTION("Vert " + i + " sould have at least one bone");
 			}
 
 			// and here is another possible error
 			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
-				MESH_ERR("Cannot have more than " << VertexWeight::MAX_BONES_PER_VERT << " bones per vertex");
-				return false;
+				THROW_EXCEPTION("Cannot have more than " + VertexWeight::MAX_BONES_PER_VERT + " bones per vertex");
 			}
 			vertWeights[i].bonesNum = boneConnections;
 
@@ -127,59 +123,63 @@ bool Mesh::load(const char* filename)
 				float weight = bs.readFloat();
 				vertWeights[i].weights[j] = weight;
 			}
-		}
+		} // end for all vert weights
+
+
+		doPostLoad();
 	}
 	catch(Exception& e)
 	{
-		MESH_ERR("Cannot read mesh: " << e.what());
-		return false;
+		MESH_THROW_EXCEPTION(e.what());
 	}
+}
 
+
+//======================================================================================================================
+// doPostLoad                                                                                                          =
+//======================================================================================================================
+void Mesh::doPostLoad()
+{
 	// Sanity checks
 	if(vertCoords.size()<1 || tris.size()<1)
 	{
-		ERROR("Vert coords and tris must be filled \"" << filename << "\"");
-		return false;
+		THROW_EXCEPTION("Vert coords and tris must be filled");
 	}
 	if(texCoords.size()!=0 && texCoords.size()!=vertCoords.size())
 	{
-		ERROR("Tex coords num must be zero or equal to vertex coords num \"" << filename << "\"");
-		return false;
+		THROW_EXCEPTION("Tex coords num must be zero or equal to vertex coords num");
 	}
 	if(vertWeights.size()!=0 && vertWeights.size()!=vertCoords.size())
 	{
-		ERROR("Vert weights num must be zero or equal to vertex coords num \"" << filename << "\"");
-		return false;
+		THROW_EXCEPTION("Vert weights num must be zero or equal to vertex coords num");
 	}
 
 	if(isRenderable())
 	{
 		createAllNormals();
 		if(texCoords.size() > 0)
+		{
 			createVertTangents();
+		}
 		createVertIndeces();
 		createVbos();
 		calcBSphere();
 
-		/*
-		 * Sanity checks continued
-		 */
+		// Sanity checks continued
 		if(material->stdAttribVars[Material::SAV_TEX_COORDS] != NULL && !vbos.texCoords.isCreated())
 		{
-			ERROR("The shader program (\"" << material->shaderProg->getRsrcName() <<
-						 "\") needs texture coord information that the mesh (\"" <<
-						 getRsrcName() << "\") doesn't have");
+			THROW_EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
+						          "\") needs texture coord information that the mesh (\"" +
+						          getRsrcName() << "\") doesn't have");
 		}
 
 		if(material->hasHWSkinning() && !vbos.vertWeights.isCreated())
 		{
-			ERROR("The shader program (\"" << material->shaderProg->getRsrcName() <<
-						 "\") needs vertex weights that the mesh (\"" <<
-						 getRsrcName() << "\") doesn't have");
+			THROW_EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
+						          "\") needs vertex weights that the mesh (\"" +
+						          getRsrcName() + "\") doesn't have");
 		}
 	}
-
-	return true;
 }
 
 
@@ -238,7 +238,9 @@ void Mesh::createVertNormals()
 	}
 
 	for(uint i=0; i<vertNormals.size(); i++)
+	{
 		vertNormals[i].normalize();
+	}
 }
 
 
@@ -322,11 +324,19 @@ void Mesh::createVbos()
 	vbos.vertCoords.create(GL_ARRAY_BUFFER, vertCoords.getSizeInBytes(), &vertCoords[0], GL_STATIC_DRAW);
 	vbos.vertNormals.create(GL_ARRAY_BUFFER, vertNormals.getSizeInBytes(), &vertNormals[0], GL_STATIC_DRAW);
 	if(vertTangents.size() > 1)
+	{
 		vbos.vertTangents.create(GL_ARRAY_BUFFER, vertTangents.getSizeInBytes(), &vertTangents[0], GL_STATIC_DRAW);
+	}
+
 	if(texCoords.size() > 1)
+	{
 		vbos.texCoords.create(GL_ARRAY_BUFFER, texCoords.getSizeInBytes(), &texCoords[0], GL_STATIC_DRAW);
+	}
+
 	if(vertWeights.size() > 1)
+	{
 		vbos.vertWeights.create(GL_ARRAY_BUFFER, vertWeights.getSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW);
+	}
 }
 
 

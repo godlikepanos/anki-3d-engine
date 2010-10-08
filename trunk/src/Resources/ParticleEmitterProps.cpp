@@ -66,7 +66,7 @@ bool ParticleEmitterPropsStruct::usingWorldGrav() const
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool ParticleEmitterProps::load(const char* /*filename*/)
+void ParticleEmitterProps::load(const char* /*filename*/)
 {
 	// dummy load
 	particleLife = 7.0;
@@ -93,39 +93,31 @@ bool ParticleEmitterProps::load(const char* /*filename*/)
 	// sanity checks
 	if(particleLife <= 0.0)
 	{
-		ERROR(errMsg << "particleLife");
-		return false;
+		RSRC_THROW_EXCEPTION(errMsg + "particleLife");
 	}
 
 	if(particleLife - particleLifeMargin <= 0.0)
 	{
-		ERROR(errMsg << "particleLifeMargin");
-		return false;
+		RSRC_THROW_EXCEPTION(errMsg + "particleLifeMargin");
 	}
 
 	if(size <= 0.0)
 	{
-		ERROR(errMsg << "size");
-		return false;
+		RSRC_THROW_EXCEPTION(errMsg + "size");
 	}
 
 	if(maxNumOfParticles < 1)
 	{
-		ERROR(errMsg << "maxNumOfParticles");
-		return false;
+		RSRC_THROW_EXCEPTION(errMsg + "maxNumOfParticles");
 	}
 
 	if(emittionPeriod <= 0.0)
 	{
-		ERROR(errMsg << "emittionPeriod");
-		return false;
+		RSRC_THROW_EXCEPTION(errMsg + "emittionPeriod");
 	}
 
 	if(particlesPerEmittion < 1)
 	{
-		ERROR(errMsg << "particlesPerEmittion");
-		return false;
+		RSRC_THROW_EXCEPTION(errMsg + "particlesPerEmittion");
 	}
-
-	return true;
 }

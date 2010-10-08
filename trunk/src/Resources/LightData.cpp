@@ -22,7 +22,7 @@ LightData::LightData():
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool LightData::load(const char* filename)
+void LightData::load(const char* filename)
 {
 	try
 	{
@@ -50,7 +50,7 @@ bool LightData::load(const char* filename)
 					}
 					else
 					{
-						PARSE_ERR_EXPECTED("LT_SPOT or LT_POINT");
+						PARSER_THROW_EXCEPTION_EXPECTED("LT_SPOT or LT_POINT");
 						return false;
 					}
 				}
@@ -71,7 +71,7 @@ bool LightData::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 					return false;
 				}
 
@@ -94,13 +94,13 @@ bool LightData::load(const char* filename)
 					}
 					else
 					{
-						PARSE_ERR_EXPECTED("true or false");
+						PARSER_THROW_EXCEPTION_EXPECTED("true or false");
 						return false;
 					}
 				}
 				else
 				{
-					PARSE_ERR_EXPECTED("true or false");
+					PARSER_THROW_EXCEPTION_EXPECTED("true or false");
 					return false;
 				}
 			}
@@ -110,7 +110,7 @@ bool LightData::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 					return false;
 				}
 
@@ -124,7 +124,7 @@ bool LightData::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 					return false;
 				}
 
@@ -138,7 +138,7 @@ bool LightData::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 					return false;
 				}
 
@@ -152,7 +152,7 @@ bool LightData::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_STRING)
 				{
-					PARSE_ERR_EXPECTED("string");
+					PARSER_THROW_EXCEPTION_EXPECTED("string");
 					return false;
 				}
 
@@ -170,23 +170,19 @@ bool LightData::load(const char* filename)
 			// other crap
 			else
 			{
-				PARSE_ERR_UNEXPECTED();
+				PARSER_THROW_EXCEPTION_UNEXPECTED();
 				return false;
 			}
 		} // end while
 	}
 	catch(std::exception& e)
 	{
-		ERROR(e.what());
-		return false;
+		THROW_EXCEPTION(e.what());
 	}
 	
 	// sanity checks
 	if(type == LT_NUM)
 	{
-		ERROR("Forgot to set type");
-		return false;
+		THROW_EXCEPTION("Forgot to set type");
 	}
-
-	return true;
 }

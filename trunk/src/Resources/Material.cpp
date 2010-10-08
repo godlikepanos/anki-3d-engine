@@ -9,8 +9,8 @@
 #include "MainRenderer.h"
 
 
-/// Customized @ref ERROR used in @ref Material class
-#define MTL_ERROR(x) ERROR("Material (" << getRsrcPath() << getRsrcName() << "): " << x);
+/// Customized THROW_EXCEPTION
+#define MTL_THROW_EXCEPTION(x) THROW_EXCEPTION("Material \"" + getRsrcPath() + getRsrcName() + "\": " + x)
 
 
 //======================================================================================================================
@@ -54,15 +54,15 @@ Material::StdVarNameAndGlDataTypePair Material::stdUniVarInfos[SUV_NUM] =
 // Stuff for custom material stage shader prgs                                                                         =
 //======================================================================================================================
 
+/// A simple pair-like structure
 struct MsSwitch
 {
 	const char* switchName;
 	const char prefix;
 };
 
-/**
- * See the docs for info about the switches
- */
+
+/// See the docs for info about the switches
 static MsSwitch msSwitches [] =
 {
 	{"DIFFUSE_MAPPING", 'd'},
@@ -120,7 +120,7 @@ static bool searchBlendEnum(const char* str, int& gl_enum)
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool Material::load(const char* filename)
+void Material::load(const char* filename)
 {
 	try
 	{
@@ -131,17 +131,19 @@ bool Material::load(const char* filename)
 		{
 			token = &scanner.getNextToken();
 
-			//** SHADER_PROG **
+			//
+			// SHADER_PROG
+			//
 			if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SHADER_PROG"))
 			{
 				if(shaderProg.get())
 				{
-					ERROR("Shader program already loaded");
-					return false;
+					PARSER_THROW_EXCEPTION("Shader program already loaded");
 				}
 
 				token = &scanner.getNextToken();
 				string shaderFilename;
+				// Just a string
 				if(token->getCode() == Scanner::TC_STRING)
 				{
 					shaderFilename = token->getValue().getString();
@@ -153,16 +155,14 @@ bool Material::load(const char* filename)
 					token = &scanner.getNextToken();
 					if(token->getCode() != Scanner::TC_LPAREN)
 					{
-						PARSE_ERR_EXPECTED("(");
-						return false;
+						PARSER_THROW_EXCEPTION_EXPECTED("(");
 					}
 
 					// shader prog
 					token = &scanner.getNextToken();
 					if(token->getCode() != Scanner::TC_STRING)
 					{
-						PARSE_ERR_EXPECTED("string");
-						return false;
+						PARSER_THROW_EXCEPTION_EXPECTED("string");
 					}
 					string sProgFilename = token->getValue().getString();
 
@@ -174,28 +174,30 @@ bool Material::load(const char* filename)
 						token = &scanner.getNextToken();
 
 						if(token->getCode() == Scanner::TC_RPAREN)
+						{
 							break;
+						}
 
 						if(token->getCode() != Scanner::TC_IDENTIFIER)
 						{
-							PARSE_ERR_EXPECTED("identifier");
-							return false;
+							PARSER_THROW_EXCEPTION_EXPECTED("identifier");
 						}
 
-						// check if acceptable value
+						// Check if acceptable value. Loop the switches array
 						MsSwitch* mss = msSwitches;
 						while(mss->switchName != NULL)
 						{
 							if(!strcmp(mss->switchName, token->getString()))
+							{
 								break;
+							}
 
 							++mss;
 						}
 
 						if(mss->switchName == NULL)
 						{
-							PARSE_ERR("Incorrect switch " << token->getString());
-							return false;
+							PARSER_THROW_EXCEPTION("Incorrect switch " + token->getString());
 						}
 
 						source += string("#define ") + token->getString() + "\n";
@@ -208,132 +210,140 @@ bool Material::load(const char* filename)
 				}
 				else
 				{
-					PARSE_ERR_EXPECTED("string or buildMsSProg");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("string or buildMsSProg");
 				}
 
 				shaderProg.loadRsrc(shaderFilename.c_str());
 			}
-			//** DEPTH_MATERIAL **
+			//
+			// DEPTH_PASS_MATERIAL
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DEPTH_PASS_MATERIAL"))
 			{
 				if(dpMtl.get())
-					ERROR("Depth material already loaded");
+				{
+					PARSER_THROW_EXCEPTION("Depth material already loaded");
+				}
 
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_STRING)
 				{
-					PARSE_ERR_EXPECTED("string");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("string");
 				}
 				dpMtl.loadRsrc(token->getValue().getString());
 			}
-			//** BLENDS **
+			//
+			// BLENDS
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDS"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 				}
 				blends = token->getValue().getInt();
 			}
-			//** BLENDING_SFACTOR **
+			//
+			// BLENDING_SFACTOR
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDING_SFACTOR"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_IDENTIFIER)
 				{
-					PARSE_ERR_EXPECTED("identifier");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("identifier");
 				}
 				int gl_enum;
 				if(!searchBlendEnum(token->getValue().getString(), gl_enum))
 				{
-					PARSE_ERR("Incorrect blending factor \"" << token->getValue().getString() << "\"");
-					return false;
+					PARSER_THROW_EXCEPTION("Incorrect blending factor \"" + token->getValue().getString() + "\"");
 				}
 				blendingSfactor = gl_enum;
 			}
-			//** BLENDING_DFACTOR **
+			//
+			// BLENDING_DFACTOR
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "BLENDING_DFACTOR"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_IDENTIFIER)
 				{
-					PARSE_ERR_EXPECTED("identifier");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("identifier");
 				}
 				int gl_enum;
 				if(!searchBlendEnum(token->getValue().getString(), gl_enum))
 				{
 					PARSE_ERR("Incorrect blending factor \"" << token->getValue().getString() << "\"");
-					return false;
 				}
 				blendingDfactor = gl_enum;
 			}
-			//** DEPTH_TESTING **
+			//
+			// DEPTH_TESTING
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "DEPTH_TESTING"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 				}
 				depthTesting = token->getValue().getInt();
 			}
-			//** WIREFRAME **
+			//
+			// WIREFRAME
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "WIREFRAME"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 				}
 				wireframe = token->getValue().getInt();
 			}
-			//** CASTS_SHADOW **
+			//
+			// CASTS_SHADOW
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "CASTS_SHADOW"))
 			{
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSE_ERR_EXPECTED("number");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("number");
 				}
 				castsShadow = token->getValue().getInt();
 			}
-			//** USER_DEFINED_VARS **
+			//
+			// USER_DEFINED_VARS
+			//
 			else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "USER_DEFINED_VARS"))
 			{
 				// first check if the shader is defined
 				if(shaderProg.get() == NULL)
 				{
-					PARSE_ERR("You have to define the shader program before the user defined vars");
-					return false;
+					PARSER_THROW_EXCEPTION("You have to define the shader program before the user defined vars");
 				}
 
-				// read {
+				// {
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_LBRACKET)
 				{
-					PARSE_ERR_EXPECTED("{");
-					return false;
+					PARSER_THROW_EXCEPTION_EXPECTED("{");
 				}
 				// loop all the vars
 				do
 				{
 					// read the name
 					token = &scanner.getNextToken();
-					if(token->getCode() == Scanner::TC_RBRACKET) break;
+					if(token->getCode() == Scanner::TC_RBRACKET)
+					{
+						break;
+					}
 
 					if(token->getCode() != Scanner::TC_IDENTIFIER)
 					{
-						PARSE_ERR_EXPECTED("identifier");
-						return false;
+						PARSER_THROW_EXCEPTION_EXPECTED("identifier");
 					}
 
 					string varName;
@@ -345,8 +355,7 @@ bool Material::load(const char* filename)
 					// check if the uniform exists
 					if(!shaderProg->uniVarExists(varName.c_str()))
 					{
-						PARSE_ERR("The variable \"" << varName << "\" is not an active uniform");
-						return false;
+						PARSER_THROW_EXCEPTION("The variable \"" + varName + "\" is not an active uniform");
 					}
 
 					var.sProgVar = shaderProg->findUniVar(varName.c_str());
@@ -360,13 +369,10 @@ bool Material::load(const char* filename)
 							if(token->getCode() == Scanner::TC_STRING)
 							{
 								var.value.texture.loadRsrc(token->getValue().getString());
-								if(var.value.texture.get() == NULL)
-									return false;
 							}
 							else
 							{
-								PARSE_ERR_EXPECTED("string");
-								return false;
+								PARSER_THROW_EXCEPTION_EXPECTED("string");
 							}
 							break;
 						// float
@@ -378,8 +384,7 @@ bool Material::load(const char* filename)
 							}
 							else
 							{
-								PARSE_ERR_EXPECTED("float");
-								return false;
+								PARSER_THROW_EXCEPTION_EXPECTED("float");
 							}
 							break;
 						// vec2
@@ -399,39 +404,40 @@ bool Material::load(const char* filename)
 				}while(true); // end loop for all the vars
 
 			}
-			// end of file
+			//
+			// EOF
+			//
 			else if(token->getCode() == Scanner::TC_EOF)
 			{
 				break;
 			}
+			//
 			// other crap
+			//
 			else
 			{
-				PARSE_ERR_UNEXPECTED();
-				return false;
+				PARSER_THROW_EXCEPTION_UNEXPECTED();
 			}
 		} // end while
 	}
 	catch(std::exception& e)
 	{
 		ERROR(e.what());
-		return false;
 	}
 
-	return initStdShaderVars();
+	initStdShaderVars();
 }
 
 
 //======================================================================================================================
 // initStdShaderVars                                                                                                   =
 //======================================================================================================================
-bool Material::initStdShaderVars()
+void Material::initStdShaderVars()
 {
 	// sanity checks
 	if(!shaderProg.get())
 	{
-		MTL_ERROR("Without shader is like cake without sugar (missing SHADER_PROG)");
-		return false;
+		MTL_THROW_EXCEPTION("Without shader is like cake without sugar (missing SHADER_PROG)");
 	}
 
 	// the attributes
@@ -450,10 +456,9 @@ bool Material::initStdShaderVars()
 		// check if the shader has different GL data type from that it suppose to have
 		if(stdAttribVars[i]->getGlDataType() != stdAttribVarInfos[i].dataType)
 		{
-			MTL_ERROR("The \"" << stdAttribVarInfos[i].varName <<
-			          "\" attribute var has incorrect GL data type from the expected (0x" << hex <<
-			          stdAttribVars[i]->getGlDataType() << ")");
-			return false;
+			MTL_THROW_EXCEPTION("The \"" + stdAttribVarInfos[i].varName +
+			                    "\" attribute var has incorrect GL data type from the expected (0x" + hex +
+			                    stdAttribVars[i]->getGlDataType() + ")");
 		}
 	}
 
@@ -473,14 +478,11 @@ bool Material::initStdShaderVars()
 		// check if the shader has different GL data type from that it suppose to have
 		if(stdUniVars[i]->getGlDataType() != stdUniVarInfos[i].dataType)
 		{
-			MTL_ERROR("The \"" << stdUniVarInfos[i].varName <<
-			          "\" uniform var has incorrect GL data type from the expected (0x" << hex <<
-			          stdUniVars[i]->getGlDataType() << ")");
-			return false;
+			MTL_THROW_EXCEPTION("The \"" + stdUniVarInfos[i].varName +
+			                    "\" uniform var has incorrect GL data type from the expected (0x" + hex +
+			                    stdUniVars[i]->getGlDataType() + ")");
 		}
 	}
-
-	return true;
 }
 
 

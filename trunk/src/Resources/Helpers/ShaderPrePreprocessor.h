@@ -1,38 +1,34 @@
-#ifndef _SHADERPARSER_H_
-#define _SHADERPARSER_H_
+#ifndef SHADER_PARSER_H
+#define SHADER_PARSER_H
 
 #include <limits>
 #include "Common.h"
 #include "Vec.h"
 
 
-/**
- * Helper class used for shader program loading
- *
- * The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to
- * have all the shaders in the same file. The file that includes all the shaders is called
- * ShaderPrePreprocessor-compatible.
- *
- * The preprocessor pragmas are:
- *
- * - #pragma anki vertShaderBegins
- * - #pragma anki geomShaderBegins
- * - #pragma anki fragShaderBegins
- * - #pragma anki attribute <varName> <customLocation>
- * - #pragma anki include "<filename>"
- * - #pragma anki transformFeedbackVarying <varName>
- *
- * @note The order of the *ShaderBegins is important
- */
+/// Helper class used for shader program loading
+///
+/// The class fills some of the GLSL spec deficiencies. It adds the include preprocessor directive and the support to
+/// have all the shaders in the same file. The file that includes all the shaders is called
+/// ShaderPrePreprocessor-compatible.
+///
+/// The preprocessor pragmas are:
+///
+/// - #pragma anki vertShaderBegins
+/// - #pragma anki geomShaderBegins
+/// - #pragma anki fragShaderBegins
+/// - #pragma anki attribute <varName> <customLocation>
+/// - #pragma anki include "<filename>"
+/// - #pragma anki transformFeedbackVarying <varName>
+///
+/// @note The order of the *ShaderBegins is important
 class ShaderPrePreprocessor
 {
 	//====================================================================================================================
 	// Nested                                                                                                            =
 	//====================================================================================================================
 	protected:
-		/**
-		 * The pragma base class
-		 */
+		/// The pragma base class
 		struct Pragma
 		{
 			string definedInFile;
@@ -68,17 +64,13 @@ class ShaderPrePreprocessor
 			CodeBeginningPragma();
 		};
 
-		/**
-		 * The output of the class packed in this struct
-		 */
+		/// The output of the class packed in this struct
 		struct Output
 		{
 			friend class ShaderPrePreprocessor;
 
 			PROPERTY_R(Vec<ShaderVarPragma>, attributes, getAttribLocs) ///< It holds the name and the custom location
-			/**
-			 * Names and and ids for transform feedback varyings
-			 */
+			/// Names and and ids for transform feedback varyings
 			PROPERTY_R(Vec<TrffbVaryingPragma>, trffbVaryings, getTrffbVaryings)
 			PROPERTY_R(string, vertShaderSource, getVertShaderSource) ///< The vert shader source
 			PROPERTY_R(string, geomShaderSource, getGeomShaderSource) ///< The geom shader source
@@ -97,11 +89,9 @@ class ShaderPrePreprocessor
 		ShaderPrePreprocessor() {}
 		~ShaderPrePreprocessor() {}
 
-		/**
-		 * Parse a ShaderPrePreprocessor formated GLSL file. Use getOutput to get the output
-		 * @param fname The file to parse
-		 * @return True on success
-		 */
+		/// Parse a ShaderPrePreprocessor formated GLSL file. Use getOutput to get the output
+		/// @param fname The file to parse
+		/// @return True on success
 		bool parseFile(const char* fname);
 
 	//====================================================================================================================
@@ -113,29 +103,23 @@ class ShaderPrePreprocessor
 		CodeBeginningPragma geomShaderBegins;
 		CodeBeginningPragma fragShaderBegins;
 		
-		/**
-		 * A recursive function that parses a file for pragmas and updates the output
-		 * @param filename The file to parse
-		 * @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the includance
-		 * depth
-		 * @return True on success
-		 */
+		/// A recursive function that parses a file for pragmas and updates the output
+		/// @param filename The file to parse
+		/// @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the includance
+		/// depth
+		/// @return True on success
 		bool parseFileForPragmas(const string& filename, int depth = 0);
 
-		/**
-		 * Searches inside the Output::uniforms or Output::attributes vectors
-		 * @param vec Output::uniforms or Output::attributes
-		 * @param name The name of the location
-		 * @return Iterator to the vector
-		 */
+		/// Searches inside the Output::uniforms or Output::attributes vectors
+		/// @param vec Output::uniforms or Output::attributes
+		/// @param name The name of the location
+		/// @return Iterator to the vector
 		Vec<ShaderVarPragma>::iterator findShaderVar(Vec<ShaderVarPragma>& vec, const string& name) const;
 
-		/**
-		 * Searches inside the Output::attributes or Output::trffbVaryings vectors
-		 * @param vec Output::uniforms or Output::trffbVaryings
-		 * @param what The name of the varying or attrib
-		 * @return Iterator to the vector
-		 */
+		/// Searches inside the Output::attributes or Output::trffbVaryings vectors
+		/// @param vec Output::uniforms or Output::trffbVaryings
+		/// @param what The name of the varying or attrib
+		/// @return Iterator to the vector
 		template<typename Type>
 		typename Vec<Type>::const_iterator findNamed(const Vec<Type>& vec, const string& what) const;
 

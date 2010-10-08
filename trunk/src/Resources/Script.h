@@ -9,18 +9,13 @@
 class Script: public Resource
 {
 	public:
-		Script();
+		Script(): Resource(RT_SCRIPT) {}
 		~Script() {}
-		bool load(const char* filename);
+		void load(const char* filename);
 
 	private:
 		string source;
 };
-
-
-inline Script::Script():
-	Resource(RT_SCRIPT)
-{}
 
 
 #endif

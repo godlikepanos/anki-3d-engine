@@ -56,7 +56,7 @@ class ParticleEmitterProps: public ParticleEmitterPropsStruct, public Resource
 		ParticleEmitterProps(): Resource(RT_PARTICLE_EMITTER_PROPS) {}
 		~ParticleEmitterProps() {}
 
-		bool load(const char* filename);
+		void load(const char* filename);
 };
 
 

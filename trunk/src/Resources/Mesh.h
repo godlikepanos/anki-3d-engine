@@ -80,7 +80,7 @@ class Mesh: public Resource
 
 		Mesh();
 		~Mesh() {}
-		bool load(const char* filename);
+		void load(const char* filename);
 
 		/// The mesh is renderable when the material is loaded
 		bool isRenderable() const;
@@ -93,6 +93,10 @@ class Mesh: public Resource
 		void createVertIndeces();
 		void createVbos();
 		void calcBSphere();
+
+		/// This func does some sanity checks and creates normals, tangents, VBOs etc
+		/// @exception Exception
+		void doPostLoad();
 };
 
 
