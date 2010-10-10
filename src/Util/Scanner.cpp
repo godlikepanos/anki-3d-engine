@@ -13,8 +13,8 @@ using namespace std;
 using namespace boost;
 
 
-#define SCANNER_THROW_EXCEPTION(x) \
-	THROW_EXCEPTION(string("Scanner failed (") + scriptName + ':' + lexical_cast<string>(lineNmbr) + "): " + x)
+#define SCANNER_EXCEPTION(x) \
+	EXCEPTION(string("Scanner exception (") + scriptName + ':' + lexical_cast<string>(lineNmbr) + "): " + x)
 
 
 //======================================================================================================================
@@ -149,9 +149,20 @@ Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
 void Scanner::initAsciiMap()
 {
 	memset(&asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable));
-	for(uint x='a'; x<='z'; x++) asciiLookupTable[x] = AC_LETTER;
-	for(uint x='A'; x<='Z'; x++) asciiLookupTable[x] = AC_LETTER;
-	for(uint x='0'; x<='9'; x++) asciiLookupTable[x] = AC_DIGIT;
+	for(uint x='a'; x<='z'; x++)
+	{
+		asciiLookupTable[x] = AC_LETTER;
+	}
+
+	for(uint x='A'; x<='Z'; x++)
+	{
+		asciiLookupTable[x] = AC_LETTER;
+	}
+
+	for(uint x='0'; x<='9'; x++)
+	{
+		asciiLookupTable[x] = AC_DIGIT;
+	}
 
 	asciiLookupTable[':'] = asciiLookupTable['['] = asciiLookupTable[']'] = asciiLookupTable['('] = AC_SPECIAL;
 	asciiLookupTable[')'] = asciiLookupTable['.'] = asciiLookupTable['{'] = asciiLookupTable['}'] = AC_SPECIAL;
@@ -231,7 +242,7 @@ char Scanner::getNextChar()
 	}
 	else if(lookupAscii(*pchar) == AC_ERROR)
 	{
-		SCANNER_THROW_EXCEPTION("Unacceptable char '" + *pchar + "' 0x" + lexical_cast<string>(static_cast<uint>(*pchar)));
+		throw SCANNER_EXCEPTION("Unacceptable char '" + *pchar + "' 0x" + lexical_cast<string>(static_cast<uint>(*pchar)));
 	}
 
 	return *pchar;
@@ -273,7 +284,7 @@ void Scanner::loadFile(const char* filename_)
 	inFstream.open(filename_);
 	if(!inFstream.good())
 	{
-		THROW_EXCEPTION("Cannot open file \"" + filename_ + '\"');
+		throw EXCEPTION("Cannot open file \"" + filename_ + '\"');
 	}
 	
 	loadIstream(inFstream, filename_);
@@ -287,7 +298,7 @@ void Scanner::loadIstream(istream& istream_, const char* scriptName_)
 {
 	if(inStream != NULL)
 	{
-		THROW_EXCEPTION("Tokenizer already initialized");
+		throw EXCEPTION("Tokenizer already initialized");
 	}
 
 	inStream = &istream_;
@@ -396,7 +407,7 @@ const Scanner::Token& Scanner::getNextToken()
 				break;
 			case AC_ERROR:
 			default:
-				SCANNER_THROW_EXCEPTION("Unexpected character \'" + *pchar + '\'');
+				throw SCANNER_EXCEPTION("Unexpected character \'" + *pchar + '\'');
 				getNextChar();
 				goto start;
 		}
@@ -526,7 +537,7 @@ void Scanner::checkComment()
 	//error
 	error:
 		crntToken.code = TC_ERROR;
-		SCANNER_THROW_EXCEPTION("Incorrect comment ending");
+		throw SCANNER_EXCEPTION("Incorrect comment ending");
 }
 
 
@@ -832,7 +843,7 @@ void Scanner::checkNumber()
 		}
 
 		*tmpStr = '\0';
-		SCANNER_THROW_EXCEPTION("Bad number suffix \"" + crntToken.asString + '\"');
+		throw SCANNER_EXCEPTION("Bad number suffix \"" + crntToken.asString + '\"');
 }
 
 
@@ -851,7 +862,7 @@ void Scanner::checkString()
 		{
 			crntToken.code = TC_ERROR;
 			*tmpStr = '\0';
-			SCANNER_THROW_EXCEPTION("Incorrect string ending \"" + crntToken.asString + '\"');
+			throw SCANNER_EXCEPTION("Incorrect string ending \"" + crntToken.asString + '\"');
 			return;
 		}
 		// Escape Codes
@@ -862,7 +873,7 @@ void Scanner::checkString()
 			{
 				crntToken.code = TC_ERROR;
 				*tmpStr = '\0';
-				SCANNER_THROW_EXCEPTION("Incorrect string ending \"" + crntToken.asString + '\"');
+				throw SCANNER_EXCEPTION("Incorrect string ending \"" + crntToken.asString + '\"');
 				return;
 			}
 
@@ -901,7 +912,7 @@ void Scanner::checkString()
 				case '\0':
 					break; // not an escape char but works almost the same
 				default:
-					SCANNER_THROW_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
+					throw SCANNER_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
 					*tmpStr++ = ch;
 			}
 		}
@@ -939,13 +950,13 @@ void Scanner::checkChar()
 
 	if(ch=='\0' || ch==eofChar) // check char after '
 	{
-		SCANNER_THROW_EXCEPTION("Newline in constant");
+		throw SCANNER_EXCEPTION("Newline in constant");
 		return;
 	}
 
 	if (ch=='\'') // if '
 	{
-		SCANNER_THROW_EXCEPTION("Empty constant");
+		throw SCANNER_EXCEPTION("Empty constant");
 		getNextChar();
 		return;
 	}
@@ -956,7 +967,7 @@ void Scanner::checkChar()
 		*tmpStr++ = ch;
 		if(ch=='\0' || ch==eofChar) //check again after the \.
 		{
-			SCANNER_THROW_EXCEPTION("Newline in constant");
+			throw SCANNER_EXCEPTION("Newline in constant");
 			return;
 		}
 
@@ -994,7 +1005,7 @@ void Scanner::checkChar()
 				break;
 			default:
 				ch0 = ch;
-				SCANNER_THROW_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
+				throw SCANNER_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
 		}
 		crntToken.value.char_ = ch0;
 	}
@@ -1012,8 +1023,7 @@ void Scanner::checkChar()
 		return;
 	}
 
-	SCANNER_THROW_EXCEPTION("Expected \'");
-	return;
+	throw SCANNER_EXCEPTION("Expected \'");
 }
 
 

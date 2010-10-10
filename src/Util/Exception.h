@@ -2,7 +2,7 @@
 #define EXCEPTION_H
 
 #include <exception>
-#include <sstream>
+#include <string>
 
 
 /// Custom exception that takes. Throw it used the THROW_EXCEPTION macro
@@ -28,12 +28,12 @@ inline Exception::Exception(const std::string& err_, const char* file, int line,
 }
 
 
-#define THROW_EXCEPTION(x) throw Exception(std::string() + x, __FILE__, __LINE__, __func__)
+#define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __func__)
 
 #if DEBUG_ENABLED == 1
 	#define RASSERT_THROW_EXCEPTION(x) \
 		if(x) \
-			THROW_EXCEPTION("Reverse assertion failed: " #x)
+			throw EXCEPTION("Reverse assertion failed: " #x)
 #else
 	#define RASSERT_THROW_EXCEPTION(x)
 #endif

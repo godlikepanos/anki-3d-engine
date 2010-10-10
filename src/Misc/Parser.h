@@ -2,7 +2,6 @@
 #define PARSER_H
 
 #include <boost/lexical_cast.hpp>
-#include "Common.h"
 #include "Exception.h"
 #include "Scanner.h"
 
@@ -14,22 +13,15 @@ namespace Parser {
 //======================================================================================================================
 // Parser macros                                                                                                       =
 //======================================================================================================================
-#define PARSE_ERR(x) ERROR("Parse Error (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x)
-#define PARSE_WARN(x) WARNING("Parse Warning (" << scanner.getScriptName() << ':' << scanner.getLineNumber() << "): " << x)
+#define PARSER_EXCEPTION(x) \
+	EXCEPTION("Parser exception (" + scanner.getScriptName() + ':' + \
+	boost::lexical_cast<std::string>(scanner.getLineNumber()) + "): " + x)
 
-#define PARSER_THROW_EXCEPTION(x) \
-	THROW_EXCEPTION("Parser failed (" + scanner.getScriptName() + ':' + \
-	                lexical_cast<string>(scanner.getLineNumber()) + "): " + x)
+#define PARSER_EXCEPTION_EXPECTED(x) \
+	PARSER_EXCEPTION("Expected " + x + " and not " + scanner.getCrntToken().getInfoStr())
 
-#define PARSER_THROW_EXCEPTION_EXPECTED(x) \
-	PARSER_THROW_EXCEPTION("Expected " + x + " and not " + scanner.getCrntToken().getInfoStr())
-
-#define PARSER_THROW_EXCEPTION_UNEXPECTED(x) \
-	PARSER_THROW_EXCEPTION("Unexpected token " + scanner.getCrntToken().getInfoStr())
-
-// common parser errors
-#define PARSE_ERR_EXPECTED(x) PARSE_ERR("Expected " << x << " and not " << scanner.getCrntToken().getInfoStr());
-#define PARSE_ERR_UNEXPECTED() PARSE_ERR("Unexpected token " << scanner.getCrntToken().getInfoStr());
+#define PARSER_EXCEPTION_UNEXPECTED() \
+	PARSER_EXCEPTION("Unexpected token " + scanner.getCrntToken().getInfoStr())
 
 
 //======================================================================================================================
@@ -48,7 +40,7 @@ namespace Parser {
  * @param arr The array that the func returns the numbers
  * @return True if the parsing was successful
 */
-template <typename Type>
+/*template <typename Type>
 bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
 {
 	const Scanner::Token* token;
@@ -116,7 +108,7 @@ bool parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Ty
 	}
 
 	return true;
-}
+}*/
 
 
 /// Parse a single number

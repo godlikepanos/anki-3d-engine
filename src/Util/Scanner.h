@@ -134,26 +134,35 @@ class Scanner
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
+		/// Constructor #1
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		/// @exception Exception
 		Scanner(bool newlinesAsWhitespace = true) {init(newlinesAsWhitespace);}
 
+		/// Constructor #2
 		/// @see loadFile
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		/// @exception Exception
 		Scanner(const char* filename, bool newlinesAsWhitespace = true);
 
+		/// Constructor #3
 		/// @see loadIstream
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		/// @exception Exception
 		Scanner(std::istream& istream_, const char* scriptName_ = "unamed-istream", bool newlinesAsWhitespace = true);
 
-		~Scanner() {void unload();}
+		~Scanner() {unload();}
 
 		/// Extracts all tokens and prints them. Used for debugging
 		void getAllPrintAll();
 
 		/// Get the next token from the stream
+		/// @return The next Token
+		/// @exception Exception
 		const Token& getNextToken();
 
 		/// Accessor for the current token
+		/// @return The current Token
 		const Token& getCrntToken() const {return crntToken;}
 
 		/// Get the name of the input stream

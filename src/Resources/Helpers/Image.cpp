@@ -1,6 +1,6 @@
 #include <png.h>
 #include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string.hpp> // for to_lower
 #include <fstream>
 #include "Image.h"
 #include "Exception.h"
@@ -24,7 +24,7 @@ void Image::loadUncompressedTga(fstream& fs, uint& bpp)
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		THROW_EXCEPTION("Cannot read info header");
+		throw EXCEPTION("Cannot read info header");
 	}
 
 	width  = header6[1] * 256 + header6[0];
@@ -33,7 +33,7 @@ void Image::loadUncompressedTga(fstream& fs, uint& bpp)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		THROW_EXCEPTION("Invalid image information");
+		throw EXCEPTION("Invalid image information");
 	}
 
 	// read the data
@@ -44,7 +44,7 @@ void Image::loadUncompressedTga(fstream& fs, uint& bpp)
 	fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
 	if(fs.gcount() != imageSize)
 	{
-		THROW_EXCEPTION("Cannot read image data");
+		throw EXCEPTION("Cannot read image data");
 	}
 
 	// swap red with blue
@@ -66,7 +66,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		THROW_EXCEPTION("Cannot read info header");
+		throw EXCEPTION("Cannot read info header");
 	}
 
 	width  = header6[1] * 256 + header6[0];
@@ -75,7 +75,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
 	{
-		THROW_EXCEPTION("Invalid texture information");
+		throw EXCEPTION("Invalid texture information");
 	}
 
 
@@ -95,7 +95,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 		fs.read((char*)&chunkheader, sizeof(unsigned char));
 		if(fs.gcount() != sizeof(unsigned char))
 		{
-			THROW_EXCEPTION("Cannot read RLE header");
+			throw EXCEPTION("Cannot read RLE header");
 		}
 
 		if(chunkheader < 128)
@@ -106,7 +106,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 				fs.read((char*)&colorbuffer[0], bytesPerPxl);
 				if(fs.gcount() != bytesPerPxl)
 				{
-					THROW_EXCEPTION("Cannot read image data");
+					throw EXCEPTION("Cannot read image data");
 				}
 
 				data[currentbyte		] = colorbuffer[2];
@@ -123,7 +123,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 
 				if(currentpixel > pixelcount)
 				{
-					THROW_EXCEPTION("Too many pixels read");
+					throw EXCEPTION("Too many pixels read");
 				}
 			}
 		}
@@ -133,7 +133,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 			fs.read((char*)&colorbuffer[0], bytesPerPxl);
 			if(fs.gcount() != bytesPerPxl)
 			{
-				THROW_EXCEPTION("Cannot read from file");
+				throw EXCEPTION("Cannot read from file");
 			}
 
 			for(int counter = 0; counter < chunkheader; counter++)
@@ -152,7 +152,7 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 
 				if(currentpixel > pixelcount)
 				{
-					THROW_EXCEPTION("Too many pixels read");
+					throw EXCEPTION("Too many pixels read");
 				}
 			}
 		}
@@ -172,14 +172,14 @@ void Image::loadTga(const char* filename)
 
 	if(!fs.good())
 	{
-		THROW_EXCEPTION("Cannot open file");
+		throw EXCEPTION("Cannot open file");
 	}
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
 	if(fs.gcount() != sizeof(myTgaHeader))
 	{
 		fs.close();
-		THROW_EXCEPTION("Cannot read file header");
+		throw EXCEPTION("Cannot read file header");
 	}
 
 	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
@@ -192,7 +192,7 @@ void Image::loadTga(const char* filename)
 	}
 	else
 	{
-		THROW_EXCEPTION("Invalid image header");
+		throw EXCEPTION("Invalid image header");
 	}
 
 	if(bpp == 32)
@@ -205,7 +205,7 @@ void Image::loadTga(const char* filename)
 	}
 	else
 	{
-		THROW_EXCEPTION("Invalid bps");
+		throw EXCEPTION("Invalid bps");
 	}
 
 	fs.close();
@@ -265,7 +265,7 @@ bool Image::loadPng(const char* filename, string& err) throw()
 	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!pngPtr)
 	{
-		THROW_EXCEPTION("png_create_read_struct failed");
+		throw EXCEPTION("png_create_read_struct failed");
 		goto cleanup;
 	}
 
@@ -327,7 +327,7 @@ bool Image::loadPng(const char* filename, string& err) throw()
 				// do nothing
 				break;
 			default:
-				THROW_EXCEPTION("Forgot to handle a color type");
+				throw EXCEPTION("Forgot to handle a color type");
 				break;
 		}
 
@@ -439,17 +439,17 @@ void Image::load(const char* filename)
 			string err;
 			if(!loadPng(filename, err))
 			{
-				THROW_EXCEPTION(err);
+				throw EXCEPTION(err);
 			}
 		}
 		else
 		{
-			THROW_EXCEPTION("Unsupported extension");
+			throw EXCEPTION("Unsupported extension");
 		}
 	}
 	catch(std::exception& e)
 	{
-		THROW_EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
 }
 

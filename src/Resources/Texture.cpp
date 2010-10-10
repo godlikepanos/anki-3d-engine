@@ -39,67 +39,80 @@ Texture::~Texture()
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-bool Texture::load(const char* filename)
+void Texture::load(const char* filename)
 {
-	target = GL_TEXTURE_2D;
-	if(isLoaded())
+	try
 	{
-		ERROR("Texture already loaded");
-		return false;
+		target = GL_TEXTURE_2D;
+		if(isLoaded())
+		{
+			THROW_ERROR("Texture already loaded");
+		}
+
+		Image img(filename);
+
+		// bind the texture
+		glGenTextures(1, &glId);
+		bind(LAST_TEX_UNIT);
+		if(mipmappingEnabled)
+		{
+			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		}
+		else
+		{
+			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
+
+		setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
+
+		// leave to GL_REPEAT. There is not real performance hit
+		setRepeat(true);
+
+		// chose formats
+		int internalFormat;
+		int format;
+		int type;
+		switch(img.getType())
+		{
+			case Image::CT_R:
+				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
+				format = GL_RED;
+				type = GL_UNSIGNED_BYTE;
+				break;
+
+			case Image::CT_RGB:
+				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+				format = GL_RGB;
+				type = GL_UNSIGNED_BYTE;
+				break;
+
+			case Image::CT_RGBA:
+				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
+				format = GL_RGBA;
+				type = GL_UNSIGNED_BYTE;
+				break;
+
+			default:
+				THROW_ERROR("See file");
+		}
+
+		glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
+		if(mipmappingEnabled)
+		{
+			glGenerateMipmap(target);
+		}
+
+		if(!GL_OK())
+		{
+			THROW_EXCEPTION("OpenGL failed");
+		}
 	}
-
-	Image img;
-	if(!img.load(filename))
-		return false;
-
-	// bind the texture
-	glGenTextures(1, &glId);
-	bind(LAST_TEX_UNIT);
-	if(mipmappingEnabled)
-		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	else
-		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
-
-	// leave to GL_REPEAT. There is not real performance hit
-	setRepeat(true);
-
-	// chose formats
-	int internalFormat;
-	int format;
-	int type;
-	switch(img.getType())
+	catch(exception& e)
 	{
-		case Image::CT_R:
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
-			format = GL_RED;
-			type = GL_UNSIGNED_BYTE;
-			break;
-
-		case Image::CT_RGB:
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
-			format = GL_RGB;
-			type = GL_UNSIGNED_BYTE;
-			break;
-
-		case Image::CT_RGBA:
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
-			format = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
-			break;
-
-		default:
-			FATAL("See file");
+		THROW_EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
-
-	glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
-	if(mipmappingEnabled)
-		glGenerateMipmap(target);
-
-	return GL_OK();
 }
 
 
