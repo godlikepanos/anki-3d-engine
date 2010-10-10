@@ -6,7 +6,8 @@
 #include "StdTypes.h"
 
 
-/// Image class. Used in Texture::load. Supported types: TGA and PNG
+/// Image class.
+/// Used in Texture::load. Supported types: TGA and PNG
 class Image
 {
 	public:

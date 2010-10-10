@@ -31,14 +31,14 @@ void parseNumber(Scanner& scanner, bool sign, Type& out)
 			}
 			else if(token->getCode() != Scanner::TC_NUMBER)
 			{
-				PARSER_THROW_EXCEPTION_EXPECTED("number or sign");
+				throw PARSER_EXCEPTION_EXPECTED("number or sign");
 			}
 		}
 
 		// check the number
 		if(token->getCode() != Scanner::TC_NUMBER)
 		{
-			PARSER_THROW_EXCEPTION_EXPECTED("number");
+			throw PARSER_EXCEPTION_EXPECTED("number");
 		}
 
 		if(token->getDataType() == Scanner::DT_FLOAT)
@@ -54,7 +54,7 @@ void parseNumber(Scanner& scanner, bool sign, Type& out)
 	}
 	catch(std::exception& e)
 	{
-		THROW_EXCEPTION(e.what());
+		throw EXCEPTION(e.what());
 	}
 }
 
@@ -73,7 +73,7 @@ void parseMathVector(Scanner& scanner, Type& out)
 		// {
 		if(token->getCode() != Scanner::TC_LBRACKET)
 		{
-			PARSER_THROW_EXCEPTION_EXPECTED("{");
+			throw PARSER_EXCEPTION_EXPECTED("{");
 		}
 
 		// numbers
@@ -88,12 +88,12 @@ void parseMathVector(Scanner& scanner, Type& out)
 		token = &scanner.getNextToken();
 		if(token->getCode() != Scanner::TC_RBRACKET)
 		{
-			PARSER_THROW_EXCEPTION_EXPECTED("}");
+			throw PARSER_EXCEPTION_EXPECTED("}");
 		}
 	}
 	catch(std::exception& e)
 	{
-		THROW_EXCEPTION(e.what());
+		throw EXCEPTION(e.what());
 	}
 }
 

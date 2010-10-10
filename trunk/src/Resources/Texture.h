@@ -9,7 +9,7 @@
 /// Texture resource class
 ///
 /// It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and
-/// uncompressed TGAs and all formats of PNG (PNG loading comes through SDL_image)
+/// uncompressed TGAs and some of the formats of PNG (PNG loading uses libpng)
 ///
 /// @note The last texture unit is reserved and you cannot use it
 class Texture: public Resource
@@ -32,8 +32,17 @@ class Texture: public Resource
 
 		/// @name Create tex funcs
 		/// @{
-		bool load(const char* filename);
-		bool createEmpty2D(float width, float height, int internalFormat, int format, uint type_);
+
+		/// Load image
+		/// @exception Exception
+		void load(const char* filename);
+
+		/// Create empty texture.
+		/// Used by the Renderer
+		void createEmpty2D(float width, float height, int internalFormat, int format, uint type_);
+
+		/// Create empty texture with MSAA.
+		/// Used by the Renderer
 		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
 		/// @}
 
