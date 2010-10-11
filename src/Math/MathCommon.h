@@ -1,7 +1,5 @@
-/**
- * @file
- * For Internal use in math lib
- */
+/// @file
+/// For Internal use in math lib
 
 #ifndef MATH_COMMON_H
 #define MATH_COMMON_H

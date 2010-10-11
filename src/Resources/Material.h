@@ -1,9 +1,7 @@
-#ifndef _MATERIAL_H_
-#define _MATERIAL_H_
+#ifndef MATERIAL_H
+#define MATERIAL_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/variant.hpp>
-#include "Common.h"
 #include "Math.h"
 #include "Resource.h"
 #include "ShaderProg.h"
@@ -117,7 +115,7 @@ class Material: public Resource
 		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
 		RsrcPtr<Material> dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
-		ptr_vector<UserDefinedUniVar> userDefinedVars;
+		boost::ptr_vector<UserDefinedUniVar> userDefinedVars;
 		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
 		int blendingSfactor;
 		int blendingDfactor;

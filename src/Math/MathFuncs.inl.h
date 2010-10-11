@@ -11,7 +11,7 @@ inline void mathSanityChecks()
 	if(sizeof(Vec2)!=fs*2 || sizeof(Vec3)!=fs*3 || sizeof(Vec4)!=fs*4 || sizeof(Quat)!=fs*4 ||
 	   sizeof(Euler)!=fs*3 || sizeof(Mat3)!=fs*9 || sizeof(Mat4)!=fs*16)
 	{
-		THROW_EXCEPTION("Your compiler does class alignment");
+		throw EXCEPTION("Your compiler does class alignment");
 	}
 }
 
@@ -48,9 +48,7 @@ inline float invSqrt(float f)
 
 
 // polynomialSinQuadrant
-/**
- * Used in sinCos
- */
+/// Used in sinCos
 inline static float polynomialSinQuadrant(float a)
 {
 	return a * (1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542)));
@@ -135,7 +133,7 @@ inline float cos(float rad)
 
 inline bool  isZero(float f)
 {
-	return (fabs(f) < EPSILON);
+	return fabs(f) < EPSILON;
 }
 
 
@@ -150,11 +148,13 @@ inline void combineTransformations(const Vec3& t0, const Mat3& r0, float s0,
 	sf = s0 * s1;
 }
 
+
 //  combineTransformations as the above but without scale
 inline void combineTransformations(const Vec3& t0, const Mat3& r0, const Vec3& t1, const Mat3& r1, Vec3& tf, Mat3& rf)
 {
 	tf = t1.getTransformed(t0, r0);
 	rf = r0 * r1;
 }
+
 
 } // end namespace

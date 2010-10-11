@@ -28,6 +28,8 @@ inline Exception::Exception(const std::string& err_, const char* file, int line,
 }
 
 
+// A few macros
+
 #define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __func__)
 
 #if DEBUG_ENABLED == 1

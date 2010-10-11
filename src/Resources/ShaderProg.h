@@ -1,14 +1,12 @@
-#ifndef _SHADER_PROG_H_
-#define _SHADER_PROG_H_
+#ifndef SHADER_PROG_H
+#define SHADER_PROG_H
 
 #include <GL/glew.h>
 #include <limits>
-#include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 #include "CharPtrHashMap.h"
-
-
+#include "Exception.h"
 
 
 /// Shader program @ref Resource
@@ -30,30 +28,28 @@ class ShaderProg: public Resource
 		{
 			public:
 				/// Shader var types
-				enum Type
+				enum ShaderVarType
 				{
 					SVT_ATTRIBUTE, ///< SVT_ATTRIBUTE
 					SVT_UNIFORM    ///< SVT_UNIFORM
 				};
 
-				Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_, const ShaderProg* fatherSProg_);
+				Var(GLint loc_, const char* name_, GLenum glDataType_, ShaderVarType type_, const ShaderProg* fatherSProg_);
 				Var(const Var& var);
 				GLint getLoc() const {return loc;}
-				const string& getName() const {return name;}
+				const std::string& getName() const {return name;}
 				GLenum getGlDataType() const {return glDataType;}
-				Type getType() const {return type;}
+				ShaderVarType getType() const {return type;}
 
 			protected:
 				GLint loc; ///< GL location
-				string name; ///< The name inside the shader program
+				std::string name; ///< The name inside the shader program
 				GLenum glDataType; ///< GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
-				Type type; ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
+				ShaderVarType type; ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
 				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
 		};
 
-		/**
-		 * Uniform shader variable
-		 */
+		/// Uniform shader variable
 		class UniVar: public Var
 		{
 			public:
@@ -70,9 +66,7 @@ class ShaderProg: public Resource
 				void setTexture(const class Texture& tex, uint texUnit) const;
 		};
 
-		/**
-		 * Attribute shader variable
-		 */
+		/// Attribute shader variable
 		class AttribVar: public Var
 		{
 			public:
@@ -93,100 +87,84 @@ class ShaderProg: public Resource
 		ShaderProg();
 		~ShaderProg() {/** @todo add code */}
 
-		/**
-		 * Accessor to glId
-		 */
+		/// Accessor to glId
 		GLuint getGlId() const;
 
-		/**
-		 * Bind the shader program
-		 */
+		/// Bind the shader program
 		void bind() const;
 		
-		/**
-		 * Unbind all shader programs
-		 */
-		static void unbind();
+		/// Unbind all shader programs
+		static void unbind() {glUseProgram(0);}
 
-		/**
-		 * Query the GL driver for the current shader program GL ID
-		 * @return Shader program GL id
-		 */
+		/// Query the GL driver for the current shader program GL ID
+		/// @return Shader program GL id
 		static uint getCurrentProgramGlId();
 
-		/**
-		 * Accessor to uniform vars vector
-		 */
+		/// Accessor to uniform vars vector
 		const Vec<UniVar>& getUniVars() const { return uniVars; }
 
-		/**
-		 * Accessor to attribute vars vector
-		 */
+		/// Accessor to attribute vars vector
 		const Vec<AttribVar>& getAttribVars() const { return attribVars; }
 
-		/**
-		 * @param varName The name of the var
-		 * @return It returns a uniform variable and on failure it throws an error and returns NULL
-		 */
+		/// Find uniform variable. On failure it throws an exception so use @ref uniVarExists to check if var exists
+		/// @param varName The name of the var
+		/// @return It returns a uniform variable
+		/// @exception Exception
 		const UniVar* findUniVar(const char* varName) const;
 
-		/**
-		 * @see findUniVar
-		 */
+		/// Find Attribute variable
+		/// @see findUniVar
 		const AttribVar* findAttribVar(const char* varName) const;
 
+		/// Uniform variable exits
+		/// @return True if uniform variable exits
 		bool uniVarExists(const char* varName) const;
+
+		/// Attribute variable exits
+		/// @return True if attribute variable exits
 		bool attribVarExists(const char* varName) const;
 
-		/**
-		 * Used by @ref Material and @ref Renderer to create custom shaders in the cache
-		 * @param sProgFPathName The file pathname of the shader prog
-		 * @param preAppendedSrcCode The source code we want to write on top of the shader prog
-		 * @param newFNamePrefix The prefix of the new shader prog
-		 * @return The file pathname of the new shader prog. Its $HOME/.anki/cache/newFNamePrefix_fName
-		 */
-		static string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
-		                                   const char* newFNamePrefix);
+		/// Used by @ref Material and @ref Renderer to create custom shaders in the cache
+		/// @param sProgFPathName The file pathname of the shader prog
+		/// @param preAppendedSrcCode The source code we want to write on top of the shader prog
+		/// @param newFNamePrefix The prefix of the new shader prog
+		/// @return The file pathname of the new shader prog. Its $HOME/.anki/cache/newFNamePrefix_fName
+		static std::string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
+		                                        const char* newFNamePrefix);
 
 	//====================================================================================================================
 	// Private                                                                                                           =
 	//====================================================================================================================
 	private:
 		GLuint glId; ///< The OpenGL ID of the shader program
-		GLuint vertShaderGlId;
-		GLuint geomShaderGlId;
-		GLuint fragShaderGlId;
-		static string stdSourceCode;
+		GLuint vertShaderGlId; ///< Vertex shader OpenGL id
+		GLuint geomShaderGlId; ///< Geometry shader OpenGL id
+		GLuint fragShaderGlId; ///< Fragment shader OpenGL id
+		static std::string stdSourceCode; ///< Shader source that is used in ALL shader programs
 		Vec<UniVar> uniVars; ///< All the uniform variables
 		Vec<AttribVar> attribVars; ///< All the attribute variables
-		CharPtrHashMap<UniVar*> uniNameToVar;  ///< A UnorderedMap for quick variable searching
+		CharPtrHashMap<UniVar*> uniNameToVar;  ///< A UnorderedMap for fast variable searching
 		CharPtrHashMap<AttribVar*> attribNameToVar; ///< @see uniNameToVar
 
-		/**
-		 * After the linking of the shader prog is done gather all the vars in custom containers
-		 */
+		/// Query the driver to get the vars. After the linking of the shader prog is done gather all the vars in custom
+		/// containers
 		void getUniAndAttribVars();
 
-		/**
-		 * Uses glBindAttribLocation for every parser attrib location
-		 */
-		bool bindCustomAttribLocs(const class ShaderPrePreprocessor& pars) const;
+		/// Uses glBindAttribLocation for every parser attrib location
+		/// @exception Exception
+		void bindCustomAttribLocs(const class ShaderPrePreprocessor& pars) const;
 
-		/**
-		 * @return Returns zero on failure
-		 */
+		/// Create and compile shader
+		/// @return The shader's OpenGL id
+		/// @exception Exception
 		uint createAndCompileShader(const char* sourceCode, const char* preproc, int type) const;
 
-		/**
-		 * Link the shader prog
-		 * @return True on success
-		 */
-		bool link();
+		/// Link the shader program
+		/// @exception Exception
+		void link();
 
-		/**
-		 * Resource load
-		 */
-		bool load(const char* filename);
+		/// Resource load
+		void load(const char* filename);
 }; 
 
 
@@ -194,7 +172,7 @@ class ShaderProg: public Resource
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline ShaderProg::Var::Var(GLint loc_, const char* name_, GLenum glDataType_, Type type_,
+inline ShaderProg::Var::Var(GLint loc_, const char* name_, GLenum glDataType_, ShaderVarType type_,
                             const ShaderProg* fatherSProg_):
 	loc(loc_),
 	name(name_),
@@ -226,27 +204,21 @@ inline ShaderProg::AttribVar::AttribVar(int loc_, const char* name_, GLenum glDa
 
 inline ShaderProg::ShaderProg():
 	Resource(RT_SHADER_PROG),
-	glId(numeric_limits<uint>::max())
+	glId(std::numeric_limits<uint>::max())
 {}
 
 
 inline GLuint ShaderProg::getGlId() const
 {
-	DEBUG_ERR(glId==numeric_limits<uint>::max());
+	RASSERT_THROW_EXCEPTION(glId == std::numeric_limits<uint>::max());
 	return glId;
 }
 
 
 inline void ShaderProg::bind() const
 {
-	DEBUG_ERR(glId==numeric_limits<uint>::max());
+	RASSERT_THROW_EXCEPTION(glId == std::numeric_limits<uint>::max());
 	glUseProgram(glId);
-}
-
-
-inline void ShaderProg::unbind()
-{
-	glUseProgram(0);
 }
 
 
@@ -256,5 +228,6 @@ inline uint ShaderProg::getCurrentProgramGlId()
 	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
 	return i;
 }
+
 
 #endif
