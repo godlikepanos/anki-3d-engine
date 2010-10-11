@@ -20,18 +20,22 @@ class BinaryStream: public std::iostream
 
 		/// The one and only constructor
 		/// @param sb An std::streambuf for in/out
-		/// @param byteOrder The stream byte order
+		/// @param byteOrder The stream's byte order
 		BinaryStream(std::streambuf* sb, ByteOrder byteOrder = BO_LITTLE_ENDIAN);
 
-		/// Read unsigned int
+		/// Read unsigned int (32bit)
+		/// @exception Exception
 		uint readUint();
 
-		/// Read float
+		/// Read float (32bit)
+		/// @exception Exception
 		float readFloat();
 
 		/// Read a string. It reads the size as an unsigned int and then it reads the characters
+		/// @exception Exception
 		std::string readString();
 
+		/// Get machine byte order
 		/// @return The byte order of the current running platform
 		static ByteOrder getMachineByteOrder();
 

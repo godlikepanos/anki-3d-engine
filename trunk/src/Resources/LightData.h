@@ -1,7 +1,6 @@
 #ifndef LIGHT_PROPS_H
 #define LIGHT_PROPS_H
 
-#include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 #include "RsrcPtr.h"

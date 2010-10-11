@@ -10,7 +10,7 @@
 
 
 /// Customized THROW_EXCEPTION
-#define MTL_THROW_EXCEPTION(x) THROW_EXCEPTION("Material \"" + getRsrcPath() + getRsrcName() + "\": " + x)
+#define MTL_EXCEPTION(x) EXCEPTION("Material \"" + getRsrcPath() + getRsrcName() + "\": " + x)
 
 
 //======================================================================================================================
@@ -155,14 +155,14 @@ void Material::load(const char* filename)
 					token = &scanner.getNextToken();
 					if(token->getCode() != Scanner::TC_LPAREN)
 					{
-						PARSER_THROW_EXCEPTION_EXPECTED("(");
+						throw PARSER_EXCEPTION_EXPECTED("(");
 					}
 
 					// shader prog
 					token = &scanner.getNextToken();
 					if(token->getCode() != Scanner::TC_STRING)
 					{
-						PARSER_THROW_EXCEPTION_EXPECTED("string");
+						throw PARSER_EXCEPTION_EXPECTED("string");
 					}
 					string sProgFilename = token->getValue().getString();
 
@@ -180,7 +180,7 @@ void Material::load(const char* filename)
 
 						if(token->getCode() != Scanner::TC_IDENTIFIER)
 						{
-							PARSER_THROW_EXCEPTION_EXPECTED("identifier");
+							throw PARSER_EXCEPTION_EXPECTED("identifier");
 						}
 
 						// Check if acceptable value. Loop the switches array
@@ -210,7 +210,7 @@ void Material::load(const char* filename)
 				}
 				else
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("string or buildMsSProg");
+					throw PARSER_EXCEPTION_EXPECTED("string or buildMsSProg");
 				}
 
 				shaderProg.loadRsrc(shaderFilename.c_str());
@@ -228,7 +228,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_STRING)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("string");
+					throw PARSER_EXCEPTION_EXPECTED("string");
 				}
 				dpMtl.loadRsrc(token->getValue().getString());
 			}
@@ -240,7 +240,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("number");
+					throw PARSER_EXCEPTION_EXPECTED("number");
 				}
 				blends = token->getValue().getInt();
 			}
@@ -252,7 +252,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_IDENTIFIER)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("identifier");
+					throw PARSER_EXCEPTION_EXPECTED("identifier");
 				}
 				int gl_enum;
 				if(!searchBlendEnum(token->getValue().getString(), gl_enum))
@@ -269,7 +269,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_IDENTIFIER)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("identifier");
+					throw PARSER_EXCEPTION_EXPECTED("identifier");
 				}
 				int gl_enum;
 				if(!searchBlendEnum(token->getValue().getString(), gl_enum))
@@ -286,7 +286,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("number");
+					throw PARSER_EXCEPTION_EXPECTED("number");
 				}
 				depthTesting = token->getValue().getInt();
 			}
@@ -298,7 +298,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("number");
+					throw PARSER_EXCEPTION_EXPECTED("number");
 				}
 				wireframe = token->getValue().getInt();
 			}
@@ -310,7 +310,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_NUMBER)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("number");
+					throw PARSER_EXCEPTION_EXPECTED("number");
 				}
 				castsShadow = token->getValue().getInt();
 			}
@@ -329,7 +329,7 @@ void Material::load(const char* filename)
 				token = &scanner.getNextToken();
 				if(token->getCode() != Scanner::TC_LBRACKET)
 				{
-					PARSER_THROW_EXCEPTION_EXPECTED("{");
+					throw PARSER_EXCEPTION_EXPECTED("{");
 				}
 				// loop all the vars
 				do
@@ -343,7 +343,7 @@ void Material::load(const char* filename)
 
 					if(token->getCode() != Scanner::TC_IDENTIFIER)
 					{
-						PARSER_THROW_EXCEPTION_EXPECTED("identifier");
+						throw PARSER_EXCEPTION_EXPECTED("identifier");
 					}
 
 					string varName;
@@ -372,7 +372,7 @@ void Material::load(const char* filename)
 							}
 							else
 							{
-								PARSER_THROW_EXCEPTION_EXPECTED("string");
+								throw PARSER_EXCEPTION_EXPECTED("string");
 							}
 							break;
 						// float
@@ -384,7 +384,7 @@ void Material::load(const char* filename)
 							}
 							else
 							{
-								PARSER_THROW_EXCEPTION_EXPECTED("float");
+								throw PARSER_EXCEPTION_EXPECTED("float");
 							}
 							break;
 						// vec2

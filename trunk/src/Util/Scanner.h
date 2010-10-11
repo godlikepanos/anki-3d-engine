@@ -49,7 +49,7 @@ class Scanner
 		}; // end enum TokenCode
 
 
-		/// The value of @ref Token::dataType
+		/// The value of Token::dataType
 		enum TokenDataType
 		{
 			DT_FLOAT,
@@ -58,7 +58,7 @@ class Scanner
 			DT_STR
 		};
 
-		/// Used inside the @ref Token, its a variant that holds the data of the Token
+		/// Used inside the Token, its a variant that holds the data of the Token
 		class TokenDataVal
 		{
 			friend class Scanner;
@@ -93,12 +93,16 @@ class Scanner
 			public:
 				Token(): code(TC_ERROR) {}
 				Token(const Token& b);
+				std::string getInfoStr() const; ///< Get a string with the info of the token
+				void print() const; ///< Print info of the token
+
+				/// @name accessors
+				/// @{
 				const char* getString() const {return asString;}
 				TokenCode getCode() const {return code;}
 				TokenDataType getDataType() const {return dataType;}
 				const TokenDataVal& getValue() const {return value;}
-				std::string getInfoStr() const; ///< Get a string with the info of the token
-				void print() const; ///< Print info of the token
+				/// @}
 
 			private:
 				char asString[1024];
@@ -151,6 +155,7 @@ class Scanner
 		/// @exception Exception
 		Scanner(std::istream& istream_, const char* scriptName_ = "unamed-istream", bool newlinesAsWhitespace = true);
 
+		/// It only unloads the file if file is chosen
 		~Scanner() {unload();}
 
 		/// Extracts all tokens and prints them. Used for debugging
@@ -225,7 +230,7 @@ class Scanner
 		/// end of the line
 		char getNextChar();
 
-		/// Put the char that Scanner::GetNextChar got back to the current line
+		/// Put the char that @ref getNextChar got back to the current line
 		char putBackChar();
 
 		/// Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner @see Scanner()
@@ -239,11 +244,13 @@ class Scanner
 
 		/// Load a file to extract tokens
 		/// @param filename The filename of the file to read
+		/// @exception Exception
 		void loadFile(const char* filename);
 
 		/// Load a STL istream to extract tokens
 		/// @param istream_ The stream from where to read
 		/// @param scriptName_ The name of the stream. For error reporting
+		/// @exception Exception
 		void loadIstream(std::istream& istream_, const char* scriptName_);
 
 		/// Unloads the file

@@ -1,8 +1,6 @@
 #include <cstring>
+#include <boost/lexical_cast.hpp>
 #include "BinaryStream.h"
-
-
-using namespace std;
 
 
 //======================================================================================================================
@@ -16,7 +14,7 @@ Type BinaryStream::read32bitNumber()
 	read((char*)c, sizeof(c));
 	if(fail())
 	{
-		THROW_EXCEPTION("Failed to read stream");
+		throw EXCEPTION("Failed to read stream");
 	}
 
 	// Copy it
@@ -59,7 +57,7 @@ float BinaryStream::readFloat()
 //======================================================================================================================
 // readString                                                                                                          =
 //======================================================================================================================
-string BinaryStream::readString()
+std::string BinaryStream::readString()
 {
 	uint size;
 	try
@@ -68,25 +66,23 @@ string BinaryStream::readString()
 	}
 	catch(Exception& e)
 	{
-		THROW_EXCEPTION("Failed to read size");
+		throw EXCEPTION("Failed to read size");
 	}
 
 	const uint buffSize = 1024;
 	if((size + 1) > buffSize)
 	{
-		THROW_EXCEPTION("String bigger than default");
+		throw EXCEPTION("String bigger than default");
 	}
 	char buff[buffSize];
 	read(buff, size);
 	if(fail())
 	{
-		stringstream ss;
-		ss << "Failed to read " << size << " bytes";
-		THROW_EXCEPTION(ss.str().c_str());
+		throw EXCEPTION("Failed to read " + boost::lexical_cast<std::string>(size) + " bytes");
 	}
 	buff[size] = '\0';
 
-	return string(buff);
+	return std::string(buff);
 }
 
 

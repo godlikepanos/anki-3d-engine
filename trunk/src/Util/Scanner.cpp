@@ -9,12 +9,8 @@
 #include <boost/lexical_cast.hpp>
 
 
-using namespace std;
-using namespace boost;
-
-
 #define SCANNER_EXCEPTION(x) \
-	EXCEPTION(string("Scanner exception (") + scriptName + ':' + lexical_cast<string>(lineNmbr) + "): " + x)
+	EXCEPTION("Scanner exception (" + scriptName + ':' + boost::lexical_cast<std::string>(lineNmbr) + "): " + x)
 
 
 //======================================================================================================================
@@ -44,9 +40,9 @@ Scanner::Token::Token(const Token& b): code(b.code), dataType(b.dataType)
 //======================================================================================================================
 // getInfoStr                                                                                                          =
 //======================================================================================================================
-string Scanner::Token::getInfoStr() const
+std::string Scanner::Token::getInfoStr() const
 {
-	char tokenInfoStr[256];
+	char tokenInfoStr[512];
 	switch(code)
 	{
 		case TC_COMMENT:
@@ -84,7 +80,7 @@ string Scanner::Token::getInfoStr() const
 			}
 	}
 
-	return string(tokenInfoStr);
+	return tokenInfoStr;
 }
 
 
@@ -93,7 +89,7 @@ string Scanner::Token::getInfoStr() const
 //======================================================================================================================
 void Scanner::Token::print() const
 {
-	cout << "Token: " << getInfoStr() << endl;
+	std::cout << "Token: " << getInfoStr() << std::endl;
 }
 
 
@@ -242,7 +238,8 @@ char Scanner::getNextChar()
 	}
 	else if(lookupAscii(*pchar) == AC_ERROR)
 	{
-		throw SCANNER_EXCEPTION("Unacceptable char '" + *pchar + "' 0x" + lexical_cast<string>(static_cast<uint>(*pchar)));
+		throw SCANNER_EXCEPTION("Unacceptable char '" + *pchar + "' 0x" +
+		                        boost::lexical_cast<std::string>(static_cast<uint>(*pchar)));
 	}
 
 	return *pchar;
@@ -271,7 +268,7 @@ void Scanner::getAllPrintAll()
 	do
 	{
 		getNextToken();
-		cout << setw(3) << setfill('0') << getLineNumber() << ": " << crntToken.getInfoStr() << endl;
+		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() << ": " << crntToken.getInfoStr() << std::endl;
 	} while(crntToken.code != TC_EOF);
 }
 
@@ -294,7 +291,7 @@ void Scanner::loadFile(const char* filename_)
 //======================================================================================================================
 // loadIstream                                                                                                        =
 //======================================================================================================================
-void Scanner::loadIstream(istream& istream_, const char* scriptName_)
+void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 {
 	if(inStream != NULL)
 	{
@@ -304,7 +301,7 @@ void Scanner::loadIstream(istream& istream_, const char* scriptName_)
 	inStream = &istream_;
 
 	// init globals
-	RASSERT_THROW_EXCEPTION(strlen(scriptName_) > sizeof(scriptName)/sizeof(char) - 1); // Too big name
+	RASSERT_THROW_EXCEPTION(strlen(scriptName_) > sizeof(scriptName) / sizeof(char) - 1); // Too big name
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
 	strcpy(scriptName, scriptName_);
@@ -407,8 +404,8 @@ const Scanner::Token& Scanner::getNextToken()
 				break;
 			case AC_ERROR:
 			default:
-				throw SCANNER_EXCEPTION("Unexpected character \'" + *pchar + '\'');
 				getNextChar();
+				throw SCANNER_EXCEPTION("Unexpected character \'" + *pchar + '\'');
 				goto start;
 		}
 	}

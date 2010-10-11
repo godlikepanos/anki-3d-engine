@@ -6,9 +6,6 @@
 #include "Exception.h"
 
 
-using namespace std;
-
-
 namespace Util {
 
 
@@ -41,31 +38,31 @@ double randRange(double min, double max)
 //======================================================================================================================
 // readFile                                                                                                            =
 //======================================================================================================================
-string readFile(const char* filename)
+std::string readFile(const char* filename)
 {
-	ifstream file(filename);
+	std::ifstream file(filename);
 	if (!file.is_open())
 	{
-		THROW_EXCEPTION(string("Cannot open file \"") + filename + "\"");
+		throw EXCEPTION(std::string("Cannot open file \"") + filename + "\"");
 	}
 
-	return string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+	return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 
 
 //======================================================================================================================
 // getFileLines                                                                                                        =
 //======================================================================================================================
-Vec<string> getFileLines(const char* filename)
+Vec<std::string> getFileLines(const char* filename)
 {
-	Vec<string> lines;
-	ifstream ifs(filename);
+	Vec<std::string> lines;
+	std::ifstream ifs(filename);
 	if(!ifs.is_open())
 	{
-		THROW_EXCEPTION(string("Cannot open file \"") + filename + "\"");
+		throw EXCEPTION("Cannot open file \"" + filename + "\"");
 	}
 
-  string temp;
+  std::string temp;
   while(getline(ifs, temp))
   {
   	lines.push_back(temp);
