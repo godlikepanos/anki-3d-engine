@@ -1,7 +1,6 @@
-#ifndef SKELANIM_H
-#define SKELANIM_H
+#ifndef SKEL_ANIM_H
+#define SKEL_ANIM_H
 
-#include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 
@@ -9,14 +8,15 @@
 /// Skeleton animation resource
 ///
 /// The format will be changed to:
+///
 /// @code
 /// skeletonAnimation
 /// {
 /// 	name same-as-file
-/// 	keyframes {<val> <val> ... <val>}
+/// 	keyframes {<integer> <integer> ... <integer>}
 /// 	bones
 /// 	{
-/// 		num <val>
+/// 		num <integer>
 /// 		boneAnims
 /// 		{
 /// 			boneAnim
@@ -26,8 +26,8 @@
 /// 				{
 /// 					bonePose
 /// 					{
-/// 						quat {<val> <val> <val> <val>}
-/// 						trf {<val> <val> <val>}
+/// 						quat {<float> <float> <float> <float>}
+/// 						trf {<float> <float> <float>}
 /// 					}
 /// 					...
 /// 					bonePose
@@ -48,9 +48,7 @@
 class SkelAnim: public Resource
 {
 	public:
-		/**
-		 * Bone pose
-		 */
+		/// Bone pose
 		class BonePose
 		{
 			public:
@@ -58,9 +56,7 @@ class SkelAnim: public Resource
 				Vec3 translation;
 		};
 
-		/**
-		 * Bone animation
-		 */
+		/// Bone animation
 		class BoneAnim
 		{
 			public:
@@ -76,7 +72,9 @@ class SkelAnim: public Resource
 
 		SkelAnim();
 		~SkelAnim() {}
-		bool load(const char* filename);
+
+		/// Implements Resource::loat
+		void load(const char* filename);
 };
 
 

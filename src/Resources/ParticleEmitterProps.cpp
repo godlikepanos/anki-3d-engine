@@ -5,6 +5,9 @@
 static const char* errMsg = "Incorrect or missing value ";
 
 
+#define PE_EXCEPTION(x) EXCEPTION("File \"" + getRsrcPath() + getRsrcName() + "\": " + x)
+
+
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
@@ -93,31 +96,31 @@ void ParticleEmitterProps::load(const char* /*filename*/)
 	// sanity checks
 	if(particleLife <= 0.0)
 	{
-		RSRC_THROW_EXCEPTION(errMsg + "particleLife");
+		throw PE_EXCEPTION(errMsg + "particleLife");
 	}
 
 	if(particleLife - particleLifeMargin <= 0.0)
 	{
-		RSRC_THROW_EXCEPTION(errMsg + "particleLifeMargin");
+		throw PE_EXCEPTION(errMsg + "particleLifeMargin");
 	}
 
 	if(size <= 0.0)
 	{
-		RSRC_THROW_EXCEPTION(errMsg + "size");
+		throw PE_EXCEPTION(errMsg + "size");
 	}
 
 	if(maxNumOfParticles < 1)
 	{
-		RSRC_THROW_EXCEPTION(errMsg + "maxNumOfParticles");
+		throw PE_EXCEPTION(errMsg + "maxNumOfParticles");
 	}
 
 	if(emittionPeriod <= 0.0)
 	{
-		RSRC_THROW_EXCEPTION(errMsg + "emittionPeriod");
+		throw PE_EXCEPTION(errMsg + "emittionPeriod");
 	}
 
 	if(particlesPerEmittion < 1)
 	{
-		RSRC_THROW_EXCEPTION(errMsg + "particlesPerEmittion");
+		throw PE_EXCEPTION(errMsg + "particlesPerEmittion");
 	}
 }

@@ -54,8 +54,4 @@ inline Resource::Resource(const ResourceType& type_):
 {}
 
 
-/// Special throwing exception macro for the resources
-#define RSRC_THROW_EXCEPTION(x) THROW_EXCEPTION("File \"" + getRsrcPath() + "/" + getRsrcName() + "\: " + x)
-
-
 #endif

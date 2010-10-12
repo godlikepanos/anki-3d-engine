@@ -1,7 +1,6 @@
 #ifndef PARTICLE_EMITTER_PROPS_H
 #define PARTICLE_EMITTER_PROPS_H
 
-#include "Common.h"
 #include "Math.h"
 #include "Resource.h"
 
@@ -11,7 +10,7 @@
 class ParticleEmitterPropsStruct
 {
 	public:
-		/// @name Particle properties
+		/// @name Particle specific properties
 		/// @{
 		float particleLife; ///< Required and > 0.0
 		float particleLifeMargin;
@@ -33,7 +32,7 @@ class ParticleEmitterPropsStruct
 		float size; ///< The size of the collision shape. Required and > 0.0
 		/// @}
 
-		/// @name Emitter properties
+		/// @name Emitter specific properties
 		/// @{
 		uint maxNumOfParticles; ///< The size of the particles vector. Required
 		float emittionPeriod; ///< How often the emitter emits new particles. In secs. Required
