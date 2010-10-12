@@ -6,6 +6,79 @@ namespace Parser {
 
 
 //======================================================================================================================
+// parseArrOfNumbers                                                                                                   =
+//======================================================================================================================
+template <typename Type>
+void parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
+{
+	const Scanner::Token* token;
+
+	// first of all the left bracket
+	if(bracket)
+	{
+		token = &scanner.getNextToken();
+		if(token->getCode() != Scanner::TC_LBRACKET)
+		{
+			throw PARSER_EXCEPTION_EXPECTED("{");
+		}
+	}
+
+	// loop to parse numbers
+	for(uint i=0; i<size; i++)
+	{
+		token = &scanner.getNextToken();
+
+
+		// check if there is a sign in front of a number
+		bool sign = 0; // sign of the number. 0 for positive and 1 for negative
+		if(signs)
+		{
+			if(token->getCode() == Scanner::TC_MINUS)
+			{
+				sign = 1;
+				token = &scanner.getNextToken();
+			}
+			else if(token->getCode() == Scanner::TC_PLUS)
+			{
+				sign = 0;
+				token = &scanner.getNextToken();
+			}
+
+			// check if not number
+			if(token->getCode() != Scanner::TC_NUMBER)
+			{
+				throw PARSER_EXCEPTION_EXPECTED("number");
+			}
+		} // end if signs
+
+		// put the number in the arr and do typecasting from int to float
+		Type nmbr;
+
+		if(token->getDataType() == Scanner::DT_FLOAT)
+		{
+			nmbr = static_cast<Type>(token->getValue().getFloat());
+		}
+		else
+		{
+			nmbr = static_cast<Type>(token->getValue().getInt());
+		}
+
+		arr[i] = (sign==0) ? nmbr : -nmbr;
+	}
+
+	// the last thing is the right bracket
+	if(bracket)
+	{
+		token = &scanner.getNextToken();
+		if(token->getCode() != Scanner::TC_RBRACKET)
+		{
+			throw PARSER_EXCEPTION_EXPECTED("}");
+		}
+	}
+}
+
+
+//======================================================================================================================
 // parseNumber                                                                                                         =
 //======================================================================================================================
 template <typename Type>

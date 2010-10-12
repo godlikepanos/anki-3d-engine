@@ -20,10 +20,43 @@
 ///
 /// File format:
 /// @code
+/// shaderProg <string> |
+/// 	standardMsSProg {
+/// 		shaderProg <string>
+/// 		defines {
+/// 			<identifier>
+/// 			<identifier>
+/// 			...
+/// 			<identifier>
+/// 		}
+/// 	}
+///
+/// dpMtl <string>
+///
+/// [blendingStage <true | false>]
+///
+/// [blendFuncs* {
+/// 	sFactor <identifier>
+/// 	dFactor <identifier>
+/// }]
+///
+/// [depthTesting <true | false>]
+///
+/// [wireFrame <true | false>]
+///
+/// [castsShadow <true | false>]
+///
+/// [userDefinedVars {
+/// 	<identifier> <value**>
+/// }]
+///
+///
+/// *: Has nothing to do with the blendFuncs. blendFuncs can be in material stage as well
+/// **: Depends on the type of the var
 /// @endcode
 class Material: public Resource
 {
-	friend class Renderer; ///< For the setupMaterial
+	friend class Renderer; ///< For setupMaterial
 	friend class Ez;
 	friend class Sm;
 	friend class Ms;
@@ -32,13 +65,14 @@ class Material: public Resource
 	friend class MeshNode;
 
 	public:
+		/// Initialize with default values
 		Material();
 
 		/// @see Resource::load
 		void load(const char* filename);
 
 	private:
-		/// Standard attribute variables that are acceptable inside the @ref ShaderProg
+		/// Standard attribute variables that are acceptable inside the material stage @ref ShaderProg
 		enum StdAttribVars
 		{
 			SAV_POSITION,
@@ -55,7 +89,7 @@ class Material: public Resource
 		/// After changing the enum update also:
 		/// - Some statics in Material.cpp
 		/// - Renderer::setupMaterial
-		/// - The generic material shader (maybe)
+		/// - The generic material GLSL shader (maybe)
 		enum StdUniVars
 		{
 			// Skinning
@@ -121,7 +155,7 @@ class Material: public Resource
 		int blendingDfactor;
 		bool depthTesting;
 		bool wireframe;
-		bool castsShadow; ///< Used in shadowmapping passes but not in Ez
+		bool castsShadow; ///< Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
 
 		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates
 		/// the stdAttribVars and stdUniVars arrays.
@@ -129,7 +163,6 @@ class Material: public Resource
 		void initStdShaderVars();
 
 		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
-		bool hasAlphaTesting() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
 };
 
 
