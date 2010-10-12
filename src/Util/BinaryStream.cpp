@@ -72,7 +72,7 @@ std::string BinaryStream::readString()
 	const uint buffSize = 1024;
 	if((size + 1) > buffSize)
 	{
-		throw EXCEPTION("String bigger than default");
+		throw EXCEPTION("String bigger than temp buffer");
 	}
 	char buff[buffSize];
 	read(buff, size);

@@ -19,7 +19,7 @@
 /// 3 * floats: head
 /// 3 * floats: tail
 /// 16 * floats: armature space matrix
-/// uint: parent id
+/// uint: parent id, if it has no parent then its 0xFFFFFFFF
 /// uint: children number
 /// n * child: children
 /// 
