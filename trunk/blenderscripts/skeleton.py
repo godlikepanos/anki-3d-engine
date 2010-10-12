@@ -1,5 +1,6 @@
 import sys
 import os
+from struct import pack
 from copy import deepcopy
 from Blender import Mathutils
 from Blender.Mathutils import *
@@ -91,7 +92,7 @@ def getBlSkeletonFromBlObj(obj):
 # getAnkiSkeletonScript                                                                                                =
 #=======================================================================================================================
 def getAnkiSkeletonScript(skeleton, flipYZ):	
-	ftxt = "" # file text
+	"""ftxt = "" # file text
 	
 	# write the file
 	boneNames = skeleton.bones.keys()
@@ -145,8 +146,61 @@ def getAnkiSkeletonScript(skeleton, flipYZ):
 		
 		ftxt += "\n"	
 		
-	return ftxt
+	return ftxt"""
+
+	buff = pack("8s", "ANKISKEL")
 	
+	boneNames = skeleton.bones.keys()
+	boneNames.sort() # the bones are written in alpabetical order
+	
+	buff += pack("I", len(boneNames))
+	
+	for boneName in boneNames:	
+		bone = skeleton.bones[boneName]
+		
+		# name
+		str_ = bone.name
+		buff += pack("I" + str(len(str_)) + "s", len(str_), str_)
+		
+		# head
+		co = bone.head["ARMATURESPACE"]
+		if flipYZ:
+			buff += pack("fff", co.x, co.z, -co.y)
+		else:
+			buff += pack("fff", co.x, co.y, co.z)
+		
+		# tail
+		co = bone.tail["ARMATURESPACE"]
+		if flipYZ:
+			buff += pack("fff", co.x, co.z, -co.y)
+		else:
+			buff += pack("fff", co.x, co.y, co.z)
+	
+		# matrix
+		m4 = bone.matrix["ARMATURESPACE"].copy()
+		
+		if flipYZ:
+			m4 = multMatrix(m4, rotMat)
+			
+		for i_ in range(0, 4):
+			for j_ in range(0, 4):
+				buff += pack("f", m4[j_][i_])
+				
+		# write the parent
+		if not bone.parent:
+			buff += pack("I", 0xFFFFFF)
+		else:
+			buff += pack("I", boneNames.index(bone.parent.name))
+			
+		# write the childs
+		buff += pack("I", len(bone.children))
+		
+		for child in bone.children:
+			buff += pack("I", boneNames.index(child.name))
+			
+	# end!
+	return buff
+		
 	
 #=======================================================================================================================
 # export                                                                                                               =
@@ -160,7 +214,7 @@ def export(skeletonInit):
 	print("Trying to export skeleton \"" + skeleton.name + "\"")
 	
 	filename = skeletonInit.saveDir + skeleton.name + ".skel"
-	file = open(filename, "w")
+	file = open(filename, "wb")
 	file.write(getAnkiSkeletonScript(skeleton, skeletonInit.flipYZ))
 	
 	print("Skeleton exported!! \"" + filename + "\"")	
