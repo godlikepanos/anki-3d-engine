@@ -96,8 +96,12 @@ void SkelAnimCtrl::updateBoneTransforms()
 
 	// put the roots
 	for(uint i=0; i<skelNode.skeleton->bones.size(); i++)
+	{
 		if(skelNode.skeleton->bones[i].parent == NULL)
+		{
 			queue[tail++] = i; // queue push
+		}
+	}
 
 	// loop
 	while(head != tail) // while queue not empty
@@ -119,14 +123,16 @@ void SkelAnimCtrl::updateBoneTransforms()
 		if(boned.parent)
 		{
 			// bone.final_final_transform = parent.transf * bone.final_transform
-			combineTransformations(boneTranslations[boned.parent->id], boneRotations[boned.parent->id],
+			combineTransformations(boneTranslations[boned.parent->getPos()], boneRotations[boned.parent->getPos()],
 		                         boneTranslations[boneId], boneRotations[boneId],
 		                         boneTranslations[boneId], boneRotations[boneId]);
 		}
 
 		// now add the bone's childes
 		for(uint i=0; i<boned.childsNum; i++)
-			queue[tail++] = boned.childs[i]->id;
+		{
+			queue[tail++] = boned.childs[i]->getPos();
+		}
 	}
 }
 
@@ -143,8 +149,8 @@ void SkelAnimCtrl::deform()
 		const Mat3& rot = skelNode.boneRotations[i];
 		const Vec3& transl = skelNode.boneTranslations[i];
 
-		skelNode.heads[i] = skeleton.bones[i].head.getTransformed(transl, rot);
-		skelNode.tails[i] = skeleton.bones[i].tail.getTransformed(transl, rot);
+		skelNode.heads[i] = skeleton.bones[i].getHead().getTransformed(transl, rot);
+		skelNode.tails[i] = skeleton.bones[i].getTail().getTransformed(transl, rot);
 	}
 }
 

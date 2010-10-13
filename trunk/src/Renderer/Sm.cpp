@@ -28,17 +28,16 @@ void Sm::init(const RendererInitializer& initializer)
 
 	// texture
 	shadowMap.createEmpty2D(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
-	shadowMap.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	if(bilinearEnabled)
 	{
-		shadowMap.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		shadowMap.setFiltering(Texture::TFT_LINEAR);
 	}
 	else
 	{
-		shadowMap.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		shadowMap.setFiltering(Texture::TFT_NEAREST);
 	}
-	shadowMap.setTexParameter(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	shadowMap.setTexParameter(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	/*
 	 * If you dont want to use the FFP for comparing the shadowmap (the above two lines) then you can make the comparison
 	 * inside the glsl shader. The GL_LEQUAL means that: shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:

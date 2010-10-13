@@ -39,8 +39,7 @@ bool Skybox::load(const char* filenames[6])
 	}
 
 	noise.loadRsrc("gfx/noise2.tga");
-	noise->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
-	noise->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+	noise->setRepeat(true);
 
 	shader.loadRsrc("shaders/ms_mp_skybox.glsl");
 

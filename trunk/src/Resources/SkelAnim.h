@@ -70,16 +70,12 @@ class SkelAnim: public Resource
 		uint framesNum;
 		Vec<BoneAnim> bones;
 
-		SkelAnim();
+		SkelAnim(): Resource(RT_SKEL_ANIM) {}
 		~SkelAnim() {}
 
 		/// Implements Resource::loat
 		void load(const char* filename);
 };
 
-
-inline SkelAnim::SkelAnim():
-	Resource(RT_SKEL_ANIM)
-{}
 
 #endif

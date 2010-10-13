@@ -6,10 +6,6 @@
 #include "Exception.h"
 
 
-using namespace std;
-using namespace boost;
-
-
 uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -17,7 +13,7 @@ uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //======================================================================================================================
 // loadUncompressedTga                                                                                                 =
 //======================================================================================================================
-void Image::loadUncompressedTga(fstream& fs, uint& bpp)
+void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 {
 	// read the info from header
 	uchar header6[6];
@@ -60,7 +56,7 @@ void Image::loadUncompressedTga(fstream& fs, uint& bpp)
 //======================================================================================================================
 // loadCompressedTga                                                                                                   =
 //======================================================================================================================
-void Image::loadCompressedTga(fstream& fs, uint& bpp)
+void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 {
 	unsigned char header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
@@ -165,9 +161,9 @@ void Image::loadCompressedTga(fstream& fs, uint& bpp)
 //======================================================================================================================
 void Image::loadTga(const char* filename)
 {
-	fstream fs;
+	std::fstream fs;
 	char myTgaHeader[12];
-	fs.open(filename, ios::in|ios::binary);
+	fs.open(filename, std::ios::in | std::ios::binary);
 	uint bpp;
 
 	if(!fs.good())
@@ -215,7 +211,7 @@ void Image::loadTga(const char* filename)
 //======================================================================================================================
 // loadPng                                                                                                             =
 //======================================================================================================================
-bool Image::loadPng(const char* filename, string& err) throw()
+bool Image::loadPng(const char* filename, std::string& err) throw()
 {
 	//
 	// All locals
@@ -230,7 +226,7 @@ bool Image::loadPng(const char* filename, string& err) throw()
 	uint channels;
 	uint rowbytes;
 	uint colorType;
-	vector<png_bytep> rowPointers;
+	Vec<png_bytep> rowPointers;
 
 	//
 	// Open file
@@ -423,8 +419,8 @@ bool Image::loadPng(const char* filename, string& err) throw()
 void Image::load(const char* filename)
 {
 	// get the extension
-	string ext = filesystem::path(filename).extension();
-	to_lower(ext);
+	std::string ext = boost::filesystem::path(filename).extension();
+	boost::to_lower(ext);
 
 
 	// load from this extension
@@ -436,7 +432,7 @@ void Image::load(const char* filename)
 		}
 		else if(ext == ".png")
 		{
-			string err;
+			std::string err;
 			if(!loadPng(filename, err))
 			{
 				throw EXCEPTION(err);

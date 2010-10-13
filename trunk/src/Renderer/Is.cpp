@@ -77,8 +77,14 @@ void Is::initFbo()
 	fbo.setNumOfColorAttachements(1);
 
 	// create the txtrs
-	if(!fai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT))
+	try
+	{
+		fai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT);
+	}
+	catch(Exception& e)
+	{
 		FATAL("Cannot create deferred shading illumination stage FAI");
+	}
 
 	// attach
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
