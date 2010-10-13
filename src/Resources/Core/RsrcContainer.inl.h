@@ -1,5 +1,7 @@
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include "RsrcContainer.h"
+#include "Exception.h"
 
 
 //======================================================================================================================
@@ -8,7 +10,7 @@
 template<typename Type>
 RsrcContainer<Type>::~RsrcContainer()
 {
-	DEBUG_ERR(BaseClass::size() != 0); // this means that somehow a resource is still loaded
+	RASSERT_THROW_EXCEPTION(BaseClass::size() != 0); // this means that somehow a resource is still loaded
 }
 
 
@@ -72,10 +74,10 @@ typename RsrcContainer<Type>::Iterator RsrcContainer<Type>::findByPtr(Type* ptr)
 template<typename Type>
 Type* RsrcContainer<Type>::load(const char* fname)
 {
-	DEBUG_ERR(fname == NULL);
-	filesystem::path fpathname = filesystem::path(fname);
-	string name = fpathname.filename();
-	string path = fpathname.parent_path().string();
+	RASSERT_THROW_EXCEPTION(fname == NULL);
+	boost::filesystem::path fpathname = boost::filesystem::path(fname);
+	std::string name = fpathname.filename();
+	std::string path = fpathname.parent_path().string();
 	Iterator it = findByNameAndPath(name.c_str(), path.c_str());
 
 	// if already loaded then inc the users and return the pointer
@@ -95,11 +97,11 @@ Type* RsrcContainer<Type>::load(const char* fname)
 	{
 		newInstance->load(fname);
 	}
-	catch(exception& e)
+	catch(Exception& e)
 	{
 		delete newInstance;
 		return NULL;
-		THROW_EXCEPTION("Cannot load \"" << fname << '\"');
+		throw EXCEPTION("Cannot load \"" + fname + '\"');
 	}
 
 	BaseClass::push_back(newInstance);
@@ -116,12 +118,11 @@ void RsrcContainer<Type>::unload(Type* x)
 	Iterator it = findByPtr(x);
 	if(it == BaseClass::end())
 	{
-		ERROR("Cannot find resource with pointer 0x" << hex << x);
-		return;
+		throw EXCEPTION("Cannot find resource with pointer " + boost::lexical_cast<std::string>(x));
 	}
 
 	Type* del_ = (*it);
-	DEBUG_ERR(del_->referenceCounter < 1); // WTF?
+	RASSERT_THROW_EXCEPTION(del_->referenceCounter < 1); // WTF?
 
 	--del_->referenceCounter;
 

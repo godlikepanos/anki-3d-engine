@@ -2,6 +2,7 @@
 #include "Texture.h"
 #include "Renderer.h"
 #include "Image.h"
+#include "GlException.h"
 
 
 #define LAST_TEX_UNIT (textureUnitsNum - 1)
@@ -32,7 +33,9 @@ Texture::Texture():
 Texture::~Texture()
 {
 	if(isLoaded())
+	{
 		glDeleteTextures(1, &glId);
+	}
 }
 
 
@@ -46,7 +49,7 @@ void Texture::load(const char* filename)
 		target = GL_TEXTURE_2D;
 		if(isLoaded())
 		{
-			THROW_ERROR("Texture already loaded");
+			throw EXCEPTION("Texture already loaded");
 		}
 
 		Image img(filename);
@@ -95,7 +98,7 @@ void Texture::load(const char* filename)
 				break;
 
 			default:
-				THROW_ERROR("See file");
+				throw EXCEPTION("See file");
 		}
 
 		glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
@@ -104,14 +107,11 @@ void Texture::load(const char* filename)
 			glGenerateMipmap(target);
 		}
 
-		if(!GL_OK())
-		{
-			THROW_EXCEPTION("OpenGL failed");
-		}
+		ON_GL_FAIL_THROW_EXCEPTION();
 	}
 	catch(exception& e)
 	{
-		THROW_EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
 }
 
@@ -119,11 +119,11 @@ void Texture::load(const char* filename)
 //======================================================================================================================
 // createEmpty2D                                                                                                       =
 //======================================================================================================================
-bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, uint type_)
+void Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, uint type_)
 {
 	target = GL_TEXTURE_2D;
-	DEBUG_ERR(internalFormat > 0 && internalFormat <= 4); // deprecated internal format
-	DEBUG_ERR(isLoaded());
+	RASSERT_THROW_EXCEPTION(internalFormat > 0 && internalFormat <= 4); // deprecated internal format
+	RASSERT_THROW_EXCEPTION(isLoaded());
 
 	// GL stuff
 	glGenTextures(1, &glId);
@@ -136,14 +136,14 @@ bool Texture::createEmpty2D(float width_, float height_, int internalFormat, int
 	// allocate to vram
 	glTexImage2D(target, 0, internalFormat, width_, height_, 0, format_, type_, NULL);
 
-	return GL_OK();
+	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 
 //======================================================================================================================
 // createEmpty2DMSAA                                                                                                   =
 //======================================================================================================================
-bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
+void Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
 {
 	target = GL_TEXTURE_2D_MULTISAMPLE;
 	DEBUG_ERR(isLoaded());
@@ -155,9 +155,9 @@ bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, 
 	glTexImage2DMultisample(target, samplesNum, internalFormat, width_, height_, false);
 
 	if(mimapping)
+	{
 		glGenerateMipmap(target);
-
-	return GL_OK();
+	}
 }
 
 
@@ -167,7 +167,9 @@ bool Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, 
 void Texture::bind(uint unit) const
 {
 	if(unit >= static_cast<uint>(textureUnitsNum))
-		WARNING("Max tex units passed");
+	{
+		throw EXCEPTION("Max tex units passed");
+	}
 
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(target, getGlId());

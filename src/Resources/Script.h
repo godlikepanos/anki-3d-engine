@@ -1,7 +1,7 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
-#include "Common.h"
+#include <string>
 #include "Resource.h"
 
 
@@ -14,7 +14,7 @@ class Script: public Resource
 		void load(const char* filename);
 
 	private:
-		string source;
+		std::string source;
 };
 
 

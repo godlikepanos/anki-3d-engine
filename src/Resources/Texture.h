@@ -2,8 +2,8 @@
 #define TEXTURE_H
 
 #include <limits>
-#include "Common.h"
 #include "Resource.h"
+#include "StdTypes.h"
 
 
 /// Texture resource class
@@ -33,7 +33,7 @@ class Texture: public Resource
 		/// @name Create tex funcs
 		/// @{
 
-		/// Load image
+		/// Implements Resource::load
 		/// @exception Exception
 		void load(const char* filename);
 
@@ -43,14 +43,12 @@ class Texture: public Resource
 
 		/// Create empty texture with MSAA.
 		/// Used by the Renderer
-		bool createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
+		void createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
 		/// @}
 
 		void bind(uint texUnit = 0) const;
 		void setRepeat(bool repeat) const;
 		void setFiltering(TextureFilteringType filterType);
-		void setTexParameter(uint paramName, int value) const;
-		void setTexParameter(uint paramName, float value) const;
 		void setAnisotropy(uint level);
 		void setMipmapLevel(uint level);
 		void genMipmap();
@@ -73,6 +71,9 @@ class Texture: public Resource
 		static bool compressionEnabled;
 		static int  anisotropyLevel;
 		/// @}
+
+				void setTexParameter(uint paramName, int value) const;
+		void setTexParameter(uint paramName, float value) const;
 
 		bool isLoaded() const;
 };

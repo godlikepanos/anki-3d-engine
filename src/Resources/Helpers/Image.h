@@ -16,7 +16,7 @@ class Image
 		{
 			CT_R, ///< Red only
 			CT_RGB, ///< RGB
-			CT_RGBA /// RGB and alpha
+			CT_RGBA /// RGB plus alpha
 		};
 
 	PROPERTY_R(uint, width, getWidth) ///< Image width

@@ -17,14 +17,14 @@ void SkelModelNode::init(const char* filename)
 		token = &scanner.getNextToken();
 		if(!(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "SKELETON")))
 		{
-			PARSE_ERR_EXPECTED("identifier SKELETON");
+			throw PARSER_EXCEPTION_EXPECTED("identifier SKELETON");
 			return;
 		}
 		
 		token = &scanner.getNextToken();
 		if(token->getCode() != Scanner::TC_STRING)
 		{
-			PARSE_ERR_EXPECTED("string");
+			throw PARSER_EXCEPTION_EXPECTED("string");
 			return;
 		}
 
@@ -36,14 +36,14 @@ void SkelModelNode::init(const char* filename)
 		token = &scanner.getNextToken();
 		if(!(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "MESHES_NUM")))
 		{
-			PARSE_ERR_EXPECTED("identifier MESHES_NUM");
+			throw PARSER_EXCEPTION_EXPECTED("identifier MESHES_NUM");
 			return;
 		}
 
 		token = &scanner.getNextToken();
 		if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
 		{
-			PARSE_ERR_EXPECTED("integer");
+			throw PARSER_EXCEPTION_EXPECTED("integer");
 			return;
 		}
 				
@@ -54,7 +54,7 @@ void SkelModelNode::init(const char* filename)
 			token = &scanner.getNextToken();
 			if(token->getCode() != Scanner::TC_STRING)
 			{
-				PARSE_ERR_EXPECTED("string");
+				throw PARSER_EXCEPTION_EXPECTED("string");
 				return;
 			}
 

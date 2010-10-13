@@ -11,14 +11,14 @@ void Extension::load(const char* filename)
 	libHandle = dlopen(filename, RTLD_LAZY);
 	if(libHandle == NULL)
 	{
-		THROW_EXCEPTION("File \"" + filename + "\": " + dlerror());
+		throw EXCEPTION("File \"" + filename + "\": " + dlerror());
 	}
 	
 	// get FooBar
 	foobarPtr = (int(*)(void*))(dlsym(libHandle, "FooBar"));
 	if(foobarPtr == NULL)
 	{
-		THROW_EXCEPTION("File \"" + filename + "\": \"FooBar\" entry symbol not found: " + dlerror());
+		throw EXCEPTION("File \"" + filename + "\": \"FooBar\" entry symbol not found: " + dlerror());
 	}
 }
 
@@ -28,7 +28,7 @@ void Extension::load(const char* filename)
 //======================================================================================================================
 Extension::~Extension()
 {
-	DEBUG_ERR(libHandle==NULL || foobarPtr==NULL);
+	//DEBUG_ERR(libHandle==NULL || foobarPtr==NULL);
 	dlclose(libHandle);
 	libHandle = NULL;
 	foobarPtr = NULL;

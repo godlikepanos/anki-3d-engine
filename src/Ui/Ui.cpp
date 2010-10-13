@@ -162,7 +162,7 @@ non static funcs                                                                
 void init()
 {
 	fontMap.loadRsrc("gfx/fontmapa.tga");
-	fontMap->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	fontMap->setFiltering(Texture::TFT_LINEAR);
 	//font_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	shader.loadRsrc("shaders/txt.glsl");
 	setPos(0.0, 0.0);

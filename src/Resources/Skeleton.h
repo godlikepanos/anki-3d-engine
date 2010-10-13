@@ -38,18 +38,18 @@ class Skeleton: public Resource
 		/// rotSkelSpaceInv = rotSkelSpace.getInverted()
 		class Bone
 		{
-			PROPERTY_R(string, name, getName) ///< @ref PROPERTY_R : The name of the bone
+			friend class Skeleton; /// For loading
 
-			friend class Skeleton;
+			PROPERTY_R(std::string, name, getName) ///< The name of the bone
+			PROPERTY_R(Vec3, head, getHead) ///< Starting point of the bone
+			PROPERTY_R(Vec3, tail, getTail) ///< End point of the bone
+			PROPERTY_R(uint, id, getPos) ///< Pos inside the @ref Skeleton::bones vector
 
 			public:
 				static const uint MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
-				ushort id; ///< Pos inside the @ref Skeleton::bones vector
 				Bone*  parent;
 				Bone*  childs[MAX_CHILDS_PER_BONE];
 				ushort childsNum;
-				Vec3   head;
-				Vec3   tail;
 
 				// see the class notes
 				Mat3 rotSkelSpace;

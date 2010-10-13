@@ -1,10 +1,11 @@
 #include <fstream>
+#include <boost/lexical_cast.hpp>
 #include "Mesh.h"
 #include "Material.h"
 #include "BinaryStream.h"
 
 
-#define MESH_THROW_EXCEPTION(x) THROW_EXCEPTION("File \"" + filename + "\": " + x)
+#define MESH_EXCEPTION(x) EXCEPTION("Mesh \"" + filename + "\": " + x)
 
 
 //======================================================================================================================
@@ -20,7 +21,7 @@ void Mesh::load(const char* filename)
 
 		if(!file.is_open())
 		{
-			THROW_EXCEPTION("Cannot open file \"" << filename << "\"");
+			throw EXCEPTION("Cannot open file \"" + filename + "\"");
 		}
 
 		BinaryStream bs(file.rdbuf());
@@ -30,8 +31,7 @@ void Mesh::load(const char* filename)
 		bs.read(magic, 8);
 		if(bs.fail() || memcmp(magic, "ANKIMESH", 8))
 		{
-			MESH_ERR("Incorrect magic word");
-			return false;
+			throw MESH_EXCEPTION("Incorrect magic word");
 		}
 
 		// Mesh name
@@ -71,7 +71,9 @@ void Mesh::load(const char* filename)
 				// a sanity check
 				if(tris[i].vertIds[j] >= vertCoords.size())
 				{
-					THROW_EXCEPTION("Vert index out of bounds" + tris[i].vertIds[j] + " (" + i + ", " + j + ")");
+					throw MESH_EXCEPTION("Vert index out of bounds" + boost::lexical_cast<std::string>(tris[i].vertIds[j]) +
+					                     " (" + boost::lexical_cast<std::string>(i) + ", " +
+					                     boost::lexical_cast<std::string>(j) + ")");
 				}
 			}
 		}
@@ -102,13 +104,15 @@ void Mesh::load(const char* filename)
 			// we treat as error if one vert doesnt have a bone
 			if(boneConnections < 1)
 			{
-				THROW_EXCEPTION("Vert " + i + " sould have at least one bone");
+				throw MESH_EXCEPTION("Vert " + boost::lexical_cast<std::string>(i) + " sould have at least one bone");
 			}
 
 			// and here is another possible error
 			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
-				THROW_EXCEPTION("Cannot have more than " + VertexWeight::MAX_BONES_PER_VERT + " bones per vertex");
+				uint tmp = VertexWeight::MAX_BONES_PER_VERT;
+				throw MESH_EXCEPTION("Cannot have more than " +
+				                     boost::lexical_cast<std::string>(tmp) + " bones per vertex");
 			}
 			vertWeights[i].bonesNum = boneConnections;
 
@@ -130,7 +134,7 @@ void Mesh::load(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		MESH_THROW_EXCEPTION(e.what());
+		throw MESH_EXCEPTION(e.what());
 	}
 }
 
@@ -143,15 +147,15 @@ void Mesh::doPostLoad()
 	// Sanity checks
 	if(vertCoords.size()<1 || tris.size()<1)
 	{
-		THROW_EXCEPTION("Vert coords and tris must be filled");
+		throw EXCEPTION("Vert coords and tris must be filled");
 	}
 	if(texCoords.size()!=0 && texCoords.size()!=vertCoords.size())
 	{
-		THROW_EXCEPTION("Tex coords num must be zero or equal to vertex coords num");
+		throw EXCEPTION("Tex coords num must be zero or equal to vertex coords num");
 	}
 	if(vertWeights.size()!=0 && vertWeights.size()!=vertCoords.size())
 	{
-		THROW_EXCEPTION("Vert weights num must be zero or equal to vertex coords num");
+		throw EXCEPTION("Vert weights num must be zero or equal to vertex coords num");
 	}
 
 	if(isRenderable())
@@ -168,14 +172,14 @@ void Mesh::doPostLoad()
 		// Sanity checks continued
 		if(material->stdAttribVars[Material::SAV_TEX_COORDS] != NULL && !vbos.texCoords.isCreated())
 		{
-			THROW_EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
+			throw EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
 						          "\") needs texture coord information that the mesh (\"" +
-						          getRsrcName() << "\") doesn't have");
+						          getRsrcName() + "\") doesn't have");
 		}
 
 		if(material->hasHWSkinning() && !vbos.vertWeights.isCreated())
 		{
-			THROW_EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
+			throw EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
 						          "\") needs vertex weights that the mesh (\"" +
 						          getRsrcName() + "\") doesn't have");
 		}

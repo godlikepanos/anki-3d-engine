@@ -21,8 +21,7 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 
 	// create the texes
 	fai.createEmpty2D(width, height, GL_RGB, GL_RGB, GL_FLOAT);
-	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	fai.setFiltering(Texture::TFT_LINEAR);
 
 	// attach
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
@@ -55,7 +54,7 @@ void Hdr::init(const RendererInitializer& initializer)
 	initFbo(hblurFbo, hblurFai);
 	initFbo(vblurFbo, fai);
 
-	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	fai.setFiltering(Texture::TFT_LINEAR);
 
 
 	// init shaders

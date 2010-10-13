@@ -1,7 +1,11 @@
 #ifndef RSRC_PTR_H
 #define RSRC_PTR_H
 
-#include "Common.h"
+#include "Exception.h"
+
+#ifndef NULL
+	#define NULL 0
+#endif
 
 
 /// This is a special smart pointer that points to Resource derivatives. It looks like auto_ptr but the main difference
@@ -43,7 +47,7 @@ class RsrcPtr
 template<typename Type>
 Type& RsrcPtr<Type>::operator*() const
 {
-	DEBUG_ERR(p == NULL);
+	RASSERT_THROW_EXCEPTION(p == NULL);
 	return *p;
 }
 
@@ -51,7 +55,7 @@ Type& RsrcPtr<Type>::operator*() const
 template<typename Type>
 Type* RsrcPtr<Type>::operator->() const
 {
-	DEBUG_ERR(p == NULL);
+	RASSERT_THROW_EXCEPTION(p == NULL);
 	return p;
 }
 
