@@ -372,12 +372,21 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	new App(argc, argv);
-	init();
+	try
+	{
+		new App(argc, argv);
+		init();
 
-	mainLoop();
+		mainLoop();
 
-	INFO("Exiting...");
-	app->quit(EXIT_SUCCESS);
-	return 0;
+		INFO("Exiting...");
+		app->quit(EXIT_SUCCESS);
+		return 0;
+	}
+	catch(std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		abort();
+		return 1;
+	}
 }

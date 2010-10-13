@@ -20,6 +20,14 @@ void Skeleton::load(const char* filename)
 	{
 		BinaryStream bs(fs.rdbuf());
 
+		// Magic word
+		char magic[8];
+		bs.read(magic, 8);
+		if(bs.fail() || memcmp(magic, "ANKISKEL", 8))
+		{
+			throw EXCEPTION("Incorrect magic word");
+		}
+
 		// Bones num
 		uint bonesNum = bs.readUint();
 		bones.resize(bonesNum);
@@ -34,19 +42,19 @@ void Skeleton::load(const char* filename)
 
 			for(uint j=0; j<3; j++)
 			{
-				bone.head[i] = bs.readFloat();
+				bone.head[j] = bs.readFloat();
 			}
 
 			for(uint j=0; j<3; j++)
 			{
-				bone.tail[i] = bs.readFloat();
+				bone.tail[j] = bs.readFloat();
 			}
 
 			// Matrix
 			Mat4 m4;
 			for(uint j=0; j<16; j++)
 			{
-				m4[i] = bs.readFloat();
+				m4[j] = bs.readFloat();
 			}
 
 			// Matrix for real
@@ -94,8 +102,8 @@ void Skeleton::load(const char* filename)
 			}
 		}
 	}
-	catch(Exception& e)
+	catch(std::exception& e)
 	{
-		throw EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw EXCEPTION("Skeleton \"" + filename + "\": " + e.what());
 	}
 }

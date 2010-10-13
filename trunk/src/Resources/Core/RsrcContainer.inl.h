@@ -97,11 +97,10 @@ Type* RsrcContainer<Type>::load(const char* fname)
 	{
 		newInstance->load(fname);
 	}
-	catch(Exception& e)
+	catch(std::exception& e)
 	{
 		delete newInstance;
-		return NULL;
-		throw EXCEPTION("Cannot load \"" + fname + '\"');
+		throw EXCEPTION("Cannot load resource \"" + fname + "\": " + e.what());
 	}
 
 	BaseClass::push_back(newInstance);

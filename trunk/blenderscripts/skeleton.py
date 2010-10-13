@@ -188,7 +188,7 @@ def getAnkiSkeletonScript(skeleton, flipYZ):
 				
 		# write the parent
 		if not bone.parent:
-			buff += pack("I", 0xFFFFFF)
+			buff += pack("I", 0xFFFFFFFF)
 		else:
 			buff += pack("I", boneNames.index(bone.parent.name))
 			
