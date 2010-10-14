@@ -7,6 +7,7 @@
 #include "MainRenderer.h"
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
+#include "MessageHandler.h"
 
 
 bool App::isCreated = false;
@@ -50,10 +51,14 @@ App::App(int argc, char* argv[], Object* parent):
 
 	parseCommandLineArgs(argc, argv);
 
+	messageHandler = new MessageHandler(this);
+
 	printAppInfo();
 
 	if(isCreated)
+	{
 		FATAL("You cannot init a second App instance");
+	}
 
 	isCreated = true;
 

@@ -13,7 +13,9 @@ class MainRenderer: public Renderer
 	public:
 		Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
 
-		MainRenderer(Object* parent); ///< The quality of the JPEG screenshots. From 0 to 100
+		MainRenderer(Object* parent);
+
+		~MainRenderer() throw() {}
 
 		/**
 		 * @name Setters & getters

@@ -12,6 +12,7 @@ class StdinListener;
 class Scene;
 class MainRenderer;
 class Camera;
+class MessageHandler;
 
 
 /**
@@ -83,9 +84,13 @@ class App: public Object
 		ScriptingEngine* scriptingEngine;
 		MainRenderer* mainRenderer;
 		StdinListener* stdinListener;
+		MessageHandler* messageHandler;
 		/**@}*/
 
 		void parseCommandLineArgs(int argc, char* argv[]);
+
+		/// A slot to handle the messageHandler's signal
+		void handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg);
 };
 
 
@@ -120,6 +125,12 @@ inline MainRenderer& App::getMainRenderer()
 {
 	DEBUG_ERR(mainRenderer == NULL);
 	return *mainRenderer;
+}
+
+
+inline void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg)
+{
+	std::cout << file << ":" << line << " " << func << ": " << msg << std::endl;
 }
 
 

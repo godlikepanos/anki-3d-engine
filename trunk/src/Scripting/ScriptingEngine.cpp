@@ -1,5 +1,6 @@
 #include <Python.h>
 #include "ScriptingEngine.h"
+#include "Exception.h"
 
 
 extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp
@@ -8,38 +9,35 @@ extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-bool ScriptingEngine::init()
+void ScriptingEngine::init()
 {
-	INFO("Initializing scripting engine...");
+	//INFO("Initializing scripting engine...");
 
 	PyImport_AppendInittab((char*)("Anki"), &initAnki);
 	Py_Initialize();
-	mainModule = python::object(python::handle<>(python::borrowed(PyImport_AddModule("__main__"))));
+	mainModule = boost::python::object(boost::python::handle<>(boost::python::borrowed(PyImport_AddModule("__main__"))));
 	mainNamespace = mainModule.attr("__dict__");
-	ankiModule = python::object(python::handle<>(PyImport_ImportModule("Anki")));
+	ankiModule = boost::python::object(boost::python::handle<>(PyImport_ImportModule("Anki")));
 
 	//execScript("import Anki\n");
 
-	INFO("Scripting engine initialized");
-	return true;
+	//INFO("Scripting engine initialized");
 }
 
 
 //======================================================================================================================
 // execScript                                                                                                          =
 //======================================================================================================================
-bool ScriptingEngine::execScript(const char* script, const char* scriptName)
+void ScriptingEngine::execScript(const char* script, const char* scriptName)
 {
 	try
 	{
-		python::handle<>ignored(PyRun_String(script, Py_file_input, mainNamespace.ptr(), mainNamespace.ptr()));
+		boost::python::handle<>ignored(PyRun_String(script, Py_file_input, mainNamespace.ptr(), mainNamespace.ptr()));
 	}
-	catch(python::error_already_set)
+	catch(boost::python::error_already_set)
 	{
-		ERROR("Script \"" << scriptName << "\" failed with error:");
 		PyErr_Print();
-		return false;
+		throw EXCEPTION("Script \"" + scriptName + "\" failed with error");
 	}
-	return true;
 }
 

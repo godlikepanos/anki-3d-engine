@@ -1,7 +1,6 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "Common.h"
 #include "Vec.h"
 
 
@@ -11,6 +10,7 @@ class Object
 {
 	public:
 		/// Calls addChild if parent is not NULL
+		/// @exception Exception
 		Object(Object* parent = NULL);
 
 		/// Delete childs from the last entered to the first and update parent
