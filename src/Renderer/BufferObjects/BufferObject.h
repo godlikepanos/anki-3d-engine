@@ -1,13 +1,12 @@
-#ifndef _BUFFEROBJECT_H_
-#define _BUFFEROBJECT_H_
+#ifndef BUFFER_OBJECT_H
+#define BUFFER_OBJECT_H
 
-#include "Common.h"
 #include <GL/glew.h>
+#include "Exception.h"
+#include "StdTypes.h"
 
 
-/**
- * A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
- */
+/// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
 class BufferObject
 {
 	protected:
@@ -16,56 +15,47 @@ class BufferObject
 		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 
 	public:
-		BufferObject();
+		BufferObject(): glId(0) {}
 		virtual ~BufferObject();
 
-		/**
-		 * Accessor. Throws an assertion error in BO is not created
-		 * @return The OpenGL ID of the buffer
-		 */
+		/// Safe accessor. Throws exception if BO is not created
+		/// @return The OpenGL ID of the buffer
+		/// @exception Exception
 		uint getGlId() const;
 
-		/**
-		 * Accessor. Throws an assertion error in BO is not created
-		 * @return
-		 */
+		/// Safe accessor. Throws exception if BO is not created
+		/// @return OpenGL target
+		/// @exception Exception
 		GLenum getBufferTarget() const;
 
-		/**
-		 * Accessor. Throws an assertion error in BO is not created
-		 * @return GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
-		 */
+		/// Safe accessor. Throws exception if BO is not created
+		/// @return GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
+		/// @exception Exception
 		GLenum getBufferUsage() const;
 
-		/**
-		 * @brief Checks if BO is created
-		 * @return True if BO is already created
-		 */
-		bool isCreated() const;
+		/// Checks if BO is created
+		/// @return True if BO is already created
+		bool isCreated() const throw() {return glId != 0;}
 
-		/**
-		 * Creates a new BO with the given params and checks if everything went OK
-		 * @param target_ Depends on the BO
-		 * @param sizeInBytes The size of the buffer that we will allocate in bytes
-		 * @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
-		 * @param usage_ It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
-		 * @return True on success
-		 */
-		bool create(GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_);
+		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails
+		/// @param target Depends on the BO
+		/// @param sizeInBytes The size of the buffer that we will allocate in bytes
+		/// @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
+		/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
+		/// @exception Exception
+		void create(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
 
-		/**
-		 * Throws an assertion error in BO is not created
-		 */
+		/// Bind BO. Throws exception if BO is not created
+		/// @exception Exception
 		void bind() const;
 
-		/**
-		 * Throws an assertion error in BO is not created
-		 */
+		/// Unbind BO. Throws exception if BO is not created
+		/// @exception Exception
 		void unbind() const;
 
-		/**
-		 * Self explanatory. Throws an assertion error in BO is not created
-		 */
+	private:
+		/// Delete the BO
+		/// @exception Exception
 		void deleteBuff();
 };
 
@@ -74,91 +64,56 @@ class BufferObject
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline BufferObject::BufferObject():
-	glId(0)
-{}
-
-
 inline BufferObject::~BufferObject()
 {
-	if(glId!=0)
+	if(isCreated())
+	{
 		deleteBuff();
+	}
 }
+
 
 inline uint BufferObject::getGlId() const
 {
-	DEBUG_ERR(!isCreated());
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	return glId;
 }
 
 
 inline GLenum BufferObject::getBufferTarget() const
 {
-	DEBUG_ERR(!isCreated());
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	return target;
 }
 
 
 inline GLenum BufferObject::getBufferUsage() const
 {
-	DEBUG_ERR(!isCreated());
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	return usage;
-}
-
-
-inline bool BufferObject::isCreated() const
-{
-	return glId != 0;
-}
-
-
-inline bool BufferObject::create(GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_)
-{
-	DEBUG_ERR(isCreated()); // BO already initialized
-	DEBUG_ERR(usage_!=GL_STREAM_DRAW && usage_!=GL_STATIC_DRAW && usage_!=GL_DYNAMIC_DRAW); // unacceptable usage_
-	DEBUG_ERR(sizeInBytes < 1); // unacceptable sizeInBytes
-
-	usage = usage_;
-	target = target_;
-
-	glGenBuffers(1, &glId);
-	bind();
-	glBufferData(target, sizeInBytes, dataPtr, usage);
-
-	// make a check
-	int bufferSize = 0;
-	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
-	if(sizeInBytes != (uint)bufferSize)
-	{
-		deleteBuff();
-		ERROR("Data size mismatch");
-		return false;
-	}
-
-	unbind();
-	return true;
 }
 
 
 inline void BufferObject::bind() const
 {
-	DEBUG_ERR(!isCreated());
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	glBindBuffer(target, glId);
 }
 
 
 inline void BufferObject::unbind() const
 {
-	DEBUG_ERR(!isCreated());
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	glBindBuffer(target, 0);
 }
 
 
 inline void BufferObject::deleteBuff()
 {
-	DEBUG_ERR(!isCreated());
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	glDeleteBuffers(1, &glId);
 	glId = 0;
 }
+
 
 #endif

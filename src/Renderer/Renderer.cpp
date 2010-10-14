@@ -75,13 +75,13 @@ void Renderer::render(Camera& cam_)
 //======================================================================================================================
 // drawQuad                                                                                                            =
 //======================================================================================================================
-void Renderer::drawQuad(int vertCoordsUniLoc)
+void Renderer::drawQuad(int vertCoordsAttribLoc)
 {
-	DEBUG_ERR(vertCoordsUniLoc == -1);
-	glEnableVertexAttribArray(vertCoordsUniLoc);
-	glVertexAttribPointer(vertCoordsUniLoc, 2, GL_FLOAT, false, 0, quadVertCoords);
+	DEBUG_ERR(vertCoordsAttribLoc == -1);
+	glEnableVertexAttribArray(vertCoordsAttribLoc);
+	glVertexAttribPointer(vertCoordsAttribLoc, 2, GL_FLOAT, false, 0, quadVertCoords);
 	glDrawArrays(GL_QUADS, 0, 4);
-	glDisableVertexAttribArray(vertCoordsUniLoc);
+	glDisableVertexAttribArray(vertCoordsAttribLoc);
 }
 
 

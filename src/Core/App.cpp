@@ -52,6 +52,7 @@ App::App(int argc, char* argv[], Object* parent):
 	parseCommandLineArgs(argc, argv);
 
 	messageHandler = new MessageHandler(this);
+	messageHandler->getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
 	printAppInfo();
 
@@ -281,7 +282,9 @@ void App::execStdinScpripts()
 		string cmd = app->getStdinLintener().getLine();
 
 		if(cmd.length() < 1)
+		{
 			break;
+		}
 
 		app->getScriptingEngine().execScript(cmd.c_str(), "command line input");
 	}
