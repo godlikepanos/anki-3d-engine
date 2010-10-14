@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "Object.h"
+#include "Exception.h"
 
 
 //======================================================================================================================
@@ -38,8 +39,8 @@ Object::~Object()
 //======================================================================================================================
 void Object::addChild(Object* child)
 {
-	DEBUG_ERR(child == NULL);
-	DEBUG_ERR(child->objParent != NULL); // Child already has parent
+	RASSERT_THROW_EXCEPTION(child == NULL);
+	RASSERT_THROW_EXCEPTION(child->objParent != NULL); // Child already has parent
 
 	child->objParent = this;
 	objChilds.push_back(child);
@@ -51,14 +52,13 @@ void Object::addChild(Object* child)
 //======================================================================================================================
 void Object::removeChild(Object* child)
 {
-	DEBUG_ERR(child == NULL);
+	RASSERT_THROW_EXCEPTION(child == NULL);
 
 	Vec<Object*>::iterator it = std::find(objChilds.begin(), objChilds.end(), child);
 
 	if(it == objChilds.end())
 	{
-		ERROR("Internal error");
-		return;
+		throw EXCEPTION("Internal error");
 	}
 
 	objChilds.erase(it);

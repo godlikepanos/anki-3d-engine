@@ -45,7 +45,7 @@ class Scene: public Object
 
 		// The funcs
 		Scene(Object* parent);
-		~Scene() {}
+		~Scene() throw() {}
 
 		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers
 		void unregisterNode(SceneNode* node);

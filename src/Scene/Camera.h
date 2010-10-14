@@ -56,7 +56,7 @@ class Camera: public SceneNode
 		// constructors and destuctors
 		Camera(float fovx_, float fovy_, float znear_, float zfar_, SceneNode* parent = NULL);
 		Camera(SceneNode* parent = NULL): SceneNode(SNT_CAMERA, parent) {}
-		~Camera() {}
+		~Camera() throw() {}
 
 		/**
 		 * @name Accessors

@@ -53,6 +53,8 @@ class Renderer: public Object
 
 		Renderer(Object* parent);
 
+		~Renderer() throw() {}
+
 		/**
 		 * @name Setters & getters
 		 */
