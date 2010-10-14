@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 #include "Common.h"
 #include "Object.h"
+#include "MessageHandler.h"
 
 
 class ScriptingEngine;
@@ -12,7 +13,6 @@ class StdinListener;
 class Scene;
 class MainRenderer;
 class Camera;
-class MessageHandler;
 
 
 /**
@@ -59,6 +59,7 @@ class App: public Object
 		MainRenderer& getMainRenderer();
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
+		MessageHandler& getMessageHandler();
 		/**@}*/
 
 		/**
@@ -125,6 +126,13 @@ inline MainRenderer& App::getMainRenderer()
 {
 	DEBUG_ERR(mainRenderer == NULL);
 	return *mainRenderer;
+}
+
+
+inline MessageHandler& App::getMessageHandler()
+{
+	/// @todo Check
+	return *messageHandler;
 }
 
 

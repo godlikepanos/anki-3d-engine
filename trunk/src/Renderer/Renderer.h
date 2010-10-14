@@ -1,5 +1,5 @@
-#ifndef _RENDERER_H_
-#define _RENDERER_H_
+#ifndef RENDERER_H
+#define RENDERER_H
 
 #include "Common.h"
 #include "Math.h"
@@ -21,11 +21,8 @@ class RendererInitializer;
 class SceneNode;
 
 
-/**
- * Offscreen renderer
- *
- * It is a class and not a namespace because we may need external renderers for security cameras for example
- */
+/// Offscreen renderer
+/// It is a class and not a namespace because we may need external renderers for security cameras for example
 class Renderer: public Object
 {
 	//====================================================================================================================
@@ -39,15 +36,13 @@ class Renderer: public Object
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		/**
-		 * @name Rendering stages
-		 */
-		/**@{*/
+		/// @name Rendering stages
+		/// @{
 		Ms ms; ///< Material rendering stage
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
 		Bs bs; ///< Blending stage
-		/**@}*/
+		/// @}
 
 		static float quadVertCoords [][2];
 
@@ -55,74 +50,56 @@ class Renderer: public Object
 
 		~Renderer() throw() {}
 
-		/**
-		 * @name Setters & getters
-		 */
-		/**@{*/
+		/// @name Setters & getters
+		/// @{
 		const Camera& getCamera() const {return *cam;}
-		/**@}*/
+		/// @}
 
-		/**
-		 * Init the renderer given an initialization class
-		 * @param initializer The initializer class
-		 */
+		/// Init the renderer given an initialization class
+		/// @param initializer The initializer class
 		void init(const RendererInitializer& initializer);
 
-		/**
-		 * This function does all the rendering stages and produces a final FAI
-		 * @param cam The camera from where the rendering will be done
-		 */
+		/// This function does all the rendering stages and produces a final FAI
+		/// @param cam The camera from where the rendering will be done
 		void render(Camera& cam);
 
-		/**
-		 * @name Setters & getters
-		 */
-		/**@{*/
+		/// @name Setters & getters
+		/// @{
 		uint getFramesNum() const {return framesNum;}
-		/**@}*/
+		/// @}
 
-		/**
-		 * My version of gluUnproject
-		 * @param windowCoords Window screen coords
-		 * @param modelViewMat The modelview matrix
-		 * @param projectionMat The projection matrix
-		 * @param view The view vector
-		 * @return The unprojected coords
-		 */
+		/// My version of gluUnproject
+		/// @param windowCoords Window screen coords
+		/// @param modelViewMat The modelview matrix
+		/// @param projectionMat The projection matrix
+		/// @param view The view vector
+		/// @return The unprojected coords
 		static Vec3 unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
 		                      const int view[4]);
 
-		/**
-		 * It returns an orthographic projection matrix
-		 * @param left left vertical clipping plane
-		 * @param right right vertical clipping plane
-		 * @param bottom bottom horizontal clipping plane
-		 * @param top top horizontal clipping plane
-		 * @param near nearer distance of depth clipping plane
-		 * @param far farther distance of depth clipping plane
-		 * @return A 4x4 projection matrix
-		 */
+		/// It returns an orthographic projection matrix
+		/// @param left left vertical clipping plane
+		/// @param right right vertical clipping plane
+		/// @param bottom bottom horizontal clipping plane
+		/// @param top top horizontal clipping plane
+		/// @param near nearer distance of depth clipping plane
+		/// @param far farther distance of depth clipping plane
+		/// @return A 4x4 projection matrix
 		static Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
 
-		/**
-		 * OpenGL wrapper
-		 */
+		/// OpenGL wrapper
 		static void setViewport(uint x, uint y, uint w, uint h) {glViewport(x, y, w, h);}
 
-		/**
-		 * @todo write cmnts
-		 * @param mtl
-		 * @param sceneNode
-		 * @param cam
-		 */
+		/// @todo write cmnts
+		/// @param mtl
+		/// @param sceneNode
+		/// @param cam
 		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam);
 
 
-		/**
-		 * @todo write cmnts
-		 * @param vertCoordsUniLoc
-		 */
-		static void drawQuad(int vertCoordsUniLoc);
+		/// Draws a quad
+		/// @param vertCoordsAttribLoc The attribute location of the vertex positions
+		static void drawQuad(int vertCoordsAttribLoc);
 
 
 	//====================================================================================================================

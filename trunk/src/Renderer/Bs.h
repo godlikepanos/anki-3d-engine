@@ -1,7 +1,6 @@
 #ifndef BS_H
 #define BS_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "RsrcPtr.h"
@@ -11,9 +10,8 @@
 class ShaderProg;
 
 
-/**
- * Blending stage
- */
+/// Blending stage.
+/// The objects that blend must be handled differently
 class Bs: public RenderingStage
 {
 	public:
