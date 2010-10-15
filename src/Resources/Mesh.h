@@ -1,11 +1,9 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "Common.h"
 #include "Math.h"
 #include "Vbo.h"
 #include "Resource.h"
-#include "collision.h"
 #include "RsrcPtr.h"
 
 
@@ -77,7 +75,6 @@ class Mesh: public Resource
 		Vec<ushort>       vertIndeces; ///< Generated if renderable. Used for vertex arrays & VBOs
 		Vbos              vbos; ///< Generated if renderable
 		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
-		bsphere_t         bsphere; ///< @todo
 
 		Mesh();
 		~Mesh() {}
@@ -93,7 +90,6 @@ class Mesh: public Resource
 		void createVertTangents();
 		void createVertIndeces();
 		void createVbos();
-		void calcBSphere();
 
 		/// This func does some sanity checks and creates normals, tangents, VBOs etc
 		/// @exception Exception

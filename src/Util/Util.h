@@ -3,6 +3,7 @@
 
 #include <string>
 #include "Vec.h"
+#include "StdTypes.h"
 
 
 /// The namespace contains a few useful functions

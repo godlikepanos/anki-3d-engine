@@ -1,8 +1,10 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
-#include "Common.h"
+#include <string>
 #include "Util.h"
+#include "Properties.h"
+#include "StdTypes.h"
 
 
 template<typename Type>
@@ -31,14 +33,14 @@ class Resource
 			RT_SCRIPT
 		};
 
-	PROPERTY_R(string, path, getRsrcPath);
-	PROPERTY_R(string, name, getRsrcName);
+	PROPERTY_R(std::string, path, getRsrcPath);
+	PROPERTY_R(std::string, name, getRsrcName);
 	PROPERTY_R(uint, referenceCounter, getRsrcReferencesNum);
 	PROPERTY_R(ResourceType, type, getRsrcType);
 
 	public:
 		Resource(const ResourceType& type_);
-		virtual ~Resource() {DEBUG_ERR(referenceCounter != 0);}
+		virtual ~Resource() {/*DEBUG_ERR(referenceCounter != 0);*/}
 
 	private:
 		/// Load the resource

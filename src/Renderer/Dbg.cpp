@@ -194,23 +194,24 @@ void Dbg::init(const RendererInitializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
 
-	// create FBO Captain Blood
-	fbo.create();
-	fbo.bind();
+	// create FBO
+	try
+	{
+		fbo.create();
+		fbo.bind();
 
-	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(1);
+		fbo.setNumOfColorAttachements(1);
 
-	// attach the textures
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.postPassFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.postPassFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	// test if success
-	if(!fbo.isGood())
-		FATAL("Cannot create debug FBO");
-
-	// unbind
-	fbo.unbind();
+		fbo.checkIfGood();
+		fbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create debug FBO: " + e.what());
+	}
 
 	// shader
 	sProg.loadRsrc("shaders/Dbg.glsl");
@@ -223,7 +224,9 @@ void Dbg::init(const RendererInitializer& initializer)
 void Dbg::run()
 {
 	if(!enabled)
+	{
 		return;
+	}
 
 	const Camera& cam = r.getCamera();
 

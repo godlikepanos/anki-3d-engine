@@ -1,7 +1,6 @@
-#ifndef _PATH_H_
-#define _PATH_H_
+#ifndef PATH_H
+#define PATH_H
 
-#include "Common.h"
 #include "Resource.h"
 #include "Math.h"
 

@@ -11,18 +11,24 @@
 //======================================================================================================================
 void Bs::createFbo()
 {
-	fbo.create();
-	fbo.bind();
+	try
+	{
+		fbo.create();
+		fbo.bind();
 
-	fbo.setNumOfColorAttachements(1);
+		fbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if(!fbo.isGood())
-		FATAL("Cannot create deferred shading blending stage FBO");
+		fbo.checkIfGood();
 
-	fbo.unbind();
+		fbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Failed to create blending stage FBO");
+	}
 }
 
 
@@ -31,18 +37,24 @@ void Bs::createFbo()
 //======================================================================================================================
 void Bs::createRefractFbo()
 {
-	refractFbo.create();
-	refractFbo.bind();
+	try
+	{
+		refractFbo.create();
+		refractFbo.bind();
 
-	refractFbo.setNumOfColorAttachements(1);
+		refractFbo.setNumOfColorAttachements(1);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if(!refractFbo.isGood())
-		FATAL("Cannot create deferred shading blending stage FBO");
+		refractFbo.checkIfGood();
 
-	refractFbo.unbind();
+		refractFbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Failed to create blending stage refract FBO");
+	}
 }
 
 
@@ -54,7 +66,6 @@ void Bs::init(const RendererInitializer& /*initializer*/)
 	createFbo();
 	refractFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA8, GL_RGBA, GL_FLOAT);
 	createRefractFbo();
-
 	refractSProg.loadRsrc("shaders/BsRefract.glsl");
 }
 
@@ -75,11 +86,13 @@ void Bs::run()
 
 		if(meshNode->mesh->material.get() == NULL)
 		{
-			ERROR("Mesh \"" << meshNode->mesh->getRsrcName() << "\" doesnt have material" );
-			continue;
+			throw EXCEPTION("Mesh \"" + meshNode->mesh->getRsrcName() + "\" doesnt have material" );
 		}
 
-		if(!meshNode->mesh->material->blends) continue;
+		if(!meshNode->mesh->material->blends)
+		{
+			continue;
+		}
 
 		// refracts
 		if(meshNode->mesh->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
