@@ -15,8 +15,8 @@ class Extension: public Resource
 		Extension();
 		~Extension();
 		void load(const char* filename);
-		template<typename Type>
-		int FooBar(Type* ptr) { DEBUG_ERR(foobarPtr==NULL); return (*foobarPtr)(reinterpret_cast<Type*>(ptr)); }
+		/*template<typename Type>
+		int FooBar(Type* ptr) { DEBUG_ERR(foobarPtr==NULL); return (*foobarPtr)(reinterpret_cast<Type*>(ptr)); }*/
 };
 
 

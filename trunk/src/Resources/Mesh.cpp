@@ -17,7 +17,7 @@ void Mesh::load(const char* filename)
 	try
 	{
 		// Open the file
-		fstream file(filename, fstream::in | fstream::binary);
+		std::fstream file(filename, std::fstream::in | std::fstream::binary);
 
 		if(!file.is_open())
 		{
@@ -35,10 +35,10 @@ void Mesh::load(const char* filename)
 		}
 
 		// Mesh name
-		string meshName = bs.readString();
+		std::string meshName = bs.readString();
 
 		// Material name
-		string materialName = bs.readString();
+		std::string materialName = bs.readString();
 		if(materialName.length() > 0)
 		{
 			material.loadRsrc(materialName.c_str());
@@ -167,7 +167,6 @@ void Mesh::doPostLoad()
 		}
 		createVertIndeces();
 		createVbos();
-		calcBSphere();
 
 		// Sanity checks continued
 		if(material->stdAttribVars[Material::SAV_TEX_COORDS] != NULL && !vbos.texCoords.isCreated())
@@ -192,7 +191,7 @@ void Mesh::doPostLoad()
 //======================================================================================================================
 void Mesh::createVertIndeces()
 {
-	DEBUG_ERR(vertIndeces.size() > 0);
+	RASSERT_THROW_EXCEPTION(vertIndeces.size() > 0);
 
 	vertIndeces.resize(tris.size() * 3);
 	for(uint i=0; i<tris.size(); i++)
@@ -341,15 +340,6 @@ void Mesh::createVbos()
 	{
 		vbos.vertWeights.create(GL_ARRAY_BUFFER, vertWeights.getSizeInBytes(), &vertWeights[0], GL_STATIC_DRAW);
 	}
-}
-
-
-//======================================================================================================================
-// calcBSphere                                                                                                         =
-//======================================================================================================================
-void Mesh::calcBSphere()
-{
-	bsphere.Set(&vertCoords[0], 0, vertCoords.size());
 }
 
 

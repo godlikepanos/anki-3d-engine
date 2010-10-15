@@ -81,14 +81,14 @@ class Texture: public Resource
 
 inline uint Texture::getGlId() const
 {
-	DEBUG_ERR(!isLoaded());
+	RASSERT_THROW_EXCEPTION(!isLoaded());
 	return glId;
 }
 
 
 inline bool Texture::isLoaded() const
 {
-	return glId != numeric_limits<uint>::max();
+	return glId != std::numeric_limits<uint>::max();
 }
 
 #endif

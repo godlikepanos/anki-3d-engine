@@ -1,7 +1,6 @@
 #ifndef DBG_H
 #define DBG_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "ShaderProg.h"
@@ -9,9 +8,7 @@
 #include "Math.h"
 
 
-/**
- * Debugging stage
- */
+/// Debugging stage
 class Dbg: public RenderingStage
 {
 	public:
@@ -25,16 +22,14 @@ class Dbg: public RenderingStage
 		void setModelMat(const Mat4& modelMat);
 		void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
-		/**
-		 * @name Setters & getters
-		 */
-		/**@{*/
+		/// @name Setters & getters
+		/// @{
 		bool isEnabled() const {return enabled;}
 		void setEnabled(bool flag) {enabled = flag;}
 		bool isShowSkeletonsEnabled() const {return showSkeletonsEnabled;}
 		void setShowSkeletonsEnabled(bool flag) {showSkeletonsEnabled = flag;}
 		/// @todo add others
-		/**@}*/
+		/// @}
 
 	private:
 		static const uint POSITION_ATTRIBUTE_ID = 0; ///< The glId of the attribute var for position in the dbg shader

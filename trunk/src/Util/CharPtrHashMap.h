@@ -33,7 +33,7 @@ struct CompareCharPtrHashMapKeys
 /// The hash map that has as key an old school C string. When inserting the char MUST NOT point to a temporary or the
 /// evaluation function will fail.
 template<typename Type>
-class CharPtrHashMap: public unordered_map<const char*, Type, CreateCharPtrHashMapKey, CompareCharPtrHashMapKeys>
+class CharPtrHashMap: public boost::unordered_map<const char*, Type, CreateCharPtrHashMapKey, CompareCharPtrHashMapKeys>
 {};
 
 

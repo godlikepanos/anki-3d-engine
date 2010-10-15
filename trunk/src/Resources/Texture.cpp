@@ -1,6 +1,5 @@
 #include <GL/glew.h>
 #include "Texture.h"
-#include "Renderer.h"
 #include "Image.h"
 #include "GlException.h"
 
@@ -22,7 +21,7 @@ int Texture::anisotropyLevel = 8;
 //======================================================================================================================
 Texture::Texture():
 	Resource(RT_TEXTURE),
-	glId(numeric_limits<uint>::max()),
+	glId(std::numeric_limits<uint>::max()),
 	target(GL_TEXTURE_2D)
 {}
 
@@ -109,7 +108,7 @@ void Texture::load(const char* filename)
 
 		ON_GL_FAIL_THROW_EXCEPTION();
 	}
-	catch(exception& e)
+	catch(std::exception& e)
 	{
 		throw EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
@@ -146,7 +145,7 @@ void Texture::createEmpty2D(float width_, float height_, int internalFormat, int
 void Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
 {
 	target = GL_TEXTURE_2D_MULTISAMPLE;
-	DEBUG_ERR(isLoaded());
+	RASSERT_THROW_EXCEPTION(isLoaded());
 
 	glGenTextures(1, &glId);
 	bind(LAST_TEX_UNIT);
