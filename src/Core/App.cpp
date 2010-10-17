@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <sstream>
 #include <SDL/SDL.h>
+#include <iostream>
 #include <boost/filesystem.hpp>
 #include "App.h"
 #include "Scene.h"
@@ -8,10 +9,19 @@
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
 #include "MessageHandler.h"
+#include "Messaging.h"
 
 
 bool App::isCreated = false;
 
+
+//======================================================================================================================
+// handleMessageHanlderMsgs                                                                                            =
+//======================================================================================================================
+void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg)
+{
+	std::cout << file << ":" << line << " " << func << ": " << msg << std::endl;
+}
 
 //======================================================================================================================
 // parseCommandLineArgs                                                                                                =
@@ -64,21 +74,21 @@ App::App(int argc, char* argv[], Object* parent):
 	isCreated = true;
 
 	// dirs
-	settingsPath = filesystem::path(getenv("HOME")) / ".anki";
-	if(!filesystem::exists(settingsPath))
+	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
+	if(!boost::filesystem::exists(settingsPath))
 	{
-		INFO("Creating settings dir \"" << settingsPath << "\"");
+		INFO("Creating settings dir \"" + settingsPath.string() + "\"");
 		filesystem::create_directory(settingsPath);
 	}
 
 	cachePath = settingsPath / "cache";
 	if(filesystem::exists(cachePath))
 	{
-		INFO("Deleting dir \"" << cachePath << "\"");
+		INFO("Deleting dir \"" + cachePath.string() + "\"");
 		filesystem::remove_all(cachePath);
 	}
 
-	INFO("Creating cache dir \"" << cachePath << "\"");
+	INFO("Creating cache dir \"" + cachePath.string() + "\"");
 	filesystem::create_directory(cachePath);
 
 	// create the subsystems. WATCH THE ORDER
@@ -105,17 +115,15 @@ void App::initWindow()
 	INFO("SDL window initializing...");
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0)
-		FATAL("Failed to init SDL_VIDEO");
+	{
+		throw EXCEPTION("Failed to init SDL_VIDEO");
+	}
 
 	// print driver name
 	const char* driverName = SDL_GetCurrentVideoDriver();
 	if(driverName != NULL)
 	{
-		INFO("Video driver name: " << driverName);
-	}
-	else
-	{
-		ERROR("Failed to obtain the video driver name");
+		INFO("Video driver name: " + driverName);
 	}
 
 	// set GL attribs
@@ -130,7 +138,9 @@ void App::initWindow()
 	                             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
 	if(!windowId)
-		FATAL("Cannot create main window");
+	{
+		throw EXCEPTION("Cannot create main window");
+	}
 
 	glContext = SDL_GL_CreateContext(windowId);
 
@@ -139,7 +149,7 @@ void App::initWindow()
 	iconImage = SDL_LoadBMP("gfx/icon.bmp");
 	if(iconImage == NULL)
 	{
-		ERROR("Cannot load window icon");
+		throw EXCEPTION("Cannot load window icon");
 	}
 	else
 	{

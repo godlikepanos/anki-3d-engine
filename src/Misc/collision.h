@@ -1,5 +1,5 @@
-#ifndef _COLLISION_H_
-#define _COLLISION_H_
+#ifndef COLLISION_H
+#define COLLISION_H
 
 /*
 Info on how seperation tests work.

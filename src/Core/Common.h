@@ -1,7 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <iostream>
+/*#include <iostream>
 #include "StdTypes.h"
 #include "Properties.h"
 #include "Exception.h"
@@ -12,10 +12,6 @@ namespace boost
 
 namespace M
 {}
-
-using namespace boost;
-using namespace std;
-using namespace M;
 
 
 //======================================================================================================================
@@ -46,9 +42,9 @@ enum MsgType
 	MT_NUM
 };
 
-extern ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func);
-extern ostream& msgSuffix(ostream& cs);
-extern ostream& msgSuffixFatal(ostream& cs);
+extern std::ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func);
+extern std::ostream& msgSuffix(std::ostream& cs);
+extern std::ostream& msgSuffixFatal(std::ostream& cs);
 extern bool msgGlError(const char* file, int line, const char* func);
 
 #ifdef __GNUG__
@@ -95,7 +91,7 @@ extern bool msgGlError(const char* file, int line, const char* func);
 
 
 /// Just print
-#define PRINT(x) cout << x << endl
+#define PRINT(x) std::cout << x << std::endl
 
 
 /// BUFFER_OFFSET
@@ -115,10 +111,10 @@ template <typename Type> inline void memZero(Type& t)
 //======================================================================================================================
 // Application                                                                                                         =
 //======================================================================================================================
-/**
+*
  * The only public variable @see App
- */
-extern class App* app;
+
+extern class App* app;*/
 
 
 #endif

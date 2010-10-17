@@ -1,11 +1,10 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <memory>
-#include "Common.h"
 #include "Object.h"
 #include "skybox.h"
 #include "Physics.h"
+#include "Exception.h"
 
 
 class SceneNode;
@@ -17,9 +16,7 @@ class Controller;
 class ParticleEmitter;
 
 
-/**
- * The Scene contains all the dynamic entities
- */
+/// The Scene contains all the dynamic entities
 class Scene: public Object
 {
 	//PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
@@ -27,9 +24,7 @@ class Scene: public Object
 	//PROPERTY_R(Physics*, phyWorld, getPhysics) ///< Connection with bullet
 
 	public:
-		/**
-		 * @brief The container template class. Extends vector
-		 */
+		/// The container template class. Extends vector
 		template<typename Type> class Container: public Vec<Type*>
 		{};
 
@@ -55,28 +50,22 @@ class Scene: public Object
 		void updateAllWorldStuff();
 		void updateAllControllers();
 
-		/**
-		 * @name Accessors
-		 */
-		/**@{*/
+		/// @name Accessors
+		/// @{
 		Vec3& getAmbientCol() {return ambientCol;}
 		void setAmbientCol(const Vec3& col) {ambientCol = col;}
 		Physics& getPhysics();
-		/**@}*/
+		/// @}
 
 	private:
 		Vec3 ambientCol; ///< The global ambient color
 		Physics* physics; ///< Connection with Bullet wrapper
 
-		/**
-		 * Adds a node in a container
-		 */
+		/// Adds a node in a container
 		template<typename ContainerType, typename Type>
 		void putBackNode(ContainerType& container, Type* x);
 
-		/**
-		 * Removes a node from a container
-		 */
+		/// Removes a node from a container
 		template<typename ContainerType, typename Type>
 		void eraseNode(ContainerType& container, Type* x);
 };
@@ -85,7 +74,7 @@ class Scene: public Object
 template<typename ContainerType, typename Type>
 inline void Scene::putBackNode(ContainerType& container, Type* x)
 {
-	DEBUG_ERR(std::find(container.begin(), container.end(), x) != container.end());
+	RASSERT_THROW_EXCEPTION(std::find(container.begin(), container.end(), x) != container.end());
 	container.push_back(x);
 }
 
@@ -94,14 +83,14 @@ template<typename ContainerType, typename Type>
 inline void Scene::eraseNode(ContainerType& container, Type* x)
 {
 	typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
-	DEBUG_ERR(it == container.end());
+	RASSERT_THROW_EXCEPTION(it == container.end());
 	container.erase(it);
 }
 
 
 inline Physics& Scene::getPhysics()
 {
-	DEBUG_ERR(physics == NULL);
+	RASSERT_THROW_EXCEPTION(physics == NULL);
 	return *physics;
 }
 

@@ -28,12 +28,12 @@ void Is::calcViewVectors()
 	for(int i=0; i<4; i++)
 	{
 		/*
-		 * Original Code:
-		 * Renderer::unProject(pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
-		 *                     viewVectors[i].x, viewVectors[i].y, viewVectors[i].z);
-		 * viewVectors[i] = cam.getViewMatrix() * viewVectors[i];
-		 * The original code is the above 3 lines. The optimized follows:
-		 */
+		Original Code:
+		Renderer::unProject(pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
+		                    viewVectors[i].x, viewVectors[i].y, viewVectors[i].z);
+		viewVectors[i] = cam.getViewMatrix() * viewVectors[i];
+		The original code is the above 3 lines. The optimized follows:
+		*/
 
 		Vec3 vec;
 		vec.x = (2.0 * (pixels[i][0] - viewport[0])) / viewport[2] - 1.0;
@@ -63,39 +63,38 @@ void Is::calcPlanes()
 //======================================================================================================================
 void Is::initFbo()
 {
-	// create FBO
-	fbo.create();
-	fbo.bind();
-
-	// init the stencil render buffer
-	glGenRenderbuffers(1, &stencilRb);
-	glBindRenderbuffer(GL_RENDERBUFFER, stencilRb);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, r.getWidth(), r.getHeight());
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb);
-
-	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(1);
-
-	// create the txtrs
 	try
 	{
+		// create FBO
+		fbo.create();
+		fbo.bind();
+
+		// init the stencil render buffer
+		glGenRenderbuffers(1, &stencilRb);
+		glBindRenderbuffer(GL_RENDERBUFFER, stencilRb);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, r.getWidth(), r.getHeight());
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb);
+
+		// inform in what buffers we draw
+		fbo.setNumOfColorAttachements(1);
+
+		// create the FAI
 		fai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT);
+
+		// attach
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+
+		// test if success
+		fbo.checkIfGood();
+
+		// unbind
+		fbo.unbind();
 	}
-	catch(Exception& e)
+	catch(std::exception& e)
 	{
-		FATAL("Cannot create deferred shading illumination stage FAI");
+		throw EXCEPTION("Cannot create deferred shading illumination stage FBO: " + e.what());
 	}
-
-	// attach
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
-
-	// test if success
-	if(!fbo.isGood())
-		FATAL("Cannot create deferred shading illumination stage FBO");
-
-	// unbind
-	fbo.unbind();
 }
 
 
@@ -345,7 +344,7 @@ void Is::run()
 			}
 
 			default:
-				DEBUG_ERR(1);
+				RASSERT_THROW_EXCEPTION("WTF?");
 		}
 	}
 

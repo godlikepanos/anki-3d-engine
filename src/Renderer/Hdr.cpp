@@ -9,29 +9,35 @@
 //======================================================================================================================
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
-	int width = renderingQuality * r.getWidth();
-	int height = renderingQuality * r.getHeight();
+	try
+	{
+		int width = renderingQuality * r.getWidth();
+		int height = renderingQuality * r.getHeight();
 
-	// create FBO
-	fbo.create();
-	fbo.bind();
+		// create FBO
+		fbo.create();
+		fbo.bind();
 
-	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(1);
+		// inform in what buffers we draw
+		fbo.setNumOfColorAttachements(1);
 
-	// create the texes
-	fai.createEmpty2D(width, height, GL_RGB, GL_RGB, GL_FLOAT);
-	fai.setFiltering(Texture::TFT_LINEAR);
+		// create the texes
+		fai.createEmpty2D(width, height, GL_RGB, GL_RGB, GL_FLOAT);
+		fai.setFiltering(Texture::TFT_LINEAR);
 
-	// attach
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+		// attach
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
-	// test if success
-	if(!fbo.isGood())
-		FATAL("Cannot create deferred shading post-processing stage HDR passes FBO");
+		// test if success
+		fbo.checkIfGood();
 
-	// unbind
-	fbo.unbind();
+		// unbind
+		fbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create deferred shading post-processing stage HDR passes FBO: " + e.what());
+	}
 }
 
 
@@ -43,7 +49,9 @@ void Hdr::init(const RendererInitializer& initializer)
 	enabled = initializer.pps.hdr.enabled;
 
 	if(!enabled)
+	{
 		return;
+	}
 
 	renderingQuality = initializer.pps.hdr.renderingQuality;
 	blurringDist = initializer.pps.hdr.blurringDist;
@@ -71,7 +79,6 @@ void Hdr::init(const RendererInitializer& initializer)
 	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
 }
 
-#include "App.h"
 
 //======================================================================================================================
 // runPass                                                                                                             =

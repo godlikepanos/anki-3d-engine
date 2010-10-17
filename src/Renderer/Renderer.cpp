@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "App.h"
 #include "Scene.h"
+#include "Exception.h"
 
 
 //======================================================================================================================
@@ -42,7 +43,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	// a few sanity checks
 	if(width < 10 || height < 10)
 	{
-		FATAL("Incorrect width");
+		throw EXCEPTION("Incorrect width");
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
@@ -77,7 +78,7 @@ void Renderer::render(Camera& cam_)
 //======================================================================================================================
 void Renderer::drawQuad(int vertCoordsAttribLoc)
 {
-	DEBUG_ERR(vertCoordsAttribLoc == -1);
+	RASSERT_THROW_EXCEPTION(vertCoordsAttribLoc == -1);
 	glEnableVertexAttribArray(vertCoordsAttribLoc);
 	glVertexAttribPointer(vertCoordsAttribLoc, 2, GL_FLOAT, false, 0, quadVertCoords);
 	glDrawArrays(GL_QUADS, 0, 4);

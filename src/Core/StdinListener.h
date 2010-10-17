@@ -5,25 +5,22 @@
 #include <boost/thread/mutex.hpp>
 #include <string>
 #include <queue>
-#include "Common.h"
 #include "Object.h"
 
 
-/**
- * The listener of the stdin
- */
+/// The listener of the stdin
 class StdinListener: public Object
 {
 	public:
 		StdinListener(Object* parent = NULL): Object(parent) {}
 		~StdinListener() {}
-		string getLine();
+		std::string getLine();
 		void start();
 
 	private:
-		queue<string> q;
-		mutex mtx;
-		thread thrd;
+		std::queue<std::string> q;
+		boost::mutex mtx;
+		boost::thread thrd;
 
 		StdinListener(const StdinListener&); ///< Non copyable
 		void workingFunc(); ///< The thread function
