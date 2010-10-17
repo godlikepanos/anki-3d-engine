@@ -3,9 +3,11 @@
 
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
-#include "Common.h"
 #include "Object.h"
 #include "MessageHandler.h"
+#include "StdTypes.h"
+#include "Properties.h"
+#include "Exception.h"
 
 
 class ScriptingEngine;
@@ -13,6 +15,10 @@ class StdinListener;
 class Scene;
 class MainRenderer;
 class Camera;
+
+
+/// The one and only global variable
+extern class App* app;
 
 
 /**
@@ -23,8 +29,8 @@ class App: public Object
 {
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
-	PROPERTY_R(filesystem::path, settingsPath, getSettingsPath)
-	PROPERTY_R(filesystem::path, cachePath, getCachePath)
+	PROPERTY_R(boost::filesystem::path, settingsPath, getSettingsPath)
+	PROPERTY_R(boost::filesystem::path, cachePath, getCachePath)
 
 	public:
 		uint timerTick;
@@ -103,42 +109,36 @@ inline bool App::isTerminalColoringEnabled() const
 
 inline Scene& App::getScene()
 {
-	DEBUG_ERR(scene == NULL);
+	RASSERT_THROW_EXCEPTION(scene == NULL);
 	return *scene;
 }
 
 
 inline ScriptingEngine& App::getScriptingEngine()
 {
-	DEBUG_ERR(scriptingEngine == NULL);
+	RASSERT_THROW_EXCEPTION(scriptingEngine == NULL);
 	return *scriptingEngine;
 }
 
 
 inline StdinListener& App::getStdinLintener()
 {
-	DEBUG_ERR(stdinListener == NULL);
+	RASSERT_THROW_EXCEPTION(stdinListener == NULL);
 	return *stdinListener;
 }
 
 
 inline MainRenderer& App::getMainRenderer()
 {
-	DEBUG_ERR(mainRenderer == NULL);
+	RASSERT_THROW_EXCEPTION(mainRenderer == NULL);
 	return *mainRenderer;
 }
 
 
 inline MessageHandler& App::getMessageHandler()
 {
-	/// @todo Check
+	RASSERT_THROW_EXCEPTION(mainRenderer == NULL);
 	return *messageHandler;
-}
-
-
-inline void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg)
-{
-	std::cout << file << ":" << line << " " << func << ": " << msg << std::endl;
 }
 
 

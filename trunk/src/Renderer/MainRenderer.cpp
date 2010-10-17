@@ -41,13 +41,17 @@ void MainRenderer::initGl()
 {
 	GLenum err = glewInit();
 	if(err != GLEW_OK)
-		FATAL("GLEW initialization failed");
+	{
+		throw EXCEPTION("GLEW initialization failed");
+	}
 
 	// print GL info
 	INFO("OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 	if(!glewIsSupported("GL_VERSION_3_1"))
+	{
 		WARNING("OpenGL ver 3.1 not supported. The application may crash (and burn)");
+	}
 
 	// get max texture units
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum);
@@ -98,15 +102,14 @@ void MainRenderer::render(Camera& cam_)
 //======================================================================================================================
 // takeScreenshotTga                                                                                                   =
 //======================================================================================================================
-bool MainRenderer::takeScreenshotTga(const char* filename)
+void MainRenderer::takeScreenshotTga(const char* filename)
 {
 	// open file and check
 	fstream fs;
 	fs.open(filename, ios::out|ios::binary);
 	if(!fs.good())
 	{
-		ERROR("Cannot create screenshot. File \"" << filename << "\"");
-		return false;
+		throw EXCEPTION("Cannot create screenshot. File \"" + filename + "\"");
 	}
 
 	// write headers
@@ -132,22 +135,20 @@ bool MainRenderer::takeScreenshotTga(const char* filename)
 	// end
 	fs.close();
 	free(buffer);
-	return true;
 }
 
 
 //======================================================================================================================
 // takeScreenshotJpeg                                                                                                  =
 //======================================================================================================================
-bool MainRenderer::takeScreenshotJpeg(const char* filename)
+void MainRenderer::takeScreenshotJpeg(const char* filename)
 {
 	// open file
 	FILE* outfile = fopen(filename, "wb");
 
 	if(!outfile)
 	{
-		ERROR("Cannot open file \"" << filename << "\"");
-		return false;
+		throw EXCEPTION("Cannot open file \"" + filename + "\"");
 	}
 
 	// set jpg params
@@ -184,7 +185,6 @@ bool MainRenderer::takeScreenshotJpeg(const char* filename)
 	// done
 	free(buffer);
 	fclose(outfile);
-	return true;
 }
 
 
@@ -193,28 +193,22 @@ bool MainRenderer::takeScreenshotJpeg(const char* filename)
 //======================================================================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	string ext = filesystem::path(filename).extension();
+	std::string ext = filesystem::path(filename).extension();
 	to_lower(ext);
-	bool ret;
 
 	// exec from this extension
 	if(ext == ".tga")
 	{
-		ret = takeScreenshotTga(filename);
+		takeScreenshotTga(filename);
 	}
 	else if(ext == ".jpg" || ext == ".jpeg")
 	{
-		ret = takeScreenshotJpeg(filename);
+		takeScreenshotJpeg(filename);
 	}
 	else
 	{
-		ERROR("File \"" << filename << "\": Unsupported extension");
-		return;
+		throw EXCEPTION("File \"" + filename + "\": Unsupported extension");
 	}
-
-	if(!ret)
-		ERROR("In taking screenshot");
-	else
-		INFO("Screenshot \"" << filename << "\" saved");
+	INFO("Screenshot \"" << filename << "\" saved");
 }
 

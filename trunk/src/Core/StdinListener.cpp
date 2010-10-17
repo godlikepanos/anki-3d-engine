@@ -14,7 +14,7 @@ void StdinListener::workingFunc()
 		buff[m] = '\0';
 		//cout << "read: " << buff << endl;
 		{
-			mutex::scoped_lock lock(mtx);
+			boost::mutex::scoped_lock lock(mtx);
 			q.push(buff);
 			//cout << "size:" << q.size() << endl;
 		}
@@ -25,10 +25,10 @@ void StdinListener::workingFunc()
 //======================================================================================================================
 // getLine                                                                                                             =
 //======================================================================================================================
-string StdinListener::getLine()
+std::string StdinListener::getLine()
 {
-	string ret;
-	mutex::scoped_lock lock(mtx);
+	std::string ret;
+	boost::mutex::scoped_lock lock(mtx);
 	//cout << "_size:" << q.size() << endl;
 	if(!q.empty())
 	{
@@ -44,5 +44,5 @@ string StdinListener::getLine()
 //======================================================================================================================
 void StdinListener::start()
 {
-	thrd = thread(&StdinListener::workingFunc, this);
+	thrd = boost::thread(&StdinListener::workingFunc, this);
 }

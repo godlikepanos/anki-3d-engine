@@ -1,7 +1,6 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "Common.h"
 #include "Math.h"
 #include "Fbo.h"
 #include "Texture.h"

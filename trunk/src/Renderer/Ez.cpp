@@ -14,22 +14,30 @@ void Ez::init(const RendererInitializer& initializer)
 	enabled = initializer.ms.ez.enabled;
 
 	if(!enabled)
+	{
 		return;
+	}
 
 	//
 	// init FBO
 	//
-	fbo.create();
-	fbo.bind();
+	try
+	{
+		fbo.create();
+		fbo.bind();
 
-	fbo.setNumOfColorAttachements(0);
+		fbo.setNumOfColorAttachements(0);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
 
-	if(!fbo.isGood())
-		FATAL("Cannot create shadowmapping FBO");
+		fbo.checkIfGood();
 
-	fbo.unbind();
+		fbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create EarlyZ FBO");
+	}
 }
 
 
@@ -38,7 +46,10 @@ void Ez::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Ez::run()
 {
-	DEBUG_ERR(!enabled);
+	if(!enabled)
+	{
+		return;
+	}
 
 	fbo.bind();
 
@@ -52,9 +63,11 @@ void Ez::run()
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material->blends)
+		{
 			continue;
+		}
 
-		DEBUG_ERR(meshNode->mesh->material->dpMtl.get() == NULL);
+		RASSERT_THROW_EXCEPTION(meshNode->mesh->material->dpMtl.get() == NULL);
 
 		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, r.getCamera());
 		meshNode->renderDepth();

@@ -1,7 +1,6 @@
 #ifndef HDR_H
 #define HDR_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "Texture.h"
@@ -9,9 +8,7 @@
 #include "ShaderProg.h"
 
 
-/**
- * High dynamic range lighting pass
- */
+/// High dynamic range lighting pass
 class Hdr: private RenderingStage
 {
 	public:
@@ -23,10 +20,8 @@ class Hdr: private RenderingStage
 		void init(const RendererInitializer& initializer);
 		void run();
 
-		/**
-		 * Setters & getters
-		 */
-		/**@{*/
+		/// Setters & getters
+		/// @{
 		float getBlurringDist() {return blurringDist;}
 		void setBlurringDist(float f) {blurringDist = f;}
 		uint getBlurringIterations() {return blurringIterations;}
@@ -35,7 +30,7 @@ class Hdr: private RenderingStage
 		void setExposure(float f) {exposure = f;}
 		bool isEnabled() const {return enabled;}
 		float getRenderingQuality() const {return renderingQuality;}
-		/**@}*/
+		/// @}
 
 	private:
 		Fbo toneFbo;

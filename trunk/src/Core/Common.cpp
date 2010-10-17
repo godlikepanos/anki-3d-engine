@@ -24,7 +24,7 @@ static const char* terminalColors [MT_NUM + 1] = {
 /**
  * The function gets __PRETTY_FUNCTION__ and strips it to get only the function name with its namespace
  */
-static string getFunctionFromPrettyFunction(const char* prettyFunction)
+static std::string getFunctionFromPrettyFunction(const char* prettyFunction)
 {
 	string ret(prettyFunction);
 
@@ -44,7 +44,7 @@ static string getFunctionFromPrettyFunction(const char* prettyFunction)
 //======================================================================================================================
 // msgPrefix                                                                                                           =
 //======================================================================================================================
-ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func)
+std::ostream& msgPrefix(MsgType msgType, const char* file, int line, const char* func)
 {
 	// select c stream
 	ostream* cs;

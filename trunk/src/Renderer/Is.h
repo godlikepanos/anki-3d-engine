@@ -1,7 +1,6 @@
 #ifndef IS_H
 #define IS_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "Sm.h"
@@ -13,9 +12,7 @@ class PointLight;
 class SpotLight;
 
 
-/**
- * Illumination stage
- */
+/// Illumination stage
 class Is: private RenderingStage
 {
 	public:
@@ -35,29 +32,31 @@ class Is: private RenderingStage
 		RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
 		RsrcPtr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
 
-		/**
-		 * @name Ptrs to uniform variables
-		 */
-		/**@{*/
+		/// @name Ptrs to uniform variables
+		/// @{
 		const ShaderProg::UniVar* ambientColUniVar;
 		const ShaderProg::UniVar* sceneColMapUniVar;
-		/**@}*/
+		/// @}
 
 		Vec3 viewVectors[4];
 		Vec2 planes;
 
-		/**
-		 * Calc the view vector that we will use inside the shader to calculate the frag pos in view space
-		 */
+		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
 		void calcViewVectors();
 
-		/**
-		 * Calc the planes that we will use inside the shader to calculate the frag pos in view space
-		 */
+		/// Calc the planes that we will use inside the shader to calculate the frag pos in view space
 		void calcPlanes();
+
+		/// The ambient pass
 		void ambientPass(const Vec3& color);
+
+		/// The point light pass
 		void pointLightPass(const PointLight& light);
+
+		/// The spot light pass
 		void spotLightPass(const SpotLight& light);
+
+		/// Used in @ref init
 		void initFbo();
 };
 
