@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "Exception.h"
 #include "Scene.h"
 #include "SkelNode.h"
 #include "Camera.h"
@@ -89,14 +90,14 @@ void Scene::unregisterNode(SceneNode* node)
 //======================================================================================================================
 void Scene::registerController(Controller* controller)
 {
-	DEBUG_ERR(std::find(controllers.begin(), controllers.end(), controller) != controllers.end());
+	RASSERT_THROW_EXCEPTION(std::find(controllers.begin(), controllers.end(), controller) != controllers.end());
 	controllers.push_back(controller);
 }
 
 void Scene::unregisterController(Controller* controller)
 {
 	Vec<Controller*>::iterator it = std::find(controllers.begin(), controllers.end(), controller);
-	DEBUG_ERR(it == controllers.end());
+	RASSERT_THROW_EXCEPTION(it == controllers.end());
 	controllers.erase(it);
 }
 
@@ -106,7 +107,7 @@ void Scene::unregisterController(Controller* controller)
 //======================================================================================================================
 void Scene::updateAllWorldStuff()
 {
-	DEBUG_ERR(nodes.size() > 1024);
+	RASSERT_THROW_EXCEPTION(nodes.size() > 1024);
 	SceneNode* queue [1024];
 	uint head = 0, tail = 0;
 	uint num = 0;
@@ -114,8 +115,12 @@ void Scene::updateAllWorldStuff()
 
 	// put the roots
 	for(uint i=0; i<nodes.size(); i++)
+	{
 		if(nodes[i]->parent == NULL)
+		{
 			queue[tail++] = nodes[i]; // queue push
+		}
+	}
 
 	// loop
 	while(head != tail) // while queue not empty
@@ -128,10 +133,12 @@ void Scene::updateAllWorldStuff()
 		++num;
 
 		for(uint i=0; i<obj->childs.size(); i++)
+		{
 			queue[tail++] = obj->childs[i];
+		}
 	}
 
-	DEBUG_ERR(num != nodes.size());
+	RASSERT_THROW_EXCEPTION(num != nodes.size());
 }
 
 

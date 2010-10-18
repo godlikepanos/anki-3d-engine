@@ -2,7 +2,7 @@
 #define PARTICLEEMITTER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include "Common.h"
+#include <memory>
 #include "SceneNode.h"
 #include "MeshNode.h"
 #include "GhostNode.h"
@@ -12,20 +12,16 @@
 class RigidBody;
 
 
-/**
- * The particle emitter scene node. This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
- */
+/// The particle emitter scene node. This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
 class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 {
 	public:
-		/**
-		 * The scene node particle class
-		 */
+		/// The scene node particle class
 		class Particle: public GhostNode
 		{
 			public:
 				float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
-				auto_ptr<RigidBody> body;
+				std::auto_ptr<RigidBody> body;
 
 				Particle();
 				void render();
@@ -37,8 +33,8 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		void init(const char* filename);
 
 	private:
-		auto_ptr<btCollisionShape> collShape;
-		ptr_vector<Particle> particles;
+		std::auto_ptr<btCollisionShape> collShape;
+		boost::ptr_vector<Particle> particles;
 		float timeOfPrevUpdate;
 		float timeOfPrevEmittion;
 		RsrcPtr<ParticleEmitterProps> particleEmitterProps; ///< The resource

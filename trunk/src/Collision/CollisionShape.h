@@ -16,7 +16,7 @@ class CollisionShape
 			CST_LINE_SEG,
 			CST_RAY,
 			CST_PLANE,
-			CST_BSPHERE,
+			CST_SPHERE,
 			CST_AABB,
 			CST_OBB,
 			CST_NUM
@@ -26,8 +26,6 @@ class CollisionShape
 
 	public:
 		CollisionShape(CollisionShapeType type_): type(type_) {}
-
-		virtual void Render() = 0;
 
 		/// If the bounding volume intersects with the plane then the func returns 0, else it returns the distance. If the
 		/// distance is < 0 then the b.v. lies behind the plane and if > 0 then in front of it
