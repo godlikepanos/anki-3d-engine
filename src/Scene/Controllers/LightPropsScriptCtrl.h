@@ -1,7 +1,6 @@
-#ifndef _LIGHT_SCRIPT_CTRL_H_
-#define _LIGHT_SCRIPT_CTRL_H_
+#ifndef LIGHT_SCRIPT_CTRL_H
+#define LIGHT_SCRIPT_CTRL_H
 
-#include "Common.h"
 #include "Controller.h"
 
 
@@ -15,6 +14,6 @@ class LightPropsScriptCtrl: public Controller
 		
 		LightPropsScriptCtrl(Light* light_): controller(CT_LIGHT), light(light_) {}
 		void update(float) { /* ToDo */ }
-}
+};
 
 #endif

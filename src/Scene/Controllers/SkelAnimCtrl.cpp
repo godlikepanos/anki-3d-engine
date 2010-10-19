@@ -20,7 +20,7 @@ SkelAnimCtrl::SkelAnimCtrl(SkelNode& skelNode_):
 //======================================================================================================================
 void SkelAnimCtrl::interpolate(const SkelAnim& animation, float frame)
 {
-	DEBUG_ERR(frame >= animation.framesNum);
+	RASSERT_THROW_EXCEPTION(frame >= animation.framesNum);
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the frame and
 	// calc the lPose and rPose witch indicate the pose ids in witch the frame lies between
@@ -49,7 +49,7 @@ void SkelAnimCtrl::interpolate(const SkelAnim& animation, float frame)
 	Vec<Mat3>& boneRotations = skelNode.boneRotations;
 	Vec<Vec3>& boneTranslations = skelNode.boneTranslations;
 
-	DEBUG_ERR(boneRotations.size()<1);
+	RASSERT_THROW_EXCEPTION(boneRotations.size()<1);
 	for(uint i=0; i<boneRotations.size(); i++)
 	{
 		const SkelAnim::BoneAnim& banim = animation.bones[i];

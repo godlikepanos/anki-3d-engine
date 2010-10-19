@@ -1,7 +1,6 @@
 #ifndef SPOT_LIGHT_H
 #define SPOT_LIGHT_H
 
-#include "Common.h"
 #include "Light.h"
 
 

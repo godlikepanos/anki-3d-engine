@@ -10,31 +10,37 @@
 //======================================================================================================================
 void Ssao::createFbo(Fbo& fbo, Texture& fai)
 {
-	int width = renderingQuality * r.getWidth();
-	int height = renderingQuality * r.getHeight();
+	try
+	{
+		int width = renderingQuality * r.getWidth();
+		int height = renderingQuality * r.getHeight();
 
-	// create
-	fbo.create();
-	fbo.bind();
+		// create
+		fbo.create();
+		fbo.bind();
 
-	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(1);
+		// inform in what buffers we draw
+		fbo.setNumOfColorAttachements(1);
 
-	// create the texes
-	fai.createEmpty2D(width, height, GL_RED, GL_RED, GL_FLOAT);
-	fai.setRepeat(false);
-	fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// create the texes
+		fai.createEmpty2D(width, height, GL_RED, GL_RED, GL_FLOAT);
+		fai.setRepeat(false);
+		fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	// attach
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+		// attach
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
-	// test if success
-	if(!fbo.isGood())
-		FATAL("Cannot create deferred shading post-processing stage SSAO blur FBO");
+		// test if success
+		fbo.checkIfGood();
 
-	// unbind
-	fbo.unbind();
+		// unbind
+		fbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create deferred shading post-processing stage SSAO blur FBO");
+	}
 }
 
 
@@ -66,8 +72,8 @@ void Ssao::init(const RendererInitializer& initializer)
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	string pps = "#define HPASS\n#define COL_R\n";
-	string prefix = "HorizontalR";
+	std::string pps = "#define HPASS\n#define COL_R\n";
+	std::string prefix = "HorizontalR";
 	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str(), prefix.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_R\n";
@@ -80,7 +86,6 @@ void Ssao::init(const RendererInitializer& initializer)
 
 	/// @todo fix this crap
 	// load noise map and disable temporally the texture compression and enable mipmapping
-	GL_OK();
 	/*bool texCompr = Texture::compressionEnabled;
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
@@ -92,7 +97,6 @@ void Ssao::init(const RendererInitializer& initializer)
 	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
 	Texture::mipmappingEnabled = mipmaping;*/
-	GL_OK();
 }
 
 

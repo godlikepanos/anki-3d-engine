@@ -1,4 +1,3 @@
-#include "Common.h"
 #include <boost/python.hpp>
 #include "Math.h"
 #include "Scene.h"
@@ -6,6 +5,7 @@
 #include "App.h"
 
 
+using namespace boost;
 using namespace boost::python;
 using namespace M;
 

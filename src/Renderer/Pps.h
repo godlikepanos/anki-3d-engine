@@ -8,11 +8,9 @@
 #include "Ssao.h"
 
 
-/**
- * Post-processing stage
- *
- * This stage is divided into 2 two parts. The first happens before blending stage and the second after.
- */
+/// Post-processing stage.
+///
+/// This stage is divided into 2 two parts. The first happens before blending stage and the second after.
 class Pps: private RenderingStage
 {
 	public:
@@ -32,16 +30,12 @@ class Pps: private RenderingStage
 		RsrcPtr<ShaderProg> prePassSProg;
 		RsrcPtr<ShaderProg> postPassSProg;
 
-		void initPassFbo(Fbo& fbo, Texture& fai, const char* msg);
+		void initPassFbo(Fbo& fbo, Texture& fai);
 
-		/**
-		 * before BS pass
-		 */
+		/// Before BS pass
 		void initPrePassSProg();
 
-		/**
-		 * after BS pass
-		 */
+		/// After BS pass
 		void initPostPassSProg();
 };
 

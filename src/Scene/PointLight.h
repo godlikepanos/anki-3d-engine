@@ -1,7 +1,6 @@
 #ifndef POINT_LIGHT_H
 #define POINT_LIGHT_H
 
-#include "Common.h"
 #include "Light.h"
 
 
@@ -21,7 +20,7 @@ inline void PointLight::init(const char* filename)
 	Light::init(filename);
 	if(lightData->getType() != LightData::LT_POINT)
 	{
-		ERROR("Light data is wrong type");
+		throw EXCEPTION("Light data is wrong type");
 		return;
 	}
 	radius = lightData->getRadius();

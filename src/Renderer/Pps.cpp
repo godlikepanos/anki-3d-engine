@@ -5,7 +5,7 @@
 //======================================================================================================================
 // initPassFbo                                                                                                         =
 //======================================================================================================================
-void Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
+void Pps::initPassFbo(Fbo& fbo, Texture& fai)
 {
 	fbo.create();
 	fbo.bind();
@@ -17,8 +17,7 @@ void Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
 
-	if(!fbo.isGood())
-		FATAL(msg);
+	fbo.checkIfGood();
 
 	fbo.unbind();
 }
@@ -29,8 +28,8 @@ void Pps::initPassFbo(Fbo& fbo, Texture& fai, const char* msg)
 //======================================================================================================================
 void Pps::initPrePassSProg()
 {
-	string pps = "";
-	string prefix = "";
+	std::string pps = "";
+	std::string prefix = "";
 
 	if(ssao.isEnabled())
 	{
@@ -49,8 +48,8 @@ void Pps::initPrePassSProg()
 //======================================================================================================================
 void Pps::initPostPassSProg()
 {
-	string pps = "";
-	string prefix = "";
+	std::string pps = "";
+	std::string prefix = "";
 
 	if(hdr.isEnabled())
 	{
@@ -72,8 +71,23 @@ void Pps::init(const RendererInitializer& initializer)
 	ssao.init(initializer);
 	hdr.init(initializer);
 
-	initPassFbo(prePassFbo, prePassFai, "Cannot create pre-pass post-processing stage FBO");
-	initPassFbo(postPassFbo, postPassFai, "Cannot create post-pass post-processing stage FBO");
+	try
+	{
+		initPassFbo(prePassFbo, prePassFai);
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create pre-pass post-processing stage FBO: " + e.what());
+	}
+
+	try
+	{
+		initPassFbo(postPassFbo, postPassFai);
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create post-pass post-processing stage FBO: " + e.what());
+	}
 
 	initPrePassSProg();
 	initPostPassSProg();
@@ -86,7 +100,9 @@ void Pps::init(const RendererInitializer& initializer)
 void Pps::runPrePass()
 {
 	if(ssao.isEnabled())
+	{
 		ssao.run();
+	}
 
 	prePassFbo.bind();
 
@@ -114,7 +130,9 @@ void Pps::runPrePass()
 void Pps::runPostPass()
 {
 	if(hdr.isEnabled())
+	{
 		hdr.run();
+	}
 
 	postPassFbo.bind();
 
