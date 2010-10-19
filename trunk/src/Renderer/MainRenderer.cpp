@@ -14,8 +14,6 @@
 //======================================================================================================================
 void MainRenderer::init(const RendererInitializer& initializer_)
 {
-	INFO("Main renderer initializing...");
-
 	initGl();
 
 	sProg.loadRsrc("shaders/final.glsl");
@@ -29,8 +27,6 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	initializer.height = app->getWindowHeight() * renderingQuality;
 	Renderer::init(initializer);
 	dbg.init(initializer);
-
-	INFO("Main renderer initialization ends");
 }
 
 
@@ -46,12 +42,12 @@ void MainRenderer::initGl()
 	}
 
 	// print GL info
-	INFO("OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION));
+	//INFO("OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	if(!glewIsSupported("GL_VERSION_3_1"))
+	/*if(!glewIsSupported("GL_VERSION_3_1"))
 	{
 		WARNING("OpenGL ver 3.1 not supported. The application may crash (and burn)");
-	}
+	}*/
 
 	// get max texture units
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum);
@@ -105,8 +101,8 @@ void MainRenderer::render(Camera& cam_)
 void MainRenderer::takeScreenshotTga(const char* filename)
 {
 	// open file and check
-	fstream fs;
-	fs.open(filename, ios::out|ios::binary);
+	std::fstream fs;
+	fs.open(filename, std::ios::out | std::ios::binary);
 	if(!fs.good())
 	{
 		throw EXCEPTION("Cannot create screenshot. File \"" + filename + "\"");
@@ -193,8 +189,8 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 //======================================================================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	std::string ext = filesystem::path(filename).extension();
-	to_lower(ext);
+	std::string ext = boost::filesystem::path(filename).extension();
+	boost::to_lower(ext);
 
 	// exec from this extension
 	if(ext == ".tga")
@@ -209,6 +205,6 @@ void MainRenderer::takeScreenshot(const char* filename)
 	{
 		throw EXCEPTION("File \"" + filename + "\": Unsupported extension");
 	}
-	INFO("Screenshot \"" << filename << "\" saved");
+	//INFO("Screenshot \"" << filename << "\" saved");
 }
 

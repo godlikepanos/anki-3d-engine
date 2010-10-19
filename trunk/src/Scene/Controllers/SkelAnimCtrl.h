@@ -1,7 +1,6 @@
 #ifndef SKEL_ANIM_CTRL_H
 #define SKEL_ANIM_CTRL_H
 
-#include "Common.h"
 #include "Vec.h"
 #include "Controller.h"
 #include "Math.h"
@@ -26,14 +25,12 @@ class SkelAnimCtrl: public Controller
 	private:
 		SkelNode& skelNode;
 
-		/**
-		 * @name The 3 steps of skeletal animation in 3 funcs
-		 */
-		/**@{*/
+		/// @name The 3 steps of skeletal animation in 3 funcs
+		/// @{
 		void interpolate(const SkelAnim& animation, float frame);
 		void updateBoneTransforms();
 		void deform();  ///< Now with HW skinning it deforms only the debug skeleton
-		/**@}*/
+		/// @}
 };
 
 

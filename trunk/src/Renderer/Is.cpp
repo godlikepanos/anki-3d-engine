@@ -9,6 +9,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "LightData.h"
+#include "Collision.h"
 
 
 //======================================================================================================================
@@ -122,9 +123,9 @@ void Is::init(const RendererInitializer& initializer)
 	                                                                 "SpotNoShadow").c_str());
 
 	// spot light w/t shadow
-	string pps = string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	                    "#define SHADOWMAP_SIZE " + lexical_cast<string>(sm.getResolution()) + "\n";
-	string prefix = "SpotShadowSmSize" + lexical_cast<string>(sm.getResolution());
+	std::string pps = std::string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
+	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm.getResolution()) + "\n";
+	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm.getResolution());
 	if(sm.isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
@@ -165,7 +166,7 @@ void Is::pointLightPass(const PointLight& light)
 	const Camera& cam = r.getCamera();
 
 	// frustum test
-	bsphere_t sphere(light.getWorldTransform().origin, light.getRadius());
+	Sphere sphere(light.getWorldTransform().origin, light.getRadius());
 	if(!cam.insideFrustum(sphere))
 	{
 		return;

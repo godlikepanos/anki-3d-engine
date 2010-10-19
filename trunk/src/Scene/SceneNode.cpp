@@ -1,7 +1,6 @@
 #include <algorithm>
 #include "SceneNode.h"
 #include "Renderer.h"
-#include "collision.h"
 #include "Controller.h"
 #include "Scene.h"
 #include "App.h"
@@ -14,7 +13,6 @@ void SceneNode::commonConstructorCode()
 {
 	parent = NULL;
 	isCompound = false;
-	bvolumeLspace = NULL;
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
 
@@ -111,8 +109,7 @@ void SceneNode::addChild(SceneNode* node)
 {
 	if(node->parent != NULL)
 	{
-		ERROR("Node already has parent");
-		return;
+		throw EXCEPTION("Node already has parent");
 	}
 
 	node->parent = this;
@@ -128,8 +125,7 @@ void SceneNode::removeChild(SceneNode* child)
 	Vec<SceneNode*>::iterator it = std::find(childs.begin(), childs.end(), child);
 	if(it == childs.end())
 	{
-		ERROR("Child not found");
-		return;
+		throw EXCEPTION("Child not found");
 	}
 
 	child->parent = NULL;

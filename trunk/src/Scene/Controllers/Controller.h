@@ -1,14 +1,14 @@
-#ifndef _CONTROLLER_H_
-#define _CONTROLLER_H_
+#ifndef CONTROLLER_H
+#define CONTROLLER_H
 
-#include "Common.h"
+#include "Properties.h"
 
 
 /// Scenegraph node controller (A)
 class Controller
 {
 	public:
-		enum Type
+		enum ControllerType
 		{ 
 			CT_SKEL_ANIM, 
 			CT_SKEL,
@@ -18,10 +18,10 @@ class Controller
 			CT_LIGHT
 		};
 	
-	PROPERTY_R(Type, type, getType) ///< Once the type is set nothing can change it
+	PROPERTY_R(ControllerType, type, getType) ///< Once the type is set nothing can change it
 
 	public:
-		Controller(Type type_);
+		Controller(ControllerType type_);
 		virtual ~Controller();
 		virtual void update(float time) = 0;
 };

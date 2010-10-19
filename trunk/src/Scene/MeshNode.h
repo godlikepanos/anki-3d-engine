@@ -1,7 +1,6 @@
-#ifndef _MESH_NODE_H_
-#define _MESH_NODE_H_
+#ifndef MESH_NODE_H
+#define MESH_NODE_H
 
-#include "Common.h"
 #include "SceneNode.h"
 #include "Material.h"
 #include "RsrcPtr.h"

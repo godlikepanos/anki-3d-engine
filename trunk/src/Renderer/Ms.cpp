@@ -11,47 +11,45 @@
 //======================================================================================================================
 void Ms::init(const RendererInitializer& initializer)
 {
-	// create FBO
-	fbo.create();
-	fbo.bind();
-
-	// inform in what buffers we draw
-	fbo.setNumOfColorAttachements(3);
-
-	// create the FAIs
 	try
 	{
+		// create FBO
+		fbo.create();
+		fbo.bind();
+
+		// inform in what buffers we draw
+		fbo.setNumOfColorAttachements(3);
+
+		// create the FAIs
 		normalFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RG16F, GL_RG, GL_FLOAT);
-	  diffuseFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT);
-	  specularFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA16F, GL_RGBA, GL_FLOAT);
-	  depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
+		diffuseFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT);
+		specularFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA16F, GL_RGBA, GL_FLOAT);
+		depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
+
+		normalFai.setRepeat(false);
+		diffuseFai.setRepeat(false);
+		specularFai.setRepeat(false);
+		depthFai.setRepeat(false);
+
+		// attach the buffers to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0);
+
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+
+		// test if success
+		fbo.checkIfGood();
+
+		// unbind
+		fbo.unbind();
 	}
-	catch(Exception& e)
+	catch(std::exception& e)
 	{
-		FATAL("Failed to create one MS FAI. See prev error");
+		throw EXCEPTION("Cannot create deferred shading material stage FBO: " + e.what());
 	}
-
-	normalFai.setRepeat(false);
-	diffuseFai.setRepeat(false);
-	specularFai.setRepeat(false);
-	depthFai.setRepeat(false);
-
-
-	// attach the buffers to the FBO
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0);
-
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
-
-	// test if success
-	if(!fbo.isGood())
-		FATAL("Cannot create deferred shading material stage FBO");
-
-	// unbind
-	fbo.unbind();
 
 	ez.init(initializer);
 }
@@ -96,10 +94,13 @@ void Ms::run()
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material.get() == NULL)
 		{
-			ERROR("Mesh \"" << meshNode->mesh->getRsrcName() << "\" doesnt have material" );
+			throw EXCEPTION("Mesh \"" + meshNode->mesh->getRsrcName() + "\" doesnt have material");
+		}
+
+		if(meshNode->mesh->material->blends)
+		{
 			continue;
 		}
-		if(meshNode->mesh->material->blends) continue;
 
 		r.setupMaterial(*meshNode->mesh->material, *meshNode, cam);
 		meshNode->render();

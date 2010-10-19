@@ -2,13 +2,12 @@
 #define SCENE_NODE_H
 
 #include <memory>
-#include "Common.h"
 #include "Vec.h"
 #include "Math.h"
 #include "Object.h"
+#include "Properties.h"
 
 
-class bvolume_t;
 class Material;
 class Controller;
 
@@ -30,15 +29,13 @@ class SceneNode: public Object
 			SNT_PARTICLE_EMITTER
 		};
 
-	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform); ///< The transformation in local space
-	PROPERTY_RW(Transform, worldTransform, setWorldTransform, getWorldTransform); ///< The transformation in world space (local combined with parent transformation)
+	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform) ///< The transformation in local space
+	PROPERTY_RW(Transform, worldTransform, setWorldTransform, getWorldTransform) ///< The transformation in world space (local combined with parent transformation)
 
 	public:
 		SceneNode* parent;
 		Vec<SceneNode*> childs;
 		SceneNodeType type;
-		bvolume_t* bvolumeLspace;
-		bvolume_t* bvolumeWspace;
 		bool isCompound;
 		
 		SceneNode(SceneNodeType type_, SceneNode* parent = NULL);
@@ -56,9 +53,9 @@ class SceneNode: public Object
 
 		/// @name Mess with the local transform
 		/// @{
-		void rotateLocalX(float angDegrees);
-		void rotateLocalY(float angDegrees);
-		void rotateLocalZ(float angDegrees);
+		void rotateLocalX(float angDegrees) {localTransform.rotation.rotateXAxis(angDegrees);}
+		void rotateLocalY(float angDegrees) {localTransform.rotation.rotateYAxis(angDegrees);}
+		void rotateLocalZ(float angDegrees) {localTransform.rotation.rotateZAxis(angDegrees);}
 		void moveLocalX(float distance);
 		void moveLocalY(float distance);
 		void moveLocalZ(float distance);
@@ -82,24 +79,6 @@ inline SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
 	{
 		parent->addChild(this);
 	}
-}
-
-
-inline void SceneNode::rotateLocalX(float angDegrees)
-{
-	localTransform.rotation.rotateXAxis(angDegrees);
-}
-
-
-inline void SceneNode::rotateLocalY(float angDegrees)
-{
-	localTransform.rotation.rotateYAxis(angDegrees);
-}
-
-
-inline void SceneNode::rotateLocalZ(float angDegrees)
-{
-	localTransform.rotation.rotateZAxis(angDegrees);
 }
 
 

@@ -13,7 +13,6 @@
 #include "Light.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "collision.h"
 #include "Material.h"
 #include "Resource.h"
 #include "Scene.h"
@@ -39,6 +38,7 @@
 #include "RigidBody.h"
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
+#include "Messaging.h"
 
 
 App* app = NULL; ///< The only global var. App constructor sets it
@@ -239,7 +239,7 @@ void init()
 
 	initPhysics();
 
-	INFO("Engine initialization ends (" << App::getTicks()-ticks << ")");
+	INFO("Engine initialization ends (" + boost::lexical_cast<std::string>(App::getTicks() - ticks) + ")");
 }
 
 
@@ -351,7 +351,7 @@ void mainLoop()
 
 		// std stuff follow
 		app->swapBuffers();
-		GL_OK();
+		//ON_GL_FAIL_THROW_EXCEPTION();
 		if(1)
 		{
 			//if(app->getMainRenderer().getFramesNum() == 100) app->getMainRenderer().takeScreenshot("gfx/screenshot.tga");
@@ -361,10 +361,8 @@ void mainLoop()
 			if(app->getMainRenderer().getFramesNum() == 5000) break;
 	}while(true);
 
-	INFO("Exiting main loop (" << App::getTicks()-ticks << ")");
+	INFO("Exiting main loop (" + boost::lexical_cast<std::string>(App::getTicks() - ticks) + ")");
 }
-
-#include "Exception.h"
 
 
 //======================================================================================================================

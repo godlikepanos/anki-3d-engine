@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include "Exception.h"
 #include "Properties.h"
+#include "StdTypes.h"
 
 
 /// The class is actually a wrapper to avoid common mistakes

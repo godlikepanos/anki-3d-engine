@@ -10,6 +10,9 @@
 #include "MainRenderer.h"
 
 
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
@@ -31,7 +34,7 @@ void MeshNode::render(Material* mtl) const
 	// if we have skeleton controller
 	if(meshSkelCtrl)
 	{
-		DEBUG_ERR(!mtl->hasHWSkinning()); // it has skel controller but no skinning
+		RASSERT_THROW_EXCEPTION(!mtl->hasHWSkinning()); // it has skel controller but no skinning
 
 		// first the uniforms
 		mtl->stdUniVars[Material::SUV_SKINNING_ROTATIONS]->setMat3(&meshSkelCtrl->skelNode->boneRotations[0],

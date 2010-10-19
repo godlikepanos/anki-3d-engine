@@ -22,41 +22,47 @@ void Sm::init(const RendererInitializer& initializer)
 	bilinearEnabled = initializer.is.sm.bilinearEnabled;
 	resolution = initializer.is.sm.resolution;
 
-	// create FBO
-	fbo.create();
-	fbo.bind();
-
-	// texture
-	shadowMap.createEmpty2D(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
-	if(bilinearEnabled)
+	try
 	{
-		shadowMap.setFiltering(Texture::TFT_LINEAR);
+		// create FBO
+		fbo.create();
+		fbo.bind();
+
+		// texture
+		shadowMap.createEmpty2D(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
+		if(bilinearEnabled)
+		{
+			shadowMap.setFiltering(Texture::TFT_LINEAR);
+		}
+		else
+		{
+			shadowMap.setFiltering(Texture::TFT_NEAREST);
+		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		/*
+		 * If you dont want to use the FFP for comparing the shadowmap (the above two lines) then you can make the comparison
+		 * inside the glsl shader. The GL_LEQUAL means that: shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:
+		 * R = _tex_coord2.z/_tex_coord2.w; and the Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
+		 * Hardware filters like GL_LINEAR cannot be applied.
+		 */
+
+		// inform the we wont write to color buffers
+		fbo.setNumOfColorAttachements(0);
+
+		// attach the texture
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
+
+		// test if success
+		fbo.checkIfGood();
+
+		// unbind
+		fbo.unbind();
 	}
-	else
+	catch(std::exception& e)
 	{
-		shadowMap.setFiltering(Texture::TFT_NEAREST);
+		throw EXCEPTION("Cannot create shadowmapping FBO: " + e.what());
 	}
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	/*
-	 * If you dont want to use the FFP for comparing the shadowmap (the above two lines) then you can make the comparison
-	 * inside the glsl shader. The GL_LEQUAL means that: shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:
-	 * R = _tex_coord2.z/_tex_coord2.w; and the Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
-	 * Hardware filters like GL_LINEAR cannot be applied.
-	 */
-
-	// inform the we wont write to color buffers
-	fbo.setNumOfColorAttachements(0);
-
-	// attach the texture
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
-
-	// test if success
-	if(!fbo.isGood())
-		FATAL("Cannot create shadowmapping FBO");
-
-	// unbind
-	fbo.unbind();
 }
 
 
@@ -65,7 +71,10 @@ void Sm::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Sm::run(const Camera& cam)
 {
-	DEBUG_ERR(!enabled);
+	if(!enabled)
+	{
+		return;
+	}
 
 	// FBO
 	fbo.bind();
@@ -88,9 +97,11 @@ void Sm::run(const Camera& cam)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material->blends)
+		{
 			continue;
+		}
 
-		DEBUG_ERR(meshNode->mesh->material->dpMtl.get() == NULL);
+		RASSERT_THROW_EXCEPTION(meshNode->mesh->material->dpMtl.get() == NULL);
 
 		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, cam);
 		meshNode->renderDepth();
