@@ -2,12 +2,9 @@
 #define RENDERER_INITIALIZER_H
 
 #include <cstring>
-#include "Common.h"
 
 
-/**
- * A struct to initialize the renderer. It contains a few extra params for the MainRenderer
- */
+/// A struct to initialize the renderer. It contains a few extra params for the MainRenderer
 struct RendererInitializer
 {
 	// Ms

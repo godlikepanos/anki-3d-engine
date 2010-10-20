@@ -1,7 +1,6 @@
 #ifndef SMO_H
 #define SMO_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "Vbo.h"

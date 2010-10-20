@@ -1,7 +1,6 @@
 #ifndef SSAO_H
 #define SSAO_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "Texture.h"

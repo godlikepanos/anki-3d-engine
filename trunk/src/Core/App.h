@@ -137,7 +137,7 @@ inline MainRenderer& App::getMainRenderer()
 
 inline MessageHandler& App::getMessageHandler()
 {
-	RASSERT_THROW_EXCEPTION(mainRenderer == NULL);
+	RASSERT_THROW_EXCEPTION(messageHandler == NULL);
 	return *messageHandler;
 }
 

@@ -1,7 +1,6 @@
 #ifndef SM_H
 #define SM_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "Texture.h"

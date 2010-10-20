@@ -2,7 +2,6 @@
 #define MOTIONSTATE_H
 
 #include <LinearMath/btMotionState.h>
-#include "Common.h"
 #include "SceneNode.h"
 #include "Object.h"
 

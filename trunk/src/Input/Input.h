@@ -2,7 +2,6 @@
 #define INPUT_H
 
 #include <SDL/SDL_scancode.h>
-#include "Common.h"
 #include "Vec.h"
 #include "App.h"
 #include "Math.h"

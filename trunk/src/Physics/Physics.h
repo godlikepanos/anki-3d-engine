@@ -3,7 +3,6 @@
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "Common.h"
 #include "Object.h"
 #include "BtAndAnkiConvertors.h"
 #include "DebugDrawer.h"

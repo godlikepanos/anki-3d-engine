@@ -1,7 +1,6 @@
 #ifndef _RAGDOLL_H_
 #define _RAGDOLL_H_
 
-#include "Common.h"
 #include "PhyCommon.h"
 
 

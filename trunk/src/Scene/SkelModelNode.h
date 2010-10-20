@@ -1,7 +1,6 @@
-#ifndef _SKEL_MODEL_NODE_H_
-#define _SKEL_MODEL_NODE_H_
+#ifndef SKEL_MODEL_NODE_H
+#define SKEL_MODEL_NODE_H
 
-#include "Common.h"
 #include "MeshNode.h" 
 
 
