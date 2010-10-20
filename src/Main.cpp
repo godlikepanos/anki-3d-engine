@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include "Common.h"
 
 #include "Input.h"
 #include "Camera.h"

@@ -1,7 +1,6 @@
 #ifndef MS_H
 #define MS_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Ez.h"
 #include "Texture.h"

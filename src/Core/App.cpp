@@ -2,6 +2,7 @@
 #include <sstream>
 #include <SDL/SDL.h>
 #include <iostream>
+#include <iomanip>
 #include <boost/filesystem.hpp>
 #include "App.h"
 #include "Scene.h"
@@ -20,8 +21,9 @@ bool App::isCreated = false;
 //======================================================================================================================
 void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg)
 {
-	std::cout << file << ":" << line << " " << func << ": " << msg << std::endl;
+	std::cout << "(" << file << ":" << line << " "<< func << ") " << msg << std::endl;
 }
+
 
 //======================================================================================================================
 // parseCommandLineArgs                                                                                                =
@@ -41,7 +43,8 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 		}
 		else
 		{
-			FATAL("Incorrect command line argument \"" << arg << "\"");
+			std::cerr << "Incorrect command line argument \"" << arg << "\"" << std::endl;
+			abort();
 		}
 	}
 }
@@ -68,7 +71,7 @@ App::App(int argc, char* argv[], Object* parent):
 
 	if(isCreated)
 	{
-		FATAL("You cannot init a second App instance");
+		throw EXCEPTION("You cannot init a second App instance");
 	}
 
 	isCreated = true;
@@ -78,18 +81,18 @@ App::App(int argc, char* argv[], Object* parent):
 	if(!boost::filesystem::exists(settingsPath))
 	{
 		INFO("Creating settings dir \"" + settingsPath.string() + "\"");
-		filesystem::create_directory(settingsPath);
+		boost::filesystem::create_directory(settingsPath);
 	}
 
 	cachePath = settingsPath / "cache";
-	if(filesystem::exists(cachePath))
+	if(boost::filesystem::exists(cachePath))
 	{
 		INFO("Deleting dir \"" + cachePath.string() + "\"");
-		filesystem::remove_all(cachePath);
+		boost::filesystem::remove_all(cachePath);
 	}
 
 	INFO("Creating cache dir \"" + cachePath.string() + "\"");
-	filesystem::create_directory(cachePath);
+	boost::filesystem::create_directory(cachePath);
 
 	// create the subsystems. WATCH THE ORDER
 	scriptingEngine = new ScriptingEngine(this);
@@ -226,7 +229,7 @@ void App::waitForNextFrame()
 
 void App::printAppInfo()
 {
-	stringstream msg;
+	std::stringstream msg;
 	msg << "App info: debugging ";
 	#if DEBUG_ENABLED == 1
 		msg << "on, ";
@@ -289,7 +292,7 @@ void App::execStdinScpripts()
 {
 	while(1)
 	{
-		string cmd = app->getStdinLintener().getLine();
+		std::string cmd = app->getStdinLintener().getLine();
 
 		if(cmd.length() < 1)
 		{

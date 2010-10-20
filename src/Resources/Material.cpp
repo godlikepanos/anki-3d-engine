@@ -140,7 +140,7 @@ void Material::load(const char* filename)
 			}
 
 			token = &scanner.getNextToken();
-			string shaderFilename;
+			std::string shaderFilename;
 			// Just a string
 			if(token->getCode() == Scanner::TC_STRING)
 			{
@@ -162,11 +162,11 @@ void Material::load(const char* filename)
 				{
 					throw PARSER_EXCEPTION_EXPECTED("string");
 				}
-				string sProgFilename = token->getValue().getString();
+				std::string sProgFilename = token->getValue().getString();
 
 				// get the switches
-				string source;
-				string prefix;
+				std::string source;
+				std::string prefix;
 				while(true)
 				{
 					token = &scanner.getNextToken();
@@ -198,7 +198,7 @@ void Material::load(const char* filename)
 						throw PARSER_EXCEPTION("Incorrect switch " + token->getString());
 					}
 
-					source += string("#define ") + token->getString() + "\n";
+					source += std::string("#define ") + token->getString() + "\n";
 					prefix.push_back(mss->prefix);
 				} // end get the switches
 
@@ -344,7 +344,7 @@ void Material::load(const char* filename)
 					throw PARSER_EXCEPTION_EXPECTED("identifier");
 				}
 
-				string varName;
+				std::string varName;
 				varName = token->getValue().getString();
 
 				userDefinedVars.push_back(new UserDefinedUniVar); // create new var

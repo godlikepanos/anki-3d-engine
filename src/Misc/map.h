@@ -2,7 +2,6 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include "Common.h"
 #include "collision.h"
 #include "Vec.h"
 #include "RsrcPtr.h"

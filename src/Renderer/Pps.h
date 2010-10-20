@@ -1,7 +1,6 @@
 #ifndef PPS_H
 #define PPS_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 #include "Hdr.h"

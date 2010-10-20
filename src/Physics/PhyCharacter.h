@@ -1,7 +1,6 @@
 #ifndef PHY_CHARACTER_H
 #define PHY_CHARACTER_H
 
-#include "Common.h"
 #include "Physics.h"
 #include "Math.h"
 #include "Object.h"

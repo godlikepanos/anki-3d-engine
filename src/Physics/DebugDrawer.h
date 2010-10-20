@@ -2,7 +2,6 @@
 #define DEBUGDRAWER_H
 
 #include <LinearMath/btIDebugDraw.h>
-#include "Common.h"
 
 
 /**

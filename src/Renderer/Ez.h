@@ -1,7 +1,6 @@
 #ifndef EZ_H
 #define EZ_H
 
-#include "Common.h"
 #include "RenderingStage.h"
 #include "Fbo.h"
 

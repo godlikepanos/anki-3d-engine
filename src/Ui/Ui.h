@@ -1,7 +1,6 @@
-#ifndef _UI_H_
-#define _UI_H_
+#ifndef UI_H
+#define UI_H
 
-#include "Common.h"
 
 namespace M {
 	class Vec4;

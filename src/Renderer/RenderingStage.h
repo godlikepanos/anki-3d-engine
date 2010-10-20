@@ -1,16 +1,12 @@
 #ifndef RENDERING_STAGE_H
 #define RENDERING_STAGE_H
 
-#include "Common.h"
-
 
 class Renderer;
 class RendererInitializer;
 
 
-/**
- * Rendering stage
- */
+/// Rendering stage
 class RenderingStage
 {
 	public:

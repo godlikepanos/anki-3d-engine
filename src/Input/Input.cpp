@@ -25,8 +25,8 @@ bool hideCursor = true;
 //======================================================================================================================
 void reset(void)
 {
-	DEBUG_ERR(keys.size() < 1);
-	DEBUG_ERR(mouseBtns.size() < 1);
+	RASSERT_THROW_EXCEPTION(keys.size() < 1);
+	RASSERT_THROW_EXCEPTION(mouseBtns.size() < 1);
 	memset(&keys[0], 0, keys.size()*sizeof(short));
 	memset(&mouseBtns[0], 0, mouseBtns.size()*sizeof(short));
 	mousePosNdc = Vec2(0.0);

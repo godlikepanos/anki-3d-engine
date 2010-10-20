@@ -1,7 +1,6 @@
-#ifndef _GHOSTNODE_H_
-#define _GHOSTNODE_H_
+#ifndef GHOST_NODE_H
+#define GHOST_NODE_H
 
-#include "Common.h"
 #include "SceneNode.h"
 
 /**

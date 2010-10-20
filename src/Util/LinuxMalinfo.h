@@ -1,8 +1,6 @@
 #ifndef LINUXMALINFO_H
 #define LINUXMALINFO_H
 
-#include "Common.h"
-
 
 #if defined(PLATFORM_LINUX)
 

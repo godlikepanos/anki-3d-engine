@@ -2,7 +2,6 @@
 #define SKEL_NODE_H
 
 #include <memory>
-#include "Common.h"
 #include "SceneNode.h"
 #include "SkelAnimCtrl.h"
 #include "RsrcPtr.h"

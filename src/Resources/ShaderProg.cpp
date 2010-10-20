@@ -5,6 +5,7 @@
 #include "ShaderPrePreprocessor.h"
 #include "Texture.h" // For certain setters
 #include "App.h" // To get cache dir
+#include "GlException.h"
 
 
 #define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + getRsrcName() + "\": " + x)
@@ -161,11 +162,11 @@ void ShaderProg::link()
 	{
 		int info_len = 0;
 		int charsWritten = 0;
-		string infoLogTxt;
+		std::string infoLogTxt;
 
 		glGetProgramiv(glId, GL_INFO_LOG_LENGTH, &info_len);
 
-		infoLogTxt.reserve(info_len + 1);
+		infoLogTxt.resize(info_len + 1);
 		glGetProgramInfoLog(glId, info_len, &charsWritten, &infoLogTxt[0]);
 		throw SPROG_EXCEPTION("Link error log follows:\n" + infoLogTxt);
 	}
@@ -196,7 +197,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			std::cout << "You are using FFP vertex attributes (\"" << name_ << "\")" << endl; /// @todo fix this
+			std::cout << "You are using FFP vertex attributes (\"" << name_ << "\")" << std::endl; /// @todo fix this
 			continue;
 		}
 
@@ -239,7 +240,11 @@ void ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 		glBindAttribLocation(glId, loc, name.c_str());
 
 		// check for error
-		if(!GL_OK())
+		try
+		{
+			ON_GL_FAIL_THROW_EXCEPTION();
+		}
+		catch(std::exception& e)
 		{
 			throw SPROG_EXCEPTION("Something went wrong for attrib \"" + name + "\" and location " +
 			                      boost::lexical_cast<std::string>(loc));
@@ -350,10 +355,10 @@ bool ShaderProg::attribVarExists(const char* name) const
 std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
                                              const char* newFNamePrefix)
 {
-	filesystem::path newfPathName = app->getCachePath() /
-	                                (std::string(newFNamePrefix) + "_" + filesystem::path(sProgFPathName).filename());
+	boost::filesystem::path newfPathName = app->getCachePath() /
+			(std::string(newFNamePrefix) + "_" + boost::filesystem::path(sProgFPathName).filename());
 
-	if(filesystem::exists(newfPathName))
+	if(boost::filesystem::exists(newfPathName))
 	{
 		return newfPathName.string();
 	}
@@ -361,7 +366,7 @@ std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const c
 	std::string src_ = Util::readFile(sProgFPathName);
 	std::string src = preAppendedSrcCode + src_;
 
-	ofstream f(newfPathName.string().c_str());
+	std::ofstream f(newfPathName.string().c_str());
 	if(!f.good())
 	{
 		throw EXCEPTION("Cannot open file for writing \"" + newfPathName.string() + "\"");

@@ -1,7 +1,6 @@
 #ifndef _SKYBOX_H_
 #define _SKYBOX_H_
 
-#include "Common.h"
 #include "Texture.h"
 #include "Math.h"
 #include "RsrcPtr.h"

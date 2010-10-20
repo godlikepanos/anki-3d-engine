@@ -2,6 +2,7 @@
 #include "MainRenderer.h"
 #include "App.h"
 #include "BtAndAnkiConvertors.h"
+#include "Messaging.h"
 
 
 //======================================================================================================================
@@ -43,8 +44,7 @@ void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btVe
 //======================================================================================================================
 // drawBox                                                                                                             =
 //======================================================================================================================
-void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btTransform& trans,
-                                 const btVector3& color)
+void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btTransform& trans, const btVector3& color)
 {
 	Mat4 trf(Mat4::getIdentity());
 	trf(0, 0) = max.getX() - min.getX();
@@ -66,7 +66,7 @@ void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btTr
 void DebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/, const btVector3& /*normalOnB*/,
                                           btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
 {
-	WARNING("Unimplemented");
+	//WARNING("Unimplemented");
 }
 
 
@@ -75,7 +75,7 @@ void DebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/, const btVector
 //======================================================================================================================
 void DebugDrawer::reportErrorWarning(const char* warningString)
 {
-	ERROR(warningString);
+	throw EXCEPTION(warningString);
 }
 
 
@@ -84,5 +84,5 @@ void DebugDrawer::reportErrorWarning(const char* warningString)
 //======================================================================================================================
 void DebugDrawer::draw3dText(const btVector3& /*location*/, const char* /*textString*/)
 {
-	WARNING("Unimplemented");
+	//WARNING("Unimplemented");
 }

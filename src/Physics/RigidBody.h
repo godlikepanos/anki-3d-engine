@@ -4,7 +4,6 @@
 #include <memory>
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
-#include "Common.h"
 #include "Math.h"
 #include "Object.h"
 
