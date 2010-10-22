@@ -6,11 +6,12 @@
 #include "MessageHandler.h"
 
 
-#define INFO(x) \
-	app->getMessageHandler().write(__FILE__, __LINE__, __func__, std::string("Info: ") + x)
+#define MESSAGE(x) \
+	app->getMessageHandler().write(__FILE__, __LINE__, __func__, std::string() + x)
 
-#define WARNING(x) \
-	app->getMessageHandler().write(__FILE__, __LINE__, __func__, std::string("Warning: ") + x)
+#define INFO(x) MESSAGE(std::string("Info: ") + x)
+
+#define WARNING(x) MESSAGE(std::string("Warning: ") + x)
 
 
 #endif

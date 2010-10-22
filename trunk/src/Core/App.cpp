@@ -11,6 +11,7 @@
 #include "StdinListener.h"
 #include "MessageHandler.h"
 #include "Messaging.h"
+#include "Input.h"
 
 
 bool App::isCreated = false;
@@ -102,6 +103,7 @@ App::App(int argc, char* argv[], Object* parent):
 	scene = new Scene(this);
 	stdinListener = new StdinListener(this);
 	stdinListener->start();
+	input = new Input(this);
 
 	// other
 	activeCam = NULL;
@@ -138,7 +140,7 @@ void App::initWindow()
 
 	// OpenWindow
 	windowId = SDL_CreateWindow("AnKi Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowW, windowH,
-	                             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+	                            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
 	if(!windowId)
 	{
@@ -152,7 +154,7 @@ void App::initWindow()
 	iconImage = SDL_LoadBMP("gfx/icon.bmp");
 	if(iconImage == NULL)
 	{
-		throw EXCEPTION("Cannot load window icon");
+		WARNING("Cannot load window icon");
 	}
 	else
 	{
@@ -215,8 +217,9 @@ void App::waitForNextFrame()
 		SDL_Delay(time - now);
 	}
 	else
+	{
 		time = now;
-
+	}
 }
 
 

@@ -174,9 +174,10 @@ SDL_COMPILE_TIME_ASSERT(uint16, sizeof(Uint16) == 2);
 SDL_COMPILE_TIME_ASSERT(sint16, sizeof(Sint16) == 2);
 SDL_COMPILE_TIME_ASSERT(uint32, sizeof(Uint32) == 4);
 SDL_COMPILE_TIME_ASSERT(sint32, sizeof(Sint32) == 4);
-#ifndef __NINTENDODS__          /* TODO: figure out why the following happens:
-                                   include/SDL_stdinc.h:150: error: size of array 'SDL_dummy_uint64' is negative
-                                   include/SDL_stdinc.h:151: error: size of array 'SDL_dummy_sint64' is negative */
+#if !defined(__NINTENDODS__) && !defined(__ANDROID__)
+/* TODO: figure out why the following happens:
+ include/SDL_stdinc.h:150: error: size of array 'SDL_dummy_uint64' is negative
+ include/SDL_stdinc.h:151: error: size of array 'SDL_dummy_sint64' is negative */
 SDL_COMPILE_TIME_ASSERT(uint64, sizeof(Uint64) == 8);
 SDL_COMPILE_TIME_ASSERT(sint64, sizeof(Sint64) == 8);
 #endif
@@ -195,7 +196,8 @@ SDL_COMPILE_TIME_ASSERT(sint64, sizeof(Sint64) == 8);
 
 /** \cond */
 #ifndef DOXYGEN_SHOULD_IGNORE_THIS
-#ifndef __NINTENDODS__          /* TODO: include/SDL_stdinc.h:174: error: size of array 'SDL_dummy_enum' is negative */
+#if !defined(__NINTENDODS__) && !defined(__ANDROID__) 
+   /* TODO: include/SDL_stdinc.h:174: error: size of array 'SDL_dummy_enum' is negative */
 typedef enum
 {
     DUMMY_ENUM_VALUE
@@ -470,12 +472,28 @@ extern DECLSPEC size_t SDLCALL SDL_strlen(const char *string);
 extern DECLSPEC size_t SDLCALL SDL_wcslen(const wchar_t * string);
 #endif
 
+#ifdef HAVE_WCSLCPY
+#define SDL_wcslcpy      wcslcpy
+#else
+extern DECLSPEC size_t SDLCALL SDL_wcslcpy(wchar_t *dst, const wchar_t *src, size_t maxlen);
+#endif
+
+#ifdef HAVE_WCSLCAT
+#define SDL_wcslcat      wcslcat
+#else
+extern DECLSPEC size_t SDLCALL SDL_wcslcat(wchar_t *dst, const wchar_t *src, size_t maxlen);
+#endif
+
+
 #ifdef HAVE_STRLCPY
 #define SDL_strlcpy     strlcpy
 #else
 extern DECLSPEC size_t SDLCALL SDL_strlcpy(char *dst, const char *src,
                                            size_t maxlen);
 #endif
+
+extern DECLSPEC size_t SDLCALL SDL_utf8strlcpy(char *dst, const char *src,
+                                            size_t dst_bytes);
 
 #ifdef HAVE_STRLCAT
 #define SDL_strlcat    strlcat
@@ -674,6 +692,18 @@ extern DECLSPEC int SDLCALL SDL_vsnprintf(char *text, size_t maxlen,
 
 #ifndef HAVE_M_PI
 #define M_PI    3.14159265358979323846264338327950288   /* pi */
+#endif
+
+#ifdef HAVE_ATAN
+#define SDL_atan        atan
+#else
+extern DECLSPEC double SDLCALL SDL_atan(double x);
+#endif
+
+#ifdef HAVE_ATAN2
+#define SDL_atan2       atan2
+#else
+extern DECLSPEC double SDLCALL SDL_atan2(double y, double x);
 #endif
 
 #ifdef HAVE_CEIL

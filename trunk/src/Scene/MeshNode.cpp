@@ -8,6 +8,7 @@
 #include "SkelAnimCtrl.h"
 #include "App.h"
 #include "MainRenderer.h"
+#include "MeshData.h" // For some sizeof
 
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -49,17 +50,17 @@ void MeshNode::render(Material* mtl) const
 		loc = mtl->stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM]->getLoc();
 		glEnableVertexAttribArray(loc);
 		locs[locsNum++] = loc;
-		glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(0));
+		glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0));
 
 		loc = mtl->stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS]->getLoc();
 		glEnableVertexAttribArray(loc);
 		locs[locsNum++] = loc;
-		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(4));
+		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(4));
 
 		loc = mtl->stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS]->getLoc();
 		glEnableVertexAttribArray(loc);
 		locs[locsNum++] = loc;
-		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(Mesh::VertexWeight), BUFFER_OFFSET(20));
+		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
 	}
 
 	if(mtl->stdAttribVars[Material::SAV_POSITION] != NULL)
@@ -100,7 +101,7 @@ void MeshNode::render(Material* mtl) const
 
 	mesh->vbos.vertIndeces.bind();
 
-	glDrawElements(GL_TRIANGLES, mesh->vertIndeces.size(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, mesh->getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
 
 	// disable
 	for(int i=0; i<locsNum; i++)

@@ -21,15 +21,20 @@
 */
 
 /**
- *  \file SDL_error.h
+ *  \file SDL_gesture.h
  *  
- *  Simple error message routines for SDL.
+ *  Include file for SDL gesture event handling.
  */
 
-#ifndef _SDL_error_h
-#define _SDL_error_h
+#ifndef _SDL_gesture_h
+#define _SDL_gesture_h
 
 #include "SDL_stdinc.h"
+#include "SDL_error.h"
+#include "SDL_video.h"
+
+#include "SDL_touch.h"
+
 
 #include "begin_code.h"
 /* Set up for C function definitions, even when using C++ */
@@ -39,31 +44,40 @@ extern "C" {
 /* *INDENT-ON* */
 #endif
 
-/* Public functions */
-extern DECLSPEC void SDLCALL SDL_SetError(const char *fmt, ...);
-extern DECLSPEC const char *SDLCALL SDL_GetError(void);
-extern DECLSPEC void SDLCALL SDL_ClearError(void);
+typedef Sint64 SDL_GestureID;
+
+/* Function prototypes */
 
 /**
- *  \name Internal error functions
- *  
- *  \internal 
- *  Private error message function - used internally.
+ *  \brief Begin Recording a gesture on the specified touch, or all touches (-1)
+ *
+ *
  */
-/*@{*/
-#define SDL_OutOfMemory()	SDL_Error(SDL_ENOMEM)
-#define SDL_Unsupported()	SDL_Error(SDL_UNSUPPORTED)
-typedef enum
-{
-    SDL_ENOMEM,
-    SDL_EFREAD,
-    SDL_EFWRITE,
-    SDL_EFSEEK,
-    SDL_UNSUPPORTED,
-    SDL_LASTERROR
-} SDL_errorcode;
-extern DECLSPEC void SDLCALL SDL_Error(SDL_errorcode code);
-/*@}*//*Internal error functions*/
+extern DECLSPEC int SDLCALL SDL_RecordGesture(SDL_TouchID touchId);
+
+
+/**
+ *  \brief Save all currently loaded Dollar Gesture templates
+ *
+ *
+ */
+extern DECLSPEC int SDLCALL SDL_SaveAllDollarTemplates(SDL_RWops *src);
+
+/**
+ *  \brief Save a currently loaded Dollar Gesture template
+ *
+ *
+ */
+extern DECLSPEC int SDLCALL SDL_SaveDollarTemplate(SDL_GestureID gestureId,SDL_RWops *src);
+
+
+/**
+ *  \brief Load Dollar Gesture templates from a file
+ *
+ *
+ */
+extern DECLSPEC int SDLCALL SDL_LoadDollarTemplates(SDL_TouchID touchId, SDL_RWops *src);
+
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
@@ -73,6 +87,6 @@ extern DECLSPEC void SDLCALL SDL_Error(SDL_errorcode code);
 #endif
 #include "close_code.h"
 
-#endif /* _SDL_error_h */
+#endif /* _SDL_gesture_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -65,7 +65,7 @@ typedef struct SDL_RWops
                             size_t size, size_t maxnum);
 
     /**
-     *  Write exactly \c num objects each of size \c objsize from the area
+     *  Write exactly \c num objects each of size \c size from the area
      *  pointed at by \c ptr to data source.
      *  
      *  \return the number of objects written, or 0 at error or end of file.

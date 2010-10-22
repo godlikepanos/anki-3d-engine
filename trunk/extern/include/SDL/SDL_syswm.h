@@ -54,6 +54,11 @@ extern "C" {
 struct SDL_SysWMinfo;
 #else
 
+#if defined(SDL_VIDEO_DRIVER_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 /* This is the structure for custom window manager events */
 #if defined(SDL_VIDEO_DRIVER_X11)
 #if defined(__APPLE__) && defined(__MACH__)
@@ -69,16 +74,34 @@ struct SDL_SysWMinfo;
 #undef Cursor
 #endif
 
+#endif /* defined(SDL_VIDEO_DRIVER_X11) */
+
+#if defined(SDL_VIDEO_DRIVER_DIRECTFB)
+#include <directfb/directfb.h>
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_COCOA)
+#ifdef __OBJC__
+#include <Cocoa/Cocoa.h>
+#else
+typedef struct _NSWindow NSWindow;
+#endif
+#endif
+
 /** 
- *  These are the various supported subsystems under UNIX.
+ *  These are the various supported windowing subsystems
  */
 typedef enum
 {
-    SDL_SYSWM_X11
+    SDL_SYSWM_UNKNOWN,
+    SDL_SYSWM_WINDOWS,
+    SDL_SYSWM_X11,
+    SDL_SYSWM_DIRECTFB,
+    SDL_SYSWM_COCOA,
 } SDL_SYSWM_TYPE;
 
 /**
- *  The UNIX custom event structure.
+ *  The custom event structure.
  */
 struct SDL_SysWMmsg
 {
@@ -86,12 +109,35 @@ struct SDL_SysWMmsg
     SDL_SYSWM_TYPE subsystem;
     union
     {
-        XEvent xevent;
-    } event;
+#if defined(SDL_VIDEO_DRIVER_WIN32)
+        struct {
+            HWND hwnd;                  /**< The window for the message */
+            UINT msg;                   /**< The type of message */
+            WPARAM wParam;              /**< WORD message parameter */
+            LPARAM lParam;              /**< LONG message parameter */
+        } win;
+#endif
+#if defined(SDL_VIDEO_DRIVER_X11)
+        struct {
+            XEvent event;
+        } x11;
+#endif
+#if defined(SDL_VIDEO_DRIVER_DIRECTFB)
+        struct {
+            DFBEvent event;
+        } dfb;
+#endif
+#if defined(SDL_VIDEO_DRIVER_COCOA)
+        struct
+        {
+            /* No Cocoa window events yet */
+        } cocoa;
+#endif
+    } /*msg*/;
 };
 
 /**
- *  The UNIX custom window manager information structure.
+ *  The custom window manager information structure.
  *
  *  When this structure is returned, it holds information about which
  *  low level system it is using, and will be one of SDL_SYSWM_TYPE.
@@ -102,126 +148,35 @@ struct SDL_SysWMinfo
     SDL_SYSWM_TYPE subsystem;
     union
     {
+#if defined(SDL_VIDEO_DRIVER_WIN32)
         struct
         {
-            Display *display;   /**< The X11 display */
-            Window window;      /**< The X11 display window */
-            /**
-             *  These locking functions should be called around
-             *  any X11 functions using the display variable.
-             *  They lock the event thread, so should not be
-             *  called around event functions or from event filters.
-             */
-            /*@{*/
-            void (*lock_func) (void);
-            void (*unlock_func) (void);
-            /*@}*/
-
-            /**
-             *  Introduced in SDL 1.0.2.
-             */
-            /*@{*/
-            Window fswindow;    /**< The X11 fullscreen window */
-            Window wmwindow;    /**< The X11 managed input window */
-            /*@}*/
+            HWND window;                /**< The window handle */
+        } win;
+#endif
+#if defined(SDL_VIDEO_DRIVER_X11)
+        struct
+        {
+            Display *display;           /**< The X11 display */
+            Window window;              /**< The X11 window */
         } x11;
-    } info;
+#endif
+#if defined(SDL_VIDEO_DRIVER_DIRECTFB)
+        struct
+        {
+            IDirectFB *dfb;             /**< The directfb main interface */
+            IDirectFBWindow *window;    /**< The directfb window handle */
+            IDirectFBSurface *surface;  /**< The directfb client surface */
+        } dfb;
+#endif
+#if defined(SDL_VIDEO_DRIVER_COCOA)
+        struct
+        {
+            NSWindow *window;           /* The Cocoa window */
+        } cocoa;
+#endif
+    } /*info*/;
 };
-
-#elif defined(SDL_VIDEO_DRIVER_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-/**
- *  The windows custom event structure.
- */
-struct SDL_SysWMmsg
-{
-    SDL_version version;
-    HWND hwnd;                  /**< The window for the message */
-    UINT msg;                   /**< The type of message */
-    WPARAM wParam;              /**< WORD message parameter */
-    LPARAM lParam;              /**< LONG message parameter */
-};
-
-/**
- *  The windows custom window manager information structure.
- */
-struct SDL_SysWMinfo
-{
-    SDL_version version;
-    HWND window;                /**< The Win32 display window */
-};
-
-#elif defined(SDL_VIDEO_DRIVER_RISCOS)
-
-/**
- *  RISC OS custom event structure.
- */
-struct SDL_SysWMmsg
-{
-    SDL_version version;
-    int eventCode;              /**< The window for the message */
-    int pollBlock[64];
-};
-
-/**
- *  The RISC OS custom window manager information structure.
- */
-struct SDL_SysWMinfo
-{
-    SDL_version version;
-    int wimpVersion;            /**< Wimp version running under */
-    int taskHandle;             /**< The RISC OS task handle */
-    int window;                 /**< The RISC OS display window */
-};
-
-#elif defined(SDL_VIDEO_DRIVER_PHOTON) || defined(SDL_VIDEO_DRIVER_QNXGF)
-#include <sys/neutrino.h>
-#if defined(SDL_VIDEO_OPENGL_ES)
-#include <gf/gf.h>
-#endif /* SDL_VIDEO_OPENGL_ES */
-#include <Ph.h>
-
-/**
- * The QNX custom event structure.
- */
-struct SDL_SysWMmsg
-{
-    SDL_version version;
-    int data;
-};
-
-/**
- *  The QNX Photon custom window manager information structure.
- */
-struct SDL_SysWMinfo
-{
-    SDL_version version;
-    int data;
-};
-
-#else
-
-/**
- *  The generic custom event structure.
- */
-struct SDL_SysWMmsg
-{
-    SDL_version version;
-    int data;
-};
-
-/**
- *  The generic custom window manager information structure.
- */
-struct SDL_SysWMinfo
-{
-    SDL_version version;
-    int data;
-};
-
-#endif /* video driver type */
 
 #endif /* SDL_PROTOTYPES_ONLY */
 
@@ -231,7 +186,7 @@ typedef struct SDL_SysWMinfo SDL_SysWMinfo;
 /**
  *  \brief This function allows access to driver-dependent window information.
  *  
- *  \param windowID The window about which information is being requested
+ *  \param window The window about which information is being requested
  *  \param info This structure must be initialized with the SDL version, and is 
  *              then filled in with information about the given window.
  *  
@@ -240,7 +195,7 @@ typedef struct SDL_SysWMinfo SDL_SysWMinfo;
  *  
  *  You typically use this function like this:
  *  \code
- *  SDL_SysWMInfo info;
+ *  SDL_SysWMinfo info;
  *  SDL_VERSION(&info.version);
  *  if ( SDL_GetWindowWMInfo(&info) ) { ... }
  *  \endcode

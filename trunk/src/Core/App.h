@@ -15,16 +15,15 @@ class StdinListener;
 class Scene;
 class MainRenderer;
 class Camera;
+class Input;
 
 
 /// The one and only global variable
 extern class App* app;
 
 
-/**
- * This class holds all the global objects of the application and its also responsible for some of the SDL stuff.
- * It should be singleton
- */
+/// This class holds all the global objects of the application and its also responsible for some of the SDL stuff.
+/// It should be singleton
 class App: public Object
 {
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
@@ -43,10 +42,8 @@ class App: public Object
 		void togleFullScreen();
 		void swapBuffers();
 
-		/**
-		 * The func pools the stdinListener for string in the console, if there are any it executes them with
-		 * scriptingEngine
-		 */
+		/// The func pools the stdinListener for string in the console, if there are any it executes them with
+		/// scriptingEngine
 		void execStdinScpripts();
 
 		static void printAppInfo();
@@ -54,10 +51,8 @@ class App: public Object
 		uint getDesktopWidth() const;
 		uint getDesktopHeight() const;
 
-		/**
-		 * @name Accessors
-		 */
-		/**@{*/
+		/// @name Accessors
+		/// @{
 		bool isTerminalColoringEnabled() const;
 		Scene& getScene();
 		ScriptingEngine& getScriptingEngine();
@@ -66,11 +61,10 @@ class App: public Object
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 		MessageHandler& getMessageHandler();
-		/**@}*/
+		Input& getInput();
+		/// @}
 
-		/**
-		 * @return Returns the number of milliseconds since SDL library initialization
-		 */
+		/// @return Returns the number of milliseconds since SDL library initialization
 		static uint getTicks();
 
 	private:
@@ -83,16 +77,15 @@ class App: public Object
 		bool fullScreenFlag;
 		Camera* activeCam; ///< Pointer to the current camera
 
-		/**
-		 * @name Pointers to serious subsystems
-		 */
-		/**@{*/
+		/// @name Pointers to serious subsystems
+		/// @{
 		Scene* scene;
 		ScriptingEngine* scriptingEngine;
 		MainRenderer* mainRenderer;
 		StdinListener* stdinListener;
 		MessageHandler* messageHandler;
-		/**@}*/
+		Input* input;
+		/// @}
 
 		void parseCommandLineArgs(int argc, char* argv[]);
 
@@ -139,6 +132,13 @@ inline MessageHandler& App::getMessageHandler()
 {
 	RASSERT_THROW_EXCEPTION(messageHandler == NULL);
 	return *messageHandler;
+}
+
+
+inline Input& App::getInput()
+{
+	RASSERT_THROW_EXCEPTION(input == NULL);
+	return *input;
 }
 
 
