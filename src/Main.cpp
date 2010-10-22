@@ -253,7 +253,7 @@ void mainLoop()
 	do
 	{
 		float crntTime = App::getTicks() / 1000.0;
-		I::handleEvents();
+		app->getInput().handleEvents();
 
 		float dist = 0.2;
 		float ang = toRad(3.0);
@@ -262,45 +262,45 @@ void mainLoop()
 		// move the camera
 		static SceneNode* mover = app->getActiveCam();
 
-		if(I::keys[SDL_SCANCODE_1]) mover = app->getActiveCam();
-		if(I::keys[SDL_SCANCODE_2]) mover = point_lights[0];
-		if(I::keys[SDL_SCANCODE_3]) mover = spot_lights[0];
-		if(I::keys[SDL_SCANCODE_4]) mover = point_lights[1];
-		if(I::keys[SDL_SCANCODE_5]) mover = spot_lights[1];
-		if(I::keys[SDL_SCANCODE_6]) mover = partEmitter;
-		if(I::keys[SDL_SCANCODE_M] == 1) I::warpMouse = !I::warpMouse;
+		if(app->getInput().keys[SDL_SCANCODE_1]) mover = app->getActiveCam();
+		if(app->getInput().keys[SDL_SCANCODE_2]) mover = point_lights[0];
+		if(app->getInput().keys[SDL_SCANCODE_3]) mover = spot_lights[0];
+		if(app->getInput().keys[SDL_SCANCODE_4]) mover = point_lights[1];
+		if(app->getInput().keys[SDL_SCANCODE_5]) mover = spot_lights[1];
+		if(app->getInput().keys[SDL_SCANCODE_6]) mover = partEmitter;
+		if(app->getInput().keys[SDL_SCANCODE_M] == 1) app->getInput().warpMouse = !app->getInput().warpMouse;
 
-		if(I::keys[SDL_SCANCODE_A]) mover->moveLocalX(-dist);
-		if(I::keys[SDL_SCANCODE_D]) mover->moveLocalX(dist);
-		if(I::keys[SDL_SCANCODE_LSHIFT]) mover->moveLocalY(dist);
-		if(I::keys[SDL_SCANCODE_SPACE]) mover->moveLocalY(-dist);
-		if(I::keys[SDL_SCANCODE_W]) mover->moveLocalZ(-dist);
-		if(I::keys[SDL_SCANCODE_S]) mover->moveLocalZ(dist);
-		if(!I::warpMouse)
+		if(app->getInput().keys[SDL_SCANCODE_A]) mover->moveLocalX(-dist);
+		if(app->getInput().keys[SDL_SCANCODE_D]) mover->moveLocalX(dist);
+		if(app->getInput().keys[SDL_SCANCODE_LSHIFT]) mover->moveLocalY(dist);
+		if(app->getInput().keys[SDL_SCANCODE_SPACE]) mover->moveLocalY(-dist);
+		if(app->getInput().keys[SDL_SCANCODE_W]) mover->moveLocalZ(-dist);
+		if(app->getInput().keys[SDL_SCANCODE_S]) mover->moveLocalZ(dist);
+		if(!app->getInput().warpMouse)
 		{
-			if(I::keys[SDL_SCANCODE_UP]) mover->rotateLocalX(ang);
-			if(I::keys[SDL_SCANCODE_DOWN]) mover->rotateLocalX(-ang);
-			if(I::keys[SDL_SCANCODE_LEFT]) mover->rotateLocalY(ang);
-			if(I::keys[SDL_SCANCODE_RIGHT]) mover->rotateLocalY(-ang);
+			if(app->getInput().keys[SDL_SCANCODE_UP]) mover->rotateLocalX(ang);
+			if(app->getInput().keys[SDL_SCANCODE_DOWN]) mover->rotateLocalX(-ang);
+			if(app->getInput().keys[SDL_SCANCODE_LEFT]) mover->rotateLocalY(ang);
+			if(app->getInput().keys[SDL_SCANCODE_RIGHT]) mover->rotateLocalY(-ang);
 		}
 		else
 		{
 			float accel = 44.0;
-			mover->rotateLocalX(ang * I::mouseVelocity.y * accel);
-			mover->rotateLocalY(-ang * I::mouseVelocity.x * accel);
+			mover->rotateLocalX(ang * app->getInput().mouseVelocity.y * accel);
+			mover->rotateLocalY(-ang * app->getInput().mouseVelocity.x * accel);
 		}
-		if(I::keys[SDL_SCANCODE_Q]) mover->rotateLocalZ(ang);
-		if(I::keys[SDL_SCANCODE_E]) mover->rotateLocalZ(-ang);
-		if(I::keys[SDL_SCANCODE_PAGEUP]) mover->getLocalTransform().scale += scale ;
-		if(I::keys[SDL_SCANCODE_PAGEDOWN]) mover->getLocalTransform().scale -= scale ;
+		if(app->getInput().keys[SDL_SCANCODE_Q]) mover->rotateLocalZ(ang);
+		if(app->getInput().keys[SDL_SCANCODE_E]) mover->rotateLocalZ(-ang);
+		if(app->getInput().keys[SDL_SCANCODE_PAGEUP]) mover->getLocalTransform().scale += scale ;
+		if(app->getInput().keys[SDL_SCANCODE_PAGEDOWN]) mover->getLocalTransform().scale -= scale ;
 
-		if(I::keys[SDL_SCANCODE_K]) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
+		if(app->getInput().keys[SDL_SCANCODE_K]) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
 
-		if(I::keys[SDL_SCANCODE_I])
+		if(app->getInput().keys[SDL_SCANCODE_I])
 			character->moveForward(0.1);
 
 
-		if(I::keys[SDL_SCANCODE_O] == 1)
+		if(app->getInput().keys[SDL_SCANCODE_O] == 1)
 		{
 			btRigidBody* body = static_cast<btRigidBody*>(boxes[0]);
 			//body->getMotionState()->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
@@ -309,7 +309,7 @@ void mainLoop()
 			body->forceActivationState(ACTIVE_TAG);
 		}
 
-		if(I::keys[SDL_SCANCODE_Y] == 1)
+		if(app->getInput().keys[SDL_SCANCODE_Y] == 1)
 		{
 			INFO("Exec script");
 			app->getScriptingEngine().exposeVar("app", app);
@@ -336,11 +336,11 @@ void mainLoop()
 		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z));*/
 
-		if(I::keys[SDL_SCANCODE_ESCAPE])
+		if(app->getInput().keys[SDL_SCANCODE_ESCAPE])
 			break;
-		if(I::keys[SDL_SCANCODE_F11])
+		if(app->getInput().keys[SDL_SCANCODE_F11])
 			app->togleFullScreen();
-		if(I::keys[SDL_SCANCODE_F12] == 1)
+		if(app->getInput().keys[SDL_SCANCODE_F12] == 1)
 			app->getMainRenderer().takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
@@ -357,7 +357,12 @@ void mainLoop()
 			app->waitForNextFrame();
 		}
 		else
-			if(app->getMainRenderer().getFramesNum() == 5000) break;
+		{
+			if(app->getMainRenderer().getFramesNum() == 5000)
+			{
+				break;
+			}
+		}
 	}while(true);
 
 	INFO("Exiting main loop (" + boost::lexical_cast<std::string>(App::getTicks() - ticks) + ")");
@@ -382,8 +387,8 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
-		abort();
+		MESSAGE("Error: " + e.what());
+		//abort();
 		return 1;
 	}
 }

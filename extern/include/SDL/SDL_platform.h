@@ -65,6 +65,11 @@
 #undef __LINUX__
 #define __LINUX__	1
 #endif
+#if defined(ANDROID)
+#undef __ANDROID__
+#undef __LINUX__ /*do we need to do this?*/
+#define __ANDROID__ 1
+#endif
 
 #if defined(__APPLE__)
 /* lets us know what version of Mac OS X we're compiling on */

@@ -1,29 +1,27 @@
-#include <SDL/SDL.h>
 #include "Input.h"
-#include "Renderer.h"
-
-
-namespace I {
-
+#include <SDL/SDL.h>
+#include "App.h"
 
 
 //======================================================================================================================
-// VARS                                                                                                                =
+// Constructor                                                                                                         =
 //======================================================================================================================
-Vec<short> keys(SDL_NUM_SCANCODES, 0);
-Vec<short> mouseBtns(8, 0);
-Vec2 mousePosNdc;
-Vec2 mousePos;
-Vec2 mouseVelocity;
-
-bool warpMouse = false;
-bool hideCursor = true;
+Input::Input(Object* parent):
+	Object(parent),
+	keys(SDL_NUM_SCANCODES, 0),
+	mouseBtns(8, 0),
+	warpMouse(false),
+	hideCursor(true),
+	parentApp(parent)
+{
+	reset();
+}
 
 
 //======================================================================================================================
 // reset                                                                                                               =
 //======================================================================================================================
-void reset(void)
+void Input::reset(void)
 {
 	RASSERT_THROW_EXCEPTION(keys.size() < 1);
 	RASSERT_THROW_EXCEPTION(mouseBtns.size() < 1);
@@ -34,15 +32,19 @@ void reset(void)
 }
 
 
-/*
-=======================================================================================================================================
-handleEvents                                                                                                           =
-=======================================================================================================================================
-*/
-void handleEvents()
+//======================================================================================================================
+// handleEvents                                                                                                        =
+//======================================================================================================================
+void Input::handleEvents()
 {
-	if(hideCursor) SDL_ShowCursor(SDL_DISABLE);
-	else             SDL_ShowCursor(SDL_ENABLE);
+	if(hideCursor)
+	{
+		SDL_ShowCursor(SDL_DISABLE);
+	}
+	else
+	{
+		SDL_ShowCursor(SDL_ENABLE);
+	}
 
 	// add the times a key is bying pressed
 	for(uint x=0; x<keys.size(); x++)
@@ -56,6 +58,7 @@ void handleEvents()
 
 
 	mouseVelocity = Vec2(0.0);
+	App* app_ = static_cast<App*>(parentApp);
 
 	SDL_Event event_;
 	while(SDL_PollEvent(&event_))
@@ -85,8 +88,8 @@ void handleEvents()
 				mousePos.x = event_.button.x;
 				mousePos.y = event_.button.y;
 
-				mousePosNdc.x = (2.0 * mousePos.x) / (float)app->getWindowWidth() - 1.0;
-				mousePosNdc.y = 1.0 - (2.0 * mousePos.y) / (float)app->getWindowHeight();
+				mousePosNdc.x = (2.0 * mousePos.x) / (float)app_->getWindowWidth() - 1.0;
+				mousePosNdc.y = 1.0 - (2.0 * mousePos.y) / (float)app_->getWindowHeight();
 
 				if(warpMouse)
 				{
@@ -103,7 +106,7 @@ void handleEvents()
 			}
 
 			case SDL_QUIT:
-				app->quit(1);
+				app_->quit(1);
 				break;
 		}
 	}
@@ -114,7 +117,3 @@ void handleEvents()
 	//cout << mouseBtns[SDL_BUTTON_LEFT] << endl;
 
 }
-
-
-
-} // end namespace

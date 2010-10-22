@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src/Scripting/ -I../../src/Math/ -I../../src/Misc/ -I../../src/ -I../../src/Renderer/ -I../../src/Scene/ -I../../src/Ui/ -I../../src/Resources/ -I../../src/Util/ -I../../src/Scene/Controllers/ -I../../src/Physics/ -I../../src/Renderer/BufferObjects/ -I../../src/Resources/Helpers/ -I../../src/Resources/Core/ -I../../src/Core/ -I../../src/Scripting/Math -I../../src/Scripting/Util -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Renderer -I../../src/Input -I../../src/Collision -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Scripting//ScriptingEngine.cpp ../../src/Scripting//BoostPythonInterfaces.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//Scene.cpp ../../src/Scene//SpotLight.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Script.cpp ../../src/Resources//LightData.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Util//Scanner.cpp ../../src/Util//Util.cpp ../../src/Util//BinaryStream.cpp ../../src/Util//Exception.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Physics//DebugDrawer.cpp ../../src/Renderer/BufferObjects//BufferObject.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp ../../src/Core//App.cpp ../../src/Core//StdinListener.cpp ../../src/Core//Object.cpp ../../src/Input/Input.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp 
-OBJECTS = ScriptingEngine.o BoostPythonInterfaces.o skybox.o map.o TestHeader.o Main.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o SpotLight.o Ui.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o Script.o LightData.o Mesh.o ParticleEmitterProps.o Scanner.o Util.o BinaryStream.o Exception.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o PhyCharacter.o DebugDrawer.o BufferObject.o Image.o ShaderPrePreprocessor.o RsrcPtr.o RsrcContainers.o App.o StdinListener.o Object.o Input.o Plane.o Sphere.o 
+SOURCES = ../../src/Scripting//ScriptingEngine.cpp ../../src/Scripting//BoostPythonInterfaces.cpp ../../src/Misc//skybox.cpp ../../src/Misc//map.cpp ../../src/Misc//TestHeader.cpp ../../src//Main.cpp ../../src/Renderer//Smo.cpp ../../src/Renderer//Ez.cpp ../../src/Renderer//Ms.cpp ../../src/Renderer//Sm.cpp ../../src/Renderer//Pps.cpp ../../src/Renderer//Ssao.cpp ../../src/Renderer//Renderer.cpp ../../src/Renderer//Is.cpp ../../src/Renderer//MainRenderer.cpp ../../src/Renderer//Dbg.cpp ../../src/Renderer//Hdr.cpp ../../src/Renderer//Bs.cpp ../../src/Scene//MeshNode.cpp ../../src/Scene//SceneNode.cpp ../../src/Scene//SkelNode.cpp ../../src/Scene//Light.cpp ../../src/Scene//SkelModelNode.cpp ../../src/Scene//Camera.cpp ../../src/Scene//ParticleEmitter.cpp ../../src/Scene//Scene.cpp ../../src/Scene//SpotLight.cpp ../../src/Ui//Ui.cpp ../../src/Resources//ShaderProg.cpp ../../src/Resources//Material.cpp ../../src/Resources//Texture.cpp ../../src/Resources//SkelAnim.cpp ../../src/Resources//Extension.cpp ../../src/Resources//Skeleton.cpp ../../src/Resources//Script.cpp ../../src/Resources//LightData.cpp ../../src/Resources//Mesh.cpp ../../src/Resources//ParticleEmitterProps.cpp ../../src/Util//Scanner.cpp ../../src/Util//Util.cpp ../../src/Util//BinaryStream.cpp ../../src/Util//Exception.cpp ../../src/Scene/Controllers//Controller.cpp ../../src/Scene/Controllers//SkelAnimCtrl.cpp ../../src/Physics//Physics.cpp ../../src/Physics//RigidBody.cpp ../../src/Physics//PhyCharacter.cpp ../../src/Physics//DebugDrawer.cpp ../../src/Renderer/BufferObjects//BufferObject.cpp ../../src/Resources/Helpers//Image.cpp ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp ../../src/Resources/Helpers//MeshData.cpp ../../src/Resources/Core//RsrcPtr.cpp ../../src/Resources/Core//RsrcContainers.cpp ../../src/Core//App.cpp ../../src/Core//StdinListener.cpp ../../src/Core//Object.cpp ../../src/Input/Input.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp 
+OBJECTS = ScriptingEngine.o BoostPythonInterfaces.o skybox.o map.o TestHeader.o Main.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o SpotLight.o Ui.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o Script.o LightData.o Mesh.o ParticleEmitterProps.o Scanner.o Util.o BinaryStream.o Exception.o Controller.o SkelAnimCtrl.o Physics.o RigidBody.o PhyCharacter.o DebugDrawer.o BufferObject.o Image.o ShaderPrePreprocessor.o MeshData.o RsrcPtr.o RsrcContainers.o App.o StdinListener.o Object.o Input.o Plane.o Sphere.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -240,6 +240,8 @@ BoostPythonInterfaces.o: ../../src/Scripting//BoostPythonInterfaces.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -445,6 +447,8 @@ skybox.o: ../../src/Misc//skybox.cpp ../../src/Misc//skybox.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -461,10 +465,21 @@ map.o: ../../src/Misc//map.cpp
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//map.cpp -o map.o
 
 TestHeader.o: ../../src/Misc//TestHeader.cpp \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Util/Exception.h \
- ../../src/Util/StdTypes.h
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Util/Properties.h
 	@echo Compiling ../../src/Misc//TestHeader.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc//TestHeader.cpp -o TestHeader.o
 
@@ -475,7 +490,35 @@ Main.o: ../../src//Main.cpp ../../src/Input/Input.h \
  ../../extern/include/SDL/SDL_platform.h \
  ../../extern/include/SDL/begin_code.h \
  ../../extern/include/SDL/close_code.h ../../src/Util/Vec.h \
- ../../src/Util/Exception.h ../../src/Core/App.h \
+ ../../src/Util/Exception.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Core/Object.h ../../src/Scene/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Util/Properties.h \
+ ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Ui/Ui.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_atomic.h \
  ../../extern/include/SDL/SDL_audio.h \
@@ -497,41 +540,15 @@ Main.o: ../../src//Main.cpp ../../src/Input/Input.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core/Object.h \
- ../../src/Core/MessageHandler.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Util/Exception.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Scene/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
- ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Ui/Ui.h ../../src/Resources/Mesh.h \
+ ../../src/Core/MessageHandler.h ../../src/Resources/Mesh.h \
  ../../src/Scene/Light.h ../../src/Scene/Camera.h \
  ../../src/Resources/LightData.h ../../src/Resources/Texture.h \
  ../../src/Scene/PointLight.h ../../src/Scene/Light.h \
@@ -774,6 +791,8 @@ Ez.o: ../../src/Renderer//Ez.cpp ../../src/Renderer//Ez.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -972,6 +991,8 @@ Ms.o: ../../src/Renderer//Ms.cpp ../../src/Renderer//Ms.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -1173,6 +1194,8 @@ Sm.o: ../../src/Renderer//Sm.cpp ../../src/Renderer//Sm.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -1444,6 +1467,8 @@ Renderer.o: ../../src/Renderer//Renderer.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -1644,6 +1669,8 @@ Is.o: ../../src/Renderer//Is.cpp ../../src/Renderer//Is.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -1838,6 +1865,8 @@ MainRenderer.o: ../../src/Renderer//MainRenderer.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -1902,6 +1931,8 @@ Dbg.o: ../../src/Renderer//Dbg.cpp ../../src/Renderer//Dbg.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2131,6 +2162,8 @@ Bs.o: ../../src/Renderer//Bs.cpp ../../src/Renderer//Bs.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2328,6 +2361,8 @@ MeshNode.o: ../../src/Scene//MeshNode.cpp ../../src/Scene//MeshNode.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2531,6 +2566,8 @@ SceneNode.o: ../../src/Scene//SceneNode.cpp ../../src/Scene//SceneNode.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2588,6 +2625,8 @@ SkelNode.o: ../../src/Scene//SkelNode.cpp ../../src/Scene//SkelNode.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2656,6 +2695,8 @@ Light.o: ../../src/Scene//Light.cpp ../../src/Scene//Light.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2763,6 +2804,8 @@ Camera.o: ../../src/Scene//Camera.cpp ../../src/Scene//Camera.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -2961,6 +3004,8 @@ ParticleEmitter.o: ../../src/Scene//ParticleEmitter.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -3219,6 +3264,8 @@ Ui.o: ../../src/Ui//Ui.cpp ../../src/Ui//Ui.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -3275,6 +3322,8 @@ ShaderProg.o: ../../src/Resources//ShaderProg.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -3333,6 +3382,8 @@ Material.o: ../../src/Resources//Material.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -3685,6 +3736,8 @@ Controller.o: ../../src/Scene/Controllers//Controller.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -3742,6 +3795,8 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers//SkelAnimCtrl.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -4289,6 +4344,8 @@ DebugDrawer.o: ../../src/Physics//DebugDrawer.cpp \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -4445,6 +4502,26 @@ ShaderPrePreprocessor.o: \
 	@echo Compiling ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Helpers//ShaderPrePreprocessor.cpp -o ShaderPrePreprocessor.o
 
+MeshData.o: ../../src/Resources/Helpers//MeshData.cpp \
+ ../../src/Resources/Helpers//MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Util/Properties.h ../../src/Util/BinaryStream.h \
+ ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Resources/Helpers//MeshData.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Helpers//MeshData.cpp -o MeshData.o
+
 RsrcPtr.o: ../../src/Resources/Core//RsrcPtr.cpp \
  ../../src/Resources/Core//RsrcPtr.h ../../src/Util/Exception.h \
  ../../src/Resources/Core//RsrcContainer.h ../../src/Util/Vec.h \
@@ -4532,6 +4609,8 @@ App.o: ../../src/Core//App.cpp ../../extern/include/GL/glew.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
@@ -4695,7 +4774,8 @@ App.o: ../../src/Core//App.cpp ../../extern/include/GL/glew.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
  ../../src/Renderer/Dbg.h ../../src/Scripting/ScriptingEngine.h \
- ../../src/Core//StdinListener.h ../../src/Core//Messaging.h
+ ../../src/Core//StdinListener.h ../../src/Core//Messaging.h \
+ ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h
 	@echo Compiling ../../src/Core//App.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core//App.cpp -o App.o
 
@@ -4711,13 +4791,27 @@ Object.o: ../../src/Core//Object.cpp ../../src/Core//Object.h \
 	@echo Compiling ../../src/Core//Object.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core//Object.cpp -o Object.o
 
-Input.o: ../../src/Input/Input.cpp ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
+Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
+ ../../extern/include/SDL/SDL_scancode.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
  ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/close_code.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Core/Object.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_atomic.h \
  ../../extern/include/SDL/SDL_audio.h \
  ../../extern/include/SDL/SDL_error.h \
@@ -4738,39 +4832,16 @@ Input.o: ../../src/Input/Input.cpp ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_mouse.h \
  ../../extern/include/SDL/SDL_joystick.h \
  ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
  ../../extern/include/SDL/SDL_loadso.h \
  ../../extern/include/SDL/SDL_power.h \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_revision.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Input/Input.h \
- ../../extern/include/SDL/SDL_scancode.h ../../src/Util/Vec.h \
- ../../src/Util/Exception.h ../../src/Core/App.h ../../src/Core/Object.h \
- ../../src/Core/MessageHandler.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Util/Exception.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Core/Object.h \
- ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Renderer/Smo.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h
+ ../../extern/include/SDL/SDL_compat.h ../../src/Core/App.h \
+ ../../src/Core/Object.h ../../src/Core/MessageHandler.h \
+ ../../src/Util/Properties.h
 	@echo Compiling ../../src/Input/Input.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Input/Input.cpp -o Input.o
 

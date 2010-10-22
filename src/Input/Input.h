@@ -3,26 +3,33 @@
 
 #include <SDL/SDL_scancode.h>
 #include "Vec.h"
-#include "App.h"
 #include "Math.h"
+#include "Object.h"
+
 
 /// Handle the SDL input
-namespace I {
+class Input: public Object
+{
+	public:
+		Input(Object* parent);
 
-extern void reset();
-extern void handleEvents();
+		// keys and btns
+		Vec<short> keys;  ///< Shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continuously
+		Vec<short> mouseBtns; ///< Mouse btns. Supporting 3 btns & wheel. @see keys
 
-// keys and btns
-extern Vec<short> keys;  ///< Shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continuously
-extern Vec<short> mouseBtns;    ///< Mouse btns. Supporting 3 btns & wheel. Works the same as above
+		void reset();
+		void handleEvents();
 
-// mouse stuff
-extern Vec2 mousePosNdc; ///< The coords are in the NDC space
-extern Vec2 mousePos;     ///< The coords are in the window space. (0, 0) is in the upper left corner
-extern Vec2 mouseVelocity;
-extern bool warpMouse;
-extern bool hideCursor;
+		// mouse stuff
+		Vec2 mousePosNdc; ///< The coords are in the NDC space
+		Vec2 mousePos;     ///< The coords are in the window space. (0, 0) is in the upper left corner
+		Vec2 mouseVelocity;
+		bool warpMouse;
+		bool hideCursor;
 
-} // end namespace
+	private:
+		Object* parentApp; ///< Hold the parrent here cause we use him
+};
+
 
 #endif

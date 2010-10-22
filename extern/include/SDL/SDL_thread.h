@@ -50,6 +50,11 @@ typedef struct SDL_Thread SDL_Thread;
 /* The SDL thread ID */
 typedef unsigned long SDL_threadID;
 
+/* The function passed to SDL_CreateThread()
+   It is passed a void* user context parameter and returns an int.
+ */
+typedef int (SDLCALL * SDL_ThreadFunction) (void *data);
+
 #if defined(__WIN32__) && !defined(HAVE_LIBC)
 /**
  *  \file SDL_thread.h
@@ -100,7 +105,7 @@ typedef void (__cdecl * pfnSDL_CurrentEndThread) (unsigned code);
  *  Create a thread.
  */
 extern DECLSPEC SDL_Thread *SDLCALL
-SDL_CreateThread(int (SDLCALL * f) (void *), void *data,
+SDL_CreateThread(SDL_ThreadFunction fn, void *data,
                  pfnSDL_CurrentBeginThread pfnBeginThread,
                  pfnSDL_CurrentEndThread pfnEndThread);
 
@@ -125,7 +130,7 @@ SDL_CreateThread(int (SDLCALL * f) (void *), void *data,
  *  Create a thread.
  */
 extern DECLSPEC SDL_Thread *SDLCALL
-SDL_CreateThread(int (SDLCALL * fn) (void *), void *data);
+SDL_CreateThread(SDL_ThreadFunction fn, void *data);
 
 #endif
 
