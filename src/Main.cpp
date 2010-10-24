@@ -39,9 +39,6 @@
 #include "StdinListener.h"
 #include "Messaging.h"
 
-
-App* app = NULL; ///< The only global var. App constructor sets it
-
 // map (hard coded)
 MeshNode* floor__,* sarge,* horse,* crate;
 SkelModelNode* imp;

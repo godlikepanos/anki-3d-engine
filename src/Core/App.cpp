@@ -14,6 +14,9 @@
 #include "Input.h"
 
 
+App* app = NULL; ///< The only global var. App constructor sets it
+
+
 bool App::isCreated = false;
 
 
