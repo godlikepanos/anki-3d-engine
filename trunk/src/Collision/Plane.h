@@ -13,8 +13,13 @@ class Plane: public CollisionShape
 	PROPERTY_RW(float, offset, setOffset, getOffset)
 
 	public:
+		/// Default constructor
 		Plane(): CollisionShape(CST_PLANE) {}
+
+		/// Copy constructor
 		Plane(const Plane& b);
+
+		/// Constructor
 		Plane(const Vec3& normal_, float offset_);
 
 		/// @see setFrom3Points

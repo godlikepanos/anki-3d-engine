@@ -26,7 +26,7 @@
 class MeshData
 {
 	public:
-		/// Vertex weight for skeletan animation
+		/// Vertex weight for skeletal animation
 		class VertexWeight
 		{
 			public:
