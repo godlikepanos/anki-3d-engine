@@ -102,27 +102,26 @@ App::App(int argc, char* argv[], Object* parent):
 	// create the subsystems. WATCH THE ORDER
 	scriptingEngine = new ScriptingEngine(this);
 	scriptingEngine->exposeVar("app", this);
-
 	const char* commonPythonCode =
 	"import sys\n"
 	"from Anki import *\n"
 	"\n"
 	"class StdoutCatcher:\n"
-	"\tdef write(self, str):\n"
-	"\t\tline = sys._getframe(2).f_lineno\n"
-	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
-	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
-	"\t\tapp.getMessageHandler().write(fname, line, func, str)\n"
+	"\tdef write(self, str_):\n"
+	"\t\tline = sys._getframe(1).f_lineno\n"
+	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
+	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
+	"\t\tapp.getMessageHandler().write(file, line, func, str_)\n"
 	"\n"
 	"class StderrCatcher:\n"
-	"\tdef write(self, str):\n"
+	"\tdef write(self, str_):\n"
 	"\t\tline = sys._getframe(2).f_lineno\n"
 	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
 	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
-	"\t\tapp.getMessageHandler().write(fname, line, func, str)\n"
+	"\t\tapp.getMessageHandler().write(file, line, func, str_)\n"
 	"\n"
-	"sys.stdout = StdoutCatcher\n"
-	"sys.stderr = StderrCatcher\n";
+	"sys.stdout = StdoutCatcher()\n";
+	//"sys.stderr = StderrCatcher\n";
 
 	scriptingEngine->execScript(commonPythonCode);
 	mainRenderer = new MainRenderer(this);
@@ -328,6 +327,13 @@ void App::execStdinScpripts()
 			break;
 		}
 
-		app->getScriptingEngine().execScript(cmd.c_str(), "command line input");
+		try
+		{
+			app->getScriptingEngine().execScript(cmd.c_str(), "command line input");
+		}
+		catch(Exception& e)
+		{
+			ERROR(e.what());
+		}
 	}
 }

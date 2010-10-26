@@ -10,7 +10,7 @@
 template<typename Type>
 RsrcContainer<Type>::~RsrcContainer()
 {
-	RASSERT_THROW_EXCEPTION(BaseClass::size() != 0); // this means that somehow a resource is still loaded
+	//RASSERT_THROW_EXCEPTION(BaseClass::size() != 0); // this means that somehow a resource is still loaded
 }
 
 
