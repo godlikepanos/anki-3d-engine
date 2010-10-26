@@ -13,5 +13,7 @@
 
 #define WARNING(x) MESSAGE(std::string("Warning: ") + x)
 
+#define ERROR(x) MESSAGE(std::string("Error: ") + x)
+
 
 #endif
