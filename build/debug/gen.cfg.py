@@ -1,4 +1,10 @@
-sourcePaths = ["../../src/Scripting/", "../../src/Math/", "../../src/Misc/", "../../src/", "../../src/Renderer/", "../../src/Scene/", "../../src/Ui/", "../../src/Resources/", "../../src/Util/", "../../src/Scene/Controllers/", "../../src/Physics/", "../../src/Renderer/BufferObjects/", "../../src/Resources/Helpers/", "../../src/Resources/Core/", "../../src/Core/", "../../src/Scripting/Math", "../../src/Scripting/Util", "../../src/Scripting/Core", "../../src/Scripting/Scene", "../../src/Scripting/Renderer", "../../src/Input", "../../src/Collision"]
+sourcePaths = ["../../src"]
+
+for top, dirs, files in os.walk("../../src"):
+	for nm in dirs:
+		dir_ = os.path.join(top, nm)
+		if dir_.find(".svn") == -1:
+			sourcePaths.append(dir_)
 
 includePaths = []
 includePaths.append("./")

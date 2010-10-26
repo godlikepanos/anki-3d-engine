@@ -1,29 +1,23 @@
 #include <boost/python.hpp>
-#include "Math.h"
-#include "Scene.h"
-#include "MainRenderer.h"
 #include "App.h"
 
 
-using namespace boost;
-using namespace boost::python;
-using namespace M;
+#define CALL_WRAP(x) extern void boostPythonWrap##x(); boostPythonWrap##x();
 
 
 BOOST_PYTHON_MODULE(Anki)
 {
-	#include "Vec2.bpi.h"
-	#include "Vec3.bpi.h"
-	#include "Vec4.bpi.h"
+	CALL_WRAP(Vec2);
+	CALL_WRAP(Vec3);
+	CALL_WRAP(Vec4);
 
-	#include "Scene.bpi.h"
+	CALL_WRAP(Scene)
 
-	#include "Hdr.bpi.h"
-	#include "Pps.bpi.h"
-	#include "Renderer.bpi.h"
-	#include "Dbg.bpi.h"
-	#include "MainRenderer.bpi.h"
+	CALL_WRAP(Hdr)
+	CALL_WRAP(Pps)
+	CALL_WRAP(Renderer)
+	CALL_WRAP(Dbg)
+	CALL_WRAP(MainRenderer)
 
-	#include "App.bpi.h"
+	CALL_WRAP(App)
 }
-

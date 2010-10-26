@@ -69,6 +69,7 @@ App::App(int argc, char* argv[], Object* parent):
 	parseCommandLineArgs(argc, argv);
 
 	messageHandler = new MessageHandler(this);
+	// send output to handleMessageHanlderMsgs
 	messageHandler->getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
 	printAppInfo();
@@ -101,7 +102,29 @@ App::App(int argc, char* argv[], Object* parent):
 	// create the subsystems. WATCH THE ORDER
 	scriptingEngine = new ScriptingEngine(this);
 	scriptingEngine->exposeVar("app", this);
-	scriptingEngine->execScript("from Anki import *");
+
+	const char* commonPythonCode =
+	"import sys\n"
+	"from Anki import *\n"
+	"\n"
+	"class StdoutCatcher:\n"
+	"\tdef write(self, str):\n"
+	"\t\tline = sys._getframe(2).f_lineno\n"
+	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
+	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
+	"\t\tapp.getMessageHandler().write(fname, line, func, str)\n"
+	"\n"
+	"class StderrCatcher:\n"
+	"\tdef write(self, str):\n"
+	"\t\tline = sys._getframe(2).f_lineno\n"
+	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
+	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
+	"\t\tapp.getMessageHandler().write(fname, line, func, str)\n"
+	"\n"
+	"sys.stdout = StdoutCatcher\n"
+	"sys.stderr = StderrCatcher\n";
+
+	scriptingEngine->execScript(commonPythonCode);
 	mainRenderer = new MainRenderer(this);
 	scene = new Scene(this);
 	stdinListener = new StdinListener(this);
@@ -110,7 +133,7 @@ App::App(int argc, char* argv[], Object* parent):
 
 	// other
 	activeCam = NULL;
-	timerTick = 1000/40; // in ms. 1000/Hz
+	timerTick = 1000 / 40; // in ms. 1000/Hz
 	time = 0;
 }
 
