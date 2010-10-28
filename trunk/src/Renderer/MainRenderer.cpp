@@ -7,6 +7,7 @@
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
+#include "Messaging.h"
 
 
 //======================================================================================================================
@@ -42,12 +43,13 @@ void MainRenderer::initGl()
 	}
 
 	// print GL info
-	//INFO("OpenGL info: OGL " << glGetString(GL_VERSION) << ", GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION));
+	INFO("OpenGL info: OGL " + reinterpret_cast<const char*>(glGetString(GL_VERSION)) + ", GLSL " +
+	     reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
-	/*if(!glewIsSupported("GL_VERSION_3_1"))
+	if(!glewIsSupported("GL_VERSION_3_1"))
 	{
 		WARNING("OpenGL ver 3.1 not supported. The application may crash (and burn)");
-	}*/
+	}
 
 	// get max texture units
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum);
