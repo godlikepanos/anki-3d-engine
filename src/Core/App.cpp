@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include "App.h"
 #include "Scene.h"
 #include "MainRenderer.h"
@@ -25,7 +26,14 @@ bool App::isCreated = false;
 //======================================================================================================================
 void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg)
 {
-	std::cout << "(" << file << ":" << line << " "<< func << ") " << msg << std::endl;
+	if(boost::find_first(msg, "Warning") || boost::find_first(msg, "Error"))
+	{
+		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg << std::endl;
+	}
+	else
+	{
+		std::cout << "(" << file << ":" << line << " "<< func << ") " << msg << std::endl;
+	}
 }
 
 

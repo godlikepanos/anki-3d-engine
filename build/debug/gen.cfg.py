@@ -1,13 +1,7 @@
 sourcePaths = ["../../src"]
+sourcePaths.extend(list(walkDir("../../src")))
 
-for top, dirs, files in os.walk("../../src"):
-	for nm in dirs:
-		dir_ = os.path.join(top, nm)
-		if dir_.find(".svn") == -1:
-			sourcePaths.append(dir_)
-
-includePaths = []
-includePaths.append("./")
+includePaths = ["./"]
 includePaths.extend(list(sourcePaths))
 includePaths.extend(["../../extern/include", "../../extern/include/bullet", "/usr/include/python2.6"])
 

@@ -6,6 +6,7 @@
 #include "Texture.h" // For certain setters
 #include "App.h" // To get cache dir
 #include "GlException.h"
+#include "Messaging.h"
 
 
 #define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + getRsrcName() + "\": " + x)
@@ -190,14 +191,14 @@ void ShaderProg::getUniAndAttribVars()
 	attribVars.reserve(num);
 	for(int i=0; i<num; i++) // loop all attributes
 	{
-		glGetActiveAttrib(glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_);
+		glGetActiveAttrib(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, name_);
 		name_[length] = '\0';
 
 		// check if its FFP location
 		int loc = glGetAttribLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			std::cout << "You are using FFP vertex attributes (\"" << name_ << "\")" << std::endl; /// @todo fix this
+			WARNING("You are using FFP vertex attributes (\"" + name_ + "\")");
 			continue;
 		}
 
@@ -211,14 +212,14 @@ void ShaderProg::getUniAndAttribVars()
 	uniVars.reserve(num);
 	for(int i=0; i<num; i++) // loop all uniforms
 	{
-		glGetActiveUniform(glId, i, sizeof(name_)/sizeof(char), &length, &size, &type, name_);
+		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, name_);
 		name_[length] = '\0';
 
 		// check if its FFP location
 		int loc = glGetUniformLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			std::cout << "You are using FFP uniforms (\"" << name_ << "\")" << std::endl;
+			WARNING("You are using FFP vertex uniforms (\"" + name_ + "\")");
 			continue;
 		}
 
