@@ -4,6 +4,10 @@
 #include "Collision.h"
 #include "App.h"
 #include "Shredder.h"
+#include "Camera.h"
+#include "Input.h"
+#include "MainRenderer.h"
+#include "RendererInitializer.h"
 
 
 struct TempMesh
@@ -109,33 +113,127 @@ void shredMesh(const char* filename, float octreeMinSize)
 
 
 //======================================================================================================================
+// initEngine                                                                                                          =
+//======================================================================================================================
+void initEngine(int argc, char** argv)
+{
+	new App(argc, argv);
+	app->initWindow();
+
+	RendererInitializer initializer;
+	initializer.ms.ez.enabled = false;
+	initializer.dbg.enabled = true;
+	initializer.is.sm.bilinearEnabled = true;
+	initializer.is.sm.enabled = true;
+	initializer.is.sm.pcfEnabled = true;
+	initializer.is.sm.resolution = 512;
+	initializer.pps.hdr.enabled = true;
+	initializer.pps.hdr.renderingQuality = 0.25;
+	initializer.pps.hdr.blurringDist = 1.0;
+	initializer.pps.hdr.blurringIterations = 2;
+	initializer.pps.hdr.exposure = 4.0;
+	initializer.pps.ssao.blurringIterations = 2;
+	initializer.pps.ssao.enabled = true;
+	initializer.pps.ssao.renderingQuality = 0.5;
+	initializer.mainRendererQuality = 1.0;
+	app->getMainRenderer().init(initializer);
+
+	Camera* cam = new Camera(toRad(60.0), toRad(60.0), 0.5, 200.0);
+	cam->moveLocalY(3.0);
+	cam->moveLocalZ(5.7);
+	cam->moveLocalX(-0.3);
+	app->setActiveCam(cam);
+}
+
+
+//======================================================================================================================
 // main                                                                                                                =
 //======================================================================================================================
 int main(int argc, char** argv)
 {
 	try
 	{
-		new App(argc, argv);
-		app->initWindow();
-
-		Camera* cam = new Camera(app->getMainRenderer().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
-		cam->moveLocalY(3.0);
-		cam->moveLocalZ(5.7);
-		cam->moveLocalX(-0.3);
-		app->setActiveCam(cam);
 
 		Shredder shredder("/home/godlike/src/anki/maps/sponza/walls.mesh", 1.0);
 
 		while(true)
 		{
+			// Input
+			app->getInput().handleEvents();
+			float dist = 0.2;
+			float ang = toRad(3.0);
+			float scale = 0.01;
+			SceneNode* mover = app->getActiveCam();
+			if(app->getInput().keys[SDL_SCANCODE_A])
+			{
+				mover->moveLocalX(-dist);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_D])
+			{
+				mover->moveLocalX(dist);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_LSHIFT])
+			{
+				mover->moveLocalY(dist);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_SPACE])
+			{
+				mover->moveLocalY(-dist);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_W])
+			{
+				mover->moveLocalZ(-dist);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_S])
+			{
+				mover->moveLocalZ(dist);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_Q])
+			{
+				mover->rotateLocalZ(ang);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_E])
+			{
+				mover->rotateLocalZ(-ang);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_UP])
+			{
+				mover->rotateLocalX(ang);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_DOWN])
+			{
+				mover->rotateLocalX(-ang);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_LEFT])
+			{
+				mover->rotateLocalY(ang);
+			}
+			if(app->getInput().keys[SDL_SCANCODE_RIGHT])
+			{
+				mover->rotateLocalY(-ang);
+			}
+
+			mover->getLocalTransform().rotation.reorthogonalize();
+
+			// Render
+			app->getMainRenderer().render(*app->getActiveCam());
+
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			glColor3fv(&Vec3(1.0)[0]);
 
 			// Draw
+			glMatrixMode(GL_PROJECTION_MATRIX);
+			Mat4 projMat = app->getActiveCam()->getProjectionMatrix().getTransposed();
+			glLoadMatrixf(&projMat[0]);
+			glMatrixMode(GL_MODELVIEW_MATRIX);
+			Mat4 viewMat = app->getActiveCam()->getViewMatrix().getTransposed();
+			glLoadMatrixf(&viewMat[0]);
+
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glVertexPointer(3, GL_FLOAT, 0, &(shredder.getOriginalMesh().getVertCoords()[0]));
-			glDrawElements(GL_QUADS, shredder.getOriginalMesh().getVertIndeces().size(), GL_UNSIGNED_BYTE, &shredder.getOriginalMesh().getVertIndeces()[0]);
+			glDrawElements(GL_QUADS, shredder.getOriginalMesh().getVertIndeces().size(), GL_UNSIGNED_BYTE,
+			               &shredder.getOriginalMesh().getVertIndeces()[0]);
 			glDisableClientState(GL_VERTEX_ARRAY);
 
 			app->swapBuffers();
