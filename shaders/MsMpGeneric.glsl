@@ -36,13 +36,13 @@
 /*
  * Attributes
  */
-attribute vec3 position;
-attribute vec3 normal;
+in vec3 position;
+in vec3 normal;
 #if NEEDS_TEX_MAPPING
-	attribute vec2 texCoords;
+	in vec2 texCoords;
 #endif
 #if NEEDS_TANGENT
-	attribute vec4 tangent;
+	in vec4 tangent;
 #endif
 
 /*
@@ -58,11 +58,11 @@ uniform mat4 modelViewProjectionMat;
 /*
  * Varyings
  */
-varying vec3 vNormal;
-varying vec2 vTexCoords;
-varying vec3 vTangent;
-varying float vTangentW;
-varying vec3 vVertPosViewSpace; ///< For env mapping. AKA view_vector
+out vec3 vNormal;
+out vec2 vTexCoords;
+out vec3 vTangent;
+out float vTangentW;
+out vec3 vVertPosViewSpace; ///< For env mapping. AKA view_vector
 
 
 
@@ -152,14 +152,17 @@ uniform vec3 diffuseCol = vec3(1.0, 0.0, 1.0);
 uniform vec3 specularCol = vec3(1.0, 0.0, 1.0);
 uniform float shininess = 50.0;
 
-varying vec3 vNormal;
-varying vec3 vTangent;
-varying float vTangentW;
-varying vec2 vTexCoords;
-varying vec3 vVertPosViewSpace;
+in vec3 vNormal;
+in vec3 vTangent;
+in float vTangentW;
+in vec2 vTexCoords;
+in vec3 vVertPosViewSpace;
 // @todo 
-varying vec3 eye;
+in vec3 eye;
 
+layout(location = 0) out vec2 fMsNormalFai;
+layout(location = 1) out vec3 fMsDiffuseFai;
+layout(location = 2) out vec4 fMsSpecularFai;
 
 
 //======================================================================================================================
@@ -283,9 +286,9 @@ void main()
 	/*
 	 * Final Stage. Write all data
 	 */
-	gl_FragData[0].rg = packNormal(_normal_);
-	gl_FragData[1].rgb = _diffColl_;
-	gl_FragData[2] = _specularCol_;
+	fMsNormalFai = packNormal(_normal_);
+	fMsDiffuseFai = _diffColl_;
+	fMsSpecularFai = _specularCol_;
 
 	/*#if defined(HARDWARE_SKINNING)
 		gl_FragData[1] = gl_Color;

@@ -48,9 +48,9 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// init the stages. Careful with the order!!!!!!!!!!
 	ms.init(initializer);
-	is.init(initializer);
+	/*is.init(initializer);
 	pps.init(initializer);
-	bs.init(initializer);
+	bs.init(initializer);*/
 }
 
 
@@ -62,14 +62,24 @@ void Renderer::render(Camera& cam_)
 	cam = &cam_;
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
-
 	ms.run();
-	is.run();
+	/*is.run();
 	pps.runPrePass();
 	bs.run();
-	pps.runPostPass();
+	pps.runPostPass();*/
 
 	++framesNum;
+}
+
+
+//======================================================================================================================
+// initQuad                                                                                                            =
+//======================================================================================================================
+void Renderer::initQuad()
+{
+	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
+	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+
 }
 
 
@@ -79,10 +89,15 @@ void Renderer::render(Camera& cam_)
 void Renderer::drawQuad(int vertCoordsAttribLoc)
 {
 	RASSERT_THROW_EXCEPTION(vertCoordsAttribLoc == -1);
+ON_GL_FAIL_THROW_EXCEPTION();
 	glEnableVertexAttribArray(vertCoordsAttribLoc);
+ON_GL_FAIL_THROW_EXCEPTION();
 	glVertexAttribPointer(vertCoordsAttribLoc, 2, GL_FLOAT, false, 0, quadVertCoords);
+ON_GL_FAIL_THROW_EXCEPTION();
 	glDrawArrays(GL_QUADS, 0, 4);
+ON_GL_FAIL_THROW_EXCEPTION();
 	glDisableVertexAttribArray(vertCoordsAttribLoc);
+ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 
@@ -120,11 +135,11 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 
 	if(mtl.wireframe)
 	{
-		glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 	else
 	{
-		glPolygonMode(GL_FRONT, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 

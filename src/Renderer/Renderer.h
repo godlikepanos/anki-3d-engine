@@ -13,6 +13,7 @@
 #include "Pps.h"
 #include "Bs.h"
 #include "Dbg.h"
+#include "GlException.h"
 
 
 class Camera;
@@ -100,7 +101,6 @@ class Renderer: public Object
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions
 		static void drawQuad(int vertCoordsAttribLoc);
 
-
 	//====================================================================================================================
 	// Protected                                                                                                         =
 	//====================================================================================================================
@@ -110,7 +110,15 @@ class Renderer: public Object
 		static int maxColorAtachments; ///< Max color attachments a FBO can accept
 		Mat4 viewProjectionMat; ///< In case anyone needs it
 
-		// to be removed
+	//====================================================================================================================
+	// Protected                                                                                                         =
+	//====================================================================================================================
+	private:
+		static Vbo quadPositionsVbo;
+		static Vao quadVao;
+		static void initQuad();
+
+	// to be removed
 	public:
 		static void color3(const Vec3& v) { glColor3fv(&((Vec3&)v)[0]); } ///< OpenGL wrapper
 		static void color4(const Vec4& v) { glColor4fv(&((Vec4&)v)[0]); } ///< OpenGL wrapper

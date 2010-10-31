@@ -17,10 +17,10 @@
 //======================================================================================================================
 
 std::string ShaderProg::stdSourceCode(
-	"#version 150 compatibility\n \
-	precision lowp float;\n \
-	#pragma optimize(on)\n \
-	#pragma debug(off)\n"
+	"#version 330 core\n"
+	//"precision lowp float;\n"
+	"#pragma optimize(on)\n"
+	"#pragma debug(off)\n"
 );
 
 
@@ -198,7 +198,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("You are using FFP vertex attributes (\"" + name_ + "\")");
+			WARNING("Shader prog: \"" + getRsrcName() + "\": You are using FFP vertex attributes (\"" + name_ + "\")");
 			continue;
 		}
 
@@ -219,7 +219,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("You are using FFP vertex uniforms (\"" + name_ + "\")");
+			WARNING("Shader prog: \"" + getRsrcName() + "\": You are using FFP vertex uniforms (\"" + name_ + "\")");
 			continue;
 		}
 
@@ -248,7 +248,7 @@ void ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 		catch(std::exception& e)
 		{
 			throw SPROG_EXCEPTION("Something went wrong for attrib \"" + name + "\" and location " +
-			                      boost::lexical_cast<std::string>(loc));
+			                      boost::lexical_cast<std::string>(loc) + ": " + e.what());
 		}
 	}
 }

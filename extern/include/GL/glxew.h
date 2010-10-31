@@ -398,6 +398,20 @@ typedef GLXContext ( * PFNGLXCREATECONTEXTATTRIBSARBPROC) (Display* dpy, GLXFBCo
 
 #endif /* GLX_ARB_create_context_profile */
 
+/* ------------------- GLX_ARB_create_context_robustness ------------------- */
+
+#ifndef GLX_ARB_create_context_robustness
+#define GLX_ARB_create_context_robustness 1
+
+#define GLX_CONTEXT_ROBUST_ACCESS_BIT_ARB 0x00000004
+#define GLX_LOSE_CONTEXT_ON_RESET_ARB 0x8252
+#define GLX_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB 0x8256
+#define GLX_NO_RESET_NOTIFICATION_ARB 0x8261
+
+#define GLXEW_ARB_create_context_robustness GLXEW_GET_VAR(__GLXEW_ARB_create_context_robustness)
+
+#endif /* GLX_ARB_create_context_robustness */
+
 /* ------------------------- GLX_ARB_fbconfig_float ------------------------ */
 
 #ifndef GLX_ARB_fbconfig_float
@@ -518,6 +532,17 @@ typedef void ( * PFNGLXRELEASETEXIMAGEATIPROC) (Display *dpy, GLXPbuffer pbuf, i
 #define GLXEW_ATI_render_texture GLXEW_GET_VAR(__GLXEW_ATI_render_texture)
 
 #endif /* GLX_ATI_render_texture */
+
+/* ------------------- GLX_EXT_create_context_es2_profile ------------------ */
+
+#ifndef GLX_EXT_create_context_es2_profile
+#define GLX_EXT_create_context_es2_profile 1
+
+#define GLX_CONTEXT_ES2_PROFILE_BIT_EXT 0x00000004
+
+#define GLXEW_EXT_create_context_es2_profile GLXEW_GET_VAR(__GLXEW_EXT_create_context_es2_profile)
+
+#endif /* GLX_EXT_create_context_es2_profile */
 
 /* --------------------- GLX_EXT_fbconfig_packed_float --------------------- */
 
@@ -1426,6 +1451,7 @@ GLXEW_EXPORT GLboolean __GLXEW_3DFX_multisample;
 GLXEW_EXPORT GLboolean __GLXEW_AMD_gpu_association;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_create_context;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_create_context_profile;
+GLXEW_EXPORT GLboolean __GLXEW_ARB_create_context_robustness;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_fbconfig_float;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_framebuffer_sRGB;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_get_proc_address;
@@ -1433,6 +1459,7 @@ GLXEW_EXPORT GLboolean __GLXEW_ARB_multisample;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_vertex_buffer_object;
 GLXEW_EXPORT GLboolean __GLXEW_ATI_pixel_format_float;
 GLXEW_EXPORT GLboolean __GLXEW_ATI_render_texture;
+GLXEW_EXPORT GLboolean __GLXEW_EXT_create_context_es2_profile;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_fbconfig_packed_float;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_framebuffer_sRGB;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_import_context;

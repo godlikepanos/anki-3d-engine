@@ -4,6 +4,7 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include "GlException.h"
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
@@ -17,7 +18,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 {
 	initGl();
 
-	sProg.loadRsrc("shaders/final.glsl");
+	sProg.loadRsrc("shaders/Final.glsl");
 
 	//
 	// init the offscreen Renderer
@@ -27,7 +28,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	initializer.width = app->getWindowWidth() * renderingQuality;
 	initializer.height = app->getWindowHeight() * renderingQuality;
 	Renderer::init(initializer);
-	dbg.init(initializer);
+	//dbg.init(initializer);
 }
 
 
@@ -42,6 +43,9 @@ void MainRenderer::initGl()
 		throw EXCEPTION("GLEW initialization failed");
 	}
 
+	// Ignore re first error
+	glGetError();
+
 	// print GL info
 	INFO("OpenGL info: OGL " + reinterpret_cast<const char*>(glGetString(GL_VERSION)) + ", GLSL " +
 	     reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
@@ -52,8 +56,8 @@ void MainRenderer::initGl()
 	}
 
 	// get max texture units
-	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &Texture::textureUnitsNum);
-
+	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Texture::textureUnitsNum);
 	glClearColor(0.1, 0.1, 0.1, 1.0);
 	glClearDepth(1.0);
 	glClearStencil(0);
@@ -61,16 +65,24 @@ void MainRenderer::initGl()
 	// CullFace is always on
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+
 	// defaults
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
+	//glDisable(GL_LIGHTING);
+	//glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 	glDisable(GL_STENCIL_TEST);
-	glPolygonMode(GL_FRONT, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(true);
 	glDepthFunc(GL_LESS);
 
-	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
+	try
+	{
+		ON_GL_FAIL_THROW_EXCEPTION();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("OpenGL initialization failed: " + e.what());
+	}
 }
 
 
@@ -80,7 +92,7 @@ void MainRenderer::initGl()
 void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
-	dbg.run();
+	//dbg.run();
 
 	//
 	// Render the PPS FAI to the framebuffer
@@ -90,10 +102,11 @@ void MainRenderer::render(Camera& cam_)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	sProg->bind();
-	//sProg->findUniVar("rasterImage")->setTexture(pps.hdr.fai, 0);
-	//sProg->findUniVar("rasterImage")->setTexture(pps.ssao.fai, 0);
-	sProg->findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
+	sProg->findUniVar("rasterImage")->setTexture(ms.diffuseFai, 0);
+	//sProg->findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
+ON_GL_FAIL_THROW_EXCEPTION();
 	drawQuad(0);
+ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 

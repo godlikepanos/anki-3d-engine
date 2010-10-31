@@ -8,6 +8,8 @@
 #include "Input.h"
 #include "MainRenderer.h"
 #include "RendererInitializer.h"
+#include "Scene.h"
+#include "GlException.h"
 
 
 struct TempMesh
@@ -120,25 +122,22 @@ void initEngine(int argc, char** argv)
 	new App(argc, argv);
 	app->initWindow();
 
-	RendererInitializer initializer;
-	initializer.ms.ez.enabled = false;
-	initializer.dbg.enabled = true;
-	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.sm.enabled = true;
-	initializer.is.sm.pcfEnabled = true;
-	initializer.is.sm.resolution = 512;
-	initializer.pps.hdr.enabled = true;
-	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterations = 2;
-	initializer.pps.hdr.exposure = 4.0;
-	initializer.pps.ssao.blurringIterations = 2;
-	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.renderingQuality = 0.5;
-	initializer.mainRendererQuality = 1.0;
-	app->getMainRenderer().init(initializer);
+	glClearColor(0.1, 0.1, 0.1, 1.0);
+	glClearDepth(1.0);
+	glClearStencil(0);
+	glDepthFunc(GL_LEQUAL);
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glDisable(GL_STENCIL_TEST);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glDepthMask(true);
+	glDepthFunc(GL_LESS);
+	glViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
 
-	Camera* cam = new Camera(toRad(60.0), toRad(60.0), 0.5, 200.0);
+	Camera* cam = new Camera(float(app->getWindowWidth()) / app->getWindowHeight() * toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -153,7 +152,7 @@ int main(int argc, char** argv)
 {
 	try
 	{
-
+		initEngine(argc, argv);
 		Shredder shredder("/home/godlike/src/anki/maps/sponza/walls.mesh", 1.0);
 
 		while(true)
@@ -162,7 +161,6 @@ int main(int argc, char** argv)
 			app->getInput().handleEvents();
 			float dist = 0.2;
 			float ang = toRad(3.0);
-			float scale = 0.01;
 			SceneNode* mover = app->getActiveCam();
 			if(app->getInput().keys[SDL_SCANCODE_A])
 			{
@@ -215,29 +213,33 @@ int main(int argc, char** argv)
 
 			mover->getLocalTransform().rotation.reorthogonalize();
 
+			// Update
+			app->getScene().updateAllControllers();
+			app->getScene().updateAllWorldStuff();
+
 			// Render
-			app->getMainRenderer().render(*app->getActiveCam());
-
 			glClear(GL_COLOR_BUFFER_BIT);
-
 			glColor3fv(&Vec3(1.0)[0]);
+			//glPolygonMode(GL_FRONT, GL_LINE);
 
 			// Draw
-			glMatrixMode(GL_PROJECTION_MATRIX);
+			glMatrixMode(GL_PROJECTION);
 			Mat4 projMat = app->getActiveCam()->getProjectionMatrix().getTransposed();
 			glLoadMatrixf(&projMat[0]);
-			glMatrixMode(GL_MODELVIEW_MATRIX);
+			glMatrixMode(GL_MODELVIEW);
 			Mat4 viewMat = app->getActiveCam()->getViewMatrix().getTransposed();
 			glLoadMatrixf(&viewMat[0]);
 
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glVertexPointer(3, GL_FLOAT, 0, &(shredder.getOriginalMesh().getVertCoords()[0]));
-			glDrawElements(GL_QUADS, shredder.getOriginalMesh().getVertIndeces().size(), GL_UNSIGNED_BYTE,
+			glNormalPointer(GL_FLOAT, 0, &(shredder.getOriginalMesh().getVertNormals()[0]));
+			glDrawElements(GL_QUADS, shredder.getOriginalMesh().getVertIndeces().size(), GL_UNSIGNED_SHORT,
 			               &shredder.getOriginalMesh().getVertIndeces()[0]);
 			glDisableClientState(GL_VERTEX_ARRAY);
 
 			app->swapBuffers();
 			app->waitForNextFrame();
+			ON_GL_FAIL_THROW_EXCEPTION();
 		}
 	}
 	catch(std::exception& e)

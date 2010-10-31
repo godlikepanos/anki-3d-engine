@@ -215,6 +215,20 @@ typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShar
 
 #endif /* WGL_ARB_create_context_profile */
 
+/* ------------------- WGL_ARB_create_context_robustness ------------------- */
+
+#ifndef WGL_ARB_create_context_robustness
+#define WGL_ARB_create_context_robustness 1
+
+#define WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB 0x00000004
+#define WGL_LOSE_CONTEXT_ON_RESET_ARB 0x8252
+#define WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB 0x8256
+#define WGL_NO_RESET_NOTIFICATION_ARB 0x8261
+
+#define WGLEW_ARB_create_context_robustness WGLEW_GET_VAR(__WGLEW_ARB_create_context_robustness)
+
+#endif /* WGL_ARB_create_context_robustness */
+
 /* ----------------------- WGL_ARB_extensions_string ----------------------- */
 
 #ifndef WGL_ARB_extensions_string
@@ -453,6 +467,17 @@ typedef BOOL (WINAPI * PFNWGLSETPBUFFERATTRIBARBPROC) (HPBUFFERARB hPbuffer, con
 #define WGLEW_ATI_render_texture_rectangle WGLEW_GET_VAR(__WGLEW_ATI_render_texture_rectangle)
 
 #endif /* WGL_ATI_render_texture_rectangle */
+
+/* ------------------- WGL_EXT_create_context_es2_profile ------------------ */
+
+#ifndef WGL_EXT_create_context_es2_profile
+#define WGL_EXT_create_context_es2_profile 1
+
+#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT 0x00000004
+
+#define WGLEW_EXT_create_context_es2_profile WGLEW_GET_VAR(__WGLEW_EXT_create_context_es2_profile)
+
+#endif /* WGL_EXT_create_context_es2_profile */
 
 /* -------------------------- WGL_EXT_depth_float -------------------------- */
 
@@ -1184,6 +1209,7 @@ WGLEW_EXPORT GLboolean __WGLEW_AMD_gpu_association;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_buffer_region;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_create_context;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_create_context_profile;
+WGLEW_EXPORT GLboolean __WGLEW_ARB_create_context_robustness;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_extensions_string;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_framebuffer_sRGB;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_make_current_read;
@@ -1194,6 +1220,7 @@ WGLEW_EXPORT GLboolean __WGLEW_ARB_pixel_format_float;
 WGLEW_EXPORT GLboolean __WGLEW_ARB_render_texture;
 WGLEW_EXPORT GLboolean __WGLEW_ATI_pixel_format_float;
 WGLEW_EXPORT GLboolean __WGLEW_ATI_render_texture_rectangle;
+WGLEW_EXPORT GLboolean __WGLEW_EXT_create_context_es2_profile;
 WGLEW_EXPORT GLboolean __WGLEW_EXT_depth_float;
 WGLEW_EXPORT GLboolean __WGLEW_EXT_display_color_table;
 WGLEW_EXPORT GLboolean __WGLEW_EXT_extensions_string;

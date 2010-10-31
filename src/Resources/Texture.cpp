@@ -232,8 +232,8 @@ void Texture::setRepeat(bool repeat) const
 	}
 	else
 	{
-		setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP);
-		setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP);
+		setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 }
 
