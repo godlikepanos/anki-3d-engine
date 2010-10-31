@@ -8,11 +8,14 @@
 #include "MeshSkelNodeCtrl.h"
 
 
+class Vao;
+
+
 /// Mesh scene node
 class MeshNode: public SceneNode
 {
 	private:
-		void render(Material* mtl) const; ///< Common code for render() and renderDepth()
+		void render(Material& mtl, Vao& vao) const; ///< Common code for render() and renderDepth()
 
 	public:
 		// resources
@@ -21,8 +24,8 @@ class MeshNode: public SceneNode
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
 		MeshNode();
-		virtual void render() { render(mesh->material.get()); }
-		virtual void renderDepth() { render(mesh->material->dpMtl.get()); }
+		virtual void render() { render(*mesh->material.get(), mesh->vao); }
+		virtual void renderDepth() { render(*mesh->material->dpMtl.get(), mesh->depthVao); }
 		void init(const char* filename);
 };
 

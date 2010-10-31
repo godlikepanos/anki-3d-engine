@@ -15,6 +15,9 @@ class Exception: public std::exception
 		/// Constructor #2
 		Exception(const std::string& err_, const char* file, int line, const char* func);
 
+		/// Copy constructor
+		Exception(const Exception& e): err(e.err) {}
+
 		/// Destructor. Do nothing
 		~Exception() throw() {}
 

@@ -2,6 +2,7 @@
 #define BUFFER_OBJECT_H
 
 #include <GL/glew.h>
+#include <limits>
 #include "Exception.h"
 #include "StdTypes.h"
 
@@ -9,13 +10,8 @@
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
 class BufferObject
 {
-	protected:
-		uint glId; ///< The OpenGL id of the BO
-		GLenum target; ///< Used in glBindBuffer(target, glId) and its for easy access so we wont have to query the GL driver
-		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
-
 	public:
-		BufferObject(): glId(0) {}
+		BufferObject(): glId(std::numeric_limits<uint>::max()) {}
 		virtual ~BufferObject();
 
 		/// Safe accessor. Throws exception if BO is not created
@@ -35,7 +31,7 @@ class BufferObject
 
 		/// Checks if BO is created
 		/// @return True if BO is already created
-		bool isCreated() const throw() {return glId != 0;}
+		bool isCreated() const throw() {return glId != std::numeric_limits<uint>::max();}
 
 		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails
 		/// @param target Depends on the BO
@@ -52,6 +48,15 @@ class BufferObject
 		/// Unbind BO. Throws exception if BO is not created
 		/// @exception Exception
 		void unbind() const;
+
+	protected:
+		uint glId; ///< The OpenGL id of the BO
+
+		/// Used in glBindBuffer(target, glId) and its for easy access so we wont have to query the GL driver. Its the type
+		/// of the buffer eg GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
+		GLenum target;
+
+		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 
 	private:
 		/// Delete the BO

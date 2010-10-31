@@ -16,10 +16,6 @@ class Vbo: public BufferObject
 };
 
 
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
-
 inline void Vbo::create(GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_)
 {
 	RASSERT_THROW_EXCEPTION(target_ != GL_ARRAY_BUFFER && target_ != GL_ELEMENT_ARRAY_BUFFER); // unacceptable target_

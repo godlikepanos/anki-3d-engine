@@ -11,7 +11,7 @@ class Object
 	public:
 		/// Calls addChild if parent is not NULL
 		/// @exception Exception
-		Object(Object* parent = NULL);
+		Object(Object* parent);
 
 		/// Delete childs from the last entered to the first and update parent
 		virtual ~Object();

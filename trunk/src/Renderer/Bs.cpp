@@ -143,6 +143,6 @@ void Bs::run()
 	}
 
 	glDepthMask(true);
-	glPolygonMode(GL_FRONT, GL_FILL); // the rendering above fucks the polygon mode
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
 	Fbo::unbind();
 }

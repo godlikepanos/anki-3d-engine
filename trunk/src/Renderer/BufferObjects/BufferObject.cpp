@@ -1,4 +1,5 @@
 #include "BufferObject.h"
+#include "GlException.h"
 
 
 //======================================================================================================================
@@ -28,4 +29,5 @@ void BufferObject::create(GLenum target_, uint sizeInBytes, const void* dataPtr,
 	}
 
 	unbind();
+	ON_GL_FAIL_THROW_EXCEPTION();
 }

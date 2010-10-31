@@ -26,7 +26,7 @@ void MeshNode::init(const char* filename)
 //======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
-void MeshNode::render(Material* mtl) const
+void MeshNode::render(Material& mtl, Vao& vao) const
 {
 	GLint loc;
 	GLint locs[64];
@@ -35,79 +35,18 @@ void MeshNode::render(Material* mtl) const
 	// if we have skeleton controller
 	if(meshSkelCtrl)
 	{
-		RASSERT_THROW_EXCEPTION(!mtl->hasHWSkinning()); // it has skel controller but no skinning
+		RASSERT_THROW_EXCEPTION(!mtl.hasHWSkinning()); // it has skel controller but no skinning
 
 		// first the uniforms
-		mtl->stdUniVars[Material::SUV_SKINNING_ROTATIONS]->setMat3(&meshSkelCtrl->skelNode->boneRotations[0],
-		                                                           meshSkelCtrl->skelNode->skeleton->bones.size());
+		mtl.stdUniVars[Material::SUV_SKINNING_ROTATIONS]->setMat3(&meshSkelCtrl->skelNode->boneRotations[0],
+		                                                          meshSkelCtrl->skelNode->skeleton->bones.size());
 
-		mtl->stdUniVars[Material::SUV_SKINNING_TRANSLATIONS]->setVec3(&meshSkelCtrl->skelNode->boneTranslations[0],
-		                                                              meshSkelCtrl->skelNode->skeleton->bones.size());
-
-		// then the attributes
-		mesh->vbos.vertWeights.bind();
-
-		loc = mtl->stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM]->getLoc();
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-		glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0));
-
-		loc = mtl->stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS]->getLoc();
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(4));
-
-		loc = mtl->stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS]->getLoc();
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
+		mtl.stdUniVars[Material::SUV_SKINNING_TRANSLATIONS]->setVec3(&meshSkelCtrl->skelNode->boneTranslations[0],
+		                                                             meshSkelCtrl->skelNode->skeleton->bones.size());
 	}
 
-	if(mtl->stdAttribVars[Material::SAV_POSITION] != NULL)
-	{
-		mesh->vbos.vertCoords.bind();
-		loc = mtl->stdAttribVars[Material::SAV_POSITION]->getLoc();
-		glVertexAttribPointer(loc, 3, GL_FLOAT, false, 0, NULL);
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-	}
 
-	if(mtl->stdAttribVars[Material::SAV_NORMAL] != NULL)
-	{
-		mesh->vbos.vertNormals.bind();
-		loc = mtl->stdAttribVars[Material::SAV_NORMAL]->getLoc();
-		glVertexAttribPointer(loc, 3, GL_FLOAT, false, 0, NULL);
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-	}
-
-	if(mtl->stdAttribVars[Material::SAV_TEX_COORDS] != NULL)
-	{
-		mesh->vbos.texCoords.bind();
-		loc = mtl->stdAttribVars[Material::SAV_TEX_COORDS]->getLoc();
-		glVertexAttribPointer(loc, 2, GL_FLOAT, false, 0, NULL);
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-	}
-
-	if(mtl->stdAttribVars[Material::SAV_TANGENT] != NULL)
-	{
-		mesh->vbos.vertTangents.bind();
-		loc = mtl->stdAttribVars[Material::SAV_TANGENT]->getLoc();
-		glVertexAttribPointer(loc, 4, GL_FLOAT, false, 0, NULL);
-		glEnableVertexAttribArray(loc);
-		locs[locsNum++] = loc;
-	}
-
-	mesh->vbos.vertIndeces.bind();
-
+	vao.bind();
 	glDrawElements(GL_TRIANGLES, mesh->getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
-
-	// disable
-	for(int i=0; i<locsNum; i++)
-	{
-		glDisableVertexAttribArray(locs[i]);
-	}
-
-	Vbo::unbindAllTargets();
+	vao.unbind();
 }

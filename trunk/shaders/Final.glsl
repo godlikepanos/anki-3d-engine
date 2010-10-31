@@ -1,3 +1,5 @@
+// The final pass
+
 #pragma anki vertShaderBegins
 
 #pragma anki include "shaders/SimpleVert.glsl"
@@ -5,13 +7,14 @@
 #pragma anki fragShaderBegins
 
 uniform sampler2D rasterImage;
-varying vec2 vTexCoords;
+in vec2 vTexCoords;
+out vec3 fragColor;
 
 void main()
 {
 	//if( gl_FragCoord.x > 0.5 ) discard;
 
-	gl_FragColor.rgb = texture2D(rasterImage, vTexCoords).rgb;
+	fragColor.rgb = texture2D(rasterImage, vTexCoords).rgb;
 
 
 	//gl_FragColor.rgb = vec3(texture2D(rasterImage, vTexCoords).r);

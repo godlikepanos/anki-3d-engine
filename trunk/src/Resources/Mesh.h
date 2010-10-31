@@ -3,6 +3,7 @@
 
 #include "Math.h"
 #include "Vbo.h"
+#include "Vao.h"
 #include "Resource.h"
 #include "RsrcPtr.h"
 
@@ -30,7 +31,9 @@ class Mesh: public Resource
 
 	public:
 		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
-		Vbos vbos;
+		Vbos vbos; ///< The vertex buffer objects
+		Vao vao; ///< Vertex array object
+		Vao depthVao; ///< Vertex array object for the depth material
 
 		Mesh(): Resource(RT_MESH) {}
 		~Mesh() {}
@@ -43,6 +46,7 @@ class Mesh: public Resource
 
 	private:
 		void createVbos(const MeshData& meshData);
+		void createVao(Vao& vao, Material& mtl);
 };
 
 

@@ -137,7 +137,7 @@ void init()
 	initializer.pps.ssao.renderingQuality = 0.5;
 	initializer.mainRendererQuality = 1.0;
 	app->getMainRenderer().init(initializer);
-	Ui::init();
+	//Ui::init();
 
 	// camera
 	Camera* cam = new Camera(app->getMainRenderer().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
@@ -161,15 +161,17 @@ void init()
 	spot_lights[1]->init("maps/temple/light3.light");
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
-	const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
+	/*const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
 																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	app->getScene().skybox.load(skybox_fnames);
+	app->getScene().skybox.load(skybox_fnames);*/
 
 	// horse
 	horse = new MeshNode();
 	horse->init("meshes/horse/horse.mesh");
 	//horse->init("models/head/head.mesh");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
+
+	return;
 
 	// sarge
 	/*sarge = new MeshNode();
@@ -325,9 +327,9 @@ void mainLoop()
 		//map.octree.root->bounding_box.render();
 
 		// print some debug stuff
-		Ui::setColor(Vec4(1.0, 1.0, 1.0, 1.0));
+		/*Ui::setColor(Vec4(1.0, 1.0, 1.0, 1.0));
 		Ui::setPos(-0.98, 0.95);
-		Ui::setFontWidth(0.03);
+		Ui::setFontWidth(0.03);*/
 		//Ui::printf("frame:%d fps:%dms\n", app->getMainRenderer().getFramesNum(), (App::getTicks()-ticks_));
 		//Ui::print("Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n");
 		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
@@ -347,7 +349,6 @@ void mainLoop()
 
 		// std stuff follow
 		app->swapBuffers();
-		//ON_GL_FAIL_THROW_EXCEPTION();
 		if(1)
 		{
 			//if(app->getMainRenderer().getFramesNum() == 100) app->getMainRenderer().takeScreenshot("gfx/screenshot.tga");

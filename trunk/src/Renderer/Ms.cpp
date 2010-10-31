@@ -74,11 +74,10 @@ void Ms::run()
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
-	r.setProjectionViewMatrices(cam); ///< @todo remove this
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	//glEnable(GL_DEPTH_TEST);
-	app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
+	//app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
 	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
@@ -106,7 +105,7 @@ void Ms::run()
 		meshNode->render();
 	}
 
-	glPolygonMode(GL_FRONT, GL_FILL); // the rendering above fucks the polygon mode
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
 
 	// restore depth
 	if(ez.isEnabled())

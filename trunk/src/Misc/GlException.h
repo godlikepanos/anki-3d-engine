@@ -2,6 +2,7 @@
 #define GL_EXCEPTION_H
 
 #include <string>
+#include <GL/glew.h>
 #include "Exception.h"
 
 

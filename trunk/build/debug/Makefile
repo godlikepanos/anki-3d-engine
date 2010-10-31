@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Resources -I../../src/Resources/Core -I../../src/Resources/Helpers -I../../src/Physics -I../../src/Math -I../../src/Misc -I../../src/Ui -I../../src/Core -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Util -I../../src/Input -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Math -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Util -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Texture.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Material.cpp ../../src/Resources/Core/RsrcPtr.cpp ../../src/Resources/Core/RsrcContainers.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/DebugDrawer.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/App.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/MeshNode.cpp ../../src/Scene/Camera.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/SkelModelNode.cpp ../../src/Scene/SkelNode.cpp ../../src/Scene/Light.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimCtrl.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Input/Input.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/MessageHandler.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
-OBJECTS = Main.o ShaderProg.o Mesh.o SkelAnim.o LightData.o Script.o Skeleton.o ParticleEmitterProps.o Texture.o Extension.o Material.o RsrcPtr.o RsrcContainers.o Image.o ShaderPrePreprocessor.o MeshData.o Physics.o RigidBody.o DebugDrawer.o PhyCharacter.o skybox.o map.o TestHeader.o Ui.o Object.o App.o StdinListener.o MeshNode.o Camera.o SpotLight.o SkelModelNode.o SkelNode.o Light.o Scene.o SceneNode.o ParticleEmitter.o Controller.o SkelAnimCtrl.o BinaryStream.o Scanner.o Util.o Exception.o Input.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o BufferObject.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o MessageHandler.bpi.o App.bpi.o Scene.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
+SOURCES = ../../src/Main.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Texture.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Material.cpp ../../src/Resources/Core/RsrcPtr.cpp ../../src/Resources/Core/RsrcContainers.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/DebugDrawer.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/App.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/MeshNode.cpp ../../src/Scene/Camera.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/SkelModelNode.cpp ../../src/Scene/SkelNode.cpp ../../src/Scene/Light.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimCtrl.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Input/Input.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/MessageHandler.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
+OBJECTS = Main.o ShaderProg.o Mesh.o SkelAnim.o LightData.o Script.o Skeleton.o ParticleEmitterProps.o Texture.o Extension.o Material.o RsrcPtr.o RsrcContainers.o Image.o ShaderPrePreprocessor.o MeshData.o Physics.o RigidBody.o DebugDrawer.o PhyCharacter.o skybox.o map.o TestHeader.o Ui.o Object.o App.o StdinListener.o MeshNode.o Camera.o SpotLight.o SkelModelNode.o SkelNode.o Light.o Scene.o SceneNode.o ParticleEmitter.o Controller.o SkelAnimCtrl.o BinaryStream.o Scanner.o Util.o Exception.o Input.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o MessageHandler.bpi.o App.bpi.o Scene.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -52,8 +52,9 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Ui/Ui.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h ../../src/Ui/Ui.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_atomic.h \
  ../../extern/include/SDL/SDL_audio.h \
  ../../extern/include/SDL/SDL_error.h \
@@ -83,12 +84,13 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core/Object.h \
  ../../src/Core/MessageHandler.h ../../src/Resources/Mesh.h \
- ../../src/Scene/Light.h ../../src/Scene/Camera.h \
- ../../src/Resources/LightData.h ../../src/Resources/Texture.h \
- ../../src/Scene/PointLight.h ../../src/Scene/Light.h \
- ../../src/Scene/SpotLight.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Scene/Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Scene/Light.h \
+ ../../src/Scene/Camera.h ../../src/Resources/LightData.h \
+ ../../src/Resources/Texture.h ../../src/Scene/PointLight.h \
+ ../../src/Scene/Light.h ../../src/Scene/SpotLight.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -310,11 +312,13 @@ Mesh.o: ../../src/Resources/Mesh.cpp ../../src/Resources/Mesh.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../extern/include/GL/glew.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Misc/GlException.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/Exception.h \
  ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Texture.h ../../src/Resources/Helpers/MeshData.h \
  ../../src/Util/Vec.h
 	@echo Compiling ../../src/Resources/Mesh.cpp...
@@ -495,7 +499,8 @@ Material.o: ../../src/Resources/Material.cpp \
  ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
  ../../src/Renderer/Smo.h ../../src/Renderer/Pps.h \
  ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Resources/Material.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Material.cpp -o Material.o
 
@@ -523,6 +528,7 @@ RsrcPtr.o: ../../src/Resources/Core/RsrcPtr.cpp \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
  ../../src/Resources/Skeleton.h ../../src/Resources/SkelAnim.h \
  ../../src/Resources/LightData.h \
  ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h
@@ -553,6 +559,7 @@ RsrcContainers.o: ../../src/Resources/Core/RsrcContainers.cpp \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
  ../../src/Resources/Skeleton.h ../../src/Resources/SkelAnim.h \
  ../../src/Resources/LightData.h \
  ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h
@@ -942,8 +949,9 @@ DebugDrawer.o: ../../src/Physics/DebugDrawer.cpp \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -1282,11 +1290,12 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Scene/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
- ../../src/Scene/SceneNode.h ../../src/Scene/Scene.h \
- ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
+ ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
+ ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1506,8 +1515,9 @@ Ui.o: ../../src/Ui/Ui.cpp ../../src/Ui/Ui.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -1742,9 +1752,10 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Scripting/ScriptingEngine.h \
- ../../src/Core/StdinListener.h ../../src/Core/Messaging.h \
- ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h \
+ ../../src/Core/Messaging.h ../../src/Input/Input.h \
+ ../../extern/include/SDL/SDL_scancode.h
 	@echo Compiling ../../src/Core/App.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/App.cpp -o App.o
 
@@ -1776,6 +1787,8 @@ MeshNode.o: ../../src/Scene/MeshNode.cpp ../../src/Scene/MeshNode.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
+ ../../src/Resources/ShaderProg.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene/SkelNode.h \
  ../../src/Scene/Controllers/SkelAnimCtrl.h \
@@ -1816,13 +1829,12 @@ MeshNode.o: ../../src/Scene/MeshNode.cpp ../../src/Scene/MeshNode.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core/Object.h \
  ../../src/Core/MessageHandler.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Renderer/Smo.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Resources/Helpers/MeshData.h
+ ../../src/Resources/Texture.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Resources/Helpers/MeshData.h
 	@echo Compiling ../../src/Scene/MeshNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/MeshNode.cpp -o MeshNode.o
 
@@ -1855,8 +1867,9 @@ Camera.o: ../../src/Scene/Camera.cpp ../../src/Scene/Camera.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -1943,6 +1956,8 @@ SkelModelNode.o: ../../src/Scene/SkelModelNode.cpp \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
+ ../../src/Resources/ShaderProg.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Misc/Parser.h \
  ../../src/Util/Scanner.h ../../src/Misc/Parser.inl.h \
@@ -2017,7 +2032,7 @@ SkelNode.o: ../../src/Scene/SkelNode.cpp ../../src/Scene/SkelNode.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Scene/SkelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SkelNode.cpp -o SkelNode.o
 
@@ -2086,7 +2101,7 @@ Light.o: ../../src/Scene/Light.cpp ../../src/Scene/Light.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Scene/Light.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Light.cpp -o Light.o
 
@@ -2248,6 +2263,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h ../../src/Scene/Light.h \
  ../../src/Resources/LightData.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
@@ -2282,9 +2298,9 @@ SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Scene/Controllers/Controller.h \
- ../../src/Scene/Scene.h ../../src/Misc/skybox.h \
- ../../src/Physics/Physics.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Scene/Controllers/Controller.h ../../src/Scene/Scene.h \
+ ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -2604,17 +2620,18 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
+ ../../src/Resources/ShaderProg.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene/GhostNode.h \
  ../../src/Resources/ParticleEmitterProps.h ../../src/Physics/RigidBody.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingStage.h ../../src/Renderer/Ez.h \
- ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Core/App.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/RenderingStage.h \
+ ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Renderer/Smo.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
@@ -2910,7 +2927,7 @@ SkelAnimCtrl.o: ../../src/Scene/Controllers/SkelAnimCtrl.cpp \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Scene/Controllers/SkelAnimCtrl.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/SkelAnimCtrl.cpp -o SkelAnimCtrl.o
 
@@ -3015,13 +3032,14 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Scene/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
- ../../src/Scene/SceneNode.h ../../src/Renderer/RendererInitializer.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Texture.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
+ ../../src/Renderer/RendererInitializer.h ../../src/Resources/Material.h \
+ ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -3215,7 +3233,7 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Ssao.h \
  ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/RendererInitializer.h
+ ../../src/Misc/GlException.h ../../src/Renderer/RendererInitializer.h
 	@echo Compiling ../../src/Renderer/Hdr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Hdr.cpp -o Hdr.o
 
@@ -3243,7 +3261,8 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Util/Vec.h ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Dbg.h ../../src/Core/App.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Dbg.h \
+ ../../src/Misc/GlException.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
@@ -3412,6 +3431,7 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Scene/MeshNode.h ../../src/Scene/SceneNode.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vao.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h
 	@echo Compiling ../../src/Renderer/Bs.cpp...
@@ -3443,8 +3463,9 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -3612,6 +3633,7 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Scene/MeshNode.h ../../src/Scene/SceneNode.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vao.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/LightData.h \
  ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
@@ -3645,7 +3667,8 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Util/Vec.h ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h ../../src/Core/App.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Misc/GlException.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
@@ -3846,7 +3869,8 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Util/Vec.h ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Pps.h \
  ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h ../../src/Scene/Light.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Misc/GlException.h ../../src/Scene/Light.h \
  ../../src/Scene/SceneNode.h ../../src/Scene/Camera.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
@@ -3881,7 +3905,8 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Renderer/BufferObjects/BufferObject.h ../../src/Core/Object.h \
  ../../src/Util/Vec.h ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Renderer/Pps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Pps.cpp -o Pps.o
 
@@ -3910,7 +3935,8 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Util/Vec.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
  ../../src/Renderer/Smo.h ../../src/Renderer/Pps.h \
  ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h ../../src/Core/App.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Misc/GlException.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
@@ -4081,15 +4107,17 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
  ../../src/Scene/MeshNode.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Resources/Mesh.h \
+ ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vao.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h
 	@echo Compiling ../../src/Renderer/Ms.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ms.cpp -o Ms.o
 
 MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Misc/GlException.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -4100,8 +4128,7 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Util/Properties.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/Exception.h \
@@ -4181,13 +4208,13 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Renderer/Ez.h ../../src/Renderer/Pps.h \
  ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
  ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/Light.h ../../src/Scene/Camera.h \
- ../../src/Resources/LightData.h ../../src/Resources/Texture.h \
- ../../src/Scene/PointLight.h ../../src/Scene/Light.h \
- ../../src/Scene/SpotLight.h ../../src/Core/App.h \
+ ../../src/Misc/GlException.h ../../src/Scene/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Scene/SceneNode.h ../../src/Scene/Light.h \
+ ../../src/Scene/Camera.h ../../src/Resources/LightData.h \
+ ../../src/Resources/Texture.h ../../src/Scene/PointLight.h \
+ ../../src/Scene/Light.h ../../src/Scene/SpotLight.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
@@ -4382,10 +4409,10 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
- ../../src/Renderer/RendererInitializer.h
+ ../../src/Misc/GlException.h ../../src/Scene/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Scene/SceneNode.h ../../src/Renderer/RendererInitializer.h
 	@echo Compiling ../../src/Renderer/Ssao.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ssao.cpp -o Ssao.o
 
@@ -4415,8 +4442,9 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -4453,7 +4481,7 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Core/MessageHandler.h ../../src/Scene/MeshNode.h \
  ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Texture.h \
- ../../src/Resources/Mesh.h \
+ ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vao.h \
  ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Scene/Scene.h \
  ../../src/Misc/skybox.h ../../src/Physics/Physics.h \
@@ -4590,10 +4618,31 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
 	@echo Compiling ../../src/Renderer/Ez.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ez.cpp -o Ez.o
 
+Vao.o: ../../src/Renderer/BufferObjects/Vao.cpp \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Misc/GlException.h \
+ ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h
+	@echo Compiling ../../src/Renderer/BufferObjects/Vao.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/Vao.cpp -o Vao.o
+
 BufferObject.o: ../../src/Renderer/BufferObjects/BufferObject.cpp \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../extern/include/GL/glew.h ../../src/Util/Exception.h \
- ../../src/Util/StdTypes.h
+ ../../src/Util/StdTypes.h ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Renderer/BufferObjects/BufferObject.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/BufferObject.cpp -o BufferObject.o
 
@@ -4962,7 +5011,7 @@ App.bpi.o: ../../src/Scripting/Core/App.bpi.cpp \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Scripting/Core/App.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/App.bpi.cpp -o App.bpi.o
 
@@ -5147,7 +5196,8 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/Dbg.h
 	@echo Compiling ../../src/Scripting/Renderer/MainRenderer.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/MainRenderer.bpi.cpp -o MainRenderer.bpi.o
 
@@ -5251,7 +5301,7 @@ Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h ../../src/Renderer/Smo.h \
  ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h
+ ../../src/Renderer/Dbg.h ../../src/Misc/GlException.h
 	@echo Compiling ../../src/Scripting/Renderer/Renderer.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Renderer.bpi.cpp -o Renderer.bpi.o
 
