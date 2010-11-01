@@ -1,5 +1,6 @@
 #include "Vao.h"
 #include "Vbo.h"
+#include "GlException.h"
 
 
 //======================================================================================================================
@@ -24,29 +25,31 @@ Vao::VboInfo::VboInfo(const Vbo* vbo_, const ShaderProg::AttribVar* attribVar_, 
 //======================================================================================================================
 // create                                                                                                              =
 //======================================================================================================================
-inline void Vao::create(Vec<VboInfo> arrayBufferVbosInfo, const Vbo* elementArrayBufferVbo)
+void Vao::create(const VboInfo arrayBufferVbosInfo[], uint arrayBufferVbosInfoNum, const Vbo* elementArrayBufferVbo)
 {
 	RASSERT_THROW_EXCEPTION(isCreated());
 	glGenVertexArrays(1, &glId);
 	bind();
 
 	// Attach the GL_ARRAY_BUFFER VBOs
-	Vec<VboInfo>::iterator info = arrayBufferVbosInfo.begin();
-	for(; info != arrayBufferVbosInfo.end(); info++)
-	{
-		RASSERT_THROW_EXCEPTION(info->vbo == NULL);
-		RASSERT_THROW_EXCEPTION(info->attribVar == NULL);
 
-		if(info->vbo->getBufferTarget() != GL_ARRAY_BUFFER)
+	for(uint i = 0; i < arrayBufferVbosInfoNum; i++)
+	{
+		const VboInfo& info = arrayBufferVbosInfo[i];
+
+		RASSERT_THROW_EXCEPTION(info.vbo == NULL);
+		RASSERT_THROW_EXCEPTION(info.attribVar == NULL);
+
+		if(info.vbo->getBufferTarget() != GL_ARRAY_BUFFER)
 		{
 			throw EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
 		}
 
-		info->vbo->bind();
-		glVertexAttribPointer(info->attribVar->getLoc(), info->size, info->type, info->normalized,
-		                      info->stride, info->pointer);
-		glEnableVertexAttribArray(info->attribVar->getLoc());
-		info->vbo->unbind();
+		info.vbo->bind();
+		glVertexAttribPointer(info.attribVar->getLoc(), info.size, info.type, info.normalized,
+		                      info.stride, info.pointer);
+		glEnableVertexAttribArray(info.attribVar->getLoc());
+		info.vbo->unbind();
 	}
 
 	// Attach the GL_ELEMENT_ARRAY_BUFFER VBO

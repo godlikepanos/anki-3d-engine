@@ -4,7 +4,6 @@
 #include <GL/glew.h>
 #include <limits>
 #include "Exception.h"
-#include "GlException.h"
 #include "StdTypes.h"
 #include "ShaderProg.h"
 
@@ -16,7 +15,8 @@ class Vbo;
 class Vao
 {
 	public:
-		/// @todo
+		/// This structs contains information for VAO bind into the VAO. Used by the @ref create method. See
+		/// glVertexAttribPointer for the interpretation of the member variables
 		struct VboInfo
 		{
 			const Vbo* vbo;
@@ -27,6 +27,7 @@ class Vao
 			GLsizei stride;
 			const GLvoid* pointer;
 
+			/// The one and only constructor
 			VboInfo(const Vbo* vbo_, const ShaderProg::AttribVar* attribVar_, GLint size_, GLenum type_,
               GLboolean normalized_, GLsizei stride_, const GLvoid* pointer_);
 
@@ -43,15 +44,18 @@ class Vao
 		/// @exception Exception
 		uint getGlId() const;
 
-		/// Create the VAO. Throws exception if already created
+		/// Create the VAO. Throws exception if already created. It requires an C-style array with size so it can be fast
+		/// @param[in] arrayBufferVbosInfo An array with information per VBO. The VBOs are GL_ARRAY_BUFFER
+		/// @param[in] arrayBufferVbosInfoNum The size of the arrayBufferVbosInfo array
+		/// @param[in] elementArrayBufferVbo The GL_ELEMENT_ARRAY_BUFFER VBO. If NULL then ignored
 		/// @exception Exception
-		void create(Vec<VboInfo> arrayBufferVbosInfo, const Vbo* elementArrayBufferVbo);
+		void create(const VboInfo arrayBufferVbosInfo[], uint arrayBufferVbosInfoNum, const Vbo* elementArrayBufferVbo);
 
 		/// Bind it. Throws exception if not created
 		/// @exception Exception
 		void bind() const;
 
-		/// Unbind the VAO
+		/// Unbind all VAOs
 		static void unbind() {glBindVertexArray(0);}
 
 		/// Destroy it. Throws exception if not created

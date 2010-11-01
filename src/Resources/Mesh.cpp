@@ -101,49 +101,46 @@ void Mesh::createVao(Vao& vao, Material& mtl)
 	if(mtl.stdAttribVars[Material::SAV_POSITION] != NULL)
 	{
 		vboInfos.push_back(Vao::VboInfo(&vbos.vertCoords, mtl.stdAttribVars[Material::SAV_POSITION], 3, GL_FLOAT,
-		                         GL_FALSE, 0, NULL));
+		                                GL_FALSE, 0, NULL));
 	}
 
 	if(mtl.stdAttribVars[Material::SAV_NORMAL] != NULL)
 	{
-		vao.attachArrayBufferVbo(vbos.vertNormals, *mtl.stdAttribVars[Material::SAV_NORMAL], 3, GL_FLOAT,
-		                         GL_FALSE, 0, NULL);
+		vboInfos.push_back(Vao::VboInfo(&vbos.vertNormals, mtl.stdAttribVars[Material::SAV_NORMAL], 3, GL_FLOAT,
+		                                GL_FALSE, 0, NULL));
 	}
 
 	if(mtl.stdAttribVars[Material::SAV_TANGENT] != NULL)
 	{
-		vao.attachArrayBufferVbo(vbos.vertTangents, *mtl.stdAttribVars[Material::SAV_TANGENT], 4, GL_FLOAT,
-		                         GL_FALSE, 0, NULL);
+		vboInfos.push_back(Vao::VboInfo(&vbos.vertTangents, mtl.stdAttribVars[Material::SAV_TANGENT], 4, GL_FLOAT,
+		                                GL_FALSE, 0, NULL));
 	}
 
 	if(mtl.stdAttribVars[Material::SAV_TEX_COORDS] != NULL)
 	{
-		vao.attachArrayBufferVbo(vbos.texCoords, *mtl.stdAttribVars[Material::SAV_TEX_COORDS], 2, GL_FLOAT,
-		                         GL_FALSE, 0, NULL);
+		vboInfos.push_back(Vao::VboInfo(&vbos.texCoords, mtl.stdAttribVars[Material::SAV_TEX_COORDS], 2, GL_FLOAT,
+		                                GL_FALSE, 0, NULL));
 	}
 
 	if(mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM] != NULL)
 	{
-		vao.attachArrayBufferVbo(vbos.vertWeights, *mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM], 1, GL_FLOAT,
-		                         GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0));
+		vboInfos.push_back(Vao::VboInfo(&vbos.vertWeights, mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM], 1,
+		                                GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0)));
 	}
 
 	if(mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS] != NULL)
 	{
-		vao.attachArrayBufferVbo(vbos.vertWeights, *mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS], 4, GL_FLOAT,
-		                         GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(4));
+		vboInfos.push_back(Vao::VboInfo(&vbos.vertWeights, mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS], 4,
+		                                GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(4)));
 	}
 
 	if(mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS] != NULL)
 	{
-		vao.attachArrayBufferVbo(vbos.vertWeights, *mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS], 4, GL_FLOAT,
-		                         GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
+		vboInfos.push_back(Vao::VboInfo(&vbos.vertWeights, mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS], 4,
+		                                GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20)));
 	}
 
-	vao.attachElementArrayBuffer(vbos.vertIndeces);
-
-	vao.create(&vboInfos[0]);
-	vao.bind();
+	vao.create(&vboInfos[0], vboInfos.size(), &vbos.vertIndeces);
 }
 
 

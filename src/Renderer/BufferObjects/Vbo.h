@@ -8,6 +8,8 @@
 class Vbo: public BufferObject
 {
 	public:
+		Vbo(Object* parent = NULL): BufferObject(parent) {}
+
 		/// It adds an extra check over @ref BufferObject::create. @see @ref BufferObject::create
 		void create(GLenum target_, uint sizeInBytes, const void* dataPtr, GLenum usage_);
 
