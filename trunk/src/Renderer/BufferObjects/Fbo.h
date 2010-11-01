@@ -5,15 +5,17 @@
 #include "Exception.h"
 #include "Properties.h"
 #include "StdTypes.h"
+#include "Object.h"
 
 
 /// The class is actually a wrapper to avoid common mistakes
-class Fbo
+class Fbo: public Object
 {
 	PROPERTY_R(uint, glId, getGlId) ///< OpenGL identification
 
 	public:
-		Fbo(): glId(0) {}
+		/// Constructor
+		Fbo(Object* parent = NULL);
 
 		/// Creates a new FBO
 		void create();
@@ -40,6 +42,12 @@ class Fbo
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
+
+inline Fbo::Fbo(Object* parent):
+	Object(parent),
+	glId(0)
+{}
+
 
 inline void Fbo::create()
 {

@@ -5,13 +5,16 @@
 #include <limits>
 #include "Exception.h"
 #include "StdTypes.h"
+#include "Object.h"
 
 
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
-class BufferObject
+class BufferObject: public Object
 {
 	public:
-		BufferObject(): glId(std::numeric_limits<uint>::max()) {}
+		/// Default constructor
+		BufferObject(Object* parent = NULL);
+
 		virtual ~BufferObject();
 
 		/// Safe accessor. Throws exception if BO is not created
@@ -68,6 +71,12 @@ class BufferObject
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
+
+inline BufferObject::BufferObject(Object* parent):
+	Object(parent),
+	glId(std::numeric_limits<uint>::max())
+{}
+
 
 inline BufferObject::~BufferObject()
 {

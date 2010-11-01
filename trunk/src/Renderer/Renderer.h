@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include "ShaderProg.h"
 #include "Vbo.h"
+#include "Vao.h"
 #include "RsrcPtr.h"
 #include "Object.h"
 #include "Ms.h"
