@@ -25,7 +25,7 @@ class Smo: public RenderingStage
 
 	private:
 		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
-		static Vbo sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+		static Vbo* sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
 		RsrcPtr<ShaderProg> sProg;
 };
 

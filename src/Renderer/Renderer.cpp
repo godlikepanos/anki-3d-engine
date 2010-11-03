@@ -13,6 +13,9 @@
 float Renderer::quadVertCoords [][2] = { {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0} };
 int Renderer::maxColorAtachments = -1;
 
+Vbo* Renderer::quadPositionsVbo = NULL;
+Vao* Renderer::globalVao = NULL;
+
 
 //======================================================================================================================
 // Constructor                                                                                                         =
@@ -51,6 +54,13 @@ void Renderer::init(const RendererInitializer& initializer)
 	/*is.init(initializer);
 	pps.init(initializer);
 	bs.init(initializer);*/
+
+	// VBOs
+	if(quadPositionsVbo == NULL)
+	{
+		float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
+		quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+	}
 }
 
 
@@ -73,31 +83,16 @@ void Renderer::render(Camera& cam_)
 
 
 //======================================================================================================================
-// initQuad                                                                                                            =
-//======================================================================================================================
-void Renderer::initQuad()
-{
-	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
-
-}
-
-
-//======================================================================================================================
 // drawQuad                                                                                                            =
 //======================================================================================================================
 void Renderer::drawQuad(int vertCoordsAttribLoc)
 {
 	RASSERT_THROW_EXCEPTION(vertCoordsAttribLoc == -1);
-ON_GL_FAIL_THROW_EXCEPTION();
+	quadPositionsVbo->bind();
 	glEnableVertexAttribArray(vertCoordsAttribLoc);
-ON_GL_FAIL_THROW_EXCEPTION();
-	glVertexAttribPointer(vertCoordsAttribLoc, 2, GL_FLOAT, false, 0, quadVertCoords);
-ON_GL_FAIL_THROW_EXCEPTION();
+	glVertexAttribPointer(vertCoordsAttribLoc, 2, GL_FLOAT, false, 0, NULL);
 	glDrawArrays(GL_QUADS, 0, 4);
-ON_GL_FAIL_THROW_EXCEPTION();
 	glDisableVertexAttribArray(vertCoordsAttribLoc);
-ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 

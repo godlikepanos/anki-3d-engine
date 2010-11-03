@@ -4,7 +4,7 @@
 
 /// Read write property
 ///
-/// - It creates a unique type so it can work with pointers
+/// - It deliberately does not work with pointers
 /// - The get funcs are coming into two flavors, one const and one non-const. The property is read-write after all so
 ///   the non-const is acceptable
 /// - Dont use it with semicolon at the end (eg PROPERTY_RW(....);) because of a doxygen bug
@@ -17,12 +17,22 @@
 		Type__& getFunc__() {return varName__;}
 
 
-/// Read only property
+/// Read only private property
 ///
-/// - It creates a unique type so it can work with pointers
+/// - It deliberately does not work with pointers
 /// - Dont use it with semicolon at the end (eg PROPERTY_RW(....);) because of a doxygen bug
 #define PROPERTY_R(Type__, varName__, getFunc__) \
 	private: \
+		Type__ varName__; \
+	public: \
+		const Type__& getFunc__() const { return varName__; }
+
+
+/// Read only protected property
+///
+/// - Dont use it with semicolon at the end (eg PROPERTY_RW(....);) because of a doxygen bug
+#define PROTECTED_PROPERTY_R(Type__, varName__, getFunc__) \
+	protected: \
 		Type__ varName__; \
 	public: \
 		const Type__& getFunc__() const { return varName__; }
