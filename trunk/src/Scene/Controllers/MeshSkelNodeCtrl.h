@@ -18,12 +18,12 @@ class MeshSkelNodeCtrl: public Controller
 		SkelNode* skelNode;
 		MeshNode* meshNode;
 
-		struct
+		/*struct
 		{
 			Vbo positions;
 			Vbo normals;
 			Vbo tangents;
-		} vbos;
+		} vbos;*/
 
 
 		MeshSkelNodeCtrl(SkelNode* skelNode_, MeshNode* meshNode_):

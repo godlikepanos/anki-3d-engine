@@ -19,12 +19,14 @@ class Mesh: public Resource
 		/// The VBOs in a structure
 		struct Vbos
 		{
-			Vbo vertCoords;
-			Vbo vertNormals;
-			Vbo vertTangents;
-			Vbo texCoords;
-			Vbo vertIndeces;
-			Vbo vertWeights;
+			Vbo* vertCoords;
+			Vbo* vertNormals;
+			Vbo* vertTangents;
+			Vbo* texCoords;
+			Vbo* vertIndeces;
+			Vbo* vertWeights;
+
+			Vbos();
 		};
 
 	PROPERTY_R(uint, vertIdsNum, getVertIdsNum)
@@ -48,6 +50,16 @@ class Mesh: public Resource
 		void createVbos(const MeshData& meshData);
 		void createVao(Vao& vao, Material& mtl);
 };
+
+
+inline Mesh::Vbos::Vbos():
+	vertCoords(NULL),
+	vertNormals(NULL),
+	vertTangents(NULL),
+	texCoords(NULL),
+	vertIndeces(NULL),
+	vertWeights(NULL)
+{}
 
 
 #endif

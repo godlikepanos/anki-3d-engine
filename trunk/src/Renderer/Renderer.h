@@ -115,9 +115,8 @@ class Renderer: public Object
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	private:
-		static Vbo quadPositionsVbo;
-		static Vao quadVao;
-		static void initQuad();
+		static Vbo* quadPositionsVbo;
+		static Vao* globalVao;
 
 	// to be removed
 	public:
