@@ -279,7 +279,7 @@ void Scanner::getAllPrintAll()
 void Scanner::loadFile(const char* filename_)
 {	
 	inFstream.open(filename_);
-	if(!inFstream.good())
+	if(!inFstream.is_open())
 	{
 		throw EXCEPTION("Cannot open file \"" + filename_ + '\"');
 	}

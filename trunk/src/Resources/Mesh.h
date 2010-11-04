@@ -6,6 +6,7 @@
 #include "Vao.h"
 #include "Resource.h"
 #include "RsrcPtr.h"
+#include "Object.h"
 
 
 class Material;
@@ -13,7 +14,7 @@ class MeshData;
 
 
 /// Mesh Resource. If the material name is empty then the mesh wont be rendered and no VBOs will be created
-class Mesh: public Resource
+class Mesh: public Resource, public Object
 {
 	public:
 		/// The VBOs in a structure
@@ -34,10 +35,10 @@ class Mesh: public Resource
 	public:
 		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
 		Vbos vbos; ///< The vertex buffer objects
-		Vao vao; ///< Vertex array object
-		Vao depthVao; ///< Vertex array object for the depth material
+		Vao* vao; ///< Vertex array object
+		Vao* depthVao; ///< Vertex array object for the depth material
 
-		Mesh(): Resource(RT_MESH) {}
+		Mesh(): Resource(RT_MESH), Object(NULL) {}
 		~Mesh() {}
 
 		/// Implements @ref Resource::load
@@ -48,7 +49,7 @@ class Mesh: public Resource
 
 	private:
 		void createVbos(const MeshData& meshData);
-		void createVao(Vao& vao, Material& mtl);
+		void createVao(Vao* vao, Material& mtl);
 };
 
 

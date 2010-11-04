@@ -118,7 +118,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	// open file and check
 	std::fstream fs;
 	fs.open(filename, std::ios::out | std::ios::binary);
-	if(!fs.good())
+	if(!fs.is_open())
 	{
 		throw EXCEPTION("Cannot create screenshot. File \"" + filename + "\"");
 	}

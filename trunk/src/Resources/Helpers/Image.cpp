@@ -166,7 +166,7 @@ void Image::loadTga(const char* filename)
 	fs.open(filename, std::ios::in | std::ios::binary);
 	uint bpp;
 
-	if(!fs.good())
+	if(!fs.is_open())
 	{
 		throw EXCEPTION("Cannot open file");
 	}

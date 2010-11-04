@@ -368,7 +368,7 @@ std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const c
 	std::string src = preAppendedSrcCode + src_;
 
 	std::ofstream f(newfPathName.string().c_str());
-	if(!f.good())
+	if(!f.is_open())
 	{
 		throw EXCEPTION("Cannot open file for writing \"" + newfPathName.string() + "\"");
 	}

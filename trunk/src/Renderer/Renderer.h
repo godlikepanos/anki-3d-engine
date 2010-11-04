@@ -91,10 +91,10 @@ class Renderer: public Object
 		/// OpenGL wrapper
 		static void setViewport(uint x, uint y, uint w, uint h) {glViewport(x, y, w, h);}
 
-		/// @todo write cmnts
-		/// @param mtl
-		/// @param sceneNode
-		/// @param cam
+		/// This functions sets the GL state using a material and a few other things
+		/// @param mtl The material containing the shader program
+		/// @param sceneNode Needed for some matrices
+		/// @param cam Needed for some matrices
 		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam);
 
 
@@ -108,15 +108,15 @@ class Renderer: public Object
 	protected:
 		uint framesNum; ///< Frame number
 		const Camera* cam; ///< Current camera
-		static int maxColorAtachments; ///< Max color attachments a FBO can accept
-		Mat4 viewProjectionMat; ///< In case anyone needs it
+		static int maxColorAtachments; ///< Max color attachments an FBO can accept
+		Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	private:
-		static Vbo* quadPositionsVbo;
-		static Vao* globalVao;
+		static Vbo* quadPositionsVbo; ///< The VBO for quad positions
+		static Vao* globalVao; ///< This VAO is used everywhere
 
 	// to be removed
 	public:
