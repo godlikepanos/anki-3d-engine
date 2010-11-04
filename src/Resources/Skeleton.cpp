@@ -11,7 +11,7 @@ void Skeleton::load(const char* filename)
 {
 	std::ifstream fs;
 	fs.open(filename);
-	if(!fs.good())
+	if(!fs.is_open())
 	{
 		throw EXCEPTION("Cannot open \"" + filename + "\"");
 	}

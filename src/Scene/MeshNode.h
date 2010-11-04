@@ -24,8 +24,8 @@ class MeshNode: public SceneNode
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
 		MeshNode();
-		virtual void render() { render(*mesh->material.get(), mesh->vao); }
-		virtual void renderDepth() { render(*mesh->material->dpMtl.get(), mesh->depthVao); }
+		virtual void render() { render(*mesh->material.get(), *mesh->vao); }
+		virtual void renderDepth() { render(*mesh->material->dpMtl.get(), *mesh->depthVao); }
 		void init(const char* filename);
 };
 
