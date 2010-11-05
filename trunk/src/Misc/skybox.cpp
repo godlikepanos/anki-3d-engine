@@ -54,7 +54,7 @@ render                                                                          
 */
 void Skybox::Render(const Mat3& rotation)
 {
-	glDisable(GL_DEPTH_TEST);
+	/*glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
 	glPushMatrix();
@@ -93,5 +93,5 @@ void Skybox::Render(const Mat3& rotation)
 		glEnd();
 	}
 
-	glPopMatrix();
+	glPopMatrix();*/
 }

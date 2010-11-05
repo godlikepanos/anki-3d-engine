@@ -117,19 +117,6 @@ class Renderer: public Object
 	private:
 		static Vbo* quadPositionsVbo; ///< The VBO for quad positions
 		static Vao* globalVao; ///< This VAO is used everywhere
-
-	// to be removed
-	public:
-		static void color3(const Vec3& v) { glColor3fv(&((Vec3&)v)[0]); } ///< OpenGL wrapper
-		static void color4(const Vec4& v) { glColor4fv(&((Vec4&)v)[0]); } ///< OpenGL wrapper
-		static void setProjectionMatrix(const Camera& cam);
-		static void setViewMatrix(const Camera& cam);
-		static void noShaders() { ShaderProg::unbind(); } ///< unbind shaders @todo remove this. From now on there will be only shaders
-		static void setProjectionViewMatrices(const Camera& cam) { setProjectionMatrix(cam); setViewMatrix(cam); }
-		static void multMatrix(const Mat4& m4) { glMultMatrixf(&(m4.getTransposed())(0, 0)); } ///< OpenGL wrapper
-		static void multMatrix(const Transform& trf) { glMultMatrixf(&(Mat4(trf).getTransposed())(0, 0)); } ///< OpenGL wrapper
-		static void loadMatrix(const Mat4& m4) { glLoadMatrixf(&(m4.getTransposed())(0, 0)); } ///< OpenGL wrapper
-		static void loadMatrix(const Transform& trf) { glLoadMatrixf(&(Mat4(trf).getTransposed())(0, 0)); } ///< OpenGL wrapper
 };
 
 #endif

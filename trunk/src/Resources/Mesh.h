@@ -17,28 +17,29 @@ class MeshData;
 class Mesh: public Resource, public Object
 {
 	public:
-		/// The VBOs in a structure
-		struct Vbos
+		/// Used in @ref vao array
+		enum Vbos
 		{
-			Vbo* vertCoords;
-			Vbo* vertNormals;
-			Vbo* vertTangents;
-			Vbo* texCoords;
-			Vbo* vertIndeces;
-			Vbo* vertWeights;
-
-			Vbos();
+			VBO_VERT_POSITIONS,
+			VBO_VERT_NORMALS,
+			VBO_VERT_TANGENTS,
+			VBO_TEX_COORDS,
+			VBO_VERT_INDECES,
+			VBO_VERT_WEIGHTS,
+			VBOS_NUM
 		};
 
 	PROPERTY_R(uint, vertIdsNum, getVertIdsNum)
 
 	public:
 		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
-		Vbos vbos; ///< The vertex buffer objects
 		Vao* vao; ///< Vertex array object
 		Vao* depthVao; ///< Vertex array object for the depth material
 
+		/// Default constructor
 		Mesh(): Resource(RT_MESH), Object(NULL) {}
+
+		/// Does nothing
 		~Mesh() {}
 
 		/// Implements @ref Resource::load
@@ -48,19 +49,14 @@ class Mesh: public Resource, public Object
 		bool isRenderable() const;
 
 	private:
+		Vbo* vbos[VBOS_NUM]; ///< The vertex buffer objects
+
+		/// Create the VBOs
 		void createVbos(const MeshData& meshData);
+
+		/// Create a VAO. Called more than one
 		void createVao(Vao* vao, Material& mtl);
 };
-
-
-inline Mesh::Vbos::Vbos():
-	vertCoords(NULL),
-	vertNormals(NULL),
-	vertTangents(NULL),
-	texCoords(NULL),
-	vertIndeces(NULL),
-	vertWeights(NULL)
-{}
 
 
 #endif
