@@ -48,7 +48,7 @@ void Mesh::load(const char* filename)
 
 
 			createVbos(meshData);
-			createVao(vao, *material.get());
+			createVao(mainVao, *material.get());
 			createVao(depthVao, *material->dpMtl.get());
 		}
 	}
@@ -106,7 +106,7 @@ void Mesh::createVbos(const MeshData& meshData)
 //======================================================================================================================
 // createVao                                                                                                           =
 //======================================================================================================================
-void Mesh::createVao(Vao* vao, Material& mtl)
+void Mesh::createVao(Vao*& vao, const Material& mtl)
 {
 	vao = new Vao(this);
 

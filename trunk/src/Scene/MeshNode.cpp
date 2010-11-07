@@ -26,12 +26,8 @@ void MeshNode::init(const char* filename)
 //======================================================================================================================
 // render                                                                                                              =
 //======================================================================================================================
-void MeshNode::render(Material& mtl, Vao& vao) const
+void MeshNode::render(const Material& mtl, const Vao& vao) const
 {
-	GLint loc;
-	GLint locs[64];
-	int locsNum = 0;
-
 	// if we have skeleton controller
 	if(meshSkelCtrl)
 	{
