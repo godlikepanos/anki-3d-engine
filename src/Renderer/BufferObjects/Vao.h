@@ -2,7 +2,6 @@
 #define VAO_H
 
 #include <GL/glew.h>
-#include "Exception.h"
 #include "StdTypes.h"
 #include "ShaderProg.h"
 #include "Object.h"
@@ -22,14 +21,32 @@ class Vao: public Object
 		/// Default constructor
 		Vao(Object* parent = NULL);
 
-		/// Destroy VAO fro the OpenGL context
+		/// Destroy VAO from the OpenGL context
 		~Vao() {glDeleteVertexArrays(1, &glId);}
 
-		/// @todo
+		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+		/// @param vbo The VBO to attach
+		/// @param attribVar For the shader attribute location
+		/// @param size Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4
+		/// @param type GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
+		/// @param normalized Specifies whether fixed-point data values should be normalized
+		/// @param stride Specifies the byte offset between consecutive generic vertex attributes
+		/// @param pointer Specifies a offset of the first component of the first generic vertex attribute in the array
 		void attachArrayBufferVbo(const Vbo& vbo, const ShaderProg::AttribVar& attribVar, GLint size, GLenum type,
 		                          GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 
-		/// @todo
+		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+		/// @param vbo The VBO to attach
+		/// @param attribVarLocation Shader attribute location
+		/// @param size Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4
+		/// @param type GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
+		/// @param normalized Specifies whether fixed-point data values should be normalized
+		/// @param stride Specifies the byte offset between consecutive generic vertex attributes
+		/// @param pointer Specifies a offset of the first component of the first generic vertex attribute in the array
+		void attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint size, GLenum type,
+		                          GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+
+		/// Attach an element array buffer VBO
 		void attachElementArrayBufferVbo(const Vbo& vbo);
 
 		/// Bind it

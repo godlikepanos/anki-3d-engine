@@ -60,6 +60,8 @@ void Renderer::init(const RendererInitializer& initializer)
 	{
 		float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
 		quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+		globalVao = new Vao();
+		globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 4, GL_FLOAT, false, 0, 0);
 	}
 }
 
@@ -72,7 +74,10 @@ void Renderer::render(Camera& cam_)
 	cam = &cam_;
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
+
 	ms.run();
+
+	globalVao->bind();
 	/*is.run();
 	pps.runPrePass();
 	bs.run();
@@ -158,19 +163,29 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 
 	// set matrices
 	if(mtl.stdUniVars[Material::SUV_MODEL_MAT])
+	{
 		mtl.stdUniVars[Material::SUV_MODEL_MAT]->setMat4(&modelMat);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_VIEW_MAT])
+	{
 		mtl.stdUniVars[Material::SUV_VIEW_MAT]->setMat4(&viewMat);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_PROJECTION_MAT])
+	{
 		mtl.stdUniVars[Material::SUV_PROJECTION_MAT]->setMat4(&projectionMat);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_MODELVIEW_MAT])
+	{
 		mtl.stdUniVars[Material::SUV_MODELVIEW_MAT]->setMat4(&modelViewMat);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_VIEWPROJECTION_MAT])
+	{
 		mtl.stdUniVars[Material::SUV_VIEWPROJECTION_MAT]->setMat4(&viewProjectionMat);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_NORMAL_MAT])
 	{
@@ -189,25 +204,39 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	// FAis
 	//
 	if(mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms.normalFai, textureUnit++);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms.diffuseFai, textureUnit++);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms.specularFai, textureUnit++);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms.depthFai, textureUnit++);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_IS_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is.fai, textureUnit++);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps.prePassFai, textureUnit++);
+	}
 
 	if(mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI])
+	{
 		mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI]->setTexture(pps.postPassFai, textureUnit++);
+	}
 
 
 	//
@@ -256,6 +285,8 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 				break;
 		}
 	}
+
+	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 

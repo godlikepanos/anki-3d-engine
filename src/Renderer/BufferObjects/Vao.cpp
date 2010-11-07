@@ -5,7 +5,7 @@
 //======================================================================================================================
 // attachArrayBufferVbo                                                                                                =
 //======================================================================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, const ShaderProg::AttribVar& attribVar, GLint size, GLenum type,
+void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint size, GLenum type,
 		                           GLboolean normalized, GLsizei stride, const GLvoid* pointer)
 {
 	if(vbo.getBufferTarget() != GL_ARRAY_BUFFER)
@@ -15,11 +15,21 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, const ShaderProg::AttribVar& attr
 
 	bind();
 	vbo.bind();
-	glVertexAttribPointer(attribVar.getLoc(), size, type, normalized, stride, pointer);
-	glEnableVertexAttribArray(attribVar.getLoc());
+	glVertexAttribPointer(attribVarLocation, size, type, normalized, stride, pointer);
+	glEnableVertexAttribArray(attribVarLocation);
 	unbind();
 
 	ON_GL_FAIL_THROW_EXCEPTION();
+}
+
+
+//======================================================================================================================
+// attachArrayBufferVbo                                                                                                =
+//======================================================================================================================
+void Vao::attachArrayBufferVbo(const Vbo& vbo, const ShaderProg::AttribVar& attribVar, GLint size, GLenum type,
+		                           GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+{
+	attachArrayBufferVbo(vbo, attribVar.getLoc(), size, type, normalized, stride, pointer);
 }
 
 

@@ -15,7 +15,7 @@ class Vao;
 class MeshNode: public SceneNode
 {
 	private:
-		void render(Material& mtl, Vao& vao) const; ///< Common code for render() and renderDepth()
+		void render(const Material& mtl, const Vao& vao) const; ///< Common code for render() and renderDepth()
 
 	public:
 		// resources
@@ -24,8 +24,8 @@ class MeshNode: public SceneNode
 		MeshSkelNodeCtrl* meshSkelCtrl;
 		// funcs
 		MeshNode();
-		virtual void render() { render(*mesh->material.get(), *mesh->vao); }
-		virtual void renderDepth() { render(*mesh->material->dpMtl.get(), *mesh->depthVao); }
+		virtual void render() { render(*mesh->material.get(), *mesh->getVao()); }
+		virtual void renderDepth() { render(*mesh->material->dpMtl.get(), *mesh->getDepthVao()); }
 		void init(const char* filename);
 };
 

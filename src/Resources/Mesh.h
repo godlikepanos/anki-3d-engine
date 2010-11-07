@@ -33,8 +33,12 @@ class Mesh: public Resource, public Object
 
 	public:
 		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
-		Vao* vao; ///< Vertex array object
-		Vao* depthVao; ///< Vertex array object for the depth material
+
+		/// Accessor to vao
+		const Vao* getVao() const {return mainVao;}
+
+		/// Accessor to depthVao
+		const Vao* getDepthVao() const {return depthVao;}
 
 		/// Default constructor
 		Mesh(): Resource(RT_MESH), Object(NULL) {}
@@ -50,12 +54,14 @@ class Mesh: public Resource, public Object
 
 	private:
 		Vbo* vbos[VBOS_NUM]; ///< The vertex buffer objects
+		Vao* mainVao; ///< Vertex array object
+		Vao* depthVao; ///< Vertex array object for the depth material
 
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);
 
 		/// Create a VAO. Called more than one
-		void createVao(Vao* vao, Material& mtl);
+		void createVao(Vao*& vao, const Material& mtl);
 };
 
 
