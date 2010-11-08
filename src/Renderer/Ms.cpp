@@ -115,4 +115,5 @@ void Ms::run()
 	}
 
 	fbo.unbind();
+	ON_GL_FAIL_THROW_EXCEPTION();
 }

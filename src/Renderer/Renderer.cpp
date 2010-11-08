@@ -14,6 +14,7 @@ float Renderer::quadVertCoords [][2] = { {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.
 int Renderer::maxColorAtachments = -1;
 
 Vbo* Renderer::quadPositionsVbo = NULL;
+Vbo* Renderer::quadVertIndecesVbo = NULL;
 Vao* Renderer::globalVao = NULL;
 
 
@@ -55,13 +56,18 @@ void Renderer::init(const RendererInitializer& initializer)
 	pps.init(initializer);
 	bs.init(initializer);*/
 
-	// VBOs
+	// quad VBOs and VAO
 	if(quadPositionsVbo == NULL)
 	{
 		float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
 		quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+
+		ushort quadVertIndeces[2][3] = {{0, 1, 2}, {1, 2, 3}};
+		quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
+
 		globalVao = new Vao();
-		globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 4, GL_FLOAT, false, 0, 0);
+		globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 4, GL_FLOAT, false, 0, NULL);
+		globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
 	}
 }
 
@@ -93,11 +99,8 @@ void Renderer::render(Camera& cam_)
 void Renderer::drawQuad(int vertCoordsAttribLoc)
 {
 	RASSERT_THROW_EXCEPTION(vertCoordsAttribLoc == -1);
-	quadPositionsVbo->bind();
-	glEnableVertexAttribArray(vertCoordsAttribLoc);
-	glVertexAttribPointer(vertCoordsAttribLoc, 2, GL_FLOAT, false, 0, NULL);
-	glDrawArrays(GL_QUADS, 0, 4);
-	glDisableVertexAttribArray(vertCoordsAttribLoc);
+	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 

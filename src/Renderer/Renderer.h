@@ -97,8 +97,7 @@ class Renderer: public Object
 		/// @param cam Needed for some matrices
 		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam);
 
-
-		/// Draws a quad
+		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions
 		static void drawQuad(int vertCoordsAttribLoc);
 
@@ -115,8 +114,12 @@ class Renderer: public Object
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	private:
+		/// @name For drawing a quad into the active framebuffer
+		/// @{
 		static Vbo* quadPositionsVbo; ///< The VBO for quad positions
-		static Vao* globalVao; ///< This VAO is used everywhere
+		static Vbo* quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+		static Vao* globalVao; ///< This VAO is used everywhere except material stage
+		/// @}
 };
 
 #endif

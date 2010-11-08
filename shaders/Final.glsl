@@ -15,6 +15,7 @@ void main()
 	//if( gl_FragCoord.x > 0.5 ) discard;
 
 	fragColor.rgb = texture2D(rasterImage, vTexCoords).rgb;
+	fragColor.rgb = fragColor.rgb * vec3(1.0, 0.0, 1.0) + vec3(1.0, 0.0, 1.0);
 
 
 	//gl_FragColor.rgb = vec3(texture2D(rasterImage, vTexCoords).r);
