@@ -217,8 +217,8 @@ void ParticleEmitter::update()
 void ParticleEmitter::render()
 {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	app->getMainRenderer().dbg.setColor(Vec4(1.0));
-	app->getMainRenderer().dbg.setModelMat(Mat4(getWorldTransform()));
-	app->getMainRenderer().dbg.drawCube();
+	app->getMainRenderer().getDbg().setColor(Vec4(1.0));
+	app->getMainRenderer().getDbg().setModelMat(Mat4(getWorldTransform()));
+	app->getMainRenderer().getDbg().drawCube();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }

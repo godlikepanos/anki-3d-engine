@@ -1,29 +1,43 @@
 #ifndef PPS_H
 #define PPS_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
-#include "Hdr.h"
-#include "Ssao.h"
+#include "Texture.h"
+#include "RsrcPtr.h"
+
+
+class Hdr;
+class Ssao;
+class ShaderProg;
 
 
 /// Post-processing stage.
 ///
 /// This stage is divided into 2 two parts. The first happens before blending stage and the second after.
-class Pps: private RenderingStage
+class Pps: private RenderingPass
 {
 	public:
-		Hdr hdr;
-		Ssao ssao;
 		Texture prePassFai;
 		Texture postPassFai;
 
-		Pps(Renderer& r_): RenderingStage(r_), hdr(r_), ssao(r_) {}
+		Pps(Renderer& r_, Object* parent);
 		void init(const RendererInitializer& initializer);
 		void runPrePass();
 		void runPostPass();
 
+		/// @name Accessors
+		/// @{
+		Hdr& getHdr() {return *hdr;}
+		/// @}
+
 	private:
+		/// @name Passes
+		/// @{
+		Hdr* hdr;
+		Ssao* ssao;
+		/// @}
+
 		Fbo prePassFbo;
 		Fbo postPassFbo;
 		RsrcPtr<ShaderProg> prePassSProg;

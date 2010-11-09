@@ -1,17 +1,17 @@
 #ifndef EZ_H
 #define EZ_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
 
 
 /**
  * Material stage EarlyZ pass
  */
-class Ez: public RenderingStage
+class Ez: public RenderingPass
 {
 	public:
-		Ez(Renderer& r_): RenderingStage(r_) {}
+		Ez(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 		bool isEnabled() const {return enabled;}
 		void init(const RendererInitializer& initializer);
 		void run();

@@ -1,7 +1,7 @@
 #ifndef SMO_H
 #define SMO_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
 #include "Vbo.h"
 #include "ShaderProg.h"
@@ -12,13 +12,11 @@ class PointLight;
 class SpotLight;
 
 
-/**
- * Stencil masking optimizations
- */
-class Smo: public RenderingStage
+/// Stencil masking optimizations
+class Smo: public RenderingPass
 {
 	public:
-		Smo(Renderer& r_): RenderingStage(r_) {}
+		Smo(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 		void init(const RendererInitializer& initializer);
 		void run(const PointLight& light);
 		void run(const SpotLight& light);

@@ -123,7 +123,7 @@ void Ssao::run()
 	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 0);
 	ssaoSProg->findUniVar("noiseMap")->setTexture(*noiseMap, 1);
 	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 2);
-	Renderer::drawQuad(0);
+	Renderer::drawQuad();
 
 
 	// blurring passes
@@ -143,14 +143,14 @@ void Ssao::run()
 			hblurSProg->findUniVar("img")->setTexture(fai, 0);
 		}
 		hblurSProg->findUniVar("imgDimension")->setFloat(width);
-		Renderer::drawQuad(0);
+		Renderer::drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
 		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
 		vblurSProg->findUniVar("imgDimension")->setFloat(height);
-		Renderer::drawQuad(0);
+		Renderer::drawQuad();
 	}
 
 	// end

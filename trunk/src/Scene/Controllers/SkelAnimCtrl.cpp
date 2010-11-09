@@ -168,7 +168,7 @@ void SkelAnimCtrl::update(float)
 
 	interpolate(*skelAnim, frame);
 	updateBoneTransforms();
-	if(app->getMainRenderer().dbg.isEnabled() && app->getMainRenderer().dbg.isShowSkeletonsEnabled())
+	if(app->getMainRenderer().getDbg().isEnabled() && app->getMainRenderer().getDbg().isShowSkeletonsEnabled())
 	{
 		deform();
 	}

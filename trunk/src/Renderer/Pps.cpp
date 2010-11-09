@@ -1,5 +1,17 @@
 #include "Pps.h"
 #include "Renderer.h"
+#include "Hdr.h"
+#include "Ssao.h"
+
+
+//======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+Pps::Pps(Renderer& r_, Object* parent):
+	RenderingPass(r_, parent),
+	hdr(new Hdr(r_, this)),
+	ssao(new Ssao(r_, this))
+{}
 
 
 //======================================================================================================================
@@ -31,7 +43,7 @@ void Pps::initPrePassSProg()
 	std::string pps = "";
 	std::string prefix = "";
 
-	if(ssao.isEnabled())
+	if(ssao->isEnabled())
 	{
 		pps += "#define SSAO_ENABLED\n";
 		prefix += "Ssao";
@@ -51,7 +63,7 @@ void Pps::initPostPassSProg()
 	std::string pps = "";
 	std::string prefix = "";
 
-	if(hdr.isEnabled())
+	if(hdr->isEnabled())
 	{
 		pps += "#define HDR_ENABLED\n";
 		prefix += "Hdr";
@@ -68,8 +80,8 @@ void Pps::initPostPassSProg()
 //======================================================================================================================
 void Pps::init(const RendererInitializer& initializer)
 {
-	ssao.init(initializer);
-	hdr.init(initializer);
+	ssao->init(initializer);
+	hdr->init(initializer);
 
 	try
 	{
@@ -99,9 +111,9 @@ void Pps::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Pps::runPrePass()
 {
-	if(ssao.isEnabled())
+	if(ssao->isEnabled())
 	{
-		ssao.run();
+		ssao->run();
 	}
 
 	prePassFbo.bind();
@@ -113,12 +125,12 @@ void Pps::runPrePass()
 	prePassSProg->bind();
 	prePassSProg->findUniVar("isFai")->setTexture(r.is.fai, 0);
 
-	if(ssao.isEnabled())
+	if(ssao->isEnabled())
 	{
-		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao.fai, 1);
+		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao->fai, 1);
 	}
 
-	Renderer::drawQuad(0);
+	Renderer::drawQuad();
 
 	Fbo::unbind();
 }
@@ -129,9 +141,9 @@ void Pps::runPrePass()
 //======================================================================================================================
 void Pps::runPostPass()
 {
-	if(hdr.isEnabled())
+	if(hdr->isEnabled())
 	{
-		hdr.run();
+		hdr->run();
 	}
 
 	postPassFbo.bind();
@@ -143,12 +155,12 @@ void Pps::runPostPass()
 	postPassSProg->bind();
 	postPassSProg->findUniVar("ppsPrePassFai")->setTexture(prePassFai, 0);
 
-	if(hdr.isEnabled())
+	if(hdr->isEnabled())
 	{
-		postPassSProg->findUniVar("ppsHdrFai")->setTexture(hdr.fai, 1);
+		postPassSProg->findUniVar("ppsHdrFai")->setTexture(hdr->fai, 1);
 	}
 
-	Renderer::drawQuad(0);
+	Renderer::drawQuad();
 
 	Fbo::unbind();
 }

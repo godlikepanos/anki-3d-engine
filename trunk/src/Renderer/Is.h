@@ -1,30 +1,35 @@
 #ifndef IS_H
 #define IS_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
-#include "Sm.h"
-#include "Smo.h"
 #include "Texture.h"
+#include "RsrcPtr.h"
+#include "ShaderProg.h"
+#include "Math.h"
 
 
 class PointLight;
 class SpotLight;
+class Vao;
+class Sm;
+class Smo;
+class Vbo;
 
 
 /// Illumination stage
-class Is: private RenderingStage
+class Is: private RenderingPass
 {
 	public:
-		Sm sm;
-		Smo smo;
 		Texture fai;
 
-		Is(Renderer& r_): RenderingStage(r_), sm(r_), smo(r_) {}
+		Is(Renderer& r_, Object* parent);
 		void init(const RendererInitializer& initializer);
 		void run();
 
 	private:
+		Sm* sm;
+		Smo* smo;
 		Fbo fbo; ///< This FBO writes to the Is::fai
 		uint stencilRb; ///< Illumination stage stencil buffer
 		RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
@@ -32,16 +37,21 @@ class Is: private RenderingStage
 		RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
 		RsrcPtr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
 
-		/// @name Ptrs to uniform variables
+		/// @name For the quad drawing in light passes
 		/// @{
-		const ShaderProg::UniVar* ambientColUniVar;
-		const ShaderProg::UniVar* sceneColMapUniVar;
+		Vbo* quadPositionsVbo; ///< The VBO for quad positions
+		Vbo* viewVectorsVbo; ///< The VBO to pass the @ref viewVectors.
+		Vbo* quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+		Vao* vao; ///< This VAO is used in light passes only
 		/// @}
 
-		Vec3 viewVectors[4];
-		Vec2 planes;
+		Vec2 planes; ///< Used to to calculate the frag pos in view space inside tha shader program
 
-		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space
+		/// Draws the vao that has attached the viewVectorsVbo as well. Used in light passes
+		void drawLightPassQuad() const;
+
+		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space. This calculates
+		/// the view vectors and updates the @ref viewVectorsVbo
 		void calcViewVectors();
 
 		/// Calc the planes that we will use inside the shader to calculate the frag pos in view space

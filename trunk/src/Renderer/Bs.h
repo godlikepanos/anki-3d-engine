@@ -1,7 +1,7 @@
 #ifndef BS_H
 #define BS_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
 #include "RsrcPtr.h"
 #include "Texture.h"
@@ -12,10 +12,10 @@ class ShaderProg;
 
 /// Blending stage.
 /// The objects that blend must be handled differently
-class Bs: public RenderingStage
+class Bs: public RenderingPass
 {
 	public:
-		Bs(Renderer& r_): RenderingStage(r_) {}
+		Bs(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 		void init(const RendererInitializer& initializer);
 		void run();
 
