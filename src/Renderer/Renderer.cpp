@@ -25,10 +25,10 @@ Renderer::Renderer(Object* parent):
 	Object(parent),
 	width(640),
 	height(480),
-	ms(*this),
-	is(*this),
-	pps(*this),
-	bs(*this)
+	ms(*this, this),
+	is(*this, this),
+	pps(*this, this),
+	bs(*this, this)
 {}
 
 
@@ -62,11 +62,11 @@ void Renderer::init(const RendererInitializer& initializer)
 		float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
 		quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
 
-		ushort quadVertIndeces[2][3] = {{0, 1, 2}, {1, 2, 3}};
+		ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
 		quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
 
 		globalVao = new Vao();
-		globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 4, GL_FLOAT, false, 0, NULL);
+		globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 3, GL_FLOAT, false, 0, NULL);
 		globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
 	}
 }
@@ -83,7 +83,6 @@ void Renderer::render(Camera& cam_)
 
 	ms.run();
 
-	globalVao->bind();
 	/*is.run();
 	pps.runPrePass();
 	bs.run();
@@ -96,10 +95,11 @@ void Renderer::render(Camera& cam_)
 //======================================================================================================================
 // drawQuad                                                                                                            =
 //======================================================================================================================
-void Renderer::drawQuad(int vertCoordsAttribLoc)
+void Renderer::drawQuad()
 {
-	RASSERT_THROW_EXCEPTION(vertCoordsAttribLoc == -1);
+	globalVao->bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+	globalVao->unbind();
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
@@ -297,7 +297,7 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 // unproject                                                                                                           =
 //======================================================================================================================
 Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
-                          const int view[4])
+                         const int view[4])
 {
 	Mat4 invPm = projectionMat * modelViewMat;
 	invPm.invert();

@@ -1,7 +1,7 @@
 #ifndef HDR_H
 #define HDR_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
 #include "Texture.h"
 #include "RsrcPtr.h"
@@ -9,14 +9,14 @@
 
 
 /// High dynamic range lighting pass
-class Hdr: private RenderingStage
+class Hdr: private RenderingPass
 {
 	public:
 		Texture toneFai; ///< Vertical blur pass FAI
 		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 		Texture fai; ///< The final FAI
 
-		Hdr(Renderer& r_): RenderingStage(r_) {}
+		Hdr(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 		void init(const RendererInitializer& initializer);
 		void run();
 

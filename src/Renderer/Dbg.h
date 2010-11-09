@@ -1,7 +1,7 @@
 #ifndef DBG_H
 #define DBG_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
@@ -9,10 +9,10 @@
 
 
 /// Debugging stage
-class Dbg: public RenderingStage
+class Dbg: public RenderingPass
 {
 	public:
-		Dbg(Renderer& r_);
+		Dbg(Renderer& r_, Object* parent);
 		void init(const RendererInitializer& initializer);
 		void run();
 		void renderGrid();

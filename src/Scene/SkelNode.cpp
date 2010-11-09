@@ -32,14 +32,14 @@ void SkelNode::init(const char* filename)
 //======================================================================================================================
 void SkelNode::render()
 {
-	app->getMainRenderer().dbg.setModelMat(Mat4(getWorldTransform()));
-	app->getMainRenderer().dbg.setColor(Vec4(1.0, 0.0, 0.0, 1.0));
-	app->getMainRenderer().dbg.setModelMat(Mat4(getWorldTransform()));
+	app->getMainRenderer().getDbg().setModelMat(Mat4(getWorldTransform()));
+	app->getMainRenderer().getDbg().setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+	app->getMainRenderer().getDbg().setModelMat(Mat4(getWorldTransform()));
 
 	Vec<Vec3> positions;
 
 	for(uint i=0; i<skeleton->bones.size(); i++)
 	{
-		app->getMainRenderer().dbg.drawLine(heads[i], tails[i], Vec4(1.0));
+		app->getMainRenderer().getDbg().drawLine(heads[i], tails[i], Vec4(1.0));
 	}
 }

@@ -26,13 +26,21 @@ class BufferObject: public Object
 		/// It deletes the BO from the GL context
 		virtual ~BufferObject() {deleteBuff();}
 
-		/// Bind BO. Throws exception if BO is not created
-		/// @exception Exception
-		void bind() const;
+		/// Bind BO
+		void bind() const {glBindBuffer(target, glId);}
 
-		/// Unbind BO. Throws exception if BO is not created
-		/// @exception Exception
-		void unbind() const;
+		/// Unbind BO
+		void unbind() const {glBindBuffer(target, 0);}
+
+		/// Write data to buffer. This means that maps the BO to local memory, writes the local memory and unmaps it.
+		/// Throws exception if the given size and the BO size are not equal. It throws an exception if the usage is
+		/// GL_STATIC_DRAW
+		/// @param[in] buff The buffer to copy to BO
+		/// @param[in] size The size in bytes we want to write
+		void write(void* buff, size_t size);
+
+	protected:
+		size_t sizeInBytes;
 
 	private:
 		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails
@@ -44,7 +52,6 @@ class BufferObject: public Object
 		void create(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
 
 		/// Delete the BO
-		/// @exception Exception
 		void deleteBuff();
 };
 
@@ -54,27 +61,19 @@ class BufferObject: public Object
 //======================================================================================================================
 
 inline BufferObject::BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage, Object* parent):
-	Object(parent)
+	Object(parent),
+	glId(0)
 {
 	create(target, sizeInBytes, dataPtr, usage);
 }
 
 
-inline void BufferObject::bind() const
-{
-	glBindBuffer(target, glId);
-}
-
-
-inline void BufferObject::unbind() const
-{
-	glBindBuffer(target, 0);
-}
-
-
 inline void BufferObject::deleteBuff()
 {
-	glDeleteBuffers(1, &glId);
+	if(glId != 0)
+	{
+		glDeleteBuffers(1, &glId);
+	}
 	glId = 0;
 }
 

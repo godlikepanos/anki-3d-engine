@@ -99,7 +99,7 @@ class Renderer: public Object
 
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions
-		static void drawQuad(int vertCoordsAttribLoc);
+		static void drawQuad();
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
@@ -121,5 +121,6 @@ class Renderer: public Object
 		static Vao* globalVao; ///< This VAO is used everywhere except material stage
 		/// @}
 };
+
 
 #endif

@@ -22,6 +22,6 @@ void Light::init(const char* filename)
 //======================================================================================================================
 void Light::render()
 {
-	app->getMainRenderer().dbg.drawSphere(0.1, getWorldTransform(), Vec4(lightData->getDiffuseCol(), 1.0));
+	app->getMainRenderer().getDbg().drawSphere(0.1, getWorldTransform(), Vec4(lightData->getDiffuseCol(), 1.0));
 }
 

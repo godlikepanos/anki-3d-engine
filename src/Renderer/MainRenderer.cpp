@@ -104,7 +104,7 @@ void MainRenderer::render(Camera& cam_)
 	sProg->bind();
 	sProg->findUniVar("rasterImage")->setTexture(ms.diffuseFai, 0);
 	//sProg->findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
-	drawQuad(0);
+	drawQuad();
 }
 
 

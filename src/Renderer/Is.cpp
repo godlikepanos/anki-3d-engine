@@ -10,6 +10,19 @@
 #include "Scene.h"
 #include "LightData.h"
 #include "Collision.h"
+#include "Vao.h"
+#include "Sm.h"
+#include "Smo.h"
+
+
+//======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+Is::Is(Renderer& r_, Object* parent):
+	RenderingPass(r_, parent),
+	sm(new Sm(r_, this)),
+	smo(new Smo(r_, this))
+{}
 
 
 //======================================================================================================================
@@ -17,6 +30,8 @@
 //======================================================================================================================
 void Is::calcViewVectors()
 {
+	Vec3 viewVectors[4];
+
 	const Camera& cam = r.getCamera();
 
 	const uint& w = r.getWidth();
@@ -44,6 +59,8 @@ void Is::calcViewVectors()
 		viewVectors[i] = vec.getTransformed(cam.getInvProjectionMatrix());
 		// end of optimized code
 	}
+
+	viewVectorsVbo->write(viewVectors, sizeof(viewVectors));
 }
 
 
@@ -105,13 +122,11 @@ void Is::initFbo()
 void Is::init(const RendererInitializer& initializer)
 {
 	// init passes
-	smo.init(initializer);
-	sm.init(initializer);
+	smo->init(initializer);
+	sm->init(initializer);
 
 	// load the shaders
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
-	ambientColUniVar = ambientPassSProg->findUniVar("ambientCol");
-	sceneColMapUniVar = ambientPassSProg->findUniVar("sceneColMap");
 
 	// point light
 	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n",
@@ -124,9 +139,9 @@ void Is::init(const RendererInitializer& initializer)
 
 	// spot light w/t shadow
 	std::string pps = std::string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm.getResolution()) + "\n";
-	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm.getResolution());
-	if(sm.isPcfEnabled())
+	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm->getResolution()) + "\n";
+	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm->getResolution());
+	if(sm->isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
 		prefix += "Pcf";
@@ -136,6 +151,31 @@ void Is::init(const RendererInitializer& initializer)
 
 	// init the rest
 	initFbo();
+
+	// The VBOs and VAOs
+	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
+	quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW, this);
+
+	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}};
+	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW, this);
+
+	viewVectorsVbo = new Vbo(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW, this);
+
+	vao = new Vao(this);
+	vao->attachArrayBufferVbo(*quadPositionsVbo, 0, 3, GL_FLOAT, false, 0, NULL);
+	vao->attachArrayBufferVbo(*viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
+	vao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
+}
+
+
+//======================================================================================================================
+// drawLightPassQuad                                                                                                   =
+//======================================================================================================================
+void Is::drawLightPassQuad() const
+{
+	vao->bind();
+	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+	vao->unbind();
 }
 
 
@@ -154,7 +194,7 @@ void Is::ambientPass(const Vec3& color)
 	ambientPassSProg->findUniVar("sceneColMap")->setTexture(r.ms.diffuseFai, 0);
 
 	// Draw quad
-	Renderer::drawQuad(0);
+	Renderer::drawQuad();
 }
 
 
@@ -173,7 +213,7 @@ void Is::pointLightPass(const PointLight& light)
 	}
 
 	// stencil optimization
-	smo.run(light);
+	smo->run(light);
 
 	// shader prog
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
@@ -191,16 +231,7 @@ void Is::pointLightPass(const PointLight& light)
 	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularCol());
 
 	// render quad
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, &Renderer::quadVertCoords[0]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, &viewVectors[0]);
-
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+	drawLightPassQuad();
 }
 
 
@@ -218,9 +249,9 @@ void Is::spotLightPass(const SpotLight& light)
 	}
 
 	// shadow mapping
-	if(light.castsShadow() && sm.isEnabled())
+	if(light.castsShadow() && sm->isEnabled())
 	{
-		sm.run(light.getCamera());
+		sm->run(light.getCamera());
 
 		// restore the IS FBO
 		fbo.bind();
@@ -233,7 +264,7 @@ void Is::spotLightPass(const SpotLight& light)
 	}
 
 	// stencil optimization
-	smo.run(light);
+	smo->run(light);
 
 	// set the texture
 	light.lightData->getTexture().setRepeat(false);
@@ -241,7 +272,7 @@ void Is::spotLightPass(const SpotLight& light)
 	// shader prog
 	const ShaderProg* shdr;
 
-	if(light.castsShadow() && sm.isEnabled())
+	if(light.castsShadow() && sm->isEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
 	}
@@ -278,22 +309,13 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->findUniVar("texProjectionMat")->setMat4(&texProjectionMat);
 
 	// the shadowmap
-	if(light.castsShadow() && sm.isEnabled())
+	if(light.castsShadow() && sm->isEnabled())
 	{
-		shdr->findUniVar("shadowMap")->setTexture(sm.shadowMap, 5);
+		shdr->findUniVar("shadowMap")->setTexture(sm->shadowMap, 5);
 	}
 
 	// render quad
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, &Renderer::quadVertCoords[0]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, &viewVectors[0]);
-
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+	drawLightPassQuad();
 }
 
 

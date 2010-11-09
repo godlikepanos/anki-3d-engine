@@ -1,31 +1,30 @@
 #ifndef MS_H
 #define MS_H
 
-#include "RenderingStage.h"
-#include "Ez.h"
+#include "RenderingPass.h"
 #include "Texture.h"
+#include "Fbo.h"
 
 
 class RendererInitializer;
+class Ez;
 
 
-/**
- * Material stage
- */
-class Ms: public RenderingStage
+/// Material stage
+class Ms: public RenderingPass
 {
 	public:
-		Ez ez;
 		Texture normalFai;
 		Texture diffuseFai;
 		Texture specularFai;
 		Texture depthFai;
 
-		Ms(Renderer& r_): RenderingStage(r_), ez(r_) {}
+		Ms(Renderer& r_, Object* parent);
 		void init(const RendererInitializer& initializer);
 		void run();
 
 	private:
+		Ez* ez;
 		Fbo fbo;
 };
 

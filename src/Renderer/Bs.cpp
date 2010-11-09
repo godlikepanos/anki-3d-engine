@@ -126,7 +126,7 @@ void Bs::run()
 			refractSProg->bind();
 			refractSProg->findUniVar("fai")->setTexture(refractFai, 0);
 
-			Renderer::drawQuad(0);
+			Renderer::drawQuad();
 
 			// cleanup
 			glStencilFunc(GL_ALWAYS, 0x1, 0x1);

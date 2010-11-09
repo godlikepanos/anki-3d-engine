@@ -17,6 +17,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint siz
 	vbo.bind();
 	glVertexAttribPointer(attribVarLocation, size, type, normalized, stride, pointer);
 	glEnableVertexAttribArray(attribVarLocation);
+	vbo.unbind();
 	unbind();
 
 	ON_GL_FAIL_THROW_EXCEPTION();

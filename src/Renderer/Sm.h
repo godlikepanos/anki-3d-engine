@@ -1,7 +1,7 @@
 #ifndef SM_H
 #define SM_H
 
-#include "RenderingStage.h"
+#include "RenderingPass.h"
 #include "Fbo.h"
 #include "Texture.h"
 
@@ -9,22 +9,18 @@
 class Camera;
 
 
-/**
- * Shadowmapping pass
- */
-class Sm: private RenderingStage
+/// Shadowmapping pass
+class Sm: private RenderingPass
 {
 	public:
 		Texture shadowMap;
 
-		Sm(Renderer& r_): RenderingStage(r_) {}
+		Sm(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 
 		void init(const RendererInitializer& initializer);
 
-		/**
-		 * Render the scene only with depth and store the result in the shadowMap
-		 * @param cam The light camera
-		 */
+		/// Render the scene only with depth and store the result in the shadowMap
+		/// @param[in] cam The light camera
 		void run(const Camera& cam);
 
 		bool isEnabled() const {return enabled;}

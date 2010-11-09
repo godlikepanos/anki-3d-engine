@@ -8,8 +8,6 @@
 class MainRenderer: public Renderer
 {
 	public:
-		Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
-
 		MainRenderer(Object* parent);
 
 		~MainRenderer() throw() {}
@@ -19,6 +17,7 @@ class MainRenderer: public Renderer
 		int& getScreenshotJpegQuality() {return screenshotJpegQuality;}
 		void setScreenshotJpegQuality(int i) {screenshotJpegQuality = i;}
 		float getRenderingQuality() const {return renderingQuality;}
+		Dbg& getDbg() {return *dbg;}
 		/// @}
 
 		/// The same as Renderer::init but with additional initialization. @see Renderer::init
@@ -33,6 +32,11 @@ class MainRenderer: public Renderer
 		void takeScreenshot(const char* filename);
 
 	private:
+		/// @name Passes
+		/// @{
+		Dbg* dbg; ///< Debugging rendering stage. Only the main renderer has it
+		/// @}
+
 		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program
 		int screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
 
@@ -48,7 +52,7 @@ class MainRenderer: public Renderer
 
 inline MainRenderer::MainRenderer(Object* parent):
 	Renderer(parent),
-	dbg(*this),
+	dbg(new Dbg(*this, this)),
 	screenshotJpegQuality(90)
 {}
 

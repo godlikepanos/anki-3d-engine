@@ -11,8 +11,8 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Dbg::Dbg(Renderer& r_):
-	RenderingStage(r_),
+Dbg::Dbg(Renderer& r_, Object* parent):
+	RenderingPass(r_, parent),
 	showAxisEnabled(false),
 	showLightsEnabled(true),
 	showSkeletonsEnabled(true),
