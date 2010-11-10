@@ -18,8 +18,8 @@ void Bs::createFbo()
 
 		fbo.setNumOfColorAttachements(1);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.pps.prePassFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.getPps().prePassFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.getMs().depthFai.getGlId(), 0);
 
 		fbo.checkIfGood();
 
@@ -45,7 +45,7 @@ void Bs::createRefractFbo()
 		refractFbo.setNumOfColorAttachements(1);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, refractFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.getMs().depthFai.getGlId(), 0);
 
 		refractFbo.checkIfGood();
 
@@ -126,7 +126,7 @@ void Bs::run()
 			refractSProg->bind();
 			refractSProg->findUniVar("fai")->setTexture(refractFai, 0);
 
-			Renderer::drawQuad();
+			r.drawQuad();
 
 			// cleanup
 			glStencilFunc(GL_ALWAYS, 0x1, 0x1);

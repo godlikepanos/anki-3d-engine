@@ -191,10 +191,10 @@ void Is::ambientPass(const Vec3& color)
 
 	// set the uniforms
 	ambientPassSProg->findUniVar("ambientCol")->setVec3(&color);
-	ambientPassSProg->findUniVar("sceneColMap")->setTexture(r.ms.diffuseFai, 0);
+	ambientPassSProg->findUniVar("sceneColMap")->setTexture(r.getMs().diffuseFai, 0);
 
 	// Draw quad
-	Renderer::drawQuad();
+	r.drawQuad();
 }
 
 
@@ -219,10 +219,10 @@ void Is::pointLightPass(const PointLight& light)
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
 	shader.bind();
 
-	shader.findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 0);
-	shader.findUniVar("msDiffuseFai")->setTexture(r.ms.diffuseFai, 1);
-	shader.findUniVar("msSpecularFai")->setTexture(r.ms.specularFai, 2);
-	shader.findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 3);
+	shader.findUniVar("msNormalFai")->setTexture(r.getMs().normalFai, 0);
+	shader.findUniVar("msDiffuseFai")->setTexture(r.getMs().diffuseFai, 1);
+	shader.findUniVar("msSpecularFai")->setTexture(r.getMs().specularFai, 2);
+	shader.findUniVar("msDepthFai")->setTexture(r.getMs().depthFai, 3);
 	shader.findUniVar("planes")->setVec2(&planes);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
@@ -284,10 +284,10 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->bind();
 
 	// bind the FAIs
-	shdr->findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 0);
-	shdr->findUniVar("msDiffuseFai")->setTexture(r.ms.diffuseFai, 1);
-	shdr->findUniVar("msSpecularFai")->setTexture(r.ms.specularFai, 2);
-	shdr->findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 3);
+	shdr->findUniVar("msNormalFai")->setTexture(r.getMs().normalFai, 0);
+	shdr->findUniVar("msDiffuseFai")->setTexture(r.getMs().diffuseFai, 1);
+	shdr->findUniVar("msSpecularFai")->setTexture(r.getMs().specularFai, 2);
+	shdr->findUniVar("msDepthFai")->setTexture(r.getMs().depthFai, 3);
 
 	// the planes
 	shdr->findUniVar("planes")->setVec2(&planes);
