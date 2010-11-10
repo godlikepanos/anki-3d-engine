@@ -10,7 +10,7 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_, const void* dataPtr
 {
 	// unacceptable usage_
 	RASSERT_THROW_EXCEPTION(usage_ != GL_STREAM_DRAW && usage_ != GL_STATIC_DRAW && usage_ != GL_DYNAMIC_DRAW);
-	RASSERT_THROW_EXCEPTION(sizeInBytes < 1); // unacceptable sizeInBytes
+	RASSERT_THROW_EXCEPTION(sizeInBytes_ < 1); // unacceptable sizeInBytes
 
 	usage = usage_;
 	target = target_;
@@ -41,7 +41,7 @@ void BufferObject::write(void* buff, size_t size)
 {
 	if(usage == GL_STATIC_DRAW)
 	{
-		throw EXCEPTION("Its not recomended to map GL_STATIC_DRAW BOs");
+		throw EXCEPTION("Its not recommended to map GL_STATIC_DRAW BOs");
 	}
 
 	bind();

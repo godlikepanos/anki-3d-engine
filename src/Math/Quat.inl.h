@@ -7,38 +7,38 @@ namespace M {
 
 
 // constructor []
-inline Quat::Quat()
-	: x(0.0), y(0.0), z(0.0), w(1.0)
+inline Quat::Quat():
+	x(0.0), y(0.0), z(0.0), w(1.0)
 {}
 
 // constructor [float]
-inline Quat::Quat(float f)
-	: x(f), y(f), z(f), w(f)
+inline Quat::Quat(float f):
+	x(f), y(f), z(f), w(f)
 {}
 
 // constructor [float, float, float, float]
-inline Quat::Quat(float x_, float y_, float z_, float w_)
-	: x(x_), y(y_), z(z_), w(w_)
+inline Quat::Quat(float x_, float y_, float z_, float w_):
+	x(x_), y(y_), z(z_), w(w_)
 {}
 
 // constructor [vec2, float, float]
-inline Quat::Quat(const Vec2& v2, float z_, float w_)
-	: x(v2.x), y(v2.y), z(z_), w(w_)
+inline Quat::Quat(const Vec2& v2, float z_, float w_):
+	x(v2.x), y(v2.y), z(z_), w(w_)
 {}
 
 // constructor [vec3, float]
-inline Quat::Quat(const Vec3& v3, float w_)
-	: x(v3.x), y(v3.y), z(v3.z), w(w_)
+inline Quat::Quat(const Vec3& v3, float w_):
+	x(v3.x), y(v3.y), z(v3.z), w(w_)
 {}
 
 // constructor [vec4]
-inline Quat::Quat(const Vec4& v4)
-	: x(v4.x), y(v4.y), z(v4.z), w(v4.w)
+inline Quat::Quat(const Vec4& v4):
+	x(v4.x), y(v4.y), z(v4.z), w(v4.w)
 {}
 
 // constructor [quat]
-inline Quat::Quat(const Quat& b)
-	: x(b.x), y(b.y), z(b.z), w(b.w)
+inline Quat::Quat(const Quat& b):
+	x(b.x), y(b.y), z(b.z), w(b.w)
 {}
 
 // constructor [mat3]
@@ -282,7 +282,7 @@ inline void Quat::setIdentity()
 }
 
 // getIdentity
-inline const Quat::Quat& getIdentity()
+inline const Quat& Quat::getIdentity()
 {
 	static Quat ident(0.0, 0.0, 0.0, 1.0);
 	return ident;

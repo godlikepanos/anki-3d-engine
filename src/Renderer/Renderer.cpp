@@ -21,6 +21,32 @@ Renderer::Renderer(Object* parent):
 {}
 
 
+
+GLsizei const ElementCount = 6;
+GLsizeiptr const ElementSize = ElementCount * sizeof(uint);
+uint const ElementData[ElementCount] =
+{
+	0, 1, 2,
+	0, 2, 3
+};
+
+GLsizei const VertexCount = 4;
+GLsizeiptr const PositionSize = VertexCount * sizeof(Vec2);
+Vec2 const PositionData[VertexCount] =
+{
+	Vec2(-1.0f,-1.0f),
+	Vec2( 1.0f,-1.0f),
+	Vec2( 1.0f, 1.0f),
+	Vec2(-1.0f, 1.0f)
+};
+
+GLuint VertexArrayName;
+GLuint ProgramName;
+GLuint ArrayBufferName;
+GLuint ElementBufferName;
+
+
+
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
@@ -36,7 +62,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	// a few sanity checks
 	if(width < 10 || height < 10)
 	{
-		throw EXCEPTION("Incorrect width");
+		throw EXCEPTION("Incorrect sizes");
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
@@ -53,7 +79,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
 
 	globalVao = new Vao();
-	globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 3, GL_FLOAT, false, 0, NULL);
+	globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
 	globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
 }
 
