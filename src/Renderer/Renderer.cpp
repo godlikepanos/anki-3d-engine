@@ -8,27 +8,16 @@
 
 
 //======================================================================================================================
-// Statics                                                                                                             =
-//======================================================================================================================
-float Renderer::quadVertCoords [][2] = { {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0} };
-int Renderer::maxColorAtachments = -1;
-
-Vbo* Renderer::quadPositionsVbo = NULL;
-Vbo* Renderer::quadVertIndecesVbo = NULL;
-Vao* Renderer::globalVao = NULL;
-
-
-//======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
 Renderer::Renderer(Object* parent):
 	Object(parent),
 	width(640),
 	height(480),
-	ms(*this, this),
-	is(*this, this),
-	pps(*this, this),
-	bs(*this, this)
+	ms(new Ms(*this, this)),
+	is(new Is(*this, this)),
+	pps(new Pps(*this, this)),
+	bs(new Bs(*this, this))
 {}
 
 
@@ -51,24 +40,21 @@ void Renderer::init(const RendererInitializer& initializer)
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
-	ms.init(initializer);
+	ms->init(initializer);
 	/*is.init(initializer);
 	pps.init(initializer);
 	bs.init(initializer);*/
 
 	// quad VBOs and VAO
-	if(quadPositionsVbo == NULL)
-	{
-		float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-		quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
+	quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
 
-		ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
-		quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
+	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
+	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
 
-		globalVao = new Vao();
-		globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 3, GL_FLOAT, false, 0, NULL);
-		globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
-	}
+	globalVao = new Vao();
+	globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 3, GL_FLOAT, false, 0, NULL);
+	globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
 }
 
 
@@ -81,7 +67,7 @@ void Renderer::render(Camera& cam_)
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
-	ms.run();
+	ms->run();
 
 	/*is.run();
 	pps.runPrePass();
@@ -208,37 +194,37 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	//
 	if(mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms.normalFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms->normalFai, textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms.diffuseFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms->diffuseFai, textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms.specularFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms->specularFai, textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms.depthFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms->depthFai, textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_IS_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is.fai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is->fai, textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps.prePassFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps->prePassFai, textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI]->setTexture(pps.postPassFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI]->setTexture(pps->postPassFai, textureUnit++);
 	}
 
 

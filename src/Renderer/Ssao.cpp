@@ -120,10 +120,10 @@ void Ssao::run()
 	ssaoSProg->bind();
 	Vec2 camRange(cam.getZNear(), cam.getZFar());
 	ssaoSProg->findUniVar("camerarange")->setVec2(&camRange);
-	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.ms.depthFai, 0);
+	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.getMs().depthFai, 0);
 	ssaoSProg->findUniVar("noiseMap")->setTexture(*noiseMap, 1);
-	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.ms.normalFai, 2);
-	Renderer::drawQuad();
+	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.getMs().normalFai, 2);
+	r.drawQuad();
 
 
 	// blurring passes
@@ -143,14 +143,14 @@ void Ssao::run()
 			hblurSProg->findUniVar("img")->setTexture(fai, 0);
 		}
 		hblurSProg->findUniVar("imgDimension")->setFloat(width);
-		Renderer::drawQuad();
+		r.drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
 		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
 		vblurSProg->findUniVar("imgDimension")->setFloat(height);
-		Renderer::drawQuad();
+		r.drawQuad();
 	}
 
 	// end

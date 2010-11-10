@@ -96,8 +96,8 @@ void Hdr::run()
 	toneFbo.bind();
 	toneSProg->bind();
 	toneSProg->findUniVar("exposure")->setFloat(exposure);
-	toneSProg->findUniVar("fai")->setTexture(r.pps.prePassFai, 0);
-	Renderer::drawQuad();
+	toneSProg->findUniVar("fai")->setTexture(r.getPps().prePassFai, 0);
+	r.drawQuad();
 
 
 	// blurring passes
@@ -118,7 +118,7 @@ void Hdr::run()
 		}
 		hblurSProg->findUniVar("imgDimension")->setFloat(w);
 		hblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / w);
-		Renderer::drawQuad();
+		r.drawQuad();
 
 		// vpass
 		vblurFbo.bind();
@@ -126,7 +126,7 @@ void Hdr::run()
 		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
 		vblurSProg->findUniVar("imgDimension")->setFloat(h);
 		vblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / h);
-		Renderer::drawQuad();
+		r.drawQuad();
 	}
 
 	// end

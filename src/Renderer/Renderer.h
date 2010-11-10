@@ -37,16 +37,6 @@ class Renderer: public Object
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		/// @name Rendering stages
-		/// @{
-		Ms ms; ///< Material rendering stage
-		Is is; ///< Illumination rendering stage
-		Pps pps; ///< Postprocessing rendering stage
-		Bs bs; ///< Blending stage
-		/// @}
-
-		static float quadVertCoords [][2];
-
 		Renderer(Object* parent);
 
 		~Renderer() throw() {}
@@ -64,9 +54,12 @@ class Renderer: public Object
 		/// @param cam The camera from where the rendering will be done
 		void render(Camera& cam);
 
-		/// @name Setters & getters
+		/// @name Accessors
 		/// @{
 		uint getFramesNum() const {return framesNum;}
+		Ms& getMs() {return *ms;}
+		Is& getIs() {return *is;}
+		Pps& getPps() {return *pps;}
 		/// @}
 
 		/// My version of gluUnproject
@@ -99,12 +92,20 @@ class Renderer: public Object
 
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions
-		static void drawQuad();
+		void drawQuad();
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	protected:
+		/// @name Rendering stages
+		/// @{
+		Ms* ms; ///< Material rendering stage
+		Is* is; ///< Illumination rendering stage
+		Pps* pps; ///< Postprocessing rendering stage
+		Bs* bs; ///< Blending stage
+		/// @}
+
 		uint framesNum; ///< Frame number
 		const Camera* cam; ///< Current camera
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
@@ -116,9 +117,9 @@ class Renderer: public Object
 	private:
 		/// @name For drawing a quad into the active framebuffer
 		/// @{
-		static Vbo* quadPositionsVbo; ///< The VBO for quad positions
-		static Vbo* quadVertIndecesVbo; ///< The VBO for quad array buffer elements
-		static Vao* globalVao; ///< This VAO is used everywhere except material stage
+		Vbo* quadPositionsVbo; ///< The VBO for quad positions
+		Vbo* quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+		Vao* globalVao; ///< This VAO is used everywhere except material stage
 		/// @}
 };
 
