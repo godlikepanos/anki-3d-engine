@@ -161,10 +161,10 @@ class Scanner
 		/// Extracts all tokens and prints them. Used for debugging
 		void getAllPrintAll();
 
-		/// Get the next token from the stream
+		/// Get the next token from the stream. Its virtual and you can override it
 		/// @return The next Token
 		/// @exception Exception
-		const Token& getNextToken();
+		virtual const Token& getNextToken();
 
 		/// Accessor for the current token
 		/// @return The current Token

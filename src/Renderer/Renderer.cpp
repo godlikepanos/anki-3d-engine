@@ -21,32 +21,6 @@ Renderer::Renderer(Object* parent):
 {}
 
 
-
-GLsizei const ElementCount = 6;
-GLsizeiptr const ElementSize = ElementCount * sizeof(uint);
-uint const ElementData[ElementCount] =
-{
-	0, 1, 2,
-	0, 2, 3
-};
-
-GLsizei const VertexCount = 4;
-GLsizeiptr const PositionSize = VertexCount * sizeof(Vec2);
-Vec2 const PositionData[VertexCount] =
-{
-	Vec2(-1.0f,-1.0f),
-	Vec2( 1.0f,-1.0f),
-	Vec2( 1.0f, 1.0f),
-	Vec2(-1.0f, 1.0f)
-};
-
-GLuint VertexArrayName;
-GLuint ProgramName;
-GLuint ArrayBufferName;
-GLuint ElementBufferName;
-
-
-
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
@@ -73,12 +47,12 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// quad VBOs and VAO
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-	quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+	quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW, this);
 
 	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
-	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
+	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW, this);
 
-	globalVao = new Vao();
+	globalVao = new Vao(this);
 	globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
 	globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
 }

@@ -162,7 +162,7 @@ void Is::init(const RendererInitializer& initializer)
 	viewVectorsVbo = new Vbo(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW, this);
 
 	vao = new Vao(this);
-	vao->attachArrayBufferVbo(*quadPositionsVbo, 0, 3, GL_FLOAT, false, 0, NULL);
+	vao->attachArrayBufferVbo(*quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
 	vao->attachArrayBufferVbo(*viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
 	vao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
 }

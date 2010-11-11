@@ -28,8 +28,8 @@ class Is: private RenderingPass
 		void run();
 
 	private:
-		Sm* sm;
-		Smo* smo;
+		Sm* sm; ///< Shadowmapping pass
+		Smo* smo; /// Stencil masking optimizations pass
 		Fbo fbo; ///< This FBO writes to the Is::fai
 		uint stencilRb; ///< Illumination stage stencil buffer
 		RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
