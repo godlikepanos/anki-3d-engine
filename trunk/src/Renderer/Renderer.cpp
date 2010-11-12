@@ -194,22 +194,22 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	//
 	if(mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms->normalFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms->getNormalFai(), textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms->diffuseFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms->getDiffuseFai(), textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms->specularFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms->getSpecularFai(), textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms->depthFai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms->getDepthFai(), textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_IS_FAI])

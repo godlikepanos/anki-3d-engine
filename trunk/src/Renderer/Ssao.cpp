@@ -120,9 +120,9 @@ void Ssao::run()
 	ssaoSProg->bind();
 	Vec2 camRange(cam.getZNear(), cam.getZFar());
 	ssaoSProg->findUniVar("camerarange")->setVec2(&camRange);
-	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.getMs().depthFai, 0);
+	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.getMs().getDepthFai(), 0);
 	ssaoSProg->findUniVar("noiseMap")->setTexture(*noiseMap, 1);
-	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.getMs().normalFai, 2);
+	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.getMs().getNormalFai(), 2);
 	r.drawQuad();
 
 
