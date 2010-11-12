@@ -139,17 +139,12 @@ class Scanner
 	//====================================================================================================================
 	public:
 		/// Constructor #1
-		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
-		/// @exception Exception
-		Scanner(bool newlinesAsWhitespace = true) {init(newlinesAsWhitespace);}
-
-		/// Constructor #2
 		/// @see loadFile
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
 		/// @exception Exception
 		Scanner(const char* filename, bool newlinesAsWhitespace = true);
 
-		/// Constructor #3
+		/// Constructor #2
 		/// @see loadIstream
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
 		/// @exception Exception
@@ -175,7 +170,6 @@ class Scanner
 
 		/// Get the current line the Scanner is processing
 		int getLineNumber() const {return lineNmbr;}
-
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
