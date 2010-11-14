@@ -1,13 +1,11 @@
-/**
- * @file
- *
- * This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write
- * in all the buffers
- *
- * Control defines:
- * DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING,
- * HARDWARE_SKINNING
- */
+/// @file
+/// 
+/// This a generic shader to fill the deferred shading buffers. You can always build your own if you dont need to write
+/// in all the buffers
+/// 
+/// Control defines:
+/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING,
+/// HARDWARE_SKINNING
  
 #if defined(ALPHA_TESTING) && !defined(DIFFUSE_MAPPING)
 	#error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
@@ -33,9 +31,8 @@
 	#pragma anki include "shaders/hw_skinning.glsl"
 #endif
 
-/*
- * Attributes
- */
+/// @name Attributes
+/// @{
 in vec3 position;
 in vec3 normal;
 #if NEEDS_TEX_MAPPING
@@ -44,25 +41,26 @@ in vec3 normal;
 #if NEEDS_TANGENT
 	in vec4 tangent;
 #endif
+/// @}
 
-/*
- * Uniforms
- */
+/// @name Uniforms
+/// @{
 uniform mat4 modelMat;
 uniform mat4 viewMat;
 uniform mat4 projectionMat;
 uniform mat4 modelViewMat;
 uniform mat3 normalMat;
 uniform mat4 modelViewProjectionMat;
+/// @}
 
-/*
- * Varyings
- */
+/// @name Varyings
+/// @{
 out vec3 vNormal;
 out vec2 vTexCoords;
 out vec3 vTangent;
 out float vTangentW;
-out vec3 vVertPosViewSpace; ///< For env mapping. AKA view_vector
+out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
+/// @}
 
 
 
@@ -121,14 +119,12 @@ void main()
 
 #pragma anki fragShaderBegins
 
-/**
- * Note: The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first happens
- * before the normal calculation and the other just after it. In the first part we read the texture (or the gl_Color)
- * and we set the _diffColl_. In case of grass we discard. In the second part we calculate a SEM color and we combine
- * it with the _diffColl_. We cannot put the second part before normal calculation because SEM needs the _normal_.
- * Also we cannot put the first part after normal calculation because in case of grass we will waste calculations for
- * the normal. For that two reasons we split the diffuse calculations in two parts
- */
+/// @note The process of calculating the diffuse color for the diffuse MSFAI is divided into two parts. The first
+/// happens before the normal calculation and the other just after it. In the first part we read the texture (or the
+/// gl_Color) and we set the _diffColl_. In case of grass we discard. In the second part we calculate a SEM color and
+/// we combine it with the _diffColl_. We cannot put the second part before normal calculation because SEM needs
+/// the _normal_. Also we cannot put the first part after normal calculation because in case of grass we will waste
+/// calculations for the normal. For that two reasons we split the diffuse calculations in two parts
 
 #pragma anki include "shaders/Pack.glsl"
 
@@ -170,10 +166,10 @@ layout(location = 2) out vec4 fMsSpecularFai;
 //======================================================================================================================
 void main()
 {
-	/*
-	 * Paralax Mapping Calculations
-	 * The code below reads the height map, makes some calculations and returns a new texCoords
-	 */
+	//
+	// Paralax Mapping Calculations
+	// The code below reads the height map, makes some calculations and returns a new texCoords
+	//
 	#if defined(PARALLAX_MAPPING)
 		/*const float _scale = 0.04;
 		const float _bias = scale * 0.4;
@@ -211,10 +207,10 @@ void main()
 	#endif
 
 
-	/*
-	 * Diffuse Calculations (Part I)
-	 * Get the color from the diffuse map and discard if alpha testing is on and alpha is zero
-	 */
+	//
+	// Diffuse Calculations (Part I)
+	// Get the color from the diffuse map and discard if alpha testing is on and alpha is zero
+	//
 	vec3 _diffColl_;
 	#if defined(DIFFUSE_MAPPING)
 
@@ -233,10 +229,10 @@ void main()
 	#endif
 
 
-	/*
-	 * Normal Calculations
-	 * Either use a normap map and make some calculations or use the vertex normal
-	 */
+	//
+	// Normal Calculations
+	// Either use a normap map and make some calculations or use the vertex normal
+	//
 	#if defined(NORMAL_MAPPING)
 		vec3 _n_ = normalize(vNormal);
 		vec3 _t_ = normalize(vTangent);
@@ -252,16 +248,16 @@ void main()
 	#endif
 
 
-	/*
-	 * Diffuse Calculations (Part II)
-	 * If SEM is enabled make some calculations (using the vVertPosViewSpace, environmentMap and the _normal_) and combine
-	 * colors of SEM and the _diffColl_
-	 */
+	//
+	// Diffuse Calculations (Part II)
+	// If SEM is enabled make some calculations (using the vVertPosViewSpace, environmentMap and the _normal_) and
+	/// combine colors of SEM and the _diffColl_
+	//
 	#if defined(ENVIRONMENT_MAPPING)
-		/*
-		 * In case of normal mapping I could play with vertex's normal but this gives better results and its allready
-		 * computed
-		 */
+		//
+		// In case of normal mapping I could play with vertex's normal but this gives better results and its allready
+		// computed
+		//
 		vec3 _u_ = normalize(vVertPosViewSpace);
 		vec3 _r_ = reflect(_u_, _normal_);
 		_r_.z += 1.0;
@@ -273,9 +269,9 @@ void main()
 	#endif
 
 
-	/*
-	 * Specular Calculations
-	 */
+	//
+	// Specular Calculations
+	//
 	#if defined(SPECULAR_MAPPING)
 		vec4 _specularCol_ = vec4(texture2D(specularMap, _superTexCoords_).rgb * specularCol, shininess);
 	#else // no specular map
@@ -283,9 +279,9 @@ void main()
 	#endif
 
 
-	/*
-	 * Final Stage. Write all data
-	 */
+	//
+	// Final Stage. Write all data
+	//
 	fMsNormalFai = packNormal(_normal_);
 	fMsDiffuseFai = _diffColl_;
 	fMsSpecularFai = _specularCol_;

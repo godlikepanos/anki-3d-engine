@@ -7,6 +7,7 @@
 #include "RsrcPtr.h"
 #include "ShaderProg.h"
 #include "Math.h"
+#include "Properties.h"
 
 
 class PointLight;
@@ -20,9 +21,9 @@ class Vbo;
 /// Illumination stage
 class Is: private RenderingPass
 {
-	public:
-		Texture fai;
+	PROPERTY_R(Texture, fai, getFai) ///< The one and only FAI
 
+	public:
 		Is(Renderer& r_, Object* parent);
 		void init(const RendererInitializer& initializer);
 		void run();
@@ -45,7 +46,7 @@ class Is: private RenderingPass
 		Vao* vao; ///< This VAO is used in light passes only
 		/// @}
 
-		Vec2 planes; ///< Used to to calculate the frag pos in view space inside tha shader program
+		Vec2 planes; ///< Used to to calculate the frag pos in view space inside the shader program
 
 		/// Draws the vao that has attached the viewVectorsVbo as well. Used in light passes
 		void drawLightPassQuad() const;

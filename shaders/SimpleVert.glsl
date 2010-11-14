@@ -3,7 +3,6 @@
 /// get the Normalized Display Coordinates ([-1,1]) simply by looking in the vertex
 /// position. The vertex positions of the quad are from 0.0 to 1.0 for both axis.
 
-//#pragma anki attribute position 0
 layout(location = 0) in vec2 position;
 
 out vec2 vTexCoords;

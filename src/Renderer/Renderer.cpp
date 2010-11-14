@@ -41,8 +41,8 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// init the stages. Careful with the order!!!!!!!!!!
 	ms->init(initializer);
-	/*is.init(initializer);
-	pps.init(initializer);
+	is->init(initializer);
+	/*pps.init(initializer);
 	bs.init(initializer);*/
 
 	// quad VBOs and VAO
@@ -68,9 +68,8 @@ void Renderer::render(Camera& cam_)
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
 	ms->run();
-
-	/*is.run();
-	pps.runPrePass();
+	is->run();
+	/*pps.runPrePass();
 	bs.run();
 	pps.runPostPass();*/
 
@@ -214,7 +213,7 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 
 	if(mtl.stdUniVars[Material::SUV_IS_FAI])
 	{
-		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is->fai, textureUnit++);
+		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is->getFai(), textureUnit++);
 	}
 
 	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])

@@ -385,7 +385,7 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		ERROR("Fatal error: " + e.what());
+		ERROR("Aborting: " + e.what());
 		//abort();
 		return 1;
 	}

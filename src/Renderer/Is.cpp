@@ -176,6 +176,7 @@ void Is::drawLightPassQuad() const
 	vao->bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
 	vao->unbind();
+	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 
@@ -330,9 +331,6 @@ void Is::run()
 	// OGL stuff
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
 	glDisable(GL_DEPTH_TEST);
 
 	// ambient pass
@@ -375,4 +373,6 @@ void Is::run()
 
 	// FBO
 	fbo.unbind();
+
+	ON_GL_FAIL_THROW_EXCEPTION();
 }

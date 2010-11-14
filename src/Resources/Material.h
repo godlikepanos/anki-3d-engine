@@ -9,6 +9,9 @@
 #include "RsrcPtr.h"
 
 
+class Scanner;
+
+
 /// Mesh material Resource
 ///
 /// Every material keeps info of how to render a MeshNode. Among this info it keeps the locations of attribute and
@@ -21,17 +24,20 @@
 /// File format:
 /// @code
 /// shaderProg <string> |
-/// 	standardMsSProg {
-/// 		shaderProg <string>
+/// {
+/// 	customMsSProg {
+/// 		file <string>
 /// 		defines {
 /// 			<identifier>
 /// 			<identifier>
 /// 			...
 /// 			<identifier>
 /// 		}
-/// 	}
+/// 	} |
+/// 	customDpSProg { <same as standardMsSProg> }
+/// }
 ///
-/// dpMtl <string>
+/// [dpMtl <string>]
 ///
 /// [blendingStage <true | false>]
 ///
@@ -51,7 +57,7 @@
 /// }]
 ///
 ///
-/// *: Has nothing to do with the blendFuncs. blendFuncs can be in material stage as well
+/// *: Has nothing to do with the blendingStage. blendFuncs can be in material stage as well
 /// **: Depends on the type of the var
 /// @endcode
 class Material: public Resource
@@ -83,6 +89,13 @@ class Material: public Resource
 			SAV_VERT_WEIGHT_BONE_IDS,
 			SAV_VERT_WEIGHT_WEIGHTS,
 			SAV_NUM
+		};
+
+		/// A simple pair-like structure
+		struct PreprocDefines
+		{
+			const char* switchName;
+			const char prefix;
 		};
 
 		/// Standard uniform variables. The Renderer sees what are applicable and sets them
@@ -142,7 +155,8 @@ class Material: public Resource
 			const ShaderProg::UniVar* sProgVar;
 		}; // end UserDefinedVar
 
-
+		static PreprocDefines msGenericDefines[]; ///< Material stage defines accepted in MsGeneric.glsl
+		static PreprocDefines dpGenericDefines[]; ///< Depth pass defines accepted in DpGeneric.glsl
 		static StdVarNameAndGlDataTypePair stdAttribVarInfos[SAV_NUM];
 		static StdVarNameAndGlDataTypePair stdUniVarInfos[SUV_NUM];
 		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
@@ -163,6 +177,18 @@ class Material: public Resource
 		void initStdShaderVars();
 
 		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
+
+		/// Parses the iostream for expressions like customMsSProg and customDpSProg in order to feed them into the
+		/// @ref ShaderProg::createSrcCodeToCache
+		/// @param[in] defines The available defines and their prefixes
+		/// @param[in,out] scanner The Scanner from to parse from
+		/// @param[out] shaderFilename The name of the generic shader program
+		/// @param[out] source The preprocessor source that will feed to the @ref ShaderProg::createSrcCodeToCache
+		/// @param[out] prefix The prefix of the custom shader program file that will feed to the
+		/// @ref ShaderProg::createSrcCodeToCache
+		/// @exception Exception
+		void parseCustomShader(const PreprocDefines defines[], Scanner& scanner,
+		                       std::string& shaderFilename, std::string& source, std::string& prefix);
 };
 
 
