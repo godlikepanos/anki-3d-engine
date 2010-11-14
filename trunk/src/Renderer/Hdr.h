@@ -6,16 +6,17 @@
 #include "Texture.h"
 #include "RsrcPtr.h"
 #include "ShaderProg.h"
+#include "Properties.h"
 
 
 /// High dynamic range lighting pass
 class Hdr: private RenderingPass
 {
-	public:
-		Texture toneFai; ///< Vertical blur pass FAI
-		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
-		Texture fai; ///< The final FAI
+	PROPERTY_R(Texture, toneFai, getToneFai) ///< Vertical blur pass FAI
+	PROPERTY_R(Texture, hblurFai, getHblurFai) ///< pass0Fai with the horizontal blur FAI
+	PROPERTY_R(Texture, fai, getFai) ///< The final FAI
 
+	public:
 		Hdr(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 		void init(const RendererInitializer& initializer);
 		void run();

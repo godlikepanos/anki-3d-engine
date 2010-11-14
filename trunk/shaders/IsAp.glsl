@@ -1,3 +1,5 @@
+/// @file
+/// Ilumination stage ambient pass shader program
 #pragma anki vertShaderBegins
 
 #pragma anki include "shaders/SimpleVert.glsl"
@@ -7,9 +9,11 @@
 uniform vec3 ambientCol;
 uniform sampler2D sceneColMap;
 
-varying vec2 vTexCoords;
+in vec2 vTexCoords;
+
+out vec3 fColor;
 
 void main()
 {
-	gl_FragData[0].rgb = texture2D( sceneColMap, vTexCoords ).rgb * ambientCol;
+	fColor = texture2D(sceneColMap, vTexCoords).rgb * ambientCol;
 }

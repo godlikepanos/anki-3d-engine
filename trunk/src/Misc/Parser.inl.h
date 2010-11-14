@@ -1,3 +1,4 @@
+#include <cstring>
 #include "Parser.h"
 #include "Exception.h"
 
@@ -170,6 +171,83 @@ void parseMathVector(Scanner& scanner, Type& out)
 	}
 }
 
+
+//======================================================================================================================
+// parseBool                                                                                                           =
+//======================================================================================================================
+inline bool parseBool(Scanner& scanner)
+{
+	const char* errMsg = "identifier true or false";
+
+	const Scanner::Token* token = &scanner.getNextToken();
+	if(token->getCode() != Scanner::TC_IDENTIFIER)
+	{
+		throw PARSER_EXCEPTION_EXPECTED(errMsg);
+	}
+
+	if(!strcmp(token->getValue().getString(), "true"))
+	{
+		return true;
+	}
+	else if (!strcmp(token->getValue().getString(), "false"))
+	{
+		return false;
+	}
+	else
+	{
+		throw PARSER_EXCEPTION_EXPECTED(errMsg);
+	}
+}
+
+
+//======================================================================================================================
+// parseIdentifier                                                                                                     =
+//======================================================================================================================
+inline std::string parseIdentifier(Scanner& scanner, const char* expectedIdentifier)
+{
+	const Scanner::Token* token = &scanner.getNextToken();
+	if(token->getCode() != Scanner::TC_IDENTIFIER)
+	{
+		if(expectedIdentifier == NULL)
+		{
+			throw PARSER_EXCEPTION_EXPECTED("identifier");
+		}
+		else
+		{
+			throw PARSER_EXCEPTION_EXPECTED("identifier " + expectedIdentifier);
+		}
+	}
+
+	if(expectedIdentifier != NULL && strcmp(token->getValue().getString(), expectedIdentifier))
+	{
+		throw PARSER_EXCEPTION_EXPECTED("identifier " + expectedIdentifier);
+	}
+
+	return token->getValue().getString();
+}
+
+
+//======================================================================================================================
+// isIdentifier                                                                                                        =
+//======================================================================================================================
+inline bool isIdentifier(const Scanner::Token* token, const char* str)
+{
+	return token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), str);
+}
+
+
+//======================================================================================================================
+// parseString                                                                                                         =
+//======================================================================================================================
+inline std::string parseString(Scanner& scanner)
+{
+	const Scanner::Token* token = &scanner.getNextToken();
+	if(token->getCode() != Scanner::TC_STRING)
+	{
+		throw PARSER_EXCEPTION_EXPECTED("string");
+	}
+	return token->getValue().getString();
+}
 
 
 } // End namespace Parser

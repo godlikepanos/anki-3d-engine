@@ -1,3 +1,7 @@
+/// @file
+///
+/// Ilunimation stage stencil masking optimizations shader program
+
 #pragma anki vertShaderBegins
 
 #pragma anki attribute position 0
@@ -7,7 +11,7 @@ uniform mat4 modelViewProjectionMat;
 
 void main()
 {
-	gl_Position = modelViewProjectionMat * vec4( position, 1.0 );
+	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 
 #pragma anki fragShaderBegins
