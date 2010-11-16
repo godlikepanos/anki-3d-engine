@@ -32,6 +32,7 @@ class Renderer: public Object
 	PROPERTY_R(uint, width, getWidth) ///< Width of the rendering. Dont confuse with the window width
 	PROPERTY_R(uint, height, getHeight) ///< Height of the rendering. Dont confuse with the window width
 	PROPERTY_R(float, aspectRatio, getAspectRatio) ///< Just a precalculated value
+	PROPERTY_R(Mat4, viewProjectionMat, getViewProjectionMat) ///< Precalculated in case anyone needs it
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -109,7 +110,6 @@ class Renderer: public Object
 		uint framesNum; ///< Frame number
 		const Camera* cam; ///< Current camera
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
-		Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
