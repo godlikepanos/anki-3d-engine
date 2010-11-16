@@ -139,12 +139,16 @@ class Scanner
 	//====================================================================================================================
 	public:
 		/// Constructor #1
+		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
+		Scanner(bool newlinesAsWhitespace = true) {init(newlinesAsWhitespace);}
+
+		/// Constructor #2
 		/// @see loadFile
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
 		/// @exception Exception
 		Scanner(const char* filename, bool newlinesAsWhitespace = true);
 
-		/// Constructor #2
+		/// Constructor #3
 		/// @see loadIstream
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
 		/// @exception Exception
@@ -152,6 +156,17 @@ class Scanner
 
 		/// It only unloads the file if file is chosen
 		~Scanner() {unload();}
+
+		/// Load a file to extract tokens
+		/// @param filename The filename of the file to read
+		/// @exception Exception
+		void loadFile(const char* filename);
+
+		/// Load a STL istream to extract tokens
+		/// @param istream_ The stream from where to read
+		/// @param scriptName_ The name of the stream. For error reporting
+		/// @exception Exception
+		void loadIstream(std::istream& istream_, const char* scriptName_);
 
 		/// Extracts all tokens and prints them. Used for debugging
 		void getAllPrintAll();
@@ -196,8 +211,8 @@ class Scanner
 		bool newlinesAsWhitespace;
 
 		/// Commented lines number
-		/// Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines in
-		/// case of newlinesAsWhitespace is false
+		/// Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines
+		/// in case of newlinesAsWhitespace is false
 		int commentedLines;
 
 		/// @name Input
@@ -235,17 +250,6 @@ class Scanner
 
 		/// Common initialization code
 		void init(bool newlinesAsWhitespace_);
-
-		/// Load a file to extract tokens
-		/// @param filename The filename of the file to read
-		/// @exception Exception
-		void loadFile(const char* filename);
-
-		/// Load a STL istream to extract tokens
-		/// @param istream_ The stream from where to read
-		/// @param scriptName_ The name of the stream. For error reporting
-		/// @exception Exception
-		void loadIstream(std::istream& istream_, const char* scriptName_);
 
 		/// Unloads the file
 		void unload();

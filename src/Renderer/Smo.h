@@ -3,13 +3,14 @@
 
 #include "RenderingPass.h"
 #include "Fbo.h"
-#include "Vbo.h"
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
 
 
 class PointLight;
 class SpotLight;
+class Vao;
+class Vbo;
 
 
 /// Stencil masking optimizations
@@ -23,7 +24,8 @@ class Smo: public RenderingPass
 
 	private:
 		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
-		static Vbo* sMOUvSVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+		Vbo* vbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+		Vao* vao; ///< And a VAO
 		RsrcPtr<ShaderProg> sProg;
 };
 
