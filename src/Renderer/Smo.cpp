@@ -23,9 +23,11 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 	sProg.loadRsrc("shaders/IsSmo.glsl");
 
 	// Geometry stuff
-	vbo = new Vbo(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW, this);
-	vao = new Vao(this);
-	vao->attachArrayBufferVbo(*vbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+	sphereVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW, this);
+	sphereVao = new Vao(this);
+	sphereVao->attachArrayBufferVbo(*sphereVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+
+	//cameraVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(float) * 3 * 3 * 6, sMOUvSCoords, GL_STATIC_DRAW, this);
 }
 
 
@@ -50,9 +52,9 @@ void Smo::run(const PointLight& light)
 	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
 
 	// render sphere to the stencil buffer
-	vao->bind();
+	sphereVao->bind();
 	glDrawArrays(GL_TRIANGLES, 0, sizeof(sMOUvSCoords) / sizeof(float) / 3);
-	vao->unbind();
+	sphereVao->unbind();
 
 	// restore GL
 	glEnable(GL_CULL_FACE);
