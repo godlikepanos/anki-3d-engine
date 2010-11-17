@@ -24,8 +24,10 @@ class Smo: public RenderingPass
 
 	private:
 		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
-		Vbo* vbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
-		Vao* vao; ///< And a VAO
+		Vbo* sphereVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+		Vao* sphereVao; ///< And a VAO
+		Vbo* cameraVbo; ///< A camera shape
+		Vao* cameraVao; ///< And another VAO
 		RsrcPtr<ShaderProg> sProg;
 };
 
