@@ -23,11 +23,20 @@ class Smo: public RenderingPass
 		void run(const SpotLight& light);
 
 	private:
+		/// @name UV sphere stuff
+		/// @{
 		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
-		Vbo* sphereVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+		Vbo* spherePositionsVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
 		Vao* sphereVao; ///< And a VAO
-		Vbo* cameraVbo; ///< A camera shape
+		/// @}
+
+		/// @name Camera shape stuff
+		/// @{
+		Vbo* cameraPositionsVbo; ///< A camera shape
+		Vbo* cameraVertIndecesVbo; ///< The vertex indeces
 		Vao* cameraVao; ///< And another VAO
+		/// @}
+
 		RsrcPtr<ShaderProg> sProg;
 };
 

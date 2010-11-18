@@ -96,7 +96,7 @@ void Hdr::run()
 	toneFbo.bind();
 	toneSProg->bind();
 	toneSProg->findUniVar("exposure")->setFloat(exposure);
-	toneSProg->findUniVar("fai")->setTexture(r.getPps().prePassFai, 0);
+	toneSProg->findUniVar("fai")->setTexture(r.getPps().getPrePassFai(), 0);
 	r.drawQuad();
 
 

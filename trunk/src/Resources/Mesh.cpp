@@ -33,23 +33,23 @@ void Mesh::load(const char* filename)
 			}
 
 			// shader needs text coords and mesh does not have any
-			if(material->stdAttribVars[Material::SAV_TEX_COORDS] != NULL && meshData.getTexCoords().size() < 1)
+			if(material->getStdAttribVar(Material::SAV_TEX_COORDS) != NULL && meshData.getTexCoords().size() < 1)
 			{
-				throw EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
+				throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
 												"\") needs texture coord information that the mesh doesn't have");
 			}
 
 			// shader has HW skinning and mesh does not have vert weights
 			if(material->hasHWSkinning() && meshData.getVertWeights().size() < 1)
 			{
-				throw EXCEPTION("The shader program (\"" + material->shaderProg->getRsrcName() +
+				throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
 												"\") needs vertex weights that the mesh doesn't have");
 			}
 
 
 			createVbos(meshData);
 			createVao(mainVao, *material.get());
-			createVao(depthVao, *material->dpMtl.get());
+			createVao(depthVao, material->getDepthMtl());
 		}
 	}
 	catch(std::exception& e)
@@ -110,45 +110,45 @@ void Mesh::createVao(Vao*& vao, const Material& mtl)
 {
 	vao = new Vao(this);
 
-	if(mtl.stdAttribVars[Material::SAV_POSITION] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_POSITION) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_POSITIONS], *mtl.stdAttribVars[Material::SAV_POSITION], 3, GL_FLOAT,
+		vao->attachArrayBufferVbo(*vbos[VBO_VERT_POSITIONS], *mtl.getStdAttribVar(Material::SAV_POSITION), 3, GL_FLOAT,
 		                          GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.stdAttribVars[Material::SAV_NORMAL] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_NORMALS], *mtl.stdAttribVars[Material::SAV_NORMAL], 3, GL_FLOAT,
+		vao->attachArrayBufferVbo(*vbos[VBO_VERT_NORMALS], *mtl.getStdAttribVar(Material::SAV_NORMAL), 3, GL_FLOAT,
 		                          GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.stdAttribVars[Material::SAV_TANGENT] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_TANGENT) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_TANGENTS], *mtl.stdAttribVars[Material::SAV_TANGENT], 4, GL_FLOAT,
+		vao->attachArrayBufferVbo(*vbos[VBO_VERT_TANGENTS], *mtl.getStdAttribVar(Material::SAV_TANGENT), 4, GL_FLOAT,
 		                          GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.stdAttribVars[Material::SAV_TEX_COORDS] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_TEX_COORDS) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_TEX_COORDS], *mtl.stdAttribVars[Material::SAV_TEX_COORDS], 2, GL_FLOAT,
+		vao->attachArrayBufferVbo(*vbos[VBO_TEX_COORDS], *mtl.getStdAttribVar(Material::SAV_TEX_COORDS), 2, GL_FLOAT,
 		                          GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONES_NUM], 1,
+		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM), 1,
 		                          GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0));
 	}
 
-	if(mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONE_IDS) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_BONE_IDS], 4,
+		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONE_IDS), 4,
 		                          GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(4));
 	}
 
-	if(mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS] != NULL)
+	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_WEIGHTS) != NULL)
 	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.stdAttribVars[Material::SAV_VERT_WEIGHT_WEIGHTS], 4,
+		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_WEIGHTS), 4,
 		                          GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
 	}
 

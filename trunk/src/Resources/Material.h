@@ -62,22 +62,21 @@ class Scanner;
 /// @endcode
 class Material: public Resource
 {
-	friend class Renderer; ///< For setupMaterial
-	friend class Ez;
-	friend class Sm;
-	friend class Ms;
-	friend class Bs;
-	friend class Mesh;
-	friend class MeshNode;
+	/// Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
+	PROPERTY_R(bool, castsShadow, isShadowCaster)
 
+	/// The entities with blending are being rendered in blending stage and those without in material stage
+	PROPERTY_R(bool, blendingStage, renderInBlendingStage)
+
+	PROPERTY_R(int, blendingSfactor, getBlendingSfactor) ///< Default GL_ONE
+	PROPERTY_R(int, blendingDfactor, getBlendingDfactor) ///< Default GL_ZERO
+	PROPERTY_R(bool, depthTesting, isDepthTestingEnabled)
+	PROPERTY_R(bool, wireframe, isWireframeEnabled)
+
+	//====================================================================================================================
+	// Nested                                                                                                            =
+	//====================================================================================================================
 	public:
-		/// Initialize with default values
-		Material();
-
-		/// @see Resource::load
-		void load(const char* filename);
-
-	private:
 		/// Standard attribute variables that are acceptable inside the material stage @ref ShaderProg
 		enum StdAttribVars
 		{
@@ -89,13 +88,6 @@ class Material: public Resource
 			SAV_VERT_WEIGHT_BONE_IDS,
 			SAV_VERT_WEIGHT_WEIGHTS,
 			SAV_NUM
-		};
-
-		/// A simple pair-like structure
-		struct PreprocDefines
-		{
-			const char* switchName;
-			const char prefix;
 		};
 
 		/// Standard uniform variables. The Renderer sees what are applicable and sets them
@@ -131,13 +123,6 @@ class Material: public Resource
 			SUV_NUM ///< The number of standard uniform variables
 		};
 
-		/// Information for the standard shader program variables
-		struct StdVarNameAndGlDataTypePair
-		{
-			const char* varName;
-			GLenum dataType; ///< aka GL data type
-		};
-
 		/// Class for user defined material variables that will be passes in to the shader
 		struct UserDefinedUniVar
 		{
@@ -155,6 +140,48 @@ class Material: public Resource
 			const ShaderProg::UniVar* sProgVar;
 		}; // end UserDefinedVar
 
+	//====================================================================================================================
+	// Public                                                                                                            =
+	//====================================================================================================================
+	public:
+		/// Initialize with default values
+		Material();
+
+		/// @see Resource::load
+		void load(const char* filename);
+
+		/// @name Accessors
+		/// @{
+		const ShaderProg::AttribVar* getStdAttribVar(StdAttribVars id) const {return stdAttribVars[id];}
+		const ShaderProg::UniVar* getStdUniVar(StdUniVars id) const {return stdUniVars[id];}
+		const ShaderProg& getShaderProg() const {return *shaderProg.get();}
+		const Material& getDepthMtl() const {return *dpMtl.get();}
+		const boost::ptr_vector<UserDefinedUniVar>& getUserDefinedVars() const {return userDefinedVars;}
+		/// @}
+
+		/// @return Return true if the shader has references to hardware skinning
+		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
+
+		bool isBlendingEnabled() const {return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;}
+
+	//====================================================================================================================
+	// Private                                                                                                           =
+	//====================================================================================================================
+	private:
+		/// A simple pair-like structure
+		struct PreprocDefines
+		{
+			const char* switchName;
+			const char prefix;
+		};
+
+		/// Information for the standard shader program variables
+		struct StdVarNameAndGlDataTypePair
+		{
+			const char* varName;
+			GLenum dataType; ///< aka GL data type
+		};
+
 		static PreprocDefines msGenericDefines[]; ///< Material stage defines accepted in MsGeneric.glsl
 		static PreprocDefines dpGenericDefines[]; ///< Depth pass defines accepted in DpGeneric.glsl
 		static StdVarNameAndGlDataTypePair stdAttribVarInfos[SAV_NUM];
@@ -164,21 +191,13 @@ class Material: public Resource
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
 		RsrcPtr<Material> dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
 		boost::ptr_vector<UserDefinedUniVar> userDefinedVars;
-		bool blends; ///< The entities with blending are being rendered in blending stage and those without in material stage
-		int blendingSfactor;
-		int blendingDfactor;
-		bool depthTesting;
-		bool wireframe;
-		bool castsShadow; ///< Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
 
 		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates
 		/// the stdAttribVars and stdUniVars arrays.
 		/// @exception Exception
 		void initStdShaderVars();
 
-		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
-
-		/// Parses the iostream for expressions like customMsSProg and customDpSProg in order to feed them into the
+		/// Parses the file for expressions like customMsSProg and customDpSProg in order to feed them into the
 		/// @ref ShaderProg::createSrcCodeToCache
 		/// @param[in] defines The available defines and their prefixes
 		/// @param[in,out] scanner The Scanner from to parse from

@@ -122,7 +122,7 @@ static bool searchBlendEnum(const char* str, int& gl_enum)
 Material::Material():
 	Resource(RT_MATERIAL)
 {
-	blends = false;
+	blendingStage = false;
 	blendingSfactor = GL_ONE;
 	blendingDfactor = GL_ZERO;
 	depthTesting = true;
@@ -214,7 +214,7 @@ void Material::load(const char* filename)
 		//
 		else if(Parser::isIdentifier(token, "blendingStage"))
 		{
-			blends = Parser::parseBool(scanner);
+			blendingStage = Parser::parseBool(scanner);
 		}
 		//
 		// blendFuncs

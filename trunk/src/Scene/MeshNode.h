@@ -25,7 +25,7 @@ class MeshNode: public SceneNode
 		// funcs
 		MeshNode();
 		virtual void render() { render(*mesh->material.get(), *mesh->getVao()); }
-		virtual void renderDepth() { render(*mesh->material->dpMtl.get(), *mesh->getDepthVao()); }
+		virtual void renderDepth() { render(mesh->material->getDepthMtl(), *mesh->getDepthVao()); }
 		void init(const char* filename);
 };
 
