@@ -18,7 +18,8 @@ void Bs::createFbo()
 
 		fbo.setNumOfColorAttachements(1);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.getPps().prePassFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+		                       r.getPps().getPrePassFai().getGlId(), 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
 		                       r.getMs().getDepthFai().getGlId(), 0);
 
@@ -91,13 +92,13 @@ void Bs::run()
 			throw EXCEPTION("Mesh \"" + meshNode->mesh->getRsrcName() + "\" doesnt have material" );
 		}
 
-		if(!meshNode->mesh->material->blends)
+		if(!meshNode->mesh->material->renderInBlendingStage())
 		{
 			continue;
 		}
 
 		// refracts
-		if(meshNode->mesh->material->stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
+		if(meshNode->mesh->material->getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
 		{
 			// render to the temp FAI
 			refractFbo.bind();
@@ -117,13 +118,15 @@ void Bs::run()
 			glStencilFunc(GL_EQUAL, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-			if(meshNode->mesh->material->blends)
+			if(meshNode->mesh->material->renderInBlendingStage())
 			{
 				glEnable(GL_BLEND);
-				glBlendFunc(meshNode->mesh->material->blendingSfactor, meshNode->mesh->material->blendingDfactor);
+				glBlendFunc(meshNode->mesh->material->getBlendingSfactor(), meshNode->mesh->material->getBlendingDfactor());
 			}
 			else
+			{
 				glDisable(GL_BLEND);
+			}
 
 			refractSProg->bind();
 			refractSProg->findUniVar("fai")->setTexture(refractFai, 0);

@@ -202,7 +202,8 @@ void Dbg::init(const RendererInitializer& initializer)
 
 		fbo.setNumOfColorAttachements(1);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.getPps().postPassFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+		                       r.getPps().getPostPassFai().getGlId(), 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
 
 		fbo.checkIfGood();

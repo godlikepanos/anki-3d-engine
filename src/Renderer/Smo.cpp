@@ -22,12 +22,38 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 {
 	sProg.loadRsrc("shaders/IsSmo.glsl");
 
+	//
 	// Geometry stuff
-	sphereVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW, this);
-	sphereVao = new Vao(this);
-	sphereVao->attachArrayBufferVbo(*sphereVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+	//
 
-	//cameraVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(float) * 3 * 3 * 6, sMOUvSCoords, GL_STATIC_DRAW, this);
+	// Sphere
+	//
+	spherePositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW, this);
+	sphereVao = new Vao(this);
+	sphereVao->attachArrayBufferVbo(*spherePositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+
+	// Camera
+	//
+
+	// 4 vertex positions: eye, top-right, top-left, bottom-left, bottom-right
+	cameraPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(float) * 3 * 5, NULL, GL_DYNAMIC_DRAW, this);
+
+	// The vert indeces
+	enum {EYE, TR, TL, BL, BR}; // Vert positions
+
+	ushort vertIndeces[6][3] = {
+		{EYE, BR, TR}, // Right triangle
+		{EYE, TR, TL}, // Top
+		{EYE, TL, BL}, // Left
+		{EYE, BL, BR}, // Bottom
+		{BR, BL, TL}, {TL, TR, BR} // Front
+	};
+
+	cameraVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertIndeces), vertIndeces, GL_STATIC_DRAW, this);
+
+	cameraVao = new Vao(this);
+	cameraVao->attachArrayBufferVbo(*cameraPositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+	cameraVao->attachElementArrayBufferVbo(*cameraVertIndecesVbo);
 }
 
 
@@ -70,6 +96,8 @@ void Smo::run(const PointLight& light)
 //======================================================================================================================
 void Smo::run(const SpotLight& light)
 {
+	const Camera& lcam = light.getCamera();
+
 	// set GL state
 	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -78,35 +106,34 @@ void Smo::run(const SpotLight& light)
 	glColorMask(false, false, false, false);
 	glDisable(GL_CULL_FACE);
 
+	// shader prog
+	sProg->bind();
+	Mat4 modelMat = Mat4(lcam.getWorldTransform());
+	Mat4 trf = r.getViewProjectionMat() * modelMat;
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
+
+	//
+	// Render
+	//
+
 	// calc camera shape
-	const Camera& lcam = light.getCamera();
 	float x = lcam.getZFar() / tan((PI-lcam.getFovX())/2);
 	float y = tan(lcam.getFovY()/2) * lcam.getZFar();
 	float z = -lcam.getZFar();
 
-	const int TRIS_NUM = 6;
-
-	float verts[TRIS_NUM][3][3] = {
-		{{0.0, 0.0, 0.0}, {x, -y, z}, {x,  y, z}}, // right triangle
-		{{0.0, 0.0, 0.0}, {x,  y, z}, {-x,  y, z}}, // top
-		{{0.0, 0.0, 0.0}, {-x,  y, z}, {-x, -y, z}}, // left
-		{{0.0, 0.0, 0.0}, {-x, -y, z}, {x, -y, z}}, // bottom
-		{{x, -y, z}, {-x,  y, z}, {x,  y, z}}, // front up right
-		{{x, -y, z}, {-x, -y, z}, {-x,  y, z}}, // front bottom left
+	float vertPositions[5][3] = {
+		{0.0, 0.0, 0.0}, // Eye
+		{x, y, z}, // Top right
+		{-x, y, z}, // Top left
+		{-x, -y, z}, // Bottom left
+		{x, -y, z} // Bottom right
 	};
 
-	// shader prog
-	sProg->bind();
-	Mat4 modelMat = Mat4(lcam.getWorldTransform());
-	Mat4 trf = r.getCamera().getProjectionMatrix() * Mat4::combineTransformations(r.getCamera().getViewMatrix(), modelMat);
-	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
-
 	// render camera shape to stencil buffer
-	const int loc = 0;
-	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 3, GL_FLOAT, false, 0, verts);
-	glDrawArrays(GL_TRIANGLES, 0, TRIS_NUM * 3);
-	glDisableVertexAttribArray(loc);
+	cameraPositionsVbo->write(vertPositions, sizeof(vertPositions));
+	cameraVao->bind();
+	glDrawElements(GL_TRIANGLES, 6 * 3, GL_UNSIGNED_SHORT, 0);
+	cameraVao->unbind();
 
 	// restore GL state
 	glEnable(GL_CULL_FACE);

@@ -94,17 +94,17 @@ void Renderer::drawQuad()
 //======================================================================================================================
 void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam)
 {
-	mtl.shaderProg->bind();
+	mtl.getShaderProg().bind();
 	uint textureUnit = 0;
 
 	//
 	// FFP stuff
 	//
-	if(mtl.blends)
+	if(mtl.isBlendingEnabled())
 	{
 		glEnable(GL_BLEND);
 		//glDisable(GL_BLEND);
-		glBlendFunc(mtl.blendingSfactor, mtl.blendingDfactor);
+		glBlendFunc(mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
 	}
 	else
 	{
@@ -112,7 +112,7 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	}
 
 
-	if(mtl.depthTesting)
+	if(mtl.isDepthTestingEnabled())
 	{
 		glEnable(GL_DEPTH_TEST);
 	}
@@ -121,7 +121,7 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 		glDisable(GL_DEPTH_TEST);
 	}
 
-	if(mtl.wireframe)
+	if(mtl.isWireframeEnabled())
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
@@ -142,113 +142,113 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	Mat4 modelViewProjectionMat;
 
 	// should I calculate the modelViewMat ?
-	if(mtl.stdUniVars[Material::SUV_MODELVIEW_MAT] ||
-	   mtl.stdUniVars[Material::SUV_MODELVIEWPROJECTION_MAT] ||
-	   mtl.stdUniVars[Material::SUV_NORMAL_MAT])
+	if(mtl.getStdUniVar(Material::SUV_MODELVIEW_MAT) ||
+	   mtl.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT) ||
+	   mtl.getStdUniVar(Material::SUV_NORMAL_MAT))
 	{
 		modelViewMat = Mat4::combineTransformations(viewMat, modelMat);
 	}
 
 	// set matrices
-	if(mtl.stdUniVars[Material::SUV_MODEL_MAT])
+	if(mtl.getStdUniVar(Material::SUV_MODEL_MAT))
 	{
-		mtl.stdUniVars[Material::SUV_MODEL_MAT]->setMat4(&modelMat);
+		mtl.getStdUniVar(Material::SUV_MODEL_MAT)->setMat4(&modelMat);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_VIEW_MAT])
+	if(mtl.getStdUniVar(Material::SUV_VIEW_MAT))
 	{
-		mtl.stdUniVars[Material::SUV_VIEW_MAT]->setMat4(&viewMat);
+		mtl.getStdUniVar(Material::SUV_VIEW_MAT)->setMat4(&viewMat);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_PROJECTION_MAT])
+	if(mtl.getStdUniVar(Material::SUV_PROJECTION_MAT))
 	{
-		mtl.stdUniVars[Material::SUV_PROJECTION_MAT]->setMat4(&projectionMat);
+		mtl.getStdUniVar(Material::SUV_PROJECTION_MAT)->setMat4(&projectionMat);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_MODELVIEW_MAT])
+	if(mtl.getStdUniVar(Material::SUV_MODELVIEW_MAT))
 	{
-		mtl.stdUniVars[Material::SUV_MODELVIEW_MAT]->setMat4(&modelViewMat);
+		mtl.getStdUniVar(Material::SUV_MODELVIEW_MAT)->setMat4(&modelViewMat);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_VIEWPROJECTION_MAT])
+	if(mtl.getStdUniVar(Material::SUV_VIEWPROJECTION_MAT))
 	{
-		mtl.stdUniVars[Material::SUV_VIEWPROJECTION_MAT]->setMat4(&viewProjectionMat);
+		mtl.getStdUniVar(Material::SUV_VIEWPROJECTION_MAT)->setMat4(&viewProjectionMat);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_NORMAL_MAT])
+	if(mtl.getStdUniVar(Material::SUV_NORMAL_MAT))
 	{
 		normalMat = modelViewMat.getRotationPart();
-		mtl.stdUniVars[Material::SUV_NORMAL_MAT]->setMat3(&normalMat);
+		mtl.getStdUniVar(Material::SUV_NORMAL_MAT)->setMat3(&normalMat);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_MODELVIEWPROJECTION_MAT])
+	if(mtl.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT))
 	{
 		modelViewProjectionMat = projectionMat * modelViewMat;
-		mtl.stdUniVars[Material::SUV_MODELVIEWPROJECTION_MAT]->setMat4(&modelViewProjectionMat);
+		mtl.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT)->setMat4(&modelViewProjectionMat);
 	}
 
 
 	//
 	// FAis
 	//
-	if(mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI])
+	if(mtl.getStdUniVar(Material::SUV_MS_NORMAL_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_MS_NORMAL_FAI]->setTexture(ms->getNormalFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_NORMAL_FAI)->setTexture(ms->getNormalFai(), textureUnit++);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI])
+	if(mtl.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_MS_DIFFUSE_FAI]->setTexture(ms->getDiffuseFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI)->setTexture(ms->getDiffuseFai(), textureUnit++);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI])
+	if(mtl.getStdUniVar(Material::SUV_MS_SPECULAR_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_MS_SPECULAR_FAI]->setTexture(ms->getSpecularFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_SPECULAR_FAI)->setTexture(ms->getSpecularFai(), textureUnit++);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI])
+	if(mtl.getStdUniVar(Material::SUV_MS_DEPTH_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_MS_DEPTH_FAI]->setTexture(ms->getDepthFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_DEPTH_FAI)->setTexture(ms->getDepthFai(), textureUnit++);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_IS_FAI])
+	if(mtl.getStdUniVar(Material::SUV_IS_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_IS_FAI]->setTexture(is->getFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_IS_FAI)->setTexture(is->getFai(), textureUnit++);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI])
+	if(mtl.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_PPS_PRE_PASS_FAI]->setTexture(pps->prePassFai, textureUnit++);
+		mtl.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI)->setTexture(pps->getPrePassFai(), textureUnit++);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI])
+	if(mtl.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI))
 	{
-		mtl.stdUniVars[Material::SUV_PPS_POST_PASS_FAI]->setTexture(pps->postPassFai, textureUnit++);
+		mtl.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI)->setTexture(pps->getPostPassFai(), textureUnit++);
 	}
 
 
 	//
 	// Other
 	//
-	if(mtl.stdUniVars[Material::SUV_RENDERER_SIZE])
+	if(mtl.getStdUniVar(Material::SUV_RENDERER_SIZE))
 	{
 		Vec2 v(width, height);
-		mtl.stdUniVars[Material::SUV_RENDERER_SIZE]->setVec2(&v);
+		mtl.getStdUniVar(Material::SUV_RENDERER_SIZE)->setVec2(&v);
 	}
 
-	if(mtl.stdUniVars[Material::SUV_SCENE_AMBIENT_COLOR])
+	if(mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR))
 	{
 		Vec3 col(app->getScene().getAmbientCol());
-		mtl.stdUniVars[Material::SUV_SCENE_AMBIENT_COLOR]->setVec3(&col);
+		mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR)->setVec3(&col);
 	}
 
 
 	//
 	// set user defined vars
 	//
-	for(uint i=0; i<mtl.userDefinedVars.size(); i++)
+	for(uint i=0; i<mtl.getUserDefinedVars().size(); i++)
 	{
-		const Material::UserDefinedUniVar* udv = &mtl.userDefinedVars[i];
+		const Material::UserDefinedUniVar* udv = &mtl.getUserDefinedVars()[i];
 		switch(udv->sProgVar->getGlDataType())
 		{
 			// texture

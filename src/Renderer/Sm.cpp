@@ -96,14 +96,14 @@ void Sm::run(const Camera& cam)
 	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
-		if(meshNode->mesh->material->blends)
+		if(meshNode->mesh->material->renderInBlendingStage())
 		{
 			continue;
 		}
 
-		RASSERT_THROW_EXCEPTION(meshNode->mesh->material->dpMtl.get() == NULL);
+		//RASSERT_THROW_EXCEPTION(meshNode->mesh->material->dpMtl.get() == NULL);
 
-		r.setupMaterial(*meshNode->mesh->material->dpMtl, *meshNode, cam);
+		r.setupMaterial(meshNode->mesh->material->getDepthMtl(), *meshNode, cam);
 		meshNode->renderDepth();
 	}
 

@@ -106,7 +106,7 @@ void Ms::run()
 			throw EXCEPTION("Mesh \"" + meshNode->mesh->getRsrcName() + "\" doesnt have material");
 		}
 
-		if(meshNode->mesh->material->blends)
+		if(meshNode->mesh->material->renderInBlendingStage())
 		{
 			continue;
 		}

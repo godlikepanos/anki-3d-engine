@@ -17,10 +17,10 @@ class ShaderProg;
 /// This stage is divided into 2 two parts. The first happens before blending stage and the second after.
 class Pps: private RenderingPass
 {
-	public:
-		Texture prePassFai;
-		Texture postPassFai;
+	PROPERTY_R(Texture, prePassFai, getPrePassFai)
+	PROPERTY_R(Texture, postPassFai, getPostPassFai)
 
+	public:
 		Pps(Renderer& r_, Object* parent);
 		void init(const RendererInitializer& initializer);
 		void runPrePass();
