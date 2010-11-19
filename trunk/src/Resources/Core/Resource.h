@@ -30,7 +30,8 @@ class Resource
 			RT_LIGHT_PROPS,
 			RT_EXTENSION,
 			RT_PARTICLE_EMITTER_PROPS,
-			RT_SCRIPT
+			RT_SCRIPT,
+			RT_MODEL
 		};
 
 	PROPERTY_R(std::string, path, getRsrcPath);
