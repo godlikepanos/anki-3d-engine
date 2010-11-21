@@ -8,6 +8,8 @@
 class Mesh;
 class Material;
 class Vao;
+class Skeleton;
+class SkelAnim;
 
 
 /// File format:
@@ -62,7 +64,7 @@ class Model: public Resource
 
 	private:
 		RsrcPtr<Skeleton> skel;
-		//RsrcPtr<SkelAnim> sAnim;
+		Vec<RsrcPtr<SkelAnim> > sAnims;
 };
 
 

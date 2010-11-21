@@ -2,6 +2,7 @@
 #include <boost/lexical_cast.hpp>
 #include "RsrcContainer.h"
 #include "Exception.h"
+#include "Messaging.h"
 
 
 //======================================================================================================================
@@ -10,7 +11,10 @@
 template<typename Type>
 RsrcContainer<Type>::~RsrcContainer()
 {
-	//RASSERT_THROW_EXCEPTION(BaseClass::size() != 0); // this means that somehow a resource is still loaded
+	if(BaseClass::size() != 0)
+	{
+		ERROR("Resources are still loaded");
+	}
 }
 
 
