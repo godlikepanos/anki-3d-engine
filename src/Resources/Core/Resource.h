@@ -18,6 +18,9 @@ class Resource
 	template<typename Type>
 	friend class RsrcContainer; ///< Cause it calls Resource::load and Resource::unload
 
+	template<typename Type>
+	friend class RsrcPtr; ///< Cause the RsrcPtr copy constructor increases the referenceCounter
+
 	public:
 		enum ResourceType
 		{
