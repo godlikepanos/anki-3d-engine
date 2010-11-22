@@ -10,18 +10,21 @@ class Material;
 class Vao;
 class Skeleton;
 class SkelAnim;
+class Scanner;
 
 
+/// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
+///
 /// File format:
 /// @code
-/// subMeshes {
-/// 	subMesh {
+/// subModels {
+/// 	subModel {
 /// 		mesh <string>
 /// 		material <string>
 /// 		dpMaterial <string>
 /// 	}
 /// 	...
-/// 	subMesh {
+/// 	subModel {
 /// 		...
 /// 	}
 /// }
@@ -40,6 +43,8 @@ class Model: public Resource
 		///
 		class SubModel
 		{
+			friend class Model;
+
 			public:
 				/// @name Accessors
 				/// @{
@@ -63,8 +68,11 @@ class Model: public Resource
 		void load(const char* filename);
 
 	private:
-		RsrcPtr<Skeleton> skel;
-		Vec<RsrcPtr<SkelAnim> > sAnims;
+		Vec<SubModel> subModels;
+		RsrcPtr<Skeleton> skel; ///< The skeleton. It can be empty
+		Vec<RsrcPtr<SkelAnim> > sAnims; ///< The standard skeleton animations
+
+		void parseSubModel(Scanner& scanner);
 };
 
 
