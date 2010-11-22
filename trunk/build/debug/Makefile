@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Physics -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Math -I../../src/Resources -I../../src/Resources/Helpers -I../../src/Resources/Core -I../../src/Misc -I../../src/Util -I../../src/Ui -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Core -I../../src/Scripting/Math -I../../src/Scripting/Util -I../../src/Scripting/Scene -I../../src/Scripting/Renderer -I../../src/Core -I../../src/Input -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Physics/DebugDrawer.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Material.cpp ../../src/Resources/Texture.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/Script.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Resources/Core/RsrcPtr.cpp ../../src/Resources/Core/RsrcContainers.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/TestHeader.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Exception.cpp ../../src/Ui/Ui.cpp ../../src/Scene/MeshNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/SkelNode.cpp ../../src/Scene/Light.cpp ../../src/Scene/SkelModelNode.cpp ../../src/Scene/Camera.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimCtrl.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Core/MessageHandler.bpi.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Core/App.cpp ../../src/Core/StdinListener.cpp ../../src/Core/Object.cpp ../../src/Input/Input.cpp 
-OBJECTS = Main.o Physics.o RigidBody.o PhyCharacter.o DebugDrawer.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o BufferObject.o Vao.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o Script.o LightData.o Mesh.o ParticleEmitterProps.o Image.o ShaderPrePreprocessor.o MeshData.o RsrcPtr.o RsrcContainers.o skybox.o map.o TestHeader.o Scanner.o Util.o BinaryStream.o Exception.o Ui.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o SpotLight.o Controller.o SkelAnimCtrl.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o App.bpi.o MessageHandler.bpi.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Scene.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o Dbg.bpi.o MainRenderer.bpi.o App.o StdinListener.o Object.o Input.o 
+SOURCES = ../../src/Main.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Physics/DebugDrawer.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Material.cpp ../../src/Resources/Texture.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/Script.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/Model.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Resources/Core/RsrcPtr.cpp ../../src/Resources/Core/RsrcContainers.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/TestHeader.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Exception.cpp ../../src/Ui/Ui.cpp ../../src/Scene/MeshNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/SkelNode.cpp ../../src/Scene/Light.cpp ../../src/Scene/SkelModelNode.cpp ../../src/Scene/Camera.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimCtrl.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Core/MessageHandler.bpi.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Core/App.cpp ../../src/Core/StdinListener.cpp ../../src/Core/Object.cpp ../../src/Input/Input.cpp 
+OBJECTS = Main.o Physics.o RigidBody.o PhyCharacter.o DebugDrawer.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o BufferObject.o Vao.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o Script.o LightData.o Mesh.o Model.o ParticleEmitterProps.o Image.o ShaderPrePreprocessor.o MeshData.o RsrcPtr.o RsrcContainers.o skybox.o map.o TestHeader.o Scanner.o Util.o BinaryStream.o Exception.o Ui.o MeshNode.o SceneNode.o SkelNode.o Light.o SkelModelNode.o Camera.o ParticleEmitter.o Scene.o SpotLight.o Controller.o SkelAnimCtrl.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o App.bpi.o MessageHandler.bpi.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Scene.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o Dbg.bpi.o MainRenderer.bpi.o App.o StdinListener.o Object.o Input.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -2763,6 +2763,17 @@ Mesh.o: ../../src/Resources/Mesh.cpp ../../src/Resources/Mesh.h \
 	@echo Compiling ../../src/Resources/Mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Mesh.cpp -o Mesh.o
 
+Model.o: ../../src/Resources/Model.cpp ../../src/Resources/Model.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Util/Exception.h ../../src/Misc/Parser.h \
+ ../../src/Util/Scanner.h ../../src/Misc/Parser.inl.h \
+ ../../src/Misc/Parser.h
+	@echo Compiling ../../src/Resources/Model.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model.cpp -o Model.o
+
 ParticleEmitterProps.o: ../../src/Resources/ParticleEmitterProps.cpp \
  ../../src/Resources/ParticleEmitterProps.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
@@ -2825,9 +2836,45 @@ RsrcPtr.o: ../../src/Resources/Core/RsrcPtr.cpp \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Util/Exception.h \
  ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
  ../../src/Util/Exception.h ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Resources/Texture.h ../../src/Resources/Core/Resource.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Util/StdTypes.h \
+ ../../src/Core/Messaging.h ../../src/Core/App.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_loadso.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_revision.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Core/Object.h \
+ ../../src/Core/MessageHandler.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Properties.h ../../src/Resources/Texture.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
  ../../src/Resources/Material.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -2855,10 +2902,46 @@ RsrcPtr.o: ../../src/Resources/Core/RsrcPtr.cpp \
 RsrcContainers.o: ../../src/Resources/Core/RsrcContainers.cpp \
  ../../src/Resources/Core/RsrcContainer.h ../../src/Util/Vec.h \
  ../../src/Util/Exception.h ../../src/Resources/Core/RsrcContainer.inl.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture.h \
+ ../../src/Util/Exception.h ../../src/Core/Messaging.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_loadso.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_revision.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Core/Object.h \
+ ../../src/Core/MessageHandler.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Properties.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Util/StdTypes.h \
  ../../src/Resources/Material.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -3090,7 +3173,8 @@ TestHeader.o: ../../src/Misc/TestHeader.cpp ../../src/Resources/Model.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/Exception.h \
  ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
- ../../src/Util/StdTypes.h
+ ../../src/Util/StdTypes.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Util/Exception.h
 	@echo Compiling ../../src/Misc/TestHeader.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/TestHeader.cpp -o TestHeader.o
 
