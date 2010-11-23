@@ -3,6 +3,7 @@
 
 #include "Resource.h"
 #include "RsrcPtr.h"
+#include "Object.h"
 
 
 class Mesh;
@@ -31,7 +32,7 @@ class Scanner;
 ///
 /// skeleton <string>
 ///
-/// stdAnims {
+/// skelAnims {
 /// 	<string>
 /// 	...
 /// 	<string>
@@ -41,24 +42,26 @@ class Model: public Resource
 {
 	public:
 		///
-		class SubModel
+		class SubModel: public Object
 		{
 			friend class Model;
 
 			public:
+				SubModel(): Object(NULL) {}
+
 				/// @name Accessors
 				/// @{
 				const Mesh& getMesh() const {return *mesh;}
-				const Material& getMtl() const {return *mtl;}
-				const Material& getDpMtl() const {return *dpMtl;}
+				const Material& getMaterial() const {return *material;}
+				const Material& getDpMaterial() const {return *dpMaterial;}
 				const Vao& getVao() const {return *normVao;}
 				const Vao& getDpVao() const {return *dpVao;}
 				/// @}
 
 			private:
 				RsrcPtr<Mesh> mesh; ///< The geometry
-				RsrcPtr<Material> mtl; ///< Material for MS ans BS
-				RsrcPtr<Material> dpMtl; ///< Material for depth passes
+				RsrcPtr<Material> material; ///< Material for MS ans BS
+				RsrcPtr<Material> dpMaterial; ///< Material for depth passes
 				Vao* normVao; ///< Normal VAO for MS ans BS
 				Vao* dpVao; ///< Depth pass VAO for SM and EarlyZ
 		};
@@ -68,11 +71,15 @@ class Model: public Resource
 		void load(const char* filename);
 
 	private:
-		Vec<SubModel> subModels;
-		RsrcPtr<Skeleton> skel; ///< The skeleton. It can be empty
-		Vec<RsrcPtr<SkelAnim> > sAnims; ///< The standard skeleton animations
+		Vec<SubModel> subModels; ///< The vector of submodels
+		RsrcPtr<Skeleton> skeleton; ///< The skeleton. It can be empty
+		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
 
+		/// Parses a submodel from after the "subModel" until the closing bracket
 		void parseSubModel(Scanner& scanner);
+
+		/// Creates VAOs for an individual submodel
+		void createVao(const Material& mtl, const Mesh& mesh, SubModel& subModel, Vao*& vao);
 };
 
 
