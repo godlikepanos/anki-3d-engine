@@ -34,11 +34,12 @@ class Mesh: public Resource, public Object
 	public:
 		RsrcPtr<Material> material; ///< Required. If empty then mesh not renderable
 
-		/// Accessor to vao
+		/// @name Accessors
+		/// @{
 		const Vao* getVao() const {return mainVao;}
-
-		/// Accessor to depthVao
 		const Vao* getDepthVao() const {return depthVao;}
+		const Vbo* getVbo(Vbos id) const {return vbos[id];}
+		/// @}
 
 		/// Default constructor
 		Mesh(): Resource(RT_MESH), Object(NULL) {}
