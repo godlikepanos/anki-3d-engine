@@ -1,9 +1,7 @@
 #include <algorithm>
 #include "Exception.h"
 #include "Scene.h"
-#include "SkelNode.h"
 #include "Camera.h"
-#include "MeshNode.h"
 #include "Light.h"
 #include "Controller.h"
 #include "Material.h"

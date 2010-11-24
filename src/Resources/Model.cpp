@@ -123,7 +123,7 @@ void Model::load(const char* filename)
 	//
 	for(Vec<SubModel>::iterator it = subModels.begin(); it != subModels.end(); it++)
 	{
-		createVao(*it->material, *it->mesh, *it, it->normVao);
+		createVao(*it->material, *it->mesh, *it, it->vao);
 		createVao(*it->dpMaterial, *it->mesh, *it, it->dpVao);
 	}
 }

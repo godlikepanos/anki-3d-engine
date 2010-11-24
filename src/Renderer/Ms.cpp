@@ -3,7 +3,6 @@
 #include "App.h"
 #include "Scene.h"
 #include "Camera.h"
-#include "MeshNode.h"
 #include "Ez.h"
 
 
@@ -98,7 +97,8 @@ void Ms::run()
 	}
 
 	// render the meshes
-	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	/// @todo Uncomment
+	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material.get() == NULL)
@@ -113,7 +113,7 @@ void Ms::run()
 
 		r.setupMaterial(*meshNode->mesh->material, *meshNode, cam);
 		meshNode->render();
-	}
+	}*/
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
 

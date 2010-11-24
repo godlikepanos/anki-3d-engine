@@ -23,10 +23,8 @@ class SceneNode: public Object
 			SNT_GHOST,
 			SNT_LIGHT,
 			SNT_CAMERA,
-			SNT_MESH,
-			SNT_SKELETON,
-			SNT_SKEL_MODEL,
-			SNT_PARTICLE_EMITTER
+			SNT_PARTICLE_EMITTER,
+			SNT_MODEL
 		};
 
 	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform) ///< The transformation in local space

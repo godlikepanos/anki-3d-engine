@@ -20,6 +20,7 @@
 class Camera;
 class RendererInitializer;
 class SceneNode;
+class ModelNode;
 
 
 /// Offscreen renderer
@@ -38,6 +39,13 @@ class Renderer: public Object
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
+		/// The two types of rendering a ModelNode
+		enum ModelNodeRenderType
+		{
+			MNRT_NORMAL,
+			MNRT_DEPTH
+		};
+
 		Renderer(Object* parent);
 
 		~Renderer() throw() {}
@@ -90,6 +98,10 @@ class Renderer: public Object
 		/// @param sceneNode Needed for some matrices
 		/// @param cam Needed for some matrices
 		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam);
+
+
+		/// Render ModelNode. The method sets up the shader and renders the geometry
+		void renderModelNode(const ModelNode& modelNod, const Camera& cam, ModelNodeRenderType type) const;
 
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions

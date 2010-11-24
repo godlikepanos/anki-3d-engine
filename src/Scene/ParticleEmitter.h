@@ -4,7 +4,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <memory>
 #include "SceneNode.h"
-#include "MeshNode.h"
 #include "GhostNode.h"
 #include "ParticleEmitterProps.h"
 

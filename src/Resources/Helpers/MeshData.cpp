@@ -34,9 +34,6 @@ void MeshData::load(const char* filename)
 		// Mesh name
 		std::string meshName = bs.readString();
 
-		// Material name
-		materialName = bs.readString();
-
 		// Verts num
 		uint vertsNum = bs.readUint();
 		vertCoords.resize(vertsNum);
@@ -105,7 +102,7 @@ void MeshData::load(const char* filename)
 			{
 				uint tmp = VertexWeight::MAX_BONES_PER_VERT;
 				throw EXCEPTION("Cannot have more than " +
-				                     boost::lexical_cast<std::string>(tmp) + " bones per vertex");
+				                boost::lexical_cast<std::string>(tmp) + " bones per vertex");
 			}
 			vertWeights[i].bonesNum = boneConnections;
 

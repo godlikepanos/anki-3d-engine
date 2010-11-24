@@ -41,7 +41,7 @@ class Scanner;
 class Model: public Resource
 {
 	public:
-		///
+		/// This is basicaly a container around mesh and materials. It also has the VAOs.
 		class SubModel: public Object
 		{
 			friend class Model;
@@ -54,7 +54,7 @@ class Model: public Resource
 				const Mesh& getMesh() const {return *mesh;}
 				const Material& getMaterial() const {return *material;}
 				const Material& getDpMaterial() const {return *dpMaterial;}
-				const Vao& getVao() const {return *normVao;}
+				const Vao& getVao() const {return *vao;}
 				const Vao& getDpVao() const {return *dpVao;}
 				/// @}
 
@@ -62,13 +62,21 @@ class Model: public Resource
 				RsrcPtr<Mesh> mesh; ///< The geometry
 				RsrcPtr<Material> material; ///< Material for MS ans BS
 				RsrcPtr<Material> dpMaterial; ///< Material for depth passes
-				Vao* normVao; ///< Normal VAO for MS ans BS
+				Vao* vao; ///< Normal VAO for MS ans BS
 				Vao* dpVao; ///< Depth pass VAO for SM and EarlyZ
 		};
 
 		Model(): Resource(RT_MODEL) {}
 
 		void load(const char* filename);
+
+		/// @name Accessors
+		/// @{
+		const Vec<SubModel>& getSubModels() const {return subModels;}
+		const Skeleton& getSkeleton() const;
+		/// @}
+
+		bool hasSkeleton() const {return skeleton.get() != NULL;}
 
 	private:
 		Vec<SubModel> subModels; ///< The vector of submodels
@@ -81,6 +89,13 @@ class Model: public Resource
 		/// Creates VAOs for an individual submodel
 		void createVao(const Material& mtl, const Mesh& mesh, SubModel& subModel, Vao*& vao);
 };
+
+
+inline const Skeleton& Model::getSkeleton() const
+{
+	RASSERT_THROW_EXCEPTION(!hasSkeleton());
+	return *skeleton;
+}
 
 
 #endif
