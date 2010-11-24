@@ -5,6 +5,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "Exception.h"
+#include "ModelNode.h"
 
 
 //======================================================================================================================
@@ -275,6 +276,54 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	}
 
 	ON_GL_FAIL_THROW_EXCEPTION();
+}
+
+
+//======================================================================================================================
+// renderModelNode                                                                                                     =
+//======================================================================================================================
+void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const
+{
+	const Material* mtl;
+	const Vao* vao;
+
+	for(uint i = 0; i < modelNode.getModel().getSubModels().size(); i++)
+	{
+		Model::SubModel& subModel = modelNode.getModel().getSubModels()[i];
+
+		const Material* mtl;
+		const Vao* vao;
+		if(type == MNRT_NORMAL)
+		{
+			mtl = subModel.getMaterial();
+			vao = subModel.getVao();
+		}
+		else
+		{
+			mtl = subModel.getDpMaterial();
+			vao = subModel.getDpVao();
+		}
+
+		// Material
+		setupMaterial(*mtl, modelNode, cam);
+
+		// Render
+		if(modelNode.hasSkeleton())
+		{
+			RASSERT_THROW_EXCEPTION(!mtl->hasHWSkinning()); // it has skel controller but no skinning
+
+			// first the uniforms
+			mtl->getStdUniVar(Material::SUV_SKINNING_ROTATIONS)->setMat3(&modelNode.getBoneRotations()[0],
+			                                                             modelNode.getBoneRotations().size());
+
+			mtl->getStdUniVar(Material::SUV_SKINNING_TRANSLATIONS)->setVec3(&meshSkelCtrl.getBoneTranslations()[0],
+			                                                                meshSkelCtrl.getBoneTranslations().size());
+		}
+
+		vao->bind();
+		glDrawElements(GL_TRIANGLES, subModel.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+		vao->unbind();
+	}
 }
 
 

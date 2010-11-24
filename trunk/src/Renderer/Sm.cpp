@@ -2,7 +2,6 @@
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
-#include "MeshNode.h"
 #include "LightData.h"
 #include "Camera.h"
 #include "RendererInitializer.h"
@@ -93,7 +92,8 @@ void Sm::run(const Camera& cam)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// render all meshes
-	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	/// @todo Uncomment
+	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material->renderInBlendingStage())
@@ -105,7 +105,7 @@ void Sm::run(const Camera& cam)
 
 		r.setupMaterial(meshNode->mesh->material->getDepthMtl(), *meshNode, cam);
 		meshNode->renderDepth();
-	}
+	}*/
 
 	// restore GL
 	glDisable(GL_POLYGON_OFFSET_FILL);

@@ -1,7 +1,6 @@
 #include "Ez.h"
 #include "Renderer.h"
 #include "App.h"
-#include "MeshNode.h"
 #include "Scene.h"
 #include "RendererInitializer.h"
 
@@ -59,7 +58,8 @@ void Ez::run()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	/// @todo Uncomment
+	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 		if(meshNode->mesh->material->renderInBlendingStage())
@@ -71,7 +71,7 @@ void Ez::run()
 
 		r.setupMaterial(meshNode->mesh->material->getDepthMtl(), *meshNode, r.getCamera());
 		meshNode->renderDepth();
-	}
+	}*/
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }

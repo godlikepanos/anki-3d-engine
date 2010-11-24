@@ -1,24 +1,26 @@
-#include "SkelAnimCtrl.h"
+#include "SkelAnimModelNodeCtrl.h"
 #include "SkelAnim.h"
-#include "SkelNode.h"
 #include "Skeleton.h"
 #include "App.h"
+#include "ModelNode.h"
+#include "Model.h"
 #include "MainRenderer.h"
 
 
 //======================================================================================================================
-// SkelAnimCtrl                                                                                              =
+// SkelAnimModelNodeCtrl                                                                                               =
 //======================================================================================================================
-SkelAnimCtrl::SkelAnimCtrl(SkelNode& skelNode_):
+SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(ModelNode& modelNode_):
 	Controller(CT_SKEL_ANIM),
-	skelNode(skelNode_)
+	modelNode(modelNode_)
 {}
 
 
 //======================================================================================================================
 // interpolate                                                                                                         =
 //======================================================================================================================
-void SkelAnimCtrl::interpolate(const SkelAnim& animation, float frame)
+void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
+                                        Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
 {
 	RASSERT_THROW_EXCEPTION(frame >= animation.framesNum);
 
@@ -44,12 +46,8 @@ void SkelAnimCtrl::interpolate(const SkelAnim& animation, float frame)
 		}
 	}
 
-
 	// now for all bones update bone's poses
-	Vec<Mat3>& boneRotations = skelNode.boneRotations;
-	Vec<Vec3>& boneTranslations = skelNode.boneTranslations;
-
-	RASSERT_THROW_EXCEPTION(boneRotations.size()<1);
+	RASSERT_THROW_EXCEPTION(boneRotations.size() < 1);
 	for(uint i=0; i<boneRotations.size(); i++)
 	{
 		const SkelAnim::BoneAnim& banim = animation.bones[i];
@@ -86,18 +84,16 @@ void SkelAnimCtrl::interpolate(const SkelAnim& animation, float frame)
 //======================================================================================================================
 // updateBoneTransforms                                                                                                =
 //======================================================================================================================
-void SkelAnimCtrl::updateBoneTransforms()
+void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
+                                                 Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
 {
 	uint queue[128];
 	uint head = 0, tail = 0;
 
-	Vec<Mat3>& boneRotations = skelNode.boneRotations;
-	Vec<Vec3>& boneTranslations = skelNode.boneTranslations;
-
 	// put the roots
-	for(uint i=0; i<skelNode.skeleton->bones.size(); i++)
+	for(uint i=0; i<skeleton.bones.size(); i++)
 	{
-		if(skelNode.skeleton->bones[i].parent == NULL)
+		if(skeleton.bones[i].parent == NULL)
 		{
 			queue[tail++] = i; // queue push
 		}
@@ -107,7 +103,7 @@ void SkelAnimCtrl::updateBoneTransforms()
 	while(head != tail) // while queue not empty
 	{
 		uint boneId = queue[head++]; // queue pop
-		const Skeleton::Bone& boned = skelNode.skeleton->bones[boneId];
+		const Skeleton::Bone& boned = skeleton.bones[boneId];
 
 		// bone.final_transform = MA * ANIM * MAi
 		// where MA is bone matrix at armature space and ANIM the interpolated transformation.
@@ -140,17 +136,16 @@ void SkelAnimCtrl::updateBoneTransforms()
 //======================================================================================================================
 // deform                                                                                                              =
 //======================================================================================================================
-void SkelAnimCtrl::deform()
+void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& boneTranslations,
+                                   const Vec<Mat3>& boneRotations, Vec<Vec3>& heads, Vec<Vec3>& tails)
 {
-	const Skeleton& skeleton = *skelNode.skeleton;
-
 	for(uint i=0; i<skeleton.bones.size(); i++)
 	{
-		const Mat3& rot = skelNode.boneRotations[i];
-		const Vec3& transl = skelNode.boneTranslations[i];
+		const Mat3& rot = boneRotations[i];
+		const Vec3& transl = boneTranslations[i];
 
-		skelNode.heads[i] = skeleton.bones[i].getHead().getTransformed(transl, rot);
-		skelNode.tails[i] = skeleton.bones[i].getTail().getTransformed(transl, rot);
+		heads[i] = skeleton.bones[i].getHead().getTransformed(transl, rot);
+		tails[i] = skeleton.bones[i].getTail().getTransformed(transl, rot);
 	}
 }
 
@@ -158,7 +153,7 @@ void SkelAnimCtrl::deform()
 //======================================================================================================================
 // update                                                                                                              =
 //======================================================================================================================
-void SkelAnimCtrl::update(float)
+void SkelAnimModelNodeCtrl::update(float)
 {
 	frame += step;
 	if(frame > skelAnim->framesNum) // if the crnt is finished then play the next or loop the crnt
@@ -166,10 +161,11 @@ void SkelAnimCtrl::update(float)
 		frame = 0.0;
 	}
 
-	interpolate(*skelAnim, frame);
-	updateBoneTransforms();
+	interpolate(*skelAnim, frame, modelNode.getBoneTranslations(), modelNode.getBoneRotations());
+	updateBoneTransforms(modelNode.getModel().getSkeleton(), modelNode.getBoneTranslations(), modelNode.getBoneRotations());
 	if(app->getMainRenderer().getDbg().isEnabled() && app->getMainRenderer().getDbg().isShowSkeletonsEnabled())
 	{
-		deform();
+		deform(modelNode.getModel().getSkeleton(), modelNode.getBoneTranslations(), modelNode.getBoneRotations(),
+		       modelNode.getHeads(), modelNode.getTails());
 	}
 }

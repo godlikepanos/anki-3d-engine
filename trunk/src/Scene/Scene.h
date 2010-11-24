@@ -10,8 +10,6 @@
 class SceneNode;
 class Light;
 class Camera;
-class MeshNode;
-class SkelNode;
 class Controller;
 class ParticleEmitter;
 
@@ -32,8 +30,6 @@ class Scene: public Object
 		Container<SceneNode> nodes;
 		Container<Light> lights;
 		Container<Camera> cameras;
-		Container<MeshNode> meshNodes;
-		Container<SkelNode> skelNodes;
 		Container<Controller> controllers;
 		Container<ParticleEmitter> particleEmitters;
 		Skybox skybox; // ToDo to be removed

@@ -3,9 +3,18 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "MeshData.h"
+#include "Vbo.h"
 
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+//======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+Mesh::Mesh():
+	Resource(RT_MESH),
+	Object(NULL)
+{
+	memset(vbos, NULL, sizeof(vbos));
+}
 
 
 //======================================================================================================================
@@ -19,38 +28,30 @@ void Mesh::load(const char* filename)
 
 	try
 	{
-		material.loadRsrc(meshData.getMaterialName().c_str());
-
-		if(isRenderable())
+		/*//
+		// Sanity checks
+		//
+		if(meshData.getVertIndeces().size() < 1 || meshData.getVertCoords().size() < 1 ||
+			 meshData.getVertNormals().size() < 1)
 		{
-			//
-			// Sanity checks
-			//
-			if(meshData.getVertIndeces().size() < 1 || meshData.getVertCoords().size() < 1 ||
-			   meshData.getVertNormals().size() < 1)
-			{
-				throw EXCEPTION("Empty required arrays");
-			}
-
-			// shader needs text coords and mesh does not have any
-			if(material->getStdAttribVar(Material::SAV_TEX_COORDS) != NULL && meshData.getTexCoords().size() < 1)
-			{
-				throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
-												"\") needs texture coord information that the mesh doesn't have");
-			}
-
-			// shader has HW skinning and mesh does not have vert weights
-			if(material->hasHWSkinning() && meshData.getVertWeights().size() < 1)
-			{
-				throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
-												"\") needs vertex weights that the mesh doesn't have");
-			}
-
-
-			createVbos(meshData);
-			createVao(mainVao, *material.get());
-			createVao(depthVao, material->getDepthMtl());
+			throw EXCEPTION("Empty required arrays");
 		}
+
+		// shader needs text coords and mesh does not have any
+		if(material->getStdAttribVar(Material::SAV_TEX_COORDS) != NULL && meshData.getTexCoords().size() < 1)
+		{
+			throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
+											"\") needs texture coord information that the mesh doesn't have");
+		}
+
+		// shader has HW skinning and mesh does not have vert weights
+		if(material->hasHWSkinning() && meshData.getVertWeights().size() < 1)
+		{
+			throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
+											"\") needs vertex weights that the mesh doesn't have");
+		}*/
+
+		createVbos(meshData);
 	}
 	catch(std::exception& e)
 	{
@@ -100,66 +101,4 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_VERT_WEIGHTS] = NULL;
 	}
-}
-
-
-//======================================================================================================================
-// createVao                                                                                                           =
-//======================================================================================================================
-void Mesh::createVao(Vao*& vao, const Material& mtl)
-{
-	vao = new Vao(this);
-
-	if(mtl.getStdAttribVar(Material::SAV_POSITION) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_POSITIONS], *mtl.getStdAttribVar(Material::SAV_POSITION), 3, GL_FLOAT,
-		                          GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_NORMALS], *mtl.getStdAttribVar(Material::SAV_NORMAL), 3, GL_FLOAT,
-		                          GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getStdAttribVar(Material::SAV_TANGENT) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_TANGENTS], *mtl.getStdAttribVar(Material::SAV_TANGENT), 4, GL_FLOAT,
-		                          GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getStdAttribVar(Material::SAV_TEX_COORDS) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_TEX_COORDS], *mtl.getStdAttribVar(Material::SAV_TEX_COORDS), 2, GL_FLOAT,
-		                          GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM), 1,
-		                          GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0));
-	}
-
-	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONE_IDS) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONE_IDS), 4,
-		                          GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(4));
-	}
-
-	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_WEIGHTS) != NULL)
-	{
-		vao->attachArrayBufferVbo(*vbos[VBO_VERT_WEIGHTS], *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_WEIGHTS), 4,
-		                          GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
-	}
-
-	vao->attachElementArrayBufferVbo(*vbos[VBO_VERT_INDECES]);
-}
-
-
-//======================================================================================================================
-// isRenderable                                                                                                        =
-//======================================================================================================================
-bool Mesh::isRenderable() const
-{
-	return material.get() != NULL;
 }

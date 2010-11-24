@@ -2,7 +2,6 @@
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
-#include "SkelNode.h"
 #include "Camera.h"
 #include "LightData.h"
 #include "RendererInitializer.h"

@@ -2,7 +2,6 @@
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
-#include "MeshNode.h"
 #include "ShaderProg.h"
 
 
@@ -83,7 +82,8 @@ void Bs::run()
 	glDepthMask(false);
 
 	// render the meshes
-	for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	/// @todo Uncomment this
+	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
 	{
 		MeshNode* meshNode = (*it);
 
@@ -145,7 +145,7 @@ void Bs::run()
 			r.setupMaterial(*meshNode->mesh->material, *meshNode, r.getCamera());
 			meshNode->render();
 		}
-	}
+	}*/
 
 	glDepthMask(true);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode

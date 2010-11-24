@@ -22,6 +22,9 @@
 /// <uint:facesNum>
 /// <uint:tri[0].vertIds[0]> <uint:tri[0].vertIds[1]> <uint:tri[0].vertIds[2]> ...
 /// <uint:tri[facesNum-1].vertIds[0]> <uint:tri[facesNum-1].vertIds[1]> <uint:tri[facesNum-1].vertIds[2]>
+/// <uint:texCoordsNum>
+/// <float:texCoord[0].x><float:texCoord[0].y> ...
+/// <float:texCoord[texCoordsNum-1].x><float:texCoord[texCoordsNum-1].y>
 /// @endcode
 class MeshData
 {
@@ -54,7 +57,6 @@ class MeshData
 	PROPERTY_R(Vec<VertexWeight>, vertWeights, getVertWeights) ///< Optional
 	PROPERTY_R(Vec<Triangle>, tris, getTris) ///< Required
 	PROPERTY_R(Vec<ushort>, vertIndeces, getVertIndeces) ///< Generated. Used for vertex arrays & VBOs
-	PROPERTY_R(std::string, materialName, getMaterialName) ///< Required. If empty then mesh not renderable
 
 	public:
 		MeshData(const char* filename) {load(filename);}
