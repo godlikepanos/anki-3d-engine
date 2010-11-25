@@ -163,9 +163,7 @@ void Model::load(const char* filename)
 //======================================================================================================================
 void Model::parseSubModel(Scanner& scanner)
 {
-	const Scanner::Token* token = &scanner.getCrntToken();
-
-	scanner.getNextToken();
+	const Scanner::Token* token = &scanner.getNextToken();
 
 	if(token->getCode() != Scanner::TC_LBRACKET)
 	{
