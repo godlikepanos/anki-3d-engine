@@ -6,6 +6,8 @@
 #include "Scene.h"
 #include "Exception.h"
 #include "ModelNode.h"
+#include "Model.h"
+#include "Mesh.h"
 
 
 //======================================================================================================================
@@ -93,7 +95,7 @@ void Renderer::drawQuad()
 //======================================================================================================================
 // setupMaterial                                                                                                       =
 //======================================================================================================================
-void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam)
+void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam) const
 {
 	mtl.getShaderProg().bind();
 	uint textureUnit = 0;
@@ -284,28 +286,26 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 //======================================================================================================================
 void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const
 {
-	const Material* mtl;
-	const Vao* vao;
-
 	for(uint i = 0; i < modelNode.getModel().getSubModels().size(); i++)
 	{
-		Model::SubModel& subModel = modelNode.getModel().getSubModels()[i];
+		const Model::SubModel& subModel = modelNode.getModel().getSubModels()[i];
 
 		const Material* mtl;
 		const Vao* vao;
 		if(type == MNRT_NORMAL)
 		{
-			mtl = subModel.getMaterial();
-			vao = subModel.getVao();
+			mtl = &subModel.getMaterial();
+			vao = &subModel.getVao();
 		}
 		else
 		{
-			mtl = subModel.getDpMaterial();
-			vao = subModel.getDpVao();
+			mtl = &subModel.getDpMaterial();
+			vao = &subModel.getDpVao();
 		}
 
 		// Material
-		setupMaterial(*mtl, modelNode, cam);
+		const SceneNode* sceneNode = &modelNode;
+		setupMaterial(*mtl, *sceneNode, cam);
 
 		// Render
 		if(modelNode.hasSkeleton())
@@ -316,8 +316,8 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 			mtl->getStdUniVar(Material::SUV_SKINNING_ROTATIONS)->setMat3(&modelNode.getBoneRotations()[0],
 			                                                             modelNode.getBoneRotations().size());
 
-			mtl->getStdUniVar(Material::SUV_SKINNING_TRANSLATIONS)->setVec3(&meshSkelCtrl.getBoneTranslations()[0],
-			                                                                meshSkelCtrl.getBoneTranslations().size());
+			mtl->getStdUniVar(Material::SUV_SKINNING_TRANSLATIONS)->setVec3(&modelNode.getBoneTranslations()[0],
+			                                                                modelNode.getBoneTranslations().size());
 		}
 
 		vao->bind();

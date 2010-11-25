@@ -28,28 +28,14 @@ void Mesh::load(const char* filename)
 
 	try
 	{
-		/*//
+		//
 		// Sanity checks
 		//
 		if(meshData.getVertIndeces().size() < 1 || meshData.getVertCoords().size() < 1 ||
-			 meshData.getVertNormals().size() < 1)
+			 meshData.getVertNormals().size() < 1 || meshData.getVertTangents().size() < 1)
 		{
-			throw EXCEPTION("Empty required arrays");
+			throw EXCEPTION("Empty one of the required vectors");
 		}
-
-		// shader needs text coords and mesh does not have any
-		if(material->getStdAttribVar(Material::SAV_TEX_COORDS) != NULL && meshData.getTexCoords().size() < 1)
-		{
-			throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
-											"\") needs texture coord information that the mesh doesn't have");
-		}
-
-		// shader has HW skinning and mesh does not have vert weights
-		if(material->hasHWSkinning() && meshData.getVertWeights().size() < 1)
-		{
-			throw EXCEPTION("The shader program (\"" + material->getShaderProg().getRsrcName() +
-											"\") needs vertex weights that the mesh doesn't have");
-		}*/
 
 		createVbos(meshData);
 	}

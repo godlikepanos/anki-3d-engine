@@ -19,12 +19,12 @@ class Mesh: public Resource, public Object
 		/// Used in @ref vbos array
 		enum Vbos
 		{
-			VBO_VERT_POSITIONS,
-			VBO_VERT_NORMALS,
-			VBO_VERT_TANGENTS,
-			VBO_TEX_COORDS,
-			VBO_VERT_INDECES,
-			VBO_VERT_WEIGHTS,
+			VBO_VERT_POSITIONS, ///< VBO never empty
+			VBO_VERT_NORMALS, ///< VBO never empty
+			VBO_VERT_TANGENTS, ///< VBO never empty
+			VBO_TEX_COORDS, ///< VBO may be empty
+			VBO_VERT_INDECES, ///< VBO never empty
+			VBO_VERT_WEIGHTS, ///< VBO may be empty
 			VBOS_NUM
 		};
 
@@ -42,6 +42,10 @@ class Mesh: public Resource, public Object
 
 		/// Implements @ref Resource::load
 		void load(const char* filename);
+
+		bool hasTexCoords() const {return vbos[VBO_TEX_COORDS] != NULL;}
+
+		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS] != NULL;}
 
 	private:
 		Vbo* vbos[VBOS_NUM]; ///< The vertex buffer objects

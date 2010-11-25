@@ -8,6 +8,7 @@
 #include "LightData.h"
 #include "ParticleEmitterProps.h"
 #include "Script.h"
+#include "Model.h"
 
 
 namespace RsrcContainers {
@@ -21,5 +22,6 @@ RsrcContainer<SkelAnim>   skelAnims;
 RsrcContainer<LightData> lightProps;
 RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 RsrcContainer<Script> scripts;
+RsrcContainer<Model> models;
 
 }

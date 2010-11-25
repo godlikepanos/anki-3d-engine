@@ -32,7 +32,7 @@ class Scene: public Object
 		Container<Camera> cameras;
 		Container<Controller> controllers;
 		Container<ParticleEmitter> particleEmitters;
-		Skybox skybox; // ToDo to be removed
+		Skybox skybox; /// @todo to be removed
 
 		// The funcs
 		Scene(Object* parent);

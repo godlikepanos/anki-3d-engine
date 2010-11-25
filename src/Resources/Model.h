@@ -44,10 +44,18 @@ class Model: public Resource
 		/// This is basically a container around mesh and materials. It also has the VAOs.
 		class SubModel: public Object
 		{
-			friend class Model;
-
 			public:
 				SubModel(): Object(NULL) {}
+
+				/// Load the resources
+				void load(const char* meshFName, const char* mtlFName, const char* dpMtlFName);
+
+				/// Creates a VAO for an individual SubModel
+				/// @param[in] material Needed for the shader program uniform variables
+				/// @param[in] mesh For providing the VBOs
+				/// @param[in,out] subModel For setting a parent to the vao
+				/// @param[out] vao The output
+				static void createVao(const Material& material, const Mesh& mesh, SubModel& subModel, Vao*& vao);
 
 				/// @name Accessors
 				/// @{
@@ -57,6 +65,8 @@ class Model: public Resource
 				const Vao& getVao() const {return *vao;}
 				const Vao& getDpVao() const {return *dpVao;}
 				/// @}
+
+				bool hasHwSkinning() const;
 
 			private:
 				RsrcPtr<Mesh> mesh; ///< The geometry
@@ -86,13 +96,6 @@ class Model: public Resource
 
 		/// Parses a submodel from after the "subModel" until the closing bracket
 		void parseSubModel(Scanner& scanner);
-
-		/// Creates a VAO for an individual SubModel
-		/// @param[in] material Needed for the shader program uniform variables
-		/// @param[in] mesh For providing the VBOs
-		/// @param[in,out] subModel For setting a parent to the vao
-		/// @param[out] vao The output
-		static void createVao(const Material& material, const Mesh& mesh, SubModel& subModel, Vao*& vao);
 };
 
 

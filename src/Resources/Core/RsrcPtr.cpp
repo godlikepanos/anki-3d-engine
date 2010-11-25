@@ -9,6 +9,7 @@
 #include "LightData.h"
 #include "ParticleEmitterProps.h"
 #include "Script.h"
+#include "Model.h"
 
 
 namespace RsrcContainers {
@@ -22,6 +23,7 @@ extern RsrcContainer<SkelAnim> skelAnims;
 extern RsrcContainer<LightData> lightProps;
 extern RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 extern RsrcContainer<Script> scripts;
+extern RsrcContainer<Model> models;
 
 }
 
@@ -120,12 +122,22 @@ bool RsrcPtr<ParticleEmitterProps>::loadRsrc(const char* filename)
 
 
 //======================================================================================================================
-// loadRsrc <Script>                                                                                     =
+// loadRsrc <Script>                                                                                                   =
 //======================================================================================================================
 template<>
 bool RsrcPtr<Script>::loadRsrc(const char* filename)
 {
 	LOAD_RSRC(scripts);
+}
+
+
+//======================================================================================================================
+// loadRsrc <Model>                                                                                                    =
+//======================================================================================================================
+template<>
+bool RsrcPtr<Model>::loadRsrc(const char* filename)
+{
+	LOAD_RSRC(models);
 }
 
 
@@ -140,7 +152,7 @@ void RsrcPtr<Texture>::unload()
 
 
 //======================================================================================================================
-// unload <ShaderProg>                                                                                                    =
+// unload <ShaderProg>                                                                                                 =
 //======================================================================================================================
 template<>
 void RsrcPtr<ShaderProg>::unload()
@@ -150,7 +162,7 @@ void RsrcPtr<ShaderProg>::unload()
 
 
 //======================================================================================================================
-// unload <Material>                                                                                                    =
+// unload <Material>                                                                                                   =
 //======================================================================================================================
 template<>
 void RsrcPtr<Material>::unload()
@@ -217,4 +229,14 @@ template<>
 void RsrcPtr<Script>::unload()
 {
 	UNLOAD_RSRC(scripts);
+}
+
+
+//======================================================================================================================
+// unload <Model>                                                                                                      =
+//======================================================================================================================
+template<>
+void RsrcPtr<Model>::unload()
+{
+	UNLOAD_RSRC(models);
 }
