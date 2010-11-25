@@ -4,9 +4,14 @@
 #include "Mesh.h"
 #include "SkelAnim.h"
 #include "MeshData.h"
+#include "Vao.h"
+#include "Skeleton.h"
 
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+
+#define MDL_EXCEPTION(x) EXCEPTION("Model \"" + filename + "\": " + x)
 
 
 //======================================================================================================================
@@ -113,9 +118,18 @@ void Model::load(const char* filename)
 	//
 	// Sanity checks
 	//
-	if(skelAnims.size() > 0 && skeleton.get() == NULL)
+	if(skelAnims.size() > 0 && !hasSkeleton())
 	{
-		throw EXCEPTION("Model \"" + filename + "\": You have skeleton animations but no skeleton");
+		throw MDL_EXCEPTION("You have skeleton animations but no skeleton");
+	}
+
+	for(uint i = 0; i < skelAnims.size(); i++)
+	{
+		if(skelAnims[i]->bones.size() != skeleton->bones.size())
+		{
+			throw MDL_EXCEPTION("SkelAnim \"" + skelAnims[i]->getRsrcName() + "\" and Skeleton \"" +
+			                    skeleton->getRsrcName() + "\" dont have equal bone count");
+		}
 	}
 
 	//
@@ -159,6 +173,8 @@ void Model::parseSubModel(Scanner& scanner)
 	subModel.mesh.loadRsrc(mesh.c_str());
 	subModel.material.loadRsrc(material.c_str());
 	subModel.dpMaterial.loadRsrc(dpMaterial.c_str());
+
+	/// @todo Sanity checks. See MeshNode.cpp
 }
 
 

@@ -14,17 +14,17 @@ class SkelAnimModelNodeCtrl;
 class ModelNode: public SceneNode
 {
 	public:
-		SkelAnimModelNodeCtrl* skelAnimModelNodeCtrl;
+		SkelAnimModelNodeCtrl* skelAnimModelNodeCtrl; ///< @todo Clean this
 
 		ModelNode(): SceneNode(SNT_MODEL) {}
 
 		/// @name Accessors
 		/// @{
 		const Model& getModel() const {return *model;}
-		Vec<Vec3>& getHeads() {return heads;}
-		Vec<Vec3>& getTails() {return tails;}
-		Vec<Mat3>& getBoneRotations() {return boneRotations;}
-		Vec<Vec3>& getBoneTranslations() {return boneTranslations;}
+		Vec<Vec3>& getHeads();
+		Vec<Vec3>& getTails();
+		Vec<Mat3>& getBoneRotations();
+		Vec<Vec3>& getBoneTranslations();
 		/// @}
 
 		/// @return True if the model support skeleton animation
@@ -40,6 +40,34 @@ class ModelNode: public SceneNode
 		Vec<Mat3> boneRotations;
 		Vec<Vec3> boneTranslations;
 };
+
+
+inline Vec<Vec3>& ModelNode::getHeads()
+{
+	RASSERT_THROW_EXCEPTION(!hasSkeleton());
+	return heads;
+}
+
+
+inline Vec<Vec3>& ModelNode::getTails()
+{
+	RASSERT_THROW_EXCEPTION(!hasSkeleton());
+	return tails;
+}
+
+
+inline Vec<Mat3>& ModelNode::getBoneRotations()
+{
+	RASSERT_THROW_EXCEPTION(!hasSkeleton());
+	return boneRotations;
+}
+
+
+inline Vec<Vec3>& ModelNode::getBoneTranslations()
+{
+	RASSERT_THROW_EXCEPTION(!hasSkeleton());
+	return boneTranslations;
+}
 
 
 #endif

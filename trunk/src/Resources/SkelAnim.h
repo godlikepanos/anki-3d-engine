@@ -10,37 +10,33 @@
 /// The format will be changed to:
 ///
 /// @code
-/// skeletonAnimation
+/// keyframes {<integer> <integer> ... <integer>}
+/// bones
 /// {
-/// 	name same-as-file
-/// 	keyframes {<integer> <integer> ... <integer>}
-/// 	bones
+/// 	num <integer>
+/// 	boneAnims
 /// 	{
-/// 		num <integer>
-/// 		boneAnims
+/// 		boneAnim
 /// 		{
-/// 			boneAnim
+/// 			hasAnim <true | false>
+/// 			[bonePoses
 /// 			{
-/// 				hasAnim <true | false>
-/// 				[bonePoses
+/// 				bonePose
 /// 				{
-/// 					bonePose
-/// 					{
-/// 						quat {<float> <float> <float> <float>}
-/// 						trf {<float> <float> <float>}
-/// 					}
-/// 					...
-/// 					bonePose
-/// 					{
-/// 						...
-/// 					}
-/// 				}]
-/// 			}
-/// 			...
-/// 			boneAnim
-/// 			{
+/// 					quat {<float> <float> <float> <float>}
+/// 					trf {<float> <float> <float>}
+/// 				}
 /// 				...
-/// 			}
+/// 				bonePose
+/// 				{
+/// 					...
+/// 				}
+/// 			}]
+/// 		}
+/// 		...
+/// 		boneAnim
+/// 		{
+/// 			...
 /// 		}
 /// 	}
 /// }

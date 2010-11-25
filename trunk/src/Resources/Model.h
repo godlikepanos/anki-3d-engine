@@ -16,7 +16,7 @@ class Scanner;
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
 ///
-/// File format:
+/// Text file format:
 /// @code
 /// subModels {
 /// 	subModel {
@@ -41,7 +41,7 @@ class Scanner;
 class Model: public Resource
 {
 	public:
-		/// This is basicaly a container around mesh and materials. It also has the VAOs.
+		/// This is basically a container around mesh and materials. It also has the VAOs.
 		class SubModel: public Object
 		{
 			friend class Model;
@@ -60,9 +60,9 @@ class Model: public Resource
 
 			private:
 				RsrcPtr<Mesh> mesh; ///< The geometry
-				RsrcPtr<Material> material; ///< Material for MS ans BS
+				RsrcPtr<Material> material; ///< Material for MS and BS
 				RsrcPtr<Material> dpMaterial; ///< Material for depth passes
-				Vao* vao; ///< Normal VAO for MS ans BS
+				Vao* vao; ///< Normal VAO for MS and BS
 				Vao* dpVao; ///< Depth pass VAO for SM and EarlyZ
 		};
 
@@ -74,20 +74,25 @@ class Model: public Resource
 		/// @{
 		const Vec<SubModel>& getSubModels() const {return subModels;}
 		const Skeleton& getSkeleton() const;
+		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const {return skelAnims;}
 		/// @}
 
 		bool hasSkeleton() const {return skeleton.get() != NULL;}
 
 	private:
-		Vec<SubModel> subModels; ///< The vector of submodels
+		Vec<SubModel> subModels; ///< The vector of SubModel
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton. It can be empty
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
 
 		/// Parses a submodel from after the "subModel" until the closing bracket
 		void parseSubModel(Scanner& scanner);
 
-		/// Creates VAOs for an individual submodel
-		void createVao(const Material& mtl, const Mesh& mesh, SubModel& subModel, Vao*& vao);
+		/// Creates a VAO for an individual SubModel
+		/// @param[in] material Needed for the shader program uniform variables
+		/// @param[in] mesh For providing the VBOs
+		/// @param[in,out] subModel For setting a parent to the vao
+		/// @param[out] vao The output
+		static void createVao(const Material& material, const Mesh& mesh, SubModel& subModel, Vao*& vao);
 };
 
 
