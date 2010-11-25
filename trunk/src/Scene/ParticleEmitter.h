@@ -6,6 +6,7 @@
 #include "SceneNode.h"
 #include "GhostNode.h"
 #include "ParticleEmitterProps.h"
+#include "RsrcPtr.h"
 
 
 class RigidBody;

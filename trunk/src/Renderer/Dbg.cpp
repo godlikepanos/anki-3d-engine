@@ -242,7 +242,8 @@ void Dbg::run()
 	sProg->bind();
 
 	//R::renderGrid();
-	for(uint i=0; i<app->getScene().nodes.size(); i++)
+	/// @todo Uncomment
+	/*for(uint i=0; i<app->getScene().nodes.size(); i++)
 	{
 		SceneNode* node = app->getScene().nodes[i];
 		if
@@ -261,7 +262,7 @@ void Dbg::run()
 			skelNode->render();
 			glEnable(GL_DEPTH_TEST);
 		}
-	}
+	}*/
 
 	// Physics
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

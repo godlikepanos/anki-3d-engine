@@ -36,15 +36,6 @@ void Scene::registerNode(SceneNode* node)
 		case SceneNode::SNT_CAMERA:
 			putBackNode(cameras, static_cast<Camera*>(node));
 			break;
-		case SceneNode::SNT_MESH:
-			putBackNode(meshNodes, static_cast<MeshNode*>(node));
-			break;
-		case SceneNode::SNT_SKELETON:
-			putBackNode(skelNodes, static_cast<SkelNode*>(node));
-			break;
-		case SceneNode::SNT_SKEL_MODEL:
-			// ToDo
-			break;
 		case SceneNode::SNT_PARTICLE_EMITTER:
 			putBackNode(particleEmitters, static_cast<ParticleEmitter*>(node));
 			break;
@@ -66,15 +57,6 @@ void Scene::unregisterNode(SceneNode* node)
 			break;
 		case SceneNode::SNT_CAMERA:
 			eraseNode(cameras, static_cast<Camera*>(node));
-			break;
-		case SceneNode::SNT_MESH:
-			eraseNode(meshNodes, static_cast<MeshNode*>(node));
-			break;
-		case SceneNode::SNT_SKELETON:
-			eraseNode(skelNodes, static_cast<SkelNode*>(node));
-			break;
-		case SceneNode::SNT_SKEL_MODEL:
-			// ToDo
 			break;
 		case SceneNode::SNT_PARTICLE_EMITTER:
 			eraseNode(particleEmitters, static_cast<ParticleEmitter*>(node));

@@ -218,9 +218,7 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/Scanner.h ../../src/Misc/map.h \
- ../../src/Resources/SkelAnim.h \
- ../../src/Scene/Controllers/MeshSkelNodeCtrl.h \
- ../../src/Scene/Controllers/Controller.h ../../src/Misc/Parser.h \
+ ../../src/Resources/SkelAnim.h ../../src/Misc/Parser.h \
  ../../src/Misc/Parser.inl.h ../../src/Misc/Parser.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
  ../../src/Resources/ParticleEmitterProps.h \
@@ -2764,7 +2762,9 @@ Model.o: ../../src/Resources/Model.cpp ../../src/Resources/Model.h \
  ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
  ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/Texture.h ../../src/Resources/Mesh.h \
- ../../src/Resources/SkelAnim.h ../../src/Resources/Helpers/MeshData.h
+ ../../src/Resources/SkelAnim.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Resources/ShaderProg.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Skeleton.h
 	@echo Compiling ../../src/Resources/Model.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model.cpp -o Model.o
 
@@ -3921,7 +3921,9 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
  ../../src/Core/Object.h ../../src/Util/Properties.h \
- ../../src/Resources/Core/RsrcPtr.h
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Model.h \
+ ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/StdTypes.h
 	@echo Compiling ../../src/Scene/ModelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNode.cpp -o ModelNode.o
 
@@ -4169,7 +4171,17 @@ SkelAnimModelNodeCtrl.o: \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core/Object.h \
  ../../src/Core/MessageHandler.h ../../src/Scene/ModelNode.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Resources/Model.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Pps.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h
 	@echo Compiling ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp -o SkelAnimModelNodeCtrl.o
 

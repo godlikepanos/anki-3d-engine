@@ -198,18 +198,6 @@ void Material::load(const char* filename)
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		//
-		// dpMtl
-		//
-		else if(Parser::isIdentifier(token, "dpMtl"))
-		{
-			if(dpMtl.get())
-			{
-				throw PARSER_EXCEPTION("Depth material already loaded");
-			}
-
-			dpMtl.loadRsrc(Parser::parseString(scanner).c_str());
-		}
-		//
 		// blendingStage
 		//
 		else if(Parser::isIdentifier(token, "blendingStage"))
@@ -230,20 +218,27 @@ void Material::load(const char* filename)
 
 			// sFactor
 			Parser::parseIdentifier(scanner, "sFactor");
-			int gl_enum;
-			if(!searchBlendEnum(Parser::parseIdentifier(scanner).c_str(), gl_enum))
+			int glEnum;
+			if(!searchBlendEnum(Parser::parseIdentifier(scanner).c_str(), glEnum))
 			{
 				throw PARSER_EXCEPTION("Incorrect blending factor \"" + token->getValue().getString() + "\"");
 			}
-			blendingSfactor = gl_enum;
+			blendingSfactor = glEnum;
 
 			// dFactor
 			Parser::parseIdentifier(scanner, "dFactor");
-			if(!searchBlendEnum(Parser::parseIdentifier(scanner).c_str(), gl_enum))
+			if(!searchBlendEnum(Parser::parseIdentifier(scanner).c_str(), glEnum))
 			{
 				throw PARSER_EXCEPTION("Incorrect blending factor \"" + token->getValue().getString() + "\"");
 			}
-			blendingDfactor = gl_enum;
+			blendingDfactor = glEnum;
+
+			// }
+			token = &scanner.getNextToken();
+			if(token->getCode() != Scanner::TC_RBRACKET)
+			{
+				throw PARSER_EXCEPTION_EXPECTED("}");
+			}
 
 		}
 		//

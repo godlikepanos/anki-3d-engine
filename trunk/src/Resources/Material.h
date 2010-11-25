@@ -155,12 +155,14 @@ class Material: public Resource
 		const ShaderProg::AttribVar* getStdAttribVar(StdAttribVars id) const {return stdAttribVars[id];}
 		const ShaderProg::UniVar* getStdUniVar(StdUniVars id) const {return stdUniVars[id];}
 		const ShaderProg& getShaderProg() const {return *shaderProg.get();}
-		const Material& getDepthMtl() const {return *dpMtl.get();}
 		const boost::ptr_vector<UserDefinedUniVar>& getUserDefinedVars() const {return userDefinedVars;}
 		/// @}
 
 		/// @return Return true if the shader has references to hardware skinning
 		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
+
+		/// @return Return true if the shader has references to texture coordinates
+		bool hasTexCoords() const {return stdAttribVars[SAV_TEX_COORDS] != NULL;}
 
 		bool isBlendingEnabled() const {return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;}
 
@@ -189,7 +191,6 @@ class Material: public Resource
 		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
 		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
-		RsrcPtr<Material> dpMtl; ///< The material for depth passes. To be removed when skinning is done using transform feedback
 		boost::ptr_vector<UserDefinedUniVar> userDefinedVars;
 
 		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates

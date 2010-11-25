@@ -19,7 +19,6 @@
 #include "skybox.h"
 #include "map.h"
 #include "SkelAnim.h"
-#include "MeshSkelNodeCtrl.h"
 #include "LightData.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
@@ -35,8 +34,8 @@
 #include "Messaging.h"
 
 // map (hard coded)
-MeshNode* floor__,* sarge,* horse,* crate;
-SkelModelNode* imp;
+//MeshNode* floor__,* sarge,* horse,* crate;
+//SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 ParticleEmitter* partEmitter;
@@ -161,10 +160,10 @@ void init()
 	app->getScene().skybox.load(skybox_fnames);*/
 
 	// horse
-	horse = new MeshNode();
-	horse->init("meshes/horse/horse.mesh");
+	//horse = new MeshNode();
+	//horse->init("meshes/horse/horse.mesh");
 	//horse->init("models/head/head.mesh");
-	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
+	//horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
 
 	return;
 
@@ -180,12 +179,12 @@ void init()
 	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.8));*/
 
 	// imp	
-	imp = new SkelModelNode();
+	/*imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
 	//imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
 	SkelAnimCtrl* ctrl = new SkelAnimCtrl(*imp->meshNodes[0]->meshSkelCtrl->skelNode);
 	ctrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
-	ctrl->step = 0.8;
+	ctrl->step = 0.8;*/
 
 	// cave map
 	/*for(int i=1; i<21; i++)
@@ -196,14 +195,14 @@ void init()
 	}*/
 
 	// sponza map
-	MeshNode* node = new MeshNode();
+	/*MeshNode* node = new MeshNode();
 	node->init("maps/sponza/floor.mesh");
 	node = new MeshNode();
 	node->init("maps/sponza/walls.mesh");
 	node = new MeshNode();
 	node->init("maps/sponza/light-marbles.mesh");
 	node = new MeshNode();
-	node->init("maps/sponza/dark-marbles.mesh");
+	node->init("maps/sponza/dark-marbles.mesh");*/
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
 	return;
@@ -214,10 +213,10 @@ void init()
 	partEmitter->getLocalTransform().origin = Vec3(3.0, 0.0, 0.0);
 
 	// character
-	PhyCharacter::Initializer init;
+	/*PhyCharacter::Initializer init;
 	init.sceneNode = imp;
 	init.startTrf = Transform(Vec3(0, 40, 0), Mat3::getIdentity(), 1.0);
-	character = new PhyCharacter(app->getScene().getPhysics(), init);
+	character = new PhyCharacter(app->getScene().getPhysics(), init);*/
 
 	// crate
 	/*crate = new MeshNode;

@@ -97,7 +97,7 @@ class Renderer: public Object
 		/// @param mtl The material containing the shader program
 		/// @param sceneNode Needed for some matrices
 		/// @param cam Needed for some matrices
-		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam);
+		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam) const;
 
 
 		/// Render ModelNode. The method sets up the shader and renders the geometry
