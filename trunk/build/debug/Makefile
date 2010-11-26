@@ -1772,7 +1772,8 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Physics/DebugDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/ModelNode.h
+ ../../src/Scene/ModelNode.h ../../src/Resources/Model.h \
+ ../../src/Resources/Mesh.h
 	@echo Compiling ../../src/Renderer/Renderer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Renderer.cpp -o Renderer.o
 
@@ -2746,8 +2747,6 @@ Model.o: ../../src/Resources/Model.cpp ../../src/Resources/Model.h \
  ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
  ../../src/Util/StdTypes.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Util/Exception.h ../../src/Core/Object.h ../../src/Util/Vec.h \
- ../../src/Misc/Parser.h ../../src/Util/Scanner.h \
- ../../src/Misc/Parser.inl.h ../../src/Misc/Parser.h \
  ../../src/Resources/Material.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -2886,7 +2885,8 @@ RsrcPtr.o: ../../src/Resources/Core/RsrcPtr.cpp \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Mesh.h \
  ../../src/Core/Object.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightData.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h \
+ ../../src/Resources/Model.h
 	@echo Compiling ../../src/Resources/Core/RsrcPtr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcPtr.cpp -o RsrcPtr.o
 
@@ -2950,7 +2950,8 @@ RsrcContainers.o: ../../src/Resources/Core/RsrcContainers.cpp \
  ../../src/Resources/ShaderProg.h ../../src/Resources/Mesh.h \
  ../../src/Core/Object.h ../../src/Resources/Skeleton.h \
  ../../src/Resources/SkelAnim.h ../../src/Resources/LightData.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h \
+ ../../src/Resources/Model.h
 	@echo Compiling ../../src/Resources/Core/RsrcContainers.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcContainers.cpp -o RsrcContainers.o
 
@@ -3669,16 +3670,15 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Physics/RigidBody.h ../../src/Renderer/MainRenderer.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Physics/RigidBody.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingPass.h ../../src/Renderer/Is.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Pps.h ../../src/Renderer/Bs.h \
  ../../src/Renderer/Dbg.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
@@ -3923,7 +3923,8 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Core/Object.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Model.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Util/StdTypes.h
+ ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Skeleton.h
 	@echo Compiling ../../src/Scene/ModelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNode.cpp -o ModelNode.o
 

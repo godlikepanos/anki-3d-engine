@@ -16,28 +16,29 @@ class Scanner;
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
 ///
-/// Text file format:
+/// XML file format:
 /// @code
-/// subModels {
-/// 	subModel {
-/// 		mesh <string>
-/// 		material <string>
-/// 		dpMaterial <string>
-/// 	}
+/// <subModels>
+/// 	<subModel>
+/// 		<mesh>path/to/mesh.mesh</mesh>
+/// 		<material>path/to/material.mtl</material>
+/// 		<dpMaterial>path/to/dp.mtl</dpMaterial>
+/// 	</subModel>
 /// 	...
-/// 	subModel {
-/// 		...
-/// 	}
-/// }
-///
-/// skeleton <string>
-///
-/// skelAnims {
-/// 	<string>
+/// 	<subModel>...</subModel>
+/// </subModels>
+/// <skeleton>path/to/skeleton.skel</skeleton>
+/// <skelAnims>
+/// 	<skelAnim>path/to/anim0.sanim</skelAnim>
 /// 	...
-/// 	<string>
-/// }
+/// 	<skelAnim>...</skelAnim>
+/// </skelAnims>
 /// @endcode
+///
+/// Requirements:
+/// - If the materials need texture coords or/and vertex weights then mesh should have them
+/// - The skeleton and skelAnims are optional
+/// - Its an error to have skelAnims without skeleton
 class Model: public Resource
 {
 	public:
@@ -93,9 +94,6 @@ class Model: public Resource
 		Vec<SubModel> subModels; ///< The vector of SubModel
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton. It can be empty
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
-
-		/// Parses a submodel from after the "subModel" until the closing bracket
-		void parseSubModel(Scanner& scanner);
 };
 
 

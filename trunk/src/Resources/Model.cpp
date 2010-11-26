@@ -1,5 +1,8 @@
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Model.h"
-#include "Parser.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "SkelAnim.h"
@@ -19,101 +22,50 @@
 //======================================================================================================================
 void Model::load(const char* filename)
 {
-	Scanner scanner(filename);
-	const Scanner::Token* token = &scanner.getCrntToken();
+	//
+	// Load
+	//
+	try
+  {
+		using namespace boost::property_tree;
+		ptree pt;
+  	read_xml(filename, pt);
 
-	while(true)
+  	// subModels
+  	BOOST_FOREACH(ptree::value_type& v, pt.get_child("subModels"))
+  	{
+  		const std::string& mesh = v.second.get<std::string>("mesh");
+  		const std::string& material = v.second.get<std::string>("material");
+  		const std::string& dpMaterial = v.second.get<std::string>("dpMaterial");
+
+  		subModels.push_back(SubModel());
+  		subModels.back().load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
+  	}
+
+  	// skeleton
+  	boost::optional<std::string> skelName = pt.get_optional<std::string>("skeleton");
+  	if(skelName.is_initialized())
+  	{
+  		skeleton.loadRsrc(skelName.get().c_str());
+  	}
+
+
+  	boost::optional<ptree&> skelAnims_ = pt.get_child_optional("skelAnims");
+  	if(skelAnims_.is_initialized())
+  	{
+  		BOOST_FOREACH(ptree::value_type& v, skelAnims_.get())
+  		{
+  			const std::string& name = v.second.data();
+  			skelAnims.push_back(RsrcPtr<SkelAnim>());
+				skelAnims.back().loadRsrc(name.c_str());
+  		}
+  	}
+	}
+	catch(std::exception& e)
 	{
-		scanner.getNextToken();
+		throw MDL_EXCEPTION(e.what());
+	}
 
-		//
-		// subModels
-		//
-		if(Parser::isIdentifier(token, "subModels"))
-		{
-			// {
-			scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_LBRACKET)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("{");
-			}
-
-			// For all subModels
-			while(true)
-			{
-				scanner.getNextToken();
-
-				// }
-				if(token->getCode() == Scanner::TC_RBRACKET)
-				{
-					break;
-				}
-				else if(Parser::isIdentifier(token, "subModel"))
-				{
-					parseSubModel(scanner);
-				}
-				else
-				{
-					throw PARSER_EXCEPTION_EXPECTED("{ or subModel");
-				}
-			} // End for all subModels
-		}
-		//
-		// skeleton
-		//
-		if(Parser::isIdentifier(token, "skeleton"))
-		{
-			skeleton.loadRsrc(Parser::parseString(scanner).c_str());
-		}
-		//
-		// skelAnims
-		//
-		if(Parser::isIdentifier(token, "skelAnims"))
-		{
-			scanner.getNextToken();
-
-			// {
-			if(token->getCode() != Scanner::TC_LBRACKET)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("{");
-			}
-
-			while(true)
-			{
-				scanner.getNextToken();
-
-				// }
-				if(token->getCode() != Scanner::TC_RBRACKET)
-				{
-					break;
-				}
-				else if(token->getCode() == Scanner::TC_STRING)
-				{
-					skelAnims.push_back(RsrcPtr<SkelAnim>());
-					skelAnims.back().loadRsrc(token->getValue().getString());
-				}
-				else
-				{
-					throw PARSER_EXCEPTION_EXPECTED("} or string");
-				}
-
-			}
-		}
-		//
-		// EOF
-		//
-		else if(token->getCode() == Scanner::TC_EOF)
-		{
-			break;
-		}
-		//
-		// other crap
-		//
-		else
-		{
-			throw PARSER_EXCEPTION_UNEXPECTED();
-		}
-	} // end while
 
 	//
 	// Sanity checks
@@ -155,33 +107,6 @@ void Model::load(const char* filename)
 	{
 		throw MDL_EXCEPTION(e.what());
 	}
-}
-
-
-//======================================================================================================================
-// parseSubModel                                                                                                       =
-//======================================================================================================================
-void Model::parseSubModel(Scanner& scanner)
-{
-	const Scanner::Token* token = &scanner.getNextToken();
-
-	if(token->getCode() != Scanner::TC_LBRACKET)
-	{
-		throw PARSER_EXCEPTION_EXPECTED("{");
-	}
-
-	Parser::parseIdentifier(scanner, "mesh");
-	std::string mesh = Parser::parseString(scanner);
-
-	Parser::parseIdentifier(scanner, "material");
-	std::string material = Parser::parseString(scanner);
-
-	Parser::parseIdentifier(scanner, "dpMaterial");
-	std::string dpMaterial = Parser::parseString(scanner);
-
-	// Load the stuff
-	subModels.push_back(SubModel());
-	subModels.back().load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
 }
 
 
