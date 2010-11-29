@@ -2,14 +2,12 @@
 #define MATERIAL_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
 #include "Math.h"
 #include "Resource.h"
 #include "ShaderProg.h"
 #include "Texture.h"
 #include "RsrcPtr.h"
-
-
-class Scanner;
 
 
 /// Mesh material Resource
@@ -21,41 +19,49 @@ class Scanner;
 /// variables (that we cannot longer use on GL >3) with a few additions. The user defined variables are defined and
 /// values inside the .mtl file. The attribute variables cannot be user defined, the uniform on the other hand can.
 ///
-/// File format:
+/// XML file format:
 /// @code
-/// shaderProg <string> |
-/// {
-/// 	customMsSProg {
-/// 		file <string>
-/// 		defines {
-/// 			<identifier>
-/// 			<identifier>
-/// 			...
-/// 			<identifier>
-/// 		}
-/// 	} |
-/// 	customDpSProg { <same as standardMsSProg> }
-/// }
+/// <material>
+/// 	<shaderProg>
+/// 		<file>path/file.glsl</file> |
+/// 		<customMsSProg>
+/// 			[<defines>
+/// 				<define>DEFINE_SOMETHING</define>
+/// 				...
+/// 				<define>DEFINE_SOMETHING_ELSE</define>
+/// 			</defines>]
+/// 		</customMsSProg> |
+/// 		<customDpSProg>...</customDpSProg>
+/// 	</shaderProg>
 ///
-/// [dpMtl <string>]
+/// 	[<blendingStage>true|false</blendingStage>]
 ///
-/// [blendingStage <true | false>]
+/// 	[<blendFuncs> *
+/// 		<sFactor>GL_SOMETHING</sFactor>
+/// 		<dFactor>GL_SOMETHING</dFactor>
+/// 	</blendFuncs>]
 ///
-/// [blendFuncs* {
-/// 	sFactor <identifier>
-/// 	dFactor <identifier>
-/// }]
+/// 	[<depthTesting>true|false</depthTesting>]
 ///
-/// [depthTesting <true | false>]
+/// 	[<wireframe>true|false</wireframe>]
 ///
-/// [wireFrame <true | false>]
+/// 	[<castsShadow>true|false</castsShadow>]
 ///
-/// [castsShadow <true | false>]
-///
-/// [userDefinedVars {
-/// 	<identifier> <value**>
-/// }]
-///
+/// 	[<userDefinedVars>
+/// 		<userDefinedVar>
+/// 			<name>varNameInShader</name>
+/// 			<value> **
+/// 				<texture>path/tex.png</texture> |
+/// 				<float>0.0</float> |
+/// 				<vec2><x>0.0</x><y>0.0</y></vec2> |
+/// 				<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
+/// 				<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>
+/// 			</value>
+/// 		</userDefinedVar>
+/// 		...
+/// 		<userDefinedVar>...</userDefinedVar>
+/// 	</userDefinedVars>]
+/// </material>
 ///
 /// *: Has nothing to do with the blendingStage. blendFuncs can be in material stage as well
 /// **: Depends on the type of the var
@@ -159,7 +165,7 @@ class Material: public Resource
 		/// @}
 
 		/// @return Return true if the shader has references to hardware skinning
-		bool hasHWSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
+		bool hasHwSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
 
 		/// @return Return true if the shader has references to texture coordinates
 		bool hasTexCoords() const {return stdAttribVars[SAV_TEX_COORDS] != NULL;}
@@ -198,17 +204,9 @@ class Material: public Resource
 		/// @exception Exception
 		void initStdShaderVars();
 
-		/// Parses the file for expressions like customMsSProg and customDpSProg in order to feed them into the
-		/// @ref ShaderProg::createSrcCodeToCache
-		/// @param[in] defines The available defines and their prefixes
-		/// @param[in,out] scanner The Scanner from to parse from
-		/// @param[out] shaderFilename The name of the generic shader program
-		/// @param[out] source The preprocessor source that will feed to the @ref ShaderProg::createSrcCodeToCache
-		/// @param[out] prefix The prefix of the custom shader program file that will feed to the
-		/// @ref ShaderProg::createSrcCodeToCache
-		/// @exception Exception
-		void parseCustomShader(const PreprocDefines defines[], Scanner& scanner,
-		                       std::string& shaderFilename, std::string& source, std::string& prefix);
+		/// @todo
+		static void parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
+		                              std::string& source, std::string& prefix);
 };
 
 

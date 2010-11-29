@@ -310,7 +310,7 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 		// Render
 		if(modelNode.hasSkeleton())
 		{
-			RASSERT_THROW_EXCEPTION(!mtl->hasHWSkinning()); // it has skel controller but no skinning
+			RASSERT_THROW_EXCEPTION(!mtl->hasHwSkinning()); // it has skel controller but no skinning
 
 			// first the uniforms
 			mtl->getStdUniVar(Material::SUV_SKINNING_ROTATIONS)->setMat3(&modelNode.getBoneRotations()[0],

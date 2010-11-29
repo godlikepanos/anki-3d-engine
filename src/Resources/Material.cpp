@@ -1,12 +1,16 @@
 #include <cstring>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Material.h"
 #include "Resource.h"
-#include "Scanner.h"
 #include "Parser.h"
 #include "Texture.h"
 #include "ShaderProg.h"
 #include "App.h"
 #include "MainRenderer.h"
+#include "PropertyTree.h"
 
 
 /// Customized THROW_EXCEPTION
@@ -110,6 +114,8 @@ static bool searchBlendEnum(const char* str, int& gl_enum)
 			gl_enum = ptr->glEnum;
 			return true;
 		}
+
+		++ptr;
 	}
 
 	return false;
@@ -136,174 +142,126 @@ Material::Material():
 //======================================================================================================================
 void Material::load(const char* filename)
 {
-	Scanner scanner(filename);
-	const Scanner::Token* token;
-
-	while(true)
+	try
 	{
-		token = &scanner.getNextToken();
+		using namespace boost::property_tree;
+		ptree rpt;
+  	read_xml(filename, rpt);
 
-		//
-		// Shader program
-		//
-		if(Parser::isIdentifier(token, "shaderProg"))
-		{
-			if(shaderProg.get())
-			{
-				throw PARSER_EXCEPTION("Shader program already loaded");
-			}
+  	const ptree& pt = rpt.get_child("material");
 
-			token = &scanner.getNextToken();
-			std::string shaderFilename;
-			// Just a string
-			if(token->getCode() == Scanner::TC_STRING)
-			{
-				shaderFilename = token->getValue().getString();
-			}
-			// Its { so... build custom shader
-			else if(token->getCode() == Scanner::TC_LBRACKET)
-			{
-				std::string sProgFilename;
-				std::string source;
-				std::string prefix;
+  	//
+  	// shaderProg
+  	//
+  	const ptree& shaderProgTree = pt.get_child("shaderProg");
 
-				std::string op = Parser::parseIdentifier(scanner);
-				if(op == "customMsSProg")
-				{
-					parseCustomShader(msGenericDefines, scanner, sProgFilename, source, prefix);
-				}
-				else if(op == "customDpSProg")
-				{
-					parseCustomShader(dpGenericDefines, scanner, sProgFilename, source, prefix);
-				}
-				else
-				{
-					throw PARSER_EXCEPTION_EXPECTED("identifier customMsSProg or customDpSProg");
-				}
+  	boost::optional<std::string> file = shaderProgTree.get_optional<std::string>("file");
+  	boost::optional<const ptree&> customMsSProgTree = shaderProgTree.get_child_optional("customMsSProg");
+		boost::optional<const ptree&> customDpSProgTree = shaderProgTree.get_child_optional("customDpSProg");
 
-				shaderFilename = ShaderProg::createSrcCodeToCache(sProgFilename.c_str(), source.c_str(), prefix.c_str());
+  	// Just file
+  	if(file)
+  	{
+  		shaderProg.loadRsrc(file.get().c_str());
+  	}
+  	// customMsSProg
+  	else if(customMsSProgTree)
+  	{
+  		std::string source;
+  		std::string prefix;
 
-				// }
-				token = &scanner.getNextToken();
-				if(token->getCode() != Scanner::TC_RBRACKET)
-				{
-					throw PARSER_EXCEPTION_EXPECTED("}");
-				}
-			}
-			else
-			{
-				throw PARSER_EXCEPTION_EXPECTED("string or {");
-			}
-
-			shaderProg.loadRsrc(shaderFilename.c_str());
+  		parseCustomShader(msGenericDefines, customMsSProgTree.get(), source, prefix);
+  		std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsGeneric.glsl",
+  		                                                              source.c_str(), prefix.c_str());
+  		shaderProg.loadRsrc(shaderFilename.c_str());
 		}
-		//
-		// blendingStage
-		//
-		else if(Parser::isIdentifier(token, "blendingStage"))
-		{
-			blendingStage = Parser::parseBool(scanner);
-		}
-		//
-		// blendFuncs
-		//
-		else if(Parser::isIdentifier(token, "blendFuncs"))
-		{
-			// {
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_LBRACKET)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("{");
-			}
+		// customDpSProg
+  	else if(customDpSProgTree)
+  	{
+  		std::string source;
+  		std::string prefix;
 
-			// sFactor
-			Parser::parseIdentifier(scanner, "sFactor");
-			int glEnum;
-			if(!searchBlendEnum(Parser::parseIdentifier(scanner).c_str(), glEnum))
+  		parseCustomShader(dpGenericDefines, customDpSProgTree.get(), source, prefix);
+  		std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
+  		                                                              source.c_str(), prefix.c_str());
+  		shaderProg.loadRsrc(shaderFilename.c_str());
+  	}
+  	// Error
+		else
+		{
+			throw EXCEPTION("Expected file or customMsSProg or customDpSProg");
+		}
+
+  	//
+  	// blendingStage
+  	//
+  	boost::optional<bool> blendingStage_ = PropertyTree::getBoolOptional(pt, "blendingStage");
+  	if(blendingStage_)
+  	{
+  		blendingStage = blendingStage_.get();
+  	}
+
+  	//
+  	// blendFuncs
+  	//
+  	boost::optional<const ptree&> blendFuncsTree = pt.get_child_optional("blendFuncs");
+  	if(blendFuncsTree)
+  	{
+  		int glEnum;
+
+  		// sFactor
+  		std::string sFactor_ = blendFuncsTree.get().get<std::string>("sFactor");
+  		if(!searchBlendEnum(sFactor_.c_str(), glEnum))
 			{
-				throw PARSER_EXCEPTION("Incorrect blending factor \"" + token->getValue().getString() + "\"");
+				throw EXCEPTION("Incorrect blending factor \"" + sFactor_ + "\"");
 			}
 			blendingSfactor = glEnum;
 
 			// dFactor
-			Parser::parseIdentifier(scanner, "dFactor");
-			if(!searchBlendEnum(Parser::parseIdentifier(scanner).c_str(), glEnum))
+			std::string dFactor_ = blendFuncsTree.get().get<std::string>("dFactor");
+			if(!searchBlendEnum(dFactor_.c_str(), glEnum))
 			{
-				throw PARSER_EXCEPTION("Incorrect blending factor \"" + token->getValue().getString() + "\"");
+				throw EXCEPTION("Incorrect blending factor \"" + dFactor_ + "\"");
 			}
 			blendingDfactor = glEnum;
+  	}
 
-			// }
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_RBRACKET)
+  	//
+  	// depthTesting
+  	//
+  	boost::optional<bool> depthTesting_ = PropertyTree::getBoolOptional(pt, "depthTesting");
+  	if(depthTesting_)
+  	{
+  		depthTesting = depthTesting_.get();
+  	}
+
+  	//
+  	// wireframe
+  	//
+  	boost::optional<bool> wireframe_ = PropertyTree::getBoolOptional(pt, "wireframe");
+  	if(wireframe_)
+  	{
+  		wireframe = wireframe_.get();
+  	}
+
+  	//
+  	// userDefinedVars
+  	//
+  	boost::optional<const ptree&> userDefinedVarsTree = pt.get_child_optional("userDefinedVars");
+  	if(userDefinedVarsTree)
+  	{
+  		BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get().get_child("userDefinedVar"))
 			{
-				throw PARSER_EXCEPTION_EXPECTED("}");
-			}
+  			const ptree& userDefinedVar = v.second;
+  			std::string varName = userDefinedVar.get<std::string>("name");
 
-		}
-		//
-		// depthTesting
-		//
-		else if(Parser::isIdentifier(token, "depthTesting"))
-		{
-			depthTesting = Parser::parseBool(scanner);
-		}
-		//
-		// wireframe
-		//
-		else if(Parser::isIdentifier(token, "wireframe"))
-		{
-			wireframe = Parser::parseBool(scanner);
-		}
-		//
-		// castsShadow
-		//
-		else if(Parser::isIdentifier(token, "castsShadow"))
-		{
-			castsShadow = Parser::parseBool(scanner);
-		}
-		//
-		// userDefinedVars
-		//
-		else if(Parser::isIdentifier(token, "userDefinedVars"))
-		{
-			// first check if the shader is defined
-			if(shaderProg.get() == NULL)
-			{
-				throw PARSER_EXCEPTION("You have to define the shader program before the user defined vars");
-			}
-
-			// {
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_LBRACKET)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("{");
-			}
-			// loop all the vars
-			do
-			{
-				// read the name
-				token = &scanner.getNextToken();
-				if(token->getCode() == Scanner::TC_RBRACKET)
-				{
-					break;
-				}
-
-				if(token->getCode() != Scanner::TC_IDENTIFIER)
-				{
-					throw PARSER_EXCEPTION_EXPECTED("identifier");
-				}
-
-				std::string varName;
-				varName = token->getValue().getString();
-
-				userDefinedVars.push_back(new UserDefinedUniVar); // create new var
-				UserDefinedUniVar& var = userDefinedVars.back();
+  			userDefinedVars.push_back(new UserDefinedUniVar); // create new var
+  			UserDefinedUniVar& var = userDefinedVars.back();
 
 				// check if the uniform exists
 				if(!shaderProg->uniVarExists(varName.c_str()))
 				{
-					throw PARSER_EXCEPTION("The variable \"" + varName + "\" is not an active uniform");
+					throw EXCEPTION("The variable \"" + varName + "\" is not an active uniform");
 				}
 
 				var.sProgVar = shaderProg->findUniVar(varName.c_str());
@@ -313,54 +271,34 @@ void Material::load(const char* filename)
 				{
 					// texture
 					case GL_SAMPLER_2D:
-						var.value.texture.loadRsrc(Parser::parseString(scanner).c_str());
+						var.value.texture.loadRsrc(userDefinedVar.get<std::string>("texture").c_str());
 						break;
-					// float
+						// float
 					case GL_FLOAT:
-						token = &scanner.getNextToken();
-						if(token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_FLOAT)
-						{
-							var.value.float_ = token->getValue().getFloat();
-						}
-						else
-						{
-							throw PARSER_EXCEPTION_EXPECTED("float");
-						}
+						var.value.float_ = PropertyTree::getFloat(userDefinedVar);
 						break;
-					// vec2
+						// vec2
 					case GL_FLOAT_VEC2:
-						Parser::parseMathVector(scanner, var.value.vec2);
+						/// @todo
 						break;
-					// vec3
+						// vec3
 					case GL_FLOAT_VEC3:
-						Parser::parseMathVector(scanner, var.value.vec3);
+						var.value.vec3 = PropertyTree::getVec3(userDefinedVar);
 						break;
-					// vec4
+						// vec4
 					case GL_FLOAT_VEC4:
-						Parser::parseMathVector(scanner, var.value.vec4);
+						/// @todo
 						break;
 				};
+			} // end for all userDefinedVars
+  	} // end userDefinedVars
 
-			}while(true); // end loop for all the vars
-
-		}
-		//
-		// EOF
-		//
-		else if(token->getCode() == Scanner::TC_EOF)
-		{
-			break;
-		}
-		//
-		// other crap
-		//
-		else
-		{
-			throw PARSER_EXCEPTION_UNEXPECTED();
-		}
-	} // end while
-
-	initStdShaderVars();
+		initStdShaderVars();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Material \"" + filename + "\": " + e.what());
+	}
 }
 
 
@@ -422,75 +360,43 @@ void Material::initStdShaderVars()
 //======================================================================================================================
 // parseCustomShader                                                                                                   =
 //======================================================================================================================
-void Material::parseCustomShader(const PreprocDefines defines[], Scanner& scanner,
-		                             std::string& shaderFilename, std::string& source, std::string& prefix)
+void Material::parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
+                                 std::string& source, std::string& prefix)
 {
-	const Scanner::Token* token;
+	using namespace boost::property_tree;
 
-	// {
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_LBRACKET)
+	boost::optional<const ptree&> definesTree = pt.get_child_optional("defines");
+	if(!definesTree)
 	{
-		throw PARSER_EXCEPTION_EXPECTED("{");
+		return;
 	}
 
-	// file
-	Parser::parseIdentifier(scanner, "file");
-
-	// the shader prog
-	shaderFilename = Parser::parseString(scanner);
-
-	// defines
-	Parser::parseIdentifier(scanner, "defines");
-
-	// {
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_LBRACKET)
+	BOOST_FOREACH(const ptree::value_type& v, definesTree.get())
 	{
-		throw PARSER_EXCEPTION_EXPECTED("{");
-	}
-
-	// Get the defines
-	while(true)
-	{
-		token = &scanner.getNextToken();
-
-		// }
-		if(token->getCode() == Scanner::TC_RBRACKET)
+		if(v.first != "define")
 		{
-			break;
-		}
-		else if(token->getCode() != Scanner::TC_IDENTIFIER)
-		{
-			throw PARSER_EXCEPTION_EXPECTED("identifier");
+			throw EXCEPTION("Found " + v.first + " in defines");
 		}
 
-		// Check if acceptable value. Loop the switches array
+		const std::string& define = v.second.data();
+
 		const PreprocDefines* def = defines;
 		while(def->switchName != NULL)
 		{
-			if(!strcmp(def->switchName, token->getString()))
+			if (define == def->switchName)
 			{
 				break;
 			}
-
 			++def;
 		}
 
 		if(def->switchName == NULL)
 		{
-			throw PARSER_EXCEPTION("Not acceptable define " + token->getString());
+			throw EXCEPTION("Not acceptable define " + define);
 		}
 
-		source += std::string("#define ") + token->getString() + "\n";
-		prefix.push_back(def->prefix);
-	} // end get the switches
-
-	// }
-	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_RBRACKET)
-	{
-		throw PARSER_EXCEPTION_EXPECTED("}");
+		source += "#define " + define + "\n";
+    prefix.push_back(def->prefix);
 	}
 
 	std::sort(prefix.begin(), prefix.end());

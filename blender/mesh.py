@@ -13,9 +13,8 @@ class Initializer:
 	def __init__(self):
 		self.blMesh = None  # Blender Mesh
 		self.blSkeleton = None # Blender Armature
-		self.mtlName = "" # Material name
 		self.saveDir = "" # the name of the saved file
-		self.flipYZ = 0 #convert from bl to right handed coord system
+		self.flipYZ = False #convert from bl to right handed coord system
 	
 
 #=======================================================================================================================
@@ -144,7 +143,7 @@ def updateAnkiVertsWithBoneWeights(mesh, skeleton, ankiVerts):
 #=======================================================================================================================
 # getAnkiMeshScript                                                                                                    =
 #=======================================================================================================================
-def	getAnkiMeshScript(mesh, skeleton, mtlName, meshName, flipYZ):
+def	getAnkiMeshScript(mesh, skeleton, meshName, flipYZ):
 	# check verts number
 	vertsNum = len(mesh.verts)
 	if vertsNum < 3:
@@ -282,17 +281,13 @@ def	getAnkiMeshScript(mesh, skeleton, mtlName, meshName, flipYZ):
 	str_ = meshName
 	buff += pack("I" + str(len(str_)) + "s", len(str_), str_)
 	
-	# Mtl name
-	str_ = mtlName
-	buff += pack("I" + str(len(str_)) + "s", len(str_), str_)
-	
 	# Verts num
 	buff += pack("I", len(ankiVerts))
 	
 	# Verts
 	for i in range(len(ankiVerts)):
 		ankiVert = ankiVerts[i]
-		if flipYZ == 0:
+		if not flipYZ:
 			buff += pack("fff", ankiVert.x, ankiVert.y, ankiVert.z)
 		else:
 			buff += pack("fff", ankiVert.x, ankiVert.z, -ankiVert.y)
@@ -348,6 +343,6 @@ def export(meshInit):
 	print("Trying to export mesh \"" + mesh.name + "\"")
 	filename = os.path.abspath(meshInit.saveDir + "/" + mesh.name + ".mesh")
 	file = open(filename, "wb")
-	file.write(getAnkiMeshScript(mesh, skeleton, meshInit.saveDir + "/" + mesh.name + ".mtl", mesh.name + ".mesh", meshInit.flipYZ))
+	file.write(getAnkiMeshScript(mesh, skeleton, mesh.name + ".mesh", meshInit.flipYZ))
 	print("Mesh exported!! \"" + filename + "\"")	
 	
