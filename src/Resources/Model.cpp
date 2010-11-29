@@ -14,19 +14,16 @@
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
-#define MDL_EXCEPTION(x) EXCEPTION("Model \"" + filename + "\": " + x)
-
-
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
 void Model::load(const char* filename)
 {
-	//
-	// Load
-	//
 	try
   {
+		//
+		// Load
+		//
 		using namespace boost::property_tree;
 		ptree pt_;
   	read_xml(filename, pt_);
@@ -46,34 +43,31 @@ void Model::load(const char* filename)
 
   	// skeleton
   	boost::optional<std::string> skelName = pt.get_optional<std::string>("skeleton");
-  	if(skelName.is_initialized())
+  	if(skelName)
   	{
   		skeleton.loadRsrc(skelName.get().c_str());
   	}
 
-
-  	boost::optional<ptree&> skelAnims_ = pt.get_child_optional("skelAnims");
-  	if(skelAnims_.is_initialized())
+  	// Anims
+  	boost::optional<ptree&> skelAnimsTree = pt.get_child_optional("skelAnims");
+  	if(skelAnimsTree)
   	{
-  		BOOST_FOREACH(ptree::value_type& v, skelAnims_.get())
+  		BOOST_FOREACH(ptree::value_type& v, skelAnimsTree.get())
   		{
+  			if(v.first != "skelAnim")
+  			{
+  				throw EXCEPTION("Expected skelAnim and no " + v.first);
+  			}
+
   			const std::string& name = v.second.data();
   			skelAnims.push_back(RsrcPtr<SkelAnim>());
 				skelAnims.back().loadRsrc(name.c_str());
   		}
   	}
-	}
-	catch(std::exception& e)
-	{
-		throw MDL_EXCEPTION(e.what());
-	}
 
-
-	//
-	// Sanity checks
-	//
-	try
-	{
+  	//
+  	// Sanity checks
+  	//
 		if(skelAnims.size() > 0 && !hasSkeleton())
 		{
 			throw EXCEPTION("You have skeleton animations but no skeleton");
@@ -107,7 +101,7 @@ void Model::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw MDL_EXCEPTION(e.what());
+		throw EXCEPTION("Model \"" + filename + "\": " + e.what());
 	}
 }
 

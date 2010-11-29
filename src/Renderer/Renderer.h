@@ -101,7 +101,7 @@ class Renderer: public Object
 
 
 		/// Render ModelNode. The method sets up the shader and renders the geometry
-		void renderModelNode(const ModelNode& modelNod, const Camera& cam, ModelNodeRenderType type) const;
+		void renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const;
 
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions

@@ -12,6 +12,7 @@ class Light;
 class Camera;
 class Controller;
 class ParticleEmitter;
+class ModelNode;
 
 
 /// The Scene contains all the dynamic entities
@@ -30,8 +31,9 @@ class Scene: public Object
 		Container<SceneNode> nodes;
 		Container<Light> lights;
 		Container<Camera> cameras;
-		Container<Controller> controllers;
 		Container<ParticleEmitter> particleEmitters;
+		Container<ModelNode> modelNodes;
+		Container<Controller> controllers;
 		Skybox skybox; /// @todo to be removed
 
 		// The funcs

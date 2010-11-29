@@ -68,17 +68,6 @@
 /// @endcode
 class Material: public Resource
 {
-	/// Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
-	PROPERTY_R(bool, castsShadow, isShadowCaster)
-
-	/// The entities with blending are being rendered in blending stage and those without in material stage
-	PROPERTY_R(bool, blendingStage, renderInBlendingStage)
-
-	PROPERTY_R(int, blendingSfactor, getBlendingSfactor) ///< Default GL_ONE
-	PROPERTY_R(int, blendingDfactor, getBlendingDfactor) ///< Default GL_ZERO
-	PROPERTY_R(bool, depthTesting, isDepthTestingEnabled)
-	PROPERTY_R(bool, wireframe, isWireframeEnabled)
-
 	//====================================================================================================================
 	// Nested                                                                                                            =
 	//====================================================================================================================
@@ -147,6 +136,20 @@ class Material: public Resource
 		}; // end UserDefinedVar
 
 	//====================================================================================================================
+	// Properties                                                                                                        =
+	//====================================================================================================================
+	/// Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
+	PROPERTY_R(bool, castsShadow, isShadowCaster)
+
+	/// The entities with blending are being rendered in blending stage and those without in material stage
+	PROPERTY_R(bool, blendingStage, renderInBlendingStage)
+
+	PROPERTY_R(int, blendingSfactor, getBlendingSfactor) ///< Default GL_ONE
+	PROPERTY_R(int, blendingDfactor, getBlendingDfactor) ///< Default GL_ZERO
+	PROPERTY_R(bool, depthTesting, isDepthTestingEnabled)
+	PROPERTY_R(bool, wireframe, isWireframeEnabled)
+
+	//====================================================================================================================
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
@@ -204,7 +207,11 @@ class Material: public Resource
 		/// @exception Exception
 		void initStdShaderVars();
 
-		/// @todo
+		/// Parse for a custom shader
+		/// @param[in] defines The acceptable defines array
+		/// @param[in] pt The property tree. Its not the root tree
+		/// @param[out] source The source to feed to ShaderProg::createSrcCodeToCache
+		/// @param[out] prefix The prefix of file to feed to ShaderProg::createSrcCodeToCache
 		static void parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
 		                              std::string& source, std::string& prefix);
 };

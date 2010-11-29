@@ -21,4 +21,9 @@ TEST(MaterialTests, Test)
 		EXPECT_EQ(mtl->getBlendingDfactor(), GL_SRC_ALPHA);
 		EXPECT_EQ(mtl->isBlendingEnabled(), true);
 	}
+	
+	{
+		RsrcPtr<Material> mtl;
+		EXPECT_THROW(mtl.loadRsrc("unit-tests/data/bool_err.mtl"));
+	}
 }

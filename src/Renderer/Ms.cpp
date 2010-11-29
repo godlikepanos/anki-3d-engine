@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Ez.h"
+#include "ModelNode.h"
 
 
 //======================================================================================================================
@@ -69,8 +70,6 @@ void Ms::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Ms::run()
 {
-	const Camera& cam = r.getCamera();
-
 	if(ez->isEnabled())
 	{
 		ez->run();
@@ -97,23 +96,12 @@ void Ms::run()
 	}
 
 	// render the meshes
-	/// @todo Uncomment
-	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	for(Vec<ModelNode*>::const_iterator it = app->getScene().modelNodes.begin();
+			it != app->getScene().modelNodes.end(); ++it)
 	{
-		MeshNode* meshNode = (*it);
-		if(meshNode->mesh->material.get() == NULL)
-		{
-			throw EXCEPTION("Mesh \"" + meshNode->mesh->getRsrcName() + "\" doesnt have material");
-		}
-
-		if(meshNode->mesh->material->renderInBlendingStage())
-		{
-			continue;
-		}
-
-		r.setupMaterial(*meshNode->mesh->material, *meshNode, cam);
-		meshNode->render();
-	}*/
+		const ModelNode& md = *(*it);
+		r.renderModelNode(md, r.getCamera(), Renderer::MNRT_NORMAL);
+	}
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
 
