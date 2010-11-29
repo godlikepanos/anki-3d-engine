@@ -304,8 +304,7 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 		}
 
 		// Material
-		const SceneNode* sceneNode = &modelNode;
-		setupMaterial(*mtl, *sceneNode, cam);
+		setupMaterial(*mtl, modelNode, cam);
 
 		// Render
 		if(modelNode.hasSkeleton())

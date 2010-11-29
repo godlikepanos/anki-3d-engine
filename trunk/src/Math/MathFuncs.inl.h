@@ -19,15 +19,13 @@ inline void mathSanityChecks()
 // 1/sqrt(f)
 inline float invSqrt(float f)
 {
+	float fhalf = 0.5 * f;
 	#if defined(PLATFORM_WIN)
-		float fhalf = 0.5*f;
 		int i = *(int*)&f;
 		i = 0x5F3759DF - (i>>1);
 		f = *(float*)&i;
 		f *= 1.5 - fhalf*f*f;
-		return f;
 	#elif defined(PLATFORM_LINUX)
-		float fhalf = 0.5*f;
 		asm
 		(
 			"mov %1, %%eax;"
@@ -40,10 +38,10 @@ inline float invSqrt(float f)
 			:"%eax", "%ebx"
 		);
 		f *= 1.5 - fhalf*f*f;
-		return f;
 	#else
 		#error "See file"
 	#endif
+	return f;
 }
 
 

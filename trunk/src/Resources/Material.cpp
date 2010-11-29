@@ -13,10 +13,6 @@
 #include "PropertyTree.h"
 
 
-/// Customized THROW_EXCEPTION
-#define MTL_EXCEPTION(x) EXCEPTION("Material \"" + getRsrcPath() + getRsrcName() + "\": " + x)
-
-
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
@@ -250,8 +246,13 @@ void Material::load(const char* filename)
   	boost::optional<const ptree&> userDefinedVarsTree = pt.get_child_optional("userDefinedVars");
   	if(userDefinedVarsTree)
   	{
-  		BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get().get_child("userDefinedVar"))
+  		BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get())
 			{
+  			if(v.first != "userDefinedVar")
+  			{
+  				throw EXCEPTION("Expected userDefinedVar and not " + v.first);
+  			}
+
   			const ptree& userDefinedVar = v.second;
   			std::string varName = userDefinedVar.get<std::string>("name");
 
@@ -310,7 +311,7 @@ void Material::initStdShaderVars()
 	// sanity checks
 	if(!shaderProg.get())
 	{
-		throw MTL_EXCEPTION("Without shader is like cake without sugar (missing SHADER_PROG)");
+		throw EXCEPTION("Material without shader program is like cake without sugar");
 	}
 
 	// the attributes
@@ -329,8 +330,8 @@ void Material::initStdShaderVars()
 		// check if the shader has different GL data type from that it suppose to have
 		if(stdAttribVars[i]->getGlDataType() != stdAttribVarInfos[i].dataType)
 		{
-			throw MTL_EXCEPTION("The \"" + stdAttribVarInfos[i].varName +
-			                    "\" attribute var has incorrect GL data type from the expected");
+			throw EXCEPTION("The \"" + stdAttribVarInfos[i].varName +
+			                "\" attribute var has incorrect GL data type from the expected");
 		}
 	}
 
@@ -350,8 +351,8 @@ void Material::initStdShaderVars()
 		// check if the shader has different GL data type from that it suppose to have
 		if(stdUniVars[i]->getGlDataType() != stdUniVarInfos[i].dataType)
 		{
-			throw MTL_EXCEPTION("The \"" + stdUniVarInfos[i].varName +
-			                    "\" uniform var has incorrect GL data type from the expected");
+			throw EXCEPTION("The \"" + stdUniVarInfos[i].varName +
+			                "\" uniform var has incorrect GL data type from the expected");
 		}
 	}
 }

@@ -6,6 +6,7 @@
 #include "Controller.h"
 #include "Material.h"
 #include "ParticleEmitter.h"
+#include "ModelNode.h"
 
 
 //======================================================================================================================
@@ -39,6 +40,9 @@ void Scene::registerNode(SceneNode* node)
 		case SceneNode::SNT_PARTICLE_EMITTER:
 			putBackNode(particleEmitters, static_cast<ParticleEmitter*>(node));
 			break;
+		case SceneNode::SNT_MODEL:
+			putBackNode(modelNodes, static_cast<ModelNode*>(node));
+			break;
 	};
 }
 
@@ -60,6 +64,9 @@ void Scene::unregisterNode(SceneNode* node)
 			break;
 		case SceneNode::SNT_PARTICLE_EMITTER:
 			eraseNode(particleEmitters, static_cast<ParticleEmitter*>(node));
+			break;
+		case SceneNode::SNT_MODEL:
+			eraseNode(modelNodes, static_cast<ModelNode*>(node));
 			break;
 	};
 }
