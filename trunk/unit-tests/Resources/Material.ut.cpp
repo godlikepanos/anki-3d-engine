@@ -3,7 +3,6 @@
 #include "RsrcPtr.h"
 
 
-
 TEST(MaterialTests, Test)
 {
 	// Tests
@@ -24,6 +23,11 @@ TEST(MaterialTests, Test)
 	
 	{
 		RsrcPtr<Material> mtl;
-		EXPECT_THROW(mtl.loadRsrc("unit-tests/data/bool_err.mtl"));
+		EXPECT_ANY_THROW(mtl.loadRsrc("unit-tests/data/bool_err.mtl"));
+	}
+
+	{
+		RsrcPtr<Material> mtl;
+		EXPECT_NO_THROW(mtl.loadRsrc("unit-tests/data/complex.mtl"));
 	}
 }
