@@ -32,9 +32,10 @@
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
 #include "Messaging.h"
+#include "ModelNode.h"
 
 // map (hard coded)
-//MeshNode* floor__,* sarge,* horse,* crate;
+ModelNode* floor__,* sarge,* horse,* crate;
 //SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
@@ -160,8 +161,8 @@ void init()
 	app->getScene().skybox.load(skybox_fnames);*/
 
 	// horse
-	//horse = new MeshNode();
-	//horse->init("meshes/horse/horse.mesh");
+	//horse = new ModelNode();
+	//horse->init("meshes/horse/horse.mdl");
 	//horse->init("models/head/head.mesh");
 	//horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
 
