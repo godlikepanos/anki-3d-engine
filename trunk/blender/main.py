@@ -27,8 +27,7 @@ for obj in objs:
 	mi.blSkeleton = skeleton.getBlSkeletonFromBlObj(obj)
 	mi.saveDir = "/home/godlike/src/anki/models/imp/"
 	#mtl = GetMaterial( mi.mesh )
-	mi.mtlName = "models/imp/imp.mtl"
-	mi.flipYZ = 1
+	mi.flipYZ = True
 	mesh.export(mi)
 	
 	"""si = skeleton.Initializer()

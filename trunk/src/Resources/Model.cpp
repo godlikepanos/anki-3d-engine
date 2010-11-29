@@ -28,8 +28,10 @@ void Model::load(const char* filename)
 	try
   {
 		using namespace boost::property_tree;
-		ptree pt;
-  	read_xml(filename, pt);
+		ptree pt_;
+  	read_xml(filename, pt_);
+
+  	ptree& pt = pt_.get_child("model");
 
   	// subModels
   	BOOST_FOREACH(ptree::value_type& v, pt.get_child("subModels"))
@@ -115,7 +117,7 @@ void Model::load(const char* filename)
 //======================================================================================================================
 bool Model::SubModel::hasHwSkinning() const
 {
-	return material->hasHWSkinning();
+	return material->hasHwSkinning();
 }
 
 
@@ -149,12 +151,12 @@ void Model::SubModel::load(const char* meshFName, const char* mtlFName, const ch
 	}
 
 	// if mtl needs weights then mesh should have
-	if(material->hasHWSkinning() && !mesh->hasVertWeights())
+	if(material->hasHwSkinning() && !mesh->hasVertWeights())
 	{
 		throw EXCEPTION_INCOMPATIBLE_RSRCS(material, mesh);
 	}
 
-	if(dpMaterial->hasHWSkinning() && !mesh->hasVertWeights())
+	if(dpMaterial->hasHwSkinning() && !mesh->hasVertWeights())
 	{
 		throw EXCEPTION_INCOMPATIBLE_RSRCS(dpMaterial, mesh);
 	}

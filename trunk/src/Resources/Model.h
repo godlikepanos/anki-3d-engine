@@ -18,21 +18,23 @@ class Scanner;
 ///
 /// XML file format:
 /// @code
-/// <subModels>
-/// 	<subModel>
-/// 		<mesh>path/to/mesh.mesh</mesh>
-/// 		<material>path/to/material.mtl</material>
-/// 		<dpMaterial>path/to/dp.mtl</dpMaterial>
-/// 	</subModel>
-/// 	...
-/// 	<subModel>...</subModel>
-/// </subModels>
-/// <skeleton>path/to/skeleton.skel</skeleton>
-/// <skelAnims>
-/// 	<skelAnim>path/to/anim0.sanim</skelAnim>
-/// 	...
-/// 	<skelAnim>...</skelAnim>
-/// </skelAnims>
+/// <model>
+/// 	<subModels>
+/// 		<subModel>
+/// 			<mesh>path/to/mesh.mesh</mesh>
+/// 			<material>path/to/material.mtl</material>
+/// 			<dpMaterial>path/to/dp.mtl</dpMaterial>
+/// 		</subModel>
+/// 		...
+/// 		<subModel>...</subModel>
+/// 	</subModels>
+/// 	<skeleton>path/to/skeleton.skel</skeleton>
+/// 	<skelAnims>
+/// 		<skelAnim>path/to/anim0.sanim</skelAnim>
+/// 		...
+/// 		<skelAnim>...</skelAnim>
+/// 	</skelAnims>
+/// </model>
 /// @endcode
 ///
 /// Requirements:

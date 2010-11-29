@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<material>
+	<shaderProg>
+		<customDpSProg>
+			<defines>
+				<define>HARDWARE_SKINNING</define>
+			</defines>
+		</customDpSProg>
+	</shaderProg>
+	
+	<blendFuncs>
+		<sFactor>GL_ONE</sFactor>
+		<dFactor>GL_SRC_ALPHA</dFactor>
+	</blendFuncs>
+</material>
+

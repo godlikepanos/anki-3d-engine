@@ -356,6 +356,11 @@ bool ShaderProg::attribVarExists(const char* name) const
 std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
                                              const char* newFNamePrefix)
 {
+	if(strlen(preAppendedSrcCode) < 1 || strlen(newFNamePrefix) < 1)
+	{
+		return sProgFPathName;
+	}
+
 	boost::filesystem::path newfPathName = app->getCachePath() /
 			(std::string(newFNamePrefix) + "_" + boost::filesystem::path(sProgFPathName).filename());
 
