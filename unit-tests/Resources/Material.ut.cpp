@@ -29,5 +29,7 @@ TEST(MaterialTests, Test)
 	{
 		RsrcPtr<Material> mtl;
 		EXPECT_NO_THROW(mtl.loadRsrc("unit-tests/data/complex.mtl"));
+		EXPECT_EQ(mtl.getUserDefinedVars().size(), 6);
+		EXPECT_EQ(mtl.getUserDefinedVars()[3]
 	}
 }

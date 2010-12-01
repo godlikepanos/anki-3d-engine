@@ -119,20 +119,29 @@ class Material: public Resource
 		};
 
 		/// Class for user defined material variables that will be passes in to the shader
-		struct UserDefinedUniVar
+		class UserDefinedUniVar
 		{
-			/// Unfortunately we cannot use union because of complex classes (Vec2, Vec3 etc)
-			struct Value
-			{
+			public:
+				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const char* texFilename);
+				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f);
+				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec2& v);
+				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec3& v);
+				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec4& v);
+
+				void set(uint& textureUnit) const;
+
+			private:
+				const ShaderProg::UniVar& sProgVar;
+
+				/// @name Values
+				/// Unfortunately we cannot use union because of complex classes (Vec2, Vec3 etc)
+				/// @{
 				RsrcPtr<Texture> texture;
 				float float_;
 				Vec2 vec2;
 				Vec3 vec3;
 				Vec4 vec4;
-			};
-
-			Value value;
-			const ShaderProg::UniVar* sProgVar;
+				/// @}
 		}; // end UserDefinedVar
 
 	//====================================================================================================================
@@ -215,6 +224,34 @@ class Material: public Resource
 		static void parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
 		                              std::string& source, std::string& prefix);
 };
+
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
+
+inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f):
+	sProgVar(sProgVar),
+	float_ (f)
+{}
+
+
+inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec2& v):
+	sProgVar(sProgVar),
+	vec2(v)
+{}
+
+
+inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec3& v):
+	sProgVar(sProgVar),
+	vec3(v)
+{}
+
+
+inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec4& v):
+	sProgVar(sProgVar),
+	vec4(v)
+{}
 
 
 #endif
