@@ -14,6 +14,47 @@
 
 
 //======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const char* texFilename):
+	sProgVar(sProgVar)
+{
+	texture.loadRsrc(texFilename);
+}
+
+
+//======================================================================================================================
+// set                                                                                                                 =
+//======================================================================================================================
+void Material::UserDefinedUniVar::set(uint& textureUnit) const
+{
+	switch(sProgVar.getGlDataType())
+	{
+		// texture
+		case GL_SAMPLER_2D:
+			sProgVar.setTexture(*texture, textureUnit++);
+			break;
+		// float
+		case GL_FLOAT:
+			sProgVar.setFloat(float_);
+			break;
+		// vec2
+		case GL_FLOAT_VEC2:
+			sProgVar.setVec2(&vec2);
+			break;
+		// vec3
+		case GL_FLOAT_VEC3:
+			sProgVar.setVec3(&vec3);
+			break;
+		// vec4
+		case GL_FLOAT_VEC4:
+			sProgVar.setVec4(&vec4);
+			break;
+	}
+}
+
+
+//======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
 Material::StdVarNameAndGlDataTypePair Material::stdAttribVarInfos[SAV_NUM] =
@@ -253,11 +294,8 @@ void Material::load(const char* filename)
   				throw EXCEPTION("Expected userDefinedVar and not " + v.first);
   			}
 
-  			const ptree& userDefinedVar = v.second;
-  			std::string varName = userDefinedVar.get<std::string>("name");
-
-  			userDefinedVars.push_back(new UserDefinedUniVar); // create new var
-  			UserDefinedUniVar& var = userDefinedVars.back();
+  			const ptree& userDefinedVarTree = v.second;
+  			std::string varName = userDefinedVarTree.get<std::string>("name");
 
 				// check if the uniform exists
 				if(!shaderProg->uniVarExists(varName.c_str()))
@@ -265,18 +303,22 @@ void Material::load(const char* filename)
 					throw EXCEPTION("The variable \"" + varName + "\" is not an active uniform");
 				}
 
-				var.sProgVar = shaderProg->findUniVar(varName.c_str());
+				//userDefinedVars.push_back(new UserDefinedUniVar); // create new var
+  			//UserDefinedUniVar& var = userDefinedVars.back();
+
+				const ShaderProg::UniVar& uni = *shaderProg->findUniVar(varName.c_str());
 
 				// read the values
-				switch(var.sProgVar->getGlDataType())
+				switch(uni.getGlDataType())
 				{
 					// texture
 					case GL_SAMPLER_2D:
-						var.value.texture.loadRsrc(userDefinedVar.get<std::string>("texture").c_str());
+						userDefinedVars.push_back(new UserDefinedUniVar(uni,
+						                                                userDefinedVarTree.get<std::string>("texture").c_str()));
 						break;
 						// float
 					case GL_FLOAT:
-						var.value.float_ = PropertyTree::getFloat(userDefinedVar);
+						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getFloat(userDefinedVarTree)));
 						break;
 						// vec2
 					case GL_FLOAT_VEC2:
@@ -284,7 +326,7 @@ void Material::load(const char* filename)
 						break;
 						// vec3
 					case GL_FLOAT_VEC3:
-						var.value.vec3 = PropertyTree::getVec3(userDefinedVar);
+						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec3(userDefinedVarTree)));
 						break;
 						// vec4
 					case GL_FLOAT_VEC4:

@@ -227,7 +227,8 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Physics/DebugDrawer.h ../../src/Physics/RigidBody.h \
  ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h \
- ../../src/Core/Messaging.h ../../src/Core/App.h
+ ../../src/Core/Messaging.h ../../src/Core/App.h \
+ ../../src/Scene/ModelNode.h
 	@echo Compiling ../../src/Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Main.cpp -o Main.o
 
@@ -1311,7 +1312,7 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
- ../../src/Renderer/Ez.h
+ ../../src/Renderer/Ez.h ../../src/Scene/ModelNode.h
 	@echo Compiling ../../src/Renderer/Ms.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ms.cpp -o Ms.o
 
@@ -3893,7 +3894,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Resources/Texture.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Scene/ModelNode.h
 	@echo Compiling ../../src/Scene/Scene.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Scene.cpp -o Scene.o
 

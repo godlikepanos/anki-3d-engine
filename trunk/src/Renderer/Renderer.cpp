@@ -10,6 +10,7 @@
 #include "Mesh.h"
 
 
+
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
@@ -249,32 +250,10 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	//
 	// set user defined vars
 	//
-	for(uint i=0; i<mtl.getUserDefinedVars().size(); i++)
+	boost::ptr_vector<Material::UserDefinedUniVar>::const_iterator it = mtl.getUserDefinedVars().begin();
+	for(; it !=  mtl.getUserDefinedVars().end(); it++)
 	{
-		const Material::UserDefinedUniVar* udv = &mtl.getUserDefinedVars()[i];
-		switch(udv->sProgVar->getGlDataType())
-		{
-			// texture
-			case GL_SAMPLER_2D:
-				udv->sProgVar->setTexture(*udv->value.texture, textureUnit++);
-				break;
-			// float
-			case GL_FLOAT:
-				udv->sProgVar->setFloat(udv->value.float_);
-				break;
-			// vec2
-			case GL_FLOAT_VEC2:
-				udv->sProgVar->setVec2(&udv->value.vec2);
-				break;
-			// vec3
-			case GL_FLOAT_VEC3:
-				udv->sProgVar->setVec3(&udv->value.vec3);
-				break;
-			// vec4
-			case GL_FLOAT_VEC4:
-				udv->sProgVar->setVec4(&udv->value.vec4);
-				break;
-		}
+		(*it).set(textureUnit);
 	}
 
 	ON_GL_FAIL_THROW_EXCEPTION();

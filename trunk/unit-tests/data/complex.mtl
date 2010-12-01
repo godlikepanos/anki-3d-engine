@@ -20,7 +20,7 @@
 		</userDefinedVar>
 	
 		<userDefinedVar>
-			<name>meshes/horse/horse.norm.png</name>
+			<name>normalMap</name>
 			<value>
 				<texture>meshes/horse/horse.norm.png</texture>
 			</value>
@@ -36,7 +36,7 @@
 		<userDefinedVar>
 			<name>specularCol</name>
 			<value>
-				<vec3><x>1.0</x><y>1.0</y><z>0.8</z></vec3>
+				<vec3><x>1.0</x><y>1.0</y><z>-0.8</z></vec3>
 			</value>
 		</userDefinedVar>
 	
