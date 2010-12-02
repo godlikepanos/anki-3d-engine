@@ -161,10 +161,9 @@ void init()
 	app->getScene().skybox.load(skybox_fnames);*/
 
 	// horse
-	//horse = new ModelNode();
-	//horse->init("meshes/horse/horse.mdl");
-	//horse->init("models/head/head.mesh");
-	//horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
+	horse = new ModelNode();
+	horse->init("meshes/horse/horse.mdl");
+	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
 
 	return;
 

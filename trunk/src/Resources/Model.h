@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "Resource.h"
 #include "RsrcPtr.h"
 #include "Object.h"
@@ -85,7 +86,7 @@ class Model: public Resource
 
 		/// @name Accessors
 		/// @{
-		const Vec<SubModel>& getSubModels() const {return subModels;}
+		const boost::ptr_vector<SubModel>& getSubModels() const {return subModels;}
 		const Skeleton& getSkeleton() const;
 		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const {return skelAnims;}
 		/// @}
@@ -93,7 +94,7 @@ class Model: public Resource
 		bool hasSkeleton() const {return skeleton.get() != NULL;}
 
 	private:
-		Vec<SubModel> subModels; ///< The vector of SubModel
+		boost::ptr_vector<SubModel> subModels; ///< The vector of SubModel
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton. It can be empty
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
 };

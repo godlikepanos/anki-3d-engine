@@ -28,17 +28,18 @@ void Model::load(const char* filename)
 		ptree pt_;
   	read_xml(filename, pt_);
 
-  	ptree& pt = pt_.get_child("model");
+  	const ptree& pt = pt_.get_child("model");
 
   	// subModels
-  	BOOST_FOREACH(ptree::value_type& v, pt.get_child("subModels"))
+  	BOOST_FOREACH(const ptree::value_type& v, pt.get_child("subModels"))
   	{
   		const std::string& mesh = v.second.get<std::string>("mesh");
   		const std::string& material = v.second.get<std::string>("material");
   		const std::string& dpMaterial = v.second.get<std::string>("dpMaterial");
 
-  		subModels.push_back(SubModel());
-  		subModels.back().load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
+  		SubModel* sub = new SubModel();
+  		subModels.push_back(sub);
+  		sub->load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
   	}
 
   	// skeleton
@@ -49,10 +50,10 @@ void Model::load(const char* filename)
   	}
 
   	// Anims
-  	boost::optional<ptree&> skelAnimsTree = pt.get_child_optional("skelAnims");
+  	boost::optional<const ptree&> skelAnimsTree = pt.get_child_optional("skelAnims");
   	if(skelAnimsTree)
   	{
-  		BOOST_FOREACH(ptree::value_type& v, skelAnimsTree.get())
+  		BOOST_FOREACH(const ptree::value_type& v, skelAnimsTree.get())
   		{
   			if(v.first != "skelAnim")
   			{
