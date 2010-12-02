@@ -33,9 +33,11 @@
 #include "StdinListener.h"
 #include "Messaging.h"
 #include "ModelNode.h"
+#include "SkelAnimModelNodeCtrl.h"
+#include "Model.h"
 
 // map (hard coded)
-ModelNode* floor__,* sarge,* horse,* crate;
+ModelNode* floor__,* sarge,* horse,* crate, *imp;
 //SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
@@ -156,14 +158,30 @@ void init()
 	spot_lights[1]->init("maps/temple/light3.light");
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
-	/*const char* skybox_fnames [] = { "textures/env/hellsky4_forward.tga", "textures/env/hellsky4_back.tga", "textures/env/hellsky4_left.tga",
-																	 "textures/env/hellsky4_right.tga", "textures/env/hellsky4_up.tga", "textures/env/hellsky4_down.tga" };
-	app->getScene().skybox.load(skybox_fnames);*/
 
 	// horse
 	horse = new ModelNode();
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
+
+
+	// Sponza
+	ModelNode* sponza = new ModelNode();
+	sponza->init("maps/sponza/sponza.mdl");
+
+
+	// Pentagram
+	ModelNode* pentagram = new ModelNode();
+	pentagram->init("models/pentagram/pentagram.mdl");
+	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
+
+
+	// Imp
+	imp = new ModelNode();
+	imp->init("models/imp/imp.mdl");
+	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
+	imp->skelAnimModelNodeCtrl->set(imp->getModel().getSkelAnims()[0].get());
+	imp->skelAnimModelNodeCtrl->setStep(0.8);
 
 	return;
 

@@ -46,8 +46,8 @@ void Renderer::init(const RendererInitializer& initializer)
 	// init the stages. Careful with the order!!!!!!!!!!
 	ms->init(initializer);
 	is->init(initializer);
-	/*pps.init(initializer);
-	bs.init(initializer);*/
+	pps->init(initializer);
+	bs->init(initializer);
 
 	// quad VBOs and VAO
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
@@ -73,9 +73,9 @@ void Renderer::render(Camera& cam_)
 
 	ms->run();
 	is->run();
-	/*pps.runPrePass();
-	bs.run();
-	pps.runPostPass();*/
+	pps->runPrePass();
+	bs->run();
+	pps->runPostPass();
 
 	++framesNum;
 }

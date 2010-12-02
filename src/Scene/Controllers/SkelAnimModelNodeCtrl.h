@@ -5,6 +5,7 @@
 #include "Controller.h"
 #include "Math.h"
 #include "RsrcPtr.h"
+#include "Properties.h"
 
 
 class Skeleton;
@@ -15,13 +16,14 @@ class ModelNode;
 /// SkelAnim controls a ModelNode
 class SkelAnimModelNodeCtrl: public Controller
 {
+	PROPERTY_RW(float, step, setStep, getStep)
+
 	public:
 		SkelAnimModelNodeCtrl(ModelNode& skelNode_);
 		void update(float time);
 		void set(const SkelAnim* skelAnim_) {skelAnim = skelAnim_;}
 
 	private:
-		float step;
 		float frame;
 		const SkelAnim* skelAnim; ///< The active skeleton animation
 		ModelNode& modelNode; ///< Know your father

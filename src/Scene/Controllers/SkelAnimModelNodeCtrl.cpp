@@ -12,7 +12,8 @@
 //======================================================================================================================
 SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(ModelNode& modelNode_):
 	Controller(CT_SKEL_ANIM),
-	modelNode(modelNode_)
+	modelNode(modelNode_),
+	frame(0.0)
 {}
 
 
