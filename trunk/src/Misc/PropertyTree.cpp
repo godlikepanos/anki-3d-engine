@@ -61,16 +61,32 @@ float getFloat(const boost::property_tree::ptree& pt)
 
 
 //======================================================================================================================
+// getVec2                                                                                                             =
+//======================================================================================================================
+Vec2 getVec2(const boost::property_tree::ptree& pt)
+{
+	const boost::property_tree::ptree& tree = pt.get_child("vec2");
+	return Vec2(tree.get<float>("x"), tree.get<float>("y"));
+}
+
+
+//======================================================================================================================
 // getVec3                                                                                                             =
 //======================================================================================================================
 Vec3 getVec3(const boost::property_tree::ptree& pt)
 {
-	const boost::property_tree::ptree& vec3Tree = pt.get_child("vec3");
-	Vec3 v3;
-	v3.x = vec3Tree.get<float>("x");
-	v3.y = vec3Tree.get<float>("y");
-	v3.z = vec3Tree.get<float>("z");
-	return v3;
+	const boost::property_tree::ptree& tree = pt.get_child("vec3");
+	return Vec3(tree.get<float>("x"), tree.get<float>("y"), tree.get<float>("z"));
+}
+
+
+//======================================================================================================================
+// getVec4                                                                                                             =
+//======================================================================================================================
+Vec4 getVec4(const boost::property_tree::ptree& pt)
+{
+	const boost::property_tree::ptree& tree = pt.get_child("vec4");
+	return Vec4(tree.get<float>("x"), tree.get<float>("y"), tree.get<float>("z"), tree.get<float>("w"));
 }
 
 

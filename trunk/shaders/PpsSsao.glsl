@@ -12,7 +12,10 @@ uniform sampler2D msDepthFai;
 uniform sampler2D noiseMap;
 uniform sampler2D msNormalFai;
 
-varying vec2 vTexCoords;
+in vec2 vTexCoords;
+
+layout(location = 0) out float fFragColor;
+
 const float totStrength = 1.3;
 const float strength = 0.07;
 const float offset = 18.0;
@@ -59,7 +62,7 @@ void main(void)
 	vec3 ray, se, occNorm;
 	float occluderDepth, depthDifference, normDiff;
 
-	for( int i=0; i<SAMPLES; ++i )
+	for(int i=0; i<SAMPLES; ++i)
 	{
 		// get a vector (randomized inside of a sphere with radius 1.0) from a texture and reflect it
 		ray = radD*reflect(pSphere[i],fres);
@@ -85,5 +88,5 @@ void main(void)
 
 	// output the result
 	float ao = 1.0-totStrength*bl*invSamples;
-	gl_FragColor.r = ao /** MAX_SSAO_DISTANCE*/;
+	fFragColor = ao /** MAX_SSAO_DISTANCE*/;
 }

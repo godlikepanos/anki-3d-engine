@@ -8,13 +8,13 @@
 
 uniform sampler2D rasterImage;
 in vec2 vTexCoords;
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec3 fFragColor;
 
 void main()
 {
 	//if( gl_FragCoord.x > 0.5 ) discard;
 
-	fragColor.rgb = texture2D(rasterImage, vTexCoords).rgb;
+	fFragColor = texture2D(rasterImage, vTexCoords).rgb;
 	
 	//fragColor = vec3(1.0, 0.0, 1.0);
 

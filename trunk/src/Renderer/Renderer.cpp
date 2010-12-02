@@ -94,9 +94,9 @@ void Renderer::drawQuad()
 
 
 //======================================================================================================================
-// setupMaterial                                                                                                       =
+// setupShaderProg                                                                                                     =
 //======================================================================================================================
-void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, const Camera& cam) const
+void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, const Camera& cam) const
 {
 	mtl.getShaderProg().bind();
 	uint textureUnit = 0;
@@ -138,7 +138,7 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 	//
 	// calc needed matrices
 	//
-	Mat4 modelMat(sceneNode.getWorldTransform());
+	Mat4 modelMat(modelNode.getWorldTransform());
 	const Mat4& projectionMat = cam.getProjectionMatrix();
 	const Mat4& viewMat = cam.getViewMatrix();
 	Mat4 modelViewMat;
@@ -256,6 +256,21 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 		(*it).set(textureUnit);
 	}
 
+	//
+	// Set the bone transformations
+	//
+	if(modelNode.hasSkeleton())
+	{
+		RASSERT_THROW_EXCEPTION(!mtl.hasHwSkinning()); // it has skel controller but no skinning
+
+		// first the uniforms
+		mtl.getStdUniVar(Material::SUV_SKINNING_ROTATIONS)->setMat3(&modelNode.getBoneRotations()[0],
+		                                                            modelNode.getBoneRotations().size());
+
+		mtl.getStdUniVar(Material::SUV_SKINNING_TRANSLATIONS)->setVec3(&modelNode.getBoneTranslations()[0],
+		                                                               modelNode.getBoneTranslations().size());
+	}
+
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
@@ -265,13 +280,21 @@ void Renderer::setupMaterial(const Material& mtl, const SceneNode& sceneNode, co
 //======================================================================================================================
 void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const
 {
-	for(uint i = 0; i < modelNode.getModel().getSubModels().size(); i++)
+	boost::ptr_vector<Model::SubModel>::const_iterator it = modelNode.getModel().getSubModels().begin();
+	for(; it != modelNode.getModel().getSubModels().end(); it++)
 	{
-		const Model::SubModel& subModel = modelNode.getModel().getSubModels()[i];
+		const Model::SubModel& subModel = *it;
+
+		if((type == MNRT_MS && subModel.getMaterial().renderInBlendingStage()) ||
+		   (type == MNRT_BS && !subModel.getMaterial().renderInBlendingStage()) ||
+		   (type == MNRT_DP && subModel.getMaterial().renderInBlendingStage()))
+		{
+			continue;
+		}
 
 		const Material* mtl;
 		const Vao* vao;
-		if(type == MNRT_NORMAL)
+		if(type == MNRT_MS || type == MNRT_BS)
 		{
 			mtl = &subModel.getMaterial();
 			vao = &subModel.getVao();
@@ -282,26 +305,30 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 			vao = &subModel.getDpVao();
 		}
 
-		// Material
-		setupMaterial(*mtl, modelNode, cam);
-
-		// Render
-		if(modelNode.hasSkeleton())
-		{
-			RASSERT_THROW_EXCEPTION(!mtl->hasHwSkinning()); // it has skel controller but no skinning
-
-			// first the uniforms
-			mtl->getStdUniVar(Material::SUV_SKINNING_ROTATIONS)->setMat3(&modelNode.getBoneRotations()[0],
-			                                                             modelNode.getBoneRotations().size());
-
-			mtl->getStdUniVar(Material::SUV_SKINNING_TRANSLATIONS)->setVec3(&modelNode.getBoneTranslations()[0],
-			                                                                modelNode.getBoneTranslations().size());
-		}
+		// Shader
+		setupShaderProg(*mtl, modelNode, cam);
 
 		vao->bind();
 		glDrawElements(GL_TRIANGLES, subModel.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
 		vao->unbind();
 	}
+}
+
+
+//======================================================================================================================
+// renderAllModelNodes                                                                                                 =
+//======================================================================================================================
+void Renderer::renderAllModelNodes(const Camera& cam, ModelNodeRenderType type) const
+{
+	Vec<ModelNode*>::const_iterator it = app->getScene().modelNodes.begin();
+	for(; it != app->getScene().modelNodes.end(); ++it)
+	{
+		const ModelNode& md = *(*it);
+		renderModelNode(md, cam, type);
+	}
+
+	// the rendering above fucks the polygon mode
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 

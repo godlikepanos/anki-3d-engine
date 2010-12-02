@@ -15,8 +15,8 @@ attribute vec2 position;
 
 uniform float imgDimension = 0.0; ///< the img width for hspass or the img height for vpass
 
-varying vec2 vTexCoords;
-varying float vOffsets[2]; ///< For side pixels
+out vec2 vTexCoords;
+out float vOffsets[2]; ///< For side pixels
 
 const float _offset_[2] = float[](1.3846153846, 3.2307692308); ///< The offset of side pixels
 
@@ -50,12 +50,11 @@ void main()
 uniform sampler2D img; ///< Input FAI
 uniform float blurringDist = 0.0;
 
-varying vec2 vTexCoords;
-varying float vOffsets[2];
+in vec2 vTexCoords;
+in float vOffsets[2];
 
-/*
- * Determin color type
- */
+
+// Determin color type
 #if defined(COL_RGBA)
 	#define COL_TYPE vec4
 #elif defined(COL_RGB)
@@ -64,9 +63,7 @@ varying float vOffsets[2];
 	#define COL_TYPE float
 #endif
 
-/*
- * Determine tex fetch
- */
+// Determine tex fetch
 #if defined(COL_RGBA)
 	#define TEX_FETCH rgba
 #elif defined(COL_RGB)
@@ -76,32 +73,35 @@ varying float vOffsets[2];
 #endif
 
 
-const float _firstWeight_ = 0.2255859375;
-const float _weights_[2] = float[](0.314208984375, 0.06982421875);
+layout(location = 0) out COL_TYPE fFragColor;
+
+
+const float FIRST_WEIGHT = 0.2255859375;
+const float WEIGHTS[2] = float[](0.314208984375, 0.06982421875);
 
 
 void main()
 {
 	// the center (0,0) pixel
-	COL_TYPE _col_ = texture2D(img, vTexCoords).TEX_FETCH * _firstWeight_;
+	COL_TYPE _col_ = texture2D(img, vTexCoords).TEX_FETCH * FIRST_WEIGHT;
 
 	// side pixels
-	for(int i=0; i<2; i++)
+	for(int i = 0; i < 2; i++)
 	{
 		#if defined(HPASS)
 			vec2 _texCoords_ = vec2(vTexCoords.x + blurringDist + vOffsets[i], vTexCoords.y);
-			_col_ += texture2D(img, _texCoords_).TEX_FETCH * _weights_[i];
+			_col_ += texture2D(img, _texCoords_).TEX_FETCH * WEIGHTS[i];
 
 			_texCoords_.x = vTexCoords.x - blurringDist - vOffsets[i];
-			_col_ += texture2D(img, _texCoords_).TEX_FETCH * _weights_[i];
+			_col_ += texture2D(img, _texCoords_).TEX_FETCH * WEIGHTS[i];
 		#elif defined(VPASS)
 			vec2 _texCoords_ = vec2(vTexCoords.x, vTexCoords.y + blurringDist + vOffsets[i]);
-			_col_ += texture2D(img, _texCoords_).TEX_FETCH * _weights_[i];
+			_col_ += texture2D(img, _texCoords_).TEX_FETCH * WEIGHTS[i];
 
 			_texCoords_.y = vTexCoords.y - blurringDist - vOffsets[i];
-			_col_ += texture2D(img, _texCoords_).TEX_FETCH * _weights_[i];
+			_col_ += texture2D(img, _texCoords_).TEX_FETCH * WEIGHTS[i];
 		#endif
 	}
 
-	gl_FragData[0].TEX_FETCH = _col_;
+	fFragColor = _col_;
 }

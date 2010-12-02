@@ -23,8 +23,14 @@ extern boost::optional<bool> getBoolOptional(const boost::property_tree::ptree& 
 /// Get a @code<float>0.0</float>@endcode
 extern float getFloat(const boost::property_tree::ptree& pt);
 
+/// Get a @code<vec2><x>0.0</x><y>0.0</y></vec2>@endcode
+extern Vec2 getVec2(const boost::property_tree::ptree& pt);
+
 /// Get a @code<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3>@endcode
 extern Vec3 getVec3(const boost::property_tree::ptree& pt);
+
+/// Get a @code<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>@endcode
+extern Vec4 getVec4(const boost::property_tree::ptree& pt);
 
 } // end namespace
 

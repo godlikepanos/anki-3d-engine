@@ -91,21 +91,8 @@ void Sm::run(const Camera& cam)
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	// render all meshes
-	/// @todo Uncomment
-	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
-	{
-		MeshNode* meshNode = (*it);
-		if(meshNode->mesh->material->renderInBlendingStage())
-		{
-			continue;
-		}
-
-		//RASSERT_THROW_EXCEPTION(meshNode->mesh->material->dpMtl.get() == NULL);
-
-		r.setupMaterial(meshNode->mesh->material->getDepthMtl(), *meshNode, cam);
-		meshNode->renderDepth();
-	}*/
+	// render all
+	r.renderAllModelNodes(cam, Renderer::MNRT_DP);
 
 	// restore GL
 	glDisable(GL_POLYGON_OFFSET_FILL);

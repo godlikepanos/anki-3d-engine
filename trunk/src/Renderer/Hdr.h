@@ -42,7 +42,7 @@ class Hdr: private RenderingPass
 		RsrcPtr<ShaderProg> vblurSProg;
 		float blurringDist;
 		uint blurringIterations;
-		float exposure; ///< @todo
+		float exposure; ///< How bright is the HDR
 		bool enabled;
 		float renderingQuality;
 
