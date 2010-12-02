@@ -5,12 +5,13 @@
 #pragma anki fragShaderBegins
 
 #pragma anki include "shaders/photoshop_filters.glsl"
-#pragma anki include "shaders/median_filter.glsl"
 
 uniform sampler2D ppsPrePassFai;
 uniform sampler2D ppsHdrFai;
 
-varying vec2 vTexCoords;
+in vec2 vTexCoords;
+
+layout(location = 0) out vec3 fFragColor;
 
 
 //======================================================================================================================
@@ -40,7 +41,7 @@ vec3 saturation(in vec3 col, in float factor)
 //======================================================================================================================
 void main(void)
 {
-	vec3 color = texture2D(ppsPrePassFai, vTexCoords).rgb;
+	fFragColor = texture2D(ppsPrePassFai, vTexCoords).rgb;
 
 	/*const float gamma = 0.7;
 	color.r = pow(color.r, 1.0 / gamma);
@@ -49,11 +50,9 @@ void main(void)
 
 	#if defined(HDR_ENABLED)
 		vec3 hdr = texture2D(ppsHdrFai, vTexCoords).rgb;
-		color += hdr;
+		fFragColor += hdr;
 	#endif
 
-	color = BlendHardLight(vec3(0.6, 0.62, 0.4), color);
-
-	gl_FragData[0].rgb = color;
+	fFragColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fFragColor);
 }
 

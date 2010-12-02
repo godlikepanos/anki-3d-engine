@@ -19,7 +19,7 @@
 
 class Camera;
 class RendererInitializer;
-class SceneNode;
+class ModelNode;
 class ModelNode;
 
 
@@ -39,11 +39,12 @@ class Renderer: public Object
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		/// The two types of rendering a ModelNode
+		/// The types of rendering a ModelNode
 		enum ModelNodeRenderType
 		{
-			MNRT_NORMAL,
-			MNRT_DEPTH
+			MNRT_MS, ///< In material stage
+			MNRT_DP, ///< In a depth pass
+			MNRT_BS  ///< In blending stage
 		};
 
 		Renderer(Object* parent);
@@ -93,15 +94,20 @@ class Renderer: public Object
 		/// OpenGL wrapper
 		static void setViewport(uint x, uint y, uint w, uint h) {glViewport(x, y, w, h);}
 
-		/// This functions sets the GL state using a material and a few other things
-		/// @param mtl The material containing the shader program
-		/// @param sceneNode Needed for some matrices
-		/// @param cam Needed for some matrices
-		void setupMaterial(const class Material& mtl, const SceneNode& sceneNode, const Camera& cam) const;
-
+		/// This function:
+		/// - binds the shader program
+		/// - loads the uniforms
+		/// - sets the GL state
+		/// @param mtl The material containing the shader program and the locations
+		/// @param modelNode Needed for some matrices (model) and the bone stuff (rotations & translations)
+		/// @param cam Needed for some matrices (view & projection)
+		void setupShaderProg(const class Material& mtl, const ModelNode& modelNode, const Camera& cam) const;
 
 		/// Render ModelNode. The method sets up the shader and renders the geometry
 		void renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const;
+
+		/// Render all ModelNodes
+		void renderAllModelNodes(const Camera& cam, ModelNodeRenderType type) const;
 
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions

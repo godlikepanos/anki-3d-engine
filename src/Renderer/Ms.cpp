@@ -1,7 +1,5 @@
 #include "Ms.h"
 #include "Renderer.h"
-#include "App.h"
-#include "Scene.h"
 #include "Camera.h"
 #include "Ez.h"
 #include "ModelNode.h"
@@ -95,15 +93,8 @@ void Ms::run()
 		glDepthFunc(GL_EQUAL);
 	}
 
-	// render the meshes
-	for(Vec<ModelNode*>::const_iterator it = app->getScene().modelNodes.begin();
-			it != app->getScene().modelNodes.end(); ++it)
-	{
-		const ModelNode& md = *(*it);
-		r.renderModelNode(md, r.getCamera(), Renderer::MNRT_NORMAL);
-	}
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
+	// render all
+	r.renderAllModelNodes(r.getCamera(), Renderer::MNRT_MS);
 
 	// restore depth
 	if(ez->isEnabled())

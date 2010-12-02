@@ -321,7 +321,7 @@ void Material::load(const char* filename)
 						break;
 						// vec2
 					case GL_FLOAT_VEC2:
-						/// @todo
+						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec2(valueTree)));
 						break;
 						// vec3
 					case GL_FLOAT_VEC3:
@@ -329,7 +329,7 @@ void Material::load(const char* filename)
 						break;
 						// vec4
 					case GL_FLOAT_VEC4:
-						/// @todo
+						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec4(valueTree)));
 						break;
 				};
 			} // end for all userDefinedVars

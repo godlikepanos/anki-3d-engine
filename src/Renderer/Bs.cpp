@@ -1,8 +1,13 @@
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "Bs.h"
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
 #include "ShaderProg.h"
+#include "Model.h"
+#include "ModelNode.h"
+#include "Material.h"
+#include "Mesh.h"
 
 
 //======================================================================================================================
@@ -81,71 +86,81 @@ void Bs::run()
 
 	glDepthMask(false);
 
-	// render the meshes
-	/// @todo Uncomment this
-	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	// render the models
+	Vec<ModelNode*>::const_iterator it = app->getScene().modelNodes.begin();
+	for(; it != app->getScene().modelNodes.end(); ++it)
 	{
-		MeshNode* meshNode = (*it);
-
-		if(meshNode->mesh->material.get() == NULL)
+		const ModelNode& mn = *(*it);
+		boost::ptr_vector<Model::SubModel>::const_iterator it = mn.getModel().getSubModels().begin();
+		for(; it != mn.getModel().getSubModels().end(); it++)
 		{
-			throw EXCEPTION("Mesh \"" + meshNode->mesh->getRsrcName() + "\" doesnt have material" );
-		}
+			const Model::SubModel& sm = *it;
 
-		if(!meshNode->mesh->material->renderInBlendingStage())
-		{
-			continue;
-		}
-
-		// refracts
-		if(meshNode->mesh->material->getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
-		{
-			// render to the temp FAI
-			refractFbo.bind();
-
-			glEnable(GL_STENCIL_TEST);
-			glClear(GL_STENCIL_BUFFER_BIT);
-			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-			r.setupMaterial(*meshNode->mesh->material, *meshNode, r.getCamera());
-			glDisable(GL_BLEND); // a hack
-			meshNode->render();
-
-			// render the temp FAI to prePassFai
-			fbo.bind();
-
-			glStencilFunc(GL_EQUAL, 0x1, 0x1);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-			if(meshNode->mesh->material->renderInBlendingStage())
+			if(!sm.getMaterial().renderInBlendingStage())
 			{
-				glEnable(GL_BLEND);
-				glBlendFunc(meshNode->mesh->material->getBlendingSfactor(), meshNode->mesh->material->getBlendingDfactor());
+				continue;
 			}
+
+			// refracts ?
+			if(sm.getMaterial().getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
+			{
+				//
+				// Stage 0: Render to the temp FAI
+				//
+				refractFbo.bind();
+
+				glEnable(GL_STENCIL_TEST);
+				glClear(GL_STENCIL_BUFFER_BIT);
+				glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+				r.setupShaderProg(sm.getMaterial(), mn, r.getCamera());
+				glDisable(GL_BLEND); // a hack
+
+				sm.getVao().bind();
+				glDrawElements(GL_TRIANGLES, sm.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+				sm.getVao().unbind();
+
+				//
+				// Stage 1: Render the temp FAI to prePassFai
+				//
+				fbo.bind();
+
+				glStencilFunc(GL_EQUAL, 0x1, 0x1);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+				if(sm.getMaterial().isBlendingEnabled())
+				{
+					glEnable(GL_BLEND);
+					glBlendFunc(sm.getMaterial().getBlendingSfactor(), sm.getMaterial().getBlendingDfactor());
+				}
+				else
+				{
+					glDisable(GL_BLEND);
+				}
+
+				refractSProg->bind();
+				refractSProg->findUniVar("fai")->setTexture(refractFai, 0);
+
+				r.drawQuad();
+
+				// cleanup
+				glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+				glClear(GL_STENCIL_BUFFER_BIT);
+				glDisable(GL_STENCIL_TEST);
+			}
+			// no rafraction
 			else
 			{
-				glDisable(GL_BLEND);
+				r.setupShaderProg(sm.getMaterial(), mn, r.getCamera());
+
+				sm.getVao().bind();
+				glDrawElements(GL_TRIANGLES, sm.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+				sm.getVao().unbind();
 			}
-
-			refractSProg->bind();
-			refractSProg->findUniVar("fai")->setTexture(refractFai, 0);
-
-			r.drawQuad();
-
-			// cleanup
-			glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-			glClear(GL_STENCIL_BUFFER_BIT);
-			glDisable(GL_STENCIL_TEST);
-		}
-		else
-		{
-			fbo.bind();
-			r.setupMaterial(*meshNode->mesh->material, *meshNode, r.getCamera());
-			meshNode->render();
-		}
-	}*/
+		} // end for all subModels
+	} // end for all modelNodes
 
 	glDepthMask(true);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
