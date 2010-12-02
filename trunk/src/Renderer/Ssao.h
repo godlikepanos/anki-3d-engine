@@ -17,10 +17,6 @@
 class Ssao: private RenderingPass
 {
 	public:
-		Texture ssaoFai; ///< It contains the unblurred SSAO factor
-		Texture hblurFai;
-		Texture fai;  ///< AKA vblurFai The final FAI
-
 		Ssao(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
 		void init(const RendererInitializer& initializer);
 		void run();
@@ -29,9 +25,13 @@ class Ssao: private RenderingPass
 		/// @{
 		bool isEnabled() const {return enabled;}
 		float getRenderingQuality() const {return renderingQuality;}
+		const Texture& getFai() const {return fai;}
 		/// @}
 
 	private:
+		Texture ssaoFai; ///< It contains the unblurred SSAO factor
+		Texture hblurFai;
+		Texture fai;  ///< AKA vblurFai The final FAI
 		bool enabled;
 		float renderingQuality;
 		float blurringIterations;

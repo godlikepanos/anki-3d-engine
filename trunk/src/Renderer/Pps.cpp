@@ -127,7 +127,7 @@ void Pps::runPrePass()
 
 	if(ssao->isEnabled())
 	{
-		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao->fai, 1);
+		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao->getFai(), 1);
 	}
 
 	r.drawQuad();

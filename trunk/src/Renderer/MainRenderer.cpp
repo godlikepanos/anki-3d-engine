@@ -9,6 +9,7 @@
 #include "App.h"
 #include "RendererInitializer.h"
 #include "Messaging.h"
+#include "Ssao.h"
 
 
 //======================================================================================================================
@@ -102,8 +103,8 @@ void MainRenderer::render(Camera& cam_)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	sProg->bind();
-	sProg->findUniVar("rasterImage")->setTexture(is->getFai(), 0);
-	//sProg->findUniVar("rasterImage")->setTexture(pps.postPassFai, 0);
+	//sProg->findUniVar("rasterImage")->setTexture(pps->getSsao().getFai(), 0);
+	sProg->findUniVar("rasterImage")->setTexture(pps->getPostPassFai(), 0);
 	drawQuad();
 }
 

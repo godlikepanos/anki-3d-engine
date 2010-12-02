@@ -29,6 +29,7 @@ class Pps: private RenderingPass
 		/// @name Accessors
 		/// @{
 		Hdr& getHdr() {return *hdr;}
+		Ssao& getSsao() {return *ssao;}
 		/// @}
 
 	private:
