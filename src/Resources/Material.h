@@ -121,6 +121,11 @@ class Material: public Resource
 		/// Class for user defined material variables that will be passes in to the shader
 		class UserDefinedUniVar
 		{
+			PROPERTY_R(float, float_, getFloat)
+			PROPERTY_R(Vec2, vec2, getVec2)
+			PROPERTY_R(Vec3, vec3, getVec3)
+			PROPERTY_R(Vec4, vec4, getVec4)
+
 			public:
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const char* texFilename);
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f);
@@ -132,16 +137,7 @@ class Material: public Resource
 
 			private:
 				const ShaderProg::UniVar& sProgVar;
-
-				/// @name Values
-				/// Unfortunately we cannot use union because of complex classes (Vec2, Vec3 etc)
-				/// @{
 				RsrcPtr<Texture> texture;
-				float float_;
-				Vec2 vec2;
-				Vec3 vec3;
-				Vec4 vec4;
-				/// @}
 		}; // end UserDefinedVar
 
 	//====================================================================================================================
@@ -231,26 +227,26 @@ class Material: public Resource
 //======================================================================================================================
 
 inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f):
-	sProgVar(sProgVar),
-	float_ (f)
+	float_ (f),
+	sProgVar(sProgVar)
 {}
 
 
 inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec2& v):
-	sProgVar(sProgVar),
-	vec2(v)
+	vec2(v),
+	sProgVar(sProgVar)
 {}
 
 
 inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec3& v):
-	sProgVar(sProgVar),
-	vec3(v)
+	vec3(v),
+	sProgVar(sProgVar)
 {}
 
 
 inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec4& v):
-	sProgVar(sProgVar),
-	vec4(v)
+	vec4(v),
+	sProgVar(sProgVar)
 {}
 
 

@@ -208,7 +208,7 @@ void Material::load(const char* filename)
   		std::string prefix;
 
   		parseCustomShader(msGenericDefines, customMsSProgTree.get(), source, prefix);
-  		std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsGeneric.glsl",
+  		std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
   		                                                              source.c_str(), prefix.c_str());
   		shaderProg.loadRsrc(shaderFilename.c_str());
 		}
@@ -303,8 +303,7 @@ void Material::load(const char* filename)
 					throw EXCEPTION("The variable \"" + varName + "\" is not an active uniform");
 				}
 
-				//userDefinedVars.push_back(new UserDefinedUniVar); // create new var
-  			//UserDefinedUniVar& var = userDefinedVars.back();
+				const ptree& valueTree = userDefinedVarTree.get_child("value");
 
 				const ShaderProg::UniVar& uni = *shaderProg->findUniVar(varName.c_str());
 
@@ -314,11 +313,11 @@ void Material::load(const char* filename)
 					// texture
 					case GL_SAMPLER_2D:
 						userDefinedVars.push_back(new UserDefinedUniVar(uni,
-						                                                userDefinedVarTree.get<std::string>("texture").c_str()));
+						                                                valueTree.get<std::string>("texture").c_str()));
 						break;
 						// float
 					case GL_FLOAT:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getFloat(userDefinedVarTree)));
+						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getFloat(valueTree)));
 						break;
 						// vec2
 					case GL_FLOAT_VEC2:
@@ -326,7 +325,7 @@ void Material::load(const char* filename)
 						break;
 						// vec3
 					case GL_FLOAT_VEC3:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec3(userDefinedVarTree)));
+						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec3(valueTree)));
 						break;
 						// vec4
 					case GL_FLOAT_VEC4:

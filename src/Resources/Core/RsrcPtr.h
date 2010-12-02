@@ -49,7 +49,10 @@ template<typename Type>
 RsrcPtr<Type>::RsrcPtr(const RsrcPtr& a):
 	p(a.p)
 {
-	++p->referenceCounter;
+	if(p)
+	{
+		++p->referenceCounter;
+	}
 }
 
 

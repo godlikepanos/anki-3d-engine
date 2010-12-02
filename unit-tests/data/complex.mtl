@@ -36,7 +36,7 @@
 		<userDefinedVar>
 			<name>specularCol</name>
 			<value>
-				<vec3><x>1.0</x><y>1.0</y><z>-0.8</z></vec3>
+				<vec3><x>1.0</x><y>2.0</y><z>-0.8</z></vec3>
 			</value>
 		</userDefinedVar>
 	
