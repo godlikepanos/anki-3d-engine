@@ -1,5 +1,6 @@
 /// @file
-/// Ilumination stage ambient pass shader program
+/// Illumination stage ambient pass shader program
+
 #pragma anki vertShaderBegins
 
 #pragma anki include "shaders/SimpleVert.glsl"

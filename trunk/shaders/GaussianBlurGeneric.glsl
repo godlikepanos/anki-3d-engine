@@ -1,12 +1,10 @@
-/**
- * @file
- * Generic shader program for Gausian blur inspired by Daniel Rakos' article
- * http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
- *
- * Switches: VPASS or HPASS, COL_RGBA or COL_RGB or COL_R
- *
- * This is an optimized version. See the clean one at rev213
- */
+/// @file
+/// Generic shader program for Gaussian blur inspired by Daniel Rakos' article
+/// http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+///
+/// Switches: VPASS or HPASS, COL_RGBA or COL_RGB or COL_R
+///
+/// This is an optimized version. See the clean one at rev213
 
 #pragma anki vertShaderBegins
 
@@ -35,9 +33,7 @@ void main()
 #pragma anki fragShaderBegins
 
 
-/*
- * Preprocessor switcher sanity checks
- */
+// Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
 	#error "See file"
 #endif
@@ -54,7 +50,7 @@ in vec2 vTexCoords;
 in float vOffsets[2];
 
 
-// Determin color type
+// Determine color type
 #if defined(COL_RGBA)
 	#define COL_TYPE vec4
 #elif defined(COL_RGB)
