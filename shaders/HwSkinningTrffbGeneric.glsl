@@ -1,22 +1,22 @@
 #pragma anki vertShaderBegins
 
-attribute vec3 position;
-attribute vec3 normal;
-attribute vec4 tangent;
-attribute float vertWeightBonesNum;
-attribute vec4  vertWeightBoneIds;
-attribute vec4  vertWeightWeights;
+in vec3 position;
+in vec3 normal;
+in vec4 tangent;
+in float vertWeightBonesNum;
+in vec4  vertWeightBoneIds;
+in vec4  vertWeightWeights;
 
 const int MAX_BONES_PER_MESH = 60;
 uniform mat3 skinningRotations[MAX_BONES_PER_MESH];
 uniform vec3 skinningTranslations[MAX_BONES_PER_MESH];
 
-#pragma anki transformFeedbackVarying outPosition
-varying vec3 outPosition;
-#pragma anki transformFeedbackVarying outNormal
-varying vec3 outNormal;
-#pragma anki transformFeedbackVarying outTangent
-varying vec4 outTangent;
+#pragma anki transformFeedbackVarying vPosition
+out vec3 vPosition;
+#pragma anki transformFeedbackVarying vNormal
+varying vec3 vNormal;
+#pragma anki transformFeedbackVarying vTangent
+varying vec4 vTangent;
 
 
 void main()
@@ -33,19 +33,18 @@ void main()
 		tsl += skinningTranslations[boneId] * weight;
 	}
 	
-	outPosition = (rot * position) + tsl;
+	vPosition = (rot * position) + tsl;
 	
 	#if defined(NORMAL_ENABLED)
-		outNormal = rot * normal;
+		vNormal = rot * normal;
 	#endif
 	
 	#if defined(TANGENT_ENABLED)
-		outTangent = vec4(rot * vec3(tangent), tangent.w);
+		vTangent = vec4(rot * vec3(tangent), tangent.w);
 	#endif	
 }
 
 #pragma anki fragShaderBegins
 
 void main()
-{
-}
+{}
