@@ -36,7 +36,7 @@ void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btVe
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
 	app->getMainRenderer().getDbg().setModelMat(trf);
-	app->getMainRenderer().getDbg().setColor(Vec4(toAnki(color), 1.0));
+	app->getMainRenderer().getDbg().setColor(toAnki(color));
 	app->getMainRenderer().getDbg().drawCube(1.0);
 }
 
@@ -55,7 +55,7 @@ void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btTr
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
 	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
 	app->getMainRenderer().getDbg().setModelMat(trf);
-	app->getMainRenderer().getDbg().setColor(Vec4(toAnki(color), 1.0));
+	app->getMainRenderer().getDbg().setColor(toAnki(color));
 	app->getMainRenderer().getDbg().drawCube(1.0);
 }
 

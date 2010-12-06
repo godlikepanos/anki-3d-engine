@@ -24,7 +24,7 @@ Dbg::Dbg(Renderer& r_, Object* parent):
 //======================================================================================================================
 void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
-	float posBuff [] = {from.x, from.y, from.z, to.x, to.y, to.z};
+	/*float posBuff [] = {from.x, from.y, from.z, to.x, to.y, to.z};
 
 	setColor(color);
 	setModelMat(Mat4::getIdentity());
@@ -32,7 +32,7 @@ void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 	glEnableVertexAttribArray(POSITION_ATTRIBUTE_ID);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, posBuff);
 	glDrawArrays(GL_LINES, 0, 2);
-	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);
+	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);*/
 }
 
 
@@ -41,7 +41,7 @@ void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 //======================================================================================================================
 void Dbg::renderGrid()
 {
-	Vec4 col0(0.5, 0.5, 0.5, 1.0);
+	/*Vec4 col0(0.5, 0.5, 0.5, 1.0);
 	Vec4 col1(0.0, 0.0, 1.0, 1.0);
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
@@ -78,7 +78,7 @@ void Dbg::renderGrid()
 	glEnableVertexAttribArray(POSITION_ATTRIBUTE_ID);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &positions[0]);
 	glDrawArrays(GL_LINES, 0, positions.size());
-	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);
+	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);*/
 }
 
 
@@ -87,7 +87,7 @@ void Dbg::renderGrid()
 //======================================================================================================================
 void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity)
 {
-	setColor(col);
+	/*setColor(col);
 
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
@@ -154,7 +154,7 @@ void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int co
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &(positions[0][0]));
 	glDrawArrays(GL_QUAD_STRIP, 0, positions.size());
-	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(0);*/
 }
 
 
@@ -163,7 +163,7 @@ void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int co
 //======================================================================================================================
 void Dbg::drawCube(float size)
 {
-	Vec3 maxPos = Vec3(0.5 * size);
+	/*Vec3 maxPos = Vec3(0.5 * size);
 	Vec3 minPos = Vec3(-0.5 * size);
 
 	Vec3 points [] = {
@@ -182,7 +182,7 @@ void Dbg::drawCube(float size)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &(points[0][0]));
 	glDrawElements(GL_QUADS, sizeof(indeces)/sizeof(ushort), GL_UNSIGNED_SHORT, indeces);
-	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(0);*/
 }
 
 
@@ -193,7 +193,9 @@ void Dbg::init(const RendererInitializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
 
-	// create FBO
+	//
+	// FBO
+	//
 	try
 	{
 		fbo.create();
@@ -213,8 +215,19 @@ void Dbg::init(const RendererInitializer& initializer)
 		throw EXCEPTION("Cannot create debug FBO: " + e.what());
 	}
 
-	// shader
+	//
+	// Shader prog
+	//
 	sProg.loadRsrc("shaders/Dbg.glsl");
+
+	//
+	// VAO & VBOs
+	//
+	positionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_DYNAMIC_DRAW, this);
+	colorsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(colors), NULL, GL_DYNAMIC_DRAW, this);
+	vao = new Vao(this);
+	const int positionAttribLoc = 0;
+	vao->attachArrayBufferVbo(*positionsVbo, positionAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 }
 
 
@@ -273,20 +286,53 @@ void Dbg::run()
 
 
 //======================================================================================================================
-// setColor                                                                                                            =
-//======================================================================================================================
-void Dbg::setColor(const Vec4& color)
-{
-	sProg->findUniVar("color")->setVec4(&color);
-}
-
-
-//======================================================================================================================
 // setModelMat                                                                                                         =
 //======================================================================================================================
 void Dbg::setModelMat(const Mat4& modelMat)
 {
+	RASSERT_THROW_EXCEPTION(pointIndex != 0); // This means that the func called after begin and before end
+
 	Mat4 pmv = viewProjectionMat * modelMat;
 	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
+}
+
+
+//======================================================================================================================
+// begin                                                                                                               =
+//======================================================================================================================
+void Dbg::begin()
+{
+	RASSERT_THROW_EXCEPTION(pointIndex != 0);
+}
+
+
+//======================================================================================================================
+// end                                                                                                                 =
+//======================================================================================================================
+void Dbg::end()
+{
+	RASSERT_THROW_EXCEPTION(pointIndex == 0);
+
+	positionsVbo->write(&positions[0], sizeof(Vec3) * pointIndex);
+	colorsVbo->write(&colors[0], sizeof(Vec3) * pointIndex);
+
+	vao->bind();
+	glDrawArrays(GL_LINES, 0, pointIndex);
+	vao->unbind();
+
+	// Cleanup
+	pointIndex = 0;
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&Mat4::getIdentity());
+}
+
+
+//======================================================================================================================
+// pushBackVertex                                                                                                      =
+//======================================================================================================================
+void Dbg::pushBackVertex(const Vec3& pos)
+{
+	positions[pointIndex] = pos;
+	colors[pointIndex] = crntCol;
+	++pointIndex;
 }
 
