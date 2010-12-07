@@ -41,44 +41,48 @@ void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 //======================================================================================================================
 void Dbg::renderGrid()
 {
-	/*Vec4 col0(0.5, 0.5, 0.5, 1.0);
+	Vec4 col0(0.5, 0.5, 0.5, 1.0);
 	Vec4 col1(0.0, 0.0, 1.0, 1.0);
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
 	const float SPACE = 1.0; // space between lines
 	const int NUM = 57;  // lines number. must be odd
 
-	float OPT = ((NUM - 1) * SPACE / 2);
+	const float OPT = ((NUM - 1) * SPACE / 2);
 
-	Vec<Vec3> positions;
-	Vec<Vec4> colors;
+	begin();
 
-	for(int x=0; x<NUM; x++)
+	for(int x = 0; x < NUM; x++)
 	{
-		if(x == NUM / 2) // if the middle line then change color
-			colors.push_back(col1);
-		else if(x == (NUM / 2) + 1) // if the next line after the middle one change back to default col
-			colors.push_back(col0);
+		// if the middle line then change color
+		if(x == NUM / 2)
+		{
+			setColor(col1);
+		}
+		// if the next line after the middle one change back to default col
+		else if(x == (NUM / 2) + 1)
+		{
+			setColor(col0);
+		}
 
 		float opt1 = x * SPACE;
 		// line in z
-		positions.push_back(Vec3(opt1 - OPT, 0.0, -OPT));
-		positions.push_back(Vec3(opt1 - OPT, 0.0, OPT));
+		pushBackVertex(Vec3(opt1 - OPT, 0.0, -OPT));
+		pushBackVertex(Vec3(opt1 - OPT, 0.0, OPT));
 
-		if(x==NUM/2) // if middle line change col so you can highlight the x-axis
-			colors.push_back(col2);
+		// if middle line change col so you can highlight the x-axis
+		if(x == NUM / 2)
+		{
+			setColor(col2);
+		}
 
 		// line in the x
-		positions.push_back(Vec3(-OPT, 0.0, opt1 - OPT));
-		positions.push_back(Vec3(OPT, 0.0, opt1 - OPT));
+		pushBackVertex(Vec3(-OPT, 0.0, opt1 - OPT));
+		pushBackVertex(Vec3(OPT, 0.0, opt1 - OPT));
 	}
 
 	// render
-	setColor(col0);
-	glEnableVertexAttribArray(POSITION_ATTRIBUTE_ID);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &positions[0]);
-	glDrawArrays(GL_LINES, 0, positions.size());
-	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);*/
+	end();
 }
 
 
@@ -228,6 +232,13 @@ void Dbg::init(const RendererInitializer& initializer)
 	vao = new Vao(this);
 	const int positionAttribLoc = 0;
 	vao->attachArrayBufferVbo(*positionsVbo, positionAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	//
+	// Rest
+	//
+	pointIndex = 0;
+	ON_GL_FAIL_THROW_EXCEPTION();
+	modelMat.setIdentity();
 }
 
 
@@ -245,16 +256,13 @@ void Dbg::run()
 
 	fbo.bind();
 	sProg->bind();
-	viewProjectionMat = cam.getProjectionMatrix() * cam.getViewMatrix();
 
 	// OGL stuff
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	sProg->bind();
-
-	//R::renderGrid();
+	renderGrid();
 	/// @todo Uncomment
 	/*for(uint i=0; i<app->getScene().nodes.size(); i++)
 	{
@@ -278,22 +286,20 @@ void Dbg::run()
 	}*/
 
 	// Physics
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	setModelMat(Mat4::getIdentity());
 	app->getScene().getPhysics().debugDraw();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);*/
 }
 
 
 //======================================================================================================================
 // setModelMat                                                                                                         =
 //======================================================================================================================
-void Dbg::setModelMat(const Mat4& modelMat)
+void Dbg::setModelMat(const Mat4& modelMat_)
 {
 	RASSERT_THROW_EXCEPTION(pointIndex != 0); // This means that the func called after begin and before end
-
-	Mat4 pmv = viewProjectionMat * modelMat;
-	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
+	modelMat = modelMat_;
 }
 
 
@@ -313,8 +319,11 @@ void Dbg::end()
 {
 	RASSERT_THROW_EXCEPTION(pointIndex == 0);
 
-	positionsVbo->write(&positions[0], sizeof(Vec3) * pointIndex);
-	colorsVbo->write(&colors[0], sizeof(Vec3) * pointIndex);
+	positionsVbo->write(&positions[0], 0, sizeof(Vec3) * pointIndex);
+	colorsVbo->write(&colors[0], 0, sizeof(Vec3) * pointIndex);
+
+	Mat4 pmv = r.getViewProjectionMat() * modelMat;
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
 
 	vao->bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);

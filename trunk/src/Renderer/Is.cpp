@@ -60,7 +60,8 @@ void Is::calcViewVectors()
 		// end of optimized code
 	}
 
-	viewVectorsVbo->write(viewVectors, sizeof(viewVectors));
+	RASSERT_THROW_EXCEPTION(sizeof(viewVectors) != viewVectorsVbo->getSizeInBytes());
+	viewVectorsVbo->write(viewVectors);
 }
 
 
