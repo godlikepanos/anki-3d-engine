@@ -239,6 +239,7 @@ void Dbg::init(const RendererInitializer& initializer)
 	pointIndex = 0;
 	ON_GL_FAIL_THROW_EXCEPTION();
 	modelMat.setIdentity();
+	crntCol = Vec3(1.0, 0.0, 0.0);
 }
 
 
