@@ -52,6 +52,7 @@
 /// 			<name>varNameInShader</name>
 /// 			<value> **
 /// 				<texture>path/tex.png</texture> |
+/// 				<fai>msDepthFai | isFai | ppsPrePassFai | ppsPostPassFai</fai> |
 /// 				<float>0.0</float> |
 /// 				<vec2><x>0.0</x><y>0.0</y></vec2> |
 /// 				<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
@@ -88,7 +89,7 @@ class Material: public Resource
 		/// Standard uniform variables. The Renderer sees what are applicable and sets them
 		/// After changing the enum update also:
 		/// - Some statics in Material.cpp
-		/// - Renderer::setupMaterial
+		/// - Renderer::setupShaderProg
 		/// - The generic material GLSL shader (maybe)
 		enum StdUniVars
 		{
@@ -118,6 +119,15 @@ class Material: public Resource
 			SUV_NUM ///< The number of standard uniform variables
 		};
 
+		/// The renderer's FAIs
+		enum Fai
+		{
+			MS_DEPTH_FAI, ///< Avoid it in MS
+			IS_FAI, ///< Use it anywhere
+			PPS_PRE_PASS_FAI, ///< Avoid it in BS
+			PPS_POST_PASS_FAI ///< Use it anywhere
+		};
+
 		/// Class for user defined material variables that will be passes in to the shader
 		class UserDefinedUniVar
 		{
@@ -125,15 +135,18 @@ class Material: public Resource
 			PROPERTY_R(Vec2, vec2, getVec2)
 			PROPERTY_R(Vec3, vec3, getVec3)
 			PROPERTY_R(Vec4, vec4, getVec4)
+			PROPERTY_R(Fai, fai, getFai)
 
 			public:
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const char* texFilename);
+				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, Fai fai);
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f);
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec2& v);
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec3& v);
 				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec4& v);
 
-				void set(uint& textureUnit) const;
+				const ShaderProg::UniVar& getUniVar() const {return sProgVar;}
+				const Texture* getTexture() const {return texture.get();}
 
 			private:
 				const ShaderProg::UniVar& sProgVar;
@@ -226,8 +239,14 @@ class Material: public Resource
 // Inlines                                                                                                             =
 //======================================================================================================================
 
+inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, Fai fai_):
+	fai(fai_),
+	sProgVar(sProgVar)
+{}
+
+
 inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f):
-	float_ (f),
+	float_(f),
 	sProgVar(sProgVar)
 {}
 

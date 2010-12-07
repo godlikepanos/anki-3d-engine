@@ -24,37 +24,6 @@ Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVa
 
 
 //======================================================================================================================
-// set                                                                                                                 =
-//======================================================================================================================
-void Material::UserDefinedUniVar::set(uint& textureUnit) const
-{
-	switch(sProgVar.getGlDataType())
-	{
-		// texture
-		case GL_SAMPLER_2D:
-			sProgVar.setTexture(*texture, textureUnit++);
-			break;
-		// float
-		case GL_FLOAT:
-			sProgVar.setFloat(float_);
-			break;
-		// vec2
-		case GL_FLOAT_VEC2:
-			sProgVar.setVec2(&vec2);
-			break;
-		// vec3
-		case GL_FLOAT_VEC3:
-			sProgVar.setVec3(&vec3);
-			break;
-		// vec4
-		case GL_FLOAT_VEC4:
-			sProgVar.setVec4(&vec4);
-			break;
-	}
-}
-
-
-//======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
 Material::StdVarNameAndGlDataTypePair Material::stdAttribVarInfos[SAV_NUM] =
@@ -312,10 +281,45 @@ void Material::load(const char* filename)
 				{
 					// texture
 					case GL_SAMPLER_2D:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni,
-						                                                valueTree.get<std::string>("texture").c_str()));
+					{
+						boost::optional<std::string> texture = valueTree.get_optional<std::string>("texture");
+						boost::optional<std::string> fai = valueTree.get_optional<std::string>("fai");
+
+						if(texture)
+						{
+							userDefinedVars.push_back(new UserDefinedUniVar(uni, texture.get().c_str()));
+						}
+						else if(fai)
+						{
+							if(fai.get() == "msDepthFai")
+							{
+								userDefinedVars.push_back(new UserDefinedUniVar(uni, MS_DEPTH_FAI));
+							}
+							else if(fai.get() == "isFai")
+							{
+								userDefinedVars.push_back(new UserDefinedUniVar(uni, IS_FAI));
+							}
+							else if(fai.get() == "ppsPrePassFai")
+							{
+								userDefinedVars.push_back(new UserDefinedUniVar(uni, PPS_PRE_PASS_FAI));
+							}
+							else if(fai.get() == "ppsPostPassFai")
+							{
+								userDefinedVars.push_back(new UserDefinedUniVar(uni, PPS_POST_PASS_FAI));
+							}
+							else
+							{
+								throw EXCEPTION("incorrect FAI");
+							}
+						}
+						else
+						{
+							throw EXCEPTION("texture or fai expected");
+						}
+
 						break;
-						// float
+					}
+					// float
 					case GL_FLOAT:
 						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getFloat(valueTree)));
 						break;

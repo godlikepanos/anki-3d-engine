@@ -2,6 +2,7 @@
 #define PARTICLEEMITTER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <btBulletCollisionCommon.h>
 #include <memory>
 #include "SceneNode.h"
 #include "GhostNode.h"
@@ -10,6 +11,7 @@
 
 
 class RigidBody;
+class btCollisionShape;
 
 
 /// The particle emitter scene node. This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
@@ -29,7 +31,6 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 
 	public:
 		ParticleEmitter();
-		void render();
 		void init(const char* filename);
 
 	private:

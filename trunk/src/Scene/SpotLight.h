@@ -12,7 +12,7 @@ class SpotLight: public Light
 		~SpotLight() {}
 		void init(const char* filename);
 
-		/// @name Setters & getters
+		/// @name Accessors
 		/// @{
 		float getDistance() const {return camera->getZFar();}
 		void setDistance(float d) {camera->setZFar(d);}

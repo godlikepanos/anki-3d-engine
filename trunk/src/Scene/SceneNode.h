@@ -38,7 +38,6 @@ class SceneNode: public Object
 		
 		SceneNode(SceneNodeType type_, SceneNode* parent = NULL);
 		virtual ~SceneNode();
-		virtual void render() {}
 		virtual void init(const char*) = 0; ///< init using a script
 
 		/// @name Updates

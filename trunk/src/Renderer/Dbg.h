@@ -11,6 +11,7 @@
 
 class Vbo;
 class Vao;
+class DbgDrawer;
 
 
 /// Debugging stage
@@ -62,6 +63,7 @@ class Dbg: public RenderingPass
 		Vbo* positionsVbo;
 		Vbo* colorsVbo;
 		Vao* vao;
+		DbgDrawer* dbgDrawer;
 };
 
 

@@ -48,7 +48,6 @@ class Light: public SceneNode
 	
 		Light(LightType type, SceneNode* parent = NULL);
 		~Light() {}
-		void render();
 		void init(const char* filename);
 };
 

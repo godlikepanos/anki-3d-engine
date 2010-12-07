@@ -44,7 +44,6 @@ class Camera: public SceneNode
 
 		void lookAtPoint(const Vec3& point);
 		void updateTrf();
-		void render();
 		void init(const char*) {}
 
 		/// @name Frustum checks

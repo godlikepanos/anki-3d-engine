@@ -253,7 +253,55 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 	boost::ptr_vector<Material::UserDefinedUniVar>::const_iterator it = mtl.getUserDefinedVars().begin();
 	for(; it !=  mtl.getUserDefinedVars().end(); it++)
 	{
-		(*it).set(textureUnit);
+		const Material::UserDefinedUniVar& udv = *it;
+
+		switch(udv.getUniVar().getGlDataType())
+		{
+			// texture or FAI
+			case GL_SAMPLER_2D:
+				if(udv.getTexture() != NULL)
+				{
+					udv.getUniVar().setTexture(*udv.getTexture(), textureUnit);
+				}
+				else
+				{
+					switch(udv.getFai())
+					{
+						case Material::MS_DEPTH_FAI:
+							udv.getUniVar().setTexture(ms->getDepthFai(), textureUnit);
+							break;
+						case Material::IS_FAI:
+							udv.getUniVar().setTexture(is->getFai(), textureUnit);
+							break;
+						case Material::PPS_PRE_PASS_FAI:
+							udv.getUniVar().setTexture(pps->getPrePassFai(), textureUnit);
+							break;
+						case Material::PPS_POST_PASS_FAI:
+							udv.getUniVar().setTexture(pps->getPostPassFai(), textureUnit);
+							break;
+						default:
+							RASSERT_THROW_EXCEPTION("WTF?");
+					}
+				}
+				++textureUnit;
+				break;
+			// float
+			case GL_FLOAT:
+				udv.getUniVar().setFloat(udv.getFloat());
+				break;
+			// vec2
+			case GL_FLOAT_VEC2:
+				udv.getUniVar().setVec2(&udv.getVec2());
+				break;
+			// vec3
+			case GL_FLOAT_VEC3:
+				udv.getUniVar().setVec3(&udv.getVec3());
+				break;
+			// vec4
+			case GL_FLOAT_VEC4:
+				udv.getUniVar().setVec4(&udv.getVec4());
+				break;
+		}
 	}
 
 	//
