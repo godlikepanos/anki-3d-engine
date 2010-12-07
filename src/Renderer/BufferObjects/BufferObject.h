@@ -19,6 +19,8 @@ class BufferObject: public Object
 
 	PROPERTY_R(GLenum, usage, getBufferUsage) ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 
+	PROPERTY_R(size_t, sizeInBytes, getSizeInBytes)
+
 	public:
 		/// Default constructor @see create
 		BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage, Object* parent = NULL);
@@ -36,11 +38,13 @@ class BufferObject: public Object
 		/// Throws exception if the given size and the BO size are not equal. It throws an exception if the usage is
 		/// GL_STATIC_DRAW
 		/// @param[in] buff The buffer to copy to BO
-		/// @param[in] size The size in bytes we want to write
-		void write(void* buff, size_t size);
+		void write(void* buff);
 
-	protected:
-		size_t sizeInBytes;
+		/// The same as the other write but it maps only a subset of the data
+		/// @param[in] buff The buffer to copy to BO
+		/// @param[in] offset The offset
+		/// @param[in] size The size in bytes we want to write
+		void write(void* buff, size_t offset, size_t size);
 
 	private:
 		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails

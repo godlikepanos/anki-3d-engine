@@ -37,23 +37,26 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_, const void* dataPtr
 //======================================================================================================================
 // write                                                                                                               =
 //======================================================================================================================
-void BufferObject::write(void* buff, size_t size)
+void BufferObject::write(void* buff)
 {
-	if(usage == GL_STATIC_DRAW)
-	{
-		throw EXCEPTION("Its not recommended to map GL_STATIC_DRAW BOs");
-	}
-
+	RASSERT_THROW_EXCEPTION(usage == GL_STATIC_DRAW);
 	bind();
-
-	int bufferSize = 0;
-	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
-	if(size != uint(bufferSize))
-	{
-		throw EXCEPTION("Data size mismatch");
-	}
-
 	void* mapped = glMapBuffer(target, GL_WRITE_ONLY);
+	memcpy(mapped, buff, sizeInBytes);
+	glUnmapBuffer(target);
+	unbind();
+}
+
+
+//======================================================================================================================
+// write                                                                                                               =
+//======================================================================================================================
+void BufferObject::write(void* buff, size_t offset, size_t size)
+{
+	RASSERT_THROW_EXCEPTION(usage == GL_STATIC_DRAW);
+	RASSERT_THROW_EXCEPTION(offset + size > sizeInBytes);
+	bind();
+	void* mapped = glMapBufferRange(target, offset, size, GL_MAP_WRITE_BIT);
 	memcpy(mapped, buff, size);
 	glUnmapBuffer(target);
 	unbind();

@@ -1,6 +1,7 @@
 #ifndef DBG_H
 #define DBG_H
 
+#include <boost/array.hpp>
 #include "RenderingPass.h"
 #include "Fbo.h"
 #include "ShaderProg.h"
@@ -45,7 +46,6 @@ class Dbg: public RenderingPass
 		/// @}
 
 	private:
-		static const uint POSITION_ATTRIBUTE_ID = 0; ///< The glId of the attribute var for position in the dbg shader
 		bool enabled;
 		bool showAxisEnabled;
 		bool showLightsEnabled;
@@ -53,11 +53,10 @@ class Dbg: public RenderingPass
 		bool showCamerasEnabled;
 		Fbo fbo;
 		RsrcPtr<ShaderProg> sProg;
-		Mat4 viewProjectionMat;
-
-		static const uint MAX_POINTS_PER_DRAW = 100;
-		Vec3 positions[MAX_POINTS_PER_DRAW];
-		Vec3 colors[MAX_POINTS_PER_DRAW];
+		static const uint MAX_POINTS_PER_DRAW = 250;
+		boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
+		boost::array<Vec3, MAX_POINTS_PER_DRAW> colors;
+		Mat4 modelMat;
 		uint pointIndex;
 		Vec3 crntCol;
 		Vbo* positionsVbo;

@@ -29,7 +29,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	initializer.width = app->getWindowWidth() * renderingQuality;
 	initializer.height = app->getWindowHeight() * renderingQuality;
 	Renderer::init(initializer);
-	//dbg.init(initializer);
+	dbg->init(initializer);
 }
 
 
@@ -50,11 +50,6 @@ void MainRenderer::initGl()
 	// print GL info
 	INFO("OpenGL info: OGL " + reinterpret_cast<const char*>(glGetString(GL_VERSION)) + ", GLSL " +
 	     reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
-
-	if(!glewIsSupported("GL_VERSION_3_1"))
-	{
-		WARNING("OpenGL ver 3.1 not supported. The application may crash (and burn)");
-	}
 
 	// get max texture units
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
@@ -93,7 +88,7 @@ void MainRenderer::initGl()
 void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
-	//dbg.run();
+	dbg->run();
 
 	//
 	// Render the PPS FAI to the framebuffer
