@@ -1,6 +1,4 @@
 #include "Camera.h"
-#include "MainRenderer.h"
-#include "App.h"
 
 
 //======================================================================================================================
@@ -14,36 +12,6 @@ void Camera::setAll(float fovx_, float fovy_, float znear_, float zfar_)
 	zFar = zfar_;
 	calcProjectionMatrix();
 	calcLSpaceFrustumPlanes();
-}
-
-
-//======================================================================================================================
-// render                                                                                                              =
-//======================================================================================================================
-void Camera::render()
-{
-	app->getMainRenderer().getDbg().setColor(Vec4(1.0, 0.0, 1.0, 1.0));
-	app->getMainRenderer().getDbg().setModelMat(Mat4(getWorldTransform()));
-
-	const float camLen = 1.0;
-	float tmp0 = camLen / tan((M::PI - fovX)*0.5) + 0.001;
-	float tmp1 = camLen * tan(fovY*0.5) + 0.001;
-
-	float points [][3] = {
-		{0.0, 0.0, 0.0}, // 0: eye point
-		{-tmp0, tmp1, -camLen}, // 1: top left
-		{-tmp0, -tmp1, -camLen}, // 2: bottom left
-		{tmp0, -tmp1, -camLen}, // 3: bottom right
-		{tmp0, tmp1, -camLen}, // 4: top right
-	};
-
-	const ushort indeces [] = { 0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2, 3, 3, 4, 4, 1 };
-
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, points);
-	glDrawElements(GL_LINES, 16, GL_UNSIGNED_SHORT, indeces);
-	glDisableVertexAttribArray(0);
 }
 
 

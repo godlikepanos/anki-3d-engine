@@ -3,8 +3,10 @@
 #include "App.h"
 #include "Scene.h"
 #include "Camera.h"
-#include "LightData.h"
+#include "Light.h"
 #include "RendererInitializer.h"
+#include "DbgDrawer.h"
+#include "ParticleEmitter.h"
 
 
 //======================================================================================================================
@@ -24,15 +26,11 @@ Dbg::Dbg(Renderer& r_, Object* parent):
 //======================================================================================================================
 void Dbg::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
-	/*float posBuff [] = {from.x, from.y, from.z, to.x, to.y, to.z};
-
 	setColor(color);
-	setModelMat(Mat4::getIdentity());
-
-	glEnableVertexAttribArray(POSITION_ATTRIBUTE_ID);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, posBuff);
-	glDrawArrays(GL_LINES, 0, 2);
-	glDisableVertexAttribArray(POSITION_ATTRIBUTE_ID);*/
+	begin();
+		pushBackVertex(from);
+		pushBackVertex(to);
+	end();
 }
 
 
@@ -48,37 +46,35 @@ void Dbg::renderGrid()
 	const float SPACE = 1.0; // space between lines
 	const int NUM = 57;  // lines number. must be odd
 
-	const float OPT = ((NUM - 1) * SPACE / 2);
+	const float GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
+
+	setColor(col0);
 
 	begin();
 
-	for(int x = 0; x < NUM; x++)
+	for(int x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
+		setColor(col0);
+
 		// if the middle line then change color
-		if(x == NUM / 2)
+		if(x == 0)
 		{
 			setColor(col1);
 		}
-		// if the next line after the middle one change back to default col
-		else if(x == (NUM / 2) + 1)
-		{
-			setColor(col0);
-		}
 
-		float opt1 = x * SPACE;
 		// line in z
-		pushBackVertex(Vec3(opt1 - OPT, 0.0, -OPT));
-		pushBackVertex(Vec3(opt1 - OPT, 0.0, OPT));
+		pushBackVertex(Vec3(x, 0.0, -GRID_HALF_SIZE));
+		pushBackVertex(Vec3(x, 0.0, GRID_HALF_SIZE));
 
 		// if middle line change col so you can highlight the x-axis
-		if(x == NUM / 2)
+		if(x == 0)
 		{
 			setColor(col2);
 		}
 
 		// line in the x
-		pushBackVertex(Vec3(-OPT, 0.0, opt1 - OPT));
-		pushBackVertex(Vec3(OPT, 0.0, opt1 - OPT));
+		pushBackVertex(Vec3(-GRID_HALF_SIZE, 0.0, x));
+		pushBackVertex(Vec3(GRID_HALF_SIZE, 0.0, x));
 	}
 
 	// render
@@ -167,10 +163,10 @@ void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int co
 //======================================================================================================================
 void Dbg::drawCube(float size)
 {
-	/*Vec3 maxPos = Vec3(0.5 * size);
+	Vec3 maxPos = Vec3(0.5 * size);
 	Vec3 minPos = Vec3(-0.5 * size);
 
-	Vec3 points [] = {
+	Vec3 points[] = {
 		Vec3(maxPos.x, maxPos.y, maxPos.z),  // right top front
 		Vec3(minPos.x, maxPos.y, maxPos.z),  // left top front
 		Vec3(minPos.x, minPos.y, maxPos.z),  // left bottom front
@@ -181,12 +177,14 @@ void Dbg::drawCube(float size)
 		Vec3(maxPos.x, minPos.y, minPos.z)   // right bottom back
 	};
 
-	const ushort indeces [] = { 0, 1, 2, 3, 4, 0, 3, 7, 1, 5, 6, 2, 5, 4, 7, 6, 0, 4, 5, 1, 3, 2, 6, 7 };
+	const uint indeces[] = {0, 1, 2, 3, 4, 0, 3, 7, 1, 5, 6, 2, 5, 4, 7, 6, 0, 4, 5, 1, 3, 2, 6, 7};
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &(points[0][0]));
-	glDrawElements(GL_QUADS, sizeof(indeces)/sizeof(ushort), GL_UNSIGNED_SHORT, indeces);
-	glDisableVertexAttribArray(0);*/
+	begin();
+		for(const uint* p = indeces; p != indeces + sizeof(indeces); p++)
+		{
+			pushBackVertex(points[*p]);
+		}
+	end();
 }
 
 
@@ -232,6 +230,8 @@ void Dbg::init(const RendererInitializer& initializer)
 	vao = new Vao(this);
 	const int positionAttribLoc = 0;
 	vao->attachArrayBufferVbo(*positionsVbo, positionAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	const int colorAttribLoc = 1;
+	vao->attachArrayBufferVbo(*colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	//
 	// Rest
@@ -240,6 +240,7 @@ void Dbg::init(const RendererInitializer& initializer)
 	ON_GL_FAIL_THROW_EXCEPTION();
 	modelMat.setIdentity();
 	crntCol = Vec3(1.0, 0.0, 0.0);
+	dbgDrawer = new DbgDrawer(*this, this);
 }
 
 
@@ -253,8 +254,6 @@ void Dbg::run()
 		return;
 	}
 
-	const Camera& cam = r.getCamera();
-
 	fbo.bind();
 	sProg->bind();
 
@@ -265,9 +264,30 @@ void Dbg::run()
 
 	renderGrid();
 	/// @todo Uncomment
+	Vec<SceneNode*>::const_iterator it = app->getScene().nodes.begin();
+	for(; it != app->getScene().nodes.end(); ++it)
+	{
+		const SceneNode& node = *(*it);
+
+		switch(node.type)
+		{
+			case SceneNode::SNT_CAMERA:
+				dbgDrawer->drawCamera(static_cast<const Camera&>(node));
+				break;
+			case SceneNode::SNT_LIGHT:
+				dbgDrawer->drawLight(static_cast<const Light&>(node));
+				break;
+			case SceneNode::SNT_PARTICLE_EMITTER:
+				dbgDrawer->drawParticleEmitter(static_cast<const ParticleEmitter&>(node));
+				break;
+			default:
+				break;
+		}
+	}
 	/*for(uint i=0; i<app->getScene().nodes.size(); i++)
 	{
 		SceneNode* node = app->getScene().nodes[i];
+
 		if
 		(
 			(node->type == SceneNode::SNT_LIGHT && showLightsEnabled) ||
