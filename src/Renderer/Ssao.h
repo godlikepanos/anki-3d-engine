@@ -34,7 +34,7 @@ class Ssao: private RenderingPass
 		Texture fai;  ///< AKA vblurFai The final FAI
 		bool enabled;
 		float renderingQuality;
-		float blurringIterations;
+		float blurringIterationsNum;
 		Fbo ssaoFbo;
 		Fbo hblurFbo;
 		Fbo vblurFbo;

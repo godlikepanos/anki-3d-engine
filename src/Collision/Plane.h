@@ -9,8 +9,8 @@
 /// Plane collision shape
 class Plane: public CollisionShape
 {
-	PROPERTY_RW(Vec3, normal, setNormal, getNormal)
-	PROPERTY_RW(float, offset, setOffset, getOffset)
+	PROPERTY_RW(Vec3, normal, getNormal, setNormal)
+	PROPERTY_RW(float, offset, getOffset, setOffset)
 
 	public:
 		/// Default constructor

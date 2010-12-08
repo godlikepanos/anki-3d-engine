@@ -126,9 +126,9 @@ void init()
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
 	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterations = 2;
+	initializer.pps.hdr.blurringIterationsNum = 2;
 	initializer.pps.hdr.exposure = 4.0;
-	initializer.pps.ssao.blurringIterations = 2;
+	initializer.pps.ssao.blurringIterationsNum = 2;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.renderingQuality = 0.5;
 	initializer.mainRendererQuality = 1.0;

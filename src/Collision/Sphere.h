@@ -12,8 +12,8 @@ class Plane;
 /// Sphere collision shape
 class Sphere: public CollisionShape
 {
-	PROPERTY_RW(Vec3, center, setCenter, getCenter)
-	PROPERTY_RW(float, radius, setRadius, getRadius)
+	PROPERTY_RW(Vec3, center, getCenter, setCenter)
+	PROPERTY_RW(float, radius, getRadius, setRadius)
 
 	public:
 		/// Default constructor

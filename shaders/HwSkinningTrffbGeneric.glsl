@@ -1,3 +1,6 @@
+/// @file
+///
+/// Switches: NORMAL_ENABLED, TANGENT_ENABLED
 #pragma anki vertShaderBegins
 
 in vec3 position;
@@ -11,12 +14,16 @@ const int MAX_BONES_PER_MESH = 60;
 uniform mat3 skinningRotations[MAX_BONES_PER_MESH];
 uniform vec3 skinningTranslations[MAX_BONES_PER_MESH];
 
-#pragma anki transformFeedbackVarying vPosition
+//#pragma anki transformFeedbackVarying vPosition
 out vec3 vPosition;
-#pragma anki transformFeedbackVarying vNormal
-varying vec3 vNormal;
-#pragma anki transformFeedbackVarying vTangent
-varying vec4 vTangent;
+//#pragma anki transformFeedbackVarying vNormal
+#if defined(NORMAL_ENABLED)
+	out vec3 vNormal;
+#endif
+//#pragma anki transformFeedbackVarying vTangent
+#if defined(TANGENT_ENABLED)
+	out vec4 vTangent;
+#endif
 
 
 void main()

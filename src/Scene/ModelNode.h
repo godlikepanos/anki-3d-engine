@@ -13,10 +13,10 @@ class SkelAnimModelNodeCtrl;
 /// The model scene node
 class ModelNode: public SceneNode
 {
-	PROPERTY_RW(Vec<Vec3>, heads, setHeads, getHeads)
-	PROPERTY_RW(Vec<Vec3>, tails, setTails, getTails)
-	PROPERTY_RW(Vec<Mat3>, boneRotations, setBoneRotations, getBoneRotations)
-	PROPERTY_RW(Vec<Vec3>, boneTranslations, setBoneTranslations, getBoneTranslations)
+	PROPERTY_RW(Vec<Vec3>, heads, getHeads, setHeads)
+	PROPERTY_RW(Vec<Vec3>, tails, getTails, setTails)
+	PROPERTY_RW(Vec<Mat3>, boneRotations, getBoneRotations, setBoneRotations)
+	PROPERTY_RW(Vec<Vec3>, boneTranslations, getBoneTranslations, setBoneTranslations)
 
 	public:
 		SkelAnimModelNodeCtrl* skelAnimModelNodeCtrl; ///< @todo Clean this

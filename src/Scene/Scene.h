@@ -19,7 +19,7 @@ class ModelNode;
 class Scene: public Object
 {
 	//PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
-	PROPERTY_RW(Vec3, sunPos, setSunPos, getSunPos)
+	PROPERTY_RW(Vec3, sunPos, getSunPos, setSunPos)
 	//PROPERTY_R(Physics*, phyWorld, getPhysics) ///< Connection with bullet
 
 	public:

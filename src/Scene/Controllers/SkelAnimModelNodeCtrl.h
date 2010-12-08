@@ -16,7 +16,7 @@ class ModelNode;
 /// SkelAnim controls a ModelNode
 class SkelAnimModelNodeCtrl: public Controller
 {
-	PROPERTY_RW(float, step, setStep, getStep)
+	PROPERTY_RW(float, step, getStep, setStep)
 
 	public:
 		SkelAnimModelNodeCtrl(ModelNode& skelNode_);

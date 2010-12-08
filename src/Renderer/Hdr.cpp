@@ -55,7 +55,7 @@ void Hdr::init(const RendererInitializer& initializer)
 
 	renderingQuality = initializer.pps.hdr.renderingQuality;
 	blurringDist = initializer.pps.hdr.blurringDist;
-	blurringIterations = initializer.pps.hdr.blurringIterations;
+	blurringIterationsNum = initializer.pps.hdr.blurringIterationsNum;
 	exposure = initializer.pps.hdr.exposure;
 
 	initFbo(toneFbo, toneFai);
@@ -103,7 +103,7 @@ void Hdr::run()
 	// blurring passes
 	hblurFai.setRepeat(false);
 	fai.setRepeat(false);
-	for(uint i=0; i<blurringIterations; i++)
+	for(uint i=0; i<blurringIterationsNum; i++)
 	{
 		// hpass
 		hblurFbo.bind();
