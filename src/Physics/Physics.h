@@ -5,7 +5,7 @@
 #include <btBulletDynamicsCommon.h>
 #include "Object.h"
 #include "BtAndAnkiConvertors.h"
-#include "DebugDrawer.h"
+#include "PhyDbgDrawer.h"
 
 
 class PhyCharacter;
@@ -50,7 +50,7 @@ class Physics: public Object
 		btCollisionDispatcher* dispatcher;
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
-		DebugDrawer* debugDrawer;
+		PhyDbgDrawer* debugDrawer;
 		float defaultContactProcessingThreshold;
 		Vec<PhyCharacter*> characters;
 		float time; ///< Time of prev update

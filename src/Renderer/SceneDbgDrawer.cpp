@@ -1,4 +1,4 @@
-#include "DbgDrawer.h"
+#include "SceneDbgDrawer.h"
 #include "Dbg.h"
 #include "Camera.h"
 #include "Light.h"
@@ -8,7 +8,7 @@
 //======================================================================================================================
 // drawCamera                                                                                                          =
 //======================================================================================================================
-void DbgDrawer::drawCamera(const Camera& cam) const
+void SceneDbgDrawer::drawCamera(const Camera& cam) const
 {
 	dbg.setColor(Vec4(1.0, 0.0, 1.0, 1.0));
 	dbg.setModelMat(Mat4(cam.getWorldTransform()));
@@ -39,16 +39,18 @@ void DbgDrawer::drawCamera(const Camera& cam) const
 //======================================================================================================================
 // drawLight                                                                                                           =
 //======================================================================================================================
-void DbgDrawer::drawLight(const Light& light) const
+void SceneDbgDrawer::drawLight(const Light& light) const
 {
-	dbg.drawSphere(0.1, light.getWorldTransform(), Vec4(light.getDiffuseCol(), 1.0));
+	dbg.setColor(light.getDiffuseCol());
+	dbg.setModelMat(Mat4(light.getWorldTransform()));
+	dbg.drawSphere(0.1);
 }
 
 
 //======================================================================================================================
 // drawParticleEmitter                                                                                                 =
 //======================================================================================================================
-void DbgDrawer::drawParticleEmitter(const ParticleEmitter& pe) const
+void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitter& pe) const
 {
 	dbg.setColor(Vec4(1.0));
 	dbg.setModelMat(Mat4(pe.getWorldTransform()));
