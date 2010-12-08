@@ -284,7 +284,7 @@ void ShaderProg::load(const char* filename)
 	bindCustomAttribLocs(pars);
 
 	// 5) set the TRFFB varyings
-	if(pars.getOutput().getTrffbVaryings().size() > 1)
+	if(pars.getOutput().getTrffbVaryings().size() > 0)
 	{
 		const char* varsArr[128];
 		for(uint i=0; i<pars.getOutput().getTrffbVaryings().size(); i++)

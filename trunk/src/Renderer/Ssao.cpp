@@ -55,7 +55,7 @@ void Ssao::init(const RendererInitializer& initializer)
 		return;
 
 	renderingQuality = initializer.pps.ssao.renderingQuality;
-	blurringIterations = initializer.pps.ssao.blurringIterations;
+	blurringIterationsNum = initializer.pps.ssao.blurringIterationsNum;
 
 	// create FBOs
 	createFbo(ssaoFbo, ssaoFai);
@@ -129,7 +129,7 @@ void Ssao::run()
 	// blurring passes
 	hblurFai.setRepeat(false);
 	fai.setRepeat(false);
-	for(uint i=0; i<blurringIterations; i++)
+	for(uint i=0; i<blurringIterationsNum; i++)
 	{
 		// hpass
 		hblurFbo.bind();

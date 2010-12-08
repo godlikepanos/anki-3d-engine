@@ -27,8 +27,8 @@ class SceneNode: public Object
 			SNT_MODEL
 		};
 
-	PROPERTY_RW(Transform, localTransform, setLocalTransform, getLocalTransform) ///< The transformation in local space
-	PROPERTY_RW(Transform, worldTransform, setWorldTransform, getWorldTransform) ///< The transformation in world space (local combined with parent transformation)
+	PROPERTY_RW(Transform, localTransform, getLocalTransform, setLocalTransform) ///< The transformation in local space
+	PROPERTY_RW(Transform, worldTransform, getWorldTransform, setWorldTransform) ///< The transformation in world space (local combined with parent transformation)
 
 	public:
 		SceneNode* parent;

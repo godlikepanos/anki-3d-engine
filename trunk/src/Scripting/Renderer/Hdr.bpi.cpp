@@ -5,8 +5,8 @@
 WRAP(Hdr)
 {
 	class_<Hdr, noncopyable>("Hdr", no_init)
-		.add_property("blurringIterations", &Hdr::getBlurringIterations, &Hdr::setBlurringIterations)
-		.add_property("blurringDist", &Hdr::getBlurringDist, &Hdr::setBlurringDist)
-		.add_property("exposure", &Hdr::getExposure, &Hdr::setExposure)
+		BP_PROPERTY_RW("blurringIterationsNum", Hdr::getBlurringIterationsNum, Hdr::setBlurringIterationsNum)
+		BP_PROPERTY_RW("exposure", Hdr::getExposure, Hdr::setExposure)
+		BP_PROPERTY_RW("blurringDist", Hdr::getBlurringDist, Hdr::setBlurringDist)
 	;
 }

@@ -7,7 +7,7 @@
 /// Point light. Defined by its radius
 class PointLight: public Light
 {
-	PROPERTY_RW(float, radius, setRadius, getRadius)
+	PROPERTY_RW(float, radius, getRadius, setRadius)
 
 	public:
 		PointLight(SceneNode* parent = NULL): Light(LT_POINT, parent) {}

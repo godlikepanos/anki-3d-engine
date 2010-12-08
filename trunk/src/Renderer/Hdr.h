@@ -15,6 +15,11 @@ class Hdr: private RenderingPass
 	PROPERTY_R(Texture, toneFai, getToneFai) ///< Vertical blur pass FAI
 	PROPERTY_R(Texture, hblurFai, getHblurFai) ///< pass0Fai with the horizontal blur FAI
 	PROPERTY_R(Texture, fai, getFai) ///< The final FAI
+	PROPERTY_R(float, renderingQuality, getRenderingQuality)
+	/// The blurring iterations of the tone map
+	PROPERTY_RW(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
+	PROPERTY_RW(float, exposure, getExposure, setExposure)///< How bright is the HDR
+	PROPERTY_RW(float, blurringDist, getBlurringDist, setBlurringDist)
 
 	public:
 		Hdr(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
@@ -23,14 +28,7 @@ class Hdr: private RenderingPass
 
 		/// Setters & getters
 		/// @{
-		float getBlurringDist() {return blurringDist;}
-		void setBlurringDist(float f) {blurringDist = f;}
-		uint getBlurringIterations() {return blurringIterations;}
-		void setBlurringIterations(uint i) {blurringIterations = i;}
-		float getExposure() const {return exposure;}
-		void setExposure(float f) {exposure = f;}
 		bool isEnabled() const {return enabled;}
-		float getRenderingQuality() const {return renderingQuality;}
 		/// @}
 
 	private:
@@ -40,11 +38,7 @@ class Hdr: private RenderingPass
 		RsrcPtr<ShaderProg> toneSProg;
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
-		float blurringDist;
-		uint blurringIterations;
-		float exposure; ///< How bright is the HDR
 		bool enabled;
-		float renderingQuality;
 
 		void initFbo(Fbo& fbo, Texture& fai);
 };
