@@ -26,7 +26,6 @@
 #include "Renderer.h"
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
-#include "DebugDrawer.h"
 #include "PhyCharacter.h"
 #include "RigidBody.h"
 #include "ScriptingEngine.h"

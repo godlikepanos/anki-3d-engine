@@ -1,13 +1,11 @@
-#ifndef DEBUGDRAWER_H
-#define DEBUGDRAWER_H
+#ifndef PHY_DBG_DRAWER_H
+#define PHY_DBG_DRAWER_H
 
 #include <LinearMath/btIDebugDraw.h>
 
 
-/**
- * An implementation of btIDebugDraw used for debugging Bullet. See Bullet docs for details
- */
-class DebugDrawer: public btIDebugDraw
+/// An implementation of btIDebugDraw used for debugging Bullet. See Bullet docs for details
+class PhyDbgDrawer: public btIDebugDraw
 {
 	public:
 		void drawLine(const btVector3& from, const btVector3& to, const btVector3& color);

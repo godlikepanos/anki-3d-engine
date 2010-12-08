@@ -19,7 +19,7 @@ Physics::Physics(Object* parent):
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, sol, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0,-10, 0));
 
-	debugDrawer = new DebugDrawer;
+	debugDrawer = new PhyDbgDrawer;
 	dynamicsWorld->setDebugDrawer(debugDrawer);
 	dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 }

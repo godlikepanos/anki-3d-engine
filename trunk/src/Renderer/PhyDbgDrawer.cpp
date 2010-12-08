@@ -1,4 +1,4 @@
-#include "DebugDrawer.h"
+#include "PhyDbgDrawer.h"
 #include "MainRenderer.h"
 #include "App.h"
 #include "BtAndAnkiConvertors.h"
@@ -8,7 +8,7 @@
 //======================================================================================================================
 // drawLine                                                                                                            =
 //======================================================================================================================
-void DebugDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
+void PhyDbgDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
 {
 	app->getMainRenderer().getDbg().drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
 }
@@ -17,16 +17,18 @@ void DebugDrawer::drawLine(const btVector3& from, const btVector3& to, const btV
 //======================================================================================================================
 // drawSphere                                                                                                          =
 //======================================================================================================================
-void DebugDrawer::drawSphere(btScalar radius, const btTransform& transform, const btVector3& color)
+void PhyDbgDrawer::drawSphere(btScalar radius, const btTransform& transform, const btVector3& color)
 {
-	app->getMainRenderer().getDbg().drawSphere(radius, Transform(toAnki(transform)), Vec4(toAnki(color), 1.0));
+	app->getMainRenderer().getDbg().setColor(toAnki(color));
+	app->getMainRenderer().getDbg().setModelMat(Mat4(toAnki(transform)));
+	app->getMainRenderer().getDbg().drawSphere(radius);
 }
 
 
 //======================================================================================================================
 // drawBox                                                                                                             =
 //======================================================================================================================
-void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btVector3& color)
+void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btVector3& color)
 {
 	Mat4 trf(Mat4::getIdentity());
 	trf(0, 0) = max.getX() - min.getX();
@@ -44,7 +46,7 @@ void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btVe
 //======================================================================================================================
 // drawBox                                                                                                             =
 //======================================================================================================================
-void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btTransform& trans, const btVector3& color)
+void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btTransform& trans, const btVector3& color)
 {
 	Mat4 trf(Mat4::getIdentity());
 	trf(0, 0) = max.getX() - min.getX();
@@ -63,7 +65,7 @@ void DebugDrawer::drawBox(const btVector3& min, const btVector3& max, const btTr
 //======================================================================================================================
 // drawContactPoint                                                                                                    =
 //======================================================================================================================
-void DebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/, const btVector3& /*normalOnB*/,
+void PhyDbgDrawer::drawContactPoint(const btVector3& /*pointOnB*/, const btVector3& /*normalOnB*/,
                                           btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
 {
 	//WARNING("Unimplemented");
@@ -73,7 +75,7 @@ void DebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/, const btVector
 //======================================================================================================================
 // reportErrorWarning                                                                                                  =
 //======================================================================================================================
-void DebugDrawer::reportErrorWarning(const char* warningString)
+void PhyDbgDrawer::reportErrorWarning(const char* warningString)
 {
 	throw EXCEPTION(warningString);
 }
@@ -82,7 +84,7 @@ void DebugDrawer::reportErrorWarning(const char* warningString)
 //======================================================================================================================
 // draw3dText                                                                                                          =
 //======================================================================================================================
-void DebugDrawer::draw3dText(const btVector3& /*location*/, const char* /*textString*/)
+void PhyDbgDrawer::draw3dText(const btVector3& /*location*/, const char* /*textString*/)
 {
 	//WARNING("Unimplemented");
 }

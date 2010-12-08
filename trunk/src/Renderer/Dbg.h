@@ -11,7 +11,7 @@
 
 class Vbo;
 class Vao;
-class DbgDrawer;
+class SceneDbgDrawer;
 
 
 /// Debugging stage
@@ -23,7 +23,7 @@ class Dbg: public RenderingPass
 		void run();
 
 		void renderGrid();
-		void drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity = 8);
+		void drawSphere(float radius, int complexity = 8);
 		void drawCube(float size = 1.0);
 		void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
@@ -63,7 +63,7 @@ class Dbg: public RenderingPass
 		Vbo* positionsVbo;
 		Vbo* colorsVbo;
 		Vao* vao;
-		DbgDrawer* dbgDrawer;
+		SceneDbgDrawer* sceneDbgDrawer;
 };
 
 

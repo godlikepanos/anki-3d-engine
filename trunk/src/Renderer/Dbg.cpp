@@ -5,7 +5,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "RendererInitializer.h"
-#include "DbgDrawer.h"
+#include "SceneDbgDrawer.h"
 #include "ParticleEmitter.h"
 
 
@@ -85,10 +85,8 @@ void Dbg::renderGrid()
 //======================================================================================================================
 // drawSphere                                                                                                        =
 //======================================================================================================================
-void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int complexity)
+void Dbg::drawSphere(float radius, int complexity)
 {
-	/*setColor(col);
-
 	const float twopi  = M::PI*2;
 	const float pidiv2 = M::PI/2;
 
@@ -104,9 +102,7 @@ void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int co
 	float py = 0.0;
 	float pz = 0.0;
 
-	Vec<Vec3> positions;
-	Vec<Vec3> normals;
-	Vec<Vec2> texCoodrs;
+	begin();
 
 	for(int i = 0; i < complexity/2; ++i)
 	{
@@ -132,9 +128,10 @@ void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int co
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back(Vec3(px, py, pz));
-			normals.push_back(Vec3(ex, ey, ez));
-			texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity));
+			pushBackVertex(Vec3(px, py, pz));
+			//positions.push_back(Vec3(px, py, pz));
+			//normals.push_back(Vec3(ex, ey, ez));
+			//texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity));
 
 			ex = costheta1 * costheta3;
 			ey = sintheta1;
@@ -143,18 +140,25 @@ void Dbg::drawSphere(float radius, const Transform& trf, const Vec4& col, int co
 			py = radius * ey;
 			pz = radius * ez;
 
-			positions.push_back(Vec3(px, py, pz));
-			normals.push_back(Vec3(ex, ey, ez));
-			texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*i/(float)complexity));
+			pushBackVertex(Vec3(px, py, pz));
+			//positions.push_back(Vec3(px, py, pz));
+			//normals.push_back(Vec3(ex, ey, ez));
+			//texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*i/(float)complexity));
 		}
 	}
 
-	setModelMat(Mat4(trf));
+	positionsVbo->write(&positions[0], 0, sizeof(Vec3) * pointIndex);
+	colorsVbo->write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, &(positions[0][0]));
-	glDrawArrays(GL_QUAD_STRIP, 0, positions.size());
-	glDisableVertexAttribArray(0);*/
+	Mat4 pmv = r.getViewProjectionMat() * modelMat;
+	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
+
+	vao->bind();
+	glDrawArrays(GL_LINE_STRIP, 0, pointIndex);
+	vao->unbind();
+
+	// Cleanup
+	pointIndex = 0;
 }
 
 
@@ -240,7 +244,7 @@ void Dbg::init(const RendererInitializer& initializer)
 	ON_GL_FAIL_THROW_EXCEPTION();
 	modelMat.setIdentity();
 	crntCol = Vec3(1.0, 0.0, 0.0);
-	dbgDrawer = new DbgDrawer(*this, this);
+	sceneDbgDrawer = new SceneDbgDrawer(*this, this);
 }
 
 
@@ -262,8 +266,9 @@ void Dbg::run()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
+	setModelMat(Mat4::getIdentity());
 	renderGrid();
-	/// @todo Uncomment
+
 	Vec<SceneNode*>::const_iterator it = app->getScene().nodes.begin();
 	for(; it != app->getScene().nodes.end(); ++it)
 	{
@@ -272,13 +277,13 @@ void Dbg::run()
 		switch(node.type)
 		{
 			case SceneNode::SNT_CAMERA:
-				dbgDrawer->drawCamera(static_cast<const Camera&>(node));
+				sceneDbgDrawer->drawCamera(static_cast<const Camera&>(node));
 				break;
 			case SceneNode::SNT_LIGHT:
-				dbgDrawer->drawLight(static_cast<const Light&>(node));
+				sceneDbgDrawer->drawLight(static_cast<const Light&>(node));
 				break;
 			case SceneNode::SNT_PARTICLE_EMITTER:
-				dbgDrawer->drawParticleEmitter(static_cast<const ParticleEmitter&>(node));
+				sceneDbgDrawer->drawParticleEmitter(static_cast<const ParticleEmitter&>(node));
 				break;
 			default:
 				break;
@@ -352,7 +357,6 @@ void Dbg::end()
 
 	// Cleanup
 	pointIndex = 0;
-	sProg->findUniVar("modelViewProjectionMat")->setMat4(&Mat4::getIdentity());
 }
 
 
