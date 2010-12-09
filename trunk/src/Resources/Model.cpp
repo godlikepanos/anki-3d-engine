@@ -30,6 +30,14 @@ void Model::load(const char* filename)
 
   	const ptree& pt = pt_.get_child("model");
 
+  	// skeleton
+  	// NOTE: Always read that first
+  	boost::optional<std::string> skelName = pt.get_optional<std::string>("skeleton");
+  	if(skelName)
+  	{
+  		skeleton.loadRsrc(skelName.get().c_str());
+  	}
+
   	// subModels
   	BOOST_FOREACH(const ptree::value_type& v, pt.get_child("subModels"))
   	{
@@ -40,13 +48,6 @@ void Model::load(const char* filename)
   		SubModel* sub = new SubModel();
   		subModels.push_back(sub);
   		sub->load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
-  	}
-
-  	// skeleton
-  	boost::optional<std::string> skelName = pt.get_optional<std::string>("skeleton");
-  	if(skelName)
-  	{
-  		skeleton.loadRsrc(skelName.get().c_str());
   	}
 
   	// Anims
