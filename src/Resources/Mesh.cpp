@@ -13,7 +13,7 @@ Mesh::Mesh():
 	Resource(RT_MESH),
 	Object(NULL)
 {
-	memset(vbos, NULL, sizeof(vbos));
+	memset(&vbos[0], NULL, sizeof(vbos));
 }
 
 

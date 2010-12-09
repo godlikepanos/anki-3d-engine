@@ -1,6 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 
+#include <boost/array.hpp>
 #include "Math.h"
 #include "Resource.h"
 #include "RsrcPtr.h"
@@ -48,7 +49,7 @@ class Mesh: public Resource, public Object
 		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS] != NULL;}
 
 	private:
-		Vbo* vbos[VBOS_NUM]; ///< The vertex buffer objects
+		boost::array<Vbo*, VBOS_NUM> vbos; ///< The vertex buffer objects
 
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);

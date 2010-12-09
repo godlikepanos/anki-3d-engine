@@ -1,6 +1,7 @@
 #ifndef MODEL_NODE_H
 #define MODEL_NODE_H
 
+#include <boost/array.hpp>
 #include "SceneNode.h"
 #include "RsrcPtr.h"
 #include "Properties.h"
@@ -8,6 +9,26 @@
 
 class Model;
 class SkelAnimModelNodeCtrl;
+class Vbo;
+
+
+/// @todo
+class Skin
+{
+	public:
+		enum Vbos
+		{
+			VBO_POSITIONS,
+			VBO_NORMALS,
+			VBO_TANGENTS,
+			VBOS_NUM
+		};
+
+		Vbo& getVbo(Vbos i) {return *vbos[i];}
+
+	private:
+		boost::array<Vbo*, VBOS_NUM> vbos;
+};
 
 
 /// The model scene node
