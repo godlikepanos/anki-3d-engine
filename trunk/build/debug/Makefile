@@ -1902,7 +1902,7 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Util/StdTypes.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -1913,8 +1913,8 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/Is.h ../../src/Renderer/Pps.h \
@@ -4624,18 +4624,7 @@ Hdr.bpi.o: ../../src/Scripting/Renderer/Hdr.bpi.cpp \
  ../../src/Util/StdTypes.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h
+ ../../src/Resources/Core/RsrcPtr.h
 	@echo Compiling ../../src/Scripting/Renderer/Hdr.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Hdr.bpi.cpp -o Hdr.bpi.o
 
@@ -4648,19 +4637,7 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
  ../../src/Util/StdTypes.h ../../src/Resources/Texture.h \
  ../../src/Resources/Core/Resource.h ../../src/Util/Util.h \
  ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
- ../../src/Resources/ShaderProg.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/CharPtrHashMap.h
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h
 	@echo Compiling ../../src/Scripting/Renderer/Pps.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Pps.bpi.cpp -o Pps.bpi.o
 
