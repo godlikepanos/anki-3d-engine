@@ -12,6 +12,11 @@ class Camera;
 /// Shadowmapping pass
 class Sm: private RenderingPass
 {
+	PROPERTY_R(bool, enabled, isEnabled) ///< If false then disable
+	PROPERTY_R(bool, pcfEnabled, isPcfEnabled) ///< Enable Percentage Closer Filtering
+	PROPERTY_R(bool, bilinearEnabled, isBilinearEnabled) ///< Shadowmap bilinear filtering. Better quality
+	PROPERTY_R(int, resolution, getResolution) ///< Shadowmap resolution. The higher the better but slower
+
 	public:
 		Texture shadowMap;
 
@@ -23,17 +28,8 @@ class Sm: private RenderingPass
 		/// @param[in] cam The light camera
 		void run(const Camera& cam);
 
-		bool isEnabled() const {return enabled;}
-		bool isPcfEnabled() const {return pcfEnabled;}
-		bool isBilinearEnabled() const {return bilinearEnabled;}
-		int getResolution() const {return resolution;}
-
 	private:
 		Fbo fbo; ///< Illumination stage shadowmapping FBO
-		bool enabled; ///< If false then disable
-		bool pcfEnabled; ///< Enable Percentage Closer Filtering
-		bool bilinearEnabled; ///< Shadowmap bilinear filtering. Better quality
-		int resolution; ///< Shadowmap resolution. The higher the better but slower
 };
 
 

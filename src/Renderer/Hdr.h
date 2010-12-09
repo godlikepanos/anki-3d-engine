@@ -5,13 +5,16 @@
 #include "Fbo.h"
 #include "Texture.h"
 #include "RsrcPtr.h"
-#include "ShaderProg.h"
 #include "Properties.h"
+
+
+class ShaderProg;
 
 
 /// High dynamic range lighting pass
 class Hdr: private RenderingPass
 {
+	PROPERTY_R(bool, enabled, isEnabled)
 	PROPERTY_R(Texture, toneFai, getToneFai) ///< Vertical blur pass FAI
 	PROPERTY_R(Texture, hblurFai, getHblurFai) ///< pass0Fai with the horizontal blur FAI
 	PROPERTY_R(Texture, fai, getFai) ///< The final FAI
@@ -26,11 +29,6 @@ class Hdr: private RenderingPass
 		void init(const RendererInitializer& initializer);
 		void run();
 
-		/// Setters & getters
-		/// @{
-		bool isEnabled() const {return enabled;}
-		/// @}
-
 	private:
 		Fbo toneFbo;
 		Fbo hblurFbo;
@@ -38,7 +36,6 @@ class Hdr: private RenderingPass
 		RsrcPtr<ShaderProg> toneSProg;
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
-		bool enabled;
 
 		void initFbo(Fbo& fbo, Texture& fai);
 };
