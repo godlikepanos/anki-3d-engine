@@ -7,10 +7,10 @@
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
 #include "Math.h"
+#include "Vbo.h"
+#include "Vao.h"
 
 
-class Vbo;
-class Vao;
 class SceneDbgDrawer;
 
 
@@ -60,9 +60,9 @@ class Dbg: public RenderingPass
 		Mat4 modelMat;
 		uint pointIndex;
 		Vec3 crntCol;
-		Vbo* positionsVbo;
-		Vbo* colorsVbo;
-		Vao* vao;
+		Vbo positionsVbo;
+		Vbo colorsVbo;
+		Vao vao;
 		SceneDbgDrawer* sceneDbgDrawer;
 };
 

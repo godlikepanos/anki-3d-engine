@@ -3,22 +3,20 @@
 
 #include <GL/glew.h>
 #include "Exception.h"
-#include "Properties.h"
 #include "StdTypes.h"
-#include "Object.h"
 
 
 /// The class is actually a wrapper to avoid common mistakes
-class Fbo: public Object
+class Fbo
 {
-	PROPERTY_R(uint, glId, getGlId) ///< OpenGL identification
-
 	public:
 		/// Constructor
-		Fbo(Object* parent = NULL);
+		Fbo(): glId(0) {}
 
-		/// Creates a new FBO
-		void create();
+		/// Destructor
+		~Fbo();
+
+		uint getGlId() const;
 
 		/// Binds FBO
 		void bind() const;
@@ -36,6 +34,17 @@ class Fbo: public Object
 		/// Returns the GL id of the current attached FBO
 		/// @return Returns the GL id of the current attached FBO
 		static uint getCurrentFbo();
+
+		/// Creates a new FBO
+		void create();
+
+		/// Destroy it
+		void destroy();
+
+	private:
+		uint glId; ///< OpenGL identification
+
+		bool isCreated() const {return glId != 0;}
 };
 
 
@@ -43,22 +52,32 @@ class Fbo: public Object
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline Fbo::Fbo(Object* parent):
-	Object(parent),
-	glId(0)
-{}
-
-
 inline void Fbo::create()
 {
-	RASSERT_THROW_EXCEPTION(glId != 0); // FBO already initialized
+	RASSERT_THROW_EXCEPTION(isCreated());
 	glGenFramebuffers(1, &glId);
+}
+
+
+inline uint Fbo::getGlId() const
+{
+	RASSERT_THROW_EXCEPTION(isCreated());
+	return glId;
+}
+
+
+inline Fbo::~Fbo()
+{
+	if(isCreated())
+	{
+		destroy();
+	}
 }
 
 
 inline void Fbo::bind() const
 {
-	RASSERT_THROW_EXCEPTION(glId == 0);  // FBO not initialized
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	glBindFramebuffer(GL_FRAMEBUFFER, glId);
 }
 
@@ -71,7 +90,7 @@ inline void Fbo::unbind()
 
 inline void Fbo::checkIfGood() const
 {
-	RASSERT_THROW_EXCEPTION(glId == 0);  // FBO not initialized
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	RASSERT_THROW_EXCEPTION(getCurrentFbo() != glId); // another FBO is binded
 
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -83,7 +102,7 @@ inline void Fbo::checkIfGood() const
 
 inline void Fbo::setNumOfColorAttachements(uint num) const
 {
-	RASSERT_THROW_EXCEPTION(glId == 0);  // FBO not initialized
+	RASSERT_THROW_EXCEPTION(!isCreated());
 	RASSERT_THROW_EXCEPTION(getCurrentFbo() != glId); // another FBO is binded
 
 	if(num == 0)
@@ -93,9 +112,10 @@ inline void Fbo::setNumOfColorAttachements(uint num) const
 	}
 	else
 	{
-		static GLenum colorAttachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
-																				GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
-																				GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
+		static GLenum colorAttachments[] = {
+			GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
+			GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
 
 		RASSERT_THROW_EXCEPTION(num > sizeof(colorAttachments)/sizeof(GLenum));
 		glDrawBuffers(num, colorAttachments);
@@ -108,6 +128,13 @@ inline uint Fbo::getCurrentFbo()
 	int fboGlId;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fboGlId);
 	return (uint)fboGlId;
+}
+
+
+inline void Fbo::destroy()
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	glDeleteFramebuffers(1, &glId);
 }
 
 

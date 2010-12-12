@@ -12,9 +12,7 @@
 Mesh::Mesh():
 	Resource(RT_MESH),
 	Object(NULL)
-{
-	memset(&vbos[0], NULL, sizeof(vbos));
-}
+{}
 
 
 //======================================================================================================================
@@ -51,40 +49,28 @@ void Mesh::load(const char* filename)
 //======================================================================================================================
 void Mesh::createVbos(const MeshData& meshData)
 {
-	vbos[VBO_VERT_INDECES] = new Vbo(GL_ELEMENT_ARRAY_BUFFER, meshData.getVertIndeces().getSizeInBytes(),
-	                                 &meshData.getVertIndeces()[0], GL_STATIC_DRAW, this);
-	vbos[VBO_VERT_POSITIONS] = new Vbo(GL_ARRAY_BUFFER, meshData.getVertCoords().getSizeInBytes(),
-	                                   &meshData.getVertCoords()[0], GL_STATIC_DRAW, this);
-	vbos[VBO_VERT_NORMALS] = new Vbo(GL_ARRAY_BUFFER, meshData.getVertNormals().getSizeInBytes(),
-	                                 &meshData.getVertNormals()[0], GL_STATIC_DRAW, this);
+	vbos[VBO_VERT_INDECES].create(GL_ELEMENT_ARRAY_BUFFER, meshData.getVertIndeces().getSizeInBytes(),
+	                              &meshData.getVertIndeces()[0], GL_STATIC_DRAW);
+	vbos[VBO_VERT_POSITIONS].create(GL_ARRAY_BUFFER, meshData.getVertCoords().getSizeInBytes(),
+	                                &meshData.getVertCoords()[0], GL_STATIC_DRAW);
+	vbos[VBO_VERT_NORMALS].create(GL_ARRAY_BUFFER, meshData.getVertNormals().getSizeInBytes(),
+	                              &meshData.getVertNormals()[0], GL_STATIC_DRAW);
 
 	if(meshData.getVertTangents().size() > 1)
 	{
-		vbos[VBO_VERT_TANGENTS] = new Vbo(GL_ARRAY_BUFFER, meshData.getVertTangents().getSizeInBytes(),
-		                                  &meshData.getVertTangents()[0], GL_STATIC_DRAW, this);
-	}
-	else
-	{
-		vbos[VBO_VERT_TANGENTS] = NULL;
+		vbos[VBO_VERT_TANGENTS].create(GL_ARRAY_BUFFER, meshData.getVertTangents().getSizeInBytes(),
+		                               &meshData.getVertTangents()[0], GL_STATIC_DRAW);
 	}
 
 	if(meshData.getTexCoords().size() > 1)
 	{
-		vbos[VBO_TEX_COORDS] = new Vbo(GL_ARRAY_BUFFER, meshData.getTexCoords().getSizeInBytes(),
-		                               &meshData.getTexCoords()[0], GL_STATIC_DRAW, this);
-	}
-	else
-	{
-		vbos[VBO_TEX_COORDS] = NULL;
+		vbos[VBO_TEX_COORDS].create(GL_ARRAY_BUFFER, meshData.getTexCoords().getSizeInBytes(),
+		                            &meshData.getTexCoords()[0], GL_STATIC_DRAW);
 	}
 
 	if(meshData.getVertWeights().size() > 1)
 	{
-		vbos[VBO_VERT_WEIGHTS] = new Vbo(GL_ARRAY_BUFFER, meshData.getVertWeights().getSizeInBytes(),
-		                                 &meshData.getVertWeights()[0], GL_STATIC_DRAW, this);
-	}
-	else
-	{
-		vbos[VBO_VERT_WEIGHTS] = NULL;
+		vbos[VBO_VERT_WEIGHTS].create(GL_ARRAY_BUFFER, meshData.getVertWeights().getSizeInBytes(),
+		                              &meshData.getVertWeights()[0], GL_STATIC_DRAW);
 	}
 }

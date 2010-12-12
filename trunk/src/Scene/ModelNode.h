@@ -12,25 +12,6 @@ class SkelAnimModelNodeCtrl;
 class Vbo;
 
 
-/// @todo
-class Skin
-{
-	public:
-		enum Vbos
-		{
-			VBO_POSITIONS,
-			VBO_NORMALS,
-			VBO_TANGENTS,
-			VBOS_NUM
-		};
-
-		Vbo& getVbo(Vbos i) {return *vbos[i];}
-
-	private:
-		boost::array<Vbo*, VBOS_NUM> vbos;
-};
-
-
 /// The model scene node
 class ModelNode: public SceneNode
 {

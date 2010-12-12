@@ -10,7 +10,6 @@
 #include "Scene.h"
 #include "LightData.h"
 #include "Collision.h"
-#include "Vao.h"
 #include "Sm.h"
 #include "Smo.h"
 
@@ -60,8 +59,8 @@ void Is::calcViewVectors()
 		// end of optimized code
 	}
 
-	RASSERT_THROW_EXCEPTION(sizeof(viewVectors) != viewVectorsVbo->getSizeInBytes());
-	viewVectorsVbo->write(viewVectors);
+	RASSERT_THROW_EXCEPTION(sizeof(viewVectors) != viewVectorsVbo.getSizeInBytes());
+	viewVectorsVbo.write(viewVectors);
 }
 
 
@@ -155,17 +154,17 @@ void Is::init(const RendererInitializer& initializer)
 
 	// The VBOs and VAOs
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-	quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW, this);
+	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
 
 	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}};
-	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW, this);
+	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
 
-	viewVectorsVbo = new Vbo(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW, this);
+	viewVectorsVbo.create(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW);
 
-	vao = new Vao(this);
-	vao->attachArrayBufferVbo(*quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
-	vao->attachArrayBufferVbo(*viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
-	vao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
+	vao.create();
+	vao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
+	vao.attachArrayBufferVbo(viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
+	vao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 }
 
 
@@ -174,9 +173,9 @@ void Is::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Is::drawLightPassQuad() const
 {
-	vao->bind();
+	vao.bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
-	vao->unbind();
+	vao.unbind();
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
 

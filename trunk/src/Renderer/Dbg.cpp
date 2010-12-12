@@ -87,8 +87,8 @@ void Dbg::renderGrid()
 //======================================================================================================================
 void Dbg::drawSphere(float radius, int complexity)
 {
-	const float twopi  = M::PI*2;
-	const float pidiv2 = M::PI/2;
+	const float twopi  = M::PI * 2;
+	const float pidiv2 = M::PI / 2;
 
 	float theta1 = 0.0;
 	float theta2 = 0.0;
@@ -147,15 +147,15 @@ void Dbg::drawSphere(float radius, int complexity)
 		}
 	}
 
-	positionsVbo->write(&positions[0], 0, sizeof(Vec3) * pointIndex);
-	colorsVbo->write(&colors[0], 0, sizeof(Vec3) * pointIndex);
+	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
+	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = r.getViewProjectionMat() * modelMat;
 	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
 
-	vao->bind();
+	vao.bind();
 	glDrawArrays(GL_LINE_STRIP, 0, pointIndex);
-	vao->unbind();
+	vao.unbind();
 
 	// Cleanup
 	pointIndex = 0;
@@ -229,13 +229,13 @@ void Dbg::init(const RendererInitializer& initializer)
 	//
 	// VAO & VBOs
 	//
-	positionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_DYNAMIC_DRAW, this);
-	colorsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(colors), NULL, GL_DYNAMIC_DRAW, this);
-	vao = new Vao(this);
+	positionsVbo.create(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_DYNAMIC_DRAW);
+	colorsVbo.create(GL_ARRAY_BUFFER, sizeof(colors), NULL, GL_DYNAMIC_DRAW);
+	vao.create();
 	const int positionAttribLoc = 0;
-	vao->attachArrayBufferVbo(*positionsVbo, positionAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	vao.attachArrayBufferVbo(positionsVbo, positionAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	const int colorAttribLoc = 1;
-	vao->attachArrayBufferVbo(*colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	vao.attachArrayBufferVbo(colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	//
 	// Rest
@@ -345,15 +345,15 @@ void Dbg::end()
 {
 	RASSERT_THROW_EXCEPTION(pointIndex == 0);
 
-	positionsVbo->write(&positions[0], 0, sizeof(Vec3) * pointIndex);
-	colorsVbo->write(&colors[0], 0, sizeof(Vec3) * pointIndex);
+	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
+	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = r.getViewProjectionMat() * modelMat;
 	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
 
-	vao->bind();
+	vao.bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);
-	vao->unbind();
+	vao.unbind();
 
 	// Cleanup
 	pointIndex = 0;
