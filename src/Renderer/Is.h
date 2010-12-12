@@ -8,14 +8,14 @@
 #include "ShaderProg.h"
 #include "Math.h"
 #include "Properties.h"
+#include "Vbo.h"
+#include "Vao.h"
 
 
 class PointLight;
 class SpotLight;
-class Vao;
 class Sm;
 class Smo;
-class Vbo;
 
 
 /// Illumination stage
@@ -40,10 +40,10 @@ class Is: private RenderingPass
 
 		/// @name For the quad drawing in light passes
 		/// @{
-		Vbo* quadPositionsVbo; ///< The VBO for quad positions
-		Vbo* viewVectorsVbo; ///< The VBO to pass the @ref viewVectors.
-		Vbo* quadVertIndecesVbo; ///< The VBO for quad array buffer elements
-		Vao* vao; ///< This VAO is used in light passes only
+		Vbo quadPositionsVbo; ///< The VBO for quad positions
+		Vbo viewVectorsVbo; ///< The VBO to pass the @ref viewVectors.
+		Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+		Vao vao; ///< This VAO is used in light passes only
 		/// @}
 
 		Vec2 planes; ///< Used to to calculate the frag pos in view space inside the shader program
@@ -51,8 +51,8 @@ class Is: private RenderingPass
 		/// Draws the vao that has attached the viewVectorsVbo as well. Used in light passes
 		void drawLightPassQuad() const;
 
-		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space. This calculates
-		/// the view vectors and updates the @ref viewVectorsVbo
+		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space. This
+		/// calculates the view vectors and updates the @ref viewVectorsVbo
 		void calcViewVectors();
 
 		/// Calc the planes that we will use inside the shader to calculate the frag pos in view space

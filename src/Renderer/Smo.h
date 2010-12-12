@@ -5,12 +5,12 @@
 #include "Fbo.h"
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
+#include "Vbo.h"
+#include "Vao.h"
 
 
 class PointLight;
 class SpotLight;
-class Vao;
-class Vbo;
 
 
 /// Stencil masking optimizations
@@ -26,15 +26,15 @@ class Smo: public RenderingPass
 		/// @name UV sphere stuff
 		/// @{
 		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
-		Vbo* spherePositionsVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
-		Vao* sphereVao; ///< And a VAO
+		Vbo spherePositionsVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
+		Vao sphereVao; ///< And a VAO
 		/// @}
 
 		/// @name Camera shape stuff
 		/// @{
-		Vbo* cameraPositionsVbo; ///< A camera shape
-		Vbo* cameraVertIndecesVbo; ///< The vertex indeces
-		Vao* cameraVao; ///< And another VAO
+		Vbo cameraPositionsVbo; ///< A camera shape
+		Vbo cameraVertIndecesVbo; ///< The vertex indeces
+		Vao cameraVao; ///< And another VAO
 		/// @}
 
 		RsrcPtr<ShaderProg> sProg;

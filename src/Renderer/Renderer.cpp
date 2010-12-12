@@ -51,14 +51,14 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// quad VBOs and VAO
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-	quadPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW, this);
+	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
 
 	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
-	quadVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW, this);
+	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
 
-	globalVao = new Vao(this);
-	globalVao->attachArrayBufferVbo(*quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
-	globalVao->attachElementArrayBufferVbo(*quadVertIndecesVbo);
+	quadVao.create();
+	quadVao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
+	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 }
 
 
@@ -86,9 +86,9 @@ void Renderer::render(Camera& cam_)
 //======================================================================================================================
 void Renderer::drawQuad()
 {
-	globalVao->bind();
+	quadVao.bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
-	globalVao->unbind();
+	quadVao.unbind();
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
 

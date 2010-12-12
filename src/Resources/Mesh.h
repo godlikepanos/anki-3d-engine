@@ -6,11 +6,11 @@
 #include "Resource.h"
 #include "RsrcPtr.h"
 #include "Object.h"
+#include "Vbo.h"
 
 
 class Material;
 class MeshData;
-class Vbo;
 
 
 /// Mesh Resource. It contains the geometry packed in VBOs
@@ -39,17 +39,17 @@ class Mesh: public Resource, public Object
 		~Mesh() {}
 
 		/// Accessor
-		const Vbo* getVbo(Vbos id) const {return vbos[id];}
+		const Vbo& getVbo(Vbos id) const {return vbos[id];}
 
 		/// Implements @ref Resource::load
 		void load(const char* filename);
 
-		bool hasTexCoords() const {return vbos[VBO_TEX_COORDS] != NULL;}
+		bool hasTexCoords() const {return vbos[VBO_TEX_COORDS].isCreated();}
 
-		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS] != NULL;}
+		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS].isCreated();}
 
 	private:
-		boost::array<Vbo*, VBOS_NUM> vbos; ///< The vertex buffer objects
+		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
 
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);

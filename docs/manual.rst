@@ -1,6 +1,6 @@
 **AnKi 3D Engine**
 
-Copyright (C) 2009, 2010 Panagiotis Christopoulos-Charitos
+Copyright (C) 2009-2011 Panayiotis Christopoulos-Charitos
 
 http://www.ancient-ritual.com
 
@@ -120,7 +120,7 @@ The engine requires:
 - Linux OS
 - Proprietary GPU drivers
 
-Development rig: Ubuntu 10.04, AMD Radeon 4870 w/ Catalyst 10.04. So it should
+Development rig: Ubuntu 10.10, AMD Radeon 4870 w/ Catalyst 10.10. So it should
 be working on similar systems.
 
 

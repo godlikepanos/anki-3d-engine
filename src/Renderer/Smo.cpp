@@ -28,15 +28,15 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 
 	// Sphere
 	//
-	spherePositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW, this);
-	sphereVao = new Vao(this);
-	sphereVao->attachArrayBufferVbo(*spherePositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+	spherePositionsVbo.create(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW);
+	sphereVao.create();
+	sphereVao.attachArrayBufferVbo(spherePositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
 
 	// Camera
 	//
 
 	// 4 vertex positions: eye, top-right, top-left, bottom-left, bottom-right
-	cameraPositionsVbo = new Vbo(GL_ARRAY_BUFFER, sizeof(float) * 3 * 5, NULL, GL_DYNAMIC_DRAW, this);
+	cameraPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(float) * 3 * 5, NULL, GL_DYNAMIC_DRAW);
 
 	// The vert indeces
 	enum {EYE, TR, TL, BL, BR}; // Vert positions
@@ -49,11 +49,11 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 		{BR, BL, TL}, {TL, TR, BR} // Front
 	};
 
-	cameraVertIndecesVbo = new Vbo(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertIndeces), vertIndeces, GL_STATIC_DRAW, this);
+	cameraVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertIndeces), vertIndeces, GL_STATIC_DRAW);
 
-	cameraVao = new Vao(this);
-	cameraVao->attachArrayBufferVbo(*cameraPositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
-	cameraVao->attachElementArrayBufferVbo(*cameraVertIndecesVbo);
+	cameraVao.create();
+	cameraVao.attachArrayBufferVbo(cameraPositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+	cameraVao.attachElementArrayBufferVbo(cameraVertIndecesVbo);
 }
 
 
@@ -78,9 +78,9 @@ void Smo::run(const PointLight& light)
 	sProg->findUniVar("modelViewProjectionMat")->setMat4(&trf);
 
 	// render sphere to the stencil buffer
-	sphereVao->bind();
+	sphereVao.bind();
 	glDrawArrays(GL_TRIANGLES, 0, sizeof(sMOUvSCoords) / sizeof(float) / 3);
-	sphereVao->unbind();
+	sphereVao.unbind();
 
 	// restore GL
 	glEnable(GL_CULL_FACE);
@@ -130,11 +130,11 @@ void Smo::run(const SpotLight& light)
 	};
 
 	// render camera shape to stencil buffer
-	RASSERT_THROW_EXCEPTION(sizeof(vertPositions) != cameraPositionsVbo->getSizeInBytes());
-	cameraPositionsVbo->write(vertPositions);
-	cameraVao->bind();
+	RASSERT_THROW_EXCEPTION(sizeof(vertPositions) != cameraPositionsVbo.getSizeInBytes());
+	cameraPositionsVbo.write(vertPositions);
+	cameraVao.bind();
 	glDrawElements(GL_TRIANGLES, 6 * 3, GL_UNSIGNED_SHORT, 0);
-	cameraVao->unbind();
+	cameraVao.unbind();
 
 	// restore GL state
 	glEnable(GL_CULL_FACE);

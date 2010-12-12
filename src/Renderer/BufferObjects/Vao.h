@@ -5,7 +5,6 @@
 #include "StdTypes.h"
 #include "ShaderProg.h"
 #include "Object.h"
-#include "Properties.h"
 #include "GlException.h"
 
 
@@ -13,16 +12,23 @@ class Vbo;
 
 
 /// Vertex array object
-class Vao: public Object
+class Vao
 {
-	PROPERTY_R(uint, glId, getGlId) ///< The OpenGL id
-
 	public:
 		/// Default constructor
-		Vao(Object* parent = NULL);
+		Vao(): glId(0) {}
 
 		/// Destroy VAO from the OpenGL context
-		~Vao() {glDeleteVertexArrays(1, &glId);}
+		~Vao();
+
+		/// Accessor
+		uint getGlId() const;
+
+		/// Create
+		void create();
+
+		/// Destroy
+		void destroy();
 
 		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
 		/// @param vbo The VBO to attach
@@ -54,14 +60,41 @@ class Vao: public Object
 
 		/// Unbind all VAOs
 		static void unbind() {glBindVertexArray(0);}
+
+	private:
+		uint glId; ///< The OpenGL id
+
+		bool isCreated() const {return glId != 0;}
 };
 
 
-inline Vao::Vao(Object* parent):
-	Object(parent)
+inline void Vao::create()
 {
+	RASSERT_THROW_EXCEPTION(isCreated());
 	glGenVertexArrays(1, &glId);
 	ON_GL_FAIL_THROW_EXCEPTION();
+}
+
+inline Vao::~Vao()
+{
+	if(isCreated())
+	{
+		destroy();
+	}
+}
+
+
+inline void Vao::destroy()
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	glDeleteVertexArrays(1, &glId);
+}
+
+
+inline uint Vao::getGlId() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	return glId;
 }
 
 

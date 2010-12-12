@@ -4,35 +4,44 @@
 #include <GL/glew.h>
 #include "Exception.h"
 #include "StdTypes.h"
-#include "Object.h"
-#include "Properties.h"
 
 
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
-class BufferObject: public Object
+class BufferObject
 {
-	PROPERTY_R(uint, glId, getGlId) ///< The OpenGL id of the BO
-
-	/// Used in glBindBuffer(target, glId) and its for easy access so we wont have to query the GL driver. Its the type
-	/// of the buffer eg GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
-	PROPERTY_R(GLenum, target, getBufferTarget)
-
-	PROPERTY_R(GLenum, usage, getBufferUsage) ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
-
-	PROPERTY_R(size_t, sizeInBytes, getSizeInBytes)
-
 	public:
+		BufferObject(): glId(0) {}
+
 		/// Default constructor @see create
-		BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage, Object* parent = NULL);
+		BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
 
 		/// It deletes the BO from the GL context
-		virtual ~BufferObject() {deleteBuff();}
+		virtual ~BufferObject();
+
+		/// @name Accessors
+		/// @{
+		uint getGlId() const;
+		GLenum getBufferTarget() const;
+		GLenum getBufferUsage() const;
+		size_t getSizeInBytes() const;
+		/// @]
 
 		/// Bind BO
-		void bind() const {glBindBuffer(target, glId);}
+		void bind() const;
 
 		/// Unbind BO
-		void unbind() const {glBindBuffer(target, 0);}
+		void unbind() const;
+
+		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails
+		/// @param target Depends on the BO
+		/// @param sizeInBytes The size of the buffer that we will allocate in bytes
+		/// @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
+		/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
+		/// @exception Exception
+		void create(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
+
+		/// Delete the BO
+		void deleteBuff();
 
 		/// Write data to buffer. This means that maps the BO to local memory, writes the local memory and unmaps it.
 		/// Throws exception if the given size and the BO size are not equal. It throws an exception if the usage is
@@ -46,17 +55,18 @@ class BufferObject: public Object
 		/// @param[in] size The size in bytes we want to write
 		void write(void* buff, size_t offset, size_t size);
 
-	private:
-		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails
-		/// @param target Depends on the BO
-		/// @param sizeInBytes The size of the buffer that we will allocate in bytes
-		/// @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
-		/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
-		/// @exception Exception
-		void create(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
+		/// If created is run successfully it returns true
+		bool isCreated() const {return glId != 0;}
 
-		/// Delete the BO
-		void deleteBuff();
+	private:
+		uint glId; ///< The OpenGL id of the BO
+
+		/// Used in glBindBuffer(target, glId) and its for easy access so we wont have to query the GL driver. Its the type
+		/// of the buffer eg GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
+		GLenum target;
+
+		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
+		size_t sizeInBytes; ///< The size of the buffer
 };
 
 
@@ -64,20 +74,68 @@ class BufferObject: public Object
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline BufferObject::BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage, Object* parent):
-	Object(parent),
+inline BufferObject::BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage):
 	glId(0)
 {
 	create(target, sizeInBytes, dataPtr, usage);
 }
 
 
+inline BufferObject::~BufferObject()
+{
+	if(isCreated())
+	{
+		deleteBuff();
+	}
+}
+
+
+inline uint BufferObject::getGlId() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	return glId;
+}
+
+
+inline GLenum BufferObject::getBufferTarget() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	return target;
+}
+
+
+inline GLenum BufferObject::getBufferUsage() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	return usage;
+}
+
+
+inline size_t BufferObject::getSizeInBytes() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	return sizeInBytes;
+}
+
+
+inline void BufferObject::bind() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	glBindBuffer(target, glId);
+}
+
+
+inline void BufferObject::unbind() const
+{
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	glBindBuffer(target, 0);
+}
+
+
 inline void BufferObject::deleteBuff()
 {
-	if(glId != 0)
-	{
-		glDeleteBuffers(1, &glId);
-	}
+	RASSERT_THROW_EXCEPTION(!isCreated());
+	glDeleteBuffers(1, &glId);
 	glId = 0;
 }
 
