@@ -46,10 +46,10 @@ class Model: public Resource
 {
 	public:
 		/// This is basically a container around mesh and materials. It also has the VAOs.
-		class SubModel: public Object
+		class SubModel
 		{
 			public:
-				SubModel(): Object(NULL) {}
+				SubModel(){}
 
 				/// Load the resources
 				void load(const char* meshFName, const char* mtlFName, const char* dpMtlFName);
