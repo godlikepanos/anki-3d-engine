@@ -6,6 +6,7 @@
 #include "RsrcPtr.h"
 #include "Object.h"
 #include "Vao.h"
+#include "ModelPatch.h"
 
 
 class Mesh;
@@ -20,15 +21,15 @@ class Scanner;
 /// XML file format:
 /// @code
 /// <model>
-/// 	<subModels>
-/// 		<subModel>
+/// 	<modelPatches>
+/// 		<modelPatch>
 /// 			<mesh>path/to/mesh.mesh</mesh>
 /// 			<material>path/to/material.mtl</material>
 /// 			<dpMaterial>path/to/dp.mtl</dpMaterial>
-/// 		</subModel>
+/// 		</modelPatch>
 /// 		...
-/// 		<subModel>...</subModel>
-/// 	</subModels>
+/// 		<modelPatch>...</modelPatch>
+/// 	</modelPatches>
 /// 	<skeleton>path/to/skeleton.skel</skeleton>
 /// 	<skelAnims>
 /// 		<skelAnim>path/to/anim0.sanim</skelAnim>
@@ -45,48 +46,13 @@ class Scanner;
 class Model: public Resource
 {
 	public:
-		/// This is basically a container around mesh and materials. It also has the VAOs.
-		class SubModel
-		{
-			public:
-				SubModel(){}
-
-				/// Load the resources
-				void load(const char* meshFName, const char* mtlFName, const char* dpMtlFName);
-
-				/// Creates a VAO for an individual SubModel
-				/// @param[in] material Needed for the shader program uniform variables
-				/// @param[in] mesh For providing the VBOs
-				/// @param[in,out] subModel For setting a parent to the vao
-				/// @param[out] vao The output
-				static void createVao(const Material& material, const Mesh& mesh, Vao& vao);
-
-				/// @name Accessors
-				/// @{
-				const Mesh& getMesh() const {return *mesh;}
-				const Material& getMaterial() const {return *material;}
-				const Material& getDpMaterial() const {return *dpMaterial;}
-				const Vao& getVao() const {return vao;}
-				const Vao& getDpVao() const {return dpVao;}
-				/// @}
-
-				bool hasHwSkinning() const;
-
-			private:
-				RsrcPtr<Mesh> mesh; ///< The geometry
-				RsrcPtr<Material> material; ///< Material for MS and BS
-				RsrcPtr<Material> dpMaterial; ///< Material for depth passes
-				Vao vao; ///< Normal VAO for MS and BS
-				Vao dpVao; ///< Depth pass VAO for SM and EarlyZ
-		};
-
 		Model(): Resource(RT_MODEL) {}
 
 		void load(const char* filename);
 
 		/// @name Accessors
 		/// @{
-		const boost::ptr_vector<SubModel>& getSubModels() const {return subModels;}
+		const boost::ptr_vector<ModelPatch>& getModelPatches() const {return modelPatches;}
 		const Skeleton& getSkeleton() const;
 		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const {return skelAnims;}
 		/// @}
@@ -94,7 +60,7 @@ class Model: public Resource
 		bool hasSkeleton() const {return skeleton.get() != NULL;}
 
 	private:
-		boost::ptr_vector<SubModel> subModels; ///< The vector of SubModel
+		boost::ptr_vector<ModelPatch> modelPatches; ///< The vector of SubModel
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton. It can be empty
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
 };
