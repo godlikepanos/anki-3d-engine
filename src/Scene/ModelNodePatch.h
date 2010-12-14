@@ -31,12 +31,12 @@ class ModelNodePatch
 	private:
 		const Model::SubModel& modelPatch;
 		boost::array<Vbo, TF_VBOS_NUM> tfVbos;
-		boost::array<Vbo*, Mesh::VBOS_NUM> vbos;
+		boost::array<const Vbo*, Mesh::VBOS_NUM> vbos;
 		Vao mainVao; ///< VAO for MS and BS
 		Vao dpVao; ///< VAO for depth passes
 		Vao tfVao; ///< VAO for transform feedback
 
-		static void createVao(const Material& material, const boost::array<Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
+		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };
 
 

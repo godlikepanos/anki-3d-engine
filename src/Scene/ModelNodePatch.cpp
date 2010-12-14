@@ -12,14 +12,27 @@
 ModelNodePatch::ModelNodePatch(const Model::SubModel& modelPatch_, bool isSkinPatch):
 	modelPatch(modelPatch_)
 {
-	//if()
+	if(!isSkinPatch)
+	{
+		for(uint i = 0; i < Mesh::VBOS_NUM; i++)
+		{
+			vbos[i] = &modelPatch.getMesh().getVbo((Mesh::Vbos)i);
+		}
+
+		createVao(modelPatch.getMaterial(), vbos, mainVao);
+		createVao(modelPatch.getDpMaterial(), vbos, dpVao);
+	}
+	else
+	{
+
+	}
 }
 
 
 //======================================================================================================================
 // createVao                                                                                                           =
 //======================================================================================================================
-void ModelNodePatch::createVao(const Material& mtl, const boost::array<Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao)
+void ModelNodePatch::createVao(const Material& mtl, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao)
 {
 	vao.create();
 
