@@ -22,6 +22,7 @@ class ModelPatch
 		const Material& getDpMaterial() const {return *dpMaterial;}
 		/// @}
 
+		/// This only checks the mesh for vertex weights
 		bool supportsHardwareSkinning() const;
 
 	private:

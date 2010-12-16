@@ -9,13 +9,14 @@
 
 
 class Material;
+class ModelPatch;
 
 
 /// A fragment of the ModelNode
 class ModelNodePatch
 {
 	public:
-		ModelNodePatch(const Model::SubModel& modelPatch, bool isSkinPatch);
+		ModelNodePatch(const ModelPatch& modelPatch, bool isSkinPatch);
 
 		/// Transform feedback VBOs
 		enum TfVbos
@@ -29,7 +30,7 @@ class ModelNodePatch
 		const Vbo& getTfVbo(TfVbos i) const {return tfVbos[i];}
 
 	private:
-		const Model::SubModel& modelPatch;
+		const ModelPatch& modelPatch;
 		boost::array<Vbo, TF_VBOS_NUM> tfVbos;
 		boost::array<const Vbo*, Mesh::VBOS_NUM> vbos;
 		Vao mainVao; ///< VAO for MS and BS
