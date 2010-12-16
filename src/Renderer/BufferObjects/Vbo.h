@@ -16,6 +16,7 @@ class Vbo: public BufferObject
 		/// Unbinds all VBOs, meaning both GL_ARRAY_BUFFER and GL_ELEMENT_ARRAY_BUFFER targets
 		static void unbindAllTargets();
 
+		/// The same as BufferObject::create but it only accepts GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER in target
 		/// @see BufferObject::create
 		void create(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
 };

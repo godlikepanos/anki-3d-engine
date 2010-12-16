@@ -7,11 +7,8 @@
 #include "Mesh.h"
 #include "SkelAnim.h"
 #include "MeshData.h"
-#include "Vao.h"
 #include "Skeleton.h"
 
-
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
 //======================================================================================================================
@@ -70,11 +67,14 @@ void Model::load(const char* filename)
   	//
   	// Sanity checks
   	//
+
+  	// Anims require skeleton
 		if(skelAnims.size() > 0 && !hasSkeleton())
 		{
 			throw EXCEPTION("You have skeleton animations but no skeleton");
 		}
 
+		// Anims and skel bones size check
 		for(uint i = 0; i < skelAnims.size(); i++)
 		{
 			// Bone number problem
@@ -85,6 +85,7 @@ void Model::load(const char* filename)
 			}
 		}
 
+		// if skeleton present then ModelPatches should support HW skinning
 		if(hasSkeleton())
 		{
 			for(uint i = 0; i < modelPatches.size(); i++)

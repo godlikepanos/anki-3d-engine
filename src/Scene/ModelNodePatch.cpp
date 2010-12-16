@@ -1,6 +1,7 @@
 #include "ModelNodePatch.h"
 #include "Material.h"
 #include "MeshData.h"
+#include "ModelPatch.h"
 
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -9,7 +10,7 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-ModelNodePatch::ModelNodePatch(const Model::SubModel& modelPatch_, bool isSkinPatch):
+ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
 	modelPatch(modelPatch_)
 {
 	if(!isSkinPatch)
@@ -24,7 +25,13 @@ ModelNodePatch::ModelNodePatch(const Model::SubModel& modelPatch_, bool isSkinPa
 	}
 	else
 	{
-
+		//
+		// Create the TF VBOs
+		//
+		tfVbos[TF_VBO_POSITIONS].create(GL_ARRAY_BUFFER,
+		                                modelPatch.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS).getSizeInBytes(),
+		                                NULL,
+		                                GL_STATIC_DRAW);
 	}
 }
 
@@ -60,7 +67,7 @@ void ModelNodePatch::createVao(const Material& mtl, const boost::array<const Vbo
 		                         2, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM) != NULL)
+	/*if(mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM) != NULL)
 	{
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_WEIGHTS],
 		                         *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_BONES_NUM), 1,
@@ -79,7 +86,7 @@ void ModelNodePatch::createVao(const Material& mtl, const boost::array<const Vbo
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_WEIGHTS],
 		                         *mtl.getStdAttribVar(Material::SAV_VERT_WEIGHT_WEIGHTS), 4,
 		                         GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
-	}
+	}*/
 
 	vao.attachElementArrayBufferVbo(*vbos[Mesh::VBO_VERT_INDECES]);
 }

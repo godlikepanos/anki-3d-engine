@@ -40,7 +40,7 @@ class Scanner;
 /// @endcode
 ///
 /// Requirements:
-/// - If the materials need texture coords or/and vertex weights then mesh should have them
+/// - If the materials need texture coords then mesh should have them
 /// - The skeleton and skelAnims are optional
 /// - Its an error to have skelAnims without skeleton
 class Model: public Resource
@@ -60,7 +60,7 @@ class Model: public Resource
 		bool hasSkeleton() const {return skeleton.get() != NULL;}
 
 	private:
-		boost::ptr_vector<ModelPatch> modelPatches; ///< The vector of SubModel
+		boost::ptr_vector<ModelPatch> modelPatches; ///< The vector of ModelPatch
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton. It can be empty
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
 };
