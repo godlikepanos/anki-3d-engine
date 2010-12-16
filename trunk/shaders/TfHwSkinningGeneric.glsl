@@ -7,8 +7,8 @@ in vec3 position;
 in vec3 normal;
 in vec4 tangent;
 in float vertWeightBonesNum;
-in vec4  vertWeightBoneIds;
-in vec4  vertWeightWeights;
+in vec4 vertWeightBoneIds;
+in vec4 vertWeightWeights;
 
 const int MAX_BONES_PER_MESH = 60;
 uniform mat3 skinningRotations[MAX_BONES_PER_MESH];
@@ -55,3 +55,4 @@ void main()
 
 void main()
 {}
+

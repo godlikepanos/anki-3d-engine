@@ -6,6 +6,7 @@
 #include "Vbo.h"
 #include "Mesh.h" // For the Vbos enum
 #include "Model.h"
+#include "RsrcPtr.h"
 
 
 class Material;
@@ -36,6 +37,7 @@ class ModelNodePatch
 		Vao mainVao; ///< VAO for MS and BS
 		Vao dpVao; ///< VAO for depth passes
 		Vao tfVao; ///< VAO for transform feedback
+		RsrcPtr<Material> tfMtl;
 
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };

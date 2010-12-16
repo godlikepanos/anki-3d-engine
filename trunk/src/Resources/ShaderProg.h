@@ -132,6 +132,9 @@ class ShaderProg: public Resource
 		static std::string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
 		                                        const char* newFNamePrefix);
 
+		/// Reling the program. Used in transform feedback
+		void relink() const {link();}
+
 	//====================================================================================================================
 	// Private                                                                                                           =
 	//====================================================================================================================
@@ -161,7 +164,7 @@ class ShaderProg: public Resource
 
 		/// Link the shader program
 		/// @exception Exception
-		void link();
+		void link() const;
 
 		/// Resource load
 		void load(const char* filename);

@@ -32,6 +32,26 @@ ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
 		                                modelPatch.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS).getSizeInBytes(),
 		                                NULL,
 		                                GL_STATIC_DRAW);
+
+		tfVbos[TF_VBO_NORMALS].create(GL_ARRAY_BUFFER,
+		                              modelPatch.getMesh().getVbo(Mesh::VBO_VERT_NORMALS).getSizeInBytes(),
+		                              NULL,
+		                              GL_STATIC_DRAW);
+
+		tfVbos[TF_VBO_TANGENTS].create(GL_ARRAY_BUFFER,
+		                               modelPatch.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
+		                               NULL,
+		                               GL_STATIC_DRAW);
+
+		//
+		// Load TF material and to TF stuff
+		//
+		tfMtl.loadRsrc("material/TfHwSkinning.mtl");
+
+		int id = tfMtl->getShaderProg().getGlId();
+		const char* tfVaryings[] = {"vPosition", "vNormal", "vTangent"};
+		glTransformFeedbackVaryings(id, 3, tfVaryings, GL_SEPARATE_ATTRIBS);
+		tfMtl->getShaderProg().relink();
 	}
 }
 
