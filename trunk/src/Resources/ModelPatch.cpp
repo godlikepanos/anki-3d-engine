@@ -6,7 +6,7 @@
 //======================================================================================================================
 // supportsHardwareSkinning                                                                                            =
 //======================================================================================================================
-bool ModelPatch::supportsHardwareSkinning() const
+bool ModelPatch::supportsHwSkinning() const
 {
 	return mesh->hasVertWeights();
 }
@@ -15,14 +15,14 @@ bool ModelPatch::supportsHardwareSkinning() const
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-void ModelPatch::load(const char* meshFName, const char* mtlFName, const char* dpMtlFName)
+void ModelPatch::load(const char* meshFName, const char* cpMtlFName, const char* dpMtlFName)
 {
 	//
 	// Load
 	//
 	mesh.loadRsrc(meshFName);
-	material.loadRsrc(mtlFName);
-	dpMaterial.loadRsrc(dpMtlFName);
+	cpMtl.loadRsrc(cpMtlFName);
+	dpMtl.loadRsrc(dpMtlFName);
 
 	//
 	// Sanity checks
@@ -31,13 +31,13 @@ void ModelPatch::load(const char* meshFName, const char* mtlFName, const char* d
 		EXCEPTION("Resource \"" + x->getRsrcName() + "\" and \"" + y->getRsrcName() + "\" are incompatible")
 
 	// if mtl needs tex coords then mesh should have
-	if(material->hasTexCoords() && !mesh->hasTexCoords())
+	if(cpMtl->hasTexCoords() && !mesh->hasTexCoords())
 	{
-		throw EXCEPTION_INCOMPATIBLE_RSRCS(material, mesh);
+		throw EXCEPTION_INCOMPATIBLE_RSRCS(cpMtl, mesh);
 	}
 
-	if(dpMaterial->hasTexCoords() && !mesh->hasTexCoords())
+	if(dpMtl->hasTexCoords() && !mesh->hasTexCoords())
 	{
-		throw EXCEPTION_INCOMPATIBLE_RSRCS(dpMaterial, mesh);
+		throw EXCEPTION_INCOMPATIBLE_RSRCS(dpMtl, mesh);
 	}
 }

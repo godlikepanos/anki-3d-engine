@@ -3,24 +3,42 @@
 /// Switches: NORMAL_ENABLED, TANGENT_ENABLED
 #pragma anki vertShaderBegins
 
-in vec3 position;
-in vec3 normal;
-in vec4 tangent;
+
+//
+// Attributes
+//
+layout(location = 0) in vec3 position;
+
+#if defined(NORMAL_ENABLED)
+	layout(location = 1) in vec3 normal;
+#endif
+
+#if defined(TANGENT_ENABLED)
+	layout(location = 2) in vec4 tangent;
+#endif
 in float vertWeightBonesNum;
 in vec4 vertWeightBoneIds;
 in vec4 vertWeightWeights;
 
+
+//
+// Uniforms
+// 
 const int MAX_BONES_PER_MESH = 60;
 uniform mat3 skinningRotations[MAX_BONES_PER_MESH];
 uniform vec3 skinningTranslations[MAX_BONES_PER_MESH];
 
-//#pragma anki transformFeedbackVarying vPosition
+
+//
+// Varyings
+//
+
 out vec3 vPosition;
-//#pragma anki transformFeedbackVarying vNormal
+
 #if defined(NORMAL_ENABLED)
 	out vec3 vNormal;
 #endif
-//#pragma anki transformFeedbackVarying vTangent
+
 #if defined(TANGENT_ENABLED)
 	out vec4 vTangent;
 #endif
@@ -54,5 +72,7 @@ void main()
 #pragma anki fragShaderBegins
 
 void main()
-{}
+{
+	// Do nothing
+}
 
