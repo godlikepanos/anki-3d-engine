@@ -28,16 +28,17 @@ class ModelNodePatch
 			TF_VBOS_NUM
 		};
 
+		const Material& getCpMtl() const {return modelPatchRsrc.getCpMtl();}
+		const Material& getDpMtl() const {return modelPatchRsrc.getDpMtl();}
 		const Vbo& getTfVbo(TfVbos i) const {return tfVbos[i];}
 
 	private:
-		const ModelPatch& modelPatch;
+		const ModelPatch& modelPatchRsrc;
 		boost::array<Vbo, TF_VBOS_NUM> tfVbos;
 		boost::array<const Vbo*, Mesh::VBOS_NUM> vbos;
-		Vao mainVao; ///< VAO for MS and BS
+		Vao cpVao; ///< VAO for MS and BS
 		Vao dpVao; ///< VAO for depth passes
 		Vao tfVao; ///< VAO for transform feedback
-		RsrcPtr<Material> tfMtl;
 
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };

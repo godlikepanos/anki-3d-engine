@@ -11,17 +11,16 @@
 // Constructor                                                                                                         =
 //======================================================================================================================
 ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
-	modelPatch(modelPatch_)
+	modelPatchRsrc(modelPatch_)
 {
+	RASSERT_THROW_EXCEPTION(isSkinPatch && !modelPatchRsrc.supportsHwSkinning());
+
 	if(!isSkinPatch)
 	{
 		for(uint i = 0; i < Mesh::VBOS_NUM; i++)
 		{
-			vbos[i] = &modelPatch.getMesh().getVbo((Mesh::Vbos)i);
+			vbos[i] = &modelPatchRsrc.getMesh().getVbo((Mesh::Vbos)i);
 		}
-
-		createVao(modelPatch.getMaterial(), vbos, mainVao);
-		createVao(modelPatch.getDpMaterial(), vbos, dpVao);
 	}
 	else
 	{
@@ -29,30 +28,35 @@ ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
 		// Create the TF VBOs
 		//
 		tfVbos[TF_VBO_POSITIONS].create(GL_ARRAY_BUFFER,
-		                                modelPatch.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS).getSizeInBytes(),
+		                                modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS).getSizeInBytes(),
 		                                NULL,
 		                                GL_STATIC_DRAW);
 
 		tfVbos[TF_VBO_NORMALS].create(GL_ARRAY_BUFFER,
-		                              modelPatch.getMesh().getVbo(Mesh::VBO_VERT_NORMALS).getSizeInBytes(),
+		                              modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_NORMALS).getSizeInBytes(),
 		                              NULL,
 		                              GL_STATIC_DRAW);
 
 		tfVbos[TF_VBO_TANGENTS].create(GL_ARRAY_BUFFER,
-		                               modelPatch.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
+		                               modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
 		                               NULL,
 		                               GL_STATIC_DRAW);
 
 		//
-		// Load TF material and to TF stuff
+		// Set the new VBOs array
 		//
-		tfMtl.loadRsrc("material/TfHwSkinning.mtl");
+		for(uint i = 0; i < Mesh::VBOS_NUM; i++)
+		{
+			vbos[i] = &modelPatchRsrc.getMesh().getVbo((Mesh::Vbos)i);
+		}
 
-		int id = tfMtl->getShaderProg().getGlId();
-		const char* tfVaryings[] = {"vPosition", "vNormal", "vTangent"};
-		glTransformFeedbackVaryings(id, 3, tfVaryings, GL_SEPARATE_ATTRIBS);
-		tfMtl->getShaderProg().relink();
+		vbos[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TF_VBO_POSITIONS];
+		vbos[Mesh::VBO_VERT_NORMALS] = &tfVbos[TF_VBO_NORMALS];
+		vbos[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TF_VBO_TANGENTS];
 	}
+
+	createVao(modelPatchRsrc.getCpMtl(), vbos, cpVao);
+	createVao(modelPatchRsrc.getDpMtl(), vbos, dpVao);
 }
 
 

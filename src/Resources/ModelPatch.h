@@ -18,17 +18,17 @@ class ModelPatch
 		/// @name Accessors
 		/// @{
 		const Mesh& getMesh() const {return *mesh;}
-		const Material& getMaterial() const {return *material;}
-		const Material& getDpMaterial() const {return *dpMaterial;}
+		const Material& getCpMtl() const {return *cpMtl;}
+		const Material& getDpMtl() const {return *dpMtl;}
 		/// @}
 
 		/// This only checks the mesh for vertex weights
-		bool supportsHardwareSkinning() const;
+		bool supportsHwSkinning() const;
 
 	private:
 		RsrcPtr<Mesh> mesh; ///< The geometry
-		RsrcPtr<Material> material; ///< Material for MS and BS
-		RsrcPtr<Material> dpMaterial; ///< Material for depth passes
+		RsrcPtr<Material> cpMtl; ///< Material for MS and BS
+		RsrcPtr<Material> dpMtl; ///< Material for depth passes
 };
 
 
