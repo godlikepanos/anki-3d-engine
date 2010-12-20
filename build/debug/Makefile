@@ -3908,9 +3908,9 @@ ModelNodePatch.o: ../../src/Scene/ModelNodePatch.cpp \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Model.h ../../src/Resources/ModelPatch.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Resources/Texture.h ../../src/Resources/Helpers/MeshData.h
+ ../../src/Resources/Texture.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Resources/ModelPatch.h
 	@echo Compiling ../../src/Scene/ModelNodePatch.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNodePatch.cpp -o ModelNodePatch.o
 

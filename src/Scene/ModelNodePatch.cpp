@@ -32,15 +32,21 @@ ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
 		                                NULL,
 		                                GL_STATIC_DRAW);
 
-		tfVbos[TF_VBO_NORMALS].create(GL_ARRAY_BUFFER,
-		                              modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_NORMALS).getSizeInBytes(),
-		                              NULL,
-		                              GL_STATIC_DRAW);
+		if(modelPatchRsrc.supportsNormals())
+		{
+			tfVbos[TF_VBO_NORMALS].create(GL_ARRAY_BUFFER,
+			                              modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_NORMALS).getSizeInBytes(),
+			                              NULL,
+			                              GL_STATIC_DRAW);
+		}
 
-		tfVbos[TF_VBO_TANGENTS].create(GL_ARRAY_BUFFER,
-		                               modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
-		                               NULL,
-		                               GL_STATIC_DRAW);
+		if(modelPatchRsrc.supportsTangents())
+		{
+			tfVbos[TF_VBO_TANGENTS].create(GL_ARRAY_BUFFER,
+			                               modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
+			                               NULL,
+			                               GL_STATIC_DRAW);
+		}
 
 		//
 		// Set the new VBOs array
@@ -51,20 +57,37 @@ ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
 		}
 
 		vbos[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TF_VBO_POSITIONS];
-		vbos[Mesh::VBO_VERT_NORMALS] = &tfVbos[TF_VBO_NORMALS];
-		vbos[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TF_VBO_TANGENTS];
+
+		if(modelPatchRsrc.supportsNormals())
+		{
+			vbos[Mesh::VBO_VERT_NORMALS] = &tfVbos[TF_VBO_NORMALS];
+		}
+
+		if(modelPatchRsrc.supportsTangents())
+		{
+			vbos[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TF_VBO_TANGENTS];
+		}
 
 		//
 		// Create the TF VAO
 		//
-		/// @todo check what are the needed VBOs
 		tfVao.create();
-		const Vbo& tmpVbo = modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS);
-		tfVao.attachArrayBufferVbo(tmpVbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		const Vbo& tmpVbo = modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_NORMALS);
-		tfVao.attachArrayBufferVbo(tmpVbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		const Vbo& tmpVbo = modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS);
-		tfVao.attachArrayBufferVbo(tmpVbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+		const Vbo* tmpVbo = &modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS);
+		tfVao.attachArrayBufferVbo(*tmpVbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+		if(modelPatchRsrc.supportsNormals())
+		{
+			tmpVbo = &modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_NORMALS);
+			tfVao.attachArrayBufferVbo(*tmpVbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		}
+
+		if(modelPatchRsrc.supportsTangents())
+		{
+			tmpVbo = &modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS);
+			tfVao.attachArrayBufferVbo(*tmpVbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+		}
+
+		tfVao.attachElementArrayBufferVbo(modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_INDECES));
 	}
 
 	createVao(modelPatchRsrc.getCpMtl(), vbos, cpVao);

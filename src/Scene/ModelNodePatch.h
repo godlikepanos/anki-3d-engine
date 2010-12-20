@@ -5,12 +5,11 @@
 #include "Vao.h"
 #include "Vbo.h"
 #include "Mesh.h" // For the Vbos enum
-#include "Model.h"
 #include "RsrcPtr.h"
+#include "ModelPatch.h"
 
 
 class Material;
-class ModelPatch;
 
 
 /// A fragment of the ModelNode
@@ -31,6 +30,7 @@ class ModelNodePatch
 		const Material& getCpMtl() const {return modelPatchRsrc.getCpMtl();}
 		const Material& getDpMtl() const {return modelPatchRsrc.getDpMtl();}
 		const Vbo& getTfVbo(TfVbos i) const {return tfVbos[i];}
+		const Vao& getTfVao() const {return tfVao;}
 
 	private:
 		const ModelPatch& modelPatchRsrc;
@@ -38,7 +38,8 @@ class ModelNodePatch
 		boost::array<const Vbo*, Mesh::VBOS_NUM> vbos;
 		Vao cpVao; ///< VAO for MS and BS. All VBOs could be attached except for the vert weights
 		Vao dpVao; ///< VAO for depth passes. All VBOs could be attached except for the vert weights
-		/// VAO for transform feedback pass. We attach only the positions, normals (optional) and tangents (optional) VBOs
+		/// VAO for transform feedback pass. We attach only the original mesh's positions, normals (optional) and tangents
+		/// (optional) VBOs
 		Vao tfVao;
 
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);

@@ -25,6 +25,12 @@ class ModelPatch
 		/// This only checks the mesh for vertex weights
 		bool supportsHwSkinning() const;
 
+		/// This checks if any of the materials needs normals
+		bool supportsNormals() const;
+
+		/// This checks if any of the materials needs tangents
+		bool supportsTangents() const;
+
 	private:
 		RsrcPtr<Mesh> mesh; ///< The geometry
 		RsrcPtr<Material> cpMtl; ///< Material for MS and BS
