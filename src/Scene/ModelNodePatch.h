@@ -36,9 +36,10 @@ class ModelNodePatch
 		const ModelPatch& modelPatchRsrc;
 		boost::array<Vbo, TF_VBOS_NUM> tfVbos;
 		boost::array<const Vbo*, Mesh::VBOS_NUM> vbos;
-		Vao cpVao; ///< VAO for MS and BS
-		Vao dpVao; ///< VAO for depth passes
-		Vao tfVao; ///< VAO for transform feedback
+		Vao cpVao; ///< VAO for MS and BS. All VBOs could be attached except for the vert weights
+		Vao dpVao; ///< VAO for depth passes. All VBOs could be attached except for the vert weights
+		/// VAO for transform feedback pass. We attach only the positions, normals (optional) and tangents (optional) VBOs
+		Vao tfVao;
 
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };
