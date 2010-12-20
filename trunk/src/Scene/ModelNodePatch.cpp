@@ -53,6 +53,18 @@ ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_, bool isSkinPatch):
 		vbos[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TF_VBO_POSITIONS];
 		vbos[Mesh::VBO_VERT_NORMALS] = &tfVbos[TF_VBO_NORMALS];
 		vbos[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TF_VBO_TANGENTS];
+
+		//
+		// Create the TF VAO
+		//
+		/// @todo check what are the needed VBOs
+		tfVao.create();
+		const Vbo& tmpVbo = modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_POSITIONS);
+		tfVao.attachArrayBufferVbo(tmpVbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		const Vbo& tmpVbo = modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_NORMALS);
+		tfVao.attachArrayBufferVbo(tmpVbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		const Vbo& tmpVbo = modelPatchRsrc.getMesh().getVbo(Mesh::VBO_VERT_TANGENTS);
+		tfVao.attachArrayBufferVbo(tmpVbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
 	createVao(modelPatchRsrc.getCpMtl(), vbos, cpVao);
