@@ -15,7 +15,6 @@
 /// @code
 /// <magic:ANKIMESH>
 /// <string:meshName>
-/// <string:material>
 /// <uint:vertsNum>
 /// <float:vert[0].x> <float:vert[0].y> <float:vert[0].z> ...
 /// <float:vert[vertsNum-1].x> <float:vert[vertsNum-1].y> <float:vert[vertsNum-1].z>

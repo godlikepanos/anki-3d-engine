@@ -7,6 +7,9 @@
 //======================================================================================================================
 void SkinsDeformer::init()
 {
+	//
+	// Load the shaders
+	//
 	std::string all = ShaderProg::createSrcCodeToCache("shaders/TfHwSkinningGeneric.glsl",
 	                                                   "#define NORMAL_ENABLED\n#define TANGENT_ENABLED\n",
 	                                                   "pnt");
@@ -23,4 +26,13 @@ void SkinsDeformer::init()
 	tfHwSkinningAllSProg.loadRsrc(all.c_str());
 	tfHwSkinningPosNormSProg.loadRsrc(pn.c_str());
 	tfHwSkinningPosTangentSProg.loadRsrc(pt.c_str());
+}
+
+
+//======================================================================================================================
+// run                                                                                                                 =
+//======================================================================================================================
+void SkinsDeformer::run()
+{
+
 }

@@ -35,6 +35,8 @@ class ModelPatch
 		RsrcPtr<Mesh> mesh; ///< The geometry
 		RsrcPtr<Material> cpMtl; ///< Material for MS and BS
 		RsrcPtr<Material> dpMtl; ///< Material for depth passes
+
+		static void doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl);
 };
 
 

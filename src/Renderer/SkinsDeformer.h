@@ -4,6 +4,7 @@
 #include "RsrcPtr.h"
 
 
+///
 class SkinsDeformer
 {
 	public:

@@ -2,6 +2,7 @@
 #define MODEL_NODE_H
 
 #include <boost/array.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include "SceneNode.h"
 #include "RsrcPtr.h"
 #include "Properties.h"
@@ -9,7 +10,7 @@
 
 class Model;
 class SkelAnimModelNodeCtrl;
-class Vbo;
+class ModelNodePatch;
 
 
 /// The model scene node
@@ -33,11 +34,15 @@ class ModelNode: public SceneNode
 		/// @return True if the model support skeleton animation
 		bool hasSkeleton() const {return boneRotations.size() > 0;}
 
-		/// @todo
+		/// Initialize the node
+		/// - Load the resource
+		/// - Create the bone transformations
+		/// - Create the patches
 		void init(const char* filename);
 
 	private:
 		RsrcPtr<Model> model;
+		boost::ptr_vector<ModelNodePatch> patches;
 };
 
 
