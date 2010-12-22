@@ -35,27 +35,44 @@ bool ModelPatch::supportsTangents() const
 //======================================================================================================================
 void ModelPatch::load(const char* meshFName, const char* cpMtlFName, const char* dpMtlFName)
 {
-	//
 	// Load
-	//
 	mesh.loadRsrc(meshFName);
 	cpMtl.loadRsrc(cpMtlFName);
 	dpMtl.loadRsrc(dpMtlFName);
 
-	//
 	// Sanity checks
-	//
-	#define EXCEPTION_INCOMPATIBLE_RSRCS(x, y) \
-		EXCEPTION("Resource \"" + x->getRsrcName() + "\" and \"" + y->getRsrcName() + "\" are incompatible")
+	doMeshAndMtlSanityChecks(*mesh, *cpMtl);
+	doMeshAndMtlSanityChecks(*mesh, *dpMtl);
+}
 
-	// if mtl needs tex coords then mesh should have
-	if(cpMtl->hasTexCoords() && !mesh->hasTexCoords())
+
+//======================================================================================================================
+// doMeshAndMtlSanityChecks                                                                                            =
+//======================================================================================================================
+void ModelPatch::doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl)
+{
+	try
 	{
-		throw EXCEPTION_INCOMPATIBLE_RSRCS(cpMtl, mesh);
+		// if mtl needs tex coords then mesh should have
+		if(mtl.hasTexCoords() && !mesh.hasTexCoords())
+		{
+			throw EXCEPTION("Texture coords");
+		}
+
+		// normals & tangents
+		if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL && !mesh.hasNormalsAndTangents())
+		{
+			throw EXCEPTION("Normals");
+		}
+
+		// Tangents
+		if(mtl.getStdAttribVar(Material::SAV_TANGENT) != NULL && !mesh.hasNormalsAndTangents())
+		{
+			throw EXCEPTION("Tangents");
+		}
 	}
-
-	if(dpMtl->hasTexCoords() && !mesh->hasTexCoords())
+	catch(std::exception& e)
 	{
-		throw EXCEPTION_INCOMPATIBLE_RSRCS(dpMtl, mesh);
+		throw EXCEPTION("Resource \"" + mesh.getRsrcName() + "\" and \"" + mtl.getRsrcName() + "\" are incompatible");
 	}
 }

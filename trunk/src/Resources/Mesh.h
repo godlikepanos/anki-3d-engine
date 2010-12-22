@@ -44,9 +44,12 @@ class Mesh: public Resource, public Object
 		/// Implements @ref Resource::load
 		void load(const char* filename);
 
+		/// @name Ask for data
+		/// @{
 		bool hasTexCoords() const {return vbos[VBO_TEX_COORDS].isCreated();}
-
 		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS].isCreated();}
+		bool hasNormalsAndTangents() const;
+		/// @}
 
 	private:
 		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
@@ -54,6 +57,12 @@ class Mesh: public Resource, public Object
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);
 };
+
+
+inline bool Mesh::hasNormalsAndTangents() const
+{
+	return vbos[VBO_VERT_NORMALS].isCreated() && vbos[VBO_VERT_TANGENTS].isCreated();
+}
 
 
 #endif
