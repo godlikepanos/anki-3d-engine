@@ -156,7 +156,7 @@ void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& bo
 //======================================================================================================================
 void SkelAnimModelNodeCtrl::update(float)
 {
-	frame += step;
+	/*frame += step;
 	if(frame > skelAnim->framesNum) // if the crnt is finished then play the next or loop the crnt
 	{
 		frame = 0.0;
@@ -168,5 +168,5 @@ void SkelAnimModelNodeCtrl::update(float)
 	{
 		deform(modelNode.getModel().getSkeleton(), modelNode.getBoneTranslations(), modelNode.getBoneRotations(),
 		       modelNode.getHeads(), modelNode.getTails());
-	}
+	}*/
 }

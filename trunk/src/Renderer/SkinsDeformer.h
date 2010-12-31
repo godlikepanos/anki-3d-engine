@@ -4,6 +4,9 @@
 #include "RsrcPtr.h"
 
 
+class ShaderProg;
+
+
 ///
 class SkinsDeformer
 {

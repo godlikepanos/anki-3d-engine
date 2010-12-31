@@ -9,6 +9,7 @@
 #include "ParticleEmitterProps.h"
 #include "Script.h"
 #include "Model.h"
+#include "Skin.h"
 
 
 namespace RsrcContainers {
@@ -23,5 +24,6 @@ RsrcContainer<LightData> lightProps;
 RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 RsrcContainer<Script> scripts;
 RsrcContainer<Model> models;
+RsrcContainer<Skin> skins;
 
 }

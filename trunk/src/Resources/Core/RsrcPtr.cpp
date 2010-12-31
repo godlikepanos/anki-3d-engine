@@ -1,8 +1,8 @@
 #include "RsrcPtr.h"
 #include "RsrcContainer.h"
 #include "Texture.h"
-#include "Material.h"
 #include "ShaderProg.h"
+#include "Material.h"
 #include "Mesh.h"
 #include "Skeleton.h"
 #include "SkelAnim.h"
@@ -10,6 +10,7 @@
 #include "ParticleEmitterProps.h"
 #include "Script.h"
 #include "Model.h"
+#include "Skin.h"
 
 
 namespace RsrcContainers {
@@ -24,6 +25,7 @@ extern RsrcContainer<LightData> lightProps;
 extern RsrcContainer<ParticleEmitterProps> particleEmitterProps;
 extern RsrcContainer<Script> scripts;
 extern RsrcContainer<Model> models;
+extern RsrcContainer<Skin> skins;
 
 }
 
@@ -142,6 +144,17 @@ bool RsrcPtr<Model>::loadRsrc(const char* filename)
 
 
 //======================================================================================================================
+// loadRsrc <Skin>                                                                                                    =
+//======================================================================================================================
+template<>
+bool RsrcPtr<Skin>::loadRsrc(const char* filename)
+{
+	LOAD_RSRC(skins);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+//======================================================================================================================
 // unload <Texture>                                                                                                    =
 //======================================================================================================================
 template<>
@@ -239,4 +252,14 @@ template<>
 void RsrcPtr<Model>::unload()
 {
 	UNLOAD_RSRC(models);
+}
+
+
+//======================================================================================================================
+// unload <Skin>                                                                                                      =
+//======================================================================================================================
+template<>
+void RsrcPtr<Skin>::unload()
+{
+	UNLOAD_RSRC(skins);
 }

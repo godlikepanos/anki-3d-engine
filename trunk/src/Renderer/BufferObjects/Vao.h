@@ -38,7 +38,7 @@ class Vao
 		/// @param normalized Specifies whether fixed-point data values should be normalized
 		/// @param stride Specifies the byte offset between consecutive generic vertex attributes
 		/// @param pointer Specifies a offset of the first component of the first generic vertex attribute in the array
-		void attachArrayBufferVbo(const Vbo& vbo, const ShaderProg::AttribVar& attribVar, GLint size, GLenum type,
+		void attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar, GLint size, GLenum type,
 		                          GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 
 		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
@@ -74,6 +74,7 @@ inline void Vao::create()
 	glGenVertexArrays(1, &glId);
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
+
 
 inline Vao::~Vao()
 {

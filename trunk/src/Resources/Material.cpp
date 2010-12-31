@@ -9,18 +9,7 @@
 #include "Texture.h"
 #include "ShaderProg.h"
 #include "App.h"
-#include "MainRenderer.h"
 #include "PropertyTree.h"
-
-
-//======================================================================================================================
-// Constructor                                                                                                         =
-//======================================================================================================================
-Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const char* texFilename):
-	sProgVar(sProgVar)
-{
-	texture.loadRsrc(texFilename);
-}
 
 
 //======================================================================================================================
@@ -31,16 +20,11 @@ Material::StdVarNameAndGlDataTypePair Material::stdAttribVarInfos[SAV_NUM] =
 	{"position", GL_FLOAT_VEC3},
 	{"tangent", GL_FLOAT_VEC4},
 	{"normal", GL_FLOAT_VEC3},
-	{"texCoords", GL_FLOAT_VEC2},
-	{"vertWeightBonesNum", GL_FLOAT},
-	{"vertWeightBoneIds", GL_FLOAT_VEC4},
-	{"vertWeightWeights", GL_FLOAT_VEC4}
+	{"texCoords", GL_FLOAT_VEC2}
 };
 
 Material::StdVarNameAndGlDataTypePair Material::stdUniVarInfos[SUV_NUM] =
 {
-	{"skinningRotations", GL_FLOAT_MAT3},
-	{"skinningTranslations", GL_FLOAT_VEC3},
 	{"modelMat", GL_FLOAT_MAT4},
 	{"viewMat", GL_FLOAT_MAT4},
 	{"projectionMat", GL_FLOAT_MAT4},
@@ -67,14 +51,12 @@ Material::PreprocDefines Material::msGenericDefines [] =
 	{"PARALLAX_MAPPING", 'p'},
 	{"ENVIRONMENT_MAPPING", 'e'},
 	{"ALPHA_TESTING", 'a'},
-	{"HARDWARE_SKINNING", 'h'},
 	{NULL, NULL}
 };
 
 Material::PreprocDefines Material::dpGenericDefines [] =
 {
 	{"ALPHA_TESTING", 'a'},
-	{"HARDWARE_SKINNING", 'h'},
 	{NULL, NULL}
 };
 
@@ -274,7 +256,7 @@ void Material::load(const char* filename)
 
 				const ptree& valueTree = userDefinedVarTree.get_child("value");
 
-				const ShaderProg::UniVar& uni = *shaderProg->findUniVar(varName.c_str());
+				const SProgUniVar& uni = *shaderProg->findUniVar(varName.c_str());
 
 				// read the values
 				switch(uni.getGlDataType())
@@ -287,25 +269,25 @@ void Material::load(const char* filename)
 
 						if(texture)
 						{
-							userDefinedVars.push_back(new UserDefinedUniVar(uni, texture.get().c_str()));
+							userDefinedVars.push_back(new MtlUserDefinedVar(uni, texture.get().c_str()));
 						}
 						else if(fai)
 						{
 							if(fai.get() == "msDepthFai")
 							{
-								userDefinedVars.push_back(new UserDefinedUniVar(uni, MS_DEPTH_FAI));
+								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::MS_DEPTH_FAI));
 							}
 							else if(fai.get() == "isFai")
 							{
-								userDefinedVars.push_back(new UserDefinedUniVar(uni, IS_FAI));
+								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::IS_FAI));
 							}
 							else if(fai.get() == "ppsPrePassFai")
 							{
-								userDefinedVars.push_back(new UserDefinedUniVar(uni, PPS_PRE_PASS_FAI));
+								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::PPS_PRE_PASS_FAI));
 							}
 							else if(fai.get() == "ppsPostPassFai")
 							{
-								userDefinedVars.push_back(new UserDefinedUniVar(uni, PPS_POST_PASS_FAI));
+								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::PPS_POST_PASS_FAI));
 							}
 							else
 							{
@@ -321,19 +303,19 @@ void Material::load(const char* filename)
 					}
 					// float
 					case GL_FLOAT:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getFloat(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getFloat(valueTree)));
 						break;
 						// vec2
 					case GL_FLOAT_VEC2:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec2(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec2(valueTree)));
 						break;
 						// vec3
 					case GL_FLOAT_VEC3:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec3(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec3(valueTree)));
 						break;
 						// vec4
 					case GL_FLOAT_VEC4:
-						userDefinedVars.push_back(new UserDefinedUniVar(uni, PropertyTree::getVec4(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec4(valueTree)));
 						break;
 				};
 			} // end for all userDefinedVars

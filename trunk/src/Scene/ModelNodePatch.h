@@ -1,12 +1,12 @@
 #ifndef MODEL_NODE_PATCH_H
 #define MODEL_NODE_PATCH_H
 
-#include <boost/array.hpp>
 #include "Vao.h"
 #include "Vbo.h"
 #include "Mesh.h" // For the Vbos enum
 #include "RsrcPtr.h"
 #include "ModelPatch.h"
+#include "Properties.h"
 
 
 class Material;
@@ -15,32 +15,24 @@ class Material;
 /// A fragment of the ModelNode
 class ModelNodePatch
 {
+	/// VAO for MS and BS. All VBOs could be attached except for the vert weights
+	PROPERTY_R(Vao, cpVao, getCpVao)
+
+	/// VAO for depth passes. All VBOs could be attached except for the vert weights
+	PROPERTY_R(Vao, dpVao, getDpVao)
+
 	public:
-		ModelNodePatch(const ModelPatch& modelPatch, bool isSkinPatch);
+		ModelNodePatch(const ModelPatch& modelPatch);
 
-		/// Transform feedback VBOs
-		enum TfVbos
-		{
-			TF_VBO_POSITIONS,
-			TF_VBO_NORMALS,
-			TF_VBO_TANGENTS,
-			TF_VBOS_NUM
-		};
-
+		/// @name Accessors
+		/// @{
 		const Material& getCpMtl() const {return modelPatchRsrc.getCpMtl();}
 		const Material& getDpMtl() const {return modelPatchRsrc.getDpMtl();}
-		const Vbo& getTfVbo(TfVbos i) const {return tfVbos[i];}
-		const Vao& getTfVao() const {return tfVao;}
+		const ModelPatch& getModelPatchRsrc() const {return modelPatchRsrc;}
+		/// @}
 
-	private:
+	protected:
 		const ModelPatch& modelPatchRsrc;
-		boost::array<Vbo, TF_VBOS_NUM> tfVbos;
-		boost::array<const Vbo*, Mesh::VBOS_NUM> vbos;
-		Vao cpVao; ///< VAO for MS and BS. All VBOs could be attached except for the vert weights
-		Vao dpVao; ///< VAO for depth passes. All VBOs could be attached except for the vert weights
-		/// VAO for transform feedback pass. We attach only the original mesh's positions, normals (optional) and tangents
-		/// (optional) VBOs
-		Vao tfVao;
 
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };

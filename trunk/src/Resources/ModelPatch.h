@@ -25,10 +25,10 @@ class ModelPatch
 		/// This only checks the mesh for vertex weights
 		bool supportsHwSkinning() const;
 
-		/// This checks if any of the materials needs normals
+		/// This checks if any of the materials need normals
 		bool supportsNormals() const;
 
-		/// This checks if any of the materials needs tangents
+		/// This checks if any of the materials need tangents
 		bool supportsTangents() const;
 
 	private:
@@ -36,6 +36,7 @@ class ModelPatch
 		RsrcPtr<Material> cpMtl; ///< Material for MS and BS
 		RsrcPtr<Material> dpMtl; ///< Material for depth passes
 
+		/// Checks if a mesh and a material are compatible
 		static void doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl);
 };
 
