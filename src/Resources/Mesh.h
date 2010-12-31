@@ -9,7 +9,6 @@
 #include "Vbo.h"
 
 
-class Material;
 class MeshData;
 
 

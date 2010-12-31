@@ -4,8 +4,7 @@
 /// in all the buffers
 /// 
 /// Control defines:
-/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING,
-/// HARDWARE_SKINNING
+/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING
  
 #if defined(ALPHA_TESTING) && !defined(DIFFUSE_MAPPING)
 	#error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
@@ -26,10 +25,6 @@
 
 
 #pragma anki vertShaderBegins
-
-#if defined(HARDWARE_SKINNING)
-	#pragma anki include "shaders/hw_skinning.glsl"
-#endif
 
 /// @name Attributes
 /// @{
@@ -70,34 +65,13 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 void main()
 {
 	// calculate the vert pos, normal and tangent
+	vNormal = normalMat * normal;
 
-	// if we have hardware skinning then:
-	#if defined(HARDWARE_SKINNING)
-		mat3 _rot_;
-		vec3 _tsl_;
-
-		HWSkinning(_rot_, _tsl_);
-
-		vNormal = normalMat * (_rot_ * normal);
-
-		#if NEEDS_TANGENT
-			vTangent = normalMat * (_rot_ * vec3(tangent));
-		#endif
-
-		vec3 _posLocalSpace_ = (_rot_ * position) + _tsl_;
-		gl_Position =  modelViewProjectionMat * vec4(_posLocalSpace_, 1.0);
-
-	// if DONT have hardware skinning
-	#else
-		vNormal = normalMat * normal;
-
-		#if NEEDS_TANGENT
-			vTangent = normalMat * vec3(tangent);
-		#endif
-
-		gl_Position = modelViewProjectionMat * vec4(position, 1.0);
+	#if NEEDS_TANGENT
+		vTangent = normalMat * vec3(tangent);
 	#endif
 
+	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 
 	// calculate the rest
 

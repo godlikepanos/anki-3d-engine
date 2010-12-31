@@ -6,8 +6,8 @@
 #include "Math.h"
 #include "Resource.h"
 #include "ShaderProg.h"
-#include "Texture.h"
 #include "RsrcPtr.h"
+#include "MtlUserDefinedVar.h"
 
 
 /// Mesh material Resource
@@ -73,16 +73,13 @@ class Material: public Resource
 	// Nested                                                                                                            =
 	//====================================================================================================================
 	public:
-		/// Standard attribute variables that are acceptable inside the material stage @ref ShaderProg
+		/// Standard attribute variables that are acceptable inside the @ref ShaderProg
 		enum StdAttribVars
 		{
 			SAV_POSITION,
 			SAV_TANGENT,
 			SAV_NORMAL,
 			SAV_TEX_COORDS,
-			SAV_VERT_WEIGHT_BONES_NUM,
-			SAV_VERT_WEIGHT_BONE_IDS,
-			SAV_VERT_WEIGHT_WEIGHTS,
 			SAV_NUM
 		};
 
@@ -93,9 +90,6 @@ class Material: public Resource
 		/// - The generic material GLSL shader (maybe)
 		enum StdUniVars
 		{
-			// Skinning
-			SUV_SKINNING_ROTATIONS,
-			SUV_SKINNING_TRANSLATIONS,
 			// Matrices
 			SUV_MODEL_MAT,
 			SUV_VIEW_MAT,
@@ -118,40 +112,6 @@ class Material: public Resource
 			// num
 			SUV_NUM ///< The number of standard uniform variables
 		};
-
-		/// The renderer's FAIs
-		enum Fai
-		{
-			MS_DEPTH_FAI, ///< Avoid it in MS
-			IS_FAI, ///< Use it anywhere
-			PPS_PRE_PASS_FAI, ///< Avoid it in BS
-			PPS_POST_PASS_FAI ///< Use it anywhere
-		};
-
-		/// Class for user defined material variables that will be passes in to the shader
-		class UserDefinedUniVar
-		{
-			PROPERTY_R(float, float_, getFloat)
-			PROPERTY_R(Vec2, vec2, getVec2)
-			PROPERTY_R(Vec3, vec3, getVec3)
-			PROPERTY_R(Vec4, vec4, getVec4)
-			PROPERTY_R(Fai, fai, getFai)
-
-			public:
-				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const char* texFilename);
-				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, Fai fai);
-				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f);
-				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec2& v);
-				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec3& v);
-				UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec4& v);
-
-				const ShaderProg::UniVar& getUniVar() const {return sProgVar;}
-				const Texture* getTexture() const {return texture.get();}
-
-			private:
-				const ShaderProg::UniVar& sProgVar;
-				RsrcPtr<Texture> texture;
-		}; // end UserDefinedVar
 
 	//====================================================================================================================
 	// Properties                                                                                                        =
@@ -179,14 +139,11 @@ class Material: public Resource
 
 		/// @name Accessors
 		/// @{
-		const ShaderProg::AttribVar* getStdAttribVar(StdAttribVars id) const {return stdAttribVars[id];}
-		const ShaderProg::UniVar* getStdUniVar(StdUniVars id) const {return stdUniVars[id];}
+		const SProgAttribVar* getStdAttribVar(StdAttribVars id) const {return stdAttribVars[id];}
+		const SProgUniVar* getStdUniVar(StdUniVars id) const {return stdUniVars[id];}
 		const ShaderProg& getShaderProg() const {return *shaderProg.get();}
-		const boost::ptr_vector<UserDefinedUniVar>& getUserDefinedVars() const {return userDefinedVars;}
+		const boost::ptr_vector<MtlUserDefinedVar>& getUserDefinedVars() const {return userDefinedVars;}
 		/// @}
-
-		/// @return Return true if the shader has references to hardware skinning
-		bool hasHwSkinning() const {return stdAttribVars[SAV_VERT_WEIGHT_BONES_NUM] != NULL;}
 
 		/// @return Return true if the shader has references to texture coordinates
 		bool hasTexCoords() const {return stdAttribVars[SAV_TEX_COORDS] != NULL;}
@@ -215,10 +172,10 @@ class Material: public Resource
 		static PreprocDefines dpGenericDefines[]; ///< Depth pass defines accepted in DpGeneric.glsl
 		static StdVarNameAndGlDataTypePair stdAttribVarInfos[SAV_NUM];
 		static StdVarNameAndGlDataTypePair stdUniVarInfos[SUV_NUM];
-		const ShaderProg::AttribVar* stdAttribVars[SAV_NUM];
-		const ShaderProg::UniVar* stdUniVars[SUV_NUM];
+		const SProgAttribVar* stdAttribVars[SAV_NUM];
+		const SProgUniVar* stdUniVars[SUV_NUM];
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
-		boost::ptr_vector<UserDefinedUniVar> userDefinedVars;
+		boost::ptr_vector<MtlUserDefinedVar> userDefinedVars;
 
 		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates
 		/// the stdAttribVars and stdUniVars arrays.
@@ -233,40 +190,6 @@ class Material: public Resource
 		static void parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
 		                              std::string& source, std::string& prefix);
 };
-
-
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
-
-inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, Fai fai_):
-	fai(fai_),
-	sProgVar(sProgVar)
-{}
-
-
-inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, float f):
-	float_(f),
-	sProgVar(sProgVar)
-{}
-
-
-inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec2& v):
-	vec2(v),
-	sProgVar(sProgVar)
-{}
-
-
-inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec3& v):
-	vec3(v),
-	sProgVar(sProgVar)
-{}
-
-
-inline Material::UserDefinedUniVar::UserDefinedUniVar(const ShaderProg::UniVar& sProgVar, const Vec4& v):
-	vec4(v),
-	sProgVar(sProgVar)
-{}
 
 
 #endif

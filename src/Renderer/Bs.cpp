@@ -91,18 +91,18 @@ void Bs::run()
 	for(; it != app->getScene().modelNodes.end(); ++it)
 	{
 		const ModelNode& mn = *(*it);
-		boost::ptr_vector<Model::SubModel>::const_iterator it = mn.getModel().getSubModels().begin();
-		for(; it != mn.getModel().getSubModels().end(); it++)
+		boost::ptr_vector<ModelNodePatch>::const_iterator it = mn.getModelNodePatches().begin();
+		for(; it != mn.getModelNodePatches().end(); it++)
 		{
-			const Model::SubModel& sm = *it;
+			const ModelNodePatch& sm = *it;
 
-			if(!sm.getMaterial().renderInBlendingStage())
+			if(!sm.getCpMtl().renderInBlendingStage())
 			{
 				continue;
 			}
 
 			// refracts ?
-			if(sm.getMaterial().getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
+			if(sm.getCpMtl().getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
 			{
 				//
 				// Stage 0: Render to the temp FAI
@@ -114,12 +114,12 @@ void Bs::run()
 				glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-				r.setupShaderProg(sm.getMaterial(), mn, r.getCamera());
+				r.setupShaderProg(sm.getCpMtl(), mn, r.getCamera());
 				glDisable(GL_BLEND); // a hack
 
-				sm.getVao().bind();
-				glDrawElements(GL_TRIANGLES, sm.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
-				sm.getVao().unbind();
+				sm.getCpVao().bind();
+				glDrawElements(GL_TRIANGLES, sm.getModelPatchRsrc().getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+				sm.getCpVao().unbind();
 
 				//
 				// Stage 1: Render the temp FAI to prePassFai
@@ -129,10 +129,10 @@ void Bs::run()
 				glStencilFunc(GL_EQUAL, 0x1, 0x1);
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-				if(sm.getMaterial().isBlendingEnabled())
+				if(sm.getCpMtl().isBlendingEnabled())
 				{
 					glEnable(GL_BLEND);
-					glBlendFunc(sm.getMaterial().getBlendingSfactor(), sm.getMaterial().getBlendingDfactor());
+					glBlendFunc(sm.getCpMtl().getBlendingSfactor(), sm.getCpMtl().getBlendingDfactor());
 				}
 				else
 				{
@@ -153,11 +153,11 @@ void Bs::run()
 			// no rafraction
 			else
 			{
-				r.setupShaderProg(sm.getMaterial(), mn, r.getCamera());
+				r.setupShaderProg(sm.getCpMtl(), mn, r.getCamera());
 
-				sm.getVao().bind();
-				glDrawElements(GL_TRIANGLES, sm.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
-				sm.getVao().unbind();
+				sm.getCpVao().bind();
+				glDrawElements(GL_TRIANGLES, sm.getModelPatchRsrc().getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+				sm.getCpVao().unbind();
 			}
 		} // end for all subModels
 	} // end for all modelNodes

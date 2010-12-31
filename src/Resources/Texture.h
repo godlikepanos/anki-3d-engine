@@ -91,4 +91,5 @@ inline bool Texture::isLoaded() const
 	return glId != std::numeric_limits<uint>::max();
 }
 
+
 #endif

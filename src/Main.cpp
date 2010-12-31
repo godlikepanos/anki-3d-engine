@@ -176,11 +176,11 @@ void init()
 
 
 	// Imp
-	imp = new ModelNode();
+	/*imp = new ModelNode();
 	imp->init("models/imp/imp.mdl");
 	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
 	imp->skelAnimModelNodeCtrl->set(imp->getModel().getSkelAnims()[0].get());
-	imp->skelAnimModelNodeCtrl->setStep(0.8);
+	imp->skelAnimModelNodeCtrl->setStep(0.8);*/
 
 	return;
 

@@ -34,7 +34,8 @@ class Resource
 			RT_EXTENSION,
 			RT_PARTICLE_EMITTER_PROPS,
 			RT_SCRIPT,
-			RT_MODEL
+			RT_MODEL,
+			RT_SKIN
 		};
 
 	PROPERTY_R(std::string, path, getRsrcPath);

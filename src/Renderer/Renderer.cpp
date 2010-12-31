@@ -250,10 +250,10 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 	//
 	// set user defined vars
 	//
-	boost::ptr_vector<Material::UserDefinedUniVar>::const_iterator it = mtl.getUserDefinedVars().begin();
+	boost::ptr_vector<MtlUserDefinedVar>::const_iterator it = mtl.getUserDefinedVars().begin();
 	for(; it !=  mtl.getUserDefinedVars().end(); it++)
 	{
-		const Material::UserDefinedUniVar& udv = *it;
+		const MtlUserDefinedVar& udv = *it;
 
 		switch(udv.getUniVar().getGlDataType())
 		{
@@ -267,16 +267,16 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 				{
 					switch(udv.getFai())
 					{
-						case Material::MS_DEPTH_FAI:
+						case MtlUserDefinedVar::MS_DEPTH_FAI:
 							udv.getUniVar().setTexture(ms->getDepthFai(), textureUnit);
 							break;
-						case Material::IS_FAI:
+						case MtlUserDefinedVar::IS_FAI:
 							udv.getUniVar().setTexture(is->getFai(), textureUnit);
 							break;
-						case Material::PPS_PRE_PASS_FAI:
+						case MtlUserDefinedVar::PPS_PRE_PASS_FAI:
 							udv.getUniVar().setTexture(pps->getPrePassFai(), textureUnit);
 							break;
-						case Material::PPS_POST_PASS_FAI:
+						case MtlUserDefinedVar::PPS_POST_PASS_FAI:
 							udv.getUniVar().setTexture(pps->getPostPassFai(), textureUnit);
 							break;
 						default:
@@ -304,21 +304,6 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 		}
 	}
 
-	//
-	// Set the bone transformations
-	//
-	if(modelNode.hasSkeleton())
-	{
-		RASSERT_THROW_EXCEPTION(!mtl.hasHwSkinning()); // it has skel controller but no skinning
-
-		// first the uniforms
-		mtl.getStdUniVar(Material::SUV_SKINNING_ROTATIONS)->setMat3(&modelNode.getBoneRotations()[0],
-		                                                            modelNode.getBoneRotations().size());
-
-		mtl.getStdUniVar(Material::SUV_SKINNING_TRANSLATIONS)->setVec3(&modelNode.getBoneTranslations()[0],
-		                                                               modelNode.getBoneTranslations().size());
-	}
-
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
@@ -328,14 +313,14 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 //======================================================================================================================
 void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const
 {
-	boost::ptr_vector<Model::SubModel>::const_iterator it = modelNode.getModel().getSubModels().begin();
-	for(; it != modelNode.getModel().getSubModels().end(); it++)
+	boost::ptr_vector<ModelNodePatch>::const_iterator it = modelNode.getModelNodePatches().begin();
+	for(; it != modelNode.getModelNodePatches().end(); it++)
 	{
-		const Model::SubModel& subModel = *it;
+		const ModelNodePatch& modelNodePatch = *it;
 
-		if((type == MNRT_MS && subModel.getMaterial().renderInBlendingStage()) ||
-		   (type == MNRT_BS && !subModel.getMaterial().renderInBlendingStage()) ||
-		   (type == MNRT_DP && subModel.getMaterial().renderInBlendingStage()))
+		if((type == MNRT_MS && modelNodePatch.getCpMtl().renderInBlendingStage()) ||
+		   (type == MNRT_BS && !modelNodePatch.getCpMtl().renderInBlendingStage()) ||
+		   (type == MNRT_DP && modelNodePatch.getDpMtl().renderInBlendingStage()))
 		{
 			continue;
 		}
@@ -344,20 +329,20 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 		const Vao* vao;
 		if(type == MNRT_MS || type == MNRT_BS)
 		{
-			mtl = &subModel.getMaterial();
-			vao = &subModel.getVao();
+			mtl = &modelNodePatch.getCpMtl();
+			vao = &modelNodePatch.getCpVao();
 		}
 		else
 		{
-			mtl = &subModel.getDpMaterial();
-			vao = &subModel.getDpVao();
+			mtl = &modelNodePatch.getDpMtl();
+			vao = &modelNodePatch.getDpVao();
 		}
 
 		// Shader
 		setupShaderProg(*mtl, modelNode, cam);
 
 		vao->bind();
-		glDrawElements(GL_TRIANGLES, subModel.getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, modelNodePatch.getModelPatchRsrc().getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
 		vao->unbind();
 	}
 }

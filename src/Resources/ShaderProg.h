@@ -4,9 +4,10 @@
 #include <GL/glew.h>
 #include <limits>
 #include "Resource.h"
-#include "Math.h"
 #include "CharPtrHashMap.h"
 #include "Exception.h"
+#include "SProgUniVar.h"
+#include "SProgAttribVar.h"
 
 
 /// Shader program @ref Resource
@@ -18,67 +19,12 @@ class ShaderProg: public Resource
 {
 	friend class Material;
 	friend class RsrcContainer<ShaderProg>;
-
-	//====================================================================================================================
-	// Nested                                                                                                            =
-	//====================================================================================================================
-	public:
-		/// Shader program variable. The type is attribute or uniform
-		class Var
-		{
-			public:
-				/// Shader var types
-				enum ShaderVarType
-				{
-					SVT_ATTRIBUTE, ///< SVT_ATTRIBUTE
-					SVT_UNIFORM    ///< SVT_UNIFORM
-				};
-
-				Var(GLint loc_, const char* name_, GLenum glDataType_, ShaderVarType type_, const ShaderProg* fatherSProg_);
-				Var(const Var& var);
-				GLint getLoc() const {return loc;}
-				const std::string& getName() const {return name;}
-				GLenum getGlDataType() const {return glDataType;}
-				ShaderVarType getType() const {return type;}
-
-			protected:
-				GLint loc; ///< GL location
-				std::string name; ///< The name inside the shader program
-				GLenum glDataType; ///< GL_FLOAT, GL_FLOAT_VEC2 etc. See http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
-				ShaderVarType type; ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
-				const ShaderProg* fatherSProg; ///< We need the ShaderProg of this variable mainly for sanity checks
-		};
-
-		/// Uniform shader variable
-		class UniVar: public Var
-		{
-			public:
-				UniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
-				UniVar(const UniVar& var): Var(var) {}
-
-				void setFloat(float f) const;
-				void setFloatVec(float f[], uint size = 1) const;
-				void setVec2(const Vec2 v2[], uint size = 1) const;
-				void setVec3(const Vec3 v3[], uint size = 1) const;
-				void setVec4(const Vec4 v4[], uint size = 1) const;
-				void setMat3(const Mat3 m3[], uint size = 1) const;
-				void setMat4(const Mat4 m4[], uint size = 1) const;
-				void setTexture(const class Texture& tex, uint texUnit) const;
-		};
-
-		/// Attribute shader variable
-		class AttribVar: public Var
-		{
-			public:
-				AttribVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
-				AttribVar(const AttribVar& var): Var(var) {}
-		};
 		
 	private:
 		/// Uniform variable name to variable iterator
-		typedef CharPtrHashMap<UniVar*>::const_iterator NameToUniVarIterator;
+		typedef CharPtrHashMap<SProgUniVar*>::const_iterator NameToSProgUniVarIterator;
 		/// Attribute variable name to variable iterator
-		typedef CharPtrHashMap<AttribVar*>::const_iterator NameToAttribVarIterator;
+		typedef CharPtrHashMap<SProgAttribVar*>::const_iterator NameToSProgAttribVarIterator;
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -101,20 +47,20 @@ class ShaderProg: public Resource
 		static uint getCurrentProgramGlId();
 
 		/// Accessor to uniform vars vector
-		const Vec<UniVar>& getUniVars() const { return uniVars; }
+		const Vec<SProgUniVar>& getUniVars() const {return uniVars;}
 
 		/// Accessor to attribute vars vector
-		const Vec<AttribVar>& getAttribVars() const { return attribVars; }
+		const Vec<SProgAttribVar>& getAttribVars() const {return attribVars;}
 
 		/// Find uniform variable. On failure it throws an exception so use @ref uniVarExists to check if var exists
 		/// @param varName The name of the var
 		/// @return It returns a uniform variable
 		/// @exception Exception
-		const UniVar* findUniVar(const char* varName) const;
+		const SProgUniVar* findUniVar(const char* varName) const;
 
 		/// Find Attribute variable
 		/// @see findUniVar
-		const AttribVar* findAttribVar(const char* varName) const;
+		const SProgAttribVar* findAttribVar(const char* varName) const;
 
 		/// Uniform variable exits
 		/// @return True if uniform variable exits
@@ -144,10 +90,10 @@ class ShaderProg: public Resource
 		GLuint geomShaderGlId; ///< Geometry shader OpenGL id
 		GLuint fragShaderGlId; ///< Fragment shader OpenGL id
 		static std::string stdSourceCode; ///< Shader source that is used in ALL shader programs
-		Vec<UniVar> uniVars; ///< All the uniform variables
-		Vec<AttribVar> attribVars; ///< All the attribute variables
-		CharPtrHashMap<UniVar*> uniNameToVar;  ///< A UnorderedMap for fast variable searching
-		CharPtrHashMap<AttribVar*> attribNameToVar; ///< @see uniNameToVar
+		Vec<SProgUniVar> uniVars; ///< All the uniform variables
+		Vec<SProgAttribVar> attribVars; ///< All the attribute variables
+		CharPtrHashMap<SProgUniVar*> uniNameToVar;  ///< A UnorderedMap for fast variable searching
+		CharPtrHashMap<SProgAttribVar*> attribNameToVar; ///< @see uniNameToVar
 
 		/// Query the driver to get the vars. After the linking of the shader prog is done gather all the vars in custom
 		/// containers
@@ -174,36 +120,6 @@ class ShaderProg: public Resource
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
-
-inline ShaderProg::Var::Var(GLint loc_, const char* name_, GLenum glDataType_, ShaderVarType type_,
-                            const ShaderProg* fatherSProg_):
-	loc(loc_),
-	name(name_),
-	glDataType(glDataType_),
-	type(type_),
-	fatherSProg(fatherSProg_)
-{}
-
-
-inline ShaderProg::Var::Var(const Var& var):
-	loc(var.loc),
-	name(var.name),
-	glDataType(var.glDataType),
-	type(var.type),
-	fatherSProg(var.fatherSProg)
-{}
-
-
-inline ShaderProg::UniVar::UniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_):
-	Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
-{}
-
-
-inline ShaderProg::AttribVar::AttribVar(int loc_, const char* name_, GLenum glDataType_,
-                                        const ShaderProg* fatherSProg_):
-	Var(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
-{}
-
 
 inline ShaderProg::ShaderProg():
 	Resource(RT_SHADER_PROG),
