@@ -34,6 +34,8 @@
 #include "ModelNode.h"
 #include "SkelAnimModelNodeCtrl.h"
 #include "Model.h"
+#include "Logger.h"
+
 
 // map (hard coded)
 ModelNode* floor__,* sarge,* horse,* crate, *imp;
@@ -383,6 +385,11 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
+	//std::stringstream ss;
+	Logger::getInstance()  << setSender(__FILE__, __LINE__, __func__) << "123456789 " << 1.23 << "+++" << endl;
+
+	return 0;
+
 	try
 	{
 		new App(argc, argv);
