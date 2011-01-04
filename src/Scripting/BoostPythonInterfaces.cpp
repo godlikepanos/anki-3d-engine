@@ -19,7 +19,5 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(Dbg)
 	CALL_WRAP(MainRenderer)
 
-	CALL_WRAP(MessageHandler)
-
 	CALL_WRAP(App)
 }

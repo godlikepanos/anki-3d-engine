@@ -30,7 +30,6 @@
 #include "RigidBody.h"
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
-#include "Messaging.h"
 #include "ModelNode.h"
 #include "SkelAnimModelNodeCtrl.h"
 #include "Model.h"
@@ -250,7 +249,7 @@ void init()
 
 	initPhysics();
 
-	INFO("Engine initialization ends (" + boost::lexical_cast<std::string>(App::getTicks() - ticks) + ")");
+	INFO("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
 }
 
 
@@ -376,7 +375,7 @@ void mainLoop()
 		}
 	}while(true);
 
-	INFO("Exiting main loop (" + boost::lexical_cast<std::string>(App::getTicks() - ticks) + ")");
+	INFO("Exiting main loop (" << (App::getTicks() - ticks) << ")");
 }
 
 
@@ -385,11 +384,6 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	//std::stringstream ss;
-	Logger::getInstance()  << setSender(__FILE__, __LINE__, __func__) << "123456789 " << 1.23 << "+++" << endl;
-
-	return 0;
-
 	try
 	{
 		new App(argc, argv);
@@ -403,7 +397,7 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		ERROR("Aborting: " + e.what());
+		ERROR("Aborting: " << e.what());
 		//abort();
 		return 1;
 	}

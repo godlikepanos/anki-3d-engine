@@ -13,9 +13,13 @@ struct LoggerSender;
 class Logger
 {
 	public:
-		typedef boost::signals2::signal<void (const char*, int, const char*, const char*)> Signal;
+		typedef boost::signals2::signal<void (const char*, int, const char*, const char*)> Signal; ///< Signal type
 
+		/// Singleton stuff
 		static Logger& getInstance();
+
+		/// Accessor
+		Signal& getSignal() {return sig;}
 
 		/// @name Numeric operators
 		/// @{
@@ -33,18 +37,22 @@ class Logger
 
 		Logger& operator<<(const void* val);
 		Logger& operator<<(const char* val);
+		Logger& operator<<(const std::string& val);
 		Logger& operator<<(Logger& (*funcPtr)(Logger&));
 		Logger& operator<<(const LoggerSender& sender);
 
+		/// An alternative method to write in the Logger
+		void write(const char* file, int line, const char* func, const char* msg);
+
 	private:
-		static Logger* instance;
-		static const int STREAM_SIZE = 25;
+		static Logger* instance; ///< Singleton stuff
+		static const int STREAM_SIZE = 512;
 		boost::array<char, STREAM_SIZE> streamBuf;
 		char* sptr; ///< Pointer to @ref streamBuf
 		Signal sig; ///< The signal
-		const char* func;
-		const char* file;
-		int line;
+		const char* func; ///< Sender info
+		const char* file; ///< Sender info
+		int line; ///< Sender info
 
 		/// @name Ensure its singleton
 		/// @{
@@ -62,10 +70,15 @@ class Logger
 		/// Append finalize streamBuf and send the signal
 		void flush();
 
+		/// Because we are bored to write
 		template<typename Type>
 		Logger& appendUsingLexicalCast(const Type& val);
 };
 
+
+//======================================================================================================================
+// Inlines                                                                                                             =
+//======================================================================================================================
 
 inline Logger& Logger::getInstance()
 {
@@ -105,6 +118,7 @@ inline Logger& endl(Logger& logger)
 }
 
 
+/// Record the sender
 struct LoggerSender
 {
 	const char* file;
@@ -112,12 +126,27 @@ struct LoggerSender
 	const char* func;
 };
 
-///
+
+/// Help the Logger to set the sender
 inline LoggerSender setSender(const char* file, int line, const char* func)
 {
 	LoggerSender sender = {file, line, func};
 	return sender;
 }
+
+
+//======================================================================================================================
+// Macros                                                                                                              =
+//======================================================================================================================
+
+#define LOGGER_MESSAGE(x) \
+	Logger::getInstance()  << setSender(__FILE__, __LINE__, __func__) << x << endl;
+
+#define INFO(x) LOGGER_MESSAGE("Info: " << x)
+
+#define WARNING(x) LOGGER_MESSAGE("Warning: " << x)
+
+#define ERROR(x) LOGGER_MESSAGE("Error: " << x)
 
 
 #endif

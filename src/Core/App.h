@@ -4,7 +4,6 @@
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
 #include "Object.h"
-#include "MessageHandler.h"
 #include "StdTypes.h"
 #include "Properties.h"
 #include "Exception.h"
@@ -60,7 +59,6 @@ class App: public Object
 		MainRenderer& getMainRenderer();
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
-		MessageHandler& getMessageHandler();
 		Input& getInput();
 		/// @}
 
@@ -83,7 +81,6 @@ class App: public Object
 		ScriptingEngine* scriptingEngine;
 		MainRenderer* mainRenderer;
 		StdinListener* stdinListener;
-		MessageHandler* messageHandler;
 		Input* input;
 		/// @}
 
@@ -125,13 +122,6 @@ inline MainRenderer& App::getMainRenderer()
 {
 	RASSERT_THROW_EXCEPTION(mainRenderer == NULL);
 	return *mainRenderer;
-}
-
-
-inline MessageHandler& App::getMessageHandler()
-{
-	RASSERT_THROW_EXCEPTION(messageHandler == NULL);
-	return *messageHandler;
 }
 
 

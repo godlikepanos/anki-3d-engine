@@ -1,4 +1,4 @@
-#include <cstdio>
+#include <cstring>
 #include "Logger.h"
 
 
@@ -16,11 +16,20 @@ Logger& Logger::operator<<(const char* val)
 
 
 //======================================================================================================================
+// operator<< [std::string]                                                                                            =
+//======================================================================================================================
+Logger& Logger::operator<<(const std::string& val)
+{
+	append(val.c_str(), val.length());
+	return *this;
+}
+
+
+//======================================================================================================================
 // operator<< [Logger& (*funcPtr)(Logger&)]                                                                            =
 //======================================================================================================================
 Logger& Logger::operator<<(Logger& (*funcPtr)(Logger&))
 {
-	printf("Got some func\n");
 	if(funcPtr == endl)
 	{
 		append("\n", 1);
@@ -31,7 +40,7 @@ Logger& Logger::operator<<(Logger& (*funcPtr)(Logger&))
 
 
 //======================================================================================================================
-//                                                                                                                     =
+// operator<< [LoggerSender]                                                                                           =
 //======================================================================================================================
 Logger& Logger::operator<<(const LoggerSender& sender)
 {
@@ -39,6 +48,19 @@ Logger& Logger::operator<<(const LoggerSender& sender)
 	line = sender.line;
 	func = sender.func;
 	return *this;
+}
+
+
+//======================================================================================================================
+// write                                                                                                               =
+//======================================================================================================================
+void Logger::write(const char* file_, int line_, const char* func_, const char* msg)
+{
+	file = file_;
+	line = line_;
+	func = func_;
+	append(msg, strlen(msg));
+	flush();
 }
 
 
@@ -94,6 +116,4 @@ void Logger::flush()
 	sptr = &streamBuf[0];
 	func = file = "error";
 	line = -1;
-
-	printf("Flushing: |%s|\n", &streamBuf[0]);
 }
