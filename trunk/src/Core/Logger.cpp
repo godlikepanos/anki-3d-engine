@@ -35,6 +35,11 @@ Logger& Logger::operator<<(Logger& (*funcPtr)(Logger&))
 		append("\n", 1);
 		flush();
 	}
+	else if(funcPtr == ::flush)
+	{
+		flush();
+	}
+
 	return *this;
 }
 

@@ -2,7 +2,7 @@
 #include "App.h"
 
 
-#define CALL_WRAP(x) extern void boostPythonWrap##x(); boostPythonWrap##x();
+#define CALL_WRAP(x) extern void boostPythonWrap##x(); boostPythonWrap##x()
 
 
 BOOST_PYTHON_MODULE(Anki)
@@ -11,13 +11,15 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(Vec3);
 	CALL_WRAP(Vec4);
 
-	CALL_WRAP(Scene)
+	CALL_WRAP(Logger);
 
-	CALL_WRAP(Hdr)
-	CALL_WRAP(Pps)
-	CALL_WRAP(Renderer)
-	CALL_WRAP(Dbg)
-	CALL_WRAP(MainRenderer)
+	CALL_WRAP(Scene);
 
-	CALL_WRAP(App)
+	CALL_WRAP(Hdr);
+	CALL_WRAP(Pps);
+	CALL_WRAP(Renderer);
+	CALL_WRAP(Dbg);
+	CALL_WRAP(MainRenderer);
+
+	CALL_WRAP(App);
 }

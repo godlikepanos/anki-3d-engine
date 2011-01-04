@@ -23,15 +23,16 @@ bool App::isCreated = false;
 //======================================================================================================================
 // handleMessageHanlderMsgs                                                                                            =
 //======================================================================================================================
-void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg)
+void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const char* msg)
 {
+	//printf("gooooooooot.....\n");
 	if(boost::find_first(msg, "Warning") || boost::find_first(msg, "Error"))
 	{
-		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg << std::endl;
+		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg << std::flush;
 	}
 	else
 	{
-		std::cout << "(" << file << ":" << line << " "<< func << ") " << msg << std::endl;
+		std::cout << "(" << file << ":" << line << " "<< func << ") " << msg << std::flush;
 	}
 }
 
@@ -106,19 +107,18 @@ App::App(int argc, char* argv[], Object* parent):
 	boost::filesystem::create_directory(cachePath);
 
 	// create the subsystems. WATCH THE ORDER
-	scriptingEngine = new ScriptingEngine(this);
-	scriptingEngine->exposeVar("app", this);
-	/// @todo
+	ScriptingEngine::getInstance().exposeVar("app", this);
 	const char* commonPythonCode =
 	"import sys\n"
 	"from Anki import *\n"
 	"\n"
 	"class StdoutCatcher:\n"
 	"\tdef write(self, str_):\n"
+	"\t\tif str_ == \"\\n\": return\n"
 	"\t\tline = sys._getframe(1).f_lineno\n"
 	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
 	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-	"\t\tLogger.getInstance().write(file, line, func, str_)\n"
+	"\t\tLogger.getInstance().write(file, line, func, str_ + \"\\n\")\n"
 	"\n"
 	"class StderrCatcher:\n"
 	"\tdef write(self, str_):\n"
@@ -128,14 +128,13 @@ App::App(int argc, char* argv[], Object* parent):
 	"\t\tLogger.getInstance().write(file, line, func, str_)\n"
 	"\n"
 	"sys.stdout = StdoutCatcher()\n"
-	"sys.stderr = StderrCatcher()\n";
-	scriptingEngine->execScript(commonPythonCode);
+	"#sys.stderr = StderrCatcher()\n";
+	ScriptingEngine::getInstance().execScript(commonPythonCode);
 
 	mainRenderer = new MainRenderer(this);
 	scene = new Scene(this);
 	stdinListener = new StdinListener(this);
 	stdinListener->start();
-	input = new Input(this);
 
 	// other
 	activeCam = NULL;
@@ -336,7 +335,7 @@ void App::execStdinScpripts()
 
 		try
 		{
-			app->getScriptingEngine().execScript(cmd.c_str(), "command line input");
+			ScriptingEngine::getInstance().execScript(cmd.c_str(), "command line input");
 		}
 		catch(Exception& e)
 		{

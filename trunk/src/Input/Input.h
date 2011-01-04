@@ -2,20 +2,20 @@
 #define INPUT_H
 
 #include <SDL/SDL_scancode.h>
-#include "Vec.h"
+#include <boost/array.hpp>
 #include "Math.h"
-#include "Object.h"
 
 
 /// Handle the SDL input
-class Input: public Object
+class Input
 {
 	public:
-		Input(Object* parent);
+		/// Singleton stuff
+		static Input& getInstance();
 
 		// keys and btns
-		Vec<short> keys;  ///< Shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continuously
-		Vec<short> mouseBtns; ///< Mouse btns. Supporting 3 btns & wheel. @see keys
+		boost::array<short, SDL_NUM_SCANCODES> keys;  ///< Shows the current key state. 0: unpressed, 1: pressed once, n is >1: kept pressed 'n' times continuously
+		boost::array<short, 8> mouseBtns; ///< Mouse btns. Supporting 3 btns & wheel. @see keys
 
 		void reset();
 		void handleEvents();
@@ -28,8 +28,27 @@ class Input: public Object
 		bool hideCursor;
 
 	private:
-		Object* parentApp; ///< Hold the parrent here cause we use him
+		static Input* instance;
+
+		/// @name Ensure its singleton
+		/// @{
+		Input() {init();}
+		Input(const Input&) {init();}
+		void operator=(const Input&) {}
+		/// @}
+
+		void init();
 };
+
+
+inline Input& Input::getInstance()
+{
+	if(instance == NULL)
+	{
+		instance = new Input();
+	}
+	return *instance;
+}
 
 
 #endif

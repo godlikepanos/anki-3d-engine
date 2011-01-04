@@ -118,6 +118,13 @@ inline Logger& endl(Logger& logger)
 }
 
 
+/// Flush the Logger
+inline Logger& flush(Logger& logger)
+{
+	return logger;
+}
+
+
 /// Record the sender
 struct LoggerSender
 {

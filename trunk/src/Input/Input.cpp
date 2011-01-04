@@ -1,20 +1,22 @@
 #include "Input.h"
 #include <SDL/SDL.h>
 #include "App.h"
+#include "Logger.h"
+
+
+Input* Input::instance = NULL;
 
 
 //======================================================================================================================
-// Constructor                                                                                                         =
+// init                                                                                                                =
 //======================================================================================================================
-Input::Input(Object* parent):
-	Object(parent),
-	keys(SDL_NUM_SCANCODES, 0),
-	mouseBtns(8, 0),
-	warpMouse(false),
-	hideCursor(true),
-	parentApp(parent)
+void Input::init()
 {
+	INFO("Initializing input...");
+	warpMouse = false;
+	hideCursor = true;
 	reset();
+	INFO("Input initialized");
 }
 
 
@@ -23,10 +25,8 @@ Input::Input(Object* parent):
 //======================================================================================================================
 void Input::reset(void)
 {
-	RASSERT_THROW_EXCEPTION(keys.size() < 1);
-	RASSERT_THROW_EXCEPTION(mouseBtns.size() < 1);
-	memset(&keys[0], 0, keys.size()*sizeof(short));
-	memset(&mouseBtns[0], 0, mouseBtns.size()*sizeof(short));
+	memset(&keys[0], 0, keys.size() * sizeof(short));
+	memset(&mouseBtns[0], 0, mouseBtns.size() * sizeof(short));
 	mousePosNdc = Vec2(0.0);
 	mouseVelocity = Vec2(0.0);
 }
@@ -58,7 +58,7 @@ void Input::handleEvents()
 
 
 	mouseVelocity = Vec2(0.0);
-	App* app_ = static_cast<App*>(parentApp);
+	App* app_ = app;
 
 	SDL_Event event_;
 	while(SDL_PollEvent(&event_))

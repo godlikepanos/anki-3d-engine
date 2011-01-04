@@ -1,9 +1,13 @@
 #include <Python.h>
 #include "ScriptingEngine.h"
 #include "Exception.h"
+#include "Logger.h"
 
 
 extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp
+
+
+ScriptingEngine* ScriptingEngine::instance = NULL;
 
 
 //======================================================================================================================
@@ -11,7 +15,7 @@ extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp
 //======================================================================================================================
 void ScriptingEngine::init()
 {
-	//INFO("Initializing scripting engine...");
+	INFO("Initializing scripting engine...");
 
 	PyImport_AppendInittab((char*)("Anki"), &initAnki);
 	Py_Initialize();
@@ -19,9 +23,7 @@ void ScriptingEngine::init()
 	mainNamespace = mainModule.attr("__dict__");
 	ankiModule = boost::python::object(boost::python::handle<>(PyImport_ImportModule("Anki")));
 
-	//execScript("import Anki\n");
-
-	//INFO("Scripting engine initialized");
+	INFO("Scripting engine initialized");
 }
 
 

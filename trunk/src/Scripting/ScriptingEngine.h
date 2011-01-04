@@ -2,18 +2,14 @@
 #define SCRIPTING_ENGINE_H
 
 #include <boost/python.hpp>
-#include "Object.h"
 
 
 /// The scripting engine using Python
-class ScriptingEngine: public Object
+class ScriptingEngine
 {
 	public:
-		/// Default constructor
-		ScriptingEngine(Object* parent = NULL);
-
-		/// Destructor
-		~ScriptingEngine() {}
+		/// Singleton stuff
+		static ScriptingEngine& getInstance();
 
 		/// Execute python script
 		/// @param script Script source
@@ -27,19 +23,30 @@ class ScriptingEngine: public Object
 		void exposeVar(const char* varName, Type* var);
 
 	private:
+		static ScriptingEngine* instance;
 		boost::python::object mainModule;
 		boost::python::object ankiModule;
 		boost::python::object mainNamespace;
+
+		/// @name Ensure its singleton
+		/// @{
+		ScriptingEngine() {init();}
+		ScriptingEngine(const ScriptingEngine&) {init();}
+		void operator=(const ScriptingEngine&) {}
+		/// @}
 
 		/// Init python and modules
 		void init();
 };
 
 
-inline ScriptingEngine::ScriptingEngine(Object* parent):
-	Object(parent)
+inline ScriptingEngine& ScriptingEngine::getInstance()
 {
-	init();
+	if(instance == NULL)
+	{
+		instance = new ScriptingEngine();
+	}
+	return *instance;
 }
 
 

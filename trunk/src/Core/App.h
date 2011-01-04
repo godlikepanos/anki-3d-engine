@@ -9,7 +9,6 @@
 #include "Exception.h"
 
 
-class ScriptingEngine;
 class StdinListener;
 class Scene;
 class MainRenderer;
@@ -54,12 +53,10 @@ class App: public Object
 		/// @{
 		bool isTerminalColoringEnabled() const;
 		Scene& getScene();
-		ScriptingEngine& getScriptingEngine();
 		StdinListener& getStdinLintener();
 		MainRenderer& getMainRenderer();
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
-		Input& getInput();
 		/// @}
 
 		/// @return Returns the number of milliseconds since SDL library initialization
@@ -78,16 +75,14 @@ class App: public Object
 		/// @name Pointers to serious subsystems
 		/// @{
 		Scene* scene;
-		ScriptingEngine* scriptingEngine;
 		MainRenderer* mainRenderer;
 		StdinListener* stdinListener;
-		Input* input;
 		/// @}
 
 		void parseCommandLineArgs(int argc, char* argv[]);
 
 		/// A slot to handle the messageHandler's signal
-		void handleMessageHanlderMsgs(const char* file, int line, const char* func, const std::string& msg);
+		void handleMessageHanlderMsgs(const char* file, int line, const char* func, const char* msg);
 };
 
 
@@ -104,13 +99,6 @@ inline Scene& App::getScene()
 }
 
 
-inline ScriptingEngine& App::getScriptingEngine()
-{
-	RASSERT_THROW_EXCEPTION(scriptingEngine == NULL);
-	return *scriptingEngine;
-}
-
-
 inline StdinListener& App::getStdinLintener()
 {
 	RASSERT_THROW_EXCEPTION(stdinListener == NULL);
@@ -122,13 +110,6 @@ inline MainRenderer& App::getMainRenderer()
 {
 	RASSERT_THROW_EXCEPTION(mainRenderer == NULL);
 	return *mainRenderer;
-}
-
-
-inline Input& App::getInput()
-{
-	RASSERT_THROW_EXCEPTION(input == NULL);
-	return *input;
 }
 
 
