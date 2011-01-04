@@ -2,7 +2,7 @@
 #include <boost/lexical_cast.hpp>
 #include "RsrcContainer.h"
 #include "Exception.h"
-#include "Messaging.h"
+#include "Logger.h"
 
 
 //======================================================================================================================

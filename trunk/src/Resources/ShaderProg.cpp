@@ -5,7 +5,7 @@
 #include "ShaderPrePreprocessor.h"
 #include "App.h" // To get cache dir
 #include "GlException.h"
-#include "Messaging.h"
+#include "Logger.h"
 
 
 #define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + getRsrcName() + "\": " + x)
@@ -126,7 +126,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" + getRsrcName() + "\": You are using FFP vertex attributes (\"" + name_ + "\")");
+			WARNING("Shader prog: \"" << getRsrcName() << "\": You are using FFP vertex attributes (\"" << name_ << "\")");
 			continue;
 		}
 
@@ -147,7 +147,7 @@ void ShaderProg::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, name_);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" + getRsrcName() + "\": You are using FFP vertex uniforms (\"" + name_ + "\")");
+			WARNING("Shader prog: \"" << getRsrcName() << "\": You are using FFP vertex uniforms (\"" << name_ << "\")");
 			continue;
 		}
 

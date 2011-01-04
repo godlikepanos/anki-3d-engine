@@ -8,8 +8,8 @@
 #include "MainRenderer.h"
 #include "App.h"
 #include "RendererInitializer.h"
-#include "Messaging.h"
 #include "Ssao.h"
+#include "Logger.h"
 
 
 //======================================================================================================================
@@ -48,8 +48,8 @@ void MainRenderer::initGl()
 	glGetError();
 
 	// print GL info
-	INFO("OpenGL info: OGL " + reinterpret_cast<const char*>(glGetString(GL_VERSION)) + ", GLSL " +
-	     reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+	INFO("OpenGL info: OGL " << reinterpret_cast<const char*>(glGetString(GL_VERSION)) <<
+	     ", GLSL " << reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// get max texture units
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);

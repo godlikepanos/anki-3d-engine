@@ -10,9 +10,8 @@
 #include "MainRenderer.h"
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
-#include "MessageHandler.h"
-#include "Messaging.h"
 #include "Input.h"
+#include "Logger.h"
 
 
 App* app = NULL; ///< The only global var. App constructor sets it
@@ -76,9 +75,8 @@ App::App(int argc, char* argv[], Object* parent):
 
 	parseCommandLineArgs(argc, argv);
 
-	messageHandler = new MessageHandler(this);
 	// send output to handleMessageHanlderMsgs
-	messageHandler->getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
+	Logger::getInstance().getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
 	printAppInfo();
 
@@ -93,23 +91,24 @@ App::App(int argc, char* argv[], Object* parent):
 	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
 	if(!boost::filesystem::exists(settingsPath))
 	{
-		INFO("Creating settings dir \"" + settingsPath.string() + "\"");
+		INFO("Creating settings dir \"" << settingsPath.string() << "\"");
 		boost::filesystem::create_directory(settingsPath);
 	}
 
 	cachePath = settingsPath / "cache";
 	if(boost::filesystem::exists(cachePath))
 	{
-		INFO("Deleting dir \"" + cachePath.string() + "\"");
+		INFO("Deleting dir \"" << cachePath.string() << "\"");
 		boost::filesystem::remove_all(cachePath);
 	}
 
-	INFO("Creating cache dir \"" + cachePath.string() + "\"");
+	INFO("Creating cache dir \"" << cachePath.string() << "\"");
 	boost::filesystem::create_directory(cachePath);
 
 	// create the subsystems. WATCH THE ORDER
 	scriptingEngine = new ScriptingEngine(this);
 	scriptingEngine->exposeVar("app", this);
+	/// @todo
 	const char* commonPythonCode =
 	"import sys\n"
 	"from Anki import *\n"
@@ -119,14 +118,14 @@ App::App(int argc, char* argv[], Object* parent):
 	"\t\tline = sys._getframe(1).f_lineno\n"
 	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
 	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-	"\t\tapp.getMessageHandler().write(file, line, func, str_)\n"
+	"\t\tLogger.getInstance().write(file, line, func, str_)\n"
 	"\n"
 	"class StderrCatcher:\n"
 	"\tdef write(self, str_):\n"
 	"\t\tline = sys._getframe(2).f_lineno\n"
 	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
 	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
-	"\t\tapp.getMessageHandler().write(file, line, func, str_)\n"
+	"\t\tLogger.getInstance().write(file, line, func, str_)\n"
 	"\n"
 	"sys.stdout = StdoutCatcher()\n"
 	"sys.stderr = StderrCatcher()\n";
@@ -161,7 +160,7 @@ void App::initWindow()
 	const char* driverName = SDL_GetCurrentVideoDriver();
 	if(driverName != NULL)
 	{
-		INFO("Video driver name: " + driverName);
+		INFO("Video driver name: " << driverName);
 	}
 
 	// set GL attribs
