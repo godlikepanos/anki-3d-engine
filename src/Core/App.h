@@ -53,7 +53,6 @@ class App: public Object
 		/// @{
 		bool isTerminalColoringEnabled() const;
 		Scene& getScene();
-		StdinListener& getStdinLintener();
 		MainRenderer& getMainRenderer();
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
@@ -76,7 +75,6 @@ class App: public Object
 		/// @{
 		Scene* scene;
 		MainRenderer* mainRenderer;
-		StdinListener* stdinListener;
 		/// @}
 
 		void parseCommandLineArgs(int argc, char* argv[]);
@@ -96,13 +94,6 @@ inline Scene& App::getScene()
 {
 	RASSERT_THROW_EXCEPTION(scene == NULL);
 	return *scene;
-}
-
-
-inline StdinListener& App::getStdinLintener()
-{
-	RASSERT_THROW_EXCEPTION(stdinListener == NULL);
-	return *stdinListener;
 }
 
 

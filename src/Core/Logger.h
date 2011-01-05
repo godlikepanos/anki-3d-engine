@@ -4,6 +4,7 @@
 #include <boost/array.hpp>
 #include <boost/signals2.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Singleton.h"
 
 
 struct LoggerSender;
@@ -15,8 +16,7 @@ class Logger
 	public:
 		typedef boost::signals2::signal<void (const char*, int, const char*, const char*)> Signal; ///< Signal type
 
-		/// Singleton stuff
-		static Logger& getInstance();
+		Logger() {execCommonConstructionCode();}
 
 		/// Accessor
 		Signal& getSignal() {return sig;}
@@ -45,7 +45,6 @@ class Logger
 		void write(const char* file, int line, const char* func, const char* msg);
 
 	private:
-		static Logger* instance; ///< Singleton stuff
 		static const int STREAM_SIZE = 512;
 		boost::array<char, STREAM_SIZE> streamBuf;
 		char* sptr; ///< Pointer to @ref streamBuf
@@ -53,13 +52,6 @@ class Logger
 		const char* func; ///< Sender info
 		const char* file; ///< Sender info
 		int line; ///< Sender info
-
-		/// @name Ensure its singleton
-		/// @{
-		Logger() {execCommonConstructionCode();}
-		Logger(const Logger&) {execCommonConstructionCode();}
-		void operator=(const Logger&) {}
-		/// @}
 
 		/// Called by all the constructors
 		void execCommonConstructionCode();
@@ -80,16 +72,6 @@ class Logger
 // Inlines                                                                                                             =
 //======================================================================================================================
 
-inline Logger& Logger::getInstance()
-{
-	if(instance == NULL)
-	{
-		instance = new Logger();
-	}
-	return *instance;
-}
-
-
 template<typename Type>
 Logger& Logger::appendUsingLexicalCast(const Type& val)
 {
@@ -108,7 +90,7 @@ Logger& Logger::appendUsingLexicalCast(const Type& val)
 
 
 //======================================================================================================================
-// Non-members                                                                                                         =
+// IO manipulation non-members                                                                                         =
 //======================================================================================================================
 
 /// Add a new line and flush the Logger
@@ -147,13 +129,20 @@ inline LoggerSender setSender(const char* file, int line, const char* func)
 //======================================================================================================================
 
 #define LOGGER_MESSAGE(x) \
-	Logger::getInstance()  << setSender(__FILE__, __LINE__, __func__) << x << endl;
+	LoggerSingleton::getInstance()  << setSender(__FILE__, __LINE__, __func__) << x << endl;
 
 #define INFO(x) LOGGER_MESSAGE("Info: " << x)
 
 #define WARNING(x) LOGGER_MESSAGE("Warning: " << x)
 
 #define ERROR(x) LOGGER_MESSAGE("Error: " << x)
+
+
+//======================================================================================================================
+// Singleton                                                                                                           =
+//======================================================================================================================
+
+typedef Singleton<Logger> LoggerSingleton;
 
 
 #endif

@@ -264,7 +264,7 @@ void mainLoop()
 	do
 	{
 		float crntTime = App::getTicks() / 1000.0;
-		Input::getInstance().handleEvents();
+		InputSingleton::getInstance().handleEvents();
 
 		float dist = 0.2;
 		float ang = toRad(3.0);
@@ -273,45 +273,45 @@ void mainLoop()
 		// move the camera
 		static SceneNode* mover = app->getActiveCam();
 
-		if(Input::getInstance().keys[SDL_SCANCODE_1]) mover = app->getActiveCam();
-		if(Input::getInstance().keys[SDL_SCANCODE_2]) mover = point_lights[0];
-		if(Input::getInstance().keys[SDL_SCANCODE_3]) mover = spot_lights[0];
-		if(Input::getInstance().keys[SDL_SCANCODE_4]) mover = point_lights[1];
-		if(Input::getInstance().keys[SDL_SCANCODE_5]) mover = spot_lights[1];
-		if(Input::getInstance().keys[SDL_SCANCODE_6]) mover = partEmitter;
-		if(Input::getInstance().keys[SDL_SCANCODE_M] == 1) Input::getInstance().warpMouse = !Input::getInstance().warpMouse;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_1)) mover = app->getActiveCam();
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_2)) mover = point_lights[0];
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = partEmitter;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
 
-		if(Input::getInstance().keys[SDL_SCANCODE_A]) mover->moveLocalX(-dist);
-		if(Input::getInstance().keys[SDL_SCANCODE_D]) mover->moveLocalX(dist);
-		if(Input::getInstance().keys[SDL_SCANCODE_LSHIFT]) mover->moveLocalY(dist);
-		if(Input::getInstance().keys[SDL_SCANCODE_SPACE]) mover->moveLocalY(-dist);
-		if(Input::getInstance().keys[SDL_SCANCODE_W]) mover->moveLocalZ(-dist);
-		if(Input::getInstance().keys[SDL_SCANCODE_S]) mover->moveLocalZ(dist);
-		if(!Input::getInstance().warpMouse)
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
+		if(!InputSingleton::getInstance().warpMouse)
 		{
-			if(Input::getInstance().keys[SDL_SCANCODE_UP]) mover->rotateLocalX(ang);
-			if(Input::getInstance().keys[SDL_SCANCODE_DOWN]) mover->rotateLocalX(-ang);
-			if(Input::getInstance().keys[SDL_SCANCODE_LEFT]) mover->rotateLocalY(ang);
-			if(Input::getInstance().keys[SDL_SCANCODE_RIGHT]) mover->rotateLocalY(-ang);
+			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
+			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
+			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
+			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
 		}
 		else
 		{
 			float accel = 44.0;
-			mover->rotateLocalX(ang * Input::getInstance().mouseVelocity.y * accel);
-			mover->rotateLocalY(-ang * Input::getInstance().mouseVelocity.x * accel);
+			mover->rotateLocalX(ang * InputSingleton::getInstance().mouseVelocity.y * accel);
+			mover->rotateLocalY(-ang * InputSingleton::getInstance().mouseVelocity.x * accel);
 		}
-		if(Input::getInstance().keys[SDL_SCANCODE_Q]) mover->rotateLocalZ(ang);
-		if(Input::getInstance().keys[SDL_SCANCODE_E]) mover->rotateLocalZ(-ang);
-		if(Input::getInstance().keys[SDL_SCANCODE_PAGEUP]) mover->getLocalTransform().scale += scale ;
-		if(Input::getInstance().keys[SDL_SCANCODE_PAGEDOWN]) mover->getLocalTransform().scale -= scale ;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().scale += scale ;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().scale -= scale ;
 
-		if(Input::getInstance().keys[SDL_SCANCODE_K]) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
 
-		if(Input::getInstance().keys[SDL_SCANCODE_I])
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
 			character->moveForward(0.1);
 
 
-		if(Input::getInstance().keys[SDL_SCANCODE_O] == 1)
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)
 		{
 			btRigidBody* body = static_cast<btRigidBody*>(boxes[0]);
 			//body->getMotionState()->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
@@ -320,7 +320,7 @@ void mainLoop()
 			body->forceActivationState(ACTIVE_TAG);
 		}
 
-		if(Input::getInstance().keys[SDL_SCANCODE_Y] == 1)
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Y) == 1)
 		{
 			INFO("Exec script");
 			ScriptingEngine::getInstance().exposeVar("app", app);
@@ -347,11 +347,11 @@ void mainLoop()
 		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z));*/
 
-		if(Input::getInstance().keys[SDL_SCANCODE_ESCAPE])
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
 			break;
-		if(Input::getInstance().keys[SDL_SCANCODE_F11])
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F11))
 			app->togleFullScreen();
-		if(Input::getInstance().keys[SDL_SCANCODE_F12] == 1)
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F12) == 1)
 			app->getMainRenderer().takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
