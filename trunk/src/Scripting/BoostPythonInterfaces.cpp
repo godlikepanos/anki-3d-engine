@@ -12,6 +12,7 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(Vec4);
 
 	CALL_WRAP(Logger);
+	CALL_WRAP(LoggerSingleton);
 
 	CALL_WRAP(Scene);
 

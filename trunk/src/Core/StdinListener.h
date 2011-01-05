@@ -5,26 +5,30 @@
 #include <boost/thread/mutex.hpp>
 #include <string>
 #include <queue>
-#include "Object.h"
+#include <Singleton.h>
 
 
-/// The listener of the stdin
-class StdinListener: public Object
+/// The listener of the stdin.
+/// It initiates a thread that constantly reads the stdin and puts the results in a queue
+class StdinListener
 {
 	public:
-		StdinListener(Object* parent = NULL): Object(parent) {}
-		~StdinListener() {}
+		/// Get line from the queue or return an empty string
 		std::string getLine();
+
+		/// Start reading
 		void start();
 
 	private:
 		std::queue<std::string> q;
-		boost::mutex mtx;
-		boost::thread thrd;
+		boost::mutex mtx; ///< Protect the queue
+		boost::thread thrd; ///< The thread
 
-		StdinListener(const StdinListener&); ///< Non copyable
 		void workingFunc(); ///< The thread function
 };
+
+
+typedef Singleton<StdinListener> StdinListenerSingleton;
 
 
 #endif

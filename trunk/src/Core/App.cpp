@@ -77,7 +77,7 @@ App::App(int argc, char* argv[], Object* parent):
 	parseCommandLineArgs(argc, argv);
 
 	// send output to handleMessageHanlderMsgs
-	Logger::getInstance().getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
+	LoggerSingleton::getInstance().getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
 	printAppInfo();
 
@@ -118,23 +118,23 @@ App::App(int argc, char* argv[], Object* parent):
 	"\t\tline = sys._getframe(1).f_lineno\n"
 	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
 	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-	"\t\tLogger.getInstance().write(file, line, func, str_ + \"\\n\")\n"
+	"\t\tLoggerSingleton.getInstance().write(file, line, func, str_ + \"\\n\")\n"
 	"\n"
 	"class StderrCatcher:\n"
 	"\tdef write(self, str_):\n"
 	"\t\tline = sys._getframe(2).f_lineno\n"
 	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
 	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
-	"\t\tLogger.getInstance().write(file, line, func, str_)\n"
+	"\t\tLoggerSingleton.getInstance().write(file, line, func, str_)\n"
 	"\n"
 	"sys.stdout = StdoutCatcher()\n"
-	"#sys.stderr = StderrCatcher()\n";
+	"sys.stderr = StderrCatcher()\n";
 	ScriptingEngine::getInstance().execScript(commonPythonCode);
 
 	mainRenderer = new MainRenderer(this);
 	scene = new Scene(this);
-	stdinListener = new StdinListener(this);
-	stdinListener->start();
+
+	StdinListenerSingleton::getInstance().start();
 
 	// other
 	activeCam = NULL;
@@ -326,7 +326,7 @@ void App::execStdinScpripts()
 {
 	while(1)
 	{
-		std::string cmd = app->getStdinLintener().getLine();
+		std::string cmd = StdinListenerSingleton::getInstance().getLine();
 
 		if(cmd.length() < 1)
 		{

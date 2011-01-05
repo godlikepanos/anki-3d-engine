@@ -5,8 +5,9 @@
 WRAP(Logger)
 {
 	class_<Logger, noncopyable>("Logger", no_init)
-		.def("getInstance", &Logger::getInstance, return_value_policy<reference_existing_object>())
-		.staticmethod("getInstance")
 		.def("write", &Logger::write)
 	;
 }
+
+
+WRAP_SINGLETON(LoggerSingleton)
