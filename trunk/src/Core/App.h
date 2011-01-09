@@ -3,26 +3,21 @@
 
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
-#include "Object.h"
 #include "StdTypes.h"
 #include "Properties.h"
 #include "Exception.h"
+#include "Singleton.h"
 
 
 class StdinListener;
 class Scene;
-class MainRenderer;
 class Camera;
 class Input;
 
 
-/// The one and only global variable
-extern class App* app;
-
-
 /// This class holds all the global objects of the application and its also responsible for some of the SDL stuff.
 /// It should be singleton
-class App: public Object
+class App
 {
 	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
 	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
@@ -32,9 +27,9 @@ class App: public Object
 	public:
 		uint timerTick;
 
-		App(int argc, char* argv[], Object* parent = NULL);
+		App() {}
 		~App() {}
-		void initWindow();
+		void init(int argc, char* argv[]);
 		void quit(int code);
 		void waitForNextFrame();
 		void togleFullScreen();
@@ -53,7 +48,6 @@ class App: public Object
 		/// @{
 		bool isTerminalColoringEnabled() const;
 		Scene& getScene();
-		MainRenderer& getMainRenderer();
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 		/// @}
@@ -62,7 +56,6 @@ class App: public Object
 		static uint getTicks();
 
 	private:
-		static bool isCreated; ///< A flag to ensure one @ref App instance
 		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
 		uint time;
 		SDL_WindowID windowId;
@@ -74,13 +67,16 @@ class App: public Object
 		/// @name Pointers to serious subsystems
 		/// @{
 		Scene* scene;
-		MainRenderer* mainRenderer;
 		/// @}
 
 		void parseCommandLineArgs(int argc, char* argv[]);
 
 		/// A slot to handle the messageHandler's signal
 		void handleMessageHanlderMsgs(const char* file, int line, const char* func, const char* msg);
+
+		void initWindow();
+		void initDirs();
+		void initRenderer();
 };
 
 
@@ -97,11 +93,7 @@ inline Scene& App::getScene()
 }
 
 
-inline MainRenderer& App::getMainRenderer()
-{
-	RASSERT_THROW_EXCEPTION(mainRenderer == NULL);
-	return *mainRenderer;
-}
+typedef Singleton<App> AppSingleton;
 
 
 #endif

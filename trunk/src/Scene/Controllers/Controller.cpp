@@ -9,7 +9,7 @@
 Controller::Controller(ControllerType type_):
 	type(type_) 
 {
-	app->getScene().registerController(this);
+	AppSingleton::getInstance().getScene().registerController(this);
 }
 
 
@@ -18,5 +18,5 @@ Controller::Controller(ControllerType type_):
 //======================================================================================================================
 Controller::~Controller()
 {
-	app->getScene().unregisterController(this);
+	AppSingleton::getInstance().getScene().unregisterController(this);
 }

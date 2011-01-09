@@ -14,14 +14,13 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Renderer::Renderer(Object* parent):
-	Object(parent),
+Renderer::Renderer():
 	width(640),
 	height(480),
-	ms(new Ms(*this, this)),
-	is(new Is(*this, this)),
-	pps(new Pps(*this, this)),
-	bs(new Bs(*this, this))
+	ms(*this),
+	is(*this),
+	pps(*this),
+	bs(*this)
 {}
 
 
@@ -44,10 +43,10 @@ void Renderer::init(const RendererInitializer& initializer)
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
-	ms->init(initializer);
-	is->init(initializer);
-	pps->init(initializer);
-	bs->init(initializer);
+	ms.init(initializer);
+	is.init(initializer);
+	pps.init(initializer);
+	bs.init(initializer);
 
 	// quad VBOs and VAO
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
@@ -71,11 +70,11 @@ void Renderer::render(Camera& cam_)
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
-	ms->run();
-	is->run();
-	pps->runPrePass();
-	bs->run();
-	pps->runPostPass();
+	ms.run();
+	is.run();
+	pps.runPrePass();
+	bs.run();
+	pps.runPostPass();
 
 	++framesNum;
 }
@@ -197,37 +196,37 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 	//
 	if(mtl.getStdUniVar(Material::SUV_MS_NORMAL_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_MS_NORMAL_FAI)->setTexture(ms->getNormalFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_NORMAL_FAI)->setTexture(ms.getNormalFai(), textureUnit++);
 	}
 
 	if(mtl.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI)->setTexture(ms->getDiffuseFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI)->setTexture(ms.getDiffuseFai(), textureUnit++);
 	}
 
 	if(mtl.getStdUniVar(Material::SUV_MS_SPECULAR_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_MS_SPECULAR_FAI)->setTexture(ms->getSpecularFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_SPECULAR_FAI)->setTexture(ms.getSpecularFai(), textureUnit++);
 	}
 
 	if(mtl.getStdUniVar(Material::SUV_MS_DEPTH_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_MS_DEPTH_FAI)->setTexture(ms->getDepthFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_MS_DEPTH_FAI)->setTexture(ms.getDepthFai(), textureUnit++);
 	}
 
 	if(mtl.getStdUniVar(Material::SUV_IS_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_IS_FAI)->setTexture(is->getFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_IS_FAI)->setTexture(is.getFai(), textureUnit++);
 	}
 
 	if(mtl.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI)->setTexture(pps->getPrePassFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI)->setTexture(pps.getPrePassFai(), textureUnit++);
 	}
 
 	if(mtl.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI))
 	{
-		mtl.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI)->setTexture(pps->getPostPassFai(), textureUnit++);
+		mtl.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI)->setTexture(pps.getPostPassFai(), textureUnit++);
 	}
 
 
@@ -242,7 +241,7 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 
 	if(mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR))
 	{
-		Vec3 col(app->getScene().getAmbientCol());
+		Vec3 col(AppSingleton::getInstance().getScene().getAmbientCol());
 		mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR)->setVec3(&col);
 	}
 
@@ -268,16 +267,16 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 					switch(udv.getFai())
 					{
 						case MtlUserDefinedVar::MS_DEPTH_FAI:
-							udv.getUniVar().setTexture(ms->getDepthFai(), textureUnit);
+							udv.getUniVar().setTexture(ms.getDepthFai(), textureUnit);
 							break;
 						case MtlUserDefinedVar::IS_FAI:
-							udv.getUniVar().setTexture(is->getFai(), textureUnit);
+							udv.getUniVar().setTexture(is.getFai(), textureUnit);
 							break;
 						case MtlUserDefinedVar::PPS_PRE_PASS_FAI:
-							udv.getUniVar().setTexture(pps->getPrePassFai(), textureUnit);
+							udv.getUniVar().setTexture(pps.getPrePassFai(), textureUnit);
 							break;
 						case MtlUserDefinedVar::PPS_POST_PASS_FAI:
-							udv.getUniVar().setTexture(pps->getPostPassFai(), textureUnit);
+							udv.getUniVar().setTexture(pps.getPostPassFai(), textureUnit);
 							break;
 						default:
 							RASSERT_THROW_EXCEPTION("WTF?");
@@ -353,8 +352,8 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 //======================================================================================================================
 void Renderer::renderAllModelNodes(const Camera& cam, ModelNodeRenderType type) const
 {
-	Vec<ModelNode*>::const_iterator it = app->getScene().modelNodes.begin();
-	for(; it != app->getScene().modelNodes.end(); ++it)
+	Vec<ModelNode*>::const_iterator it = AppSingleton::getInstance().getScene().modelNodes.begin();
+	for(; it != AppSingleton::getInstance().getScene().modelNodes.end(); ++it)
 	{
 		const ModelNode& md = *(*it);
 		renderModelNode(md, cam, type);

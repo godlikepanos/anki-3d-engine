@@ -10,12 +10,12 @@
 #include "Properties.h"
 #include "Vbo.h"
 #include "Vao.h"
+#include "Sm.h"
+#include "Smo.h"
 
 
 class PointLight;
 class SpotLight;
-class Sm;
-class Smo;
 
 
 /// Illumination stage
@@ -24,13 +24,13 @@ class Is: private RenderingPass
 	PROPERTY_R(Texture, fai, getFai) ///< The one and only FAI
 
 	public:
-		Is(Renderer& r_, Object* parent);
+		Is(Renderer& r_);
 		void init(const RendererInitializer& initializer);
 		void run();
 
 	private:
-		Sm* sm; ///< Shadowmapping pass
-		Smo* smo; /// Stencil masking optimizations pass
+		Sm sm; ///< Shadowmapping pass
+		Smo smo; /// Stencil masking optimizations pass
 		Fbo fbo; ///< This FBO writes to the Is::fai
 		uint stencilRb; ///< Illumination stage stencil buffer
 		RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program

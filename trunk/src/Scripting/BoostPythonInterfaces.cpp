@@ -21,6 +21,7 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(Renderer);
 	CALL_WRAP(Dbg);
 	CALL_WRAP(MainRenderer);
+	CALL_WRAP(MainRendererSingleton);
 
 	CALL_WRAP(App);
 }

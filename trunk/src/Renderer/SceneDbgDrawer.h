@@ -1,9 +1,6 @@
 #ifndef SCENE_DBG_DRAWER_H
 #define SCENE_DBG_DRAWER_H
 
-#include "Object.h"
-
-
 class Dbg;
 class Camera;
 class Light;
@@ -11,11 +8,11 @@ class ParticleEmitter;
 
 
 /// This is a drawer for some scene nodes that need debug
-class SceneDbgDrawer: public Object
+class SceneDbgDrawer
 {
 	public:
 		/// Constructor
-		SceneDbgDrawer(Dbg& dbg_, Object* parent);
+		SceneDbgDrawer(Dbg& dbg_);
 
 		/// Draw a Camera
 		virtual void drawCamera(const Camera& cam) const;
@@ -31,8 +28,7 @@ class SceneDbgDrawer: public Object
 };
 
 
-inline SceneDbgDrawer::SceneDbgDrawer(Dbg& dbg_, Object* parent):
-	Object(parent),
+inline SceneDbgDrawer::SceneDbgDrawer(Dbg& dbg_):
 	dbg(dbg_)
 {}
 

@@ -5,10 +5,10 @@
 #include "Fbo.h"
 #include "Texture.h"
 #include "RsrcPtr.h"
+#include "Hdr.h"
+#include "Ssao.h"
 
 
-class Hdr;
-class Ssao;
 class ShaderProg;
 
 
@@ -21,22 +21,22 @@ class Pps: private RenderingPass
 	PROPERTY_R(Texture, postPassFai, getPostPassFai)
 
 	public:
-		Pps(Renderer& r_, Object* parent);
+		Pps(Renderer& r_);
 		void init(const RendererInitializer& initializer);
 		void runPrePass();
 		void runPostPass();
 
 		/// @name Accessors
 		/// @{
-		Hdr& getHdr() {return *hdr;}
-		Ssao& getSsao() {return *ssao;}
+		Hdr& getHdr() {return hdr;}
+		Ssao& getSsao() {return ssao;}
 		/// @}
 
 	private:
 		/// @name Passes
 		/// @{
-		Hdr* hdr;
-		Ssao* ssao;
+		Hdr hdr;
+		Ssao ssao;
 		/// @}
 
 		Fbo prePassFbo;

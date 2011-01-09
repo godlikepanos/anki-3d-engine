@@ -15,7 +15,7 @@ class ShaderProg;
 class Bs: public RenderingPass
 {
 	public:
-		Bs(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
+		Bs(Renderer& r_): RenderingPass(r_) {}
 		void init(const RendererInitializer& initializer);
 		void run();
 

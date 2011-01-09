@@ -8,9 +8,9 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Ms::Ms(Renderer& r_, Object* parent):
-	RenderingPass(r_, parent),
-	ez(new Ez(r_, this))
+Ms::Ms(Renderer& r_):
+	RenderingPass(r_),
+	ez(r_)
 {}
 
 
@@ -59,7 +59,7 @@ void Ms::init(const RendererInitializer& initializer)
 		throw EXCEPTION("Cannot create deferred shading material stage FBO: " + e.what());
 	}
 
-	ez->init(initializer);
+	ez.init(initializer);
 }
 
 
@@ -68,14 +68,14 @@ void Ms::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Ms::run()
 {
-	if(ez->isEnabled())
+	if(ez.isEnabled())
 	{
-		ez->run();
+		ez.run();
 	}
 
 	fbo.bind();
 
-	if(!ez->isEnabled())
+	if(!ez.isEnabled())
 	{
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
@@ -87,7 +87,7 @@ void Ms::run()
 	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
-	if(ez->isEnabled())
+	if(ez.isEnabled())
 	{
 		glDepthMask(false);
 		glDepthFunc(GL_EQUAL);
@@ -97,7 +97,7 @@ void Ms::run()
 	r.renderAllModelNodes(r.getCamera(), Renderer::MNRT_MS);
 
 	// restore depth
-	if(ez->isEnabled())
+	if(ez.isEnabled())
 	{
 		glDepthMask(true);
 		glDepthFunc(GL_LESS);

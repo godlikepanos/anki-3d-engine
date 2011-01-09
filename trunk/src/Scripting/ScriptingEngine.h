@@ -2,14 +2,14 @@
 #define SCRIPTING_ENGINE_H
 
 #include <boost/python.hpp>
+#include "Singleton.h"
 
 
 /// The scripting engine using Python
 class ScriptingEngine
 {
 	public:
-		/// Singleton stuff
-		static ScriptingEngine& getInstance();
+		ScriptingEngine() {init();}
 
 		/// Execute python script
 		/// @param script Script source
@@ -28,26 +28,8 @@ class ScriptingEngine
 		boost::python::object ankiModule;
 		boost::python::object mainNamespace;
 
-		/// @name Ensure its singleton
-		/// @{
-		ScriptingEngine() {init();}
-		ScriptingEngine(const ScriptingEngine&) {init();}
-		void operator=(const ScriptingEngine&) {}
-		/// @}
-
-		/// Init python and modules
 		void init();
 };
-
-
-inline ScriptingEngine& ScriptingEngine::getInstance()
-{
-	if(instance == NULL)
-	{
-		instance = new ScriptingEngine();
-	}
-	return *instance;
-}
 
 
 template<typename Type>
@@ -55,6 +37,9 @@ inline void ScriptingEngine::exposeVar(const char* varName, Type* var)
 {
 	boost::python::scope(ankiModule).attr(varName) = boost::python::ptr(var);
 }
+
+
+typedef Singleton<ScriptingEngine> ScriptingEngineSingleton;
 
 
 #endif

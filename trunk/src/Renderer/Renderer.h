@@ -25,7 +25,7 @@ class ModelNode;
 
 /// Offscreen renderer
 /// It is a class and not a namespace because we may need external renderers for security cameras for example
-class Renderer: public Object
+class Renderer
 {
 	//====================================================================================================================
 	// Properties                                                                                                        =
@@ -47,7 +47,7 @@ class Renderer: public Object
 			MNRT_BS  ///< In blending stage
 		};
 
-		Renderer(Object* parent);
+		Renderer();
 
 		~Renderer() throw() {}
 
@@ -67,9 +67,9 @@ class Renderer: public Object
 		/// @name Accessors
 		/// @{
 		uint getFramesNum() const {return framesNum;}
-		Ms& getMs() {return *ms;}
-		Is& getIs() {return *is;}
-		Pps& getPps() {return *pps;}
+		Ms& getMs() {return ms;}
+		Is& getIs() {return is;}
+		Pps& getPps() {return pps;}
 		/// @}
 
 		/// My version of gluUnproject
@@ -119,10 +119,10 @@ class Renderer: public Object
 	protected:
 		/// @name Rendering stages
 		/// @{
-		Ms* ms; ///< Material rendering stage
-		Is* is; ///< Illumination rendering stage
-		Pps* pps; ///< Postprocessing rendering stage
-		Bs* bs; ///< Blending stage
+		Ms ms; ///< Material rendering stage
+		Is is; ///< Illumination rendering stage
+		Pps pps; ///< Postprocessing rendering stage
+		Bs bs; ///< Blending stage
 		/// @}
 
 		uint framesNum; ///< Frame number

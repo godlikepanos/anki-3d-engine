@@ -5,10 +5,10 @@
 #include "Texture.h"
 #include "Fbo.h"
 #include "Properties.h"
+#include "Ez.h"
 
 
 class RendererInitializer;
-class Ez;
 
 
 /// Material stage
@@ -20,12 +20,12 @@ class Ms: public RenderingPass
 	PROPERTY_R(Texture, depthFai, getDepthFai) ///< The FAI for depth
 
 	public:
-		Ms(Renderer& r_, Object* parent);
+		Ms(Renderer& r_);
 		void init(const RendererInitializer& initializer);
 		void run();
 
 	private:
-		Ez* ez;
+		Ez ez;
 		Fbo fbo;
 };
 

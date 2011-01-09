@@ -55,7 +55,6 @@ void Input::handleEvents()
 
 
 	mouseVelocity = Vec2(0.0);
-	App* app_ = app;
 
 	SDL_Event event_;
 	while(SDL_PollEvent(&event_))
@@ -85,8 +84,8 @@ void Input::handleEvents()
 				mousePos.x = event_.button.x;
 				mousePos.y = event_.button.y;
 
-				mousePosNdc.x = (2.0 * mousePos.x) / (float)app_->getWindowWidth() - 1.0;
-				mousePosNdc.y = 1.0 - (2.0 * mousePos.y) / (float)app_->getWindowHeight();
+				mousePosNdc.x = (2.0 * mousePos.x) / (float)AppSingleton::getInstance().getWindowWidth() - 1.0;
+				mousePosNdc.y = 1.0 - (2.0 * mousePos.y) / (float)AppSingleton::getInstance().getWindowHeight();
 
 				if(warpMouse)
 				{
@@ -95,7 +94,8 @@ void Input::handleEvents()
 					if(mousePosNdc == Vec2(0.0))
 						break;
 
-					SDL_WarpMouse(app->getWindowWidth()/2, app->getWindowHeight()/2);
+					SDL_WarpMouse(AppSingleton::getInstance().getWindowWidth() / 2,
+					              AppSingleton::getInstance().getWindowHeight() / 2);
 				}
 
 				mouseVelocity = mousePosNdc - prevMousePosNdc;
@@ -103,7 +103,7 @@ void Input::handleEvents()
 			}
 
 			case SDL_QUIT:
-				app_->quit(1);
+				AppSingleton::getInstance().quit(1);
 				break;
 		}
 	}

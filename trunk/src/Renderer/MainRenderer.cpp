@@ -17,6 +17,7 @@
 //======================================================================================================================
 void MainRenderer::init(const RendererInitializer& initializer_)
 {
+	INFO("Initializing main renderer...");
 	initGl();
 
 	sProg.loadRsrc("shaders/Final.glsl");
@@ -26,10 +27,11 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	//
 	RendererInitializer initializer = initializer_;
 	renderingQuality = initializer.mainRendererQuality;
-	initializer.width = app->getWindowWidth() * renderingQuality;
-	initializer.height = app->getWindowHeight() * renderingQuality;
+	initializer.width = AppSingleton::getInstance().getWindowWidth() * renderingQuality;
+	initializer.height = AppSingleton::getInstance().getWindowHeight() * renderingQuality;
 	Renderer::init(initializer);
-	dbg->init(initializer);
+	dbg.init(initializer);
+	INFO("Main renderer initialized");
 }
 
 
@@ -88,18 +90,18 @@ void MainRenderer::initGl()
 void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
-	dbg->run();
+	dbg.run();
 
 	//
 	// Render the PPS FAI to the framebuffer
 	//
 	Fbo::unbind();
-	setViewport(0, 0, app->getWindowWidth(), app->getWindowHeight());
+	setViewport(0, 0, AppSingleton::getInstance().getWindowWidth(), AppSingleton::getInstance().getWindowHeight());
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	sProg->bind();
 	//sProg->findUniVar("rasterImage")->setTexture(pps->getSsao().getFai(), 0);
-	sProg->findUniVar("rasterImage")->setTexture(pps->getPostPassFai(), 0);
+	sProg->findUniVar("rasterImage")->setTexture(pps.getPostPassFai(), 0);
 	drawQuad();
 }
 

@@ -17,7 +17,7 @@
 class Ssao: private RenderingPass
 {
 	public:
-		Ssao(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
+		Ssao(Renderer& r_): RenderingPass(r_) {}
 		void init(const RendererInitializer& initializer);
 		void run();
 

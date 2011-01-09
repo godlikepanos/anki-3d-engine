@@ -11,7 +11,7 @@
 class Ez: public RenderingPass
 {
 	public:
-		Ez(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
+		Ez(Renderer& r_): RenderingPass(r_) {}
 		bool isEnabled() const {return enabled;}
 		void init(const RendererInitializer& initializer);
 		void run();

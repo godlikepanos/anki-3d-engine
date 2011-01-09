@@ -1,6 +1,5 @@
 #include "PhyDbgDrawer.h"
 #include "MainRenderer.h"
-#include "App.h"
 #include "BtAndAnkiConvertors.h"
 #include "Logger.h"
 
@@ -10,7 +9,7 @@
 //======================================================================================================================
 void PhyDbgDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
 {
-	app->getMainRenderer().getDbg().drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
+	MainRendererSingleton::getInstance().getDbg().drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
 }
 
 
@@ -19,9 +18,9 @@ void PhyDbgDrawer::drawLine(const btVector3& from, const btVector3& to, const bt
 //======================================================================================================================
 void PhyDbgDrawer::drawSphere(btScalar radius, const btTransform& transform, const btVector3& color)
 {
-	app->getMainRenderer().getDbg().setColor(toAnki(color));
-	app->getMainRenderer().getDbg().setModelMat(Mat4(toAnki(transform)));
-	app->getMainRenderer().getDbg().drawSphere(radius);
+	MainRendererSingleton::getInstance().getDbg().setColor(toAnki(color));
+	MainRendererSingleton::getInstance().getDbg().setModelMat(Mat4(toAnki(transform)));
+	MainRendererSingleton::getInstance().getDbg().drawSphere(radius);
 }
 
 
@@ -37,9 +36,9 @@ void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btV
 	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
-	app->getMainRenderer().getDbg().setModelMat(trf);
-	app->getMainRenderer().getDbg().setColor(toAnki(color));
-	app->getMainRenderer().getDbg().drawCube(1.0);
+	MainRendererSingleton::getInstance().getDbg().setModelMat(trf);
+	MainRendererSingleton::getInstance().getDbg().setColor(toAnki(color));
+	MainRendererSingleton::getInstance().getDbg().drawCube(1.0);
 }
 
 
@@ -56,9 +55,9 @@ void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btT
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
 	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
-	app->getMainRenderer().getDbg().setModelMat(trf);
-	app->getMainRenderer().getDbg().setColor(toAnki(color));
-	app->getMainRenderer().getDbg().drawCube(1.0);
+	MainRendererSingleton::getInstance().getDbg().setModelMat(trf);
+	MainRendererSingleton::getInstance().getDbg().setColor(toAnki(color));
+	MainRendererSingleton::getInstance().getDbg().drawCube(1.0);
 }
 
 

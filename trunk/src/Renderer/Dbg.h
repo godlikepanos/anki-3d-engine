@@ -9,16 +9,14 @@
 #include "Math.h"
 #include "Vbo.h"
 #include "Vao.h"
-
-
-class SceneDbgDrawer;
+#include "SceneDbgDrawer.h"
 
 
 /// Debugging stage
 class Dbg: public RenderingPass
 {
 	public:
-		Dbg(Renderer& r_, Object* parent);
+		Dbg(Renderer& r_);
 		void init(const RendererInitializer& initializer);
 		void run();
 
@@ -63,7 +61,7 @@ class Dbg: public RenderingPass
 		Vbo positionsVbo;
 		Vbo colorsVbo;
 		Vao vao;
-		SceneDbgDrawer* sceneDbgDrawer;
+		SceneDbgDrawer sceneDbgDrawer;
 };
 
 

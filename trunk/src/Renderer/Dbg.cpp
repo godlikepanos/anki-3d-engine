@@ -12,12 +12,13 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Dbg::Dbg(Renderer& r_, Object* parent):
-	RenderingPass(r_, parent),
+Dbg::Dbg(Renderer& r_):
+	RenderingPass(r_),
 	showAxisEnabled(false),
 	showLightsEnabled(true),
 	showSkeletonsEnabled(true),
-	showCamerasEnabled(true)
+	showCamerasEnabled(true),
+	sceneDbgDrawer(*this)
 {}
 
 
@@ -244,7 +245,6 @@ void Dbg::init(const RendererInitializer& initializer)
 	ON_GL_FAIL_THROW_EXCEPTION();
 	modelMat.setIdentity();
 	crntCol = Vec3(1.0, 0.0, 0.0);
-	sceneDbgDrawer = new SceneDbgDrawer(*this, this);
 }
 
 
@@ -269,21 +269,21 @@ void Dbg::run()
 	setModelMat(Mat4::getIdentity());
 	renderGrid();
 
-	Vec<SceneNode*>::const_iterator it = app->getScene().nodes.begin();
-	for(; it != app->getScene().nodes.end(); ++it)
+	Vec<SceneNode*>::const_iterator it = AppSingleton::getInstance().getScene().nodes.begin();
+	for(; it != AppSingleton::getInstance().getScene().nodes.end(); ++it)
 	{
 		const SceneNode& node = *(*it);
 
 		switch(node.type)
 		{
 			case SceneNode::SNT_CAMERA:
-				sceneDbgDrawer->drawCamera(static_cast<const Camera&>(node));
+				sceneDbgDrawer.drawCamera(static_cast<const Camera&>(node));
 				break;
 			case SceneNode::SNT_LIGHT:
-				sceneDbgDrawer->drawLight(static_cast<const Light&>(node));
+				sceneDbgDrawer.drawLight(static_cast<const Light&>(node));
 				break;
 			case SceneNode::SNT_PARTICLE_EMITTER:
-				sceneDbgDrawer->drawParticleEmitter(static_cast<const ParticleEmitter&>(node));
+				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitter&>(node));
 				break;
 			default:
 				break;

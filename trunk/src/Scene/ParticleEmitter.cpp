@@ -58,7 +58,7 @@ void ParticleEmitter::init(const char* filename)
 		init.sceneNode = particle;
 		init.group = Physics::CG_PARTICLE;
 		init.mask = Physics::CG_ALL ^ Physics::CG_PARTICLE;
-		RigidBody* body = new RigidBody(app->getScene().getPhysics(), init);
+		RigidBody* body = new RigidBody(AppSingleton::getInstance().getScene().getPhysics(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 
@@ -72,7 +72,7 @@ void ParticleEmitter::init(const char* filename)
 //======================================================================================================================
 void ParticleEmitter::update()
 {
-	float crntTime = app->getTicks() / 1000.0;
+	float crntTime = AppSingleton::getInstance().getTicks() / 1000.0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
 	bool identRot = getWorldTransform().rotation == Mat3::getIdentity();
