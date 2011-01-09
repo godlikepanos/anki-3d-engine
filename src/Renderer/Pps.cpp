@@ -7,10 +7,10 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Pps::Pps(Renderer& r_, Object* parent):
-	RenderingPass(r_, parent),
-	hdr(new Hdr(r_, this)),
-	ssao(new Ssao(r_, this))
+Pps::Pps(Renderer& r_):
+	RenderingPass(r_),
+	hdr(r_),
+	ssao(r_)
 {}
 
 
@@ -43,7 +43,7 @@ void Pps::initPrePassSProg()
 	std::string pps = "";
 	std::string prefix = "";
 
-	if(ssao->isEnabled())
+	if(ssao.isEnabled())
 	{
 		pps += "#define SSAO_ENABLED\n";
 		prefix += "Ssao";
@@ -63,7 +63,7 @@ void Pps::initPostPassSProg()
 	std::string pps = "";
 	std::string prefix = "";
 
-	if(hdr->isEnabled())
+	if(hdr.isEnabled())
 	{
 		pps += "#define HDR_ENABLED\n";
 		prefix += "Hdr";
@@ -80,8 +80,8 @@ void Pps::initPostPassSProg()
 //======================================================================================================================
 void Pps::init(const RendererInitializer& initializer)
 {
-	ssao->init(initializer);
-	hdr->init(initializer);
+	ssao.init(initializer);
+	hdr.init(initializer);
 
 	try
 	{
@@ -111,9 +111,9 @@ void Pps::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Pps::runPrePass()
 {
-	if(ssao->isEnabled())
+	if(ssao.isEnabled())
 	{
-		ssao->run();
+		ssao.run();
 	}
 
 	prePassFbo.bind();
@@ -125,9 +125,9 @@ void Pps::runPrePass()
 	prePassSProg->bind();
 	prePassSProg->findUniVar("isFai")->setTexture(r.getIs().getFai(), 0);
 
-	if(ssao->isEnabled())
+	if(ssao.isEnabled())
 	{
-		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao->getFai(), 1);
+		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao.getFai(), 1);
 	}
 
 	r.drawQuad();
@@ -141,9 +141,9 @@ void Pps::runPrePass()
 //======================================================================================================================
 void Pps::runPostPass()
 {
-	if(hdr->isEnabled())
+	if(hdr.isEnabled())
 	{
-		hdr->run();
+		hdr.run();
 	}
 
 	postPassFbo.bind();
@@ -155,9 +155,9 @@ void Pps::runPostPass()
 	postPassSProg->bind();
 	postPassSProg->findUniVar("ppsPrePassFai")->setTexture(prePassFai, 0);
 
-	if(hdr->isEnabled())
+	if(hdr.isEnabled())
 	{
-		postPassSProg->findUniVar("ppsHdrFai")->setTexture(hdr->getFai(), 1);
+		postPassSProg->findUniVar("ppsHdrFai")->setTexture(hdr.getFai(), 1);
 	}
 
 	r.drawQuad();

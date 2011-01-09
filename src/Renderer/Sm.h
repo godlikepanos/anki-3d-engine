@@ -20,7 +20,7 @@ class Sm: private RenderingPass
 	public:
 		Texture shadowMap;
 
-		Sm(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
+		Sm(Renderer& r_): RenderingPass(r_) {}
 
 		void init(const RendererInitializer& initializer);
 

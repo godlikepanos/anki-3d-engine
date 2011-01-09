@@ -16,7 +16,7 @@ void SceneNode::commonConstructorCode()
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
 
-	app->getScene().registerNode(this);
+	AppSingleton::getInstance().getScene().registerNode(this);
 }
 
 
@@ -25,7 +25,7 @@ void SceneNode::commonConstructorCode()
 //======================================================================================================================
 SceneNode::~SceneNode()
 {
-	app->getScene().unregisterNode(this);
+	AppSingleton::getInstance().getScene().unregisterNode(this);
 }
 
 

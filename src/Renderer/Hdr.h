@@ -25,7 +25,7 @@ class Hdr: private RenderingPass
 	PROPERTY_RW(float, blurringDist, getBlurringDist, setBlurringDist)
 
 	public:
-		Hdr(Renderer& r_, Object* parent): RenderingPass(r_, parent) {}
+		Hdr(Renderer& r_): RenderingPass(r_) {}
 		void init(const RendererInitializer& initializer);
 		void run();
 

@@ -7,6 +7,7 @@
 #include <boost/algorithm/string.hpp>
 #include "App.h"
 #include "Scene.h"
+#include "RendererInitializer.h"
 #include "MainRenderer.h"
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
@@ -14,18 +15,11 @@
 #include "Logger.h"
 
 
-App* app = NULL; ///< The only global var. App constructor sets it
-
-
-bool App::isCreated = false;
-
-
 //======================================================================================================================
 // handleMessageHanlderMsgs                                                                                            =
 //======================================================================================================================
 void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const char* msg)
 {
-	//printf("gooooooooot.....\n");
 	if(boost::find_first(msg, "Warning") || boost::find_first(msg, "Error"))
 	{
 		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg << std::flush;
@@ -63,51 +57,29 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 
 
 //======================================================================================================================
-// Constructor                                                                                                         =
+// init                                                                                                                =
 //======================================================================================================================
-App::App(int argc, char* argv[], Object* parent):
-	Object(parent),
-	windowW(1280),
-	windowH(720),
-	terminalColoringEnabled(true),
-	fullScreenFlag(false)
+void App::init(int argc, char* argv[])
 {
-	app = this;
+	windowW = 1280;
+	windowH = 720;
+	terminalColoringEnabled = true,
+	fullScreenFlag = false;
+
+	// send output to handleMessageHanlderMsgs
+	LoggerSingleton::getInstance().getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs,
+	                                                               this, _1, _2, _3, _4));
+
+	INFO("Initializing the engine...");
 
 	parseCommandLineArgs(argc, argv);
 
-	// send output to handleMessageHanlderMsgs
-	LoggerSingleton::getInstance().getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
-
 	printAppInfo();
 
-	if(isCreated)
-	{
-		throw EXCEPTION("You cannot init a second App instance");
-	}
-
-	isCreated = true;
-
 	// dirs
-	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
-	if(!boost::filesystem::exists(settingsPath))
-	{
-		INFO("Creating settings dir \"" << settingsPath.string() << "\"");
-		boost::filesystem::create_directory(settingsPath);
-	}
-
-	cachePath = settingsPath / "cache";
-	if(boost::filesystem::exists(cachePath))
-	{
-		INFO("Deleting dir \"" << cachePath.string() << "\"");
-		boost::filesystem::remove_all(cachePath);
-	}
-
-	INFO("Creating cache dir \"" << cachePath.string() << "\"");
-	boost::filesystem::create_directory(cachePath);
+	initDirs();
 
 	// create the subsystems. WATCH THE ORDER
-	ScriptingEngine::getInstance().exposeVar("app", this);
 	const char* commonPythonCode =
 	"import sys\n"
 	"from Anki import *\n"
@@ -122,24 +94,28 @@ App::App(int argc, char* argv[], Object* parent):
 	"\n"
 	"class StderrCatcher:\n"
 	"\tdef write(self, str_):\n"
-	"\t\tline = sys._getframe(2).f_lineno\n"
-	"\t\tfile = sys._getframe(2).f_code.co_filename\n"
-	"\t\tfunc = sys._getframe(2).f_code.co_name\n"
+	"\t\tline = sys._getframe(1).f_lineno\n"
+	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
+	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
 	"\t\tLoggerSingleton.getInstance().write(file, line, func, str_)\n"
 	"\n"
 	"sys.stdout = StdoutCatcher()\n"
 	"sys.stderr = StderrCatcher()\n";
-	ScriptingEngine::getInstance().execScript(commonPythonCode);
+	ScriptingEngineSingleton::getInstance().execScript(commonPythonCode);
 
-	mainRenderer = new MainRenderer(this);
-	scene = new Scene(this);
+	scene = new Scene(NULL);
 
 	StdinListenerSingleton::getInstance().start();
+
+	initWindow();
+	initRenderer();
 
 	// other
 	activeCam = NULL;
 	timerTick = 1000 / 40; // in ms. 1000/Hz
 	time = 0;
+
+	INFO("Engine initialization ends");
 }
 
 
@@ -196,6 +172,55 @@ void App::initWindow()
 	}
 
 	INFO("SDL window initialization ends");
+}
+
+
+//======================================================================================================================
+// initDirs                                                                                                            =
+//======================================================================================================================
+void App::initDirs()
+{
+	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
+	if(!boost::filesystem::exists(settingsPath))
+	{
+		INFO("Creating settings dir \"" << settingsPath.string() << "\"");
+		boost::filesystem::create_directory(settingsPath);
+	}
+
+	cachePath = settingsPath / "cache";
+	if(boost::filesystem::exists(cachePath))
+	{
+		INFO("Deleting dir \"" << cachePath.string() << "\"");
+		boost::filesystem::remove_all(cachePath);
+	}
+
+	INFO("Creating cache dir \"" << cachePath.string() << "\"");
+	boost::filesystem::create_directory(cachePath);
+}
+
+
+//======================================================================================================================
+// initRenderer                                                                                                        =
+//======================================================================================================================
+void App::initRenderer()
+{
+	RendererInitializer initializer;
+	initializer.ms.ez.enabled = false;
+	initializer.dbg.enabled = true;
+	initializer.is.sm.bilinearEnabled = true;
+	initializer.is.sm.enabled = true;
+	initializer.is.sm.pcfEnabled = true;
+	initializer.is.sm.resolution = 512;
+	initializer.pps.hdr.enabled = true;
+	initializer.pps.hdr.renderingQuality = 0.25;
+	initializer.pps.hdr.blurringDist = 1.0;
+	initializer.pps.hdr.blurringIterationsNum = 2;
+	initializer.pps.hdr.exposure = 4.0;
+	initializer.pps.ssao.blurringIterationsNum = 2;
+	initializer.pps.ssao.enabled = true;
+	initializer.pps.ssao.renderingQuality = 0.5;
+	initializer.mainRendererQuality = 1.0;
+	MainRendererSingleton::getInstance().init(initializer);
 }
 
 
@@ -335,7 +360,7 @@ void App::execStdinScpripts()
 
 		try
 		{
-			ScriptingEngine::getInstance().execScript(cmd.c_str(), "command line input");
+			ScriptingEngineSingleton::getInstance().execScript(cmd.c_str(), "command line input");
 		}
 		catch(Exception& e)
 		{

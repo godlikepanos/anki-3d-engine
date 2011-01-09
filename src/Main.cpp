@@ -73,7 +73,7 @@ void initPhysics()
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new RigidBody(app->getScene().getPhysics(), init);
+	new RigidBody(AppSingleton::getInstance().getScene().getPhysics(), init);
 
 
 	/*{
@@ -109,39 +109,21 @@ void initPhysics()
 //======================================================================================================================
 void init()
 {
-	INFO("Engine initializing...");
+	INFO("Other init...");
 
 	srand(unsigned(time(NULL)));
 	mathSanityChecks();
 
-	app->initWindow();
-	uint ticks = app->getTicks();
+	uint ticks = AppSingleton::getInstance().getTicks();
 
-	RendererInitializer initializer;
-	initializer.ms.ez.enabled = false;
-	initializer.dbg.enabled = true;
-	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.sm.enabled = true;
-	initializer.is.sm.pcfEnabled = true;
-	initializer.is.sm.resolution = 512;
-	initializer.pps.hdr.enabled = true;
-	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterationsNum = 2;
-	initializer.pps.hdr.exposure = 4.0;
-	initializer.pps.ssao.blurringIterationsNum = 2;
-	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.renderingQuality = 0.5;
-	initializer.mainRendererQuality = 1.0;
-	app->getMainRenderer().init(initializer);
 	//Ui::init();
 
 	// camera
-	Camera* cam = new Camera(app->getMainRenderer().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	Camera* cam = new Camera(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
-	app->setActiveCam(cam);
+	AppSingleton::getInstance().setActiveCam(cam);
 
 	// lights
 	point_lights[0] = new PointLight();
@@ -234,7 +216,7 @@ void init()
 	/*PhyCharacter::Initializer init;
 	init.sceneNode = imp;
 	init.startTrf = Transform(Vec3(0, 40, 0), Mat3::getIdentity(), 1.0);
-	character = new PhyCharacter(app->getScene().getPhysics(), init);*/
+	character = new PhyCharacter(AppSingleton::getInstance().getScene().getPhysics(), init);*/
 
 	// crate
 	/*crate = new MeshNode;
@@ -271,9 +253,9 @@ void mainLoop()
 		float scale = 0.01;
 
 		// move the camera
-		static SceneNode* mover = app->getActiveCam();
+		static SceneNode* mover = AppSingleton::getInstance().getActiveCam();
 
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_1)) mover = app->getActiveCam();
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_1)) mover = AppSingleton::getInstance().getActiveCam();
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_2)) mover = point_lights[0];
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
@@ -305,7 +287,7 @@ void mainLoop()
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().scale += scale ;
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().scale -= scale ;
 
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) app->getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
 			character->moveForward(0.1);
@@ -323,18 +305,17 @@ void mainLoop()
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Y) == 1)
 		{
 			INFO("Exec script");
-			ScriptingEngine::getInstance().exposeVar("app", app);
-			ScriptingEngine::getInstance().execScript(Util::readFile("test.py").c_str());
+			ScriptingEngineSingleton::getInstance().execScript(Util::readFile("test.py").c_str());
 		}
 
 		mover->getLocalTransform().rotation.reorthogonalize();
 
-		app->execStdinScpripts();
-		app->getScene().getPhysics().update(crntTime);
-		app->getScene().updateAllControllers();
-		app->getScene().updateAllWorldStuff();
+		AppSingleton::getInstance().execStdinScpripts();
+		AppSingleton::getInstance().getScene().getPhysics().update(crntTime);
+		AppSingleton::getInstance().getScene().updateAllControllers();
+		AppSingleton::getInstance().getScene().updateAllWorldStuff();
 
-		app->getMainRenderer().render(*app->getActiveCam());
+		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
 		//map.octree.root->bounding_box.render();
 
@@ -342,7 +323,7 @@ void mainLoop()
 		/*Ui::setColor(Vec4(1.0, 1.0, 1.0, 1.0));
 		Ui::setPos(-0.98, 0.95);
 		Ui::setFontWidth(0.03);*/
-		//Ui::printf("frame:%d fps:%dms\n", app->getMainRenderer().getFramesNum(), (App::getTicks()-ticks_));
+		//Ui::printf("frame:%d fps:%dms\n", AppSingleton::getInstance().getMainRenderer().getFramesNum(), (App::getTicks()-ticks_));
 		//Ui::print("Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n");
 		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
 								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z));*/
@@ -350,25 +331,25 @@ void mainLoop()
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
 			break;
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F11))
-			app->togleFullScreen();
+			AppSingleton::getInstance().togleFullScreen();
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F12) == 1)
-			app->getMainRenderer().takeScreenshot("gfx/screenshot.jpg");
+			MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
 
 		/*char str[128];
-		static string scrFile = (app->getSettingsPath() / "capt" / "%06d.jpg").string();
-		sprintf(str, scrFile.c_str(), app->getMainRenderer().getFramesNum());
-		app->getMainRenderer().takeScreenshot(str);*/
+		static string scrFile = (AppSingleton::getInstance().getSettingsPath() / "capt" / "%06d.jpg").string();
+		sprintf(str, scrFile.c_str(), AppSingleton::getInstance().getMainRenderer().getFramesNum());
+		AppSingleton::getInstance().getMainRenderer().takeScreenshot(str);*/
 
 		// std stuff follow
-		app->swapBuffers();
+		AppSingleton::getInstance().swapBuffers();
 		if(1)
 		{
-			//if(app->getMainRenderer().getFramesNum() == 100) app->getMainRenderer().takeScreenshot("gfx/screenshot.tga");
-			app->waitForNextFrame();
+			//if(AppSingleton::getInstance().getMainRenderer().getFramesNum() == 100) AppSingleton::getInstance().getMainRenderer().takeScreenshot("gfx/screenshot.tga");
+			AppSingleton::getInstance().waitForNextFrame();
 		}
 		else
 		{
-			if(app->getMainRenderer().getFramesNum() == 5000)
+			if(MainRendererSingleton::getInstance().getFramesNum() == 5000)
 			{
 				break;
 			}
@@ -386,13 +367,13 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		new App(argc, argv);
+		AppSingleton::getInstance().init(argc, argv);
 		init();
 
 		mainLoop();
 
 		INFO("Exiting...");
-		app->quit(EXIT_SUCCESS);
+		AppSingleton::getInstance().quit(EXIT_SUCCESS);
 		return 0;
 	}
 	catch(std::exception& e)

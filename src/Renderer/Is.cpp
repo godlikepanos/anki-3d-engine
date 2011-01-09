@@ -17,10 +17,10 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Is::Is(Renderer& r_, Object* parent):
-	RenderingPass(r_, parent),
-	sm(new Sm(r_, this)),
-	smo(new Smo(r_, this))
+Is::Is(Renderer& r_):
+	RenderingPass(r_),
+	sm(r_),
+	smo(r_)
 {}
 
 
@@ -122,8 +122,8 @@ void Is::initFbo()
 void Is::init(const RendererInitializer& initializer)
 {
 	// init passes
-	smo->init(initializer);
-	sm->init(initializer);
+	smo.init(initializer);
+	sm.init(initializer);
 
 	// load the shaders
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
@@ -139,9 +139,9 @@ void Is::init(const RendererInitializer& initializer)
 
 	// spot light w/t shadow
 	std::string pps = std::string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm->getResolution()) + "\n";
-	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm->getResolution());
-	if(sm->isPcfEnabled())
+	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm.getResolution()) + "\n";
+	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm.getResolution());
+	if(sm.isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
 		prefix += "Pcf";
@@ -214,7 +214,7 @@ void Is::pointLightPass(const PointLight& light)
 	}
 
 	// stencil optimization
-	smo->run(light);
+	smo.run(light);
 
 	// shader prog
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
@@ -250,9 +250,9 @@ void Is::spotLightPass(const SpotLight& light)
 	}
 
 	// shadow mapping
-	if(light.castsShadow() && sm->isEnabled())
+	if(light.castsShadow() && sm.isEnabled())
 	{
-		sm->run(light.getCamera());
+		sm.run(light.getCamera());
 
 		// restore the IS FBO
 		fbo.bind();
@@ -265,7 +265,7 @@ void Is::spotLightPass(const SpotLight& light)
 	}
 
 	// stencil optimization
-	smo->run(light);
+	smo.run(light);
 
 	// set the texture
 	light.lightData->getTexture().setRepeat(false);
@@ -273,7 +273,7 @@ void Is::spotLightPass(const SpotLight& light)
 	// shader prog
 	const ShaderProg* shdr;
 
-	if(light.castsShadow() && sm->isEnabled())
+	if(light.castsShadow() && sm.isEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
 	}
@@ -310,9 +310,9 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->findUniVar("texProjectionMat")->setMat4(&texProjectionMat);
 
 	// the shadowmap
-	if(light.castsShadow() && sm->isEnabled())
+	if(light.castsShadow() && sm.isEnabled())
 	{
-		shdr->findUniVar("shadowMap")->setTexture(sm->shadowMap, 5);
+		shdr->findUniVar("shadowMap")->setTexture(sm.shadowMap, 5);
 	}
 
 	// render quad
@@ -334,7 +334,7 @@ void Is::run()
 	glDisable(GL_DEPTH_TEST);
 
 	// ambient pass
-	ambientPass(app->getScene().getAmbientCol());
+	ambientPass(AppSingleton::getInstance().getScene().getAmbientCol());
 
 	// light passes
 	glEnable(GL_BLEND);
@@ -345,9 +345,9 @@ void Is::run()
 	calcPlanes();
 
 	// for all lights
-	for(uint i=0; i<app->getScene().lights.size(); i++)
+	for(uint i=0; i<AppSingleton::getInstance().getScene().lights.size(); i++)
 	{
-		const Light& light = *app->getScene().lights[i];
+		const Light& light = *AppSingleton::getInstance().getScene().lights[i];
 		switch(light.getType())
 		{
 			case Light::LT_POINT:

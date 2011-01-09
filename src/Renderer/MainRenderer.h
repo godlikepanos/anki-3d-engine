@@ -2,13 +2,14 @@
 #define MAIN_RENDERER_H
 
 #include "Renderer.h"
+#include "Singleton.h"
 
 
 /// Main onscreen renderer
 class MainRenderer: public Renderer
 {
 	public:
-		MainRenderer(Object* parent);
+		MainRenderer();
 
 		~MainRenderer() throw() {}
 
@@ -17,7 +18,7 @@ class MainRenderer: public Renderer
 		int& getScreenshotJpegQuality() {return screenshotJpegQuality;}
 		void setScreenshotJpegQuality(int i) {screenshotJpegQuality = i;}
 		float getRenderingQuality() const {return renderingQuality;}
-		Dbg& getDbg() {return *dbg;}
+		Dbg& getDbg() {return dbg;}
 		/// @}
 
 		/// The same as Renderer::init but with additional initialization. @see Renderer::init
@@ -34,7 +35,7 @@ class MainRenderer: public Renderer
 	private:
 		/// @name Passes
 		/// @{
-		Dbg* dbg; ///< Debugging rendering stage. Only the main renderer has it
+		Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
 		/// @}
 
 		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program
@@ -50,10 +51,13 @@ class MainRenderer: public Renderer
 };
 
 
-inline MainRenderer::MainRenderer(Object* parent):
-	Renderer(parent),
-	dbg(new Dbg(*this, this)),
+inline MainRenderer::MainRenderer():
+	dbg(*this),
 	screenshotJpegQuality(90)
 {}
+
+
+typedef Singleton<MainRenderer> MainRendererSingleton; ///< Make the MainRenderer singleton class
+
 
 #endif

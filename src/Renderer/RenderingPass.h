@@ -1,18 +1,16 @@
 #ifndef RENDERING_PASS_H
 #define RENDERING_PASS_H
 
-#include "Object.h"
-
 
 class Renderer;
 class RendererInitializer;
 
 
 /// Rendering pass
-class RenderingPass: public Object
+class RenderingPass
 {
 	public:
-		RenderingPass(Renderer& r_, Object* parent = NULL);
+		RenderingPass(Renderer& r_): r(r_) {}
 
 		/// All passes should have an init
 		virtual void init(const RendererInitializer& initializer) = 0;
@@ -20,12 +18,6 @@ class RenderingPass: public Object
 	protected:
 		Renderer& r; ///< Know your father
 };
-
-
-inline RenderingPass::RenderingPass(Renderer& r_, Object* parent):
-	Object(parent),
-	r(r_)
-{}
 
 
 #endif
