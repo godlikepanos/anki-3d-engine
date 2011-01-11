@@ -2,7 +2,8 @@
 #define SKELETON_H
 
 #include "Math.h"
-#include "Resource.h"
+#include "Properties.h"
+#include "Vec.h"
 
 
 /// It contains the bones with their position and hierarchy
@@ -26,7 +27,7 @@
 /// child:
 /// uint: bone id
 /// @endcode
-class Skeleton: public Resource
+class Skeleton
 {
 	public:
 		/// Skeleton bone
@@ -62,9 +63,6 @@ class Skeleton: public Resource
 		};	
 	
 		Vec<Bone> bones;
-
-		 Skeleton(): Resource(RT_SKELETON) {}
-		~Skeleton() {}
 
 		/// Implements Resource::load
 		void load(const char* filename);

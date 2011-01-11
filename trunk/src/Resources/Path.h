@@ -1,12 +1,11 @@
 #ifndef PATH_H
 #define PATH_H
 
-#include "Resource.h"
 #include "Math.h"
 
 
 /// Path @ref Resource resource
-class Path: public Resource
+class Path
 {
 	public:
 		Vec<Vec3> positions; ///< AKA translations

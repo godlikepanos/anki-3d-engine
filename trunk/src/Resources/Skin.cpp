@@ -58,8 +58,8 @@ void Skin::load(const char* filename)
 			// Bone number problem
 			if(skelAnims[i]->bones.size() != skeleton->bones.size())
 			{
-				throw EXCEPTION("Skeleton animation \"" + skelAnims[i]->getRsrcName() + "\" and skeleton \"" +
-				                skeleton->getRsrcName() + "\" dont have equal bone count");
+				throw EXCEPTION("Skeleton animation \"" + skelAnims[i].getRsrcName() + "\" and skeleton \"" +
+				                skeleton.getRsrcName() + "\" dont have equal bone count");
 			}
 		}
 
@@ -68,8 +68,7 @@ void Skin::load(const char* filename)
 		{
 			if(!model->getModelPatches()[i].supportsHwSkinning())
 			{
-				throw EXCEPTION("Mesh " + model->getModelPatches()[i].getMesh().getRsrcName() +
-				                " does not support HW skinning");
+				throw EXCEPTION("Mesh does not support HW skinning");
 			}
 		}
   }

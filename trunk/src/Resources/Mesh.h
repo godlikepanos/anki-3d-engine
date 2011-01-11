@@ -3,17 +3,16 @@
 
 #include <boost/array.hpp>
 #include "Math.h"
-#include "Resource.h"
 #include "RsrcPtr.h"
-#include "Object.h"
 #include "Vbo.h"
+#include "Properties.h"
 
 
 class MeshData;
 
 
 /// Mesh Resource. It contains the geometry packed in VBOs
-class Mesh: public Resource, public Object
+class Mesh
 {
 	public:
 		/// Used in @ref vbos array
@@ -32,7 +31,7 @@ class Mesh: public Resource, public Object
 
 	public:
 		/// Default constructor
-		Mesh();
+		Mesh() {}
 
 		/// Does nothing
 		~Mesh() {}

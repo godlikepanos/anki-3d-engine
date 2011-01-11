@@ -1,14 +1,14 @@
 #ifndef LIGHT_PROPS_H
 #define LIGHT_PROPS_H
 
-#include "Resource.h"
 #include "Math.h"
 #include "RsrcPtr.h"
 #include "Texture.h"
+#include "Properties.h"
 
 
 /// Light properties Resource
-class LightData: public Resource
+class LightData
 {
 	public:
 		enum LightType

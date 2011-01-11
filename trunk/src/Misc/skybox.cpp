@@ -1,5 +1,4 @@
 #include "skybox.h"
-#include "Resource.h"
 #include "Renderer.h"
 #include "Math.h"
 #include "Camera.h"

@@ -4,7 +4,6 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Material.h"
-#include "Resource.h"
 #include "Parser.h"
 #include "Texture.h"
 #include "ShaderProg.h"
@@ -113,8 +112,7 @@ static bool searchBlendEnum(const char* str, int& gl_enum)
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Material::Material():
-	Resource(RT_MATERIAL)
+Material::Material()
 {
 	blendingStage = false;
 	blendingSfactor = GL_ONE;

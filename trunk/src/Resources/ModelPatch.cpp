@@ -73,6 +73,6 @@ void ModelPatch::doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Resource \"" + mesh.getRsrcName() + "\" and \"" + mtl.getRsrcName() + "\" are incompatible");
+		throw EXCEPTION("Mesh and material are incompatible");
 	}
 }

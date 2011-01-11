@@ -2,7 +2,6 @@
 #define PARTICLE_EMITTER_PROPS_H
 
 #include "Math.h"
-#include "Resource.h"
 
 
 /// This is the properties of the particle emitter resource. Its a separate class from ParticleEmitterProps cause
@@ -49,12 +48,9 @@ class ParticleEmitterPropsStruct
 
 
 /// The actual particle emitter resource
-class ParticleEmitterProps: public ParticleEmitterPropsStruct, public Resource
+class ParticleEmitterProps: public ParticleEmitterPropsStruct
 {
 	public:
-		ParticleEmitterProps(): Resource(RT_PARTICLE_EMITTER_PROPS) {}
-		~ParticleEmitterProps() {}
-
 		void load(const char* filename);
 };
 

@@ -4,6 +4,7 @@
 #include "RenderingPass.h"
 #include "Fbo.h"
 #include "Texture.h"
+#include "Properties.h"
 
 
 class Camera;

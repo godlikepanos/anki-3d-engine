@@ -1,8 +1,8 @@
 #ifndef SKEL_ANIM_H
 #define SKEL_ANIM_H
 
-#include "Resource.h"
 #include "Math.h"
+#include "Vec.h"
 
 
 /// Skeleton animation resource
@@ -41,7 +41,7 @@
 /// 	}
 /// }
 /// @endcode
-class SkelAnim: public Resource
+class SkelAnim
 {
 	public:
 		/// Bone pose
@@ -65,9 +65,6 @@ class SkelAnim: public Resource
 		Vec<uint> keyframes;
 		uint framesNum;
 		Vec<BoneAnim> bones;
-
-		SkelAnim(): Resource(RT_SKEL_ANIM) {}
-		~SkelAnim() {}
 
 		/// Implements Resource::loat
 		void load(const char* filename);

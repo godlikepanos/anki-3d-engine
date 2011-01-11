@@ -2,7 +2,6 @@
 #define MODEL_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include "Resource.h"
 #include "RsrcPtr.h"
 #include "Vao.h"
 #include "ModelPatch.h"
@@ -29,10 +28,10 @@
 /// - If the materials need texture coords then mesh should have them
 /// - The skeleton and skelAnims are optional
 /// - Its an error to have skelAnims without skeleton
-class Model: public Resource
+class Model
 {
 	public:
-		Model(): Resource(RT_MODEL) {}
+		Model() {}
 
 		void load(const char* filename);
 
