@@ -1,7 +1,6 @@
 #ifndef SKIN_H
 #define SKIN_H
 
-#include "Resource.h"
 #include "RsrcPtr.h"
 #include "Model.h"
 
@@ -22,12 +21,9 @@ class SkelAnim;
 /// 	</skelAnims>
 /// </skin>
 /// @endcode
-class Skin: public Resource
+class Skin
 {
 	public:
-		/// Nothing special
-		Skin(): Resource(RT_SKIN) {}
-
 		/// Implements Resource::load
 		void load(const char*);
 

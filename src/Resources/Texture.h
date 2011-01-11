@@ -2,8 +2,8 @@
 #define TEXTURE_H
 
 #include <limits>
-#include "Resource.h"
 #include "StdTypes.h"
+#include "Exception.h"
 
 
 /// Texture resource class
@@ -12,7 +12,7 @@
 /// uncompressed TGAs and some of the formats of PNG (PNG loading uses libpng)
 ///
 /// @note The last texture unit is reserved and you cannot use it
-class Texture: public Resource
+class Texture
 {
 	friend class Renderer; /// @todo Remove this when remove the SSAO load noise map crap
 	friend class Ssao;

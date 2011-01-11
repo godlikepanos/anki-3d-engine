@@ -1,11 +1,11 @@
 #ifndef EXTENSION_H
 #define EXTENSION_H
 
-#include "Resource.h"
+#include "StdTypes.h"
 
 
 /// Extension @ref Resource resource
-class Extension: public Resource
+class Extension
 {
 	private:
 		void* libHandle;
@@ -21,7 +21,6 @@ class Extension: public Resource
 
 
 inline Extension::Extension():
-	Resource(RT_EXTENSION),
 	libHandle(NULL),
 	foobarPtr(NULL)
 {}

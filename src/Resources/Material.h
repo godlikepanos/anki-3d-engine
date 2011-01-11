@@ -4,7 +4,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include "Math.h"
-#include "Resource.h"
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
 #include "MtlUserDefinedVar.h"
@@ -67,7 +66,7 @@
 /// *: Has nothing to do with the blendingStage. blendFuncs can be in material stage as well
 /// **: Depends on the type of the var
 /// @endcode
-class Material: public Resource
+class Material
 {
 	//====================================================================================================================
 	// Nested                                                                                                            =

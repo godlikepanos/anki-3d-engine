@@ -5,7 +5,7 @@
 static const char* errMsg = "Incorrect or missing value ";
 
 
-#define PE_EXCEPTION(x) EXCEPTION("File \"" + getRsrcPath() + getRsrcName() + "\": " + x)
+#define PE_EXCEPTION(x) EXCEPTION("Particle emmiter: " + x)
 
 
 //======================================================================================================================

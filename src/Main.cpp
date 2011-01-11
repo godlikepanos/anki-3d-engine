@@ -13,7 +13,6 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "Material.h"
-#include "Resource.h"
 #include "Scene.h"
 #include "Scanner.h"
 #include "skybox.h"
@@ -34,6 +33,7 @@
 #include "SkelAnimModelNodeCtrl.h"
 #include "Model.h"
 #include "Logger.h"
+#include "Util.h"
 
 
 // map (hard coded)

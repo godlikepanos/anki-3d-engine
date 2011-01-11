@@ -8,7 +8,6 @@
 // Constructor                                                                                                         =
 //======================================================================================================================
 LightData::LightData():
-	Resource(RT_LIGHT_PROPS),
 	diffuseCol(0.5),
 	specularCol(0.5),
 	castsShadow_(false),

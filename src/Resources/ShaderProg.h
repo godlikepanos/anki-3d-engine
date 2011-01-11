@@ -3,11 +3,11 @@
 
 #include <GL/glew.h>
 #include <limits>
-#include "Resource.h"
 #include "CharPtrHashMap.h"
 #include "Exception.h"
 #include "SProgUniVar.h"
 #include "SProgAttribVar.h"
+#include "Vec.h"
 
 
 /// Shader program @ref Resource
@@ -15,11 +15,8 @@
 /// Shader program. Combines a fragment and a vertex shader. Every shader program consist of one OpenGL ID, a vector of
 /// uniform variables and a vector of attribute variables. Every variable is a struct that contains the variable's name,
 /// location, OpenGL data type and if it is a uniform or an attribute var.
-class ShaderProg: public Resource
+class ShaderProg
 {
-	friend class Material;
-	friend class RsrcContainer<ShaderProg>;
-		
 	private:
 		/// Uniform variable name to variable iterator
 		typedef CharPtrHashMap<SProgUniVar*>::const_iterator NameToSProgUniVarIterator;
@@ -32,6 +29,9 @@ class ShaderProg: public Resource
 	public:
 		ShaderProg();
 		~ShaderProg() {/** @todo add code */}
+
+		/// Resource load
+		void load(const char* filename);
 
 		/// Accessor to glId
 		GLuint getGlId() const;
@@ -85,6 +85,7 @@ class ShaderProg: public Resource
 	// Private                                                                                                           =
 	//====================================================================================================================
 	private:
+		std::string rsrcFilename;
 		GLuint glId; ///< The OpenGL ID of the shader program
 		GLuint vertShaderGlId; ///< Vertex shader OpenGL id
 		GLuint geomShaderGlId; ///< Geometry shader OpenGL id
@@ -111,9 +112,6 @@ class ShaderProg: public Resource
 		/// Link the shader program
 		/// @exception Exception
 		void link() const;
-
-		/// Resource load
-		void load(const char* filename);
 }; 
 
 
@@ -122,7 +120,6 @@ class ShaderProg: public Resource
 //======================================================================================================================
 
 inline ShaderProg::ShaderProg():
-	Resource(RT_SHADER_PROG),
 	glId(std::numeric_limits<uint>::max())
 {}
 
