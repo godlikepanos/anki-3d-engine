@@ -38,8 +38,8 @@ class ResourceManager
 		template<typename Type>
 		struct Types
 		{
-			typedef RsrcHook<Type> Info;
-			typedef std::list<Info> Container;
+			typedef RsrcHook<Type> Hook;
+			typedef std::list<Hook> Container;
 			typedef typename Container::iterator Iterator;
 			typedef typename Container::const_iterator ConstIterator;
 		};
@@ -48,14 +48,14 @@ class ResourceManager
 		/// See if its already loaded, if its not:
 		/// - Create a instance
 		/// - Call load method of the instance
-		/// If it loaded:
+		/// If its loaded:
 		/// - Increase the resource counter
 		template<typename Type>
-		typename Types<Type>::Info& load(const char* filename);
+		typename Types<Type>::Hook& load(const char* filename);
 
 		/// Unload a resource if no one uses it
 		template<typename Type>
-		void unload(const typename Types<Type>::Info& info);
+		void unload(const typename Types<Type>::Hook& info);
 
 	private:
 		/// Find a resource using the filename
@@ -72,7 +72,7 @@ class ResourceManager
 
 		/// Unload a resource if no one uses it. This is the real deal
 		template<typename Type>
-		void unloadR(const typename Types<Type>::Info& info);
+		void unloadR(const typename Types<Type>::Hook& info);
 
 		/// @name Containers
 		/// @{

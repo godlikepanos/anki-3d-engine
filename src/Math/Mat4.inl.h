@@ -106,19 +106,19 @@ inline Mat4::Mat4(const Vec4& v)
 	ME(0, 0) = 1.0;
 	ME(0, 1) = 0.0;
 	ME(0, 2) = 0.0;
-	ME(0, 3) = v.x;
+	ME(0, 3) = v.x();
 	ME(1, 0) = 0.0;
 	ME(1, 1) = 1.0;
 	ME(1, 2) = 0.0;
-	ME(1, 3) = v.y;
+	ME(1, 3) = v.y();
 	ME(2, 0) = 0.0;
 	ME(2, 1) = 0.0;
 	ME(2, 2) = 1.0;
-	ME(2, 3) = v.z;
+	ME(2, 3) = v.z();
 	ME(3, 0) = 0.0;
 	ME(3, 1) = 0.0;
 	ME(3, 2) = 0.0;
-	ME(3, 3) = v.w;
+	ME(3, 3) = v.w();
 }
 
 // constructor [vec3, mat3]
@@ -240,10 +240,10 @@ inline bool Mat4::operator !=(const Mat4& b) const
 // 4x4 * vec4
 inline Vec4 Mat4::operator *(const Vec4& b) const
 {
-	return Vec4(ME(0, 0)*b.x + ME(0, 1)*b.y + ME(0, 2)*b.z + ME(0, 3)*b.w,
-	            ME(1, 0)*b.x + ME(1, 1)*b.y + ME(1, 2)*b.z + ME(1, 3)*b.w,
-	            ME(2, 0)*b.x + ME(2, 1)*b.y + ME(2, 2)*b.z + ME(2, 3)*b.w,
-	            ME(3, 0)*b.x + ME(3, 1)*b.y + ME(3, 2)*b.z + ME(3, 3)*b.w);
+	return Vec4(ME(0, 0) * b.x() + ME(0, 1) * b.y() + ME(0, 2) * b.z() + ME(0, 3) * b.w(),
+	            ME(1, 0) * b.x() + ME(1, 1) * b.y() + ME(1, 2) * b.z() + ME(1, 3) * b.w(),
+	            ME(2, 0) * b.x() + ME(2, 1) * b.y() + ME(2, 2) * b.z() + ME(2, 3) * b.w(),
+	            ME(3, 0) * b.x() + ME(3, 1) * b.y() + ME(3, 2) * b.z() + ME(3, 3) * b.w());
 }
 
 // 4x4 + float
@@ -251,14 +251,16 @@ inline Mat4 Mat4::operator +(float f) const
 {
 	Mat4 c;
 	for(int i=0; i<16; i++)
+	{
 		c[i] = ME[i] + f;
+	}
 	return c;
 }
 
 // float + 4x4
 inline Mat4 operator +(float f, const Mat4& m4)
 {
-	return m4+f;
+	return m4 + f;
 }
 
 // 4x4 + float (self)
@@ -347,63 +349,63 @@ inline Mat4& Mat4::operator /=(float f)
 // setRows
 inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d)
 {
-	ME(0, 0) = a.x;
-	ME(0, 1) = a.y;
-	ME(0, 2) = a.z;
-	ME(0, 3) = a.w;
-	ME(1, 0) = b.x;
-	ME(1, 1) = b.y;
-	ME(1, 2) = b.z;
-	ME(1, 3) = b.w;
-	ME(2, 0) = c.x;
-	ME(2, 1) = c.y;
-	ME(2, 2) = c.z;
-	ME(2, 3) = c.w;
-	ME(3, 0) = d.x;
-	ME(3, 1) = d.y;
-	ME(3, 2) = d.z;
-	ME(3, 3) = d.w;
+	ME(0, 0) = a.x();
+	ME(0, 1) = a.y();
+	ME(0, 2) = a.z();
+	ME(0, 3) = a.w();
+	ME(1, 0) = b.x();
+	ME(1, 1) = b.y();
+	ME(1, 2) = b.z();
+	ME(1, 3) = b.w();
+	ME(2, 0) = c.x();
+	ME(2, 1) = c.y();
+	ME(2, 2) = c.z();
+	ME(2, 3) = c.w();
+	ME(3, 0) = d.x();
+	ME(3, 1) = d.y();
+	ME(3, 2) = d.z();
+	ME(3, 3) = d.w();
 }
 
 // setRow
 inline void Mat4::setRow(uint i, const Vec4& v)
 {
 	RASSERT_THROW_EXCEPTION(i > 3);
-	ME(i, 0) = v.x;
-	ME(i, 1) = v.y;
-	ME(i, 2) = v.z;
-	ME(i, 3) = v.w;
+	ME(i, 0) = v.x();
+	ME(i, 1) = v.y();
+	ME(i, 2) = v.z();
+	ME(i, 3) = v.w();
 }
 
 // setColumns
 inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d)
 {
-	ME(0, 0) = a.x;
-	ME(1, 0) = a.y;
-	ME(2, 0) = a.z;
-	ME(3, 0) = a.w;
-	ME(0, 1) = b.x;
-	ME(1, 1) = b.y;
-	ME(2, 1) = b.z;
-	ME(3, 1) = b.w;
-	ME(0, 2) = c.x;
-	ME(1, 2) = c.y;
-	ME(2, 2) = c.z;
-	ME(3, 2) = c.w;
-	ME(0, 3) = d.x;
-	ME(1, 3) = d.y;
-	ME(2, 3) = d.z;
-	ME(3, 3) = d.w;
+	ME(0, 0) = a.x();
+	ME(1, 0) = a.y();
+	ME(2, 0) = a.z();
+	ME(3, 0) = a.w();
+	ME(0, 1) = b.x();
+	ME(1, 1) = b.y();
+	ME(2, 1) = b.z();
+	ME(3, 1) = b.w();
+	ME(0, 2) = c.x();
+	ME(1, 2) = c.y();
+	ME(2, 2) = c.z();
+	ME(3, 2) = c.w();
+	ME(0, 3) = d.x();
+	ME(1, 3) = d.y();
+	ME(2, 3) = d.z();
+	ME(3, 3) = d.w();
 }
 
 // setColumn
 inline void Mat4::setColumn(uint i, const Vec4& v)
 {
 	RASSERT_THROW_EXCEPTION(i > 3);
-	ME(0,i) = v.x;
-	ME(1,i) = v.y;
-	ME(2,i) = v.z;
-	ME(3,i) = v.w;
+	ME(0,i) = v.x();
+	ME(1,i) = v.y();
+	ME(2,i) = v.z();
+	ME(3,i) = v.w();
 }
 
 // transpose
@@ -486,10 +488,10 @@ inline Mat3 Mat4::getRotationPart() const
 // setTranslationPart
 inline void Mat4::setTranslationPart(const Vec4& v)
 {
-	ME(0, 3) = v.x;
-	ME(1, 3) = v.y;
-	ME(2, 3) = v.z;
-	ME(3, 3) = v.w;
+	ME(0, 3) = v.x();
+	ME(1, 3) = v.y();
+	ME(2, 3) = v.z();
+	ME(3, 3) = v.w();
 }
 
 // setTranslationPart

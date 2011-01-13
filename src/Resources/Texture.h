@@ -72,7 +72,7 @@ class Texture
 		static int  anisotropyLevel;
 		/// @}
 
-				void setTexParameter(uint paramName, int value) const;
+		void setTexParameter(uint paramName, int value) const;
 		void setTexParameter(uint paramName, float value) const;
 
 		bool isLoaded() const;

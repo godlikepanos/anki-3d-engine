@@ -23,9 +23,9 @@
 	} \
 	\
 	template<> \
-	void ResourceManager::unload<type__>(const Types<type__>::Info& info) \
+	void ResourceManager::unload<type__>(const Types<type__>::Hook& hook) \
 	{ \
-		unloadR<type__>(info); \
+		unloadR<type__>(hook); \
 	}
 
 
