@@ -1,7 +1,11 @@
 #ifndef VEC4_H
 #define VEC4_H
 
+#include <boost/array.hpp>
 #include "MathCommon.h"
+#if defined(MATH_INTEL_SIMD)
+	#include <tmmintrin.h>
+#endif
 
 
 namespace M {
@@ -11,15 +15,18 @@ namespace M {
 class Vec4
 {
 	public:
-		/// @name Data members
-		/// @{
-		float x, y, z, w;
-		/// @}
-
 		/// @name Accessors
 		/// @{
-		float& operator [](uint i);
-		float  operator [](uint i) const;
+		float& operator[](uint i);
+		float operator[](uint i) const;
+		float& x();
+		float x() const;
+		float& y();
+		float y() const;
+		float& z();
+		float z() const;
+		float& w();
+		float w() const;
 		/// @}
 
 		/// @name Constructors & distructors
@@ -35,34 +42,34 @@ class Vec4
 
 		/// @name Operators with same
 		/// @{
-		Vec4 operator +(const Vec4& b) const;
-		Vec4& operator +=(const Vec4& b);
-		Vec4 operator -(const Vec4& b) const;
-		Vec4& operator -=(const Vec4& b);
-		Vec4 operator *(const Vec4& b) const;
-		Vec4& operator *=(const Vec4& b);
-		Vec4 operator /(const Vec4& b) const;
-		Vec4& operator /=(const Vec4& b);
-		Vec4 operator -() const;
-		bool operator ==(const Vec4& b) const;
-		bool operator !=(const Vec4& b) const;
+		Vec4 operator+(const Vec4& b) const;
+		Vec4& operator+=(const Vec4& b);
+		Vec4 operator-(const Vec4& b) const;
+		Vec4& operator-=(const Vec4& b);
+		Vec4 operator*(const Vec4& b) const;
+		Vec4& operator*=(const Vec4& b);
+		Vec4 operator/(const Vec4& b) const;
+		Vec4& operator/=(const Vec4& b);
+		Vec4 operator-() const;
+		bool operator==(const Vec4& b) const;
+		bool operator!=(const Vec4& b) const;
 		/// @}
 
 		/// @name Operators with float
 		/// @{
-		Vec4 operator +(float f) const;
-		Vec4& operator +=(float f);
-		Vec4 operator -(float f) const;
-		Vec4& operator -=(float f);
-		Vec4 operator *(float f) const;
-		Vec4& operator *=(float f);
-		Vec4 operator /(float f) const;
-		Vec4& operator /=(float f);
+		Vec4 operator+(float f) const;
+		Vec4& operator+=(float f);
+		Vec4 operator-(float f) const;
+		Vec4& operator-=(float f);
+		Vec4 operator*(float f) const;
+		Vec4& operator*=(float f);
+		Vec4 operator/(float f) const;
+		Vec4& operator/=(float f);
 		/// @}
 
 		/// @name Operators with other
 		/// @{
-		Vec4  operator * (const Mat4& m4) const;
+		Vec4  operator*(const Mat4& m4) const;
 		/// @}
 
 		/// @name Other
@@ -72,15 +79,33 @@ class Vec4
 		void normalize();
 		float dot(const Vec4& b) const;
 		/// @}
+
+	private:
+		/// @name Data
+		/// @{
+		union
+		{
+			struct
+			{
+				float x, y, z, w;
+			} vec;
+
+			boost::array<float, 4> arr;
+
+			#if defined(MATH_INTEL_SIMD)
+				__m128 mm;
+			#endif
+		};
+		/// @}
 };
 
 
 /// @name Other operators
 /// @{
-extern Vec4 operator +(float f, const Vec4& v4);
-extern Vec4 operator -(float f, const Vec4& v4);
-extern Vec4 operator *(float f, const Vec4& v4);
-extern Vec4 operator /(float f, const Vec4& v4);
+extern Vec4 operator+(float f, const Vec4& v4);
+extern Vec4 operator-(float f, const Vec4& v4);
+extern Vec4 operator*(float f, const Vec4& v4);
+extern Vec4 operator/(float f, const Vec4& v4);
 extern std::ostream& operator<<(std::ostream& s, const Vec4& v);
 /// @}
 

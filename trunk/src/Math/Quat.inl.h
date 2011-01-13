@@ -33,7 +33,7 @@ inline Quat::Quat(const Vec3& v3, float w_):
 
 // constructor [vec4]
 inline Quat::Quat(const Vec4& v4):
-	x(v4.x), y(v4.y), z(v4.z), w(v4.w)
+	x(v4.x()), y(v4.y()), z(v4.z()), w(v4.w())
 {}
 
 // constructor [quat]

@@ -41,7 +41,7 @@ inline Vec2::Vec2(const Vec3& v3): x(v3.x), y(v3.y)
 {}
 
 // constructor [vec4]
-inline Vec2::Vec2(const Vec4& v4): x(v4.x), y(v4.y)
+inline Vec2::Vec2(const Vec4& v4): x(v4.x()), y(v4.y())
 {}
 
 // +

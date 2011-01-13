@@ -6,7 +6,7 @@
 // loadRsrc                                                                                                            =
 //======================================================================================================================
 template<typename Type>
-typename ResourceManager::Types<Type>::Info& ResourceManager::load(const char* filename)
+typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* filename)
 {
 	// Chose container
 	typename Types<Type>::Container& c = choseContainer<Type>();
@@ -38,7 +38,7 @@ typename ResourceManager::Types<Type>::Info& ResourceManager::load(const char* f
 			//throw EXCEPTION("Cannot load resource: " + e.what());
 		}
 
-		c.push_back(typename Types<Type>::Info());
+		c.push_back(typename Types<Type>::Hook());
 		it = c.end();
 		--it;
 
@@ -55,22 +55,22 @@ typename ResourceManager::Types<Type>::Info& ResourceManager::load(const char* f
 // unload                                                                                                              =
 //======================================================================================================================
 template<typename Type>
-void ResourceManager::unloadR(const typename Types<Type>::Info& info)
+void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
 {
 	// Chose container
 	typename Types<Type>::Container& c = choseContainer<Type>();
 
 	// Find
-	typename Types<Type>::Iterator it = find<Type>(info.resource, c);
+	typename Types<Type>::Iterator it = find<Type>(hook.resource, c);
 
 	// If not found
 	if(it == c.end())
 	{
-		throw EXCEPTION("Resource hook incorrect (\"" + info.uuid + "\")");
+		throw EXCEPTION("Resource hook incorrect (\"" + hook.uuid + "\")");
 	}
 
-	RASSERT_THROW_EXCEPTION(it->uuid != info.uuid);
-	RASSERT_THROW_EXCEPTION(it->referenceCounter != info.referenceCounter);
+	RASSERT_THROW_EXCEPTION(it->uuid != hook.uuid);
+	RASSERT_THROW_EXCEPTION(it->referenceCounter != hook.referenceCounter);
 
 	--it->referenceCounter;
 

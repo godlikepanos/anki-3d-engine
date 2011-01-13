@@ -50,7 +50,7 @@ inline btVector3 toBt(const Vec3& v)
 
 inline btVector4 toBt(const Vec4& v)
 {
-	return btVector4(v.x,  v.y, v.z, v.w);
+	return btVector4(v.x(), v.y(), v.z(), v.w());
 }
 
 

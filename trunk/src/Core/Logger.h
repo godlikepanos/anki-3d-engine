@@ -21,7 +21,7 @@ class Logger
 		/// Accessor
 		Signal& getSignal() {return sig;}
 
-		/// @name Numeric operators
+		/// @name Operators for numbers
 		/// @{
 		Logger& operator<<(const bool& val) {return appendUsingLexicalCast(val);}
 		Logger& operator<<(const short& val) {return appendUsingLexicalCast(val);}
@@ -35,11 +35,14 @@ class Logger
 		Logger& operator<<(const long double& val) {return appendUsingLexicalCast(val);}
 		/// @}
 
+		/// @name Operators for other types
+		/// @{
 		Logger& operator<<(const void* val);
 		Logger& operator<<(const char* val);
 		Logger& operator<<(const std::string& val);
 		Logger& operator<<(Logger& (*funcPtr)(Logger&));
 		Logger& operator<<(const LoggerSender& sender);
+		/// @}
 
 		/// An alternative method to write in the Logger
 		void write(const char* file, int line, const char* func, const char* msg);

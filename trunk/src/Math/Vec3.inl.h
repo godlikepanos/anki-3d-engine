@@ -45,7 +45,7 @@ inline Vec3::Vec3(const Vec2& v2, float z_)
 
 // constructor [vec4]
 inline Vec3::Vec3(const Vec4& v4)
-	: x(v4.x), y(v4.y), z(v4.z)
+	: x(v4.x()), y(v4.y()), z(v4.z())
 {}
 
 // constructor [quat]
