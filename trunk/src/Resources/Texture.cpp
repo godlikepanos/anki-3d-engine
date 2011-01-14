@@ -2,6 +2,8 @@
 #include "Texture.h"
 #include "Image.h"
 #include "GlException.h"
+#include "Logger.h" /// @todo remove it
+#include "Math.h"  /// @todo remove it
 
 
 #define LAST_TEX_UNIT (textureUnitsNum - 1)
@@ -99,11 +101,39 @@ void Texture::load(const char* filename)
 				throw EXCEPTION("See file");
 		}
 
+		/*if(std::string("textures/stone.001.diff.tga") == filename)
+		{
+			Vec<uchar> buff(img.getWidth() * img.getHeight(), 0xFF);
+
+			glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &buff[0]);
+		}
+		else*/
+
 		glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
 		if(mipmappingEnabled)
 		{
 			glGenerateMipmap(target);
 		}
+
+		/// @todo delete this
+		if(std::string("textures/stone.001.diff.tga") == filename)
+		{
+			//setMipmapLevel(7);
+			//INFO(filename << " " << getBaseLevel() << " " << getMaxLevel() << " " << getWidth(1));
+
+			int w, h;
+
+			w = img.getWidth();
+			h = img.getHeight();
+			Vec<uchar> buff__(w * h * 3, 0x0F);
+			glTexSubImage2D(target, 0, 0, 0, w, h, format, type, &buff__[0]);
+
+			w = img.getWidth() / 2;
+			h = img.getHeight() / 2;
+			Vec<uchar> buff(w * h * 3, 0xFF);
+			glTexSubImage2D(target, 1, 0, 0, w, h, format, type, &buff[0]);
+		}
+
 
 		ON_GL_FAIL_THROW_EXCEPTION();
 	}
@@ -177,11 +207,11 @@ void Texture::bind(uint unit) const
 //======================================================================================================================
 // getWidth                                                                                                            =
 //======================================================================================================================
-int Texture::getWidth() const
+int Texture::getWidth(uint level) const
 {
 	bind(LAST_TEX_UNIT);
 	int i;
-	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &i);
+	glGetTexLevelParameteriv(target, level, GL_TEXTURE_WIDTH, &i);
 	return i;
 }
 
@@ -189,11 +219,11 @@ int Texture::getWidth() const
 //======================================================================================================================
 // getHeight                                                                                                           =
 //======================================================================================================================
-int Texture::getHeight() const
+int Texture::getHeight(uint level) const
 {
 	bind(LAST_TEX_UNIT);
 	int i;
-	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &i);
+	glGetTexLevelParameteriv(target, level, GL_TEXTURE_HEIGHT, &i);
 	return i;
 }
 

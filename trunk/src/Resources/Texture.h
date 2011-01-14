@@ -52,8 +52,8 @@ class Texture
 		void setAnisotropy(uint level);
 		void setMipmapLevel(uint level);
 		void genMipmap();
-		int getWidth() const;
-		int getHeight() const;
+		int getWidth(uint level = 0) const;
+		int getHeight(uint level = 0) const;
 		int getBaseLevel() const;
 		int getMaxLevel() const;
 		static uint getActiveTexUnit();
