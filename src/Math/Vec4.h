@@ -36,6 +36,9 @@ class Vec4
 		explicit Vec4(float arr[]);
 		explicit Vec4(float x, float y, float z, float w);
 		explicit Vec4(const Vec2& v2, float z, float w);
+		#if defined(MATH_INTEL_SIMD)
+			explicit Vec4(const __m128& mm);
+		#endif
 		explicit Vec4(const Vec3& v3, float w);
 		         Vec4(const Vec4& b);
 		explicit Vec4(const Quat& q);

@@ -104,6 +104,14 @@ inline Vec4::Vec4(float x_, float y_, float z_, float w_)
 	#endif
 }
 
+// constructor [__m128]
+#if defined(MATH_INTEL_SIMD)
+	inline Vec4::Vec4(const __m128& mm_)
+	{
+		mm = mm_;
+	}
+#endif
+
 // constructor [vec2, float, float]
 inline Vec4::Vec4(const Vec2& v2, float z_, float w_)
 {
@@ -147,32 +155,48 @@ inline Vec4::Vec4(const Quat& q)
 // +
 inline Vec4 Vec4::operator+(const Vec4& b) const
 {
-	return Vec4(x() + b.x(), y() + b.y(), z() + b.z(), w() + b.w());
+	#if defined(MATH_INTEL_SIMD)
+		return Vec4(_mm_add_ps(mm, b.mm));
+	#else
+		return Vec4(x() + b.x(), y() + b.y(), z() + b.z(), w() + b.w());
+	#endif
 }
 
 // +=
 inline Vec4& Vec4::operator+=(const Vec4& b)
 {
-	x() += b.x();
-	y() += b.y();
-	z() += b.z();
-	w() += b.w();
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_add_ps(mm, b.mm);
+	#else
+		x() += b.x();
+		y() += b.y();
+		z() += b.z();
+		w() += b.w();
+	#endif
 	return SELF;
 }
 
 // -
 inline Vec4 Vec4::operator-(const Vec4& b) const
 {
-	return Vec4(x() - b.x(), y() - b.y(), z() - b.z(), w() - b.w());
+	#if defined(MATH_INTEL_SIMD)
+		return Vec4(_mm_sub_ps(mm, b.mm));
+	#else
+		return Vec4(x() - b.x(), y() - b.y(), z() - b.z(), w() - b.w());
+	#endif
 }
 
 // -=
 inline Vec4& Vec4::operator-=(const Vec4& b)
 {
-	x() -= b.x();
-	y() -= b.y();
-	z() -= b.z();
-	w() -= b.w();
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_sub_ps(mm, b.mm);
+	#else
+		x() -= b.x();
+		y() -= b.y();
+		z() -= b.z();
+		w() -= b.w();
+	#endif
 	return SELF;
 }
 

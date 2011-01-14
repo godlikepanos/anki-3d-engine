@@ -7,7 +7,7 @@
 int main(int argc, char** argv)
 {
 	// Init app
-	AppSingleton::getInstance().init(0, NULL);
+	//AppSingleton::getInstance().init(0, NULL);
 
 	// Tests
 	::testing::InitGoogleTest(&argc, argv);
