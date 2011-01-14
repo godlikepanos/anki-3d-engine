@@ -13,6 +13,7 @@ class Vec: public std::vector<Type>
 		Vec();
 		Vec(size_t size);
 		Vec(size_t size, Type val);
+		~Vec() {std::vector<Type>::clear();}
 		Type& operator[](size_t n);
 		const Type& operator[](size_t n) const;
 		size_t getSizeInBytes() const;

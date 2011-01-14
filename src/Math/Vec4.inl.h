@@ -58,7 +58,7 @@ inline float Vec4::w() const
 	return vec.w;
 }
 
-// constructor []
+// default constructor
 inline Vec4::Vec4()
 {
 	#if defined(MATH_INTEL_SIMD)
@@ -78,11 +78,24 @@ inline Vec4::Vec4(float f)
 	#endif
 }
 
+// Constructor [float[]]
+inline Vec4::Vec4(float arr_[])
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_load_ps(arr_);
+	#else
+		arr[0] = arr_[0];
+		arr[1] = arr_[1];
+		arr[2] = arr_[2];
+		arr[3] = arr_[3];
+	#endif
+}
+
 // constructor [float, float, float, float]
 inline Vec4::Vec4(float x_, float y_, float z_, float w_)
 {
 	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_set1_ps(f);
+		mm = _mm_set_ps(w_, z_, y_, x_);
 	#else
 		x() = x_;
 		y() = y_;
