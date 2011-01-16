@@ -39,7 +39,7 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 	}
 	else
 	{
-		float recip = invSqrt(lensq);
+		float recip = 1.0 / sqrt(lensq);
 		normal = Vec3(a * recip, b * recip, c * recip);
 		offset = d * recip;
 	}

@@ -5,15 +5,29 @@
 
 
 const float RANGE_MIN = -1.00123;
-const float RANGE_MAX = 9.9990001;
+const float RANGE_MAX = 900.9990001;
+const float REALY_SMALL_FLOAT = 1.0e-3;
 
-
+/// Get random float and not zero cause of the divs
 static float randFloat()
 {
-	return Util::randRange(RANGE_MIN, RANGE_MAX);
+	float f;
+	while(true)
+	{
+		f = Util::randRange(RANGE_MIN, RANGE_MAX);
+		if(!isZero(f))
+		{
+			break;
+		}
+	}
+
+	return f;
 }
 
 
+//======================================================================================================================
+// Alignment                                                                                                           =
+//======================================================================================================================
 TEST(MathTests, Alignment)
 {
 	const int FS = sizeof(float); // float size
@@ -28,66 +42,226 @@ TEST(MathTests, Alignment)
 }
 
 
-TEST(MathTests, Constructors)
+//======================================================================================================================
+// Constructors                                                                                                        =
+//======================================================================================================================
+
+template<typename Type>
+void testCommonContructors()
 {
+	Type a, b;
+	float f;
+	float arr[sizeof(Type) / sizeof(float)];
+
+	f = randFloat();
+	for(uint i = 0; i < (sizeof(Type) / sizeof(float)); i++)
 	{
-		EXPECT_EQ(Vec4().x(), 0.0);
-		EXPECT_EQ(Vec4().y(), 0.0);
-		EXPECT_EQ(Vec4().z(), 0.0);
-		EXPECT_EQ(Vec4().w(), 0.0);
-
-		float f = randFloat();
-		Vec4 a(f);
-		EXPECT_EQ(a.x(), f);
-		EXPECT_EQ(a.y(), f);
-		EXPECT_EQ(a.z(), f);
-		EXPECT_EQ(a.w(), f);
-
-		float arr[4] = {randFloat(), randFloat(), randFloat(), randFloat()};
-		a = Vec4(arr);
-		EXPECT_EQ(a[0], arr[0]);
-		EXPECT_EQ(a.y(), arr[1]);
-		EXPECT_EQ(a.z(), arr[2]);
-		EXPECT_EQ(a[3], arr[3]);
+		a[i] = f;
+		b[i] =  randFloat();
+		arr[i] = b[i];
 	}
 
+	// float
+	EXPECT_EQ(Type(f), a);
 
+	// arr
+	EXPECT_EQ(Type(arr), b);
+
+	// Type
+	EXPECT_EQ(Type(b), b);
 }
 
 
-template<typename Type, int size, Type (Type::* op)(const Type&) const>
-void testOperator()
+TEST(MathTests, Constructors)
+{
+	testCommonContructors<Vec2>();
+
+	testCommonContructors<Vec3>();
+
+	// Vec4
+	testCommonContructors<Vec4>();
+}
+
+
+//======================================================================================================================
+// Arithmetic                                                                                                          =
+//======================================================================================================================
+
+float addf(float a, float b)
+{
+	return a + b;
+}
+
+
+float subf(float a, float b)
+{
+	return a - b;
+}
+
+
+float mulf(float a, float b)
+{
+	return a * b;
+}
+
+
+float divf(float a, float b)
+{
+	return a / b;
+}
+
+
+template<
+	typename Type,
+	Type (Type::* op)(const Type&) const,
+	Type& (Type::* compoundAssignment)(const Type&),
+	float (* normalOp)(float, float)>
+void testOperators()
 {
 	Type a, b, c;
 
-	for(int i = 0; i < size; i++)
+	for(uint i = 0; i < (sizeof(Type) / sizeof(float)); i++)
 	{
 		a[i] = randFloat();
 		b[i] = randFloat();
-		//c[i] = a[i] + b[i];
+		c[i] = normalOp(a[i], b[i]);
 	}
 
 	EXPECT_EQ((a.*op)(b), c);
 
-	/*a += b;
+	(a.*compoundAssignment)(b);
 
-	EXPECT_EQ(a, c);*/
+	EXPECT_EQ(a, c);
 }
 
 
-TEST(MathTests, Addition)
+template<
+	typename Type,
+	Type (Type::* op)(float) const,
+	Type& (Type::* compoundAssignment)(float),
+	Type (* opExtern)(float, const Type&),
+	float (* normalOp)(float, float)>
+void testOperatorsWithFloat()
 {
-	testOperator<Vec4, 4, &Vec4::operator+ >();
+	Type a, b, c;
+	float f = randFloat();
+
+	for(uint i = 0; i < (sizeof(Type) / sizeof(float)); i++)
+	{
+		a[i] = randFloat();
+		b[i] = normalOp(a[i], f);
+		c[i] = normalOp(f, a[i]);
+	}
+
+	EXPECT_EQ((a.*op)(f), b);
+
+	EXPECT_EQ(opExtern(f, a), c);
+
+	(a.*compoundAssignment)(f);
+	EXPECT_EQ(a, b);
 }
 
 
-TEST(MathTests, Substraction)
+template<typename Type>
+void testCmpOperators()
 {
-	Vec4 a(randFloat(), randFloat(), randFloat(), randFloat());
-	Vec4 b(randFloat(), randFloat(), randFloat(), randFloat());
-	EXPECT_EQ(a - b, Vec4(a.x() - b.x(), a.y() - b.y(), a.z() - b.z(), a.w() - b.w()));
+	Type a, b;
 
-	Vec4 c = a;
-	a -= b;
-	EXPECT_EQ(a, Vec4(c.x() - b.x(), c.y() - b.y(), c.z() - b.z(), c.w() - b.w()));
+	for(uint i = 0; i < (sizeof(Type) / sizeof(float)); i++)
+	{
+		a[i] = b[i] = randFloat();
+	}
+
+	EXPECT_EQ(a == b, true);
+	EXPECT_EQ(a != b, false);
+}
+
+
+template<typename Type>
+void testNegOperator()
+{
+	Type a, b;
+	for(int i = 0; i < (sizeof(Type) / sizeof(float)); i++)
+	{
+		a[i] = randFloat();
+		b[i] = -a[i];
+	}
+
+	EXPECT_EQ(-a == b, true);
+}
+
+
+template<typename Type>
+void arithmeticOperations()
+{
+	testOperators<Type, &Type::operator+, &Type::operator+=, &addf>();
+	testOperators<Type, &Type::operator-, &Type::operator-=, &subf>();
+	testOperators<Type, &Type::operator*, &Type::operator*=, &mulf>();
+	testOperators<Type, &Type::operator/, &Type::operator/=, &divf>();
+	testOperatorsWithFloat<Type, &Type::operator+, &Type::operator+=, &operator+, &addf>();
+	testOperatorsWithFloat<Type, &Type::operator-, &Type::operator-=, &operator-, &subf>();
+	testOperatorsWithFloat<Type, &Type::operator*, &Type::operator*=, &operator*, &mulf>();
+	testOperatorsWithFloat<Type, &Type::operator/, &Type::operator/=, &operator/, &divf>();
+	testCmpOperators<Type>();
+}
+
+
+TEST(MathTests, VectorArithmetic)
+{
+	arithmeticOperations<Vec2>();
+	arithmeticOperations<Vec3>();
+	arithmeticOperations<Vec4>();
+}
+
+
+template<typename Type>
+void testDotProd()
+{
+	Type a, b;
+	float o = 0.0;
+
+	for(uint i = 0; i < (sizeof(Type) / sizeof(float)); i++)
+	{
+		a[i] = randFloat();
+		b[i] = randFloat();
+		o += a[i] * b[i];
+	}
+
+	EXPECT_NEAR(a.dot(b), o, M::EPSILON);
+}
+
+
+TEST(MathTests, DotProducts)
+{
+	testDotProd<Vec2>();
+	testDotProd<Vec3>();
+	testDotProd<Vec4>();
+}
+
+
+template<typename Type>
+void testLengthAndNormalize()
+{
+	Type a;
+	float o = 0.0;
+
+	for(uint i = 0; i < (sizeof(Type) / sizeof(float)); i++)
+	{
+		a[i] = randFloat();
+		o += a[i] * a[i];
+	}
+
+	o = sqrt(o);
+
+	EXPECT_NEAR(a.getLength(), o, REALY_SMALL_FLOAT);
+	EXPECT_NEAR(a.getNormalized().getLength(), 1.0, REALY_SMALL_FLOAT);
+	//EXPECT_EQ(a.getNormalized() * a.getLength(), a);
+}
+
+
+TEST(MathTests, LengthsAndNormals)
+{
+	testLengthAndNormalize<Vec2>();
+	testLengthAndNormalize<Vec3>();
+	testLengthAndNormalize<Vec4>();
 }

@@ -4,47 +4,6 @@
 namespace M {
 
 
-// mathSanityChecks
-inline void mathSanityChecks()
-{
-	const int fs = sizeof(float); // float size
-	if(sizeof(Vec2)!=fs*2 || sizeof(Vec3)!=fs*3 || sizeof(Vec4)!=fs*4 || sizeof(Quat)!=fs*4 ||
-	   sizeof(Euler)!=fs*3 || sizeof(Mat3)!=fs*9 || sizeof(Mat4)!=fs*16)
-	{
-		throw EXCEPTION("Your compiler does class alignment");
-	}
-}
-
-
-// 1/sqrt(f)
-inline float invSqrt(float f)
-{
-	float fhalf = 0.5 * f;
-	#if defined(PLATFORM_WIN)
-		int i = *(int*)&f;
-		i = 0x5F3759DF - (i>>1);
-		f = *(float*)&i;
-		f *= 1.5 - fhalf*f*f;
-	#elif defined(PLATFORM_LINUX)
-		asm
-		(
-			"mov %1, %%eax;"
-			"sar %%eax;"
-			"mov $0x5F3759DF, %%ebx;"
-			"sub %%eax, %%ebx;"
-			"mov %%ebx, %0"
-			:"=g"(f)
-			:"g"(f)
-			:"%eax", "%ebx"
-		);
-		f *= 1.5 - fhalf*f*f;
-	#else
-		#error "See file"
-	#endif
-	return f;
-}
-
-
 // polynomialSinQuadrant
 /// Used in sinCos
 inline static float polynomialSinQuadrant(float a)
@@ -106,30 +65,43 @@ inline void sinCos(float a, float& sina, float& cosa)
 //======================================================================================================================
 inline float sqrt(float f)
 {
-	return 1/invSqrt(f);
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm = _mm_set_ss(f);
+		mm = _mm_sqrt_ss(mm);
+		float o;
+		_mm_store_ss(&o, mm);
+		return o;
+	#else
+		return ::sqrtf(f);
+	#endif
 }
+
 
 inline float toRad(float degrees)
 {
 	return degrees*(PI/180.0);
 }
 
+
 inline float toDegrees(float rad)
 {
 	return rad*(180.0/PI);
 }
+
 
 inline float sin(float rad)
 {
 	return ::sin(rad);
 }
 
+
 inline float cos(float rad)
 {
 	return ::cos(rad);
 }
 
-inline bool  isZero(float f)
+
+inline bool isZero(float f)
 {
 	return fabs(f) < EPSILON;
 }

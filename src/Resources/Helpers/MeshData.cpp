@@ -237,7 +237,7 @@ void MeshData::createVertTangents()
 		Vec2 uvedge02 = texCoords[i2] - texCoords[i0];
 
 
-		float det = (uvedge01.y * uvedge02.x) - (uvedge01.x * uvedge02.y);
+		float det = (uvedge01.y() * uvedge02.x()) - (uvedge01.x() * uvedge02.y());
 		if(isZero(det))
 		{
 			//WARNING(getRsrcName() << ": det == " << fixed << det);
@@ -248,8 +248,8 @@ void MeshData::createVertTangents()
 			det = 1.0 / det;
 		}
 
-		Vec3 t = (edge02 * uvedge01.y - edge01 * uvedge02.y) * det;
-		Vec3 b = (edge02 * uvedge01.x - edge01 * uvedge02.x) * det;
+		Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
+		Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
 		t.normalize();
 		b.normalize();
 

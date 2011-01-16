@@ -5,7 +5,11 @@
 #define MATH_COMMON_H
 
 #include <iostream>
+#include <boost/array.hpp>
 #include "StdTypes.h"
+#if defined(MATH_INTEL_SIMD)
+	#include <smmintrin.h>
+#endif
 
 
 // Forward delcs

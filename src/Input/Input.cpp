@@ -81,11 +81,11 @@ void Input::handleEvents()
 			{
 				Vec2 prevMousePosNdc(mousePosNdc);
 
-				mousePos.x = event_.button.x;
-				mousePos.y = event_.button.y;
+				mousePos.x() = event_.button.x;
+				mousePos.y() = event_.button.y;
 
-				mousePosNdc.x = (2.0 * mousePos.x) / (float)AppSingleton::getInstance().getWindowWidth() - 1.0;
-				mousePosNdc.y = 1.0 - (2.0 * mousePos.y) / (float)AppSingleton::getInstance().getWindowHeight();
+				mousePosNdc.x() = (2.0 * mousePos.x()) / (float)AppSingleton::getInstance().getWindowWidth() - 1.0;
+				mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) / (float)AppSingleton::getInstance().getWindowHeight();
 
 				if(warpMouse)
 				{

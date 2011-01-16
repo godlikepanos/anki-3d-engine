@@ -10,10 +10,7 @@ namespace M {
 const float PI = 3.14159265358979323846;
 const float EPSILON = 1.0e-6;
 
-
-extern void  mathSanityChecks(); ///< Used to test the compiler
 extern void  sinCos(float rad, float& sin_, float& cos_); ///< A fast func that given the angle in rads it returns the sin and cos
-extern float invSqrt(float f); ///< Inverted square root
 extern float sqrt(float f); ///< Square root
 extern float toRad(float degrees);
 extern float toDegrees(float rad);

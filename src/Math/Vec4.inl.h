@@ -58,6 +58,18 @@ inline float Vec4::w() const
 	return vec.w;
 }
 
+#if defined(MATH_INTEL_SIMD)
+	inline __m128& Vec4::getMm()
+	{
+		return mm;
+	}
+
+	inline const __m128& Vec4::getMm() const
+	{
+		return mm;
+	}
+#endif
+
 // default constructor
 inline Vec4::Vec4()
 {
@@ -115,8 +127,8 @@ inline Vec4::Vec4(float x_, float y_, float z_, float w_)
 // constructor [vec2, float, float]
 inline Vec4::Vec4(const Vec2& v2, float z_, float w_)
 {
-	x() = v2.x;
-	y() = v2.y;
+	x() = v2.x();
+	y() = v2.y();
 	z() = z_;
 	w() = w_;
 }
@@ -203,32 +215,48 @@ inline Vec4& Vec4::operator-=(const Vec4& b)
 // *
 inline Vec4 Vec4::operator*(const Vec4& b) const
 {
-	return Vec4(x() * b.x(), y() * b.y(), z() * b.z(), w() * b.w());
+	#if defined(MATH_INTEL_SIMD)
+		return Vec4(_mm_mul_ps(mm, b.mm));
+	#else
+		return Vec4(x() * b.x(), y() * b.y(), z() * b.z(), w() * b.w());
+	#endif
 }
 
 // *=
 inline Vec4& Vec4::operator*=(const Vec4& b)
 {
-	x() *= b.x();
-	y() *= b.y();
-	z() *= b.z();
-	w() *= b.w();
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_mul_ps(mm, b.mm);
+	#else
+		x() *= b.x();
+		y() *= b.y();
+		z() *= b.z();
+		w() *= b.w();
+	#endif
 	return SELF;
 }
 
 // /
 inline Vec4 Vec4::operator/(const Vec4& b) const
 {
-	return Vec4(x() / b.x(), y() / b.y(), z() / b.z(), w() / b.w());
+	#if defined(MATH_INTEL_SIMD)
+		return Vec4(_mm_div_ps(mm, b.mm));
+	#else
+		return Vec4(x() / b.x(), y() / b.y(), z() / b.z(), w() / b.w());
+	#endif
 }
 
 // /=
 inline Vec4& Vec4::operator/=(const Vec4& b)
 {
-	x() /= b.x();
-	y() /= b.y();
-	z() /= b.z();
-	w() /= b.w();
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_div_ps(mm, b.mm);
+	#else
+		x() /= b.x();
+		y() /= b.y();
+		z() /= b.z();
+		w() /= b.w();
+	#endif
 	return SELF;
 }
 
@@ -241,13 +269,15 @@ inline Vec4 Vec4::operator-() const
 // ==
 inline bool Vec4::operator==(const Vec4& b) const
 {
-	return isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()) && isZero(w() - b.w());
+	Vec4 sub = SELF - b;
+	return isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) && isZero(sub.w());
 }
 
 // !=
 inline bool Vec4::operator!=(const Vec4& b) const
 {
-	return isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()) && isZero(w() - b.w());
+	Vec4 sub = SELF - b;
+	return !(isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) && isZero(sub.w()));
 }
 
 // vec4 + float
@@ -278,7 +308,7 @@ inline Vec4 Vec4::operator-(float f) const
 // float - vec4
 inline Vec4 operator-(float f, const Vec4& v4)
 {
-	return Vec4(f - v4.x(), f - v4.y(), f - v4.z(), f -v4.w());
+	return Vec4(f) - v4;
 }
 
 // vec4 -= float
@@ -316,7 +346,7 @@ inline Vec4 Vec4::operator/(float f) const
 // float / vec4
 inline Vec4 operator/(float f, const Vec4& v4)
 {
-	return Vec4(f / v4.x(), f / v4.y(), f / v4.z(), f / v4.w());
+	return Vec4(f) / v4;
 }
 
 // vec4 /= float
@@ -340,25 +370,31 @@ inline Vec4 Vec4::operator*(const Mat4& m4) const
 // dot
 inline float Vec4::dot(const Vec4& b) const
 {
-	return x() * b.x() + y() * b.y() + z() * b.z() + w() * b.w();
+	#if defined(MATH_INTEL_SIMD)
+		float o;
+		_mm_store_ss(&o, _mm_dp_ps(mm, b.mm, 0xF1));
+		return o;
+	#else
+		return x() * b.x() + y() * b.y() + z() * b.z() + w() * b.w();
+	#endif
 }
 
 // getLength
 inline float Vec4::getLength() const
 {
-	return M::sqrt(x() * x() + y() * y() + z() * z() + w() * w());
+	return M::sqrt(dot(SELF));
 }
 
 // Normalized
 inline Vec4 Vec4::getNormalized() const
 {
-	return SELF * invSqrt(x() * x() + y() * y() + z() * z() + w() * w());
+	return SELF / getLength();
 }
 
 // normalize
 inline void Vec4::normalize()
 {
-	SELF *= invSqrt(x() * x() + y() * y() + z() * z() + w() * w());
+	SELF /= getLength();
 }
 
 // print

@@ -18,14 +18,15 @@ class Vec3
 
 		/// @name Accessors
 		/// @{
-		float& operator [](uint i);
-		float  operator [](uint i) const;
+		float& operator[](uint i);
+		float operator[](uint i) const;
 		/// @}
 
 		/// @name Constructors & distructors
 		/// @{
 		explicit Vec3();
 		explicit Vec3(float f);
+		explicit Vec3(float arr[]);
 		explicit Vec3(float x, float y, float z);
 		explicit Vec3(const Vec2& v2, float z);
 		         Vec3(const Vec3& b);
@@ -35,34 +36,34 @@ class Vec3
 
 		/// @name Operators with same type
 		/// @{
-		Vec3 operator +(const Vec3& b) const;
-		Vec3& operator +=(const Vec3& b);
-		Vec3 operator -(const Vec3& b) const;
-		Vec3& operator -=(const Vec3& b);
-		Vec3 operator *(const Vec3& b) const;
-		Vec3& operator *=(const Vec3& b);
-		Vec3 operator /(const Vec3& b) const;
-		Vec3& operator /=(const Vec3& b);
-		Vec3 operator -() const;
-		bool operator ==(const Vec3& b) const;
-		bool operator !=(const Vec3& b) const;
+		Vec3 operator+(const Vec3& b) const;
+		Vec3& operator+=(const Vec3& b);
+		Vec3 operator-(const Vec3& b) const;
+		Vec3& operator-=(const Vec3& b);
+		Vec3 operator*(const Vec3& b) const;
+		Vec3& operator*=(const Vec3& b);
+		Vec3 operator/(const Vec3& b) const;
+		Vec3& operator/=(const Vec3& b);
+		Vec3 operator-() const;
+		bool operator==(const Vec3& b) const;
+		bool operator!=(const Vec3& b) const;
 		/// @}
 
 		/// @name Operators with float
 		/// @{
-		Vec3 operator +(float f) const;
-		Vec3& operator +=(float f);
-		Vec3 operator -(float f) const;
-		Vec3& operator -=(float f);
-		Vec3 operator *(float f) const;
-		Vec3& operator *=(float f);
-		Vec3 operator /(float f) const;
-		Vec3& operator /=(float f);
+		Vec3 operator+(float f) const;
+		Vec3& operator+=(float f);
+		Vec3 operator-(float f) const;
+		Vec3& operator-=(float f);
+		Vec3 operator*(float f) const;
+		Vec3& operator*=(float f);
+		Vec3 operator/(float f) const;
+		Vec3& operator/=(float f);
 		/// @}
 
 		/// @name Operators with other types
 		/// @{
-		Vec3 operator * (const Mat3& m3) const;
+		Vec3 operator* (const Mat3& m3) const;
 		/// @}
 
 		/// @name Other
@@ -102,10 +103,10 @@ class Vec3
 
 /// @name Other operators
 /// @{
-extern Vec3 operator +(float f, const Vec3& v);
-extern Vec3 operator -(float f, const Vec3& v);
-extern Vec3 operator *(float f, const Vec3& v);
-extern Vec3 operator /(float f, const Vec3& v);
+extern Vec3 operator+(float f, const Vec3& v);
+extern Vec3 operator-(float f, const Vec3& v);
+extern Vec3 operator*(float f, const Vec3& v);
+extern Vec3 operator/(float f, const Vec3& v);
 extern std::ostream& operator<<(std::ostream& s, const Vec3& v);
 /// @}
 

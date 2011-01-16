@@ -71,8 +71,8 @@ void Is::calcPlanes()
 {
 	const Camera& cam = r.getCamera();
 
-	planes.x = cam.getZFar() / (cam.getZNear() - cam.getZFar());
-	planes.y = (cam.getZFar() * cam.getZNear()) / (cam.getZNear() -cam.getZFar());
+	planes.x() = cam.getZFar() / (cam.getZNear() - cam.getZFar());
+	planes.y() = (cam.getZFar() * cam.getZNear()) / (cam.getZNear() -cam.getZFar());
 }
 
 
