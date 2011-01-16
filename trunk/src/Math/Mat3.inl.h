@@ -517,10 +517,10 @@ inline void Mat3::rotateXAxis(float rad)
 	ME(2, 2) = ME(2, 2)*cosa - ME(2, 1)*sina;
 
 	// zAxis.normalize();
-	float len = invSqrt(ME(0, 2)*ME(0, 2) + ME(1, 2)*ME(1, 2) + ME(2, 2)*ME(2, 2));
-	ME(0, 2) *= len;
-	ME(1, 2) *= len;
-	ME(2, 2) *= len;
+	float len = sqrt(ME(0, 2)*ME(0, 2) + ME(1, 2)*ME(1, 2) + ME(2, 2)*ME(2, 2));
+	ME(0, 2) /= len;
+	ME(1, 2) /= len;
+	ME(2, 2) /= len;
 
 	// yAxis = zAxis * xAxis;
 	ME(0, 1) = ME(1, 2)*ME(2, 0) - ME(2, 2)*ME(1, 0);
@@ -552,10 +552,10 @@ inline void Mat3::rotateYAxis(float rad)
 	ME(2, 2) = ME(2, 2)*cosa + ME(2, 0)*sina;
 
 	// zAxis.normalize();
-	float len = invSqrt(ME(0, 2)*ME(0, 2) + ME(1, 2)*ME(1, 2) + ME(2, 2)*ME(2, 2));
-	ME(0, 2) *= len;
-	ME(1, 2) *= len;
-	ME(2, 2) *= len;
+	float len = sqrt(ME(0, 2)*ME(0, 2) + ME(1, 2)*ME(1, 2) + ME(2, 2)*ME(2, 2));
+	ME(0, 2) /= len;
+	ME(1, 2) /= len;
+	ME(2, 2) /= len;
 
 	// xAxis = (zAxis*yAxis) * -1.0f;
 	ME(0, 0) = ME(2, 2)*ME(1, 1) - ME(1, 2)*ME(2, 1);
@@ -587,10 +587,10 @@ inline void Mat3::rotateZAxis(float rad)
 	ME(2, 0) = ME(2, 0)*cosa + ME(2, 1)*sina;
 
 	// xAxis.normalize();
-	float len = invSqrt(ME(0, 0)*ME(0, 0) + ME(1, 0)*ME(1, 0) + ME(2, 0)*ME(2, 0));
-	ME(0, 0) *= len;
-	ME(1, 0) *= len;
-	ME(2, 0) *= len;
+	float len = sqrt(ME(0, 0)*ME(0, 0) + ME(1, 0)*ME(1, 0) + ME(2, 0)*ME(2, 0));
+	ME(0, 0) /= len;
+	ME(1, 0) /= len;
+	ME(2, 0) /= len;
 
 	// yAxis = zAxis*xAxis;
 	ME(0, 1) = ME(1, 2)*ME(2, 0) - ME(2, 2)*ME(1, 0);

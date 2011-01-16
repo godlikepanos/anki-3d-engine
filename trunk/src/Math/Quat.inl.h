@@ -23,7 +23,7 @@ inline Quat::Quat(float x_, float y_, float z_, float w_):
 
 // constructor [vec2, float, float]
 inline Quat::Quat(const Vec2& v2, float z_, float w_):
-	x(v2.x), y(v2.y), z(z_), w(w_)
+	x(v2.x()), y(v2.y()), z(z_), w(w_)
 {}
 
 // constructor [vec3, float]
@@ -47,7 +47,7 @@ inline Quat::Quat(const Mat3& m3)
 	float trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
 	if(trace > EPSILON)
 	{
-		float s = 0.5 * invSqrt(trace);
+		float s = 0.5 / sqrt(trace);
 		w = 0.25 / s;
 		x = (m3(2, 1) - m3(1, 2)) * s;
 		y = (m3(0, 2) - m3(2, 0)) * s;
@@ -57,7 +57,7 @@ inline Quat::Quat(const Mat3& m3)
 	{
 		if(m3(0, 0) > m3(1, 1) && m3(0, 0) > m3(2, 2))
 		{
-			float s = 0.5 * invSqrt(1.0 + m3(0, 0) - m3(1, 1) - m3(2, 2));
+			float s = 0.5 / sqrt(1.0 + m3(0, 0) - m3(1, 1) - m3(2, 2));
 			w = (m3(1, 2) - m3(2, 1)) * s;
 			x = 0.25 / s;
 			y = (m3(0, 1) + m3(1, 0)) * s;
@@ -65,7 +65,7 @@ inline Quat::Quat(const Mat3& m3)
 		}
 		else if(m3(1, 1) > m3(2, 2))
 		{
-			float s = 0.5 * invSqrt(1.0 + m3(1, 1) - m3(0, 0) - m3(2, 2));
+			float s = 0.5 / sqrt(1.0 + m3(1, 1) - m3(0, 0) - m3(2, 2));
 			w = (m3(0, 2) - m3(2, 0)) * s;
 			x = (m3(0, 1) + m3(1, 0)) * s;
 			y = 0.25 / s;
@@ -73,7 +73,7 @@ inline Quat::Quat(const Mat3& m3)
 		}
 		else
 		{
-			float s = 0.5 * invSqrt(1.0 + m3(2, 2) - m3(0, 0) - m3(1, 1));
+			float s = 0.5 / sqrt(1.0 + m3(2, 2) - m3(0, 0) - m3(1, 1));
 			w = (m3(0, 1) - m3(1, 0)) * s;
 			x = (m3(0, 2) + m3(2, 0)) * s;
 			y = (m3(1, 2) + m3(2, 1)) * s;
@@ -117,7 +117,7 @@ inline Quat::Quat(const Axisang& axisang)
 	float sintheta, costheta;
 	sinCos(rad, sintheta, costheta);
 
-	float scalefactor = sintheta * invSqrt(lengthsq);
+	float scalefactor = sintheta / sqrt(lengthsq);
 
 	x = scalefactor * axisang.axis.x;
 	y = scalefactor * axisang.axis.y;

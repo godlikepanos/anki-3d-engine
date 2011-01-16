@@ -33,6 +33,14 @@ inline Vec3::Vec3(float f)
 	: x(f), y(f), z(f)
 {}
 
+// constructor [float[]]
+inline Vec3::Vec3(float arr[])
+{
+	x = arr[0];
+	y = arr[1];
+	z = arr[2];
+}
+
 // constructor [Vec3]
 inline Vec3::Vec3(const Vec3& b)
 	: x(b.x), y(b.y), z(b.z)
@@ -40,7 +48,7 @@ inline Vec3::Vec3(const Vec3& b)
 
 // constructor [vec2, float]
 inline Vec3::Vec3(const Vec2& v2, float z_)
-	: x(v2.x), y(v2.y), z(z_)
+	: x(v2.x()), y(v2.y()), z(z_)
 {}
 
 // constructor [vec4]
@@ -240,13 +248,13 @@ inline float Vec3::getDistanceSquared(const Vec3& b) const
 // normalize
 inline void Vec3::normalize()
 {
-	ME *= invSqrt(x*x + y*y + z*z);
+	ME /= getLength();
 }
 
 // Normalized (return the normalized)
 inline Vec3 Vec3::getNormalized() const
 {
-	return ME * invSqrt(x*x + y*y + z*z);
+	return ME / getLength();
 }
 
 // getProjection

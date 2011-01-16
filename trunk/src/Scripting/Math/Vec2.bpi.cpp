@@ -5,8 +5,9 @@
 WRAP(Vec2)
 {
 	class_<Vec2>("Vec2")
-		.def_readwrite("x", &Vec2::x)
-		.def_readwrite("y", &Vec2::y)
+		/// @todo fix this
+		/*.def_readwrite("x", &Vec2::x)
+		.def_readwrite("y", &Vec2::y)*/
 		// constructors
 		.def(init<>())
 		.def(init<float>())

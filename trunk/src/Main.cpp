@@ -112,7 +112,6 @@ void init()
 	INFO("Other init...");
 
 	srand(unsigned(time(NULL)));
-	mathSanityChecks();
 
 	uint ticks = AppSingleton::getInstance().getTicks();
 
@@ -279,8 +278,8 @@ void mainLoop()
 		else
 		{
 			float accel = 44.0;
-			mover->rotateLocalX(ang * InputSingleton::getInstance().mouseVelocity.y * accel);
-			mover->rotateLocalY(-ang * InputSingleton::getInstance().mouseVelocity.x * accel);
+			mover->rotateLocalX(ang * InputSingleton::getInstance().mouseVelocity.y() * accel);
+			mover->rotateLocalY(-ang * InputSingleton::getInstance().mouseVelocity.x() * accel);
 		}
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
