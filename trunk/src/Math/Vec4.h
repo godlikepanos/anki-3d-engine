@@ -11,6 +11,21 @@ namespace M {
 class Vec4
 {
 	public:
+		/// @name Constructors & distructors
+		/// @{
+		explicit Vec4();
+		explicit Vec4(float x, float y, float z, float w);
+		explicit Vec4(float f);
+		explicit Vec4(float arr[]);
+		explicit Vec4(const Vec2& v2, float z, float w);
+		explicit Vec4(const Vec3& v3, float w);
+		         Vec4(const Vec4& b);
+		explicit Vec4(const Quat& q);
+		#if defined(MATH_INTEL_SIMD)
+			explicit Vec4(const __m128& mm);
+		#endif
+		/// @}
+
 		/// @name Accessors
 		/// @{
 		float& x();
@@ -26,21 +41,6 @@ class Vec4
 		#if defined(MATH_INTEL_SIMD)
 			__m128& getMm();
 			const __m128& getMm() const;
-		#endif
-		/// @}
-
-		/// @name Constructors & distructors
-		/// @{
-		explicit Vec4();
-		explicit Vec4(float x, float y, float z, float w);
-		explicit Vec4(float f);
-		explicit Vec4(float arr[]);
-		explicit Vec4(const Vec2& v2, float z, float w);
-		explicit Vec4(const Vec3& v3, float w);
-		         Vec4(const Vec4& b);
-		explicit Vec4(const Quat& q);
-		#if defined(MATH_INTEL_SIMD)
-			explicit Vec4(const __m128& mm);
 		#endif
 		/// @}
 
@@ -73,10 +73,10 @@ class Vec4
 
 		/// @name Operators with other
 		/// @{
-		Vec4  operator*(const Mat4& m4) const;
+		Vec4 operator*(const Mat4& m4) const;
 		/// @}
 
-		/// @name Other
+		/// @name Misc methods
 		/// @{
 		float getLength() const;
 		Vec4 getNormalized() const;
@@ -104,14 +104,16 @@ class Vec4
 };
 
 
-/// @name Other operators
+/// @name Global operators with Vec4 and float
 /// @{
 extern Vec4 operator+(float f, const Vec4& v4);
 extern Vec4 operator-(float f, const Vec4& v4);
 extern Vec4 operator*(float f, const Vec4& v4);
 extern Vec4 operator/(float f, const Vec4& v4);
-extern std::ostream& operator<<(std::ostream& s, const Vec4& v);
 /// @}
+
+
+extern std::ostream& operator<<(std::ostream& s, const Vec4& v);
 
 
 } // end namespace

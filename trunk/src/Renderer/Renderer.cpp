@@ -375,9 +375,9 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat, con
 
 	// the vec is in NDC space meaning: -1<=vec.x<=1 -1<=vec.y<=1 -1<=vec.z<=1
 	Vec4 vec;
-	vec.x() = (2.0 * (windowCoords.x - view[0])) / view[2] - 1.0;
-	vec.y() = (2.0 * (windowCoords.y - view[1])) / view[3] - 1.0;
-	vec.z() = 2.0 * windowCoords.z - 1.0;
+	vec.x() = (2.0 * (windowCoords.x() - view[0])) / view[2] - 1.0;
+	vec.y() = (2.0 * (windowCoords.y() - view[1])) / view[3] - 1.0;
+	vec.z() = 2.0 * windowCoords.z() - 1.0;
 	vec.w() = 1.0;
 
 	Vec4 final = invPm * vec;

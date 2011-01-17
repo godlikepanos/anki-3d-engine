@@ -172,14 +172,14 @@ void Dbg::drawCube(float size)
 	Vec3 minPos = Vec3(-0.5 * size);
 
 	Vec3 points[] = {
-		Vec3(maxPos.x, maxPos.y, maxPos.z),  // right top front
-		Vec3(minPos.x, maxPos.y, maxPos.z),  // left top front
-		Vec3(minPos.x, minPos.y, maxPos.z),  // left bottom front
-		Vec3(maxPos.x, minPos.y, maxPos.z),  // right bottom front
-		Vec3(maxPos.x, maxPos.y, minPos.z),  // right top back
-		Vec3(minPos.x, maxPos.y, minPos.z),  // left top back
-		Vec3(minPos.x, minPos.y, minPos.z),  // left bottom back
-		Vec3(maxPos.x, minPos.y, minPos.z)   // right bottom back
+		Vec3(maxPos.x(), maxPos.y(), maxPos.z()),  // right top front
+		Vec3(minPos.x(), maxPos.y(), maxPos.z()),  // left top front
+		Vec3(minPos.x(), minPos.y(), maxPos.z()),  // left bottom front
+		Vec3(maxPos.x(), minPos.y(), maxPos.z()),  // right bottom front
+		Vec3(maxPos.x(), maxPos.y(), minPos.z()),  // right top back
+		Vec3(minPos.x(), maxPos.y(), minPos.z()),  // left top back
+		Vec3(minPos.x(), minPos.y(), minPos.z()),  // left bottom back
+		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
 	};
 
 	const uint indeces[] = {0, 1, 2, 3, 4, 0, 3, 7, 1, 5, 6, 2, 5, 4, 7, 6, 0, 4, 5, 1, 3, 2, 6, 7};

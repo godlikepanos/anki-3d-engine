@@ -48,34 +48,34 @@ inline Axisang::Axisang(const Mat3& m3)
 		}
 
 		ang = PI;
-		axis.x = (m3(0, 0)+1)/2;
-		if(axis.x > 0.0)
-			axis.x = M::sqrt(axis.x);
+		axis.x() = (m3(0, 0)+1)/2;
+		if(axis.x() > 0.0)
+			axis.x() = M::sqrt(axis.x());
 		else
-			axis.x = 0;
-		axis.y = (m3(1, 1)+1)/2;
-		if(axis.y > 0)
-			axis.y = M::sqrt(axis.y);
+			axis.x() = 0;
+		axis.y() = (m3(1, 1)+1)/2;
+		if(axis.y() > 0)
+			axis.y() = M::sqrt(axis.y());
 		else
-			axis.y = 0;
-		axis.z = (m3(2, 2)+1)/2;
-		if(axis.z > 0)
-			axis.z = M::sqrt(axis.z);
+			axis.y() = 0;
+		axis.z() = (m3(2, 2)+1)/2;
+		if(axis.z() > 0)
+			axis.z() = M::sqrt(axis.z());
 		else
-			axis.z = 0.0;
+			axis.z() = 0.0;
 
-		bool xZero = (fabs(axis.x)<EPSILON);
-		bool yZero = (fabs(axis.y)<EPSILON);
-		bool zZero = (fabs(axis.z)<EPSILON);
+		bool xZero = (fabs(axis.x())<EPSILON);
+		bool yZero = (fabs(axis.y())<EPSILON);
+		bool zZero = (fabs(axis.z())<EPSILON);
 		bool xyPositive = (m3(0, 1) > 0);
 		bool xzPositive = (m3(0, 2) > 0);
 		bool yzPositive = (m3(1, 2) > 0);
 		if(xZero && !yZero && !zZero){
-			if(!yzPositive) axis.y = -axis.y;
+			if(!yzPositive) axis.y() = -axis.y();
 		}else if(yZero && !zZero){
-			if(!xzPositive) axis.z = -axis.z;
+			if(!xzPositive) axis.z() = -axis.z();
 		}else if (zZero){
-			if(!xyPositive) axis.x = -axis.x;
+			if(!xyPositive) axis.x() = -axis.x();
 		}
 
 		return;
@@ -86,9 +86,9 @@ inline Axisang::Axisang(const Mat3& m3)
 	if(fabs(s) < 0.001) s = 1;
 
 	ang = acos((m3(0, 0) + m3(1, 1) + m3(2, 2) - 1)/2);
-	axis.x= (m3(2, 1) - m3(1, 2))/s;
-	axis.y= (m3(0, 2) - m3(2, 0))/s;
-	axis.z= (m3(1, 0) - m3(0, 1))/s;
+	axis.x() = (m3(2, 1) - m3(1, 2))/s;
+	axis.y() = (m3(0, 2) - m3(2, 0))/s;
+	axis.z() = (m3(1, 0) - m3(0, 1))/s;
 }
 
 

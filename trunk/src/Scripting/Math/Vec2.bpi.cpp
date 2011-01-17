@@ -5,9 +5,6 @@
 WRAP(Vec2)
 {
 	class_<Vec2>("Vec2")
-		/// @todo fix this
-		/*.def_readwrite("x", &Vec2::x)
-		.def_readwrite("y", &Vec2::y)*/
 		// constructors
 		.def(init<>())
 		.def(init<float>())
@@ -15,6 +12,9 @@ WRAP(Vec2)
 		.def(init<const Vec2&>())
 		.def(init<const Vec3&>())
 		.def(init<const Vec4&>())
+		// Accessors
+		BP_PROPERTY_MATH(Vec2, x)
+		BP_PROPERTY_MATH(Vec2, y)
 		// ops with same type
 		.def(self + self)
 		.def(self += self)

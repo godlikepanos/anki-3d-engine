@@ -85,15 +85,15 @@ inline Mat4::Mat4(const Vec3& v)
 	ME(0, 0) = 1.0;
 	ME(0, 1) = 0.0;
 	ME(0, 2) = 0.0;
-	ME(0, 3) = v.x;
+	ME(0, 3) = v.x();
 	ME(1, 0) = 0.0;
 	ME(1, 1) = 1.0;
 	ME(1, 2) = 0.0;
-	ME(1, 3) = v.y;
+	ME(1, 3) = v.y();
 	ME(2, 0) = 0.0;
 	ME(2, 1) = 0.0;
 	ME(2, 2) = 1.0;
-	ME(2, 3) = v.z;
+	ME(2, 3) = v.z();
 	ME(3, 0) = 0.0;
 	ME(3, 1) = 0.0;
 	ME(3, 2) = 0.0;
@@ -497,9 +497,9 @@ inline void Mat4::setTranslationPart(const Vec4& v)
 // setTranslationPart
 inline void Mat4::setTranslationPart(const Vec3& v)
 {
-	ME(0, 3) = v.x;
-	ME(1, 3) = v.y;
-	ME(2, 3) = v.z;
+	ME(0, 3) = v.x();
+	ME(1, 3) = v.y();
+	ME(2, 3) = v.z();
 }
 
 // getTranslationPart

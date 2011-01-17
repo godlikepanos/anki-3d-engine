@@ -11,27 +11,28 @@ namespace M {
 class Vec3
 {
 	public:
-		/// @name Data members
-		/// @{
-		float x, y, z;
-		/// @}
-
-		/// @name Accessors
-		/// @{
-		float& operator[](uint i);
-		float operator[](uint i) const;
-		/// @}
-
 		/// @name Constructors & distructors
 		/// @{
 		explicit Vec3();
+		explicit Vec3(float x, float y, float z);
 		explicit Vec3(float f);
 		explicit Vec3(float arr[]);
-		explicit Vec3(float x, float y, float z);
 		explicit Vec3(const Vec2& v2, float z);
 		         Vec3(const Vec3& b);
 		explicit Vec3(const Vec4& v4);
 		explicit Vec3(const Quat& q);
+		/// @}
+
+		/// @name Accessors
+		/// @{
+		float& x();
+		float x() const;
+		float& y();
+		float y() const;
+		float& z();
+		float z() const;
+		float& operator[](uint i);
+		float operator[](uint i) const;
 		/// @}
 
 		/// @name Operators with same type
@@ -63,27 +64,27 @@ class Vec3
 
 		/// @name Operators with other types
 		/// @{
-		Vec3 operator* (const Mat3& m3) const;
+		Vec3 operator*(const Mat3& m3) const;
 		/// @}
 
-		/// @name Other
+		/// @name Misc methods
 		/// @{
 		float dot(const Vec3& b) const;
 		Vec3 cross(const Vec3& b) const;
 		float getLength() const;
 		float getLengthSquared() const;
 		float getDistanceSquared(const Vec3& b) const;
-		void  normalize();
+		void normalize();
 		Vec3 getNormalized() const;
 		Vec3 getProjection(const Vec3& toThis) const;
 		/// Returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 		Vec3 getRotated(const Quat& q) const;
-		void  rotate(const Quat& q);
+		void rotate(const Quat& q);
 		Vec3 lerp(const Vec3& v1, float t) const; ///< Return lerp(this, v1, t)
 		/// @}
 
 		/// @name Transformations
-		/// The faster way is by far the mat4 * vec3 or the getTransformed(Vec3, Mat3)
+		/// The faster way is by far the Mat4 * Vec3 or the getTransformed(Vec3, Mat3)
 		/**@{*/
 		Vec3 getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const;
 		void transform(const Vec3& translate, const Mat3& rotate, float scale);
@@ -98,6 +99,20 @@ class Vec3
 		Vec3 getTransformed(const Transform& transform) const;
 		void transform(const Transform& transform);
 		/**@}*/
+
+	private:
+		/// @name Data
+		/// @{
+		union
+		{
+			struct
+			{
+				float x, y, z;
+			} vec;
+
+			boost::array<float, 3> arr;
+		};
+		/// @}
 };
 
 
