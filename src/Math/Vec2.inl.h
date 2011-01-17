@@ -75,8 +75,8 @@ inline Vec2::Vec2(const Vec2& b)
 // constructor [vec3]
 inline Vec2::Vec2(const Vec3& v3)
 {
-	x() = v3.x;
-	y() = v3.y;
+	x() = v3.x();
+	y() = v3.y();
 }
 
 // constructor [vec4]

@@ -28,7 +28,7 @@ inline Quat::Quat(const Vec2& v2, float z_, float w_):
 
 // constructor [vec3, float]
 inline Quat::Quat(const Vec3& v3, float w_):
-	x(v3.x), y(v3.y), z(v3.z), w(w_)
+	x(v3.x()), y(v3.y()), z(v3.z()), w(w_)
 {}
 
 // constructor [vec4]
@@ -119,9 +119,9 @@ inline Quat::Quat(const Axisang& axisang)
 
 	float scalefactor = sintheta / sqrt(lengthsq);
 
-	x = scalefactor * axisang.axis.x;
-	y = scalefactor * axisang.axis.y;
-	z = scalefactor * axisang.axis.z;
+	x = scalefactor * axisang.axis.x();
+	y = scalefactor * axisang.axis.y();
+	z = scalefactor * axisang.axis.z();
 	w = costheta;
 }
 
@@ -209,16 +209,20 @@ inline void Quat::invert()
 inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 {
 	Vec3 axis(from.cross(to));
-	ME = Quat(axis.x, axis.y, axis.z, from.dot(to));
+	ME = Quat(axis.x(), axis.y(), axis.z(), from.dot(to));
 	normalize();
 	w += 1.0;
 
 	if(w <= EPSILON)
 	{
-		if(from.z*from.z > from.x*from.x)
-			ME = Quat(0.0, from.z, -from.y, 0.0);
+		if(from.z() * from.z() > from.x() * from.x())
+		{
+			ME = Quat(0.0, from.z(), -from.y(), 0.0);
+		}
 		else
-			ME = Quat(from.y, -from.x, 0.0, 0.0);
+		{
+			ME = Quat(from.y(), -from.x(), 0.0, 0.0);
+		}
 	}
 	normalize();
 }

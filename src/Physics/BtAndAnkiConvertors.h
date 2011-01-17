@@ -44,7 +44,7 @@ inline Transform toAnki(const btTransform& t)
 
 inline btVector3 toBt(const Vec3& v)
 {
-	return btVector3(v.x,  v.y, v.z);
+	return btVector3(v.x(),  v.y(), v.z());
 }
 
 

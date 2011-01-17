@@ -117,19 +117,19 @@ inline Mat3::Mat3(const Axisang& axisang)
 	float t = 1.0 - c;
 
 	const Vec3& axis = axisang.axis;
-	ME(0, 0) = c + axis.x*axis.x*t;
-	ME(1, 1) = c + axis.y*axis.y*t;
-	ME(2, 2) = c + axis.z*axis.z*t;
+	ME(0, 0) = c + axis.x() * axis.x() * t;
+	ME(1, 1) = c + axis.y() * axis.y() * t;
+	ME(2, 2) = c + axis.z() * axis.z() * t;
 
-	float tmp1 = axis.x*axis.y*t;
-	float tmp2 = axis.z*s;
+	float tmp1 = axis.x() * axis.y() * t;
+	float tmp2 = axis.z() * s;
 	ME(1, 0) = tmp1 + tmp2;
 	ME(0, 1) = tmp1 - tmp2;
-	tmp1 = axis.x*axis.z*t;
-	tmp2 = axis.y*s;
+	tmp1 = axis.x() * axis.z() * t;
+	tmp2 = axis.y() * s;
 	ME(2, 0) = tmp1 - tmp2;
-	ME(0, 2) = tmp1 + tmp2;    tmp1 = axis.y*axis.z*t;
-	tmp2 = axis.x*s;
+	ME(0, 2) = tmp1 + tmp2;    tmp1 = axis.y() * axis.z() * t;
+	tmp2 = axis.x() * s;
 	ME(2, 1) = tmp1 + tmp2;
 	ME(1, 2) = tmp1 - tmp2;
 }
@@ -303,9 +303,9 @@ inline Mat3& Mat3::operator /=(float f)
 inline Vec3 Mat3::operator *(const Vec3& b) const
 {
 	return Vec3(
-		ME(0, 0)*b.x + ME(0, 1)*b.y + ME(0, 2)*b.z,
-		ME(1, 0)*b.x + ME(1, 1)*b.y + ME(1, 2)*b.z,
-		ME(2, 0)*b.x + ME(2, 1)*b.y + ME(2, 2)*b.z
+		ME(0, 0) * b.x() + ME(0, 1) * b.y() + ME(0, 2) * b.z(),
+		ME(1, 0) * b.x() + ME(1, 1) * b.y() + ME(1, 2) * b.z(),
+		ME(2, 0) * b.x() + ME(2, 1) * b.y() + ME(2, 2) * b.z()
 	);
 }
 
@@ -328,65 +328,65 @@ inline bool Mat3::operator !=(const Mat3& b) const
 // setRows
 inline void Mat3::setRows(const Vec3& a, const Vec3& b, const Vec3& c)
 {
-	ME(0, 0) = a.x;
-	ME(0, 1) = a.y;
-	ME(0, 2) = a.z;
-	ME(1, 0) = b.x;
-	ME(1, 1) = b.y;
-	ME(1, 2) = b.z;
-	ME(2, 0) = c.x;
-	ME(2, 1) = c.y;
-	ME(2, 2) = c.z;
+	ME(0, 0) = a.x();
+	ME(0, 1) = a.y();
+	ME(0, 2) = a.z();
+	ME(1, 0) = b.x();
+	ME(1, 1) = b.y();
+	ME(1, 2) = b.z();
+	ME(2, 0) = c.x();
+	ME(2, 1) = c.y();
+	ME(2, 2) = c.z();
 }
 
 // setColumns
 inline void Mat3::setColumns(const Vec3& a, const Vec3& b, const Vec3& c)
 {
-	ME(0, 0) = a.x;
-	ME(1, 0) = a.y;
-	ME(2, 0) = a.z;
-	ME(0, 1) = b.x;
-	ME(1, 1) = b.y;
-	ME(2, 1) = b.z;
-	ME(0, 2) = c.x;
-	ME(1, 2) = c.y;
-	ME(2, 2) = c.z;
+	ME(0, 0) = a.x();
+	ME(1, 0) = a.y();
+	ME(2, 0) = a.z();
+	ME(0, 1) = b.x();
+	ME(1, 1) = b.y();
+	ME(2, 1) = b.z();
+	ME(0, 2) = c.x();
+	ME(1, 2) = c.y();
+	ME(2, 2) = c.z();
 }
 
 // getRows
 inline void Mat3::getRows(Vec3& a, Vec3& b, Vec3& c) const
 {
-	a.x = ME(0, 0);
-	a.y = ME(0, 1);
-	a.z = ME(0, 2);
-	b.x = ME(1, 0);
-	b.y = ME(1, 1);
-	b.z = ME(1, 2);
-	c.x = ME(2, 0);
-	c.y = ME(2, 1);
-	c.z = ME(2, 2);
+	a.x() = ME(0, 0);
+	a.y() = ME(0, 1);
+	a.z() = ME(0, 2);
+	b.x() = ME(1, 0);
+	b.y() = ME(1, 1);
+	b.z() = ME(1, 2);
+	c.x() = ME(2, 0);
+	c.y() = ME(2, 1);
+	c.z() = ME(2, 2);
 }
 
 // getColumns
 inline void Mat3::getColumns(Vec3& a, Vec3& b, Vec3& c) const
 {
-	a.x = ME(0, 0);
-	a.y = ME(1, 0);
-	a.z = ME(2, 0);
-	b.x = ME(0, 1);
-	b.y = ME(1, 1);
-	b.z = ME(2, 1);
-	c.x = ME(0, 2);
-	c.y = ME(1, 2);
-	c.z = ME(2, 2);
+	a.x() = ME(0, 0);
+	a.y() = ME(1, 0);
+	a.z() = ME(2, 0);
+	b.x() = ME(0, 1);
+	b.y() = ME(1, 1);
+	b.z() = ME(2, 1);
+	c.x() = ME(0, 2);
+	c.y() = ME(1, 2);
+	c.z() = ME(2, 2);
 }
 
 // setRow
 inline void Mat3::setRow(const uint i, const Vec3& v)
 {
-	ME(i, 0)=v.x;
-	ME(i, 1)=v.y;
-	ME(i, 2)=v.z;
+	ME(i, 0) = v.x();
+	ME(i, 1) = v.y();
+	ME(i, 2) = v.z();
 }
 
 // getRow
@@ -398,9 +398,9 @@ inline Vec3 Mat3::getRow(const uint i) const
 // setColumn
 inline void Mat3::setColumn(const uint i, const Vec3& v)
 {
-	ME(0,i) = v.x;
-	ME(1,i) = v.y;
-	ME(2,i) = v.z;
+	ME(0, i) = v.x();
+	ME(1, i) = v.y();
+	ME(2, i) = v.z();
 }
 
 // getColumn

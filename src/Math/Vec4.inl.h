@@ -7,7 +7,109 @@
 namespace M {
 
 
-// accessors
+//======================================================================================================================
+// Constructors                                                                                                        =
+//======================================================================================================================
+
+// default
+inline Vec4::Vec4()
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_setzero_ps();
+	#else
+		arr[0] = arr[1] = arr[2] = arr[3] = 0.0;
+	#endif
+}
+
+// float
+inline Vec4::Vec4(float f)
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_set1_ps(f);
+	#else
+		arr[0] = arr[1] = arr[2] = arr[3] = f;
+	#endif
+}
+
+// float[]
+inline Vec4::Vec4(float arr_[])
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_load_ps(arr_);
+	#else
+		arr[0] = arr_[0];
+		arr[1] = arr_[1];
+		arr[2] = arr_[2];
+		arr[3] = arr_[3];
+	#endif
+}
+
+// float, float, float, float
+inline Vec4::Vec4(float x_, float y_, float z_, float w_)
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = _mm_set_ps(w_, z_, y_, x_);
+	#else
+		x() = x_;
+		y() = y_;
+		z() = z_;
+		w() = w_;
+	#endif
+}
+
+// vec2, float, float
+inline Vec4::Vec4(const Vec2& v2, float z_, float w_)
+{
+	x() = v2.x();
+	y() = v2.y();
+	z() = z_;
+	w() = w_;
+}
+
+// vec3, float
+inline Vec4::Vec4(const Vec3& v3, float w_)
+{
+	x() = v3.x();
+	y() = v3.y();
+	z() = v3.z();
+	w() = w_;
+}
+
+// copy
+inline Vec4::Vec4(const Vec4& b)
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = b.mm;
+	#else
+		x() = b.x();
+		y() = b.y();
+		z() = b.z();
+		w() = b.w();
+	#endif
+}
+
+// quat
+inline Vec4::Vec4(const Quat& q)
+{
+	x() = q.x;
+	y() = q.y;
+	z() = q.z;
+	w() = q.w;
+}
+
+// __m128
+#if defined(MATH_INTEL_SIMD)
+	inline Vec4::Vec4(const __m128& mm_)
+	{
+		mm = mm_;
+	}
+#endif
+
+
+//======================================================================================================================
+// Accessors                                                                                                           =
+//======================================================================================================================
+
 inline float& Vec4::operator[](uint i)
 {
 	return arr[i];
@@ -70,99 +172,10 @@ inline float Vec4::w() const
 	}
 #endif
 
-// default constructor
-inline Vec4::Vec4()
-{
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_setzero_ps();
-	#else
-		x() = y() = z() = w() = 0.0;
-	#endif
-}
 
-// constructor [float]
-inline Vec4::Vec4(float f)
-{
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_set1_ps(f);
-	#else
-		x() = y() = z() = w() = f;
-	#endif
-}
-
-// Constructor [float[]]
-inline Vec4::Vec4(float arr_[])
-{
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_load_ps(arr_);
-	#else
-		arr[0] = arr_[0];
-		arr[1] = arr_[1];
-		arr[2] = arr_[2];
-		arr[3] = arr_[3];
-	#endif
-}
-
-// constructor [float, float, float, float]
-inline Vec4::Vec4(float x_, float y_, float z_, float w_)
-{
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_set_ps(w_, z_, y_, x_);
-	#else
-		x() = x_;
-		y() = y_;
-		z() = z_;
-		w() = w_;
-	#endif
-}
-
-// constructor [__m128]
-#if defined(MATH_INTEL_SIMD)
-	inline Vec4::Vec4(const __m128& mm_)
-	{
-		mm = mm_;
-	}
-#endif
-
-// constructor [vec2, float, float]
-inline Vec4::Vec4(const Vec2& v2, float z_, float w_)
-{
-	x() = v2.x();
-	y() = v2.y();
-	z() = z_;
-	w() = w_;
-}
-
-// constructor [vec3, float]
-inline Vec4::Vec4(const Vec3& v3, float w_)
-{
-	x() = v3.x;
-	y() = v3.y;
-	z() = v3.z;
-	w() = w_;
-}
-
-// constructor [vec4]
-inline Vec4::Vec4(const Vec4& b)
-{
-	#if defined(MATH_INTEL_SIMD)
-		mm = b.mm;
-	#else
-		x() = b.x();
-		y() = b.y();
-		z() = b.z();
-		w() = b.w();
-	#endif
-}
-
-// constructor [quat]
-inline Vec4::Vec4(const Quat& q)
-{
-	x() = q.x;
-	y() = q.y;
-	z() = q.z;
-	w() = q.w;
-}
+//======================================================================================================================
+// Operators with same                                                                                                 =
+//======================================================================================================================
 
 // +
 inline Vec4 Vec4::operator+(const Vec4& b) const
@@ -280,83 +293,93 @@ inline bool Vec4::operator!=(const Vec4& b) const
 	return !(isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) && isZero(sub.w()));
 }
 
-// vec4 + float
+
+//======================================================================================================================
+// Operators with float                                                                                                =
+//======================================================================================================================
+
+// Vec4 + float
 inline Vec4 Vec4::operator+(float f) const
 {
 	return SELF + Vec4(f);
 }
 
-// float + vec4
+// float + Vec4
 inline Vec4 operator+(float f, const Vec4& v4)
 {
 	return v4 + f;
 }
 
-// vec4 += float
+// Vec4 += float
 inline Vec4& Vec4::operator+=(float f)
 {
 	SELF += Vec4(f);
 	return SELF;
 }
 
-// vec4 - float
+// Vec4 - float
 inline Vec4 Vec4::operator-(float f) const
 {
 	return SELF - Vec4(f);
 }
 
-// float - vec4
+// float - Vec4
 inline Vec4 operator-(float f, const Vec4& v4)
 {
 	return Vec4(f) - v4;
 }
 
-// vec4 -= float
+// Vec4 -= float
 inline Vec4& Vec4::operator-=(float f)
 {
 	SELF -= Vec4(f);
 	return SELF;
 }
 
-// vec4 * float
+// Vec4 * float
 inline Vec4 Vec4::operator*(float f) const
 {
 	return SELF * Vec4(f);
 }
 
-// float * vec4
+// float * Vec4
 inline Vec4 operator*(float f, const Vec4& v4)
 {
 	return v4 * f;
 }
 
-// vec4 *= float
+// Vec4 *= float
 inline Vec4& Vec4::operator*=(float f)
 {
 	SELF *= Vec4(f);
 	return SELF;
 }
 
-// vec4 / float
+// Vec4 / float
 inline Vec4 Vec4::operator/(float f) const
 {
 	return SELF / Vec4(f);
 }
 
-// float / vec4
+// float / Vec4
 inline Vec4 operator/(float f, const Vec4& v4)
 {
 	return Vec4(f) / v4;
 }
 
-// vec4 /= float
+// Vec4 /= float
 inline Vec4& Vec4::operator/=(float f)
 {
 	SELF /= Vec4(f);
 	return SELF;
 }
 
-// vec4 * mat4
+
+//======================================================================================================================
+// Operators with other                                                                                                =
+//======================================================================================================================
+
+// Vec4 * mat4
 inline Vec4 Vec4::operator*(const Mat4& m4) const
 {
 	return Vec4(
@@ -366,6 +389,11 @@ inline Vec4 Vec4::operator*(const Mat4& m4) const
 		x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3)
 	);
 }
+
+
+//======================================================================================================================
+// Misc methods                                                                                                        =
+//======================================================================================================================
 
 // dot
 inline float Vec4::dot(const Vec4& b) const
@@ -385,7 +413,7 @@ inline float Vec4::getLength() const
 	return M::sqrt(dot(SELF));
 }
 
-// Normalized
+// getNormalized
 inline Vec4 Vec4::getNormalized() const
 {
 	return SELF / getLength();
@@ -397,7 +425,10 @@ inline void Vec4::normalize()
 	SELF /= getLength();
 }
 
-// print
+
+//======================================================================================================================
+// Print                                                                                                               =
+//======================================================================================================================
 inline std::ostream& operator<<(std::ostream& s, const Vec4& v)
 {
 	s << v.x() << ' ' << v.y() << ' ' << v.z() << ' ' << v.w();

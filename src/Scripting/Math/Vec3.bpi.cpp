@@ -5,9 +5,10 @@
 WRAP(Vec3)
 {
 	class_<Vec3>("Vec3")
-		.def_readwrite("x", &Vec3::x)
+		/// @todo correct
+		/*.def_readwrite("x", &Vec3::x)
 		.def_readwrite("y", &Vec3::y)
-		.def_readwrite("z", &Vec3::z)
+		.def_readwrite("z", &Vec3::z)*/
 		// constructors
 		.def(init<>())
 		.def(init<float>())

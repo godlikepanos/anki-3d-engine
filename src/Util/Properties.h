@@ -13,10 +13,8 @@
 		Type__ varName__; \
 	public: \
 		void setFunc__(const Type__& x__) {varName__ = x__;} \
-		void setFunc__##Value(Type__ x__) {varName__ = x__;} \
 		const Type__& getFunc__() const {return varName__;} \
 		Type__& getFunc__() {return varName__;} \
-		Type__ getFunc__##Value() const {return varName__;}
 
 
 /// Read only private property

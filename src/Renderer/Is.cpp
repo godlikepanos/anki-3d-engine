@@ -51,9 +51,9 @@ void Is::calcViewVectors()
 		*/
 
 		Vec3 vec;
-		vec.x = (2.0 * (pixels[i][0] - viewport[0])) / viewport[2] - 1.0;
-		vec.y = (2.0 * (pixels[i][1] - viewport[1])) / viewport[3] - 1.0;
-		vec.z = 1.0;
+		vec.x() = (2.0 * (pixels[i][0] - viewport[0])) / viewport[2] - 1.0;
+		vec.y() = (2.0 * (pixels[i][1] - viewport[1])) / viewport[3] - 1.0;
+		vec.z() = 1.0;
 
 		viewVectors[i] = vec.getTransformed(cam.getInvProjectionMatrix());
 		// end of optimized code

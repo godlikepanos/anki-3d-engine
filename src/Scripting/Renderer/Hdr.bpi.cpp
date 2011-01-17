@@ -5,8 +5,8 @@
 WRAP(Hdr)
 {
 	class_<Hdr, noncopyable>("Hdr", no_init)
-		BP_PROPERTY_RW("blurringIterationsNum", Hdr::getBlurringIterationsNum, Hdr::setBlurringIterationsNum)
-		BP_PROPERTY_RW("exposure", Hdr::getExposure, Hdr::setExposure)
-		BP_PROPERTY_RW("blurringDist", Hdr::getBlurringDist, Hdr::setBlurringDist)
+		BP_PROPERTY_BASIC_TYPE(uint, Hdr, "blurringIterationsNum", getBlurringIterationsNum, setBlurringIterationsNum)
+		BP_PROPERTY_BASIC_TYPE(float, Hdr, "exposure", getExposure, setExposure)
+		BP_PROPERTY_BASIC_TYPE(float, Hdr, "blurringDist", getBlurringDist, setBlurringDist)
 	;
 }
