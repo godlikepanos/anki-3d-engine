@@ -5,11 +5,7 @@
 WRAP(Vec3)
 {
 	class_<Vec3>("Vec3")
-		/// @todo correct
-		/*.def_readwrite("x", &Vec3::x)
-		.def_readwrite("y", &Vec3::y)
-		.def_readwrite("z", &Vec3::z)*/
-		// constructors
+		// Constructors
 		.def(init<>())
 		.def(init<float>())
 		.def(init<float, float, float>())
@@ -17,6 +13,10 @@ WRAP(Vec3)
 		.def(init<const Vec3&>())
 		.def(init<const Vec4&>())
 		.def(init<const Quat&>())
+		// Accessors
+		BP_PROPERTY_MATH(Vec3, x)
+		BP_PROPERTY_MATH(Vec3, y)
+		BP_PROPERTY_MATH(Vec3, z)
 		// ops with self
 		.def(self + self) // +
 		.def(self += self) // +=
