@@ -7,9 +7,6 @@
 extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp
 
 
-ScriptingEngine* ScriptingEngine::instance = NULL;
-
-
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
@@ -38,7 +35,7 @@ void ScriptingEngine::execScript(const char* script, const char* scriptName)
 	}
 	catch(boost::python::error_already_set)
 	{
-		//PyErr_Print();
+		PyErr_Print();
 		throw EXCEPTION("Script \"" + scriptName + "\" failed with error");
 	}
 }

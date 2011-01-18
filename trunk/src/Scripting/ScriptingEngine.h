@@ -23,7 +23,6 @@ class ScriptingEngine
 		void exposeVar(const char* varName, Type* var);
 
 	private:
-		static ScriptingEngine* instance;
 		boost::python::object mainModule;
 		boost::python::object ankiModule;
 		boost::python::object mainNamespace;
