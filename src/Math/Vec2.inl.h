@@ -7,7 +7,61 @@
 namespace M {
 
 
-// accessors
+//======================================================================================================================
+// Constructors                                                                                                                    =
+//======================================================================================================================
+
+// default
+inline Vec2::Vec2()
+{
+	x() = y() = 0.0;
+}
+
+// float
+inline Vec2::Vec2(float f)
+{
+	x() = y() = f;
+}
+
+// float, float
+inline Vec2::Vec2(float x_, float y_)
+{
+	x() = x_;
+	y() = y_;
+}
+
+// float[]
+inline Vec2::Vec2(float arr[])
+{
+	x() = arr[0];
+	y() = arr[1];
+}
+
+// vec2
+inline Vec2::Vec2(const Vec2& b)
+{
+	x() = b.x();
+	y() = b.y();
+}
+
+// vec3
+inline Vec2::Vec2(const Vec3& v3)
+{
+	x() = v3.x();
+	y() = v3.y();
+}
+
+// vec4
+inline Vec2::Vec2(const Vec4& v4)
+{
+	x() = v4.x();
+	y() = v4.y();
+}
+
+
+//======================================================================================================================
+// Accessors                                                                                                           =
+//======================================================================================================================
 
 inline float& Vec2::x()
 {
@@ -39,52 +93,10 @@ inline float Vec2::operator[](uint i) const
 	return arr[i];
 }
 
-// constructor []
-inline Vec2::Vec2()
-{
-	x() = y() = 0.0;
-}
 
-// constructor [float, float]
-inline Vec2::Vec2(float x_, float y_)
-{
-	x() = x_;
-	y() = y_;
-}
-
-// constructor [float]
-inline Vec2::Vec2(float f)
-{
-	x() = y() = f;
-}
-
-// constructor [float[]]
-inline Vec2::Vec2(float arr[])
-{
-	x() = arr[0];
-	y() = arr[1];
-}
-
-// constructor [vec2]
-inline Vec2::Vec2(const Vec2& b)
-{
-	x() = b.x();
-	y() = b.y();
-}
-
-// constructor [vec3]
-inline Vec2::Vec2(const Vec3& v3)
-{
-	x() = v3.x();
-	y() = v3.y();
-}
-
-// constructor [vec4]
-inline Vec2::Vec2(const Vec4& v4)
-{
-	x() = v4.x();
-	y() = v4.y();
-}
+//======================================================================================================================
+// Operators with same                                                                                                 =
+//======================================================================================================================
 
 // +
 inline Vec2 Vec2::operator+(const Vec2& b) const
@@ -159,6 +171,11 @@ inline bool Vec2::operator!=(const Vec2& b) const
 {
 	return !(isZero(x() - b.x()) && isZero(y() - b.y()));
 }
+
+
+//======================================================================================================================
+// Operators with float                                                                                                =
+//======================================================================================================================
 
 // vec2 + float
 inline Vec2 Vec2::operator+(float f) const
@@ -236,6 +253,10 @@ inline Vec2& Vec2::operator/=(float f)
 	return ME;
 }
 
+//======================================================================================================================
+// Misc methods                                                                                                        =
+//======================================================================================================================
+
 // getLength
 inline float Vec2::getLength() const
 {
@@ -260,7 +281,10 @@ inline float Vec2::dot(const Vec2& b) const
 	return x() * b.x() + y() * b.y();
 }
 
-// print
+
+//======================================================================================================================
+// Print                                                                                                               =
+//======================================================================================================================
 inline std::ostream& operator<<(std::ostream& s, const Vec2& v)
 {
 	s << v.x() << ' ' << v.y();

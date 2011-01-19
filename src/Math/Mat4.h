@@ -11,21 +11,13 @@ namespace M {
 class Mat4
 {
 	public:
-		/// @name Accessors
-		/// @{
-		float& operator ()(const uint i, const uint j);
-		const float& operator ()(const uint i, const uint j) const;
-		float& operator [](const uint i);
-		const float& operator [](const uint i) const;
-		/// @}
-
 		/// @name Constructors & distructors
 		/// @{
 		explicit Mat4() {}
 		explicit Mat4(float f);
 		explicit Mat4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
 		              float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33);
-		explicit Mat4(const float arr []);
+		explicit Mat4(const float arr[]);
 		         Mat4(const Mat4& b);
 		explicit Mat4(const Mat3& m3);
 		explicit Mat4(const Vec3& v);
@@ -35,35 +27,43 @@ class Mat4
 		explicit Mat4(const Transform& t);
 		/// @}
 
+		/// @name Accessors
+		/// @{
+		float& operator()(const uint i, const uint j);
+		const float& operator()(const uint i, const uint j) const;
+		float& operator[](const uint i);
+		const float& operator[](const uint i) const;
+		/// @}
+
 		/// @name Operators with same type
 		/// @{
-		Mat4 operator +(const Mat4& b) const;
-		Mat4& operator +=(const Mat4& b);
-		Mat4 operator -(const Mat4& b) const;
-		Mat4& operator -=(const Mat4& b);
-		Mat4 operator *(const Mat4& b) const; ///< 64 muls, 48 adds
-		Mat4& operator *=(const Mat4& b);
-		Mat4 operator /(const Mat4& b) const;
-		Mat4& operator /=(const Mat4& b);
-		bool operator ==(const Mat4& b) const;
-		bool operator !=(const Mat4& b) const;
+		Mat4 operator+(const Mat4& b) const;
+		Mat4& operator+=(const Mat4& b);
+		Mat4 operator-(const Mat4& b) const;
+		Mat4& operator-=(const Mat4& b);
+		Mat4 operator*(const Mat4& b) const; ///< 64 muls, 48 adds
+		Mat4& operator*=(const Mat4& b);
+		Mat4 operator/(const Mat4& b) const;
+		Mat4& operator/=(const Mat4& b);
+		bool operator==(const Mat4& b) const;
+		bool operator!=(const Mat4& b) const;
 		/// @}
 
 		/// @name Operators with float
 		/// @{
-		Mat4  operator + (float f) const;
-		Mat4& operator +=(float f);
-		Mat4  operator - (float f) const;
-		Mat4& operator -=(float f);
-		Mat4  operator * (float f) const;
-		Mat4& operator *=(float f);
-		Mat4  operator / (float f) const;
-		Mat4& operator /=(float f);
+		Mat4  operator+(float f) const;
+		Mat4& operator+=(float f);
+		Mat4  operator-(float f) const;
+		Mat4& operator-=(float f);
+		Mat4  operator*(float f) const;
+		Mat4& operator*=(float f);
+		Mat4  operator/(float f) const;
+		Mat4& operator/=(float f);
 		/// @}
 
 		/// @name Operators with other types
 		/// @{
-		Vec4  operator *(const Vec4& v4) const; ///< 16 muls, 12 adds
+		Vec4 operator*(const Vec4& v4) const; ///< 16 muls, 12 adds
 		/// @}
 
 		/// @name Other
@@ -96,8 +96,11 @@ class Mat4
 		/// @{
 		union
 		{
-			float arr1[16];
-			float arr2[4][4];
+			boost::array<float, 16> arr1;
+			boost::array<boost::array<float, 4>, 4> arr2;
+			#if defined(MATH_INTEL_SIMD)
+				boost::array<__m128, 4> arrMm;
+			#endif
 		};
 		/// @}
 };
@@ -105,13 +108,12 @@ class Mat4
 
 /// @name Other operators
 /// @{
-extern Mat4 operator +(float f, const Mat4& m4);
-extern Mat4 operator -(float f, const Mat4& m4);
-extern Mat4 operator *(float f, const Mat4& m4);
-extern Mat4 operator /(float f, const Mat4& m4);
+extern Mat4 operator+(float f, const Mat4& m4);
+extern Mat4 operator-(float f, const Mat4& m4);
+extern Mat4 operator*(float f, const Mat4& m4);
+extern Mat4 operator/(float f, const Mat4& m4);
 extern std::ostream& operator<<(std::ostream& s, const Mat4& m);
 /// @}
-
 
 } // end namespace
 

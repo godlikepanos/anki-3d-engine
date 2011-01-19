@@ -4,7 +4,7 @@
 #include "Logger.h"
 
 
-extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp
+extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp by boost::python
 
 
 //======================================================================================================================
