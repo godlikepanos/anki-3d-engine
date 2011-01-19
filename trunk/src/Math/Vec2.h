@@ -11,16 +11,6 @@ namespace M {
 class Vec2
 {
 	public:
-		/// @name Accessors
-		/// @{
-		float& x();
-		float x() const;
-		float& y();
-		float y() const;
-		float& operator[](uint i);
-		float operator[](uint i) const;
-		/// @}
-
 		/// @name Constructors & distructors
 		/// @{
 		explicit Vec2();
@@ -30,9 +20,16 @@ class Vec2
 		         Vec2(const Vec2& b);
 		explicit Vec2(const Vec3& v3);
 		explicit Vec2(const Vec4& v4);
-		#if defined(MATH_INTEL_SIMD)
-			explicit Vec2(const __m64& mm);
-		#endif
+		/// @}
+
+		/// @name Accessors
+		/// @{
+		float& x();
+		float x() const;
+		float& y();
+		float y() const;
+		float& operator[](uint i);
+		float operator[](uint i) const;
 		/// @}
 
 		/// @name Operators with same type
@@ -81,10 +78,6 @@ class Vec2
 			} vec;
 
 			boost::array<float, 2> arr;
-
-			#if defined(MATH_INTEL_SIMD)
-				__m64 mm;
-			#endif
 		};
 		/// @}
 };

@@ -146,7 +146,7 @@ void App::initWindow()
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
 	// OpenWindow
-	windowId = SDL_CreateWindow("AnKi Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowW, windowH,
+	windowId = SDL_CreateWindow("AnKi 3D Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowW, windowH,
 	                            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
 	if(!windowId)
