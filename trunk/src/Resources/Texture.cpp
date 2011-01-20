@@ -46,6 +46,58 @@ void Texture::load(const char* filename)
 {
 	try
 	{
+		/// @todo delete this
+		if(std::string("textures/stone.001.diff.tga") == filename)
+		{
+			target = GL_TEXTURE_2D;
+			glGenTextures(1, &glId);
+			bind(LAST_TEX_UNIT);
+
+			setRepeat(true);
+			int internalFormat;
+			int format;
+			int type;
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+			format = GL_RGBA;
+			type = GL_UNSIGNED_BYTE;
+
+			int w = 100, h = 100;
+			int level = 0;
+			//uint cols
+			while(1)
+			{
+				uint col = rand();
+				Vec<uint> buff(w * h, col);
+				glTexImage2D(target, level, internalFormat, w, h, 0, format, type, &buff[0]);
+				++level;
+				w /= 2;
+				h /= 2;
+				if(w == 0 || h == 0)
+				{
+					break;
+				}
+			}
+
+			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			//setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
+
+
+			/*w = img.getWidth();
+			h = img.getHeight();
+			Vec<uchar> buff__(w * h * 3, 0x0F);
+			glTexSubImage2D(target, 0, 0, 0, w, h, format, type, &buff__[0]);
+
+			w = img.getWidth() / 2;
+			h = img.getHeight() / 2;
+			Vec<uchar> buff(w * h * 3, 0xFF);
+			glTexSubImage2D(target, 1, 0, 0, w, h, format, type, &buff[0]);*/
+			return;
+		}
+
+
+
 		target = GL_TEXTURE_2D;
 		if(isLoaded())
 		{
@@ -101,39 +153,11 @@ void Texture::load(const char* filename)
 				throw EXCEPTION("See file");
 		}
 
-		/*if(std::string("textures/stone.001.diff.tga") == filename)
-		{
-			Vec<uchar> buff(img.getWidth() * img.getHeight(), 0xFF);
-
-			glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &buff[0]);
-		}
-		else*/
-
 		glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
 		if(mipmappingEnabled)
 		{
 			glGenerateMipmap(target);
 		}
-
-		/// @todo delete this
-		if(std::string("textures/stone.001.diff.tga") == filename)
-		{
-			//setMipmapLevel(7);
-			//INFO(filename << " " << getBaseLevel() << " " << getMaxLevel() << " " << getWidth(1));
-
-			int w, h;
-
-			w = img.getWidth();
-			h = img.getHeight();
-			Vec<uchar> buff__(w * h * 3, 0x0F);
-			glTexSubImage2D(target, 0, 0, 0, w, h, format, type, &buff__[0]);
-
-			w = img.getWidth() / 2;
-			h = img.getHeight() / 2;
-			Vec<uchar> buff(w * h * 3, 0xFF);
-			glTexSubImage2D(target, 1, 0, 0, w, h, format, type, &buff[0]);
-		}
-
 
 		ON_GL_FAIL_THROW_EXCEPTION();
 	}
