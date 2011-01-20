@@ -10,6 +10,11 @@ namespace M {
 /// Used mainly for transformations but not necessarily. Its row major
 class Mat4
 {
+	friend Mat4 operator+(float f, const Mat4& m4);
+	friend Mat4 operator-(float f, const Mat4& m4);
+	friend Mat4 operator*(float f, const Mat4& m4);
+	friend Mat4 operator/(float f, const Mat4& m4);
+
 	public:
 		/// @name Constructors & distructors
 		/// @{
@@ -80,8 +85,8 @@ class Mat4
 		void  transpose();
 		Mat4  getTransposed() const;
 		float getDet() const;
-		void  invert();
-		Mat4  getInverse() const;
+		Mat4  getInverse() const; ///< Invert using Cramer's rule
+		void  invert(); ///< See getInverse
 		Mat4  getInverseTransformation() const;
 		Mat4  lerp(const Mat4& b, float t) const;
 		void  setIdentity();
