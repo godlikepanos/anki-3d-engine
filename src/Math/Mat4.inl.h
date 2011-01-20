@@ -357,54 +357,99 @@ inline Mat4 operator+(float f, const Mat4& m4)
 // 4x4 += float
 inline Mat4& Mat4::operator+=(float f)
 {
-	for(int i = 0; i < 16; i++)
-	{
-		SELF[i] += f;
-	}
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			arrMm[i] = _mm_add_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			SELF[i] += f;
+		}
+	#endif
 	return SELF;
 }
 
 // 4x4 - float
 inline Mat4 Mat4::operator-(float f) const
 {
-	Mat4 c;
-	for(int i = 0; i < 16; i++)
-	{
-		c[i] = SELF[i] - f;
-	}
-	return c;
+	Mat4 r;
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			r.arrMm[i] = _mm_sub_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			r[i] = SELF[i] - f;
+		}
+	#endif
+	return r;
 }
 
 // float - 4x4
 inline Mat4 operator-(float f, const Mat4& m4)
 {
-	Mat4 out;
-	for(int i = 0; i < 16; i++)
-	{
-		out[i] = f- m4[i];
-	}
-	return out;
+	Mat4 r;
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			r.arrMm[i] = _mm_sub_ps(mm, m4.arrMm[i]);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			r[i] = f - m4[i];
+		}
+	#endif
+	return r;
 }
 
-// 4x4 - float (self)
+// 4x4 -= float
 inline Mat4& Mat4::operator-=(float f)
 {
-	for(int i = 0; i < 16; i++)
-	{
-		SELF[i] -= f;
-	}
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			arrMm[i] = _mm_sub_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			SELF[i] -= f;
+		}
+	#endif
 	return SELF;
 }
 
 // 4x4 * float
 inline Mat4 Mat4::operator*(float f) const
 {
-	Mat4 c;
-	for(int i = 0; i < 16; i++)
-	{
-		c[i] = SELF[i] * f;
-	}
-	return c;
+	Mat4 r;
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			r.arrMm[i] = _mm_mul_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			r[i] = SELF[i] * f;
+		}
+	#endif
+	return r;
 }
 
 // float * 4x4
@@ -416,42 +461,78 @@ inline Mat4 operator*(float f, const Mat4& m4)
 // 4x4 *= float
 inline Mat4& Mat4::operator*=(float f)
 {
-	for(int i = 0; i < 16; i++)
-	{
-		SELF[i] *= f;
-	}
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			arrMm[i] = _mm_mul_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			SELF[i] *= f;
+		}
+	#endif
 	return SELF;
 }
 
 // 4x4 / float
 inline Mat4 Mat4::operator/(float f) const
 {
-	Mat4 c;
-	for(int i = 0; i < 16; i++)
-	{
-		c[i] = SELF[i] / f;
-	}
-	return c;
+	Mat4 r;
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			r.arrMm[i] = _mm_mul_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			r[i] = SELF[i] / f;
+		}
+	#endif
+	return r;
 }
 
 // float / 4x4
 inline Mat4 operator/(float f, const Mat4& m4)
 {
-	Mat4 out;
-	for(uint i = 0; i < 16; i++)
-	{
-		out[i] = f / m4[i];
-	}
-	return out;
+	Mat4 r;
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			r.arrMm[i] = _mm_div_ps(mm, m4.arrMm[i]);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			r[i] = f / m4[i];
+		}
+	#endif
+	return r;
 }
 
 // 4x4 /= float
 inline Mat4& Mat4::operator/=(float f)
 {
-	for(int i = 0; i < 16; i++)
-	{
-		SELF[i] /= f;
-	}
+	#if defined(MATH_INTEL_SIMD)
+		__m128 mm;
+		mm = _mm_set1_ps(f);
+		for(int i = 0; i < 4; i++)
+		{
+			arrMm[i] = _mm_div_ps(arrMm[i], mm);
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			SELF[i] /= f;
+		}
+	#endif
 	return SELF;
 }
 
@@ -582,7 +663,6 @@ inline void Mat4::transpose()
 }
 
 // getTransposed
-// return the transposed
 inline Mat4 Mat4::getTransposed() const
 {
 	Mat4 m4;
@@ -690,96 +770,175 @@ inline float Mat4::getDet() const
 	SELF(0, 1) * SELF(1, 0) * SELF(2, 2) * SELF(3, 3) + SELF(0, 0) * SELF(1, 1) * SELF(2, 2) * SELF(3, 3);
 }
 
+// getInverse
+inline Mat4 Mat4::getInverse() const
+{
+	#if defined(MATH_INTEL_SIMD)
+		Mat4 r(SELF);
+		__m128 minor0, minor1, minor2, minor3;
+		__m128 det, tmp1;
+
+		// Transpose
+		r.transpose();
+
+		// Calc coeffs
+		tmp1 = _mm_mul_ps(r.arrMm[2], r.arrMm[3]);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+		minor0 = _mm_mul_ps(r.arrMm[1], tmp1);
+		minor1 = _mm_mul_ps(r.arrMm[0], tmp1);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+		minor0 = _mm_sub_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor0);
+		minor1 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor1);
+		minor1 = _mm_shuffle_ps(minor1, minor1, 0x4E);
+
+		tmp1 = _mm_mul_ps(r.arrMm[1], r.arrMm[2]);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+		minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor0);
+		minor3 = _mm_mul_ps(r.arrMm[0], tmp1);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+		minor0 = _mm_sub_ps(minor0, _mm_mul_ps(r.arrMm[3], tmp1));
+		minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor3);
+		minor3 = _mm_shuffle_ps(minor3, minor3, 0x4E);
+
+		tmp1 = _mm_mul_ps(_mm_shuffle_ps(r.arrMm[1], r.arrMm[1], 0x4E), r.arrMm[3]);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+		r.arrMm[2] = _mm_shuffle_ps(r.arrMm[2], r.arrMm[2], 0x4E);
+		minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor0);
+		minor2 = _mm_mul_ps(r.arrMm[0], tmp1);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+		minor0 = _mm_sub_ps(minor0, _mm_mul_ps(r.arrMm[2], tmp1));
+		minor2 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor2);
+		minor2 = _mm_shuffle_ps(minor2, minor2, 0x4E);
+
+		tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[1]);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+		minor2 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor2);
+		minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor3);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+		minor2 = _mm_sub_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor2);
+		minor3 = _mm_sub_ps(minor3, _mm_mul_ps(r.arrMm[2], tmp1));
+
+		tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[3]);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+		minor1 = _mm_sub_ps(minor1, _mm_mul_ps(r.arrMm[2], tmp1));
+		minor2 = _mm_add_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor2);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+		minor1 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor1);
+		minor2 = _mm_sub_ps(minor2, _mm_mul_ps(r.arrMm[1], tmp1));
+
+		tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[2]);
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+		minor1 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor1);
+		minor3 = _mm_sub_ps(minor3, _mm_mul_ps(r.arrMm[1], tmp1));
+		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+		minor1 = _mm_sub_ps(minor1, _mm_mul_ps(r.arrMm[3], tmp1));
+		minor3 = _mm_add_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor3);
+
+		// 1 / det
+		det = _mm_mul_ps(r.arrMm[0], minor0);
+		det = _mm_add_ps(_mm_shuffle_ps(det, det, 0x4E), det);
+		det = _mm_add_ss(_mm_shuffle_ps(det, det, 0xB1), det);
+		tmp1 = _mm_rcp_ss(det);
+		det = _mm_sub_ss(_mm_add_ss(tmp1, tmp1), _mm_mul_ss(det, _mm_mul_ss(tmp1, tmp1)));
+		det = _mm_shuffle_ps(det, det, 0x00);
+
+		// Mul and store
+		minor0 = _mm_mul_ps(det, minor0);
+		r.arrMm[0] = minor0;
+		minor1 = _mm_mul_ps(det, minor1);
+		r.arrMm[1] = minor1;
+		minor2 = _mm_mul_ps(det, minor2);
+		r.arrMm[2] = minor2;
+		minor3 = _mm_mul_ps(det, minor3);
+		r.arrMm[3] = minor3;
+
+		return r;
+	#else
+		float tmp[12];
+		float det;
+		const Mat4& in = SELF;
+		Mat4 m4;
+
+		tmp[0] = in(2, 2) * in(3, 3);
+		tmp[1] = in(3, 2) * in(2, 3);
+		tmp[2] = in(1, 2) * in(3, 3);
+		tmp[3] = in(3, 2) * in(1, 3);
+		tmp[4] = in(1, 2) * in(2, 3);
+		tmp[5] = in(2, 2) * in(1, 3);
+		tmp[6] = in(0, 2) * in(3, 3);
+		tmp[7] = in(3, 2) * in(0, 3);
+		tmp[8] = in(0, 2) * in(2, 3);
+		tmp[9] = in(2, 2) * in(0, 3);
+		tmp[10] = in(0, 2) * in(1, 3);
+		tmp[11] = in(1, 2) * in(0, 3);
+
+		m4(0, 0) =  tmp[0] * in(1, 1) + tmp[3] * in(2, 1) + tmp[4] * in(3, 1);
+		m4(0, 0) -= tmp[1] * in(1, 1) + tmp[2] * in(2, 1) + tmp[5] * in(3, 1);
+		m4(0, 1) =  tmp[1] * in(0, 1) + tmp[6] * in(2, 1) + tmp[9] * in(3, 1);
+		m4(0, 1) -= tmp[0] * in(0, 1) + tmp[7] * in(2, 1) + tmp[8] * in(3, 1);
+		m4(0, 2) =  tmp[2] * in(0, 1) + tmp[7] * in(1, 1) + tmp[10] * in(3, 1);
+		m4(0, 2) -= tmp[3] * in(0, 1) + tmp[6] * in(1, 1) + tmp[11] * in(3, 1);
+		m4(0, 3) =  tmp[5] * in(0, 1) + tmp[8] * in(1, 1) + tmp[11] * in(2, 1);
+		m4(0, 3) -= tmp[4] * in(0, 1) + tmp[9] * in(1, 1) + tmp[10] * in(2, 1);
+		m4(1, 0) =  tmp[1] * in(1, 0) + tmp[2] * in(2, 0) + tmp[5] * in(3, 0);
+		m4(1, 0) -= tmp[0] * in(1, 0) + tmp[3] * in(2, 0) + tmp[4] * in(3, 0);
+		m4(1, 1) =  tmp[0] * in(0, 0) + tmp[7] * in(2, 0) + tmp[8] * in(3, 0);
+		m4(1, 1) -= tmp[1] * in(0, 0) + tmp[6] * in(2, 0) + tmp[9] * in(3, 0);
+		m4(1, 2) =  tmp[3] * in(0, 0) + tmp[6] * in(1, 0) + tmp[11] * in(3, 0);
+		m4(1, 2) -= tmp[2] * in(0, 0) + tmp[7] * in(1, 0) + tmp[10] * in(3, 0);
+		m4(1, 3) =  tmp[4] * in(0, 0) + tmp[9] * in(1, 0) + tmp[10] * in(2, 0);
+		m4(1, 3) -= tmp[5] * in(0, 0) + tmp[8] * in(1, 0) + tmp[11] * in(2, 0);
+
+		tmp[0] = in(2, 0) * in(3, 1);
+		tmp[1] = in(3, 0) * in(2, 1);
+		tmp[2] = in(1, 0) * in(3, 1);
+		tmp[3] = in(3, 0) * in(1, 1);
+		tmp[4] = in(1, 0) * in(2, 1);
+		tmp[5] = in(2, 0) * in(1, 1);
+		tmp[6] = in(0, 0) * in(3, 1);
+		tmp[7] = in(3, 0) * in(0, 1);
+		tmp[8] = in(0, 0) * in(2, 1);
+		tmp[9] = in(2, 0) * in(0, 1);
+		tmp[10] = in(0, 0) * in(1, 1);
+		tmp[11] = in(1, 0) * in(0, 1);
+
+		m4(2, 0) = tmp[0] * in(1, 3) + tmp[3] * in(2, 3) + tmp[4] * in(3, 3);
+		m4(2, 0)-= tmp[1] * in(1, 3) + tmp[2] * in(2, 3) + tmp[5] * in(3, 3);
+		m4(2, 1) = tmp[1] * in(0, 3) + tmp[6] * in(2, 3) + tmp[9] * in(3, 3);
+		m4(2, 1)-= tmp[0] * in(0, 3) + tmp[7] * in(2, 3) + tmp[8] * in(3, 3);
+		m4(2, 2) = tmp[2] * in(0, 3) + tmp[7] * in(1, 3) + tmp[10] * in(3, 3);
+		m4(2, 2)-= tmp[3] * in(0, 3) + tmp[6] * in(1, 3) + tmp[11] * in(3, 3);
+		m4(2, 3) = tmp[5] * in(0, 3) + tmp[8] * in(1, 3) + tmp[11] * in(2, 3);
+		m4(2, 3)-= tmp[4] * in(0, 3) + tmp[9] * in(1, 3) + tmp[10] * in(2, 3);
+		m4(3, 0) = tmp[2] * in(2, 2) + tmp[5] * in(3, 2) + tmp[1] * in(1, 2);
+		m4(3, 0)-= tmp[4] * in(3, 2) + tmp[0] * in(1, 2) + tmp[3] * in(2, 2);
+		m4(3, 1) = tmp[8] * in(3, 2) + tmp[0] * in(0, 2) + tmp[7] * in(2, 2);
+		m4(3, 1)-= tmp[6] * in(2, 2) + tmp[9] * in(3, 2) + tmp[1] * in(0, 2);
+		m4(3, 2) = tmp[6] * in(1, 2) + tmp[11] * in(3, 2) + tmp[3] * in(0, 2);
+		m4(3, 2)-= tmp[10] * in(3, 2) + tmp[2] * in(0, 2) + tmp[7] * in(1, 2);
+		m4(3, 3) = tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
+		m4(3, 3)-= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
+
+		det = SELF(0, 0) * m4(0, 0) + SELF(1, 0) * m4(0, 1) + SELF(2, 0) * m4(0, 2) + SELF(3, 0) * m4(0, 3);
+
+		RASSERT_THROW_EXCEPTION(isZero(det)); // Cannot invert, det == 0
+		det = 1.0 / det;
+		m4 *= det;
+		return m4;
+	#endif
+}
+
 // invert
 inline void Mat4::invert()
 {
 	SELF = getInverse();
 }
 
-// Inverted
-inline Mat4 Mat4::getInverse() const
-{
-	float tmp[12];
-	float det;
-	const Mat4& in = SELF;
-
-	Mat4 m4;
-
-
-	tmp[0] = in(2, 2) * in(3, 3);
-	tmp[1] = in(3, 2) * in(2, 3);
-	tmp[2] = in(1, 2) * in(3, 3);
-	tmp[3] = in(3, 2) * in(1, 3);
-	tmp[4] = in(1, 2) * in(2, 3);
-	tmp[5] = in(2, 2) * in(1, 3);
-	tmp[6] = in(0, 2) * in(3, 3);
-	tmp[7] = in(3, 2) * in(0, 3);
-	tmp[8] = in(0, 2) * in(2, 3);
-	tmp[9] = in(2, 2) * in(0, 3);
-	tmp[10] = in(0, 2) * in(1, 3);
-	tmp[11] = in(1, 2) * in(0, 3);
-
-	m4(0, 0) =  tmp[0]*in(1, 1) + tmp[3]*in(2, 1) + tmp[4]*in(3, 1);
-	m4(0, 0) -= tmp[1]*in(1, 1) + tmp[2]*in(2, 1) + tmp[5]*in(3, 1);
-	m4(0, 1) =  tmp[1]*in(0, 1) + tmp[6]*in(2, 1) + tmp[9]*in(3, 1);
-	m4(0, 1) -= tmp[0]*in(0, 1) + tmp[7]*in(2, 1) + tmp[8]*in(3, 1);
-	m4(0, 2) =  tmp[2]*in(0, 1) + tmp[7]*in(1, 1) + tmp[10]*in(3, 1);
-	m4(0, 2) -= tmp[3]*in(0, 1) + tmp[6]*in(1, 1) + tmp[11]*in(3, 1);
-	m4(0, 3) =  tmp[5]*in(0, 1) + tmp[8]*in(1, 1) + tmp[11]*in(2, 1);
-	m4(0, 3) -= tmp[4]*in(0, 1) + tmp[9]*in(1, 1) + tmp[10]*in(2, 1);
-	m4(1, 0) =  tmp[1]*in(1, 0) + tmp[2]*in(2, 0) + tmp[5]*in(3, 0);
-	m4(1, 0) -= tmp[0]*in(1, 0) + tmp[3]*in(2, 0) + tmp[4]*in(3, 0);
-	m4(1, 1) =  tmp[0]*in(0, 0) + tmp[7]*in(2, 0) + tmp[8]*in(3, 0);
-	m4(1, 1) -= tmp[1]*in(0, 0) + tmp[6]*in(2, 0) + tmp[9]*in(3, 0);
-	m4(1, 2) =  tmp[3]*in(0, 0) + tmp[6]*in(1, 0) + tmp[11]*in(3, 0);
-	m4(1, 2) -= tmp[2]*in(0, 0) + tmp[7]*in(1, 0) + tmp[10]*in(3, 0);
-	m4(1, 3) =  tmp[4]*in(0, 0) + tmp[9]*in(1, 0) + tmp[10]*in(2, 0);
-	m4(1, 3) -= tmp[5]*in(0, 0) + tmp[8]*in(1, 0) + tmp[11]*in(2, 0);
-
-
-	tmp[0] = in(2, 0)*in(3, 1);
-	tmp[1] = in(3, 0)*in(2, 1);
-	tmp[2] = in(1, 0)*in(3, 1);
-	tmp[3] = in(3, 0)*in(1, 1);
-	tmp[4] = in(1, 0)*in(2, 1);
-	tmp[5] = in(2, 0)*in(1, 1);
-	tmp[6] = in(0, 0)*in(3, 1);
-	tmp[7] = in(3, 0)*in(0, 1);
-	tmp[8] = in(0, 0)*in(2, 1);
-	tmp[9] = in(2, 0)*in(0, 1);
-	tmp[10] = in(0, 0)*in(1, 1);
-	tmp[11] = in(1, 0)*in(0, 1);
-
-	m4(2, 0) = tmp[0]*in(1, 3) + tmp[3]*in(2, 3) + tmp[4]*in(3, 3);
-	m4(2, 0)-= tmp[1]*in(1, 3) + tmp[2]*in(2, 3) + tmp[5]*in(3, 3);
-	m4(2, 1) = tmp[1]*in(0, 3) + tmp[6]*in(2, 3) + tmp[9]*in(3, 3);
-	m4(2, 1)-= tmp[0]*in(0, 3) + tmp[7]*in(2, 3) + tmp[8]*in(3, 3);
-	m4(2, 2) = tmp[2]*in(0, 3) + tmp[7]*in(1, 3) + tmp[10]*in(3, 3);
-	m4(2, 2)-= tmp[3]*in(0, 3) + tmp[6]*in(1, 3) + tmp[11]*in(3, 3);
-	m4(2, 3) = tmp[5]*in(0, 3) + tmp[8]*in(1, 3) + tmp[11]*in(2, 3);
-	m4(2, 3)-= tmp[4]*in(0, 3) + tmp[9]*in(1, 3) + tmp[10]*in(2, 3);
-	m4(3, 0) = tmp[2]*in(2, 2) + tmp[5]*in(3, 2) + tmp[1]*in(1, 2);
-	m4(3, 0)-= tmp[4]*in(3, 2) + tmp[0]*in(1, 2) + tmp[3]*in(2, 2);
-	m4(3, 1) = tmp[8]*in(3, 2) + tmp[0]*in(0, 2) + tmp[7]*in(2, 2);
-	m4(3, 1)-= tmp[6]*in(2, 2) + tmp[9]*in(3, 2) + tmp[1]*in(0, 2);
-	m4(3, 2) = tmp[6]*in(1, 2) + tmp[11]*in(3, 2) + tmp[3]*in(0, 2);
-	m4(3, 2)-= tmp[10]*in(3, 2) + tmp[2]*in(0, 2) + tmp[7]*in(1, 2);
-	m4(3, 3) = tmp[10]*in(2, 2) + tmp[4]*in(0, 2) + tmp[9]*in(1, 2);
-	m4(3, 3)-= tmp[8]*in(1, 2) + tmp[11]*in(2, 2) + tmp[5]*in(0, 2);
-
-	det = SELF(0, 0)*m4(0, 0)+SELF(1, 0)*m4(0, 1)+SELF(2, 0)*m4(0, 2)+SELF(3, 0)*m4(0, 3);
-
-	RASSERT_THROW_EXCEPTION(isZero(det)); // Cannot invert, det == 0
-	det = 1.0/det;
-	m4 *= det;
-	return m4;
-}
-
 
 // getInverseTransformation
 inline Mat4 Mat4::getInverseTransformation() const
 {
-	Mat3 invertedRot = (getRotationPart()).getTransposed();
+	Mat3 invertedRot = getRotationPart().getTransposed();
 	Vec3 invertedTsl = getTranslationPart();
 	invertedTsl = -(invertedRot * invertedTsl);
 	return Mat4(invertedTsl, invertedRot);
@@ -788,7 +947,7 @@ inline Mat4 Mat4::getInverseTransformation() const
 // lerp
 inline Mat4 Mat4::lerp(const Mat4& b, float t) const
 {
-	return (SELF*(1.0-t))+(b*t);
+	return (SELF * (1.0 - t)) + (b * t);
 }
 
 // setIdentity
@@ -801,12 +960,12 @@ inline void Mat4::setIdentity()
 inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 {
 	/*
-	 * The clean code is:
-	 * Mat3 rot = m0.getRotationPart() * m1.getRotationPart();  // combine the rotations
-	 * Vec3 tra = (m1.getTranslationPart()).Transformed(m0.getTranslationPart(), m0.getRotationPart(), 1.0);
-	 * return Mat4(tra, rot);
-	 * and the optimized:
-	 */
+	The clean code is:
+	Mat3 rot = m0.getRotationPart() * m1.getRotationPart();  // combine the rotations
+	Vec3 tra = (m1.getTranslationPart()).Transformed(m0.getTranslationPart(), m0.getRotationPart(), 1.0);
+	return Mat4(tra, rot);
+	and the optimized:
+	*/
 	RASSERT_THROW_EXCEPTION(!isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3)-1.0) ||
 	          !isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3)-1.0)); // one of the 2 mat4 doesnt represent transformation
 
@@ -832,14 +991,15 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	return m4;
 }
 
+
 //======================================================================================================================
 // Print                                                                                                               =
 //======================================================================================================================
 inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 {
-	for(int i=0; i<4; i++)
+	for(int i = 0; i < 4; i++)
 	{
-		for(int j=0; j<4; j++)
+		for(int j = 0; j < 4; j++)
 		{
 			s << m(i, j) << ' ';
 		}
@@ -851,5 +1011,6 @@ inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 	}
 	return s;
 }
+
 
 } // end namespace

@@ -11,55 +11,55 @@ namespace M {
 class Mat3
 {
 	public:
-		/// @name Accessors
-		/// @{
-		float& operator()(const uint i, const uint j);
-		const float& operator()(const uint i, const uint j) const;
-		float& operator [](const uint i);
-		const float& operator [](const uint i) const;
-		/// @}
-
 		/// @name Constructors & distructors
 		/// @{
 		explicit Mat3() {};
 		explicit Mat3(float f);
 		explicit Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
-		explicit Mat3(float arr []);
+		explicit Mat3(float arr[]);
 		         Mat3(const Mat3& b);
 		explicit Mat3(const Quat& q); ///< Quat to Mat3. 12 muls, 12 adds
 		explicit Mat3(const Euler& eu);
 		explicit Mat3(const Axisang& axisang);
 		/// @}
 
+		/// @name Accessors
+		/// @{
+		float& operator()(const uint i, const uint j);
+		const float& operator()(const uint i, const uint j) const;
+		float& operator[](const uint i);
+		const float& operator[](const uint i) const;
+		/// @}
+
 		/// @name Operators with Mat3
 		/// @{
-		Mat3 operator +(const Mat3& b) const;
-		Mat3& operator +=(const Mat3& b);
-		Mat3 operator -(const Mat3& b) const;
-		Mat3& operator -=(const Mat3& b);
-		Mat3 operator *(const Mat3& b) const; ///< 27 muls, 18 adds
-		Mat3& operator *=(const Mat3& b);
-		Mat3 operator /(const Mat3& b) const;
-		Mat3& operator /=(const Mat3& b);
-		bool operator ==(const Mat3& b) const;
-		bool operator !=(const Mat3& b) const;
+		Mat3 operator+(const Mat3& b) const;
+		Mat3& operator+=(const Mat3& b);
+		Mat3 operator-(const Mat3& b) const;
+		Mat3& operator-=(const Mat3& b);
+		Mat3 operator*(const Mat3& b) const; ///< 27 muls, 18 adds
+		Mat3& operator*=(const Mat3& b);
+		Mat3 operator/(const Mat3& b) const;
+		Mat3& operator/=(const Mat3& b);
+		bool operator==(const Mat3& b) const;
+		bool operator!=(const Mat3& b) const;
 		/// @}
 
 		/// @name Operators with float
 		/// @{
-		Mat3 operator +(float f) const;
-		Mat3& operator +=(float f);
-		Mat3 operator -(float f) const;
-		Mat3& operator -=(float f);
-		Mat3 operator *(float f) const;
-		Mat3& operator *=(float f);
-		Mat3 operator /(float f) const;
-		Mat3& operator /=(float f);
+		Mat3 operator+(float f) const;
+		Mat3& operator+=(float f);
+		Mat3 operator-(float f) const;
+		Mat3& operator-=(float f);
+		Mat3 operator*(float f) const;
+		Mat3& operator*=(float f);
+		Mat3 operator/(float f) const;
+		Mat3& operator/=(float f);
 		/// @}
 
 		/// @name Operators with others
 		/// @{
-		Vec3 operator *(const Vec3& b) const;  ///< 9 muls, 6 adds
+		Vec3 operator*(const Vec3& b) const;  ///< 9 muls, 6 adds
 		/// @}
 
 		/// @name Other
@@ -101,8 +101,8 @@ class Mat3
 		/// @{
 		union
 		{
-			float arr1[9];
-			float arr2[3][3];
+			boost::array<float, 9> arr1;
+			boost::array<boost::array<float, 3>, 3> arr2;
 		};
 		/// @}
 };
@@ -110,10 +110,10 @@ class Mat3
 
 /// @name Other Mat3 operators
 /// @{
-extern Mat3 operator +(float f, const Mat3& m3);
-extern Mat3 operator -(float f, const Mat3& m3);
-extern Mat3 operator *(float f, const Mat3& m3);
-extern Mat3 operator /(float f, const Mat3& m3);
+extern Mat3 operator+(float f, const Mat3& m3);
+extern Mat3 operator-(float f, const Mat3& m3);
+extern Mat3 operator*(float f, const Mat3& m3);
+extern Mat3 operator/(float f, const Mat3& m3);
 extern std::ostream& operator<<(std::ostream& s, const Mat3& m);
 /// @}
 
