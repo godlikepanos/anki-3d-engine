@@ -438,7 +438,7 @@ inline Mat4 Mat4::operator/(float f) const
 inline Mat4 operator/(float f, const Mat4& m4)
 {
 	Mat4 out;
-	for(uint i = 0; i < 9; i++)
+	for(uint i = 0; i < 16; i++)
 	{
 		out[i] = f / m4[i];
 	}
