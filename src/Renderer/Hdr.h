@@ -14,30 +14,38 @@ class ShaderProg;
 /// High dynamic range lighting pass
 class Hdr: private RenderingPass
 {
-	PROPERTY_R(bool, enabled, isEnabled)
-	PROPERTY_R(Texture, toneFai, getToneFai) ///< Vertical blur pass FAI
-	PROPERTY_R(Texture, hblurFai, getHblurFai) ///< pass0Fai with the horizontal blur FAI
-	PROPERTY_R(Texture, fai, getFai) ///< The final FAI
-	PROPERTY_R(float, renderingQuality, getRenderingQuality)
-	/// The blurring iterations of the tone map
-	PROPERTY_RW(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
-	//PROPERTY_RW(float, exposure, getExposure, setExposure)///< How bright is the HDR
-	PROPERTY_RW(float, blurringDist, getBlurringDist, setBlurringDist)
-
 	public:
 		Hdr(Renderer& r_): RenderingPass(r_) {}
 		void init(const RendererInitializer& initializer);
 		void run();
+
+		/// @name Accessors
+		/// @{
+		bool isEnabled() const {return enabled;}
 		GETTER_SETTER_BY_VAL(float, exposure, getExposure, setExposure)
+		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
+		GETTER_SETTER_BY_VAL(float, blurringDist, getBlurringDist, setBlurringDist)
+		float getRenderingQuality() const {return renderingQuality;}
+		GETTER_R(Texture, toneFai, getToneFai)
+		GETTER_R(Texture, hblurFai, getHblurFai)
+		GETTER_R(Texture, fai, getFai)
+		/// @}
 
 	private:
+		bool enabled;
 		float exposure; ///< How bright is the HDR
+		uint blurringIterationsNum; ///< The blurring iterations of the tone map
+		float blurringDist; ///< Distance in blurring
+		float renderingQuality;
 		Fbo toneFbo;
 		Fbo hblurFbo;
 		Fbo vblurFbo;
 		RsrcPtr<ShaderProg> toneSProg;
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
+		Texture toneFai; ///< Vertical blur pass FAI
+		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
+		Texture fai; ///< The final FAI
 
 		void initFbo(Fbo& fbo, Texture& fai);
 };

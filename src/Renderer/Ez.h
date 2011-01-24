@@ -5,9 +5,7 @@
 #include "Fbo.h"
 
 
-/**
- * Material stage EarlyZ pass
- */
+/// Material stage EarlyZ pass
 class Ez: public RenderingPass
 {
 	public:
