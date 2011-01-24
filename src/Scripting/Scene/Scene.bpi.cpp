@@ -6,6 +6,10 @@ WRAP(Scene)
 {
 	class_<Scene, noncopyable>("Scene", no_init)
 		.def("setAmbientCol", &Scene::setAmbientCol)
-		.def("getAmbientCol", &Scene::getAmbientCol, return_value_policy<reference_existing_object>())
+		.def("getAmbientCol", (const Vec3& (Scene::*)() const)(&Scene::getAmbientCol),
+		     return_value_policy<reference_existing_object>())
 	;
 }
+
+
+WRAP_SINGLETON(SceneSingleton)

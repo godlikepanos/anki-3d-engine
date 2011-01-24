@@ -87,8 +87,8 @@ void Bs::run()
 	glDepthMask(false);
 
 	// render the models
-	Vec<ModelNode*>::const_iterator it = AppSingleton::getInstance().getScene().modelNodes.begin();
-	for(; it != AppSingleton::getInstance().getScene().modelNodes.end(); ++it)
+	Vec<ModelNode*>::const_iterator it = SceneSingleton::getInstance().modelNodes.begin();
+	for(; it != SceneSingleton::getInstance().modelNodes.end(); ++it)
 	{
 		const ModelNode& mn = *(*it);
 		boost::ptr_vector<ModelNodePatch>::const_iterator it = mn.getModelNodePatches().begin();

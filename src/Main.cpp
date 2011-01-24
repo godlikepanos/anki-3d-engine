@@ -73,7 +73,7 @@ void initPhysics()
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new RigidBody(AppSingleton::getInstance().getScene().getPhysics(), init);
+	new RigidBody(SceneSingleton::getInstance().getPhysics(), init);
 
 
 	/*{
@@ -215,7 +215,7 @@ void init()
 	/*PhyCharacter::Initializer init;
 	init.sceneNode = imp;
 	init.startTrf = Transform(Vec3(0, 40, 0), Mat3::getIdentity(), 1.0);
-	character = new PhyCharacter(AppSingleton::getInstance().getScene().getPhysics(), init);*/
+	character = new PhyCharacter(SceneSingleton::getInstance().getPhysics(), init);*/
 
 	// crate
 	/*crate = new MeshNode;
@@ -310,9 +310,9 @@ void mainLoop()
 		mover->getLocalTransform().rotation.reorthogonalize();
 
 		AppSingleton::getInstance().execStdinScpripts();
-		AppSingleton::getInstance().getScene().getPhysics().update(crntTime);
-		AppSingleton::getInstance().getScene().updateAllControllers();
-		AppSingleton::getInstance().getScene().updateAllWorldStuff();
+		SceneSingleton::getInstance().getPhysics().update(crntTime);
+		SceneSingleton::getInstance().updateAllControllers();
+		SceneSingleton::getInstance().updateAllWorldStuff();
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 

@@ -15,12 +15,12 @@
 // Constructor                                                                                                         =
 //======================================================================================================================
 Renderer::Renderer():
-	width(640),
-	height(480),
 	ms(*this),
 	is(*this),
 	pps(*this),
-	bs(*this)
+	bs(*this),
+	width(640),
+	height(480)
 {}
 
 
@@ -241,7 +241,7 @@ void Renderer::setupShaderProg(const Material& mtl, const ModelNode& modelNode, 
 
 	if(mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR))
 	{
-		Vec3 col(AppSingleton::getInstance().getScene().getAmbientCol());
+		Vec3 col(SceneSingleton::getInstance().getAmbientCol());
 		mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR)->setVec3(&col);
 	}
 
@@ -352,8 +352,8 @@ void Renderer::renderModelNode(const ModelNode& modelNode, const Camera& cam, Mo
 //======================================================================================================================
 void Renderer::renderAllModelNodes(const Camera& cam, ModelNodeRenderType type) const
 {
-	Vec<ModelNode*>::const_iterator it = AppSingleton::getInstance().getScene().modelNodes.begin();
-	for(; it != AppSingleton::getInstance().getScene().modelNodes.end(); ++it)
+	Vec<ModelNode*>::const_iterator it = SceneSingleton::getInstance().modelNodes.begin();
+	for(; it != SceneSingleton::getInstance().modelNodes.end(); ++it)
 	{
 		const ModelNode& md = *(*it);
 		renderModelNode(md, cam, type);

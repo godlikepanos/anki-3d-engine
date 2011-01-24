@@ -1,10 +1,11 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "Object.h"
-#include "skybox.h"
+#include <memory>
 #include "Physics.h"
 #include "Exception.h"
+#include "Properties.h"
+#include "Singleton.h"
 
 
 class SceneNode;
@@ -16,7 +17,7 @@ class ModelNode;
 
 
 /// The Scene contains all the dynamic entities
-class Scene: public Object
+class Scene
 {
 	//PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
 	PROPERTY_RW(Vec3, sunPos, getSunPos, setSunPos)
@@ -34,10 +35,9 @@ class Scene: public Object
 		Container<ParticleEmitter> particleEmitters;
 		Container<ModelNode> modelNodes;
 		Container<Controller> controllers;
-		Skybox skybox; /// @todo to be removed
 
 		// The funcs
-		Scene(Object* parent);
+		Scene();
 		~Scene() throw() {}
 
 		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers
@@ -50,14 +50,14 @@ class Scene: public Object
 
 		/// @name Accessors
 		/// @{
-		Vec3& getAmbientCol() {return ambientCol;}
-		void setAmbientCol(const Vec3& col) {ambientCol = col;}
-		Physics& getPhysics();
+		GETTER_SETTER(Vec3, ambientCol, getAmbientCol, setAmbientCol)
+		Physics& getPhysics() {return *physics;}
+		const Physics& getPhysics() const {return *physics;}
 		/// @}
 
 	private:
 		Vec3 ambientCol; ///< The global ambient color
-		Physics* physics; ///< Connection with Bullet wrapper
+		std::auto_ptr<Physics> physics; ///< Connection with Bullet wrapper
 
 		/// Adds a node in a container
 		template<typename ContainerType, typename Type>
@@ -86,11 +86,10 @@ inline void Scene::eraseNode(ContainerType& container, Type* x)
 }
 
 
-inline Physics& Scene::getPhysics()
-{
-	RASSERT_THROW_EXCEPTION(physics == NULL);
-	return *physics;
-}
+//======================================================================================================================
+// Singleton                                                                                                           =
+//======================================================================================================================
+typedef Singleton<Scene> SceneSingleton;
 
 
 #endif

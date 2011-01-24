@@ -20,9 +20,13 @@ class SceneDrawer
 			RPT_DEPTH
 		};
 
+		/// The one and only contructor
+		SceneDrawer(const Renderer& r_): r(r_) {}
+
+		void renderSceneNodePatch(const SceneNodePatch& renderable, const Camera& cam, RenderingPassType rtype);
 
 	private:
-		//const Renderer& r; ///< Keep it here cause the class wants a few FAIs
+		const Renderer& r; ///< Keep it here cause the class wants a few stuff from it
 
 		/// This function:
 		/// - binds the shader program

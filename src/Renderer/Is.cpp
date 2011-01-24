@@ -334,7 +334,7 @@ void Is::run()
 	glDisable(GL_DEPTH_TEST);
 
 	// ambient pass
-	ambientPass(AppSingleton::getInstance().getScene().getAmbientCol());
+	ambientPass(SceneSingleton::getInstance().getAmbientCol());
 
 	// light passes
 	glEnable(GL_BLEND);
@@ -345,9 +345,9 @@ void Is::run()
 	calcPlanes();
 
 	// for all lights
-	for(uint i=0; i<AppSingleton::getInstance().getScene().lights.size(); i++)
+	for(uint i=0; i<SceneSingleton::getInstance().lights.size(); i++)
 	{
-		const Light& light = *AppSingleton::getInstance().getScene().lights[i];
+		const Light& light = *SceneSingleton::getInstance().lights[i];
 		switch(light.getType())
 		{
 			case Light::LT_POINT:

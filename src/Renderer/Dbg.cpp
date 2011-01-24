@@ -269,8 +269,8 @@ void Dbg::run()
 	setModelMat(Mat4::getIdentity());
 	renderGrid();
 
-	Vec<SceneNode*>::const_iterator it = AppSingleton::getInstance().getScene().nodes.begin();
-	for(; it != AppSingleton::getInstance().getScene().nodes.end(); ++it)
+	Vec<SceneNode*>::const_iterator it = SceneSingleton::getInstance().nodes.begin();
+	for(; it != SceneSingleton::getInstance().nodes.end(); ++it)
 	{
 		const SceneNode& node = *(*it);
 

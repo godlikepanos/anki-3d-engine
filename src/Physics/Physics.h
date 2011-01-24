@@ -3,9 +3,9 @@
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "Object.h"
 #include "BtAndAnkiConvertors.h"
 #include "PhyDbgDrawer.h"
+#include "Vec.h"
 
 
 class PhyCharacter;
@@ -15,7 +15,7 @@ class RigidBody;
 /**
  * The master container for all physics related stuff.
  */
-class Physics: public Object
+class Physics
 {
 	friend class PhyCharacter; ///< For registering and unregistering
 	friend class RigidBody;  ///< For registering and unregistering
@@ -33,7 +33,7 @@ class Physics: public Object
 		};
 
 	public:
-		Physics(Object* parent);
+		Physics();
 		void update(float crntTime);
 		void debugDraw();
 

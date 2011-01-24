@@ -31,6 +31,7 @@ class ModelNodePatch: public SceneNodePatch
 		const Material& getCpMtl() const {return modelPatchRsrc.getCpMtl();}
 		const Material& getDpMtl() const {return modelPatchRsrc.getDpMtl();}
 		const ModelPatch& getModelPatchRsrc() const {return modelPatchRsrc;}
+		uint getVertIdsNum() const {return modelPatchRsrc.getMesh().getVertIdsNum();}
 		/// @}
 
 	protected:

@@ -4,8 +4,6 @@
 
 WRAP(Hdr)
 {
-	//typedef ;
-
 	class_<Hdr, noncopyable>("Hdr", no_init)
 		.add_property("blurringIterationsNum", (uint (Hdr::*)() const)(&Hdr::getBlurringIterationsNum),
 		              &Hdr::setBlurringIterationsNum)
