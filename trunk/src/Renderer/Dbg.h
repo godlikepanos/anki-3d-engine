@@ -10,6 +10,7 @@
 #include "Vbo.h"
 #include "Vao.h"
 #include "SceneDbgDrawer.h"
+#include "Properties.h"
 
 
 /// Debugging stage
@@ -27,10 +28,8 @@ class Dbg: public RenderingPass
 
 		/// @name Accessors
 		/// @{
-		bool isEnabled() const {return enabled;}
-		void setEnabled(bool flag) {enabled = flag;}
-		bool isShowSkeletonsEnabled() const {return showSkeletonsEnabled;}
-		void setShowSkeletonsEnabled(bool flag) {showSkeletonsEnabled = flag;}
+		GETTER_SETTER_BY_VAL(bool, enabled, isEnabled, setEnabled)
+		GETTER_SETTER_BY_VAL(bool, showSkeletonsEnabled, isShowSkeletonsEnabled, setShowSkeletonsEnabled)
 		/// @todo add others
 		/// @}
 
