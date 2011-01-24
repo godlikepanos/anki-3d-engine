@@ -57,21 +57,27 @@ void Texture::load(const char* filename)
 			int internalFormat;
 			int format;
 			int type;
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+			internalFormat = GL_RGBA;
 			format = GL_RGBA;
 			type = GL_UNSIGNED_BYTE;
 
 			int w = 100, h = 100;
 			int level = 0;
-			//uint cols
+			uint cols[3] = {0xFF0000FF, 0xFF00FF00, 0xFFFF0000};
+			uint ii = 0;
 			while(1)
 			{
-				uint col = rand();
+				uint col = cols[ii++];
 				Vec<uint> buff(w * h, col);
 				glTexImage2D(target, level, internalFormat, w, h, 0, format, type, &buff[0]);
 				++level;
 				w /= 2;
 				h /= 2;
+				if(ii > 2)
+				{
+					ii = 0;
+				}
+
 				if(w == 0 || h == 0)
 				{
 					break;
@@ -81,18 +87,7 @@ void Texture::load(const char* filename)
 			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			//setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
-
-
-			/*w = img.getWidth();
-			h = img.getHeight();
-			Vec<uchar> buff__(w * h * 3, 0x0F);
-			glTexSubImage2D(target, 0, 0, 0, w, h, format, type, &buff__[0]);
-
-			w = img.getWidth() / 2;
-			h = img.getHeight() / 2;
-			Vec<uchar> buff(w * h * 3, 0xFF);
-			glTexSubImage2D(target, 1, 0, 0, w, h, format, type, &buff[0]);*/
+			//setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
 			return;
 		}
 

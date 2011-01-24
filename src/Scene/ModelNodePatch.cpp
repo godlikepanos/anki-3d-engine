@@ -3,12 +3,14 @@
 #include "Material.h"
 #include "MeshData.h"
 #include "ModelPatch.h"
+#include "ModelNode.h"
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-ModelNodePatch::ModelNodePatch(const ModelPatch& modelPatch_):
+ModelNodePatch::ModelNodePatch(const ModelNode& modelNode, const ModelPatch& modelPatch_):
+	SceneNodePatch(modelNode),
 	modelPatchRsrc(modelPatch_)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;

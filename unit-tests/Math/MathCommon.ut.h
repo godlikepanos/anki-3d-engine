@@ -104,7 +104,10 @@ void testOperators()
 	EXPECT_EQ(a, c);
 }
 
-
+/// @tparam op eg Type + float
+/// @tparam compoundAssignment eg Type += float
+/// @tparam opExtern eg float + Type
+/// @tparam normalOp The normal function
 template<
 	typename Type,
 	Type (Type::* op)(float) const,

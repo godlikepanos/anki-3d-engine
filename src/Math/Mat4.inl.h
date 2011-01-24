@@ -486,7 +486,7 @@ inline Mat4 Mat4::operator/(float f) const
 		mm = _mm_set1_ps(f);
 		for(int i = 0; i < 4; i++)
 		{
-			r.arrMm[i] = _mm_mul_ps(arrMm[i], mm);
+			r.arrMm[i] = _mm_div_ps(arrMm[i], mm);
 		}
 	#else
 		for(int i = 0; i < 16; i++)

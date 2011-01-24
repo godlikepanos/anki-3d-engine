@@ -1,6 +1,7 @@
 #ifndef SCENE_DBG_DRAWER_H
 #define SCENE_DBG_DRAWER_H
 
+
 class Dbg;
 class Camera;
 class Light;

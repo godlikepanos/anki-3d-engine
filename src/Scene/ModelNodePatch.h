@@ -7,13 +7,15 @@
 #include "RsrcPtr.h"
 #include "ModelPatch.h"
 #include "Properties.h"
+#include "SceneNodePatch.h"
 
 
 class Material;
+class ModelNode;
 
 
 /// A fragment of the ModelNode
-class ModelNodePatch
+class ModelNodePatch: public SceneNodePatch
 {
 	/// VAO for MS and BS. All VBOs could be attached except for the vert weights
 	PROPERTY_R(Vao, cpVao, getCpVao)
@@ -22,7 +24,7 @@ class ModelNodePatch
 	PROPERTY_R(Vao, dpVao, getDpVao)
 
 	public:
-		ModelNodePatch(const ModelPatch& modelPatch);
+		ModelNodePatch(const ModelNode& modelNode, const ModelPatch& modelPatch);
 
 		/// @name Accessors
 		/// @{
