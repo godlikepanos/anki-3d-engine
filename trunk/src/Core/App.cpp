@@ -6,7 +6,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include "App.h"
-#include "Scene.h"
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
 #include "ScriptingEngine.h"
@@ -102,8 +101,6 @@ void App::init(int argc, char* argv[])
 	"sys.stdout = StdoutCatcher()\n"
 	"sys.stderr = StderrCatcher()\n";
 	ScriptingEngineSingleton::getInstance().execScript(commonPythonCode);
-
-	scene = new Scene(NULL);
 
 	StdinListenerSingleton::getInstance().start();
 

@@ -159,7 +159,7 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 
 	if(mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR))
 	{
-		Vec3 col(AppSingleton::getInstance().getScene().getAmbientCol());
+		Vec3 col(SceneSingleton::getInstance().getAmbientCol());
 		mtl.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR)->setVec3(&col);
 	}
 
@@ -222,4 +222,33 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 	}
 
 	ON_GL_FAIL_THROW_EXCEPTION();
+}
+
+
+//======================================================================================================================
+// renderSceneNodePatch                                                                                                =
+//======================================================================================================================
+void SceneDrawer::renderSceneNodePatch(const SceneNodePatch& renderable, const Camera& cam, RenderingPassType rtype)
+{
+	const Material* mtl;
+	const Vao* vao;
+
+	switch(rtype)
+	{
+		case RPT_COLOR:
+			mtl = &renderable.getCpMtl();
+			vao = &renderable.getCpVao();
+			break;
+
+		case RPT_DEPTH:
+			mtl = &renderable.getDpMtl();
+			vao = &renderable.getDpVao();
+			break;
+	}
+
+	setupShaderProg(*mtl, renderable.getWorldTransform(), cam, r);
+
+	vao->bind();
+	glDrawElements(GL_TRIANGLES, renderable.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	vao->unbind();
 }

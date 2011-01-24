@@ -28,15 +28,6 @@ class ModelNode;
 class Renderer
 {
 	//====================================================================================================================
-	// Properties                                                                                                        =
-	//====================================================================================================================
-	PROPERTY_R(uint, width, getWidth) ///< Width of the rendering. Dont confuse with the window width
-	PROPERTY_R(uint, height, getHeight) ///< Height of the rendering. Dont confuse with the window width
-	PROPERTY_R(float, aspectRatio, getAspectRatio) ///< Just a precalculated value
-	PROPERTY_R(Mat4, viewProjectionMat, getViewProjectionMat) ///< Precalculated in case anyone needs it
-	PROPERTY_R(uint, framesNum, getFramesNum) ///< Frame number
-
-	//====================================================================================================================
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
@@ -49,11 +40,18 @@ class Renderer
 		};
 
 		Renderer();
-
 		~Renderer() throw() {}
 
-		/// @name Setters & getters
+		/// @name Accessors
 		/// @{
+		GETTER_RW(Ms, ms, getMs)
+		GETTER_RW(Is, is, getIs)
+		GETTER_RW(Pps, pps, getPps)
+		uint getWidth() const {return width;}
+		uint getHeight() const {return height;}
+		float getAspectRatio() const {return aspectRatio;}
+		uint getFramesNum() const {return framesNum;}
+		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat);
 		const Camera& getCamera() const {return *cam;}
 		/// @}
 
@@ -64,13 +62,6 @@ class Renderer
 		/// This function does all the rendering stages and produces a final FAI
 		/// @param cam The camera from where the rendering will be done
 		void render(Camera& cam);
-
-		/// @name Accessors
-		/// @{
-		GETTER_RW(Ms, ms, getMs)
-		GETTER_RW(Is, is, getIs)
-		GETTER_RW(Pps, pps, getPps)
-		/// @}
 
 		/// My version of gluUnproject
 		/// @param windowCoords Window screen coords
@@ -125,6 +116,9 @@ class Renderer
 		Bs bs; ///< Blending stage
 		/// @}
 
+		uint width; ///< Width of the rendering. Dont confuse with the window width
+		uint height; ///< Height of the rendering. Dont confuse with the window width
+		float aspectRatio; ///< Just a precalculated value
 		const Camera* cam; ///< Current camera
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
 
@@ -132,6 +126,9 @@ class Renderer
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	private:
+		uint framesNum; ///< Frame number
+		Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it
+
 		/// @name For drawing a quad into the active framebuffer
 		/// @{
 		Vbo quadPositionsVbo; ///< The VBO for quad positions

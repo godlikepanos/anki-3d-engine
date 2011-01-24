@@ -47,7 +47,6 @@ class App
 		/// @name Accessors
 		/// @{
 		bool isTerminalColoringEnabled() const;
-		Scene& getScene();
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 		/// @}
@@ -64,11 +63,6 @@ class App
 		bool fullScreenFlag;
 		Camera* activeCam; ///< Pointer to the current camera
 
-		/// @name Pointers to serious subsystems
-		/// @{
-		Scene* scene;
-		/// @}
-
 		void parseCommandLineArgs(int argc, char* argv[]);
 
 		/// A slot to handle the messageHandler's signal
@@ -83,13 +77,6 @@ class App
 inline bool App::isTerminalColoringEnabled() const
 {
 	return terminalColoringEnabled;
-}
-
-
-inline Scene& App::getScene()
-{
-	RASSERT_THROW_EXCEPTION(scene == NULL);
-	return *scene;
 }
 
 

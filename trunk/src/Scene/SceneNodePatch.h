@@ -17,6 +17,7 @@ class SceneNodePatch
 
 		virtual const Vao& getCpVao() const = 0; ///< Get color pass VAO
 		virtual const Vao& getDpVao() const = 0; ///< Get depth pass VAO
+		virtual uint getVertIdsNum() const = 0;  ///< Get vert ids number for rendering
 		virtual const Material& getCpMtl() const = 0;  ///< Get color pass material
 		virtual const Material& getDpMtl() const = 0;  ///< Get depth pass material
 		const Transform& getWorldTransform() const {return father.getWorldTransform();}

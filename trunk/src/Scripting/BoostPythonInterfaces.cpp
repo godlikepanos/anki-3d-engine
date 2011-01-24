@@ -15,6 +15,7 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(LoggerSingleton);
 
 	CALL_WRAP(Scene);
+	CALL_WRAP(SceneSingleton);
 
 	CALL_WRAP(Hdr);
 	CALL_WRAP(Pps);
