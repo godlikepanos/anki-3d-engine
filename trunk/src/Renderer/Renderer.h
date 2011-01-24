@@ -34,6 +34,7 @@ class Renderer
 	PROPERTY_R(uint, height, getHeight) ///< Height of the rendering. Dont confuse with the window width
 	PROPERTY_R(float, aspectRatio, getAspectRatio) ///< Just a precalculated value
 	PROPERTY_R(Mat4, viewProjectionMat, getViewProjectionMat) ///< Precalculated in case anyone needs it
+	PROPERTY_R(uint, framesNum, getFramesNum) ///< Frame number
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -66,10 +67,9 @@ class Renderer
 
 		/// @name Accessors
 		/// @{
-		uint getFramesNum() const {return framesNum;}
-		Ms& getMs() {return ms;}
-		Is& getIs() {return is;}
-		Pps& getPps() {return pps;}
+		GETTER_RW(Ms, ms, getMs)
+		GETTER_RW(Is, is, getIs)
+		GETTER_RW(Pps, pps, getPps)
 		/// @}
 
 		/// My version of gluUnproject
@@ -125,7 +125,6 @@ class Renderer
 		Bs bs; ///< Blending stage
 		/// @}
 
-		uint framesNum; ///< Frame number
 		const Camera* cam; ///< Current camera
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
 

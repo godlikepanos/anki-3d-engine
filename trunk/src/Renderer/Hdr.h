@@ -21,15 +21,17 @@ class Hdr: private RenderingPass
 	PROPERTY_R(float, renderingQuality, getRenderingQuality)
 	/// The blurring iterations of the tone map
 	PROPERTY_RW(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
-	PROPERTY_RW(float, exposure, getExposure, setExposure)///< How bright is the HDR
+	//PROPERTY_RW(float, exposure, getExposure, setExposure)///< How bright is the HDR
 	PROPERTY_RW(float, blurringDist, getBlurringDist, setBlurringDist)
 
 	public:
 		Hdr(Renderer& r_): RenderingPass(r_) {}
 		void init(const RendererInitializer& initializer);
 		void run();
+		GETTER_SETTER_BY_VAL(float, exposure, getExposure, setExposure)
 
 	private:
+		float exposure; ///< How bright is the HDR
 		Fbo toneFbo;
 		Fbo hblurFbo;
 		Fbo vblurFbo;

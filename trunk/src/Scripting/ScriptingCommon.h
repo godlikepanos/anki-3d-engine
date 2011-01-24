@@ -41,7 +41,7 @@ void setterSv(ClassType* t, InType in)
 
 /// Boost python property for simple types (int, float etc) that cannot be wrapped by boost::python correctly
 #define BP_PROPERTY_BASIC_TYPE(Type__, Class__, var__, getter__, setter__) \
-	.add_property(var__, &getterSv<Class__, Type__, &Class__::getter__>, \
+	.add_property(#var__, &getterSv<Class__, Type__, &Class__::getter__>, \
 	              &setterSv<Class__, Type__, &Class__::setter__>)
 
 
