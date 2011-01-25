@@ -9,6 +9,8 @@
 class Object
 {
 	public:
+		typedef Vec<Object*> Container;
+
 		/// Calls addChild if parent is not NULL
 		/// @exception Exception
 		Object(Object* parent);
@@ -16,9 +18,18 @@ class Object
 		/// Delete childs from the last entered to the first and update parent
 		virtual ~Object();
 
+	protected:
+		/// @name Accessors
+		/// @{
+		const Object* getObjParent() const {return objParent;}
+		Object* getObjParent() {return objParent;}
+		const Container& getObjChildren() const {return objChilds;}
+		Container& getObjChildren() {return objChilds;}
+		/// @}
+
 	private:
 		Object* objParent;
-		Vec<Object*> objChilds;
+		Container objChilds;
 
 		void addChild(Object* child);
 		void removeChild(Object* child);

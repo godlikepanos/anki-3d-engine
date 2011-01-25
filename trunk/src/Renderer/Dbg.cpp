@@ -274,7 +274,7 @@ void Dbg::run()
 	{
 		const SceneNode& node = *(*it);
 
-		switch(node.type)
+		switch(node.getSceneNodeType())
 		{
 			case SceneNode::SNT_CAMERA:
 				sceneDbgDrawer.drawCamera(static_cast<const Camera&>(node));

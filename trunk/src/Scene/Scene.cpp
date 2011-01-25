@@ -15,7 +15,7 @@
 Scene::Scene()
 {
 	ambientCol = Vec3(0.1, 0.05, 0.05)*4;
-	sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
+	//sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
 
 	physics.reset(new Physics);
 }
@@ -94,7 +94,7 @@ void Scene::unregisterController(Controller* controller)
 void Scene::updateAllWorldStuff()
 {
 	RASSERT_THROW_EXCEPTION(nodes.size() > 1024);
-	SceneNode* queue [1024];
+	boost::array<SceneNode*, 1024> queue;
 	uint head = 0, tail = 0;
 	uint num = 0;
 
@@ -102,7 +102,7 @@ void Scene::updateAllWorldStuff()
 	// put the roots
 	for(uint i=0; i<nodes.size(); i++)
 	{
-		if(nodes[i]->parent == NULL)
+		if(nodes[i]->getObjParent() == NULL)
 		{
 			queue[tail++] = nodes[i]; // queue push
 		}
@@ -118,9 +118,11 @@ void Scene::updateAllWorldStuff()
 		obj->update();
 		++num;
 
-		for(uint i=0; i<obj->childs.size(); i++)
+		Object::Container::iterator it = obj->getObjChildren().begin();
+		for(; it != obj->getObjChildren().end(); it++)
 		{
-			queue[tail++] = obj->childs[i];
+			SceneNode* node = static_cast<SceneNode*>(*it);
+			queue[tail++] = node;
 		}
 	}
 
