@@ -20,7 +20,7 @@ class Bs: public RenderingPass
 		void run();
 
 	private:
-		Fbo fbo; ///< Writes to pps.prePassFai
+		Fbo fbo; ///< Writes to Pps::prePassFai
 		Fbo refractFbo; ///< Writes to refractFai
 		RsrcPtr<ShaderProg> refractSProg;
 		Texture refractFai;

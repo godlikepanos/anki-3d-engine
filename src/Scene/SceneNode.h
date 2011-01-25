@@ -2,7 +2,6 @@
 #define SCENE_NODE_H
 
 #include <memory>
-#include "Vec.h"
 #include "Math.h"
 #include "Object.h"
 #include "Properties.h"
@@ -13,7 +12,7 @@ class Controller;
 
 
 /// The backbone of scene. It is also an Object for memory management reasons
-class SceneNode: public Object
+class SceneNode: private Object
 {
 	friend class Scene;
 
@@ -26,26 +25,24 @@ class SceneNode: public Object
 			SNT_PARTICLE_EMITTER,
 			SNT_MODEL
 		};
-
-	PROPERTY_RW(Transform, localTransform, getLocalTransform, setLocalTransform) ///< The transformation in local space
-	PROPERTY_RW(Transform, worldTransform, getWorldTransform, setWorldTransform) ///< The transformation in world space (local combined with parent transformation)
-
-	public:
-		SceneNode* parent;
-		Vec<SceneNode*> childs;
-		SceneNodeType type;
-		bool isCompound;
 		
 		SceneNode(SceneNodeType type_, SceneNode* parent = NULL);
 		virtual ~SceneNode();
 		virtual void init(const char*) = 0; ///< init using a script
 
+		/// @name Accessors
+		/// @{
+		GETTER_SETTER(Transform, localTransform, getLocalTransform, setLocalTransform)
+		GETTER_SETTER(Transform, worldTransform, getWorldTransform, setWorldTransform)
+		SceneNodeType getSceneNodeType() const {return type;}
+		/// @}
+
 		/// @name Updates
 		/// Two separate updates happen every loop. The update happens anyway and the updateTrf only when the node is being
 		/// moved
 		/// @{
-		virtual void update() {};
-		virtual void updateTrf() {};
+		virtual void update() {}
+		virtual void updateTrf() {}
 		/// @}
 
 		/// @name Mess with the local transform
@@ -58,25 +55,14 @@ class SceneNode: public Object
 		void moveLocalZ(float distance);
 		/// @}
 
-		void addChild(SceneNode* node);
-		void removeChild(SceneNode* node);
-
 	private:
+		Transform localTransform; ///< The transformation in local space
+		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
+		SceneNodeType type;
+
 		void commonConstructorCode(); ///< Cause we cannot call constructor from other constructor
 		void updateWorldTransform(); ///< This update happens only when the object gets moved
 };
-
-
-inline SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
-	Object(parent),
-	type(type_)
-{
-	commonConstructorCode();
-	if(parent != NULL)
-	{
-		parent->addChild(this);
-	}
-}
 
 
 #endif

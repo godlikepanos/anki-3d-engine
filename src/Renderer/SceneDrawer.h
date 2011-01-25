@@ -4,13 +4,13 @@
 #include "Math.h"
 
 
-class SceneNodePatch;
+class SceneRenderable;
 class Renderer;
 class Camera;
 class Material;
 
 
-/// It includes all the functions to render a SceneNodePatch
+/// It includes all the functions to render a SceneRenderable
 class SceneDrawer
 {
 	public:
@@ -23,7 +23,7 @@ class SceneDrawer
 		/// The one and only contructor
 		SceneDrawer(const Renderer& r_): r(r_) {}
 
-		void renderSceneNodePatch(const SceneNodePatch& renderable, const Camera& cam, RenderingPassType rtype);
+		void renderSceneRenderable(const SceneRenderable& renderable, const Camera& cam, RenderingPassType rtype);
 
 	private:
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff from it

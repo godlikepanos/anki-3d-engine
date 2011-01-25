@@ -7,7 +7,6 @@
 #include "RsrcPtr.h"
 #include "ShaderProg.h"
 #include "Math.h"
-#include "Properties.h"
 #include "Vbo.h"
 #include "Vao.h"
 #include "Sm.h"
@@ -21,17 +20,21 @@ class SpotLight;
 /// Illumination stage
 class Is: private RenderingPass
 {
-	PROPERTY_R(Texture, fai, getFai) ///< The one and only FAI
-
 	public:
 		Is(Renderer& r_);
 		void init(const RendererInitializer& initializer);
 		void run();
 
+		/// @name Accessors
+		/// @{
+		const Texture& getFai() const {return fai;}
+		/// @}
+
 	private:
 		Sm sm; ///< Shadowmapping pass
 		Smo smo; /// Stencil masking optimizations pass
 		Fbo fbo; ///< This FBO writes to the Is::fai
+		Texture fai; ///< The one and only FAI
 		uint stencilRb; ///< Illumination stage stencil buffer
 		RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
 		RsrcPtr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program

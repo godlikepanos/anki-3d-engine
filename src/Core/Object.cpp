@@ -27,7 +27,7 @@ Object::~Object()
 	}
 
 	// delete all children
-	for(Vec<Object*>::reverse_iterator it=objChilds.rbegin(); it!=objChilds.rend(); it++)
+	for(Container::reverse_iterator it=objChilds.rbegin(); it!=objChilds.rend(); it++)
 	{
 		delete *it;
 	}
@@ -54,7 +54,7 @@ void Object::removeChild(Object* child)
 {
 	RASSERT_THROW_EXCEPTION(child == NULL);
 
-	Vec<Object*>::iterator it = std::find(objChilds.begin(), objChilds.end(), child);
+	Container::iterator it = std::find(objChilds.begin(), objChilds.end(), child);
 
 	if(it == objChilds.end())
 	{

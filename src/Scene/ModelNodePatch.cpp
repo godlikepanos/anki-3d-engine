@@ -4,13 +4,14 @@
 #include "MeshData.h"
 #include "ModelPatch.h"
 #include "ModelNode.h"
+#include "ModelNode.h"
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
 ModelNodePatch::ModelNodePatch(const ModelNode& modelNode, const ModelPatch& modelPatch_):
-	SceneNodePatch(modelNode),
+	node(modelNode),
 	modelPatchRsrc(modelPatch_)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
@@ -24,6 +25,14 @@ ModelNodePatch::ModelNodePatch(const ModelNode& modelNode, const ModelPatch& mod
 	createVao(modelPatchRsrc.getDpMtl(), vboArr, dpVao);
 }
 
+
+//======================================================================================================================
+// getWorldTransform                                                                                                   =
+//======================================================================================================================
+const Transform& ModelNodePatch::getWorldTransform() const
+{
+	return node.getWorldTransform();
+}
 
 //======================================================================================================================
 // createVao                                                                                                           =

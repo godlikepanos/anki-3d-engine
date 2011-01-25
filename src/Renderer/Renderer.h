@@ -20,7 +20,6 @@
 class Camera;
 class RendererInitializer;
 class ModelNode;
-class ModelNode;
 
 
 /// Offscreen renderer

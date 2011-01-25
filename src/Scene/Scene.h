@@ -19,22 +19,24 @@ class ModelNode;
 /// The Scene contains all the dynamic entities
 class Scene
 {
-	//PROPERTY_RW(Vec3, ambientCol, setAmbientCol, getAmbientCol) ///< The global ambient color
-	PROPERTY_RW(Vec3, sunPos, getSunPos, setSunPos)
-	//PROPERTY_R(Physics*, phyWorld, getPhysics) ///< Connection with bullet
-
 	public:
-		/// The container template class. Extends vector
-		template<typename Type> class Container: public Vec<Type*>
-		{};
+		/// Typetraits
+		template<typename Type>
+		class Types
+		{
+			public:
+				typedef Vec<Type*> Container;
+				typedef typename Container::iterator Iterator;
+				typedef typename Container::const_iterator ConstIterator;
+		};
 
 		// Containers of scene's data
-		Container<SceneNode> nodes;
-		Container<Light> lights;
-		Container<Camera> cameras;
-		Container<ParticleEmitter> particleEmitters;
-		Container<ModelNode> modelNodes;
-		Container<Controller> controllers;
+		Types<SceneNode>::Container nodes;
+		Types<Light>::Container lights;
+		Types<Camera>::Container cameras;
+		Types<ParticleEmitter>::Container particleEmitters;
+		Types<ModelNode>::Container modelNodes;
+		Types<Controller>::Container controllers;
 
 		// The funcs
 		Scene();

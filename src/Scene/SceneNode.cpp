@@ -1,21 +1,17 @@
 #include <algorithm>
 #include "SceneNode.h"
-#include "Renderer.h"
-#include "Controller.h"
 #include "Scene.h"
-#include "App.h"
 
 
 //======================================================================================================================
-// commonConstructorCode                                                                                               =
+// Constructor                                                                                                         =
 //======================================================================================================================
-void SceneNode::commonConstructorCode()
+SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
+	Object(parent),
+	type(type_)
 {
-	parent = NULL;
-	isCompound = false;
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
-
 	SceneSingleton::getInstance().registerNode(this);
 }
 
@@ -34,8 +30,9 @@ SceneNode::~SceneNode()
 //======================================================================================================================
 void SceneNode::updateWorldTransform()
 {
-	if(parent)
+	if(getObjParent())
 	{
+		const SceneNode* parent = static_cast<const SceneNode*>(getObjParent());
 		worldTransform = Transform::combineTransformations(parent->getWorldTransform(), localTransform);
 	}
 	else // else copy
@@ -81,7 +78,6 @@ void SceneNode::updateWorldTransform()
 
 //======================================================================================================================
 // Move(s)                                                                                                             =
-// Move the object according to it's local axis                                                                        =
 //======================================================================================================================
 void SceneNode::moveLocalX(float distance)
 {
@@ -101,33 +97,3 @@ void SceneNode::moveLocalZ(float distance)
 	getLocalTransform().origin += z_axis * distance;
 }
 
-
-//======================================================================================================================
-// addChild                                                                                                            =
-//======================================================================================================================
-void SceneNode::addChild(SceneNode* node)
-{
-	if(node->parent != NULL)
-	{
-		throw EXCEPTION("Node already has parent");
-	}
-
-	node->parent = this;
-	childs.push_back(node);
-}
-
-
-//======================================================================================================================
-// removeChild                                                                                                         =
-//======================================================================================================================
-void SceneNode::removeChild(SceneNode* child)
-{
-	Vec<SceneNode*>::iterator it = std::find(childs.begin(), childs.end(), child);
-	if(it == childs.end())
-	{
-		throw EXCEPTION("Child not found");
-	}
-
-	child->parent = NULL;
-	childs.erase(it);
-}
