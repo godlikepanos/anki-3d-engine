@@ -345,9 +345,10 @@ void Is::run()
 	calcPlanes();
 
 	// for all lights
-	for(uint i=0; i<SceneSingleton::getInstance().lights.size(); i++)
+	Scene::Types<Light>::ConstIterator it = SceneSingleton::getInstance().getLights().begin();
+	for(; it != SceneSingleton::getInstance().getLights().end(); it++)
 	{
-		const Light& light = *SceneSingleton::getInstance().lights[i];
+		const Light& light = *(*it);
 		switch(light.getType())
 		{
 			case Light::LT_POINT:
