@@ -30,15 +30,6 @@ class Scene
 				typedef typename Container::const_iterator ConstIterator;
 		};
 
-		// Containers of scene's data
-		Types<SceneNode>::Container nodes;
-		Types<Light>::Container lights;
-		Types<Camera>::Container cameras;
-		Types<ParticleEmitter>::Container particleEmitters;
-		Types<ModelNode>::Container modelNodes;
-		Types<Controller>::Container controllers;
-
-		// The funcs
 		Scene();
 		~Scene() throw() {}
 
@@ -55,9 +46,26 @@ class Scene
 		GETTER_SETTER(Vec3, ambientCol, getAmbientCol, setAmbientCol)
 		Physics& getPhysics() {return *physics;}
 		const Physics& getPhysics() const {return *physics;}
+
+		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
+		GETTER_RW(Types<Light>::Container, lights, getLights)
+		GETTER_RW(Types<Camera>::Container, cameras, getCameras)
+		GETTER_RW(Types<ParticleEmitter>::Container, particleEmitters, getParticleEmitters)
+		GETTER_RW(Types<ModelNode>::Container, modelNodes, getModelNodes)
+		GETTER_RW(Types<Controller>::Container, controllers, getControllers)
 		/// @}
 
 	private:
+		/// @name Containers of scene's data
+		/// @{
+		Types<SceneNode>::Container nodes;
+		Types<Light>::Container lights;
+		Types<Camera>::Container cameras;
+		Types<ParticleEmitter>::Container particleEmitters;
+		Types<ModelNode>::Container modelNodes;
+		Types<Controller>::Container controllers;
+		/// @}
+
 		Vec3 ambientCol; ///< The global ambient color
 		std::auto_ptr<Physics> physics; ///< Connection with Bullet wrapper
 
