@@ -1,7 +1,5 @@
 #include "ScriptingCommon.h"
 #include "App.h"
-#include "Scene.h"
-#include "MainRenderer.h"
 
 
 WRAP(App)
