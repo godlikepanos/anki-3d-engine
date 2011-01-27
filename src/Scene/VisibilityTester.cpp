@@ -1,5 +1,20 @@
 #include "VisibilityTester.h"
 #include "Scene.h"
+#include "ModelNode.h"
+#include "ModelNodePatch.h"
+#include "Material.h"
+#include "Sphere.h"
+#include "PointLight.h"
+#include "SpotLight.h"
+
+
+//======================================================================================================================
+// CmpLength::operator()                                                                                               =
+//======================================================================================================================
+inline bool VisibilityTester::CmpLength::operator()(const SceneRenderable* a, const SceneRenderable* b) const
+{
+	return (a->getWorldTransform().origin - o).getLengthSquared() < (b->getWorldTransform().origin - o).getLengthSquared();
+}
 
 
 //======================================================================================================================
@@ -15,5 +30,75 @@ VisibilityTester::VisibilityTester(const Scene& scene_):
 //======================================================================================================================
 void VisibilityTester::test(const Camera& cam)
 {
-	//Scene
+	//
+	// Clean
+	//
+	msRenderables.clear();
+	bsRenderables.clear();
+	pointLights.clear();
+	spotLights.clear();
+
+	//
+	// Collect the SceneRenderable
+	//
+	Scene::Types<ModelNode>::ConstIterator it = scene.getModelNodes().begin();
+	for(; it != scene.getModelNodes().end(); it++)
+	{
+		boost::ptr_vector<ModelNodePatch>::const_iterator it2 = (*it)->getModelNodePatches().begin();
+		for(; it2 != (*it)->getModelNodePatches().end(); it2++)
+		{
+			const ModelNodePatch& modelNodePatch = *it2;
+
+			if(modelNodePatch.getCpMtl().isBlendingEnabled())
+			{
+				bsRenderables.push_back(&modelNodePatch);
+			}
+			else
+			{
+				msRenderables.push_back(&modelNodePatch);
+			}
+		}
+	}
+
+	//
+	// Sort the renderables from closest to the camera to the farthest
+	//
+	std::sort(msRenderables.begin(), msRenderables.end(), CmpLength(cam.getWorldTransform().origin));
+	std::sort(bsRenderables.begin(), bsRenderables.end(), CmpLength(cam.getWorldTransform().origin));
+
+	//
+	// Collect the lights
+	//
+	Scene::Types<Light>::ConstIterator itl = scene.getLights().begin();
+	for(; itl != scene.getLights().end(); itl++)
+	{
+		const Light& light = *(*itl);
+
+		// Point
+		switch(light.getType())
+		{
+			case Light::LT_POINT:
+			{
+				const PointLight& pointl = static_cast<const PointLight&>(light);
+
+				Sphere sphere(pointl.getWorldTransform().origin, pointl.getRadius());
+				if(cam.insideFrustum(sphere))
+				{
+					pointLights.push_back(&pointl);
+				}
+				break;
+			}
+			// Spot
+			case Light::LT_SPOT:
+			{
+				const SpotLight& spotl = static_cast<const SpotLight&>(light);
+
+				if(cam.insideFrustum(spotl.getCamera()))
+				{
+					spotLights.push_back(&spotl);
+				}
+				break;
+			}
+		}
+	}
 }
