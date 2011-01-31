@@ -18,8 +18,9 @@ class ModelNode;
 class ModelPatchNode: public RenderableNode
 {
 	public:
-		ModelPatchNode(const ModelNode& modelNode, const ModelPatch& modelPatch, ModelNode* parent);
+		ModelPatchNode(const ModelPatch& modelPatch, ModelNode* parent);
 
+		/// Do nothing
 		void init(const char*) {}
 
 		/// @name Accessors

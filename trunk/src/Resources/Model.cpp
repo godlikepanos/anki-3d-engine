@@ -2,6 +2,8 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/assign.hpp>
+#include <boost/range/iterator_range.hpp>
 #include "Model.h"
 #include "Material.h"
 #include "Mesh.h"
@@ -34,9 +36,18 @@ void Model::load(const char* filename)
   		const std::string& material = v.second.get<std::string>("material");
   		const std::string& dpMaterial = v.second.get<std::string>("dpMaterial");
 
-  		ModelPatch* sub = new ModelPatch();
-  		modelPatches.push_back(sub);
-  		sub->load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
+  		ModelPatch* patch = new ModelPatch();
+  		modelPatches.push_back(patch);
+  		patch->load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
+
+  		boundingShape = boundingShape.getCompoundSphere(patch->getMesh().getBoundingShape());
+  	}
+
+  	// Bounding volume
+  	boundingShape = modelPatches[0].getMesh().getBoundingShape();
+  	BOOST_FOREACH(const ModelPatch& patch, boost::make_iterator_range(modelPatches.begin() + 1, modelPatches.end()))
+  	{
+  		boundingShape = boundingShape.getCompoundSphere(patch.getMesh().getBoundingShape());
   	}
 	}
 	catch(std::exception& e)

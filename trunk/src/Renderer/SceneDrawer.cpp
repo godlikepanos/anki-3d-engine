@@ -228,7 +228,8 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 //======================================================================================================================
 // renderRenderableNode                                                                                                =
 //======================================================================================================================
-void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const Camera& cam, RenderingPassType rtype)
+void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const Camera& cam,
+                                       RenderingPassType rtype) const
 {
 	const Material* mtl;
 	const Vao* vao;

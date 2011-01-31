@@ -10,19 +10,19 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-ModelPatchNode::ModelPatchNode(const ModelNode& modelNode, const ModelPatch& modelPatch_, ModelNode* parent):
-	RenderableNode(parent),
-	modelPatchRsrc(modelPatch_)
+ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_, ModelNode* parent):
+	RenderableNode(modelPatch_.getMesh().getBoundingShape(), parent),
+	rsrc(modelPatch_)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
 
 	for(uint i = 0; i < Mesh::VBOS_NUM; i++)
 	{
-		vboArr[i] = &modelPatchRsrc.getMesh().getVbo((Mesh::Vbos)i);
+		vboArr[i] = &rsrc.getMesh().getVbo((Mesh::Vbos)i);
 	}
 
-	createVao(modelPatchRsrc.getCpMtl(), vboArr, cpVao);
-	createVao(modelPatchRsrc.getDpMtl(), vboArr, dpVao);
+	createVao(rsrc.getCpMtl(), vboArr, cpVao);
+	createVao(rsrc.getDpMtl(), vboArr, dpVao);
 }
 
 

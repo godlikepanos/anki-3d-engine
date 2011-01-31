@@ -1,8 +1,11 @@
+#include <boost/foreach.hpp>
 #include "Ms.h"
 #include "Renderer.h"
 #include "Camera.h"
 #include "Ez.h"
 #include "ModelNode.h"
+#include "Scene.h"
+#include "RenderableNode.h"
 
 
 //======================================================================================================================
@@ -94,7 +97,10 @@ void Ms::run()
 	}
 
 	// render all
-	r.renderAllModelNodes(r.getCamera(), Renderer::MNRT_MS);
+	BOOST_FOREACH(const RenderableNode* node, SceneSingleton::getInstance().getVisibilityTester().getMsRenderables())
+	{
+		r.getSceneDrawer().renderRenderableNode(*node, r.getCamera(), SceneDrawer::RPT_COLOR);
+	}
 
 	// restore depth
 	if(ez.isEnabled())

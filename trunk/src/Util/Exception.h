@@ -5,7 +5,7 @@
 #include <string>
 
 
-/// Custom exception that takes file, line and function that throwed it. Throw it using the EXCEPTION macro
+/// Custom exception that takes file, line and function that throw it. Throw it using the EXCEPTION macro
 class Exception: public std::exception
 {
 	public:

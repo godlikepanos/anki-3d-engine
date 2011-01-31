@@ -1,6 +1,6 @@
 #include <png.h>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp> // for to_lower
+#include <boost/filesystem.hpp> // For file extensions
+#include <boost/algorithm/string.hpp> // For to_lower
 #include <fstream>
 #include "Image.h"
 #include "Exception.h"
@@ -285,7 +285,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	// Init io
 	//
 	png_init_io(pngPtr, file);
-	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE); // PNG lib knows that we allready have read the header
+	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE); // PNG lib knows that we already have read the header
 
 	//
 	// Read info and make conversions

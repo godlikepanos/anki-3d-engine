@@ -56,6 +56,11 @@ class VisibilityTester
 		GETTER_R(Types<VisibleLight<SpotLight> >::Container, spotLights, getSpotLights)
 		/// @}
 
+		/// This method:
+		/// - Gets the visible renderable nodes
+		/// - Sort them from the closest to the farthest
+		/// - Get the visible lights
+		/// - For every spot light that casts shadow get the visible renderables
 		void test(const Camera& cam);
 
 	//====================================================================================================================
@@ -63,22 +68,26 @@ class VisibilityTester
 	//====================================================================================================================
 	private:
 		/// Used in sorting. Compare the length of 2 nodes from the camera
-		struct CmpLength
+		struct CmpDistanceFromOrigin
 		{
 			Vec3 o; ///< The camera origin
-			CmpLength(Vec3 o_): o(o_) {}
+			CmpDistanceFromOrigin(Vec3 o_): o(o_) {}
 			bool operator()(const RenderableNode* a, const RenderableNode* b) const;
 		};
 
 		const Scene& scene; ///< Know your father
 
+		/// @name Containers
+		/// @{
 		Types<const RenderableNode*>::Container msRenderables;
 		Types<const RenderableNode*>::Container bsRenderables;
 		Types<VisibleLight<PointLight> >::Container pointLights;
 		Types<VisibleLight<SpotLight> >::Container spotLights;
+		/// @}
 
-		/// @todo write some real code
-		static bool test(const RenderableNode& /*renderable*/, const Camera& /*cam*/) {return true;}
+		/// Test a node against the camera frustum
+		template<typename Type>
+		static bool test(const Type& tested, const Camera& cam);
 };
 
 

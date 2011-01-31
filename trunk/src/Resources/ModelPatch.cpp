@@ -59,7 +59,7 @@ void ModelPatch::doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl)
 			throw EXCEPTION("Texture coords");
 		}
 
-		// normals & tangents
+		// Normals
 		if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL && !mesh.hasNormalsAndTangents())
 		{
 			throw EXCEPTION("Normals");
@@ -73,6 +73,6 @@ void ModelPatch::doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Mesh and material are incompatible");
+		throw EXCEPTION("Mesh and material are incompatible: " + e.what());
 	}
 }

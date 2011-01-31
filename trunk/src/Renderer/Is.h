@@ -11,6 +11,7 @@
 #include "Vao.h"
 #include "Sm.h"
 #include "Smo.h"
+#include "VisibilityTester.h"
 
 
 class PointLight;
@@ -65,10 +66,10 @@ class Is: private RenderingPass
 		void ambientPass(const Vec3& color);
 
 		/// The point light pass
-		void pointLightPass(const PointLight& light);
+		void pointLightPass(const VisibilityTester::VisibleLight<PointLight>& vlight);
 
 		/// The spot light pass
-		void spotLightPass(const SpotLight& light);
+		void spotLightPass(const VisibilityTester::VisibleLight<SpotLight>& vlight);
 
 		/// Used in @ref init
 		void initFbo();

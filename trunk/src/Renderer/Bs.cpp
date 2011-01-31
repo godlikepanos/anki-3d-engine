@@ -82,7 +82,7 @@ void Bs::init(const RendererInitializer& /*initializer*/)
 //======================================================================================================================
 void Bs::run()
 {
-	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+	/*Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	glDepthMask(false);
 
@@ -91,8 +91,8 @@ void Bs::run()
 	for(; it != SceneSingleton::getInstance().getModelNodes().end(); ++it)
 	{
 		const ModelNode& mn = *(*it);
-		boost::ptr_vector<ModelNodePatch>::const_iterator it = mn.getModelNodePatches().begin();
-		for(; it != mn.getModelNodePatches().end(); it++)
+		boost::ptr_vector<ModelNodePatch>::const_iterator it = mn.getModelPatchNodes().begin();
+		for(; it != mn.getModelPatchNodes().end(); it++)
 		{
 			const ModelNodePatch& sm = *it;
 
@@ -164,5 +164,5 @@ void Bs::run()
 
 	glDepthMask(true);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // the rendering above fucks the polygon mode
-	Fbo::unbind();
+	Fbo::unbind();*/
 }

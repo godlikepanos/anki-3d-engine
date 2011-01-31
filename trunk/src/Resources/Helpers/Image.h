@@ -2,7 +2,6 @@
 #define IMAGE_H
 
 #include "Vec.h"
-#include "Properties.h"
 #include "StdTypes.h"
 
 
@@ -19,19 +18,26 @@ class Image
 			CT_RGBA /// RGB plus alpha
 		};
 
-	PROPERTY_R(uint, width, getWidth) ///< Image width
-	PROPERTY_R(uint, height, getHeight) ///< Image height
-	PROPERTY_R(ColorType, type, getType) ///< Image color type
-	PROPERTY_R(Vec<uchar>, data, getData) ///< Image data
-
-	public:
 		/// Load an image
 		/// @param[in] filename The image file to load
 		/// @exception Exception
 		Image(const char* filename) {load(filename);}
 		~Image() {}
 
+		/// @name Accessors
+		/// @{
+		uint getWidth() const {return width;}
+		uint getHeight() const {return height;}
+		ColorType getColorType() const {return type;}
+		const Vec<uchar>& getData() const {return data;}
+		/// @}
+
 	private:
+		uint width; ///< Image width
+		uint height; ///< Image height
+		ColorType type; ///< Image color type
+		Vec<uchar> data; ///< Image data
+
 		/// @name TGA headers
 		/// @{
 		static uchar tgaHeaderUncompressed[12];

@@ -5,6 +5,7 @@
 #include "Fbo.h"
 #include "Texture.h"
 #include "Properties.h"
+#include "VisibilityTester.h"
 
 
 class Camera;
@@ -27,7 +28,7 @@ class Sm: private RenderingPass
 
 		/// Render the scene only with depth and store the result in the shadowMap
 		/// @param[in] cam The light camera
-		void run(const Camera& cam);
+		void run(const Camera& cam, const VisibilityTester::Types<const RenderableNode*>::Container renderables);
 
 	private:
 		Fbo fbo; ///< Illumination stage shadowmapping FBO

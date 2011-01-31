@@ -1,4 +1,5 @@
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 #include "Is.h"
 #include "Renderer.h"
 #include "Camera.h"
@@ -202,16 +203,10 @@ void Is::ambientPass(const Vec3& color)
 //======================================================================================================================
 // pointLightPass                                                                                                      =
 //======================================================================================================================
-void Is::pointLightPass(const PointLight& light)
+void Is::pointLightPass(const VisibilityTester::VisibleLight<PointLight>& vlight)
 {
 	const Camera& cam = r.getCamera();
-
-	// frustum test
-	Sphere sphere(light.getWorldTransform().origin, light.getRadius());
-	if(!cam.insideFrustum(sphere))
-	{
-		return;
-	}
+	const PointLight& light = vlight.getLight();
 
 	// stencil optimization
 	smo.run(light);
@@ -239,20 +234,15 @@ void Is::pointLightPass(const PointLight& light)
 //======================================================================================================================
 // spotLightPass                                                                                                       =
 //======================================================================================================================
-void Is::spotLightPass(const SpotLight& light)
+void Is::spotLightPass(const VisibilityTester::VisibleLight<SpotLight>& vlight)
 {
 	const Camera& cam = r.getCamera();
-
-	// frustum test
-	if(!cam.insideFrustum(light.getCamera()))
-	{
-		return;
-	}
+	const SpotLight& light = vlight.getLight();
 
 	// shadow mapping
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		sm.run(light.getCamera());
+		sm.run(light.getCamera(), vlight.getRenderables());
 
 		// restore the IS FBO
 		fbo.bind();
@@ -345,30 +335,18 @@ void Is::run()
 	calcPlanes();
 
 	// for all lights
-	Scene::Types<Light>::ConstIterator it = SceneSingleton::getInstance().getLights().begin();
-	for(; it != SceneSingleton::getInstance().getLights().end(); it++)
+	BOOST_FOREACH(const VisibilityTester::VisibleLight<PointLight> light, 
+	              SceneSingleton::getInstance().getVisibilityTester().getPointLights())
 	{
-		const Light& light = *(*it);
-		switch(light.getType())
-		{
-			case Light::LT_POINT:
-			{
-				const PointLight& pointl = static_cast<const PointLight&>(light);
-				pointLightPass(pointl);
-				break;
-			}
-
-			case Light::LT_SPOT:
-			{
-				const SpotLight& projl = static_cast<const SpotLight&>(light);
-				spotLightPass(projl);
-				break;
-			}
-
-			default:
-				RASSERT_THROW_EXCEPTION("WTF?");
-		}
+		pointLightPass(light);
 	}
+	
+	BOOST_FOREACH(const VisibilityTester::VisibleLight<SpotLight> light, 
+	              SceneSingleton::getInstance().getVisibilityTester().getSpotLights())
+	{
+		spotLightPass(light);
+	}
+	
 
 	glDisable(GL_STENCIL_TEST);
 

@@ -124,7 +124,7 @@ void Texture::load(const char* filename)
 		int internalFormat;
 		int format;
 		int type;
-		switch(img.getType())
+		switch(img.getColorType())
 		{
 			case Image::CT_R:
 				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;

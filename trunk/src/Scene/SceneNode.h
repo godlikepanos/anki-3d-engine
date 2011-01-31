@@ -57,9 +57,11 @@ class SceneNode: private Object
 		void moveLocalZ(float distance);
 		/// @}
 
-	private:
+	protected:
 		Transform localTransform; ///< The transformation in local space
 		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
+
+	private:
 		SceneNodeType type;
 		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
 

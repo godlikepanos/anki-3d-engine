@@ -27,6 +27,8 @@ void Mesh::load(const char* filename)
 		}
 
 		createVbos(meshData);
+
+		boundingShape = Sphere((const float*)(&meshData.getVertCoords()[0]), 0, meshData.getVertCoords().size());
 	}
 	catch(std::exception& e)
 	{

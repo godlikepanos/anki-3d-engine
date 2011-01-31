@@ -12,9 +12,6 @@ class Plane;
 /// Sphere collision shape
 class Sphere: public CollisionShape
 {
-	PROPERTY_RW(Vec3, center, getCenter, setCenter)
-	PROPERTY_RW(float, radius, getRadius, setRadius)
-
 	public:
 		/// Default constructor
 		Sphere(): CollisionShape(CST_SPHERE) {}
@@ -25,15 +22,27 @@ class Sphere: public CollisionShape
 		/// Constructor
 		Sphere(const Vec3& center_, float radius_);
 
+		/// @name Accessors
+		/// @{
+		GETTER_SETTER(Vec3, center, getCenter, setCenter)
+		GETTER_SETTER_BY_VAL(float, radius, getRadius, setRadius)
+		/// @}
+
 		/// @see set
 		Sphere(const float* pointer, size_t stride, int count);
 
-		Sphere getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const;
+		Sphere getTransformed(const Transform& transform) const;
+
+		/// Get the sphere that includes this sphere and the given
+		Sphere getCompoundSphere(const Sphere& b) const;
 
 		/// @see CollisionShape::testPlane
 		float testPlane(const Plane& plane) const;
 
 	private:
+		Vec3 center;
+		float radius;
+
 		/// Set from Vec3 array
 		/// @param pointer The start of the array
 		/// @param stride The space between the elements
