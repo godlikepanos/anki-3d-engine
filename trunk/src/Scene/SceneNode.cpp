@@ -6,9 +6,10 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-SceneNode::SceneNode(SceneNodeType type_, SceneNode* parent):
+SceneNode::SceneNode(SceneNodeType type_, bool compoundFlag_, SceneNode* parent):
 	Object(parent),
-	type(type_)
+	type(type_),
+	compoundFlag(compoundFlag_)
 {
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
@@ -33,7 +34,15 @@ void SceneNode::updateWorldTransform()
 	if(getObjParent())
 	{
 		const SceneNode* parent = static_cast<const SceneNode*>(getObjParent());
-		worldTransform = Transform::combineTransformations(parent->getWorldTransform(), localTransform);
+
+		if(compoundFlag)
+		{
+			worldTransform = parent->getWorldTransform();
+		}
+		else
+		{
+			worldTransform = Transform::combineTransformations(parent->getWorldTransform(), localTransform);
+		}
 	}
 	else // else copy
 	{

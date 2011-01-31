@@ -118,7 +118,7 @@ void init()
 	//Ui::init();
 
 	// camera
-	Camera* cam = new Camera(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	Camera* cam = new Camera(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0, false, NULL);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);

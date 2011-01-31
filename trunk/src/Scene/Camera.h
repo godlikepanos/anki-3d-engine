@@ -1,7 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <fstream>
 #include "Collision.h"
 #include "SceneNode.h"
 
@@ -22,8 +21,8 @@ class Camera: public SceneNode
 
 	public:
 		// constructors and destuctors
-		Camera(float fovx_, float fovy_, float znear_, float zfar_, SceneNode* parent = NULL);
-		Camera(SceneNode* parent = NULL): SceneNode(SNT_CAMERA, parent) {}
+		Camera(float fovx_, float fovy_, float znear_, float zfar_, bool compoundFlag, SceneNode* parent = NULL);
+		Camera(bool compoundFlag, SceneNode* parent): SceneNode(SNT_CAMERA, compoundFlag, parent) {}
 		~Camera() {}
 
 		/// @name Accessors
@@ -92,8 +91,8 @@ class Camera: public SceneNode
 };
 
 
-inline Camera::Camera(float fovx_, float fovy_, float znear_, float zfar_, SceneNode* parent):
-	SceneNode(SNT_CAMERA, parent),
+inline Camera::Camera(float fovx_, float fovy_, float znear_, float zfar_, bool compoundFlag, SceneNode* parent):
+	SceneNode(SNT_CAMERA, compoundFlag, parent),
 	fovX(fovx_),
 	fovY(fovy_),
 	zNear(znear_),

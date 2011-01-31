@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Resources -I../../src/Resources/Core -I../../src/Resources/Helpers -I../../src/Physics -I../../src/Math -I../../src/Misc -I../../src/Ui -I../../src/Core -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Util -I../../src/Input -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Math -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Util -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Texture.cpp ../../src/Resources/MtlUserDefinedVar.cpp ../../src/Resources/ModelPatch.cpp ../../src/Resources/Extension.cpp ../../src/Resources/SProgUniVar.cpp ../../src/Resources/Model.cpp ../../src/Resources/Material.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/ModelNodePatch.cpp ../../src/Scene/Camera.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/Light.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Input/Input.cpp ../../src/Renderer/SceneDbgDrawer.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/PhyDbgDrawer.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/SceneDrawer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
-OBJECTS = Main.o ShaderProg.o Mesh.o DummyRsrc.o Skin.o SkelAnim.o LightData.o Script.o Skeleton.o ParticleEmitterProps.o Texture.o MtlUserDefinedVar.o ModelPatch.o Extension.o SProgUniVar.o Model.o Material.o ResourceManager.o Image.o ShaderPrePreprocessor.o MeshData.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o StdinListener.o ModelNodePatch.o Camera.o SpotLight.o Light.o Scene.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o SkelAnimModelNodeCtrl.o Controller.o BinaryStream.o Scanner.o Util.o Exception.o Input.o SceneDbgDrawer.o SkinsDeformer.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o PhyDbgDrawer.o Ms.o MainRenderer.o SceneDrawer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Scene.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
+SOURCES = ../../src/Main.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Texture.cpp ../../src/Resources/MtlUserDefinedVar.cpp ../../src/Resources/ModelPatch.cpp ../../src/Resources/Extension.cpp ../../src/Resources/SProgUniVar.cpp ../../src/Resources/Model.cpp ../../src/Resources/Material.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/Camera.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/Light.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Input/Input.cpp ../../src/Renderer/SceneDbgDrawer.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/PhyDbgDrawer.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/SceneDrawer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
+OBJECTS = Main.o ShaderProg.o Mesh.o DummyRsrc.o Skin.o SkelAnim.o LightData.o Script.o Skeleton.o ParticleEmitterProps.o Texture.o MtlUserDefinedVar.o ModelPatch.o Extension.o SProgUniVar.o Model.o Material.o ResourceManager.o Image.o ShaderPrePreprocessor.o MeshData.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o StdinListener.o Camera.o SpotLight.o Light.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o BinaryStream.o Scanner.o Util.o Exception.o Input.o SceneDbgDrawer.o SkinsDeformer.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o PhyDbgDrawer.o Ms.o MainRenderer.o SceneDrawer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Scene.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -236,8 +236,8 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Physics/RigidBody.h ../../src/Scripting/ScriptingEngine.h \
  ../../src/Core/StdinListener.h ../../src/Scene/ModelNode.h \
- ../../src/Scene/ModelNodePatch.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h \
+ ../../src/Scene/ModelPatchNode.h ../../src/Resources/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
  ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.h \
  ../../src/Scene/Controllers/Controller.h ../../src/Resources/Model.h \
  ../../src/Resources/ModelPatch.h ../../src/Core/Logger.h \
@@ -1518,38 +1518,6 @@ StdinListener.o: ../../src/Core/StdinListener.cpp \
 	@echo Compiling ../../src/Core/StdinListener.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/StdinListener.cpp -o StdinListener.o
 
-ModelNodePatch.o: ../../src/Scene/ModelNodePatch.cpp \
- ../../src/Scene/ModelNodePatch.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../extern/include/GL/glew.h ../../src/Util/StdTypes.h \
- ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Util/Exception.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Util/Properties.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h ../../src/Resources/Material.h \
- ../../src/Resources/ShaderProg.h ../../src/Resources/MtlUserDefinedVar.h \
- ../../src/Resources/Helpers/MeshData.h ../../src/Scene/ModelNode.h \
- ../../src/Scene/SceneNode.h
-	@echo Compiling ../../src/Scene/ModelNodePatch.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNodePatch.cpp -o ModelNodePatch.o
-
 Camera.o: ../../src/Scene/Camera.cpp ../../src/Scene/Camera.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Util/Properties.h \
@@ -1787,14 +1755,43 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Resources/MtlUserDefinedVar.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/GhostNode.h \
  ../../src/Resources/ParticleEmitterProps.h ../../src/Scene/ModelNode.h \
- ../../src/Scene/ModelNodePatch.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Scene/ModelPatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
  ../../src/Resources/ShaderProg.h ../../src/Misc/GlException.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h
+ ../../src/Scene/RenderableNode.h
 	@echo Compiling ../../src/Scene/Scene.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Scene.cpp -o Scene.o
+
+SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Util/Properties.h ../../src/Scene/SkinPatchNode.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
+ ../../src/Resources/SProgAttribVar.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/RenderableNode.h
+	@echo Compiling ../../src/Scene/SkinNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SkinNode.cpp -o SkinNode.o
 
 SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
@@ -1964,7 +1961,7 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelNodePatch.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelPatchNode.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
  ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
@@ -1972,7 +1969,7 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h ../../src/Resources/Model.h \
+ ../../src/Scene/RenderableNode.h ../../src/Resources/Model.h \
  ../../src/Resources/ModelPatch.h ../../src/Resources/Skeleton.h
 	@echo Compiling ../../src/Scene/ModelNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNode.cpp -o ModelNode.o
@@ -2333,7 +2330,7 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Resources/Core/ResourceManager.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelNodePatch.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelPatchNode.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
  ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
@@ -2341,7 +2338,7 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h ../../src/Resources/Material.h \
+ ../../src/Scene/RenderableNode.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/MtlUserDefinedVar.h \
  ../../src/Collision/Sphere.h ../../src/Collision/CollisionShape.h \
  ../../src/Scene/PointLight.h ../../src/Scene/Light.h \
@@ -2351,6 +2348,38 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Resources/Texture.h ../../src/Scene/SpotLight.h
 	@echo Compiling ../../src/Scene/VisibilityTester.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/VisibilityTester.cpp -o VisibilityTester.o
+
+ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
+ ../../src/Scene/ModelPatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../extern/include/GL/glew.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Util/Exception.h ../../src/Resources/SProgUniVar.h \
+ ../../src/Resources/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
+ ../../src/Util/Vec.h ../../src/Util/Exception.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h ../../src/Scene/SceneNode.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Resources/MtlUserDefinedVar.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Scene/ModelNode.h
+	@echo Compiling ../../src/Scene/ModelPatchNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelPatchNode.cpp -o ModelPatchNode.o
 
 SkelAnimModelNodeCtrl.o: \
  ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp \
@@ -2409,14 +2438,14 @@ SkelAnimModelNodeCtrl.o: \
  ../../extern/include/SDL/SDL_revision.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Scene/ModelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Scene/ModelNodePatch.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Scene/ModelPatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
  ../../extern/include/GL/glew.h ../../src/Resources/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
  ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
  ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h ../../src/Resources/Model.h \
+ ../../src/Scene/RenderableNode.h ../../src/Resources/Model.h \
  ../../src/Resources/ModelPatch.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture.h ../../src/Renderer/Ms.h \
@@ -3042,9 +3071,9 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Physics/BtAndAnkiConvertors.h \
  ../../src/Renderer/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/ModelNode.h ../../src/Scene/ModelNodePatch.h \
+ ../../src/Scene/ModelNode.h ../../src/Scene/ModelPatchNode.h \
  ../../src/Resources/Mesh.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h ../../src/Resources/Model.h \
+ ../../src/Scene/RenderableNode.h ../../src/Resources/Model.h \
  ../../src/Resources/ModelPatch.h
 	@echo Compiling ../../src/Renderer/Renderer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Renderer.cpp -o Renderer.o
@@ -3285,8 +3314,8 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Resources/Model.h ../../src/Resources/ModelPatch.h \
  ../../src/Scene/ModelNode.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/ModelNodePatch.h ../../src/Resources/Mesh.h \
- ../../src/Resources/ModelPatch.h ../../src/Scene/SceneRenderable.h \
+ ../../src/Scene/ModelPatchNode.h ../../src/Resources/Mesh.h \
+ ../../src/Resources/ModelPatch.h ../../src/Scene/RenderableNode.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
  ../../src/Resources/MtlUserDefinedVar.h
 	@echo Compiling ../../src/Renderer/Bs.cpp...
@@ -3985,9 +4014,9 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/ModelNode.h ../../src/Scene/ModelNodePatch.h \
+ ../../src/Scene/ModelNode.h ../../src/Scene/ModelPatchNode.h \
  ../../src/Resources/Mesh.h ../../src/Resources/ModelPatch.h \
- ../../src/Scene/SceneRenderable.h
+ ../../src/Scene/RenderableNode.h
 	@echo Compiling ../../src/Renderer/Ms.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ms.cpp -o Ms.o
 
@@ -4087,14 +4116,13 @@ SceneDrawer.o: ../../src/Renderer/SceneDrawer.cpp \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/MtlUserDefinedVar.h \
- ../../src/Scene/SceneRenderable.h ../../src/Scene/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Resources/MtlUserDefinedVar.h ../../src/Scene/RenderableNode.h \
  ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture.h ../../src/Resources/ShaderProg.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Scene/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../src/Resources/Texture.h \
+ ../../src/Resources/ShaderProg.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
  ../../src/Renderer/Ms.h ../../src/Renderer/RenderingPass.h \

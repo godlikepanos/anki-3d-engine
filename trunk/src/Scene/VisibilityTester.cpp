@@ -1,7 +1,7 @@
 #include "VisibilityTester.h"
 #include "Scene.h"
 #include "ModelNode.h"
-#include "ModelNodePatch.h"
+#include "ModelPatchNode.h"
 #include "Material.h"
 #include "Sphere.h"
 #include "PointLight.h"
@@ -11,7 +11,7 @@
 //======================================================================================================================
 // CmpLength::operator()                                                                                               =
 //======================================================================================================================
-inline bool VisibilityTester::CmpLength::operator()(const SceneRenderable* a, const SceneRenderable* b) const
+inline bool VisibilityTester::CmpLength::operator()(const RenderableNode* a, const RenderableNode* b) const
 {
 	return (a->getWorldTransform().origin - o).getLengthSquared() < (b->getWorldTransform().origin - o).getLengthSquared();
 }
@@ -82,10 +82,10 @@ void VisibilityTester::test(const Camera& cam)
 	Scene::Types<ModelNode>::ConstIterator it = scene.getModelNodes().begin();
 	for(; it != scene.getModelNodes().end(); it++)
 	{
-		boost::ptr_vector<ModelNodePatch>::const_iterator it2 = (*it)->getModelNodePatches().begin();
-		for(; it2 != (*it)->getModelNodePatches().end(); it2++)
+		boost::ptr_vector<ModelPatchNode>::const_iterator it2 = (*it)->getModelPatchNodees().begin();
+		for(; it2 != (*it)->getModelPatchNodees().end(); it2++)
 		{
-			const ModelNodePatch& modelNodePatch = *it2;
+			const ModelPatchNode& modelNodePatch = *it2;
 
 			// First check if its rendered by a light
 			Types<VisibleLight<SpotLight> >::Iterator itsl = spotLights.begin();

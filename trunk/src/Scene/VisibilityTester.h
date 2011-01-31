@@ -8,7 +8,7 @@
 
 class Camera;
 class Scene;
-class SceneRenderable;
+class RenderableNode;
 class SpotLight;
 class PointLight;
 
@@ -38,11 +38,11 @@ class VisibilityTester
 
 			public:
 				const LightType& getLight() const {return *light;}
-				GETTER_R(Types<const SceneRenderable*>::Container, renderables, getRenderables)
+				GETTER_R(Types<const RenderableNode*>::Container, renderables, getRenderables)
 
 			private:
 				const LightType* light;
-				Types<const SceneRenderable*>::Container renderables; ///< The visible nodes by that light
+				Types<const RenderableNode*>::Container renderables; ///< The visible nodes by that light
 		};
 
 		/// Constructor
@@ -50,8 +50,8 @@ class VisibilityTester
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Types<const SceneRenderable*>::Container, msRenderables, getMsRenderables)
-		GETTER_R(Types<const SceneRenderable*>::Container, bsRenderables, getBsRenderables)
+		GETTER_R(Types<const RenderableNode*>::Container, msRenderables, getMsRenderables)
+		GETTER_R(Types<const RenderableNode*>::Container, bsRenderables, getBsRenderables)
 		GETTER_R(Types<VisibleLight<PointLight> >::Container, pointLights, getPointLights)
 		GETTER_R(Types<VisibleLight<SpotLight> >::Container, spotLights, getSpotLights)
 		/// @}
@@ -67,18 +67,18 @@ class VisibilityTester
 		{
 			Vec3 o; ///< The camera origin
 			CmpLength(Vec3 o_): o(o_) {}
-			bool operator()(const SceneRenderable* a, const SceneRenderable* b) const;
+			bool operator()(const RenderableNode* a, const RenderableNode* b) const;
 		};
 
 		const Scene& scene; ///< Know your father
 
-		Types<const SceneRenderable*>::Container msRenderables;
-		Types<const SceneRenderable*>::Container bsRenderables;
+		Types<const RenderableNode*>::Container msRenderables;
+		Types<const RenderableNode*>::Container bsRenderables;
 		Types<VisibleLight<PointLight> >::Container pointLights;
 		Types<VisibleLight<SpotLight> >::Container spotLights;
 
 		/// @todo write some real code
-		static bool test(const SceneRenderable& /*renderable*/, const Camera& /*cam*/) {return true;}
+		static bool test(const RenderableNode& /*renderable*/, const Camera& /*cam*/) {return true;}
 };
 
 

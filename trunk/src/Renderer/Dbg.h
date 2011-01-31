@@ -2,6 +2,7 @@
 #define DBG_H
 
 #include <boost/array.hpp>
+#include <map>
 #include "RenderingPass.h"
 #include "Fbo.h"
 #include "ShaderProg.h"
@@ -22,7 +23,7 @@ class Dbg: public RenderingPass
 		void run();
 
 		void renderGrid();
-		void drawSphere(float radius, int complexity = 8);
+		void drawSphere(float radius, int complexity = 4);
 		void drawCube(float size = 1.0);
 		void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
@@ -51,7 +52,7 @@ class Dbg: public RenderingPass
 		bool showCamerasEnabled;
 		Fbo fbo;
 		RsrcPtr<ShaderProg> sProg;
-		static const uint MAX_POINTS_PER_DRAW = 250;
+		static const uint MAX_POINTS_PER_DRAW = 256;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> colors;
 		Mat4 modelMat;
@@ -61,6 +62,9 @@ class Dbg: public RenderingPass
 		Vbo colorsVbo;
 		Vao vao;
 		SceneDbgDrawer sceneDbgDrawer;
+		/// This is a container of some precalculated spheres. Its a map that from sphere complexity it returns a vector
+		/// of lines (Vec3s in pairs)
+		std::map<uint, Vec<Vec3> > complexityToPreCalculatedSphere;
 };
 
 

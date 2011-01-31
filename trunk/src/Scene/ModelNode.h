@@ -2,11 +2,11 @@
 #define MODEL_NODE_H
 
 #include <boost/array.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include "SceneNode.h"
 #include "RsrcPtr.h"
 #include "Properties.h"
-#include "ModelNodePatch.h"
+#include "ModelPatchNode.h"
+#include "Vec.h"
 
 
 class Model;
@@ -16,7 +16,7 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
-		ModelNode(): SceneNode(SNT_MODEL) {}
+		ModelNode(): SceneNode(SNT_MODEL, true, NULL) {}
 
 		/// @name Accessors
 		/// @{
@@ -29,12 +29,12 @@ class ModelNode: public SceneNode
 
 		/// @name Accessors
 		/// @{
-		const boost::ptr_vector<ModelNodePatch>& getModelNodePatches() const {return patches;}
+		const Vec<ModelPatchNode*>& getModelPatchNodees() const {return patches;}
 		/// @}
 
 	private:
 		RsrcPtr<Model> model;
-		boost::ptr_vector<ModelNodePatch> patches;
+		Vec<ModelPatchNode*> patches;
 };
 
 

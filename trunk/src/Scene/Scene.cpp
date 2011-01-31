@@ -42,6 +42,9 @@ void Scene::registerNode(SceneNode* node)
 		case SceneNode::SNT_MODEL:
 			putBackNode(modelNodes, static_cast<ModelNode*>(node));
 			break;
+		case SceneNode::SNT_RENDERABLE:
+			putBackNode(renderableNodes, static_cast<RenderableNode*>(node));
+			break;
 	};
 }
 
@@ -66,6 +69,9 @@ void Scene::unregisterNode(SceneNode* node)
 			break;
 		case SceneNode::SNT_MODEL:
 			eraseNode(modelNodes, static_cast<ModelNode*>(node));
+			break;
+		case SceneNode::SNT_RENDERABLE:
+			eraseNode(renderableNodes, static_cast<RenderableNode*>(node));
 			break;
 	};
 }
