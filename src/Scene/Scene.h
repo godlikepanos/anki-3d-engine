@@ -6,6 +6,7 @@
 #include "Exception.h"
 #include "Properties.h"
 #include "Singleton.h"
+#include "VisibilityTester.h"
 
 
 class SceneNode;
@@ -32,7 +33,7 @@ class Scene
 		};
 
 		Scene();
-		~Scene() throw() {}
+		~Scene() {}
 
 		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers
 		void unregisterNode(SceneNode* node);
@@ -41,12 +42,14 @@ class Scene
 
 		void updateAllWorldStuff();
 		void updateAllControllers();
+		void doVisibilityTests(const Camera& cam) {visibilityTester->test(cam);}
 
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER(Vec3, ambientCol, getAmbientCol, setAmbientCol)
 		Physics& getPhysics() {return *physics;}
 		const Physics& getPhysics() const {return *physics;}
+		const VisibilityTester& getVisibilityTester() const {return *visibilityTester;}
 
 		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
 		GETTER_RW(Types<Light>::Container, lights, getLights)
@@ -71,6 +74,7 @@ class Scene
 
 		Vec3 ambientCol; ///< The global ambient color
 		std::auto_ptr<Physics> physics; ///< Connection with Bullet wrapper
+		std::auto_ptr<VisibilityTester> visibilityTester;
 
 		/// Adds a node in a container
 		template<typename ContainerType, typename Type>

@@ -15,6 +15,7 @@
 #include "Bs.h"
 #include "Dbg.h"
 #include "GlException.h"
+#include "SceneDrawer.h"
 
 
 class Camera;
@@ -52,6 +53,7 @@ class Renderer
 		uint getFramesNum() const {return framesNum;}
 		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat);
 		const Camera& getCamera() const {return *cam;}
+		GETTER_R(SceneDrawer, sceneDrawer, getSceneDrawer)
 		/// @}
 
 		/// Init the renderer given an initialization class
@@ -84,21 +86,6 @@ class Renderer
 		/// OpenGL wrapper
 		static void setViewport(uint x, uint y, uint w, uint h) {glViewport(x, y, w, h);}
 
-		/// This function:
-		/// - binds the shader program
-		/// - loads the uniforms
-		/// - sets the GL state
-		/// @param mtl The material containing the shader program and the locations
-		/// @param modelNode Needed for some matrices (model) and the bone stuff (rotations & translations)
-		/// @param cam Needed for some matrices (view & projection)
-		void setupShaderProg(const class Material& mtl, const ModelNode& modelNode, const Camera& cam) const;
-
-		/// Render ModelNode. The method sets up the shader and renders the geometry
-		void renderModelNode(const ModelNode& modelNode, const Camera& cam, ModelNodeRenderType type) const;
-
-		/// Render all ModelNodes
-		void renderAllModelNodes(const Camera& cam, ModelNodeRenderType type) const;
-
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		/// @param vertCoordsAttribLoc The attribute location of the vertex positions
 		void drawQuad();
@@ -120,6 +107,7 @@ class Renderer
 		float aspectRatio; ///< Just a precalculated value
 		const Camera* cam; ///< Current camera
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
+		SceneDrawer sceneDrawer;
 
 	//====================================================================================================================
 	// Protected                                                                                                         =

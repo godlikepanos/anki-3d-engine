@@ -7,6 +7,7 @@
 #include "Material.h"
 #include "ParticleEmitter.h"
 #include "ModelNode.h"
+#include "VisibilityTester.h"
 
 
 //======================================================================================================================
@@ -18,6 +19,8 @@ Scene::Scene()
 	//sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
 
 	physics.reset(new Physics);
+
+	visibilityTester.reset(new VisibilityTester(*this));
 }
 
 

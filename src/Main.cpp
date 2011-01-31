@@ -118,7 +118,8 @@ void init()
 	//Ui::init();
 
 	// camera
-	Camera* cam = new Camera(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0, false, NULL);
+	Camera* cam = new Camera(false, NULL);
+	cam->setAll(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -313,6 +314,7 @@ void mainLoop()
 		SceneSingleton::getInstance().getPhysics().update(crntTime);
 		SceneSingleton::getInstance().updateAllControllers();
 		SceneSingleton::getInstance().updateAllWorldStuff();
+		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 

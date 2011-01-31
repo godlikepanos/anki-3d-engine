@@ -5,12 +5,40 @@
 //======================================================================================================================
 // getTransformed                                                                                                      =
 //======================================================================================================================
-Sphere Sphere::getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const
+Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;
-	newSphere.center = center.getTransformed(translate, rotate, scale);
-	newSphere.radius = radius * scale;
+	newSphere.center = center.getTransformed(transform.origin, transform.rotation, transform.scale);
+	newSphere.radius = radius * transform.scale;
 	return newSphere;
+}
+
+
+//======================================================================================================================
+// getCompoundSphere                                                                                                   =
+//======================================================================================================================
+Sphere Sphere::getCompoundSphere(const Sphere& b) const
+{
+	const Sphere& a = *this;
+
+	Vec3 c = b.getCenter() - a.getCenter();
+	float cLen = c.getLength();
+
+	if(cLen + b.getRadius() < a.getRadius())
+	{
+		return a;
+	}
+	else if(cLen + a.getRadius() < b.getRadius())
+	{
+		return b;
+	}
+
+	Vec3 bnorm = c / cLen;
+
+	Vec3 ca = (-bnorm) * a.getRadius() + a.getCenter();
+	Vec3 cb = (bnorm) * b.getRadius() + b.getCenter();
+
+	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
 }
 
 
@@ -36,7 +64,7 @@ float Sphere::testPlane(const Plane& plane) const
 }
 
 //======================================================================================================================
-//                                                                                                                     =
+// set                                                                                                                 =
 //======================================================================================================================
 void Sphere::set(const float* pointer, size_t stride, int count)
 {
@@ -68,14 +96,16 @@ void Sphere::set(const float* pointer, size_t stride, int count)
 
 	tmpPtr = (void*)pointer;
 	float maxDist = (*((Vec3*)tmpPtr) - center).getLengthSquared(); // max distance between center and the vec3 arr
-	for(int i=1; i<count; i++)
+	for(int i = 1; i < count; i++)
 	{
 		tmpPtr = (char*)tmpPtr + stride;
 
 		const Vec3& vertco = *((Vec3*)tmpPtr);
 		float dist = (vertco - center).getLengthSquared();
 		if(dist > maxDist)
+		{
 			maxDist = dist;
+		}
 	}
 
 	radius = M::sqrt(maxDist);

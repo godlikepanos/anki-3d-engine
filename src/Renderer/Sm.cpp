@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include "Sm.h"
 #include "Renderer.h"
 #include "App.h"
@@ -68,7 +69,7 @@ void Sm::init(const RendererInitializer& initializer)
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Sm::run(const Camera& cam)
+void Sm::run(const Camera& cam, const VisibilityTester::Types<const RenderableNode*>::Container renderables)
 {
 	if(!enabled)
 	{
@@ -92,7 +93,10 @@ void Sm::run(const Camera& cam)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
-	r.renderAllModelNodes(cam, Renderer::MNRT_DP);
+	BOOST_FOREACH(const RenderableNode* node, renderables)
+	{
+		r.getSceneDrawer().renderRenderableNode(*node, cam, SceneDrawer::RPT_DEPTH);
+	}
 
 	// restore GL
 	glDisable(GL_POLYGON_OFFSET_FILL);

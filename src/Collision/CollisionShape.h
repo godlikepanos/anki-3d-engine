@@ -1,13 +1,11 @@
 #ifndef COLLISION_SHAPE
 #define COLLISION_SHAPE
 
-#include "Properties.h"
-
 
 class Plane;
 
 
-/// Abstact class for collision shapes
+/// Abstract class for collision shapes
 class CollisionShape
 {
 	public:
@@ -22,9 +20,11 @@ class CollisionShape
 			CST_NUM
 		};
 
-	PROPERTY_R(CollisionShapeType, type, getType)
+	CollisionShapeType getType() const {return type;}
 
 	public:
+		CollisionShapeType type;
+
 		CollisionShape(CollisionShapeType type_): type(type_) {}
 
 		/// If the bounding volume intersects with the plane then the func returns 0, else it returns the distance. If the

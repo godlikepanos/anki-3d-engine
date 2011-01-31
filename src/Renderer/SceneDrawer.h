@@ -23,7 +23,7 @@ class SceneDrawer
 		/// The one and only contructor
 		SceneDrawer(const Renderer& r_): r(r_) {}
 
-		void renderRenderableNode(const RenderableNode& renderable, const Camera& cam, RenderingPassType rtype);
+		void renderRenderableNode(const RenderableNode& renderable, const Camera& cam, RenderingPassType rtype) const;
 
 	private:
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff from it

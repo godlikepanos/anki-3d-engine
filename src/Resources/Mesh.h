@@ -5,7 +5,7 @@
 #include "Math.h"
 #include "RsrcPtr.h"
 #include "Vbo.h"
-#include "Properties.h"
+#include "Sphere.h"
 
 
 class MeshData;
@@ -27,22 +27,23 @@ class Mesh
 			VBOS_NUM
 		};
 
-	PROPERTY_R(uint, vertIdsNum, getVertIdsNum)
-
-	public:
 		/// Default constructor
 		Mesh() {}
 
 		/// Does nothing
 		~Mesh() {}
 
-		/// Accessor
+		/// @name Accessors
+		/// @{
 		const Vbo& getVbo(Vbos id) const {return vbos[id];}
+		uint getVertIdsNum() const {return vertIdsNum;}
+		const Sphere& getBoundingShape() const {return boundingShape;}
+		/// @}
 
 		/// Implements @ref Resource::load
 		void load(const char* filename);
 
-		/// @name Ask for data
+		/// @name Ask for geometry properties
 		/// @{
 		bool hasTexCoords() const {return vbos[VBO_TEX_COORDS].isCreated();}
 		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS].isCreated();}
@@ -51,6 +52,8 @@ class Mesh
 
 	private:
 		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
+		uint vertIdsNum; ///< The number of vertex IDs
+		Sphere boundingShape;
 
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);

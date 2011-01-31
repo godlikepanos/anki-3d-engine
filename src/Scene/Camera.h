@@ -1,6 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <boost/array.hpp>
 #include "Collision.h"
 #include "SceneNode.h"
 
@@ -19,30 +20,33 @@ class Camera: public SceneNode
 			FP_FAR
 		};
 
-	public:
-		// constructors and destuctors
-		Camera(float fovx_, float fovy_, float znear_, float zfar_, bool compoundFlag, SceneNode* parent = NULL);
 		Camera(bool compoundFlag, SceneNode* parent): SceneNode(SNT_CAMERA, compoundFlag, parent) {}
 		~Camera() {}
 
 		/// @name Accessors
 		//// @{
-		void setFovX (float fovx_)  { fovX=fovx_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
-		void setFovY (float fovy_)  { fovY=fovy_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
-		void setZNear(float znear_) { zNear=znear_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
-		void setZFar (float zfar_)  { zFar=zfar_; calcProjectionMatrix(); calcLSpaceFrustumPlanes(); }
+		void setFovX (float fovx_)  {fovX=fovx_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
+		void setFovY (float fovy_)  {fovY=fovy_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
+		void setZNear(float znear_) {zNear=znear_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
+		void setZFar (float zfar_)  {zFar=zfar_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
 		void setAll(float fovx_, float fovy_, float znear_, float zfar_);
-		float getFovX () const { return fovX; }
-		float getFovY () const { return fovY; }
-		float getZNear() const { return zNear; }
-		float getZFar () const { return zFar; }
-		const Mat4& getProjectionMatrix() const { return projectionMat; }
-		const Mat4& getViewMatrix() const { return viewMat; }
-		const Mat4& getInvProjectionMatrix() const { return invProjectionMat; } ///< See the declaration of invProjectionMat for info
+		float getFovX() const {return fovX;}
+		float getFovY() const {return fovY;}
+		float getZNear() const {return zNear;}
+		float getZFar() const {return zFar;}
+		const Mat4& getProjectionMatrix() const {return projectionMat;}
+		const Mat4& getViewMatrix() const {return viewMat;}
+		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;} ///< See the declaration of invProjectionMat for info
 		//// @}
 
 		void lookAtPoint(const Vec3& point);
+
+		/// This does:
+		/// - Update view matrix
+		/// - Update frustum planes
 		void updateTrf();
+
+		/// Do nothing
 		void init(const char*) {}
 
 		/// @name Frustum checks
@@ -68,8 +72,8 @@ class Camera: public SceneNode
 
 		/// @name The frustum planes in local and world space
 		/// @{
-		Plane lspaceFrustumPlanes[6];
-		Plane wspaceFrustumPlanes[6];
+		boost::array<Plane, 6> lspaceFrustumPlanes;
+		boost::array<Plane, 6> wspaceFrustumPlanes;
 		/// @}
 
 		/// @name Matrices
@@ -89,19 +93,6 @@ class Camera: public SceneNode
 		void calcLSpaceFrustumPlanes();
 		void updateWSpaceFrustumPlanes();
 };
-
-
-inline Camera::Camera(float fovx_, float fovy_, float znear_, float zfar_, bool compoundFlag, SceneNode* parent):
-	SceneNode(SNT_CAMERA, compoundFlag, parent),
-	fovX(fovx_),
-	fovY(fovy_),
-	zNear(znear_),
-	zFar(zfar_)
-{
-	calcLSpaceFrustumPlanes();
-	updateWSpaceFrustumPlanes();
-	calcProjectionMatrix();
-}
 
 
 #endif

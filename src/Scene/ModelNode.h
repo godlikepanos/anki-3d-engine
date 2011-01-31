@@ -7,6 +7,7 @@
 #include "Properties.h"
 #include "ModelPatchNode.h"
 #include "Vec.h"
+#include "Sphere.h"
 
 
 class Model;
@@ -21,11 +22,16 @@ class ModelNode: public SceneNode
 		/// @name Accessors
 		/// @{
 		const Model& getModel() const {return *model;}
+		GETTER_R(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
+		GETTER_R(Sphere, boundingShapeWSpace, getBoundingShapeWSpace)
 		/// @}
 
 		/// Initialize the node
 		/// - Load the resource
 		void init(const char* filename);
+
+		/// Update the bounding shape
+		void updateTrf();
 
 		/// @name Accessors
 		/// @{
@@ -35,6 +41,7 @@ class ModelNode: public SceneNode
 	private:
 		RsrcPtr<Model> model;
 		Vec<ModelPatchNode*> patches;
+		Sphere boundingShapeWSpace;
 };
 
 

@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <boost/lexical_cast.hpp>
 #include "Exception.h"
 
 
@@ -8,8 +9,5 @@
 //======================================================================================================================
 void Exception::init(const char* err_, const char* file, int line, const char* func)
 {
-	char tmpStr[1024];
-	sprintf(tmpStr, "\n(%s:%d %s) %s", file, line, func, err_);
-	//sprintf(tmpStr, "%s", err_);
-	err = tmpStr;
+	err = std::string("\n(") + file + ":" + boost::lexical_cast<std::string>(line) + " " + func + ") " + err_;
 }

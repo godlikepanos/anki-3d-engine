@@ -238,34 +238,6 @@ void Dbg::init(const RendererInitializer& initializer)
 }
 
 
-/*Sphere Dbg::getCommonSphere(const Sphere& a, const Sphere& b)
-{
-	Vec3 bridge = b.getCenter() - a.getCenter();
-	float blen = bridge.getLength();
-
-	if(blen + b.getRadius() < a.getRadius())
-	{
-		return a;
-	}
-	else if(blen + a.getRadius() < b.getRadius())
-	{
-		return b;
-	}
-
-	Vec3 bnorm = bridge / blen;
-
-	Vec3 ca = (-bnorm) * a.getRadius() + a.getCenter();
-	Vec3 cb = (bnorm) * b.getRadius() + b.getCenter();
-
-	setColor(Vec4(1.0));
-	setModelMat(Mat4(ca));
-	drawSphere(0.01);
-	setModelMat(Mat4(cb));
-	drawSphere(0.01);
-
-	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
-}*/
-
 //======================================================================================================================
 // runStage                                                                                                            =
 //======================================================================================================================
