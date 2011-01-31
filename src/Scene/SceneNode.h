@@ -23,12 +23,14 @@ class SceneNode: private Object
 			SNT_LIGHT,
 			SNT_CAMERA,
 			SNT_PARTICLE_EMITTER,
-			SNT_MODEL
+			SNT_MODEL,
+			SNT_SKIN,
+			SNT_RENDERABLE
 		};
 		
-		SceneNode(SceneNodeType type_, SceneNode* parent = NULL);
+		explicit SceneNode(SceneNodeType type_, bool compoundFlag, SceneNode* parent);
 		virtual ~SceneNode();
-		virtual void init(const char*) = 0; ///< init using a script
+		virtual void init(const char*) = 0; ///< init using a script file
 
 		/// @name Accessors
 		/// @{
@@ -38,7 +40,7 @@ class SceneNode: private Object
 		/// @}
 
 		/// @name Updates
-		/// Two separate updates happen every loop. The update happens anyway and the updateTrf only when the node is being
+		/// Two separate updates for the main loop. The update happens anyway and the updateTrf only when the node is being
 		/// moved
 		/// @{
 		virtual void update() {}
@@ -59,8 +61,8 @@ class SceneNode: private Object
 		Transform localTransform; ///< The transformation in local space
 		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
 		SceneNodeType type;
+		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
 
-		void commonConstructorCode(); ///< Cause we cannot call constructor from other constructor
 		void updateWorldTransform(); ///< This update happens only when the object gets moved
 };
 

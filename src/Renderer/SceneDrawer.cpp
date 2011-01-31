@@ -1,7 +1,7 @@
 #include "SceneDrawer.h"
 #include "Math.h"
 #include "Material.h"
-#include "SceneRenderable.h"
+#include "RenderableNode.h"
 #include "Camera.h"
 #include "Renderer.h"
 #include "App.h"
@@ -226,9 +226,9 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 
 
 //======================================================================================================================
-// renderSceneRenderable                                                                                                =
+// renderRenderableNode                                                                                                =
 //======================================================================================================================
-void SceneDrawer::renderSceneRenderable(const SceneRenderable& renderable, const Camera& cam, RenderingPassType rtype)
+void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const Camera& cam, RenderingPassType rtype)
 {
 	const Material* mtl;
 	const Vao* vao;

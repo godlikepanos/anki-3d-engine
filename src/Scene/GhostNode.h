@@ -9,7 +9,7 @@
 class GhostNode: public SceneNode
 {
 	public:
-		GhostNode(): SceneNode(SNT_GHOST) {}
+		GhostNode(): SceneNode(SNT_GHOST, false, NULL) {}
 		~GhostNode() {}
 		void init(const char*) {}
 };

@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include "Dbg.h"
 #include "Renderer.h"
 #include "App.h"
@@ -88,78 +89,67 @@ void Dbg::renderGrid()
 //======================================================================================================================
 void Dbg::drawSphere(float radius, int complexity)
 {
-	const float twopi  = M::PI * 2;
-	const float pidiv2 = M::PI / 2;
+	Vec<Vec3>* sphereLines;
 
-	float theta1 = 0.0;
-	float theta2 = 0.0;
-	float theta3 = 0.0;
+	//
+	// Pre-calculate the sphere points5
+	//
+	std::map<uint, Vec<Vec3> >::iterator it = complexityToPreCalculatedSphere.find(complexity);
 
-	float ex = 0.0;
-	float ey = 0.0;
-	float ez = 0.0;
-
-	float px = 0.0;
-	float py = 0.0;
-	float pz = 0.0;
-
-	begin();
-
-	for(int i = 0; i < complexity/2; ++i)
+	if(it != complexityToPreCalculatedSphere.end()) // Found
 	{
-		theta1 = i * twopi / complexity - pidiv2;
-		theta2 = (i + 1) * twopi / complexity - pidiv2;
+		sphereLines = &(it->second);
+	}
+	else // Not found
+	{
+		complexityToPreCalculatedSphere[complexity] = Vec<Vec3>();
+		sphereLines = &complexityToPreCalculatedSphere[complexity];
 
-		for(int j = complexity; j >= 0; --j)
+		float fi = M::PI / complexity;
+
+		Vec3 prev(1.0, 0.0, 0.0);
+		for(float th = fi; th < M::PI * 2.0 + fi; th += fi)
 		{
-			theta3 = j * twopi / complexity;
+			Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
 
-			float sintheta1, costheta1;
-			sinCos(theta1, sintheta1, costheta1);
-			float sintheta2, costheta2;
-			sinCos(theta2, sintheta2, costheta2);
-			float sintheta3, costheta3;
-			sinCos(theta3, sintheta3, costheta3);
+			for(float th2 = 0.0; th2 < M::PI; th2 += fi)
+			{
+				Mat3 rot(Euler(th2, 0.0, 0.0));
 
+				Vec3 rotPrev = rot * prev;
+				Vec3 rotP = rot * p;
 
-			ex = costheta2 * costheta3;
-			ey = sintheta2;
-			ez = costheta2 * sintheta3;
-			px = radius * ex;
-			py = radius * ey;
-			pz = radius * ez;
+				sphereLines->push_back(rotPrev);
+				sphereLines->push_back(rotP);
 
-			pushBackVertex(Vec3(px, py, pz));
-			//positions.push_back(Vec3(px, py, pz));
-			//normals.push_back(Vec3(ex, ey, ez));
-			//texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*(i+1)/(float)complexity));
+				Mat3 rot2(Euler(0.0, 0.0, M::PI / 2));
 
-			ex = costheta1 * costheta3;
-			ey = sintheta1;
-			ez = costheta1 * sintheta3;
-			px = radius * ex;
-			py = radius * ey;
-			pz = radius * ez;
+				sphereLines->push_back(rot2 * rotPrev);
+				sphereLines->push_back(rot2 * rotP);
+			}
 
-			pushBackVertex(Vec3(px, py, pz));
-			//positions.push_back(Vec3(px, py, pz));
-			//normals.push_back(Vec3(ex, ey, ez));
-			//texCoodrs.push_back(Vec2(-(j/(float)complexity), 2*i/(float)complexity));
+			prev = p;
 		}
 	}
 
-	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
-	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
-	Mat4 pmv = r.getViewProjectionMat() * modelMat;
-	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
+	//
+	// Render
+	//
+	modelMat = modelMat * Mat4(Vec3(0.0), Mat3::getIdentity(), radius);
 
-	vao.bind();
-	glDrawArrays(GL_LINE_STRIP, 0, pointIndex);
-	vao.unbind();
+	begin();
+	BOOST_FOREACH(const Vec3& p, *sphereLines)
+	{
+		if(pointIndex >= MAX_POINTS_PER_DRAW)
+		{
+			end();
+			begin();
+		}
 
-	// Cleanup
-	pointIndex = 0;
+		pushBackVertex(p);
+	}
+	end();
 }
 
 
@@ -248,6 +238,34 @@ void Dbg::init(const RendererInitializer& initializer)
 }
 
 
+/*Sphere Dbg::getCommonSphere(const Sphere& a, const Sphere& b)
+{
+	Vec3 bridge = b.getCenter() - a.getCenter();
+	float blen = bridge.getLength();
+
+	if(blen + b.getRadius() < a.getRadius())
+	{
+		return a;
+	}
+	else if(blen + a.getRadius() < b.getRadius())
+	{
+		return b;
+	}
+
+	Vec3 bnorm = bridge / blen;
+
+	Vec3 ca = (-bnorm) * a.getRadius() + a.getCenter();
+	Vec3 cb = (bnorm) * b.getRadius() + b.getCenter();
+
+	setColor(Vec4(1.0));
+	setModelMat(Mat4(ca));
+	drawSphere(0.01);
+	setModelMat(Mat4(cb));
+	drawSphere(0.01);
+
+	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
+}*/
+
 //======================================================================================================================
 // runStage                                                                                                            =
 //======================================================================================================================
@@ -289,27 +307,6 @@ void Dbg::run()
 				break;
 		}
 	}
-	/*for(uint i=0; i<app->getScene().nodes.size(); i++)
-	{
-		SceneNode* node = app->getScene().nodes[i];
-
-		if
-		(
-			(node->type == SceneNode::SNT_LIGHT && showLightsEnabled) ||
-			(node->type == SceneNode::SNT_CAMERA && showCamerasEnabled) ||
-			node->type == SceneNode::SNT_PARTICLE_EMITTER
-		)
-		{
-			node->render();
-		}
-		else if(app->getScene().nodes[i]->type == SceneNode::SNT_SKELETON && showSkeletonsEnabled)
-		{
-			SkelNode* skelNode = static_cast<SkelNode*>(node);
-			glDisable(GL_DEPTH_TEST);
-			skelNode->render();
-			glEnable(GL_DEPTH_TEST);
-		}
-	}*/
 
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

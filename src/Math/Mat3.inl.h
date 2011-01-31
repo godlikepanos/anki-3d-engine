@@ -71,7 +71,9 @@ inline Mat3::Mat3(float m00, float m01, float m02, float m10, float m11, float m
 inline Mat3::Mat3(const Mat3& b)
 {
 	for(int i = 0; i < 9; i++)
+	{
 		SELF[i] = b[i];
+	}
 }
 
 // Quat

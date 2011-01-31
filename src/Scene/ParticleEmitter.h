@@ -51,7 +51,7 @@ inline ParticleEmitter::Particle::Particle():
 
 
 inline ParticleEmitter::ParticleEmitter():
-	SceneNode(SNT_PARTICLE_EMITTER)
+	SceneNode(SNT_PARTICLE_EMITTER, false, NULL)
 {}
 
 

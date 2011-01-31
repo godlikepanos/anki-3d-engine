@@ -1,5 +1,5 @@
 #include <boost/array.hpp>
-#include "ModelNodePatch.h"
+#include "ModelPatchNode.h"
 #include "Material.h"
 #include "MeshData.h"
 #include "ModelPatch.h"
@@ -10,8 +10,8 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-ModelNodePatch::ModelNodePatch(const ModelNode& modelNode, const ModelPatch& modelPatch_):
-	node(modelNode),
+ModelPatchNode::ModelPatchNode(const ModelNode& modelNode, const ModelPatch& modelPatch_, ModelNode* parent):
+	RenderableNode(parent),
 	modelPatchRsrc(modelPatch_)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
@@ -27,17 +27,9 @@ ModelNodePatch::ModelNodePatch(const ModelNode& modelNode, const ModelPatch& mod
 
 
 //======================================================================================================================
-// getWorldTransform                                                                                                   =
-//======================================================================================================================
-const Transform& ModelNodePatch::getWorldTransform() const
-{
-	return node.getWorldTransform();
-}
-
-//======================================================================================================================
 // createVao                                                                                                           =
 //======================================================================================================================
-void ModelNodePatch::createVao(const Material& mtl, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao)
+void ModelPatchNode::createVao(const Material& mtl, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao)
 {
 	vao.create();
 

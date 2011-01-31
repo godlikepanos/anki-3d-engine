@@ -46,14 +46,14 @@ class Light: public SceneNode
 	public:
 		RsrcPtr<LightData> lightData;
 	
-		Light(LightType type, SceneNode* parent = NULL);
+		Light(LightType type, bool compoundFlag, SceneNode* parent = NULL);
 		~Light() {}
 		void init(const char* filename);
 };
 
 
-inline Light::Light(LightType type_, SceneNode* parent):
-	SceneNode(SNT_LIGHT, parent),
+inline Light::Light(LightType type_, bool compoundFlag, SceneNode* parent):
+	SceneNode(SNT_LIGHT, compoundFlag, parent),
 	type(type_)
 {}
 

@@ -14,6 +14,7 @@ class Camera;
 class Controller;
 class ParticleEmitter;
 class ModelNode;
+class RenderableNode;
 
 
 /// The Scene contains all the dynamic entities
@@ -52,6 +53,7 @@ class Scene
 		GETTER_RW(Types<Camera>::Container, cameras, getCameras)
 		GETTER_RW(Types<ParticleEmitter>::Container, particleEmitters, getParticleEmitters)
 		GETTER_RW(Types<ModelNode>::Container, modelNodes, getModelNodes)
+		GETTER_RW(Types<RenderableNode>::Container, renderableNodes, getRenderableNodes)
 		GETTER_RW(Types<Controller>::Container, controllers, getControllers)
 		/// @}
 
@@ -63,6 +65,7 @@ class Scene
 		Types<Camera>::Container cameras;
 		Types<ParticleEmitter>::Container particleEmitters;
 		Types<ModelNode>::Container modelNodes;
+		Types<RenderableNode>::Container renderableNodes;
 		Types<Controller>::Container controllers;
 		/// @}
 

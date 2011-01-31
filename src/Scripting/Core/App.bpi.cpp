@@ -8,3 +8,6 @@ WRAP(App)
 		.def("quit", &App::quit)
 	;
 }
+
+
+WRAP_SINGLETON(AppSingleton)
