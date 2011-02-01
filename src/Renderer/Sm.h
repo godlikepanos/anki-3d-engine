@@ -28,7 +28,7 @@ class Sm: private RenderingPass
 
 		/// Render the scene only with depth and store the result in the shadowMap
 		/// @param[in] cam The light camera
-		void run(const Camera& cam, const VisibilityTester::Types<const RenderableNode*>::Container renderables);
+		void run(const Camera& cam);
 
 	private:
 		Fbo fbo; ///< Illumination stage shadowmapping FBO

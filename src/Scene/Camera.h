@@ -2,8 +2,15 @@
 #define CAMERA_H
 
 #include <boost/array.hpp>
+#include <deque>
+#include "Vec.h"
 #include "Collision.h"
 #include "SceneNode.h"
+
+
+class RenderableNode;
+class SpotLight;
+class PointLight;
 
 
 /// Camera SceneNode
@@ -25,18 +32,25 @@ class Camera: public SceneNode
 
 		/// @name Accessors
 		//// @{
-		void setFovX (float fovx_)  {fovX=fovx_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
-		void setFovY (float fovy_)  {fovY=fovy_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
-		void setZNear(float znear_) {zNear=znear_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
-		void setZFar (float zfar_)  {zFar=zfar_; calcProjectionMatrix(); calcLSpaceFrustumPlanes();}
-		void setAll(float fovx_, float fovy_, float znear_, float zfar_);
+		void setFovX(float fovx);
+		void setFovY(float fovy);
+		void setZNear(float znear);
+		void setZFar(float zfar);
+		void setAll(float fovx, float fovy, float znear, float zfar);
 		float getFovX() const {return fovX;}
 		float getFovY() const {return fovY;}
 		float getZNear() const {return zNear;}
 		float getZFar() const {return zFar;}
 		const Mat4& getProjectionMatrix() const {return projectionMat;}
 		const Mat4& getViewMatrix() const {return viewMat;}
-		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;} ///< See the declaration of invProjectionMat for info
+
+		/// See the declaration of invProjectionMat for info
+		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;}
+
+		GETTER_RW(std::deque<const RenderableNode*>, msRenderableNodes, getVisibleMsRenderableNodes)
+		GETTER_RW(std::deque<const RenderableNode*>, bsRenderableNodes, getVisibleBsRenderableNodes)
+		GETTER_RW(Vec<const PointLight*>, pointLights, getVisiblePointLights)
+		GETTER_RW(Vec<SpotLight*>, spotLights, getVisibleSpotLights)
 		//// @}
 
 		void lookAtPoint(const Vec3& point);
@@ -88,11 +102,51 @@ class Camera: public SceneNode
 		Mat4 invProjectionMat;
 		/// @}
 
+		/// @name Visibility containers
+		/// @{
+		std::deque<const RenderableNode*> msRenderableNodes;
+		std::deque<const RenderableNode*> bsRenderableNodes;
+		Vec<const PointLight*> pointLights;
+		Vec<SpotLight*> spotLights;
+		/// @}
+
 		void calcProjectionMatrix();
 		void updateViewMatrix();
 		void calcLSpaceFrustumPlanes();
 		void updateWSpaceFrustumPlanes();
 };
+
+
+inline void Camera::setFovX(float fovx_)
+{
+	fovX = fovx_;
+	calcProjectionMatrix();
+	calcLSpaceFrustumPlanes();
+}
+
+
+inline void Camera::setFovY(float fovy_)
+{
+	fovY = fovy_;
+	calcProjectionMatrix();
+	calcLSpaceFrustumPlanes();
+}
+
+
+inline void Camera::setZNear(float znear_)
+{
+	zNear = znear_;
+	calcProjectionMatrix();
+	calcLSpaceFrustumPlanes();
+}
+
+
+inline void Camera::setZFar(float zfar_)
+{
+	zFar = zfar_;
+	calcProjectionMatrix();
+	calcLSpaceFrustumPlanes();
+}
 
 
 #endif

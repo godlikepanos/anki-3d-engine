@@ -22,7 +22,7 @@ bool VisibilityTester::CmpDistanceFromOrigin::operator()(const RenderableNode* a
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-VisibilityTester::VisibilityTester(const Scene& scene_):
+VisibilityTester::VisibilityTester(Scene& scene_):
 	scene(scene_)
 {}
 
@@ -30,80 +30,38 @@ VisibilityTester::VisibilityTester(const Scene& scene_):
 //======================================================================================================================
 // test                                                                                                                =
 //======================================================================================================================
-void VisibilityTester::test(const Camera& cam)
+void VisibilityTester::test(Camera& cam)
 {
 	//
-	// Clean
+	// Collect the lights for the main cam
 	//
-	msRenderables.clear();
-	bsRenderables.clear();
-	pointLights.clear();
-	spotLights.clear();
+	cam.getVisiblePointLights().clear();
+	cam.getVisibleSpotLights().clear();
 
-	//
-	// Collect the renderables
-	//
-	BOOST_FOREACH(const ModelNode* node, scene.getModelNodes())
-	{
-		// Skip if the ModeNode is not visible
-		if(!test(*node, cam))
-		{
-			continue;
-		}
-
-		// If not test every patch individually
-		BOOST_FOREACH(const ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
-		{
-			// Test if visible by main camera
-			if(test(*modelPatchNode, cam))
-			{
-				if(modelPatchNode->getCpMtl().isBlendingEnabled())
-				{
-					bsRenderables.push_back(modelPatchNode);
-				}
-				else
-				{
-					msRenderables.push_back(modelPatchNode);
-				}
-			}
-		}
-	}
-
-	//
-	// Sort the renderables from closest to the camera to the farthest
-	//
-	std::sort(msRenderables.begin(), msRenderables.end(), CmpDistanceFromOrigin(cam.getWorldTransform().origin));
-	std::sort(bsRenderables.begin(), bsRenderables.end(), CmpDistanceFromOrigin(cam.getWorldTransform().origin));
-
-	//
-	// Collect the lights
-	//
-	BOOST_FOREACH(const Light* light, scene.getLights())
+	BOOST_FOREACH(Light* light, scene.getLights())
 	{
 		switch(light->getType())
 		{
 			// Point
 			case Light::LT_POINT:
 			{
-				const PointLight& pointl = static_cast<const PointLight&>(*light);
+				PointLight* pointl = static_cast<PointLight*>(light);
 
-				Sphere sphere(pointl.getWorldTransform().origin, pointl.getRadius());
+				Sphere sphere(pointl->getWorldTransform().origin, pointl->getRadius());
 				if(cam.insideFrustum(sphere))
 				{
-					pointLights.push_back(VisibleLight<PointLight>());
-					pointLights.back().light = &pointl;
+					cam.getVisiblePointLights().push_back(pointl);
 				}
 				break;
 			}
 			// Spot
 			case Light::LT_SPOT:
 			{
-				const SpotLight& spotl = static_cast<const SpotLight&>(*light);
+				SpotLight* spotl = static_cast<SpotLight*>(light);
 
-				if(cam.insideFrustum(spotl.getCamera()))
+				if(cam.insideFrustum(spotl->getCamera()))
 				{
-					spotLights.push_back(VisibleLight<SpotLight>());
-					spotLights.back().light = &spotl;
+					cam.getVisibleSpotLights().push_back(spotl);
 				}
 				break;
 			}
@@ -111,43 +69,17 @@ void VisibilityTester::test(const Camera& cam)
 	} // end for all lights
 
 	//
-	// For all the spot lights get the visible renderables
+	// Get the renderables for the main cam
 	//
-	BOOST_FOREACH(VisibleLight<SpotLight>& sl, spotLights)
+	getRenderableNodes(false, cam);
+
+	//
+	// For every spot light camera collect the renderable nodes
+	//
+	BOOST_FOREACH(SpotLight* spot, cam.getVisibleSpotLights())
 	{
-		// Skip if the light doesnt cast shadow
-		if(!sl.light->castsShadow())
-		{
-			continue;
-		}
-
-		BOOST_FOREACH(const ModelNode* node, scene.getModelNodes())
-		{
-			// Skip if the ModeNode is not visible
-			if(!test(*node, sl.light->getCamera()))
-			{
-				continue;
-			}
-
-			// If not test every patch individually
-			BOOST_FOREACH(const ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
-			{
-				// Skip if doesnt cast shadow
-				if(!modelPatchNode->getCpMtl().isShadowCaster())
-				{
-					continue;
-				}
-
-				if(test(*modelPatchNode, sl.light->getCamera()))
-				{
-					sl.renderables.push_back(modelPatchNode);
-				}
-			} // end for all patches
-		} // end for all model nodes
-
-		std::sort(sl.renderables.begin(), sl.renderables.end(),
-		          CmpDistanceFromOrigin(sl.light->getWorldTransform().origin));
-	} // end for all spot lights
+		getRenderableNodes(true, spot->getCamera());
+	}
 }
 
 
@@ -159,3 +91,54 @@ bool VisibilityTester::test(const Type& tested, const Camera& cam)
 {
 	return cam.insideFrustum(tested.getBoundingShapeWSpace());
 }
+
+
+//======================================================================================================================
+// getRenderableNodes                                                                                                  =
+//======================================================================================================================
+void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
+{
+	cam.getVisibleMsRenderableNodes().clear();
+	cam.getVisibleBsRenderableNodes().clear();
+
+	BOOST_FOREACH(const ModelNode* node, scene.getModelNodes())
+	{
+		// Skip if the ModeNode is not visible
+		if(!test(*node, cam))
+		{
+			continue;
+		}
+
+		// If not test every patch individually
+		BOOST_FOREACH(const ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
+		{
+			// Skip shadowless
+			if(skipShadowless && !modelPatchNode->getCpMtl().isShadowCaster())
+			{
+				continue;
+			}
+
+			// Test if visible by main camera
+			if(test(*modelPatchNode, cam))
+			{
+				if(modelPatchNode->getCpMtl().isBlendingEnabled())
+				{
+					cam.getVisibleBsRenderableNodes().push_back(modelPatchNode);
+				}
+				else
+				{
+					cam.getVisibleMsRenderableNodes().push_back(modelPatchNode);
+				}
+			}
+		}
+	}
+
+	//
+	// Sort the renderables from closest to the camera to the farthest
+	//
+	std::sort(cam.getVisibleMsRenderableNodes().begin(), cam.getVisibleMsRenderableNodes().end(),
+	          CmpDistanceFromOrigin(cam.getWorldTransform().origin));
+	std::sort(cam.getVisibleBsRenderableNodes().begin(), cam.getVisibleBsRenderableNodes().end(),
+	          CmpDistanceFromOrigin(cam.getWorldTransform().origin));
+}
+

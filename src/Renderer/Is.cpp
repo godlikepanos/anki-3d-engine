@@ -203,10 +203,9 @@ void Is::ambientPass(const Vec3& color)
 //======================================================================================================================
 // pointLightPass                                                                                                      =
 //======================================================================================================================
-void Is::pointLightPass(const VisibilityTester::VisibleLight<PointLight>& vlight)
+void Is::pointLightPass(const PointLight& light)
 {
 	const Camera& cam = r.getCamera();
-	const PointLight& light = vlight.getLight();
 
 	// stencil optimization
 	smo.run(light);
@@ -234,15 +233,14 @@ void Is::pointLightPass(const VisibilityTester::VisibleLight<PointLight>& vlight
 //======================================================================================================================
 // spotLightPass                                                                                                       =
 //======================================================================================================================
-void Is::spotLightPass(const VisibilityTester::VisibleLight<SpotLight>& vlight)
+void Is::spotLightPass(const SpotLight& light)
 {
 	const Camera& cam = r.getCamera();
-	const SpotLight& light = vlight.getLight();
 
 	// shadow mapping
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		sm.run(light.getCamera(), vlight.getRenderables());
+		sm.run(light.getCamera());
 
 		// restore the IS FBO
 		fbo.bind();
@@ -335,16 +333,16 @@ void Is::run()
 	calcPlanes();
 
 	// for all lights
-	BOOST_FOREACH(const VisibilityTester::VisibleLight<PointLight> light, 
-	              SceneSingleton::getInstance().getVisibilityTester().getPointLights())
+	BOOST_FOREACH(const PointLight* light,
+	              r.getCamera().getVisiblePointLights())
 	{
-		pointLightPass(light);
+		pointLightPass(*light);
 	}
 	
-	BOOST_FOREACH(const VisibilityTester::VisibleLight<SpotLight> light, 
-	              SceneSingleton::getInstance().getVisibilityTester().getSpotLights())
+	BOOST_FOREACH(const SpotLight* light,
+	              r.getCamera().getVisibleSpotLights())
 	{
-		spotLightPass(light);
+		spotLightPass(*light);
 	}
 	
 

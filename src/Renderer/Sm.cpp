@@ -69,7 +69,7 @@ void Sm::init(const RendererInitializer& initializer)
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Sm::run(const Camera& cam, const VisibilityTester::Types<const RenderableNode*>::Container renderables)
+void Sm::run(const Camera& cam)
 {
 	if(!enabled)
 	{
@@ -93,7 +93,7 @@ void Sm::run(const Camera& cam, const VisibilityTester::Types<const RenderableNo
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node, renderables)
+	BOOST_FOREACH(const RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
 		r.getSceneDrawer().renderRenderableNode(*node, cam, SceneDrawer::RPT_DEPTH);
 	}
