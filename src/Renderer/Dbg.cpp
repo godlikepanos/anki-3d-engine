@@ -8,6 +8,7 @@
 #include "RendererInitializer.h"
 #include "SceneDbgDrawer.h"
 #include "ParticleEmitter.h"
+#include "RenderableNode.h"
 
 
 //======================================================================================================================
@@ -19,6 +20,7 @@ Dbg::Dbg(Renderer& r_):
 	showLightsEnabled(true),
 	showSkeletonsEnabled(true),
 	showCamerasEnabled(true),
+	showVisibilityBoundingShapesFlag(true),
 	sceneDbgDrawer(*this)
 {}
 
@@ -259,21 +261,26 @@ void Dbg::run()
 	setModelMat(Mat4::getIdentity());
 	renderGrid();
 
-	Scene::Types<SceneNode>::ConstIterator it = SceneSingleton::getInstance().getAllNodes().begin();
-	for(; it != SceneSingleton::getInstance().getAllNodes().end(); ++it)
+	BOOST_FOREACH(const SceneNode* node, SceneSingleton::getInstance().getAllNodes())
 	{
-		const SceneNode& node = *(*it);
-
-		switch(node.getSceneNodeType())
+		switch(node->getSceneNodeType())
 		{
 			case SceneNode::SNT_CAMERA:
-				sceneDbgDrawer.drawCamera(static_cast<const Camera&>(node));
+				sceneDbgDrawer.drawCamera(static_cast<const Camera&>(*node));
 				break;
 			case SceneNode::SNT_LIGHT:
-				sceneDbgDrawer.drawLight(static_cast<const Light&>(node));
+				sceneDbgDrawer.drawLight(static_cast<const Light&>(*node));
 				break;
 			case SceneNode::SNT_PARTICLE_EMITTER:
-				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitter&>(node));
+				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitter&>(*node));
+				break;
+			case SceneNode::SNT_RENDERABLE:
+				if(showVisibilityBoundingShapesFlag)
+				{
+					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
+					setModelMat(Mat4(rnode.getWorldTransform()) * Mat4(rnode.getBoundingShapeWSpace().getCenter(), Mat3::getIdentity(), 1.0));
+					drawSphere(rnode.getBoundingShapeWSpace().getRadius());
+				}
 				break;
 			default:
 				break;

@@ -146,6 +146,8 @@ void init()
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
 
+	return;
+
 
 	// Sponza
 	ModelNode* sponza = new ModelNode();
@@ -260,7 +262,7 @@ void mainLoop()
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = partEmitter;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = horse;
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
@@ -315,6 +317,7 @@ void mainLoop()
 		SceneSingleton::getInstance().updateAllControllers();
 		SceneSingleton::getInstance().updateAllWorldStuff();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
+		//SceneSingleton::getInstance().doVisibilityTests(spot_lights[0]->getCamera());
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
