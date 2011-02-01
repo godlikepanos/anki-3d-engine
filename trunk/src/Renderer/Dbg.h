@@ -50,6 +50,7 @@ class Dbg: public RenderingPass
 		bool showLightsEnabled;
 		bool showSkeletonsEnabled;
 		bool showCamerasEnabled;
+		bool showVisibilityBoundingShapesFlag;
 		Fbo fbo;
 		RsrcPtr<ShaderProg> sProg;
 		static const uint MAX_POINTS_PER_DRAW = 256;

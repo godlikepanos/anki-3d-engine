@@ -28,9 +28,6 @@ class Sphere: public CollisionShape
 		GETTER_SETTER_BY_VAL(float, radius, getRadius, setRadius)
 		/// @}
 
-		/// @see set
-		Sphere(const float* pointer, size_t stride, int count);
-
 		Sphere getTransformed(const Transform& transform) const;
 
 		/// Get the sphere that includes this sphere and the given
@@ -39,15 +36,16 @@ class Sphere: public CollisionShape
 		/// @see CollisionShape::testPlane
 		float testPlane(const Plane& plane) const;
 
-	private:
-		Vec3 center;
-		float radius;
-
-		/// Set from Vec3 array
+		/// Set from a container containing Vec3s
 		/// @param pointer The start of the array
 		/// @param stride The space between the elements
 		/// @param count The number of 3D vectors
-		void set(const float* pointer, size_t stride, int count);
+		template<typename Container>
+		void set(const Container& container);
+
+	private:
+		Vec3 center;
+		float radius;
 };
 
 
@@ -65,11 +63,7 @@ inline Sphere::Sphere(const Vec3& center_, float radius_):
 {}
 
 
-inline Sphere::Sphere(const float* pointer, size_t stride, int count):
-	CollisionShape(CST_SPHERE)
-{
-	set(pointer, stride, count);
-}
+#include "Sphere.inl.h"
 
 
 #endif
