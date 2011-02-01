@@ -20,48 +20,15 @@ class VisibilityTester
 	// Public                                                                                                            =
 	//====================================================================================================================
 	public:
-		/// Types
-		template<typename Type>
-		class Types
-		{
-			public:
-				typedef std::deque<Type> Container;
-				typedef typename Container::iterator Iterator;
-				typedef typename Container::const_iterator ConstIterator;
-		};
-
-		/// The information about the visible lights
-		template<typename LightType>
-		class VisibleLight
-		{
-			friend class VisibilityTester;
-
-			public:
-				const LightType& getLight() const {return *light;}
-				GETTER_R(Types<const RenderableNode*>::Container, renderables, getRenderables)
-
-			private:
-				const LightType* light;
-				Types<const RenderableNode*>::Container renderables; ///< The visible nodes by that light
-		};
-
 		/// Constructor
-		VisibilityTester(const Scene& scene);
-
-		/// @name Accessors
-		/// @{
-		GETTER_R(Types<const RenderableNode*>::Container, msRenderables, getMsRenderables)
-		GETTER_R(Types<const RenderableNode*>::Container, bsRenderables, getBsRenderables)
-		GETTER_R(Types<VisibleLight<PointLight> >::Container, pointLights, getPointLights)
-		GETTER_R(Types<VisibleLight<SpotLight> >::Container, spotLights, getSpotLights)
-		/// @}
+		VisibilityTester(Scene& scene);
 
 		/// This method:
 		/// - Gets the visible renderable nodes
 		/// - Sort them from the closest to the farthest
 		/// - Get the visible lights
 		/// - For every spot light that casts shadow get the visible renderables
-		void test(const Camera& cam);
+		void test(Camera& cam);
 
 	//====================================================================================================================
 	// Private                                                                                                           =
@@ -75,19 +42,16 @@ class VisibilityTester
 			bool operator()(const RenderableNode* a, const RenderableNode* b) const;
 		};
 
-		const Scene& scene; ///< Know your father
-
-		/// @name Containers
-		/// @{
-		Types<const RenderableNode*>::Container msRenderables;
-		Types<const RenderableNode*>::Container bsRenderables;
-		Types<VisibleLight<PointLight> >::Container pointLights;
-		Types<VisibleLight<SpotLight> >::Container spotLights;
-		/// @}
+		Scene& scene; ///< Know your father
 
 		/// Test a node against the camera frustum
 		template<typename Type>
 		static bool test(const Type& tested, const Camera& cam);
+
+		/// Get renderable nodes for a given camera
+		/// @param skipShadowless Skip shadowless nodes. If the cam is a light cam
+		/// @param cam The camera to test and gather renderable nodes
+		void getRenderableNodes(bool skipShadowless, Camera& cam);
 };
 
 

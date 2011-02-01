@@ -97,7 +97,7 @@ void Ms::run()
 	}
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node, SceneSingleton::getInstance().getVisibilityTester().getMsRenderables())
+	BOOST_FOREACH(const RenderableNode* node, r.getCamera().getVisibleMsRenderableNodes())
 	{
 		r.getSceneDrawer().renderRenderableNode(*node, r.getCamera(), SceneDrawer::RPT_COLOR);
 	}

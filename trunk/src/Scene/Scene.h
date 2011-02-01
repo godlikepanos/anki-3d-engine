@@ -42,7 +42,7 @@ class Scene
 
 		void updateAllWorldStuff();
 		void updateAllControllers();
-		void doVisibilityTests(const Camera& cam) {visibilityTester->test(cam);}
+		void doVisibilityTests(Camera& cam) {visibilityTester->test(cam);}
 
 		/// @name Accessors
 		/// @{
