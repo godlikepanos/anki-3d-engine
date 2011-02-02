@@ -8,11 +8,10 @@
 #include "SpotLight.h"
 #include "LightData.h"
 #include "App.h"
-#include "Scene.h"
 #include "LightData.h"
-#include "Collision.h"
 #include "Sm.h"
 #include "Smo.h"
+#include "Scene.h"
 
 
 //======================================================================================================================

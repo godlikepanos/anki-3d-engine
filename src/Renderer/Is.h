@@ -11,7 +11,6 @@
 #include "Vao.h"
 #include "Sm.h"
 #include "Smo.h"
-#include "VisibilityTester.h"
 
 
 class PointLight;
