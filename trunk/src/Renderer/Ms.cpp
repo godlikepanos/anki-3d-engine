@@ -3,8 +3,6 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "Ez.h"
-#include "ModelNode.h"
-#include "Scene.h"
 #include "RenderableNode.h"
 
 

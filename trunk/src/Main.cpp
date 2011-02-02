@@ -146,9 +146,6 @@ void init()
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
 
-	return;
-
-
 	// Sponza
 	ModelNode* sponza = new ModelNode();
 	sponza->init("maps/sponza/sponza.mdl");

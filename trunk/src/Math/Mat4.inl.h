@@ -773,7 +773,8 @@ inline float Mat4::getDet() const
 // getInverse
 inline Mat4 Mat4::getInverse() const
 {
-	#if defined(MATH_INTEL_SIMD)
+	/// @todo test this
+	#if !defined(MATH_INTEL_SIMD)
 		Mat4 r(SELF);
 		__m128 minor0, minor1, minor2, minor3;
 		__m128 det, tmp1;

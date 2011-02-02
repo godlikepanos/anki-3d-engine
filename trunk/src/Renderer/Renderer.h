@@ -8,7 +8,6 @@
 #include "Vbo.h"
 #include "Vao.h"
 #include "RsrcPtr.h"
-#include "Object.h"
 #include "Ms.h"
 #include "Is.h"
 #include "Pps.h"

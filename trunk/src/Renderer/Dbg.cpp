@@ -1,7 +1,6 @@
 #include <boost/foreach.hpp>
 #include "Dbg.h"
 #include "Renderer.h"
-#include "App.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "Light.h"
@@ -278,7 +277,7 @@ void Dbg::run()
 				if(showVisibilityBoundingShapesFlag)
 				{
 					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
-					setModelMat(Mat4(rnode.getWorldTransform()) * Mat4(rnode.getBoundingShapeWSpace().getCenter(), Mat3::getIdentity(), 1.0));
+					setModelMat(Mat4(rnode.getBoundingShapeWSpace().getCenter(), Mat3::getIdentity(), 1.0));
 					drawSphere(rnode.getBoundingShapeWSpace().getRadius());
 				}
 				break;
