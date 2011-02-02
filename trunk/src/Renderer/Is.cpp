@@ -332,14 +332,12 @@ void Is::run()
 	calcPlanes();
 
 	// for all lights
-	BOOST_FOREACH(const PointLight* light,
-	              r.getCamera().getVisiblePointLights())
+	BOOST_FOREACH(const PointLight* light, r.getCamera().getVisiblePointLights())
 	{
 		pointLightPass(*light);
 	}
 	
-	BOOST_FOREACH(const SpotLight* light,
-	              r.getCamera().getVisibleSpotLights())
+	BOOST_FOREACH(const SpotLight* light, r.getCamera().getVisibleSpotLights())
 	{
 		spotLightPass(*light);
 	}

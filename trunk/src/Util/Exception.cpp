@@ -1,13 +1,34 @@
-#include <cstdio>
-#include <cstring>
 #include <boost/lexical_cast.hpp>
 #include "Exception.h"
 
 
 //======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+Exception::Exception(const std::string& err_, const char* file_, int line_, const char* func_):
+	err(err_),
+	file(file_),
+	line(line_),
+	func(func_)
+{}
+
+
+//======================================================================================================================
+// Copy constructor                                                                                                    =
+//======================================================================================================================
+Exception::Exception(const Exception& e):
+	err(e.err),
+	file(e.file),
+	line(e.line),
+	func(e.func)
+{}
+
+
+//======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
-void Exception::init(const char* err_, const char* file, int line, const char* func)
+const char* Exception::what() const throw()
 {
-	err = std::string("\n(") + file + ":" + boost::lexical_cast<std::string>(line) + " " + func + ") " + err_;
+	err = std::string("\n(") + file + ":" + boost::lexical_cast<std::string>(line) + " " + func + ") " + err;
+	return err.c_str();
 }
