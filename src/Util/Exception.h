@@ -9,36 +9,29 @@
 class Exception: public std::exception
 {
 	public:
-		/// Constructor #1
-		Exception(const char* err_, const char* file, int line, const char* func) {init(err_, file, line, func);}
-
-		/// Constructor #2
-		Exception(const std::string& err_, const char* file, int line, const char* func);
+		/// Constructor
+		Exception(const std::string& err, const char* file = "unknown", int line = -1, const char* func = "unknown");
 
 		/// Copy constructor
-		Exception(const Exception& e): err(e.err) {}
+		Exception(const Exception& e);
 
 		/// Destructor. Do nothing
 		~Exception() throw() {}
 
 		/// Return the error code
-		const char* what() const throw() {return err.c_str();}
+		const char* what() const throw();
 
 	private:
-		std::string err;
-
-		/// Common construction code
-		void init(const char* err_, const char* file, int line, const char* func);
+		mutable std::string err;
+		const char* file;
+		int line;
+		const char* func;
 };
 
 
-inline Exception::Exception(const std::string& err_, const char* file, int line, const char* func)
-{
-	init(err_.c_str(), file, line, func);
-}
-
-
-// A few macros
+//======================================================================================================================
+// Macros                                                                                                              =
+//======================================================================================================================
 
 #define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __func__)
 
