@@ -13,26 +13,17 @@ void AsyncLoader::start()
 
 
 //======================================================================================================================
-// loadInPreallocatedBuff                                                                                              =
+// load                                                                                                                =
 //======================================================================================================================
-void AsyncLoader::loadInPreallocatedBuff(const char* filename, void* buff, size_t size)
+void AsyncLoader::load(const char* filename, bool (*func)(const char*, void*), void* storage)
 {
-	//std::cout << "pushing " << filename << "..." << std::endl;
-	boost::mutex::scoped_lock lock(mutexIn);
-	Request f = {filename, buff, size};
-	in.push_back(f);
+	INFO("New load request for \"" << filename << "\"");
+	boost::mutex::scoped_lock lock(mutexReq);
+	Request f = {filename, func, storage};
+	requests.push_back(f);
 	lock.unlock();
 
 	condVar.notify_one();
-}
-
-
-//======================================================================================================================
-// loadInNewBuff                                                                                                       =
-//======================================================================================================================
-void AsyncLoader::loadInNewBuff(const char* filename)
-{
-	loadInPreallocatedBuff(filename, NULL, 0);
 }
 
 
@@ -43,67 +34,34 @@ void AsyncLoader::workingFunc()
 {
 	while(1)
 	{
-		Request f;
+		Request req;
 
 		// Wait for something
 		{
-			boost::mutex::scoped_lock lock(mutexIn);
-			while(in.empty())
+			boost::mutex::scoped_lock lock(mutexReq);
+			while(requests.empty())
 			{
 				INFO("Waiting...");
 				condVar.wait(lock);
 			}
 
-			f = in.front();
-			in.pop_front();
+			req = requests.front();
+			requests.pop_front();
 		}
 
-		// Load the file
-		INFO("Loading \"" << f.filename << "\"...");
+		// Exec the loader
+		bool ok = req.func(req.filename.c_str(), req.storage);
 
-		std::ifstream is;
-		is.open(f.filename.c_str(), std::ios::binary);
-
-		if(!is.good())
+		if(!ok)
 		{
-			ERROR("Cannot open \"" << f.filename << "\"");
-			continue;
+			ERROR("Loading \"" << req.filename << "\" failed");
 		}
 
-		// Get size of file
-		is.seekg(0, std::ios::end);
-		size_t size = is.tellg();
-		is.seekg(0, std::ios::beg);
-
-		// Alloc (if needed)
-		if(f.data == NULL && f.size == 0)
+		// Put back the response
 		{
-			f.size = size;
-			f.data = new char[f.size];
-		}
-		else if(f.size != size)
-		{
-			ERROR("Size mismatch \"" << f.filename << "\"");
-			is.close();
-			continue;
-		}
-
-		is.read((char*)f.data, f.size);
-
-		if(!is.good())
-		{
-			ERROR("Cannot read \"" << f.filename << "\"");
-			is.close();
-			continue;
-		}
-
-		is.close();
-		INFO("Request \"" << f.filename << "\"");
-
-		// Put the data in the out
-		{
-			boost::mutex::scoped_lock lock(mutexOut);
-			out.push_back(f);
+			boost::mutex::scoped_lock lock(mutexResp);
+			Response resp = {req.filename, req.storage, ok};
+			responses.push_back(resp);
 		}
 	} // end thread loop
 }
@@ -112,21 +70,20 @@ void AsyncLoader::workingFunc()
 //======================================================================================================================
 // getLoaded                                                                                                           =
 //======================================================================================================================
-bool AsyncLoader::getLoaded(std::string& filename, void*& buff, size_t& size)
+bool AsyncLoader::getLoaded(std::string& filename, void* buff, bool& ok)
 {
-	boost::mutex::scoped_lock lock(mutexOut);
-	if(out.empty())
+	boost::mutex::scoped_lock lock(mutexResp);
+	if(responses.empty())
 	{
 		return false;
 	}
 
-	Request f = out.back();
-	out.pop_back();
+	Response resp = responses.back();
+	responses.pop_back();
 	lock.unlock();
 
-	filename = f.filename;
-	buff = f.data;
-	size = f.size;
+	filename = resp.filename;
+	buff = resp.storage;
 	return true;
 }
 

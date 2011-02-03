@@ -18,42 +18,43 @@ class AsyncLoader
 		/// Do nothing
 		~AsyncLoader() {}
 
-		/// Load a binary file and put the data in the preallocated buffer
-		void loadInPreallocatedBuff(const char* filename, void* buff, size_t size);
-
-		/// Load in a new buff
-		void loadInNewBuff(const char* filename);
-
-		void load(const char* filename, void (*func)(const char*, void*));
+		/// Tell me what to load, how to load it and where to store it
+		/// @param filename The file to load
+		/// @param func How to load the file
+		/// @param storage This points to the storage
+		void load(const char* filename, bool (*func)(const char*, void*), void* storage);
 
 		/// Query the loader and see if its got something
 		/// @param[out] filename The file that finished loading
-		/// @param[out] buff The data are stored in this buffer
-		/// @param[out] size The buffer size
+		/// @param[out] storage The data are stored in this buffer
 		/// @return Return true if there is something that finished loading
-		bool getLoaded(std::string& filename, void*& buff, size_t& size);
+		bool getLoaded(std::string& filename, void* storage, bool& ok);
 
 	private:
 		struct Request
 		{
 			std::string filename;
-			void* data;
-			size_t size;
-
-
+			bool (*func)(const char*, void*);
+			void* storage;
 		};
 
-		std::list<Request> in;
-		std::list<Request> out;
-		boost::mutex mutexIn;
-		boost::mutex mutexOut;
+		/// It contains a few things to identify the response
+		struct Response
+		{
+			std::string filename;
+			void* storage;
+			bool ok;
+		};
+
+		std::list<Request> requests;
+		std::list<Response> responses;
+		boost::mutex mutexReq;
+		boost::mutex mutexResp;
 		boost::thread thread;
 		boost::condition_variable condVar;
 
 		void workingFunc(); ///< The thread function
-
-		/// Start thread
-		void start();
+		void start(); ///< Start thread
 };
 
 
