@@ -19,7 +19,7 @@ void AsyncLoader::loadInPreallocatedBuff(const char* filename, void* buff, size_
 {
 	//std::cout << "pushing " << filename << "..." << std::endl;
 	boost::mutex::scoped_lock lock(mutexIn);
-	File f = {filename, buff, size};
+	Request f = {filename, buff, size};
 	in.push_back(f);
 	lock.unlock();
 
@@ -43,14 +43,14 @@ void AsyncLoader::workingFunc()
 {
 	while(1)
 	{
-		File f;
+		Request f;
 
 		// Wait for something
 		{
 			boost::mutex::scoped_lock lock(mutexIn);
 			while(in.empty())
 			{
-				std::cout << "waiting..." << std::endl;
+				INFO("Waiting...");
 				condVar.wait(lock);
 			}
 
@@ -59,14 +59,14 @@ void AsyncLoader::workingFunc()
 		}
 
 		// Load the file
-		std::cout << "loading " << f.filename << "..." << std::endl;
+		INFO("Loading \"" << f.filename << "\"...");
 
 		std::ifstream is;
 		is.open(f.filename.c_str(), std::ios::binary);
 
 		if(!is.good())
 		{
-			std::cerr << "error opening" << f.filename << std::endl;
+			ERROR("Cannot open \"" << f.filename << "\"");
 			continue;
 		}
 
@@ -80,11 +80,10 @@ void AsyncLoader::workingFunc()
 		{
 			f.size = size;
 			f.data = new char[f.size];
-			std::cout << "allocating " << f.size << " " << f.data << std::endl;
 		}
 		else if(f.size != size)
 		{
-			std::cerr << "error: size mismatch " << f.filename << std::endl;
+			ERROR("Size mismatch \"" << f.filename << "\"");
 			is.close();
 			continue;
 		}
@@ -93,13 +92,13 @@ void AsyncLoader::workingFunc()
 
 		if(!is.good())
 		{
-			std::cerr << "error reading" << f.filename << std::endl;
+			ERROR("Cannot read \"" << f.filename << "\"");
 			is.close();
 			continue;
 		}
 
 		is.close();
-		std::cout << "" << f.filename << " loaded" << std::endl;
+		INFO("Request \"" << f.filename << "\"");
 
 		// Put the data in the out
 		{
@@ -121,7 +120,7 @@ bool AsyncLoader::getLoaded(std::string& filename, void*& buff, size_t& size)
 		return false;
 	}
 
-	File f = out.back();
+	Request f = out.back();
 	out.pop_back();
 	lock.unlock();
 
