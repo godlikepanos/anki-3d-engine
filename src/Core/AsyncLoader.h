@@ -15,7 +15,7 @@ class AsyncLoader
 		/// Default constructor starts the thread
 		AsyncLoader() {start();}
 		
-		// Do nothing
+		/// Do nothing
 		~AsyncLoader() {}
 
 		/// Load a binary file and put the data in the preallocated buffer
@@ -23,6 +23,8 @@ class AsyncLoader
 
 		/// Load in a new buff
 		void loadInNewBuff(const char* filename);
+
+		void load(const char* filename, void (*func)(const char*, void*));
 
 		/// Query the loader and see if its got something
 		/// @param[out] filename The file that finished loading
@@ -32,15 +34,17 @@ class AsyncLoader
 		bool getLoaded(std::string& filename, void*& buff, size_t& size);
 
 	private:
-		struct File
+		struct Request
 		{
 			std::string filename;
 			void* data;
 			size_t size;
+
+
 		};
 
-		std::list<File> in;
-		std::list<File> out;
+		std::list<Request> in;
+		std::list<Request> out;
 		boost::mutex mutexIn;
 		boost::mutex mutexOut;
 		boost::thread thread;
