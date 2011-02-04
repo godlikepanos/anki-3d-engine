@@ -35,7 +35,6 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* f
 			{
 				delete newInstance;
 			}
-			//throw EXCEPTION("Cannot load resource: " + e.what());
 		}
 
 		c.push_back(typename Types<Type>::Hook());
