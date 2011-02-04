@@ -4,6 +4,7 @@
 #include <list>
 #include <string>
 #include "Singleton.h"
+#include "AsyncLoader.h"
 
 
 class Texture;
@@ -20,11 +21,11 @@ class Skin;
 class DummyRsrc;
 
 
-/// Includes information about the resources
+/// Holds information about a resource
 template<typename Type>
 struct RsrcHook
 {
-	std::string uuid;
+	std::string uuid; ///< Unique identifier
 	int referenceCounter;
 	Type* resource;
 };
@@ -58,22 +59,6 @@ class ResourceManager
 		void unload(const typename Types<Type>::Hook& info);
 
 	private:
-		/// Find a resource using the filename
-		template<typename Type>
-		typename Types<Type>::Iterator find(const char* filename, typename Types<Type>::Container& container);
-
-		/// Find a resource using the pointer
-		template<typename Type>
-		typename Types<Type>::Iterator find(const Type* resource, typename Types<Type>::Container& container);
-
-		/// Specialized func
-		template<typename Type>
-		typename Types<Type>::Container& choseContainer();
-
-		/// Unload a resource if no one uses it. This is the real deal
-		template<typename Type>
-		void unloadR(const typename Types<Type>::Hook& info);
-
 		/// @name Containers
 		/// @{
 		Types<Texture>::Container textures;
@@ -89,6 +74,24 @@ class ResourceManager
 		Types<Skin>::Container skins;
 		Types<DummyRsrc>::Container dummies;
 		/// @}
+
+		AsyncLoader al;
+
+		/// Find a resource using the filename
+		template<typename Type>
+		typename Types<Type>::Iterator find(const char* filename, typename Types<Type>::Container& container);
+
+		/// Find a resource using the pointer
+		template<typename Type>
+		typename Types<Type>::Iterator find(const Type* resource, typename Types<Type>::Container& container);
+
+		/// Specialized func
+		template<typename Type>
+		typename Types<Type>::Container& choseContainer();
+
+		/// Unload a resource if no one uses it. This is the real deal
+		template<typename Type>
+		void unloadR(const typename Types<Type>::Hook& info);
 };
 
 

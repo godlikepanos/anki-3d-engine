@@ -1,4 +1,3 @@
-#include <fstream>
 #include "AsyncLoader.h"
 #include "Logger.h"
 
@@ -8,6 +7,7 @@
 //======================================================================================================================
 void AsyncLoader::start()
 {
+	INFO("Starting async loader thread...");
 	thread = boost::thread(&AsyncLoader::workingFunc, this);
 }
 
@@ -84,6 +84,7 @@ bool AsyncLoader::getLoaded(std::string& filename, void* buff, bool& ok)
 
 	filename = resp.filename;
 	buff = resp.storage;
+	ok = resp.ok;
 	return true;
 }
 

@@ -1,14 +1,7 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "RendererInitializer.h"
-#include "Material.h"
-#include "App.h"
-#include "Scene.h"
 #include "Exception.h"
-#include "ModelNode.h"
-#include "Model.h"
-#include "Mesh.h"
-
 
 
 //======================================================================================================================
