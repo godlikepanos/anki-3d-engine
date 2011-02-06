@@ -2,9 +2,11 @@
 #define RESOURCE_MANAGER_H
 
 #include <list>
+#include <boost/ptr_container/ptr_list.hpp>
 #include <string>
 #include "Singleton.h"
 #include "AsyncLoader.h"
+#include "Properties.h"
 
 
 class Texture;
@@ -75,7 +77,40 @@ class ResourceManager
 		Types<DummyRsrc>::Container dummies;
 		/// @}
 
-		AsyncLoader al;
+		/// Request for the AsyncLoader [Base class]
+		class LoadingRequestBase
+		{
+			public:
+				enum RequestType
+				{
+					RT_IMAGE,
+					RT_MESH_DATA
+				};
+
+				LoadingRequestBase(const char* filename_, RequestType type_): filename(filename_), type(type_) {}
+
+				GETTER_R(std::string, filename, getFilename)
+				GETTER_R(RequestType, type, getType)
+
+			private:
+				std::string filename;
+				RequestType type;
+		};
+
+		/// Request for the AsyncLoader
+		template<typename Type>
+		struct LoadingRequest: public LoadingRequestBase
+		{
+			public:
+				GETTER_RW(Type, object, getObject)
+
+			private:
+				Type object; ///< The object to load
+		};
+
+		boost::ptr_list<LoadingRequestBase> loadingRequests; ///< Loading requests
+
+		AsyncLoader al; ///< Asynchronous loader
 
 		/// Find a resource using the filename
 		template<typename Type>
