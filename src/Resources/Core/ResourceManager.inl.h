@@ -37,16 +37,10 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* f
 			}
 		}
 
-		c.push_back(typename Types<Type>::Hook());
-		it = c.end();
-		--it;
-
-		it->uuid = filename;
-		it->referenceCounter = 1;
-		it->resource = newInstance;
+		c.push_back(typename Types<Type>::Hook(filename, 1, newInstance));
 	}
 
-	return *it;
+	return c.back();
 }
 
 

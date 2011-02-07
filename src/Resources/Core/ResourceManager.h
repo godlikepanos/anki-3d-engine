@@ -2,11 +2,12 @@
 #define RESOURCE_MANAGER_H
 
 #include <list>
-#include <boost/ptr_container/ptr_list.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include <string>
 #include "Singleton.h"
 #include "AsyncLoader.h"
 #include "Properties.h"
+#include "RsrcHook.h"
 
 
 class Texture;
@@ -21,16 +22,6 @@ class Script;
 class Model;
 class Skin;
 class DummyRsrc;
-
-
-/// Holds information about a resource
-template<typename Type>
-struct RsrcHook
-{
-	std::string uuid; ///< Unique identifier
-	int referenceCounter;
-	Type* resource;
-};
 
 
 /// Responsible of loading and unloading resources
@@ -102,13 +93,14 @@ class ResourceManager
 		struct LoadingRequest: public LoadingRequestBase
 		{
 			public:
-				GETTER_RW(Type, object, getObject)
+				//LoadingRequestBase
+				//GETTER_RW(Type, object, getObject)
 
 			private:
 				Type object; ///< The object to load
 		};
 
-		boost::ptr_list<LoadingRequestBase> loadingRequests; ///< Loading requests
+		boost::ptr_vector<LoadingRequestBase> loadingRequests; ///< Loading requests
 
 		AsyncLoader al; ///< Asynchronous loader
 
