@@ -15,11 +15,11 @@ void AsyncLoader::start()
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-void AsyncLoader::load(const char* filename, bool (*func)(const char*, void*), void* storage)
+void AsyncLoader::load(const char* filename, void (*loadCallback)(const char*, void*), void* storage)
 {
 	INFO("New load request for \"" << filename << "\"");
 	boost::mutex::scoped_lock lock(mutexReq);
-	Request f = {filename, func, storage};
+	Request f = {filename, loadCallback, storage};
 	requests.push_back(f);
 	lock.unlock();
 
@@ -50,11 +50,15 @@ void AsyncLoader::workingFunc()
 		}
 
 		// Exec the loader
-		bool ok = req.func(req.filename.c_str(), req.storage);
-
-		if(!ok)
+		bool ok = true;
+		try
 		{
-			ERROR("Loading \"" << req.filename << "\" failed");
+			req.loadCallback(req.filename.c_str(), req.storage);
+		}
+		catch(std::exception& e)
+		{
+			ERROR("Loading \"" << req.filename << "\" failed: " << e.what());
+			ok = false;
 		}
 
 		// Put back the response
@@ -68,9 +72,9 @@ void AsyncLoader::workingFunc()
 
 
 //======================================================================================================================
-// getLoaded                                                                                                           =
+// pollForFinished                                                                                                     =
 //======================================================================================================================
-bool AsyncLoader::getLoaded(std::string& filename, void* buff, bool& ok)
+bool AsyncLoader::pollForFinished(std::string& filename, void* buff, bool& ok)
 {
 	boost::mutex::scoped_lock lock(mutexResp);
 	if(responses.empty())

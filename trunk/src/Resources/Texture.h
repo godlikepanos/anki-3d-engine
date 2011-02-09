@@ -6,6 +6,9 @@
 #include "Exception.h"
 
 
+class Image;
+
+
 /// Texture resource class
 ///
 /// It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and
@@ -36,6 +39,9 @@ class Texture
 		/// Implements Resource::load
 		/// @exception Exception
 		void load(const char* filename);
+		
+		/// @exception Exception
+		void load(const Image& img);
 
 		/// Create empty texture.
 		/// Used by the Renderer

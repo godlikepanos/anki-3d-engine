@@ -18,10 +18,15 @@ class Image
 			CT_RGBA /// RGB plus alpha
 		};
 
+		/// Do nothing
+		Image() {}
+
 		/// Load an image
 		/// @param[in] filename The image file to load
 		/// @exception Exception
 		Image(const char* filename) {load(filename);}
+		
+		/// Do nothing
 		~Image() {}
 
 		/// @name Accessors
@@ -31,6 +36,11 @@ class Image
 		ColorType getColorType() const {return type;}
 		const Vec<uchar>& getData() const {return data;}
 		/// @}
+		
+		/// Load an image file
+		/// @param[in] filename The file to load
+		/// @exception Exception
+		void load(const char* filename);
 
 	private:
 		uint width; ///< Image width
@@ -43,11 +53,6 @@ class Image
 		static uchar tgaHeaderUncompressed[12];
 		static uchar tgaHeaderCompressed[12];
 		/// @}
-
-		/// Load an image file
-		/// @param[in] filename The file to load
-		/// @exception Exception
-		void load(const char* filename);
 
 		/// Load a TGA
 		/// @param[in] filename The file to load

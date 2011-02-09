@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Physics -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Math -I../../src/Resources -I../../src/Resources/Helpers -I../../src/Resources/Core -I../../src/Misc -I../../src/Util -I../../src/Ui -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Core -I../../src/Scripting/Math -I../../src/Scripting/Util -I../../src/Scripting/Scene -I../../src/Scripting/Renderer -I../../src/Core -I../../src/Input -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/SceneDbgDrawer.cpp ../../src/Renderer/PhyDbgDrawer.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/SceneDrawer.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Material.cpp ../../src/Resources/Texture.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/Script.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/Model.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/ModelPatch.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SProgUniVar.cpp ../../src/Resources/MtlUserDefinedVar.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Misc/skybox.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/map.cpp ../../src/Misc/TestHeader.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Exception.cpp ../../src/Ui/Ui.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/Light.cpp ../../src/Scene/RenderableNode.cpp ../../src/Scene/Camera.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Core/App.cpp ../../src/Core/Logger.cpp ../../src/Core/StdinListener.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/Object.cpp ../../src/Input/Input.cpp 
-OBJECTS = Main.o Physics.o RigidBody.o PhyCharacter.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o SceneDbgDrawer.o PhyDbgDrawer.o SkinsDeformer.o SceneDrawer.o BufferObject.o Vao.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o Script.o LightData.o Mesh.o Model.o ParticleEmitterProps.o ModelPatch.o Skin.o SProgUniVar.o MtlUserDefinedVar.o DummyRsrc.o Image.o ShaderPrePreprocessor.o MeshData.o ResourceManager.o skybox.o PropertyTree.o map.o TestHeader.o Scanner.o Util.o BinaryStream.o Exception.o Ui.o SceneNode.o SkinNode.o Light.o RenderableNode.o Camera.o ParticleEmitter.o Scene.o SpotLight.o ModelNode.o VisibilityTester.o ModelPatchNode.o Controller.o SkelAnimModelNodeCtrl.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o App.bpi.o Logger.bpi.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Scene.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o Dbg.bpi.o MainRenderer.bpi.o App.o Logger.o StdinListener.o AsyncLoader.o Object.o Input.o 
+SOURCES = ../../src/Main.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/SceneDbgDrawer.cpp ../../src/Renderer/PhyDbgDrawer.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/SceneDrawer.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Resources/ShaderProg.cpp ../../src/Resources/Material.cpp ../../src/Resources/Texture.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/Script.cpp ../../src/Resources/LightData.cpp ../../src/Resources/Mesh.cpp ../../src/Resources/Model.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/ModelPatch.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SProgUniVar.cpp ../../src/Resources/MtlUserDefinedVar.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Helpers/Image.cpp ../../src/Resources/Helpers/ShaderPrePreprocessor.cpp ../../src/Resources/Helpers/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Misc/skybox.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/map.cpp ../../src/Misc/TestHeader.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Exception.cpp ../../src/Ui/Ui.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/Light.cpp ../../src/Scene/RenderableNode.cpp ../../src/Scene/Camera.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SpotLight.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Core/App.cpp ../../src/Core/Logger.cpp ../../src/Core/StdinListener.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/Object.cpp ../../src/Input/Input.cpp 
+OBJECTS = Main.o Physics.o RigidBody.o PhyCharacter.o Smo.o Ez.o Ms.o Sm.o Pps.o Ssao.o Renderer.o Is.o MainRenderer.o Dbg.o Hdr.o Bs.o SceneDbgDrawer.o PhyDbgDrawer.o SkinsDeformer.o SceneDrawer.o BufferObject.o Vao.o ShaderProg.o Material.o Texture.o SkelAnim.o Extension.o Skeleton.o Script.o LightData.o Mesh.o Model.o ParticleEmitterProps.o ModelPatch.o Skin.o SProgUniVar.o MtlUserDefinedVar.o DummyRsrc.o Image.o ShaderPrePreprocessor.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o skybox.o PropertyTree.o map.o TestHeader.o Scanner.o Util.o BinaryStream.o Exception.o Ui.o SceneNode.o SkinNode.o Light.o RenderableNode.o Camera.o ParticleEmitter.o Scene.o SpotLight.o ModelNode.o VisibilityTester.o ModelPatchNode.o Controller.o SkelAnimModelNodeCtrl.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o App.bpi.o Logger.bpi.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Scene.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o Dbg.bpi.o MainRenderer.bpi.o App.o Logger.o StdinListener.o AsyncLoader.o Object.o Input.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -52,6 +52,9 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -731,6 +734,9 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -780,6 +786,9 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -985,6 +994,9 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Is.h \
@@ -1027,6 +1039,9 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -1217,13 +1232,10 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1233,8 +1245,13 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
+ ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -1268,6 +1285,9 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Renderer.h \
@@ -1311,6 +1331,9 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -1336,12 +1359,10 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1351,8 +1372,12 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
+ ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -1565,6 +1590,9 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -1635,6 +1663,9 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -1800,9 +1831,9 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Renderer.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -1813,10 +1844,13 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Renderer.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
+ ../../src/Resources/SProgAttribVar.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -1838,11 +1872,10 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture.h \
- ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1852,10 +1885,13 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture.h \
+ ../../src/Renderer/Renderer.h ../../src/Resources/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
  ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -2065,6 +2101,9 @@ SceneDbgDrawer.o: ../../src/Renderer/SceneDbgDrawer.cpp \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -2208,6 +2247,9 @@ PhyDbgDrawer.o: ../../src/Renderer/PhyDbgDrawer.cpp \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -2346,15 +2388,13 @@ SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -2362,8 +2402,13 @@ SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
+ ../../src/Resources/SProgAttribVar.h
 	@echo Compiling ../../src/Renderer/SkinsDeformer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/SkinsDeformer.cpp -o SkinsDeformer.o
 
@@ -2389,6 +2434,9 @@ SceneDrawer.o: ../../src/Renderer/SceneDrawer.cpp \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -2686,6 +2734,9 @@ Material.o: ../../src/Resources/Material.cpp \
  ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -2820,6 +2871,9 @@ LightData.o: ../../src/Resources/LightData.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture.h \
@@ -2846,6 +2900,9 @@ Mesh.o: ../../src/Resources/Mesh.cpp ../../src/Resources/Mesh.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -2856,9 +2913,7 @@ Mesh.o: ../../src/Resources/Mesh.cpp ../../src/Resources/Mesh.h \
  ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
  ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h \
- ../../src/Resources/MtlUserDefinedVar.h \
- ../../src/Resources/Helpers/MeshData.h
+ ../../src/Resources/MtlUserDefinedVar.h
 	@echo Compiling ../../src/Resources/Mesh.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Mesh.cpp -o Mesh.o
 
@@ -2867,13 +2922,10 @@ Model.o: ../../src/Resources/Model.cpp ../../src/Resources/Model.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Math/Math.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2884,16 +2936,21 @@ Model.o: ../../src/Resources/Model.cpp ../../src/Resources/Model.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h ../../src/Core/Object.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
+ ../../src/Resources/SProgAttribVar.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/ModelPatch.h \
  ../../src/Collision/Sphere.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.inl.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/MtlUserDefinedVar.h \
  ../../src/Resources/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/SkelAnim.h ../../src/Resources/Helpers/MeshData.h \
- ../../src/Resources/Skeleton.h
+ ../../src/Resources/SkelAnim.h ../../src/Resources/Skeleton.h
 	@echo Compiling ../../src/Resources/Model.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model.cpp -o Model.o
 
@@ -2919,44 +2976,10 @@ ModelPatch.o: ../../src/Resources/ModelPatch.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Collision/Sphere.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.inl.h \
- ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h \
- ../../src/Resources/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Resources/ModelPatch.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ModelPatch.cpp -o ModelPatch.o
-
-Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Model.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Math/Math.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2967,8 +2990,48 @@ Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h ../../src/Core/Object.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../extern/include/GL/glew.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Resources/Material.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
+ ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
+ ../../src/Resources/MtlUserDefinedVar.h
+	@echo Compiling ../../src/Resources/ModelPatch.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ModelPatch.cpp -o ModelPatch.o
+
+Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Model.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
+ ../../src/Resources/SProgAttribVar.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/ModelPatch.h \
  ../../src/Collision/Sphere.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.inl.h ../../src/Resources/Skeleton.h \
@@ -3017,6 +3080,9 @@ MtlUserDefinedVar.o: ../../src/Resources/MtlUserDefinedVar.cpp \
  ../../extern/include/GL/glew.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture.h
@@ -3070,10 +3136,11 @@ ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture.h \
- ../../src/Util/StdTypes.h ../../src/Resources/Material.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3083,11 +3150,13 @@ ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
- ../../src/Resources/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Texture.h ../../src/Resources/Material.h \
+ ../../src/Resources/ShaderProg.h ../../extern/include/GL/glew.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
+ ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
+ ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/MtlUserDefinedVar.h ../../src/Resources/ShaderProg.h \
@@ -3101,9 +3170,31 @@ ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/ModelPatch.h \
  ../../src/Resources/Skin.h ../../src/Resources/Model.h \
- ../../src/Resources/DummyRsrc.h
+ ../../src/Resources/DummyRsrc.h ../../src/Core/Logger.h
 	@echo Compiling ../../src/Resources/Core/ResourceManager.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/ResourceManager.cpp -o ResourceManager.o
+
+RsrcAsyncLoadingReqsHandler.o: \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Helpers/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Exception.h \
+ ../../src/Resources/Texture.h
+	@echo Compiling ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp -o RsrcAsyncLoadingReqsHandler.o
 
 skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Resources/Texture.h ../../src/Util/StdTypes.h \
@@ -3122,13 +3213,15 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/ShaderProg.h \
  ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/SProgUniVar.h ../../src/Resources/SProgVar.h \
- ../../src/Resources/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Exception.h ../../src/Renderer/Renderer.h \
+ ../../src/Resources/SProgAttribVar.h ../../src/Renderer/Renderer.h \
  ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
@@ -3551,6 +3644,9 @@ SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
  ../../src/Resources/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Sphere.h \
@@ -3581,6 +3677,9 @@ Light.o: ../../src/Scene/Light.cpp ../../src/Scene/Light.h \
  ../../src/Collision/Sphere.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightData.h \
@@ -3777,6 +3876,9 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Physics/RigidBody.h \
@@ -3990,6 +4092,9 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Resources/Texture.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightData.h \
@@ -4032,6 +4137,9 @@ SpotLight.o: ../../src/Scene/SpotLight.cpp ../../src/Scene/SpotLight.h \
  ../../src/Collision/Sphere.inl.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightData.h \
@@ -4056,6 +4164,9 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Util/Properties.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelPatchNode.h \
@@ -4224,6 +4335,9 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelPatchNode.h \
@@ -4269,6 +4383,9 @@ ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
  ../../src/Resources/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Sphere.h \
@@ -4276,7 +4393,7 @@ ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
  ../../src/Resources/ModelPatch.h ../../src/Scene/RenderableNode.h \
  ../../src/Scene/SceneNode.h ../../src/Resources/Material.h \
  ../../src/Resources/ShaderProg.h ../../src/Resources/MtlUserDefinedVar.h \
- ../../src/Resources/Helpers/MeshData.h ../../src/Scene/ModelNode.h
+ ../../src/Scene/ModelNode.h
 	@echo Compiling ../../src/Scene/ModelPatchNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelPatchNode.cpp -o ModelPatchNode.o
 
@@ -4484,6 +4601,9 @@ SkelAnimModelNodeCtrl.o: \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/SkelAnim.h \
@@ -4919,6 +5039,20 @@ Hdr.bpi.o: ../../src/Scripting/Renderer/Hdr.bpi.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h
@@ -4934,13 +5068,10 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
  ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
- ../../src/Resources/SProgVar.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Exception.h ../../src/Resources/Helpers/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -4950,8 +5081,14 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/SProgAttribVar.h \
- ../../src/Util/Vec.h ../../src/Util/Exception.h ../../src/Renderer/Hdr.h
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Resources/SProgUniVar.h \
+ ../../src/Resources/SProgVar.h ../../src/Resources/SProgAttribVar.h \
+ ../../src/Renderer/Hdr.h
 	@echo Compiling ../../src/Scripting/Renderer/Pps.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Pps.bpi.cpp -o Pps.bpi.o
 
@@ -4980,6 +5117,9 @@ Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -5016,6 +5156,9 @@ Dbg.bpi.o: ../../src/Scripting/Renderer/Dbg.bpi.cpp \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
@@ -5052,6 +5195,9 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
@@ -5125,6 +5271,9 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Helpers/Image.h \
+ ../../src/Resources/Helpers/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
