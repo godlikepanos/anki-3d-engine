@@ -1,5 +1,29 @@
-#include <boost/type_traits.hpp>
 #include "Exception.h"
+
+
+//======================================================================================================================
+// allocAndLoadRsrc                                                                                                    =
+//======================================================================================================================
+template<typename Type>
+void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
+{
+	newInstance = NULL;
+
+	try
+	{
+		newInstance = new Type();
+		newInstance->load(filename);
+	}
+	catch(std::exception& e)
+	{
+		if(newInstance != NULL)
+		{
+			delete newInstance;
+		}
+		
+		throw EXCEPTION(e.what());
+	}
+}
 
 
 //======================================================================================================================
@@ -22,25 +46,13 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* f
 	// else create new, load it and update the container
 	else
 	{
-		Type* newInstance = NULL;
-
-		try
-		{
-			newInstance = new Type();
-			newInstance->load(filename);
-		}
-		catch(std::exception& e)
-		{
-			if(newInstance != NULL)
-			{
-				delete newInstance;
-			}
-		}
-
-		c.push_back(typename Types<Type>::Hook(filename, 1, newInstance));
+		c.push_back(new typename Types<Type>::Hook(filename, 1, allocAndLoadRsrc<Type>(filename)));
+		
+		it = c.end();
+		--it;
 	}
 
-	return c.back();
+	return *it;
 }
 
 

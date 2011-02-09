@@ -23,25 +23,25 @@ class AsyncLoader
 
 		/// Tell me what to load, how to load it and where to store it. This puts a new loading request in the stack
 		/// @param filename The file to load
-		/// @param func How to load the file. The function should gets a filename (const char*) and the storage. It returns
-		/// false if there was a loading error
+		/// @param loadCallback How to load the file. The function should gets a filename (const char*) and the storage.
+		/// It can throw an exception in case of a loading error
 		/// @param storage This points to the storage that the loader will store the data. The storage should not be
 		/// destroyed from other threads
-		void load(const char* filename, bool (*func)(const char*, void*), void* storage);
+		void load(const char* filename, void (*loadCallback)(const char*, void*), void* storage);
 
 		/// Query the loader and see if its got something
 		/// @param[out] filename The file that finished loading
 		/// @param[out] storage The data are stored in this buffer
 		/// @param[out] ok Its true if the loading of the resource was ok
 		/// @return Return true if there is something that finished loading
-		bool getLoaded(std::string& filename, void* storage, bool& ok);
+		bool pollForFinished(std::string& filename, void* storage, bool& ok);
 
 	private:
 		/// A loading request
 		struct Request
 		{
 			std::string filename;
-			bool (*func)(const char*, void*);
+			void (*loadCallback)(const char*, void*);
 			void* storage;
 		};
 

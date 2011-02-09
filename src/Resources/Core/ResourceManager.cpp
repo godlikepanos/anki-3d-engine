@@ -13,6 +13,9 @@
 #include "Skin.h"
 #include "DummyRsrc.h"
 
+#include "Image.h"
+#include "Logger.h"
+
 
 // Because we are bored to write the same
 #define SPECIALIZE_TEMPLATE_STUFF(type__, container__) \
@@ -41,3 +44,24 @@ SPECIALIZE_TEMPLATE_STUFF(Script, scripts)
 SPECIALIZE_TEMPLATE_STUFF(Model, models)
 SPECIALIZE_TEMPLATE_STUFF(Skin, skins)
 SPECIALIZE_TEMPLATE_STUFF(DummyRsrc, dummies)
+
+
+//======================================================================================================================
+// allocAndLoadRsrc <Texture>                                                                                          =
+//======================================================================================================================
+template<>
+void ResourceManager::allocAndLoadRsrc(const char* filename, Texture*& ptr)
+{
+	// Load the dummy
+	if(dummyTex.get() == NULL)
+	{
+		dummyTex.reset(new Texture);
+		dummyTex->load("gfx/default.png");
+	}
+	
+	// Send a loading request
+	rsrcAsyncLoadingReqsHandler.sendNewLoadingRequest(filename, &ptr);
+
+	ptr = dummyTex.get();
+}
+

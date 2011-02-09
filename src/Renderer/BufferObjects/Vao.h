@@ -31,6 +31,7 @@ class Vao
 		void destroy();
 
 		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+		/// @endlink
 		/// @param vbo The VBO to attach
 		/// @param attribVar For the shader attribute location
 		/// @param size Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4
@@ -42,6 +43,7 @@ class Vao
 		                          GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 
 		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+		/// @endlink
 		/// @param vbo The VBO to attach
 		/// @param attribVarLocation Shader attribute location
 		/// @param size Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4

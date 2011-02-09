@@ -40,126 +40,86 @@ Texture::~Texture()
 
 
 //======================================================================================================================
-// load                                                                                                                =
+// load (const char*)                                                                                                  =
 //======================================================================================================================
 void Texture::load(const char* filename)
 {
 	try
 	{
-		/// @todo delete this
-		if(std::string("textures/stone.001.diff.tga") == filename)
-		{
-			target = GL_TEXTURE_2D;
-			glGenTextures(1, &glId);
-			bind(LAST_TEX_UNIT);
-
-			setRepeat(true);
-			int internalFormat;
-			int format;
-			int type;
-			internalFormat = GL_RGBA;
-			format = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
-
-			int w = 100, h = 100;
-			int level = 0;
-			uint cols[3] = {0xFF0000FF, 0xFF00FF00, 0xFFFF0000};
-			uint ii = 0;
-			while(1)
-			{
-				uint col = cols[ii++];
-				Vec<uint> buff(w * h, col);
-				glTexImage2D(target, level, internalFormat, w, h, 0, format, type, &buff[0]);
-				++level;
-				w /= 2;
-				h /= 2;
-				if(ii > 2)
-				{
-					ii = 0;
-				}
-
-				if(w == 0 || h == 0)
-				{
-					break;
-				}
-			}
-
-			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			//setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			//setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
-			return;
-		}
-
-
-
-		target = GL_TEXTURE_2D;
-		if(isLoaded())
-		{
-			throw EXCEPTION("Texture already loaded");
-		}
-
-		Image img(filename);
-
-		// bind the texture
-		glGenTextures(1, &glId);
-		bind(LAST_TEX_UNIT);
-		if(mipmappingEnabled)
-		{
-			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		}
-		else
-		{
-			setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		}
-
-		setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
-
-		// leave to GL_REPEAT. There is not real performance hit
-		setRepeat(true);
-
-		// chose formats
-		int internalFormat;
-		int format;
-		int type;
-		switch(img.getColorType())
-		{
-			case Image::CT_R:
-				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
-				format = GL_RED;
-				type = GL_UNSIGNED_BYTE;
-				break;
-
-			case Image::CT_RGB:
-				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
-				format = GL_RGB;
-				type = GL_UNSIGNED_BYTE;
-				break;
-
-			case Image::CT_RGBA:
-				internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
-				format = GL_RGBA;
-				type = GL_UNSIGNED_BYTE;
-				break;
-
-			default:
-				throw EXCEPTION("See file");
-		}
-
-		glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
-		if(mipmappingEnabled)
-		{
-			glGenerateMipmap(target);
-		}
-
-		ON_GL_FAIL_THROW_EXCEPTION();
+		load(Image(filename));
 	}
 	catch(std::exception& e)
 	{
 		throw EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
+}
+
+
+//======================================================================================================================
+// load (const Image&)                                                                                                 =
+//======================================================================================================================
+void Texture::load(const Image& img)
+{
+	target = GL_TEXTURE_2D;
+	if(isLoaded())
+	{
+		throw EXCEPTION("Texture already loaded");
+	}
+
+	// bind the texture
+	glGenTextures(1, &glId);
+	bind(LAST_TEX_UNIT);
+	if(mipmappingEnabled)
+	{
+		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	}
+	else
+	{
+		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+
+	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
+
+	// leave to GL_REPEAT. There is not real performance hit
+	setRepeat(true);
+
+	// chose formats
+	int internalFormat;
+	int format;
+	int type;
+	switch(img.getColorType())
+	{
+		case Image::CT_R:
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
+			format = GL_RED;
+			type = GL_UNSIGNED_BYTE;
+			break;
+
+		case Image::CT_RGB:
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+			format = GL_RGB;
+			type = GL_UNSIGNED_BYTE;
+			break;
+
+		case Image::CT_RGBA:
+			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
+			format = GL_RGBA;
+			type = GL_UNSIGNED_BYTE;
+			break;
+
+		default:
+			throw EXCEPTION("See file");
+	}
+
+	glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
+	if(mipmappingEnabled)
+	{
+		glGenerateMipmap(target);
+	}
+
+	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 
