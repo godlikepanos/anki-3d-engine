@@ -14,6 +14,8 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint siz
 		throw EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
 	}
 
+	ON_GL_FAIL_THROW_EXCEPTION();
+
 	bind();
 	vbo.bind();
 	glVertexAttribPointer(attribVarLocation, size, type, normalized, stride, pointer);

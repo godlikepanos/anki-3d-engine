@@ -1,5 +1,6 @@
 #include "RsrcAsyncLoadingReqsHandler.h"
 #include "Texture.h"
+#include "Logger.h"
 
 
 //======================================================================================================================
@@ -40,7 +41,7 @@ void RsrcAsyncLoadingReqsHandler::serveFinishedRequests(uint /*maxTime*/)
 				TextureRequest& texReq = static_cast<TextureRequest&>(req);
 				Texture* tex = new Texture;
 				tex->load(texReq.getHelperObj());
-				//*texReq.getObjToLoad()->load(texReq.getHelperObj());
+				*texReq.getObjToLoad() = tex;
 				break;
 			}
 				
@@ -61,5 +62,6 @@ void RsrcAsyncLoadingReqsHandler::loadImageCallback(const char* filename, void* 
 {
 	Image* img = (Image*)img_;
 	img->load(filename);
+	sleep(2);
 }
 

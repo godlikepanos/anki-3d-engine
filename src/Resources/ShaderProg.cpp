@@ -18,9 +18,9 @@
 
 std::string ShaderProg::stdSourceCode(
 	"#version 330 core\n"
-	//"precision lowp float;\n"
-	//"#pragma optimize(on)\n"
-	//"#pragma debug(off)\n"
+	"precision lowp float;\n"
+	"#pragma optimize(on)\n"
+	"#pragma debug(off)\n"
 );
 
 

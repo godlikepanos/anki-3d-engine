@@ -53,7 +53,7 @@ class ResourceManager
 		void unload(const typename Types<Type>::Hook& info);
 		
 		/// See RsrcAsyncLoadingReqsHandler::serveFinishedRequests
-		void serveFinishedRequests(uint maxTime) {rsrcAsyncLoadingReqsHandler.serveFinishedRequests();}
+		void serveFinishedRequests(uint maxTime) {rsrcAsyncLoadingReqsHandler.serveFinishedRequests(maxTime);}
 
 	private:
 		/// @name Containers
@@ -74,8 +74,8 @@ class ResourceManager
 
 		RsrcAsyncLoadingReqsHandler rsrcAsyncLoadingReqsHandler;
 		
-		/// This will be used in every new texture until the async loader is finished with the loading of tha actual
-		/// texure. Its initialized when its first needed so that we wont have colflicts with opengl initialization.
+		/// This will be used in every new texture until the async loader is finished with the loading of the actual
+		/// texture. Its initialized when its first needed so that we wont have conflicts with opengl initialization.
 		std::auto_ptr<Texture> dummyTex;
 
 		/// Find a resource using the filename
@@ -96,7 +96,7 @@ class ResourceManager
 		
 		/// Allocate and load a resource.
 		/// This method allocates memory for a resource and loads it (calls the load metod). Its been used by the load
-		/// method. Its a sepperate method because we want to specialize it for async loaded resources
+		/// method. Its a separate method because we want to specialize it for async loaded resources
 		template<typename Type>
 		void allocAndLoadRsrc(const char* filename, Type*& ptr);
 };

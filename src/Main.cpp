@@ -142,9 +142,9 @@ void init()
 
 
 	// horse
-	horse = new ModelNode();
+	/*horse = new ModelNode();
 	horse->init("meshes/horse/horse.mdl");
-	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));
+	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));*/
 
 	// Sponza
 	ModelNode* sponza = new ModelNode();
@@ -152,9 +152,9 @@ void init()
 
 
 	// Pentagram
-	ModelNode* pentagram = new ModelNode();
+	/*ModelNode* pentagram = new ModelNode();
 	pentagram->init("models/pentagram/pentagram.mdl");
-	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
+	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));*/
 
 
 	// Imp
@@ -314,9 +314,10 @@ void mainLoop()
 		SceneSingleton::getInstance().updateAllControllers();
 		SceneSingleton::getInstance().updateAllWorldStuff();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
-		//SceneSingleton::getInstance().doVisibilityTests(spot_lights[0]->getCamera());
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
+
+		ResourceManagerSingleton::getInstance().serveFinishedRequests(1000);
 
 		//map.octree.root->bounding_box.render();
 

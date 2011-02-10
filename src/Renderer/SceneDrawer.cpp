@@ -178,6 +178,7 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 			case GL_SAMPLER_2D:
 				if(udv.getTexture() != NULL)
 				{
+					udv.getTexture()->setRepeat(true);
 					udv.getUniVar().setTexture(*udv.getTexture(), textureUnit);
 				}
 				else
