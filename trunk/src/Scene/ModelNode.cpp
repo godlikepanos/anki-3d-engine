@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include "ModelNode.h"
 #include "Model.h"
 #include "Skeleton.h"
@@ -10,9 +11,9 @@ void ModelNode::init(const char* filename)
 {
 	model.loadRsrc(filename);
 
-	for(uint i = 0; i < model->getModelPatches().size(); i++)
+	BOOST_FOREACH(const ModelPatch& patch, model->getModelPatches())
 	{
-		patches.push_back(new ModelPatchNode(model->getModelPatches()[i], this));
+		patches.push_back(new ModelPatchNode(patch, this));
 	}
 }
 

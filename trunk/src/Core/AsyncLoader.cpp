@@ -54,6 +54,7 @@ void AsyncLoader::workingFunc()
 		try
 		{
 			req.loadCallback(req.filename.c_str(), req.storage);
+			INFO("File \"" << req.filename << "\" loaded");
 		}
 		catch(std::exception& e)
 		{
@@ -82,8 +83,8 @@ bool AsyncLoader::pollForFinished(std::string& filename, void* buff, bool& ok)
 		return false;
 	}
 
-	Response resp = responses.back();
-	responses.pop_back();
+	Response resp = responses.front();
+	responses.pop_front();
 	lock.unlock();
 
 	filename = resp.filename;

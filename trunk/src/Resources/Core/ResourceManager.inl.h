@@ -46,7 +46,12 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* f
 	// else create new, load it and update the container
 	else
 	{
-		c.push_back(new typename Types<Type>::Hook(filename, 1, allocAndLoadRsrc<Type>(filename)));
+		typename Types<Type>::Hook* hook = new typename Types<Type>::Hook;
+		hook->uuid = filename;
+		hook->referenceCounter = 1;
+		allocAndLoadRsrc<Type>(filename, hook->resource);
+
+		c.push_back(hook);
 		
 		it = c.end();
 		--it;
