@@ -49,9 +49,9 @@ class SceneNode: private Object
 
 		/// @name Mess with the local transform
 		/// @{
-		void rotateLocalX(float angDegrees) {localTransform.rotation.rotateXAxis(angDegrees);}
-		void rotateLocalY(float angDegrees) {localTransform.rotation.rotateYAxis(angDegrees);}
-		void rotateLocalZ(float angDegrees) {localTransform.rotation.rotateZAxis(angDegrees);}
+		void rotateLocalX(float angDegrees) {localTransform.getRotation().rotateXAxis(angDegrees);}
+		void rotateLocalY(float angDegrees) {localTransform.getRotation().rotateYAxis(angDegrees);}
+		void rotateLocalZ(float angDegrees) {localTransform.getRotation().rotateZAxis(angDegrees);}
 		void moveLocalX(float distance);
 		void moveLocalY(float distance);
 		void moveLocalZ(float distance);

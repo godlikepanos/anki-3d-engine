@@ -56,9 +56,9 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 	if(node)
 	{
 		Transform& nodeTrf = node->getLocalTransform();
-		float originalScale = nodeTrf.scale;
+		float originalScale = nodeTrf.getScale();
 		nodeTrf = toAnki(worldTrans);
-		nodeTrf.scale = originalScale;
+		nodeTrf.setScale(originalScale);
 	}
 }
 

@@ -66,9 +66,9 @@ inline Vec3::Vec3(const Vec4& v4)
 // Quat
 inline Vec3::Vec3(const Quat& q)
 {
-	x() = q.x;
-	y() = q.y;
-	z() = q.z;
+	x() = q.x();
+	y() = q.y();
+	z() = q.z();
 }
 
 //======================================================================================================================
@@ -345,7 +345,7 @@ inline Vec3 Vec3::getRotated(const Quat& q) const
 							   pmult*y + vmult*q.y + crossmult*(q.z*x - q.x*z),
 	               pmult*z + vmult*q.z + crossmult*(q.x*y - q.y*x));*/
 	Vec3 qXyz(q);
-	return SELF + qXyz.cross(qXyz.cross(SELF) + SELF * q.w) * 2.0;
+	return SELF + qXyz.cross(qXyz.cross(SELF) + SELF * q.w()) * 2.0;
 }
 
 // rotate
@@ -420,7 +420,7 @@ inline void Vec3::transform(const Mat4& transform)
 // Transform
 inline Vec3 Vec3::getTransformed(const Transform& transform) const
 {
-	return (transform.rotation * (SELF * transform.scale)) + transform.origin;
+	return (transform.getRotation() * (SELF * transform.getScale())) + transform.getOrigin();
 }
 
 // Transform

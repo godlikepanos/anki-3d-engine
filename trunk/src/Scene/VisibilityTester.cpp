@@ -14,8 +14,8 @@
 //======================================================================================================================
 bool VisibilityTester::CmpDistanceFromOrigin::operator()(const RenderableNode* a, const RenderableNode* b) const
 {
-	return (a->getWorldTransform().origin - o).getLengthSquared() <
-	       (b->getWorldTransform().origin - o).getLengthSquared();
+	return (a->getWorldTransform().getOrigin() - o).getLengthSquared() <
+	       (b->getWorldTransform().getOrigin() - o).getLengthSquared();
 }
 
 
@@ -47,7 +47,7 @@ void VisibilityTester::test(Camera& cam)
 			{
 				PointLight* pointl = static_cast<PointLight*>(light);
 
-				Sphere sphere(pointl->getWorldTransform().origin, pointl->getRadius());
+				Sphere sphere(pointl->getWorldTransform().getOrigin(), pointl->getRadius());
 				if(cam.insideFrustum(sphere))
 				{
 					cam.getVisiblePointLights().push_back(pointl);
@@ -137,8 +137,8 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 	// Sort the renderables from closest to the camera to the farthest
 	//
 	std::sort(cam.getVisibleMsRenderableNodes().begin(), cam.getVisibleMsRenderableNodes().end(),
-	          CmpDistanceFromOrigin(cam.getWorldTransform().origin));
+	          CmpDistanceFromOrigin(cam.getWorldTransform().getOrigin()));
 	std::sort(cam.getVisibleBsRenderableNodes().begin(), cam.getVisibleBsRenderableNodes().end(),
-	          CmpDistanceFromOrigin(cam.getWorldTransform().origin));
+	          CmpDistanceFromOrigin(cam.getWorldTransform().getOrigin()));
 }
 

@@ -11,14 +11,32 @@ namespace M {
 class Axisang
 {
 	public:
-		float ang;
-		Vec3 axis;
-
+		/// @name Constructors
+		/// @{
 		explicit Axisang();
 		         Axisang(const Axisang& b);
 		explicit Axisang(float rad, const Vec3& axis_);
 		explicit Axisang(const Quat& q);
 		explicit Axisang(const Mat3& m3);
+		/// @}
+		
+		/// @name Accessors
+		/// @{
+		float getAngle() const;
+		float& getAngle();
+		void setAngle(float a);
+		
+		const Vec3& getAxis() const;
+		Vec3& getAxis();
+		void setAxis(const Vec3& a);
+		/// @}
+		
+	private:
+		/// @name Data
+		/// @{
+		float ang;
+		Vec3 axis;
+		/// @}
 };
 
 
