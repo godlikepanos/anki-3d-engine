@@ -91,10 +91,10 @@ inline Vec4::Vec4(const Vec4& b)
 // quat
 inline Vec4::Vec4(const Quat& q)
 {
-	x() = q.x;
-	y() = q.y;
-	z() = q.z;
-	w() = q.w;
+	x() = q.x();
+	y() = q.y();
+	z() = q.z();
+	w() = q.w();
 }
 
 // __m128

@@ -162,7 +162,7 @@ inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, float scale)
 // Transform
 inline Mat4::Mat4(const Transform& t)
 {
-	SELF = Mat4(t.origin, t.rotation, t.scale);
+	SELF = Mat4(t.getOrigin(), t.getRotation(), t.getScale());
 }
 
 

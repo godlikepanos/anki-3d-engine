@@ -1,6 +1,7 @@
 #include "RsrcAsyncLoadingReqsHandler.h"
 #include "Texture.h"
 #include "Logger.h"
+#include "HighRezTimer.h"
 
 
 //======================================================================================================================
@@ -18,8 +19,11 @@ void RsrcAsyncLoadingReqsHandler::sendNewLoadingRequest<Texture>(const char* fil
 //======================================================================================================================
 // serveFinishedRequests                                                                                               =
 //======================================================================================================================
-void RsrcAsyncLoadingReqsHandler::serveFinishedRequests(uint /*maxTime*/)
+void RsrcAsyncLoadingReqsHandler::serveFinishedRequests(uint maxTime)
 {
+	HighRezTimer t;
+	t.start();
+
 	while(1)
 	{
 		std::string filename;
@@ -51,6 +55,12 @@ void RsrcAsyncLoadingReqsHandler::serveFinishedRequests(uint /*maxTime*/)
 		}
 		
 		requests.pop_front();
+
+		// Leave if you passed the max time
+		if(t.getElapsedTime() >= maxTime)
+		{
+			break;
+		}
 	}
 }
 

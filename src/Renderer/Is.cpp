@@ -218,7 +218,7 @@ void Is::pointLightPass(const PointLight& light)
 	shader.findUniVar("msSpecularFai")->setTexture(r.getMs().getSpecularFai(), 2);
 	shader.findUniVar("msDepthFai")->setTexture(r.getMs().getDepthFai(), 3);
 	shader.findUniVar("planes")->setVec2(&planes);
-	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
+	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
 	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseCol());
@@ -281,7 +281,7 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->findUniVar("planes")->setVec2(&planes);
 
 	// the light params
-	Vec3 lightPosEyeSpace = light.getWorldTransform().origin.getTransformed(cam.getViewMatrix());
+	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
 	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseCol());

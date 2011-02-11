@@ -30,7 +30,8 @@ class Sphere: public CollisionShape
 
 		Sphere getTransformed(const Transform& transform) const;
 
-		/// Get the sphere that includes this sphere and the given
+		/// Get the sphere that includes this sphere and the given. See a drawing in the docs dir for more info about the
+		/// algorithm
 		Sphere getCompoundSphere(const Sphere& b) const;
 
 		/// @see CollisionShape::testPlane

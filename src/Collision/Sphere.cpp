@@ -8,8 +8,8 @@
 Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;
-	newSphere.center = center.getTransformed(transform.origin, transform.rotation, transform.scale);
-	newSphere.radius = radius * transform.scale;
+	newSphere.center = center.getTransformed(transform.getOrigin(), transform.getRotation(), transform.getScale());
+	newSphere.radius = radius * transform.getScale();
 	return newSphere;
 }
 
@@ -21,7 +21,7 @@ Sphere Sphere::getCompoundSphere(const Sphere& b) const
 {
 	const Sphere& a = *this;
 
-	Vec3 c = b.getCenter() - a.getCenter();
+	Vec3 c = b.getCenter() - a.getCenter(); // vector from one center to the other
 	float cLen = c.getLength();
 
 	if(cLen + b.getRadius() < a.getRadius())

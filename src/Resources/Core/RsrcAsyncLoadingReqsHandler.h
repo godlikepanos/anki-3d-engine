@@ -9,7 +9,7 @@
 #include "MeshData.h"
 
 
-// Dont even think to include the files those:
+// Dont even think to include these files:
 class Texture;
 class Mesh;
 
@@ -19,16 +19,17 @@ class Mesh;
 class RsrcAsyncLoadingReqsHandler
 {
 	public:
-		/// Send a loading requst to an AsyncLoader
+		/// Send a loading request to an AsyncLoader
 		/// @tparam Type It should be Texture or Mesh
 		/// @param filename The file to load
-		/// @param objToLoad Pointer to a pointer to the object to load asynchronusly
+		/// @param objToLoad Pointer to a pointer to the object to load asynchronously
 		template<typename Type>
 		void sendNewLoadingRequest(const char* filename, Type** objToLoad);
 		
-		/// Serve the finished requests. This should be called periodicaly in the main loop
-		/// @param maxTime The max time to spend serving finished requests in a single call. If for example there are many
-		/// requests it wont serve them all at one time, it will leave some for later
+		/// Serve the finished requests. This should be called once every loop of the main loop
+		/// @param maxTime The max time to spend serving finished requests. If for example there are many that need more
+		/// time than the max the method will return. The pending requests will be served when it will be called again.
+		/// In ms
 		void serveFinishedRequests(uint maxTime);
 		
 	

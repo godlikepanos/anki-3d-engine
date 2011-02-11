@@ -11,11 +11,6 @@ namespace M {
 class Quat
 {
 	public:
-		/// @name Data
-		/// @{
-		float x, y, z, w;
-		/// @}
-
 		/// @name Constructors & destructors
 		/// @{
 		explicit Quat();
@@ -30,7 +25,19 @@ class Quat
 		explicit Quat(const Axisang& axisang);
 		/// @}
 
-		/// Operatorswith same
+		/// @name Accessors
+		/// @{
+		float x() const;
+		float& x();
+		float y() const;
+		float& y();
+		float z() const;
+		float& z();
+		float w() const;
+		float& w();
+		/// @}
+
+		/// Operators with same
 		/// @{
 		Quat operator *(const Quat& b) const; ///< 16 muls, 12 adds
 		Quat& operator *=(const Quat& b);
@@ -54,6 +61,15 @@ class Quat
 		void  rotate(const Quat& b); ///< @see getRotated
 		void  setIdentity();
 		static const Quat& getIdentity();
+		/// @}
+
+	private:
+		/// @name Data
+		/// @{
+		struct
+		{
+			float x, y, z, w;
+		} vec;
 		/// @}
 };
 

@@ -66,7 +66,7 @@ void initPhysics()
 
 	Transform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.origin = Vec3(0,-50, 0);
+	groundTransform.setOrigin(Vec3(0,-50, 0));
 
 	RigidBody::Initializer init;
 	init.mass = 0.0;
@@ -209,7 +209,7 @@ void init()
 	// particle emitter
 	partEmitter = new ParticleEmitter;
 	partEmitter->init("asdf");
-	partEmitter->getLocalTransform().origin = Vec3(3.0, 0.0, 0.0);
+	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
 
 	// character
 	/*PhyCharacter::Initializer init;
@@ -283,10 +283,10 @@ void mainLoop()
 		}
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().scale += scale ;
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().scale -= scale ;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
 
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().origin);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
 			character->moveForward(0.1);
@@ -307,7 +307,7 @@ void mainLoop()
 			ScriptingEngineSingleton::getInstance().execScript(Util::readFile("test.py").c_str());
 		}
 
-		mover->getLocalTransform().rotation.reorthogonalize();
+		mover->getLocalTransform().getRotation().reorthogonalize();
 
 		AppSingleton::getInstance().execStdinScpripts();
 		SceneSingleton::getInstance().getPhysics().update(crntTime);

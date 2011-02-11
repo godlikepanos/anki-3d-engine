@@ -11,13 +11,6 @@ namespace M {
 class Transform
 {
 	public:
-		/// @name Data
-		/// @{
-		Vec3 origin; ///< The rotation
-		Mat3 rotation; ///< The translation
-		float scale; ///< The uniform scaling
-		/// @}
-
 		/// @name Constructors
 		/// @{
 		explicit Transform();
@@ -26,11 +19,34 @@ class Transform
 		explicit Transform(const Vec3& origin, const Mat3& rotation_, float scale_);
 		/// @}
 
+		/// @name Accessors
+		/// @{
+		const Vec3& getOrigin() const;
+		Vec3& getOrigin();
+		void setOrigin(const Vec3 o);
+		
+		const Mat3& getRotation() const;
+		Mat3& getRotation();
+		void setRotation(const Mat3& r);
+		
+		float getScale() const;
+		float& getScale();
+		void setScale(float s);
+		/// @}
+
 		/// @name Other
 		/// @{
 		void setIdentity();
 		static const Transform& getIdentity();
 		static Transform combineTransformations(const Transform& a, const Transform& b); ///< @see M::combineTransformations
+		/// @}
+		
+	private:
+		/// @name Data
+		/// @{
+		Vec3 origin; ///< The rotation
+		Mat3 rotation; ///< The translation
+		float scale; ///< The uniform scaling
 		/// @}
 };
 

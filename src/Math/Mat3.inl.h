@@ -6,30 +6,6 @@
 
 namespace M {
 
-//======================================================================================================================
-// Accessor                                                                                                            =
-//======================================================================================================================
-
-inline float& Mat3::operator()(const uint i, const uint j)
-{
-	return arr2[i][j];
-}
-
-inline const float& Mat3::operator()(const uint i, const uint j) const
-{
-	return arr2[i][j]; 
-}
-
-inline float& Mat3::operator[](const uint i)
-{
-	return arr1[i];
-}
-
-inline const float& Mat3::operator[](const uint i) const
-{
-	return arr1[i];
-}
-
 
 //======================================================================================================================
 // Constructors                                                                                                        =
@@ -83,18 +59,18 @@ inline Mat3::Mat3(const Quat& q)
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
-	xs = q.x + q.x;
-	ys = q.y + q.y;
-	zs = q.z + q.z;
-	wx = q.w * xs;
-	wy = q.w * ys;
-	wz = q.w * zs;
-	xx = q.x * xs;
-	xy = q.x * ys;
-	xz = q.x * zs;
-	yy = q.y * ys;
-	yz = q.y * zs;
-	zz = q.z * zs;
+	xs = q.x() + q.x();
+	ys = q.y() + q.y();
+	zs = q.z() + q.z();
+	wx = q.w() * xs;
+	wy = q.w() * ys;
+	wz = q.w() * zs;
+	xx = q.x() * xs;
+	xy = q.x() * ys;
+	xz = q.x() * zs;
+	yy = q.y() * ys;
+	yz = q.y() * zs;
+	zz = q.z() * zs;
 
 	SELF(0, 0) = 1.0 - (yy + zz);
 	SELF(0, 1) = xy - wz;
@@ -131,13 +107,13 @@ inline Mat3::Mat3(const Euler& e)
 // Axisang
 inline Mat3::Mat3(const Axisang& axisang)
 {
-	RASSERT_THROW_EXCEPTION(!isZero(1.0 - axisang.axis.getLength())); // Not normalized axis
+	RASSERT_THROW_EXCEPTION(!isZero(1.0 - axisang.getAxis().getLength())); // Not normalized axis
 
 	float c, s;
-	sinCos(axisang.ang, s, c);
+	sinCos(axisang.getAngle(), s, c);
 	float t = 1.0 - c;
 
-	const Vec3& axis = axisang.axis;
+	const Vec3& axis = axisang.getAxis();
 	SELF(0, 0) = c + axis.x() * axis.x() * t;
 	SELF(1, 1) = c + axis.y() * axis.y() * t;
 	SELF(2, 2) = c + axis.z() * axis.z() * t;
@@ -153,6 +129,31 @@ inline Mat3::Mat3(const Axisang& axisang)
 	tmp2 = axis.x() * s;
 	SELF(2, 1) = tmp1 + tmp2;
 	SELF(1, 2) = tmp1 - tmp2;
+}
+
+
+//======================================================================================================================
+// Accessors                                                                                                            =
+//======================================================================================================================
+
+inline float& Mat3::operator()(const uint i, const uint j)
+{
+	return arr2[i][j];
+}
+
+inline const float& Mat3::operator()(const uint i, const uint j) const
+{
+	return arr2[i][j];
+}
+
+inline float& Mat3::operator[](const uint i)
+{
+	return arr1[i];
+}
+
+inline const float& Mat3::operator[](const uint i) const
+{
+	return arr1[i];
 }
 
 
