@@ -60,8 +60,8 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 //======================================================================================================================
 void App::init(int argc, char* argv[])
 {
-	windowW = 1700;
-	windowH = 1000;
+	windowW = 1280;
+	windowH = 720;
 	terminalColoringEnabled = true,
 	fullScreenFlag = false;
 

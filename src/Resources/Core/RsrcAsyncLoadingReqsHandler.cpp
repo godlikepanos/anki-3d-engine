@@ -17,9 +17,9 @@ void RsrcAsyncLoadingReqsHandler::sendNewLoadingRequest<Texture>(const char* fil
 
 
 //======================================================================================================================
-// serveFinishedRequests                                                                                               =
+// postProcessFinishedRequests                                                                                         =
 //======================================================================================================================
-void RsrcAsyncLoadingReqsHandler::serveFinishedRequests(uint maxTime)
+void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 {
 	HighRezTimer t;
 	t.start();
@@ -72,6 +72,6 @@ void RsrcAsyncLoadingReqsHandler::loadImageCallback(const char* filename, void* 
 {
 	Image* img = (Image*)img_;
 	img->load(filename);
-	sleep(2);
+	//sleep(2);
 }
 

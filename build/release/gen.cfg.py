@@ -1,7 +1,7 @@
-sourcePaths = ["../../src/Scripting/", "../../src/Math/", "../../src/Util/Tokenizer/", "../../src/Misc/", "../../src/", "../../src/Renderer/", "../../src/Scene/", "../../src/Ui/", "../../src/Resources/", "../../src/Util/", "../../src/Scene/Controllers/", "../../src/Physics/", "../../src/Renderer/BufferObjects/", "../../src/Resources/Helpers/", "../../src/Resources/Core/", "../../src/Core/", "../../src/Scripting/Math", "../../src/Scripting/Util", "../../src/Scripting/Core", "../../src/Scripting/Scene", "../../src/Scripting/Renderer"]
+sourcePaths = ["../../src"]
+sourcePaths.extend(list(walkDir("../../src")))
 
-includePaths = []
-includePaths.append("./")
+includePaths = ["./"]
 includePaths.extend(list(sourcePaths))
 includePaths.extend(["../../extern/include", "../../extern/include/bullet", "/usr/include/python2.6"])
 
@@ -9,6 +9,6 @@ executableName = "anki"
 
 compiler = "g++"
 
-compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -DREVISION=\\\"`svnversion -c ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -s -msse4 -O3 -mtune=core2 -ffast-math -fsingle-precision-constant"
+compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -DMATH_INTEL_SIMD -DREVISION=\\\"`svnversion -c ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -fsingle-precision-constant -msse4 -s -msse4 -O3 -mtune=core2 -ffast-math"
 
-linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread"
+linkerFlags = "-rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread"

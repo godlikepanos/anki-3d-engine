@@ -29,15 +29,19 @@ class Skin
 
 		/// @name Accessors
 		/// @{
+		const Model& getModel() const {return *model;}
 		const boost::ptr_vector<ModelPatch>& getModelPatches() const {return model->getModelPatches();}
-		const Skeleton& getSkeleton() const;
+		const Skeleton& getSkeleton() const {return *skeleton;}
 		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const {return skelAnims;}
 		/// @}
 
 	private:
+		/// @name The resources
+		/// @{
 		RsrcPtr<Model> model;
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
+		/// @}
 };
 
 

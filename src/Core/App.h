@@ -25,8 +25,6 @@ class App
 	PROPERTY_R(boost::filesystem::path, cachePath, getCachePath)
 
 	public:
-		uint timerTick;
-
 		App() {}
 		~App() {}
 		void init(int argc, char* argv[]);
@@ -47,14 +45,20 @@ class App
 		/// @name Accessors
 		/// @{
 		bool isTerminalColoringEnabled() const;
+
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
+
+		uint getTimerTick() const {return timerTick;}
+		uint& getTimerTick() {return timerTick;}
+		void setTimerTick(uint t) {timerTick = t;}
 		/// @}
 
 		/// @return Returns the number of milliseconds since SDL library initialization
 		static uint getTicks();
 
 	private:
+		uint timerTick;
 		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
 		uint time;
 		SDL_WindowID windowId;

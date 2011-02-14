@@ -92,6 +92,8 @@ void Logger::execCommonConstructionCode()
 //======================================================================================================================
 void Logger::append(const char* cstr, int len)
 {
+	boost::mutex::scoped_lock lock(mutex);
+
 	if(len > STREAM_SIZE - 1)
 	{
 		return;

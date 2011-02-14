@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "ParticleEmitter.h"
+#include "SkinNode.h"
 
 
 //======================================================================================================================
@@ -55,4 +56,21 @@ void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitter& pe) const
 	dbg.setColor(Vec4(1.0));
 	dbg.setModelMat(Mat4(pe.getWorldTransform()));
 	dbg.drawCube();
+}
+
+
+//======================================================================================================================
+// drawSkinNodeSkeleton                                                                                                =
+//======================================================================================================================
+void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
+{
+	dbg.setModelMat(Mat4(sn.getWorldTransform()));
+
+	for(uint i = 0; i < sn.getHeads().size(); i++)
+	{
+		dbg.setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+		dbg.pushBackVertex(sn.getHeads()[i]);
+		dbg.setColor(Vec4(1.0));
+		dbg.pushBackVertex(sn.getTails()[i]);
+	}
 }

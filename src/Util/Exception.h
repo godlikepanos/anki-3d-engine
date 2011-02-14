@@ -33,7 +33,7 @@ class Exception: public std::exception
 // Macros                                                                                                              =
 //======================================================================================================================
 
-#define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __func__)
+#define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
 #if DEBUG_ENABLED == 1
 	#define RASSERT_THROW_EXCEPTION(x) \

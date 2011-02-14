@@ -30,7 +30,7 @@ class RsrcAsyncLoadingReqsHandler
 		/// @param maxTime The max time to spend serving finished requests. If for example there are many that need more
 		/// time than the max the method will return. The pending requests will be served when it will be called again.
 		/// In ms
-		void serveFinishedRequests(uint maxTime);
+		void postProcessFinishedRequests(uint maxTime);
 		
 	
 	private:
