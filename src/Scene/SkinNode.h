@@ -1,10 +1,9 @@
 #ifndef SKIN_NODE_H
 #define SKIN_NODE_H
 
-#include <boost/array.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
 #include "SceneNode.h"
 #include "SkinPatchNode.h"
+#include "Vec.h"
 
 
 class Skin;
@@ -19,8 +18,8 @@ class SkinNode: public SceneNode
 		void init(const char* filename);
 
 	private:
-		RsrcPtr<Skin> skin;
-		//boost::ptr_vector<SkinNodePatch> patches;
+		RsrcPtr<Skin> skin; ///< The resource
+		Vec<SkinPatchNode*> patches;
 };
 
 

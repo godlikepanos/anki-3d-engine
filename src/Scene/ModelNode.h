@@ -22,8 +22,8 @@ class ModelNode: public SceneNode
 		/// @name Accessors
 		/// @{
 		const Model& getModel() const {return *model;}
-		GETTER_R(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
-		GETTER_R(Sphere, boundingShapeWSpace, getBoundingShapeWSpace)
+		const Vec<ModelPatchNode*>& getModelPatchNodes() const {return patches;}
+		const Sphere& getBoundingShapeWSpace() const {return boundingShapeWSpace;}
 		/// @}
 
 		/// Initialize the node
