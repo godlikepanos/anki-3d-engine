@@ -4,6 +4,7 @@
 #include <boost/array.hpp>
 #include "PatchNode.h"
 #include "Vbo.h"
+#include "Vao.h"
 
 
 class SkinNode;
@@ -17,13 +18,15 @@ class SkinPatchNode: public PatchNode
 		{
 			TFV_POSITIONS,
 			TFV_NORMALS,
-			TFV_TANGENTS
+			TFV_TANGENTS,
+			TFV_NUM
 		};
 
 		SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent);
 
 	public:
-		boost::array<Vbo, 3> tfVbos; ///< VBOs that contain the deformed vertex attributes
+		boost::array<Vbo, TFV_NUM> tfVbos; ///< VBOs that contain the deformed vertex attributes
+		Vao tfVao; ///< For TF passes
 };
 
 

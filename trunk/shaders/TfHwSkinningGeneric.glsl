@@ -16,9 +16,9 @@ layout(location = 0) in vec3 position;
 #if defined(TANGENT_ENABLED)
 	layout(location = 2) in vec4 tangent;
 #endif
-in float vertWeightBonesNum;
-in vec4 vertWeightBoneIds;
-in vec4 vertWeightWeights;
+layout(location = 3) in float vertWeightBonesNum;
+layout(location = 4) in vec4 vertWeightBoneIds;
+layout(location = 5) in vec4 vertWeightWeights;
 
 
 //

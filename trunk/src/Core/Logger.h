@@ -4,13 +4,15 @@
 #include <boost/array.hpp>
 #include <boost/signals2.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/thread/mutex.hpp>
 #include "Singleton.h"
 
 
 struct LoggerSender;
 
 
-/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow
+/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. Its
+/// thread safe
 class Logger
 {
 	public:
@@ -55,6 +57,7 @@ class Logger
 		const char* func; ///< Sender info
 		const char* file; ///< Sender info
 		int line; ///< Sender info
+		boost::mutex mutex; ///< For thread safety
 
 		/// Called by all the constructors
 		void execCommonConstructionCode();
@@ -132,7 +135,7 @@ inline LoggerSender setSender(const char* file, int line, const char* func)
 //======================================================================================================================
 
 #define LOGGER_MESSAGE(x) \
-	LoggerSingleton::getInstance()  << setSender(__FILE__, __LINE__, __func__) << x << endl;
+	LoggerSingleton::getInstance()  << setSender(__FILE__, __LINE__, __PRETTY_FUNCTION__) << x << endl;
 
 #define INFO(x) LOGGER_MESSAGE("Info: " << x)
 

@@ -57,5 +57,6 @@ uint HighRezTimer::getElapsedTime() const
 uint HighRezTimer::getCrntTime()
 {
 	using namespace boost::posix_time;
-	return ptime(microsec_clock::local_time()).time_of_day().total_milliseconds();
+	uint ms = ptime(microsec_clock::local_time()).time_of_day().total_milliseconds();
+	return ms;
 }

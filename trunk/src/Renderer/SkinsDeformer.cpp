@@ -14,18 +14,13 @@ void SkinsDeformer::init()
 	                                                   "#define NORMAL_ENABLED\n#define TANGENT_ENABLED\n",
 	                                                   "pnt");
 
-	std::string pn = ShaderProg::createSrcCodeToCache("shaders/TfHwSkinningGeneric.glsl",
-	                                                  "#define NORMAL_ENABLED\n",
-	                                                  "pn");
-
-	std::string pt = ShaderProg::createSrcCodeToCache("shaders/TfHwSkinningGeneric.glsl",
-	                                                  "\n#define TANGENT_ENABLED\n",
-	                                                  "pt");
+	std::string p = ShaderProg::createSrcCodeToCache("shaders/TfHwSkinningGeneric.glsl",
+	                                                 "",
+	                                                 "p");
 
 
 	tfHwSkinningAllSProg.loadRsrc(all.c_str());
-	tfHwSkinningPosNormSProg.loadRsrc(pn.c_str());
-	tfHwSkinningPosTangentSProg.loadRsrc(pt.c_str());
+	tfHwSkinningPosSProg.loadRsrc(p.c_str());
 }
 
 

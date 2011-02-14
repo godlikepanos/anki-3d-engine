@@ -6,6 +6,7 @@ class Dbg;
 class Camera;
 class Light;
 class ParticleEmitter;
+class SkinNode;
 
 
 /// This is a drawer for some scene nodes that need debug
@@ -23,6 +24,9 @@ class SceneDbgDrawer
 
 		/// Draw a ParticleEmitter
 		virtual void drawParticleEmitter(const ParticleEmitter& pe) const;
+
+		/// Draw a skeleton
+		virtual void drawSkinNodeSkeleton(const SkinNode& pe) const;
 
 	private:
 		Dbg& dbg; ///< The debug stage

@@ -1,4 +1,5 @@
 #include "Exception.h"
+#include "Logger.h"
 
 
 //======================================================================================================================
@@ -16,6 +17,8 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 	}
 	catch(std::exception& e)
 	{
+		ERROR("fuckkkkkkkkkk " << e.what());
+
 		if(newInstance != NULL)
 		{
 			delete newInstance;

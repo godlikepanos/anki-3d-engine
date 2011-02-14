@@ -1,19 +1,19 @@
 #include "SkelAnimModelNodeCtrl.h"
 #include "SkelAnim.h"
 #include "Skeleton.h"
-#include "App.h"
-#include "ModelNode.h"
+#include "SkinNode.h"
 #include "Model.h"
 #include "MainRenderer.h"
+#include "Skin.h"
 
 
 //======================================================================================================================
 // SkelAnimModelNodeCtrl                                                                                               =
 //======================================================================================================================
-SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(ModelNode& modelNode_):
+SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(SkinNode& skinNode_):
 	Controller(CT_SKEL_ANIM),
-	modelNode(modelNode_),
-	frame(0.0)
+	frame(0.0),
+	skinNode(skinNode_)
 {}
 
 
@@ -156,17 +156,18 @@ void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& bo
 //======================================================================================================================
 void SkelAnimModelNodeCtrl::update(float)
 {
-	/*frame += step;
+	frame += step;
 	if(frame > skelAnim->framesNum) // if the crnt is finished then play the next or loop the crnt
 	{
 		frame = 0.0;
 	}
 
-	interpolate(*skelAnim, frame, modelNode.getBoneTranslations(), modelNode.getBoneRotations());
-	updateBoneTransforms(modelNode.getModel().getSkeleton(), modelNode.getBoneTranslations(), modelNode.getBoneRotations());
-	if(app->getMainRenderer().getDbg().isEnabled() && app->getMainRenderer().getDbg().isShowSkeletonsEnabled())
+	interpolate(*skelAnim, frame, skinNode.getBoneTranslations(), skinNode.getBoneRotations());
+	updateBoneTransforms(skinNode.getSkin().getSkeleton(), skinNode.getBoneTranslations(), skinNode.getBoneRotations());
+	if(MainRendererSingleton::getInstance().getDbg().isEnabled() &&
+	   MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
 	{
-		deform(modelNode.getModel().getSkeleton(), modelNode.getBoneTranslations(), modelNode.getBoneRotations(),
-		       modelNode.getHeads(), modelNode.getTails());
-	}*/
+		deform(skinNode.getSkin().getSkeleton(), skinNode.getBoneTranslations(), skinNode.getBoneRotations(),
+		       skinNode.getHeads(), skinNode.getTails());
+	}
 }

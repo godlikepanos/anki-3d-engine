@@ -34,10 +34,14 @@
 #include "Model.h"
 #include "Logger.h"
 #include "Util.h"
+#include "HighRezTimer.h"
+#include "SkinNode.h"
+#include "Skin.h"
 
 
 // map (hard coded)
-ModelNode* floor__,* sarge,* horse,* crate, *imp;
+ModelNode* floor__,* sarge,* horse,* crate;
+SkinNode* imp;
 //SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
@@ -142,9 +146,9 @@ void init()
 
 
 	// horse
-	/*horse = new ModelNode();
+	horse = new ModelNode();
 	horse->init("meshes/horse/horse.mdl");
-	horse->setLocalTransform(Transform(Vec3(-2, 0, 1), Mat3::getIdentity(), 1.0));*/
+	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(), 1.0));
 
 	// Sponza
 	ModelNode* sponza = new ModelNode();
@@ -152,16 +156,17 @@ void init()
 
 
 	// Pentagram
-	/*ModelNode* pentagram = new ModelNode();
-	pentagram->init("models/pentagram/pentagram.mdl");
-	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));*/
+	ModelNode* pentagram = new ModelNode();
+	//pentagram->init("models/pentagram/pentagram.mdl");
+	pentagram->init("models/imp/imp.mdl");
+	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
 
 
 	// Imp
-	/*imp = new ModelNode();
-	imp->init("models/imp/imp.mdl");
+	/*imp = new SkinNode();
+	imp->init("models/imp/imp.skin");
 	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
-	imp->skelAnimModelNodeCtrl->set(imp->getModel().getSkelAnims()[0].get());
+	imp->skelAnimModelNodeCtrl->set(imp->getSkin().getSkelAnims()[0].get());
 	imp->skelAnimModelNodeCtrl->setStep(0.8);*/
 
 	return;
@@ -235,6 +240,77 @@ void init()
 
 
 //======================================================================================================================
+//                                                                                                                     =
+//======================================================================================================================
+void mainLoopExtra()
+{
+	InputSingleton::getInstance().handleEvents();
+
+	float dist = 0.2;
+	float ang = toRad(3.0);
+	float scale = 0.01;
+
+	// move the camera
+	static SceneNode* mover = AppSingleton::getInstance().getActiveCam();
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_1)) mover = AppSingleton::getInstance().getActiveCam();
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_2)) mover = point_lights[0];
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = horse;
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
+	if(!InputSingleton::getInstance().warpMouse)
+	{
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
+		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
+	}
+	else
+	{
+		float accel = 44.0;
+		mover->rotateLocalX(ang * InputSingleton::getInstance().mouseVelocity.y() * accel);
+		mover->rotateLocalY(-ang * InputSingleton::getInstance().mouseVelocity.x() * accel);
+	}
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
+		character->moveForward(0.1);
+
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)
+	{
+		btRigidBody* body = static_cast<btRigidBody*>(boxes[0]);
+		//body->getMotionState()->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
+		body->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
+		//body->clearForces();
+		body->forceActivationState(ACTIVE_TAG);
+	}
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Y) == 1)
+	{
+		INFO("Exec script");
+		ScriptingEngineSingleton::getInstance().execScript(Util::readFile("test.py").c_str());
+	}
+
+	mover->getLocalTransform().getRotation().reorthogonalize();
+}
+
+
+//======================================================================================================================
 // mainLoop                                                                                                            =
 //======================================================================================================================
 void mainLoop()
@@ -244,110 +320,48 @@ void mainLoop()
 	int ticks = App::getTicks();
 	do
 	{
-		float crntTime = App::getTicks() / 1000.0;
-		InputSingleton::getInstance().handleEvents();
+		HighRezTimer timer;
+		timer.start();
 
-		float dist = 0.2;
-		float ang = toRad(3.0);
-		float scale = 0.01;
-
-		// move the camera
-		static SceneNode* mover = AppSingleton::getInstance().getActiveCam();
-
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_1)) mover = AppSingleton::getInstance().getActiveCam();
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_2)) mover = point_lights[0];
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = horse;
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
-
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
-		if(!InputSingleton::getInstance().warpMouse)
-		{
-			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
-			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
-			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
-			if(InputSingleton::getInstance().getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
-		}
-		else
-		{
-			float accel = 44.0;
-			mover->rotateLocalX(ang * InputSingleton::getInstance().mouseVelocity.y() * accel);
-			mover->rotateLocalY(-ang * InputSingleton::getInstance().mouseVelocity.x() * accel);
-		}
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
-
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
-
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
-			character->moveForward(0.1);
-
-
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)
-		{
-			btRigidBody* body = static_cast<btRigidBody*>(boxes[0]);
-			//body->getMotionState()->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
-			body->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
-			//body->clearForces();
-			body->forceActivationState(ACTIVE_TAG);
-		}
-
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Y) == 1)
-		{
-			INFO("Exec script");
-			ScriptingEngineSingleton::getInstance().execScript(Util::readFile("test.py").c_str());
-		}
-
-		mover->getLocalTransform().getRotation().reorthogonalize();
+		mainLoopExtra();
 
 		AppSingleton::getInstance().execStdinScpripts();
-		SceneSingleton::getInstance().getPhysics().update(crntTime);
+		SceneSingleton::getInstance().getPhysics().update(timer.getCrntTime());
 		SceneSingleton::getInstance().updateAllControllers();
 		SceneSingleton::getInstance().updateAllWorldStuff();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
-		ResourceManagerSingleton::getInstance().serveFinishedRequests(1000);
-
-		//map.octree.root->bounding_box.render();
-
-		// print some debug stuff
-		/*Ui::setColor(Vec4(1.0, 1.0, 1.0, 1.0));
-		Ui::setPos(-0.98, 0.95);
-		Ui::setFontWidth(0.03);*/
-		//Ui::printf("frame:%d fps:%dms\n", AppSingleton::getInstance().getMainRenderer().getFramesNum(), (App::getTicks()-ticks_));
-		//Ui::print("Movement keys: arrows,w,a,s,d,q,e,shift,space\nSelect objects: keys 1 to 5\n");
-		/*Ui::printf("Mover: Pos(%.2f %.2f %.2f) Angs(%.2f %.2f %.2f)", mover->translationWspace.x, mover->translationWspace.y, mover->translationWspace.z,
-								 toDegrees(Euler(mover->rotationWspace).x), toDegrees(Euler(mover->rotationWspace).y), toDegrees(Euler(mover->rotationWspace).z));*/
-
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
+		{
 			break;
+		}
+
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F11))
+		{
 			AppSingleton::getInstance().togleFullScreen();
+		}
+
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F12) == 1)
+		{
 			MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
+		}
 
-		/*char str[128];
-		static string scrFile = (AppSingleton::getInstance().getSettingsPath() / "capt" / "%06d.jpg").string();
-		sprintf(str, scrFile.c_str(), AppSingleton::getInstance().getMainRenderer().getFramesNum());
-		AppSingleton::getInstance().getMainRenderer().takeScreenshot(str);*/
-
-		// std stuff follow
 		AppSingleton::getInstance().swapBuffers();
+
+		uint timeToSpendForRsrcPostProcess = AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime();
+		ResourceManagerSingleton::getInstance().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
+
 		if(1)
 		{
-			//if(AppSingleton::getInstance().getMainRenderer().getFramesNum() == 100) AppSingleton::getInstance().getMainRenderer().takeScreenshot("gfx/screenshot.tga");
-			AppSingleton::getInstance().waitForNextFrame();
+			//AppSingleton::getInstance().waitForNextFrame();
+
+			timer.stop();
+			if(timer.getElapsedTime() < AppSingleton::getInstance().getTimerTick())
+			{
+				SDL_Delay(AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime());
+			}
 		}
 		else
 		{

@@ -52,16 +52,33 @@ SPECIALIZE_TEMPLATE_STUFF(DummyRsrc, dummies)
 template<>
 void ResourceManager::allocAndLoadRsrc(const char* filename, Texture*& ptr)
 {
-	// Load the dummy
+	// Load the dummys
 	if(dummyTex.get() == NULL)
 	{
 		dummyTex.reset(new Texture);
-		dummyTex->load("gfx/default.png");
+		dummyTex->load("gfx/dummy.png");
 	}
 	
+	if(dummyNormTex.get() == NULL)
+	{
+		dummyNormTex.reset(new Texture);
+		dummyNormTex->load("gfx/dummy.norm.png");
+	}
+
 	// Send a loading request
 	rsrcAsyncLoadingReqsHandler.sendNewLoadingRequest(filename, &ptr);
 
-	ptr = dummyTex.get();
+	// Point to the dummy for now
+	std::string fname(filename);
+
+	size_t found = fname.find("norm.");
+	if(found != std::string::npos)
+	{
+		ptr = dummyNormTex.get();
+	}
+	else
+	{
+		ptr = dummyTex.get();
+	}
 }
 

@@ -52,8 +52,8 @@ class ResourceManager
 		template<typename Type>
 		void unload(const typename Types<Type>::Hook& info);
 		
-		/// See RsrcAsyncLoadingReqsHandler::serveFinishedRequests
-		void serveFinishedRequests(uint maxTime) {rsrcAsyncLoadingReqsHandler.serveFinishedRequests(maxTime);}
+		/// See RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests
+		void postProcessFinishedLoadingRequests(uint maxTime);
 
 	private:
 		/// @name Containers
@@ -78,6 +78,8 @@ class ResourceManager
 		/// texture. Its initialized when its first needed so that we wont have conflicts with opengl initialization.
 		std::auto_ptr<Texture> dummyTex;
 
+		std::auto_ptr<Texture> dummyNormTex; ///< The same as dummyTex but for normals
+
 		/// Find a resource using the filename
 		template<typename Type>
 		typename Types<Type>::Iterator find(const char* filename, typename Types<Type>::Container& container);
@@ -100,6 +102,12 @@ class ResourceManager
 		template<typename Type>
 		void allocAndLoadRsrc(const char* filename, Type*& ptr);
 };
+
+
+inline void ResourceManager::postProcessFinishedLoadingRequests(uint maxTime)
+{
+	rsrcAsyncLoadingReqsHandler.postProcessFinishedRequests(maxTime);
+}
 
 
 #include "ResourceManager.inl.h"

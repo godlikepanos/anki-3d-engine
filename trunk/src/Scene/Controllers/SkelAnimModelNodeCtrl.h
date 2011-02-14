@@ -10,23 +10,30 @@
 
 class Skeleton;
 class SkelAnim;
-class ModelNode;
+class SkinNode;
 
 
 /// SkelAnim controls a ModelNode
 class SkelAnimModelNodeCtrl: public Controller
 {
-	PROPERTY_RW(float, step, getStep, setStep)
-
 	public:
-		SkelAnimModelNodeCtrl(ModelNode& skelNode_);
+		SkelAnimModelNodeCtrl(SkinNode& skelNode_);
+
+		/// @name Accessors
+		/// @{
+		float getStep() const {return step;}
+		float& getStep() {return step;}
+		void setStep(float s) {step = s;}
+		/// @}
+
 		void update(float time);
 		void set(const SkelAnim* skelAnim_) {skelAnim = skelAnim_;}
 
 	private:
+		float step;
 		float frame;
 		const SkelAnim* skelAnim; ///< The active skeleton animation
-		ModelNode& modelNode; ///< Know your father
+		SkinNode& skinNode; ///< Know your father
 
 		/// @name The 3 steps of skeletal animation in 3 methods
 		/// @{

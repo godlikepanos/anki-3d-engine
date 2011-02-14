@@ -11,13 +11,28 @@ class ShaderProg;
 class SkinsDeformer
 {
 	public:
+		enum TfShaderProgAttrib
+		{
+			TFSPA_POSITION,
+			TFSPA_NORMAL,
+			TFSPA_TANGENT,
+			TFSPA_VERT_WEIGHT_BONES_NUM,
+			TFSPA_VERT_WEIGHT_BONE_IDS,
+			TFSPA_VERT_WEIGHT_WEIGHTS
+		};
+
+		/// @name Accessors
+		/// @{
+		/*const ShaderProg& allSProg() const {return *tfHwSkinningAllSProg;}
+		const ShaderProg& posSProg() const {return *tfHwSkinningAllSProg;}*/
+		/// @}
+
 		void init();
 		void run();
 
 	private:
 		RsrcPtr<ShaderProg> tfHwSkinningAllSProg;
-		RsrcPtr<ShaderProg> tfHwSkinningPosNormSProg;
-		RsrcPtr<ShaderProg> tfHwSkinningPosTangentSProg;
+		RsrcPtr<ShaderProg> tfHwSkinningPosSProg;
 };
 
 
