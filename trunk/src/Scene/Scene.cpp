@@ -1,13 +1,15 @@
 #include <algorithm>
 #include "Exception.h"
 #include "Scene.h"
+#include "VisibilityTester.h"
+
 #include "Camera.h"
 #include "Light.h"
 #include "Controller.h"
 #include "Material.h"
 #include "ParticleEmitter.h"
 #include "ModelNode.h"
-#include "VisibilityTester.h"
+#include "SkinNode.h"
 
 
 //======================================================================================================================
@@ -15,7 +17,7 @@
 //======================================================================================================================
 Scene::Scene()
 {
-	ambientCol = Vec3(0.1, 0.05, 0.05)*4;
+	ambientCol = Vec3(0.1, 0.05, 0.05) * 4;
 	//sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
 
 	physics.reset(new Physics);
@@ -45,8 +47,11 @@ void Scene::registerNode(SceneNode* node)
 		case SceneNode::SNT_MODEL:
 			putBackNode(modelNodes, static_cast<ModelNode*>(node));
 			break;
+		case SceneNode::SNT_SKIN:
+			putBackNode(skinNodes, static_cast<SkinNode*>(node));
+			break;
 		case SceneNode::SNT_RENDERABLE:
-			putBackNode(renderableNodes, static_cast<RenderableNode*>(node));
+		case SceneNode::SNT_GHOST:
 			break;
 	};
 }
@@ -73,8 +78,11 @@ void Scene::unregisterNode(SceneNode* node)
 		case SceneNode::SNT_MODEL:
 			eraseNode(modelNodes, static_cast<ModelNode*>(node));
 			break;
+		case SceneNode::SNT_SKIN:
+			eraseNode(skinNodes, static_cast<SkinNode*>(node));
+			break;
 		case SceneNode::SNT_RENDERABLE:
-			eraseNode(renderableNodes, static_cast<RenderableNode*>(node));
+		case SceneNode::SNT_GHOST:
 			break;
 	};
 }

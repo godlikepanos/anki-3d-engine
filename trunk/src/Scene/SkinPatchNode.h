@@ -1,36 +1,29 @@
 #ifndef SKIN_PATCH_NODE_H
 #define SKIN_PATCH_NODE_H
 
-#include "Vao.h"
+#include <boost/array.hpp>
+#include "PatchNode.h"
 #include "Vbo.h"
-#include "Mesh.h" // For the Vbos enum
-#include "RsrcPtr.h"
-#include "Properties.h"
-#include "RenderableNode.h"
 
 
-class Material;
+class SkinNode;
 
 
 /// A fragment of the SkinNode
-class SkinPatchNode: public RenderableNode
+class SkinPatchNode: public PatchNode
 {
-	/*public:
-		SkinPatchNode(const ModelNode& modelNode, const ModelPatch& modelPatch);
+	public:
+		enum TransformFeedbackVbo
+		{
+			TFV_POSITIONS,
+			TFV_NORMALS,
+			TFV_TANGENTS
+		};
 
-		/// @name Accessors
-		/// @{
-		const Material& getCpMtl() const {return modelPatchRsrc.getCpMtl();}
-		const Material& getDpMtl() const {return modelPatchRsrc.getDpMtl();}
-		const ModelPatch& getModelPatchRsrc() const {return modelPatchRsrc;}
-		uint getVertIdsNum() const {return rsrc.getMesh().getVertIdsNum();}
-		/// @}
+		SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent);
 
-	protected:
-		const SkinNode& node; ///< Know your father
-		const ModelPatch& rsrc;
-		Vao dpVao;
-		Vao cpVao;*/
+	public:
+		boost::array<Vbo, 3> tfVbos; ///< VBOs that contain the deformed vertex attributes
 };
 
 
