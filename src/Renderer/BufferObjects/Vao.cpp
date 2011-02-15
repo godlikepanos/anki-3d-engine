@@ -8,7 +8,7 @@
 void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint size, GLenum type,
 		                           GLboolean normalized, GLsizei stride, const GLvoid* pointer)
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ARRAY_BUFFER)
 	{
 		throw EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
@@ -42,7 +42,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar, 
 //======================================================================================================================
 void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ELEMENT_ARRAY_BUFFER)
 	{
 		throw EXCEPTION("Only GL_ELEMENT_ARRAY_BUFFER is accepted");

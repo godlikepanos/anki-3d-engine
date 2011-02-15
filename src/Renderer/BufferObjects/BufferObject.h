@@ -2,7 +2,7 @@
 #define BUFFER_OBJECT_H
 
 #include <GL/glew.h>
-#include "Exception.h"
+#include "Assert.h"
 #include "StdTypes.h"
 
 
@@ -92,49 +92,49 @@ inline BufferObject::~BufferObject()
 
 inline uint BufferObject::getGlId() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	return glId;
 }
 
 
 inline GLenum BufferObject::getBufferTarget() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	return target;
 }
 
 
 inline GLenum BufferObject::getBufferUsage() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	return usage;
 }
 
 
 inline size_t BufferObject::getSizeInBytes() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	return sizeInBytes;
 }
 
 
 inline void BufferObject::bind() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	glBindBuffer(target, glId);
 }
 
 
 inline void BufferObject::unbind() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	glBindBuffer(target, 0);
 }
 
 
 inline void BufferObject::deleteBuff()
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	glDeleteBuffers(1, &glId);
 	glId = 0;
 }

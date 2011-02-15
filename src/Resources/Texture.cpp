@@ -129,8 +129,8 @@ void Texture::load(const Image& img)
 void Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, uint type_)
 {
 	target = GL_TEXTURE_2D;
-	RASSERT_THROW_EXCEPTION(internalFormat > 0 && internalFormat <= 4); // deprecated internal format
-	RASSERT_THROW_EXCEPTION(isLoaded());
+	ASSERT(internalFormat <= 0 || internalFormat > 4); // deprecated internal format
+	ASSERT(!isLoaded());
 
 	// GL stuff
 	glGenTextures(1, &glId);
@@ -153,7 +153,7 @@ void Texture::createEmpty2D(float width_, float height_, int internalFormat, int
 void Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
 {
 	target = GL_TEXTURE_2D_MULTISAMPLE;
-	RASSERT_THROW_EXCEPTION(isLoaded());
+	ASSERT(!isLoaded());
 
 	glGenTextures(1, &glId);
 	bind(LAST_TEX_UNIT);

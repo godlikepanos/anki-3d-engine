@@ -67,7 +67,7 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode, const char* prep
 				shaderType = "Fragment shader";
 				break;
 			default:
-				RASSERT_THROW_EXCEPTION(1); // Not supported
+				ASSERT(0); // Not supported
 		}
 		throw SPROG_EXCEPTION(shaderType + " compiler error log follows:\n" + infoLog);
 	}
@@ -189,7 +189,7 @@ void ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 void ShaderProg::load(const char* filename)
 {
 	rsrcFilename = filename;
-	RASSERT_THROW_EXCEPTION(glId != std::numeric_limits<uint>::max());
+	ASSERT(glId == std::numeric_limits<uint>::max());
 
 	ShaderPrePreprocessor pars(filename);
 

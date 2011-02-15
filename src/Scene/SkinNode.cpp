@@ -16,3 +16,13 @@ void SkinNode::init(const char* filename)
 		patches.push_back(new SkinPatchNode(patch, this));
 	}
 }
+
+
+//======================================================================================================================
+// updateTrf                                                                                                           =
+//======================================================================================================================
+void SkinNode::updateTrf()
+{
+	boundingShapeWSpace.set(tails);
+	boundingShapeWSpace = boundingShapeWSpace.getTransformed(worldTransform);
+}

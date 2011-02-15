@@ -54,7 +54,7 @@ class LightData
 
 inline const Texture& LightData::getTexture() const
 {
-	RASSERT_THROW_EXCEPTION(texture.get() == NULL);
+	ASSERT(texture.get() != NULL);
 	return *texture;
 }
 

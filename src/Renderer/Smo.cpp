@@ -130,7 +130,7 @@ void Smo::run(const SpotLight& light)
 	};
 
 	// render camera shape to stencil buffer
-	RASSERT_THROW_EXCEPTION(sizeof(vertPositions) != cameraPositionsVbo.getSizeInBytes());
+	ASSERT(sizeof(vertPositions) == cameraPositionsVbo.getSizeInBytes());
 	cameraPositionsVbo.write(vertPositions);
 	cameraVao.bind();
 	glDrawElements(GL_TRIANGLES, 6 * 3, GL_UNSIGNED_SHORT, 0);

@@ -55,7 +55,7 @@ inline Mat3::Mat3(const Mat3& b)
 // Quat
 inline Mat3::Mat3(const Quat& q)
 {
-	RASSERT_THROW_EXCEPTION(fabs(1.0 - q.getLength()) > 0.002); // If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
+	ASSERT(fabs(1.0 - q.getLength()) <= 0.002); // If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
@@ -107,7 +107,7 @@ inline Mat3::Mat3(const Euler& e)
 // Axisang
 inline Mat3::Mat3(const Axisang& axisang)
 {
-	RASSERT_THROW_EXCEPTION(!isZero(1.0 - axisang.getAxis().getLength())); // Not normalized axis
+	ASSERT(isZero(1.0 - axisang.getAxis().getLength())); // Not normalized axis
 
 	float c, s;
 	sinCos(axisang.getAngle(), s, c);
@@ -760,7 +760,7 @@ inline Mat3 Mat3::getInverse() const
 	float cofactor6 = SELF(0, 1) * SELF(1, 2) - SELF(0, 2) * SELF(1, 1);
 	float det = SELF(0, 0) * cofactor0 + SELF(1, 0) * cofactor3 + SELF(2, 0) * cofactor6;
 
-	RASSERT_THROW_EXCEPTION(isZero(det)); // Cannot invert det == 0
+	ASSERT(!isZero(det)); // Cannot invert det == 0
 
 	// create adjoint matrix and multiply by 1/det to get inverse
 	float invDet = 1.0 / det;

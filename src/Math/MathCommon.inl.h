@@ -14,4 +14,4 @@
 #include "MathFuncs.h"
 #include "Transform.h"
 
-#include "Exception.h"
+#include "Assert.h"

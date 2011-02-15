@@ -1,6 +1,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "HighRezTimer.h"
-#include "Exception.h"
+#include "Assert.h"
 
 
 //======================================================================================================================
@@ -17,8 +17,8 @@ HighRezTimer::HighRezTimer():
 //======================================================================================================================
 void HighRezTimer::start()
 {
-	RASSERT_THROW_EXCEPTION(startTime != 0);
-	RASSERT_THROW_EXCEPTION(stopTime != 0);
+	ASSERT(startTime == 0);
+	ASSERT(stopTime == 0);
 	startTime = getCrntTime();
 	stopTime = 0;
 }
@@ -29,8 +29,8 @@ void HighRezTimer::start()
 //======================================================================================================================
 void HighRezTimer::stop()
 {
-	RASSERT_THROW_EXCEPTION(startTime == 0);
-	RASSERT_THROW_EXCEPTION(stopTime != 0);
+	ASSERT(startTime != 0);
+	ASSERT(stopTime == 0);
 	stopTime = getCrntTime();
 }
 

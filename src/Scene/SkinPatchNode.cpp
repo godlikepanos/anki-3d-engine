@@ -60,7 +60,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent):
 	}
 
 	// Attach some extra stuff to the tfVao
-	RASSERT_THROW_EXCEPTION(!mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
+	ASSERT(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS), SkinsDeformer::TFSPA_VERT_WEIGHT_BONES_NUM, 1,
 	                           GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(0));

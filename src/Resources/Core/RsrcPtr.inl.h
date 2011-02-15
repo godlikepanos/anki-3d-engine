@@ -1,5 +1,6 @@
 #include "RsrcPtr.h"
 #include "Exception.h"
+#include "Assert.h"
 
 
 //======================================================================================================================
@@ -22,7 +23,7 @@ RsrcPtr<Type>::RsrcPtr(const RsrcPtr& a):
 template<typename Type>
 Type& RsrcPtr<Type>::operator*() const
 {
-	RASSERT_THROW_EXCEPTION(hook == NULL);
+	ASSERT(hook != NULL);
 	return *hook->resource;
 }
 
@@ -33,7 +34,7 @@ Type& RsrcPtr<Type>::operator*() const
 template<typename Type>
 Type* RsrcPtr<Type>::operator->() const
 {
-	RASSERT_THROW_EXCEPTION(hook == NULL);
+	ASSERT(hook != NULL);
 	return hook->resource;
 }
 
@@ -44,7 +45,7 @@ Type* RsrcPtr<Type>::operator->() const
 template<typename Type>
 void RsrcPtr<Type>::loadRsrc(const char* filename)
 {
-	RASSERT_THROW_EXCEPTION(hook != NULL);
+	ASSERT(hook == NULL);
 	hook = &ResourceManagerSingleton::getInstance().load<Type>(filename);
 }
 
@@ -69,6 +70,6 @@ void RsrcPtr<Type>::unload()
 template<typename Type>
 const std::string& RsrcPtr<Type>::getRsrcName() const
 {
-	RASSERT_THROW_EXCEPTION(hook == NULL);
+	ASSERT(hook != NULL);
 	return hook->uuid;
 }

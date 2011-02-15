@@ -93,14 +93,14 @@ void Scene::unregisterNode(SceneNode* node)
 //======================================================================================================================
 void Scene::registerController(Controller* controller)
 {
-	RASSERT_THROW_EXCEPTION(std::find(controllers.begin(), controllers.end(), controller) != controllers.end());
+	ASSERT(std::find(controllers.begin(), controllers.end(), controller) == controllers.end());
 	controllers.push_back(controller);
 }
 
 void Scene::unregisterController(Controller* controller)
 {
 	Vec<Controller*>::iterator it = std::find(controllers.begin(), controllers.end(), controller);
-	RASSERT_THROW_EXCEPTION(it == controllers.end());
+	ASSERT(it != controllers.end());
 	controllers.erase(it);
 }
 
@@ -110,7 +110,7 @@ void Scene::unregisterController(Controller* controller)
 //======================================================================================================================
 void Scene::updateAllWorldStuff()
 {
-	RASSERT_THROW_EXCEPTION(nodes.size() > 1024);
+	ASSERT(nodes.size() <= 1024);
 	boost::array<SceneNode*, 1024> queue;
 	uint head = 0, tail = 0;
 	uint num = 0;
@@ -143,7 +143,7 @@ void Scene::updateAllWorldStuff()
 		}
 	}
 
-	RASSERT_THROW_EXCEPTION(num != nodes.size());
+	ASSERT(num == nodes.size());
 }
 
 

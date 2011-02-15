@@ -1,5 +1,6 @@
 #include <cstring>
 #include "ParticleEmitterProps.h"
+#include "Exception.h"
 
 
 static const char* errMsg = "Incorrect or missing value ";

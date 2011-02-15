@@ -30,7 +30,7 @@ inline Vbo::Vbo(GLenum target_, uint sizeInBytes_, const void* dataPtr_, GLenum 
 
 inline void Vbo::create(GLenum target_, uint sizeInBytes_, const void* dataPtr_, GLenum usage_)
 {
-	RASSERT_THROW_EXCEPTION(target_ != GL_ARRAY_BUFFER && target_ != GL_ELEMENT_ARRAY_BUFFER); // unacceptable target_
+	ASSERT(target_ == GL_ARRAY_BUFFER || target_ == GL_ELEMENT_ARRAY_BUFFER); // unacceptable target_
 	BufferObject::create(target_, sizeInBytes_, dataPtr_, usage_);
 }
 

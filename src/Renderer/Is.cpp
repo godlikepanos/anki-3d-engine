@@ -59,7 +59,7 @@ void Is::calcViewVectors()
 		// end of optimized code
 	}
 
-	RASSERT_THROW_EXCEPTION(sizeof(viewVectors) != viewVectorsVbo.getSizeInBytes());
+	ASSERT(sizeof(viewVectors) == viewVectorsVbo.getSizeInBytes());
 	viewVectorsVbo.write(viewVectors);
 }
 

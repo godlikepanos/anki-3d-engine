@@ -21,7 +21,7 @@ PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init, Object* p
 	motionState = new MotionState(init.startTrf, init.sceneNode, this);
 
 	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(physics.broadphase);
-	RASSERT_THROW_EXCEPTION(sweepBp == NULL);
+	ASSERT(sweepBp != NULL);
 
 	ghostPairCallback = new btGhostPairCallback();
 	sweepBp->getOverlappingPairCache()->setInternalGhostPairCallback(ghostPairCallback);

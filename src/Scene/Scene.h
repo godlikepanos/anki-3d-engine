@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "Physics.h"
-#include "Exception.h"
+#include "Assert.h"
 #include "Properties.h"
 #include "Singleton.h"
 #include "VisibilityTester.h"
@@ -89,7 +89,7 @@ class Scene
 template<typename ContainerType, typename Type>
 inline void Scene::putBackNode(ContainerType& container, Type* x)
 {
-	RASSERT_THROW_EXCEPTION(std::find(container.begin(), container.end(), x) != container.end());
+	ASSERT(std::find(container.begin(), container.end(), x) == container.end());
 	container.push_back(x);
 }
 
@@ -98,7 +98,7 @@ template<typename ContainerType, typename Type>
 inline void Scene::eraseNode(ContainerType& container, Type* x)
 {
 	typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
-	RASSERT_THROW_EXCEPTION(it == container.end());
+	ASSERT(it != container.end());
 	container.erase(it);
 }
 

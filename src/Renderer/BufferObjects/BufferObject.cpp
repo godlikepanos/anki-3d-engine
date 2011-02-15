@@ -8,10 +8,10 @@
 //======================================================================================================================
 void BufferObject::create(GLenum target_, uint sizeInBytes_, const void* dataPtr, GLenum usage_)
 {
-	RASSERT_THROW_EXCEPTION(isCreated());
+	ASSERT(!isCreated());
 	// unacceptable usage_
-	RASSERT_THROW_EXCEPTION(usage_ != GL_STREAM_DRAW && usage_ != GL_STATIC_DRAW && usage_ != GL_DYNAMIC_DRAW);
-	RASSERT_THROW_EXCEPTION(sizeInBytes_ < 1); // unacceptable sizeInBytes
+	ASSERT(usage_ == GL_STREAM_DRAW || usage_ == GL_STATIC_DRAW || usage_ == GL_DYNAMIC_DRAW);
+	ASSERT(sizeInBytes_ > 0); // unacceptable sizeInBytes
 
 	usage = usage_;
 	target = target_;
@@ -40,8 +40,8 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_, const void* dataPtr
 //======================================================================================================================
 void BufferObject::write(void* buff)
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
-	RASSERT_THROW_EXCEPTION(usage == GL_STATIC_DRAW);
+	ASSERT(isCreated());
+	ASSERT(usage != GL_STATIC_DRAW);
 	bind();
 	void* mapped = glMapBuffer(target, GL_WRITE_ONLY);
 	memcpy(mapped, buff, sizeInBytes);
@@ -55,9 +55,9 @@ void BufferObject::write(void* buff)
 //======================================================================================================================
 void BufferObject::write(void* buff, size_t offset, size_t size)
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
-	RASSERT_THROW_EXCEPTION(usage == GL_STATIC_DRAW);
-	RASSERT_THROW_EXCEPTION(offset + size > sizeInBytes);
+	ASSERT(isCreated());
+	ASSERT(usage != GL_STATIC_DRAW);
+	ASSERT(offset + size <= sizeInBytes);
 	bind();
 	void* mapped = glMapBufferRange(target, offset, size, GL_MAP_WRITE_BIT);
 	memcpy(mapped, buff, size);
