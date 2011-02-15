@@ -1,6 +1,6 @@
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
-#include "Exception.h"
+#include "Assert.h"
 
 
 //======================================================================================================================
@@ -9,7 +9,7 @@
 template<typename Container>
 void Sphere::set(const Container& container)
 {
-	RASSERT_THROW_EXCEPTION(container.size() < 1);
+	ASSERT(container.size() >= 1);
 
 	Vec3 min(container.front());
 	Vec3 max(container.front());

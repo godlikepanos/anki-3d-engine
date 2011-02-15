@@ -2,8 +2,9 @@
 #define FBO_H
 
 #include <GL/glew.h>
-#include "Exception.h"
+#include "Assert.h"
 #include "StdTypes.h"
+#include "Exception.h"
 
 
 /// The class is actually a wrapper to avoid common mistakes
@@ -54,14 +55,14 @@ class Fbo
 
 inline void Fbo::create()
 {
-	RASSERT_THROW_EXCEPTION(isCreated());
+	ASSERT(!isCreated());
 	glGenFramebuffers(1, &glId);
 }
 
 
 inline uint Fbo::getGlId() const
 {
-	RASSERT_THROW_EXCEPTION(isCreated());
+	ASSERT(!isCreated());
 	return glId;
 }
 
@@ -77,7 +78,7 @@ inline Fbo::~Fbo()
 
 inline void Fbo::bind() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	glBindFramebuffer(GL_FRAMEBUFFER, glId);
 }
 
@@ -90,8 +91,8 @@ inline void Fbo::unbind()
 
 inline void Fbo::checkIfGood() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
-	RASSERT_THROW_EXCEPTION(getCurrentFbo() != glId); // another FBO is binded
+	ASSERT(isCreated());
+	ASSERT(getCurrentFbo() == glId); // another FBO is binded
 
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
@@ -102,8 +103,8 @@ inline void Fbo::checkIfGood() const
 
 inline void Fbo::setNumOfColorAttachements(uint num) const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
-	RASSERT_THROW_EXCEPTION(getCurrentFbo() != glId); // another FBO is binded
+	ASSERT(isCreated());
+	ASSERT(getCurrentFbo() == glId); // another FBO is binded
 
 	if(num == 0)
 	{
@@ -117,7 +118,7 @@ inline void Fbo::setNumOfColorAttachements(uint num) const
 			GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
 			GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
 
-		RASSERT_THROW_EXCEPTION(num > sizeof(colorAttachments)/sizeof(GLenum));
+		ASSERT(num <= sizeof(colorAttachments) / sizeof(GLenum));
 		glDrawBuffers(num, colorAttachments);
 	}
 }
@@ -133,7 +134,7 @@ inline uint Fbo::getCurrentFbo()
 
 inline void Fbo::destroy()
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	glDeleteFramebuffers(1, &glId);
 }
 

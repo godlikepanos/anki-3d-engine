@@ -198,7 +198,7 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 							udv.getUniVar().setTexture(r.getPps().getPostPassFai(), textureUnit);
 							break;
 						default:
-							RASSERT_THROW_EXCEPTION("WTF?");
+							ASSERT(0);
 					}
 				}
 				++textureUnit;

@@ -72,7 +72,7 @@ class Vao
 
 inline void Vao::create()
 {
-	RASSERT_THROW_EXCEPTION(isCreated());
+	ASSERT(!isCreated());
 	glGenVertexArrays(1, &glId);
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
@@ -89,14 +89,14 @@ inline Vao::~Vao()
 
 inline void Vao::destroy()
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	glDeleteVertexArrays(1, &glId);
 }
 
 
 inline uint Vao::getGlId() const
 {
-	RASSERT_THROW_EXCEPTION(!isCreated());
+	ASSERT(isCreated());
 	return glId;
 }
 

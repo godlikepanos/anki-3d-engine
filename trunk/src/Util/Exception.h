@@ -35,14 +35,5 @@ class Exception: public std::exception
 
 #define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
-#if DEBUG_ENABLED == 1
-	#define RASSERT_THROW_EXCEPTION(x) \
-		if(x) \
-			throw EXCEPTION("Reverse assertion failed: " #x)
-#else
-	#define RASSERT_THROW_EXCEPTION(x)
-#endif
-
-
 
 #endif

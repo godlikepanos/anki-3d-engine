@@ -275,7 +275,7 @@ inline Quat Quat::getInverted() const
 {
 	float norm = w() * w() + x() * x() + y() * y() + z() * z();
 
-	RASSERT_THROW_EXCEPTION(isZero(norm)); // Norm is zero
+	ASSERT(!isZero(norm)); // Norm is zero
 
 	float normi = 1.0 / norm;
 	return Quat(-normi * x(), -normi * y(), -normi * z(), normi * w());

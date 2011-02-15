@@ -21,12 +21,6 @@ class SkinsDeformer
 			TFSPA_VERT_WEIGHT_WEIGHTS
 		};
 
-		/// @name Accessors
-		/// @{
-		/*const ShaderProg& allSProg() const {return *tfHwSkinningAllSProg;}
-		const ShaderProg& posSProg() const {return *tfHwSkinningAllSProg;}*/
-		/// @}
-
 		void init();
 		void run();
 

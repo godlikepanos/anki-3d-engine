@@ -2,7 +2,7 @@
 #define VEC_H
 
 #include <vector>
-#include "Exception.h"
+#include "Assert.h"
 
 
 /// This is a wrapper of std::std::vector that adds new functionality
@@ -53,7 +53,7 @@ Vec<Type>::Vec(size_t size, Type val):
 template<typename Type>
 Type& Vec<Type>::operator[](size_t n)
 {
-	RASSERT_THROW_EXCEPTION(n >= std::vector<Type>::size());
+	ASSERT(n < std::vector<Type>::size());
 	return std::vector<Type>::operator [](n);
 }
 
@@ -64,7 +64,7 @@ Type& Vec<Type>::operator[](size_t n)
 template<typename Type>
 const Type& Vec<Type>::operator[](size_t n) const
 {
-	RASSERT_THROW_EXCEPTION(n >= std::vector<Type>::size());
+	ASSERT(n < std::vector<Type>::size());
 	return std::vector<Type>::operator [](n);
 }
 

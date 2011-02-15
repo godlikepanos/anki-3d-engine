@@ -299,7 +299,7 @@ void Dbg::run()
 //======================================================================================================================
 void Dbg::setModelMat(const Mat4& modelMat_)
 {
-	RASSERT_THROW_EXCEPTION(pointIndex != 0); // This means that the func called after begin and before end
+	ASSERT(pointIndex == 0); // This means that the func called after begin and before end
 	modelMat = modelMat_;
 }
 
@@ -309,7 +309,7 @@ void Dbg::setModelMat(const Mat4& modelMat_)
 //======================================================================================================================
 void Dbg::begin()
 {
-	RASSERT_THROW_EXCEPTION(pointIndex != 0);
+	ASSERT(pointIndex == 0);
 }
 
 
@@ -318,7 +318,7 @@ void Dbg::begin()
 //======================================================================================================================
 void Dbg::end()
 {
-	RASSERT_THROW_EXCEPTION(pointIndex == 0);
+	ASSERT(pointIndex != 0);
 
 	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);

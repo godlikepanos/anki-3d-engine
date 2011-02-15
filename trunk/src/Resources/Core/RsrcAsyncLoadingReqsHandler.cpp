@@ -2,6 +2,7 @@
 #include "Texture.h"
 #include "Logger.h"
 #include "HighRezTimer.h"
+#include "Assert.h"
 
 
 //======================================================================================================================
@@ -36,7 +37,7 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 		}
 
 		LoadingRequestBase& req = requests.front();	
-		RASSERT_THROW_EXCEPTION(filename != req.getFilename());
+		ASSERT(filename == req.getFilename());
 
 		switch(req.getType())
 		{

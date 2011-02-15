@@ -34,13 +34,19 @@ class SkinNode: public SceneNode
 		Vec<Vec3>& getBoneTranslations() {return boneTranslations;}
 
 		const Skin& getSkin() const {return *skin;}
+
+		const Sphere& getBoundingShapeWSpace() const {return boundingShapeWSpace;}
 		/// @}
 
 		void init(const char* filename);
 
+		/// Update boundingShapeWSpace from bone tails (not bone and heads cause its faster that way)
+		void updateTrf();
+
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
 		Vec<SkinPatchNode*> patches;
+		Sphere boundingShapeWSpace;
 
 		Vec<Vec3> heads;
 		Vec<Vec3> tails;

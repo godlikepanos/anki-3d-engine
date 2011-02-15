@@ -3,7 +3,7 @@
 
 #include <limits>
 #include "StdTypes.h"
-#include "Exception.h"
+#include "Assert.h"
 
 
 class Image;
@@ -87,7 +87,7 @@ class Texture
 
 inline uint Texture::getGlId() const
 {
-	RASSERT_THROW_EXCEPTION(!isLoaded());
+	ASSERT(isLoaded());
 	return glId;
 }
 

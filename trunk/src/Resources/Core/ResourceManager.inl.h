@@ -1,5 +1,6 @@
 #include "Exception.h"
 #include "Logger.h"
+#include "Assert.h"
 
 
 //======================================================================================================================
@@ -17,14 +18,14 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 	}
 	catch(std::exception& e)
 	{
-		ERROR("fuckkkkkkkkkk " << e.what());
+		//ERROR("fuckkkkkkkkkk " << e.what());
 
 		if(newInstance != NULL)
 		{
 			delete newInstance;
 		}
 		
-		throw EXCEPTION(e.what());
+		throw EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
 	}
 }
 
@@ -49,15 +50,29 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* f
 	// else create new, load it and update the container
 	else
 	{
-		typename Types<Type>::Hook* hook = new typename Types<Type>::Hook;
-		hook->uuid = filename;
-		hook->referenceCounter = 1;
-		allocAndLoadRsrc<Type>(filename, hook->resource);
+		typename Types<Type>::Hook* hook = NULL;
 
-		c.push_back(hook);
-		
-		it = c.end();
-		--it;
+		try
+		{
+			hook = new typename Types<Type>::Hook;
+			hook->uuid = filename;
+			hook->referenceCounter = 1;
+			allocAndLoadRsrc<Type>(filename, hook->resource);
+
+			c.push_back(hook);
+
+			it = c.end();
+			--it;
+		}
+		catch(std::exception& e)
+		{
+			if(hook != NULL)
+			{
+				delete hook;
+			}
+
+			throw EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
+		}
 	}
 
 	return *it;
@@ -82,8 +97,8 @@ void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
 		throw EXCEPTION("Resource hook incorrect (\"" + hook.uuid + "\")");
 	}
 
-	RASSERT_THROW_EXCEPTION(it->uuid != hook.uuid);
-	RASSERT_THROW_EXCEPTION(it->referenceCounter != hook.referenceCounter);
+	ASSERT(it->uuid == hook.uuid);
+	ASSERT(it->referenceCounter == hook.referenceCounter);
 
 	--it->referenceCounter;
 

@@ -335,7 +335,7 @@ inline Vec3 Vec3::getProjection(const Vec3& toThis) const
 // getRotated
 inline Vec3 Vec3::getRotated(const Quat& q) const
 {
-	RASSERT_THROW_EXCEPTION(!isZero(1.0 - q.getLength())); // Not normalized quat
+	ASSERT(isZero(1.0 - q.getLength())); // Not normalized quat
 
 	/*float vmult = 2.0f*(q.x*x + q.y*y + q.z*z);
 	float crossmult = 2.0*q.w;

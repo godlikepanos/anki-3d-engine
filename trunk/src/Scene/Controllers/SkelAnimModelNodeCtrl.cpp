@@ -23,7 +23,7 @@ SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(SkinNode& skinNode_):
 void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
                                         Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
 {
-	RASSERT_THROW_EXCEPTION(frame >= animation.framesNum);
+	ASSERT(frame < animation.framesNum);
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the frame and
 	// calc the lPose and rPose witch indicate the pose ids in witch the frame lies between
@@ -48,7 +48,7 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 	}
 
 	// now for all bones update bone's poses
-	RASSERT_THROW_EXCEPTION(boneRotations.size() < 1);
+	ASSERT(boneRotations.size() >= 1);
 	for(uint i=0; i<boneRotations.size(); i++)
 	{
 		const SkelAnim::BoneAnim& banim = animation.bones[i];

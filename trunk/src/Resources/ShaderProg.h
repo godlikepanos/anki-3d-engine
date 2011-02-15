@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <limits>
 #include "CharPtrHashMap.h"
-#include "Exception.h"
+#include "Assert.h"
 #include "SProgUniVar.h"
 #include "SProgAttribVar.h"
 #include "Vec.h"
@@ -126,14 +126,14 @@ inline ShaderProg::ShaderProg():
 
 inline GLuint ShaderProg::getGlId() const
 {
-	RASSERT_THROW_EXCEPTION(glId == std::numeric_limits<uint>::max());
+	ASSERT(glId != std::numeric_limits<uint>::max());
 	return glId;
 }
 
 
 inline void ShaderProg::bind() const
 {
-	RASSERT_THROW_EXCEPTION(glId == std::numeric_limits<uint>::max());
+	ASSERT(glId != std::numeric_limits<uint>::max());
 	glUseProgram(glId);
 }
 

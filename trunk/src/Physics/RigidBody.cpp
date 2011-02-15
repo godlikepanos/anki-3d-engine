@@ -12,7 +12,7 @@ RigidBody::RigidBody(Physics& physics_, const Initializer& init, Object* parent)
   Object(parent),
   physics(physics_)
 {
-	RASSERT_THROW_EXCEPTION(init.shape==NULL || init.shape->getShapeType()==INVALID_SHAPE_PROXYTYPE);
+	ASSERT(init.shape != NULL && init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
 	bool isDynamic = (init.mass != 0.0);
 

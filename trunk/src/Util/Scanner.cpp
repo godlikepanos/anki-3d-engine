@@ -4,9 +4,10 @@
 #include <cmath>
 #include <sstream>
 #include <iomanip>
+#include <boost/lexical_cast.hpp>
 #include "Scanner.h"
 #include "Exception.h"
-#include <boost/lexical_cast.hpp>
+#include "Assert.h"
 
 
 #define SCANNER_EXCEPTION(x) \
@@ -214,7 +215,7 @@ void Scanner::getLine()
 		++lineNmbr;
 	}
 
-	RASSERT_THROW_EXCEPTION(inStream->gcount() > MAX_SCRIPT_LINE_LEN - 10); // too big line
+	ASSERT(inStream->gcount() <= MAX_SCRIPT_LINE_LEN - 10); // too big line
 }
 
 
@@ -301,7 +302,7 @@ void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 	inStream = &istream_;
 
 	// init globals
-	RASSERT_THROW_EXCEPTION(strlen(scriptName_) > sizeof(scriptName) / sizeof(char) - 1); // Too big name
+	ASSERT(strlen(scriptName_) <= sizeof(scriptName) / sizeof(char) - 1); // Too big name
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
 	strcpy(scriptName, scriptName_);

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "Object.h"
+#include "Assert.h"
 #include "Exception.h"
 
 
@@ -39,8 +40,8 @@ Object::~Object()
 //======================================================================================================================
 void Object::addChild(Object* child)
 {
-	RASSERT_THROW_EXCEPTION(child == NULL);
-	RASSERT_THROW_EXCEPTION(child->objParent != NULL); // Child already has parent
+	ASSERT(child != NULL);
+	ASSERT(child->objParent == NULL); // Child already has parent
 
 	child->objParent = this;
 	objChilds.push_back(child);
@@ -52,7 +53,7 @@ void Object::addChild(Object* child)
 //======================================================================================================================
 void Object::removeChild(Object* child)
 {
-	RASSERT_THROW_EXCEPTION(child == NULL);
+	ASSERT(child != NULL);
 
 	Container::iterator it = std::find(objChilds.begin(), objChilds.end(), child);
 
