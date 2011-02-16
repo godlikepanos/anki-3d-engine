@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -45,13 +45,13 @@ extern "C" {
 /**
  *  \brief The SDL keysym structure, used in key events.
  */
-typedef struct SDL_keysym
+typedef struct SDL_Keysym
 {
-    SDL_scancode scancode;      /**< SDL physical key code - see ::SDL_scancode for details */
-    SDLKey sym;                 /**< SDL virtual key code - see ::SDLKey for details */
+    SDL_Scancode scancode;      /**< SDL physical key code - see ::SDL_Scancode for details */
+    SDL_Keycode sym;            /**< SDL virtual key code - see ::SDL_Keycode for details */
     Uint16 mod;                 /**< current key modifiers */
     Uint32 unicode;             /**< \deprecated use SDL_TextInputEvent instead */
-} SDL_keysym;
+} SDL_Keysym;
 
 /* Function prototypes */
 
@@ -65,7 +65,7 @@ extern DECLSPEC SDL_Window * SDLCALL SDL_GetKeyboardFocus(void);
  *  
  *  \param numkeys if non-NULL, receives the length of the returned array.
  *  
- *  \return An array of key states. Indexes into this array are obtained by using ::SDL_scancode values.
+ *  \return An array of key states. Indexes into this array are obtained by using ::SDL_Scancode values.
  *  
  *  \b Example:
  *  \code
@@ -80,34 +80,34 @@ extern DECLSPEC Uint8 *SDLCALL SDL_GetKeyboardState(int *numkeys);
 /**
  *  \brief Get the current key modifier state for the keyboard.
  */
-extern DECLSPEC SDLMod SDLCALL SDL_GetModState(void);
+extern DECLSPEC SDL_Keymod SDLCALL SDL_GetModState(void);
 
 /**
  *  \brief Set the current key modifier state for the keyboard.
  *  
  *  \note This does not change the keyboard state, only the key modifier flags.
  */
-extern DECLSPEC void SDLCALL SDL_SetModState(SDLMod modstate);
+extern DECLSPEC void SDLCALL SDL_SetModState(SDL_Keymod modstate);
 
 /**
  *  \brief Get the key code corresponding to the given scancode according
  *         to the current keyboard layout.
  *  
- *  See ::SDLKey for details.
+ *  See ::SDL_Keycode for details.
  *  
  *  \sa SDL_GetKeyName()
  */
-extern DECLSPEC SDLKey SDLCALL SDL_GetKeyFromScancode(SDL_scancode scancode);
+extern DECLSPEC SDL_Keycode SDLCALL SDL_GetKeyFromScancode(SDL_Scancode scancode);
 
 /**
  *  \brief Get the scancode corresponding to the given key code according to the
  *         current keyboard layout.
  *  
- *  See ::SDL_scancode for details.
+ *  See ::SDL_Scancode for details.
  *  
  *  \sa SDL_GetScancodeName()
  */
-extern DECLSPEC SDL_scancode SDLCALL SDL_GetScancodeFromKey(SDLKey key);
+extern DECLSPEC SDL_Scancode SDLCALL SDL_GetScancodeFromKey(SDL_Keycode key);
 
 /**
  *  \brief Get a human-readable name for a scancode.
@@ -117,9 +117,9 @@ extern DECLSPEC SDL_scancode SDLCALL SDL_GetScancodeFromKey(SDLKey key);
  *          copy it.  If the scancode doesn't have a name, this function returns
  *          an empty string ("").
  *
- *  \sa SDL_scancode
+ *  \sa SDL_Scancode
  */
-extern DECLSPEC const char *SDLCALL SDL_GetScancodeName(SDL_scancode
+extern DECLSPEC const char *SDLCALL SDL_GetScancodeName(SDL_Scancode
                                                         scancode);
 
 /**
@@ -130,9 +130,9 @@ extern DECLSPEC const char *SDLCALL SDL_GetScancodeName(SDL_scancode
  *          copy it.  If the key doesn't have a name, this function returns an 
  *          empty string ("").
  *  
- *  \sa SDLKey
+ *  \sa SDL_Key
  */
-extern DECLSPEC const char *SDLCALL SDL_GetKeyName(SDLKey key);
+extern DECLSPEC const char *SDLCALL SDL_GetKeyName(SDL_Keycode key);
 
 /**
  *  \brief Start accepting Unicode text input events.

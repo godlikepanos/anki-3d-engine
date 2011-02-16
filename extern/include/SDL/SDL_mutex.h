@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -164,6 +164,31 @@ typedef struct SDL_cond SDL_cond;
 
 /**
  *  Create a condition variable.
+ *
+ *  Typical use of condition variables:
+ *
+ *  Thread A:
+ *    SDL_LockMutex(lock);
+ *    while ( ! condition ) {
+ *        SDL_CondWait(cond, lock);
+ *    }
+ *    SDL_UnlockMutex(lock);
+ *
+ *  Thread B:
+ *    SDL_LockMutex(lock);
+ *    ...
+ *    condition = true;
+ *    ...
+ *    SDL_CondSignal(cond);
+ *    SDL_UnlockMutex(lock);
+ *
+ *  There is some discussion whether to signal the condition variable
+ *  with the mutex locked or not.  There is some potential performance
+ *  benefit to unlocking first on some platforms, but there are some
+ *  potential race conditions depending on how your code is structured.
+ *
+ *  In general it's safer to signal the condition variable while the
+ *  mutex is locked.
  */
 extern DECLSPEC SDL_cond *SDLCALL SDL_CreateCond(void);
 
@@ -181,6 +206,7 @@ extern DECLSPEC int SDLCALL SDL_CondSignal(SDL_cond * cond);
 
 /**
  *  Restart all threads that are waiting on the condition variable.
+ *
  *  \return 0 or -1 on error.
  */
 extern DECLSPEC int SDLCALL SDL_CondBroadcast(SDL_cond * cond);

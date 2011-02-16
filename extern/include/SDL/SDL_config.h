@@ -1,7 +1,7 @@
 /* include/SDL_config.h.  Generated from SDL_config.h.in by configure.  */
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -59,6 +59,8 @@
 
 #define SIZEOF_VOIDP 8
 #define SDL_HAS_64BIT_TYPE 1
+#define HAVE_GCC_ATOMICS 1
+/* #undef HAVE_GCC_SYNC_LOCK_TEST_AND_SET */
 
 /* Comment this if you want to build without any C library requirements */
 #define HAVE_LIBC 1
@@ -81,7 +83,6 @@
 #define HAVE_MATH_H 1
 #define HAVE_ICONV_H 1
 #define HAVE_SIGNAL_H 1
-/* #undef HAVE_ALTIVEC_H */
 
 /* C library functions */
 #define HAVE_MALLOC 1
@@ -89,7 +90,7 @@
 #define HAVE_REALLOC 1
 #define HAVE_FREE 1
 #define HAVE_ALLOCA 1
-#ifndef _WIN32 /* Don't use C runtime versions of these on Windows */
+#ifndef __WIN32__ /* Don't use C runtime versions of these on Windows */
 #define HAVE_GETENV 1
 #define HAVE_SETENV 1
 #define HAVE_PUTENV 1
@@ -159,6 +160,7 @@
 /* #undef HAVE_CLOCK_GETTIME */
 /* #undef HAVE_GETPAGESIZE */
 #define HAVE_MPROTECT 1
+#define HAVE_ICONV 1
 
 #else
 /* We may need some replacement for stdarg.h here */
@@ -169,6 +171,7 @@
 /* #undef SDL_DEFAULT_ASSERT_LEVEL */
 
 /* Allow disabling of core subsystems */
+/* #undef SDL_ATOMIC_DISABLED */
 /* #undef SDL_AUDIO_DISABLED */
 /* #undef SDL_CPUINFO_DISABLED */
 /* #undef SDL_EVENTS_DISABLED */
@@ -176,6 +179,7 @@
 /* #undef SDL_JOYSTICK_DISABLED */
 /* #undef SDL_HAPTIC_DISABLED */
 /* #undef SDL_LOADSO_DISABLED */
+/* #undef SDL_RENDER_DISABLED */
 /* #undef SDL_THREADS_DISABLED */
 /* #undef SDL_TIMERS_DISABLED */
 /* #undef SDL_VIDEO_DISABLED */
@@ -219,7 +223,6 @@
 /* #undef SDL_JOYSTICK_IOKIT */
 #define SDL_JOYSTICK_LINUX 1
 /* #undef SDL_JOYSTICK_NDS */
-/* #undef SDL_JOYSTICK_RISCOS */
 /* #undef SDL_JOYSTICK_WINMM */
 /* #undef SDL_JOYSTICK_USBHID */
 /* #undef SDL_JOYSTICK_USBHID_MACHINE_JOYSTICK_H */
@@ -234,7 +237,7 @@
 #define SDL_LOADSO_DLOPEN 1
 /* #undef SDL_LOADSO_DUMMY */
 /* #undef SDL_LOADSO_LDG */
-/* #undef SDL_LOADSO_WIN32 */
+/* #undef SDL_LOADSO_WINDOWS */
 
 /* Enable various threading systems */
 /* #undef SDL_THREAD_BEOS */
@@ -243,15 +246,14 @@
 #define SDL_THREAD_PTHREAD_RECURSIVE_MUTEX 1
 /* #undef SDL_THREAD_PTHREAD_RECURSIVE_MUTEX_NP */
 /* #undef SDL_THREAD_SPROC */
-/* #undef SDL_THREAD_WIN32 */
+/* #undef SDL_THREAD_WINDOWS */
 
 /* Enable various timer systems */
 /* #undef SDL_TIMER_BEOS */
 /* #undef SDL_TIMER_DUMMY */
 /* #undef SDL_TIMER_NDS */
-/* #undef SDL_TIMER_RISCOS */
 #define SDL_TIMER_UNIX 1
-/* #undef SDL_TIMER_WIN32 */
+/* #undef SDL_TIMER_WINDOWS */
 /* #undef SDL_TIMER_WINCE */
 
 /* Enable various video drivers */
@@ -260,41 +262,26 @@
 /* #undef SDL_VIDEO_DRIVER_DIRECTFB */
 /* #undef SDL_VIDEO_DRIVER_DIRECTFB_DYNAMIC */
 #define SDL_VIDEO_DRIVER_DUMMY 1
-/* #undef SDL_VIDEO_DRIVER_FBCON */
 /* #undef SDL_VIDEO_DRIVER_NDS */
-/* #undef SDL_VIDEO_DRIVER_PHOTON */
-/* #undef SDL_VIDEO_DRIVER_QNXGF */
-/* #undef SDL_VIDEO_DRIVER_PS3 */
-/* #undef SDL_VIDEO_DRIVER_RISCOS */
-/* #undef SDL_VIDEO_DRIVER_SVGALIB */
-/* #undef SDL_VIDEO_DRIVER_WIN32 */
+/* #undef SDL_VIDEO_DRIVER_WINDOWS */
 #define SDL_VIDEO_DRIVER_X11 1
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC "libX11.so.6"
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC_XEXT "libXext.so.6"
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC_XRANDR "libXrandr.so.2"
-#define SDL_VIDEO_DRIVER_X11_DYNAMIC_XRENDER "libXrender.so.1"
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC_XINPUT "libXi.so.6"
 /* #undef SDL_VIDEO_DRIVER_X11_DYNAMIC_XSS */
-/* #undef SDL_VIDEO_DRIVER_X11_DYNAMIC_XDAMAGE */
-/* #undef SDL_VIDEO_DRIVER_X11_DYNAMIC_XFIXES */
 #define SDL_VIDEO_DRIVER_X11_VIDMODE 1
 #define SDL_VIDEO_DRIVER_X11_XINERAMA 1
 #define SDL_VIDEO_DRIVER_X11_XRANDR 1
 #define SDL_VIDEO_DRIVER_X11_XINPUT 1
 /* #undef SDL_VIDEO_DRIVER_X11_SCRNSAVER */
 #define SDL_VIDEO_DRIVER_X11_XV 1
-#define SDL_VIDEO_DRIVER_X11_XRENDER 1
-/* #undef SDL_VIDEO_DRIVER_X11_XDAMAGE */
-/* #undef SDL_VIDEO_DRIVER_X11_XFIXES */
 #define SDL_VIDEO_DRIVER_X11_XSHAPE 1
 
 /* #undef SDL_VIDEO_RENDER_D3D */
-/* #undef SDL_VIDEO_RENDER_GDI */
 #define SDL_VIDEO_RENDER_OGL 1
 /* #undef SDL_VIDEO_RENDER_OGL_ES */
-#define SDL_VIDEO_RENDER_X11 1
-/* #undef SDL_VIDEO_RENDER_GAPI */
-/* #undef SDL_VIDEO_RENDER_DDRAW */
+/* #undef SDL_VIDEO_RENDER_DIRECTFB */
 
 /* Enable OpenGL support */
 #define SDL_VIDEO_OPENGL 1
@@ -316,6 +303,5 @@
 
 /* Enable assembly routines */
 #define SDL_ASSEMBLY_ROUTINES 1
-/* #undef SDL_ALTIVEC_BLITTERS */
 
 #endif /* _SDL_config_h */

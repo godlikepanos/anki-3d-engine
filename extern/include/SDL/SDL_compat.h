@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,12 @@ extern "C" {
  *  \addtogroup Compatibility
  */
 /*@{*/
+
+/* Platform */
+#ifdef __WIN32__
+#undef __WIN32__
+#define __WIN32__   1
+#endif
 
 /**
  *  \name Surface flags
@@ -209,6 +215,13 @@ struct SDL_SysWMinfo;
  */
 /*@{*/
 
+#define SDL_keysym		SDL_Keysym
+#define SDL_KeySym		SDL_Keysym
+#define SDL_scancode	SDL_Scancode
+#define SDL_ScanCode	SDL_Scancode
+#define SDLKey          SDL_Keycode
+#define SDLMod          SDL_Keymod
+
 /** 
  *  \name Renamed keys
  *
@@ -264,8 +277,8 @@ struct SDL_SysWMinfo;
 #define SDL_AllocSurface    SDL_CreateRGBSurface
 
 extern DECLSPEC const SDL_version *SDLCALL SDL_Linked_Version(void);
-extern DECLSPEC char *SDLCALL SDL_AudioDriverName(char *namebuf, int maxlen);
-extern DECLSPEC char *SDLCALL SDL_VideoDriverName(char *namebuf, int maxlen);
+extern DECLSPEC const char *SDLCALL SDL_AudioDriverName(char *namebuf, int maxlen);
+extern DECLSPEC const char *SDLCALL SDL_VideoDriverName(char *namebuf, int maxlen);
 extern DECLSPEC const SDL_VideoInfo *SDLCALL SDL_GetVideoInfo(void);
 extern DECLSPEC int SDLCALL SDL_VideoModeOK(int width,
                                             int height,
@@ -315,16 +328,26 @@ extern DECLSPEC int SDLCALL SDL_DisplayYUVOverlay(SDL_Overlay * overlay,
                                                   SDL_Rect * dstrect);
 extern DECLSPEC void SDLCALL SDL_FreeYUVOverlay(SDL_Overlay * overlay);
 extern DECLSPEC void SDLCALL SDL_GL_SwapBuffers(void);
+extern DECLSPEC int SDLCALL SDL_SetGamma(float red, float green, float blue);
+extern DECLSPEC int SDLCALL SDL_SetGammaRamp(const Uint16 * red,
+                                             const Uint16 * green,
+                                             const Uint16 * blue);
+extern DECLSPEC int SDLCALL SDL_GetGammaRamp(Uint16 * red, Uint16 * green,
+                                             Uint16 * blue);
 extern DECLSPEC int SDLCALL SDL_EnableKeyRepeat(int delay, int interval);
 extern DECLSPEC void SDLCALL SDL_GetKeyRepeat(int *delay, int *interval);
 extern DECLSPEC int SDLCALL SDL_EnableUNICODE(int enable);
 
-#define SDL_TextureID SDL_Texture*
-#define SDL_WindowID SDL_Window*
-#define SDL_RenderPoint SDL_RenderDrawPoint
-#define SDL_RenderLine SDL_RenderDrawLine
-#define SDL_RenderFill(X)  (X) ? SDL_RenderFillRect(X) : SDL_RenderClear()
+typedef SDL_Window* SDL_WindowID;
+
 #define SDL_KillThread(X)
+
+/* The timeslice and timer resolution are no longer relevant */
+#define SDL_TIMESLICE		10
+#define TIMER_RESOLUTION	10
+
+typedef Uint32 (SDLCALL * SDL_OldTimerCallback) (Uint32 interval);
+extern DECLSPEC int SDLCALL SDL_SetTimer(Uint32 interval, SDL_OldTimerCallback callback);
 
 extern DECLSPEC int SDLCALL SDL_putenv(const char *variable);
 

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -35,7 +35,7 @@
  *  \brief The SDL keyboard scancode representation.
  *  
  *  Values of this type are used to represent keyboard keys, among other places
- *  in the \link SDL_keysym::scancode key.keysym.scancode \endlink field of the
+ *  in the \link SDL_Keysym::scancode key.keysym.scancode \endlink field of the
  *  SDL_Event structure.
  *  
  *  The values in this enumeration are based on the USB usage page standard:
@@ -392,7 +392,7 @@ typedef enum
 
     SDL_NUM_SCANCODES = 512 /**< not a key, just marks the number of scancodes 
                                  for array bounds */
-} SDL_scancode;
+} SDL_Scancode;
 
 #endif /* _SDL_scancode_h */
 
