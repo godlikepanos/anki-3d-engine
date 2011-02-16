@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -50,8 +50,9 @@ on the assertion line and not in some random guts of SDL, and so each
 assert can have unique static variables associated with it.
 */
 
-#if (defined(_MSC_VER) && ((_M_IX86) || (_M_X64)))
-    #define SDL_TriggerBreakpoint() __asm { int 3 }
+#if defined(_MSC_VER) && !defined(_WIN32_WCE)
+#include <intrin.h>
+    #define SDL_TriggerBreakpoint() __debugbreak()
 #elif (defined(__GNUC__) && ((__i386__) || (__x86_64__)))
     #define SDL_TriggerBreakpoint() __asm__ __volatile__ ( "int $3\n\t" )
 #elif defined(HAVE_SIGNAL_H)

@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include <algorithm>
 #include "Exception.h"
 #include "Scene.h"
@@ -152,8 +153,8 @@ void Scene::updateAllWorldStuff()
 //======================================================================================================================
 void Scene::updateAllControllers()
 {
-	for(Vec<Controller*>::iterator it=controllers.begin(); it!=controllers.end(); it++)
+	BOOST_FOREACH(Controller* ctl, controllers)
 	{
-		(*it)->update(0.0);
+		ctl->update(0.0);
 	}
 }

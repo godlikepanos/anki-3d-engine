@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -54,7 +54,7 @@ extern "C" {
 struct SDL_SysWMinfo;
 #else
 
-#if defined(SDL_VIDEO_DRIVER_WIN32)
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -77,7 +77,7 @@ struct SDL_SysWMinfo;
 #endif /* defined(SDL_VIDEO_DRIVER_X11) */
 
 #if defined(SDL_VIDEO_DRIVER_DIRECTFB)
-#include <directfb/directfb.h>
+#include <directfb.h>
 #endif
 
 #if defined(SDL_VIDEO_DRIVER_COCOA)
@@ -85,6 +85,14 @@ struct SDL_SysWMinfo;
 #include <Cocoa/Cocoa.h>
 #else
 typedef struct _NSWindow NSWindow;
+#endif
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_UIKIT)
+#ifdef __OBJC__
+#include <UIKit/UIKit.h>
+#else
+typedef struct _UIWindow UIWindow;
 #endif
 #endif
 
@@ -98,6 +106,7 @@ typedef enum
     SDL_SYSWM_X11,
     SDL_SYSWM_DIRECTFB,
     SDL_SYSWM_COCOA,
+    SDL_SYSWM_UIKIT,
 } SDL_SYSWM_TYPE;
 
 /**
@@ -109,7 +118,7 @@ struct SDL_SysWMmsg
     SDL_SYSWM_TYPE subsystem;
     union
     {
-#if defined(SDL_VIDEO_DRIVER_WIN32)
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
         struct {
             HWND hwnd;                  /**< The window for the message */
             UINT msg;                   /**< The type of message */
@@ -133,7 +142,15 @@ struct SDL_SysWMmsg
             /* No Cocoa window events yet */
         } cocoa;
 #endif
-    } /*msg*/;
+#if defined(SDL_VIDEO_DRIVER_UIKIT)
+        struct
+        {
+            /* No UIKit window events yet */
+        } uikit;
+#endif
+        /* Can't have an empty union */
+        int dummy;
+    } msg;
 };
 
 /**
@@ -148,7 +165,7 @@ struct SDL_SysWMinfo
     SDL_SYSWM_TYPE subsystem;
     union
     {
-#if defined(SDL_VIDEO_DRIVER_WIN32)
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
         struct
         {
             HWND window;                /**< The window handle */
@@ -175,7 +192,15 @@ struct SDL_SysWMinfo
             NSWindow *window;           /* The Cocoa window */
         } cocoa;
 #endif
-    } /*info*/;
+#if defined(SDL_VIDEO_DRIVER_UIKIT)
+        struct
+        {
+            UIWindow *window;           /* The UIKit window */
+        } uikit;
+#endif
+        /* Can't have an empty union */
+        int dummy;
+    } info;
 };
 
 #endif /* SDL_PROTOTYPES_ONLY */

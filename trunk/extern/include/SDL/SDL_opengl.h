@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -38,16 +38,18 @@
 #endif
 #include <windows.h>
 #endif
+#ifdef __glext_h_
+/* Someone has already included glext.h */
+#define NO_SDL_GLEXT
+#endif
 #ifndef NO_SDL_GLEXT
 #define __glext_h_              /* Don't let gl.h include glext.h */
 #endif
 #if defined(__MACOSX__)
 #include <OpenGL/gl.h>          /* Header File For The OpenGL Library */
-#include <OpenGL/glu.h>         /* Header File For The GLU Library */
 #define __X_GL_H
 #else
 #include <GL/gl.h>              /* Header File For The OpenGL Library */
-#include <GL/glu.h>             /* Header File For The GLU Library */
 #endif
 #ifndef NO_SDL_GLEXT
 #undef __glext_h_

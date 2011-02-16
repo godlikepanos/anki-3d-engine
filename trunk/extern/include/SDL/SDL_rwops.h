@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,7 @@
  *  \file SDL_rwops.h
  *  
  *  This file provides a general interface for SDL to read and write
- *  data sources.  It can easily be extended to files, memory, etc.
+ *  data streams.  It can easily be extended to files, memory, etc.
  */
 
 #ifndef _SDL_rwops_h
@@ -50,14 +50,14 @@ typedef struct SDL_RWops
      *  Seek to \c offset relative to \c whence, one of stdio's whence values:
      *  RW_SEEK_SET, RW_SEEK_CUR, RW_SEEK_END
      *  
-     *  \return the final offset in the data source.
+     *  \return the final offset in the data stream.
      */
     long (SDLCALL * seek) (struct SDL_RWops * context, long offset,
                            int whence);
 
     /**
      *  Read up to \c maxnum objects each of size \c size from the data
-     *  source to the area pointed at by \c ptr.
+     *  stream to the area pointed at by \c ptr.
      *  
      *  \return the number of objects read, or 0 at error or end of file.
      */
@@ -66,7 +66,7 @@ typedef struct SDL_RWops
 
     /**
      *  Write exactly \c num objects each of size \c size from the area
-     *  pointed at by \c ptr to data source.
+     *  pointed at by \c ptr to data stream.
      *  
      *  \return the number of objects written, or 0 at error or end of file.
      */
@@ -94,7 +94,7 @@ typedef struct SDL_RWops
                 size_t size;
                 size_t left;
             } buffer;
-        } win32io;
+        } windowsio;
 #endif
 #ifdef HAVE_STDIO_H
         struct
@@ -121,7 +121,7 @@ typedef struct SDL_RWops
 /**
  *  \name RWFrom functions
  *  
- *  Functions to create SDL_RWops structures from various data sources.
+ *  Functions to create SDL_RWops structures from various data streams.
  */
 /*@{*/
 

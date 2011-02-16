@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -36,10 +36,6 @@
  *  This is the Simple DirectMedia Layer, a general API that provides low
  *  level access to audio, keyboard, mouse, joystick, 3D hardware via OpenGL,
  *  and 2D framebuffer across multiple platforms.
- *  
- *  The current version supports Windows, Windows CE, Mac OS X, Linux,
- *  FreeBSD, NetBSD, OpenBSD, BSD/OS, Solaris, and QNX. The code contains
- *  support for other operating systems but those are not officially supported. 
  *  
  *  SDL is written in C, but works with C++ natively, and has bindings to
  *  several other languages, including Ada, C#, Eiffel, Erlang, Euphoria,
@@ -83,9 +79,12 @@
 #include "SDL_endian.h"
 #include "SDL_error.h"
 #include "SDL_events.h"
+#include "SDL_hints.h"
 #include "SDL_loadso.h"
+#include "SDL_log.h"
 #include "SDL_mutex.h"
 #include "SDL_power.h"
+#include "SDL_render.h"
 #include "SDL_rwops.h"
 #include "SDL_thread.h"
 #include "SDL_timer.h"
@@ -116,7 +115,6 @@ extern "C" {
 #define SDL_INIT_JOYSTICK       0x00000200
 #define SDL_INIT_HAPTIC         0x00001000
 #define SDL_INIT_NOPARACHUTE    0x00100000      /**< Don't catch fatal signals */
-#define SDL_INIT_EVENTTHREAD    0x01000000      /**< Not supported on all OS's */
 #define SDL_INIT_EVERYTHING     0x0000FFFF
 /*@}*/
 

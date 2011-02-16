@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -18,24 +18,42 @@
 
     Sam Lantinga
     slouken@libsdl.org
-
-    Contributed by Bob Pendleton, bob@pendleton.com
  */
 
 /**
- *  \file SDL_atomic.h
- *  
- *  Atomic operations.
- *  
- *  These operations may, or may not, actually be implemented using
- *  processor specific atomic operations. When possible they are
- *  implemented as true processor specific atomic operations. When that
- *  is not possible the are implemented using locks that *do* use the
- *  available atomic operations.
- *  
- *  At the very minimum spin locks must be implemented. Without spin
- *  locks it is not possible (AFAICT) to emulate the rest of the atomic
- *  operations.
+ * \file SDL_atomic.h
+ * 
+ * Atomic operations.
+ * 
+ * IMPORTANT:
+ * If you are not an expert in concurrent lockless programming, you should
+ * only be using the atomic lock and reference counting functions in this
+ * file.  In all other cases you should be protecting your data structures
+ * with full mutexes.
+ * 
+ * The list of "safe" functions to use are:
+ *  SDL_AtomicLock()
+ *  SDL_AtomicUnlock()
+ *  SDL_AtomicIncRef()
+ *  SDL_AtomicDecRef()
+ * 
+ * Seriously, here be dragons!
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ *
+ * You can find out a little more about lockless programming and the 
+ * subtle issues that can arise here:
+ * http://msdn.microsoft.com/en-us/library/ee418650%28v=vs.85%29.aspx
+ *
+ * There's also lots of good information here:
+ * http://www.1024cores.net/home/lock-free-algorithms
+ *
+ * These operations may or may not actually be implemented using
+ * processor specific atomic operations. When possible they are
+ * implemented as true processor specific atomic operations. When that
+ * is not possible the are implemented using locks that *do* use the
+ * available atomic operations.
+ *
+ * All of the atomic operations that modify memory are full memory barriers.
  */
 
 #ifndef _SDL_atomic_h_
@@ -46,6 +64,13 @@
 
 #include "begin_code.h"
 
+/* Need to do this here because intrin.h has C++ code in it */
+/* Visual Studio 2005 has a bug where intrin.h conflicts with winnt.h */
+#if defined(_MSC_VER) && (_MSC_VER >= 1500) && !defined(_WIN32_WCE)
+#include <intrin.h>
+#define HAVE_MSC_ATOMICS 1
+#endif
+
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus
 /* *INDENT-OFF* */
@@ -53,154 +78,232 @@ extern "C" {
 /* *INDENT-ON* */
 #endif
 
-/* Function prototypes */
-
 /**
- *  \name SDL AtomicLock
- *  
- *  The spin lock functions and type are required and can not be
- *  emulated because they are used in the emulation code.
+ * \name SDL AtomicLock
+ * 
+ * The atomic locks are efficient spinlocks using CPU instructions,
+ * but are vulnerable to starvation and can spin forever if a thread
+ * holding a lock has been terminated.  For this reason you should
+ * minimize the code executed inside an atomic lock and never do
+ * expensive things like API or system calls while holding them.
+ *
+ * The atomic locks are not safe to lock recursively.
+ *
+ * Porting Note:
+ * The spin lock functions and type are required and can not be
+ * emulated because they are used in the atomic emulation code.
  */
 /*@{*/
 
-typedef volatile Uint32 SDL_SpinLock;
+typedef int SDL_SpinLock;
 
 /**
- *  \brief Lock a spin lock by setting it to a none zero value.
- *  
- *  \param lock Points to the lock.
+ * \brief Try to lock a spin lock by setting it to a non-zero value.
+ * 
+ * \param lock Points to the lock.
+ *
+ * \return SDL_TRUE if the lock succeeded, SDL_FALSE if the lock is already held.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_AtomicTryLock(SDL_SpinLock *lock);
+
+/**
+ * \brief Lock a spin lock by setting it to a non-zero value.
+ * 
+ * \param lock Points to the lock.
  */
 extern DECLSPEC void SDLCALL SDL_AtomicLock(SDL_SpinLock *lock);
 
 /**
- *  \brief Unlock a spin lock by setting it to 0. Always returns immediately
+ * \brief Unlock a spin lock by setting it to 0. Always returns immediately
  *
- *  \param lock Points to the lock.
+ * \param lock Points to the lock.
  */
 extern DECLSPEC void SDLCALL SDL_AtomicUnlock(SDL_SpinLock *lock);
 
 /*@}*//*SDL AtomicLock*/
 
-/**
- *  \name 32 bit atomic operations
- */
-/*@{*/
 
 /**
- *  \brief Check to see if \c *ptr == 0 and set it to 1.
- *  
- *  \return SDL_True if the value pointed to by \c ptr was zero and
- *          SDL_False if it was not zero
- *  
- *  \param ptr Points to the value to be tested and set.
+ * The compiler barrier prevents the compiler from reordering
+ * reads and writes to globally visible variables across the call.
  */
-extern DECLSPEC SDL_bool SDLCALL SDL_AtomicTestThenSet32(volatile Uint32 * ptr);
+#ifdef _MSC_VER
+void _ReadWriteBarrier(void);
+#pragma intrinsic(_ReadWriteBarrier)
+#define SDL_CompilerBarrier()   _ReadWriteBarrier()
+#elif defined(__GNUC__)
+#define SDL_CompilerBarrier()   __asm__ __volatile__ ("" : : : "memory")
+#else
+#define SDL_CompilerBarrier()   \
+({ SDL_SpinLock _tmp = 0; SDL_AtomicLock(&_tmp); SDL_AtomicUnlock(&_tmp); })
+#endif
+
+/* Platform specific optimized versions of the atomic functions,
+ * you can disable these by defining SDL_DISABLE_ATOMIC_INLINE
+ */
+#if SDL_ATOMIC_DISABLED
+#define SDL_DISABLE_ATOMIC_INLINE
+#endif
+#ifndef SDL_DISABLE_ATOMIC_INLINE
+
+#ifdef HAVE_MSC_ATOMICS
+
+#define SDL_AtomicSet(a, v)     _InterlockedExchange((long*)&(a)->value, (v))
+#define SDL_AtomicAdd(a, v)     _InterlockedExchangeAdd((long*)&(a)->value, (v))
+#define SDL_AtomicCAS(a, oldval, newval) (_InterlockedCompareExchange((long*)&(a)->value, (newval), (oldval)) == (oldval))
+#define SDL_AtomicSetPtr(a, v)  _InterlockedExchangePointer((a), (v))
+#if _M_IX86
+#define SDL_AtomicCASPtr(a, oldval, newval) (_InterlockedCompareExchange((long*)(a), (long)(newval), (long)(oldval)) == (long)(oldval))
+#else
+#define SDL_AtomicCASPtr(a, oldval, newval) (_InterlockedCompareExchangePointer((a), (newval), (oldval)) == (oldval))
+#endif
+
+#elif defined(__MACOSX__)
+#include <libkern/OSAtomic.h>
+
+#define SDL_AtomicCAS(a, oldval, newval) OSAtomicCompareAndSwap32Barrier((oldval), (newval), &(a)->value)
+#if SIZEOF_VOIDP == 4
+#define SDL_AtomicCASPtr(a, oldval, newval) OSAtomicCompareAndSwap32Barrier((int32_t)(oldval), (int32_t)(newval), (int32_t*)(a))
+#elif SIZEOF_VOIDP == 8
+#define SDL_AtomicCASPtr(a, oldval, newval) OSAtomicCompareAndSwap64Barrier((int64_t)(oldval), (int64_t)(newval), (int64_t*)(a))
+#endif
+
+#elif defined(HAVE_GCC_ATOMICS)
+
+#define SDL_AtomicSet(a, v)     __sync_lock_test_and_set(&(a)->value, v)
+#define SDL_AtomicAdd(a, v)     __sync_fetch_and_add(&(a)->value, v)
+#define SDL_AtomicSetPtr(a, v)  __sync_lock_test_and_set(a, v)
+#define SDL_AtomicCAS(a, oldval, newval) __sync_bool_compare_and_swap(&(a)->value, oldval, newval)
+#define SDL_AtomicCASPtr(a, oldval, newval) __sync_bool_compare_and_swap(a, oldval, newval)
+
+#endif
+
+#endif /* !SDL_DISABLE_ATOMIC_INLINE */
+
 
 /**
- *  \brief Set the value pointed to by \c ptr to be zero.
- *  
- *  \param ptr Address of the value to be set to zero
+ * \brief A type representing an atomic integer value.  It is a struct
+ *        so people don't accidentally use numeric operations on it.
  */
-extern DECLSPEC void SDLCALL SDL_AtomicClear32(volatile Uint32 * ptr);
+#ifndef SDL_atomic_t_defined
+typedef struct { int value; } SDL_atomic_t;
+#endif
 
 /**
- *  \brief Fetch the current value of \c *ptr and then increment that
- *         value in place.
- *  
- *  \return The value before it was incremented.
- *  
- *  \param ptr Address of the value to fetch and increment
- */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicFetchThenIncrement32(volatile Uint32 * ptr);
+ * \brief Set an atomic variable to a new value if it is currently an old value.
+ *
+ * \return SDL_TRUE if the atomic variable was set, SDL_FALSE otherwise.
+ *
+ * \note If you don't know what this function is for, you shouldn't use it!
+*/
+#ifndef SDL_AtomicCAS
+#define SDL_AtomicCAS SDL_AtomicCAS_
+#endif
+extern DECLSPEC SDL_bool SDLCALL SDL_AtomicCAS_(SDL_atomic_t *a, int oldval, int newval);
 
 /**
- *  \brief Fetch \c *ptr and then decrement the value in place.
- *  
- *  \return The value before it was decremented.
- *  
- *  \param ptr Address of the value to fetch and decrement
+ * \brief Set an atomic variable to a value.
+ *
+ * \return The previous value of the atomic variable.
  */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicFetchThenDecrement32(volatile Uint32 * ptr);
+#ifndef SDL_AtomicSet
+static __inline__ int SDL_AtomicSet(SDL_atomic_t *a, int v)
+{
+    int value;
+    do {
+        value = a->value;
+    } while (!SDL_AtomicCAS(a, value, v));
+    return value;
+}
+#endif
 
 /**
- *  \brief Fetch the current value at \c ptr and then add \c value to \c *ptr.
- *  
- *  \return \c *ptr before the addition took place.
- *  
- *  \param ptr The address of data we are changing.
- *  \param value The value to add to \c *ptr. 
+ * \brief Get the value of an atomic variable
  */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicFetchThenAdd32(volatile Uint32 * ptr, Uint32 value);
+#ifndef SDL_AtomicGet
+static __inline__ int SDL_AtomicGet(SDL_atomic_t *a)
+{
+    int value = a->value;
+    SDL_CompilerBarrier();
+    return value;
+}
+#endif
 
 /**
- *  \brief Fetch \c *ptr and then subtract \c value from it.
- *  
- *  \return \c *ptr before the subtraction took place.
- *  
- *  \param ptr The address of the data being changed.
- *  \param value The value to subtract from \c *ptr.
+ * \brief Add to an atomic variable.
+ *
+ * \return The previous value of the atomic variable.
+ *
+ * \note This same style can be used for any number operation
  */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicFetchThenSubtract32(volatile Uint32 * ptr, Uint32 value);
+#ifndef SDL_AtomicAdd
+static __inline__ int SDL_AtomicAdd(SDL_atomic_t *a, int v)
+{
+    int value;
+    do {
+        value = a->value;
+    } while (!SDL_AtomicCAS(a, value, (value + v)));
+    return value;
+}
+#endif
 
 /**
- *  \brief Add one to the data pointed to by \c ptr and return that value.
- *  
- *  \return The incremented value.
- *  
- *  \param ptr The address of the data to increment.
+ * \brief Increment an atomic variable used as a reference count.
  */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicIncrementThenFetch32(volatile Uint32 * ptr);
+#ifndef SDL_AtomicIncRef
+#define SDL_AtomicIncRef(a)    SDL_AtomicAdd(a, 1)
+#endif
 
 /**
- *  \brief Subtract one from data pointed to by \c ptr and return the new value.
- *  
- *  \return The decremented value.
- *  
- *  \param ptr The address of the data to decrement.
+ * \brief Decrement an atomic variable used as a reference count.
+ *
+ * \return SDL_TRUE if the variable reached zero after decrementing,
+ *         SDL_FALSE otherwise
  */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicDecrementThenFetch32(volatile Uint32 * ptr);
+#ifndef SDL_AtomicDecRef
+#define SDL_AtomicDecRef(a)    (SDL_AtomicAdd(a, -1) == 1)
+#endif
 
 /**
- *  \brief Add \c value to the data pointed to by \c ptr and return result.
- *  
- *  \return The sum of \c *ptr and \c value.
- *  
- *  \param ptr The address of the data to be modified.
- *  \param value The value to be added.
- */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicAddThenFetch32(volatile Uint32 * ptr, Uint32 value);
+ * \brief Set a pointer to a new value if it is currently an old value.
+ *
+ * \return SDL_TRUE if the pointer was set, SDL_FALSE otherwise.
+ *
+ * \note If you don't know what this function is for, you shouldn't use it!
+*/
+#ifndef SDL_AtomicCASPtr
+#define SDL_AtomicCASPtr SDL_AtomicCASPtr_
+#endif
+extern DECLSPEC SDL_bool SDLCALL SDL_AtomicCASPtr_(void* *a, void *oldval, void *newval);
 
 /**
- *  \brief Subtract \c value from the data pointed to by \c ptr and return the result.
- *  
- *  \return The difference between \c *ptr and \c value.
- *  
- *  \param ptr The address of the data to be modified.
- *  \param value The value to be subtracted.
+ * \brief Set a pointer to a value atomically.
+ *
+ * \return The previous value of the pointer.
  */
-extern DECLSPEC Uint32 SDLCALL SDL_AtomicSubtractThenFetch32(volatile Uint32 * ptr, Uint32 value);
-
-/*@}*//*32 bit atomic operations*/
+#ifndef SDL_AtomicSetPtr
+static __inline__ void* SDL_AtomicSetPtr(void* *a, void* v)
+{
+    void* value;
+    do {
+        value = *a;
+    } while (!SDL_AtomicCASPtr(a, value, v));
+    return value;
+}
+#endif
 
 /**
- *  \name 64 bit atomic operations
+ * \brief Get the value of a pointer atomically.
  */
-/*@{*/
-#ifdef SDL_HAS_64BIT_TYPE
+#ifndef SDL_AtomicGetPtr
+static __inline__ void* SDL_AtomicGetPtr(void* *a)
+{
+    void* value = *a;
+    SDL_CompilerBarrier();
+    return value;
+}
+#endif
 
-extern DECLSPEC SDL_bool SDLCALL SDL_AtomicTestThenSet64(volatile Uint64 * ptr);
-extern DECLSPEC void SDLCALL SDL_AtomicClear64(volatile Uint64 * ptr);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicFetchThenIncrement64(volatile Uint64 * ptr);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicFetchThenDecrement64(volatile Uint64 * ptr);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicFetchThenAdd64(volatile Uint64 * ptr, Uint64 value);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicFetchThenSubtract64(volatile Uint64 * ptr, Uint64 value);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicIncrementThenFetch64(volatile Uint64 * ptr);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicDecrementThenFetch64(volatile Uint64 * ptr);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicAddThenFetch64(volatile Uint64 * ptr, Uint64 value);
-extern DECLSPEC Uint64 SDLCALL SDL_AtomicSubtractThenFetch64(volatile Uint64 * ptr, Uint64 value);
-#endif /*  SDL_HAS_64BIT_TYPE */
-
-/*@}*//*64 bit atomic operations*/
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

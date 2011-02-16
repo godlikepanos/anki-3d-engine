@@ -21,20 +21,13 @@
 */
 
 /**
- *  \file SDL_gesture.h
+ *  \file SDL_blendmode.h
  *  
- *  Include file for SDL gesture event handling.
+ *  Header file declaring the SDL_BlendMode enumeration
  */
 
-#ifndef _SDL_gesture_h
-#define _SDL_gesture_h
-
-#include "SDL_stdinc.h"
-#include "SDL_error.h"
-#include "SDL_video.h"
-
-#include "SDL_touch.h"
-
+#ifndef _SDL_blendmode_h
+#define _SDL_blendmode_h
 
 #include "begin_code.h"
 /* Set up for C function definitions, even when using C++ */
@@ -44,40 +37,16 @@ extern "C" {
 /* *INDENT-ON* */
 #endif
 
-typedef Sint64 SDL_GestureID;
-
-/* Function prototypes */
-
 /**
- *  \brief Begin Recording a gesture on the specified touch, or all touches (-1)
- *
- *
+ *  \brief The blend mode used in SDL_RenderCopy() and drawing operations.
  */
-extern DECLSPEC int SDLCALL SDL_RecordGesture(SDL_TouchID touchId);
-
-
-/**
- *  \brief Save all currently loaded Dollar Gesture templates
- *
- *
- */
-extern DECLSPEC int SDLCALL SDL_SaveAllDollarTemplates(SDL_RWops *src);
-
-/**
- *  \brief Save a currently loaded Dollar Gesture template
- *
- *
- */
-extern DECLSPEC int SDLCALL SDL_SaveDollarTemplate(SDL_GestureID gestureId,SDL_RWops *src);
-
-
-/**
- *  \brief Load Dollar Gesture templates from a file
- *
- *
- */
-extern DECLSPEC int SDLCALL SDL_LoadDollarTemplates(SDL_TouchID touchId, SDL_RWops *src);
-
+typedef enum
+{
+    SDL_BLENDMODE_NONE = 0x00000000,     /**< No blending */
+    SDL_BLENDMODE_BLEND = 0x00000001,    /**< dst = (src * A) + (dst * (1-A)) */
+    SDL_BLENDMODE_ADD = 0x00000002,      /**< dst = (src * A) + dst */
+    SDL_BLENDMODE_MOD = 0x00000004       /**< dst = src * dst */
+} SDL_BlendMode;
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
@@ -87,6 +56,6 @@ extern DECLSPEC int SDLCALL SDL_LoadDollarTemplates(SDL_TouchID touchId, SDL_RWo
 #endif
 #include "close_code.h"
 
-#endif /* _SDL_gesture_h */
+#endif /* _SDL_video_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

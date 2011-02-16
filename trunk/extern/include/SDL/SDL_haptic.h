@@ -81,6 +81,10 @@
  *    return 0; // Success
  * }
  * \endcode
+ *
+ * You can also find out more information on my blog:
+ * http://bobbens.dyndns.org/journal/2010/sdl_haptic/
+ *
  * \author Edgar Simo Serra
  */
 

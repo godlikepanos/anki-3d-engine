@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2010 Sam Lantinga
+    Copyright (C) 1997-2011 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -48,7 +48,7 @@ extern DECLSPEC void SDLCALL SDL_ClearError(void);
  *  \name Internal error functions
  *  
  *  \internal 
- *  Private error message function - used internally.
+ *  Private error reporting function - used internally.
  */
 /*@{*/
 #define SDL_OutOfMemory()	SDL_Error(SDL_ENOMEM)
