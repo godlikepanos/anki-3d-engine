@@ -227,7 +227,7 @@ void App::initRenderer()
 void App::togleFullScreen()
 {
 	//SDL_WM_ToggleFullScreen(mainSurf);
-	SDL_SetWindowFullscreen(windowId, fullScreenFlag);
+	SDL_SetWindowFullscreen(windowId, fullScreenFlag ? SDL_TRUE : SDL_FALSE);
 	fullScreenFlag = !fullScreenFlag;
 }
 
@@ -316,7 +316,8 @@ void App::printAppInfo()
 uint App::getDesktopWidth() const
 {
 	SDL_DisplayMode mode;
-	SDL_GetDesktopDisplayMode(&mode);
+	/// @todo re-enable it
+	//SDL_GetDesktopDisplayMode(&mode);
 	return mode.w;
 }
 
@@ -327,7 +328,8 @@ uint App::getDesktopWidth() const
 uint App::getDesktopHeight() const
 {
 	SDL_DisplayMode mode;
-	SDL_GetDesktopDisplayMode(&mode);
+	/// @todo re-enable it
+	//SDL_GetDesktopDisplayMode(&mode);
 	return mode.h;
 }
 
