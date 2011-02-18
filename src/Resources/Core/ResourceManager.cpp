@@ -26,13 +26,14 @@
 	} \
 	\
 	template<> \
-	void ResourceManager::unload<type__>(const Types<type__>::Hook& hook) \
+	void ResourceManager::deallocRsrc<type__>(type__* rsrc) \
 	{ \
-		unloadR<type__>(hook); \
+		delete rsrc; \
 	}
 
 
-SPECIALIZE_TEMPLATE_STUFF(Texture, textures)
+
+//SPECIALIZE_TEMPLATE_STUFF(Texture, textures)
 SPECIALIZE_TEMPLATE_STUFF(ShaderProg, shaderProgs)
 SPECIALIZE_TEMPLATE_STUFF(Material, materials)
 SPECIALIZE_TEMPLATE_STUFF(Mesh, meshes)
@@ -45,10 +46,27 @@ SPECIALIZE_TEMPLATE_STUFF(Model, models)
 SPECIALIZE_TEMPLATE_STUFF(Skin, skins)
 SPECIALIZE_TEMPLATE_STUFF(DummyRsrc, dummies)
 
+//======================================================================================================================
+// Texture Specializations                                                                                             =
+//======================================================================================================================
 
-//======================================================================================================================
-// allocAndLoadRsrc <Texture>                                                                                          =
-//======================================================================================================================
+template<>
+ResourceManager::Types<Texture>::Container& ResourceManager::choseContainer<Texture>()
+{
+	return textures;
+}
+
+
+template<>
+void ResourceManager::deallocRsrc<Texture>(Texture* rsrc)
+{
+	if(rsrc != dummyTex.get() && rsrc != dummyNormTex.get())
+	{
+		delete rsrc;
+	}
+}
+
+
 template<>
 void ResourceManager::allocAndLoadRsrc(const char* filename, Texture*& ptr)
 {

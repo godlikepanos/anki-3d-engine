@@ -20,10 +20,10 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 	{
 		//ERROR("fuckkkkkkkkkk " << e.what());
 
-		if(newInstance != NULL)
+		/*if(newInstance != NULL)
 		{
 			delete newInstance;
-		}
+		}*/
 		
 		throw EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
 	}
@@ -83,7 +83,7 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* f
 // unload                                                                                                              =
 //======================================================================================================================
 template<typename Type>
-void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
+void ResourceManager::unload(const typename Types<Type>::Hook& hook)
 {
 	// Chose container
 	typename Types<Type>::Container& c = choseContainer<Type>();
@@ -97,6 +97,11 @@ void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
 		throw EXCEPTION("Resource hook incorrect (\"" + hook.uuid + "\")");
 	}
 
+	if(it->uuid != hook.uuid)
+	{
+		INFO(it->uuid << " " << hook.uuid);
+	}
+
 	ASSERT(it->uuid == hook.uuid);
 	ASSERT(it->referenceCounter == hook.referenceCounter);
 
@@ -105,7 +110,7 @@ void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
 	// Delete the resource
 	if(it->referenceCounter == 0)
 	{
-		delete it->resource;
+		deallocRsrc(it->resource);
 		c.erase(it);
 	}
 }
