@@ -28,7 +28,7 @@ class Object
 		/// @}
 
 	private:
-		Object* objParent;
+		Object* objParent; ///< May be nullptr
 		Container objChilds;
 
 		void addChild(Object* child);

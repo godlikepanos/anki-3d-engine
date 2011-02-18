@@ -12,6 +12,9 @@ class GhostNode: public SceneNode
 		GhostNode(): SceneNode(SNT_GHOST, false, NULL) {}
 		~GhostNode() {}
 		void init(const char*) {}
+
+		void moveUpdate() {}
+		void frameUpdate() {}
 };
 
 

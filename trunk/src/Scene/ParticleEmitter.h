@@ -41,7 +41,8 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		RsrcPtr<ParticleEmitterProps> particleEmitterProps; ///< The resource
 		static btTransform startingTrf;
 
-		void update();
+		void frameUpdate();
+		void moveUpdate() {}
 };
 
 

@@ -19,9 +19,9 @@ void ModelNode::init(const char* filename)
 
 
 //======================================================================================================================
-// updateTrf                                                                                                           =
+// moveUpdate                                                                                                          =
 //======================================================================================================================
-void ModelNode::updateTrf()
+void ModelNode::moveUpdate()
 {
 	// Update bounding shape
 	boundingShapeWSpace = model->getBoundingShape().getTransformed(worldTransform);

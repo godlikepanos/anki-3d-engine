@@ -33,6 +33,14 @@ VisibilityTester::VisibilityTester(Scene& scene_):
 void VisibilityTester::test(Camera& cam)
 {
 	//
+	// Set all nodes to not visible
+	//
+	BOOST_FOREACH(SceneNode* node, scene.getAllNodes())
+	{
+		node->setVisible(false);
+	}
+
+	//
 	// Collect the lights for the main cam
 	//
 	cam.getVisiblePointLights().clear();
@@ -51,6 +59,7 @@ void VisibilityTester::test(Camera& cam)
 				if(cam.insideFrustum(sphere))
 				{
 					cam.getVisiblePointLights().push_back(pointl);
+					pointl->setVisible(true);
 				}
 				break;
 			}
@@ -62,6 +71,7 @@ void VisibilityTester::test(Camera& cam)
 				if(cam.insideFrustum(spotl->getCamera()))
 				{
 					cam.getVisibleSpotLights().push_back(spotl);
+					spotl->setVisible(true);
 				}
 				break;
 			}
@@ -101,7 +111,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 	cam.getVisibleMsRenderableNodes().clear();
 	cam.getVisibleBsRenderableNodes().clear();
 
-	BOOST_FOREACH(const ModelNode* node, scene.getModelNodes())
+	BOOST_FOREACH(ModelNode* node, scene.getModelNodes())
 	{
 		// Skip if the ModeNode is not visible
 		if(!test(*node, cam))
@@ -109,8 +119,10 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 			continue;
 		}
 
+		node->setVisible(true);
+
 		// If not test every patch individually
-		BOOST_FOREACH(const ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
+		BOOST_FOREACH(ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
 		{
 			// Skip shadowless
 			if(skipShadowless && !modelPatchNode->getCpMtl().isShadowCaster())
@@ -129,6 +141,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 				{
 					cam.getVisibleMsRenderableNodes().push_back(modelPatchNode);
 				}
+				modelPatchNode->setVisible(true);
 			}
 		}
 	}

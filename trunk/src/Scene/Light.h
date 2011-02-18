@@ -21,7 +21,7 @@ Specular intensity of material: Sm
 #include "SceneNode.h"
 #include "Camera.h"
 #include "RsrcPtr.h"
-#include "LightData.h"
+#include "LightRsrc.h"
 
 
 /// Light scene node. It can be spot or point
@@ -44,11 +44,18 @@ class Light: public SceneNode
 	/// @}
 
 	public:
-		RsrcPtr<LightData> lightData;
+		RsrcPtr<LightRsrc> lightData;
 	
 		Light(LightType type, bool compoundFlag, SceneNode* parent = NULL);
 		~Light() {}
 		void init(const char* filename);
+
+		void moveUpdate() {}
+		void frameUpdate() {}
+
+	private:
+		//LightType type;
+
 };
 
 

@@ -7,13 +7,13 @@
 class Light;
 
 
-class LightPropsScriptCtrl: public Controller
+/*class LightPropsScriptCtrl: public Controller
 {
 	public:
 		Light* light;
 		
 		LightPropsScriptCtrl(Light* light_): controller(CT_LIGHT), light(light_) {}
-		void update(float) { /* ToDo */ }
-};
+		void update(float) {  ToDo  }
+};*/
 
 #endif

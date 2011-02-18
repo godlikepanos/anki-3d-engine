@@ -11,7 +11,7 @@
 // SkelAnimModelNodeCtrl                                                                                               =
 //======================================================================================================================
 SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(SkinNode& skinNode_):
-	Controller(CT_SKEL_ANIM),
+	Controller(CT_SKEL_ANIM_SKIN_NODE, skinNode_),
 	frame(0.0),
 	skinNode(skinNode_)
 {}
@@ -26,7 +26,7 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 	ASSERT(frame < animation.framesNum);
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the frame and
-	// calc the lPose and rPose witch indicate the pose ids in witch the frame lies between
+	// calc the lPose and rPose witch indicate the pose IDs in witch the frame lies between
 	const Vec<uint>& keyframes = animation.keyframes;
 	float t = 0.0;
 	uint lPose = 0, rPose = 0;
@@ -160,6 +160,11 @@ void SkelAnimModelNodeCtrl::update(float)
 	if(frame > skelAnim->framesNum) // if the crnt is finished then play the next or loop the crnt
 	{
 		frame = 0.0;
+	}
+
+	if(!controlledNode.isVisible())
+	{
+		return;
 	}
 
 	interpolate(*skelAnim, frame, skinNode.getBoneTranslations(), skinNode.getBoneRotations());

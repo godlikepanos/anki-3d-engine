@@ -42,7 +42,7 @@ class SkinNode: public SceneNode
 
 		/// Update boundingShapeWSpace from bone tails (not bone and heads cause its faster that way). The tails come from
 		/// the previous frame
-		void updateTrf();
+		void moveUpdate();
 
 	private:
 		RsrcPtr<Skin> skin; ///< The resource

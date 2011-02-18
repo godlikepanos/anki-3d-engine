@@ -18,7 +18,7 @@
 #include "skybox.h"
 #include "map.h"
 #include "SkelAnim.h"
-#include "LightData.h"
+#include "LightRsrc.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
 #include "PhyCharacter.h"
@@ -328,8 +328,8 @@ void mainLoop()
 		AppSingleton::getInstance().execStdinScpripts();
 		SceneSingleton::getInstance().getPhysics().update(timer.getCrntTime());
 		SceneSingleton::getInstance().updateAllWorldStuff();
-		SceneSingleton::getInstance().updateAllControllers();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
+		SceneSingleton::getInstance().updateAllControllers();
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 

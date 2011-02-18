@@ -132,8 +132,8 @@ void Scene::updateAllWorldStuff()
 		SceneNode* obj = queue[head++]; // queue pop
 
 		obj->updateWorldTransform();
-		obj->updateTrf();
-		obj->update();
+		obj->frameUpdate();
+		obj->moveUpdate();
 		++num;
 
 		Object::Container::iterator it = obj->getObjChildren().begin();

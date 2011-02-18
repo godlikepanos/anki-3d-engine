@@ -7,7 +7,7 @@
 void SpotLight::init(const char* filename)
 {
 	Light::init(filename);
-	if(lightData->getType() != LightData::LT_SPOT)
+	if(lightData->getType() != LightRsrc::LT_SPOT)
 	{
 		throw EXCEPTION("Light data is wrong type");
 	}

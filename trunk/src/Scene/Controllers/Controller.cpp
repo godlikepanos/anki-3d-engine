@@ -6,8 +6,9 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Controller::Controller(ControllerType type_):
-	type(type_) 
+Controller::Controller(ControllerType type_, SceneNode& node):
+	controlledNode(node),
+	type(type_)
 {
 	SceneSingleton::getInstance().registerController(this);
 }

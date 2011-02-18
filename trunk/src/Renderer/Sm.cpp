@@ -3,7 +3,7 @@
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
-#include "LightData.h"
+#include "LightRsrc.h"
 #include "Camera.h"
 #include "RendererInitializer.h"
 

@@ -8,7 +8,7 @@
 
 
 /// Light properties Resource
-class LightData
+class LightRsrc
 {
 	public:
 		enum LightType
@@ -39,8 +39,8 @@ class LightData
 	/// @}
 		
 	public:
-		LightData();
-		~LightData() {}
+		LightRsrc();
+		~LightRsrc() {}
 		void load(const char* filename);
 		const Texture& getTexture() const;
 
@@ -52,7 +52,7 @@ class LightData
 };
 
 
-inline const Texture& LightData::getTexture() const
+inline const Texture& LightRsrc::getTexture() const
 {
 	ASSERT(texture.get() != NULL);
 	return *texture;

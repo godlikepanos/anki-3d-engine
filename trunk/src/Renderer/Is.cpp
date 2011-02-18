@@ -1,14 +1,16 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/array.hpp>
+
 #include "Is.h"
 #include "Renderer.h"
 #include "Camera.h"
 #include "Light.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "LightData.h"
+#include "LightRsrc.h"
 #include "App.h"
-#include "LightData.h"
+#include "LightRsrc.h"
 #include "Sm.h"
 #include "Smo.h"
 #include "Scene.h"
@@ -29,18 +31,18 @@ Is::Is(Renderer& r_):
 //======================================================================================================================
 void Is::calcViewVectors()
 {
-	Vec3 viewVectors[4];
+	boost::array<Vec3, 4> viewVectors;
 
 	const Camera& cam = r.getCamera();
 
-	const uint& w = r.getWidth();
-	const uint& h = r.getHeight();
+	uint w = r.getWidth();
+	uint h = r.getHeight();
 
 	// From right up and CC wise to right down, Just like we render the quad
-	uint pixels[4][2]={{w, h}, {0, h}, {0, 0}, {w, 0}};
-	uint viewport[4]={0, 0, w, h};
+	uint pixels[4][2] = {{w, h}, {0, h}, {0, 0}, {w, 0}};
+	boost::array<uint, 4> viewport = {{0, 0, w, h}};
 
-	for(int i=0; i<4; i++)
+	for(int i = 0; i < 4; i++)
 	{
 		/*
 		Original Code:
@@ -60,7 +62,7 @@ void Is::calcViewVectors()
 	}
 
 	ASSERT(sizeof(viewVectors) == viewVectorsVbo.getSizeInBytes());
-	viewVectorsVbo.write(viewVectors);
+	viewVectorsVbo.write(&viewVectors[0]);
 }
 
 

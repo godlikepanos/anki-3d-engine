@@ -4,7 +4,6 @@
 #include <memory>
 #include "Math.h"
 #include "Object.h"
-#include "Properties.h"
 
 
 class Material;
@@ -34,24 +33,37 @@ class SceneNode: private Object
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Transform, localTransform, getLocalTransform, setLocalTransform)
-		GETTER_SETTER(Transform, worldTransform, getWorldTransform, setWorldTransform)
+		const Transform& getLocalTransform() const {return localTransform;}
+		Transform& getLocalTransform() {return localTransform;}
+		void setLocalTransform(const Transform& t) {localTransform = t;}
+
+		const Transform& getWorldTransform() const {return worldTransform;}
+		Transform& getWorldTransform() {return worldTransform;}
+		void setWorldTransform(const Transform& t) {worldTransform = t;}
+
 		SceneNodeType getSceneNodeType() const {return type;}
+
+		bool isVisible() const {return visible;}
+		void setVisible(bool v) {visible = v;}
 		/// @}
 
 		/// @name Updates
 		/// Two separate updates for the main loop. The update happens anyway and the updateTrf only when the node is being
 		/// moved
 		/// @{
-		virtual void update() {}
-		virtual void updateTrf() {}
+
+		/// This is called every frame
+		virtual void frameUpdate() = 0;
+
+		/// This is called if the node moved
+		virtual void moveUpdate() = 0;
 		/// @}
 
 		/// @name Mess with the local transform
 		/// @{
-		void rotateLocalX(float angDegrees) {localTransform.getRotation().rotateXAxis(angDegrees);}
-		void rotateLocalY(float angDegrees) {localTransform.getRotation().rotateYAxis(angDegrees);}
-		void rotateLocalZ(float angDegrees) {localTransform.getRotation().rotateZAxis(angDegrees);}
+		void rotateLocalX(float angDegrees) {getLocalTransform().getRotation().rotateXAxis(angDegrees);}
+		void rotateLocalY(float angDegrees) {getLocalTransform().getRotation().rotateYAxis(angDegrees);}
+		void rotateLocalZ(float angDegrees) {getLocalTransform().getRotation().rotateZAxis(angDegrees);}
 		void moveLocalX(float distance);
 		void moveLocalY(float distance);
 		void moveLocalZ(float distance);
@@ -64,6 +76,12 @@ class SceneNode: private Object
 	private:
 		SceneNodeType type;
 		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
+
+		/// @name Runtime info
+		/// @{
+		bool visible; ///< Visible by any camera
+		bool moved;
+		/// @}
 
 		void updateWorldTransform(); ///< This update happens only when the object gets moved
 };
