@@ -1,5 +1,5 @@
 #include <cstring>
-#include "LightData.h"
+#include "LightRsrc.h"
 #include "Parser.h"
 #include "Texture.h"
 
@@ -7,7 +7,7 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-LightData::LightData():
+LightRsrc::LightRsrc():
 	diffuseCol(0.5),
 	specularCol(0.5),
 	castsShadow_(false),
@@ -21,7 +21,7 @@ LightData::LightData():
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-void LightData::load(const char* filename)
+void LightRsrc::load(const char* filename)
 {
 	Scanner scanner(filename);
 	const Scanner::Token* token;

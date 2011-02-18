@@ -5,13 +5,13 @@
 
 
 /// Transformation controlled by a script
-class TrfScriptCtrl: public Controller
+/*class TrfScriptCtrl: public Controller
 {
 	public:
 		SceneNode* node;
 	
 		TrfScriptCtrl(SceneNode* node_): Controller(CT_TRF), node(node_) {}
-		void Update(float) { /* ToDo */ }
-};
+		void Update(float) {  ToDo  }
+};*/
 
 #endif

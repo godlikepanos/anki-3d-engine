@@ -68,9 +68,9 @@ void ParticleEmitter::init(const char* filename)
 
 
 //======================================================================================================================
-// update                                                                                                              =
+// frameUpdate                                                                                                         =
 //======================================================================================================================
-void ParticleEmitter::update()
+void ParticleEmitter::frameUpdate()
 {
 	float crntTime = AppSingleton::getInstance().getTicks() / 1000.0;
 

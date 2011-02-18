@@ -1,7 +1,7 @@
 #include "Smo.h"
 #include "Renderer.h"
 #include "Light.h"
-#include "LightData.h"
+#include "LightRsrc.h"
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "Camera.h"

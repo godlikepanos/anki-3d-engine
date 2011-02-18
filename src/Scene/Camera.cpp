@@ -183,9 +183,9 @@ void Camera::updateViewMatrix()
 
 
 //======================================================================================================================
-// updateTrf                                                                                                           =
+// moveUpdate                                                                                                          =
 //======================================================================================================================
-void Camera::updateTrf()
+void Camera::moveUpdate()
 {
 	updateViewMatrix();
 	updateWSpaceFrustumPlanes();

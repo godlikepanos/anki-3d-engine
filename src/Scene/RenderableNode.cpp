@@ -11,9 +11,9 @@ RenderableNode::RenderableNode(const Sphere& boundingShapeLSpace_, SceneNode* pa
 
 
 //======================================================================================================================
-// updateTrf                                                                                                           =
+// moveUpdate                                                                                                          =
 //======================================================================================================================
-void RenderableNode::updateTrf()
+void RenderableNode::moveUpdate()
 {
 	boundingShapeWSpace = boundingShapeLSpace.getTransformed(getWorldTransform());
 }

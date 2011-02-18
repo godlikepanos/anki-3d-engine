@@ -19,9 +19,9 @@ void SkinNode::init(const char* filename)
 
 
 //======================================================================================================================
-// updateTrf                                                                                                           =
+// moveUpdate                                                                                                          =
 //======================================================================================================================
-void SkinNode::updateTrf()
+void SkinNode::moveUpdate()
 {
 	boundingShapeWSpace.set(tails);
 	boundingShapeWSpace = boundingShapeWSpace.getTransformed(worldTransform);

@@ -58,7 +58,10 @@ class Camera: public SceneNode
 		/// This does:
 		/// - Update view matrix
 		/// - Update frustum planes
-		void updateTrf();
+		void moveUpdate();
+
+		/// Do nothing
+		void frameUpdate() {}
 
 		/// Do nothing
 		void init(const char*) {}

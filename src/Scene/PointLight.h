@@ -18,7 +18,7 @@ class PointLight: public Light
 inline void PointLight::init(const char* filename)
 {
 	Light::init(filename);
-	if(lightData->getType() != LightData::LT_POINT)
+	if(lightData->getType() != LightRsrc::LT_POINT)
 	{
 		throw EXCEPTION("Light data is wrong type");
 		return;

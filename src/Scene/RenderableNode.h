@@ -23,7 +23,8 @@ class RenderableNode: public SceneNode
 		const Sphere& getBoundingShapeWSpace() const {return boundingShapeWSpace;}
 
 		/// Update the bounding shape
-		virtual void updateTrf();
+		virtual void moveUpdate();
+		void frameUpdate() {}
 
 	private:
 		Sphere boundingShapeLSpace;

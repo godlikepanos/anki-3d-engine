@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <boost/foreach.hpp>
+
 #include "Object.h"
 #include "Assert.h"
 #include "Exception.h"
@@ -28,9 +30,9 @@ Object::~Object()
 	}
 
 	// delete all children
-	for(Container::reverse_iterator it=objChilds.rbegin(); it!=objChilds.rend(); it++)
+	BOOST_REVERSE_FOREACH(Object* child, objChilds)
 	{
-		delete *it;
+		delete child;
 	}
 }
 

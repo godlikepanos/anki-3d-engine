@@ -31,7 +31,9 @@ class ModelNode: public SceneNode
 		void init(const char* filename);
 
 		/// Update the bounding shape
-		void updateTrf();
+		void moveUpdate();
+
+		void frameUpdate() {}
 
 		/// @name Accessors
 		/// @{
