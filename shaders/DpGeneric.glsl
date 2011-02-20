@@ -1,9 +1,7 @@
 /// Control defines:
-/// ALPHA_TESTING, HARDWARE_SKINNING
+/// ALPHA_TESTING
 
 #pragma anki vertShaderBegins
-
-#pragma anki include "shaders/hw_skinning.glsl"
 
 uniform mat4 modelViewProjectionMat;
 
@@ -20,17 +18,7 @@ void main()
 		vTexCoords = texCoords;
 	#endif
 
-	#if defined(HARDWARE_SKINNING)
-		mat3 _rot_;
-		vec3 _tsl_;
-
-		HWSkinning(_rot_, _tsl_);
-
-		vec3 _posLocalSpace_ = (_rot_ * position) + _tsl_;
-		gl_Position = modelViewProjectionMat * vec4(_posLocalSpace_, 1.0);
-	#else
-	  gl_Position = modelViewProjectionMat * vec4(position, 1.0);
-	#endif
+	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 
 #pragma anki fragShaderBegins

@@ -50,7 +50,7 @@ class Logger
 		void write(const char* file, int line, const char* func, const char* msg);
 
 	private:
-		static const int STREAM_SIZE = 512;
+		static const int STREAM_SIZE = 2048;
 		boost::array<char, STREAM_SIZE> streamBuf;
 		char* sptr; ///< Pointer to @ref streamBuf
 		Signal sig; ///< The signal
@@ -135,7 +135,7 @@ inline LoggerSender setSender(const char* file, int line, const char* func)
 //======================================================================================================================
 
 #define LOGGER_MESSAGE(x) \
-	LoggerSingleton::getInstance()  << setSender(__FILE__, __LINE__, __PRETTY_FUNCTION__) << x << endl;
+	LoggerSingleton::getInstance()  << setSender(__FILE__, __LINE__, __func__) << x << endl;
 
 #define INFO(x) LOGGER_MESSAGE("Info: " << x)
 

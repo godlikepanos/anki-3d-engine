@@ -33,7 +33,7 @@ class Exception: public std::exception
 // Macros                                                                                                              =
 //======================================================================================================================
 
-#define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __func__)
 
 
 #endif

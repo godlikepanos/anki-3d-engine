@@ -157,8 +157,7 @@ void init()
 
 	// Pentagram
 	ModelNode* pentagram = new ModelNode();
-	//pentagram->init("models/pentagram/pentagram.mdl");
-	pentagram->init("models/imp/imp.mdl");
+	pentagram->init("models/pentagram/pentagram.mdl");
 	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
 
 
