@@ -96,7 +96,9 @@ void Logger::append(const char* cstr, int len)
 
 	if(len > STREAM_SIZE - 1)
 	{
-		return;
+		const char ERR[] = "**logger buffer overflow**";
+		cstr = ERR;
+		len = sizeof(ERR);
 	}
 
 	int charsLeft = &streamBuf[STREAM_SIZE - 1] - sptr; // Leaving an extra char for the '\0'

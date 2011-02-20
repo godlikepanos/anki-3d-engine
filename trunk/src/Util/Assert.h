@@ -9,7 +9,7 @@
 #if DEBUG_ENABLED == 1
 	#define ASSERT(x) \
 		if(!(x)) { \
-			std::cerr << "(" << __FILE__ << ":" << __LINE__ << " " << __PRETTY_FUNCTION__ << ") " << \
+			std::cerr << "(" << __FILE__ << ":" << __LINE__ << " " << __func__ << ") " << \
 			             "Assertion failed: " << #x << std::endl; \
 			asm("int $3"); \
 			abort(); \
