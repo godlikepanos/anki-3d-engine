@@ -100,8 +100,8 @@ class Camera: public SceneNode
 
 		/// Used in deferred shading for the calculation of view vector (see CalcViewVector). The reason we store this
 		/// matrix here is that we dont want it to be re-calculated all the time but only when the projection params
-		/// (fovX, fovY, zNear, zFar) change. Fortunately the projection params change rarely. Note that the Camera as we
-		/// all know re-calculates the matrices only when the parameters change!!
+		/// (fovX, fovY, zNear, zFar) change. Fortunately the projection params change rarely. Note that the Camera as
+		/// we all know re-calculates the matrices only when the parameters change!!
 		Mat4 invProjectionMat;
 		/// @}
 

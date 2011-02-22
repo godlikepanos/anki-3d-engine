@@ -11,6 +11,7 @@ class Scene;
 class RenderableNode;
 class SpotLight;
 class PointLight;
+class SceneNode;
 
 
 /// Performs visibility determination tests and fills a few containers with the visible scene nodes
@@ -39,7 +40,7 @@ class VisibilityTester
 		{
 			Vec3 o; ///< The camera origin
 			CmpDistanceFromOrigin(Vec3 o_): o(o_) {}
-			bool operator()(const RenderableNode* a, const RenderableNode* b) const;
+			bool operator()(const SceneNode* a, const SceneNode* b) const;
 		};
 
 		Scene& scene; ///< Know your father
