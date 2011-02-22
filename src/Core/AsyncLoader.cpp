@@ -15,7 +15,7 @@ void AsyncLoader::start()
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-void AsyncLoader::load(const char* filename, void (*loadCallback)(const char*, void*), void* storage)
+void AsyncLoader::load(const char* filename, LoadCallback loadCallback, void* storage)
 {
 	INFO("New load request for \"" << filename << "\"");
 	boost::mutex::scoped_lock lock(mutexReq);

@@ -12,7 +12,7 @@
 //======================================================================================================================
 // CmpDistanceFromOrigin::operator()                                                                                   =
 //======================================================================================================================
-bool VisibilityTester::CmpDistanceFromOrigin::operator()(const RenderableNode* a, const RenderableNode* b) const
+bool VisibilityTester::CmpDistanceFromOrigin::operator()(const SceneNode* a, const SceneNode* b) const
 {
 	return (a->getWorldTransform().getOrigin() - o).getLengthSquared() <
 	       (b->getWorldTransform().getOrigin() - o).getLengthSquared();

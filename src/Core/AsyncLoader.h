@@ -15,6 +15,9 @@
 class AsyncLoader
 {
 	public:
+		/// Type of the callback function that the async loader wants
+		typedef void (*LoadCallback)(const char*, void*);
+	
 		/// Default constructor starts the thread
 		AsyncLoader() {start();}
 		
@@ -27,7 +30,7 @@ class AsyncLoader
 		/// It can throw an exception in case of a loading error
 		/// @param storage This points to the storage that the loader will store the data. The storage should not be
 		/// destroyed from other threads
-		void load(const char* filename, void (*loadCallback)(const char*, void*), void* storage);
+		void load(const char* filename, LoadCallback loadCallback, void* storage);
 
 		/// Query the loader and see if its got something
 		/// @param[out] filename The file that finished loading
@@ -41,7 +44,7 @@ class AsyncLoader
 		struct Request
 		{
 			std::string filename;
-			void (*loadCallback)(const char*, void*);
+			LoadCallback loadCallback;
 			void* storage;
 		};
 
@@ -50,7 +53,7 @@ class AsyncLoader
 		{
 			std::string filename;
 			void* storage;
-			bool ok;
+			bool ok; ///< True if the loading was successful
 		};
 
 		std::list<Request> requests;
