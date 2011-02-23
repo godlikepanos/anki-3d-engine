@@ -105,7 +105,7 @@ class Camera: public SceneNode
 		Mat4 invProjectionMat;
 		/// @}
 
-		/// @name Visibility containers
+		/// @name Visible nodes
 		/// @{
 		std::deque<const RenderableNode*> msRenderableNodes;
 		std::deque<const RenderableNode*> bsRenderableNodes;

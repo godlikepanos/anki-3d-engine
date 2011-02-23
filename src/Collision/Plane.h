@@ -3,15 +3,11 @@
 
 #include "CollisionShape.h"
 #include "Math.h"
-#include "Properties.h"
 
 
 /// Plane collision shape
 class Plane: public CollisionShape
 {
-	PROPERTY_RW(Vec3, normal, getNormal, setNormal)
-	PROPERTY_RW(float, offset, getOffset, setOffset)
-
 	public:
 		/// Default constructor
 		Plane(): CollisionShape(CST_PLANE) {}
@@ -27,6 +23,17 @@ class Plane: public CollisionShape
 
 		/// @see setFromPlaneEquation
 		Plane(float a, float b, float c, float d);
+
+		/// @name Accessors
+		/// @{
+		const Vec3& getNormal() const {return normal;}
+		Vec3& getNormal() {return normal;}
+		void setNormal(const Vec3& n) {normal = n;}
+
+		float getOffset() const {return offset;}
+		float& getOffset() {return offset;}
+		void setOffset(float o) {offset = o;}
+		/// @}
 
 		/// Return the transformed
 		Plane getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const;
@@ -46,6 +53,12 @@ class Plane: public CollisionShape
 		float testPlane(const Plane&) const {return 0.0;}
 
 	private:
+		/// @name Data
+		/// @{
+		Vec3 normal;
+		float offset;
+		/// @}
+
 		/// Set the plane from 3 points
 		void setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2);
 
