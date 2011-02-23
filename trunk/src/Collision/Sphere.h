@@ -37,10 +37,7 @@ class Sphere: public CollisionShape
 		/// @see CollisionShape::testPlane
 		float testPlane(const Plane& plane) const;
 
-		/// Set from a container containing Vec3s
-		/// @param pointer The start of the array
-		/// @param stride The space between the elements
-		/// @param count The number of 3D vectors
+		/// Calculate from a set of points
 		template<typename Container>
 		void set(const Container& container);
 

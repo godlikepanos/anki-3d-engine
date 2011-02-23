@@ -121,7 +121,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 
 		node->setVisible(true);
 
-		// If not test every patch individually
+		// If visible test every patch individually
 		BOOST_FOREACH(ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
 		{
 			// Skip shadowless
@@ -133,7 +133,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 			// Test if visible by main camera
 			if(test(*modelPatchNode, cam))
 			{
-				if(modelPatchNode->getCpMtl().isBlendingEnabled())
+				if(modelPatchNode->getCpMtl().renderInBlendingStage())
 				{
 					cam.getVisibleBsRenderableNodes().push_back(modelPatchNode);
 				}
