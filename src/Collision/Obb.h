@@ -1,6 +1,7 @@
 #ifndef OBB_H
 #define OBB_H
 
+#include <boost/array.hpp>
 #include "CollisionShape.h"
 #include "Math.h"
 
@@ -33,6 +34,9 @@ class Obb: public CollisionShape
 
 		Obb getTransformed(const Transform& transform) const;
 
+		/// Get a collision shape that includes this and the given. Its not very accurate
+		Obb getCompoundShape(const Obb& b) const;
+
 		/// @see CollisionShape::testPlane
 		float testPlane(const Plane& plane) const;
 
@@ -45,8 +49,11 @@ class Obb: public CollisionShape
 		/// @{
 		Vec3 center;
 		Mat3 rotation;
-		Vec3 extends;
+		Vec3 extends; ///< With identity rotation this points to max (front, right, top in our case)
 		/// @}
+
+		/// Get extreme points in 3D space
+		void getExtremePoints(boost::array<Vec3, 8>& points) const;
 };
 
 

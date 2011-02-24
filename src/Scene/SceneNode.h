@@ -4,6 +4,7 @@
 #include <memory>
 #include "Math.h"
 #include "Object.h"
+#include "Obb.h"
 
 
 class Material;
@@ -16,6 +17,8 @@ class SceneNode: private Object
 	friend class Scene;
 
 	public:
+		typedef Obb VisibilityCollisionShape;
+
 		enum SceneNodeType
 		{
 			SNT_GHOST,
