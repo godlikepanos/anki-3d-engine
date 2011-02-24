@@ -21,6 +21,32 @@ Sphere Sphere::getCompoundSphere(const Sphere& b) const
 {
 	const Sphere& a = *this;
 
+	/// @todo test this
+	/*
+	Vec3 centerDiff = b.center - a.center;
+	float radiusDiff = b.radius - a.radius;
+	Vec3 radiusDiffSqr = radiusDiff * radiusDiff;
+	float lenSqr = centerDiff.getLengthSquared();
+
+	if(radiusDiffSqrt >= 0.0)
+	{
+		if(radiusDiff >= 0.0)
+		{
+			return b;
+		}
+		else
+		{
+			return a;
+		}
+	}
+	else
+	{
+		float l = sqrt(lenSqr);
+		float t = (l + b.radius - a.radius) / (2.0 * l);
+		return Sphere(a.center + t * centerDiff, (l + a.radius + b.radius) / 2.0);
+	}
+	*/
+
 	Vec3 c = b.getCenter() - a.getCenter(); // vector from one center to the other
 	float cLen = c.getLength();
 
