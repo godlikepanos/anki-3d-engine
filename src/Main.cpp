@@ -152,8 +152,9 @@ void init()
 
 	// Sponza
 	ModelNode* sponza = new ModelNode();
-	sponza->init("maps/sponza/sponza.mdl");
-
+	//sponza->init("maps/sponza/sponza.mdl");
+	sponza->init("maps/sponza-crytek/sponza_crytek.mdl");
+	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));
 
 	// Pentagram
 	ModelNode* pentagram = new ModelNode();
