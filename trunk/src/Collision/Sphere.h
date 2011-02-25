@@ -2,7 +2,6 @@
 #define SPHERE_H
 
 #include "CollisionShape.h"
-#include "Properties.h"
 #include "Math.h"
 
 
@@ -24,15 +23,20 @@ class Sphere: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, center, getCenter, setCenter)
-		GETTER_SETTER_BY_VAL(float, radius, getRadius, setRadius)
+		const Vec3& getCenter() const {return center;}
+		Vec3& getCenter() {return center;}
+		void setCenter(const Vec3& c) {center = c;}
+
+		float getRadius() const {return radius;}
+		float& getRadius() {return radius;}
+		void setRadius(float f) {radius = f;}
 		/// @}
 
 		Sphere getTransformed(const Transform& transform) const;
 
 		/// Get the sphere that includes this sphere and the given. See a drawing in the docs dir for more info about the
 		/// algorithm
-		Sphere getCompoundSphere(const Sphere& b) const;
+		Sphere getCompoundShape(const Sphere& b) const;
 
 		/// @see CollisionShape::testPlane
 		float testPlane(const Plane& plane) const;

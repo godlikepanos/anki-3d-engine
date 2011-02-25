@@ -553,9 +553,9 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 		return v;
 	#else
 		return Vec4(SELF(0, 0) * b.x() + SELF(0, 1) * b.y() + SELF(0, 2) * b.z() + SELF(0, 3) * b.w(),
-	              SELF(1, 0) * b.x() + SELF(1, 1) * b.y() + SELF(1, 2) * b.z() + SELF(1, 3) * b.w(),
-	              SELF(2, 0) * b.x() + SELF(2, 1) * b.y() + SELF(2, 2) * b.z() + SELF(2, 3) * b.w(),
-	              SELF(3, 0) * b.x() + SELF(3, 1) * b.y() + SELF(3, 2) * b.z() + SELF(3, 3) * b.w());
+		            SELF(1, 0) * b.x() + SELF(1, 1) * b.y() + SELF(1, 2) * b.z() + SELF(1, 3) * b.w(),
+		            SELF(2, 0) * b.x() + SELF(2, 1) * b.y() + SELF(2, 2) * b.z() + SELF(2, 3) * b.w(),
+		            SELF(3, 0) * b.x() + SELF(3, 1) * b.y() + SELF(3, 2) * b.z() + SELF(3, 3) * b.w());
 	#endif
 }
 
