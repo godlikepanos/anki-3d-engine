@@ -20,7 +20,8 @@ Dbg::Dbg(Renderer& r_):
 	showSkeletonsEnabled(true),
 	showCamerasEnabled(true),
 	showVisibilityBoundingShapesFlag(true),
-	sceneDbgDrawer(*this)
+	sceneDbgDrawer(*this),
+	collisionDbgDrawer(*this)
 {}
 
 
@@ -277,8 +278,7 @@ void Dbg::run()
 				if(showVisibilityBoundingShapesFlag)
 				{
 					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
-					setModelMat(Mat4(rnode.getBoundingShapeWSpace().getCenter(), Mat3::getIdentity(), 1.0));
-					drawSphere(rnode.getBoundingShapeWSpace().getRadius());
+					collisionDbgDrawer.draw(rnode.getBoundingShapeWSpace());
 				}
 				break;
 			default:

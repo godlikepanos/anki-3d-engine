@@ -11,6 +11,7 @@
 #include "Vbo.h"
 #include "Vao.h"
 #include "SceneDbgDrawer.h"
+#include "CollisionDbgDrawer.h"
 #include "Properties.h"
 
 
@@ -63,6 +64,9 @@ class Dbg: public RenderingPass
 		Vbo colorsVbo;
 		Vao vao;
 		SceneDbgDrawer sceneDbgDrawer;
+		CollisionDbgDrawer collisionDbgDrawer;
+
+
 		/// This is a container of some precalculated spheres. Its a map that from sphere complexity it returns a vector
 		/// of lines (Vec3s in pairs)
 		std::map<uint, Vec<Vec3> > complexityToPreCalculatedSphere;
