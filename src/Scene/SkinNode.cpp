@@ -24,5 +24,5 @@ void SkinNode::init(const char* filename)
 void SkinNode::moveUpdate()
 {
 	boundingShapeWSpace.set(tails);
-	boundingShapeWSpace = boundingShapeWSpace.getTransformed(worldTransform);
+	boundingShapeWSpace = boundingShapeWSpace.getTransformed(getWorldTransform());
 }

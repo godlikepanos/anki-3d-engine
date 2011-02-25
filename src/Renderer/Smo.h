@@ -32,6 +32,7 @@ class Smo: public RenderingPass
 
 		/// @name Camera shape stuff
 		/// @{
+		static float camPositions[];
 		Vbo cameraPositionsVbo; ///< A camera shape
 		Vbo cameraVertIndecesVbo; ///< The vertex indeces
 		Vao cameraVao; ///< And another VAO

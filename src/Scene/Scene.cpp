@@ -34,7 +34,7 @@ void Scene::registerNode(SceneNode* node)
 {
 	putBackNode(nodes, node);
 	
-	switch(node->type)
+	switch(node->getSceneNodeType())
 	{
 		case SceneNode::SNT_LIGHT:
 			putBackNode(lights, static_cast<Light*>(node));
@@ -65,7 +65,7 @@ void Scene::unregisterNode(SceneNode* node)
 {
 	eraseNode(nodes, node);
 	
-	switch(node->type)
+	switch(node->getSceneNodeType())
 	{
 		case SceneNode::SNT_LIGHT:
 			eraseNode(lights, static_cast<Light*>(node));
@@ -118,28 +118,27 @@ void Scene::updateAllWorldStuff()
 
 
 	// put the roots
-	for(uint i=0; i<nodes.size(); i++)
+	BOOST_FOREACH(SceneNode* node, nodes)
 	{
-		if(nodes[i]->getObjParent() == NULL)
+		if(node->getParent() == NULL)
 		{
-			queue[tail++] = nodes[i]; // queue push
+			queue[tail++] = node; // queue push
 		}
 	}
 
 	// loop
 	while(head != tail) // while queue not empty
 	{
-		SceneNode* obj = queue[head++]; // queue pop
+		SceneNode* pnode = queue[head++]; // queue pop
 
-		obj->updateWorldTransform();
-		obj->frameUpdate();
-		obj->moveUpdate();
+		pnode->updateWorldTransform();
+		pnode->frameUpdate();
+		pnode->moveUpdate();
 		++num;
 
-		Object::Container::iterator it = obj->getObjChildren().begin();
-		for(; it != obj->getObjChildren().end(); it++)
+		BOOST_FOREACH(Object* obj, pnode->getChildren())
 		{
-			SceneNode* node = static_cast<SceneNode*>(*it);
+			SceneNode* node = static_cast<SceneNode*>(obj);
 			queue[tail++] = node;
 		}
 	}

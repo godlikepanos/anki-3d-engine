@@ -12,10 +12,8 @@ class Controller;
 
 
 /// The backbone of scene. It is also an Object for memory management reasons
-class SceneNode: private Object
+class SceneNode: public Object
 {
-	friend class Scene;
-
 	public:
 		typedef Obb VisibilityCollisionShape;
 
@@ -46,6 +44,11 @@ class SceneNode: private Object
 
 		SceneNodeType getSceneNodeType() const {return type;}
 
+		const Object* getParent() const {return getObjParent();}
+		Object* getParent() {return getObjParent();}
+		const Object::Container& getChildren() const {return getObjChildren();}
+		Object::Container& getChildren() {return getObjChildren();}
+
 		bool isVisible() const {return visible;}
 		void setVisible(bool v) {visible = v;}
 		/// @}
@@ -72,11 +75,13 @@ class SceneNode: private Object
 		void moveLocalZ(float distance);
 		/// @}
 
-	protected:
+		/// This update happens only when the object gets moved. Called only by the Scene
+		void updateWorldTransform();
+
+	private:
 		Transform localTransform; ///< The transformation in local space
 		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
 
-	private:
 		SceneNodeType type;
 		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
 
@@ -85,8 +90,6 @@ class SceneNode: private Object
 		bool visible; ///< Visible by any camera
 		bool moved;
 		/// @}
-
-		void updateWorldTransform(); ///< This update happens only when the object gets moved
 };
 
 

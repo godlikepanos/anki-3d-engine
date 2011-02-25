@@ -15,9 +15,9 @@ Sphere Sphere::getTransformed(const Transform& transform) const
 
 
 //======================================================================================================================
-// getCompoundSphere                                                                                                   =
+// getCompoundShape                                                                                                   =
 //======================================================================================================================
-Sphere Sphere::getCompoundSphere(const Sphere& b) const
+Sphere Sphere::getCompoundShape(const Sphere& b) const
 {
 	const Sphere& a = *this;
 

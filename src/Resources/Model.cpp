@@ -40,14 +40,14 @@ void Model::load(const char* filename)
   		modelPatches.push_back(patch);
   		patch->load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
 
-  		boundingShape = boundingShape.getCompoundSphere(patch->getMesh().getBoundingShape());
+  		boundingShape = boundingShape.getCompoundShape(patch->getMesh().getBoundingShape());
   	}
 
   	// Bounding volume
   	boundingShape = modelPatches[0].getMesh().getBoundingShape();
   	BOOST_FOREACH(const ModelPatch& patch, boost::make_iterator_range(modelPatches.begin() + 1, modelPatches.end()))
   	{
-  		boundingShape = boundingShape.getCompoundSphere(patch.getMesh().getBoundingShape());
+  		boundingShape = boundingShape.getCompoundShape(patch.getMesh().getBoundingShape());
   	}
 	}
 	catch(std::exception& e)

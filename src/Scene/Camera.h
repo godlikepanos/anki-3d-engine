@@ -3,9 +3,11 @@
 
 #include <boost/array.hpp>
 #include <deque>
+
 #include "Vec.h"
 #include "Collision.h"
 #include "SceneNode.h"
+#include "Properties.h"
 
 
 class RenderableNode;
