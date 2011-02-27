@@ -44,7 +44,7 @@ class Obb: public CollisionShape
 		template<typename Container>
 		void set(const Container& container);
 
-	private:
+	public:
 		/// @name Data
 		/// @{
 		Vec3 center;

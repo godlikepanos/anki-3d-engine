@@ -7,7 +7,7 @@
 #include "Properties.h"
 #include "ModelPatchNode.h"
 #include "Vec.h"
-#include "Sphere.h"
+#include "Obb.h"
 
 
 class Model;
@@ -23,7 +23,7 @@ class ModelNode: public SceneNode
 		/// @{
 		const Model& getModel() const {return *model;}
 		const Vec<ModelPatchNode*>& getModelPatchNodes() const {return patches;}
-		const Sphere& getBoundingShapeWSpace() const {return boundingShapeWSpace;}
+		const Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
 		/// @}
 
 		/// Initialize the node
@@ -43,7 +43,7 @@ class ModelNode: public SceneNode
 	private:
 		RsrcPtr<Model> model;
 		Vec<ModelPatchNode*> patches;
-		Sphere boundingShapeWSpace;
+		Obb visibilityShapeWSpace;
 };
 
 

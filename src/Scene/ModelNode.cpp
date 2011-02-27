@@ -24,5 +24,5 @@ void ModelNode::init(const char* filename)
 void ModelNode::moveUpdate()
 {
 	// Update bounding shape
-	boundingShapeWSpace = model->getBoundingShape().getTransformed(getWorldTransform());
+	visibilityShapeWSpace = model->getVisibilityShape().getTransformed(getWorldTransform());
 }

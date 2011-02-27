@@ -163,7 +163,7 @@ void Dbg::drawCube(float size)
 	Vec3 maxPos = Vec3(0.5 * size);
 	Vec3 minPos = Vec3(-0.5 * size);
 
-	Vec3 points[] = {
+	boost::array<Vec3, 8> points = {{
 		Vec3(maxPos.x(), maxPos.y(), maxPos.z()),  // right top front
 		Vec3(minPos.x(), maxPos.y(), maxPos.z()),  // left top front
 		Vec3(minPos.x(), minPos.y(), maxPos.z()),  // left bottom front
@@ -172,14 +172,14 @@ void Dbg::drawCube(float size)
 		Vec3(minPos.x(), maxPos.y(), minPos.z()),  // left top back
 		Vec3(minPos.x(), minPos.y(), minPos.z()),  // left bottom back
 		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
-	};
+	}};
 
-	const uint indeces[] = {0, 1, 2, 3, 4, 0, 3, 7, 1, 5, 6, 2, 5, 4, 7, 6, 0, 4, 5, 1, 3, 2, 6, 7};
+	boost::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin();
-		for(const uint* p = indeces; p != indeces + sizeof(indeces); p++)
+		BOOST_FOREACH(uint id, indeces)
 		{
-			pushBackVertex(points[*p]);
+			pushBackVertex(points[id]);
 		}
 	end();
 }
@@ -278,13 +278,56 @@ void Dbg::run()
 				if(showVisibilityBoundingShapesFlag)
 				{
 					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
-					collisionDbgDrawer.draw(rnode.getBoundingShapeWSpace());
+					collisionDbgDrawer.draw(rnode.getVisibilityShapeWSpace());
 				}
 				break;
 			default:
 				break;
 		}
 	}
+
+	///////////////
+	/*setColor(Vec3(1));
+	Obb obb(Vec3(0.0), Mat3::getIdentity(), Vec3(1.0, 2.0, 1.0));
+	Obb obb2(Vec3(0.0), Mat3::getIdentity(), Vec3(1.0, 1.5, 1.0));
+	obb = obb.getTransformed(SceneSingleton::getInstance().getAllNodes()[1]->getWorldTransform());
+	collisionDbgDrawer.draw(obb.getCompoundShape(obb2));
+	collisionDbgDrawer.draw(obb);
+	collisionDbgDrawer.draw(obb2);
+
+	setModelMat(Mat4::getIdentity());
+	boost::array<Vec3, 8> points;
+	obb.getExtremePoints(points);
+	setColor(Vec3(1, 0, 0));
+	begin();
+
+	enum
+	{
+		RTF,
+		LTF,
+		LBF,
+		RBF,
+		RTB,
+		LTB,
+		LBB,
+		RBB
+	};
+
+	Vec3 xAxis = obb.getRotation().getColumn(0);
+	Vec3 yAxis = obb.getRotation().getColumn(1);
+	Vec3 zAxis = obb.getRotation().getColumn(2);
+
+	Vec3 er = obb.getRotation() * obb.getExtend();
+
+	boost::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+
+	BOOST_FOREACH(uint id, indeces)
+	{
+		pushBackVertex(points[id]);
+	}
+	end();*/
+	///////////////
+
 
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

@@ -5,7 +5,7 @@
 #include "Math.h"
 #include "RsrcPtr.h"
 #include "Vbo.h"
-#include "Sphere.h"
+#include "Obb.h"
 
 
 class MeshData;
@@ -37,7 +37,7 @@ class Mesh
 		/// @{
 		const Vbo& getVbo(Vbos id) const {return vbos[id];}
 		uint getVertIdsNum() const {return vertIdsNum;}
-		const Sphere& getBoundingShape() const {return boundingShape;}
+		const Obb& getVisibilityShape() const {return visibilityShape;}
 		/// @}
 
 		/// Implements @ref Resource::load
@@ -53,7 +53,7 @@ class Mesh
 	private:
 		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
 		uint vertIdsNum; ///< The number of vertex IDs
-		Sphere boundingShape;
+		Obb visibilityShape;
 
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);

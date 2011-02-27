@@ -32,5 +32,14 @@ void CollisionDbgDrawer::draw(const Obb& obb)
 	tsl = Mat4::combineTransformations(trs, tsl);
 
 	dbg.setModelMat(tsl);
-	dbg.drawCube();
+	dbg.setColor(Vec3(1.0, 1.0, 0.0));
+	dbg.drawCube(2.0);
+
+	/*dbg.setModelMat(Mat4::getIdentity());
+	dbg.begin();
+	dbg.setColor(Vec3(1.0, 1.0, 1.0));
+	dbg.pushBackVertex(obb.getCenter());
+	dbg.setColor(Vec3(1.0, 1.0, 0.0));
+	dbg.pushBackVertex(obb.getCenter() + obb.getRotation() * obb.getExtend());
+	dbg.end();*/
 }

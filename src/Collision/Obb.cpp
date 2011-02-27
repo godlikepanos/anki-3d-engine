@@ -95,15 +95,15 @@ void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
 	Vec3 yAxis = rotation.getColumn(1);
 	Vec3 zAxis = rotation.getColumn(2);
 
-	// Reflection: x1' = x1 - 2n|x1.n|
+	// Reflection: x1' = 2n|x1.n| - x1
 
-	points[RBB] = er - 2.0 * er.dot(xAxis) * xAxis;
-	points[LTB] = er - 2.0 * er.dot(yAxis) * yAxis;
-	points[LBF] = er - 2.0 * er.dot(zAxis) * zAxis;
+	points[RBB] = 2.0 * er.dot(xAxis) * xAxis - er;
+	points[LTB] = 2.0 * er.dot(yAxis) * yAxis - er;
+	points[LBF] = 2.0 * er.dot(zAxis) * zAxis - er;
 
-	points[LTF] = points[LBB] - 2.0 * points[LBB].dot(-xAxis) * -xAxis;
-	points[RTB] = points[LTF] - 2.0 * points[LTF].dot(yAxis) * yAxis;
-	points[RBF] = points[LTF] - 2.0 * points[LTF].dot(zAxis) * zAxis;
+	points[LTF] = 2.0 * points[LBB].dot(-xAxis) * -xAxis - points[LBB];
+	points[RTB] = 2.0 * points[LTF].dot(yAxis) * yAxis - points[LTF];
+	points[RBF] = 2.0 * points[LTF].dot(zAxis) * zAxis - points[LTF];
 
 	BOOST_FOREACH(Vec3& point, points)
 	{
