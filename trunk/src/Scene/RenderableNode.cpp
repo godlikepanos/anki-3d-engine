@@ -4,9 +4,9 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-RenderableNode::RenderableNode(const Sphere& boundingShapeLSpace_, SceneNode* parent):
+RenderableNode::RenderableNode(const Obb& visibilityShapeLSpace_, SceneNode* parent):
 	SceneNode(SNT_RENDERABLE, false, parent),
-	boundingShapeLSpace(boundingShapeLSpace_)
+	visibilityShapeLSpace(visibilityShapeLSpace_)
 {}
 
 
@@ -15,5 +15,5 @@ RenderableNode::RenderableNode(const Sphere& boundingShapeLSpace_, SceneNode* pa
 //======================================================================================================================
 void RenderableNode::moveUpdate()
 {
-	boundingShapeWSpace = boundingShapeLSpace.getTransformed(getWorldTransform());
+	visibilityShapeWSpace = visibilityShapeLSpace.getTransformed(getWorldTransform());
 }

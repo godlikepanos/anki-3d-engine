@@ -35,7 +35,7 @@ class SkinNode: public SceneNode
 
 		const Skin& getSkin() const {return *skin;}
 
-		const Sphere& getBoundingShapeWSpace() const {return boundingShapeWSpace;}
+		const Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
 		/// @}
 
 		void init(const char* filename);
@@ -47,7 +47,7 @@ class SkinNode: public SceneNode
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
 		Vec<SkinPatchNode*> patches;
-		Sphere boundingShapeWSpace;
+		Obb visibilityShapeWSpace;
 
 		Vec<Vec3> heads;
 		Vec<Vec3> tails;

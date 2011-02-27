@@ -2,10 +2,10 @@
 #define MESH_DATA_H
 
 #include <string>
+#include <boost/array.hpp>
 #include "Math.h"
 #include "StdTypes.h"
 #include "Vec.h"
-#include "Properties.h"
 
 
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to the GPU
@@ -32,12 +32,13 @@ class MeshData
 		class VertexWeight
 		{
 			public:
-				static const uint MAX_BONES_PER_VERT = 4; ///< Dont change or change the skinning code in shader
+				/// Dont change this or prepare to change the skinning code in shader
+				static const uint MAX_BONES_PER_VERT = 4;
 
 				/// @todo change the vals to uint when change drivers
 				float bonesNum;
-				float boneIds[MAX_BONES_PER_VERT];
-				float weights[MAX_BONES_PER_VERT];
+				boost::array<float, MAX_BONES_PER_VERT> boneIds;
+				boost::array<float, MAX_BONES_PER_VERT> weights;
 		};
 
 		/// Triangle
@@ -48,20 +49,32 @@ class MeshData
 				Vec3 normal;
 		};
 
-
-	PROPERTY_R(Vec<Vec3>, vertCoords, getVertCoords) ///< Loaded from file
-	PROPERTY_R(Vec<Vec3>, vertNormals, getVertNormals) ///< Generated
-	PROPERTY_R(Vec<Vec4>, vertTangents, getVertTangents) ///< Generated
-	PROPERTY_R(Vec<Vec2>, texCoords, getTexCoords) ///< Optional. One for every vert so we can use vertex arrays & VBOs
-	PROPERTY_R(Vec<VertexWeight>, vertWeights, getVertWeights) ///< Optional
-	PROPERTY_R(Vec<Triangle>, tris, getTris) ///< Required
-	PROPERTY_R(Vec<ushort>, vertIndeces, getVertIndeces) ///< Generated. Used for vertex arrays & VBOs
-
-	public:
 		MeshData(const char* filename) {load(filename);}
 		~MeshData() {}
 
+		/// @name Accessors
+		/// @{
+		const Vec<Vec3>& getVertCoords() const {return vertCoords;}
+		const Vec<Vec3>& getVertNormals() const {return vertNormals;}
+		const Vec<Vec4>& getVertTangents() const {return vertTangents;}
+		const Vec<Vec2>& getTexCoords() const {return texCoords;}
+		const Vec<VertexWeight>& getVertWeights() const {return vertWeights;}
+		const Vec<Triangle>& getTris() const {return tris;}
+		const Vec<ushort>& getVertIndeces() const {return vertIndeces;}
+		/// @}
+
 	private:
+		/// @name Data
+		/// @{
+		Vec<Vec3> vertCoords; ///< Loaded from file
+		Vec<Vec3> vertNormals; ///< Generated
+		Vec<Vec4> vertTangents; ///< Generated
+		Vec<Vec2> texCoords; ///< Optional. One for every vert so we can use vertex arrays & VBOs
+		Vec<VertexWeight> vertWeights; ///< Optional
+		Vec<Triangle> tris; ///< Required
+		Vec<ushort> vertIndeces; ///< Generated. Used for vertex arrays & VBOs
+		/// @}
+
 		/// Load the mesh data from a binary file
 		/// @exception Exception
 		void load(const char* filename);

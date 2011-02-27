@@ -99,7 +99,7 @@ void VisibilityTester::test(Camera& cam)
 template<typename Type>
 bool VisibilityTester::test(const Type& tested, const Camera& cam)
 {
-	return cam.insideFrustum(tested.getBoundingShapeWSpace());
+	return cam.insideFrustum(tested.getVisibilityShapeWSpace());
 }
 
 

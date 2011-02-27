@@ -28,7 +28,7 @@ void Mesh::load(const char* filename)
 
 		createVbos(meshData);
 
-		boundingShape.set(meshData.getVertCoords());
+		visibilityShape.set(meshData.getVertCoords());
 	}
 	catch(std::exception& e)
 	{

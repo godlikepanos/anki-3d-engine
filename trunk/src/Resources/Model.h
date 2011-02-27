@@ -5,7 +5,7 @@
 #include "RsrcPtr.h"
 #include "Vao.h"
 #include "ModelPatch.h"
-#include "Sphere.h"
+#include "Obb.h"
 
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
@@ -39,12 +39,12 @@ class Model
 		/// @name Accessors
 		/// @{
 		const boost::ptr_vector<ModelPatch>& getModelPatches() const {return modelPatches;}
-		const Sphere& getBoundingShape() const {return boundingShape;}
+		const Obb& getVisibilityShape() const {return visibilityShape;}
 		/// @}
 
 	private:
 		boost::ptr_vector<ModelPatch> modelPatches; ///< The vector of ModelPatch
-		Sphere boundingShape;
+		Obb visibilityShape;
 };
 
 

@@ -1,6 +1,8 @@
 #include <fstream>
 #include <cstring>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+
 #include "MeshData.h"
 #include "BinaryStream.h"
 
@@ -39,11 +41,11 @@ void MeshData::load(const char* filename)
 		vertCoords.resize(vertsNum);
 
 		// Vert coords
-		for(uint i=0; i<vertCoords.size(); i++)
+		BOOST_FOREACH(Vec3& vertCoord, vertCoords)
 		{
-			for(uint j=0; j<3; j++)
+			for(uint j = 0; j < 3; j++)
 			{
-				vertCoords[i][j] = bs.readFloat();
+				vertCoord[j] = bs.readFloat();
 			}
 		}
 
@@ -52,18 +54,16 @@ void MeshData::load(const char* filename)
 		tris.resize(facesNum);
 
 		// Faces IDs
-		for(uint i=0; i<tris.size(); i++)
+		BOOST_FOREACH(Triangle& tri, tris)
 		{
-			for(uint j=0; j<3; j++)
+			for(uint j = 0; j < 3; j++)
 			{
-				tris[i].vertIds[j] = bs.readUint();
+				tri.vertIds[j] = bs.readUint();
 
 				// a sanity check
-				if(tris[i].vertIds[j] >= vertCoords.size())
+				if(tri.vertIds[j] >= vertCoords.size())
 				{
-					throw EXCEPTION("Vert index out of bounds" + boost::lexical_cast<std::string>(tris[i].vertIds[j]) +
-					                     " (" + boost::lexical_cast<std::string>(i) + ", " +
-					                     boost::lexical_cast<std::string>(j) + ")");
+					throw EXCEPTION("Vert index out of bounds");
 				}
 			}
 		}
@@ -73,11 +73,11 @@ void MeshData::load(const char* filename)
 		texCoords.resize(texCoordsNum);
 
 		// Tex coords
-		for(uint i=0; i<texCoords.size(); i++)
+		BOOST_FOREACH(Vec2& texCoord, texCoords)
 		{
-			for(uint j=0; j<2; j++)
+			for(uint i = 0; i < 2; i++)
 			{
-				texCoords[i][j] = bs.readFloat();
+				texCoord[i] = bs.readFloat();
 			}
 		}
 
@@ -86,7 +86,7 @@ void MeshData::load(const char* filename)
 		vertWeights.resize(vertWeightsNum);
 
 		// Vert weights
-		for(uint i=0; i<vertWeights.size(); i++)
+		BOOST_FOREACH(VertexWeight& vw, vertWeights)
 		{
 			// get the bone connections num
 			uint boneConnections = bs.readUint();
@@ -94,7 +94,7 @@ void MeshData::load(const char* filename)
 			// we treat as error if one vert doesnt have a bone
 			if(boneConnections < 1)
 			{
-				throw EXCEPTION("Vert " + boost::lexical_cast<std::string>(i) + " sould have at least one bone");
+				throw EXCEPTION("Vert sould have at least one bone");
 			}
 
 			// and here is another possible error
@@ -104,18 +104,18 @@ void MeshData::load(const char* filename)
 				throw EXCEPTION("Cannot have more than " +
 				                boost::lexical_cast<std::string>(tmp) + " bones per vertex");
 			}
-			vertWeights[i].bonesNum = boneConnections;
+			vw.bonesNum = boneConnections;
 
 			// for all the weights of the current vertes
-			for(uint j=0; j<vertWeights[i].bonesNum; j++)
+			for(uint i = 0; i < vw.bonesNum; i++)
 			{
 				// read bone id
 				uint boneId = bs.readUint();
-				vertWeights[i].boneIds[j] = boneId;
+				vw.boneIds[i] = boneId;
 
 				// read the weight of that bone
 				float weight = bs.readFloat();
-				vertWeights[i].weights[j] = weight;
+				vw.weights[i] = weight;
 			}
 		} // end for all vert weights
 
@@ -159,7 +159,7 @@ void MeshData::doPostLoad()
 void MeshData::createVertIndeces()
 {
 	vertIndeces.resize(tris.size() * 3);
-	for(uint i=0; i<tris.size(); i++)
+	for(uint i = 0; i < tris.size(); i++)
 	{
 		vertIndeces[i * 3 + 0] = tris[i].vertIds[0];
 		vertIndeces[i * 3 + 1] = tris[i].vertIds[1];
@@ -173,12 +173,16 @@ void MeshData::createVertIndeces()
 //======================================================================================================================
 void MeshData::createFaceNormals()
 {
-	for(uint i=0; i<tris.size(); i++)
+	BOOST_FOREACH(Triangle& tri, tris)
 	{
-		Triangle& tri = tris[i];
 		const Vec3& v0 = vertCoords[tri.vertIds[0]];
 		const Vec3& v1 = vertCoords[tri.vertIds[1]];
 		const Vec3& v2 = vertCoords[tri.vertIds[2]];
+
+		/*std::cout << v0 << std::endl;
+		std::cout << v1 << std::endl;
+		std::cout << v2 << std::endl;
+		std::cout << std::endl;*/
 
 		tri.normal = (v1 - v0).cross(v2 - v0);
 
@@ -194,22 +198,21 @@ void MeshData::createVertNormals()
 {
 	vertNormals.resize(vertCoords.size());
 
-	for(uint i=0; i<vertCoords.size(); i++)
+	BOOST_FOREACH(Vec3& vertNormal, vertNormals)
 	{
-		vertNormals[i] = Vec3(0.0, 0.0, 0.0);
+		vertNormal = Vec3(0.0, 0.0, 0.0);
 	}
 
-	for(uint i=0; i<tris.size(); i++)
+	BOOST_FOREACH(Triangle& tri, tris)
 	{
-		const Triangle& tri = tris[i];
 		vertNormals[tri.vertIds[0]] += tri.normal;
 		vertNormals[tri.vertIds[1]] += tri.normal;
 		vertNormals[tri.vertIds[2]] += tri.normal;
 	}
 
-	for(uint i=0; i<vertNormals.size(); i++)
+	BOOST_FOREACH(Vec3& vertNormal, vertNormals)
 	{
-		vertNormals[i].normalize();
+		vertNormal.normalize();
 	}
 }
 
