@@ -176,8 +176,8 @@ class Material
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
 		boost::ptr_vector<MtlUserDefinedVar> userDefinedVars;
 
-		/// The func sweeps all the variables of the shader program to find standard shader program variables. It updates
-		/// the stdAttribVars and stdUniVars arrays.
+		/// The func sweeps all the variables of the shader program to find standard shader program variables. It
+		/// updates the stdAttribVars and stdUniVars arrays.
 		/// @exception Exception
 		void initStdShaderVars();
 
