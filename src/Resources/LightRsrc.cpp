@@ -7,15 +7,16 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-LightRsrc::LightRsrc():
-	diffuseCol(0.5),
-	specularCol(0.5),
-	castsShadow_(false),
-	radius(1.0),
-	distance(3.0),
-	fovX(M::PI/4.0),
-	fovY(M::PI/4.0)
-{}
+LightRsrc::LightRsrc()
+{
+	diffuseCol = Vec3(0.5);
+	specularCol = Vec3(0.5);
+	castsShadowFlag = false;
+	radius = 1.0;
+	distance = 3.0;
+	fovX = M::PI / 4.0;
+	fovY = M::PI / 4.0;
+}
 
 
 //======================================================================================================================
@@ -71,7 +72,7 @@ void LightRsrc::load(const char* filename)
 			}
 
 			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-																														 float(token->getValue().getInt());
+			                                                     float(token->getValue().getInt());
 		}
 		// castsShadow
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "castsShadow"))
@@ -81,11 +82,11 @@ void LightRsrc::load(const char* filename)
 			{
 				if(!strcmp(token->getValue().getString(), "true"))
 				{
-					castsShadow_ = true;
+					castsShadowFlag = true;
 				}
 				else if(!strcmp(token->getValue().getString(), "false"))
 				{
-					castsShadow_ = false;
+					castsShadowFlag = false;
 				}
 				else
 				{
@@ -107,7 +108,7 @@ void LightRsrc::load(const char* filename)
 			}
 
 			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-																															 float(token->getValue().getInt());
+			                                                       float(token->getValue().getInt());
 			type = LT_SPOT;
 		}
 		// fovX
@@ -120,7 +121,7 @@ void LightRsrc::load(const char* filename)
 			}
 
 			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-																													 float(token->getValue().getInt());
+			                                                   float(token->getValue().getInt());
 			type = LT_SPOT;
 		}
 		// fovY
@@ -133,7 +134,7 @@ void LightRsrc::load(const char* filename)
 			}
 
 			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-																													 float(token->getValue().getInt());
+			                                                   float(token->getValue().getInt());
 			type = LT_SPOT;
 		}
 		// texture
