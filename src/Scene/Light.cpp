@@ -11,5 +11,5 @@ void Light::init(const char* filename)
 
 	diffuseCol = lightData->getDiffuseCol();
 	specularCol = lightData->getSpecularCol();
-	castsShadow_ = lightData->castsShadow();
+	castsShadowFlag = lightData->castsShadow();
 }

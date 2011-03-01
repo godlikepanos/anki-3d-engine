@@ -223,8 +223,8 @@ void Is::pointLightPass(const PointLight& light)
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
-	shader.findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseCol());
-	shader.findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularCol());
+	shader.findUniVar("lightDiffuseCol")->setVec3(&light.getDiffuseCol());
+	shader.findUniVar("lightSpecularCol")->setVec3(&light.getSpecularCol());
 
 	// render quad
 	drawLightPassQuad();
@@ -257,7 +257,7 @@ void Is::spotLightPass(const SpotLight& light)
 	smo.run(light);
 
 	// set the texture
-	light.lightData->getTexture().setRepeat(false);
+	light.getTexture().setRepeat(false);
 
 	// shader prog
 	const ShaderProg* shdr;
@@ -286,9 +286,9 @@ void Is::spotLightPass(const SpotLight& light)
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
 	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
-	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.lightData->getDiffuseCol());
-	shdr->findUniVar("lightSpecularCol")->setVec3(&light.lightData->getSpecularCol());
-	shdr->findUniVar("lightTex")->setTexture(light.lightData->getTexture(), 4);
+	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.getDiffuseCol());
+	shdr->findUniVar("lightSpecularCol")->setVec3(&light.getSpecularCol());
+	shdr->findUniVar("lightTex")->setTexture(light.getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)

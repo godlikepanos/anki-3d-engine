@@ -34,28 +34,31 @@ class Light: public SceneNode
 			LT_SPOT
 		};
 
-	PROPERTY_R(LightType, type, getType) ///< Light type
-
-	/// @name Copies of some of the resource properties. The others are camera properties or not changeable
-	/// @{
-	PROPERTY_RW(Vec3, diffuseCol, getDiffuseCol, setDiffuseCol) ///< Diffuse color
-	PROPERTY_RW(Vec3, specularCol, getSpecularCol, setSpecularCol) ///< Specular color
-	PROPERTY_RW(bool, castsShadow_, castsShadow, setCastsShadow) ///< Casts shadow
-	/// @}
-
-	public:
-		RsrcPtr<LightRsrc> lightData;
-	
 		Light(LightType type, bool compoundFlag, SceneNode* parent = NULL);
 		~Light() {}
+
+		/// @name Accessors
+		/// @{
+		GETTER_R(LightType, type, getType)
+
+		GETTER_SETTER(Vec3, diffuseCol, getDiffuseCol, setDiffuseCol)
+		GETTER_SETTER(Vec3, specularCol, getSpecularCol, setSpecularCol)
+		GETTER_SETTER_BY_VAL(bool, castsShadowFlag, castsShadow, setCastsShadow)
+		/// @}
+
 		void init(const char* filename);
 
 		void moveUpdate() {}
 		void frameUpdate() {}
 
-	private:
-		//LightType type;
+	protected:
+		RsrcPtr<LightRsrc> lightData;
+		Vec3 diffuseCol; ///< Diffuse color
+		Vec3 specularCol; ///< Specular color
+		bool castsShadowFlag; ///< Casts shadow
 
+	private:
+		LightType type; ///< Light type
 };
 
 

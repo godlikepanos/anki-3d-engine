@@ -9,8 +9,8 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent):
-	PatchNode(modelPatch, parent)
+SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
+	PatchNode(modelPatch_, parent)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
 
@@ -31,7 +31,8 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent):
 	if(mesh.getVbo(Mesh::VBO_VERT_POSITIONS).isCreated())
 	{
 		tfVbos[TFV_POSITIONS].create(GL_ARRAY_BUFFER, mesh.getVbo(Mesh::VBO_VERT_POSITIONS).getSizeInBytes(),
-	                               NULL, GL_STATIC_DRAW);
+		                             NULL, GL_STATIC_DRAW);
+
 		vboArr[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TFV_POSITIONS];
 
 		tfVao.attachArrayBufferVbo(tfVbos[TFV_POSITIONS], SkinsDeformer::TFSPA_POSITION, 3, GL_FLOAT, false, 0, NULL);
@@ -52,7 +53,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent):
 	if(mesh.getVbo(Mesh::VBO_VERT_TANGENTS).isCreated())
 	{
 		tfVbos[TFV_TANGENTS].create(GL_ARRAY_BUFFER, mesh.getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
-	                               NULL, GL_STATIC_DRAW);
+		                            NULL, GL_STATIC_DRAW);
 
 		vboArr[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TFV_TANGENTS];
 

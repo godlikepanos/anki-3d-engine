@@ -11,7 +11,8 @@
 // Constructor                                                                                                         =
 //======================================================================================================================
 ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_, ModelNode* parent):
-	PatchNode(modelPatch_, parent)
+	PatchNode(modelPatch_, parent),
+	modelPatch(modelPatch_)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
 
@@ -22,4 +23,13 @@ ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_, ModelNode* parent)
 
 	createVao(rsrc.getCpMtl(), vboArr, cpVao);
 	createVao(rsrc.getDpMtl(), vboArr, dpVao);
+}
+
+
+//======================================================================================================================
+// moveUpdate                                                                                                          =
+//======================================================================================================================
+void ModelPatchNode::moveUpdate()
+{
+	visibilityShapeWSpace = modelPatch.getMesh().getVisibilityShape().getTransformed(getWorldTransform());
 }

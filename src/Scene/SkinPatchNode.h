@@ -24,7 +24,16 @@ class SkinPatchNode: public PatchNode
 
 		SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent);
 
-	public:
+		/// @name Accessors
+		/// @{
+		GETTER_R(Vao, tfVao, getTfVao)
+		const Vbo& getTfVbo(uint i) const {return tfVbos[i];}
+		/// @}
+
+		virtual void moveUpdate() {}
+		virtual void frameUpdate() {}
+
+	private:
 		boost::array<Vbo, TFV_NUM> tfVbos; ///< VBOs that contain the deformed vertex attributes
 		Vao tfVao; ///< For TF passes
 };
