@@ -5,6 +5,7 @@
 
 
 class ShaderProg;
+class SkinPatchNode;
 
 
 ///
@@ -22,7 +23,7 @@ class SkinsDeformer
 		};
 
 		void init();
-		void run();
+		void deform(SkinPatchNode& node);
 
 	private:
 		RsrcPtr<ShaderProg> tfHwSkinningAllSProg;

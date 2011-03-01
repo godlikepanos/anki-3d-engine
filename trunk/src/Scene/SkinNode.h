@@ -5,6 +5,7 @@
 #include "SkinPatchNode.h"
 #include "Vec.h"
 #include "Math.h"
+#include "Properties.h"
 
 
 class Skin;
@@ -21,27 +22,18 @@ class SkinNode: public SceneNode
 
 		/// @name Accessors
 		/// @{
-		const Vec<Vec3>& getHeads() const {return heads;}
-		Vec<Vec3>& getHeads() {return heads;}
-
-		const Vec<Vec3>& getTails() const {return tails;}
-		Vec<Vec3>& getTails() {return tails;}
-
-		const Vec<Mat3>& getBoneRotations() const {return boneRotations;}
-		Vec<Mat3>& getBoneRotations() {return boneRotations;}
-
-		const Vec<Vec3>& getBoneTranslations() const {return boneTranslations;}
-		Vec<Vec3>& getBoneTranslations() {return boneTranslations;}
-
+		GETTER_RW(Vec<Vec3>, heads, getHeads)
+		GETTER_RW(Vec<Vec3>, tails, getTails)
+		GETTER_RW(Vec<Mat3>, boneRotations, getBoneRotations)
+		GETTER_RW(Vec<Vec3>, boneTranslations, getBoneTranslations)
 		const Skin& getSkin() const {return *skin;}
-
-		const Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
+		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 		/// @}
 
 		void init(const char* filename);
 
-		/// Update boundingShapeWSpace from bone tails (not bone and heads cause its faster that way). The tails come from
-		/// the previous frame
+		/// Update boundingShapeWSpace from bone tails (not bone and heads cause its faster that way). The tails come
+		/// from the previous frame
 		void moveUpdate();
 
 	private:

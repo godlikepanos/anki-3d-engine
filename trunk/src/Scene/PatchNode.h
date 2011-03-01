@@ -44,7 +44,7 @@ class PatchNode: public RenderableNode
 
 
 inline PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent):
-	RenderableNode(modelPatch.getMesh().getVisibilityShape(), parent),
+	RenderableNode(parent),
 	rsrc(modelPatch)
 {}
 

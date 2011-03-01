@@ -275,11 +275,11 @@ void Dbg::run()
 				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitter&>(*node));
 				break;
 			case SceneNode::SNT_RENDERABLE:
-				if(showVisibilityBoundingShapesFlag)
+				/*if(showVisibilityBoundingShapesFlag)
 				{
 					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
 					collisionDbgDrawer.draw(rnode.getVisibilityShapeWSpace());
-				}
+				}*/
 				break;
 			default:
 				break;

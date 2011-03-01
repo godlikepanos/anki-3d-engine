@@ -10,14 +10,24 @@
 /// Properties common for all lights
 struct LightProps
 {
+	/// @name Common light properties
+	/// @{
 	Vec3 diffuseCol;
 	Vec3 specularCol;
-	bool castsShadowFlag;
-	float radius;
-	float distance;
+	bool castsShadowFlag; ///< Currently only for spot lights
+	/// @}
+
+	/// @name Point light properties
+	/// @{
+	float radius; ///< Sphere radius
+	/// @}
+
+	/// @name Spot light properties
+	/// @{
+	float distance; ///< AKA camera's zFar
 	float fovX;
 	float fovY;
-	RsrcPtr<Texture> texture;
+	/// @}
 };
 
 
@@ -39,12 +49,12 @@ class LightRsrc: private LightProps
 		/// @{
 		GETTER_R(Vec3, diffuseCol, getDiffuseCol)
 		GETTER_R(Vec3, specularCol, getSpecularCol)
-		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow) ///< Currently only for spot lights
+		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
 		GETTER_R_BY_VAL(LightType, type, getType)
 
-		GETTER_R_BY_VAL(float, radius, getRadius) ///< Sphere radius
+		GETTER_R_BY_VAL(float, radius, getRadius)
 
-		GETTER_R_BY_VAL(float, distance, getDistance) ///< AKA camera's zFar
+		GETTER_R_BY_VAL(float, distance, getDistance)
 		GETTER_R_BY_VAL(float, fovX, getFovX)
 		GETTER_R_BY_VAL(float, fovY, getFovY)
 		const Texture& getTexture() const;
@@ -54,11 +64,7 @@ class LightRsrc: private LightProps
 
 	private:
 		LightType type;
-
-		/// @name Spot light properties
-		/// @{
 		RsrcPtr<Texture> texture;
-		/// @}
 };
 
 

@@ -54,8 +54,8 @@ class SceneNode: public Object
 		/// @}
 
 		/// @name Updates
-		/// Two separate updates for the main loop. The update happens anyway and the updateTrf only when the node is being
-		/// moved
+		/// Two separate updates for the main loop. The update happens anyway and the updateTrf only when the node is
+		/// being moved
 		/// @{
 
 		/// This is called every frame
