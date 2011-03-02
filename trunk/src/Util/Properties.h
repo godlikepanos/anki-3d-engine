@@ -56,8 +56,7 @@
 	private: \
 		Type__ varName__; \
 	public: \
-		GETTER_RW(Type__, varName__, getFunc__) \
-		void setFunc__(const Type__& x__) {varName__ = x__;}
+		SETTER_GETTER(Type__, varName__, getFunc__, setFunc__)
 
 
 /// Read only private property

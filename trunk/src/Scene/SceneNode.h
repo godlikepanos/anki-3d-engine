@@ -2,9 +2,11 @@
 #define SCENE_NODE_H
 
 #include <memory>
+#include <string>
 #include "Math.h"
 #include "Object.h"
 #include "Obb.h"
+#include "Properties.h"
 
 
 class Material;
@@ -42,15 +44,16 @@ class SceneNode: public Object
 		Transform& getWorldTransform() {return worldTransform;}
 		void setWorldTransform(const Transform& t) {worldTransform = t;}
 
-		SceneNodeType getSceneNodeType() const {return type;}
+		GETTER_R_BY_VAL(SceneNodeType, type, getSceneNodeType)
 
 		const Object* getParent() const {return getObjParent();}
 		Object* getParent() {return getObjParent();}
 		const Object::Container& getChildren() const {return getObjChildren();}
 		Object::Container& getChildren() {return getObjChildren();}
 
-		bool isVisible() const {return visible;}
-		void setVisible(bool v) {visible = v;}
+		GETTER_SETTER_BY_VAL(bool, visible, isVisible, setVisible)
+
+		GETTER_R(std::string, name, getSceneNodeName)
 		/// @}
 
 		/// @name Updates
@@ -84,6 +87,9 @@ class SceneNode: public Object
 
 		SceneNodeType type;
 		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
+		std::string name;
+
+		static uint uid; ///< Unique identifier
 
 		/// @name Runtime info
 		/// @{
