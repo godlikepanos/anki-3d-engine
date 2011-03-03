@@ -26,7 +26,8 @@ class Camera: public SceneNode
 			FP_NEAR,
 			FP_TOP,
 			FP_BOTTOM,
-			FP_FAR
+			FP_FAR,
+			FP_NUM
 		};
 
 		Camera(bool compoundFlag, SceneNode* parent): SceneNode(SNT_CAMERA, compoundFlag, parent) {}
@@ -91,8 +92,8 @@ class Camera: public SceneNode
 
 		/// @name The frustum planes in local and world space
 		/// @{
-		boost::array<Plane, 6> lspaceFrustumPlanes;
-		boost::array<Plane, 6> wspaceFrustumPlanes;
+		boost::array<Plane, FP_NUM> lspaceFrustumPlanes;
+		boost::array<Plane, FP_NUM> wspaceFrustumPlanes;
 		/// @}
 
 		/// @name Matrices
@@ -107,7 +108,7 @@ class Camera: public SceneNode
 		Mat4 invProjectionMat;
 		/// @}
 
-		/// @name Visible nodes
+		/// @name Visible nodes. They are in separate containers for faster shorting
 		/// @{
 		std::deque<const RenderableNode*> msRenderableNodes;
 		std::deque<const RenderableNode*> bsRenderableNodes;

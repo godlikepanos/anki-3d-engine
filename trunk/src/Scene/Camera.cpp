@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include "Camera.h"
 
 
@@ -59,7 +60,7 @@ void Camera::calcLSpaceFrustumPlanes()
 //======================================================================================================================
 void Camera::updateWSpaceFrustumPlanes()
 {
-	for(uint i=0; i<6; i++)
+	for(uint i = 0; i < FP_NUM; i++)
 	{
 		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].getTransformed(getWorldTransform().getOrigin(),
 		                                                               getWorldTransform().getRotation(),
@@ -71,12 +72,11 @@ void Camera::updateWSpaceFrustumPlanes()
 //======================================================================================================================
 // insideFrustum                                                                                                       =
 //======================================================================================================================
-/// Check if the volume is inside the frustum cliping planes
 bool Camera::insideFrustum(const CollisionShape& bvol) const
 {
-	for(uint i=0; i<6; i++)
+	BOOST_FOREACH(const Plane& plane, wspaceFrustumPlanes)
 	{
-		if(bvol.testPlane(wspaceFrustumPlanes[i]) < 0.0)
+		if(bvol.testPlane(plane) < 0.0)
 		{
 			return false;
 		}
@@ -92,11 +92,11 @@ bool Camera::insideFrustum(const CollisionShape& bvol) const
 bool Camera::insideFrustum(const Camera& cam) const
 {
 	// get five points. These points are the tips of the given camera
-	Vec3 points[5];
+	boost::array<Vec3, 5> points;
 
 	// get 3 sample floats
-	float x = cam.getZFar() / tan((PI - cam.getFovX())/2);
-	float y = tan(cam.getFovY() / 2) * cam.getZFar();
+	float x = cam.getZFar() / tan((PI - cam.getFovX()) / 2.0);
+	float y = tan(cam.getFovY() / 2.0) * cam.getZFar();
 	float z = -cam.getZFar();
 
 	// the actual points in local space
@@ -107,17 +107,17 @@ bool Camera::insideFrustum(const Camera& cam) const
 	points[4] = cam.getWorldTransform().getOrigin(); // eye (already in world space)
 
 	// transform them to the given camera's world space (exept the eye)
-	for(uint i=0; i<4; i++)
+	for(uint i = 0; i < 4; i++)
 	{
 		points[i].transform(getWorldTransform());
 	}
 
 	// the collision code
-	for(uint i=0; i<6; i++) // for the 6 planes
+	for(uint i = 0; i < 6; i++) // for the 6 planes
 	{
 		int failed = 0;
 
-		for(uint j=0; j<5; j++) // for the 5 points
+		for(uint j = 0; j < 5; j++) // for the 5 points
 		{
 			if(wspaceFrustumPlanes[i].test(points[j]) < 0.0)
 			{
@@ -152,7 +152,7 @@ void Camera::calcProjectionMatrix()
 	projectionMat(2, 0) = 0.0;
 	projectionMat(2, 1) = 0.0;
 	projectionMat(2, 2) = (zFar + zNear) / ( zNear - zFar);
-	projectionMat(2, 3) = (2.0f * zFar * zNear) / (zNear - zFar);
+	projectionMat(2, 3) = (2.0 * zFar * zNear) / (zNear - zFar);
 	projectionMat(3, 0) = 0.0;
 	projectionMat(3, 1) = 0.0;
 	projectionMat(3, 2) = -1.0;
