@@ -34,7 +34,7 @@ class Camera: public SceneNode
 		~Camera() {}
 
 		/// @name Accessors
-		//// @{
+		/// @{
 		void setFovX(float fovx);
 		void setFovY(float fovy);
 		void setZNear(float znear);
@@ -54,7 +54,7 @@ class Camera: public SceneNode
 		GETTER_RW(std::deque<const RenderableNode*>, bsRenderableNodes, getVisibleBsRenderableNodes)
 		GETTER_RW(Vec<const PointLight*>, pointLights, getVisiblePointLights)
 		GETTER_RW(Vec<SpotLight*>, spotLights, getVisibleSpotLights)
-		//// @}
+		/// @}
 
 		void lookAtPoint(const Vec3& point);
 

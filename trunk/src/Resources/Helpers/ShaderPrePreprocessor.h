@@ -33,7 +33,7 @@ class ShaderPrePreprocessor
 		struct Pragma
 		{
 			std::string definedInFile;
-			int    definedInLine;
+			int definedInLine;
 			Pragma(): definedInLine(-1) {}
 			Pragma(const std::string& definedInFile_, int definedInLine_);
 		};
@@ -70,18 +70,21 @@ class ShaderPrePreprocessor
 		{
 			friend class ShaderPrePreprocessor;
 
-			PROPERTY_R(Vec<ShaderVarPragma>, attributes, getAttribLocs) ///< It holds the name and the custom location
-			/// Names and and ids for transform feedback varyings
-			PROPERTY_R(Vec<TrffbVaryingPragma>, trffbVaryings, getTrffbVaryings)
-			PROPERTY_R(std::string, vertShaderSource, getVertShaderSource) ///< The vert shader source
-			PROPERTY_R(std::string, geomShaderSource, getGeomShaderSource) ///< The geom shader source
-			PROPERTY_R(std::string, fragShaderSource, getFragShaderSource) ///< The frag shader source
+			public:
+				GETTER_R(Vec<ShaderVarPragma>, attributes, getAttribLocs)
+				GETTER_R(Vec<TrffbVaryingPragma>, trffbVaryings, getTrffbVaryings)
+				GETTER_R(std::string, vertShaderSource, getVertShaderSource)
+				GETTER_R(std::string, geomShaderSource, getGeomShaderSource)
+				GETTER_R(std::string, fragShaderSource, getFragShaderSource)
+			
+			private:
+				Vec<ShaderVarPragma> attributes; ///< It holds the name and the custom location
+				Vec<TrffbVaryingPragma> trffbVaryings; ///< Names and and ids for transform feedback varyings
+				std::string vertShaderSource; ///< The vert shader source
+				std::string geomShaderSource; ///< The geom shader source
+				std::string fragShaderSource; ///< The frag shader source
 		};
-
-	//====================================================================================================================
-	// Properties                                                                                                        =
-	//====================================================================================================================
-	PROPERTY_R(Output, output, getOutput) ///< The one and only public property
+		
 
 	//====================================================================================================================
 	// Public                                                                                                            =
@@ -94,11 +97,14 @@ class ShaderPrePreprocessor
 
 		/// Destructor does nothing
 		~ShaderPrePreprocessor() {}
+		
+		GETTER_R(Output, output, getOutput)
 
 	//====================================================================================================================
 	// Protected                                                                                                         =
 	//====================================================================================================================
 	protected:
+		Output output; ///< The most important variable
 		Vec<std::string> sourceLines;  ///< The parseFileForPragmas fills this
 		CodeBeginningPragma vertShaderBegins;
 		CodeBeginningPragma geomShaderBegins;

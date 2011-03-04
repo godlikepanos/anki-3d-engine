@@ -32,7 +32,7 @@ class SkinNode: public SceneNode
 
 		void init(const char* filename);
 
-		/// Update boundingShapeWSpace from bone tails (not bone and heads cause its faster that way). The tails come
+		/// Update boundingShapeWSpace from bone tails (not heads as well cause its faster that way). The tails come
 		/// from the previous frame
 		void moveUpdate();
 
@@ -41,10 +41,13 @@ class SkinNode: public SceneNode
 		Vec<SkinPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 
+		/// @name Bone data
+		/// @{
 		Vec<Vec3> heads;
 		Vec<Vec3> tails;
 		Vec<Mat3> boneRotations;
 		Vec<Vec3> boneTranslations;
+		/// @}
 };
 
 
