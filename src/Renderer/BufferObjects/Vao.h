@@ -30,7 +30,7 @@ class Vao
 		/// Destroy
 		void destroy();
 
-		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml 
 		/// @endlink
 		/// @param vbo The VBO to attach
 		/// @param attribVar For the shader attribute location

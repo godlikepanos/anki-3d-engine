@@ -52,7 +52,7 @@ class Logger
 	private:
 		static const int STREAM_SIZE = 2048;
 		boost::array<char, STREAM_SIZE> streamBuf;
-		char* sptr; ///< Pointer to @ref streamBuf
+		char* sptr; ///< Pointer to streamBuf
 		Signal sig; ///< The signal
 		const char* func; ///< Sender info
 		const char* file; ///< Sender info

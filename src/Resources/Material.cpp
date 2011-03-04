@@ -132,72 +132,72 @@ void Material::load(const char* filename)
 	{
 		using namespace boost::property_tree;
 		ptree rpt;
-  	read_xml(filename, rpt);
+		read_xml(filename, rpt);
 
-  	const ptree& pt = rpt.get_child("material");
+		const ptree& pt = rpt.get_child("material");
 
-  	//
-  	// shaderProg
-  	//
-  	const ptree& shaderProgTree = pt.get_child("shaderProg");
+		//
+		// shaderProg
+		//
+		const ptree& shaderProgTree = pt.get_child("shaderProg");
 
-  	boost::optional<std::string> file = shaderProgTree.get_optional<std::string>("file");
-  	boost::optional<const ptree&> customMsSProgTree = shaderProgTree.get_child_optional("customMsSProg");
+		boost::optional<std::string> file = shaderProgTree.get_optional<std::string>("file");
+		boost::optional<const ptree&> customMsSProgTree = shaderProgTree.get_child_optional("customMsSProg");
 		boost::optional<const ptree&> customDpSProgTree = shaderProgTree.get_child_optional("customDpSProg");
 
-  	// Just file
-  	if(file)
-  	{
-  		shaderProg.loadRsrc(file.get().c_str());
-  	}
-  	// customMsSProg
-  	else if(customMsSProgTree)
-  	{
-  		std::string source;
-  		std::string prefix;
+		// Just file
+		if(file)
+		{
+			shaderProg.loadRsrc(file.get().c_str());
+		}
+		// customMsSProg
+		else if(customMsSProgTree)
+		{
+			std::string source;
+			std::string prefix;
 
-  		parseCustomShader(msGenericDefines, customMsSProgTree.get(), source, prefix);
-  		std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
-  		                                                              source.c_str(), prefix.c_str());
-  		shaderProg.loadRsrc(shaderFilename.c_str());
+			parseCustomShader(msGenericDefines, customMsSProgTree.get(), source, prefix);
+			std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
+																		  source.c_str(), prefix.c_str());
+			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		// customDpSProg
-  	else if(customDpSProgTree)
-  	{
-  		std::string source;
-  		std::string prefix;
+		else if(customDpSProgTree)
+		{
+			std::string source;
+			std::string prefix;
 
-  		parseCustomShader(dpGenericDefines, customDpSProgTree.get(), source, prefix);
-  		std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
-  		                                                              source.c_str(), prefix.c_str());
-  		shaderProg.loadRsrc(shaderFilename.c_str());
-  	}
-  	// Error
+			parseCustomShader(dpGenericDefines, customDpSProgTree.get(), source, prefix);
+			std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
+																		  source.c_str(), prefix.c_str());
+			shaderProg.loadRsrc(shaderFilename.c_str());
+		}
+		// Error
 		else
 		{
 			throw EXCEPTION("Expected file or customMsSProg or customDpSProg");
 		}
 
-  	//
-  	// blendingStage
-  	//
-  	boost::optional<bool> blendingStage_ = PropertyTree::getBoolOptional(pt, "blendingStage");
-  	if(blendingStage_)
-  	{
-  		blendingStage = blendingStage_.get();
-  	}
+		//
+		// blendingStage
+		//
+		boost::optional<bool> blendingStage_ = PropertyTree::getBoolOptional(pt, "blendingStage");
+		if(blendingStage_)
+		{
+			blendingStage = blendingStage_.get();
+		}
 
-  	//
-  	// blendFuncs
-  	//
-  	boost::optional<const ptree&> blendFuncsTree = pt.get_child_optional("blendFuncs");
-  	if(blendFuncsTree)
-  	{
-  		int glEnum;
+		//
+		// blendFuncs
+		//
+		boost::optional<const ptree&> blendFuncsTree = pt.get_child_optional("blendFuncs");
+		if(blendFuncsTree)
+		{
+			int glEnum;
 
-  		// sFactor
-  		std::string sFactor_ = blendFuncsTree.get().get<std::string>("sFactor");
-  		if(!searchBlendEnum(sFactor_.c_str(), glEnum))
+			// sFactor
+			std::string sFactor_ = blendFuncsTree.get().get<std::string>("sFactor");
+			if(!searchBlendEnum(sFactor_.c_str(), glEnum))
 			{
 				throw EXCEPTION("Incorrect blending factor \"" + sFactor_ + "\"");
 			}
@@ -210,41 +210,41 @@ void Material::load(const char* filename)
 				throw EXCEPTION("Incorrect blending factor \"" + dFactor_ + "\"");
 			}
 			blendingDfactor = glEnum;
-  	}
+		}
 
-  	//
-  	// depthTesting
-  	//
-  	boost::optional<bool> depthTesting_ = PropertyTree::getBoolOptional(pt, "depthTesting");
-  	if(depthTesting_)
-  	{
-  		depthTesting = depthTesting_.get();
-  	}
+		//
+		// depthTesting
+		//
+		boost::optional<bool> depthTesting_ = PropertyTree::getBoolOptional(pt, "depthTesting");
+		if(depthTesting_)
+		{
+			depthTesting = depthTesting_.get();
+		}
 
-  	//
-  	// wireframe
-  	//
-  	boost::optional<bool> wireframe_ = PropertyTree::getBoolOptional(pt, "wireframe");
-  	if(wireframe_)
-  	{
-  		wireframe = wireframe_.get();
-  	}
+		//
+		// wireframe
+		//
+		boost::optional<bool> wireframe_ = PropertyTree::getBoolOptional(pt, "wireframe");
+		if(wireframe_)
+		{
+			wireframe = wireframe_.get();
+		}
 
-  	//
-  	// userDefinedVars
-  	//
-  	boost::optional<const ptree&> userDefinedVarsTree = pt.get_child_optional("userDefinedVars");
-  	if(userDefinedVarsTree)
-  	{
-  		BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get())
+		//
+		// userDefinedVars
+		//
+		boost::optional<const ptree&> userDefinedVarsTree = pt.get_child_optional("userDefinedVars");
+		if(userDefinedVarsTree)
+		{
+			BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get())
 			{
-  			if(v.first != "userDefinedVar")
-  			{
-  				throw EXCEPTION("Expected userDefinedVar and not " + v.first);
-  			}
+				if(v.first != "userDefinedVar")
+				{
+					throw EXCEPTION("Expected userDefinedVar and not " + v.first);
+				}
 
-  			const ptree& userDefinedVarTree = v.second;
-  			std::string varName = userDefinedVarTree.get<std::string>("name");
+				const ptree& userDefinedVarTree = v.second;
+				std::string varName = userDefinedVarTree.get<std::string>("name");
 
 				// check if the uniform exists
 				if(!shaderProg->uniVarExists(varName.c_str()))
@@ -317,8 +317,7 @@ void Material::load(const char* filename)
 						break;
 				};
 			} // end for all userDefinedVars
-  	} // end userDefinedVars
-
+		} // end userDefinedVars
 		initStdShaderVars();
 	}
 	catch(std::exception& e)

@@ -2,13 +2,14 @@
 #include <cstring>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 #include "ShaderPrePreprocessor.h"
 #include "Parser.h"
 #include "Util.h"
 #include "Exception.h"
 
 
-const char* MULTIPLE_DEF_MSG = " already defined in the same place. Check for circular or multiple includance";
+static const char* MULTIPLE_DEF_MSG = " already defined in the same place. Check for circular or multiple includance";
 
 
 //======================================================================================================================
@@ -16,9 +17,9 @@ const char* MULTIPLE_DEF_MSG = " already defined in the same place. Check for ci
 //======================================================================================================================
 void ShaderPrePreprocessor::printSourceLines() const
 {
-	for(uint i=0; i<sourceLines.size(); ++i)
+	for(uint i = 0; i < sourceLines.size(); ++i)
 	{
-		std::cout << std::setw(3) << i+1 << ": " << sourceLines[i] << std::endl;
+		std::cout << std::setw(3) << (i + 1) << ": " << sourceLines[i] << std::endl;
 	}
 }
 
@@ -29,7 +30,7 @@ void ShaderPrePreprocessor::printSourceLines() const
 void ShaderPrePreprocessor::printShaderVars() const
 {
 	std::cout << "TYPE" << std::setw(20) << "NAME" << std::setw(4) << "LOC" << std::endl;
-	for(uint i=0; i<output.attributes.size(); ++i)
+	for(uint i = 0; i < output.attributes.size(); ++i)
 	{
 		std::cout << std::setw(4) << "A" << std::setw(20) << output.attributes[i].name << std::setw(4) <<
 		             output.attributes[i].customLoc << std::endl;
@@ -95,7 +96,8 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 						// play
 
 						// its defined in same place so there is probable circular includance
-						if(vertShaderBegins.definedInLine==scanner.getLineNumber() && vertShaderBegins.definedInFile==filename)
+						if(vertShaderBegins.definedInLine == scanner.getLineNumber() &&
+						   vertShaderBegins.definedInFile == filename)
 						{
 							throw PARSER_EXCEPTION("vertShaderBegins" + MULTIPLE_DEF_MSG);
 						}
@@ -103,43 +105,46 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 						// already defined elsewhere => error
 						if(vertShaderBegins.definedInLine != -1)
 						{
-							throw PARSER_EXCEPTION("vertShaderBegins already defined at " + vertShaderBegins.definedInFile + ":" +
-																		 boost::lexical_cast<std::string>(vertShaderBegins.definedInLine));
+							throw PARSER_EXCEPTION("vertShaderBegins already defined at " +
+							                       vertShaderBegins.definedInFile + ":" +
+							                       boost::lexical_cast<std::string>(vertShaderBegins.definedInLine));
 						}
 
 						// vert shader should be before frag
 						if(fragShaderBegins.definedInLine != -1)
 						{
 							throw PARSER_EXCEPTION("vertShaderBegins must precede fragShaderBegins defined at " +
-																		 fragShaderBegins.definedInFile + ":" +
-																		 boost::lexical_cast<std::string>(fragShaderBegins.definedInLine));
+							                       fragShaderBegins.definedInFile + ":" +
+							                       boost::lexical_cast<std::string>(fragShaderBegins.definedInLine));
 						}
 
 						// vert shader should be before geom
 						if(geomShaderBegins.definedInLine != -1)
 						{
 							throw PARSER_EXCEPTION("vertShaderBegins must precede geomShaderBegins defined at " +
-																		 geomShaderBegins.definedInFile + ":" +
-																		 boost::lexical_cast<std::string>(geomShaderBegins.definedInLine));
+							                       geomShaderBegins.definedInFile + ":" +
+							                       boost::lexical_cast<std::string>(geomShaderBegins.definedInLine));
 						}
 
 						vertShaderBegins.definedInFile = filename;
 						vertShaderBegins.definedInLine = scanner.getLineNumber();
 						vertShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) + ' ' +
-																	boost::lexical_cast<std::string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) +
+						                      ' ' + boost::lexical_cast<std::string>(depth) + " // " +
+						                      lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 					//
 					// geomShaderBegins
 					//
 					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
-									strcmp(token->getValue().getString(), "geomShaderBegins") == 0)
+					        strcmp(token->getValue().getString(), "geomShaderBegins") == 0)
 					{
 						// play
 
 						// its defined in same place so there is probable circular includance
-						if(geomShaderBegins.definedInLine==scanner.getLineNumber() && geomShaderBegins.definedInFile==filename)
+						if(geomShaderBegins.definedInLine == scanner.getLineNumber() &&
+						   geomShaderBegins.definedInFile == filename)
 						{
 							throw PARSER_EXCEPTION("geomShaderBegins" + MULTIPLE_DEF_MSG);
 						}
@@ -147,8 +152,9 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 						// already defined elsewhere => error
 						if(geomShaderBegins.definedInLine != -1)
 						{
-							throw PARSER_EXCEPTION("geomShaderBegins already defined at " + geomShaderBegins.definedInFile + ":" +
-																		 boost::lexical_cast<std::string>(geomShaderBegins.definedInLine));
+							throw PARSER_EXCEPTION("geomShaderBegins already defined at " +
+							                       geomShaderBegins.definedInFile + ":" +
+							                       boost::lexical_cast<std::string>(geomShaderBegins.definedInLine));
 						}
 
 						// vert shader entry point not defined => error
@@ -161,15 +167,16 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 						if(fragShaderBegins.definedInLine != -1)
 						{
 							throw PARSER_EXCEPTION("geomShaderBegins must precede fragShaderBegins defined at " +
-																		 fragShaderBegins.definedInFile + ":" +
-																		 boost::lexical_cast<std::string>(fragShaderBegins.definedInLine));
+							                       fragShaderBegins.definedInFile + ":" +
+							                       boost::lexical_cast<std::string>(fragShaderBegins.definedInLine));
 						}
 
 						geomShaderBegins.definedInFile = filename;
 						geomShaderBegins.definedInLine = scanner.getLineNumber();
 						geomShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) + ' ' +
-																	boost::lexical_cast<std::string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) +
+						                      ' ' + boost::lexical_cast<std::string>(depth) + " // " +
+						                      lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 					//
@@ -181,15 +188,17 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 						// play
 
 						// its defined in same place so there is probable circular includance
-						if(fragShaderBegins.definedInLine==scanner.getLineNumber() && fragShaderBegins.definedInFile==filename)
+						if(fragShaderBegins.definedInLine == scanner.getLineNumber() &&
+						   fragShaderBegins.definedInFile == filename)
 						{
 							throw PARSER_EXCEPTION("fragShaderBegins" + MULTIPLE_DEF_MSG);
 						}
 
 						if(fragShaderBegins.definedInLine != -1) // if already defined elsewhere throw error
 						{
-							throw PARSER_EXCEPTION("fragShaderBegins already defined at " + fragShaderBegins.definedInFile + ":" +
-																		 boost::lexical_cast<std::string>(fragShaderBegins.definedInLine));
+							throw PARSER_EXCEPTION("fragShaderBegins already defined at " +
+							                       fragShaderBegins.definedInFile + ":" +
+							                       boost::lexical_cast<std::string>(fragShaderBegins.definedInLine));
 						}
 
 						// vert shader entry point not defined
@@ -201,25 +210,29 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 						fragShaderBegins.definedInFile = filename;
 						fragShaderBegins.definedInLine = scanner.getLineNumber();
 						fragShaderBegins.globalLine = sourceLines.size() + 1;
-						sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) + ' ' +
-																	boost::lexical_cast<std::string>(depth) + " // " + lines[scanner.getLineNumber()-1]);
+						sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) +
+						                      ' ' + boost::lexical_cast<std::string>(depth) + " // " +
+						                      lines[scanner.getLineNumber()-1]);
 						// stop play
 					}
 					//
 					// include
 					//
-					else if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "include") == 0)
+					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
+					        strcmp(token->getValue().getString(), "include") == 0)
 					{
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_STRING)
 						{
 							// play
 							//int line = sourceLines.size();
-							sourceLines.push_back("#line 0 " + boost::lexical_cast<std::string>(depth+1) + " // " +
-																		lines[scanner.getLineNumber()-1]);
-							parseFileForPragmas(token->getValue().getString(), depth+1);
-							sourceLines.push_back("#line " + boost::lexical_cast<std::string>(scanner.getLineNumber()) + ' ' +
-																		boost::lexical_cast<std::string>(depth) +  " // end of " + lines[scanner.getLineNumber()-1]);
+							sourceLines.push_back("#line 0 " + boost::lexical_cast<std::string>(depth + 1) + " // " +
+							                      lines[scanner.getLineNumber() - 1]);
+							parseFileForPragmas(token->getValue().getString(), depth + 1);
+							sourceLines.push_back("#line " +
+							                      boost::lexical_cast<std::string>(scanner.getLineNumber()) + ' ' +
+							                      boost::lexical_cast<std::string>(depth) +  " // end of " +
+							                      lines[scanner.getLineNumber() - 1]);
 							// stop play
 						}
 						else
@@ -231,7 +244,7 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 					// transformFeedbackVarying
 					//
 					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
-									strcmp(token->getValue().getString(), "transformFeedbackVarying") == 0)
+							strcmp(token->getValue().getString(), "transformFeedbackVarying") == 0)
 					{
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_IDENTIFIER)
@@ -247,13 +260,15 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 								}
 								else
 								{
-									throw PARSER_EXCEPTION("Varying \"" + varName + "\" already defined at " + var->definedInFile +
-																				 ":" + boost::lexical_cast<std::string>(var->definedInLine));
+									throw PARSER_EXCEPTION("Varying \"" + varName + "\" already defined at " +
+									                       var->definedInFile + ":" +
+									                       boost::lexical_cast<std::string>(var->definedInLine));
 								}
 							}
 
 							// all ok, push it back
-							output.trffbVaryings.push_back(TrffbVaryingPragma(filename, scanner.getLineNumber(), varName));
+							output.trffbVaryings.push_back(TrffbVaryingPragma(filename, scanner.getLineNumber(),
+							                                                  varName));
 							sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
 						}
 						else
@@ -264,7 +279,8 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 					//
 					// attribute
 					//
-					else if(token->getCode() == Scanner::TC_IDENTIFIER && strcmp(token->getValue().getString(), "attribute") == 0)
+					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
+					        strcmp(token->getValue().getString(), "attribute") == 0)
 					{
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_IDENTIFIER)
@@ -279,31 +295,34 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 								Vec<ShaderVarPragma>::const_iterator attrib = findNamed(output.attributes, varName);
 								if(attrib != output.attributes.end())
 								{
-									if(attrib->definedInLine==scanner.getLineNumber() && attrib->definedInFile==filename)
+									if(attrib->definedInLine == scanner.getLineNumber() &&
+									   attrib->definedInFile == filename)
 									{
 										throw PARSER_EXCEPTION("\"" + varName + "\"" + MULTIPLE_DEF_MSG);
 									}
 									else
 									{
 										throw PARSER_EXCEPTION("Attribute \"" + varName + "\" already defined at " +
-																					 attrib->definedInFile + ":" +
-																					 boost::lexical_cast<std::string>(attrib->definedInLine));
+										                       attrib->definedInFile + ":" +
+										                       boost::lexical_cast<std::string>(attrib->definedInLine));
 									}
 								}
 								// search if another var has the same loc
-								for(attrib = output.attributes.begin(); attrib!=output.attributes.end(); ++attrib)
+								for(attrib = output.attributes.begin(); attrib != output.attributes.end(); ++attrib)
 								{
 									if(attrib->customLoc == loc)
 									{
-										throw PARSER_EXCEPTION("The attributes \"" + attrib->name + "\" (" + attrib->definedInFile + ":" +
-																					 boost::lexical_cast<std::string>(attrib->definedInLine) + ") and \"" +
-																					 varName + "\" share the same location");
+										throw PARSER_EXCEPTION("The attributes \"" + attrib->name + "\" (" +
+										                       attrib->definedInFile + ":" +
+										                       boost::lexical_cast<std::string>(attrib->definedInLine) +
+										                       ") and \"" + varName + "\" share the same location");
 									}
 								}
 
 								// all ok, push it back
-								output.attributes.push_back(ShaderVarPragma(filename, scanner.getLineNumber(), varName, loc));
-								sourceLines.push_back(lines[scanner.getLineNumber()-1]);
+								output.attributes.push_back(ShaderVarPragma(filename, scanner.getLineNumber(),
+								                                            varName, loc));
+								sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
 							}
 							else
 							{
@@ -406,8 +425,9 @@ void ShaderPrePreprocessor::parseFile(const char* filename)
 			}
 
 			// vert shader code
-			int limit = (geomShaderBegins.definedInLine != -1) ? geomShaderBegins.globalLine-1 : fragShaderBegins.globalLine-1;
-			for(int i=vertShaderBegins.globalLine-1; i<limit; ++i)
+			int limit = (geomShaderBegins.definedInLine != -1) ? geomShaderBegins.globalLine-1 :
+			                                                     fragShaderBegins.globalLine-1;
+			for(int i = vertShaderBegins.globalLine - 1; i < limit; ++i)
 			{
 				output.vertShaderSource += sourceLines[i] + "\n";
 			}
@@ -415,14 +435,14 @@ void ShaderPrePreprocessor::parseFile(const char* filename)
 			// geom shader code
 			if(geomShaderBegins.definedInLine != -1)
 			{
-				for(int i=geomShaderBegins.globalLine-1; i<fragShaderBegins.globalLine-1; ++i)
+				for(int i = geomShaderBegins.globalLine - 1; i < fragShaderBegins.globalLine - 1; ++i)
 				{
 					output.geomShaderSource += sourceLines[i] + "\n";
 				}
 			}
 
 			// frag shader code
-			for(int i=fragShaderBegins.globalLine-1; i<int(sourceLines.size()); ++i)
+			for(int i = fragShaderBegins.globalLine - 1; i < int(sourceLines.size()); ++i)
 			{
 				output.fragShaderSource += sourceLines[i] + "\n";
 			}
