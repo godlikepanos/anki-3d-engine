@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include "SkelAnimModelNodeCtrl.h"
 #include "SkelAnim.h"
 #include "Skeleton.h"
@@ -92,11 +93,11 @@ void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
 	uint head = 0, tail = 0;
 
 	// put the roots
-	for(uint i=0; i<skeleton.bones.size(); i++)
+	BOOST_FOREACH(const Bone& bone, skeleton.getBones())
 	{
-		if(skeleton.bones[i].parent == NULL)
+		if(bone.getParent() == NULL)
 		{
-			queue[tail++] = i; // queue push
+			queue[tail++] = bone.getPos(); // queue push
 		}
 	}
 
@@ -104,31 +105,32 @@ void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
 	while(head != tail) // while queue not empty
 	{
 		uint boneId = queue[head++]; // queue pop
-		const Skeleton::Bone& boned = skeleton.bones[boneId];
+		const Bone& boned = skeleton.getBones()[boneId];
 
 		// bone.final_transform = MA * ANIM * MAi
 		// where MA is bone matrix at armature space and ANIM the interpolated transformation.
 		combineTransformations(boneTranslations[boneId], boneRotations[boneId],
-		                       boned.tslSkelSpaceInv, boned.rotSkelSpaceInv,
+		                       boned.getTslSkelSpaceInv(), boned.getRotSkelSpaceInv(),
 		                       boneTranslations[boneId], boneRotations[boneId]);
 
-		combineTransformations(boned.tslSkelSpace, boned.rotSkelSpace,
+		combineTransformations(boned.getTslSkelSpace(), boned.getRotSkelSpace(),
 		                       boneTranslations[boneId], boneRotations[boneId],
 		                       boneTranslations[boneId], boneRotations[boneId]);
 
 		// and finaly add the parent's transform
-		if(boned.parent)
+		if(boned.getParent())
 		{
 			// bone.final_final_transform = parent.transf * bone.final_transform
-			combineTransformations(boneTranslations[boned.parent->getPos()], boneRotations[boned.parent->getPos()],
-		                         boneTranslations[boneId], boneRotations[boneId],
-		                         boneTranslations[boneId], boneRotations[boneId]);
+			combineTransformations(boneTranslations[boned.getParent()->getPos()],
+			                       boneRotations[boned.getParent()->getPos()],
+			                       boneTranslations[boneId], boneRotations[boneId],
+			                       boneTranslations[boneId], boneRotations[boneId]);
 		}
 
 		// now add the bone's childes
-		for(uint i=0; i<boned.childsNum; i++)
+		for(uint i = 0; i < boned.getChildsNum(); i++)
 		{
-			queue[tail++] = boned.childs[i]->getPos();
+			queue[tail++] = boned.getChild(i).getPos();
 		}
 	}
 }
@@ -140,13 +142,13 @@ void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
 void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& boneTranslations,
                                    const Vec<Mat3>& boneRotations, Vec<Vec3>& heads, Vec<Vec3>& tails)
 {
-	for(uint i=0; i<skeleton.bones.size(); i++)
+	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{
 		const Mat3& rot = boneRotations[i];
 		const Vec3& transl = boneTranslations[i];
 
-		heads[i] = skeleton.bones[i].getHead().getTransformed(transl, rot);
-		tails[i] = skeleton.bones[i].getTail().getTransformed(transl, rot);
+		heads[i] = skeleton.getBones()[i].getHead().getTransformed(transl, rot);
+		tails[i] = skeleton.getBones()[i].getTail().getTransformed(transl, rot);
 	}
 }
 
@@ -169,6 +171,7 @@ void SkelAnimModelNodeCtrl::update(float)
 
 	interpolate(*skelAnim, frame, skinNode.getBoneTranslations(), skinNode.getBoneRotations());
 	updateBoneTransforms(skinNode.getSkin().getSkeleton(), skinNode.getBoneTranslations(), skinNode.getBoneRotations());
+
 	if(MainRendererSingleton::getInstance().getDbg().isEnabled() &&
 	   MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
 	{

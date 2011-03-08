@@ -17,7 +17,7 @@ void SkinNode::init(const char* filename)
 		patches.push_back(new SkinPatchNode(patch, this));
 	}
 
-	uint bonesNum = skin->getSkeleton().bones.size();
+	uint bonesNum = skin->getSkeleton().getBones().size();
 	tails.resize(bonesNum);
 	heads.resize(bonesNum);
 	boneRotations.resize(bonesNum);
