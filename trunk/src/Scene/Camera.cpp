@@ -109,7 +109,7 @@ bool Camera::insideFrustum(const Camera& cam) const
 	// transform them to the given camera's world space (exept the eye)
 	for(uint i = 0; i < 4; i++)
 	{
-		points[i].transform(getWorldTransform());
+		points[i].transform(cam.getWorldTransform());
 	}
 
 	// the collision code

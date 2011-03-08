@@ -65,7 +65,7 @@ void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitter& pe) const
 void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 {
 	dbg.setModelMat(Mat4(sn.getWorldTransform()));
-
+	dbg.begin();
 	for(uint i = 0; i < sn.getHeads().size(); i++)
 	{
 		dbg.setColor(Vec4(1.0, 0.0, 0.0, 1.0));
@@ -73,4 +73,5 @@ void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 		dbg.setColor(Vec4(1.0));
 		dbg.pushBackVertex(sn.getTails()[i]);
 	}
+	dbg.end();
 }

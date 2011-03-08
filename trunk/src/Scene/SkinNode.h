@@ -28,6 +28,7 @@ class SkinNode: public SceneNode
 		GETTER_RW(Vec<Vec3>, boneTranslations, getBoneTranslations)
 		const Skin& getSkin() const {return *skin;}
 		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+		GETTER_R(Vec<SkinPatchNode*>, patches, getPatcheNodes)
 		/// @}
 
 		void init(const char* filename);
@@ -35,6 +36,8 @@ class SkinNode: public SceneNode
 		/// Update boundingShapeWSpace from bone tails (not heads as well cause its faster that way). The tails come
 		/// from the previous frame
 		void moveUpdate();
+
+		void frameUpdate() {}
 
 	private:
 		RsrcPtr<Skin> skin; ///< The resource

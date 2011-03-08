@@ -2,6 +2,7 @@
 #include "VisibilityTester.h"
 #include "Scene.h"
 #include "ModelNode.h"
+#include "SkinNode.h"
 #include "ModelPatchNode.h"
 #include "Material.h"
 #include "Sphere.h"
@@ -72,6 +73,7 @@ void VisibilityTester::test(Camera& cam)
 				{
 					cam.getVisibleSpotLights().push_back(spotl);
 					spotl->setVisible(true);
+					spotl->getCamera().setVisible(true);
 				}
 				break;
 			}
@@ -111,6 +113,9 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 	cam.getVisibleMsRenderableNodes().clear();
 	cam.getVisibleBsRenderableNodes().clear();
 
+	//
+	// ModelNodes
+	//
 	BOOST_FOREACH(ModelNode* node, scene.getModelNodes())
 	{
 		// Skip if the ModeNode is not visible
@@ -144,6 +149,40 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 				modelPatchNode->setVisible(true);
 			}
 		}
+	}
+
+	//
+	// SkinNodes
+	//
+	BOOST_FOREACH(SkinNode* node, scene.getSkinNodes())
+	{
+		// Skip if the SkinNode is not visible
+		if(!test(*node, cam))
+		{
+			continue;
+		}
+
+		node->setVisible(true);
+
+		// Put all the patches into the visible container
+		/*BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
+		{
+			// Skip shadowless
+			if(skipShadowless && !patchNode->getCpMtl().isShadowCaster())
+			{
+				continue;
+			}
+
+			if(patchNode->getCpMtl().renderInBlendingStage())
+			{
+				cam.getVisibleBsRenderableNodes().push_back(patchNode);
+			}
+			else
+			{
+				cam.getVisibleMsRenderableNodes().push_back(patchNode);
+			}
+			patchNode->setVisible(true);
+		}*/
 	}
 
 	//

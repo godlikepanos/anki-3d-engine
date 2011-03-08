@@ -163,11 +163,11 @@ void init()
 
 
 	// Imp
-	/*imp = new SkinNode();
+	imp = new SkinNode();
 	imp->init("models/imp/imp.skin");
 	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
 	imp->skelAnimModelNodeCtrl->set(imp->getSkin().getSkelAnims()[0].get());
-	imp->skelAnimModelNodeCtrl->setStep(0.8);*/
+	imp->skelAnimModelNodeCtrl->setStep(0.8);
 
 	return;
 
@@ -258,7 +258,7 @@ void mainLoopExtra()
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = horse;
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = imp;
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
@@ -307,6 +307,17 @@ void mainLoopExtra()
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();
+
+	//INFO(mover->getSceneNodeName())
+
+	if(spot_lights[0]->getCamera().insideFrustum(spot_lights[1]->getCamera()))
+	{
+		INFO("in");
+	}
+	else
+	{
+		INFO("out");
+	}
 }
 
 
@@ -328,7 +339,13 @@ void mainLoop()
 		AppSingleton::getInstance().execStdinScpripts();
 		SceneSingleton::getInstance().getPhysics().update(timer.getCrntTime());
 		SceneSingleton::getInstance().updateAllWorldStuff();
-		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
+		//SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
+		SceneSingleton::getInstance().doVisibilityTests(spot_lights[0]->getCamera());
+		AppSingleton::getInstance().getActiveCam()->getVisibleMsRenderableNodes().clear();
+		AppSingleton::getInstance().getActiveCam()->getVisibleMsRenderableNodes() = spot_lights[0]->getCamera().getVisibleMsRenderableNodes();
+		AppSingleton::getInstance().getActiveCam()->getVisiblePointLights() = spot_lights[0]->getCamera().getVisiblePointLights();
+		AppSingleton::getInstance().getActiveCam()->getVisibleSpotLights() = spot_lights[0]->getCamera().getVisibleSpotLights();
+
 		SceneSingleton::getInstance().updateAllControllers();
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());

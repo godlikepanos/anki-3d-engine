@@ -8,6 +8,8 @@
 #include "SceneDbgDrawer.h"
 #include "ParticleEmitter.h"
 #include "RenderableNode.h"
+#include "SkinNode.h"
+#include "SpotLight.h"
 
 
 //======================================================================================================================
@@ -263,6 +265,46 @@ void Dbg::run()
 
 	BOOST_FOREACH(const SceneNode* node, SceneSingleton::getInstance().getAllNodes())
 	{
+		if(!node->isVisible())
+		{
+			continue;
+		}
+
+		if(node->getSceneNodeName() == "Light:5")
+		{
+			const SpotLight* sl = static_cast<const SpotLight*>(node);
+			const Camera& cam = sl->getCamera();
+
+			boost::array<Vec3, 5> points;
+
+			// get 3 sample floats
+			float x = cam.getZFar() / tan((PI - cam.getFovX()) / 2.0);
+			float y = tan(cam.getFovY() / 2.0) * cam.getZFar();
+			float z = -cam.getZFar();
+
+			// the actual points in local space
+			points[0] = Vec3(x, y, z); // top right
+			points[1] = Vec3(-x, y, z); // top left
+			points[2] = Vec3(-x, -y, z); // bottom left
+			points[3] = Vec3(x, -y, z); // bottom right
+			points[4] = cam.getWorldTransform().getOrigin(); // eye (already in world space)
+
+			for(uint i = 0; i < 4; i++)
+			{
+				points[i].transform(cam.getWorldTransform());
+			}
+
+			setModelMat(Mat4::getIdentity());
+			setColor(Vec3(1,0,0));
+			begin();
+				for(uint i = 0; i < 4; i++)
+				{
+					pushBackVertex(points[4]);
+					pushBackVertex(points[i]);
+				}
+			end();
+		}
+
 		switch(node->getSceneNodeType())
 		{
 			case SceneNode::SNT_CAMERA:
@@ -281,6 +323,16 @@ void Dbg::run()
 					collisionDbgDrawer.draw(rnode.getVisibilityShapeWSpace());
 				}*/
 				break;
+			case SceneNode::SNT_SKIN:
+			{
+				const SkinNode& node_ = static_cast<const SkinNode&>(*node);
+				sceneDbgDrawer.drawSkinNodeSkeleton(node_);
+				if(showVisibilityBoundingShapesFlag)
+				{
+					collisionDbgDrawer.draw(node_.getVisibilityShapeWSpace());
+				}
+				break;
+			}
 			default:
 				break;
 		}
