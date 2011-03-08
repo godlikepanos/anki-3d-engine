@@ -104,7 +104,8 @@ class ResourceManager
 
 		/// Dealocate the resource. Its separate for two reasons:
 		/// - Because we want to specialize it for the async loaded resources
-		/// - Because we cannot have the operator delete in a template body. Apparently the compiler is to dump to decide
+		/// - Because we cannot have the operator delete in a template body. Apparently the compiler is to dump to
+		///   decide
 		template<typename Type>
 		void deallocRsrc(Type* rsrc);
 };
