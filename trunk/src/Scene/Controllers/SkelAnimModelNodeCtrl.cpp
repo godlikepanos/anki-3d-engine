@@ -178,4 +178,9 @@ void SkelAnimModelNodeCtrl::update(float)
 		deform(skinNode.getSkin().getSkeleton(), skinNode.getBoneTranslations(), skinNode.getBoneRotations(),
 		       skinNode.getHeads(), skinNode.getTails());
 	}
+
+	BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())
+	{
+		MainRendererSingleton::getInstance().getSkinsDeformer().deform(*skinPatchNode);
+	}
 }

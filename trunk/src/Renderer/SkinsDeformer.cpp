@@ -27,12 +27,12 @@ void SkinsDeformer::init()
 
 	// All
 	tfHwSkinningAllSProg->bind();
-	glTransformFeedbackVaryings(tfHwSkinningAllSProg->getGlId(), 1, vars, GL_SEPARATE_ATTRIBS);
+	glTransformFeedbackVaryings(tfHwSkinningAllSProg->getGlId(), 3, vars, GL_SEPARATE_ATTRIBS);
 	tfHwSkinningAllSProg->relink();
 
 	// Pos
 	tfHwSkinningPosSProg->bind();
-	glTransformFeedbackVaryings(tfHwSkinningAllSProg->getGlId(), 3, vars, GL_SEPARATE_ATTRIBS);
+	glTransformFeedbackVaryings(tfHwSkinningAllSProg->getGlId(), 1, vars, GL_SEPARATE_ATTRIBS);
 	tfHwSkinningPosSProg->relink();
 }
 
