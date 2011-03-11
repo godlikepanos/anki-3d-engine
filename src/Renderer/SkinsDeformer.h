@@ -8,7 +8,7 @@ class ShaderProg;
 class SkinPatchNode;
 
 
-///
+/// @todo
 class SkinsDeformer
 {
 	public:

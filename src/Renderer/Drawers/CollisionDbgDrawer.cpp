@@ -43,3 +43,19 @@ void CollisionDbgDrawer::draw(const Obb& obb)
 	dbg.pushBackVertex(obb.getCenter() + obb.getRotation() * obb.getExtend());
 	dbg.end();*/
 }
+
+
+//======================================================================================================================
+// draw (Plane)                                                                                                        =
+//======================================================================================================================
+void CollisionDbgDrawer::draw(const Plane& plane)
+{
+	const Vec3& n = plane.getNormal();
+	const float& o = plane.getOffset();
+	Quat q;
+	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
+	Mat4 trf(n * o, Mat3(q));
+
+	dbg.setModelMat(trf);
+	dbg.renderGrid();
+}

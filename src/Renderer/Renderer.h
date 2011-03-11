@@ -15,6 +15,7 @@
 #include "Dbg.h"
 #include "GlException.h"
 #include "SceneDrawer.h"
+#include "SkinsDeformer.h"
 
 
 class Camera;
@@ -53,6 +54,7 @@ class Renderer
 		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat);
 		const Camera& getCamera() const {return *cam;}
 		GETTER_R(SceneDrawer, sceneDrawer, getSceneDrawer)
+		GETTER_RW(SkinsDeformer, skinsDeformer, getSkinsDeformer)
 		/// @}
 
 		/// Init the renderer given an initialization class
@@ -107,6 +109,7 @@ class Renderer
 		const Camera* cam; ///< Current camera
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
 		SceneDrawer sceneDrawer;
+		SkinsDeformer skinsDeformer;
 
 	//====================================================================================================================
 	// Protected                                                                                                         =

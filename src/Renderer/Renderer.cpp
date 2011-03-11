@@ -52,6 +52,9 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVao.create();
 	quadVao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
 	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
+
+	// Other
+	skinsDeformer.init();
 }
 
 

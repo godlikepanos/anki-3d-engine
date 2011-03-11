@@ -5,6 +5,7 @@
 class Dbg;
 class Sphere;
 class Obb;
+class Plane;
 
 
 /// Contains methods to render the collision shapes
@@ -19,6 +20,9 @@ class CollisionDbgDrawer
 
 		/// Draw Obb
 		virtual void draw(const Obb& obb);
+
+		/// Draw Plane
+		virtual void draw(const Plane& plane);
 
 	private:
 		Dbg& dbg; ///< The debug stage
