@@ -19,6 +19,8 @@ class Mesh;
 class RsrcAsyncLoadingReqsHandler
 {
 	public:
+		GETTER_R(uint, frameServedRequestsNum, getFrameServedRequestsNum)
+
 		/// Send a loading request to an AsyncLoader
 		/// @tparam Type It should be Texture or Mesh
 		/// @param filename The file to load
@@ -31,7 +33,6 @@ class RsrcAsyncLoadingReqsHandler
 		/// time than the max the method will return. The pending requests will be served when it will be called again.
 		/// In ms
 		void postProcessFinishedRequests(uint maxTime);
-		
 	
 	private:
 		/// Request for the AsyncLoader [Base class]
@@ -74,6 +75,7 @@ class RsrcAsyncLoadingReqsHandler
 		boost::ptr_list<LoadingRequestBase> requests; ///< Loading requests
 
 		AsyncLoader al; ///< Asynchronous loader
+		uint frameServedRequestsNum; ///< The number of served requests for this frame
 		
 		/// @name Async loader callbacks
 		/// @{

@@ -80,7 +80,7 @@ class Camera: public SceneNode
 		bool insideFrustum(const Camera& cam) const;
 		/// @}
 
-	private:
+	public:
 		/// @name Angles
 		/// fovX is the angle in the y axis (imagine the cam positioned in the default OGL pos) Note that fovX > fovY
 		/// (most of the time) and aspectRatio = fovX/fovY
