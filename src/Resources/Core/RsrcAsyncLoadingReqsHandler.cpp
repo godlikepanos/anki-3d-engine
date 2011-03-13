@@ -24,6 +24,7 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 {
 	HighRezTimer t;
 	t.start();
+	frameServedRequestsNum = 0;
 
 	while(1)
 	{
@@ -55,6 +56,8 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 				break;
 		}
 		
+		++frameServedRequestsNum;
+
 		requests.pop_front();
 
 		// Leave if you passed the max time
@@ -62,6 +65,11 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 		{
 			break;
 		}
+	}
+
+	if(frameServedRequestsNum > 0)
+	{
+		INFO(frameServedRequestsNum << " requests served. Time: " << t.getElapsedTime() << ", max time: " << maxTime);
 	}
 }
 

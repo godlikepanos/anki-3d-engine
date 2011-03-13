@@ -54,7 +54,9 @@ void CollisionDbgDrawer::draw(const Plane& plane)
 	const float& o = plane.getOffset();
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
-	Mat4 trf(n * o, Mat3(q));
+	Mat3 rot(q);
+	rot.rotateXAxis(M::PI / 2);
+	Mat4 trf(n * o, rot);
 
 	dbg.setModelMat(trf);
 	dbg.renderGrid();

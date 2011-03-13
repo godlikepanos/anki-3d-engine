@@ -140,9 +140,9 @@ void init()
 	spot_lights[0] = new SpotLight();
 	spot_lights[0]->init("maps/temple/light2.light");
 	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(toRad(-20), toRad(20), 0.0)), 1.0));
-	spot_lights[1] = new SpotLight();
+	/*spot_lights[1] = new SpotLight();
 	spot_lights[1]->init("maps/temple/light3.light");
-	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
+	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));*/
 
 
 	// horse
@@ -310,14 +310,14 @@ void mainLoopExtra()
 
 	//INFO(mover->getSceneNodeName())
 
-	if(spot_lights[0]->getCamera().insideFrustum(spot_lights[1]->getCamera()))
+	/*if(spot_lights[0]->getCamera().insideFrustum(spot_lights[1]->getCamera()))
 	{
 		INFO("in");
 	}
 	else
 	{
 		INFO("out");
-	}
+	}*/
 }
 
 
@@ -339,13 +339,12 @@ void mainLoop()
 		AppSingleton::getInstance().execStdinScpripts();
 		SceneSingleton::getInstance().getPhysics().update(timer.getCrntTime());
 		SceneSingleton::getInstance().updateAllWorldStuff();
-		//SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
-		SceneSingleton::getInstance().doVisibilityTests(spot_lights[0]->getCamera());
+		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
+		/*SceneSingleton::getInstance().doVisibilityTests(spot_lights[0]->getCamera());
 		AppSingleton::getInstance().getActiveCam()->getVisibleMsRenderableNodes().clear();
 		AppSingleton::getInstance().getActiveCam()->getVisibleMsRenderableNodes() = spot_lights[0]->getCamera().getVisibleMsRenderableNodes();
 		AppSingleton::getInstance().getActiveCam()->getVisiblePointLights() = spot_lights[0]->getCamera().getVisiblePointLights();
-		AppSingleton::getInstance().getActiveCam()->getVisibleSpotLights() = spot_lights[0]->getCamera().getVisibleSpotLights();
-
+		AppSingleton::getInstance().getActiveCam()->getVisibleSpotLights() = spot_lights[0]->getCamera().getVisibleSpotLights();*/
 		SceneSingleton::getInstance().updateAllControllers();
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());

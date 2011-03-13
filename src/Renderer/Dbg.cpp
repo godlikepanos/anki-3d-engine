@@ -206,7 +206,8 @@ void Dbg::init(const RendererInitializer& initializer)
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
 		                       r.getPps().getPostPassFai().getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(),
+		                       0);
 
 		fbo.checkIfGood();
 		fbo.unbind();
@@ -270,7 +271,7 @@ void Dbg::run()
 			continue;
 		}
 
-		if(node->getSceneNodeName() == "Light:5")
+		/*if(node->getSceneNodeName() == "Light:5")
 		{
 			const SpotLight* sl = static_cast<const SpotLight*>(node);
 			const Camera& cam = sl->getCamera();
@@ -303,12 +304,13 @@ void Dbg::run()
 					pushBackVertex(points[i]);
 				}
 			end();
-		}
+		}*/
 
 		switch(node->getSceneNodeType())
 		{
 			case SceneNode::SNT_CAMERA:
 				sceneDbgDrawer.drawCamera(static_cast<const Camera&>(*node));
+				//collisionDbgDrawer.draw(static_cast<const Camera&>(*node).wspaceFrustumPlanes[0]);
 				break;
 			case SceneNode::SNT_LIGHT:
 				sceneDbgDrawer.drawLight(static_cast<const Light&>(*node));
@@ -320,7 +322,7 @@ void Dbg::run()
 				/*if(showVisibilityBoundingShapesFlag)
 				{
 					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
-					collisionDbgDrawer.draw(rnode.getVisibilityShapeWSpace());
+					collisionDbgDrawer.draw(rnode. getVisibilityShapeWSpace());
 				}*/
 				break;
 			case SceneNode::SNT_SKIN:
