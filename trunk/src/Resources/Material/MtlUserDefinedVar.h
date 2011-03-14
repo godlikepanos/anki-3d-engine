@@ -37,26 +37,15 @@ class MtlUserDefinedVar
 		/// @name Accessors
 		/// @{
 		const SProgUniVar& getUniVar() const {return sProgVar;}
-		const Texture* getTexture() const {return data.texture.get();}
-		GETTER_R(float, data.float_, getFloat)
-		GETTER_R(Vec2, data.vec2, getVec2)
-		GETTER_R(Vec3, data.vec3, getVec3)
-		GETTER_R(Vec4, data.vec4, getVec4)
-		GETTER_R(Fai, data.fai, getFai)
+
+		const DataVariant& getDataVariant() const {return data;}
+
+		template<typename Type>
+		const Type& get() const {return boost::get<Type>(data);}
 		/// @}
 
 	private:
-		/// @note If you change this change the runtime as well
-		struct
-		{
-			RsrcPtr<Texture> texture;
-			float float_;
-			Vec2 vec2;
-			Vec3 vec3;
-			Vec4 vec4;
-			Fai fai;
-		} data;
-
+		DataVariant data;
 		const SProgUniVar& sProgVar; ///< Know the other resource
 };
 
@@ -65,7 +54,7 @@ inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_SAMPLER_2D);
-	data.fai = fai_;
+	data = fai_;
 }
 
 
@@ -73,7 +62,7 @@ inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, float f
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_FLOAT);
-	data.float_ = f;
+	data = f;
 }
 
 
@@ -81,7 +70,7 @@ inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const V
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC2);
-	data.vec2 = v;
+	data = v;
 }
 
 
@@ -89,7 +78,7 @@ inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const V
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC3);
-	data.vec3 = v;
+	data = v;
 }
 
 
@@ -97,7 +86,7 @@ inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const V
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC4);
-	data.vec4 = v;
+	data = v;
 }
 
 

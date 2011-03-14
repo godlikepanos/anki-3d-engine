@@ -282,6 +282,8 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
 					        strcmp(token->getValue().getString(), "attribute") == 0)
 					{
+						throw EXCEPTION("Deprecated feature");
+
 						token = &scanner.getNextToken();
 						if(token->getCode() == Scanner::TC_IDENTIFIER)
 						{

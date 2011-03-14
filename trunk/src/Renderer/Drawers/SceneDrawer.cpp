@@ -9,6 +9,71 @@
 
 
 //======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MtlUserDefinedVar& udv_, const Renderer& r_, uint& texUnit_):
+	udv(udv_),
+	r(r_),
+	texUnit(texUnit_)
+{}
+
+
+//======================================================================================================================
+// Visitor functors                                                                                                    =
+//======================================================================================================================
+
+void SceneDrawer::UsrDefVarVisitor::operator()(float x) const
+{
+	udv.getUniVar().setFloat(x);
+}
+
+void SceneDrawer::UsrDefVarVisitor::operator()(const Vec2& x) const
+{
+	udv.getUniVar().setVec2(&x);
+}
+
+void SceneDrawer::UsrDefVarVisitor::operator()(const Vec3& x) const
+{
+	udv.getUniVar().setVec3(&x);
+}
+
+void SceneDrawer::UsrDefVarVisitor::operator()(const Vec4& x) const
+{
+	udv.getUniVar().setVec4(&x);
+}
+
+void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>& x) const
+{
+	x->setRepeat(true);
+	udv.getUniVar().setTexture(*x, texUnit);
+	++texUnit;
+}
+
+void SceneDrawer::UsrDefVarVisitor::operator()(MtlUserDefinedVar::Fai x) const
+{
+	switch(x)
+	{
+		case MtlUserDefinedVar::MS_DEPTH_FAI:
+			udv.getUniVar().setTexture(r.getMs().getDepthFai(), texUnit);
+			break;
+		case MtlUserDefinedVar::IS_FAI:
+			udv.getUniVar().setTexture(r.getIs().getFai(), texUnit);
+			break;
+		case MtlUserDefinedVar::PPS_PRE_PASS_FAI:
+			udv.getUniVar().setTexture(r.getPps().getPrePassFai(), texUnit);
+			break;
+		case MtlUserDefinedVar::PPS_POST_PASS_FAI:
+			udv.getUniVar().setTexture(r.getPps().getPostPassFai(), texUnit);
+			break;
+		default:
+			ASSERT(0);
+	}
+	++texUnit;
+}
+
+
+
+//======================================================================================================================
 // setupShaderProg                                                                                                     =
 //======================================================================================================================
 void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorldTransform, const Camera& cam,
@@ -167,7 +232,12 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 	//
 	// set user defined vars
 	//
-	boost::ptr_vector<MtlUserDefinedVar>::const_iterator it = mtl.getUserDefinedVars().begin();
+	BOOST_FOREACH(const MtlUserDefinedVar& udv, mtl.getUserDefinedVars())
+	{
+		boost::apply_visitor(UsrDefVarVisitor(udv, r, textureUnit), udv.getDataVariant());
+	}
+
+	/*boost::ptr_vector<MtlUserDefinedVar>::const_iterator it = mtl.getUserDefinedVars().begin();
 	for(; it !=  mtl.getUserDefinedVars().end(); it++)
 	{
 		const MtlUserDefinedVar& udv = *it;
@@ -176,12 +246,15 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 		{
 			// texture or FAI
 			case GL_SAMPLER_2D:
-				if(udv.getTexture() != NULL)
+				RsrcPtr<Texture>* tex;
+				MtlUserDefinedVar::Fai* fai;
+
+				if(fai = udv.get<RsrcPtr<Texture> >())
 				{
 					udv.getTexture()->setRepeat(true);
 					udv.getUniVar().setTexture(*udv.getTexture(), textureUnit);
 				}
-				else
+				else if(fai = udv.get< >())
 				{
 					switch(udv.getFai())
 					{
@@ -205,22 +278,22 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 				break;
 			// float
 			case GL_FLOAT:
-				udv.getUniVar().setFloat(udv.getFloat());
+				udv.getUniVar().setFloat(udv.get<float>());
 				break;
 			// vec2
 			case GL_FLOAT_VEC2:
-				udv.getUniVar().setVec2(&udv.getVec2());
+				udv.getUniVar().setVec2(&udv.get<Vec2>());
 				break;
 			// vec3
 			case GL_FLOAT_VEC3:
-				udv.getUniVar().setVec3(&udv.getVec3());
+				udv.getUniVar().setVec3(&udv.get<Vec3>());
 				break;
 			// vec4
 			case GL_FLOAT_VEC4:
-				udv.getUniVar().setVec4(&udv.getVec4());
+				udv.getUniVar().setVec4(&udv.get<Vec4>());
 				break;
 		}
-	}
+	}*/
 
 	ON_GL_FAIL_THROW_EXCEPTION();
 }

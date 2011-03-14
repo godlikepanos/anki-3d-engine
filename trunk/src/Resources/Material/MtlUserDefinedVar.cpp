@@ -9,5 +9,6 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const char* te
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_SAMPLER_2D);
-	data.texture.loadRsrc(texFilename);
+	data = RsrcPtr<Texture>();
+	boost::get<RsrcPtr<Texture> >(data).loadRsrc(texFilename);
 }

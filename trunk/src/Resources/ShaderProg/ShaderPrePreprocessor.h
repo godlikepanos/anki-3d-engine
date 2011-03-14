@@ -25,9 +25,9 @@
 /// @note The order of the *ShaderBegins is important
 class ShaderPrePreprocessor
 {
-	//====================================================================================================================
-	// Nested                                                                                                            =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Nested                                                                                                          =
+	//==================================================================================================================
 	protected:
 		/// The pragma base class
 		struct Pragma
@@ -48,7 +48,8 @@ class ShaderPrePreprocessor
 			std::string name;
 			uint customLoc;
 
-			ShaderVarPragma(const std::string& definedInFile_, int definedInLine_, const std::string& name_, uint customLoc_);
+			ShaderVarPragma(const std::string& definedInFile_, int definedInLine_, const std::string& name_,
+			                uint customLoc_);
 		};
 
 		struct TrffbVaryingPragma: Pragma
@@ -86,9 +87,9 @@ class ShaderPrePreprocessor
 		};
 		
 
-	//====================================================================================================================
-	// Public                                                                                                            =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Public                                                                                                          =
+	//==================================================================================================================
 	public:
 		/// It loads a file and parses it
 		/// @param[in] filename The file to load
@@ -100,9 +101,9 @@ class ShaderPrePreprocessor
 		
 		GETTER_R(Output, output, getOutput)
 
-	//====================================================================================================================
-	// Protected                                                                                                         =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Protected                                                                                                       =
+	//==================================================================================================================
 	protected:
 		Output output; ///< The most important variable
 		Vec<std::string> sourceLines;  ///< The parseFileForPragmas fills this
@@ -117,8 +118,8 @@ class ShaderPrePreprocessor
 
 		/// A recursive function that parses a file for pragmas and updates the output
 		/// @param filename The file to parse
-		/// @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the includance
-		/// depth
+		/// @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the
+		/// includance depth
 		/// @exception Ecxeption
 		void parseFileForPragmas(const std::string& filename, int depth = 0);
 
