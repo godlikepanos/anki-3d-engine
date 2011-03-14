@@ -4,8 +4,7 @@
 
 #pragma anki vertShaderBegins
 
-#pragma anki attribute position 0
-attribute vec3 position;
+layout(location = 0) in vec3 position;
 
 uniform mat4 modelViewProjectionMat;
 

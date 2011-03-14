@@ -39,7 +39,7 @@ class VisibilityTester
 		struct CmpDistanceFromOrigin
 		{
 			Vec3 o; ///< The camera origin
-			CmpDistanceFromOrigin(Vec3 o_): o(o_) {}
+			CmpDistanceFromOrigin(const Vec3& o_): o(o_) {}
 			bool operator()(const SceneNode* a, const SceneNode* b) const;
 		};
 

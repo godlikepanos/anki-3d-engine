@@ -49,9 +49,7 @@ class App
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 
-		uint getTimerTick() const {return timerTick;}
-		uint& getTimerTick() {return timerTick;}
-		void setTimerTick(uint t) {timerTick = t;}
+		GETTER_SETTER(uint, timerTick, getTimerTick, setTimerTick)
 		/// @}
 
 		/// @return Returns the number of milliseconds since SDL library initialization

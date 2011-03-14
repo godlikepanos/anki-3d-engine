@@ -7,8 +7,8 @@ includePaths.extend(["../../extern/include", "../../extern/include/bullet", "/us
 
 executableName = "anki"
 
-compiler = "g++"
+compiler = "g++-4.5"
 
-compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -DMATH_INTEL_SIMD -DNDEBUG -DBOOST_DISABLE_ASSERTS -DREVISION=\\\"`svnversion -c ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -fsingle-precision-constant -msse4 -O3 -mtune=core2 -ffast-math"
+compilerFlags = "-DDEBUG_ENABLED=0 -DPLATFORM_LINUX -DMATH_INTEL_SIMD -DNDEBUG -DBOOST_DISABLE_ASSERTS -DREVISION=\\\"`svnversion -c ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -fsingle-precision-constant -msse4 -O3 -mtune=core2 -ffast-math -flto"
 
-linkerFlags = "-rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread"
+linkerFlags = "-rdynamic -flto -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread"

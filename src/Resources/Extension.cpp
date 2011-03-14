@@ -6,9 +6,9 @@
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-void Extension::load(const char* filename)
+void Extension::load(const char* /*filename*/)
 {
-	// load libary
+	/*// load libary
 	libHandle = dlopen(filename, RTLD_LAZY);
 	if(libHandle == NULL)
 	{
@@ -20,7 +20,7 @@ void Extension::load(const char* filename)
 	if(foobarPtr == NULL)
 	{
 		throw EXCEPTION("File \"" + filename + "\": \"FooBar\" entry symbol not found: " + dlerror());
-	}
+	}*/
 }
 
 
@@ -29,8 +29,8 @@ void Extension::load(const char* filename)
 //======================================================================================================================
 Extension::~Extension()
 {
-	//DEBUG_ERR(libHandle==NULL || foobarPtr==NULL);
+	/*//DEBUG_ERR(libHandle==NULL || foobarPtr==NULL);
 	dlclose(libHandle);
 	libHandle = NULL;
-	foobarPtr = NULL;
+	foobarPtr = NULL;*/
 }

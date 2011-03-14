@@ -7,7 +7,7 @@
 #include "MainRenderer.h"
 
 
-static float coords [][4][3] =
+/*static float coords [][4][3] =
 {
 	// front
 	{ { 1,  1, -1}, {-1,  1, -1}, {-1, -1, -1}, { 1, -1, -1} },
@@ -21,7 +21,7 @@ static float coords [][4][3] =
 	{ { 1,  1,  1}, {-1,  1,  1}, {-1,  1, -1}, { 1,  1, -1} },
 	//
 	{ { 1, -1, -1}, {-1, -1, -1}, {-1, -1,  1}, { 1, -1,  1} }
-};
+};*/
 
 
 
@@ -51,7 +51,7 @@ bool Skybox::load(const char* filenames[6])
 render                                                                                                                 =
 =======================================================================================================================================
 */
-void Skybox::Render(const Mat3& rotation)
+void Skybox::Render(const Mat3& /*rotation*/)
 {
 	/*glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);

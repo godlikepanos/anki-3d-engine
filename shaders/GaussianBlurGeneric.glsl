@@ -8,8 +8,7 @@
 
 #pragma anki vertShaderBegins
 
-#pragma anki attribute position 0
-attribute vec2 position;
+layout(location = 0) in vec2 position;
 
 uniform float imgDimension = 0.0; ///< the img width for hspass or the img height for vpass
 

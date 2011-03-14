@@ -366,7 +366,17 @@ void mainLoop()
 
 		AppSingleton::getInstance().swapBuffers();
 
-		uint timeToSpendForRsrcPostProcess = AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime();
+		uint a = timer.getElapsedTime();
+		uint b = AppSingleton::getInstance().getTimerTick();
+		uint timeToSpendForRsrcPostProcess;
+		if(a < b)
+		{
+			timeToSpendForRsrcPostProcess = b - a;
+		}
+		else
+		{
+			timeToSpendForRsrcPostProcess = 1;
+		}
 		ResourceManagerSingleton::getInstance().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
 
 		if(1)
