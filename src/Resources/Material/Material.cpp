@@ -14,16 +14,16 @@
 //======================================================================================================================
 // Statics                                                                                                             =
 //======================================================================================================================
-Material::StdVarNameAndGlDataTypePair Material::stdAttribVarInfos[SAV_NUM] =
-{
+boost::array<Material::StdVarNameAndGlDataTypePair, Material::SAV_NUM> Material::stdAttribVarInfos =
+{{
 	{"position", GL_FLOAT_VEC3},
 	{"tangent", GL_FLOAT_VEC4},
 	{"normal", GL_FLOAT_VEC3},
 	{"texCoords", GL_FLOAT_VEC2}
-};
+}};
 
-Material::StdVarNameAndGlDataTypePair Material::stdUniVarInfos[SUV_NUM] =
-{
+boost::array<Material::StdVarNameAndGlDataTypePair, Material::SUV_NUM> Material::stdUniVarInfos =
+{{
 	{"modelMat", GL_FLOAT_MAT4},
 	{"viewMat", GL_FLOAT_MAT4},
 	{"projectionMat", GL_FLOAT_MAT4},
@@ -40,9 +40,9 @@ Material::StdVarNameAndGlDataTypePair Material::stdUniVarInfos[SUV_NUM] =
 	{"ppsPostPassFai", GL_SAMPLER_2D},
 	{"rendererSize", GL_FLOAT_VEC2},
 	{"sceneAmbientColor", GL_FLOAT_VEC3}
-};
+}};
 
-Material::PreprocDefines Material::msGenericDefines [] =
+Material::PreprocDefines Material::msGenericDefines[] =
 {
 	{"DIFFUSE_MAPPING", 'd'},
 	{"NORMAL_MAPPING", 'n'},
@@ -53,7 +53,7 @@ Material::PreprocDefines Material::msGenericDefines [] =
 	{NULL, NULL}
 };
 
-Material::PreprocDefines Material::dpGenericDefines [] =
+Material::PreprocDefines Material::dpGenericDefines[] =
 {
 	{"ALPHA_TESTING", 'a'},
 	{NULL, NULL}
@@ -281,11 +281,13 @@ void Material::load(const char* filename)
 							}
 							else if(fai.get() == "ppsPrePassFai")
 							{
-								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::PPS_PRE_PASS_FAI));
+								userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+								                                                MtlUserDefinedVar::PPS_PRE_PASS_FAI));
 							}
 							else if(fai.get() == "ppsPostPassFai")
 							{
-								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::PPS_POST_PASS_FAI));
+								userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+								                                                MtlUserDefinedVar::PPS_POST_PASS_FAI));
 							}
 							else
 							{
@@ -303,15 +305,15 @@ void Material::load(const char* filename)
 					case GL_FLOAT:
 						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getFloat(valueTree)));
 						break;
-						// vec2
+					// vec2
 					case GL_FLOAT_VEC2:
 						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec2(valueTree)));
 						break;
-						// vec3
+					// vec3
 					case GL_FLOAT_VEC3:
 						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec3(valueTree)));
 						break;
-						// vec4
+					// vec4
 					case GL_FLOAT_VEC4:
 						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec4(valueTree)));
 						break;
@@ -339,7 +341,7 @@ void Material::initStdShaderVars()
 	}
 
 	// the attributes
-	for(uint i=0; i<SAV_NUM; i++)
+	for(uint i = 0; i < SAV_NUM; i++)
 	{
 		// if the var is not in the sProg then... bye
 		if(!shaderProg->attribVarExists(stdAttribVarInfos[i].varName))
@@ -360,7 +362,7 @@ void Material::initStdShaderVars()
 	}
 
 	// the uniforms
-	for(uint i=0; i<SUV_NUM; i++)
+	for(uint i = 0; i < SUV_NUM; i++)
 	{
 		// if the var is not in the sProg then... bye
 		if(!shaderProg->uniVarExists(stdUniVarInfos[i].varName))
@@ -421,7 +423,7 @@ void Material::parseCustomShader(const PreprocDefines defines[], const boost::pr
 		}
 
 		source += "#define " + define + "\n";
-    prefix.push_back(def->prefix);
+		prefix.push_back(def->prefix);
 	}
 
 	std::sort(prefix.begin(), prefix.end());

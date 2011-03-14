@@ -1,6 +1,7 @@
 #ifndef MTL_USER_DEFINED_VAR_H
 #define MTL_USER_DEFINED_VAR_H
 
+#include <boost/variant.hpp>
 #include "Properties.h"
 #include "Math.h"
 #include "SProgUniVar.h"
@@ -23,13 +24,9 @@ class MtlUserDefinedVar
 			PPS_POST_PASS_FAI ///< Use it anywhere
 		};
 
-	PROPERTY_R(float, float_, getFloat)
-	PROPERTY_R(Vec2, vec2, getVec2)
-	PROPERTY_R(Vec3, vec3, getVec3)
-	PROPERTY_R(Vec4, vec4, getVec4)
-	PROPERTY_R(Fai, fai, getFai)
+		/// The data union
+		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture>, Fai> DataVariant;
 
-	public:
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const char* texFilename);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, float f);
@@ -37,43 +34,71 @@ class MtlUserDefinedVar
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v);
 
+		/// @name Accessors
+		/// @{
 		const SProgUniVar& getUniVar() const {return sProgVar;}
-		const Texture* getTexture() const {return texture.get();}
+		const Texture* getTexture() const {return data.texture.get();}
+		GETTER_R(float, data.float_, getFloat)
+		GETTER_R(Vec2, data.vec2, getVec2)
+		GETTER_R(Vec3, data.vec3, getVec3)
+		GETTER_R(Vec4, data.vec4, getVec4)
+		GETTER_R(Fai, data.fai, getFai)
+		/// @}
 
 	private:
-		const SProgUniVar& sProgVar;
-		RsrcPtr<Texture> texture;
+		/// @note If you change this change the runtime as well
+		struct
+		{
+			RsrcPtr<Texture> texture;
+			float float_;
+			Vec2 vec2;
+			Vec3 vec3;
+			Vec4 vec4;
+			Fai fai;
+		} data;
+
+		const SProgUniVar& sProgVar; ///< Know the other resource
 };
 
 
 inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai_):
-	fai(fai_),
 	sProgVar(sProgVar)
-{}
+{
+	ASSERT(sProgVar.getGlDataType() == GL_SAMPLER_2D);
+	data.fai = fai_;
+}
 
 
 inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, float f):
-	float_(f),
 	sProgVar(sProgVar)
-{}
+{
+	ASSERT(sProgVar.getGlDataType() == GL_FLOAT);
+	data.float_ = f;
+}
 
 
 inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec2& v):
-	vec2(v),
 	sProgVar(sProgVar)
-{}
+{
+	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC2);
+	data.vec2 = v;
+}
 
 
 inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v):
-	vec3(v),
 	sProgVar(sProgVar)
-{}
+{
+	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC3);
+	data.vec3 = v;
+}
 
 
 inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v):
-	vec4(v),
 	sProgVar(sProgVar)
-{}
+{
+	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC4);
+	data.vec4 = v;
+}
 
 
 #endif
