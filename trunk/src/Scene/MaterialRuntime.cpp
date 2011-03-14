@@ -1,12 +1,25 @@
-#include "MtlUserDefinedVar.h"
-#include "Texture.h"
+#include "MaterialRuntime.h"
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const char* texFilename):
-	sProgVar(sProgVar)
+MtlUserDefinedVarRuntime::MtlUserDefinedVarRuntime(const MtlUserDefinedVar& rsrc_):
+	rsrc(rsrc_)
 {
-	texture.loadRsrc(texFilename);
+	switch(rsrc.getUniVar().getGlDataType())
+	{
+		case GL_FLOAT:
+			break;
+		case GL_FLOAT_VEC2:
+			break;
+		case GL_FLOAT_VEC3:
+			break;
+		case GL_FLOAT_VEC4:
+			break;
+		case GL_SAMPLER_2D:
+			break;
+		default:
+			ASSERT(0);
+	}
 }

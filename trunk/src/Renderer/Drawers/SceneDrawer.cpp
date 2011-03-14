@@ -12,7 +12,7 @@
 // setupShaderProg                                                                                                     =
 //======================================================================================================================
 void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorldTransform, const Camera& cam,
-		                              const Renderer& r)
+                                  const Renderer& r)
 {
 	uint textureUnit = 0;
 

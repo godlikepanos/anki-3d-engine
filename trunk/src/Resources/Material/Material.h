@@ -3,6 +3,7 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
+#include <boost/array.hpp>
 #include "Math.h"
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
@@ -68,9 +69,9 @@
 /// @endcode
 class Material
 {
-	//====================================================================================================================
-	// Nested                                                                                                            =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Nested                                                                                                          =
+	//==================================================================================================================
 	public:
 		/// Standard attribute variables that are acceptable inside the @ref ShaderProg
 		enum StdAttribVars
@@ -112,23 +113,9 @@ class Material
 			SUV_NUM ///< The number of standard uniform variables
 		};
 
-	//====================================================================================================================
-	// Properties                                                                                                        =
-	//====================================================================================================================
-	/// Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
-	PROPERTY_R(bool, castsShadow, isShadowCaster)
-
-	/// The entities with blending are being rendered in blending stage and those without in material stage
-	PROPERTY_R(bool, blendingStage, renderInBlendingStage)
-
-	PROPERTY_R(int, blendingSfactor, getBlendingSfactor) ///< Default GL_ONE
-	PROPERTY_R(int, blendingDfactor, getBlendingDfactor) ///< Default GL_ZERO
-	PROPERTY_R(bool, depthTesting, isDepthTestingEnabled)
-	PROPERTY_R(bool, wireframe, isWireframeEnabled)
-
-	//====================================================================================================================
-	// Public                                                                                                            =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Public                                                                                                          =
+	//==================================================================================================================
 	public:
 		/// Initialize with default values
 		Material();
@@ -141,7 +128,13 @@ class Material
 		const SProgAttribVar* getStdAttribVar(StdAttribVars id) const {return stdAttribVars[id];}
 		const SProgUniVar* getStdUniVar(StdUniVars id) const {return stdUniVars[id];}
 		const ShaderProg& getShaderProg() const {return *shaderProg.get();}
-		const boost::ptr_vector<MtlUserDefinedVar>& getUserDefinedVars() const {return userDefinedVars;}
+		GETTER_R(bool, castsShadow, isShadowCaster)
+		GETTER_R(bool, blendingStage, renderInBlendingStage)
+		GETTER_R(int, blendingSfactor, getBlendingSfactor)
+		GETTER_R(int, blendingDfactor, getBlendingDfactor)
+		GETTER_R(bool, depthTesting, isDepthTestingEnabled)
+		GETTER_R(bool, wireframe, isWireframeEnabled)
+		GETTER_R(boost::ptr_vector<MtlUserDefinedVar>, userDefinedVars, getUserDefinedVars)
 		/// @}
 
 		/// @return Return true if the shader has references to texture coordinates
@@ -149,9 +142,9 @@ class Material
 
 		bool isBlendingEnabled() const {return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;}
 
-	//====================================================================================================================
-	// Private                                                                                                           =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Private                                                                                                         =
+	//==================================================================================================================
 	private:
 		/// A simple pair-like structure
 		struct PreprocDefines
@@ -167,14 +160,22 @@ class Material
 			GLenum dataType; ///< aka GL data type
 		};
 
+		bool castsShadow; ///< Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
+		/// The entities with blending are being rendered in blending stage and those without in material stage
+		bool blendingStage;
+		int blendingSfactor; ///< Default GL_ONE
+		int blendingDfactor; ///< Default GL_ZERO
+		bool depthTesting;
+		bool wireframe;
+		boost::ptr_vector<MtlUserDefinedVar> userDefinedVars;
+
 		static PreprocDefines msGenericDefines[]; ///< Material stage defines accepted in MsGeneric.glsl
 		static PreprocDefines dpGenericDefines[]; ///< Depth pass defines accepted in DpGeneric.glsl
-		static StdVarNameAndGlDataTypePair stdAttribVarInfos[SAV_NUM];
-		static StdVarNameAndGlDataTypePair stdUniVarInfos[SUV_NUM];
-		const SProgAttribVar* stdAttribVars[SAV_NUM];
-		const SProgUniVar* stdUniVars[SUV_NUM];
+		static boost::array<StdVarNameAndGlDataTypePair, SAV_NUM> stdAttribVarInfos;
+		static boost::array<StdVarNameAndGlDataTypePair, SUV_NUM> stdUniVarInfos;
+		boost::array<const SProgAttribVar*, SAV_NUM> stdAttribVars;
+		boost::array<const SProgUniVar*, SUV_NUM> stdUniVars;
 		RsrcPtr<ShaderProg> shaderProg; ///< The most important aspect of materials
-		boost::ptr_vector<MtlUserDefinedVar> userDefinedVars;
 
 		/// The func sweeps all the variables of the shader program to find standard shader program variables. It
 		/// updates the stdAttribVars and stdUniVars arrays.
