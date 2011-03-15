@@ -109,7 +109,7 @@ void ShaderProg::link() const
 void ShaderProg::getUniAndAttribVars()
 {
 	int num;
-	char name_[256];
+	boost::array<char, 256> name_;
 	GLsizei length;
 	GLint size;
 	GLenum type;
@@ -117,22 +117,23 @@ void ShaderProg::getUniAndAttribVars()
 
 	// attrib locations
 	glGetProgramiv(glId, GL_ACTIVE_ATTRIBUTES, &num);
-	attribVars.reserve(num);
-	for(int i=0; i<num; i++) // loop all attributes
+	for(int i = 0; i < num; i++) // loop all attributes
 	{
-		glGetActiveAttrib(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, name_);
+		glGetActiveAttrib(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, &name_[0]);
 		name_[length] = '\0';
 
 		// check if its FFP location
-		int loc = glGetAttribLocation(glId, name_);
+		int loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" << rsrcFilename << "\": You are using FFP vertex attributes (\"" << name_ << "\")");
+			WARNING("Shader prog: \"" << rsrcFilename << "\": You are using FFP vertex attributes (\"" <<
+			        &name_[0] << "\")");
 			continue;
 		}
 
-		attribVars.push_back(SProgAttribVar(loc, name_, type, this));
-		attribNameToVar[attribVars.back().getName().c_str()] = &attribVars.back();
+		SProgAttribVar* var = new SProgAttribVar(loc, &name_[0], type, this);
+		attribVars.push_back(var);
+		attribNameToVar[attribVars.back().getName().c_str()] = var;
 	}
 
 
@@ -141,19 +142,21 @@ void ShaderProg::getUniAndAttribVars()
 	uniVars.reserve(num);
 	for(int i=0; i<num; i++) // loop all uniforms
 	{
-		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, name_);
+		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, &name_[0]);
 		name_[length] = '\0';
 
 		// check if its FFP location
-		int loc = glGetUniformLocation(glId, name_);
+		int loc = glGetUniformLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" << rsrcFilename << "\": You are using FFP vertex uniforms (\"" << name_ << "\")");
+			WARNING("Shader prog: \"" << rsrcFilename << "\": You are using FFP vertex uniforms (\"" <<
+			        &name_[0] << "\")");
 			continue;
 		}
 
-		uniVars.push_back(SProgUniVar(loc, name_, type, this));
-		uniNameToVar[uniVars.back().getName().c_str()] = &uniVars.back();
+		SProgUniVar* var = new SProgUniVar(loc, &name_[0], type, this);
+		uniVars.push_back(var);
+		uniNameToVar[uniVars.back().getName().c_str()] = var;
 	}
 }
 

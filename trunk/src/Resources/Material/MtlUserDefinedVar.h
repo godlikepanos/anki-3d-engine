@@ -27,12 +27,15 @@ class MtlUserDefinedVar
 		/// The data union
 		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture>, Fai> DataVariant;
 
+		/// @name Contructors
+		/// @{
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const char* texFilename);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, float f);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec2& v);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v);
 		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v);
+		/// @}
 
 		/// @name Accessors
 		/// @{
@@ -40,54 +43,16 @@ class MtlUserDefinedVar
 
 		const DataVariant& getDataVariant() const {return data;}
 
+		/// Get the value of the variant
+		/// @exception boost::exception when you try to get the incorrect data type
 		template<typename Type>
 		const Type& get() const {return boost::get<Type>(data);}
 		/// @}
 
 	private:
 		DataVariant data;
-		const SProgUniVar& sProgVar; ///< Know the other resource
+		const SProgUniVar& sProgVar; ///< Know a part of the ShaderProg resource
 };
-
-
-inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai_):
-	sProgVar(sProgVar)
-{
-	ASSERT(sProgVar.getGlDataType() == GL_SAMPLER_2D);
-	data = fai_;
-}
-
-
-inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, float f):
-	sProgVar(sProgVar)
-{
-	ASSERT(sProgVar.getGlDataType() == GL_FLOAT);
-	data = f;
-}
-
-
-inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec2& v):
-	sProgVar(sProgVar)
-{
-	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC2);
-	data = v;
-}
-
-
-inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v):
-	sProgVar(sProgVar)
-{
-	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC3);
-	data = v;
-}
-
-
-inline MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v):
-	sProgVar(sProgVar)
-{
-	ASSERT(sProgVar.getGlDataType() == GL_FLOAT_VEC4);
-	data = v;
-}
 
 
 #endif
