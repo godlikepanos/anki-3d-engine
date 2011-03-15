@@ -1,6 +1,7 @@
 #ifndef SHADER_PROG_H
 #define SHADER_PROG_H
 
+#include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <limits>
 #include "CharPtrHashMap.h"
@@ -17,15 +18,9 @@
 /// location, OpenGL data type and if it is a uniform or an attribute var.
 class ShaderProg
 {
-	private:
-		/// Uniform variable name to variable iterator
-		typedef CharPtrHashMap<SProgUniVar*>::const_iterator NameToSProgUniVarIterator;
-		/// Attribute variable name to variable iterator
-		typedef CharPtrHashMap<SProgAttribVar*>::const_iterator NameToSProgAttribVarIterator;
-
-	//====================================================================================================================
-	// Public                                                                                                            =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Public                                                                                                          =
+	//==================================================================================================================
 	public:
 		ShaderProg();
 		~ShaderProg() {/** @todo add code */}
@@ -47,10 +42,10 @@ class ShaderProg
 		static uint getCurrentProgramGlId();
 
 		/// Accessor to uniform vars vector
-		const Vec<SProgUniVar>& getUniVars() const {return uniVars;}
+		const boost::ptr_vector<SProgUniVar>& getUniVars() const {return uniVars;}
 
 		/// Accessor to attribute vars vector
-		const Vec<SProgAttribVar>& getAttribVars() const {return attribVars;}
+		const boost::ptr_vector<SProgAttribVar>& getAttribVars() const {return attribVars;}
 
 		/// Find uniform variable. On failure it throws an exception so use @ref uniVarExists to check if var exists
 		/// @param varName The name of the var
@@ -81,23 +76,28 @@ class ShaderProg
 		/// Reling the program. Used in transform feedback
 		void relink() const {link();}
 
-	//====================================================================================================================
-	// Private                                                                                                           =
-	//====================================================================================================================
+	//==================================================================================================================
+	// Private                                                                                                         =
+	//==================================================================================================================
 	private:
+		/// Uniform variable name to variable iterator
+		typedef CharPtrHashMap<SProgUniVar*>::const_iterator NameToSProgUniVarIterator;
+		/// Attribute variable name to variable iterator
+		typedef CharPtrHashMap<SProgAttribVar*>::const_iterator NameToSProgAttribVarIterator;
+
 		std::string rsrcFilename;
 		GLuint glId; ///< The OpenGL ID of the shader program
 		GLuint vertShaderGlId; ///< Vertex shader OpenGL id
 		GLuint geomShaderGlId; ///< Geometry shader OpenGL id
 		GLuint fragShaderGlId; ///< Fragment shader OpenGL id
 		static std::string stdSourceCode; ///< Shader source that is used in ALL shader programs
-		Vec<SProgUniVar> uniVars; ///< All the uniform variables
-		Vec<SProgAttribVar> attribVars; ///< All the attribute variables
+		boost::ptr_vector<SProgUniVar> uniVars; ///< All the uniform variables
+		boost::ptr_vector<SProgAttribVar> attribVars; ///< All the attribute variables
 		CharPtrHashMap<SProgUniVar*> uniNameToVar;  ///< A UnorderedMap for fast variable searching
 		CharPtrHashMap<SProgAttribVar*> attribNameToVar; ///< @see uniNameToVar
 
-		/// Query the driver to get the vars. After the linking of the shader prog is done gather all the vars in custom
-		/// containers
+		/// Query the driver to get the vars. After the linking of the shader prog is done gather all the vars in
+		/// custom containers
 		void getUniAndAttribVars();
 
 		/// Uses glBindAttribLocation for every parser attrib location

@@ -2,7 +2,7 @@
 
 Copyright (C) 2009-2011 Panayiotis Christopoulos-Charitos
 
-http://www.ancient-ritual.com
+http://www.anki3d.org
 
 godlike@ancient-ritual.com
 

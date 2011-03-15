@@ -13,17 +13,29 @@
 /// Binary file format:
 ///
 /// @code
+/// // Header
 /// <magic:ANKIMESH>
 /// <string:meshName>
-/// <uint:vertsNum>
-/// <float:vert[0].x> <float:vert[0].y> <float:vert[0].z> ...
-/// <float:vert[vertsNum-1].x> <float:vert[vertsNum-1].y> <float:vert[vertsNum-1].z>
-/// <uint:facesNum>
-/// <uint:tri[0].vertIds[0]> <uint:tri[0].vertIds[1]> <uint:tri[0].vertIds[2]> ...
-/// <uint:tri[facesNum-1].vertIds[0]> <uint:tri[facesNum-1].vertIds[1]> <uint:tri[facesNum-1].vertIds[2]>
-/// <uint:texCoordsNum>
-/// <float:texCoord[0].x><float:texCoord[0].y> ...
-/// <float:texCoord[texCoordsNum-1].x><float:texCoord[texCoordsNum-1].y>
+///
+/// // Verts
+/// uint: verts number
+/// float: vert 0 x, float vert 0 y, float: vert 0 z
+/// ...
+///
+/// // Faces
+/// uint: faces number
+/// uint: tri 0 vert ID 0, uint: tri 0 vert ID 1, uint: tri 0 vert ID 2
+/// ...
+///
+/// // Tex coords
+/// uint: tex coords number
+/// float: tex coord for vert 0 x, float: tex coord for vert 0 y
+/// ...
+///
+/// // Bone weights
+/// uint: bone weights number (equal to verts number)
+/// uint: bones number for vert 0, uint: bone id for vert 0 and weight 0, float: weight for vert 0 and weight 0, ...
+/// ...
 /// @endcode
 class MeshData
 {
