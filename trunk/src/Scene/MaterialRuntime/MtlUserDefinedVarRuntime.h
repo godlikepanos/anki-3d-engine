@@ -4,13 +4,13 @@
 #include "MtlUserDefinedVar.h"
 
 
-/// @todo
+/// This holds a copy of the MtlUserDefinedVar's data in order to be changed inside the main loop
 class MtlUserDefinedVarRuntime
 {
 	friend class ConstructVisitor;
 
 	public:
-		/// The data union. The Texture resource is readonly at runtime
+		/// The data union. The Texture resource is read-only at runtime
 		typedef boost::variant<float, Vec2, Vec3, Vec4, const RsrcPtr<Texture>*, MtlUserDefinedVar::Fai> DataVariant;
 
 		MtlUserDefinedVarRuntime(const MtlUserDefinedVar& rsrc);
@@ -31,7 +31,7 @@ class MtlUserDefinedVarRuntime
 		/// @}
 
 	private:
-		/// @todo
+		/// Initialize the data using a visitor
 		class ConstructVisitor: public boost::static_visitor<void>
 		{
 			public:
