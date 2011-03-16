@@ -72,7 +72,9 @@ void ParticleEmitter::init(const char* filename)
 //======================================================================================================================
 void ParticleEmitter::frameUpdate()
 {
-	float crntTime = AppSingleton::getInstance().getTicks() / 1000.0;
+	//float crntTime = AppSingleton::getInstance().getTicks() / 1000.0;
+	float crntTime;
+	/// @todo correct this
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
 	bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();

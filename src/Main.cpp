@@ -117,8 +117,6 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	uint ticks = AppSingleton::getInstance().getTicks();
-
 	//Ui::init();
 
 	// camera
@@ -235,7 +233,7 @@ void init()
 
 	initPhysics();
 
-	INFO("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
+	//INFO("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
 }
 
 
@@ -328,7 +326,8 @@ void mainLoop()
 {
 	INFO("Entering main loop");
 
-	int ticks = App::getTicks();
+	HighRezTimer mainLoopTimer;
+	mainLoopTimer.start();
 	do
 	{
 		HighRezTimer timer;
@@ -398,7 +397,7 @@ void mainLoop()
 		}
 	}while(true);
 
-	INFO("Exiting main loop (" << (App::getTicks() - ticks) << ")");
+	INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << ")");
 }
 
 

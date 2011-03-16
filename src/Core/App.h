@@ -15,22 +15,33 @@ class Camera;
 class Input;
 
 
-/// This class holds all the global objects of the application and its also responsible for some of the SDL stuff.
-/// It should be singleton
+/// The core class of the engine.
+///
+/// - It initializes the window
+/// - it holds the global state and thus it parses the command line arguments
+/// - It manipulates the main loop timer
 class App
 {
-	PROPERTY_R(uint, windowW, getWindowWidth) ///< The main window width
-	PROPERTY_R(uint, windowH, getWindowHeight) ///< The main window height
-	PROPERTY_R(boost::filesystem::path, settingsPath, getSettingsPath)
-	PROPERTY_R(boost::filesystem::path, cachePath, getCachePath)
-
 	public:
 		App() {}
 		~App() {}
+
+		/// This method:
+		/// - Initialize the window
+		/// - Initialize the main renderer
+		/// - Initialize and start the stdin listener
+		/// - Initialize the scripting engine
 		void init(int argc, char* argv[]);
+
+		/// What it does:
+		/// - Destroy the window
+		/// - call exit()
 		void quit(int code);
-		void waitForNextFrame();
+
+		/// Self explanatory
 		void togleFullScreen();
+
+		/// Wrapper for an SDL function that swaps the buffers
 		void swapBuffers();
 
 		/// The func pools the stdinListener for string in the console, if there are any it executes them with
@@ -44,18 +55,22 @@ class App
 
 		/// @name Accessors
 		/// @{
-		bool isTerminalColoringEnabled() const;
-
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 
 		GETTER_SETTER(uint, timerTick, getTimerTick, setTimerTick)
+		GETTER_R_BY_VAL(bool, terminalColoringEnabled, isTerminalColoringEnabled)
+		GETTER_R_BY_VAL(uint, windowW, getWindowWidth)
+		GETTER_R(uint, windowH, getWindowHeight)
+		GETTER_R(boost::filesystem::path, settingsPath, getSettingsPath)
+		GETTER_R(boost::filesystem::path, cachePath, getCachePath)
 		/// @}
 
-		/// @return Returns the number of milliseconds since SDL library initialization
-		static uint getTicks();
-
 	private:
+		uint windowW; ///< The main window width
+		uint windowH; ///< The main window height
+		boost::filesystem::path settingsPath; ///< The path that holds the configuration
+		boost::filesystem::path cachePath; ///< This is used as a cache
 		uint timerTick;
 		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
 		uint time;
@@ -74,12 +89,6 @@ class App
 		void initDirs();
 		void initRenderer();
 };
-
-
-inline bool App::isTerminalColoringEnabled() const
-{
-	return terminalColoringEnabled;
-}
 
 
 typedef Singleton<App> AppSingleton;
