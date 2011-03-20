@@ -13,11 +13,16 @@ class MtlUserDefinedVarRuntime
 		/// The data union. The Texture resource is read-only at runtime
 		typedef boost::variant<float, Vec2, Vec3, Vec4, const RsrcPtr<Texture>*, MtlUserDefinedVar::Fai> DataVariant;
 
+		/// The one and only constructor
 		MtlUserDefinedVarRuntime(const MtlUserDefinedVar& rsrc);
 
 		/// @name Accessors
 		/// @{
-		const MtlUserDefinedVar& getMtlUserDefinedVar() const {return rsrc;}
+		const SProgUniVar& getUniVar() const {return rsrc.getUniVar();}
+
+		const std::string& getName() const {return getUniVar().getName();}
+
+		GETTER_RW(DataVariant, data, getDataVariant)
 
 		/// Get the value of the variant
 		/// @exception boost::exception when you try to get the incorrect data type
@@ -48,7 +53,7 @@ class MtlUserDefinedVarRuntime
 		};
 
 		DataVariant data;
-		const MtlUserDefinedVar& rsrc;
+		const MtlUserDefinedVar& rsrc; ///< Know the resource
 };
 
 

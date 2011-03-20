@@ -10,6 +10,8 @@ class RenderableNode;
 class Renderer;
 class Camera;
 class Material;
+class MaterialRuntime;
+class MtlUserDefinedVarRuntime;
 
 
 /// It includes all the functions to render a RenderableNode
@@ -32,17 +34,17 @@ class SceneDrawer
 		class UsrDefVarVisitor: public boost::static_visitor<void>
 		{
 			public:
-				const MtlUserDefinedVar& udv;
+				const MtlUserDefinedVarRuntime& udvr;
 				const Renderer& r;
 				mutable uint& texUnit;
 
-				UsrDefVarVisitor(const MtlUserDefinedVar& udv, const Renderer& r, uint& texUnit);
+				UsrDefVarVisitor(const MtlUserDefinedVarRuntime& udvr, const Renderer& r, uint& texUnit);
 
 				void operator()(float x) const;
 				void operator()(const Vec2& x) const;
 				void operator()(const Vec3& x) const;
 				void operator()(const Vec4& x) const;
-				void operator()(const RsrcPtr<Texture>& x) const;
+				void operator()(const RsrcPtr<Texture>* x) const;
 				void operator()(MtlUserDefinedVar::Fai x) const;
 		};
 
@@ -52,12 +54,12 @@ class SceneDrawer
 		/// - binds the shader program
 		/// - loads the uniforms
 		/// - sets the GL state
-		/// @param mtl The material containing the shader program and the locations
+		/// @param mtlr The material runtime
 		/// @param nodeWorldTransform The world transformation to pass to the shader
 		/// @param cam Needed for some matrices (view & projection)
 		/// @param r The renderer, needed for some FAIs and some matrices
-		static void setupShaderProg(const Material& mtl, const Transform& nodeWorldTransform, const Camera& cam,
-		                            const Renderer& r);
+		static void setupShaderProg(const MaterialRuntime& mtlr, const Transform& nodeWorldTransform,
+		                            const Camera& cam, const Renderer& r);
 };
 
 

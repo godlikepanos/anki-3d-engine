@@ -14,7 +14,7 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_):
 	{
 		MtlUserDefinedVarRuntime* udvr = new MtlUserDefinedVarRuntime(udv);
 		userDefVars.push_back(udvr);
-		userDefVarsHashMap[udvr->getMtlUserDefinedVar().getUniVar().getName().c_str()] = udvr;
+		userDefVarsHashMap[udvr->getName().c_str()] = udvr;
 	}
 }
 

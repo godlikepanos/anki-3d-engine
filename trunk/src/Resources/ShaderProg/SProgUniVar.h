@@ -12,8 +12,7 @@ class Texture;
 class SProgUniVar: public SProgVar
 {
 	public:
-		SProgUniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_);
-		SProgUniVar(const SProgUniVar& var): SProgVar(var) {}
+		SProgUniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg& fatherSProg_);
 
 		/// @name Set the var
 		/// @{
@@ -29,7 +28,7 @@ class SProgUniVar: public SProgVar
 };
 
 
-inline SProgUniVar::SProgUniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg* fatherSProg_):
+inline SProgUniVar::SProgUniVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg& fatherSProg_):
 	SProgVar(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
 {}
 

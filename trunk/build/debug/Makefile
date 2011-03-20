@@ -259,7 +259,9 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Resources/Model/Model.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/HighRezTimer.h \
  ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h \
- ../../src/Resources/Skin.h
+ ../../src/Resources/Skin.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MtlUserDefinedVarRuntime.h
 	@echo Compiling ../../src/Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Main.cpp -o Main.o
 
@@ -1841,7 +1843,10 @@ PatchNode.o: ../../src/Scene/PatchNode.cpp ../../src/Scene/PatchNode.h \
  ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
  ../../src/Scene/SceneNode.h ../../src/Resources/Material/Material.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MtlUserDefinedVarRuntime.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h
 	@echo Compiling ../../src/Scene/PatchNode.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/PatchNode.cpp -o PatchNode.o
 
@@ -5202,7 +5207,9 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../src/Physics/BtAndAnkiConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/VisibilityTester.h
+ ../../src/Scene/VisibilityTester.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MtlUserDefinedVarRuntime.h
 	@echo Compiling ../../src/Renderer/Drawers/SceneDrawer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/SceneDrawer.cpp -o SceneDrawer.o
 
