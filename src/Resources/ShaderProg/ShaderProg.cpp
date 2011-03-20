@@ -131,7 +131,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		SProgAttribVar* var = new SProgAttribVar(loc, &name_[0], type, this);
+		SProgAttribVar* var = new SProgAttribVar(loc, &name_[0], type, *this);
 		attribVars.push_back(var);
 		attribNameToVar[attribVars.back().getName().c_str()] = var;
 	}
@@ -154,7 +154,7 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		SProgUniVar* var = new SProgUniVar(loc, &name_[0], type, this);
+		SProgUniVar* var = new SProgUniVar(loc, &name_[0], type, *this);
 		uniVars.push_back(var);
 		uniNameToVar[uniVars.back().getName().c_str()] = var;
 	}

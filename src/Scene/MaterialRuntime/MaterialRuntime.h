@@ -10,7 +10,7 @@
 class Material;
 
 
-/// @todo
+/// One layer above material resource
 class MaterialRuntime
 {
 	public:
@@ -18,7 +18,7 @@ class MaterialRuntime
 
 		/// @name Accessors
 		/// @{
-		GETTER_RW(boost::ptr_vector<MtlUserDefinedVarRuntime>, userDefVars, getUserDefVars)
+		GETTER_RW(boost::ptr_vector<MtlUserDefinedVarRuntime>, userDefVars, getUserDefinedVars)
 
 		/// Find MtlUserDefinedVarRuntime variable. On failure it throws an exception
 		/// @param[in] name The name of the var
@@ -26,8 +26,11 @@ class MaterialRuntime
 		/// @exception Exception
 		MtlUserDefinedVarRuntime& getUserDefinedVarByName(const char* name);
 
+		/// The const version of getUserDefinedVarByName
 		/// @see getUserDefinedVarByName
 		const MtlUserDefinedVarRuntime& getUserDefinedVarByName(const char* name) const;
+
+		const Material& getMaterial() const {return mtl;}
 		/// @}
 
 	private:

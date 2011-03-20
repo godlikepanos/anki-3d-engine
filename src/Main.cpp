@@ -37,10 +37,11 @@
 #include "HighRezTimer.h"
 #include "SkinNode.h"
 #include "Skin.h"
+#include "MaterialRuntime.h"
 
 
 // map (hard coded)
-ModelNode* floor__,* sarge,* horse,* crate;
+ModelNode* floor__,* sarge,* horse,* crate,* pentagram;
 SkinNode* imp;
 //SkelModelNode* imp;
 PointLight* point_lights[10];
@@ -155,7 +156,7 @@ void init()
 	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));
 
 	// Pentagram
-	ModelNode* pentagram = new ModelNode();
+	pentagram = new ModelNode();
 	pentagram->init("models/pentagram/pentagram.mdl");
 	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
 
@@ -287,6 +288,12 @@ void mainLoopExtra()
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
 		character->moveForward(0.1);
+
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_T))
+	{
+		pentagram->getModelPatchNodees()[0]->getCpMtlRun().getUserDefinedVarByName("specularCol").get<Vec3>() = Vec3(10.0, -1.6, 1.6);
+		pentagram->getModelPatchNodees()[0]->getCpMtlRun().getUserDefinedVarByName("shininess").get<float>() = 10.0;
+	}
 
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)

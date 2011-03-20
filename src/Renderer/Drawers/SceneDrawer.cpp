@@ -6,13 +6,15 @@
 #include "Renderer.h"
 #include "App.h"
 #include "Scene.h"
+#include "MaterialRuntime.h"
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MtlUserDefinedVar& udv_, const Renderer& r_, uint& texUnit_):
-	udv(udv_),
+SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MtlUserDefinedVarRuntime& udvr_,
+                                                const Renderer& r_, uint& texUnit_):
+	udvr(udvr_),
 	r(r_),
 	texUnit(texUnit_)
 {}
@@ -24,28 +26,29 @@ SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MtlUserDefinedVar& udv_, c
 
 void SceneDrawer::UsrDefVarVisitor::operator()(float x) const
 {
-	udv.getUniVar().setFloat(x);
+	udvr.getUniVar().setFloat(x);
 }
 
 void SceneDrawer::UsrDefVarVisitor::operator()(const Vec2& x) const
 {
-	udv.getUniVar().setVec2(&x);
+	udvr.getUniVar().setVec2(&x);
 }
 
 void SceneDrawer::UsrDefVarVisitor::operator()(const Vec3& x) const
 {
-	udv.getUniVar().setVec3(&x);
+	udvr.getUniVar().setVec3(&x);
 }
 
 void SceneDrawer::UsrDefVarVisitor::operator()(const Vec4& x) const
 {
-	udv.getUniVar().setVec4(&x);
+	udvr.getUniVar().setVec4(&x);
 }
 
-void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>& x) const
+void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>* x) const
 {
-	x->setRepeat(true);
-	udv.getUniVar().setTexture(*x, texUnit);
+	const RsrcPtr<Texture>& texPtr = *x;
+	texPtr->setRepeat(true);
+	udvr.getUniVar().setTexture(*texPtr, texUnit);
 	++texUnit;
 }
 
@@ -54,16 +57,16 @@ void SceneDrawer::UsrDefVarVisitor::operator()(MtlUserDefinedVar::Fai x) const
 	switch(x)
 	{
 		case MtlUserDefinedVar::MS_DEPTH_FAI:
-			udv.getUniVar().setTexture(r.getMs().getDepthFai(), texUnit);
+			udvr.getUniVar().setTexture(r.getMs().getDepthFai(), texUnit);
 			break;
 		case MtlUserDefinedVar::IS_FAI:
-			udv.getUniVar().setTexture(r.getIs().getFai(), texUnit);
+			udvr.getUniVar().setTexture(r.getIs().getFai(), texUnit);
 			break;
 		case MtlUserDefinedVar::PPS_PRE_PASS_FAI:
-			udv.getUniVar().setTexture(r.getPps().getPrePassFai(), texUnit);
+			udvr.getUniVar().setTexture(r.getPps().getPrePassFai(), texUnit);
 			break;
 		case MtlUserDefinedVar::PPS_POST_PASS_FAI:
-			udv.getUniVar().setTexture(r.getPps().getPostPassFai(), texUnit);
+			udvr.getUniVar().setTexture(r.getPps().getPostPassFai(), texUnit);
 			break;
 		default:
 			ASSERT(0);
@@ -76,11 +79,12 @@ void SceneDrawer::UsrDefVarVisitor::operator()(MtlUserDefinedVar::Fai x) const
 //======================================================================================================================
 // setupShaderProg                                                                                                     =
 //======================================================================================================================
-void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorldTransform, const Camera& cam,
+void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& nodeWorldTransform, const Camera& cam,
                                   const Renderer& r)
 {
 	uint textureUnit = 0;
 
+	const Material& mtl = mtlr.getMaterial();
 	mtl.getShaderProg().bind();
 
 	//
@@ -232,68 +236,10 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 	//
 	// set user defined vars
 	//
-	BOOST_FOREACH(const MtlUserDefinedVar& udv, mtl.getUserDefinedVars())
+	BOOST_FOREACH(const MtlUserDefinedVarRuntime& udvr, mtlr.getUserDefinedVars())
 	{
-		boost::apply_visitor(UsrDefVarVisitor(udv, r, textureUnit), udv.getDataVariant());
+		boost::apply_visitor(UsrDefVarVisitor(udvr, r, textureUnit), udvr.getDataVariant());
 	}
-
-	/*boost::ptr_vector<MtlUserDefinedVar>::const_iterator it = mtl.getUserDefinedVars().begin();
-	for(; it !=  mtl.getUserDefinedVars().end(); it++)
-	{
-		const MtlUserDefinedVar& udv = *it;
-
-		switch(udv.getUniVar().getGlDataType())
-		{
-			// texture or FAI
-			case GL_SAMPLER_2D:
-				RsrcPtr<Texture>* tex;
-				MtlUserDefinedVar::Fai* fai;
-
-				if(fai = udv.get<RsrcPtr<Texture> >())
-				{
-					udv.getTexture()->setRepeat(true);
-					udv.getUniVar().setTexture(*udv.getTexture(), textureUnit);
-				}
-				else if(fai = udv.get< >())
-				{
-					switch(udv.getFai())
-					{
-						case MtlUserDefinedVar::MS_DEPTH_FAI:
-							udv.getUniVar().setTexture(r.getMs().getDepthFai(), textureUnit);
-							break;
-						case MtlUserDefinedVar::IS_FAI:
-							udv.getUniVar().setTexture(r.getIs().getFai(), textureUnit);
-							break;
-						case MtlUserDefinedVar::PPS_PRE_PASS_FAI:
-							udv.getUniVar().setTexture(r.getPps().getPrePassFai(), textureUnit);
-							break;
-						case MtlUserDefinedVar::PPS_POST_PASS_FAI:
-							udv.getUniVar().setTexture(r.getPps().getPostPassFai(), textureUnit);
-							break;
-						default:
-							ASSERT(0);
-					}
-				}
-				++textureUnit;
-				break;
-			// float
-			case GL_FLOAT:
-				udv.getUniVar().setFloat(udv.get<float>());
-				break;
-			// vec2
-			case GL_FLOAT_VEC2:
-				udv.getUniVar().setVec2(&udv.get<Vec2>());
-				break;
-			// vec3
-			case GL_FLOAT_VEC3:
-				udv.getUniVar().setVec3(&udv.get<Vec3>());
-				break;
-			// vec4
-			case GL_FLOAT_VEC4:
-				udv.getUniVar().setVec4(&udv.get<Vec4>());
-				break;
-		}
-	}*/
 
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
@@ -305,23 +251,23 @@ void SceneDrawer::setupShaderProg(const Material& mtl, const Transform& nodeWorl
 void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const Camera& cam,
                                        RenderingPassType rtype) const
 {
-	const Material* mtl;
+	const MaterialRuntime* mtlr;
 	const Vao* vao;
 
 	switch(rtype)
 	{
 		case RPT_COLOR:
-			mtl = &renderable.getCpMtl();
+			mtlr = &renderable.getCpMtlRun();
 			vao = &renderable.getCpVao();
 			break;
 
 		case RPT_DEPTH:
-			mtl = &renderable.getDpMtl();
+			mtlr = &renderable.getDpMtlRun();
 			vao = &renderable.getDpVao();
 			break;
 	}
 
-	setupShaderProg(*mtl, renderable.getWorldTransform(), cam, r);
+	setupShaderProg(*mtlr, renderable.getWorldTransform(), cam, r);
 
 	vao->bind();
 	glDrawElements(GL_TRIANGLES, renderable.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);

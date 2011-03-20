@@ -1,5 +1,18 @@
 #include "PatchNode.h"
 #include "Material.h"
+#include "MaterialRuntime.h"
+
+
+//======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent):
+	RenderableNode(parent),
+	rsrc(modelPatch)
+{
+	cpMtlRun.reset(new MaterialRuntime(rsrc.getCpMtl()));
+	dpMtlRun.reset(new MaterialRuntime(rsrc.getDpMtl()));
+}
 
 
 //======================================================================================================================
