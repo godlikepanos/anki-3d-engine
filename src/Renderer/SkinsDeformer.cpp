@@ -52,11 +52,11 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 	tfHwSkinningAllSProg->bind();
 
 	// Uniforms
-	tfHwSkinningAllSProg->findUniVar("skinningRotations")->setMat3(&skinNode->getBoneRotations()[0],
-	                                                               skinNode->getBoneRotations().size());
+	tfHwSkinningAllSProg->findUniVar("skinningRotations")->set(&skinNode->getBoneRotations()[0],
+	                                                           skinNode->getBoneRotations().size());
 
-	tfHwSkinningAllSProg->findUniVar("skinningTranslations")->setVec3(&skinNode->getBoneTranslations()[0],
-	                                                                  skinNode->getBoneTranslations().size());
+	tfHwSkinningAllSProg->findUniVar("skinningTranslations")->set(&skinNode->getBoneTranslations()[0],
+	                                                              skinNode->getBoneTranslations().size());
 
 	// TF
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, node.getTfVbo(SkinPatchNode::TFV_POSITIONS).getGlId());

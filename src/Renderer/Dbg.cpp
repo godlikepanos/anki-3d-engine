@@ -421,7 +421,7 @@ void Dbg::end()
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = r.getViewProjectionMat() * modelMat;
-	sProg->findUniVar("modelViewProjectionMat")->setMat4(&pmv);
+	sProg->findUniVar("modelViewProjectionMat")->set(&pmv);
 
 	vao.bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);

@@ -95,8 +95,8 @@ void Hdr::run()
 	// pass 0
 	toneFbo.bind();
 	toneSProg->bind();
-	toneSProg->findUniVar("exposure")->setFloat(exposure);
-	toneSProg->findUniVar("fai")->setTexture(r.getPps().getPrePassFai(), 0);
+	toneSProg->findUniVar("exposure")->set(&exposure);
+	toneSProg->findUniVar("fai")->set(r.getPps().getPrePassFai(), 0);
 	r.drawQuad();
 
 
@@ -110,22 +110,26 @@ void Hdr::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniVar("img")->setTexture(toneFai, 0);
+			hblurSProg->findUniVar("img")->set(toneFai, 0);
 		}
 		else
 		{
-			hblurSProg->findUniVar("img")->setTexture(fai, 0);
+			hblurSProg->findUniVar("img")->set(fai, 0);
 		}
-		hblurSProg->findUniVar("imgDimension")->setFloat(w);
-		hblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / w);
+		float tmp = float(w);
+		hblurSProg->findUniVar("imgDimension")->set(&tmp);
+		tmp = blurringDist / w;
+		hblurSProg->findUniVar("blurringDist")->set(&tmp);
 		r.drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
-		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
-		vblurSProg->findUniVar("imgDimension")->setFloat(h);
-		vblurSProg->findUniVar("blurringDist")->setFloat(blurringDist / h);
+		vblurSProg->findUniVar("img")->set(hblurFai, 0);
+		tmp = float(h);
+		vblurSProg->findUniVar("imgDimension")->set(&tmp);
+		tmp = blurringDist / h;
+		vblurSProg->findUniVar("blurringDist")->set(&tmp);
 		r.drawQuad();
 	}
 

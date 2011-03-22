@@ -74,13 +74,13 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Texture*& ptr)
 	if(dummyTex.get() == NULL)
 	{
 		dummyTex.reset(new Texture);
-		dummyTex->load("gfx/dummy.png");
+		dummyTex->load("engine-rsrc/dummy.png");
 	}
 	
 	if(dummyNormTex.get() == NULL)
 	{
 		dummyNormTex.reset(new Texture);
-		dummyNormTex->load("gfx/dummy.norm.png");
+		dummyNormTex->load("engine-rsrc/dummy.norm.png");
 	}
 
 	// Send a loading request
