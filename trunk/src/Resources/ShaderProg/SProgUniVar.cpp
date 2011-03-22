@@ -16,56 +16,57 @@
 	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(), getName().c_str()) == getLoc());
 
 
-void SProgUniVar::setFloat(float f) const
+void SProgUniVar::set(const float f[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT);
-	glUniform1f(getLoc(), f);
+
+	if(size == 1)
+	{
+		glUniform1f(getLoc(), f[0]);
+	}
+	else
+	{
+		glUniform1fv(getLoc(), size, f);
+	}
 }
 
-void SProgUniVar::setFloatVec(float f[], uint size) const
-{
-	STD_SET_UNI_CHECK();
-	ASSERT(getGlDataType() == GL_FLOAT);
-	glUniform1fv(getLoc(), size, f);
-}
-
-void SProgUniVar::setVec2(const Vec2 v2[], uint size) const
+void SProgUniVar::set(const Vec2 v2[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
 	glUniform2fv(getLoc(), size, &(const_cast<Vec2&>(v2[0]))[0]);
 }
 
-void SProgUniVar::setVec3(const Vec3 v3[], uint size) const
+void SProgUniVar::set(const Vec3 v3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
 	glUniform3fv(getLoc(), size, &(const_cast<Vec3&>(v3[0]))[0]);
 }
 
-void SProgUniVar::setVec4(const Vec4 v4[], uint size) const
+void SProgUniVar::set(const Vec4 v4[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
 	glUniform4fv(getLoc(), size, &(const_cast<Vec4&>(v4[0]))[0]);
 }
 
-void SProgUniVar::setMat3(const Mat3 m3[], uint size) const
+void SProgUniVar::set(const Mat3 m3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_MAT3);
 	glUniformMatrix3fv(getLoc(), size, true, &(m3[0])[0]);
 }
 
-void SProgUniVar::setMat4(const Mat4 m4[], uint size) const
+void SProgUniVar::set(const Mat4 m4[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_MAT4);
 	glUniformMatrix4fv(getLoc(), size, true, &(m4[0])[0]);
 }
 
-void SProgUniVar::setTexture(const Texture& tex, uint texUnit) const
+void SProgUniVar::set(const Texture& tex, uint texUnit) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_SAMPLER_2D || getGlDataType() == GL_SAMPLER_2D_SHADOW);

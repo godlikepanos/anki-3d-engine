@@ -123,11 +123,11 @@ void Pps::runPrePass()
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
-	prePassSProg->findUniVar("isFai")->setTexture(r.getIs().getFai(), 0);
+	prePassSProg->findUniVar("isFai")->set(r.getIs().getFai(), 0);
 
 	if(ssao.isEnabled())
 	{
-		prePassSProg->findUniVar("ppsSsaoFai")->setTexture(ssao.getFai(), 1);
+		prePassSProg->findUniVar("ppsSsaoFai")->set(ssao.getFai(), 1);
 	}
 
 	r.drawQuad();
@@ -153,11 +153,11 @@ void Pps::runPostPass()
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();
-	postPassSProg->findUniVar("ppsPrePassFai")->setTexture(prePassFai, 0);
+	postPassSProg->findUniVar("ppsPrePassFai")->set(prePassFai, 0);
 
 	if(hdr.isEnabled())
 	{
-		postPassSProg->findUniVar("ppsHdrFai")->setTexture(hdr.getFai(), 1);
+		postPassSProg->findUniVar("ppsHdrFai")->set(hdr.getFai(), 1);
 	}
 
 	r.drawQuad();

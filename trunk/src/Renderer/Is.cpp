@@ -193,8 +193,8 @@ void Is::ambientPass(const Vec3& color)
 	ambientPassSProg->bind();
 
 	// set the uniforms
-	ambientPassSProg->findUniVar("ambientCol")->setVec3(&color);
-	ambientPassSProg->findUniVar("sceneColMap")->setTexture(r.getMs().getDiffuseFai(), 0);
+	ambientPassSProg->findUniVar("ambientCol")->set(&color);
+	ambientPassSProg->findUniVar("sceneColMap")->set(r.getMs().getDiffuseFai(), 0);
 
 	// Draw quad
 	r.drawQuad();
@@ -215,16 +215,16 @@ void Is::pointLightPass(const PointLight& light)
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
 	shader.bind();
 
-	shader.findUniVar("msNormalFai")->setTexture(r.getMs().getNormalFai(), 0);
-	shader.findUniVar("msDiffuseFai")->setTexture(r.getMs().getDiffuseFai(), 1);
-	shader.findUniVar("msSpecularFai")->setTexture(r.getMs().getSpecularFai(), 2);
-	shader.findUniVar("msDepthFai")->setTexture(r.getMs().getDepthFai(), 3);
-	shader.findUniVar("planes")->setVec2(&planes);
+	shader.findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 0);
+	shader.findUniVar("msDiffuseFai")->set(r.getMs().getDiffuseFai(), 1);
+	shader.findUniVar("msSpecularFai")->set(r.getMs().getSpecularFai(), 2);
+	shader.findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 3);
+	shader.findUniVar("planes")->set(&planes);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
-	shader.findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
-	shader.findUniVar("lightRadius")->setFloat(light.getRadius());
-	shader.findUniVar("lightDiffuseCol")->setVec3(&light.getDiffuseCol());
-	shader.findUniVar("lightSpecularCol")->setVec3(&light.getSpecularCol());
+	shader.findUniVar("lightPos")->set(&lightPosEyeSpace);
+	shader.findUniVar("lightRadius")->set(&light.getRadius());
+	shader.findUniVar("lightDiffuseCol")->set(&light.getDiffuseCol());
+	shader.findUniVar("lightSpecularCol")->set(&light.getSpecularCol());
 
 	// render quad
 	drawLightPassQuad();
@@ -274,21 +274,22 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->bind();
 
 	// bind the FAIs
-	shdr->findUniVar("msNormalFai")->setTexture(r.getMs().getNormalFai(), 0);
-	shdr->findUniVar("msDiffuseFai")->setTexture(r.getMs().getDiffuseFai(), 1);
-	shdr->findUniVar("msSpecularFai")->setTexture(r.getMs().getSpecularFai(), 2);
-	shdr->findUniVar("msDepthFai")->setTexture(r.getMs().getDepthFai(), 3);
+	shdr->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 0);
+	shdr->findUniVar("msDiffuseFai")->set(r.getMs().getDiffuseFai(), 1);
+	shdr->findUniVar("msSpecularFai")->set(r.getMs().getSpecularFai(), 2);
+	shdr->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 3);
 
 	// the planes
-	shdr->findUniVar("planes")->setVec2(&planes);
+	shdr->findUniVar("planes")->set(&planes);
 
 	// the light params
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
-	shdr->findUniVar("lightPos")->setVec3(&lightPosEyeSpace);
-	shdr->findUniVar("lightRadius")->setFloat(light.getDistance());
-	shdr->findUniVar("lightDiffuseCol")->setVec3(&light.getDiffuseCol());
-	shdr->findUniVar("lightSpecularCol")->setVec3(&light.getSpecularCol());
-	shdr->findUniVar("lightTex")->setTexture(light.getTexture(), 4);
+	shdr->findUniVar("lightPos")->set(&lightPosEyeSpace);
+	float tmp = light.getDistance();
+	shdr->findUniVar("lightRadius")->set(&tmp);
+	shdr->findUniVar("lightDiffuseCol")->set(&light.getDiffuseCol());
+	shdr->findUniVar("lightSpecularCol")->set(&light.getSpecularCol());
+	shdr->findUniVar("lightTex")->set(light.getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)
@@ -296,12 +297,12 @@ void Is::spotLightPass(const SpotLight& light)
 	Mat4 texProjectionMat;
 	texProjectionMat = biasMat4 * light.getCamera().getProjectionMatrix() *
 	                   Mat4::combineTransformations(light.getCamera().getViewMatrix(), Mat4(cam.getWorldTransform()));
-	shdr->findUniVar("texProjectionMat")->setMat4(&texProjectionMat);
+	shdr->findUniVar("texProjectionMat")->set(&texProjectionMat);
 
 	// the shadowmap
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		shdr->findUniVar("shadowMap")->setTexture(sm.shadowMap, 5);
+		shdr->findUniVar("shadowMap")->set(sm.shadowMap, 5);
 	}
 
 	// render quad

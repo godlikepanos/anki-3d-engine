@@ -119,10 +119,10 @@ void Ssao::run()
 	ssaoFbo.bind();
 	ssaoSProg->bind();
 	Vec2 camRange(cam.getZNear(), cam.getZFar());
-	ssaoSProg->findUniVar("camerarange")->setVec2(&camRange);
-	ssaoSProg->findUniVar("msDepthFai")->setTexture(r.getMs().getDepthFai(), 0);
-	ssaoSProg->findUniVar("noiseMap")->setTexture(*noiseMap, 1);
-	ssaoSProg->findUniVar("msNormalFai")->setTexture(r.getMs().getNormalFai(), 2);
+	ssaoSProg->findUniVar("camerarange")->set(&camRange);
+	ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
+	ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
+	ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
 	r.drawQuad();
 
 
@@ -136,20 +136,22 @@ void Ssao::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniVar("img")->setTexture(ssaoFai, 0);
+			hblurSProg->findUniVar("img")->set(ssaoFai, 0);
 		}
 		else
 		{
-			hblurSProg->findUniVar("img")->setTexture(fai, 0);
+			hblurSProg->findUniVar("img")->set(fai, 0);
 		}
-		hblurSProg->findUniVar("imgDimension")->setFloat(width);
+		float tmp = width;
+		hblurSProg->findUniVar("imgDimension")->set(&tmp);
 		r.drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
-		vblurSProg->findUniVar("img")->setTexture(hblurFai, 0);
-		vblurSProg->findUniVar("imgDimension")->setFloat(height);
+		vblurSProg->findUniVar("img")->set(hblurFai, 0);
+		tmp = height;
+		vblurSProg->findUniVar("imgDimension")->set(&tmp);
 		r.drawQuad();
 	}
 

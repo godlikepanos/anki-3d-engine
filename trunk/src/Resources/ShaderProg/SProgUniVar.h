@@ -16,14 +16,13 @@ class SProgUniVar: public SProgVar
 
 		/// @name Set the var
 		/// @{
-		void setFloat(float f) const;
-		void setFloatVec(float f[], uint size = 1) const;
-		void setVec2(const Vec2 v2[], uint size = 1) const;
-		void setVec3(const Vec3 v3[], uint size = 1) const;
-		void setVec4(const Vec4 v4[], uint size = 1) const;
-		void setMat3(const Mat3 m3[], uint size = 1) const;
-		void setMat4(const Mat4 m4[], uint size = 1) const;
-		void setTexture(const Texture& tex, uint texUnit) const;
+		void set(const float f[], uint size = 1) const;
+		void set(const Vec2 v2[], uint size = 1) const;
+		void set(const Vec3 v3[], uint size = 1) const;
+		void set(const Vec4 v4[], uint size = 1) const;
+		void set(const Mat3 m3[], uint size = 1) const;
+		void set(const Mat4 m4[], uint size = 1) const;
+		void set(const Texture& tex, uint texUnit) const;
 		/// @}
 };
 

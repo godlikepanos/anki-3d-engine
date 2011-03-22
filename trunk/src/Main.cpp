@@ -139,9 +139,9 @@ void init()
 	spot_lights[0] = new SpotLight();
 	spot_lights[0]->init("maps/temple/light2.light");
 	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(toRad(-20), toRad(20), 0.0)), 1.0));
-	/*spot_lights[1] = new SpotLight();
+	spot_lights[1] = new SpotLight();
 	spot_lights[1]->init("maps/temple/light3.light");
-	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));*/
+	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
 
 	// horse
