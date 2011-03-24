@@ -6,7 +6,9 @@
 
 
 /// Assertion. Print an error and stop the debugger and then abort
-#if DEBUG_ENABLED == 1
+#if defined(NDEBUG)
+	#define ASSERT(x) ((void)0)
+#else
 	#define ASSERT(x) \
 		if(!(x)) { \
 			std::cerr << "(" << __FILE__ << ":" << __LINE__ << " " << __func__ << ") " << \
@@ -14,8 +16,6 @@
 			asm("int $3"); \
 			abort(); \
 		}
-#else
-	#define ASSERT(x) ((void)0)
 #endif
 
 

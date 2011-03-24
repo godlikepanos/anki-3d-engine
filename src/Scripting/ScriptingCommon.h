@@ -1,6 +1,7 @@
 /// @file
 /// This file is included by all the *.bpi.cpp files
 #include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 
 using namespace boost;
@@ -20,6 +21,12 @@ using namespace boost::python;
 			.staticmethod("getInstance") \
 		; \
 	}
+
+
+#define WRAP_CONTAINER(x) \
+	class_<x >(#x) \
+		.def(vector_indexing_suite<x >()) \
+	;
 
 
 //======================================================================================================================
