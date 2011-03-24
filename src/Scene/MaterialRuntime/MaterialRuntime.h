@@ -31,6 +31,10 @@ class MaterialRuntime
 		const MtlUserDefinedVarRuntime& getUserDefinedVarByName(const char* name) const;
 
 		const Material& getMaterial() const {return mtl;}
+
+		/// @todo
+		template<typename Type>
+		void setUserDefVar(const char* name, const Type& value);
 		/// @}
 
 	private:
@@ -38,6 +42,13 @@ class MaterialRuntime
 		boost::ptr_vector<MtlUserDefinedVarRuntime> userDefVars;
 		CharPtrHashMap<MtlUserDefinedVarRuntime*> userDefVarsHashMap; ///< For fast finding the variables
 };
+
+
+template<typename Type>
+void MaterialRuntime::setUserDefVar(const char* name, const Type& value)
+{
+	getUserDefinedVarByName(name).get<Type>() = value;
+}
 
 
 #endif
