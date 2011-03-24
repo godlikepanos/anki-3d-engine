@@ -291,7 +291,7 @@ void mainLoopExtra()
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_T))
 	{
-		pentagram->getModelPatchNodees()[0]->getCpMtlRun().getUserDefinedVarByName("specularCol").get<Vec3>() = Vec3(10.0, -1.6, 1.6);
+		pentagram->getModelPatchNodees()[0]->setUserDefVar(PatchNode::MT_BOTH, "specularCol", Vec3(10.0, -1.6, 1.6));
 		pentagram->getModelPatchNodees()[0]->getCpMtlRun().getUserDefinedVarByName("shininess").get<float>() = 10.0;
 	}
 
