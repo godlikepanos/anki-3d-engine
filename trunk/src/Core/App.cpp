@@ -265,8 +265,8 @@ void App::quit(int code)
 void App::printAppInfo()
 {
 	std::stringstream msg;
-	msg << "App info: debugging ";
-	#if DEBUG_ENABLED == 1
+	msg << "App info: NDEBUG ";
+	#if defined(NDEBUG)
 		msg << "on, ";
 	#else
 		msg << "off, ";

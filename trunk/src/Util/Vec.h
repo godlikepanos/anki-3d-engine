@@ -5,77 +5,62 @@
 #include "Assert.h"
 
 
-/// This is a wrapper of std::std::vector that adds new functionality
-template<typename Type>
-class Vec: public std::vector<Type>
+/// This is a wrapper of std::vector that adds new functionality and assertions in operator[]
+template<typename Type, typename Allocator = std::allocator<Type> >
+class Vec: public std::vector<Type, Allocator>
 {
 	public:
-		Vec();
-		Vec(size_t size);
-		Vec(size_t size, Type val);
-		~Vec() {std::vector<Type>::clear();}
+		typedef std::vector<Type, Allocator> Base;
+
+		/// @name Constructors/destructors
+		/// @{
+		Vec(const Allocator& al = Allocator()): Base(al) {}
+		Vec(size_t size, const Type& value = Type(), const Allocator& al = Allocator()): Base(size, value, al) {}
+
+		template <typename InputIterator>
+		Vec(InputIterator first, InputIterator last, const Allocator& al = Allocator()): Base(first, last, al) {}
+
+		Vec(const Vec<Type, Allocator>& b): Base(b) {}
+		/// @}
+
+		/// @name Accessors
+		/// @{
 		Type& operator[](size_t n);
 		const Type& operator[](size_t n) const;
 		size_t getSizeInBytes() const;
+		/// @}
 };
-
-
-//======================================================================================================================
-// Constructor []                                                                                                      =
-//======================================================================================================================
-template<typename Type>
-Vec<Type>::Vec():
-	std::vector<Type>()
-{}
-
-
-//======================================================================================================================
-// Constructor [size]                                                                                                  =
-//======================================================================================================================
-template<typename Type>
-Vec<Type>::Vec(size_t size):
-	std::vector<Type>(size)
-{}
-
-
-//======================================================================================================================
-// Constructor [size, val]                                                                                             =
-//======================================================================================================================
-template<typename Type>
-Vec<Type>::Vec(size_t size, Type val):
-	std::vector<Type>(size,val)
-{}
 
 
 //======================================================================================================================
 // operator[]                                                                                                          =
 //======================================================================================================================
-template<typename Type>
-Type& Vec<Type>::operator[](size_t n)
+template<typename Type, typename Allocator>
+Type& Vec<Type, Allocator>::operator[](size_t n)
 {
-	ASSERT(n < std::vector<Type>::size());
-	return std::vector<Type>::operator [](n);
+	ASSERT(n < Base::size());
+	return Base::operator [](n);
 }
 
 
 //======================================================================================================================
 // operator[]                                                                                                          =
 //======================================================================================================================
-template<typename Type>
-const Type& Vec<Type>::operator[](size_t n) const
+template<typename Type, typename Allocator>
+const Type& Vec<Type, Allocator>::operator[](size_t n) const
 {
-	ASSERT(n < std::vector<Type>::size());
-	return std::vector<Type>::operator [](n);
+	ASSERT(n < Base::size());
+	return Base::operator [](n);
 }
 
 
 //======================================================================================================================
 // getSizeInBytes                                                                                                      =
 //======================================================================================================================
-template<typename Type>
-size_t Vec<Type>::getSizeInBytes() const
+template<typename Type, typename Allocator>
+size_t Vec<Type, Allocator>::getSizeInBytes() const
 {
-	return std::vector<Type>::size() * sizeof(Type);
+	return Base::size() * sizeof(Type);
 }
 
 

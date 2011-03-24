@@ -79,13 +79,13 @@ inline float sqrt(float f)
 
 inline float toRad(float degrees)
 {
-	return degrees*(PI/180.0);
+	return degrees * (PI / 180.0);
 }
 
 
 inline float toDegrees(float rad)
 {
-	return rad*(180.0/PI);
+	return rad * (180.0 / PI);
 }
 
 

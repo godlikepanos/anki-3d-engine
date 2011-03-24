@@ -1,9 +1,12 @@
 #include "ScriptingCommon.h"
 #include "Scene.h"
+#include "Camera.h"
 
 
 WRAP(Scene)
 {
+	WRAP_CONTAINER(Scene::Types<Camera>::Container)
+
 	class_<Scene, noncopyable>("Scene", no_init)
 		.def("setAmbientCol", &Scene::setAmbientCol)
 		.def("getAmbientCol", (const Vec3& (Scene::*)() const)(&Scene::getAmbientCol),
