@@ -16,6 +16,10 @@ BOOST_PYTHON_MODULE(Anki)
 
 	CALL_WRAP(SceneNode);
 	CALL_WRAP(Camera);
+	CALL_WRAP(MaterialRuntime);
+	CALL_WRAP(PatchNode);
+	CALL_WRAP(ModelPatchNode);
+	CALL_WRAP(ModelNode);
 	CALL_WRAP(Scene);
 	CALL_WRAP(SceneSingleton);
 

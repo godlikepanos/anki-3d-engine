@@ -21,8 +21,8 @@ class ModelNode: public SceneNode
 
 		/// @name Accessors
 		/// @{
+		GETTER_RW(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
 		const Model& getModel() const {return *model;}
-		const Vec<ModelPatchNode*>& getModelPatchNodes() const {return patches;}
 		const Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
 		/// @}
 
@@ -34,11 +34,6 @@ class ModelNode: public SceneNode
 		void moveUpdate();
 
 		void frameUpdate() {}
-
-		/// @name Accessors
-		/// @{
-		const Vec<ModelPatchNode*>& getModelPatchNodees() const {return patches;}
-		/// @}
 
 	private:
 		RsrcPtr<Model> model;
