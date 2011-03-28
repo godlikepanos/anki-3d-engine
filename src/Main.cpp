@@ -149,16 +149,16 @@ void init()
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(), 1.0));
 
+	// Pentagram
+	pentagram = new ModelNode();
+	pentagram->init("models/pentagram/pentagram.mdl");
+	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
+
 	// Sponza
 	ModelNode* sponza = new ModelNode();
 	//sponza->init("maps/sponza/sponza.mdl");
 	sponza->init("maps/sponza-crytek/sponza_crytek.mdl");
 	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));
-
-	// Pentagram
-	pentagram = new ModelNode();
-	pentagram->init("models/pentagram/pentagram.mdl");
-	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
 
 
 	// Imp
@@ -291,8 +291,8 @@ void mainLoopExtra()
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_T))
 	{
-		pentagram->getModelPatchNodees()[0]->setUserDefVar(PatchNode::MT_BOTH, "specularCol", Vec3(10.0, -1.6, 1.6));
-		pentagram->getModelPatchNodees()[0]->getCpMtlRun().getUserDefinedVarByName("shininess").get<float>() = 10.0;
+		//pentagram->getModelPatchNodees()[0]->setUserDefVar(PatchNode::MT_BOTH, "specularCol", Vec3(10.0, -1.6, 1.6));
+		pentagram->getModelPatchNodes()[0]->getCpMtlRun().getUserDefinedVarByName("shininess").get<float>() = 10.0;
 	}
 
 

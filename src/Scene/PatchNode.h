@@ -19,14 +19,6 @@ class Material;
 class PatchNode: public RenderableNode
 {
 	public:
-		/// Passed as parameter in setUserDefVar
-		enum MaterialType
-		{
-			MT_COLOR_PASS,
-			MT_DEPTH_PASS,
-			MT_BOTH
-		};
-
 		PatchNode(const ModelPatch& modelPatch, SceneNode* parent);
 
 		/// Do nothing
@@ -46,10 +38,6 @@ class PatchNode: public RenderableNode
 		const Vao& getCpVao() const {return cpVao;}
 		const Vao& getDpVao() const {return dpVao;}
 		uint getVertIdsNum() const {return rsrc.getMesh().getVertIdsNum();}
-
-		/// @todo
-		template<typename Type>
-		void setUserDefVar(MaterialType mt, const char* name, const Type& value);
 		/// @}
 
 	protected:
@@ -62,21 +50,6 @@ class PatchNode: public RenderableNode
 		/// Create a VAO given a material and an array of VBOs
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };
-
-
-template<typename Type>
-void PatchNode::setUserDefVar(MaterialType mt, const char* name, const Type& value)
-{
-	if(mt == MT_COLOR_PASS || mt == MT_BOTH)
-	{
-		cpMtlRun->setUserDefVar(name, value);
-	}
-
-	if(mt == MT_DEPTH_PASS || mt == MT_BOTH)
-	{
-		dpMtlRun->setUserDefVar(name, value);
-	}
-}
 
 
 #endif
