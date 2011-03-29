@@ -2,7 +2,7 @@
 #define MATERIAL_RUNTIME_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include "MtlUserDefinedVarRuntime.h"
+#include "MaterialRuntimeUserDefinedVar.h"
 #include "Properties.h"
 #include "CharPtrHashMap.h"
 #include "Material.h"
@@ -13,21 +13,23 @@
 class MaterialRuntime: private MaterialProps
 {
 	public:
+		typedef boost::ptr_vector<MaterialRuntimeUserDefinedVar> MaterialRuntimeUserDefinedVarContainer;
+
 		MaterialRuntime(const Material& mtl);
 
 		/// @name Accessors
 		/// @{
-		GETTER_RW(boost::ptr_vector<MtlUserDefinedVarRuntime>, userDefVars, getUserDefinedVars)
+		GETTER_RW(MaterialRuntimeUserDefinedVarContainer, userDefVars, getUserDefinedVars)
 
-		/// Find MtlUserDefinedVarRuntime variable. On failure it throws an exception
+		/// Find MaterialRuntimeUserDefinedVar variable. On failure it throws an exception
 		/// @param[in] name The name of the var
-		/// @return It returns a MtlUserDefinedVarRuntime
+		/// @return It returns a MaterialRuntimeUserDefinedVar
 		/// @exception Exception
-		MtlUserDefinedVarRuntime& getUserDefinedVarByName(const char* name);
+		MaterialRuntimeUserDefinedVar& getUserDefinedVarByName(const char* name);
 
 		/// The const version of getUserDefinedVarByName
 		/// @see getUserDefinedVarByName
-		const MtlUserDefinedVarRuntime& getUserDefinedVarByName(const char* name) const;
+		const MaterialRuntimeUserDefinedVar& getUserDefinedVarByName(const char* name) const;
 
 		const Material& getMaterial() const {return mtl;}
 
@@ -39,6 +41,7 @@ class MaterialRuntime: private MaterialProps
 		template<typename Type>
 		const Type& getUserDefVarValue(const char* name) const;
 
+		/// The non const version of getUserDefVarValue
 		template<typename Type>
 		Type& getUserDefVarValue(const char* name);
 
@@ -58,8 +61,8 @@ class MaterialRuntime: private MaterialProps
 
 	private:
 		const Material& mtl; ///< The resource
-		boost::ptr_vector<MtlUserDefinedVarRuntime> userDefVars;
-		CharPtrHashMap<MtlUserDefinedVarRuntime*> userDefVarsHashMap; ///< For fast finding the variables
+		MaterialRuntimeUserDefinedVarContainer userDefVars;
+		CharPtrHashMap<MaterialRuntimeUserDefinedVar*> userDefVarsHashMap; ///< For fast finding the variables
 };
 
 

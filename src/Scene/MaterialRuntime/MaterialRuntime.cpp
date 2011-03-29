@@ -19,7 +19,7 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_):
 
 	BOOST_FOREACH(const MtlUserDefinedVar& udv, mtl.getUserDefinedVars())
 	{
-		MtlUserDefinedVarRuntime* udvr = new MtlUserDefinedVarRuntime(udv);
+		MaterialRuntimeUserDefinedVar* udvr = new MaterialRuntimeUserDefinedVar(udv);
 		userDefVars.push_back(udvr);
 		userDefVarsHashMap[udvr->getName().c_str()] = udvr;
 	}
@@ -29,9 +29,9 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_):
 //======================================================================================================================
 // getUserDefinedVarByName                                                                                             =
 //======================================================================================================================
-MtlUserDefinedVarRuntime& MaterialRuntime::getUserDefinedVarByName(const char* name)
+MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(const char* name)
 {
-	CharPtrHashMap<MtlUserDefinedVarRuntime*>::iterator it = userDefVarsHashMap.find(name);
+	CharPtrHashMap<MaterialRuntimeUserDefinedVar*>::iterator it = userDefVarsHashMap.find(name);
 	if(it == userDefVarsHashMap.end())
 	{
 		throw EXCEPTION("Cannot get user defined variable with name \"" + name + '\"');
@@ -43,9 +43,9 @@ MtlUserDefinedVarRuntime& MaterialRuntime::getUserDefinedVarByName(const char* n
 //======================================================================================================================
 // getUserDefinedVarByName                                                                                             =
 //======================================================================================================================
-const MtlUserDefinedVarRuntime& MaterialRuntime::getUserDefinedVarByName(const char* name) const
+const MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(const char* name) const
 {
-	CharPtrHashMap<MtlUserDefinedVarRuntime*>::const_iterator it = userDefVarsHashMap.find(name);
+	CharPtrHashMap<MaterialRuntimeUserDefinedVar*>::const_iterator it = userDefVarsHashMap.find(name);
 	if(it == userDefVarsHashMap.end())
 	{
 		throw EXCEPTION("Cannot get user defined variable with name \"" + name + '\"');

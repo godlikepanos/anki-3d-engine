@@ -4,7 +4,13 @@
 
 WRAP(MaterialRuntime)
 {
+	WRAP_CONTAINER(MaterialRuntime::MaterialRuntimeUserDefinedVarContainer)
+
 	class_<MaterialRuntime, noncopyable>("MaterialRuntime", no_init)
+		/*.def("getUserDefinedVars",
+		     (boost::ptr_vector<MaterialRuntimeUserDefinedVar>& (MaterialRuntime::*)())(&MaterialRuntime::getUserDefinedVars),
+		     return_value_policy<reference_existing_object>())*/
+
 		.def("setUserDefVar", (void (MaterialRuntime::*)(const char*, const float&))(&MaterialRuntime::setUserDefVarValue))
 		.def("setUserDefVar", (void (MaterialRuntime::*)(const char*, const Vec2&))(&MaterialRuntime::setUserDefVarValue))
 		.def("setUserDefVar", (void (MaterialRuntime::*)(const char*, const Vec3&))(&MaterialRuntime::setUserDefVarValue))

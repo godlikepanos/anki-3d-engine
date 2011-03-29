@@ -12,7 +12,7 @@
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MtlUserDefinedVarRuntime& udvr_,
+SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MaterialRuntimeUserDefinedVar& udvr_,
                                                 const Renderer& r_, uint& texUnit_):
 	udvr(udvr_),
 	r(r_),
@@ -236,7 +236,7 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	//
 	// set user defined vars
 	//
-	BOOST_FOREACH(const MtlUserDefinedVarRuntime& udvr, mtlr.getUserDefinedVars())
+	BOOST_FOREACH(const MaterialRuntimeUserDefinedVar& udvr, mtlr.getUserDefinedVars())
 	{
 		boost::apply_visitor(UsrDefVarVisitor(udvr, r, textureUnit), udvr.getDataVariant());
 	}

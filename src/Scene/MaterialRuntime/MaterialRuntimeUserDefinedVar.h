@@ -1,11 +1,11 @@
-#ifndef MTL_USER_DEFINED_VAR_RUNTIME_H
-#define MTL_USER_DEFINED_VAR_RUNTIME_H
+#ifndef MATERIAL_RUNTIME_USER_DEFINED_VAR_H
+#define MATERIAL_RUNTIME_USER_DEFINED_VAR_H
 
 #include "MtlUserDefinedVar.h"
 
 
 /// This holds a copy of the MtlUserDefinedVar's data in order to be changed inside the main loop
-class MtlUserDefinedVarRuntime
+class MaterialRuntimeUserDefinedVar
 {
 	friend class ConstructVisitor;
 
@@ -14,7 +14,7 @@ class MtlUserDefinedVarRuntime
 		typedef boost::variant<float, Vec2, Vec3, Vec4, const RsrcPtr<Texture>*, MtlUserDefinedVar::Fai> DataVariant;
 
 		/// The one and only constructor
-		MtlUserDefinedVarRuntime(const MtlUserDefinedVar& rsrc);
+		MaterialRuntimeUserDefinedVar(const MtlUserDefinedVar& rsrc);
 
 		/// @name Accessors
 		/// @{
@@ -43,9 +43,9 @@ class MtlUserDefinedVarRuntime
 		class ConstructVisitor: public boost::static_visitor<void>
 		{
 			public:
-				MtlUserDefinedVarRuntime& udvr;
+				MaterialRuntimeUserDefinedVar& udvr;
 
-				ConstructVisitor(MtlUserDefinedVarRuntime& udvr_): udvr(udvr_) {}
+				ConstructVisitor(MaterialRuntimeUserDefinedVar& udvr_): udvr(udvr_) {}
 
 				void operator()(float x) const;
 				void operator()(const Vec2& x) const;

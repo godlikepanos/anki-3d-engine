@@ -11,7 +11,7 @@ class Renderer;
 class Camera;
 class Material;
 class MaterialRuntime;
-class MtlUserDefinedVarRuntime;
+class MaterialRuntimeUserDefinedVar;
 
 
 /// It includes all the functions to render a RenderableNode
@@ -34,11 +34,11 @@ class SceneDrawer
 		class UsrDefVarVisitor: public boost::static_visitor<void>
 		{
 			public:
-				const MtlUserDefinedVarRuntime& udvr;
+				const MaterialRuntimeUserDefinedVar& udvr;
 				const Renderer& r;
 				mutable uint& texUnit;
 
-				UsrDefVarVisitor(const MtlUserDefinedVarRuntime& udvr, const Renderer& r, uint& texUnit);
+				UsrDefVarVisitor(const MaterialRuntimeUserDefinedVar& udvr, const Renderer& r, uint& texUnit);
 
 				void operator()(float x) const;
 				void operator()(const Vec2& x) const;
