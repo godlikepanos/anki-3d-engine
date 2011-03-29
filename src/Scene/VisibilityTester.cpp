@@ -130,7 +130,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 		BOOST_FOREACH(ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
 		{
 			// Skip shadowless
-			if(skipShadowless && !modelPatchNode->getCpMtl().isShadowCaster())
+			if(skipShadowless && !modelPatchNode->getCpMtl().castsShadow())
 			{
 				continue;
 			}
@@ -168,7 +168,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 		/*BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
 		{
 			// Skip shadowless
-			if(skipShadowless && !patchNode->getCpMtl().isShadowCaster())
+			if(skipShadowless && !patchNode->getCpMtl().castsShadow())
 			{
 				continue;
 			}

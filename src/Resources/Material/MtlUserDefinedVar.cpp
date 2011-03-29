@@ -6,7 +6,8 @@
 // Constructors                                                                                                        =
 //======================================================================================================================
 
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai_):
+template<>
+MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Fai& fai_):
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_SAMPLER_2D);
@@ -14,7 +15,8 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai_):
 }
 
 
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, float f):
+template<>
+MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const float& f):
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_FLOAT);
@@ -22,6 +24,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, float f):
 }
 
 
+template<>
 MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec2& v):
 	sProgVar(sProgVar)
 {
@@ -30,6 +33,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec2& v)
 }
 
 
+template<>
 MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v):
 	sProgVar(sProgVar)
 {
@@ -38,6 +42,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v)
 }
 
 
+template<>
 MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v):
 	sProgVar(sProgVar)
 {
@@ -46,10 +51,11 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v)
 }
 
 
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const char* texFilename):
+template<>
+MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& sProgVar, const std::string& texFilename):
 	sProgVar(sProgVar)
 {
 	ASSERT(sProgVar.getGlDataType() == GL_SAMPLER_2D);
 	data = RsrcPtr<Texture>();
-	boost::get<RsrcPtr<Texture> >(data).loadRsrc(texFilename);
+	boost::get<RsrcPtr<Texture> >(data).loadRsrc(texFilename.c_str());
 }
