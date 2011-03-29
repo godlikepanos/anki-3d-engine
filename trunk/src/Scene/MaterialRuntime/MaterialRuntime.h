@@ -5,13 +5,12 @@
 #include "MtlUserDefinedVarRuntime.h"
 #include "Properties.h"
 #include "CharPtrHashMap.h"
+#include "Material.h"
 
-
-class Material;
 
 
 /// One layer above material resource
-class MaterialRuntime
+class MaterialRuntime: private MaterialProps
 {
 	public:
 		MaterialRuntime(const Material& mtl);
@@ -32,10 +31,30 @@ class MaterialRuntime
 
 		const Material& getMaterial() const {return mtl;}
 
-		/// @todo
+		/// Find var and set its value
 		template<typename Type>
-		void setUserDefVar(const char* name, const Type& value);
+		void setUserDefVarValue(const char* name, const Type& value);
+
+		/// Find var and set its value
+		template<typename Type>
+		const Type& getUserDefVarValue(const char* name) const;
+
+		template<typename Type>
+		Type& getUserDefVarValue(const char* name);
+
+		GETTER_SETTER_BY_VAL(bool, castsShadowFlag, castsShadow, setCastsShadow)
+		GETTER_SETTER_BY_VAL(bool, renderInBlendingStageFlag, renderInBlendingStage, setRenderInBlendingStage)
+		GETTER_SETTER_BY_VAL(int, blendingSfactor, getBlendingSfactor, setBlendingSfactor)
+		GETTER_SETTER_BY_VAL(int, blendingDfactor, getBlendingDfactor, setBlendingDfactor)
+		GETTER_SETTER_BY_VAL(bool, depthTesting, isDepthTestingEnabled, setDepthTestingEnabled)
+		GETTER_SETTER_BY_VAL(bool, wireframe, isWireframeEnabled, setWireframeEnabled)
+
+		const SProgAttribVar* getStdAttribVar(Material::StdAttribVars id) const {return mtl.getStdAttribVar(id);}
+		const SProgUniVar* getStdUniVar(Material::StdUniVars id) const {return mtl.getStdUniVar(id);}
+		const ShaderProg& getShaderProg() const {return mtl.getShaderProg();}
 		/// @}
+
+		bool isBlendingEnabled() const {return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;}
 
 	private:
 		const Material& mtl; ///< The resource
@@ -45,9 +64,23 @@ class MaterialRuntime
 
 
 template<typename Type>
-void MaterialRuntime::setUserDefVar(const char* name, const Type& value)
+const Type& MaterialRuntime::getUserDefVarValue(const char* name) const
 {
-	getUserDefinedVarByName(name).get<Type>() = value;
+	return getUserDefinedVarByName(name).get<Type>();
+}
+
+
+template<typename Type>
+Type& MaterialRuntime::getUserDefVarValue(const char* name)
+{
+	return getUserDefinedVarByName(name).get<Type>();
+}
+
+
+template<typename Type>
+void MaterialRuntime::setUserDefVarValue(const char* name, const Type& value)
+{
+	getUserDefinedVarByName(name).set<Type>(value);
 }
 
 

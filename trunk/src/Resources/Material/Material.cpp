@@ -114,12 +114,12 @@ static bool searchBlendEnum(const char* str, int& gl_enum)
 //======================================================================================================================
 Material::Material()
 {
-	blendingStage = false;
+	renderInBlendingStageFlag = false;
 	blendingSfactor = GL_ONE;
 	blendingDfactor = GL_ZERO;
 	depthTesting = true;
 	wireframe = false;
-	castsShadow = true;
+	castsShadowFlag = true;
 }
 
 
@@ -179,12 +179,12 @@ void Material::load(const char* filename)
 		}
 
 		//
-		// blendingStage
+		// renderInBlendingStageFlag
 		//
 		boost::optional<bool> blendingStage_ = PropertyTree::getBoolOptional(pt, "blendingStage");
 		if(blendingStage_)
 		{
-			blendingStage = blendingStage_.get();
+			renderInBlendingStageFlag = blendingStage_.get();
 		}
 
 		//
@@ -267,7 +267,7 @@ void Material::load(const char* filename)
 
 						if(texture)
 						{
-							userDefinedVars.push_back(new MtlUserDefinedVar(uni, texture.get().c_str()));
+							userDefinedVars.push_back(new MtlUserDefinedVar(uni, texture.get()));
 						}
 						else if(fai)
 						{

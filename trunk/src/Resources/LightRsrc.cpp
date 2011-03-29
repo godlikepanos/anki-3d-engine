@@ -74,7 +74,7 @@ void LightRsrc::load(const char* filename)
 			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
 			                                                     float(token->getValue().getInt());
 		}
-		// castsShadow
+		// castsShadowFlag
 		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "castsShadow"))
 		{
 			token = &scanner.getNextToken();

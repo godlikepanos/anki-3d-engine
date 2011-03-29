@@ -27,15 +27,10 @@ class MtlUserDefinedVar
 		/// The data union
 		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture>, Fai> DataVariant;
 
-		/// @name Contructors
-		/// @{
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, const char* texFilename);
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, Fai fai);
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, float f);
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec2& v);
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec3& v);
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Vec4& v);
-		/// @}
+		/// Contructor
+		/// @tparam Type Can be std::string, Fai, float, Vec2, Vec3, Vec4
+		template<typename Type>
+		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Type& val);
 
 		/// @name Accessors
 		/// @{

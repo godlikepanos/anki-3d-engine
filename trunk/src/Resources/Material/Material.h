@@ -10,6 +10,19 @@
 #include "MtlUserDefinedVar.h"
 
 
+/// Contains a few properties that other classes may use
+struct MaterialProps
+{
+	bool castsShadowFlag; ///< Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
+	/// The entities with blending are being rendered in blending stage and those without in material stage
+	bool renderInBlendingStageFlag;
+	int blendingSfactor; ///< Default GL_ONE
+	int blendingDfactor; ///< Default GL_ZERO
+	bool depthTesting;
+	bool wireframe;
+};
+
+
 /// Mesh material Resource
 ///
 /// Every material keeps info of how to render a MeshNode. Among this info it keeps the locations of attribute and
@@ -34,7 +47,7 @@
 /// 		<customDpSProg>...</customDpSProg>
 /// 	</shaderProg>
 ///
-/// 	[<blendingStage>true|false</blendingStage>]
+/// 	[<renderInBlendingStageFlag>true|false</renderInBlendingStageFlag>]
 ///
 /// 	[<blendFuncs> *
 /// 		<sFactor>GL_SOMETHING</sFactor>
@@ -45,7 +58,7 @@
 ///
 /// 	[<wireframe>true|false</wireframe>]
 ///
-/// 	[<castsShadow>true|false</castsShadow>]
+/// 	[<castsShadowFlag>true|false</castsShadowFlag>]
 ///
 /// 	[<userDefinedVars>
 /// 		<userDefinedVar>
@@ -64,10 +77,10 @@
 /// 	</userDefinedVars>]
 /// </material>
 ///
-/// *: Has nothing to do with the blendingStage. blendFuncs can be in material stage as well
+/// *: Has nothing to do with the renderInBlendingStageFlag. blendFuncs can be in material stage as well
 /// **: Depends on the type of the var
 /// @endcode
-class Material
+class Material: private MaterialProps
 {
 	//==================================================================================================================
 	// Public                                                                                                          =
@@ -124,13 +137,13 @@ class Material
 		/// @{
 		const SProgAttribVar* getStdAttribVar(StdAttribVars id) const {return stdAttribVars[id];}
 		const SProgUniVar* getStdUniVar(StdUniVars id) const {return stdUniVars[id];}
-		const ShaderProg& getShaderProg() const {return *shaderProg.get();}
-		GETTER_R(bool, castsShadow, isShadowCaster)
-		GETTER_R(bool, blendingStage, renderInBlendingStage)
-		GETTER_R(int, blendingSfactor, getBlendingSfactor)
-		GETTER_R(int, blendingDfactor, getBlendingDfactor)
-		GETTER_R(bool, depthTesting, isDepthTestingEnabled)
-		GETTER_R(bool, wireframe, isWireframeEnabled)
+		const ShaderProg& getShaderProg() const {return *shaderProg;}
+		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
+		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, renderInBlendingStage)
+		GETTER_R_BY_VAL(int, blendingSfactor, getBlendingSfactor)
+		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
+		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
+		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
 		GETTER_R(boost::ptr_vector<MtlUserDefinedVar>, userDefinedVars, getUserDefinedVars)
 		/// @}
 
@@ -157,13 +170,6 @@ class Material
 			GLenum dataType; ///< aka GL data type
 		};
 
-		bool castsShadow; ///< Used in depth passes of shadowmapping and not in other depth passes like EarlyZ
-		/// The entities with blending are being rendered in blending stage and those without in material stage
-		bool blendingStage;
-		int blendingSfactor; ///< Default GL_ONE
-		int blendingDfactor; ///< Default GL_ZERO
-		bool depthTesting;
-		bool wireframe;
 		boost::ptr_vector<MtlUserDefinedVar> userDefinedVars;
 
 		static PreprocDefines msGenericDefines[]; ///< Material stage defines accepted in MsGeneric.glsl

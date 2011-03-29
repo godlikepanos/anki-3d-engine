@@ -33,6 +33,9 @@ class MtlUserDefinedVarRuntime
 		/// @exception boost::exception when you try to get the incorrect data type
 		template<typename Type>
 		Type& get() {return boost::get<Type>(data);}
+
+		template<typename Type>
+		void set(const Type& v) {boost::get<Type>(data) = v;}
 		/// @}
 
 	private:

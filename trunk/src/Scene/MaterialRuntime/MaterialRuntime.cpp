@@ -10,6 +10,13 @@
 MaterialRuntime::MaterialRuntime(const Material& mtl_):
 	mtl(mtl_)
 {
+	castsShadowFlag = mtl.castsShadow();
+	renderInBlendingStageFlag = mtl.renderInBlendingStage();
+	blendingSfactor = mtl.getBlendingSfactor();
+	blendingDfactor = mtl.getBlendingDfactor();
+	depthTesting = mtl.isDepthTestingEnabled();
+	wireframe = mtl.isWireframeEnabled();
+
 	BOOST_FOREACH(const MtlUserDefinedVar& udv, mtl.getUserDefinedVars())
 	{
 		MtlUserDefinedVarRuntime* udvr = new MtlUserDefinedVarRuntime(udv);
