@@ -195,6 +195,23 @@ inline const float& Mat4::operator[](const uint i) const
 // Operators with same                                                                                                 =
 //======================================================================================================================
 
+// =
+inline Mat4& Mat4::operator=(const Mat4& b)
+{
+	#if defined(MATH_INTEL_SIMD)
+		for(int i = 0; i < 4; i++)
+		{
+			arrMm[i] = b.arrMm[i];
+		}
+	#else
+		for(int i = 0; i < 16; i++)
+		{
+			SELF[i] = b[i];
+		}
+	#endif
+	return SELF;
+}
+
 // +
 inline Mat4 Mat4::operator+(const Mat4& b) const
 {

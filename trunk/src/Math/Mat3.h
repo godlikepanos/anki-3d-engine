@@ -31,8 +31,9 @@ class Mat3
 		const float& operator[](const uint i) const;
 		/// @}
 
-		/// @name Operators with Mat3
+		/// @name Operators with same
 		/// @{
+		Mat3& operator=(const Mat3& b);
 		Mat3 operator+(const Mat3& b) const;
 		Mat3& operator+=(const Mat3& b);
 		Mat3 operator-(const Mat3& b) const;

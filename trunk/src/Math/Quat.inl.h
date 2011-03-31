@@ -112,13 +112,13 @@ inline Quat::Quat(const Mat3& m3)
 inline Quat::Quat(const Euler& eu)
 {
 	float cx, sx;
-	sinCos(eu.getHeading() * 0.5, sx, cx);
+	sinCos(eu.y() * 0.5, sx, cx);
 
 	float cy, sy;
-	sinCos(eu.getAttitude() * 0.5, sy, cy);
+	sinCos(eu.z() * 0.5, sy, cy);
 
 	float cz, sz;
-	sinCos(eu.getBank() * 0.5, sz, cz);
+	sinCos(eu.x() * 0.5, sz, cz);
 
 	float cxcy = cx * cy;
 	float sxsy = sx * sy;
@@ -201,6 +201,16 @@ inline float& Quat::w()
 //======================================================================================================================
 // Operators with same                                                                                                 =
 //======================================================================================================================
+
+// =
+inline Quat& Quat::operator=(const Quat& b)
+{
+	x() = b.x();
+	y() = b.y();
+	z() = b.z();
+	w() = b.w();
+	return SELF;
+}
 
 // *
 inline Quat Quat::operator *(const Quat& b) const

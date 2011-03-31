@@ -7,6 +7,7 @@
 #include <iostream>
 #include <boost/array.hpp>
 #include "StdTypes.h"
+#include "Properties.h"
 #if defined(MATH_INTEL_SIMD)
 	#include <smmintrin.h>
 #endif

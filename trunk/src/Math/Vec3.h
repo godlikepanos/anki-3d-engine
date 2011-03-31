@@ -37,6 +37,7 @@ class Vec3
 
 		/// @name Operators with same type
 		/// @{
+		Vec3& operator=(const Vec3& b);
 		Vec3 operator+(const Vec3& b) const;
 		Vec3& operator+=(const Vec3& b);
 		Vec3 operator-(const Vec3& b) const;

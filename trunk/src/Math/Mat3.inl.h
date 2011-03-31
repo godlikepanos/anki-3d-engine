@@ -89,19 +89,19 @@ inline Mat3::Mat3(const Quat& q)
 inline Mat3::Mat3(const Euler& e)
 {
 	float ch, sh, ca, sa, cb, sb;
-  sinCos(e.getHeading(), sh, ch);
-  sinCos(e.getAttitude(), sa, ca);
-  sinCos(e.getBank(), sb, cb);
+	sinCos(e.y(), sh, ch);
+	sinCos(e.z(), sa, ca);
+	sinCos(e.x(), sb, cb);
 
-  SELF(0, 0) = ch * ca;
-  SELF(0, 1) = sh * sb - ch * sa * cb;
-  SELF(0, 2) = ch * sa * sb + sh * cb;
-  SELF(1, 0) = sa;
-  SELF(1, 1) = ca * cb;
-  SELF(1, 2) = -ca * sb;
-  SELF(2, 0) = -sh * ca;
-  SELF(2, 1) = sh * sa * cb + ch * sb;
-  SELF(2, 2) = -sh * sa * sb + ch * cb;
+	SELF(0, 0) = ch * ca;
+	SELF(0, 1) = sh * sb - ch * sa * cb;
+	SELF(0, 2) = ch * sa * sb + sh * cb;
+	SELF(1, 0) = sa;
+	SELF(1, 1) = ca * cb;
+	SELF(1, 2) = -ca * sb;
+	SELF(2, 0) = -sh * ca;
+	SELF(2, 1) = sh * sa * cb + ch * sb;
+	SELF(2, 2) = -sh * sa * sb + ch * cb;
 }
 
 // Axisang
@@ -160,6 +160,16 @@ inline const float& Mat3::operator[](const uint i) const
 //======================================================================================================================
 // Operators with same                                                                                                 =
 //======================================================================================================================
+
+// =
+inline Mat3& Mat3::operator=(const Mat3& b)
+{
+	for(int i = 0; i < 9; i++)
+	{
+		SELF[i] = b[i];
+	}
+	return SELF;
+}
 
 // +
 inline Mat3 Mat3::operator+(const Mat3& b) const

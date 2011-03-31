@@ -120,6 +120,15 @@ inline float Vec3::operator[](uint i) const
 // Operators with same type                                                                                            =
 //======================================================================================================================
 
+// =
+inline Vec3& Vec3::operator=(const Vec3& b)
+{
+	arr[0] = b.arr[0];
+	arr[1] = b.arr[1];
+	arr[2] = b.arr[2];
+	return SELF;
+}
+
 // +
 inline Vec3 Vec3::operator+(const Vec3& b) const
 {

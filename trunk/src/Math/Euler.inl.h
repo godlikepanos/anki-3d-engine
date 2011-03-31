@@ -4,90 +4,60 @@
 namespace M {
 
 
-// accessors
-inline float& Euler::operator [](uint i)
-{
-	return (&x)[i];
-}
+//======================================================================================================================
+// Constructors                                                                                                        =
+//======================================================================================================================
 
-inline float Euler::operator [](uint i) const
-{
-	return (&x)[i];
-}
-
-inline float& Euler::getBank()
-{
-	return x;
-}
-
-inline float Euler::getBank() const
-{
-	return x;
-}
-
-inline float& Euler::getHeading()
-{
-	return y;
-}
-
-inline float Euler::getHeading() const
-{
-	return y;
-}
-
-inline float& Euler::getAttitude()
-{
-	return z;
-}
-
-inline float Euler::getAttitude() const
-{
-	return z;
-}
-
-// constructor []
+// Default
 inline Euler::Euler()
-	: x(0.0), y(0.0), z(0.0)
-{}
+{
+	x() = y() = z() = 0.0;
+}
 
-// constructor [float, float, float]
+// float, float, float
 inline Euler::Euler(float x_, float y_, float z_)
-	: x(x_), y(y_), z(z_)
-{}
+{
+	x() = x_;
+	y() = y_;
+	z() = z_;
+}
 
-// constructor [euler]
+// Copy
 inline Euler::Euler(const Euler& b)
-	: x(b.x), y(b.y), z(b.z)
-{}
+{
+	x() = b.x();
+	y() = b.y();
+	z() = b.z();
+}
 
-// constructor [quat]
+// Quat
 inline Euler::Euler(const Quat& q)
 {
 	float test = q.x() * q.y() + q.z() * q.w();
 	if(test > 0.499)
 	{
-		getHeading() = 2.0 * atan2(q.x(), q.w());
-		getAttitude() = PI / 2.0;
-		getBank() = 0.0;
+		y() = 2.0 * atan2(q.x(), q.w());
+		z() = PI / 2.0;
+		x() = 0.0;
 		return;
 	}
 	if(test < -0.499)
 	{
-		getHeading() = -2.0 * atan2(q.x(), q.w());
-		getAttitude() = -PI / 2.0;
-		getBank() = 0.0;
+		y() = -2.0 * atan2(q.x(), q.w());
+		z() = -PI / 2.0;
+		x() = 0.0;
 		return;
 	}
 
 	float sqx = q.x() * q.x();
 	float sqy = q.y() * q.y();
 	float sqz = q.z() * q.z();
-	getHeading() = atan2(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(), 1.0 - 2.0 * sqy - 2.0 * sqz);
-	getAttitude() = asin(2.0f * test);
-	getBank() = atan2(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(), 1.0 - 2.0 * sqx - 2.0 * sqz);
+	y() = atan2(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(), 1.0 - 2.0 * sqy - 2.0 * sqz);
+	z() = asin(2.0 * test);
+	x() = atan2(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(), 1.0 - 2.0 * sqx - 2.0 * sqz);
 }
 
-// constructor [mat3]
+// mat3
 inline Euler::Euler(const Mat3& m3)
 {
 	float cx, sx;
@@ -114,16 +84,80 @@ inline Euler::Euler(const Mat3& m3)
 		cx = m3(1, 1);
 	}
 
-	z = atan2f(sz, cz);
-	y = atan2f(sy, cy);
-	x = atan2f(sx, cx);
+	z() = atan2f(sz, cz);
+	y() = atan2f(sy, cy);
+	x() = atan2f(sx, cx);
 }
 
-// print
+
+//======================================================================================================================
+// Accessors                                                                                                           =
+//======================================================================================================================
+
+inline float& Euler::operator [](uint i)
+{
+	return arr[i];
+}
+
+inline float Euler::operator [](uint i) const
+{
+	return arr[i];
+}
+
+inline float& Euler::x()
+{
+	return vec.x;
+}
+
+inline float Euler::x() const
+{
+	return vec.x;
+}
+
+inline float& Euler::y()
+{
+	return vec.y;
+}
+
+inline float Euler::y() const
+{
+	return vec.y;
+}
+
+inline float& Euler::z()
+{
+	return vec.z;
+}
+
+inline float Euler::z() const
+{
+	return vec.z;
+}
+
+
+//======================================================================================================================
+// Operators with same                                                                                                 =
+//======================================================================================================================
+
+// =
+inline Euler& Euler::operator=(const Euler& b)
+{
+	x() = b.x();
+	y() = b.y();
+	z() = b.z();
+	return SELF;
+}
+
+
+//======================================================================================================================
+// Print                                                                                                               =
+//======================================================================================================================
+
 inline std::ostream& operator<<(std::ostream& s, const Euler& e)
 {
-	s << e.x << ' ' << e.y << ' ' << e.z;
+	s << e.x() << ' ' << e.y() << ' ' << e.z();
 	return s;
 }
+
 
 } // end namespace

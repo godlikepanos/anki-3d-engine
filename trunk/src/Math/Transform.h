@@ -34,6 +34,11 @@ class Transform
 		void setScale(float s);
 		/// @}
 
+		/// @name Operators with same
+		/// @{
+		Transform& operator=(const Transform& b);
+		/// @}
+
 		/// @name Other
 		/// @{
 		void setIdentity();
