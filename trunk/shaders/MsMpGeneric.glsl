@@ -118,9 +118,12 @@ void main()
 #if defined(ENVIRONMENT_MAPPING)
 	uniform sampler2D environmentMap;
 #endif
+uniform float shininess = 50.0;
 uniform vec3 diffuseCol = vec3(1.0, 0.0, 1.0);
 uniform vec3 specularCol = vec3(1.0, 0.0, 1.0);
-uniform float shininess = 50.0;
+#if defined(ALPHA_TESTING)
+	uniform float alphaTestingTolerance = 0.5; ///< Below this value the pixels are getting discarded 
+#endif
 
 in vec3 vNormal;
 in vec3 vTangent;
@@ -190,8 +193,10 @@ void main()
 
 		#if defined(ALPHA_TESTING)
 			vec4 _diffCol4_ = texture2D(diffuseMap, _superTexCoords_);
-			if(_diffCol4_.a == 0.0)
+			if(_diffCol4_.a < alphaTestingTolerance)
+			{
 				discard;
+			}
 			_diffColl_ = _diffCol4_.rgb;
 		#else // no alpha
 			_diffColl_ = texture2D(diffuseMap, _superTexCoords_).rgb;

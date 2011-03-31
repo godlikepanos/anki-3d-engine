@@ -25,13 +25,14 @@ void main()
 
 #if defined(ALPHA_TESTING)
 	uniform sampler2D diffuseMap;
+	uniform float alphaTestingTolerance = 0.5; ///< Below this value the pixels are getting discarded 
 	in vec2 vTexCoords;
 #endif
 
 void main()
 {
 	#if defined(ALPHA_TESTING)
-		if(texture2D(diffuseMap, vTexCoords).a == 0.0)
+		if(texture2D(diffuseMap, vTexCoords).a < alphaTestingTolerance)
 		{
 			discard;
 		}

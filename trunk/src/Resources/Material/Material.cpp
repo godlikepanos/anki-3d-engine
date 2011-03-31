@@ -50,13 +50,13 @@ Material::PreprocDefines Material::msGenericDefines[] =
 	{"PARALLAX_MAPPING", 'p'},
 	{"ENVIRONMENT_MAPPING", 'e'},
 	{"ALPHA_TESTING", 'a'},
-	{NULL, NULL}
+	{0, 0}
 };
 
 Material::PreprocDefines Material::dpGenericDefines[] =
 {
 	{"ALPHA_TESTING", 'a'},
-	{NULL, NULL}
+	{0, 0}
 };
 
 
