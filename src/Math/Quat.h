@@ -39,10 +39,11 @@ class Quat
 
 		/// Operators with same
 		/// @{
-		Quat operator *(const Quat& b) const; ///< 16 muls, 12 adds
-		Quat& operator *=(const Quat& b);
-		bool operator ==(const Quat& b) const;
-		bool operator !=(const Quat& b) const;
+		Quat& operator=(const Quat& b);
+		Quat operator*(const Quat& b) const; ///< 16 muls, 12 adds
+		Quat& operator*=(const Quat& b);
+		bool operator==(const Quat& b) const;
+		bool operator!=(const Quat& b) const;
 		/// @}
 
 		/// @name Other

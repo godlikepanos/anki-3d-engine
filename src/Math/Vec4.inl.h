@@ -75,7 +75,7 @@ inline Vec4::Vec4(const Vec3& v3, float w_)
 	w() = w_;
 }
 
-// copy
+// Copy
 inline Vec4::Vec4(const Vec4& b)
 {
 	#if defined(MATH_INTEL_SIMD)
@@ -176,6 +176,20 @@ inline float Vec4::w() const
 //======================================================================================================================
 // Operators with same                                                                                                 =
 //======================================================================================================================
+
+// =
+inline Vec4& Vec4::operator=(const Vec4& b)
+{
+	#if defined(MATH_INTEL_SIMD)
+		mm = b.mm;
+	#else
+		x() = b.x();
+		y() = b.y();
+		z() = b.z();
+		w() = b.w();
+	#endif
+	return SELF;
+}
 
 // +
 inline Vec4 Vec4::operator+(const Vec4& b) const

@@ -11,12 +11,7 @@ namespace M {
 class Euler
 {
 	public:
-		/// @name Data
-		/// @{
-		float x, y, z;
-		/// @}
-
-		/// @name Constructors & distructors
+		/// @name Constructors
 		/// @{
 		explicit Euler();
 		explicit Euler(float x, float y, float z);
@@ -29,12 +24,31 @@ class Euler
 		/// @{
 		float& operator [](uint i);
 		float operator [](uint i) const;
-		float& getBank();
-		float getBank() const;
-		float& getHeading();
-		float getHeading() const;
-		float& getAttitude();
-		float getAttitude() const;
+		float& x();
+		float x() const;
+		float& y();
+		float y() const;
+		float& z();
+		float z() const;
+		/// @}
+
+		/// @name Operators with same
+		/// @{
+		Euler& operator=(const Euler& b);
+		/// @}
+
+	private:
+		/// @name Data
+		/// @{
+		union
+		{
+			struct
+			{
+				float x, y, z;
+			} vec;
+
+			boost::array<float, 3> arr;
+		};
 		/// @}
 };
 

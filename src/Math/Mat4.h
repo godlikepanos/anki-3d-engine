@@ -42,6 +42,7 @@ class Mat4
 
 		/// @name Operators with same type
 		/// @{
+		Mat4& operator=(const Mat4& b);
 		Mat4 operator+(const Mat4& b) const;
 		Mat4& operator+=(const Mat4& b);
 		Mat4 operator-(const Mat4& b) const;

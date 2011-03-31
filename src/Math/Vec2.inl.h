@@ -37,7 +37,7 @@ inline Vec2::Vec2(float arr[])
 	y() = arr[1];
 }
 
-// vec2
+// Copy
 inline Vec2::Vec2(const Vec2& b)
 {
 	x() = b.x();
@@ -97,6 +97,14 @@ inline float Vec2::operator[](uint i) const
 //======================================================================================================================
 // Operators with same                                                                                                 =
 //======================================================================================================================
+
+// =
+inline Vec2& Vec2::operator=(const Vec2& b)
+{
+	x() = b.x();
+	y() = b.y();
+	return SELF;
+}
 
 // +
 inline Vec2 Vec2::operator+(const Vec2& b) const

@@ -11,7 +11,7 @@ namespace M {
 class Vec4
 {
 	public:
-		/// @name Constructors & distructors
+		/// @name Constructors
 		/// @{
 		explicit Vec4();
 		explicit Vec4(float x, float y, float z, float w);
@@ -46,6 +46,7 @@ class Vec4
 
 		/// @name Operators with same
 		/// @{
+		Vec4& operator=(const Vec4& b);
 		Vec4 operator+(const Vec4& b) const;
 		Vec4& operator+=(const Vec4& b);
 		Vec4 operator-(const Vec4& b) const;

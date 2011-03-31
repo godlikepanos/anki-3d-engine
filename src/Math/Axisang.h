@@ -31,6 +31,11 @@ class Axisang
 		void setAxis(const Vec3& a);
 		/// @}
 		
+		/// @name Operators with same
+		/// @{
+		Axisang& operator=(const Axisang& b);
+		/// @}
+
 	private:
 		/// @name Data
 		/// @{
