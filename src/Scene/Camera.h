@@ -19,6 +19,12 @@ class PointLight;
 class Camera: public SceneNode
 {
 	public:
+		enum CameraType
+		{
+			CT_PERSPECTIVE,
+			CT_ORTHOGRAPHIC
+		};
+
 		enum FrustrumPlanes
 		{
 			FP_LEFT = 0,
@@ -35,15 +41,20 @@ class Camera: public SceneNode
 
 		/// @name Accessors
 		/// @{
-		void setFovX(float fovx);
-		void setFovY(float fovy);
-		void setZNear(float znear);
-		void setZFar(float zfar);
-		void setAll(float fovx, float fovy, float znear, float zfar);
 		float getFovX() const {return fovX;}
+		void setFovX(float fovx);
+
 		float getFovY() const {return fovY;}
+		void setFovY(float fovy);
+
 		float getZNear() const {return zNear;}
+		void setZNear(float znear);
+
 		float getZFar() const {return zFar;}
+		void setZFar(float zfar);
+
+		void setAll(float fovx, float fovy, float znear, float zfar);
+
 		const Mat4& getProjectionMatrix() const {return projectionMat;}
 		const Mat4& getViewMatrix() const {return viewMat;}
 
