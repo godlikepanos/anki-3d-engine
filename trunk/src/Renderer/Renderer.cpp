@@ -116,12 +116,12 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat, con
 //======================================================================================================================
 Mat4 Renderer::ortho(float left, float right, float bottom, float top, float near, float far)
 {
-	float difx = right-left;
-	float dify = top-bottom;
-	float difz = far-near;
-	float tx = -(right+left) / difx;
-	float ty = -(top+bottom) / dify;
-	float tz = -(far+near) / difz;
+	float difx = right - left;
+	float dify = top - bottom;
+	float difz = far - near;
+	float tx = -(right + left) / difx;
+	float ty = -(top + bottom) / dify;
+	float tz = -(far + near) / difz;
 	Mat4 m;
 
 	m(0, 0) = 2.0 / difx;
