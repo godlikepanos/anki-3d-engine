@@ -148,7 +148,10 @@ void MeshData::doPostLoad()
 	}
 
 	createAllNormals();
-	createVertTangents();
+	if(texCoords.size() > 0)
+	{
+		createVertTangents();
+	}
 	createVertIndeces();
 }
 
@@ -225,7 +228,7 @@ void MeshData::createVertTangents()
 	vertTangents.resize(vertCoords.size(), Vec4(0.0)); // alloc
 	Vec<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
 
-	for(uint i=0; i<tris.size(); i++)
+	for(uint i = 0; i < tris.size(); i++)
 	{
 		const Triangle& tri = tris[i];
 		const int i0 = tri.vertIds[0];
@@ -265,7 +268,7 @@ void MeshData::createVertTangents()
 		bitagents[i2] += b;
 	}
 
-	for(uint i=0; i<vertTangents.size(); i++)
+	for(uint i = 0; i < vertTangents.size(); i++)
 	{
 		Vec3 t = Vec3(vertTangents[i]);
 		const Vec3& n = vertNormals[i];

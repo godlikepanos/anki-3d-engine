@@ -147,7 +147,7 @@ layout(location = 2) out vec4 fMsSpecularFai;
 	/// @param[in] tangent Extra stuff for the tangent
 	/// @param[in] map The map
 	/// @param[in] texCoords Texture coordinates
-	vec3 getNormal(in vec3 normal, in vec3 tangent, in vec3 tangentW, in sampler2D map, in vec2 texCoords)
+	vec3 getNormal(in vec3 normal, in vec3 tangent, in float tangentW, in sampler2D map, in vec2 texCoords)
 	{	
 			vec3 n = normalize(normal);
 			vec3 t = normalize(tangent);

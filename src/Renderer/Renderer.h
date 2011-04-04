@@ -74,16 +74,6 @@ class Renderer
 		static Vec3 unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
 		                      const int view[4]);
 
-		/// It returns an orthographic projection matrix
-		/// @param left left vertical clipping plane
-		/// @param right right vertical clipping plane
-		/// @param bottom bottom horizontal clipping plane
-		/// @param top top horizontal clipping plane
-		/// @param near nearer distance of depth clipping plane
-		/// @param far farther distance of depth clipping plane
-		/// @return A 4x4 projection matrix
-		static Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
-
 		/// OpenGL wrapper
 		static void setViewport(uint x, uint y, uint w, uint h) {glViewport(x, y, w, h);}
 
