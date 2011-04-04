@@ -110,37 +110,3 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat, con
 	return Vec3(final);
 }
 
-
-//======================================================================================================================
-// ortho                                                                                                               =
-//======================================================================================================================
-Mat4 Renderer::ortho(float left, float right, float bottom, float top, float near, float far)
-{
-	float difx = right - left;
-	float dify = top - bottom;
-	float difz = far - near;
-	float tx = -(right + left) / difx;
-	float ty = -(top + bottom) / dify;
-	float tz = -(far + near) / difz;
-	Mat4 m;
-
-	m(0, 0) = 2.0 / difx;
-	m(0, 1) = 0.0;
-	m(0, 2) = 0.0;
-	m(0, 3) = tx;
-	m(1, 0) = 0.0;
-	m(1, 1) = 2.0 / dify;
-	m(1, 2) = 0.0;
-	m(1, 3) = ty;
-	m(2, 0) = 0.0;
-	m(2, 1) = 0.0;
-	m(2, 2) = -2.0 / difz;
-	m(2, 3) = tz;
-	m(3, 0) = 0.0;
-	m(3, 1) = 0.0;
-	m(3, 2) = 0.0;
-	m(3, 3) = 1.0;
-
-	return m;
-}
-

@@ -24,25 +24,18 @@ class Smo: public RenderingPass
 		void run(const SpotLight& light);
 
 	private:
-		/// @name UV sphere stuff
-		/// @{
-		static float sMOUvSCoords[]; ///< Illumination stage stencil masking optimizations UV sphere vertex positions
-		Vbo spherePositionsVbo; ///< Illumination stage stencil masking optimizations UV sphere VBO
-		Vao sphereVao; ///< And a VAO
-		/// @}
-
-		/// @name Camera shape stuff
-		/// @{
-
-		struct CameraGeom
+		/// @todo
+		struct Geom
 		{
-			Vbo positionsVbo; ///< A camera shape
-			Vbo vertIndecesVbo; ///< The vertex indeces
-			Vao vao; ///< And another VAO
+			RsrcPtr<Mesh> mesh;
+			Vao vao;
 		};
 
-		boost::array<CameraGeom, Camera::CT_NUM> camGeom;
-		/// @}
+		Geom sphereGeom;
+
+		/// An array of geometry stuff. For perspective cameras the shape is a pyramid, see the blend file with the
+		/// vertex positions
+		boost::array<Geom, Camera::CT_NUM> camGeom;
 
 		RsrcPtr<ShaderProg> sProg;
 

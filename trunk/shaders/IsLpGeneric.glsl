@@ -240,12 +240,12 @@ void main()
 
 
 	/*#if defined(POINT_LIGHT_ENABLED)
-		gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
+		fColor = fColor - fColor + vec3(1, 0, 1);
 	#endif*/
 	
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
 	/*#if defined(SPOT_LIGHT_ENABLED)
-	gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(texture2D(msDepthFai, vTexCoords).r);
+	fColor = fColor - fColor + vec3(1, 0, 1);
 	//gl_FragData[0] = vec4(texture2D(msDepthFai, vTexCoords).rg), 1.0);
 	#endif*/
 }

@@ -8,21 +8,8 @@
 #include "Vao.h"
 #include "Vbo.h"
 #include "PerspectiveCamera.h"
+#include "Mesh.h"
 
-
-//======================================================================================================================
-// Statics                                                                                                             =
-//======================================================================================================================
-
-float Smo::sMOUvSCoords[] = {-0.000000, 0.000000, -1.000000, 0.500000, 0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.707107, 0.000000, 0.707107, -0.000000, 0.707107, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.000000, 0.707107, -0.707107, 0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.000000, 0.707107, 0.707107, -0.707107, -0.000000, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.000000, -1.000000, -0.707107, -0.000000, -0.707107, -0.500000, 0.500000, -0.707107, -0.000000, 0.000000, -1.000000, -0.500000, -0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, -0.707107, -0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, 0.000000, 1.000000, -0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, -0.500000, -0.500000, -0.707107, -0.000000, 0.000000, -1.000000, 0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, 0.707107, 0.000000, 0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, 0.000000, 1.000000, 0.500000, -0.500000, 0.707107, -0.000000, 0.000000, -1.000000, 0.707107, 0.000000, -0.707107, 0.500000, -0.500000, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, 0.000000, -0.707107, 1.000000, 0.000000, -0.000000, 0.500000, -0.500000, -0.707107, 1.000000, 0.000000, -0.000000, 0.707107, -0.707107, 0.000000, 0.707107, -0.707107, 0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.000000, 0.707107, 0.707107, -0.707107, 0.000000, 0.707107, 0.000000, 0.707107, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.707107, -0.707107, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -1.000000, 0.000000, 0.500000, -0.500000, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, -0.707107, 0.500000, -0.500000, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, -0.500000, -0.500000, -0.707107, 0.000000, -0.707107, -0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -1.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.707107, -0.707107, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, -0.707107, 0.707107, -0.707107, -0.707107, 0.000000, 0.000000, -0.707107, 0.707107, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.707107, -0.707107, 0.000000, -0.500000, -0.500000, 0.707107, -1.000000, -0.000000, 0.000000, -0.500000, -0.500000, 0.707107, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, -0.707107, -0.500000, -0.500000, -0.707107, -0.707107, -0.707107, 0.000000, -0.707107, -0.000000, -0.707107, -0.707107, -0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -0.707107, -0.000000, -0.707107, -1.000000, -0.000000, 0.000000, -0.500000, 0.500000, -0.707107, -1.000000, -0.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.707107, 0.707107, 0.000000, -1.000000, -0.000000, 0.000000, -0.707107, -0.000000, 0.707107, -0.707107, 0.707107, 0.000000, -0.707107, -0.000000, 0.707107, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.707107, 0.707107, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 1.000000, 0.000000, -0.500000, 0.500000, 0.707107, -0.000000, 0.707107, 0.707107, -0.000000, 0.707107, -0.707107, -0.500000, 0.500000, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 0.707107, -0.707107, -0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 0.707107, -0.707107, -0.000000, 1.000000, 0.000000, 0.500000, 0.500000, -0.707107, -0.000000, 1.000000, 0.000000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.000000, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.707107, 0.707107, 0.000000, -0.000000, 0.707107, 0.707107, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.707107, 0.707107, 0.000000, 0.500000, 0.500000, 0.707107, 1.000000, 0.000000, -0.000000, 0.500000, 0.500000, 0.707107, 0.707107, 0.000000, 0.707107, 0.707107, 0.000000, -0.707107, 0.500000, 0.500000, -0.707107, 0.707107, 0.707107, 0.000000, 0.707107, 0.000000, -0.707107, 0.707107, 0.707107, 0.000000, 1.000000, 0.000000, -0.000000};
-
-static float perspectiveCamPositions[] = {
-	0.0, 0.0, 0.0, // Eye
-	1.0, 1.0, -1.0, // Top right
-	-1.0, 1.0, -1.0, // Top left
-	-1.0, -1.0, -1.0, // Bottom left
-	1.0, -1.0, -1.0 // Bottom right
-};
 
 //======================================================================================================================
 // init                                                                                                                =
@@ -36,9 +23,11 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 	//
 
 	// Sphere
-	spherePositionsVbo.create(GL_ARRAY_BUFFER, sizeof(sMOUvSCoords), sMOUvSCoords, GL_STATIC_DRAW);
-	sphereVao.create();
-	sphereVao.attachArrayBufferVbo(spherePositionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
+	sphereGeom.mesh.loadRsrc("engine-rsrc/sphere.mesh");
+	sphereGeom.vao.create();
+	sphereGeom.vao.attachArrayBufferVbo(sphereGeom.mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
+										*sProg->findAttribVar("position"), 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	sphereGeom.vao.attachElementArrayBufferVbo(sphereGeom.mesh->getVbo(Mesh::VBO_VERT_INDECES));
 
 	// Cameras
 	initCamGeom();
@@ -50,27 +39,16 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 //======================================================================================================================
 void Smo::initCamGeom()
 {
-	CameraGeom* cg = &camGeom[Camera::CT_PERSPECTIVE];
+	boost::array<const char*, Camera::CT_NUM> files = {{"engine-rsrc/pyramid.mesh", "engine-rsrc/cube.mesh"}};
 
-	// 4 vertex positions: eye, top-right, top-left, bottom-left, bottom-right
-	cg->positionsVbo.create(GL_ARRAY_BUFFER, sizeof(float) * 3 * 5, perspectiveCamPositions, GL_STATIC_DRAW);
-
-	// The vert indeces
-	enum {EYE, TR, TL, BL, BR}; // Vert positions
-
-	ushort vertIndeces[6][3] = {
-		{EYE, BR, TR}, // Right triangle
-		{EYE, TR, TL}, // Top
-		{EYE, TL, BL}, // Left
-		{EYE, BL, BR}, // Bottom
-		{BR, BL, TL}, {TL, TR, BR} // Front
-	};
-
-	cg->vertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertIndeces), vertIndeces, GL_STATIC_DRAW);
-
-	cg->vao.create();
-	cg->vao.attachArrayBufferVbo(cg->positionsVbo, *sProg->findAttribVar("position"), 3, GL_FLOAT, false, 0, NULL);
-	cg->vao.attachElementArrayBufferVbo(cg->vertIndecesVbo);
+	for(uint i = 0; i < Camera::CT_NUM; i++)
+	{
+		camGeom[i].mesh.loadRsrc(files[i]);
+		camGeom[i].vao.create();
+		camGeom[i].vao.attachArrayBufferVbo(camGeom[i].mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
+		                                    *sProg->findAttribVar("position"), 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		camGeom[i].vao.attachElementArrayBufferVbo(camGeom[i].mesh->getVbo(Mesh::VBO_VERT_INDECES));
+	}
 }
 
 
@@ -88,16 +66,16 @@ void Smo::run(const PointLight& light)
 	glDisable(GL_CULL_FACE);
 
 	// set shared prog
-	const float scale = 1.2; // we scale the sphere a little
+	const float SCALE = 1.0; // we scale the sphere a little
 	sProg->bind();
-	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.getRadius() * scale);
+	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.getRadius() * SCALE);
 	Mat4 trf = r.getViewProjectionMat() * modelMat;
 	sProg->findUniVar("modelViewProjectionMat")->set(&trf);
 
 	// render sphere to the stencil buffer
-	sphereVao.bind();
-	glDrawArrays(GL_TRIANGLES, 0, sizeof(sMOUvSCoords) / sizeof(float) / 3);
-	sphereVao.unbind();
+	sphereGeom.vao.bind();
+	glDrawElements(GL_TRIANGLES, sphereGeom.mesh->getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	sphereGeom.vao.unbind();
 
 	// restore GL
 	glEnable(GL_CULL_FACE);
@@ -125,7 +103,7 @@ void Smo::run(const SpotLight& light)
 
 	// Calc the camera shape scale matrix
 	Mat4 scaleMat(Mat4::getIdentity());
-	const CameraGeom* cg = &camGeom[lcam.getType()];
+	const Geom& cg = camGeom[lcam.getType()];
 
 	switch(lcam.getType())
 	{
@@ -158,9 +136,11 @@ void Smo::run(const SpotLight& light)
 	//
 	// Render
 	//
-	cg->vao.bind();
-	glDrawElements(GL_TRIANGLES, 6 * 3, GL_UNSIGNED_SHORT, 0);
-	cg->vao.unbind();
+	//mesh->get
+
+	cg.vao.bind();
+	glDrawElements(GL_TRIANGLES, cg.mesh->getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	cg.vao.unbind();
 
 	// restore GL state
 	glEnable(GL_CULL_FACE);

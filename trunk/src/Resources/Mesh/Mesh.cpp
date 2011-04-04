@@ -21,7 +21,7 @@ void Mesh::load(const char* filename)
 		// Sanity checks
 		//
 		if(meshData.getVertIndeces().size() < 1 || meshData.getVertCoords().size() < 1 ||
-			 meshData.getVertNormals().size() < 1 || meshData.getVertTangents().size() < 1)
+		   meshData.getVertNormals().size() < 1)
 		{
 			throw EXCEPTION("Empty one of the required vectors");
 		}
