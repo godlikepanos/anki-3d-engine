@@ -21,8 +21,6 @@ class PerspectiveCamera: public Camera
 
 		void setAll(float fovx, float fovy, float znear, float zfar);
 
-		bool insideFrustum(const PerspectiveCamera& cam) const;
-
 	private:
 		/// @name Data
 		/// @{
@@ -33,7 +31,10 @@ class PerspectiveCamera: public Camera
 		float fovY; /// @see fovX
 		/// @}
 
+		/// Implements Camera::calcLSpaceFrustumPlanes
 		void calcLSpaceFrustumPlanes();
+
+		/// Implements Camera::calcProjectionMatrix
 		void calcProjectionMatrix();
 
 		/// Implements Camera::getExtremePoints
