@@ -139,6 +139,61 @@ layout(location = 2) out vec4 fMsSpecularFai;
 
 
 //======================================================================================================================
+// getNormal                                                                                                           =
+//======================================================================================================================
+#if defined(NORMAL_MAPPING)
+	/// @param[in] normal The fragment's normal in view space
+	/// @param[in] tangent The tangent
+	/// @param[in] tangent Extra stuff for the tangent
+	/// @param[in] map The map
+	/// @param[in] texCoords Texture coordinates
+	vec3 getNormal(in vec3 normal, in vec3 tangent, in vec3 tangentW, in sampler2D map, in vec2 texCoords)
+	{	
+			vec3 n = normalize(normal);
+			vec3 t = normalize(tangent);
+			vec3 b = cross(n, t) * tangentW;
+
+			mat3 tbnMat = mat3(t, b, n);
+
+			vec3 nAtTangentspace = (texture2D(map, texCoords).rgb - 0.5) * 2.0;
+
+			return normalize(tbnMat * nAtTangentspace);
+	}		
+#else
+	/// Just normalize
+	vec3 getNormal(in vec3 normal)
+	{
+		return normalize(normal);
+	}
+#endif
+
+
+
+//======================================================================================================================
+// doEnvMapping                                                                                                        =
+//======================================================================================================================
+/// Environment mapping calculations
+/// @param[in] vertPosViewSpace Fragment position in view space
+/// @param[in] normal Fragment's normal in view space as well
+/// @param[in] map The env map
+/// @return The color
+vec3 doEnvMapping(in vec3 vertPosViewSpace, in vec3 normal, in sampler2D map)
+{
+	// In case of normal mapping I could play with vertex's normal but this gives better results and its allready
+	// computed
+	
+	vec3 u = normalize(vertPosViewSpace);
+	vec3 r = reflect(u, normal);
+	r.z += 1.0;
+	float m = 2.0 * length(r);
+	vec2 semTexCoords = r.xy / m + 0.5;
+
+	vec3 semCol = texture2D(map, semTexCoords).rgb;
+	return semCol;
+}
+
+
+//======================================================================================================================
 // main                                                                                                                =
 //======================================================================================================================
 void main()
@@ -213,38 +268,20 @@ void main()
 	// Either use a normap map and make some calculations or use the vertex normal
 	//
 	#if defined(NORMAL_MAPPING)
-		vec3 _n_ = normalize(vNormal);
-		vec3 _t_ = normalize(vTangent);
-		vec3 _b_ = cross(_n_, _t_) * vTangentW;
-
-		mat3 _tbnMat_ = mat3(_t_, _b_, _n_);
-
-		vec3 _nAtTangentspace_ = (texture2D(normalMap, _superTexCoords_).rgb - 0.5) * 2.0;
-
-		vec3 _normal_ = normalize(_tbnMat_ * _nAtTangentspace_);
+		vec3 _normal_ = getNormal(vNormal, vTangent, vTangentW, normalMap, _superTexCoords_);
 	#else
-		vec3 _normal_ = normalize(vNormal);
+		vec3 _normal_ = getNormal(vNormal);
 	#endif
 
 
 	//
 	// Diffuse Calculations (Part II)
 	// If SEM is enabled make some calculations (using the vVertPosViewSpace, environmentMap and the _normal_) and
-	/// combine colors of SEM and the _diffColl_
+	// combine colors of SEM and the _diffColl_
 	//
 	#if defined(ENVIRONMENT_MAPPING)
-		//
-		// In case of normal mapping I could play with vertex's normal but this gives better results and its allready
-		// computed
-		//
-		vec3 _u_ = normalize(vVertPosViewSpace);
-		vec3 _r_ = reflect(_u_, _normal_);
-		_r_.z += 1.0;
-		float _m_ = 2.0 * length(_r_);
-		vec2 _semTexCoords_ = _r_.xy / _m_ + 0.5;
-
-		vec3 _semCol_ = texture2D(environmentMap, _semTexCoords_).rgb;
-		_diffColl_ += _semCol_; // blend existing color with the SEM texture map
+		// blend existing color with the SEM texture map
+		_diffColl_ += doEnvMapping(vVertPosViewSpace, _normal_, environmentMap); 
 	#endif
 
 
@@ -264,10 +301,6 @@ void main()
 	fMsNormalFai = packNormal(_normal_);
 	fMsDiffuseFai = _diffColl_;
 	fMsSpecularFai = _specularCol_;
-
-	/*#if defined(HARDWARE_SKINNING)
-		gl_FragData[1] = gl_Color;
-	#endif*/
 }
 
 
