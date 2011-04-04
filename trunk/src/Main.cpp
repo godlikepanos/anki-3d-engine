@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include "Input.h"
-#include "Camera.h"
+#include "PerspectiveCamera.h"
 #include "Math.h"
 #include "Renderer.h"
 #include "Ui.h"
@@ -121,7 +121,7 @@ void init()
 	//Ui::init();
 
 	// camera
-	Camera* cam = new Camera(false, NULL);
+	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
 	cam->setAll(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);

@@ -11,6 +11,6 @@ void SpotLight::init(const char* filename)
 	{
 		throw EXCEPTION("Light data is wrong type");
 	}
-	camera = new Camera(true, this);
+	camera = new PerspectiveCamera(true, this);
 	camera->setAll(lightData->getFovX(), lightData->getFovY(), 0.02, lightData->getDistance());
 }

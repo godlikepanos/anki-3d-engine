@@ -4,12 +4,39 @@
 #include "Light.h"
 #include "ParticleEmitter.h"
 #include "SkinNode.h"
+#include "PerspectiveCamera.h"
 
 
 //======================================================================================================================
 // drawCamera                                                                                                          =
 //======================================================================================================================
 void SceneDbgDrawer::drawCamera(const Camera& cam) const
+{
+	switch(cam.getType())
+	{
+		case Camera::CT_PERSPECTIVE:
+		{
+			const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
+			drawPerspectiveCamera(pcam);
+			break;
+		}
+
+		case Camera::CT_ORTHOGRAPHIC:
+			/// @todo
+			ASSERT(false && "todo");
+			break;
+
+		case Camera::CT_NUM:
+			ASSERT(false && "WTF?");
+			break;
+	}
+}
+
+
+//======================================================================================================================
+// drawPerspectiveCamera                                                                                               =
+//======================================================================================================================
+void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
 {
 	dbg.setColor(Vec4(1.0, 0.0, 1.0, 1.0));
 	dbg.setModelMat(Mat4(cam.getWorldTransform()));

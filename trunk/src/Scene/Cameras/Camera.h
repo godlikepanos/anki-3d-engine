@@ -22,7 +22,8 @@ class Camera: public SceneNode
 		enum CameraType
 		{
 			CT_PERSPECTIVE,
-			CT_ORTHOGRAPHIC
+			CT_ORTHOGRAPHIC,
+			CT_NUM
 		};
 
 		enum FrustrumPlanes
@@ -36,24 +37,17 @@ class Camera: public SceneNode
 			FP_NUM
 		};
 
-		Camera(bool compoundFlag, SceneNode* parent): SceneNode(SNT_CAMERA, compoundFlag, parent) {}
-		~Camera() {}
+		Camera(CameraType camType, bool compoundFlag, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
-		float getFovX() const {return fovX;}
-		void setFovX(float fovx);
-
-		float getFovY() const {return fovY;}
-		void setFovY(float fovy);
+		GETTER_R(CameraType, type, getType)
 
 		float getZNear() const {return zNear;}
 		void setZNear(float znear);
 
 		float getZFar() const {return zFar;}
 		void setZFar(float zfar);
-
-		void setAll(float fovx, float fovy, float znear, float zfar);
 
 		const Mat4& getProjectionMatrix() const {return projectionMat;}
 		const Mat4& getViewMatrix() const {return viewMat;}
@@ -91,13 +85,8 @@ class Camera: public SceneNode
 		bool insideFrustum(const Camera& cam) const;
 		/// @}
 
-	public:
-		/// @name Angles
-		/// fovX is the angle in the y axis (imagine the cam positioned in the default OGL pos) Note that fovX > fovY
-		/// (most of the time) and aspectRatio = fovX/fovY
-		/// @{
-		float fovX, fovY;
-		/// @}
+	protected:
+		CameraType type;
 
 		float zNear, zFar;
 
@@ -127,27 +116,22 @@ class Camera: public SceneNode
 		Vec<SpotLight*> spotLights;
 		/// @}
 
-		void calcProjectionMatrix();
+		/// Calculate projectionMat and invProjectionMat
+		virtual void calcProjectionMatrix() = 0;
+		virtual void calcLSpaceFrustumPlanes() = 0;
 		void updateViewMatrix();
-		void calcLSpaceFrustumPlanes();
 		void updateWSpaceFrustumPlanes();
+
+		/// @todo
+		virtual void getExtremePoints(Vec3* pointsArr, uint& pointsNum) const = 0;
 };
 
 
-inline void Camera::setFovX(float fovx_)
-{
-	fovX = fovx_;
-	calcProjectionMatrix();
-	calcLSpaceFrustumPlanes();
-}
 
-
-inline void Camera::setFovY(float fovy_)
-{
-	fovY = fovy_;
-	calcProjectionMatrix();
-	calcLSpaceFrustumPlanes();
-}
+inline Camera::Camera(CameraType camType, bool compoundFlag, SceneNode* parent):
+	SceneNode(SNT_CAMERA, compoundFlag, parent),
+	type(camType)
+{}
 
 
 inline void Camera::setZNear(float znear_)
