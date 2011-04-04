@@ -7,6 +7,7 @@
 #include "RsrcPtr.h"
 #include "Vbo.h"
 #include "Vao.h"
+#include "Camera.h"
 
 
 class PointLight;
@@ -32,13 +33,20 @@ class Smo: public RenderingPass
 
 		/// @name Camera shape stuff
 		/// @{
-		static float camPositions[];
-		Vbo cameraPositionsVbo; ///< A camera shape
-		Vbo cameraVertIndecesVbo; ///< The vertex indeces
-		Vao cameraVao; ///< And another VAO
+
+		struct CameraGeom
+		{
+			Vbo positionsVbo; ///< A camera shape
+			Vbo vertIndecesVbo; ///< The vertex indeces
+			Vao vao; ///< And another VAO
+		};
+
+		boost::array<CameraGeom, Camera::CT_NUM> camGeom;
 		/// @}
 
 		RsrcPtr<ShaderProg> sProg;
+
+		void initCamGeom();
 };
 
 

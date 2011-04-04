@@ -19,7 +19,6 @@ Specular intensity of material: Sm
 
 #include "Texture.h"
 #include "SceneNode.h"
-#include "Camera.h"
 #include "RsrcPtr.h"
 #include "LightRsrc.h"
 

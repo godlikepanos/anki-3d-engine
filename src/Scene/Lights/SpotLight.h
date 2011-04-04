@@ -2,6 +2,7 @@
 #define SPOT_LIGHT_H
 
 #include "Light.h"
+#include "PerspectiveCamera.h"
 
 
 /// Spot light
@@ -26,7 +27,7 @@ class SpotLight: public Light
 		/// @}
 
 	private:
-		Camera* camera;
+		PerspectiveCamera* camera;
 };
 
 
