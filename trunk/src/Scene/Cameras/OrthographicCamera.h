@@ -4,11 +4,11 @@
 #include "Camera.h"
 
 
-/// @todo
+/// Orthographic camera defined by pairs of parallel planes
 class OrthographicCamera: public Camera
 {
 	public:
-		OrthographicCamera(bool compoundFlag, SceneNode* parent): Camera(CT_ORTHOGRAPHIC, compoundFlag, parent) {}
+		OrthographicCamera(bool compoundFlag, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -21,7 +21,7 @@ class OrthographicCamera: public Camera
 		float getTop() const {return top;}
 		void setTop(float f);
 
-		float getBottom() const {return top;}
+		float getBottom() const {return bottom;}
 		void setBottom(float f);
 		/// @}
 
@@ -55,6 +55,13 @@ class OrthographicCamera: public Camera
 		/// Implements Camera::getExtremePoints
 		void getExtremePoints(Vec3* pointsArr, uint& pointsNum) const;
 };
+
+
+inline OrthographicCamera::OrthographicCamera(bool compoundFlag, SceneNode* parent):
+	Camera(CT_ORTHOGRAPHIC, compoundFlag, parent)
+{
+	name = "OrthographicCamera:" + name;
+}
 
 
 inline void OrthographicCamera::setLeft(float f)

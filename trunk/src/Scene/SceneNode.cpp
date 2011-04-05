@@ -23,30 +23,7 @@ SceneNode::SceneNode(SceneNodeType type_, bool compoundFlag_, SceneNode* parent)
 	getLocalTransform().setIdentity();
 	SceneSingleton::getInstance().registerNode(this);
 
-	switch(type)
-	{
-		case SNT_GHOST:
-			name = "GhostNode:" + boost::lexical_cast<std::string>(uid);
-			break;
-		case SNT_LIGHT:
-			name = "Light:" + boost::lexical_cast<std::string>(uid);
-			break;
-		case SNT_CAMERA:
-			name = "Camera:" + boost::lexical_cast<std::string>(uid);
-			break;
-		case SNT_PARTICLE_EMITTER:
-			name = "ParticleEmitter:" + boost::lexical_cast<std::string>(uid);
-			break;
-		case SNT_MODEL:
-			name = "ModelNode:" + boost::lexical_cast<std::string>(uid);
-			break;
-		case SNT_SKIN:
-			name = "SkinNode:" + boost::lexical_cast<std::string>(uid);
-			break;
-		case SNT_RENDERABLE:
-			name = "RenderableNode:" + boost::lexical_cast<std::string>(uid);
-			break;
-	}
+	name = boost::lexical_cast<std::string>(uid);
 
 	++uid;
 }

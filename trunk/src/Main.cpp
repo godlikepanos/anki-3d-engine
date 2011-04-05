@@ -4,6 +4,7 @@
 
 #include "Input.h"
 #include "PerspectiveCamera.h"
+#include "OrthographicCamera.h"
 #include "Math.h"
 #include "Renderer.h"
 #include "Ui.h"
@@ -127,6 +128,9 @@ void init()
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
 	AppSingleton::getInstance().setActiveCam(cam);
+
+	OrthographicCamera* ocam = new OrthographicCamera(false, NULL);
+	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
 
 	// lights
 	point_lights[0] = new PointLight();

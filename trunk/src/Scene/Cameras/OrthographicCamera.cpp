@@ -2,6 +2,22 @@
 
 
 //======================================================================================================================
+// setAll                                                                                                              =
+//======================================================================================================================
+void OrthographicCamera::setAll(float left_, float right_, float top_, float bottom_, float zNear_, float zFar_)
+{
+	left = left_;
+	right = right_;
+	top = top_;
+	bottom = bottom_;
+	zNear = zNear_;
+	zFar = zFar_;
+	calcProjectionMatrix();
+	calcLSpaceFrustumPlanes();
+}
+
+
+//======================================================================================================================
 // calcLSpaceFrustumPlanes                                                                                             =
 //======================================================================================================================
 void OrthographicCamera::calcLSpaceFrustumPlanes()

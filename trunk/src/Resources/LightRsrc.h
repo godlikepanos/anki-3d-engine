@@ -25,8 +25,10 @@ struct LightProps
 	/// @name Spot light properties
 	/// @{
 	float distance; ///< AKA camera's zFar
-	float fovX;
-	float fovY;
+	float fovX; ///< For perspective camera
+	float fovY; ///< For perspective camera
+	float width; ///< For orthographic camera
+	float height; ///< For orthographic camera
 	/// @}
 };
 
@@ -40,6 +42,12 @@ class LightRsrc: private LightProps
 			LT_POINT,
 			LT_SPOT,
 			LT_NUM
+		};
+
+		enum SpotLightCameraType
+		{
+			SLCT_PERSPECTIVE,
+			SLCT_ORTHOGRAPHIC
 		};
 
 		LightRsrc();
@@ -57,6 +65,8 @@ class LightRsrc: private LightProps
 		GETTER_R_BY_VAL(float, distance, getDistance)
 		GETTER_R_BY_VAL(float, fovX, getFovX)
 		GETTER_R_BY_VAL(float, fovY, getFovY)
+		GETTER_R_BY_VAL(float, width, getWidth)
+		GETTER_R_BY_VAL(float, height, getHeight)
 		const Texture& getTexture() const;
 		/// @}
 
@@ -64,6 +74,7 @@ class LightRsrc: private LightProps
 
 	private:
 		LightType type;
+		SpotLightCameraType spotLightCameraType;
 		RsrcPtr<Texture> texture;
 };
 

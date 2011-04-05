@@ -131,7 +131,9 @@ class Camera: public SceneNode
 inline Camera::Camera(CameraType camType, bool compoundFlag, SceneNode* parent):
 	SceneNode(SNT_CAMERA, compoundFlag, parent),
 	type(camType)
-{}
+{
+	name = "Camera:" + name;
+}
 
 
 inline void Camera::setZNear(float znear_)
