@@ -1,7 +1,12 @@
 #include <cstring>
+#include <string>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include "LightRsrc.h"
-#include "Parser.h"
 #include "Texture.h"
+#include "PropertyTree.h"
 
 
 //======================================================================================================================
@@ -14,8 +19,9 @@ LightRsrc::LightRsrc()
 	castsShadowFlag = false;
 	radius = 1.0;
 	distance = 3.0;
-	fovX = M::PI / 4.0;
-	fovY = M::PI / 4.0;
+	fovX = fovY = M::PI / 4.0;
+	width = height = 1.0;
+	spotLightCameraType = SLCT_PERSPECTIVE;
 }
 
 
@@ -24,150 +30,179 @@ LightRsrc::LightRsrc()
 //======================================================================================================================
 void LightRsrc::load(const char* filename)
 {
-	Scanner scanner(filename);
-	const Scanner::Token* token;
-	type = LT_NUM;
-
-	while(true)
+	try
 	{
-		token = &scanner.getNextToken();
+		using namespace boost::property_tree;
+		ptree rpt;
+		read_xml(filename, rpt);
 
+		const ptree& pt = rpt.get_child("light");
+
+		//
 		// type
-		if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "type"))
+		//
+		std::string type_ = pt.get<std::string>("type");
+		if(type_ == "POINT")
 		{
-			token = &scanner.getNextToken();
-			if(token->getCode() == Scanner::TC_IDENTIFIER)
-			{
-				if(!strcmp(token->getValue().getString(), "LT_SPOT"))
-				{
-					type = LT_SPOT;
-				}
-				else if(!strcmp(token->getValue().getString(), "LT_POINT"))
-				{
-					type = LT_POINT;
-				}
-				else
-				{
-					throw PARSER_EXCEPTION_EXPECTED("LT_SPOT or LT_POINT");
-				}
-			}
+			type = LT_POINT;
 		}
-		// diffuseCol
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "diffuseCol"))
+		else if(type_ == "SPOT")
 		{
-			Parser::parseMathVector(scanner, diffuseCol);
+			type = LT_SPOT;
 		}
-		// specularCol
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "specularCol"))
+		else
 		{
-			Parser::parseMathVector(scanner, specularCol);
+			throw EXCEPTION("Incorrect type: " + type_);
 		}
-		// radius
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "radius"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("number");
-			}
 
-			radius = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                     float(token->getValue().getInt());
-		}
-		// castsShadowFlag
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "castsShadow"))
+		//
+		// diffuseCol
+		//
+		boost::optional<const ptree&> diffColTree = pt.get_child_optional("diffuseCol");
+		if(diffColTree)
 		{
-			token = &scanner.getNextToken();
-			if(token->getCode() == Scanner::TC_IDENTIFIER)
+			diffuseCol = PropertyTree::getVec3(diffColTree.get());
+		}
+
+		//
+		// specularCol
+		//
+		boost::optional<const ptree&> specColTree = pt.get_child_optional("specularCol");
+		if(specColTree)
+		{
+			specularCol = PropertyTree::getVec3(specColTree.get());
+		}
+
+		//
+		// castsShadow
+		//
+		boost::optional<bool> castsShadow_ = PropertyTree::getBoolOptional(pt, "castsShadow");
+		if(castsShadow_)
+		{
+			castsShadowFlag = castsShadow_.get();
+		}
+
+		//
+		// radius
+		//
+		boost::optional<float> radius_ = pt.get_optional<float>("radius");
+		if(radius_)
+		{
+			radius = radius_.get();
+
+			if(type == LT_SPOT)
 			{
-				if(!strcmp(token->getValue().getString(), "true"))
-				{
-					castsShadowFlag = true;
-				}
-				else if(!strcmp(token->getValue().getString(), "false"))
-				{
-					castsShadowFlag = false;
-				}
-				else
-				{
-					throw PARSER_EXCEPTION_EXPECTED("true or false");
-				}
+				WARNING("File \"" << filename << "\": No radius for spot lights");
+			}
+		}
+
+		//
+		// distance
+		//
+		boost::optional<float> distance_ = pt.get_optional<float>("distance");
+		if(distance_)
+		{
+			distance = distance_.get();
+
+			if(type == LT_POINT)
+			{
+				WARNING("File \"" << filename << "\": No distance for point lights");
+			}
+		}
+
+		//
+		// fovX
+		//
+		boost::optional<float> fovX_ = pt.get_optional<float>("fovX");
+		if(fovX_)
+		{
+			fovX = fovX_.get();
+
+			if(type == LT_POINT)
+			{
+				WARNING("File \"" << filename << "\": No fovX for point lights");
+			}
+		}
+
+		//
+		// fovY
+		//
+		boost::optional<float> fovY_ = pt.get_optional<float>("fovY");
+		if(fovY_)
+		{
+			fovY = fovY_.get();
+
+			if(type == LT_POINT)
+			{
+				WARNING("File \"" << filename << "\": No fovY for point lights");
+			}
+		}
+
+		//
+		// width
+		//
+		boost::optional<float> width_ = pt.get_optional<float>("width");
+		if(width_)
+		{
+			width = width_.get();
+
+			if(type == LT_POINT)
+			{
+				WARNING("File \"" << filename << "\": No width for point lights");
+			}
+		}
+
+		//
+		// height
+		//
+		boost::optional<float> height_ = pt.get_optional<float>("height");
+		if(height_)
+		{
+			height = height_.get();
+
+			if(type == LT_POINT)
+			{
+				WARNING("File \"" << filename << "\": No height for point lights");
+			}
+		}
+
+		//
+		// texture
+		//
+		boost::optional<std::string> tex = pt.get_optional<std::string>("texture");
+		if(tex)
+		{
+			texture.loadRsrc(tex.get().c_str());
+
+			if(type == LT_POINT)
+			{
+				WARNING("File \"" << filename << "\": No texture for point lights");
+			}
+		}
+
+		//
+		// cameraType
+		//
+		boost::optional<std::string> cam = pt.get_optional<std::string>("cameraType");
+		if(cam)
+		{
+			if(cam.get() == "PERSPECTIVE")
+			{
+				spotLightCameraType = SLCT_PERSPECTIVE;
+			}
+			else if(cam.get() == "ORTHOGRAPHIC")
+			{
+				spotLightCameraType = SLCT_ORTHOGRAPHIC;
 			}
 			else
 			{
-				throw PARSER_EXCEPTION_EXPECTED("true or false");
+				throw EXCEPTION("Incorrect cameraYype: " + cam.get());
 			}
 		}
-		// distance
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "distance"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("number");
-			}
 
-			distance = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                       float(token->getValue().getInt());
-			type = LT_SPOT;
-		}
-		// fovX
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "fovX"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("number");
-			}
-
-			fovX = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                   float(token->getValue().getInt());
-			type = LT_SPOT;
-		}
-		// fovY
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "fovY"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_NUMBER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("number");
-			}
-
-			fovY = (token->getDataType() == Scanner::DT_FLOAT) ? token->getValue().getFloat() :
-			                                                   float(token->getValue().getInt());
-			type = LT_SPOT;
-		}
-		// texture
-		else if(token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), "texture"))
-		{
-			token = &scanner.getNextToken();
-			if(token->getCode() != Scanner::TC_STRING)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("string");
-			}
-
-			texture.loadRsrc(token->getValue().getString());
-			texture->setRepeat(false);
-			texture->setAnisotropy(0);
-			texture->setFiltering(Texture::TFT_LINEAR);
-			type = LT_SPOT;
-		}
-		// end of file
-		else if(token->getCode() == Scanner::TC_EOF)
-		{
-			break;
-		}
-		// other crap
-		else
-		{
-			throw PARSER_EXCEPTION_UNEXPECTED();
-		}
-	} // end while
-
-	
-	// sanity checks
-	if(type == LT_NUM)
+	}
+	catch(std::exception& e)
 	{
-		throw EXCEPTION("File \"" + filename + "\": Forgot to set type");
+		throw EXCEPTION("Material \"" + filename + "\": " + e.what());
 	}
 }

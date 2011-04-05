@@ -81,13 +81,15 @@ class SceneNode: public Object
 		/// This update happens only when the object gets moved. Called only by the Scene
 		void updateWorldTransform();
 
+	protected:
+		std::string name;
+
 	private:
 		Transform localTransform; ///< The transformation in local space
 		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
 
 		SceneNodeType type;
 		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
-		std::string name;
 
 		static uint uid; ///< Unique identifier
 

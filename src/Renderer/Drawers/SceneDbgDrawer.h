@@ -8,6 +8,7 @@ class Light;
 class ParticleEmitter;
 class SkinNode;
 class PerspectiveCamera;
+class OrthographicCamera;
 
 
 /// This is a drawer for some scene nodes that need debug
@@ -33,6 +34,7 @@ class SceneDbgDrawer
 		Dbg& dbg; ///< The debug stage
 
 		virtual void drawPerspectiveCamera(const PerspectiveCamera& cam) const;
+		virtual void drawOrthographicCamera(const OrthographicCamera& cam) const;
 };
 
 

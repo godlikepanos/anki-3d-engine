@@ -8,7 +8,7 @@
 class PerspectiveCamera: public Camera
 {
 	public:
-		PerspectiveCamera(bool compoundFlag, SceneNode* parent): Camera(CT_PERSPECTIVE, compoundFlag, parent) {}
+		PerspectiveCamera(bool compoundFlag, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -41,6 +41,12 @@ class PerspectiveCamera: public Camera
 		void getExtremePoints(Vec3* pointsArr, uint& pointsNum) const;
 };
 
+
+inline PerspectiveCamera::PerspectiveCamera(bool compoundFlag, SceneNode* parent):
+	Camera(CT_PERSPECTIVE, compoundFlag, parent)
+{
+	name = "PerspectiveCamera:" + name;
+}
 
 inline void PerspectiveCamera::setFovX(float fovx_)
 {

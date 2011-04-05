@@ -8,6 +8,7 @@
 #include "Vao.h"
 #include "Vbo.h"
 #include "PerspectiveCamera.h"
+#include "OrthographicCamera.h"
 #include "Mesh.h"
 
 
@@ -102,7 +103,7 @@ void Smo::run(const SpotLight& light)
 	glDisable(GL_CULL_FACE);
 
 	// Calc the camera shape scale matrix
-	Mat4 scaleMat(Mat4::getIdentity());
+	Mat4 localMat(Mat4::getIdentity());
 	const Geom& cg = camGeom[lcam.getType()];
 
 	switch(lcam.getType())
@@ -110,16 +111,35 @@ void Smo::run(const SpotLight& light)
 		case Camera::CT_PERSPECTIVE:
 		{
 			const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(lcam);
-			scaleMat(0, 0) = tan(pcam.getFovX() / 2.0) * pcam.getZFar(); // Scale in x
-			scaleMat(1, 1) = tan(pcam.getFovY() / 2.0) * pcam.getZFar(); // Scale in y
-			scaleMat(2, 2) = pcam.getZFar(); // Scale in z
+			localMat(0, 0) = tan(pcam.getFovX() / 2.0) * pcam.getZFar(); // Scale in x
+			localMat(1, 1) = tan(pcam.getFovY() / 2.0) * pcam.getZFar(); // Scale in y
+			localMat(2, 2) = pcam.getZFar(); // Scale in z
 			break;
 		}
 
 		case Camera::CT_ORTHOGRAPHIC:
-			/// @todo
-			ASSERT(false && "todo");
+		{
+			const OrthographicCamera& ocam = static_cast<const OrthographicCamera&>(lcam);
+			Vec3 tsl;
+			float left = ocam.getLeft();
+			float right = ocam.getRight();
+			float zNear = ocam.getZNear();
+			float zFar = ocam.getZFar();
+			float top = ocam.getTop();
+			float bottom = ocam.getBottom();
+
+			localMat(0, 0) = (right - left) / 2.0;
+			tsl.x() = (right + left) / 2.0;
+
+			localMat(1, 1) = (top - bottom) / 2.0;
+			tsl.y() = (top + bottom) / 2.0;
+
+			localMat(2, 2) = (zFar - zNear) / 2.0;
+			tsl.z() = -(zNear + zFar) / 2.0;
+
+			localMat.setTranslationPart(tsl);
 			break;
+		}
 
 		case Camera::CT_NUM:
 			ASSERT(false && "WTF?");
@@ -130,7 +150,7 @@ void Smo::run(const SpotLight& light)
 	sProg->bind();
 	Mat4 modelMat = Mat4(lcam.getWorldTransform());
 
-	Mat4 trf = r.getViewProjectionMat() * modelMat * scaleMat;
+	Mat4 trf = r.getViewProjectionMat() * modelMat * localMat;
 	sProg->findUniVar("modelViewProjectionMat")->set(&trf);
 
 	//

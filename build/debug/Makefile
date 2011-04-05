@@ -43,9 +43,10 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
  ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Collision/Obb.h ../../src/Scene/Cameras/OrthographicCamera.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../extern/include/GL/glew.h ../../src/Util/Exception.h \
+ ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
@@ -4040,7 +4041,9 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Resources/LightRsrc.h ../../src/Scene/Lights/PointLight.h \
  ../../src/Scene/Lights/Light.h ../../src/Scene/Lights/SpotLight.h \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h
+ ../../src/Scene/Cameras/Camera.h \
+ ../../src/Scene/Cameras/OrthographicCamera.h \
+ ../../src/Resources/Mesh/Mesh.h
 	@echo Compiling ../../src/Renderer/Smo.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Smo.cpp -o Smo.o
 
@@ -4913,7 +4916,8 @@ SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
  ../../src/Resources/Material/Material.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h
+ ../../src/Scene/Cameras/Camera.h \
+ ../../src/Scene/Cameras/OrthographicCamera.h
 	@echo Compiling ../../src/Renderer/Drawers/SceneDbgDrawer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/SceneDbgDrawer.cpp -o SceneDbgDrawer.o
 
