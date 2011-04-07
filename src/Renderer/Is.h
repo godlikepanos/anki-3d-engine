@@ -30,6 +30,18 @@ class Is: private RenderingPass
 		const Texture& getFai() const {return fai;}
 		/// @}
 
+		/// Calculate the view vectors needed for the calculation of the frag pos in view space in shaders
+		/// @param[in] screenSize The width and height of the screen
+		/// @param[in] invProjectionMat The inverted camera projection matrix
+		/// @param[out] viewVectors The output
+		static void calcViewVectors(const boost::array<float, 2>& screenSize, const Mat4& invProjectionMat,
+		                            boost::array<Vec3, 4>& viewVectors);
+
+		/// Calculate the planes needed for the calculation of the frag pos in view space in shaders
+		/// @param[in] cameraRange The zNear, zFar
+		/// @param[out] planes The planes
+		static void calcPlanes(const Vec2& cameraRange, Vec2& planes);
+
 	private:
 		Sm sm; ///< Shadowmapping pass
 		Smo smo; /// Stencil masking optimizations pass
@@ -57,9 +69,6 @@ class Is: private RenderingPass
 		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space. This
 		/// calculates the view vectors and updates the @ref viewVectorsVbo
 		void calcViewVectors();
-
-		/// Calc the planes that we will use inside the shader to calculate the frag pos in view space
-		void calcPlanes();
 
 		/// The ambient pass
 		void ambientPass(const Vec3& color);
