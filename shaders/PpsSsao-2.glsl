@@ -25,9 +25,8 @@ void main()
 
 /// @name Uniforms
 /// @{
-uniform vec2 camerarange;  // = vec2( znear, zfar )
 uniform vec2 planes; ///< for the calculation of frag pos in view space	
-uniform sampler2D msDepthFai;
+uniform sampler2D msDepthFai; ///< for the calculation of frag pos in view space	
 uniform sampler2D noiseMap;
 uniform sampler2D msNormalFai;
 
@@ -49,10 +48,11 @@ in vec3 vPosition; ///< for the calculation of frag pos in view space
 layout(location = 0) out float fColor;
 /// @}
 
-
-vec3 getPosition(in sampler2D depthMap, in vec2 uv)
+/// Get frag position in view space
+/// globals: msDepthFai, planes, vPosition
+vec3 getPosition(in vec2 uv)
 {
-	float depth = texture2D(depthMap, uv).r;
+	float depth = texture2D(msDepthFai, uv).r;
 
 	vec3 fragPosVspace;
 	vec3 vposn = normalize(vPosition);
@@ -62,13 +62,15 @@ vec3 getPosition(in sampler2D depthMap, in vec2 uv)
 }
 
 
-vec3 getNormal(in sampler2D normalMap, in vec2 uv)
+/// globals: msNormalFai
+vec3 getNormal(in vec2 uv)
 {
-	return unpackNormal(texture2D(normalMap, uv).rg);
+	return unpackNormal(texture2D(msNormalFai, uv).rg);
 }
 
 
-vec2 getRandom(in sampler2D noiseMap, in vec2 uv)
+/// globals: noiseMap, screenSize, noiseMapSize
+vec2 getRandom(in vec2 uv)
 {
 	return normalize(texture2D(noiseMap, screenSize * uv / noiseMapSize).xy * 2.0f - 1.0f);
 }
@@ -89,9 +91,9 @@ void main(void)
 	
 	const vec3 kernel[4] = vec3[](vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1));
 
-	vec3 p = getPosition(msDepthFai, vTexCoords);
-	vec3 n = getNormal(msNormalFai, vTexCoords);
-	vec2 rand = getRandom(noiseMap, vTexCoords);
+	vec3 p = getPosition(vTexCoords);
+	vec3 n = getNormal(vTexCoords);
+	vec2 rand = getRandom(vTexCoords);
 
 	float ao = 0.0f;
 	float rad = g_sample_rad / p.z;
