@@ -129,7 +129,7 @@ void Ssao::run()
 	// blurring passes
 	hblurFai.setRepeat(false);
 	fai.setRepeat(false);
-	for(uint i=0; i<blurringIterationsNum; i++)
+	for(uint i = 0; i < blurringIterationsNum; i++)
 	{
 		// hpass
 		hblurFbo.bind();

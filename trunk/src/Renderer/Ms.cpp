@@ -33,7 +33,8 @@ void Ms::init(const RendererInitializer& initializer)
 		normalFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RG16F, GL_RG, GL_FLOAT);
 		diffuseFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT);
 		specularFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA16F, GL_RGBA, GL_FLOAT);
-		depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
+		depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
+		                       GL_UNSIGNED_INT_24_8);
 
 		normalFai.setRepeat(false);
 		diffuseFai.setRepeat(false);

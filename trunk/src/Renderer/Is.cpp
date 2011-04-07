@@ -26,17 +26,15 @@ Is::Is(Renderer& r_):
 {}
 
 
+
 //======================================================================================================================
 // calcViewVectors                                                                                                     =
 //======================================================================================================================
-void Is::calcViewVectors()
+void Is::calcViewVectors(const boost::array<float, 2>& screenSize, const Mat4& invProjectionMat,
+                         boost::array<Vec3, 4>& viewVectors)
 {
-	boost::array<Vec3, 4> viewVectors;
-
-	const Camera& cam = r.getCamera();
-
-	uint w = r.getWidth();
-	uint h = r.getHeight();
+	uint w = screenSize[0];
+	uint h = screenSize[1];
 
 	// From right up and CC wise to right down, Just like we render the quad
 	uint pixels[4][2] = {{w, h}, {0, h}, {0, 0}, {w, 0}};
@@ -57,11 +55,22 @@ void Is::calcViewVectors()
 		vec.y() = (2.0 * (pixels[i][1] - viewport[1])) / viewport[3] - 1.0;
 		vec.z() = 1.0;
 
-		viewVectors[i] = vec.getTransformed(cam.getInvProjectionMatrix());
+		viewVectors[i] = vec.getTransformed(invProjectionMat);
 		// end of optimized code
 	}
+}
 
-	ASSERT(sizeof(viewVectors) == viewVectorsVbo.getSizeInBytes());
+
+//======================================================================================================================
+// calcViewVectors                                                                                                     =
+//======================================================================================================================
+void Is::calcViewVectors()
+{
+	boost::array<Vec3, 4> viewVectors;
+	boost::array<float, 2> screenSize = {{r.getWidth(), r.getHeight()}};
+
+	calcViewVectors(screenSize, r.getCamera().getInvProjectionMatrix(), viewVectors);
+
 	viewVectorsVbo.write(&viewVectors[0]);
 }
 
@@ -69,12 +78,13 @@ void Is::calcViewVectors()
 //======================================================================================================================
 // calcPlanes                                                                                                          =
 //======================================================================================================================
-void Is::calcPlanes()
+void Is::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 {
-	const Camera& cam = r.getCamera();
+	float zNear = cameraRange.x();
+	float zFar = cameraRange.y();
 
-	planes.x() = cam.getZFar() / (cam.getZNear() - cam.getZFar());
-	planes.y() = (cam.getZFar() * cam.getZNear()) / (cam.getZNear() -cam.getZFar());
+	planes.x() = zFar / (zNear - zFar);
+	planes.y() = (zFar * zNear) / (zNear -zFar);
 }
 
 
@@ -332,7 +342,7 @@ void Is::run()
 	glEnable(GL_STENCIL_TEST);
 
 	calcViewVectors();
-	calcPlanes();
+	calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
 
 	// for all lights
 	BOOST_FOREACH(const PointLight* light, r.getCamera().getVisiblePointLights())

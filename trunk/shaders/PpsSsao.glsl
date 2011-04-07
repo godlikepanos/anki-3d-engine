@@ -4,7 +4,7 @@
 
 #pragma anki fragShaderBegins
 
-#pragma anki include "shaders/linear_depth.glsl"
+#pragma anki include "shaders/LinearDepth.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
 uniform vec2 camerarange;  // = vec2( znear, zfar )
@@ -36,7 +36,7 @@ void main(void)
 	// grab a normal for reflecting the sample rays later on
 
 
-	float currentPixelDepth = ReadFromTexAndLinearizeDepth( msDepthFai, vTexCoords, camerarange.x, camerarange.y );
+	float currentPixelDepth = readFromTexAndLinearizeDepth( msDepthFai, vTexCoords, camerarange.x, camerarange.y );
 
 	/*if( currentPixelDepth * camerarange.y > MAX_SSAO_DISTANCE )
 	{
@@ -77,7 +77,7 @@ void main(void)
 		occNorm = unpackNormal(occluderFragment.xy);
 
 		// if depthDifference is negative = occluder is behind current fragment
-		depthDifference = currentPixelDepth - ReadFromTexAndLinearizeDepth( msDepthFai, se.xy, camerarange.x, camerarange.y );;
+		depthDifference = currentPixelDepth - readFromTexAndLinearizeDepth( msDepthFai, se.xy, camerarange.x, camerarange.y );;
 
 		// calculate the difference between the normals as a weight
 
