@@ -97,6 +97,23 @@ void Ssao::init(const RendererInitializer& initializer)
 	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
 	Texture::mipmappingEnabled = mipmaping;*/
+	
+	//
+	// Geom
+	//
+	
+	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
+	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
+
+	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}};
+	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
+
+	viewVectorsVbo.create(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW);
+
+	vao.create();
+	vao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
+	vao.attachArrayBufferVbo(viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
+	vao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 }
 
 
@@ -115,18 +132,38 @@ void Ssao::run()
 
 	Renderer::setViewport(0, 0, width, height);
 
+	//
 	// 1st pass
+	//
+	
+	boost::array<Vec3, 4> viewVectors;
+	boost::array<float, 2> gScreenSize = {{r.getWidth(), r.getHeight()}};
+	Is::calcViewVectors(gScreenSize, cam.getInvProjectionMatrix(), viewVectors);
+	viewVectorsVbo.write(&viewVectors[0]);
+	
+	Vec2 planes;
+	Is::calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
+	
 	ssaoFbo.bind();
 	ssaoSProg->bind();
-	Vec2 camRange(cam.getZNear(), cam.getZFar());
-	ssaoSProg->findUniVar("camerarange")->set(&camRange);
+	
+	ssaoSProg->findUniVar("planes")->set(&planes);
 	ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
 	ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
 	ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
-	r.drawQuad();
+	Vec2 screenSize(width, height);
+	ssaoSProg->findUniVar("screenSize")->set(&screenSize);
+	float noiseMapSize = noiseMap->getWidth();
+	ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
+	
+	vao.bind();
+	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+	vao.unbind();
 
 
-	// blurring passes
+	//
+	// Blurring passes
+	//
 	hblurFai.setRepeat(false);
 	fai.setRepeat(false);
 	for(uint i = 0; i < blurringIterationsNum; i++)

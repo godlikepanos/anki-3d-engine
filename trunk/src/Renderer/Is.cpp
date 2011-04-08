@@ -141,7 +141,8 @@ void Is::init(const RendererInitializer& initializer)
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
 
 	// point light
-	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n",
+	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
+	                                                          "#define POINT_LIGHT_ENABLED\n",
 	                                                          "Point").c_str());
 
 	// spot light no shadow
@@ -151,7 +152,8 @@ void Is::init(const RendererInitializer& initializer)
 
 	// spot light w/t shadow
 	std::string pps = std::string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm.getResolution()) + "\n";
+	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm.getResolution()) +
+	                              "\n";
 	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm.getResolution());
 	if(sm.isPcfEnabled())
 	{

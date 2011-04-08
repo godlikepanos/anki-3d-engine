@@ -4,7 +4,7 @@ layout(location = 0) in vec2 position; ///< the vert coords are {1.0,1.0}, {0.0,
 layout(location = 1) in vec3 viewVector;
 
 out vec2 vTexCoords;
-out vec3 vPosition;
+out vec3 vViewVector;
 
 
 //======================================================================================================================
@@ -12,7 +12,7 @@ out vec3 vPosition;
 //======================================================================================================================
 void main()
 {
-	vPosition = viewVector;
+	vViewVector = viewVector;
 	vTexCoords = position;
 	vec2 vertPosNdc = position * 2.0 - 1.0;
 	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
@@ -29,18 +29,18 @@ uniform vec2 planes; ///< for the calculation of frag pos in view space
 uniform sampler2D msDepthFai; ///< for the calculation of frag pos in view space	
 uniform sampler2D noiseMap;
 uniform sampler2D msNormalFai;
-
-uniform float noiseMapSize;
-uniform float g_sample_rad;
-uniform float g_intensity;
-uniform float g_scale;
-uniform float g_bias;
+uniform float noiseMapSize = 100.0; /// Used in getRandom
+uniform float sampleRad = 0.006;  /// Used in main
+uniform float scale = 0.01; /// Used in doAmbientOcclusion
+uniform float intensity = 0.5; /// Used in doAmbientOcclusion
+uniform float bias = 0.01; /// Used in doAmbientOcclusion
+uniform vec2 screenSize; /// Used in getRandom
 /// @}
 
 /// @name Varyings
 /// @{
 in vec2 vTexCoords;
-in vec3 vPosition; ///< for the calculation of frag pos in view space
+in vec3 vViewVector; ///< for the calculation of frag pos in view space
 /// @}
 
 /// @name Output
@@ -48,14 +48,15 @@ in vec3 vPosition; ///< for the calculation of frag pos in view space
 layout(location = 0) out float fColor;
 /// @}
 
+
 /// Get frag position in view space
-/// globals: msDepthFai, planes, vPosition
+/// globals: msDepthFai, planes, vViewVector
 vec3 getPosition(in vec2 uv)
 {
 	float depth = texture2D(msDepthFai, uv).r;
 
 	vec3 fragPosVspace;
-	vec3 vposn = normalize(vPosition);
+	vec3 vposn = normalize(vViewVector);
 	fragPosVspace.z = -planes.y / (planes.x + depth);
 	fragPosVspace.xy = vposn.xy * (fragPosVspace.z / vposn.z);
 	return fragPosVspace;
@@ -80,8 +81,8 @@ float doAmbientOcclusion(in vec2 tcoord, in vec2 uv, in vec3 p, in vec3 cnorm)
 {
 	vec3 diff = getPosition(tcoord + uv) - p;
 	vec3 v = normalize(diff);
-	float d = length(diff) * g_scale;
-	return max(0.0, dot(cnorm, v) - g_bias) * (1.0 / (1.0 + d)) * g_intensity;
+	float d = length(diff) * scale;
+	return max(0.0, dot(cnorm, v) - bias) * (1.0 / (1.0 + d)) * intensity;
 }
 
 
@@ -96,11 +97,11 @@ void main(void)
 	vec2 rand = getRandom(vTexCoords);
 
 	float ao = 0.0f;
-	float rad = g_sample_rad / p.z;
+	float rad = sampleRad / p.z;
 
 	// SSAO Calculation
-	const int iterations = 4;
-	for(int j = 0; j < iterations; ++j)
+	const int ITERATIONS = 4;
+	for(int j = 0; j < ITERATIONS; ++j)
 	{
 		vec2 coord1 = reflect(kernel[j], rand) * rad;
 		vec2 coord2 = vec2(coord1.x * 0.707 - coord1.y * 0.707, coord1.x * 0.707 + coord1.y * 0.707);
