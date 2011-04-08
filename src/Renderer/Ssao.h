@@ -6,6 +6,8 @@
 #include "Texture.h"
 #include "ShaderProg.h"
 #include "RsrcPtr.h"
+#include "Vbo.h"
+#include "Vao.h"
 
 
 /// Screen space ambient occlusion pass
@@ -42,6 +44,14 @@ class Ssao: private RenderingPass
 		RsrcPtr<ShaderProg> ssaoSProg;
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
+		
+		/// @name For the quad drawing in light passes
+		/// @{
+		Vbo quadPositionsVbo; ///< The VBO for quad positions
+		Vbo viewVectorsVbo; ///< The VBO to pass the @ref viewVectors.
+		Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+		Vao vao; ///< This VAO is used in light passes only
+		/// @}
 
 		void createFbo(Fbo& fbo, Texture& fai);
 };
