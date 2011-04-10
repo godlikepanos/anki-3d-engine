@@ -101,7 +101,7 @@ void MainRenderer::render(Camera& cam_)
 	glDisable(GL_BLEND);
 	sProg->bind();
 	//sProg->findUniVar("rasterImage")->setTexture(ms.getNormalFai(), 0);
-	sProg->findUniVar("rasterImage")->set(pps.getSsao().getFai(), 0);
+	sProg->findUniVar("rasterImage")->set(pps.getSsao().ssaoFai, 0);
 	//sProg->findUniVar("rasterImage")->set(pps.getPostPassFai(), 0);
 	drawQuad();
 }

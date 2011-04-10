@@ -67,7 +67,7 @@ void Ssao::init(const RendererInitializer& initializer)
 	//
 
 	// first pass prog
-	ssaoSProg.loadRsrc("shaders/PpsSsao.glsl");
+	ssaoSProg.loadRsrc("shaders/PpsSsao-2.glsl");
 
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
@@ -86,17 +86,17 @@ void Ssao::init(const RendererInitializer& initializer)
 
 	/// @todo fix this crap
 	// load noise map and disable temporally the texture compression and enable mipmapping
-	/*bool texCompr = Texture::compressionEnabled;
+	bool texCompr = Texture::compressionEnabled;
 	bool mipmaping = Texture::mipmappingEnabled;
 	Texture::compressionEnabled = false;
-	Texture::mipmappingEnabled = true;*/
-	noiseMap.loadRsrc("gfx/noise3.tga");
-	/*noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+	Texture::mipmappingEnabled = true;
+	noiseMap.loadRsrc("engine-rsrc/noise.png");
+	noiseMap->setTexParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
 	noiseMap->setTexParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 	//noise_map->setTexParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
-	Texture::mipmappingEnabled = mipmaping;*/
+	Texture::mipmappingEnabled = mipmaping;
 	
 	//
 	// Geom

@@ -30,7 +30,7 @@ class Ssao: private RenderingPass
 		const Texture& getFai() const {return fai;}
 		/// @}
 
-	private:
+	public: /// @todo make private
 		Texture ssaoFai; ///< It contains the unblurred SSAO factor
 		Texture hblurFai;
 		Texture fai;  ///< AKA vblurFai The final FAI

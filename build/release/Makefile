@@ -4076,19 +4076,19 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
+ ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -4493,21 +4493,21 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Renderer.h \
+ ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
+ ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -6150,7 +6150,11 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Renderer/Hdr.h
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Hdr.h
 	@echo Compiling ../../src/Scripting/Renderer/Pps.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Pps.bpi.cpp -o Pps.bpi.o
 
