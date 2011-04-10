@@ -30,10 +30,10 @@ uniform sampler2D msDepthFai; ///< for the calculation of frag pos in view space
 uniform sampler2D noiseMap;
 uniform sampler2D msNormalFai;
 uniform float noiseMapSize = 100.0; /// Used in getRandom
-uniform float sampleRad = 0.006;  /// Used in main
-uniform float scale = 0.01; /// Used in doAmbientOcclusion
-uniform float intensity = 0.5; /// Used in doAmbientOcclusion
-uniform float bias = 0.01; /// Used in doAmbientOcclusion
+uniform float sampleRad = 0.1;  /// Used in main
+uniform float scale = 1.0; /// Used in doAmbientOcclusion
+uniform float intensity = 1.0; /// Used in doAmbientOcclusion
+uniform float bias = 0.001; /// Used in doAmbientOcclusion
 uniform vec2 screenSize; /// Used in getRandom
 /// @}
 
@@ -87,17 +87,15 @@ float doAmbientOcclusion(in vec2 tcoord, in vec2 uv, in vec3 p, in vec3 cnorm)
 
 
 void main(void)
-{
-	fColor = 1.0f;
-	
-	const vec3 kernel[4] = vec3[](vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1));
+{	
+	const vec2 kernel[4] = vec2[](vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1));
 
 	vec3 p = getPosition(vTexCoords);
 	vec3 n = getNormal(vTexCoords);
 	vec2 rand = getRandom(vTexCoords);
 
 	float ao = 0.0f;
-	float rad = sampleRad / p.z;
+	float rad = sampleRad ;// p.z;
 
 	// SSAO Calculation
 	const int ITERATIONS = 4;
@@ -111,8 +109,12 @@ void main(void)
 		ao += doAmbientOcclusion(vTexCoords, coord1 * 0.75, p, n);
 		ao += doAmbientOcclusion(vTexCoords, coord2, p, n);
 	} 
-	ao /= 4.0;
+	ao /= ITERATIONS * 4.0;
 
-	fColor = ao;
+	fColor = 1 - ao;
+	
+	
+	/*vec2 v = getRandom(vTexCoords);	
+	fColor = (fColor - fColor) + ((v.x + v.y) / 2.0);*/
 }
 
