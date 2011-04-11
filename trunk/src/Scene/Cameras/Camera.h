@@ -7,7 +7,7 @@
 #include "Vec.h"
 #include "Collision.h"
 #include "SceneNode.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 class RenderableNode;

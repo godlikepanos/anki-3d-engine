@@ -4,7 +4,7 @@
 #include <boost/array.hpp>
 #include "SceneNode.h"
 #include "RsrcPtr.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "ModelPatchNode.h"
 #include "Vec.h"
 #include "Obb.h"

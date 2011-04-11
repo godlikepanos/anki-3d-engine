@@ -4,7 +4,7 @@
 #include <string>
 #include <boost/ptr_container/ptr_list.hpp>
 #include "AsyncLoader.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "Image.h"
 #include "MeshData.h"
 

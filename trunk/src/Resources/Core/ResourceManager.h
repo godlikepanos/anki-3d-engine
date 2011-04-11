@@ -6,7 +6,7 @@
 #include <string>
 #include "Singleton.h"
 #include "AsyncLoader.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "RsrcHook.h"
 #include "RsrcAsyncLoadingReqsHandler.h"
 

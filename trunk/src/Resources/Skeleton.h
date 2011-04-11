@@ -2,7 +2,7 @@
 #define SKELETON_H
 
 #include "Math.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "Vec.h"
 
 

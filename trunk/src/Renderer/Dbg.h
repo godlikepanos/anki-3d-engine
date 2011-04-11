@@ -12,7 +12,7 @@
 #include "Vao.h"
 #include "SceneDbgDrawer.h"
 #include "CollisionDbgDrawer.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 /// Debugging stage

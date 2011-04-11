@@ -6,7 +6,8 @@
 WRAP(MainRenderer)
 {
 	class_<MainRenderer, bases<Renderer>, noncopyable>("MainRenderer", no_init)
-		.def("getDbg", &MainRenderer::getDbg, return_value_policy<reference_existing_object>())
+		.def("getDbg", (Dbg& (MainRenderer::*)())(&MainRenderer::getDbg),
+		     return_value_policy<reference_existing_object>())
 	;
 }
 

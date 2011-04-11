@@ -47,11 +47,11 @@ class Renderer
 		GETTER_RW(Ms, ms, getMs)
 		GETTER_RW(Is, is, getIs)
 		GETTER_RW(Pps, pps, getPps)
-		uint getWidth() const {return width;}
-		uint getHeight() const {return height;}
-		float getAspectRatio() const {return aspectRatio;}
-		uint getFramesNum() const {return framesNum;}
-		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat);
+		GETTER_R_BY_VAL(uint, width, getWidth)
+		GETTER_R_BY_VAL(uint, height, getHeight)
+		GETTER_R_BY_VAL(float, aspectRatio, getAspectRatio)
+		GETTER_R_BY_VAL(uint, framesNum, getFramesNum)
+		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat)
 		const Camera& getCamera() const {return *cam;}
 		GETTER_R(SceneDrawer, sceneDrawer, getSceneDrawer)
 		GETTER_RW(SkinsDeformer, skinsDeformer, getSkinsDeformer)

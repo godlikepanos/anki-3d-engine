@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <string>
 #include <boost/noncopyable.hpp>
-#include "Properties.h"
+#include "Accessors.h"
 
 
 class ShaderProg;

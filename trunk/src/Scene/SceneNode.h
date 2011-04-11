@@ -6,7 +6,7 @@
 #include "Math.h"
 #include "Object.h"
 #include "Obb.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 class Material;

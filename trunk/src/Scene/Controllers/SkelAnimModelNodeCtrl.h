@@ -5,7 +5,7 @@
 #include "Controller.h"
 #include "Math.h"
 #include "RsrcPtr.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 class Skeleton;

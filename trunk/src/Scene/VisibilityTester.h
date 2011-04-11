@@ -2,7 +2,7 @@
 #define VISIBILITY_TESTER_H
 
 #include <deque>
-#include "Properties.h"
+#include "Accessors.h"
 #include "Math.h"
 
 

@@ -314,7 +314,7 @@ void Is::spotLightPass(const SpotLight& light)
 	// the shadowmap
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		shdr->findUniVar("shadowMap")->set(sm.shadowMap, 5);
+		shdr->findUniVar("shadowMap")->set(sm.getShadowMap(), 5);
 	}
 
 	// render quad

@@ -4,7 +4,7 @@
 #include <limits>
 #include "Vec.h"
 #include "StdTypes.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 /// Helper class used for shader program loading
