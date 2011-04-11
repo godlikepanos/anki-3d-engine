@@ -4,7 +4,7 @@
 #include "RenderingPass.h"
 #include "Fbo.h"
 #include "Texture.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "VisibilityTester.h"
 
 
@@ -14,15 +14,17 @@ class Camera;
 /// Shadowmapping pass
 class Sm: private RenderingPass
 {
-	PROPERTY_R(bool, enabled, isEnabled) ///< If false then disable
-	PROPERTY_R(bool, pcfEnabled, isPcfEnabled) ///< Enable Percentage Closer Filtering
-	PROPERTY_R(bool, bilinearEnabled, isBilinearEnabled) ///< Shadowmap bilinear filtering. Better quality
-	PROPERTY_R(int, resolution, getResolution) ///< Shadowmap resolution. The higher the better but slower
-
 	public:
-		Texture shadowMap;
-
 		Sm(Renderer& r_): RenderingPass(r_) {}
+
+		/// @name Accessors
+		/// @{
+		GETTER_R(Texture, shadowMap, getShadowMap)
+		GETTER_R_BY_VAL(bool, enabled, isEnabled)
+		GETTER_R_BY_VAL(bool, pcfEnabled, isPcfEnabled)
+		GETTER_R_BY_VAL(bool, bilinearEnabled, isBilinearEnabled)
+		GETTER_R_BY_VAL(int, resolution, getResolution)
+		/// @}
 
 		void init(const RendererInitializer& initializer);
 
@@ -32,6 +34,11 @@ class Sm: private RenderingPass
 
 	private:
 		Fbo fbo; ///< Illumination stage shadowmapping FBO
+		Texture shadowMap;
+		bool enabled; ///< If false then disable
+		bool pcfEnabled; ///< Enable Percentage Closer Filtering
+		bool bilinearEnabled; ///< Shadowmap bilinear filtering. Better quality
+		int resolution; ///< Shadowmap resolution. The higher the better but slower
 };
 
 

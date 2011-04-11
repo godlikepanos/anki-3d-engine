@@ -5,7 +5,7 @@
 #include "SkinPatchNode.h"
 #include "Vec.h"
 #include "Math.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 class Skin;

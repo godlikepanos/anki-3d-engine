@@ -4,7 +4,7 @@
 #include <memory>
 #include "Physics.h"
 #include "Assert.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "Singleton.h"
 #include "VisibilityTester.h"
 

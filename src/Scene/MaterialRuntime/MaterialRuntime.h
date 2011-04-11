@@ -3,7 +3,7 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "MaterialRuntimeUserDefinedVar.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "CharPtrHashMap.h"
 #include "Material.h"
 

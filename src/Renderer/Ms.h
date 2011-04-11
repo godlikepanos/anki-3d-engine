@@ -4,7 +4,7 @@
 #include "RenderingPass.h"
 #include "Texture.h"
 #include "Fbo.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "Ez.h"
 
 
@@ -14,19 +14,27 @@ class RendererInitializer;
 /// Material stage
 class Ms: public RenderingPass
 {
-	PROPERTY_R(Texture, normalFai, getNormalFai) ///< The FAI for normals
-	PROPERTY_R(Texture, diffuseFai, getDiffuseFai) ///< The FAI for diffuse color
-	PROPERTY_R(Texture, specularFai, getSpecularFai) ///< The FAI for specular color and shininess
-	PROPERTY_R(Texture, depthFai, getDepthFai) ///< The FAI for depth
-
 	public:
 		Ms(Renderer& r_);
+
+		/// @name Accessors
+		/// @{
+		GETTER_R(Texture, normalFai, getNormalFai)
+		GETTER_R(Texture, diffuseFai, getDiffuseFai)
+		GETTER_R(Texture, specularFai, getSpecularFai)
+		GETTER_R(Texture, depthFai, getDepthFai)
+		/// @}
+
 		void init(const RendererInitializer& initializer);
 		void run();
 
 	private:
-		Ez ez;
+		Ez ez; /// EarlyZ pass
 		Fbo fbo;
+		Texture normalFai; ///< The FAI for normals
+		Texture diffuseFai; ///< The FAI for diffuse color
+		Texture specularFai; ///< The FAI for specular color and shininess
+		Texture depthFai; ///< The FAI for depth
 };
 
 

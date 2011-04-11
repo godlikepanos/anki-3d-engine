@@ -23,11 +23,11 @@ class Ssao: private RenderingPass
 		void init(const RendererInitializer& initializer);
 		void run();
 
-		/// @name Setters & getters
+		/// @name Accessors
 		/// @{
-		bool isEnabled() const {return enabled;}
-		float getRenderingQuality() const {return renderingQuality;}
-		const Texture& getFai() const {return fai;}
+		GETTER_R_BY_VAL(bool, enabled, isEnabled)
+		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
+		GETTER_R(Texture, fai, getFai)
 		/// @}
 
 	public: /// @todo make private

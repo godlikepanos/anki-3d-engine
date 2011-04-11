@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 
-/// Assertion. Print an error and stop the debugger and then abort
+/// Assertion. Print an error and stop the debugger (if it runs through a debugger) and then abort
 #if defined(NDEBUG)
 	#define ASSERT(x) ((void)0)
 #else

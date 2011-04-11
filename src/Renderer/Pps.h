@@ -17,9 +17,6 @@ class ShaderProg;
 /// This stage is divided into 2 two parts. The first happens before blending stage and the second after.
 class Pps: private RenderingPass
 {
-	PROPERTY_R(Texture, prePassFai, getPrePassFai)
-	PROPERTY_R(Texture, postPassFai, getPostPassFai)
-
 	public:
 		Pps(Renderer& r_);
 		void init(const RendererInitializer& initializer);
@@ -28,8 +25,10 @@ class Pps: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		Hdr& getHdr() {return hdr;}
-		Ssao& getSsao() {return ssao;}
+		GETTER_R(Hdr, hdr, getHdr)
+		GETTER_R(Ssao, ssao, getSsao)
+		GETTER_R(Texture, prePassFai, getPrePassFai)
+		GETTER_R(Texture, postPassFai, getPostPassFai)
 		/// @}
 
 	private:
@@ -43,6 +42,8 @@ class Pps: private RenderingPass
 		Fbo postPassFbo;
 		RsrcPtr<ShaderProg> prePassSProg;
 		RsrcPtr<ShaderProg> postPassSProg;
+		Texture prePassFai; ///< FAI #1
+		Texture postPassFai; ///< FAI #2
 
 		void initPassFbo(Fbo& fbo, Texture& fai);
 

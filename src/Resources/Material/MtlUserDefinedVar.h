@@ -2,7 +2,7 @@
 #define MTL_USER_DEFINED_VAR_H
 
 #include <boost/variant.hpp>
-#include "Properties.h"
+#include "Accessors.h"
 #include "Math.h"
 #include "SProgUniVar.h"
 #include "RsrcPtr.h"

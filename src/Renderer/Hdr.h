@@ -5,7 +5,7 @@
 #include "Fbo.h"
 #include "Texture.h"
 #include "RsrcPtr.h"
-#include "Properties.h"
+#include "Accessors.h"
 
 
 class ShaderProg;
@@ -21,11 +21,12 @@ class Hdr: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		bool isEnabled() const {return enabled;}
 		GETTER_SETTER_BY_VAL(float, exposure, getExposure, setExposure)
 		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
 		GETTER_SETTER_BY_VAL(float, blurringDist, getBlurringDist, setBlurringDist)
-		float getRenderingQuality() const {return renderingQuality;}
+
+		GETTER_R_BY_VAL(bool, enabled, isEnabled);
+		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
 		GETTER_R(Texture, toneFai, getToneFai)
 		GETTER_R(Texture, hblurFai, getHblurFai)
 		GETTER_R(Texture, fai, getFai)

@@ -4,7 +4,7 @@
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
 #include "StdTypes.h"
-#include "Properties.h"
+#include "Accessors.h"
 #include "Exception.h"
 #include "Singleton.h"
 
