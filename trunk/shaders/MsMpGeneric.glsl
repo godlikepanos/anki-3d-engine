@@ -4,7 +4,8 @@
 /// in all the buffers
 /// 
 /// Control defines:
-/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING
+/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING,
+/// STATIC_GEOMETRY
  
 #if defined(ALPHA_TESTING) && !defined(DIFFUSE_MAPPING)
 	#error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
@@ -65,13 +66,25 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 void main()
 {
 	// calculate the vert pos, normal and tangent
-	vNormal = normalMat * normal;
-
-	#if NEEDS_TANGENT
-		vTangent = normalMat * vec3(tangent);
+	#if defined(STATIC_GEOMETRY)
+		vNormal = normal;
+	#else
+		vNormal = normalMat * normal;
 	#endif
 
-	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
+	#if NEEDS_TANGENT
+		#if defined(STATIC_GEOMETRY)
+			vTangent = vec3(tangent);
+		#else
+			vTangent = normalMat * vec3(tangent);
+		#endif
+	#endif
+
+	#if defined(STATIC_GEOMETRY)
+		gl_Position = vec4(position, 1.0);
+	#else
+		gl_Position = modelViewProjectionMat * vec4(position, 1.0);
+	#endif
 
 	// calculate the rest
 
@@ -86,7 +99,11 @@ void main()
 
 
 	#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
-		vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+		#if defined(STATIC_GEOMETRY)
+			vVertPosViewSpace = vec3(viewMat * vec4(position, 1.0));
+		#else
+			vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+		#endif
 	#endif
 }
 
@@ -139,34 +156,31 @@ layout(location = 2) out vec4 fMsSpecularFai;
 
 
 //======================================================================================================================
-// getNormal                                                                                                           =
+// Normal funcs                                                                                                        =
 //======================================================================================================================
-#if defined(NORMAL_MAPPING)
-	/// @param[in] normal The fragment's normal in view space
-	/// @param[in] tangent The tangent
-	/// @param[in] tangent Extra stuff for the tangent
-	/// @param[in] map The map
-	/// @param[in] texCoords Texture coordinates
-	vec3 getNormal(in vec3 normal, in vec3 tangent, in float tangentW, in sampler2D map, in vec2 texCoords)
-	{	
-			vec3 n = normalize(normal);
-			vec3 t = normalize(tangent);
-			vec3 b = cross(n, t) * tangentW;
+/// @param[in] normal The fragment's normal in view space
+/// @param[in] tangent The tangent
+/// @param[in] tangent Extra stuff for the tangent
+/// @param[in] map The map
+/// @param[in] texCoords Texture coordinates
+vec3 getNormalUsingMap(in vec3 normal, in vec3 tangent, in float tangentW, in sampler2D map, in vec2 texCoords)
+{
+		vec3 n = normalize(normal);
+		vec3 t = normalize(tangent);
+		vec3 b = cross(n, t) * tangentW;
 
-			mat3 tbnMat = mat3(t, b, n);
+		mat3 tbnMat = mat3(t, b, n);
 
-			vec3 nAtTangentspace = (texture2D(map, texCoords).rgb - 0.5) * 2.0;
+		vec3 nAtTangentspace = (texture2D(map, texCoords).rgb - 0.5) * 2.0;
 
-			return normalize(tbnMat * nAtTangentspace);
-	}		
-#else
-	/// Just normalize
-	vec3 getNormal(in vec3 normal)
-	{
-		return normalize(normal);
-	}
-#endif
+		return normalize(tbnMat * nAtTangentspace);
+}
 
+/// Just normalize
+vec3 getNormalSimple(in vec3 normal)
+{
+	return normalize(normal);
+}
 
 
 //======================================================================================================================
@@ -190,6 +204,25 @@ vec3 doEnvMapping(in vec3 vertPosViewSpace, in vec3 normal, in sampler2D map)
 
 	vec3 semCol = texture2D(map, semTexCoords).rgb;
 	return semCol;
+}
+
+
+//======================================================================================================================
+// doAlpha                                                                                                             =
+//======================================================================================================================
+/// Using a 4-channel texture and a tolerance discard the fragment if the texture's alpha is less than the tolerance
+/// @param[in] map The diffuse map
+/// @param[in] tolerance Tolerance value
+/// @param[in] texCoords Texture coordinates
+/// @return The RGB channels of the map
+vec3 doAlpha(in sampler2D map, in float tolerance, in vec2 texCoords)
+{
+	vec4 col = texture2D(map, texCoords);
+	if(col.a < tolerance)
+	{
+		discard;
+	}
+	return col.rgb;
 }
 
 
@@ -247,12 +280,7 @@ void main()
 	#if defined(DIFFUSE_MAPPING)
 
 		#if defined(ALPHA_TESTING)
-			vec4 _diffCol4_ = texture2D(diffuseMap, _superTexCoords_);
-			if(_diffCol4_.a < alphaTestingTolerance)
-			{
-				discard;
-			}
-			_diffColl_ = _diffCol4_.rgb;
+			_diffColl_ = doAlpha(diffuseMap, alphaTestingTolerance, _superTexCoords_);
 		#else // no alpha
 			_diffColl_ = texture2D(diffuseMap, _superTexCoords_).rgb;
 		#endif
@@ -268,9 +296,9 @@ void main()
 	// Either use a normap map and make some calculations or use the vertex normal
 	//
 	#if defined(NORMAL_MAPPING)
-		vec3 _normal_ = getNormal(vNormal, vTangent, vTangentW, normalMap, _superTexCoords_);
+		vec3 _normal_ = getNormalUsingMap(vNormal, vTangent, vTangentW, normalMap, _superTexCoords_);
 	#else
-		vec3 _normal_ = getNormal(vNormal);
+		vec3 _normal_ = getNormalSimple(vNormal);
 	#endif
 
 
@@ -302,6 +330,4 @@ void main()
 	fMsDiffuseFai = _diffColl_;
 	fMsSpecularFai = _specularCol_;
 }
-
-
 

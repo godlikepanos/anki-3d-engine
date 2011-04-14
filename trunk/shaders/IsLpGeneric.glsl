@@ -80,7 +80,7 @@ vec3 getFragPosVSpace()
 //======================================================================================================================
 // getAttenuation                                                                                                      =
 //======================================================================================================================
-/// @return The attenuation factor fiven the distance from the frag to the light source
+/// @return The attenuation factor given the distance from the frag to the light source
 float getAttenuation(in float _fragLightDist_)
 {
 	return clamp(1.0 - sqrt(_fragLightDist_) / lightRadius, 0.0, 1.0);
