@@ -85,9 +85,9 @@ void main()
 	#endif
 
 
-	#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
+	//#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
 		vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
-	#endif
+	//#endif
 }
 
 
@@ -136,6 +136,7 @@ in vec3 eye;
 layout(location = 0) out vec2 fMsNormalFai;
 layout(location = 1) out vec3 fMsDiffuseFai;
 layout(location = 2) out vec4 fMsSpecularFai;
+layout(location = 3) out vec3 fMsPosFai;
 
 
 //======================================================================================================================
@@ -312,5 +313,6 @@ void main()
 	fMsNormalFai = packNormal(_normal_);
 	fMsDiffuseFai = _diffColl_;
 	fMsSpecularFai = _specularCol_;
+	fMsPosFai = vVertPosViewSpace;
 }
 

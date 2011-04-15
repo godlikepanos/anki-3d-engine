@@ -10,6 +10,7 @@ uniform sampler2D rasterImage;
 in vec2 vTexCoords;
 layout(location = 0) out vec3 fFragColor;
 
+
 void main()
 {
 	//if( gl_FragCoord.x > 0.5 ) discard;

@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -flto -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Resources -I../../src/Resources/Model -I../../src/Resources/Material -I../../src/Resources/Texture -I../../src/Resources/Mesh -I../../src/Resources/Core -I../../src/Resources/ShaderProg -I../../src/Physics -I../../src/Math -I../../src/Misc -I../../src/Ui -I../../src/Core -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Scene/MaterialRuntime -I../../src/Scene/Cameras -I../../src/Scene/Lights -I../../src/Util -I../../src/Input -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Renderer/Drawers -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Math -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Scene/MaterialRuntime -I../../src/Scripting/Util -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
-OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Scanner.o Util.o Exception.o HighRezTimer.o Input.o SkinsDeformer.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Obb.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
+SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
+OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Scanner.o Util.o Exception.o HighRezTimer.o Input.o SkinsDeformer.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Ray.o Obb.o Plane.o Sphere.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -25,7 +25,7 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../extern/include/SDL/begin_code.h \
  ../../extern/include/SDL/close_code.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -42,8 +42,9 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h ../../src/Scene/Cameras/OrthographicCamera.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Core/Object.h ../../src/Collision/Obb.h \
+ ../../src/Scene/Cameras/OrthographicCamera.h \
  ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../extern/include/GL/glew.h ../../src/Util/Exception.h \
  ../../src/Resources/Texture/Texture.h \
@@ -275,7 +276,7 @@ DummyRsrc.o: ../../src/Resources/DummyRsrc.cpp \
 Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -315,7 +316,7 @@ Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
 SkelAnim.o: ../../src/Resources/SkelAnim.cpp \
  ../../src/Resources/SkelAnim.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -336,7 +337,7 @@ SkelAnim.o: ../../src/Resources/SkelAnim.cpp \
 LightRsrc.o: ../../src/Resources/LightRsrc.cpp \
  ../../src/Resources/LightRsrc.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -370,7 +371,7 @@ Script.o: ../../src/Resources/Script.cpp ../../src/Resources/Script.h \
 Skeleton.o: ../../src/Resources/Skeleton.cpp \
  ../../src/Resources/Skeleton.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -390,7 +391,7 @@ Skeleton.o: ../../src/Resources/Skeleton.cpp \
 ParticleEmitterProps.o: ../../src/Resources/ParticleEmitterProps.cpp \
  ../../src/Resources/ParticleEmitterProps.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -415,7 +416,7 @@ ModelPatch.o: ../../src/Resources/Model/ModelPatch.cpp \
  ../../src/Resources/Model/ModelPatch.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -454,7 +455,7 @@ ModelPatch.o: ../../src/Resources/Model/ModelPatch.cpp \
 Model.o: ../../src/Resources/Model/Model.cpp \
  ../../src/Resources/Model/Model.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -494,7 +495,7 @@ Model.o: ../../src/Resources/Model/Model.cpp \
 
 MtlUserDefinedVar.o: ../../src/Resources/Material/MtlUserDefinedVar.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Util/Properties.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -524,7 +525,7 @@ MtlUserDefinedVar.o: ../../src/Resources/Material/MtlUserDefinedVar.cpp \
 Material.o: ../../src/Resources/Material/Material.cpp \
  ../../src/Resources/Material/Material.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -607,7 +608,7 @@ Texture.o: ../../src/Resources/Texture/Texture.cpp \
  ../../src/Util/Assert.h ../../src/Misc/GlException.h \
  ../../src/Util/Exception.h ../../src/Core/Logger.h \
  ../../src/Util/Singleton.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/Properties.h \
+ ../../src/Math/MathCommon.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -623,7 +624,7 @@ Texture.o: ../../src/Resources/Texture/Texture.cpp \
 
 Mesh.o: ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/Mesh.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -663,7 +664,7 @@ Mesh.o: ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/Mesh.h \
 MeshData.o: ../../src/Resources/Mesh/MeshData.cpp \
  ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -682,7 +683,7 @@ MeshData.o: ../../src/Resources/Mesh/MeshData.cpp \
 
 ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -729,7 +730,7 @@ ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
 RsrcAsyncLoadingReqsHandler.o: \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
  ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
@@ -754,7 +755,7 @@ ShaderProg.o: ../../src/Resources/ShaderProg/ShaderProg.cpp \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
  ../../src/Util/Assert.h ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
@@ -817,7 +818,7 @@ ShaderPrePreprocessor.o: \
  ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp \
  ../../src/Resources/ShaderProg/ShaderPrePreprocessor.h \
  ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Misc/Parser.h \
+ ../../src/Util/Accessors.h ../../src/Misc/Parser.h \
  ../../src/Util/Exception.h ../../src/Util/Scanner.h \
  ../../src/Util/StdTypes.h ../../src/Misc/Parser.inl.h \
  ../../src/Misc/Parser.h ../../src/Util/Util.h ../../src/Util/Vec.h
@@ -827,7 +828,7 @@ ShaderPrePreprocessor.o: \
 SProgUniVar.o: ../../src/Resources/ShaderProg/SProgUniVar.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
- ../../src/Util/Properties.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -980,7 +981,7 @@ Physics.o: ../../src/Physics/Physics.cpp \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1131,7 +1132,7 @@ RigidBody.o: ../../src/Physics/RigidBody.cpp \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1290,7 +1291,7 @@ PhyCharacter.o: ../../src/Physics/PhyCharacter.cpp \
  ../../src/Physics/PhyCharacter.h ../../src/Physics/Physics.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1313,7 +1314,7 @@ PhyCharacter.o: ../../src/Physics/PhyCharacter.cpp \
 skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
  ../../src/Util/Assert.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/Properties.h \
+ ../../src/Math/MathCommon.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1350,10 +1351,11 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -1538,7 +1540,7 @@ map.o: ../../src/Misc/map.cpp
 PropertyTree.o: ../../src/Misc/PropertyTree.cpp \
  ../../src/Misc/PropertyTree.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1555,7 +1557,7 @@ PropertyTree.o: ../../src/Misc/PropertyTree.cpp \
 
 TestHeader.o: ../../src/Misc/TestHeader.cpp ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1621,7 +1623,7 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core/App.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Util/Exception.h ../../src/Util/Singleton.h \
  ../../src/Renderer/RendererInitializer.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
@@ -1661,10 +1663,11 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -1692,7 +1695,7 @@ SkinPatchNode.o: ../../src/Scene/SkinPatchNode.cpp \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -1735,7 +1738,7 @@ PatchNode.o: ../../src/Scene/PatchNode.cpp ../../src/Scene/PatchNode.h \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -1903,7 +1906,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1921,10 +1924,10 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Core/Object.h ../../src/Collision/Obb.h \
- ../../src/Scene/Lights/Light.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h ../../src/Scene/Lights/Light.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
@@ -1959,7 +1962,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
 SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
  ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Math/Vec2.inl.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2005,7 +2008,7 @@ SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
 
 SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2157,7 +2160,7 @@ SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
 ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Math/Vec2.inl.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2331,7 +2334,7 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2372,10 +2375,10 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Scene/SceneNode.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -2426,7 +2429,7 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ParticleEmitter.cpp -o ParticleEmitter.o
 
 VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
- ../../src/Scene/VisibilityTester.h ../../src/Util/Properties.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
@@ -2608,7 +2611,7 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Obb.h
+ ../../src/Collision/Obb.h ../../src/Collision/Ray.h
 	@echo Compiling ../../src/Scene/VisibilityTester.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/VisibilityTester.cpp -o VisibilityTester.o
 
@@ -2618,7 +2621,7 @@ ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2661,7 +2664,7 @@ SkelAnimModelNodeCtrl.o: \
  ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Scene/Controllers/Controller.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2712,10 +2715,10 @@ SkelAnimModelNodeCtrl.o: \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Scene/SceneNode.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Resources/Skin.h
@@ -2854,7 +2857,7 @@ Controller.o: ../../src/Scene/Controllers/Controller.cpp \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2912,7 +2915,7 @@ MaterialRuntimeUserDefinedVar.o: \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Util/Properties.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2943,7 +2946,7 @@ MaterialRuntime.o: ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Util/Properties.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2981,7 +2984,7 @@ OrthographicCamera.o: ../../src/Scene/Cameras/OrthographicCamera.cpp \
  ../../src/Util/Assert.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -2994,8 +2997,8 @@ OrthographicCamera.o: ../../src/Scene/Cameras/OrthographicCamera.cpp \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Core/Object.h ../../src/Collision/Obb.h
 	@echo Compiling ../../src/Scene/Cameras/OrthographicCamera.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/OrthographicCamera.cpp -o OrthographicCamera.o
 
@@ -3004,7 +3007,7 @@ Camera.o: ../../src/Scene/Cameras/Camera.cpp \
  ../../src/Util/Assert.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3017,8 +3020,8 @@ Camera.o: ../../src/Scene/Cameras/Camera.cpp \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Core/Object.h ../../src/Collision/Obb.h
 	@echo Compiling ../../src/Scene/Cameras/Camera.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/Camera.cpp -o Camera.o
 
@@ -3028,7 +3031,7 @@ PerspectiveCamera.o: ../../src/Scene/Cameras/PerspectiveCamera.cpp \
  ../../src/Util/Assert.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3041,8 +3044,8 @@ PerspectiveCamera.o: ../../src/Scene/Cameras/PerspectiveCamera.cpp \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Core/Object.h ../../src/Collision/Obb.h
 	@echo Compiling ../../src/Scene/Cameras/PerspectiveCamera.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/PerspectiveCamera.cpp -o PerspectiveCamera.o
 
@@ -3051,7 +3054,7 @@ SpotLight.o: ../../src/Scene/Lights/SpotLight.cpp \
  ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
  ../../src/Util/Assert.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/Properties.h ../../src/Math/Vec2.inl.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3076,7 +3079,8 @@ SpotLight.o: ../../src/Scene/Lights/SpotLight.cpp \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Ray.h
 	@echo Compiling ../../src/Scene/Lights/SpotLight.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Lights/SpotLight.cpp -o SpotLight.o
 
@@ -3084,7 +3088,7 @@ Light.o: ../../src/Scene/Lights/Light.cpp ../../src/Scene/Lights/Light.h \
  ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
  ../../src/Util/Assert.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/Properties.h ../../src/Math/Vec2.inl.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3145,7 +3149,7 @@ Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
  ../../extern/include/SDL/begin_code.h \
  ../../extern/include/SDL/close_code.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3195,7 +3199,7 @@ Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
 SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
  ../../src/Renderer/SkinsDeformer.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -3241,7 +3245,7 @@ SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
 
 Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3277,10 +3281,11 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -3297,7 +3302,7 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -3331,10 +3336,10 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -3350,7 +3355,7 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
  ../../src/Util/Exception.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -3385,10 +3390,10 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -3578,7 +3583,7 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Util/Properties.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Util/Accessors.h ../../src/Scene/VisibilityTester.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3611,10 +3616,11 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -3799,7 +3805,7 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -3832,10 +3838,11 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Scene/Scene.h \
@@ -3995,7 +4002,7 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -4023,14 +4030,14 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Renderer.h \
- ../../src/Resources/Texture/Texture.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Renderer.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
+ ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -4052,7 +4059,7 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -4086,9 +4093,10 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -4101,7 +4109,7 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Renderer/RenderingPass.h ../../src/Resources/Texture/Texture.h \
  ../../src/Util/StdTypes.h ../../src/Util/Assert.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Util/Properties.h \
+ ../../src/Util/Exception.h ../../src/Util/Accessors.h \
  ../../src/Renderer/Ez.h ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -4135,11 +4143,11 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -4154,7 +4162,7 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Util/Exception.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -4190,10 +4198,11 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -4246,7 +4255,7 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -4279,9 +4288,9 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Pps.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Pps.h \
  ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
  ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
  ../../src/Renderer/Drawers/SceneDbgDrawer.h \
@@ -4473,7 +4482,7 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -4504,16 +4513,19 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h \
- ../../src/Renderer/RendererInitializer.h
+ ../../src/Renderer/RendererInitializer.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h
 	@echo Compiling ../../src/Renderer/Ssao.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ssao.cpp -o Ssao.o
 
@@ -4521,11 +4533,11 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Renderer/RenderingPass.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/Properties.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Util/Exception.h ../../src/Util/Accessors.h \
+ ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -4556,10 +4568,11 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -4742,7 +4755,7 @@ Vao.o: ../../src/Renderer/BufferObjects/Vao.cpp \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -4778,7 +4791,7 @@ SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
  ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -4808,9 +4821,10 @@ SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Scene/Lights/Light.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/LightRsrc.h ../../src/Scene/ParticleEmitter.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Scene/Lights/Light.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Resources/LightRsrc.h \
+ ../../src/Scene/ParticleEmitter.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -4927,7 +4941,7 @@ CollisionDbgDrawer.o: ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp \
  ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -4956,7 +4970,7 @@ CollisionDbgDrawer.o: ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h
 	@echo Compiling ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp -o CollisionDbgDrawer.o
 
@@ -4973,7 +4987,7 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
  ../../extern/include/bullet/LinearMath/btQuadWord.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5009,10 +5023,11 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -5144,7 +5159,7 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
 SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5180,8 +5195,8 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
  ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Scene/SceneNode.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Resources/Texture/Texture.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
@@ -5368,10 +5383,28 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
 	@echo Compiling ../../src/Renderer/Drawers/SceneDrawer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/SceneDrawer.cpp -o SceneDrawer.o
 
+Ray.o: ../../src/Collision/Ray.cpp ../../src/Collision/Ray.h \
+ ../../src/Collision/CollisionShape.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Plane.h
+	@echo Compiling ../../src/Collision/Ray.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Ray.cpp -o Ray.o
+
 Obb.o: ../../src/Collision/Obb.cpp ../../src/Collision/Obb.h \
  ../../src/Collision/CollisionShape.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5389,7 +5422,7 @@ Obb.o: ../../src/Collision/Obb.cpp ../../src/Collision/Obb.h \
 Plane.o: ../../src/Collision/Plane.cpp ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5406,7 +5439,7 @@ Plane.o: ../../src/Collision/Plane.cpp ../../src/Collision/Plane.h \
 Sphere.o: ../../src/Collision/Sphere.cpp ../../src/Collision/Sphere.h \
  ../../src/Collision/CollisionShape.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5498,7 +5531,7 @@ BoostPythonInterfaces.o: ../../src/Scripting/BoostPythonInterfaces.cpp \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Util/Exception.h \
+ ../../src/Util/Accessors.h ../../src/Util/Exception.h \
  ../../src/Util/Singleton.h
 	@echo Compiling ../../src/Scripting/BoostPythonInterfaces.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/BoostPythonInterfaces.cpp -o BoostPythonInterfaces.o
@@ -5506,7 +5539,7 @@ BoostPythonInterfaces.o: ../../src/Scripting/BoostPythonInterfaces.cpp \
 Vec4.bpi.o: ../../src/Scripting/Math/Vec4.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5523,7 +5556,7 @@ Vec4.bpi.o: ../../src/Scripting/Math/Vec4.bpi.cpp \
 Vec3.bpi.o: ../../src/Scripting/Math/Vec3.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5540,7 +5573,7 @@ Vec3.bpi.o: ../../src/Scripting/Math/Vec3.bpi.cpp \
 Vec2.bpi.o: ../../src/Scripting/Math/Vec2.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5598,7 +5631,7 @@ App.bpi.o: ../../src/Scripting/Core/App.bpi.cpp \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Util/Exception.h \
+ ../../src/Util/Accessors.h ../../src/Util/Exception.h \
  ../../src/Util/Singleton.h
 	@echo Compiling ../../src/Scripting/Core/App.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/App.bpi.cpp -o App.bpi.o
@@ -5609,7 +5642,7 @@ Camera.bpi.o: ../../src/Scripting/Scene/Camera.bpi.cpp \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5622,8 +5655,8 @@ Camera.bpi.o: ../../src/Scripting/Scene/Camera.bpi.cpp \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Core/Object.h ../../src/Collision/Obb.h
 	@echo Compiling ../../src/Scripting/Scene/Camera.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/Camera.bpi.cpp -o Camera.bpi.o
 
@@ -5634,7 +5667,7 @@ ModelPatchNode.bpi.o: ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -5675,7 +5708,7 @@ ModelNode.bpi.o: ../../src/Scripting/Scene/ModelNode.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Scene/ModelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Util/Properties.h ../../src/Math/Vec2.inl.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
  ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5720,7 +5753,7 @@ ModelNode.bpi.o: ../../src/Scripting/Scene/ModelNode.bpi.cpp \
 SceneNode.bpi.o: ../../src/Scripting/Scene/SceneNode.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5743,7 +5776,7 @@ PatchNode.bpi.o: ../../src/Scripting/Scene/PatchNode.bpi.cpp \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -5912,7 +5945,7 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
  ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -5930,10 +5963,10 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
  ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SceneNode.h \
- ../../src/Core/Object.h ../../src/Collision/Obb.h \
- ../../src/Scene/ModelNode.h ../../src/Scene/SceneNode.h \
- ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h ../../src/Scene/ModelNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
@@ -5968,7 +6001,7 @@ MaterialRuntime.bpi.o: \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Util/Properties.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -6004,7 +6037,7 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/MainRenderer.h \
  ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -6040,10 +6073,11 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -6060,7 +6094,7 @@ Dbg.bpi.o: ../../src/Scripting/Renderer/Dbg.bpi.cpp \
  ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Properties.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -6097,7 +6131,7 @@ Hdr.bpi.o: ../../src/Scripting/Renderer/Hdr.bpi.cpp \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -6127,7 +6161,7 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Util/Properties.h \
+ ../../src/Core/AsyncLoader.h ../../src/Util/Accessors.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
@@ -6161,7 +6195,7 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
 Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Properties.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -6197,10 +6231,11 @@ Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
  ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Collision/Ray.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
