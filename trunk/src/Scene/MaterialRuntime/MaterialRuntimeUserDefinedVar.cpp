@@ -2,37 +2,12 @@
 
 
 //======================================================================================================================
-// Visitor functors                                                                                                    =
+// ConstructVisitor::operator() <RsrcPtr<Texture> >                                                                    =
 //======================================================================================================================
-
-void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()(float x) const
-{
-	udvr.data = x;
-}
-
-void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()(const Vec2& x) const
-{
-	udvr.data = x;
-}
-
-void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()(const Vec3& x) const
-{
-	udvr.data = x;
-}
-
-void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()(const Vec4& x) const
-{
-	udvr.data = x;
-}
-
-void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()(const RsrcPtr<Texture>& x) const
+template <>
+void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()<RsrcPtr<Texture> >(const RsrcPtr<Texture>& x) const
 {
 	udvr.data = &x;
-}
-
-void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()(MtlUserDefinedVar::Fai x) const
-{
-	udvr.data = x;
 }
 
 

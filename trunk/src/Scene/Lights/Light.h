@@ -1,19 +1,3 @@
-/*
-LIGHTING MODEL
-
-Final intensity:                If = Ia + Id + Is
-Ambient intensity:              Ia = Al * Am
-Ambient intensity of light:     Al
-Ambient intensity of material:  Am
-Defuse intensity:               Id = Dl * Dm * LambertTerm
-Defuse intensity of light:      Dl
-Defuse intensity of material:   Dm
-LambertTerm:                    max(Normal dot Light, 0.0)
-Specular intensity:             Is = Sm x Sl x pow(max(R dot E, 0.0), f)
-Specular intensity of light:    Sl
-Specular intensity of material: Sm
-*/
-
 #ifndef LIGHT_H
 #define LIGHT_H
 
@@ -24,6 +8,21 @@ Specular intensity of material: Sm
 
 
 /// Light scene node. It can be spot or point
+////
+/// Explaining the lighting model:
+/// @code
+/// Final intensity:                If = Ia + Id + Is
+/// Ambient intensity:              Ia = Al * Am
+/// Ambient intensity of light:     Al
+/// Ambient intensity of material:  Am
+/// Defuse intensity:               Id = Dl * Dm * LambertTerm
+/// Defuse intensity of light:      Dl
+/// Defuse intensity of material:   Dm
+/// LambertTerm:                    max(Normal dot Light, 0.0)
+/// Specular intensity:             Is = Sm * Sl * pow(max(R dot E, 0.0), f)
+/// Specular intensity of light:    Sl
+/// Specular intensity of material: Sm
+/// @endcode
 class Light: public SceneNode
 {
 	public:

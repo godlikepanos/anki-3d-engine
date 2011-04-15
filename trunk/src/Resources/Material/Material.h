@@ -145,6 +145,9 @@ class Material: private MaterialProps
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
 		GETTER_R(boost::ptr_vector<MtlUserDefinedVar>, userDefinedVars, getUserDefinedVars)
+
+		/// Access the base class just for copying in other classes
+		const MaterialProps& accessMaterialPropsBaseClass() const {return *this;}
 		/// @}
 
 		/// @return Return true if the shader has references to texture coordinates

@@ -136,7 +136,15 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	   mtlr.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT) ||
 	   mtlr.getStdUniVar(Material::SUV_NORMAL_MAT))
 	{
-		modelViewMat = Mat4::combineTransformations(viewMat, modelMat);
+		// Optimization
+		if(modelMat == Mat4::getIdentity())
+		{
+			modelViewMat = viewMat;
+		}
+		else
+		{
+			modelViewMat = Mat4::combineTransformations(viewMat, modelMat);
+		}
 	}
 
 	// set matrices
