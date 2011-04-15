@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "RendererInitializer.h"
+#include "PerspectiveCamera.h"
 
 
 //======================================================================================================================
@@ -137,25 +138,53 @@ void Ssao::run()
 	//
 	
 	boost::array<Vec3, 4> viewVectors;
-	boost::array<float, 2> gScreenSize = {{r.getWidth(), r.getHeight()}};
+	boost::array<float, 2> gScreenSize = {{width, height}};
 	Is::calcViewVectors(gScreenSize, cam.getInvProjectionMatrix(), viewVectors);
 	viewVectorsVbo.write(&viewVectors[0]);
 	
-	Vec2 planes;
-	Is::calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
+	/*BOOST_FOREACH(Vec3 v, viewVectors)
+	{
+		std::cout << v << std::endl;
+	}
+	std::cout << "----------------" << std::endl;*/
 	
+	//std::cout << planes << std::endl;
+
 	ssaoFbo.bind();
 	ssaoSProg->bind();
 	
-	ssaoSProg->findUniVar("planes")->set(&planes);
-	ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
-	ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
-	ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
+	Vec2 planes;
+	Is::calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
+	if(ssaoSProg->uniVarExists("planes"))
+		ssaoSProg->findUniVar("planes")->set(&planes);
+
+	Vec2 limitsOfNearPlane;
+	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
+	limitsOfNearPlane.y() = cam.getZNear() * tan(0.5 * pcam.getFovY());
+	limitsOfNearPlane.x() = limitsOfNearPlane.y() * (pcam.getFovX() / pcam.getFovY());
+	if(ssaoSProg->uniVarExists("limitsOfNearPlane"))
+		ssaoSProg->findUniVar("limitsOfNearPlane")->set(&limitsOfNearPlane);
+
+	if(ssaoSProg->uniVarExists("msDepthFai"))
+		ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
+
+	if(ssaoSProg->uniVarExists("noiseMap"))
+		ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
+
+	if(ssaoSProg->uniVarExists("msNormalFai"))
+		ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
+
 	Vec2 screenSize(width, height);
-	ssaoSProg->findUniVar("screenSize")->set(&screenSize);
+	if(ssaoSProg->uniVarExists("screenSize"))
+		ssaoSProg->findUniVar("screenSize")->set(&screenSize);
+
 	float noiseMapSize = noiseMap->getWidth();
-	ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
-	
+	if(ssaoSProg->uniVarExists("noiseMapSize"))
+		ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
+
+	if(ssaoSProg->uniVarExists("msPosFai"))
+		ssaoSProg->findUniVar("msPosFai")->set(r.getMs().posFai, 3);
+
 	vao.bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
 	vao.unbind();

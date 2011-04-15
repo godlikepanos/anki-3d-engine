@@ -57,7 +57,7 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode, const char* prep
 		infoLog.resize(infoLen + 1);
 		glGetShaderInfoLog(glId, infoLen, &charsWritten, &infoLog[0]);
 		
-		const char* shaderType;
+		const char* shaderType = "*dummy*";
 		switch(type)
 		{
 			case GL_VERTEX_SHADER:

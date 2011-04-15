@@ -123,7 +123,7 @@ void init()
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
-	cam->setAll(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	cam->setAll(toRad(100.0), toRad(100.0) / MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -417,6 +417,20 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
+	/*float depth = 0.5;
+
+	Vec3 vViewVector(1.0264, 0.57735, -1);
+	Vec2 planes(-1.00251, -0.501253);
+
+	Vec3 fragPosVspace;
+	Vec3 vposn = vViewVector.getNormalized();
+	fragPosVspace.z() = -planes.y() / (planes.x() + depth);
+	fragPosVspace.x() = vposn.x() * (fragPosVspace.z() / vposn.z());
+	fragPosVspace.y() = vposn.y() * (fragPosVspace.z() / vposn.z());
+	std::cout << fragPosVspace << std::endl;
+
+	return 0;*/
+
 	try
 	{
 		AppSingleton::getInstance().init(argc, argv);
