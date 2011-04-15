@@ -10,12 +10,9 @@
 MaterialRuntime::MaterialRuntime(const Material& mtl_):
 	mtl(mtl_)
 {
-	castsShadowFlag = mtl.castsShadow();
-	renderInBlendingStageFlag = mtl.renderInBlendingStage();
-	blendingSfactor = mtl.getBlendingSfactor();
-	blendingDfactor = mtl.getBlendingDfactor();
-	depthTesting = mtl.isDepthTestingEnabled();
-	wireframe = mtl.isWireframeEnabled();
+	MaterialProps& me = *this;
+	const MaterialProps& he = mtl.accessMaterialPropsBaseClass();
+	me = he;
 
 	BOOST_FOREACH(const MtlUserDefinedVar& udv, mtl.getUserDefinedVars())
 	{

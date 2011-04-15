@@ -4,8 +4,7 @@
 /// in all the buffers
 /// 
 /// Control defines:
-/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING,
-/// STATIC_GEOMETRY
+/// DIFFUSE_MAPPING, NORMAL_MAPPING, SPECULAR_MAPPING, PARALLAX_MAPPING, ENVIRONMENT_MAPPING, ALPHA_TESTING
  
 #if defined(ALPHA_TESTING) && !defined(DIFFUSE_MAPPING)
 	#error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
@@ -66,25 +65,13 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 void main()
 {
 	// calculate the vert pos, normal and tangent
-	#if defined(STATIC_GEOMETRY)
-		vNormal = normal;
-	#else
-		vNormal = normalMat * normal;
-	#endif
+	vNormal = normalMat * normal;
 
 	#if NEEDS_TANGENT
-		#if defined(STATIC_GEOMETRY)
-			vTangent = vec3(tangent);
-		#else
-			vTangent = normalMat * vec3(tangent);
-		#endif
+		vTangent = normalMat * vec3(tangent);
 	#endif
 
-	#if defined(STATIC_GEOMETRY)
-		gl_Position = vec4(position, 1.0);
-	#else
-		gl_Position = modelViewProjectionMat * vec4(position, 1.0);
-	#endif
+	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 
 	// calculate the rest
 
@@ -99,11 +86,7 @@ void main()
 
 
 	#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
-		#if defined(STATIC_GEOMETRY)
-			vVertPosViewSpace = vec3(viewMat * vec4(position, 1.0));
-		#else
-			vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
-		#endif
+		vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
 	#endif
 }
 

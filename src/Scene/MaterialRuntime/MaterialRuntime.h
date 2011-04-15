@@ -13,8 +13,10 @@
 class MaterialRuntime: private MaterialProps
 {
 	public:
+		/// A type
 		typedef boost::ptr_vector<MaterialRuntimeUserDefinedVar> MaterialRuntimeUserDefinedVarContainer;
 
+		/// The one and only contructor
 		MaterialRuntime(const Material& mtl);
 
 		/// @name Accessors
@@ -31,6 +33,7 @@ class MaterialRuntime: private MaterialProps
 		/// @see getUserDefinedVarByName
 		const MaterialRuntimeUserDefinedVar& getUserDefinedVarByName(const char* name) const;
 
+		/// Get the resource
 		const Material& getMaterial() const {return mtl;}
 
 		/// Find var and set its value

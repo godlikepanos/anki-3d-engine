@@ -47,12 +47,9 @@ class MaterialRuntimeUserDefinedVar
 
 				ConstructVisitor(MaterialRuntimeUserDefinedVar& udvr_): udvr(udvr_) {}
 
-				void operator()(float x) const;
-				void operator()(const Vec2& x) const;
-				void operator()(const Vec3& x) const;
-				void operator()(const Vec4& x) const;
-				void operator()(const RsrcPtr<Texture>& x) const;
-				void operator()(MtlUserDefinedVar::Fai x) const;
+				/// Template method that applies to all DataVariant values except texture resource
+				template<typename Type>
+				void operator()(const Type& x) const {udvr.data = x;}
 		};
 
 		DataVariant data;
