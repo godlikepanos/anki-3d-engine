@@ -29,7 +29,7 @@ void Sm::init(const RendererInitializer& initializer)
 		fbo.bind();
 
 		// texture
-		shadowMap.createEmpty2D(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
+		Renderer::createFai(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, shadowMap);
 		if(bilinearEnabled)
 		{
 			shadowMap.setFiltering(Texture::TFT_LINEAR);

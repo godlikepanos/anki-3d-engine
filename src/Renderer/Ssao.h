@@ -30,7 +30,7 @@ class Ssao: private RenderingPass
 		GETTER_R(Texture, fai, getFai)
 		/// @}
 
-	public: /// @todo make private
+	private:
 		Texture ssaoFai; ///< It contains the unblurred SSAO factor
 		Texture hblurFai;
 		Texture fai;  ///< AKA vblurFai The final FAI
@@ -44,14 +44,6 @@ class Ssao: private RenderingPass
 		RsrcPtr<ShaderProg> ssaoSProg;
 		RsrcPtr<ShaderProg> hblurSProg;
 		RsrcPtr<ShaderProg> vblurSProg;
-		
-		/// @name For the quad drawing in light passes
-		/// @{
-		Vbo quadPositionsVbo; ///< The VBO for quad positions
-		Vbo viewVectorsVbo; ///< The VBO to pass the @ref viewVectors.
-		Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
-		Vao vao; ///< This VAO is used in light passes only
-		/// @}
 
 		void createFbo(Fbo& fbo, Texture& fai);
 };

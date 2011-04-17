@@ -29,6 +29,21 @@ class Texture
 			TFT_TRILINEAR
 		};
 
+		/// Texture initializer struct
+		struct Initializer
+		{
+			float width;
+			float height;
+			int internalFormat;
+			int format;
+			uint type;
+			const void* data;
+			bool mipmapping;
+			TextureFilteringType filteringType;
+			bool repeat;
+			int anisotropyLevel;
+		};
+
 		Texture();
 		~Texture();
 		uint getGlId() const;
@@ -43,13 +58,8 @@ class Texture
 		/// @exception Exception
 		void load(const Image& img);
 
-		/// Create empty texture.
-		/// Used by the Renderer
-		void createEmpty2D(float width, float height, int internalFormat, int format, uint type_);
-
-		/// Create empty texture with MSAA.
-		/// Used by the Renderer
-		void createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping);
+		/// Create a texture
+		void create(const Initializer& init);
 		/// @}
 
 		void bind(uint texUnit = 0) const;

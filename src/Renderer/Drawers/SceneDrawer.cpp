@@ -47,7 +47,7 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const Vec4& x) const
 void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>* x) const
 {
 	const RsrcPtr<Texture>& texPtr = *x;
-	texPtr->setRepeat(true);
+	//texPtr->setRepeat(true);
 	udvr.getUniVar().set(*texPtr, texUnit);
 	++texUnit;
 }

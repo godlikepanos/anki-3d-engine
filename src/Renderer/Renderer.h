@@ -80,6 +80,9 @@ class Renderer
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 		void drawQuad();
 
+		/// Create FAI texture
+		static void createFai(uint width, uint height, int internalFormat, int format, int type, Texture& fai);
+
 	//==================================================================================================================
 	// Protected                                                                                                       =
 	//==================================================================================================================

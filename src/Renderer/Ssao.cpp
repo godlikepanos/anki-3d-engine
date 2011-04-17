@@ -24,10 +24,7 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai)
 		fbo.setNumOfColorAttachements(1);
 
 		// create the texes
-		fai.createEmpty2D(width, height, GL_RED, GL_RED, GL_FLOAT);
-		fai.setRepeat(false);
-		fai.setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		fai.setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
 
 		// attach
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
@@ -68,7 +65,7 @@ void Ssao::init(const RendererInitializer& initializer)
 	//
 
 	// first pass prog
-	ssaoSProg.loadRsrc("shaders/PpsSsao-2.glsl");
+	ssaoSProg.loadRsrc("shaders/PpsSsao.glsl");
 
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
@@ -98,23 +95,6 @@ void Ssao::init(const RendererInitializer& initializer)
 	//noise_map->setTexParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	Texture::compressionEnabled = texCompr;
 	Texture::mipmappingEnabled = mipmaping;
-	
-	//
-	// Geom
-	//
-	
-	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
-
-	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}};
-	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
-
-	viewVectorsVbo.create(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW);
-
-	vao.create();
-	vao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
-	vao.attachArrayBufferVbo(viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
-	vao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 }
 
 
@@ -137,57 +117,44 @@ void Ssao::run()
 	// 1st pass
 	//
 	
-	boost::array<Vec3, 4> viewVectors;
-	boost::array<float, 2> gScreenSize = {{width, height}};
-	Is::calcViewVectors(gScreenSize, cam.getInvProjectionMatrix(), viewVectors);
-	viewVectorsVbo.write(&viewVectors[0]);
-	
-	/*BOOST_FOREACH(Vec3 v, viewVectors)
-	{
-		std::cout << v << std::endl;
-	}
-	std::cout << "----------------" << std::endl;*/
-	
-	//std::cout << planes << std::endl;
-
 	ssaoFbo.bind();
 	ssaoSProg->bind();
 	
+	// planes
 	Vec2 planes;
 	Is::calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
-	if(ssaoSProg->uniVarExists("planes"))
-		ssaoSProg->findUniVar("planes")->set(&planes);
+	ssaoSProg->findUniVar("planes")->set(&planes);
 
+	// limitsOfNearPlane
 	Vec2 limitsOfNearPlane;
+	ASSERT(cam.getType() == Camera::CT_PERSPECTIVE);
 	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
 	limitsOfNearPlane.y() = cam.getZNear() * tan(0.5 * pcam.getFovY());
 	limitsOfNearPlane.x() = limitsOfNearPlane.y() * (pcam.getFovX() / pcam.getFovY());
-	if(ssaoSProg->uniVarExists("limitsOfNearPlane"))
-		ssaoSProg->findUniVar("limitsOfNearPlane")->set(&limitsOfNearPlane);
+	ssaoSProg->findUniVar("limitsOfNearPlane")->set(&limitsOfNearPlane);
 
-	if(ssaoSProg->uniVarExists("msDepthFai"))
-		ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
+	// zNear
+	float zNear = cam.getZNear();
+	ssaoSProg->findUniVar("zNear")->set(&zNear);
 
-	if(ssaoSProg->uniVarExists("noiseMap"))
-		ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
+	// msDepthFai
+	ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
 
-	if(ssaoSProg->uniVarExists("msNormalFai"))
-		ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
+	// noiseMap
+	ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
 
-	Vec2 screenSize(width, height);
-	if(ssaoSProg->uniVarExists("screenSize"))
-		ssaoSProg->findUniVar("screenSize")->set(&screenSize);
-
+	// noiseMapSize
 	float noiseMapSize = noiseMap->getWidth();
-	if(ssaoSProg->uniVarExists("noiseMapSize"))
-		ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
+	ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
 
-	if(ssaoSProg->uniVarExists("msPosFai"))
-		ssaoSProg->findUniVar("msPosFai")->set(r.getMs().posFai, 3);
+	// screenSize
+	Vec2 screenSize(width, height);
+	ssaoSProg->findUniVar("screenSize")->set(&screenSize);
 
-	vao.bind();
-	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
-	vao.unbind();
+	// msNormalFai
+	ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
+
+	r.drawQuad();
 
 
 	//

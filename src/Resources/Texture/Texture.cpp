@@ -14,7 +14,7 @@
 //======================================================================================================================
 int Texture::textureUnitsNum = -1;
 bool Texture::mipmappingEnabled = true;
-bool Texture::compressionEnabled = false;
+bool Texture::compressionEnabled = true;
 int Texture::anisotropyLevel = 8;
 
 
@@ -60,111 +60,94 @@ void Texture::load(const char* filename)
 //======================================================================================================================
 void Texture::load(const Image& img)
 {
-	target = GL_TEXTURE_2D;
-	if(isLoaded())
-	{
-		throw EXCEPTION("Texture already loaded");
-	}
+	Initializer init;
+	init.width = img.getWidth();
+	init.height = img.getHeight();
 
-	// bind the texture
-	glGenTextures(1, &glId);
-	bind(LAST_TEX_UNIT);
-	if(mipmappingEnabled)
-	{
-		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	}
-	else
-	{
-		setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	}
-
-	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(anisotropyLevel));
-
-	// leave to GL_REPEAT. There is not real performance hit
-	setRepeat(true);
-
-	// chose formats
-	int internalFormat;
-	int format;
-	int type;
 	switch(img.getColorType())
 	{
 		case Image::CT_R:
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
-			format = GL_RED;
-			type = GL_UNSIGNED_BYTE;
+			init.internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
+			init.format = GL_RED;
+			init.type = GL_UNSIGNED_BYTE;
 			break;
 
 		case Image::CT_RGB:
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
-			format = GL_RGB;
-			type = GL_UNSIGNED_BYTE;
+			init.internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+			init.format = GL_RGB;
+			init.type = GL_UNSIGNED_BYTE;
 			break;
 
 		case Image::CT_RGBA:
-			internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
-			format = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
+			init.internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
+			init.format = GL_RGBA;
+			init.type = GL_UNSIGNED_BYTE;
 			break;
 
 		default:
 			throw EXCEPTION("See file");
 	}
 
-	glTexImage2D(target, 0, internalFormat, img.getWidth(), img.getHeight(), 0, format, type, &img.getData()[0]);
-	if(mipmappingEnabled)
-	{
-		glGenerateMipmap(target);
-	}
+	init.data = &img.getData()[0];
+	init.mipmapping = mipmappingEnabled;
+	init.filteringType = TFT_TRILINEAR;
+	init.repeat = true;
+	init.anisotropyLevel = anisotropyLevel;
 
-	ON_GL_FAIL_THROW_EXCEPTION();
+	create(init);
 }
 
 
 //======================================================================================================================
-// createEmpty2D                                                                                                       =
+// create                                                                                                              =
 //======================================================================================================================
-void Texture::createEmpty2D(float width_, float height_, int internalFormat, int format_, uint type_)
+void Texture::create(const Initializer& init)
 {
+	//
+	// Sanity checks
+	//
+	if(init.internalFormat <= 4)
+	{
+		throw EXCEPTION("Deprecated internal format");
+	}
+
+	if(isLoaded())
+	{
+		throw EXCEPTION("Already loaded");
+	}
+
+	//
+	// Create
+	//
+	glGenTextures(1, &glId);
+	bind(LAST_TEX_UNIT);
 	target = GL_TEXTURE_2D;
-	ASSERT(internalFormat <= 0 || internalFormat > 4); // deprecated internal format
-	ASSERT(!isLoaded());
 
-	// GL stuff
-	glGenTextures(1, &glId);
-	bind(LAST_TEX_UNIT);
+	glTexImage2D(target, 0, init.internalFormat, init.width, init.height, 0, init.format, init.type, init.data);
 
-	setTexParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	setTexParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	setRepeat(true);
+	setRepeat(init.repeat);
 
-	// allocate to vram
-	glTexImage2D(target, 0, internalFormat, width_, height_, 0, format_, type_, NULL);
-
-	ON_GL_FAIL_THROW_EXCEPTION();
-}
-
-
-//======================================================================================================================
-// createEmpty2DMSAA                                                                                                   =
-//======================================================================================================================
-void Texture::createEmpty2DMsaa(int samplesNum, int internalFormat, int width_, int height_, bool mimapping)
-{
-	target = GL_TEXTURE_2D_MULTISAMPLE;
-	ASSERT(!isLoaded());
-
-	glGenTextures(1, &glId);
-	bind(LAST_TEX_UNIT);
-	
-	// allocate
-	glTexImage2DMultisample(target, samplesNum, internalFormat, width_, height_, false);
-
-	if(mimapping)
+	if(init.mipmapping)
 	{
 		glGenerateMipmap(target);
 	}
+
+	// If not mipmapping then the filtering cannot be trilinear
+	if(init.filteringType == TFT_TRILINEAR && !init.mipmapping)
+	{
+		setFiltering(TFT_LINEAR);
+	}
+	else
+	{
+		setFiltering(init.filteringType);
+	}
+
+	if(init.anisotropyLevel > 1)
+	{
+		setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(init.anisotropyLevel));
+	}
+
+	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 

@@ -21,9 +21,8 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 		// inform in what buffers we draw
 		fbo.setNumOfColorAttachements(1);
 
-		// create the texes
-		fai.createEmpty2D(width, height, GL_RGB, GL_RGB, GL_FLOAT);
-		fai.setFiltering(Texture::TFT_LINEAR);
+		// create the FAI
+		Renderer::createFai(width, height, GL_RGB, GL_RGB, GL_FLOAT, fai);
 
 		// attach
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);

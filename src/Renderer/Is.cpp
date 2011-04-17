@@ -109,7 +109,7 @@ void Is::initFbo()
 		fbo.setNumOfColorAttachements(1);
 
 		// create the FAI
-		fai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, fai);
 
 		// attach
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
@@ -269,7 +269,7 @@ void Is::spotLightPass(const SpotLight& light)
 	smo.run(light);
 
 	// set the texture
-	light.getTexture().setRepeat(false);
+	//light.getTexture().setRepeat(false);
 
 	// shader prog
 	const ShaderProg* shdr;
