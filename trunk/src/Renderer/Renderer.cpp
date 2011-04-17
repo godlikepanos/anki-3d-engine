@@ -110,3 +110,25 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat, con
 	return Vec3(final);
 }
 
+
+//======================================================================================================================
+// createFai                                                                                                           =
+//======================================================================================================================
+void Renderer::createFai(uint width, uint height, int internalFormat, int format, int type, Texture& fai)
+{
+	Texture::Initializer init;
+	init.width = width;
+	init.height = height;
+	init.internalFormat = internalFormat;
+	init.format = format;
+	init.type = type;
+	init.data = NULL;
+	init.mipmapping = false;
+	init.filteringType = Texture::TFT_LINEAR;
+	init.repeat = false;
+	init.anisotropyLevel = 0;
+
+	fai.create(init);
+}
+
+

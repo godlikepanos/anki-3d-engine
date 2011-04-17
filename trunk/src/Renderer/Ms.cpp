@@ -27,28 +27,20 @@ void Ms::init(const RendererInitializer& initializer)
 		fbo.bind();
 
 		// inform in what buffers we draw
-		fbo.setNumOfColorAttachements(4);
+		fbo.setNumOfColorAttachements(3);
 
 		// create the FAIs
-		normalFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RG16F, GL_RG, GL_FLOAT);
-		diffuseFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT);
-		specularFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGBA16F, GL_RGBA, GL_FLOAT);
-		depthFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
-		                       GL_UNSIGNED_INT_24_8);
 
-		posFai.createEmpty2D(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT);
-
-		normalFai.setRepeat(false);
-		diffuseFai.setRepeat(false);
-		specularFai.setRepeat(false);
-		depthFai.setRepeat(false);
-		posFai.setRepeat(false);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RG16F, GL_RG, GL_FLOAT, normalFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT, diffuseFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGBA16F, GL_RGBA, GL_FLOAT, specularFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
+		                    GL_UNSIGNED_INT_24_8, depthFai);
 
 		// attach the buffers to the FBO
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, posFai.getGlId(), 0);
 
 		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
 		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);

@@ -15,8 +15,6 @@ class RendererInitializer;
 class Ms: public RenderingPass
 {
 	public:
-		Texture posFai; ///< @todo remove it
-
 		Ms(Renderer& r_);
 
 		/// @name Accessors
