@@ -10,7 +10,7 @@ namespace Parser {
 // parseArrOfNumbers                                                                                                   =
 //======================================================================================================================
 template <typename Type>
-void parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
+void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
 {
 	const Scanner::Token* token;
 
@@ -83,7 +83,7 @@ void parseArrOfNumbers(Scanner& scanner, bool bracket, bool signs, uint size, Ty
 // parseNumber                                                                                                         =
 //======================================================================================================================
 template <typename Type>
-void parseNumber(Scanner& scanner, bool sign, Type& out)
+void parseNumber(Scanner::Scanner& scanner, bool sign, Type& out)
 {
 	try
 	{
@@ -137,7 +137,7 @@ void parseNumber(Scanner& scanner, bool sign, Type& out)
 // parseMathVector                                                                                                     =
 //======================================================================================================================
 template <typename Type>
-void parseMathVector(Scanner& scanner, Type& out)
+void parseMathVector(Scanner::Scanner& scanner, Type& out)
 {
 	try
 	{
@@ -175,7 +175,7 @@ void parseMathVector(Scanner& scanner, Type& out)
 //======================================================================================================================
 // parseBool                                                                                                           =
 //======================================================================================================================
-inline bool parseBool(Scanner& scanner)
+inline bool parseBool(Scanner::Scanner& scanner)
 {
 	const char* errMsg = "identifier true or false";
 
@@ -203,7 +203,7 @@ inline bool parseBool(Scanner& scanner)
 //======================================================================================================================
 // parseIdentifier                                                                                                     =
 //======================================================================================================================
-inline std::string parseIdentifier(Scanner& scanner, const char* expectedIdentifier)
+inline std::string parseIdentifier(Scanner::Scanner& scanner, const char* expectedIdentifier)
 {
 	const Scanner::Token* token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_IDENTIFIER)
@@ -239,7 +239,7 @@ inline bool isIdentifier(const Scanner::Token* token, const char* str)
 //======================================================================================================================
 // parseString                                                                                                         =
 //======================================================================================================================
-inline std::string parseString(Scanner& scanner)
+inline std::string parseString(Scanner::Scanner& scanner)
 {
 	const Scanner::Token* token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_STRING)

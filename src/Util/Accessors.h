@@ -1,5 +1,5 @@
-#ifndef PROPERTIES_H
-#define PROPERTIES_H
+#ifndef ACCESSORS_H
+#define ACCESSORS_H
 
 
 /// Read only getter, cause we are to bored to write

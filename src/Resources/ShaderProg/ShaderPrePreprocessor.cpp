@@ -71,7 +71,7 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename, int
 		throw EXCEPTION("File \"" + filename + "\": Cannot open or empty");
 	}
 
-	Scanner scanner(filename.c_str(), false);
+	Scanner::Scanner scanner(filename.c_str(), false);
 	const Scanner::Token* token;
 
 	while(true)
