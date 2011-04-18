@@ -8,7 +8,7 @@
 /// The hash function
 struct CreateCharPtrHashMapKey
 {
-  size_t operator()(const char* str) const
+	size_t operator()(const char* str) const
 	{
 		size_t h = 0;
 		for (; *str != '\0'; ++str)

@@ -7,7 +7,7 @@
 //======================================================================================================================
 void SkelAnim::load(const char* filename)
 {
-	Scanner scanner(filename);
+	Scanner::Scanner scanner(filename);
 	const Scanner::Token* token;
 
 	// keyframes
@@ -26,10 +26,10 @@ void SkelAnim::load(const char* filename)
 	{
 		throw PARSER_EXCEPTION_EXPECTED("integer");
 	}
-	bones.resize(token->getValue().getInt());
+	boneAnims.resize(token->getValue().getInt());
 
 	// poses
-	for(uint i=0; i<bones.size(); i++)
+	for(uint i = 0; i < boneAnims.size(); i++)
 	{
 		// has anim?
 		token = &scanner.getNextToken();
@@ -41,17 +41,17 @@ void SkelAnim::load(const char* filename)
 		// it has
 		if(token->getValue().getInt() == 1)
 		{
-			bones[i].keyframes.resize(keyframes.size());
-
-			for(uint j=0; j<keyframes.size(); ++j)
+			for(uint j = 0; j < keyframes.size(); ++j)
 			{
 				// parse the quat
 				float tmp[4];
 				Parser::parseArrOfNumbers(scanner, false, true, 4, &tmp[0]);
-				bones[i].keyframes[j].rotation = Quat(tmp[1], tmp[2], tmp[3], tmp[0]);
 
 				// parse the vec3
-				Parser::parseArrOfNumbers(scanner, false, true, 3, &bones[i].keyframes[j].translation[0]);
+				Vec3 trs;
+				Parser::parseArrOfNumbers(scanner, false, true, 3, &trs[0]);
+
+				boneAnims[i].bonePoses.push_back(BonePose(Quat(tmp[1], tmp[2], tmp[3], tmp[0]), trs));
 			}
 		}
 	} // end for all bones

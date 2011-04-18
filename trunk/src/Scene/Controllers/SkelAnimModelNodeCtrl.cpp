@@ -24,11 +24,11 @@ SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(SkinNode& skinNode_):
 void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
                                         Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
 {
-	ASSERT(frame < animation.framesNum);
+	ASSERT(frame < animation.getFramesNum());
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the frame and
 	// calc the lPose and rPose witch indicate the pose IDs in witch the frame lies between
-	const Vec<uint>& keyframes = animation.keyframes;
+	const Vec<uint>& keyframes = animation.getKeyframes();
 	float t = 0.0;
 	uint lPose = 0, rPose = 0;
 	for(uint j=0; j<keyframes.size(); j++)
@@ -50,27 +50,27 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 
 	// now for all bones update bone's poses
 	ASSERT(boneRotations.size() >= 1);
-	for(uint i=0; i<boneRotations.size(); i++)
+	for(uint i=0; i < boneRotations.size(); i++)
 	{
-		const SkelAnim::BoneAnim& banim = animation.bones[i];
+		const BoneAnim& banim = animation.getBoneAnims()[i];
 
 		Mat3& localRot = boneRotations[i];
 		Vec3& localTransl = boneTranslations[i];
 
 		// if the bone has animations then slerp and lerp to find the rotation and translation
-		if(banim.keyframes.size() != 0)
+		if(banim.getBonePoses().size() != 0)
 		{
-			const SkelAnim::BonePose& lBpose = banim.keyframes[lPose];
-			const SkelAnim::BonePose& rBpose = banim.keyframes[rPose];
+			const BonePose& lBpose = banim.getBonePoses()[lPose];
+			const BonePose& rBpose = banim.getBonePoses()[rPose];
 
 			// rotation
-			const Quat& q0 = lBpose.rotation;
-			const Quat& q1 = rBpose.rotation;
+			const Quat& q0 = lBpose.getRotation();
+			const Quat& q1 = rBpose.getRotation();
 			localRot = Mat3(q0.slerp(q1, t));
 
 			// translation
-			const Vec3& v0 = lBpose.translation;
-			const Vec3& v1 = rBpose.translation;
+			const Vec3& v0 = lBpose.getTranslation();
+			const Vec3& v1 = rBpose.getTranslation();
 			localTransl = v0.lerp(v1, t);
 		}
 		// else put the idents
@@ -159,7 +159,7 @@ void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& bo
 void SkelAnimModelNodeCtrl::update(float)
 {
 	frame += step;
-	if(frame > skelAnim->framesNum) // if the crnt is finished then play the next or loop the crnt
+	if(frame > skelAnim->getFramesNum()) // if the crnt is finished then play the next or loop the crnt
 	{
 		frame = 0.0;
 	}
