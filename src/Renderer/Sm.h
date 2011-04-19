@@ -47,7 +47,7 @@ class Sm: private RenderingPass
 			float distance;
 		};
 
-		boost::array<Level, 2> levels; ///< The levels of detail. The 0 is the detailed one
+		boost::array<Level, 4> levels; ///< The levels of detail. The 0 is the detailed one
 		Level* crntLevel; ///< Current level of detail. Assigned by run
 
 		bool enabled; ///< If false then disable SM at all

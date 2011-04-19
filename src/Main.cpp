@@ -123,7 +123,8 @@ void init()
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
-	cam->setAll(toRad(100.0), toRad(100.0) / MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
+	//cam->setAll(toRad(100.0), toRad(100.0) / MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
+	cam->setAll(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);

@@ -29,7 +29,7 @@ void Sm::init(const RendererInitializer& initializer)
 	initLevel(resolution, level0Distance, bilinearEnabled, levels[0]);
 	for(uint i = 1; i < levels.size(); i++)
 	{
-		initLevel(levels[i - 1].resolution / 2, levels[i - 1].distance * 2.0, false, levels[i]);
+		initLevel(levels[i - 1].resolution / 2, levels[i - 1].distance * 2.0, bilinearEnabled, levels[i]);
 	}
 }
 

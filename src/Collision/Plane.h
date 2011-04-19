@@ -36,7 +36,7 @@ class Plane: public CollisionShape
 		/// @}
 
 		/// Return the transformed
-		Plane getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const;
+		Plane getTransformed(const Transform& trf) const;
 
 		/// It gives the distance between a point and a plane. if returns >0 then the point lies in front of the plane,
 		/// if <0 then it is behind and if =0 then it is co-planar

@@ -251,7 +251,18 @@ void Is::spotLightPass(const SpotLight& light)
 	// shadow mapping
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		float dist = (light.getWorldTransform().getOrigin() - cam.getWorldTransform().getOrigin()).getLength();
+		Vec3 zAxis = light.getWorldTransform().getRotation().getColumn(2);
+		LineSegment seg(light.getWorldTransform().getOrigin(),
+		                -zAxis * light.getCamera().getZFar());
+
+		const Plane& plane = cam.getWSpaceFrustumPlane(Camera::FP_NEAR);
+
+		//float dist = (light.getWorldTransform().getOrigin() - cam.getWorldTransform().getOrigin()).getLength();
+		float dist = seg.testPlane(plane);
+		//float dist = plane.test(light.getWorldTransform().getOrigin());
+
+		//INFO(dist);
+
 		sm.run(light.getCamera(), dist);
 
 		// restore the IS FBO
