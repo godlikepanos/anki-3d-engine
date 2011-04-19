@@ -10,7 +10,7 @@
 void Input::init()
 {
 	INFO("Initializing input...");
-	warpMouse = false;
+	warpMouseFlag = false;
 	hideCursor = true;
 	reset();
 	INFO("Input initialized");
@@ -87,12 +87,14 @@ void Input::handleEvents()
 				mousePosNdc.x() = (2.0 * mousePos.x()) / (float)AppSingleton::getInstance().getWindowWidth() - 1.0;
 				mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) / (float)AppSingleton::getInstance().getWindowHeight();
 
-				if(warpMouse)
+				if(warpMouseFlag)
 				{
-					// the SDL_WarpMouse pushes an event in the event queue. This check is so we wont process the event of the...
-					// ...SDL_WarpMouse function
+					// the SDL_WarpMouse pushes an event in the event queue. This check is so we wont process...
+					// ...the event of the SDL_WarpMouse function
 					if(mousePosNdc == Vec2(0.0))
+					{
 						break;
+					}
 
 					SDL_WarpMouse(AppSingleton::getInstance().getWindowWidth() / 2,
 					              AppSingleton::getInstance().getWindowHeight() / 2);

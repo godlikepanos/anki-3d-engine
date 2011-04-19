@@ -133,6 +133,10 @@ void Ssao::run()
 	limitsOfNearPlane.x() = limitsOfNearPlane.y() * (pcam.getFovX() / pcam.getFovY());
 	ssaoSProg->findUniVar("limitsOfNearPlane")->set(&limitsOfNearPlane);
 
+	// limitsOfNearPlane2
+	limitsOfNearPlane *= 2;
+	ssaoSProg->findUniVar("limitsOfNearPlane2")->set(&limitsOfNearPlane);
+
 	// zNear
 	float zNear = cam.getZNear();
 	ssaoSProg->findUniVar("zNear")->set(&zNear);

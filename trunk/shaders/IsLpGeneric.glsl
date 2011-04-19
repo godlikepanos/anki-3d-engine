@@ -40,6 +40,7 @@ uniform vec3 lightSpecularCol;
 	uniform mat4 texProjectionMat;
 	#if defined(SHADOW_ENABLED)
 		uniform sampler2DShadow shadowMap;
+		uniform float shadowMapSize;
 	#endif
 #endif
 /// @}
@@ -96,24 +97,24 @@ float getAttenuation(in float fragLightDist)
 /// @return The blurred shadow
 float pcfLow(in vec3 shadowUv)
 {
-	const float MAP_SCALE = 1.0 / SHADOWMAP_SIZE;
+	float mapScale = 1.0 / shadowMapSize;
 	const int KERNEL_SIZE = 8;
 	const vec2 KERNEL[KERNEL_SIZE] = vec2[]
 	(
-		vec2(MAP_SCALE, MAP_SCALE),
-		vec2(MAP_SCALE, -MAP_SCALE),
-		vec2(-MAP_SCALE, MAP_SCALE),
-		vec2(-MAP_SCALE, -MAP_SCALE),
-		vec2(0.0, MAP_SCALE),
-		vec2(0.0, -MAP_SCALE),
-		vec2(MAP_SCALE, 0.0),
-		vec2(-MAP_SCALE, 0.0)
+		vec2(1.0, 1.0),
+		vec2(1.0, -1.0),
+		vec2(-1.0, 1.0),
+		vec2(-1.0, -1.0),
+		vec2(0.0, 1.0),
+		vec2(0.0, -1.0),
+		vec2(1.0, 0.0),
+		vec2(-1.0, 0.0)
 	);
 	
 	float shadowCol = shadow2D(shadowMap, shadowUv).r;
-	for(int i=0; i<KERNEL_SIZE; i++)
+	for(int i = 0; i < KERNEL_SIZE; i++)
 	{
-		vec3 uv = vec3(shadowUv.xy + KERNEL[i], shadowUv.z);
+		vec3 uv = vec3(shadowUv.xy + (KERNEL[i] * mapScale), shadowUv.z);
 		shadowCol += shadow2D(shadowMap, uv).r;
 	}
 	
@@ -195,22 +196,22 @@ void main()
 	// Spot light
 	//
 	#elif defined(SPOT_LIGHT_ENABLED)
-		vec4 vTexCoords2 = texProjectionMat * vec4(fragPosVspace, 1.0);
-		vec3 vTexCoords3 = vTexCoords2.xyz / vTexCoords2.w;
+		vec4 texCoords2 = texProjectionMat * vec4(fragPosVspace, 1.0);
+		vec3 texCoords3 = texCoords2.xyz / texCoords2.w;
 
-		if(vTexCoords2.w > 0.0 &&
-		   vTexCoords3.x > 0.0 &&
-		   vTexCoords3.x < 1.0 &&
-		   vTexCoords3.y > 0.0 &&
-		   vTexCoords3.y < 1.0 &&
-		   vTexCoords2.w < lightRadius)
+		if(texCoords2.w > 0.0 &&
+		   texCoords3.x > 0.0 &&
+		   texCoords3.x < 1.0 &&
+		   texCoords3.y > 0.0 &&
+		   texCoords3.y < 1.0 &&
+		   texCoords2.w < lightRadius)
 		{
 			// Get shadow
 			#if defined(SHADOW_ENABLED)
 				#if defined(PCF_ENABLED)
-					float shadowCol = pcfLow(vTexCoords3);
+					float shadowCol = pcfLow(texCoords3);
 				#else
-					float shadowCol = shadow2D(shadowMap, vTexCoords3).r;
+					float shadowCol = shadow2D(shadowMap, texCoords3).r;
 				#endif
 
 				if(shadowCol == 0.0)
@@ -222,7 +223,7 @@ void main()
 			float fragLightDist;
 			vec3 color = doPhong(fragPosVspace, fragLightDist);
 
-			vec3 lightTexCol = texture2DProj(lightTex, vTexCoords2.xyz).rgb;
+			vec3 lightTexCol = texture2DProj(lightTex, texCoords2.xyz).rgb;
 			float att = getAttenuation(fragLightDist);
 
 			#if defined(SHADOW_ENABLED)

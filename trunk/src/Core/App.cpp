@@ -207,7 +207,8 @@ void App::initRenderer()
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
-	initializer.is.sm.resolution = 512;
+	initializer.is.sm.resolution = 1024;
+	initializer.is.sm.level0Distance = 5.0;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
 	initializer.pps.hdr.blurringDist = 1.0;

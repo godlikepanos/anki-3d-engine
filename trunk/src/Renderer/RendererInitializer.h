@@ -26,6 +26,7 @@ struct RendererInitializer
 			bool pcfEnabled;
 			bool bilinearEnabled;
 			int resolution;
+			float level0Distance;
 		} sm;
 	} is;
 
