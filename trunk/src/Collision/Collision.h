@@ -5,6 +5,7 @@
 #include "Sphere.h"
 #include "Obb.h"
 #include "Ray.h"
+#include "LineSegment.h"
 
 
 #endif

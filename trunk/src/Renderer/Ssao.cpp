@@ -152,7 +152,7 @@ void Ssao::run()
 	ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
 
 	// screenSize
-	Vec2 screenSize(width, height);
+	Vec2 screenSize(width * 2, height * 2);
 	ssaoSProg->findUniVar("screenSize")->set(&screenSize);
 
 	// msNormalFai

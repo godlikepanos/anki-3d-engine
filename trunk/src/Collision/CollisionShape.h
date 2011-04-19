@@ -1,6 +1,8 @@
 #ifndef COLLISION_SHAPE
 #define COLLISION_SHAPE
 
+#include "Accessors.h"
+
 
 class Plane;
 

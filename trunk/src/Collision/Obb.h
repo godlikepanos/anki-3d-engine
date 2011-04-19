@@ -19,17 +19,9 @@ class Obb: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		const Vec3& getCenter() const {return center;}
-		Vec3& getCenter() {return center;}
-		void setCenter(const Vec3& c) {center = c;}
-
-		const Mat3& getRotation() const {return rotation;}
-		Mat3& getRotation() {return rotation;}
-		void setCenter(const Mat3& r) {rotation = r;}
-
-		const Vec3& getExtend() const {return extends;}
-		Vec3& getExtend() {return extends;}
-		void setExtend(const Vec3& e) {extends = e;}
+		GETTER_SETTER(Vec3, center, getCenter, setCenter)
+		GETTER_SETTER(Mat3, rotation, getRotation, setRotation)
+		GETTER_SETTER(Vec3, extends, getExtend, setExtend)
 		/// @}
 
 		Obb getTransformed(const Transform& transform) const;

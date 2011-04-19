@@ -16,7 +16,7 @@ uniform sampler2D msDepthFai; ///< for the calculation of frag pos in view space
 
 uniform sampler2D noiseMap; /// Used in getRandom
 uniform float noiseMapSize = 0.0; /// Used in getRandom
-uniform vec2 screenSize = 0.0; /// Used in getRandom
+uniform vec2 screenSize = vec2(0.0); /// Used in getRandom
 
 uniform sampler2D msNormalFai; /// Used in getNormal
 /// @}
@@ -33,7 +33,7 @@ layout(location = 0) out float fColor;
 
 /// @name Consts
 /// @{
-uniform float SAMPLE_RAD = 0.1;  /// Used in main
+uniform float SAMPLE_RAD = 0.08;  /// Used in main
 uniform float SCALE = 1.0; /// Used in doAmbientOcclusion
 uniform float INTENSITY = 3.0; /// Used in doAmbientOcclusion
 uniform float BIAS = 0.00; /// Used in doAmbientOcclusion
@@ -112,5 +112,7 @@ void main(void)
 	}
 
 	fColor = 1.0 - fColor / KERNEL_SIZE;
+
+	//fColor = fColor - fColor + rand.x;
 }
 

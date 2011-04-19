@@ -49,16 +49,16 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 //======================================================================================================================
 // getTransformed                                                                                                      =
 //======================================================================================================================
-Plane Plane::getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const
+Plane Plane::getTransformed(const Transform& trf) const
 {
 	Plane plane;
 
 	// the normal
-	plane.normal = rotate * normal;
+	plane.normal = trf.getRotation()* normal;
 
 	// the offset
-	Vec3 new_trans = rotate.getTransposed() * translate;
-	plane.offset = offset*scale + new_trans.dot(normal);
+	Vec3 newTrans = trf.getRotation().getTransposed() * trf.getOrigin();
+	plane.offset = offset * trf.getScale() + newTrans.dot(normal);
 
 	return plane;
 }

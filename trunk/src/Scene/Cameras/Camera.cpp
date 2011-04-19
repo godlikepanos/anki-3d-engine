@@ -22,9 +22,7 @@ void Camera::updateWSpaceFrustumPlanes()
 {
 	for(uint i = 0; i < FP_NUM; i++)
 	{
-		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].getTransformed(getWorldTransform().getOrigin(),
-		                                                               getWorldTransform().getRotation(),
-		                                                               getWorldTransform().getScale());
+		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].getTransformed(getWorldTransform());
 	}
 }
 
