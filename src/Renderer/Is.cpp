@@ -26,7 +26,6 @@ Is::Is(Renderer& r_):
 {}
 
 
-
 //======================================================================================================================
 // calcViewVectors                                                                                                     =
 //======================================================================================================================
@@ -148,17 +147,16 @@ void Is::init(const RendererInitializer& initializer)
 	// spot light no shadow
 	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
 	                                                                 "#define SPOT_LIGHT_ENABLED\n",
-	                                                                 "SpotNoShadow").c_str());
+	                                                                 "Spot_NoShadow").c_str());
 
 	// spot light w/t shadow
-	std::string pps = std::string("\n#define SPOT_LIGHT_ENABLED\n#define SHADOW_ENABLED\n") +
-	                              "#define SHADOWMAP_SIZE " + boost::lexical_cast<std::string>(sm.getResolution()) +
-	                              "\n";
-	std::string prefix = "SpotShadowSmSize" + boost::lexical_cast<std::string>(sm.getResolution());
+	std::string pps = std::string("#define SPOT_LIGHT_ENABLED\n"
+	                              "#define SHADOW_ENABLED\n");
+	std::string prefix = "Spot_Shadow";
 	if(sm.isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
-		prefix += "Pcf";
+		prefix += "_Pcf";
 	}
 	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", pps.c_str(),
 	                                                               prefix.c_str()).c_str());
@@ -253,7 +251,8 @@ void Is::spotLightPass(const SpotLight& light)
 	// shadow mapping
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		sm.run(light.getCamera());
+		float dist = (light.getWorldTransform().getOrigin() - cam.getWorldTransform().getOrigin()).getLength();
+		sm.run(light.getCamera(), dist);
 
 		// restore the IS FBO
 		fbo.bind();
@@ -315,6 +314,8 @@ void Is::spotLightPass(const SpotLight& light)
 	if(light.castsShadow() && sm.isEnabled())
 	{
 		shdr->findUniVar("shadowMap")->set(sm.getShadowMap(), 5);
+		float smSize = sm.getShadowMap().getWidth();
+		shdr->findUniVar("shadowMapSize")->set(&smSize);
 	}
 
 	// render quad

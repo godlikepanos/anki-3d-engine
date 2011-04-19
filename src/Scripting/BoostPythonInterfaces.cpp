@@ -32,4 +32,7 @@ BOOST_PYTHON_MODULE(Anki)
 
 	CALL_WRAP(App);
 	CALL_WRAP(AppSingleton);
+
+	CALL_WRAP(Input);
+	CALL_WRAP(InputSingleton);
 }

@@ -5,6 +5,7 @@
 #include <boost/array.hpp>
 #include "Math.h"
 #include "Singleton.h"
+#include "Accessors.h"
 
 
 /// Handle the SDL input
@@ -12,17 +13,21 @@ class Input
 {
 	public:
 		Input() {init();}
-		void reset();
-		void handleEvents();
 
+		/// @name Acessors
+		/// @{
 		short getKey(uint i) const {return keys[i];}
 		short getMouseBtn(uint i) const {return mouseBtns[i];}
+		GETTER_SETTER_BY_VAL(bool, warpMouseFlag, warpMouse, setWarpMouse)
+		/// @}
+
+		void reset();
+		void handleEvents();
 
 		// mouse stuff
 		Vec2 mousePosNdc; ///< The coords are in the NDC space
 		Vec2 mousePos;     ///< The coords are in the window space. (0, 0) is in the upper left corner
 		Vec2 mouseVelocity;
-		bool warpMouse;
 		bool hideCursor;
 
 	private:
@@ -37,6 +42,8 @@ class Input
 
 		boost::array<short, 8> mouseBtns; ///< Mouse btns. Supporting 3 btns & wheel. @see keys
 		/// @}
+
+		bool warpMouseFlag;
 
 		void init();
 };

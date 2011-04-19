@@ -84,7 +84,6 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 {
 	uint textureUnit = 0;
 
-	//const Material& mtl = mtlr.getMaterial();
 	mtlr.getMaterial().getShaderProg().bind();
 
 	//

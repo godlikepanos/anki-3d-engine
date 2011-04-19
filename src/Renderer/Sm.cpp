@@ -16,27 +16,49 @@ void Sm::init(const RendererInitializer& initializer)
 	enabled = initializer.is.sm.enabled;
 
 	if(!enabled)
+	{
 		return;
+	}
 
 	pcfEnabled = initializer.is.sm.pcfEnabled;
 	bilinearEnabled = initializer.is.sm.bilinearEnabled;
 	resolution = initializer.is.sm.resolution;
+	level0Distance = initializer.is.sm.level0Distance;
+
+	// Init the levels
+	initLevel(resolution, level0Distance, bilinearEnabled, levels[0]);
+	for(uint i = 1; i < levels.size(); i++)
+	{
+		initLevel(levels[i - 1].resolution / 2, levels[i - 1].distance * 2.0, false, levels[i]);
+	}
+}
+
+
+//======================================================================================================================
+// initLevel                                                                                                           =
+//======================================================================================================================
+void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
+{
+	level.resolution = resolution;
+	level.distance = distance;
+	level.bilinear = bilinear;
 
 	try
 	{
 		// create FBO
-		fbo.create();
-		fbo.bind();
+		level.fbo.create();
+		level.fbo.bind();
 
 		// texture
-		Renderer::createFai(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, shadowMap);
-		if(bilinearEnabled)
+		Renderer::createFai(level.resolution, level.resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT,
+		                    GL_FLOAT, level.shadowMap);
+		if(level.bilinear)
 		{
-			shadowMap.setFiltering(Texture::TFT_LINEAR);
+			level.shadowMap.setFiltering(Texture::TFT_LINEAR);
 		}
 		else
 		{
-			shadowMap.setFiltering(Texture::TFT_NEAREST);
+			level.shadowMap.setFiltering(Texture::TFT_NEAREST);
 		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
@@ -48,16 +70,16 @@ void Sm::init(const RendererInitializer& initializer)
 		 */
 
 		// inform the we wont write to color buffers
-		fbo.setNumOfColorAttachements(0);
+		level.fbo.setNumOfColorAttachements(0);
 
 		// attach the texture
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, level.shadowMap.getGlId(), 0);
 
 		// test if success
-		fbo.checkIfGood();
+		level.fbo.checkIfGood();
 
 		// unbind
-		fbo.unbind();
+		level.fbo.unbind();
 	}
 	catch(std::exception& e)
 	{
@@ -69,18 +91,34 @@ void Sm::init(const RendererInitializer& initializer)
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Sm::run(const Camera& cam)
+void Sm::run(const Camera& cam, float distance)
 {
 	if(!enabled)
 	{
 		return;
 	}
 
+	//
+	// Determine the level
+	//
+	BOOST_FOREACH(Level& level, levels)
+	{
+		crntLevel = &level;
+		if(distance < level.distance)
+		{
+			break;
+		}
+	}
+
+	//
+	// Render
+	//
+
 	// FBO
-	fbo.bind();
+	crntLevel->fbo.bind();
 
 	// set GL
-	Renderer::setViewport(0, 0, resolution, resolution);
+	Renderer::setViewport(0, 0, crntLevel->resolution, crntLevel->resolution);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// disable color & blend & enable depth test
@@ -104,5 +142,5 @@ void Sm::run(const Camera& cam)
 
 
 	// FBO
-	fbo.unbind();
+	crntLevel->fbo.unbind();
 }
