@@ -117,8 +117,8 @@ void Pps::runPrePass()
 
 	prePassFbo.bind();
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
@@ -147,8 +147,8 @@ void Pps::runPostPass()
 
 	postPassFbo.bind();
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();

@@ -115,7 +115,7 @@ void Bs::run()
 				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 				r.setupShaderProg(sm.getCpMtl(), mn, r.getCamera());
-				glDisable(GL_BLEND); // a hack
+				GlStateMachineSingleton::getInstance().setBlendingEnabled(false); // a hack
 
 				sm.getCpVao().bind();
 				glDrawElements(GL_TRIANGLES, sm.getModelPatchRsrc().getMesh().getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
@@ -131,12 +131,12 @@ void Bs::run()
 
 				if(sm.getCpMtl().isBlendingEnabled())
 				{
-					glEnable(GL_BLEND);
+					GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
 					glBlendFunc(sm.getCpMtl().getBlendingSfactor(), sm.getCpMtl().getBlendingDfactor());
 				}
 				else
 				{
-					glDisable(GL_BLEND);
+					GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 				}
 
 				refractSProg->bind();

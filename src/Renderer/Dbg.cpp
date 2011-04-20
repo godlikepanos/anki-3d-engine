@@ -258,8 +258,8 @@ void Dbg::run()
 
 	// OGL stuff
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(true);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 
 	setModelMat(Mat4::getIdentity());
 	renderGrid();

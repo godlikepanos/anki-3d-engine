@@ -123,8 +123,8 @@ void Sm::run(const Camera& cam, float distance)
 
 	// disable color & blend & enable depth test
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(true);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 
 	// for artifacts
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!

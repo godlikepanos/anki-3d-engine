@@ -44,9 +44,9 @@ static void SetGL()
 	shader->bind();
 	shader->findUniVar("fontMap")->setTexture(*fontMap, 0);
 
-	glEnable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 	glColor4fv(color);
 
 	// matrix stuff
