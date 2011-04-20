@@ -30,7 +30,7 @@ class SceneDrawer
 		void renderRenderableNode(const RenderableNode& renderable, const Camera& cam, RenderingPassType rtype) const;
 
 	private:
-		/// @todo
+		/// Set the uniform using this visitor
 		class UsrDefVarVisitor: public boost::static_visitor<void>
 		{
 			public:

@@ -197,7 +197,7 @@ void Is::drawLightPassQuad() const
 //======================================================================================================================
 void Is::ambientPass(const Vec3& color)
 {
-	glDisable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 
 	// set the shader
 	ambientPassSProg->bind();
@@ -269,9 +269,9 @@ void Is::spotLightPass(const SpotLight& light)
 		fbo.bind();
 
 		// and restore blending and depth test
-		glEnable(GL_BLEND);
+		GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
 		glBlendFunc(GL_ONE, GL_ONE);
-		glDisable(GL_DEPTH_TEST);
+		GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 		Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 	}
 
@@ -345,13 +345,13 @@ void Is::run()
 	// OGL stuff
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
-	glDisable(GL_DEPTH_TEST);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 
 	// ambient pass
 	ambientPass(SceneSingleton::getInstance().getAmbientCol());
 
 	// light passes
-	glEnable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_STENCIL_TEST);
 

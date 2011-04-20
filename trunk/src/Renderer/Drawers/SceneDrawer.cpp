@@ -7,6 +7,7 @@
 #include "App.h"
 #include "Scene.h"
 #include "MaterialRuntime.h"
+#include "GlStateMachine.h"
 
 
 //======================================================================================================================
@@ -89,26 +90,13 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	//
 	// FFP stuff
 	//
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(mtlr.isBlendingEnabled());
 	if(mtlr.isBlendingEnabled())
 	{
-		glEnable(GL_BLEND);
-		//glDisable(GL_BLEND);
 		glBlendFunc(mtlr.getBlendingSfactor(), mtlr.getBlendingDfactor());
 	}
-	else
-	{
-		glDisable(GL_BLEND);
-	}
 
-
-	if(mtlr.isDepthTestingEnabled())
-	{
-		glEnable(GL_DEPTH_TEST);
-	}
-	else
-	{
-		glDisable(GL_DEPTH_TEST);
-	}
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(mtlr.isDepthTestingEnabled());
 
 	if(mtlr.isWireframeEnabled())
 	{

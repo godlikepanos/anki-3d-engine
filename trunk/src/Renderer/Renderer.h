@@ -16,6 +16,7 @@
 #include "GlException.h"
 #include "SceneDrawer.h"
 #include "SkinsDeformer.h"
+#include "GlStateMachine.h"
 
 
 class Camera;

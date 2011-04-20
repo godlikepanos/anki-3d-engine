@@ -107,8 +107,8 @@ void Ssao::run()
 	int height = renderingQuality * r.getHeight();
 	const Camera& cam = r.getCamera();
 
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 
 
 	Renderer::setViewport(0, 0, width, height);

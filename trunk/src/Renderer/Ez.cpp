@@ -55,8 +55,8 @@ void Ez::run()
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(true);
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 
 	/// @todo Uncomment
 	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
