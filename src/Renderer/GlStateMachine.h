@@ -23,27 +23,28 @@ class GlStateMachine
 
 		bool isBlendingEnabled() const {return getFlag(GL_BLEND, blendingEnabledFlag);}
 		void setBlendingEnabled(bool enable) {setFlag(GL_BLEND, enable, blendingEnabledFlag);}
+
+		void useShaderProg(GLuint id);
 		/// @}
 
 	private:
+		/// @name The GL state
+		/// @{
 		bool depthTestEnabledFlag;
 		bool blendingEnabledFlag;
+		GLuint sProgGlId;
+		/// @}
 
 		static bool getFlag(GLenum glFlag, bool myFlag);
 		static void setFlag(GLenum glFlag, bool enable, bool& myFlag);
+
+		static GLuint getCurrentProgramGlId();
 };
 
 
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
-
-inline void GlStateMachine::sync()
-{
-	depthTestEnabledFlag = glIsEnabled(GL_DEPTH_TEST);
-	blendingEnabledFlag = glIsEnabled(GL_BLEND);
-}
-
 
 inline bool GlStateMachine::getFlag(GLenum glFlag, bool myFlag)
 {
@@ -68,6 +69,26 @@ inline void GlStateMachine::setFlag(GLenum glFlag, bool enable, bool& myFlag)
 		}
 		myFlag = enable;
 	}
+}
+
+
+inline void GlStateMachine::useShaderProg(GLuint id)
+{
+	ASSERT(getCurrentProgramGlId() == sProgGlId);
+
+	if(sProgGlId != id)
+	{
+		glUseProgram(id);
+		sProgGlId = id;
+	}
+}
+
+
+inline GLuint GlStateMachine::getCurrentProgramGlId()
+{
+	int i;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
+	return i;
 }
 
 
