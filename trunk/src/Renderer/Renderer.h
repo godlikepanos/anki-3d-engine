@@ -54,7 +54,7 @@ class Renderer
 		GETTER_R_BY_VAL(uint, framesNum, getFramesNum)
 		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat)
 		const Camera& getCamera() const {return *cam;}
-		GETTER_R(SceneDrawer, sceneDrawer, getSceneDrawer)
+		GETTER_RW(SceneDrawer, sceneDrawer, getSceneDrawer)
 		GETTER_RW(SkinsDeformer, skinsDeformer, getSkinsDeformer)
 		/// @}
 

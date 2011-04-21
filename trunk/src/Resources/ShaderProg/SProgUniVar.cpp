@@ -35,14 +35,29 @@ void SProgUniVar::set(const Vec2 v2[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	glUniform2fv(getLoc(), size, &(const_cast<Vec2&>(v2[0]))[0]);
+	if(size == 1)
+	{
+		glUniform2f(getLoc(), v2[0].x(), v2[0].y());
+	}
+	else
+	{
+		glUniform2fv(getLoc(), size, &(const_cast<Vec2&>(v2[0]))[0]);
+	}
 }
 
 void SProgUniVar::set(const Vec3 v3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	glUniform3fv(getLoc(), size, &(const_cast<Vec3&>(v3[0]))[0]);
+
+	if(size == 1)
+	{
+		glUniform3f(getLoc(), v3[0].x(), v3[0].y(), v3[0].z());
+	}
+	else
+	{
+		glUniform3fv(getLoc(), size, &(const_cast<Vec3&>(v3[0]))[0]);
+	}
 }
 
 void SProgUniVar::set(const Vec4 v4[], uint size) const

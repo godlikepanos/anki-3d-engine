@@ -9,6 +9,7 @@
 #include "SProgUniVar.h"
 #include "SProgAttribVar.h"
 #include "Vec.h"
+#include "GlStateMachine.h"
 
 
 /// Shader program @ref Resource
@@ -134,7 +135,7 @@ inline GLuint ShaderProg::getGlId() const
 inline void ShaderProg::bind() const
 {
 	ASSERT(glId != std::numeric_limits<uint>::max());
-	glUseProgram(glId);
+	GlStateMachineSingleton::getInstance().useShaderProg(glId);
 }
 
 
