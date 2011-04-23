@@ -179,8 +179,8 @@ void SkelAnimModelNodeCtrl::update(float)
 		       skinNode.getHeads(), skinNode.getTails());
 	}
 
-	/*BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())
+	BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())
 	{
 		MainRendererSingleton::getInstance().getSkinsDeformer().deform(*skinPatchNode);
-	}*/
+	}
 }

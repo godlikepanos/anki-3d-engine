@@ -1,6 +1,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 #include <fstream>
+#include <sstream>
 #include "ShaderProg.h"
 #include "ShaderPrePreprocessor.h"
 #include "App.h" // To get cache dir
@@ -219,17 +221,27 @@ void ShaderProg::load(const char* filename)
 	// 5) set the TRFFB varyings
 	if(pars.getOutput().getTrffbVaryings().size() > 0)
 	{
-		const char* varsArr[128];
+		boost::array<const char*, 128> varsArr;
 		for(uint i=0; i<pars.getOutput().getTrffbVaryings().size(); i++)
 		{
 			varsArr[i] = pars.getOutput().getTrffbVaryings()[i].name.c_str();
 		}
-		glTransformFeedbackVaryings(glId, pars.getOutput().getTrffbVaryings().size(), varsArr, GL_SEPARATE_ATTRIBS);
+		glTransformFeedbackVaryings(glId, pars.getOutput().getTrffbVaryings().size(), &varsArr[0], GL_SEPARATE_ATTRIBS);
 	}
 
 	// 6) link
 	link();
 	
+	/*if(pars.getOutput().getTrffbVaryings().size() > 0)
+	{
+		char name[128] = {'\0'};
+		GLsizei size;
+		GLsizei len;
+		GLenum type;
+		glGetTransformFeedbackVarying(glId, 0, 128, &len, &size, &type, name);
+		INFO(name);
+	}*/
+
 	// init the rest
 	getUniAndAttribVars();
 }
@@ -315,3 +327,27 @@ std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const c
 
 	return newfPathName.string();
 }
+
+
+//======================================================================================================================
+// getShaderInfoString                                                                                                 =
+//======================================================================================================================
+std::string ShaderProg::getShaderInfoString() const
+{
+	std::stringstream ss;
+
+	ss << "Uniform vars:\n";
+	BOOST_FOREACH(const SProgUniVar& var, uniVars)
+	{
+		ss << var.getName() << " " << var.getLoc() << "\n";
+	}
+
+	ss << "\nAttribute vars:\n";
+	BOOST_FOREACH(const SProgAttribVar& var, attribVars)
+	{
+		ss << var.getName() << " " << var.getLoc() << "\n";
+	}
+
+	return ss.str();
+}
+

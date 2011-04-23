@@ -74,8 +74,11 @@ class ShaderProg
 		static std::string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
 		                                        const char* newFNamePrefix);
 
-		/// Reling the program. Used in transform feedback
+		/// Relink the program. Used in transform feedback
 		void relink() const {link();}
+
+		/// For debuging
+		std::string getShaderInfoString() const;
 
 	//==================================================================================================================
 	// Private                                                                                                         =

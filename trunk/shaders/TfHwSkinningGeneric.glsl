@@ -32,7 +32,6 @@ uniform vec3 skinningTranslations[MAX_BONES_PER_MESH];
 //
 // Varyings
 //
-
 out vec3 vPosition;
 
 #if defined(NORMAL_ENABLED)
@@ -49,7 +48,7 @@ void main()
 	mat3 rot = mat3(0.0);
 	vec3 tsl = vec3(0.0);
 
-	for(int i=0; i<int(vertWeightBonesNum); i++)
+	for(int i = 0; i < int(vertWeightBonesNum); i++)
 	{
 		int boneId = int(vertWeightBoneIds[i]);
 		float weight = vertWeightWeights[i];
@@ -66,7 +65,7 @@ void main()
 	
 	#if defined(TANGENT_ENABLED)
 		vTangent = vec4(rot * vec3(tangent), tangent.w);
-	#endif	
+	#endif
 }
 
 #pragma anki fragShaderBegins

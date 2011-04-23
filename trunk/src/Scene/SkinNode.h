@@ -26,7 +26,7 @@ class SkinNode: public SceneNode
 		GETTER_RW(Vec<Vec3>, tails, getTails)
 		GETTER_RW(Vec<Mat3>, boneRotations, getBoneRotations)
 		GETTER_RW(Vec<Vec3>, boneTranslations, getBoneTranslations)
-		const Skin& getSkin() const {return *skin;}
+		GETTER_R(Skin, *skin, getSkin)
 		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 		GETTER_R(Vec<SkinPatchNode*>, patches, getPatcheNodes)
 		/// @}

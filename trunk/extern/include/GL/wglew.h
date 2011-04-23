@@ -831,6 +831,37 @@ typedef BOOL (WINAPI * PFNWGLQUERYFRAMETRACKINGI3DPROC) (DWORD* pFrameCount, DWO
 
 #endif /* WGL_I3D_swap_frame_usage */
 
+/* --------------------------- WGL_NV_DX_interop --------------------------- */
+
+#ifndef WGL_NV_DX_interop
+#define WGL_NV_DX_interop 1
+
+#define WGL_ACCESS_READ_ONLY_NV 0x0000
+#define WGL_ACCESS_READ_WRITE_NV 0x0001
+#define WGL_ACCESS_WRITE_DISCARD_NV 0x0002
+
+typedef BOOL (WINAPI * PFNWGLDXCLOSEDEVICENVPROC) (HANDLE hDevice);
+typedef BOOL (WINAPI * PFNWGLDXLOCKOBJECTSNVPROC) (HANDLE hDevice, GLint count, HANDLE* hObjects);
+typedef BOOL (WINAPI * PFNWGLDXOBJECTACCESSNVPROC) (HANDLE hObject, GLenum access);
+typedef HANDLE (WINAPI * PFNWGLDXOPENDEVICENVPROC) (void* dxDevice);
+typedef HANDLE (WINAPI * PFNWGLDXREGISTEROBJECTNVPROC) (HANDLE hDevice, void* dxObject, GLuint name, GLenum type, GLenum access);
+typedef BOOL (WINAPI * PFNWGLDXSETRESOURCESHAREHANDLENVPROC) (void* dxObject, HANDLE shareHandle);
+typedef BOOL (WINAPI * PFNWGLDXUNLOCKOBJECTSNVPROC) (HANDLE hDevice, GLint count, HANDLE* hObjects);
+typedef BOOL (WINAPI * PFNWGLDXUNREGISTEROBJECTNVPROC) (HANDLE hDevice, HANDLE hObject);
+
+#define wglDXCloseDeviceNV WGLEW_GET_FUN(__wglewDXCloseDeviceNV)
+#define wglDXLockObjectsNV WGLEW_GET_FUN(__wglewDXLockObjectsNV)
+#define wglDXObjectAccessNV WGLEW_GET_FUN(__wglewDXObjectAccessNV)
+#define wglDXOpenDeviceNV WGLEW_GET_FUN(__wglewDXOpenDeviceNV)
+#define wglDXRegisterObjectNV WGLEW_GET_FUN(__wglewDXRegisterObjectNV)
+#define wglDXSetResourceShareHandleNV WGLEW_GET_FUN(__wglewDXSetResourceShareHandleNV)
+#define wglDXUnlockObjectsNV WGLEW_GET_FUN(__wglewDXUnlockObjectsNV)
+#define wglDXUnregisterObjectNV WGLEW_GET_FUN(__wglewDXUnregisterObjectNV)
+
+#define WGLEW_NV_DX_interop WGLEW_GET_VAR(__WGLEW_NV_DX_interop)
+
+#endif /* WGL_NV_DX_interop */
+
 /* --------------------------- WGL_NV_copy_image --------------------------- */
 
 #ifndef WGL_NV_copy_image
@@ -995,6 +1026,32 @@ typedef void (WINAPI * PFNWGLFREEMEMORYNVPROC) (void *pointer);
 #define WGLEW_NV_vertex_array_range WGLEW_GET_VAR(__WGLEW_NV_vertex_array_range)
 
 #endif /* WGL_NV_vertex_array_range */
+
+/* -------------------------- WGL_NV_video_capture ------------------------- */
+
+#ifndef WGL_NV_video_capture
+#define WGL_NV_video_capture 1
+
+#define WGL_UNIQUE_ID_NV 0x20CE
+#define WGL_NUM_VIDEO_CAPTURE_SLOTS_NV 0x20CF
+
+DECLARE_HANDLE(HVIDEOINPUTDEVICENV);
+
+typedef BOOL (WINAPI * PFNWGLBINDVIDEOCAPTUREDEVICENVPROC) (UINT uVideoSlot, HVIDEOINPUTDEVICENV hDevice);
+typedef UINT (WINAPI * PFNWGLENUMERATEVIDEOCAPTUREDEVICESNVPROC) (HDC hDc, HVIDEOINPUTDEVICENV* phDeviceList);
+typedef BOOL (WINAPI * PFNWGLLOCKVIDEOCAPTUREDEVICENVPROC) (HDC hDc, HVIDEOINPUTDEVICENV hDevice);
+typedef BOOL (WINAPI * PFNWGLQUERYVIDEOCAPTUREDEVICENVPROC) (HDC hDc, HVIDEOINPUTDEVICENV hDevice, int iAttribute, int* piValue);
+typedef BOOL (WINAPI * PFNWGLRELEASEVIDEOCAPTUREDEVICENVPROC) (HDC hDc, HVIDEOINPUTDEVICENV hDevice);
+
+#define wglBindVideoCaptureDeviceNV WGLEW_GET_FUN(__wglewBindVideoCaptureDeviceNV)
+#define wglEnumerateVideoCaptureDevicesNV WGLEW_GET_FUN(__wglewEnumerateVideoCaptureDevicesNV)
+#define wglLockVideoCaptureDeviceNV WGLEW_GET_FUN(__wglewLockVideoCaptureDeviceNV)
+#define wglQueryVideoCaptureDeviceNV WGLEW_GET_FUN(__wglewQueryVideoCaptureDeviceNV)
+#define wglReleaseVideoCaptureDeviceNV WGLEW_GET_FUN(__wglewReleaseVideoCaptureDeviceNV)
+
+#define WGLEW_NV_video_capture WGLEW_GET_VAR(__WGLEW_NV_video_capture)
+
+#endif /* WGL_NV_video_capture */
 
 /* -------------------------- WGL_NV_video_output -------------------------- */
 
@@ -1168,6 +1225,15 @@ WGLEW_EXPORT PFNWGLENDFRAMETRACKINGI3DPROC __wglewEndFrameTrackingI3D;
 WGLEW_EXPORT PFNWGLGETFRAMEUSAGEI3DPROC __wglewGetFrameUsageI3D;
 WGLEW_EXPORT PFNWGLQUERYFRAMETRACKINGI3DPROC __wglewQueryFrameTrackingI3D;
 
+WGLEW_EXPORT PFNWGLDXCLOSEDEVICENVPROC __wglewDXCloseDeviceNV;
+WGLEW_EXPORT PFNWGLDXLOCKOBJECTSNVPROC __wglewDXLockObjectsNV;
+WGLEW_EXPORT PFNWGLDXOBJECTACCESSNVPROC __wglewDXObjectAccessNV;
+WGLEW_EXPORT PFNWGLDXOPENDEVICENVPROC __wglewDXOpenDeviceNV;
+WGLEW_EXPORT PFNWGLDXREGISTEROBJECTNVPROC __wglewDXRegisterObjectNV;
+WGLEW_EXPORT PFNWGLDXSETRESOURCESHAREHANDLENVPROC __wglewDXSetResourceShareHandleNV;
+WGLEW_EXPORT PFNWGLDXUNLOCKOBJECTSNVPROC __wglewDXUnlockObjectsNV;
+WGLEW_EXPORT PFNWGLDXUNREGISTEROBJECTNVPROC __wglewDXUnregisterObjectNV;
+
 WGLEW_EXPORT PFNWGLCOPYIMAGESUBDATANVPROC __wglewCopyImageSubDataNV;
 
 WGLEW_EXPORT PFNWGLCREATEAFFINITYDCNVPROC __wglewCreateAffinityDCNV;
@@ -1189,6 +1255,12 @@ WGLEW_EXPORT PFNWGLRESETFRAMECOUNTNVPROC __wglewResetFrameCountNV;
 
 WGLEW_EXPORT PFNWGLALLOCATEMEMORYNVPROC __wglewAllocateMemoryNV;
 WGLEW_EXPORT PFNWGLFREEMEMORYNVPROC __wglewFreeMemoryNV;
+
+WGLEW_EXPORT PFNWGLBINDVIDEOCAPTUREDEVICENVPROC __wglewBindVideoCaptureDeviceNV;
+WGLEW_EXPORT PFNWGLENUMERATEVIDEOCAPTUREDEVICESNVPROC __wglewEnumerateVideoCaptureDevicesNV;
+WGLEW_EXPORT PFNWGLLOCKVIDEOCAPTUREDEVICENVPROC __wglewLockVideoCaptureDeviceNV;
+WGLEW_EXPORT PFNWGLQUERYVIDEOCAPTUREDEVICENVPROC __wglewQueryVideoCaptureDeviceNV;
+WGLEW_EXPORT PFNWGLRELEASEVIDEOCAPTUREDEVICENVPROC __wglewReleaseVideoCaptureDeviceNV;
 
 WGLEW_EXPORT PFNWGLBINDVIDEOIMAGENVPROC __wglewBindVideoImageNV;
 WGLEW_EXPORT PFNWGLGETVIDEODEVICENVPROC __wglewGetVideoDeviceNV;
@@ -1237,6 +1309,7 @@ WGLEW_EXPORT GLboolean __WGLEW_I3D_genlock;
 WGLEW_EXPORT GLboolean __WGLEW_I3D_image_buffer;
 WGLEW_EXPORT GLboolean __WGLEW_I3D_swap_frame_lock;
 WGLEW_EXPORT GLboolean __WGLEW_I3D_swap_frame_usage;
+WGLEW_EXPORT GLboolean __WGLEW_NV_DX_interop;
 WGLEW_EXPORT GLboolean __WGLEW_NV_copy_image;
 WGLEW_EXPORT GLboolean __WGLEW_NV_float_buffer;
 WGLEW_EXPORT GLboolean __WGLEW_NV_gpu_affinity;
@@ -1246,6 +1319,7 @@ WGLEW_EXPORT GLboolean __WGLEW_NV_render_depth_texture;
 WGLEW_EXPORT GLboolean __WGLEW_NV_render_texture_rectangle;
 WGLEW_EXPORT GLboolean __WGLEW_NV_swap_group;
 WGLEW_EXPORT GLboolean __WGLEW_NV_vertex_array_range;
+WGLEW_EXPORT GLboolean __WGLEW_NV_video_capture;
 WGLEW_EXPORT GLboolean __WGLEW_NV_video_output;
 WGLEW_EXPORT GLboolean __WGLEW_OML_sync_control;
 
@@ -1259,7 +1333,7 @@ WGLEW_EXPORT GLboolean __WGLEW_OML_sync_control;
 
 typedef struct WGLEWContextStruct WGLEWContext;
 GLEWAPI GLenum wglewContextInit (WGLEWContext* ctx);
-GLEWAPI GLboolean wglewContextIsSupported (WGLEWContext* ctx, const char* name);
+GLEWAPI GLboolean wglewContextIsSupported (const WGLEWContext* ctx, const char* name);
 
 #define wglewInit() wglewContextInit(wglewGetContext())
 #define wglewIsSupported(x) wglewContextIsSupported(wglewGetContext(), x)

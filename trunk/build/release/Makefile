@@ -6,8 +6,8 @@ PHFLAGS =
 LFLAGS = -rdynamic -flto -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Resources -I../../src/Resources/Model -I../../src/Resources/Material -I../../src/Resources/Texture -I../../src/Resources/Mesh -I../../src/Resources/Core -I../../src/Resources/ShaderProg -I../../src/Physics -I../../src/Math -I../../src/Misc -I../../src/Ui -I../../src/Core -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Scene/MaterialRuntime -I../../src/Scene/Cameras -I../../src/Scene/Lights -I../../src/Util -I../../src/Util/Scanner -I../../src/Input -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Renderer/Drawers -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Math -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Scene/MaterialRuntime -I../../src/Scripting/Util -I../../src/Scripting/Input -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Util/Scanner/ScannerToken.cpp ../../src/Util/Scanner/Scanner.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Collision/LineSegment.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Input/Input.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
-OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Util.o Exception.o HighRezTimer.o ScannerToken.o Scanner.o Input.o SkinsDeformer.o Renderer.o Hdr.o Bs.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Ray.o Obb.o Plane.o Sphere.o LineSegment.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o Input.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
+SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Util/Scanner/ScannerToken.cpp ../../src/Util/Scanner/Scanner.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/GlStateMachine.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Collision/LineSegment.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Input/Input.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
+OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Util.o Exception.o HighRezTimer.o ScannerToken.o Scanner.o Input.o SkinsDeformer.o Renderer.o Hdr.o Bs.o GlStateMachine.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Ray.o Obb.o Plane.o Sphere.o LineSegment.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o Input.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -53,6 +53,7 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
@@ -75,8 +76,8 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Ui/Ui.h \
- ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Ui/Ui.h ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_atomic.h \
  ../../extern/include/SDL/SDL_audio.h \
@@ -304,7 +305,8 @@ Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Core/Object.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Obb.inl.h ../../src/Resources/Skeleton.h \
@@ -450,6 +452,7 @@ ModelPatch.o: ../../src/Resources/Model/ModelPatch.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h
 	@echo Compiling ../../src/Resources/Model/ModelPatch.cpp...
@@ -484,7 +487,8 @@ Model.o: ../../src/Resources/Model/Model.cpp \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Core/Object.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
  ../../src/Collision/Obb.inl.h ../../src/Resources/Material/Material.h \
@@ -544,9 +548,10 @@ Material.o: ../../src/Resources/Material/Material.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
@@ -659,6 +664,7 @@ Mesh.o: ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/Mesh.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Mesh/MeshData.h
@@ -713,7 +719,7 @@ ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -773,7 +779,8 @@ ShaderProg.o: ../../src/Resources/ShaderProg/ShaderProg.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h \
  ../../src/Resources/ShaderProg/ShaderPrePreprocessor.h \
  ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
@@ -812,9 +819,8 @@ ShaderProg.o: ../../src/Resources/ShaderProg/ShaderProg.cpp \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Util/Exception.h \
- ../../src/Util/Singleton.h ../../src/Misc/GlException.h \
- ../../src/Core/Logger.h ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Util/StdTypes.h
+ ../../src/Misc/GlException.h ../../src/Core/Logger.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/StdTypes.h
 	@echo Compiling ../../src/Resources/ShaderProg/ShaderProg.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/ShaderProg.cpp -o ShaderProg.o
 
@@ -849,7 +855,8 @@ SProgUniVar.o: ../../src/Resources/ShaderProg/SProgUniVar.cpp \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Texture/Texture.h
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Texture/Texture.h
 	@echo Compiling ../../src/Resources/ShaderProg/SProgUniVar.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/SProgUniVar.cpp -o SProgUniVar.o
 
@@ -1345,7 +1352,8 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -1366,8 +1374,8 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Scene/Scene.h \
- ../../src/Physics/Physics.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1651,7 +1659,8 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
@@ -1678,9 +1687,10 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Scripting/ScriptingEngine.h \
- ../../src/Core/StdinListener.h ../../src/Input/Input.h \
- ../../extern/include/SDL/SDL_scancode.h ../../src/Core/Logger.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h \
+ ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h \
+ ../../src/Core/Logger.h
 	@echo Compiling ../../src/Core/App.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/App.cpp -o App.o
 
@@ -1714,13 +1724,14 @@ SkinPatchNode.o: ../../src/Scene/SkinPatchNode.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -1757,13 +1768,14 @@ PatchNode.o: ../../src/Scene/PatchNode.cpp ../../src/Scene/PatchNode.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -1949,6 +1961,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
@@ -1990,12 +2003,13 @@ SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Util/Singleton.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -2196,7 +2210,8 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Scene/RenderableNode.h \
@@ -2373,6 +2388,7 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
@@ -2391,8 +2407,9 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -2601,7 +2618,8 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Scene/RenderableNode.h \
@@ -2643,13 +2661,14 @@ ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -2704,7 +2723,8 @@ SkelAnimModelNodeCtrl.o: \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Scene/RenderableNode.h \
@@ -2731,7 +2751,8 @@ SkelAnimModelNodeCtrl.o: \
  ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Resources/Skin.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Resources/Skin.h
 	@echo Compiling ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp -o SkelAnimModelNodeCtrl.o
 
@@ -2984,6 +3005,7 @@ MaterialRuntime.o: ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h
 	@echo Compiling ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp -o MaterialRuntime.o
@@ -3245,9 +3267,10 @@ SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Scene/SkinPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Core/Object.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Collision/Obb.h \
  ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
@@ -3283,12 +3306,13 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -3310,7 +3334,7 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/RendererInitializer.h
 	@echo Compiling ../../src/Renderer/Renderer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Renderer.cpp -o Renderer.o
@@ -3346,6 +3370,7 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -3365,7 +3390,7 @@ Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/RendererInitializer.h
 	@echo Compiling ../../src/Renderer/Hdr.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Hdr.cpp -o Hdr.o
@@ -3401,6 +3426,7 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -3420,8 +3446,9 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -3600,6 +3627,12 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
 	@echo Compiling ../../src/Renderer/Bs.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Bs.cpp -o Bs.o
 
+GlStateMachine.o: ../../src/Renderer/GlStateMachine.cpp \
+ ../../src/Renderer/GlStateMachine.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Renderer/GlStateMachine.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/GlStateMachine.cpp -o GlStateMachine.o
+
 Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Renderer/RenderingPass.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
@@ -3622,12 +3655,13 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -3647,8 +3681,9 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -3840,9 +3875,10 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -3867,8 +3903,8 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Renderer/Bs.h ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Scene/Scene.h \
- ../../src/Physics/Physics.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -4037,9 +4073,10 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -4065,9 +4102,10 @@ Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Scene/Lights/Light.h \
- ../../src/Resources/LightRsrc.h ../../src/Scene/Lights/PointLight.h \
- ../../src/Scene/Lights/Light.h ../../src/Scene/Lights/SpotLight.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/Lights/Light.h ../../src/Resources/LightRsrc.h \
+ ../../src/Scene/Lights/PointLight.h ../../src/Scene/Lights/Light.h \
+ ../../src/Scene/Lights/SpotLight.h \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
  ../../src/Scene/Cameras/Camera.h \
  ../../src/Scene/Cameras/OrthographicCamera.h \
@@ -4106,6 +4144,7 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -4124,7 +4163,7 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
 	@echo Compiling ../../src/Renderer/Pps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Pps.cpp -o Pps.o
 
@@ -4150,12 +4189,13 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -4176,8 +4216,8 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Scene/RenderableNode.h \
- ../../src/Scene/SceneNode.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/RenderableNode.h ../../src/Scene/SceneNode.h
 	@echo Compiling ../../src/Renderer/Ms.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ms.cpp -o Ms.o
 
@@ -4204,12 +4244,13 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -4231,8 +4272,9 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -4303,6 +4345,7 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -4323,9 +4366,10 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Scene/Lights/Light.h \
- ../../src/Resources/LightRsrc.h ../../src/Scene/Lights/PointLight.h \
- ../../src/Scene/Lights/Light.h ../../src/Scene/Lights/SpotLight.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/Lights/Light.h ../../src/Resources/LightRsrc.h \
+ ../../src/Scene/Lights/PointLight.h ../../src/Scene/Lights/Light.h \
+ ../../src/Scene/Lights/SpotLight.h \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
  ../../src/Scene/Cameras/Camera.h ../../src/Core/App.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
@@ -4520,9 +4564,10 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -4547,7 +4592,7 @@ Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/RendererInitializer.h \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
  ../../src/Scene/Cameras/Camera.h
@@ -4576,12 +4621,13 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -4602,8 +4648,9 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -4793,7 +4840,8 @@ Vao.o: ../../src/Renderer/BufferObjects/Vao.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h
@@ -4829,9 +4877,10 @@ SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -4979,9 +5028,10 @@ CollisionDbgDrawer.o: ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -5031,12 +5081,13 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -5058,7 +5109,7 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Physics/BtAndAnkiConvertors.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
@@ -5214,6 +5265,7 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Scene/RenderableNode.h ../../src/Scene/SceneNode.h \
  ../../src/Core/Object.h ../../src/Collision/Obb.h \
@@ -5236,8 +5288,9 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -5726,13 +5779,14 @@ ModelPatchNode.bpi.o: ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -5783,7 +5837,8 @@ ModelNode.bpi.o: ../../src/Scripting/Scene/ModelNode.bpi.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Scene/RenderableNode.h \
@@ -5835,13 +5890,14 @@ PatchNode.bpi.o: ../../src/Scripting/Scene/PatchNode.bpi.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Util/Exception.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -6029,7 +6085,8 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Scene/RenderableNode.h \
@@ -6076,6 +6133,7 @@ MaterialRuntime.bpi.o: \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h
 	@echo Compiling ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp -o MaterialRuntime.bpi.o
@@ -6126,12 +6184,13 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -6153,7 +6212,8 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/Dbg.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/Dbg.h
 	@echo Compiling ../../src/Scripting/Renderer/MainRenderer.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/MainRenderer.bpi.cpp -o MainRenderer.bpi.o
 
@@ -6178,9 +6238,10 @@ Dbg.bpi.o: ../../src/Scripting/Renderer/Dbg.bpi.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -6256,6 +6317,7 @@ Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
@@ -6284,12 +6346,13 @@ Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
@@ -6311,7 +6374,7 @@ Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
 	@echo Compiling ../../src/Scripting/Renderer/Renderer.bpi.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Renderer.bpi.cpp -o Renderer.bpi.o
 
