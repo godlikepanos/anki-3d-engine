@@ -208,15 +208,15 @@ void App::initRenderer()
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
 	initializer.is.sm.resolution = 1024;
-	initializer.is.sm.level0Distance = 5.0;
+	initializer.is.sm.level0Distance = 3.0;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
 	initializer.pps.hdr.blurringDist = 1.0;
 	initializer.pps.hdr.blurringIterationsNum = 2;
 	initializer.pps.hdr.exposure = 4.0;
-	initializer.pps.ssao.blurringIterationsNum = 2;
+	initializer.pps.ssao.blurringIterationsNum = 4;
 	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.renderingQuality = 0.4;
+	initializer.pps.ssao.renderingQuality = 0.3;
 	initializer.mainRendererQuality = 1.0;
 	MainRendererSingleton::getInstance().init(initializer);
 }

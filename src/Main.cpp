@@ -168,6 +168,7 @@ void init()
 
 	// Imp
 	imp = new SkinNode();
+	imp->setLocalTransform(Transform(Vec3(0.0, 2.0, 0.0), Mat3::getIdentity(), 0.7));
 	imp->init("models/imp/imp.skin");
 	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
 	imp->skelAnimModelNodeCtrl->set(imp->getSkin().getSkelAnims()[0].get());
@@ -402,7 +403,7 @@ void mainLoop()
 		}
 		else
 		{
-			if(MainRendererSingleton::getInstance().getFramesNum() == 5000)
+			if(MainRendererSingleton::getInstance().getFramesNum() == 100)
 			{
 				break;
 			}

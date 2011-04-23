@@ -35,7 +35,8 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 
 		vboArr[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TFV_POSITIONS];
 
-		tfVao.attachArrayBufferVbo(tfVbos[TFV_POSITIONS], SkinsDeformer::TFSPA_POSITION, 3, GL_FLOAT, false, 0, NULL);
+		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_POSITIONS), SkinsDeformer::TFSPA_POSITION, 3,
+		                           GL_FLOAT, false, 0, NULL);
 	}
 
 	// Normals
@@ -46,7 +47,8 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 
 		vboArr[Mesh::VBO_VERT_NORMALS] = &tfVbos[TFV_NORMALS];
 
-		tfVao.attachArrayBufferVbo(tfVbos[TFV_NORMALS], SkinsDeformer::TFSPA_NORMAL, 3, GL_FLOAT, false, 0, NULL);
+		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_NORMALS), SkinsDeformer::TFSPA_NORMAL, 3,
+		                           GL_FLOAT, false, 0, NULL);
 	}
 
 	// Tangents
@@ -57,7 +59,8 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 
 		vboArr[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TFV_TANGENTS];
 
-		tfVao.attachArrayBufferVbo(tfVbos[TFV_TANGENTS], SkinsDeformer::TFSPA_TANGENT, 4, GL_FLOAT, false, 0, NULL);
+		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_TANGENTS), SkinsDeformer::TFSPA_TANGENT, 4,
+		                           GL_FLOAT, false, 0, NULL);
 	}
 
 	// Attach some extra stuff to the tfVao
@@ -72,7 +75,6 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),SkinsDeformer::TFSPA_VERT_WEIGHT_WEIGHTS, 4,
 	                           GL_FLOAT, GL_FALSE, sizeof(MeshData::VertexWeight), BUFFER_OFFSET(20));
-
 
 	// Rendering VAOs
 	createVao(rsrc.getCpMtl(), vboArr, cpVao);

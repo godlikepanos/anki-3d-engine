@@ -14,6 +14,7 @@ void Mesh::load(const char* filename)
 	MeshData meshData(filename);
 
 	vertIdsNum = meshData.getVertIndeces().size();
+	vertsNum = meshData.getVertCoords().size();
 
 	try
 	{

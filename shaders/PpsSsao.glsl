@@ -102,6 +102,7 @@ void main(void)
 	vec3 p = getPosition(vTexCoords);
 	vec3 n = getNormal(vTexCoords);
 	vec2 rand = getRandom(vTexCoords);
+	//rand = rand - rand + vec2(0.0, 0.0);
 
 	fColor = 0.0;
 	

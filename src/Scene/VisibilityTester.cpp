@@ -165,7 +165,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 		node->setVisible(true);
 
 		// Put all the patches into the visible container
-		/*BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
+		BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
 		{
 			// Skip shadowless
 			if(skipShadowless && !patchNode->getCpMtl().castsShadow())
@@ -182,7 +182,7 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless, Camera& cam)
 				cam.getVisibleMsRenderableNodes().push_back(patchNode);
 			}
 			patchNode->setVisible(true);
-		}*/
+		}
 	}
 
 	//

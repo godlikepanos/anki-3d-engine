@@ -6,6 +6,7 @@
 #include "RsrcPtr.h"
 #include "Vbo.h"
 #include "Obb.h"
+#include "Accessors.h"
 
 
 class MeshData;
@@ -36,8 +37,9 @@ class Mesh
 		/// @name Accessors
 		/// @{
 		const Vbo& getVbo(Vbos id) const {return vbos[id];}
-		uint getVertIdsNum() const {return vertIdsNum;}
-		const Obb& getVisibilityShape() const {return visibilityShape;}
+		GETTER_R_BY_VAL(uint, vertIdsNum, getVertIdsNum)
+		GETTER_R(Obb, visibilityShape, getVisibilityShape)
+		GETTER_R_BY_VAL(uint, vertsNum, getVertsNum)
 		/// @}
 
 		/// Implements @ref Resource::load
@@ -54,6 +56,7 @@ class Mesh
 		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
 		uint vertIdsNum; ///< The number of vertex IDs
 		Obb visibilityShape;
+		uint vertsNum;
 
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);

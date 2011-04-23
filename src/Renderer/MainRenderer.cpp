@@ -100,9 +100,9 @@ void MainRenderer::render(Camera& cam_)
 	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 	sProg->bind();
-	//sProg->findUniVar("rasterImage")->set(ms.getNormalFai(), 0);
+	sProg->findUniVar("rasterImage")->set(ms.getNormalFai(), 0);
 	//sProg->findUniVar("rasterImage")->set(pps.getSsao().getFai(), 0);
-	sProg->findUniVar("rasterImage")->set(pps.getPostPassFai(), 0);
+	//sProg->findUniVar("rasterImage")->set(pps.getPostPassFai(), 0);
 	drawQuad();
 }
 

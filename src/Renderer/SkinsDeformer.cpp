@@ -12,28 +12,8 @@ void SkinsDeformer::init()
 	//
 	// Load the shaders
 	//
-	std::string all = ShaderProg::createSrcCodeToCache("shaders/TfHwSkinningGeneric.glsl",
-	                                                   "#define NORMAL_ENABLED\n#define TANGENT_ENABLED\n",
-	                                                   "pnt");
-
-	std::string p = ShaderProg::createSrcCodeToCache("shaders/TfHwSkinningGeneric.glsl",
-	                                                 "",
-	                                                 "p");
-
-	tfHwSkinningAllSProg.loadRsrc(all.c_str());
-	tfHwSkinningPosSProg.loadRsrc(p.c_str());
-
-	const char* vars[] = {"vPosition", "vNormal", "vTangent"};
-
-	// All
-	tfHwSkinningAllSProg->bind();
-	glTransformFeedbackVaryings(tfHwSkinningAllSProg->getGlId(), 3, vars, GL_SEPARATE_ATTRIBS);
-	tfHwSkinningAllSProg->relink();
-
-	// Pos
-	tfHwSkinningPosSProg->bind();
-	glTransformFeedbackVaryings(tfHwSkinningAllSProg->getGlId(), 1, vars, GL_SEPARATE_ATTRIBS);
-	tfHwSkinningPosSProg->relink();
+	tfHwSkinningAllSProg.loadRsrc("shaders/TfHwSkinningPosNormTan.glsl");
+	tfHwSkinningPosSProg.loadRsrc("shaders/TfHwSkinningPos.glsl");
 }
 
 
@@ -42,12 +22,24 @@ void SkinsDeformer::init()
 //======================================================================================================================
 void SkinsDeformer::deform(SkinPatchNode& node)
 {
-	ASSERT(node.getParent() == NULL);
+	ASSERT(node.getParent() != NULL); // The SkinPatchNode are always have parent
 	ASSERT(static_cast<SceneNode*>(node.getParent())->getSceneNodeType() == SceneNode::SNT_SKIN);
 
 	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
 
 	glEnable(GL_RASTERIZER_DISCARD);
+
+	const ShaderProg* sProg;
+
+	if(node.getModelPatchRsrc().supportsNormals() &&
+	   node.getModelPatchRsrc().supportsTangents())
+	{
+		sProg = tfHwSkinningAllSProg.get();
+	}
+	else
+	{
+		sProg = tfHwSkinningPosSProg.get();
+	}
 
 	tfHwSkinningAllSProg->bind();
 
@@ -58,18 +50,30 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 	tfHwSkinningAllSProg->findUniVar("skinningTranslations")->set(&skinNode->getBoneTranslations()[0],
 	                                                              skinNode->getBoneTranslations().size());
 
-	// TF
-	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, node.getTfVbo(SkinPatchNode::TFV_POSITIONS).getGlId());
-	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, node.getTfVbo(SkinPatchNode::TFV_NORMALS).getGlId());
-	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, node.getTfVbo(SkinPatchNode::TFV_TANGENTS).getGlId());
-
 	node.getTfVao().bind();
 
+	// TF
+	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, node.getTfVbo(SkinPatchNode::TFV_POSITIONS).getGlId());
+
+	if(sProg == tfHwSkinningAllSProg.get())
+	{
+		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, node.getTfVbo(SkinPatchNode::TFV_NORMALS).getGlId());
+		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, node.getTfVbo(SkinPatchNode::TFV_TANGENTS).getGlId());
+	}
+
 	//glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, this->Query);
-	glBeginTransformFeedback(GL_TRIANGLES);
-		glDrawElements(GL_TRIANGLES, node.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	glBeginTransformFeedback(GL_POINTS);
+		glDrawArrays(GL_POINTS, 0, node.getModelPatchRsrc().getMesh().getVertsNum());
 	glEndTransformFeedback();
 	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 
 	glDisable(GL_RASTERIZER_DISCARD);
 }
+
+
+
+
+
+
+
+
