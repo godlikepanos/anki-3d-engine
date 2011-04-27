@@ -38,6 +38,10 @@ class Mat4
 		const float& operator()(const uint i, const uint j) const;
 		float& operator[](const uint i);
 		const float& operator[](const uint i) const;
+		#if defined(MATH_INTEL_SIMD)
+			__m128& getMm(uint i);
+			const __m128& getMm(uint i) const;
+		#endif
 		/// @}
 
 		/// @name Operators with same type
