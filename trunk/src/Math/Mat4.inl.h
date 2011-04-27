@@ -190,6 +190,17 @@ inline const float& Mat4::operator[](const uint i) const
 	return arr1[i];
 }
 
+#if defined(MATH_INTEL_SIMD)
+	const __m128& Mat4::getMm(uint i) const
+	{
+		return arrMm[i];
+	}
+	
+	__m128& Mat4::getMm(uint i)
+	{
+		return arrMm[i];
+	}
+#endif
 
 //======================================================================================================================
 // Operators with same                                                                                                 =
