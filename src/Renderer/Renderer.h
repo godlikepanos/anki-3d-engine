@@ -56,6 +56,9 @@ class Renderer
 		const Camera& getCamera() const {return *cam;}
 		GETTER_RW(SceneDrawer, sceneDrawer, getSceneDrawer)
 		GETTER_RW(SkinsDeformer, skinsDeformer, getSkinsDeformer)
+		GETTER_R(Vec2, planes, getPlanes)
+		GETTER_R(Vec2, limitsOfNearPlane, getLimitsOfNearPlane)
+		GETTER_R(Vec2, limitsOfNearPlane2, getLimitsOfNearPlane2)
 		/// @}
 
 		/// Init the renderer given an initialization class
@@ -84,6 +87,20 @@ class Renderer
 		/// Create FAI texture
 		static void createFai(uint width, uint height, int internalFormat, int format, int type, Texture& fai);
 
+		/// Calculate the planes needed for the calculation of the fragment position z in view space.
+		/// Having the fragment's depth, the camera's zNear and zFar the z of the fragment is being calculated inside
+		/// the fragment shader from:
+		/// @code z = (- zFar * zNear) / (zFar - depth * (zFar - zNear)) @endcode
+		/// The above can be optimized and this method actually precalculates a few things in order to lift a few
+		/// calculations from the fragment shader. So the z is:
+		/// @code z =  -planes.y / (planes.x + depth) @endcode
+		/// @param[in] cameraRange The zNear, zFar
+		/// @param[out] planes The planes
+		static void calcPlanes(const Vec2& cameraRange, Vec2& planes);
+
+		/// Calculates two values needed for the calculation of the fragment position in view space.
+		static void calcLimitsOfNearPlane(const PerspectiveCamera& cam, Vec2& limitsOfNearPlane);
+
 	//==================================================================================================================
 	// Protected                                                                                                       =
 	//==================================================================================================================
@@ -103,6 +120,14 @@ class Renderer
 		static int maxColorAtachments; ///< Max color attachments an FBO can accept
 		SceneDrawer sceneDrawer;
 		SkinsDeformer skinsDeformer;
+
+		/// @name Optimization vars
+		/// Used in other stages
+		/// @{
+		Vec2 planes; ///< Used to to calculate the frag pos in view space inside a few shader programs
+		Vec2 limitsOfNearPlane; ///< Used to to calculate the frag pos in view space inside a few shader programs
+		Vec2 limitsOfNearPlane2; ///< Used to to calculate the frag pos in view space inside a few shader programs
+		/// @}
 
 	//==================================================================================================================
 	// Protected                                                                                                       =

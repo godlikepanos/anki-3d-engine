@@ -91,7 +91,7 @@ void Ms::run()
 		glDepthFunc(GL_EQUAL);
 	}
 
-	glClear(GL_COLOR_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT);
 
 	// render all
 	BOOST_FOREACH(const RenderableNode* node, r.getCamera().getVisibleMsRenderableNodes())

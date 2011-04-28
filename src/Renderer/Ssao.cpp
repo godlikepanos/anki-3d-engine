@@ -110,21 +110,13 @@ void Ssao::run()
 	ssaoSProg->bind();
 	
 	// planes
-	Vec2 planes;
-	Is::calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
-	ssaoSProg->findUniVar("planes")->set(&planes);
+	ssaoSProg->findUniVar("planes")->set(&r.getPlanes());
 
 	// limitsOfNearPlane
-	Vec2 limitsOfNearPlane;
-	ASSERT(cam.getType() == Camera::CT_PERSPECTIVE);
-	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
-	limitsOfNearPlane.y() = cam.getZNear() * tan(0.5 * pcam.getFovY());
-	limitsOfNearPlane.x() = limitsOfNearPlane.y() * (pcam.getFovX() / pcam.getFovY());
-	ssaoSProg->findUniVar("limitsOfNearPlane")->set(&limitsOfNearPlane);
+	ssaoSProg->findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
 
 	// limitsOfNearPlane2
-	limitsOfNearPlane *= 2;
-	ssaoSProg->findUniVar("limitsOfNearPlane2")->set(&limitsOfNearPlane);
+	ssaoSProg->findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
 
 	// zNear
 	float zNear = cam.getZNear();

@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "RendererInitializer.h"
 #include "Exception.h"
+#include "PerspectiveCamera.h"
 
 
 //======================================================================================================================
@@ -64,6 +65,16 @@ void Renderer::init(const RendererInitializer& initializer)
 void Renderer::render(Camera& cam_)
 {
 	cam = &cam_;
+
+	//
+	// Calc a few vars
+	//
+	calcPlanes(Vec2(cam->getZNear(), cam->getZFar()), planes);
+
+	ASSERT(cam->getType() == Camera::CT_PERSPECTIVE);
+	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(*cam);
+	calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
+	limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
@@ -132,3 +143,24 @@ void Renderer::createFai(uint width, uint height, int internalFormat, int format
 }
 
 
+//======================================================================================================================
+// calcPlanes                                                                                                          =
+//======================================================================================================================
+void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
+{
+	float zNear = cameraRange.x();
+	float zFar = cameraRange.y();
+
+	planes.x() = zFar / (zNear - zFar);
+	planes.y() = (zFar * zNear) / (zNear -zFar);
+}
+
+
+//======================================================================================================================
+// calcLimitsOfNearPlane                                                                                               =
+//======================================================================================================================
+void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam, Vec2& limitsOfNearPlane)
+{
+	limitsOfNearPlane.y() = pcam.getZNear() * tan(0.5 * pcam.getFovY());
+	limitsOfNearPlane.x() = limitsOfNearPlane.y() * (pcam.getFovX() / pcam.getFovY());
+}

@@ -27,67 +27,6 @@ Is::Is(Renderer& r_):
 
 
 //======================================================================================================================
-// calcViewVectors                                                                                                     =
-//======================================================================================================================
-void Is::calcViewVectors(const boost::array<float, 2>& screenSize, const Mat4& invProjectionMat,
-                         boost::array<Vec3, 4>& viewVectors)
-{
-	uint w = screenSize[0];
-	uint h = screenSize[1];
-
-	// From right up and CC wise to right down, Just like we render the quad
-	uint pixels[4][2] = {{w, h}, {0, h}, {0, 0}, {w, 0}};
-	boost::array<uint, 4> viewport = {{0, 0, w, h}};
-
-	for(int i = 0; i < 4; i++)
-	{
-		/*
-		Original Code:
-		Renderer::unProject(pixels[i][0], pixels[i][1], 10, cam.getViewMatrix(), cam.getProjectionMatrix(), viewport,
-		                    viewVectors[i].x, viewVectors[i].y, viewVectors[i].z);
-		viewVectors[i] = cam.getViewMatrix() * viewVectors[i];
-		The original code is the above 3 lines. The optimized follows:
-		*/
-
-		Vec3 vec;
-		vec.x() = (2.0 * (pixels[i][0] - viewport[0])) / viewport[2] - 1.0;
-		vec.y() = (2.0 * (pixels[i][1] - viewport[1])) / viewport[3] - 1.0;
-		vec.z() = 1.0;
-
-		viewVectors[i] = vec.getTransformed(invProjectionMat);
-		// end of optimized code
-	}
-}
-
-
-//======================================================================================================================
-// calcViewVectors                                                                                                     =
-//======================================================================================================================
-void Is::calcViewVectors()
-{
-	boost::array<Vec3, 4> viewVectors;
-	boost::array<float, 2> screenSize = {{r.getWidth(), r.getHeight()}};
-
-	calcViewVectors(screenSize, r.getCamera().getInvProjectionMatrix(), viewVectors);
-
-	viewVectorsVbo.write(&viewVectors[0]);
-}
-
-
-//======================================================================================================================
-// calcPlanes                                                                                                          =
-//======================================================================================================================
-void Is::calcPlanes(const Vec2& cameraRange, Vec2& planes)
-{
-	float zNear = cameraRange.x();
-	float zFar = cameraRange.y();
-
-	planes.x() = zFar / (zNear - zFar);
-	planes.y() = (zFar * zNear) / (zNear -zFar);
-}
-
-
-//======================================================================================================================
 // initFbo                                                                                                             =
 //======================================================================================================================
 void Is::initFbo()
@@ -163,32 +102,6 @@ void Is::init(const RendererInitializer& initializer)
 
 	// init the rest
 	initFbo();
-
-	// The VBOs and VAOs
-	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}, {1.0, 0.0}};
-	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords), quadVertCoords, GL_STATIC_DRAW);
-
-	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}};
-	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces), quadVertIndeces, GL_STATIC_DRAW);
-
-	viewVectorsVbo.create(GL_ARRAY_BUFFER, 4 * sizeof(Vec3), NULL, GL_DYNAMIC_DRAW);
-
-	vao.create();
-	vao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, NULL);
-	vao.attachArrayBufferVbo(viewVectorsVbo, 1, 3, GL_FLOAT, false, 0, NULL);
-	vao.attachElementArrayBufferVbo(quadVertIndecesVbo);
-}
-
-
-//======================================================================================================================
-// drawLightPassQuad                                                                                                   =
-//======================================================================================================================
-void Is::drawLightPassQuad() const
-{
-	vao.bind();
-	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
-	vao.unbind();
-	ON_GL_FAIL_THROW_EXCEPTION();
 }
 
 
@@ -229,7 +142,11 @@ void Is::pointLightPass(const PointLight& light)
 	shader.findUniVar("msDiffuseFai")->set(r.getMs().getDiffuseFai(), 1);
 	shader.findUniVar("msSpecularFai")->set(r.getMs().getSpecularFai(), 2);
 	shader.findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 3);
-	shader.findUniVar("planes")->set(&planes);
+	shader.findUniVar("planes")->set(&r.getPlanes());
+	shader.findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
+	shader.findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
+	float zNear = cam.getZNear();
+	shader.findUniVar("zNear")->set(&zNear);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->set(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->set(&light.getRadius());
@@ -237,7 +154,7 @@ void Is::pointLightPass(const PointLight& light)
 	shader.findUniVar("lightSpecularCol")->set(&light.getSpecularCol());
 
 	// render quad
-	drawLightPassQuad();
+	r.drawQuad();
 }
 
 
@@ -257,11 +174,7 @@ void Is::spotLightPass(const SpotLight& light)
 
 		const Plane& plane = cam.getWSpaceFrustumPlane(Camera::FP_NEAR);
 
-		//float dist = (light.getWorldTransform().getOrigin() - cam.getWorldTransform().getOrigin()).getLength();
 		float dist = seg.testPlane(plane);
-		//float dist = plane.test(light.getWorldTransform().getOrigin());
-
-		//INFO(dist);
 
 		sm.run(light.getCamera(), dist);
 
@@ -301,8 +214,12 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->findUniVar("msSpecularFai")->set(r.getMs().getSpecularFai(), 2);
 	shdr->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 3);
 
-	// the planes
-	shdr->findUniVar("planes")->set(&planes);
+	// the ???
+	shdr->findUniVar("planes")->set(&r.getPlanes());
+	shdr->findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
+	shdr->findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
+	float zNear = cam.getZNear();
+	shdr->findUniVar("zNear")->set(&zNear);
 
 	// the light params
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
@@ -330,7 +247,7 @@ void Is::spotLightPass(const SpotLight& light)
 	}
 
 	// render quad
-	drawLightPassQuad();
+	r.drawQuad();
 }
 
 
@@ -339,6 +256,8 @@ void Is::spotLightPass(const SpotLight& light)
 //======================================================================================================================
 void Is::run()
 {
+	const Camera& cam = r.getCamera();
+
 	// FBO
 	fbo.bind();
 
@@ -354,9 +273,6 @@ void Is::run()
 	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_STENCIL_TEST);
-
-	calcViewVectors();
-	calcPlanes(Vec2(r.getCamera().getZNear(), r.getCamera().getZFar()), planes);
 
 	// for all lights
 	BOOST_FOREACH(const PointLight* light, r.getCamera().getVisiblePointLights())

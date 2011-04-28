@@ -66,7 +66,7 @@ class App
 		GETTER_R(boost::filesystem::path, cachePath, getCachePath)
 		/// @}
 
-	private:
+	public: /// @todo
 		uint windowW; ///< The main window width
 		uint windowH; ///< The main window height
 		boost::filesystem::path settingsPath; ///< The path that holds the configuration
