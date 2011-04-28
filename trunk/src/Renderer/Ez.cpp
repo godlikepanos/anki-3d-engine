@@ -27,7 +27,8 @@ void Ez::init(const RendererInitializer& initializer)
 
 		fbo.setNumOfColorAttachements(0);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+		                       r.getMs().getDepthFai().getGlId(), 0);
 
 		fbo.checkIfGood();
 
@@ -50,6 +51,8 @@ void Ez::run()
 		return;
 	}
 
+	const Camera& cam = r.getCamera();
+
 	fbo.bind();
 
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
@@ -58,20 +61,12 @@ void Ez::run()
 	GlStateMachineSingleton::getInstance().setDepthTestEnabled(true);
 	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
 
-	/// @todo Uncomment
-	/*for(Vec<MeshNode*>::iterator it=app->getScene().meshNodes.begin(); it!=app->getScene().meshNodes.end(); it++)
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	BOOST_FOREACH(const RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
-		MeshNode* meshNode = (*it);
-		if(meshNode->mesh->material->renderInBlendingStage())
-		{
-			continue;
-		}
-
-		//RASSERT_THROW_EXCEPTION(meshNode->mesh->material->getDepthMtl() == NULL);
-
-		r.setupMaterial(meshNode->mesh->material->getDepthMtl(), *meshNode, r.getCamera());
-		meshNode->renderDepth();
-	}*/
+		r.getSceneDrawer().renderRenderableNode(*node, cam, SceneDrawer::RPT_DEPTH);
+	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }

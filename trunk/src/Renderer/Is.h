@@ -30,24 +30,6 @@ class Is: private RenderingPass
 		const Texture& getFai() const {return fai;}
 		/// @}
 
-		/// Calculate the view vectors needed for the calculation of the frag pos in view space in shaders
-		/// @param[in] screenSize The width and height of the screen
-		/// @param[in] invProjectionMat The inverted camera projection matrix
-		/// @param[out] viewVectors The output
-		static void calcViewVectors(const boost::array<float, 2>& screenSize, const Mat4& invProjectionMat,
-		                            boost::array<Vec3, 4>& viewVectors);
-
-		/// Calculate the planes needed for the calculation of the fragment position z in view space.
-		/// Having the fragment's depth, the camera's zNear and zFar the z of the fragment is being calculated inside
-		/// the fragment shader from:
-		/// @code z = (- zFar * zNear) / (zFar - depth * (zFar - zNear)) @endcode
-		/// The above can be optimized and this method actually precalculates a few things in order to lift a few 
-		/// calculations from the fragment shader. So the z is:
-		/// @code z =  -planes.y / (planes.x + depth) @endcode
-		/// @param[in] cameraRange The zNear, zFar
-		/// @param[out] planes The planes
-		static void calcPlanes(const Vec2& cameraRange, Vec2& planes);
-
 	private:
 		Sm sm; ///< Shadowmapping pass
 		Smo smo; /// Stencil masking optimizations pass
@@ -58,23 +40,6 @@ class Is: private RenderingPass
 		RsrcPtr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program
 		RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
 		RsrcPtr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
-
-		/// @name For the quad drawing in light passes
-		/// @{
-		Vbo quadPositionsVbo; ///< The VBO for quad positions
-		Vbo viewVectorsVbo; ///< The VBO to pass the @ref viewVectors.
-		Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
-		Vao vao; ///< This VAO is used in light passes only
-		/// @}
-
-		Vec2 planes; ///< Used to to calculate the frag pos in view space inside the shader program
-
-		/// Draws the vao that has attached the viewVectorsVbo as well. Used in light passes
-		void drawLightPassQuad() const;
-
-		/// Calc the view vector that we will use inside the shader to calculate the frag pos in view space. This
-		/// calculates the view vectors and updates the @ref viewVectorsVbo
-		void calcViewVectors();
 
 		/// The ambient pass
 		void ambientPass(const Vec3& color);

@@ -35,7 +35,7 @@ void App::handleMessageHanlderMsgs(const char* file, int line, const char* func,
 //======================================================================================================================
 void App::parseCommandLineArgs(int argc, char* argv[])
 {
-	for(int i=1; i<argc; i++)
+	for(int i = 1; i < argc; i++)
 	{
 		char* arg = argv[i];
 		if(strcmp(arg, "--terminal-coloring") == 0)
@@ -202,7 +202,7 @@ void App::initDirs()
 void App::initRenderer()
 {
 	RendererInitializer initializer;
-	initializer.ms.ez.enabled = false;
+	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;

@@ -4,24 +4,7 @@
 
 #pragma anki vertShaderBegins
 
-layout(location = 0) in vec2 position; ///< the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
-layout(location = 1) in vec3 viewVector;
-
-out vec2 vTexCoords;
-out vec3 vPosition;
-
-
-//======================================================================================================================
-// main                                                                                                                =
-//======================================================================================================================
-void main()
-{
-	vPosition = viewVector;
-	vTexCoords = position;
-	vec2 _vertPosNdc_ = position * 2.0 - 1.0;
-	gl_Position = vec4(_vertPosNdc_, 0.0, 1.0);
-}
-
+#pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki fragShaderBegins
 
@@ -29,8 +12,12 @@ void main()
 
 /// @name Uniforms
 /// @{
+uniform vec2 planes; ///< for the calculation of frag pos in view space
+uniform vec2 limitsOfNearPlane; ///< for the calculation of frag pos in view space
+uniform vec2 limitsOfNearPlane2; ///< This is an optimization see PpsSsao.glsl and r403 for the clean one
+uniform float zNear; ///< for the calculation of frag pos in view space
+
 uniform sampler2D msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai;
-uniform vec2 planes; ///< for the calculation of frag pos in view space	
 uniform vec3 lightPos; ///< Light pos in eye space
 uniform float lightRadius;
 uniform vec3 lightDiffuseCol;
@@ -48,7 +35,6 @@ uniform vec3 lightSpecularCol;
 /// @name Varyings
 /// @{
 in vec2 vTexCoords;
-in vec3 vPosition; ///< for the calculation of frag pos in view space
 /// @}
 
 /// @name Output
@@ -63,17 +49,21 @@ out vec3 fColor;
 /// @return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float _depth_ = texture2D(msDepthFai, vTexCoords).r;
+	float depth = texture2D(msDepthFai, vTexCoords).r;
 
-	if(_depth_ == 1.0)
+	/*if(depth == 1.0)
 	{
 		discard;
-	}
+	}*/
 
 	vec3 fragPosVspace;
-	vec3 vposn = normalize(vPosition);
-	fragPosVspace.z = -planes.y / (planes.x + _depth_);
-	fragPosVspace.xy = vposn.xy * (fragPosVspace.z / vposn.z);
+	fragPosVspace.z = -planes.y / (planes.x + depth);
+
+	fragPosVspace.xy = (vTexCoords * limitsOfNearPlane2) - limitsOfNearPlane;
+
+	float sc = -fragPosVspace.z / zNear;
+	fragPosVspace.xy *= sc;
+
 	return fragPosVspace;
 }
 
