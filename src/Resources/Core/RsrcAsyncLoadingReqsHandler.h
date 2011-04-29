@@ -29,8 +29,9 @@ class RsrcAsyncLoadingReqsHandler
 		void sendNewLoadingRequest(const char* filename, Type** objToLoad);
 		
 		/// Serve the finished requests. This should be called once every loop of the main loop
-		/// @param maxTime The max time to spend serving finished requests. If for example there are many that need more
-		/// time than the max the method will return. The pending requests will be served when it will be called again.
+		/// @param maxTime The max time to spend serving finished requests. If for example there are many that need
+		/// more time than the max the method will return. The pending requests will be served when it will be called
+		/// again.
 		/// In ms
 		void postProcessFinishedRequests(uint maxTime);
 	

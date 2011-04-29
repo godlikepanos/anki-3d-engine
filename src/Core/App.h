@@ -64,9 +64,10 @@ class App
 		GETTER_R(uint, windowH, getWindowHeight)
 		GETTER_R(boost::filesystem::path, settingsPath, getSettingsPath)
 		GETTER_R(boost::filesystem::path, cachePath, getCachePath)
+		GETTER_RW(SDL_WindowID, windowId, getWindowId)
 		/// @}
 
-	public: /// @todo
+	private:
 		uint windowW; ///< The main window width
 		uint windowH; ///< The main window height
 		boost::filesystem::path settingsPath; ///< The path that holds the configuration

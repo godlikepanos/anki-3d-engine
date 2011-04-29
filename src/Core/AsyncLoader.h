@@ -5,6 +5,7 @@
 #include <string>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <SDL/SDL.h>
 
 
 /// Asynchronous loader
@@ -55,6 +56,8 @@ class AsyncLoader
 			void* storage;
 			bool ok; ///< True if the loading was successful
 		};
+
+		SDL_GLContext glContext; ///< For OpenGL stuff
 
 		std::list<Request> requests;
 		std::list<Response> responses;

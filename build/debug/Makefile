@@ -3,11 +3,11 @@
 CXX = g++
 CFLAGS = -DPLATFORM_LINUX -DMATH_INTEL_SIMD -DREVISION=\"`svnversion -c ../..`\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -g3 -fsingle-precision-constant -msse4
 PHFLAGS = 
-LFLAGS = -rdynamic -pg -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
+LFLAGS = -rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
 EXECUTABLE = anki
 INCPATH = -I./ -I../../src -I../../src/Resources -I../../src/Resources/Model -I../../src/Resources/Material -I../../src/Resources/Texture -I../../src/Resources/Mesh -I../../src/Resources/Core -I../../src/Resources/ShaderProg -I../../src/Physics -I../../src/Math -I../../src/Misc -I../../src/Ui -I../../src/Core -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Scene/MaterialRuntime -I../../src/Scene/Cameras -I../../src/Scene/Lights -I../../src/Util -I../../src/Util/Scanner -I../../src/Input -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Renderer/Drawers -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Math -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Scene/MaterialRuntime -I../../src/Scripting/Util -I../../src/Scripting/Input -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Util/Scanner/ScannerToken.cpp ../../src/Util/Scanner/Scanner.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/GlStateMachine.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Collision/LineSegment.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Input/Input.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
-OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Util.o Exception.o HighRezTimer.o ScannerToken.o Scanner.o Input.o SkinsDeformer.o Renderer.o Hdr.o Bs.o GlStateMachine.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Ray.o Obb.o Plane.o Sphere.o LineSegment.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o Input.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
+SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/Ui.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/JobManager.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Util/Scanner/ScannerToken.cpp ../../src/Util/Scanner/Scanner.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/GlStateMachine.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Collision/LineSegment.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Input/Input.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
+OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o Ui.o Object.o Logger.o JobManager.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Util.o Exception.o HighRezTimer.o ScannerToken.o Scanner.o Input.o SkinsDeformer.o Renderer.o Hdr.o Bs.o GlStateMachine.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Ray.o Obb.o Plane.o Sphere.o LineSegment.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o Input.bpi.o MainRenderer.bpi.o Dbg.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -1600,6 +1600,10 @@ Logger.o: ../../src/Core/Logger.cpp ../../src/Core/Logger.h \
 	@echo Compiling ../../src/Core/Logger.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/Logger.cpp -o Logger.o
 
+JobManager.o: ../../src/Core/JobManager.cpp ../../src/Core/JobManager.h
+	@echo Compiling ../../src/Core/JobManager.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/JobManager.cpp -o JobManager.o
+
 App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
@@ -1695,8 +1699,45 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/App.cpp -o App.o
 
 AsyncLoader.o: ../../src/Core/AsyncLoader.cpp \
- ../../src/Core/AsyncLoader.h ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Core/AsyncLoader.h \
+ ../../src/Core/Logger.h ../../src/Util/Singleton.h ../../src/Core/App.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Util/Exception.h
 	@echo Compiling ../../src/Core/AsyncLoader.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/AsyncLoader.cpp -o AsyncLoader.o
 
@@ -3335,7 +3376,9 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/RendererInitializer.h
+ ../../src/Renderer/RendererInitializer.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h
 	@echo Compiling ../../src/Renderer/Renderer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Renderer.cpp -o Renderer.o
 
