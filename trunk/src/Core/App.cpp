@@ -153,7 +153,6 @@ void App::initWindow()
 
 	glContext = SDL_GL_CreateContext(windowId);
 
-
 	// the icon
 	iconImage = SDL_LoadBMP("gfx/icon.bmp");
 	if(iconImage == NULL)

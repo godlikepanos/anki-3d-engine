@@ -1,4 +1,3 @@
-#include <SDL/SDL.h>
 #include "AsyncLoader.h"
 #include "Logger.h"
 #include "App.h"
@@ -34,10 +33,11 @@ void AsyncLoader::load(const char* filename, LoadCallback loadCallback, void* st
 //======================================================================================================================
 void AsyncLoader::workingFunc()
 {
-	/*SDL_GLContext glContext;
-	glContext = SDL_GL_CreateContext(AppSingleton::getInstance().windowId);
-
-	ERROR(SDL_GetError() << " " << glContext);*/
+	glContext = SDL_GL_CreateContext(AppSingleton::getInstance().getWindowId());
+	if(SDL_GL_MakeCurrent(AppSingleton::getInstance().getWindowId(), glContext) != 0)
+	{
+		throw EXCEPTION("Cannot select GL context");
+	}
 
 
 	while(1)
