@@ -7,6 +7,7 @@
 #include "Accessors.h"
 #include "Image.h"
 #include "MeshData.h"
+#include "RsrcLoadingRequests.h"
 
 
 // Dont even think to include these files:
@@ -36,64 +37,10 @@ class RsrcAsyncLoadingReqsHandler
 		void postProcessFinishedRequests(uint maxTime);
 	
 	private:
-		/// Request for the AsyncLoader [Base class]
-		class LoadingRequestBase
-		{
-			public:
-				enum RequestType
-				{
-					RT_TEXTURE,
-					RT_MESH
-				};
-
-				LoadingRequestBase(const char* filename_, RequestType type_): filename(filename_), type(type_) {}
-
-				GETTER_R(std::string, filename, getFilename)
-				GETTER_R(RequestType, type, getType)
-
-			private:
-				std::string filename;
-				RequestType type;
-		};
-
-		/// Request for the AsyncLoader. The combination of the template params is: <MeshData, Mesh> or <Image, Texture>
-		template<typename HelperType, typename LoadType, LoadingRequestBase::RequestType type>
-		struct LoadingRequest: public LoadingRequestBase
-		{
-			public:
-				LoadingRequest(const char* filename, LoadType** objToLoad_);
-				GETTER_R(HelperType, helperObj, getHelperObj)
-				LoadType** getObjToLoad() {return objToLoad;}
-
-			private:
-				HelperType helperObj; ///< The object to pass to the AsyncLoader
-				LoadType** objToLoad; ///< The object to serve in the main thread
-		};
-		
-		typedef LoadingRequest<Image, Texture, LoadingRequestBase::RT_TEXTURE> TextureRequest;
-		typedef LoadingRequest<MeshData, Mesh, LoadingRequestBase::RT_MESH> MeshRequest;
-		
-		boost::ptr_list<LoadingRequestBase> requests; ///< Loading requests
-
 		AsyncLoader al; ///< Asynchronous loader
+		boost::ptr_list<RsrcLoadingRequestBase> requests; ///< Loading requests
 		uint frameServedRequestsNum; ///< The number of served requests for this frame
-		
-		/// @name Async loader callbacks
-		/// @{
-		
-		/// Load image callback. Passed to al
-		static void loadImageCallback(const char* filename, void* img);
-		
-		/// @}
 };
-
-
-template<typename HelperType, typename LoadType, RsrcAsyncLoadingReqsHandler::LoadingRequestBase::RequestType type_>
-inline RsrcAsyncLoadingReqsHandler::LoadingRequest<HelperType, LoadType, type_>::LoadingRequest(const char* filename, 
-                                                                                                LoadType** objToLoad_):
-LoadingRequestBase(filename, type_),
-objToLoad(objToLoad_)
-{}
 
 
 #endif

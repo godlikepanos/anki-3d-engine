@@ -63,6 +63,7 @@ void Texture::load(const Image& img)
 	Initializer init;
 	init.width = img.getWidth();
 	init.height = img.getHeight();
+	init.dataSize = img.getData().getSizeInBytes();
 
 	switch(img.getColorType())
 	{
@@ -88,9 +89,28 @@ void Texture::load(const Image& img)
 			throw EXCEPTION("See file");
 	}
 
+	switch(img.getDataCompression())
+	{
+		case Image::DC_NONE:
+			init.dataCompression = DC_NONE;
+			break;
+
+		case Image::DC_DXT1:
+			init.dataCompression = DC_DXT1;
+			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+
+		case Image::DC_DXT3:
+			init.dataCompression = DC_DXT3;
+			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+
+		case Image::DC_DXT5:
+			init.dataCompression = DC_DXT5;
+			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+	}
+
 	init.data = &img.getData()[0];
 	init.mipmapping = mipmappingEnabled;
-	init.filteringType = TFT_TRILINEAR;
+	init.filteringType = mipmappingEnabled ? TFT_TRILINEAR : TFT_LINEAR;
 	init.repeat = true;
 	init.anisotropyLevel = anisotropyLevel;
 
@@ -101,19 +121,21 @@ void Texture::load(const Image& img)
 //======================================================================================================================
 // create                                                                                                              =
 //======================================================================================================================
-void Texture::create(const Initializer& init)
+void Texture::create(const Initializer& init_)
 {
+	Initializer init = init_;
+
 	//
 	// Sanity checks
 	//
-	if(init.internalFormat <= 4)
-	{
-		throw EXCEPTION("Deprecated internal format");
-	}
-
 	if(isLoaded())
 	{
 		throw EXCEPTION("Already loaded");
+	}
+
+	if(init.internalFormat <= 4)
+	{
+		throw EXCEPTION("Deprecated internal format");
 	}
 
 	//
@@ -123,7 +145,28 @@ void Texture::create(const Initializer& init)
 	bind(LAST_TEX_UNIT);
 	target = GL_TEXTURE_2D;
 
-	glTexImage2D(target, 0, init.internalFormat, init.width, init.height, 0, init.format, init.type, init.data);
+	if(init.data == NULL)
+	{
+		init.dataCompression = DC_NONE;
+	}
+
+	switch(init.dataCompression)
+	{
+		case DC_NONE:
+			glTexImage2D(target, 0, init.internalFormat, init.width, init.height, 0, init.format,
+			             init.type, init.data);
+			break;
+
+		case DC_DXT1:
+		case DC_DXT3:
+		case DC_DXT5:
+			glCompressedTexImage2D(target, 0, init.internalFormat, init.width, init.height, 0,
+			                       init.dataSize, init.data);
+			break;
+
+		default:
+			throw EXCEPTION("Incorrect data compression value");
+	}
 
 	setRepeat(init.repeat);
 

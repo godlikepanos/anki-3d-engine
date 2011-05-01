@@ -205,6 +205,7 @@ void Image::loadTga(const char* filename)
 	}
 
 	fs.close();
+	dataCompression = DC_NONE;
 }
 
 
@@ -409,6 +410,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		fclose(file);
 	}
 
+	dataCompression = DC_NONE;
 	return ok;
 }
 
@@ -438,6 +440,10 @@ void Image::load(const char* filename)
 				throw EXCEPTION(err);
 			}
 		}
+		else if(ext == ".dds")
+		{
+			loadDds(filename);
+		}
 		else
 		{
 			throw EXCEPTION("Unsupported extension");
@@ -449,3 +455,231 @@ void Image::load(const char* filename)
 	}
 }
 
+
+//======================================================================================================================
+// DDS                                                                                                                 =
+//======================================================================================================================
+
+//  little-endian, of course
+#define DDS_MAGIC 0x20534444
+
+//  DDS_header.dwFlags
+#define DDSD_CAPS                   0x00000001
+#define DDSD_HEIGHT                 0x00000002
+#define DDSD_WIDTH                  0x00000004
+#define DDSD_PITCH                  0x00000008
+#define DDSD_PIXELFORMAT            0x00001000
+#define DDSD_MIPMAPCOUNT            0x00020000
+#define DDSD_LINEARSIZE             0x00080000
+#define DDSD_DEPTH                  0x00800000
+
+//  DDS_header.sPixelFormat.dwFlags
+#define DDPF_ALPHAPIXELS            0x00000001
+#define DDPF_FOURCC                 0x00000004
+#define DDPF_INDEXED                0x00000020
+#define DDPF_RGB                    0x00000040
+
+//  DDS_header.sCaps.dwCaps1
+#define DDSCAPS_COMPLEX             0x00000008
+#define DDSCAPS_TEXTURE             0x00001000
+#define DDSCAPS_MIPMAP              0x00400000
+
+//  DDS_header.sCaps.dwCaps2
+#define DDSCAPS2_CUBEMAP            0x00000200
+#define DDSCAPS2_CUBEMAP_POSITIVEX  0x00000400
+#define DDSCAPS2_CUBEMAP_NEGATIVEX  0x00000800
+#define DDSCAPS2_CUBEMAP_POSITIVEY  0x00001000
+#define DDSCAPS2_CUBEMAP_NEGATIVEY  0x00002000
+#define DDSCAPS2_CUBEMAP_POSITIVEZ  0x00004000
+#define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
+#define DDSCAPS2_VOLUME             0x00200000
+
+#define D3DFMT_DXT1     '1TXD'    //  DXT1 compression texture format
+#define D3DFMT_DXT2     '2TXD'    //  DXT2 compression texture format
+#define D3DFMT_DXT3     '3TXD'    //  DXT3 compression texture format
+#define D3DFMT_DXT4     '4TXD'    //  DXT4 compression texture format
+#define D3DFMT_DXT5     '5TXD'    //  DXT5 compression texture format
+
+#define PF_IS_DXT1(pf) \
+  ((pf.dwFlags & DDPF_FOURCC) && \
+   (pf.dwFourCC == D3DFMT_DXT1))
+
+#define PF_IS_DXT3(pf) \
+  ((pf.dwFlags & DDPF_FOURCC) && \
+   (pf.dwFourCC == D3DFMT_DXT3))
+
+#define PF_IS_DXT5(pf) \
+  ((pf.dwFlags & DDPF_FOURCC) && \
+   (pf.dwFourCC == D3DFMT_DXT5))
+
+#define PF_IS_BGRA8(pf) \
+  ((pf.dwFlags & DDPF_RGB) && \
+   (pf.dwFlags & DDPF_ALPHAPIXELS) && \
+   (pf.dwRGBBitCount == 32) && \
+   (pf.dwRBitMask == 0xff0000) && \
+   (pf.dwGBitMask == 0xff00) && \
+   (pf.dwBBitMask == 0xff) && \
+   (pf.dwAlphaBitMask == 0xff000000U))
+
+#define PF_IS_BGR8(pf) \
+  ((pf.dwFlags & DDPF_ALPHAPIXELS) && \
+  !(pf.dwFlags & DDPF_ALPHAPIXELS) && \
+   (pf.dwRGBBitCount == 24) && \
+   (pf.dwRBitMask == 0xff0000) && \
+   (pf.dwGBitMask == 0xff00) && \
+   (pf.dwBBitMask == 0xff))
+
+#define PF_IS_BGR5A1(pf) \
+  ((pf.dwFlags & DDPF_RGB) && \
+   (pf.dwFlags & DDPF_ALPHAPIXELS) && \
+   (pf.dwRGBBitCount == 16) && \
+   (pf.dwRBitMask == 0x00007c00) && \
+   (pf.dwGBitMask == 0x000003e0) && \
+   (pf.dwBBitMask == 0x0000001f) && \
+   (pf.dwAlphaBitMask == 0x00008000))
+
+#define PF_IS_BGR565(pf) \
+  ((pf.dwFlags & DDPF_RGB) && \
+  !(pf.dwFlags & DDPF_ALPHAPIXELS) && \
+   (pf.dwRGBBitCount == 16) && \
+   (pf.dwRBitMask == 0x0000f800) && \
+   (pf.dwGBitMask == 0x000007e0) && \
+   (pf.dwBBitMask == 0x0000001f))
+
+#define PF_IS_INDEX8(pf) \
+  ((pf.dwFlags & DDPF_INDEXED) && \
+   (pf.dwRGBBitCount == 8))
+
+
+union DDS_header
+{
+	struct
+	{
+		uint dwMagic;
+		uint dwSize;
+		uint dwFlags;
+		uint dwHeight;
+		uint dwWidth;
+		uint dwPitchOrLinearSize;
+		uint dwDepth;
+		uint dwMipMapCount;
+		uint dwReserved1[11];
+
+		//  DDPIXELFORMAT
+		struct
+		{
+			uint dwSize;
+			uint dwFlags;
+			uint dwFourCC;
+			uint dwRGBBitCount;
+			uint dwRBitMask;
+			uint dwGBitMask;
+			uint dwBBitMask;
+			uint dwAlphaBitMask;
+		} sPixelFormat;
+
+		//  DDCAPS2
+		struct
+		{
+			uint dwCaps1;
+			uint dwCaps2;
+			uint dwDDSX;
+			uint dwReserved;
+		} sCaps;
+		uint dwReserved2;
+	} data;
+	char dataArr[128];
+};
+
+struct DdsLoadInfo
+{
+	bool compressed;
+	bool swap;
+	bool palette;
+	unsigned int divSize;
+	unsigned int blockBytes;
+};
+
+DdsLoadInfo loadInfoDXT1 = {true, false, false, 4, 8};
+DdsLoadInfo loadInfoDXT3 = {true, false, false, 4, 16};
+DdsLoadInfo loadInfoDXT5 = {true, false, false, 4, 16};
+DdsLoadInfo loadInfoBGRA8 = {false, false, false, 1, 4};
+DdsLoadInfo loadInfoBGR8 = {false, false, false, 1, 3};
+DdsLoadInfo loadInfoBGR5A1 = {false, true, false, 1, 2};
+DdsLoadInfo loadInfoBGR565 = {false, true, false, 1, 2};
+DdsLoadInfo loadInfoIndex8 = {false, false, true, 1, 1};
+
+void Image::loadDds(const char* filename)
+{
+	std::fstream in;
+	in.open(filename, std::ios::in | std::ios::binary);
+
+	if(!in.is_open())
+	{
+		throw EXCEPTION("Cannot open file");
+	}
+
+	//
+	// Read header
+	//
+	DDS_header hdr;
+	in.read((char*)&hdr, sizeof(hdr));
+
+	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124 || !(hdr.data.dwFlags & DDSD_PIXELFORMAT) ||
+	   !(hdr.data.dwFlags & DDSD_CAPS))
+	{
+		throw EXCEPTION("Incorrect DDS header");
+	}
+
+	//
+	// Determine the format
+	//
+	DdsLoadInfo * li;
+
+	if(PF_IS_DXT1(hdr.data.sPixelFormat))
+	{
+		li = &loadInfoDXT1;
+		dataCompression = DC_DXT1;
+	}
+	else if(PF_IS_DXT3(hdr.data.sPixelFormat))
+	{
+		li = &loadInfoDXT3;
+		dataCompression = DC_DXT3;
+	}
+	else if(PF_IS_DXT5(hdr.data.sPixelFormat))
+	{
+		li = &loadInfoDXT5;
+		dataCompression = DC_DXT5;
+	}
+	else
+	{
+		throw EXCEPTION("Unsupported DDS format");
+	}
+
+	//
+	// Load the data
+	//
+	uint mipMapCount = (hdr.data.dwFlags & DDSD_MIPMAPCOUNT) ? hdr.data.dwMipMapCount : 1;
+	if(mipMapCount != 1)
+	{
+		throw EXCEPTION("Currently mipmaps are not supported in DDS");
+	}
+
+	uint x = hdr.data.dwWidth;
+	uint y = hdr.data.dwHeight;
+
+	if(li->compressed)
+	{
+		size_t size = std::max(li->divSize, x) / li->divSize * std::max(li->divSize, y) / li->divSize * li->blockBytes;
+		/*assert( size == hdr.dwPitchOrLinearSize );
+		assert( hdr.dwFlags & DDSD_LINEARSIZE );*/
+		data.resize(size);
+		in.read((char*)(&data[0]), size);
+	}
+
+	type = CT_RGBA;
+	width = hdr.data.dwWidth;
+	height = hdr.data.dwHeight;
+
+	in.close();
+}
