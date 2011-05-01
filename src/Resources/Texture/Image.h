@@ -18,6 +18,15 @@ class Image
 			CT_RGBA /// RGB plus alpha
 		};
 
+		/// The data compression
+		enum DataCompression
+		{
+			DC_NONE,
+			DC_DXT1,
+			DC_DXT3,
+			DC_DXT5
+		};
+
 		/// Do nothing
 		Image() {}
 
@@ -35,6 +44,7 @@ class Image
 		uint getHeight() const {return height;}
 		ColorType getColorType() const {return type;}
 		const Vec<uchar>& getData() const {return data;}
+		DataCompression getDataCompression() const {return dataCompression;}
 		/// @}
 		
 		/// Load an image file
@@ -47,6 +57,7 @@ class Image
 		uint height; ///< Image height
 		ColorType type; ///< Image color type
 		Vec<uchar> data; ///< Image data
+		DataCompression dataCompression;
 
 		/// @name TGA headers
 		/// @{
@@ -76,6 +87,10 @@ class Image
 		/// @param[out] err The error message
 		/// @return true on success
 		bool loadPng(const char* filename, std::string& err) throw();
+
+		/// Load a DDS file
+		/// @param[in] filename The file to load
+		void loadDds(const char* filename);
 };
 
 

@@ -11,9 +11,9 @@
 template<>
 void RsrcAsyncLoadingReqsHandler::sendNewLoadingRequest<Texture>(const char* filename, Texture** objToLoad)
 {
-	TextureRequest* req = new TextureRequest(filename, objToLoad);
+	RsrcTextureLoadingRequest* req = new RsrcTextureLoadingRequest(filename, objToLoad);
 	requests.push_back(req);
-	al.load(filename, &loadImageCallback, (void*)&req->getHelperObj());
+	req->postRequest(al);
 }
 
 
@@ -37,24 +37,10 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 			break;
 		}
 
-		LoadingRequestBase& req = requests.front();	
+		RsrcLoadingRequestBase& req = requests.front();
 		ASSERT(filename == req.getFilename());
 
-		switch(req.getType())
-		{
-			case LoadingRequestBase::RT_TEXTURE:
-			{
-				TextureRequest& texReq = static_cast<TextureRequest&>(req);
-				Texture* tex = new Texture;
-				tex->load(texReq.getHelperObj());
-				*texReq.getObjToLoad() = tex;
-				break;
-			}
-				
-			case LoadingRequestBase::RT_MESH:
-				/// @todo handle it
-				break;
-		}
+		req.doPostLoading();
 		
 		++frameServedRequestsNum;
 
@@ -71,16 +57,5 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 	{
 		INFO(frameServedRequestsNum << " requests served. Time: " << t.getElapsedTime() << ", max time: " << maxTime);
 	}
-}
-
-
-//======================================================================================================================
-// loadImageCallback                                                                                                   =
-//======================================================================================================================
-void RsrcAsyncLoadingReqsHandler::loadImageCallback(const char* filename, void* img_)
-{
-	Image* img = (Image*)img_;
-	img->load(filename);
-	//sleep(2);
 }
 

@@ -29,6 +29,14 @@ class Texture
 			TFT_TRILINEAR
 		};
 
+		enum DataCompression
+		{
+			DC_NONE,
+			DC_DXT1,
+			DC_DXT3,
+			DC_DXT5
+		};
+
 		/// Texture initializer struct
 		struct Initializer
 		{
@@ -42,6 +50,8 @@ class Texture
 			TextureFilteringType filteringType;
 			bool repeat;
 			int anisotropyLevel;
+			DataCompression dataCompression;
+			size_t dataSize; ///< For compressed textures
 		};
 
 		Texture();
