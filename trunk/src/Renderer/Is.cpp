@@ -256,8 +256,6 @@ void Is::spotLightPass(const SpotLight& light)
 //======================================================================================================================
 void Is::run()
 {
-	const Camera& cam = r.getCamera();
-
 	// FBO
 	fbo.bind();
 
