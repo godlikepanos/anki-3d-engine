@@ -43,6 +43,9 @@ out vec3 fColor;
 /// @}
 
 
+const float MAX_SHININESS = 128.0;
+
+
 //======================================================================================================================
 // getFragPosVSpace                                                                                                    =
 //======================================================================================================================
@@ -152,7 +155,7 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	// Specular
 	vec4 specularMix = texture2D(msSpecularFai, vTexCoords); // the MS specular FAI has the color and the shininess
 	vec3 specular = specularMix.xyz;
-	float shininess = specularMix.w;
+	float shininess = specularMix.w * MAX_SHININESS;
 
 	vec3 _eyeVec_ = normalize(-fragPosVspace);
 	vec3 h = normalize(lightDir + _eyeVec_);

@@ -137,6 +137,8 @@ layout(location = 0) out vec2 fMsNormalFai;
 layout(location = 1) out vec3 fMsDiffuseFai;
 layout(location = 2) out vec4 fMsSpecularFai;
 
+const float MAX_SHININESS = 128.0;
+
 
 //======================================================================================================================
 // Normal funcs                                                                                                        =
@@ -300,9 +302,10 @@ void main()
 	// Specular Calculations
 	//
 	#if defined(SPECULAR_MAPPING)
-		vec4 _specularCol_ = vec4(texture2D(specularMap, _superTexCoords_).rgb * specularCol, shininess);
+		vec4 _specularCol_ = vec4(texture2D(specularMap, _superTexCoords_).rgb * specularCol,
+		                                    shininess / MAX_SHININESS);
 	#else // no specular map
-		vec4 _specularCol_ = vec4(specularCol, shininess);
+		vec4 _specularCol_ = vec4(specularCol, shininess / MAX_SHININESS);
 	#endif
 
 
