@@ -95,7 +95,8 @@ void MainRenderer::render(Camera& cam_)
 	//
 	// Render the PPS FAI to the framebuffer
 	//
-	Fbo::unbind();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
+
 	setViewport(0, 0, AppSingleton::getInstance().getWindowWidth(), AppSingleton::getInstance().getWindowHeight());
 	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);

@@ -20,16 +20,16 @@ class Fbo
 		uint getGlId() const;
 
 		/// Binds FBO
-		void bind() const;
+		void bind(GLenum target = GL_FRAMEBUFFER);
 
-		/// Unbinds the FBO. Actually unbinds all FBOs
-		static void unbind();
+		/// Unbinds the FBO
+		void unbind();
 
 		/// Checks the status of an initialized FBO and if fails throw exception
 		/// @exception Exception
 		void checkIfGood() const;
 
-		/// Set the number of color attachements of the FBO
+		/// Set the number of color attachments of the FBO
 		void setNumOfColorAttachements(uint num) const;
 
 		/// Returns the GL id of the current attached FBO
@@ -44,6 +44,7 @@ class Fbo
 
 	private:
 		uint glId; ///< OpenGL identification
+		GLenum target; ///< How the buffer is bind
 
 		bool isCreated() const {return glId != 0;}
 };
@@ -76,16 +77,18 @@ inline Fbo::~Fbo()
 }
 
 
-inline void Fbo::bind() const
+inline void Fbo::bind(GLenum target_)
 {
 	ASSERT(isCreated());
-	glBindFramebuffer(GL_FRAMEBUFFER, glId);
+	target = target_;
+	ASSERT(target == GL_DRAW_FRAMEBUFFER || target == GL_READ_FRAMEBUFFER || target == GL_FRAMEBUFFER);
+	glBindFramebuffer(target, glId);
 }
 
 
 inline void Fbo::unbind()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(target, 0);
 }
 
 

@@ -131,7 +131,7 @@ void Pps::runPrePass()
 
 	r.drawQuad();
 
-	Fbo::unbind();
+	//Fbo::unbind();
 }
 
 
@@ -161,5 +161,5 @@ void Pps::runPostPass()
 
 	r.drawQuad();
 
-	Fbo::unbind();
+	//Fbo::unbind();
 }

@@ -18,14 +18,22 @@ class Exception: public std::exception
 		/// Destructor. Do nothing
 		~Exception() throw() {}
 
-		/// Return the error code
-		const char* what() const throw();
+		/// @name Accessors
+		/// @{
+		const std::string& getTheError() const {return err;}
+		/// @}
 
-	private:
-		mutable std::string err;
+		/// Return the error code formated with the other info
+		virtual const char* what() const throw();
+
+	protected:
+		std::string err;
+		mutable std::string errWhat;
 		const char* file;
 		int line;
 		const char* func;
+
+		std::string getInfoStr() const;
 };
 
 

@@ -46,7 +46,7 @@ class Scanner
 		/// @param istream_ The stream from where to read
 		/// @param scriptName_ The name of the stream. For error reporting
 		/// @exception Exception
-		void loadIstream(std::istream& istream_, const char* scriptName_);
+		void loadIstream(std::istream& istream_, const char* scriptName_ = "unamed-istream");
 
 		/// Extracts all tokens and prints them. Used for debugging
 		void getAllPrintAll();
