@@ -1,15 +1,18 @@
 #include <boost/lexical_cast.hpp>
-#include "Exception.h"
+#include "ScannerException.h"
+
+
+namespace Scanner {
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Exception::Exception(const std::string& err_, const char* file_, int line_, const char* func_):
-	err(err_),
-	file(file_),
-	line(line_),
-	func(func_)
+Exception::Exception(const std::string& err, const std::string& scriptFilename_, int scriptLineNmbr_,
+                     const char* file, int line, const char* func):
+	BaseClass(err, file, line, func),
+	scriptFilename(scriptFilename_),
+	scriptLineNmbr(scriptLineNmbr_)
 {}
 
 
@@ -17,20 +20,10 @@ Exception::Exception(const std::string& err_, const char* file_, int line_, cons
 // Copy constructor                                                                                                    =
 //======================================================================================================================
 Exception::Exception(const Exception& e):
-	err(e.err),
-	file(e.file),
-	line(e.line),
-	func(e.func)
+	BaseClass(e),
+	scriptFilename(e.scriptFilename),
+	scriptLineNmbr(e.scriptLineNmbr)
 {}
-
-
-//======================================================================================================================
-// getInfoStr                                                                                                          =
-//======================================================================================================================
-std::string Exception::getInfoStr() const
-{
-	return std::string("(") + file + ":" + boost::lexical_cast<std::string>(line) + " " + func + ")";
-}
 
 
 //======================================================================================================================
@@ -38,6 +31,10 @@ std::string Exception::getInfoStr() const
 //======================================================================================================================
 const char* Exception::what() const throw()
 {
-	errWhat = "\n" + getInfoStr() + " " + err;
+	errWhat = "\n" + getInfoStr() + " Scanner exception (" + scriptFilename + ':' +
+	          boost::lexical_cast<std::string>(scriptLineNmbr) + ") " + err;
 	return errWhat.c_str();
 }
+
+
+} // end namespace

@@ -8,12 +8,13 @@
 #include "Scanner.h"
 #include "Exception.h"
 #include "Assert.h"
+#include "ScannerException.h"
 
 
 namespace Scanner {
 
 #define SCANNER_EXCEPTION(x) \
-	EXCEPTION("Scanner exception (" + scriptName + ':' + boost::lexical_cast<std::string>(lineNmbr) + "): " + x)
+	Exception(std::string() + x, scriptName, lineNmbr, __FILE__, __LINE__, __func__)
 
 
 //======================================================================================================================

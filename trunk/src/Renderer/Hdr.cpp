@@ -133,5 +133,5 @@ void Hdr::run()
 	}
 
 	// end
-	Fbo::unbind();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }

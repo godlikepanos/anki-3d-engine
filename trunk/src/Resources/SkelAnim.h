@@ -12,7 +12,7 @@ struct BonePose
 	public:
 		BonePose(const Quat& r, const Vec3& trs): rotation(r), translation(trs) {}
 
-		/// Copy contructor
+		/// Copy constructor
 		BonePose(const BonePose& b): rotation(b.rotation), translation(b.translation) {}
 
 		/// @name Accessors

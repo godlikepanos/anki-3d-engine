@@ -39,6 +39,7 @@
 #include "SkinNode.h"
 #include "Skin.h"
 #include "MaterialRuntime.h"
+#include "ScannerException.h"
 
 
 // map (hard coded)
