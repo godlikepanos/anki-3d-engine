@@ -384,6 +384,9 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		case PNG_COLOR_TYPE_RGBA:
 			type = CT_RGBA;
 			break;
+		default:
+			err = "See file";
+			goto cleanup;
 	}
 
 	ok = true;

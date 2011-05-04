@@ -40,6 +40,9 @@ class Smo: public RenderingPass
 		RsrcPtr<ShaderProg> sProg;
 
 		void initCamGeom();
+
+		void setUpGl(bool inside);
+		void restoreGl(bool inside);
 };
 
 

@@ -40,7 +40,14 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
 		RsrcLoadingRequestBase& req = requests.front();
 		ASSERT(filename == req.getFilename());
 
-		req.doPostLoading();
+		try
+		{
+			req.doPostLoading();
+		}
+		catch(std::exception& e)
+		{
+			ERROR("Post-loading failed for \"" << filename << "\": " << e.what());
+		}
 		
 		++frameServedRequestsNum;
 
