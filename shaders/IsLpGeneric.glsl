@@ -141,11 +141,11 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	// Lambert term
 	float lambertTerm = dot(normal, lightDir);
 
-	if(lambertTerm < 0.0)
+	/*if(lambertTerm < 0.0)
 	{
 		discard;
-	}
-	//lambertTerm = max(0.0, lambertTerm);
+	}*/
+	lambertTerm = max(0.0, lambertTerm);
 
 	// Diffuce
 	vec3 diffuse = texture2D(msDiffuseFai, vTexCoords).rgb;
@@ -233,10 +233,9 @@ void main()
 
 
 
-	/*#if defined(POINT_LIGHT_ENABLED)
-		fColor = fColor - fColor + vec3(1, 0, 1);
-	#endif*/
 	
+	//fColor = fColor - fColor + vec3(1, 0, 1);
+
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
 	/*#if defined(SPOT_LIGHT_ENABLED)
 	fColor = fColor - fColor + vec3(1, 0, 1);

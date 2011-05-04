@@ -12,6 +12,9 @@
 #include "Mesh.h"
 
 
+const float THRESHOLD = 0.2;
+
+
 //======================================================================================================================
 // init                                                                                                                =
 //======================================================================================================================
@@ -54,17 +57,59 @@ void Smo::initCamGeom()
 
 
 //======================================================================================================================
+// setUpGl                                                                                                             =
+//======================================================================================================================
+void Smo::setUpGl(bool inside)
+{
+	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glClear(GL_STENCIL_BUFFER_BIT);
+
+	if(inside)
+	{
+		glCullFace(GL_FRONT);
+		GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	}
+	else
+	{
+		glDepthMask(GL_FALSE);
+		GlStateMachineSingleton::getInstance().setDepthTestEnabled(true);
+	}
+}
+
+
+//======================================================================================================================
+// restoreGl                                                                                                           =
+//======================================================================================================================
+void Smo::restoreGl(bool inside)
+{
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glStencilFunc(GL_EQUAL, 0x1, 0x1);
+
+	if(inside)
+	{
+		glCullFace(GL_BACK);
+	}
+	else
+	{
+		glDepthMask(GL_TRUE);
+	}
+}
+
+
+//======================================================================================================================
 // run [PointLight]                                                                                                    =
 //======================================================================================================================
 void Smo::run(const PointLight& light)
 {
-	// set GL
-	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glColorMask(false, false, false, false);
-	glClear(GL_STENCIL_BUFFER_BIT);
+	const Vec3& o = light.getWorldTransform().getOrigin();
+	const Vec3& c = r.getCamera().getWorldTransform().getOrigin();
+	bool inside =  (o - c).getLength() <= (light.getRadius() + r.getCamera().getZNear() + THRESHOLD);
 
-	glDisable(GL_CULL_FACE);
+	// set GL state
+	setUpGl(inside);
 
 	// set shared prog
 	const float SCALE = 1.0; // we scale the sphere a little
@@ -79,11 +124,7 @@ void Smo::run(const PointLight& light)
 	sphereGeom.vao.unbind();
 
 	// restore GL
-	glEnable(GL_CULL_FACE);
-	glColorMask(true, true, true, true);
-
-	glStencilFunc(GL_EQUAL, 0x1, 0x1);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	restoreGl(inside);
 }
 
 
@@ -94,13 +135,11 @@ void Smo::run(const SpotLight& light)
 {
 	const Camera& lcam = light.getCamera();
 
-	// set GL state
-	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glClear(GL_STENCIL_BUFFER_BIT);
+	bool inside =  lcam.insideFrustum(Sphere(r.getCamera().getWorldTransform().getOrigin(),
+	                                         r.getCamera().getZNear() + THRESHOLD));
 
-	glColorMask(false, false, false, false);
-	glDisable(GL_CULL_FACE);
+	// set GL state
+	setUpGl(inside);
 
 	// Calc the camera shape scale matrix
 	Mat4 localMat(Mat4::getIdentity());
@@ -163,9 +202,5 @@ void Smo::run(const SpotLight& light)
 	cg.vao.unbind();
 
 	// restore GL state
-	glEnable(GL_CULL_FACE);
-	glColorMask(true, true, true, true);
-
-	glStencilFunc(GL_EQUAL, 0x1, 0x1);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	restoreGl(inside);
 }

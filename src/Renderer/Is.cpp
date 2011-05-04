@@ -37,12 +37,6 @@ void Is::initFbo()
 		fbo.create();
 		fbo.bind();
 
-		// init the stencil render buffer
-		glGenRenderbuffers(1, &stencilRb);
-		glBindRenderbuffer(GL_RENDERBUFFER, stencilRb);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, r.getWidth(), r.getHeight());
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilRb);
-
 		// inform in what buffers we draw
 		fbo.setNumOfColorAttachements(1);
 
@@ -51,7 +45,8 @@ void Is::initFbo()
 
 		// attach
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
-		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, r.ms.depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+		                       copyMsDepthFai.getGlId(), 0);
 
 		// test if success
 		fbo.checkIfGood();
@@ -62,6 +57,39 @@ void Is::initFbo()
 	catch(std::exception& e)
 	{
 		throw EXCEPTION("Cannot create deferred shading illumination stage FBO: " + e.what());
+	}
+}
+
+
+//======================================================================================================================
+// initCopy                                                                                                            =
+//======================================================================================================================
+void Is::initCopy()
+{
+	try
+	{
+		// Read
+		readFbo.create();
+		readFbo.bind();
+		readFbo.setNumOfColorAttachements(0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+		                       r.getMs().getDepthFai().getGlId(), 0);
+		readFbo.unbind();
+
+		// Write
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
+		                    GL_UNSIGNED_INT_24_8, copyMsDepthFai);
+
+		writeFbo.create();
+		writeFbo.bind();
+		writeFbo.setNumOfColorAttachements(0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+		                       copyMsDepthFai.getGlId(), 0);
+		writeFbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create deferred shading illumination stage additional FBO: " + e.what());
 	}
 }
 
@@ -101,6 +129,7 @@ void Is::init(const RendererInitializer& initializer)
 	                                                               prefix.c_str()).c_str());
 
 	// init the rest
+	initCopy();
 	initFbo();
 }
 
@@ -133,6 +162,7 @@ void Is::pointLightPass(const PointLight& light)
 
 	// stencil optimization
 	smo.run(light);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 
 	// shader prog
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
@@ -190,6 +220,7 @@ void Is::spotLightPass(const SpotLight& light)
 
 	// stencil optimization
 	smo.run(light);
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 
 	// set the texture
 	//light.getTexture().setRepeat(false);
@@ -252,19 +283,38 @@ void Is::spotLightPass(const SpotLight& light)
 
 
 //======================================================================================================================
+// copyDepth                                                                                                           =
+//======================================================================================================================
+void Is::copyDepth()
+{
+	readFbo.bind(GL_READ_FRAMEBUFFER);
+	writeFbo.bind(GL_DRAW_FRAMEBUFFER);
+	glBlitFramebuffer(0, 0, r.getWidth(), r.getHeight(),
+	                  0, 0, r.getWidth(), r.getHeight(),
+	                  GL_DEPTH_BUFFER_BIT,
+	                  GL_NEAREST);
+}
+
+
+//======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
 void Is::run()
 {
-	// FBO
-	fbo.bind();
-
 	// OGL stuff
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	// Copy
+	if(r.getFramesNum() % 2)
+	{
+		copyDepth();
+	}
+
+	// FBO
+	fbo.bind();
 
 	// ambient pass
+	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
 	ambientPass(SceneSingleton::getInstance().getAmbientCol());
 
 	// light passes
@@ -287,7 +337,7 @@ void Is::run()
 	glDisable(GL_STENCIL_TEST);
 
 	// FBO
-	fbo.unbind();
+	//fbo.unbind();
 
 	ON_GL_FAIL_THROW_EXCEPTION();
 }

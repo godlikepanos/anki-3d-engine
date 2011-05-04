@@ -36,6 +36,9 @@ class Is: private RenderingPass
 		Fbo fbo; ///< This FBO writes to the Is::fai
 		Texture fai; ///< The one and only FAI
 		uint stencilRb; ///< Illumination stage stencil buffer
+		Texture copyMsDepthFai;
+		Fbo readFbo;
+		Fbo writeFbo;
 		RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
 		RsrcPtr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program
 		RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
@@ -52,6 +55,12 @@ class Is: private RenderingPass
 
 		/// Used in @ref init
 		void initFbo();
+
+		/// Init the copy stuff
+		void initCopy();
+
+		///
+		void copyDepth();
 };
 
 
