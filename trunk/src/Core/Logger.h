@@ -8,13 +8,19 @@
 #include "Singleton.h"
 
 
-struct LoggerSender;
-
-
 /// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. Its
 /// thread safe
 class Logger
 {
+	private:
+		/// Record the sender
+		struct LoggerSender
+		{
+			const char* file;
+			int line;
+			const char* func;
+		};
+
 	public:
 		typedef boost::signals2::signal<void (const char*, int, const char*, const char*)> Signal; ///< Signal type
 
@@ -46,8 +52,28 @@ class Logger
 		Logger& operator<<(const LoggerSender& sender);
 		/// @}
 
+		/// @name IO manipulation
+		/// @{
+
+		/// Help the Logger to set the sender
+		static LoggerSender setSender(const char* file, int line, const char* func);
+
+		/// Add a new line and flush the Logger
+		static Logger& endl(Logger& logger) {return logger;}
+
+		/// Flush the Logger
+		static Logger& flush(Logger& logger) {return logger;}
+
+		/// @}
+
 		/// An alternative method to write in the Logger
 		void write(const char* file, int line, const char* func, const char* msg);
+
+		/// Mutex lock
+		void lock() {mutex.lock();}
+
+		/// Mutex unlock
+		void unlock() {mutex.unlock();}
 
 	private:
 		static const int STREAM_SIZE = 2048;
@@ -66,7 +92,7 @@ class Logger
 		void append(const char* cstr, int len);
 
 		/// Append finalize streamBuf and send the signal
-		void flush();
+		void realFlush();
 
 		/// Because we are bored to write
 		template<typename Type>
@@ -77,6 +103,13 @@ class Logger
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
+
+inline Logger::LoggerSender Logger::setSender(const char* file, int line, const char* func)
+{
+	LoggerSender sender = {file, line, func};
+	return sender;
+}
+
 
 template<typename Type>
 Logger& Logger::appendUsingLexicalCast(const Type& val)
@@ -96,46 +129,16 @@ Logger& Logger::appendUsingLexicalCast(const Type& val)
 
 
 //======================================================================================================================
-// IO manipulation non-members                                                                                         =
-//======================================================================================================================
-
-/// Add a new line and flush the Logger
-inline Logger& endl(Logger& logger)
-{
-	return logger;
-}
-
-
-/// Flush the Logger
-inline Logger& flush(Logger& logger)
-{
-	return logger;
-}
-
-
-/// Record the sender
-struct LoggerSender
-{
-	const char* file;
-	int line;
-	const char* func;
-};
-
-
-/// Help the Logger to set the sender
-inline LoggerSender setSender(const char* file, int line, const char* func)
-{
-	LoggerSender sender = {file, line, func};
-	return sender;
-}
-
-
-//======================================================================================================================
 // Macros                                                                                                              =
 //======================================================================================================================
 
 #define LOGGER_MESSAGE(x) \
-	LoggerSingleton::getInstance()  << setSender(__FILE__, __LINE__, __func__) << x << endl;
+	do \
+	{ \
+		LoggerSingleton::getInstance().lock(); \
+		LoggerSingleton::getInstance()  << Logger::setSender(__FILE__, __LINE__, __func__) << x << Logger::endl; \
+		LoggerSingleton::getInstance().unlock(); \
+	} while(false);
 
 #define INFO(x) LOGGER_MESSAGE("Info: " << x)
 

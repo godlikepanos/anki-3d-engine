@@ -39,11 +39,11 @@ Logger& Logger::operator<<(Logger& (*funcPtr)(Logger&))
 	if(funcPtr == endl)
 	{
 		append("\n", 1);
-		flush();
+		realFlush();
 	}
-	else if(funcPtr == ::flush)
+	else if(funcPtr == flush)
 	{
-		flush();
+		realFlush();
 	}
 
 	return *this;
@@ -71,7 +71,7 @@ void Logger::write(const char* file_, int line_, const char* func_, const char* 
 	line = line_;
 	func = func_;
 	append(msg, strlen(msg));
-	flush();
+	realFlush();
 }
 
 
@@ -92,8 +92,6 @@ void Logger::execCommonConstructionCode()
 //======================================================================================================================
 void Logger::append(const char* cstr, int len)
 {
-	mutex.lock();
-
 	if(len > STREAM_SIZE - 1)
 	{
 		const char ERR[] = "**logger buffer overflow**";
@@ -109,22 +107,20 @@ void Logger::append(const char* cstr, int len)
 		// Handle overflow
 		memcpy(sptr, cstr, charsLeft);
 		sptr += charsLeft;
-		flush();
-		mutex.unlock();
+		realFlush();
 		append(cstr + charsLeft, len - charsLeft);
 		return;
 	}
 
 	memcpy(sptr, cstr, len);
 	sptr += len;
-	mutex.unlock();
 }
 
 
 //======================================================================================================================
-// flush                                                                                                               =
+// realFlush                                                                                                           =
 //======================================================================================================================
-void Logger::flush()
+void Logger::realFlush()
 {
 	*sptr = '\0';
 	sig(file, line, func, &streamBuf[0]);
