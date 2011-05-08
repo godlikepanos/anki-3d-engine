@@ -122,6 +122,7 @@ class Material: private MaterialProps
 			// Other
 			SUV_RENDERER_SIZE,
 			SUV_SCENE_AMBIENT_COLOR,
+			SUV_BLURRING,
 			// num
 			SUV_NUM ///< The number of standard uniform variables
 		};

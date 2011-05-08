@@ -124,6 +124,7 @@ uniform vec3 specularCol = vec3(1.0, 0.0, 1.0);
 #if defined(ALPHA_TESTING)
 	uniform float alphaTestingTolerance = 0.5; ///< Below this value the pixels are getting discarded 
 #endif
+uniform float blurring = 0.0;
 
 in vec3 vNormal;
 in vec3 vTangent;
@@ -133,7 +134,7 @@ in vec3 vVertPosViewSpace;
 // @todo 
 in vec3 eye;
 
-layout(location = 0) out vec2 fMsNormalFai;
+layout(location = 0) out vec3 fMsNormalFai;
 layout(location = 1) out vec3 fMsDiffuseFai;
 layout(location = 2) out vec4 fMsSpecularFai;
 
@@ -312,7 +313,7 @@ void main()
 	//
 	// Final Stage. Write all data
 	//
-	fMsNormalFai = packNormal(_normal_);
+	fMsNormalFai = vec3(packNormal(_normal_), blurring);
 	fMsDiffuseFai = _diffColl_;
 	fMsSpecularFai = _specularCol_;
 }

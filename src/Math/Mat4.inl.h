@@ -802,7 +802,7 @@ inline float Mat4::getDet() const
 inline Mat4 Mat4::getInverse() const
 {
 	/// @todo test this
-	#if !defined(MATH_INTEL_SIMD)
+	/*#if !defined(MATH_INTEL_SIMD)
 		Mat4 r(SELF);
 		__m128 minor0, minor1, minor2, minor3;
 		__m128 det, tmp1;
@@ -882,7 +882,7 @@ inline Mat4 Mat4::getInverse() const
 		r.arrMm[3] = minor3;
 
 		return r;
-	#else
+	#else*/
 		float tmp[12];
 		float det;
 		const Mat4& in = SELF;
@@ -954,7 +954,7 @@ inline Mat4 Mat4::getInverse() const
 		det = 1.0 / det;
 		m4 *= det;
 		return m4;
-	#endif
+	//#endif
 }
 
 // invert

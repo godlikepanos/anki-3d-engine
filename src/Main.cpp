@@ -175,6 +175,8 @@ void init()
 	imp->skelAnimModelNodeCtrl->set(imp->getSkin().getSkelAnims()[0].get());
 	imp->skelAnimModelNodeCtrl->setStep(0.8);
 
+	imp->addChild(*cam);
+
 	return;
 
 	// sarge
