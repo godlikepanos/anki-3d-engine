@@ -50,7 +50,9 @@ void Ssao::init(const RendererInitializer& initializer)
 	enabled = initializer.pps.ssao.enabled;
 
 	if(!enabled)
+	{
 		return;
+	}
 
 	renderingQuality = initializer.pps.ssao.renderingQuality;
 	blurringIterationsNum = initializer.pps.ssao.blurringIterationsNum;

@@ -81,7 +81,7 @@ void SceneDrawer::UsrDefVarVisitor::operator()(MtlUserDefinedVar::Fai x) const
 // setupShaderProg                                                                                                     =
 //======================================================================================================================
 void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& nodeWorldTransform, const Camera& cam,
-                                  const Renderer& r)
+                                  const Renderer& r, float blurring)
 {
 	uint textureUnit = 0;
 
@@ -227,6 +227,14 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 		mtlr.getStdUniVar(Material::SUV_SCENE_AMBIENT_COLOR)->set(&col);
 	}
 
+	if(mtlr.getStdUniVar(Material::SUV_BLURRING))
+	{
+		/*blurring *= 10.0;
+		INFO(blurring);*/
+		float b = blurring;
+		mtlr.getStdUniVar(Material::SUV_BLURRING)->set(&b);
+	}
+
 
 	//
 	// set user defined vars
@@ -248,12 +256,17 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const C
 {
 	const MaterialRuntime* mtlr;
 	const Vao* vao;
+	float blurring = 0.0;
 
 	switch(rtype)
 	{
 		case RPT_COLOR:
 			mtlr = &renderable.getCpMtlRun();
 			vao = &renderable.getCpVao();
+
+			blurring = (renderable.getWorldTransform().getOrigin() -
+			            renderable.getPrevWorldTransform().getOrigin()).getLength();
+
 			break;
 
 		case RPT_DEPTH:
@@ -262,7 +275,7 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const C
 			break;
 	}
 
-	setupShaderProg(*mtlr, renderable.getWorldTransform(), cam, r);
+	setupShaderProg(*mtlr, renderable.getWorldTransform(), cam, r, blurring);
 
 	vao->bind();
 	glDrawElements(GL_TRIANGLES, renderable.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);

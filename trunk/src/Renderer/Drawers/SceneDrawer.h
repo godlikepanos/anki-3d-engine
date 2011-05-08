@@ -59,7 +59,7 @@ class SceneDrawer
 		/// @param cam Needed for some matrices (view & projection)
 		/// @param r The renderer, needed for some FAIs and some matrices
 		static void setupShaderProg(const MaterialRuntime& mtlr, const Transform& nodeWorldTransform,
-		                            const Camera& cam, const Renderer& r);
+		                            const Camera& cam, const Renderer& r, float blurring = 0.0);
 };
 
 

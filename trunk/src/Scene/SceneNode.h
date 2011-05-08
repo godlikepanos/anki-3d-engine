@@ -36,13 +36,9 @@ class SceneNode: public Object
 
 		/// @name Accessors
 		/// @{
-		const Transform& getLocalTransform() const {return localTransform;}
-		Transform& getLocalTransform() {return localTransform;}
-		void setLocalTransform(const Transform& t) {localTransform = t;}
-
-		const Transform& getWorldTransform() const {return worldTransform;}
-		Transform& getWorldTransform() {return worldTransform;}
-		void setWorldTransform(const Transform& t) {worldTransform = t;}
+		GETTER_SETTER(Transform, localTransform, getLocalTransform, setLocalTransform)
+		GETTER_SETTER(Transform, worldTransform, getWorldTransform, setWorldTransform)
+		GETTER_R(Transform, prevWorldTransform, getPrevWorldTransform)
 
 		GETTER_R_BY_VAL(SceneNodeType, type, getSceneNodeType)
 
@@ -81,12 +77,15 @@ class SceneNode: public Object
 		/// This update happens only when the object gets moved. Called only by the Scene
 		void updateWorldTransform();
 
+		void addChild(SceneNode& node) {Object::addChild(&node);}
+
 	protected:
 		std::string name;
 
 	private:
 		Transform localTransform; ///< The transformation in local space
 		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
+		Transform prevWorldTransform;
 
 		SceneNodeType type;
 		bool compoundFlag; ///< This means that the children will inherit the world transform of this node

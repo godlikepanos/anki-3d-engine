@@ -40,10 +40,18 @@ class Pps: private RenderingPass
 
 		Fbo prePassFbo;
 		Fbo postPassFbo;
+		Fbo hBlurFbo; ///< Fbo that writes to blurFai
+		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
+		Fbo sideBlurFbo;
 		RsrcPtr<ShaderProg> prePassSProg;
 		RsrcPtr<ShaderProg> postPassSProg;
+		RsrcPtr<ShaderProg> hBlurSProg;
+		RsrcPtr<ShaderProg> vBlurSProg;
+		RsrcPtr<ShaderProg> sideBlurSProg;
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2
+		Texture blurFai; ///< Temp FAI for blurring
+		RsrcPtr<Texture> sideBlur;
 
 		void initPassFbo(Fbo& fbo, Texture& fai);
 
@@ -52,6 +60,8 @@ class Pps: private RenderingPass
 
 		/// After BS pass
 		void initPostPassSProg();
+
+		void runBlur();
 };
 
 

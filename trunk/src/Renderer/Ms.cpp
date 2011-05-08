@@ -31,7 +31,7 @@ void Ms::init(const RendererInitializer& initializer)
 
 		// create the FAIs
 
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RG16F, GL_RG, GL_FLOAT, normalFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT, normalFai);
 		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB8, GL_RGB, GL_FLOAT, diffuseFai);
 		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGBA8, GL_RGBA, GL_FLOAT, specularFai);
 		Renderer::createFai(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,

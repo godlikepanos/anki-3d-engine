@@ -6,15 +6,12 @@
 
 #pragma anki fragShaderBegins
 
-uniform sampler2D rasterImage;
+uniform sampler2D tex;
 in vec2 vTexCoords;
 layout(location = 0) out vec3 fFragColor;
 
 
 void main()
 {
-	//if( gl_FragCoord.x > 0.5 ) discard;
-
-	fFragColor = texture2D(rasterImage, vTexCoords).rgb;
-	//fFragColor = vec3(texture2D(rasterImage, vTexCoords).b);
+	fFragColor = vec3(0.0, 0.0, texture2D(tex, vTexCoords).r);
 }

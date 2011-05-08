@@ -27,12 +27,12 @@ class Object
 		Container& getObjChildren() {return objChilds;}
 		/// @}
 
+		void addChild(Object* child);
+		void removeChild(Object* child);
+
 	private:
 		Object* objParent; ///< May be nullptr
 		Container objChilds;
-
-		void addChild(Object* child);
-		void removeChild(Object* child);
 };
 
 

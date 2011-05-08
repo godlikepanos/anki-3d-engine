@@ -43,6 +43,8 @@ SceneNode::~SceneNode()
 //======================================================================================================================
 void SceneNode::updateWorldTransform()
 {
+	prevWorldTransform = worldTransform;
+
 	if(getObjParent())
 	{
 		const SceneNode* parent = static_cast<const SceneNode*>(getObjParent());

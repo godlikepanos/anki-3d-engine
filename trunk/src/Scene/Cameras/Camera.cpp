@@ -94,6 +94,7 @@ void Camera::updateViewMatrix()
 
 	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
 	Mat3 camInvertedRot = getWorldTransform().getRotation().getTransposed();
+	camInvertedRot *= 1.0 / getWorldTransform().getScale();
 	Vec3 camInvertedTsl = -(camInvertedRot * getWorldTransform().getOrigin());
 	viewMat = Mat4(camInvertedTsl, camInvertedRot);
 }

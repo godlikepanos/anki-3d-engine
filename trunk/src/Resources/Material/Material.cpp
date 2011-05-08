@@ -39,7 +39,8 @@ boost::array<Material::StdVarNameAndGlDataTypePair, Material::SUV_NUM> Material:
 	{"ppsPrePassFai", GL_SAMPLER_2D},
 	{"ppsPostPassFai", GL_SAMPLER_2D},
 	{"rendererSize", GL_FLOAT_VEC2},
-	{"sceneAmbientColor", GL_FLOAT_VEC3}
+	{"sceneAmbientColor", GL_FLOAT_VEC3},
+	{"blurring", GL_FLOAT},
 }};
 
 Material::PreprocDefines Material::msGenericDefines[] =
