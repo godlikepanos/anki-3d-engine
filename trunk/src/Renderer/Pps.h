@@ -29,6 +29,7 @@ class Pps: private RenderingPass
 		GETTER_R(Ssao, ssao, getSsao)
 		GETTER_R(Texture, prePassFai, getPrePassFai)
 		GETTER_R(Texture, postPassFai, getPostPassFai)
+		GETTER_SETTER_BY_VAL(bool, blurringEnabled, isBlurringEnabled, setBlurringEnabled)
 		/// @}
 
 	private:

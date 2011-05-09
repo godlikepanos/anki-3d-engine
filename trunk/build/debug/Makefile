@@ -5237,7 +5237,8 @@ Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/RendererInitializer.h
 	@echo Compiling ../../src/Renderer/Pps.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Pps.cpp -o Pps.o
 
