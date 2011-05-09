@@ -50,6 +50,9 @@ struct RendererInitializer
 			float renderingQuality;
 			float blurringIterationsNum;
 		} ssao;
+
+		bool blurringEnabled;
+		uint blurringIterationsNum;
 	} pps;
 
 	// Dbg
