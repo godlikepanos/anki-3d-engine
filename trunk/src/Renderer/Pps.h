@@ -52,16 +52,11 @@ class Pps: private RenderingPass
 		Texture postPassFai; ///< FAI #2
 		Texture blurFai; ///< Temp FAI for blurring
 		RsrcPtr<Texture> sideBlur;
-
-		void initPassFbo(Fbo& fbo, Texture& fai);
-
-		/// Before BS pass
-		void initPrePassSProg();
-
-		/// After BS pass
-		void initPostPassSProg();
+		bool blurringEnabled;
+		uint blurringIterationsNum;
 
 		void runBlur();
+		void runSideBlur();
 };
 
 

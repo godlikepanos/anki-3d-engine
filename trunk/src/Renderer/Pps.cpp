@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "Hdr.h"
 #include "Ssao.h"
+#include "RendererInitializer.h"
 
 
 //======================================================================================================================
@@ -15,33 +16,38 @@ Pps::Pps(Renderer& r_):
 
 
 //======================================================================================================================
-// initPassFbo                                                                                                         =
+// init                                                                                                                =
 //======================================================================================================================
-void Pps::initPassFbo(Fbo& fbo, Texture& fai)
+void Pps::init(const RendererInitializer& initializer)
 {
-	fbo.create();
-	fbo.bind();
+	ssao.init(initializer);
+	hdr.init(initializer);
+	blurringEnabled = initializer.pps.blurringEnabled;
+	blurringIterationsNum = initializer.pps.blurringIterationsNum;
 
-	fbo.setNumOfColorAttachements(1);
+	//
+	// Init pre pass
+	//
 
-	Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, fai);
+	// FBO
+	try
+	{
+		prePassFbo.create();
+		prePassFbo.bind();
+		prePassFbo.setNumOfColorAttachements(1);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, prePassFai);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, prePassFai.getGlId(), 0);
+		prePassFbo.checkIfGood();
+		prePassFbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create pre-pass post-processing stage FBO: " + e.what());
+	}
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
-
-	fbo.checkIfGood();
-
-	fbo.unbind();
-}
-
-
-//======================================================================================================================
-// initPrePassSProg                                                                                                    =
-//======================================================================================================================
-void Pps::initPrePassSProg()
-{
+	// SProg
 	std::string pps = "";
 	std::string prefix = "";
-
 	if(ssao.isEnabled())
 	{
 		pps += "#define SSAO_ENABLED\n";
@@ -50,17 +56,30 @@ void Pps::initPrePassSProg()
 
 	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
 	                                                       prefix.c_str()).c_str());
-	prePassSProg->bind();
-}
 
+	//
+	// Init post pass
+	//
 
-//======================================================================================================================
-// initPostPassSProg                                                                                                   =
-//======================================================================================================================
-void Pps::initPostPassSProg()
-{
-	std::string pps = "";
-	std::string prefix = "";
+	// FBO
+	try
+	{
+		postPassFbo.create();
+		postPassFbo.bind();
+		postPassFbo.setNumOfColorAttachements(1);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, postPassFai);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postPassFai.getGlId(), 0);
+		postPassFbo.checkIfGood();
+		postPassFbo.unbind();
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("Cannot create post-pass post-processing stage FBO: " + e.what());
+	}
+
+	// SProg
+	pps = "";
+	prefix = "";
 
 	if(hdr.isEnabled())
 	{
@@ -70,87 +89,64 @@ void Pps::initPostPassSProg()
 
 	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
 	                                                        prefix.c_str()).c_str());
-	postPassSProg->bind();
-}
 
 
-//======================================================================================================================
-// init                                                                                                                =
-//======================================================================================================================
-void Pps::init(const RendererInitializer& initializer)
-{
-	ssao.init(initializer);
-	hdr.init(initializer);
-
-	try
+	//
+	// Blurring
+	//
+	if(blurringEnabled)
 	{
-		initPassFbo(prePassFbo, prePassFai);
-	}
-	catch(std::exception& e)
-	{
-		throw EXCEPTION("Cannot create pre-pass post-processing stage FBO: " + e.what());
-	}
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, blurFai);
 
-	try
-	{
-		initPassFbo(postPassFbo, postPassFai);
-	}
-	catch(std::exception& e)
-	{
-		throw EXCEPTION("Cannot create post-pass post-processing stage FBO: " + e.what());
-	}
+		// Horizontal
+		try
+		{
+			hBlurFbo.create();
+			hBlurFbo.bind();
+			hBlurFbo.setNumOfColorAttachements(1);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurFai.getGlId(), 0);
+		}
+		catch(std::exception& e)
+		{
+			throw EXCEPTION("Cannot create horizontal blur post-processing stage FBO: " + e.what());
+		}
 
-	initPrePassSProg();
-	initPostPassSProg();
+		hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define HPASS\n",
+															 "h").c_str());
 
+		// Vertical
+		try
+		{
+			vBlurFbo.create();
+			vBlurFbo.bind();
+			vBlurFbo.setNumOfColorAttachements(1);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postPassFai.getGlId(), 0);
+		}
+		catch(std::exception& e)
+		{
+			throw EXCEPTION("Cannot create vertical blur post-processing stage FBO: " + e.what());
+		}
 
-	hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define HPASS\n",
-	                                                     "h").c_str());
-	vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define VPASS\n",
-	                                                     "v").c_str());
+		vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define VPASS\n",
+															 "v").c_str());
 
-	Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, blurFai);
+		// Side blur
+		try
+		{
+			sideBlurFbo.create();
+			sideBlurFbo.bind();
+			sideBlurFbo.setNumOfColorAttachements(1);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+								   r.getMs().getNormalFai().getGlId(), 0);
+		}
+		catch(std::exception& e)
+		{
+			throw EXCEPTION("Cannot create side blur post-processing stage FBO: " + e.what());
+		}
 
-	try
-	{
-		hBlurFbo.create();
-		hBlurFbo.bind();
-		hBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurFai.getGlId(), 0);
-	}
-	catch(std::exception& e)
-	{
-		throw EXCEPTION("Cannot create h blur post-processing stage FBO: " + e.what());
-	}
-
-	try
-	{
-		vBlurFbo.create();
-		vBlurFbo.bind();
-		vBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postPassFai.getGlId(), 0);
-	}
-	catch(std::exception& e)
-	{
-		throw EXCEPTION("Cannot create v blur post-processing stage FBO: " + e.what());
-	}
-
-
-	try
-	{
-		sideBlurFbo.create();
-		sideBlurFbo.bind();
-		sideBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r.getMs().getNormalFai().getGlId(), 0);
-	}
-	catch(std::exception& e)
-	{
-		throw EXCEPTION("Cannot create side blur post-processing stage FBO: " + e.what());
-	}
-
-	sideBlur.loadRsrc("engine-rsrc/side-blur.png");
-
-	sideBlurSProg.loadRsrc("shaders/PpsSideBlur.glsl");
+		sideBlur.loadRsrc("engine-rsrc/side-blur.png");
+		sideBlurSProg.loadRsrc("shaders/PpsSideBlur.glsl");
+	} // end blurring enabled
 }
 
 
@@ -179,8 +175,6 @@ void Pps::runPrePass()
 	}
 
 	r.drawQuad();
-
-	//Fbo::unbind();
 }
 
 
@@ -190,7 +184,7 @@ void Pps::runPrePass()
 void Pps::runBlur()
 {
 	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
-	uint blurringIterationsNum = 1;
+
 	for(uint i = 0; i < blurringIterationsNum; i++)
 	{
 		// hpass
@@ -219,10 +213,30 @@ void Pps::runBlur()
 
 
 //======================================================================================================================
+// runSideBlur                                                                                                         =
+//======================================================================================================================
+void Pps::runSideBlur()
+{
+	sideBlurFbo.bind();
+
+	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	sideBlurSProg->bind();
+	sideBlurSProg->findUniVar("tex")->set(*sideBlur, 0);
+
+	r.drawQuad();
+}
+
+
+//======================================================================================================================
 // runPostPass                                                                                                         =
 //======================================================================================================================
 void Pps::runPostPass()
 {
+	//
+	// The actual pass
+	//
 	if(hdr.isEnabled())
 	{
 		hdr.run();
@@ -236,7 +250,6 @@ void Pps::runPostPass()
 
 	postPassSProg->bind();
 	postPassSProg->findUniVar("ppsPrePassFai")->set(prePassFai, 0);
-
 	if(hdr.isEnabled())
 	{
 		postPassSProg->findUniVar("ppsHdrFai")->set(hdr.getFai(), 1);
@@ -245,16 +258,11 @@ void Pps::runPostPass()
 	r.drawQuad();
 
 	//
-	// todo
+	// Blurring
 	//
-	sideBlurFbo.bind();
-	sideBlurSProg->bind();
-	sideBlurSProg->findUniVar("tex")->set(*sideBlur, 0);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
-	glBlendFunc(GL_ONE, GL_ONE);
-	r.drawQuad();
-
-
-	runBlur();
-
+	if(blurringEnabled)
+	{
+		runSideBlur();
+		runBlur();
+	}
 }
