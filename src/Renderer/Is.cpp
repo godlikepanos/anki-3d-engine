@@ -139,7 +139,7 @@ void Is::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Is::ambientPass(const Vec3& color)
 {
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 
 	// set the shader
 	ambientPassSProg->bind();
@@ -162,7 +162,7 @@ void Is::pointLightPass(const PointLight& light)
 
 	// stencil optimization
 	smo.run(light);
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 
 	// shader prog
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
@@ -212,15 +212,15 @@ void Is::spotLightPass(const SpotLight& light)
 		fbo.bind();
 
 		// and restore blending and depth test
-		GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
+		GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
 		glBlendFunc(GL_ONE, GL_ONE);
-		GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+		GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 		Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 	}
 
 	// stencil optimization
 	smo.run(light);
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 
 	// set the texture
 	//light.getTexture().setRepeat(false);
@@ -314,11 +314,11 @@ void Is::run()
 	fbo.bind();
 
 	// ambient pass
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 	ambientPass(SceneSingleton::getInstance().getAmbientCol());
 
 	// light passes
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_STENCIL_TEST);
 

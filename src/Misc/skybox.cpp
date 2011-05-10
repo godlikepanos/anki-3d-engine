@@ -53,8 +53,8 @@ render                                                                          
 */
 void Skybox::Render(const Mat3& /*rotation*/)
 {
-	/*GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	/*GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 
 	glPushMatrix();
 

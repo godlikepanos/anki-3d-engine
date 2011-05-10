@@ -80,7 +80,7 @@ void Ms::run()
 
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
-	//GlStateMachineSingleton::getInstance().setDepthTestEnabled(true);
+	//GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
 	//app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
 	//glDepthFunc(GL_LEQUAL);
 

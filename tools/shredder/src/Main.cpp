@@ -130,7 +130,7 @@ void initEngine(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false)eton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, lse)eton::getInstance().setBlendingEnabled(false);
 	glDisable(GL_STENCIL_TEST);
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glDepthMask(true);

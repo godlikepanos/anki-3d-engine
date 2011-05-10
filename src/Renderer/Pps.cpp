@@ -162,8 +162,8 @@ void Pps::runPrePass()
 
 	prePassFbo.bind();
 
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
@@ -183,7 +183,7 @@ void Pps::runPrePass()
 //======================================================================================================================
 void Pps::runBlur()
 {
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 
 	for(uint i = 0; i < blurringIterationsNum; i++)
 	{
@@ -219,7 +219,7 @@ void Pps::runSideBlur()
 {
 	sideBlurFbo.bind();
 
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(true);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	sideBlurSProg->bind();
@@ -244,8 +244,8 @@ void Pps::runPostPass()
 
 	postPassFbo.bind();
 
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();

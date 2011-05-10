@@ -88,8 +88,8 @@ void Hdr::run()
 	int h = renderingQuality * r.getHeight();
 	Renderer::setViewport(0, 0, w, h);
 
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 
 	// pass 0
 	toneFbo.bind();
