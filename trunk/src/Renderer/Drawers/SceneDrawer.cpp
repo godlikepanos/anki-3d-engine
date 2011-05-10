@@ -90,13 +90,13 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	//
 	// FFP stuff
 	//
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(mtlr.isBlendingEnabled());
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, mtlr.isBlendingEnabled());
 	if(mtlr.isBlendingEnabled())
 	{
 		glBlendFunc(mtlr.getBlendingSfactor(), mtlr.getBlendingDfactor());
 	}
 
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(mtlr.isDepthTestingEnabled());
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, mtlr.isDepthTestingEnabled());
 
 	if(mtlr.isWireframeEnabled())
 	{

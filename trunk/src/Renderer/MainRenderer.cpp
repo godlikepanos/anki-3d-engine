@@ -67,7 +67,7 @@ void MainRenderer::initGl()
 	// defaults
 	//glDisable(GL_LIGHTING);
 	//glDisable(GL_TEXTURE_2D);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 	glDisable(GL_STENCIL_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(true);
@@ -98,8 +98,8 @@ void MainRenderer::render(Camera& cam_)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 
 	setViewport(0, 0, AppSingleton::getInstance().getWindowWidth(), AppSingleton::getInstance().getWindowHeight());
-	GlStateMachineSingleton::getInstance().setDepthTestEnabled(false);
-	GlStateMachineSingleton::getInstance().setBlendingEnabled(false);
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 	sProg->bind();
 	//sProg->findUniVar("rasterImage")->set(ms.getNormalFai(), 0);
 	//sProg->findUniVar("rasterImage")->set(pps.getSsao().getFai(), 0);

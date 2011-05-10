@@ -2,6 +2,7 @@
 #define GL_STATE_MACHINE_H
 
 #include <GL/glew.h>
+#include <boost/unordered_map.hpp>
 #include "Assert.h"
 #include "Singleton.h"
 
@@ -18,11 +19,8 @@ class GlStateMachine
 
 		/// @name Set the Fixed Function Pipeline, Call the OpenGL functions only when needed
 		/// @{
-		bool isDepthTestEnabled() const {return getFlag(GL_DEPTH_TEST, depthTestEnabledFlag);}
-		void setDepthTestEnabled(bool enable) {setFlag(GL_DEPTH_TEST, enable, depthTestEnabledFlag);}
-
-		bool isBlendingEnabled() const {return getFlag(GL_BLEND, blendingEnabledFlag);}
-		void setBlendingEnabled(bool enable) {setFlag(GL_BLEND, enable, blendingEnabledFlag);}
+		void enable(GLenum flag, bool enable);
+		bool isEnabled(GLenum flag);
 
 		void useShaderProg(GLuint id);
 		/// @}
@@ -30,13 +28,11 @@ class GlStateMachine
 	private:
 		/// @name The GL state
 		/// @{
-		bool depthTestEnabledFlag;
-		bool blendingEnabledFlag;
 		GLuint sProgGlId;
-		/// @}
 
-		static bool getFlag(GLenum glFlag, bool myFlag);
-		static void setFlag(GLenum glFlag, bool enable, bool& myFlag);
+		boost::unordered_map<GLenum, bool> flags;
+		static GLenum flagEnums[];
+		/// @}
 
 		static GLuint getCurrentProgramGlId();
 };
@@ -45,32 +41,6 @@ class GlStateMachine
 //======================================================================================================================
 // Inlines                                                                                                             =
 //======================================================================================================================
-
-inline bool GlStateMachine::getFlag(GLenum glFlag, bool myFlag)
-{
-	ASSERT(glIsEnabled(glFlag) == myFlag);
-	return myFlag;
-}
-
-
-inline void GlStateMachine::setFlag(GLenum glFlag, bool enable, bool& myFlag)
-{
-	ASSERT(glIsEnabled(glFlag) == myFlag);
-
-	if(enable != myFlag)
-	{
-		if(enable)
-		{
-			glEnable(glFlag);
-		}
-		else
-		{
-			glDisable(glFlag);
-		}
-		myFlag = enable;
-	}
-}
-
 
 inline void GlStateMachine::useShaderProg(GLuint id)
 {
