@@ -2,6 +2,7 @@
 #define UI_H
 
 
+/*
 namespace M {
 	class Vec4;
 }
@@ -17,5 +18,28 @@ extern void printf(const char* format, ...);
 extern void print(const char* str);
 
 
-} // end namespace
+} // end namespace */
+
+#include "RsrcPtr.h"
+#include "Math.h"
+
+
+class Ui
+{
+	public:
+		Ui();
+
+		void setSize(float width, float height = -1.0);
+		void setPos(const Vec2& pos);
+		void setColor(const Vec4& col);
+		void printf(const char* format, ...);
+
+	private:
+		RsrcPtr<Texture> fontMap;
+		uint charsVertical;
+		uint charsHorizontal;
+		RsrcPtr<ShaderProg> sProg;
+};
+
+
 #endif

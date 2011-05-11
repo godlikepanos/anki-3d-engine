@@ -59,7 +59,7 @@ class Is: private RenderingPass
 		/// Init the copy stuff
 		void initCopy();
 
-		///
+		/// Copy the MS depth FAI to one of our own
 		void copyDepth();
 };
 

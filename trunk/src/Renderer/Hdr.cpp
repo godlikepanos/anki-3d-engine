@@ -84,6 +84,11 @@ void Hdr::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Hdr::run()
 {
+	/*if(r.getFramesNum() % 2 == 0)
+	{
+		return;
+	}*/
+
 	int w = renderingQuality * r.getWidth();
 	int h = renderingQuality * r.getHeight();
 	Renderer::setViewport(0, 0, w, h);

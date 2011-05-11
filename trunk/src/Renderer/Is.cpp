@@ -305,7 +305,7 @@ void Is::run()
 	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
 
 	// Copy
-	if(r.getFramesNum() % 2)
+	if(r.getFramesNum() % 2 == 0)
 	{
 		copyDepth();
 	}
