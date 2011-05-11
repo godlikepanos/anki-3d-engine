@@ -1,21 +1,22 @@
+/// For information about the blurring you can see the code and the comments of GaussianBlurGeneric.glsl
+
 #pragma anki vertShaderBegins
 
 layout(location = 0) in vec2 position;
 
 out vec2 vTexCoords;
-out float vOffsets[2]; ///< For side pixels
+out vec2 vOffsets; ///< For side pixels
 
 uniform float imgDimension = 0.0; ///< the img width for hspass or the img height for vpass
 
-const float BLURRING_OFFSET[2] = float[](1.3846153846, 3.2307692308); ///< The offset of side pixels
+const vec2 BLURRING_OFFSET = vec2(1.3846153846, 3.2307692308); ///< The offset of side pixels
 
 
 void main()
 {
 	vTexCoords = position;
 
-	vOffsets[0] = BLURRING_OFFSET[0] / imgDimension;
-	vOffsets[1] = BLURRING_OFFSET[1] / imgDimension;
+	vOffsets = BLURRING_OFFSET / imgDimension;
 
 	gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);
 }
@@ -28,7 +29,7 @@ uniform sampler2D img; ///< Input FAI
 uniform sampler2D msNormalFai;
 
 in vec2 vTexCoords;
-in float vOffsets[2];
+in vec2 vOffsets;
 
 layout(location = 0) out vec3 fFragColor;
 
