@@ -61,5 +61,6 @@ void GlStateMachine::sync()
 	while(*flagEnum != 0)
 	{
 		flags[*flagEnum] = glIsEnabled(*flagEnum);
+		++flagEnum;
 	}
 }

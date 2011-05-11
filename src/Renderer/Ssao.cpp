@@ -94,6 +94,11 @@ void Ssao::init(const RendererInitializer& initializer)
 //======================================================================================================================
 void Ssao::run()
 {
+	if(!enabled)
+	{
+		return;
+	}
+
 	int width = renderingQuality * r.getWidth();
 	int height = renderingQuality * r.getHeight();
 	const Camera& cam = r.getCamera();
