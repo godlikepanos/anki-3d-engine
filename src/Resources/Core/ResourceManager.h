@@ -84,10 +84,6 @@ class ResourceManager
 		template<typename Type>
 		typename Types<Type>::Iterator find(const char* filename, typename Types<Type>::Container& container);
 
-		/// Find a resource using the pointer
-		template<typename Type>
-		typename Types<Type>::Iterator find(const Type* resource, typename Types<Type>::Container& container);
-
 		/// Specialized func
 		template<typename Type>
 		typename Types<Type>::Container& choseContainer();

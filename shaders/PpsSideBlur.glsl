@@ -13,5 +13,6 @@ layout(location = 0) out vec3 fFragColor;
 
 void main()
 {
-	fFragColor = vec3(0.0, 0.0, texture2D(tex, vTexCoords).r);
+	float factor = texture2D(tex, vTexCoords).r;
+	fFragColor = vec3(0.0, 0.0, factor * 2.0);
 }

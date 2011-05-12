@@ -4,6 +4,7 @@
 #include <fstream>
 #include "Image.h"
 #include "Exception.h"
+#include "Logger.h"
 
 
 uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};

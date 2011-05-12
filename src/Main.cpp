@@ -39,7 +39,8 @@
 #include "SkinNode.h"
 #include "Skin.h"
 #include "MaterialRuntime.h"
-#include "ScannerException.h"
+#include "Ui.h"
+#include "Globals.h"
 
 
 // map (hard coded)
@@ -119,6 +120,8 @@ void init()
 	INFO("Other init...");
 
 	srand(unsigned(time(NULL)));
+
+	gUi = new Ui;
 
 	//Ui::init();
 
