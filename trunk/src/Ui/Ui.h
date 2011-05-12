@@ -1,44 +1,43 @@
 #ifndef UI_H
 #define UI_H
 
-
-/*
-namespace M {
-	class Vec4;
-}
-
-namespace Ui { // begin namespace
-
-
-extern void init(); // exec after init SDL
-extern void setColor(const M::Vec4& color);
-extern void setPos(float x_, float y_);
-extern void setFontWidth(float w_);
-extern void printf(const char* format, ...);
-extern void print(const char* str);
-
-
-} // end namespace */
-
 #include "RsrcPtr.h"
 #include "Math.h"
+#include "Accessors.h"
+#include "Vbo.h"
+#include "Vao.h"
 
 
 class Ui
 {
 	public:
 		Ui();
+		~Ui();
 
-		void setSize(float width, float height = -1.0);
-		void setPos(const Vec2& pos);
-		void setColor(const Vec4& col);
+		/// @name Accessors
+		/// @{
+		GETTER_SETTER(Vec2, pos, getPosition, setPosition)
+		GETTER_SETTER(Vec2, size, getSize, setSize)
+		GETTER_SETTER(Vec4, col, getColor, setColor)
+		/// @}
+
+		void print(const char* text);
+
 		void printf(const char* format, ...);
 
 	private:
 		RsrcPtr<Texture> fontMap;
-		uint charsVertical;
-		uint charsHorizontal;
+		uint columns;
+		uint rows;
 		RsrcPtr<ShaderProg> sProg;
+
+		Vec2 pos;
+		Vec2 size;
+		Vec4 col;
+
+		Vbo qPositions;
+		Vbo qIndeces;
+		Vao qVao;
 };
 
 

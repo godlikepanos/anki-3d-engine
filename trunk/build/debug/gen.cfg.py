@@ -9,6 +9,6 @@ executableName = "anki"
 
 compiler = "g++"
 
-compilerFlags = "-DPLATFORM_LINUX -DMATH_INTEL_SIMD -DREVISION=\\\"`svnversion -c ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -g3 -fsingle-precision-constant -msse4"
+compilerFlags = "-DPLATFORM_LINUX -DMATH_INTEL_SIMD -DREVISION=\\\"`svnversion ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -g3 -fsingle-precision-constant -msse4"
 
 linkerFlags = "-rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread"

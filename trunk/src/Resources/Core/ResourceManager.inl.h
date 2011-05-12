@@ -31,7 +31,7 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 
 
 //======================================================================================================================
-// loadRsrc                                                                                                            =
+// load                                                                                                                =
 //======================================================================================================================
 template<typename Type>
 typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* filename)
@@ -89,7 +89,7 @@ void ResourceManager::unload(const typename Types<Type>::Hook& hook)
 	typename Types<Type>::Container& c = choseContainer<Type>();
 
 	// Find
-	typename Types<Type>::Iterator it = find<Type>(hook.resource, c);
+	typename Types<Type>::Iterator it = find<Type>(hook.uuid.c_str(), c);
 
 	// If not found
 	if(it == c.end())
@@ -102,6 +102,7 @@ void ResourceManager::unload(const typename Types<Type>::Hook& hook)
 		INFO(it->uuid << " " << hook.uuid);
 	}
 
+	ERROR(it->uuid << " " << hook.uuid << " " << it->resource << " " << hook.resource << " " << dummyTex.get());
 	ASSERT(it->uuid == hook.uuid);
 	ASSERT(it->referenceCounter == hook.referenceCounter);
 
@@ -127,26 +128,6 @@ ResourceManager::find(const char* filename, typename Types<Type>::Container& con
 	for(; it != container.end(); it++)
 	{
 		if(it->uuid == filename)
-		{
-			break;
-		}
-	}
-
-	return it;
-}
-
-
-//======================================================================================================================
-// find [Type*]                                                                                                        =
-//======================================================================================================================
-template<typename Type>
-typename ResourceManager::Types<Type>::Iterator
-ResourceManager::find(const Type* resource, typename Types<Type>::Container& container)
-{
-	typename Types<Type>::Iterator it = container.begin();
-	for(; it != container.end(); it++)
-	{
-		if(it->resource == resource)
 		{
 			break;
 		}

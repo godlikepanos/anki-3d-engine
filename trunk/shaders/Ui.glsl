@@ -1,18 +1,18 @@
 #pragma anki vertShaderBegins
 
 in vec2 position;
-in vec2 texCoords;
 
-uniform mat2 tranformation; ///< Position transformation
-uniform mat2 textureTranformation; ///< Texture transformation
+uniform mat3 tranformation; ///< Position transformation
+uniform mat3 textureTranformation; ///< Texture transformation
 
 out vec2 vTexCoords;
 
 
 void main(void)
 {
-	vTexCoords = textureTranformation * texCoords;
-	gl_Position = vec4(tranformation * position, 0.0, 1.0);
+	vec3 pos3d = vec3(position, 0.0);
+	vTexCoords = (textureTranformation * pos3d).xy;
+	gl_Position = vec4(tranformation * pos3d, 1.0);
 }
 
 #pragma anki fragShaderBegins
