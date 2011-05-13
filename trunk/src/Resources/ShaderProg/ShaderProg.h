@@ -10,6 +10,7 @@
 #include "SProgAttribVar.h"
 #include "Vec.h"
 #include "GlStateMachine.h"
+#include "Globals.h"
 
 
 /// Shader program @ref Resource

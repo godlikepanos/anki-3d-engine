@@ -147,11 +147,4 @@ Logger& Logger::appendUsingLexicalCast(const Type& val)
 #define ERROR(x) LOGGER_MESSAGE("Error: " << x)
 
 
-//======================================================================================================================
-// Singleton                                                                                                           =
-//======================================================================================================================
-
-typedef Singleton<Logger> LoggerSingleton;
-
-
 #endif

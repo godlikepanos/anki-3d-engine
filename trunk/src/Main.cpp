@@ -7,7 +7,7 @@
 #include "OrthographicCamera.h"
 #include "Math.h"
 #include "Renderer.h"
-#include "Ui.h"
+#include "UiPainter.h"
 #include "App.h"
 #include "Mesh.h"
 #include "Light.h"
@@ -39,7 +39,6 @@
 #include "SkinNode.h"
 #include "Skin.h"
 #include "MaterialRuntime.h"
-#include "Ui.h"
 #include "Globals.h"
 
 
@@ -120,8 +119,6 @@ void init()
 	INFO("Other init...");
 
 	srand(unsigned(time(NULL)));
-
-	gUi = new Ui;
 
 	//Ui::init();
 

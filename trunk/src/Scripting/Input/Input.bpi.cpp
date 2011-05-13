@@ -9,6 +9,3 @@ WRAP(Input)
 		.def("setWarpMouse", &Input::setWarpMouse)
 	;
 }
-
-
-WRAP_SINGLETON(InputSingleton)

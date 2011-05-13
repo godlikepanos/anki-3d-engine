@@ -8,6 +8,3 @@ WRAP(Logger)
 		.def("write", &Logger::write)
 	;
 }
-
-
-WRAP_SINGLETON(LoggerSingleton)

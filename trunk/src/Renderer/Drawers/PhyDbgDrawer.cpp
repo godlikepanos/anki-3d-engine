@@ -2,6 +2,7 @@
 #include "MainRenderer.h"
 #include "BtAndAnkiConvertors.h"
 #include "Logger.h"
+#include "Globals.h"
 
 
 //======================================================================================================================

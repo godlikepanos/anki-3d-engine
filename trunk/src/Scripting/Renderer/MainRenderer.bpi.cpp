@@ -10,6 +10,3 @@ WRAP(MainRenderer)
 		     return_value_policy<reference_existing_object>())
 	;
 }
-
-
-WRAP_SINGLETON(MainRendererSingleton)

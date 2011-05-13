@@ -38,7 +38,4 @@ inline void ScriptingEngine::exposeVar(const char* varName, Type* var)
 }
 
 
-typedef Singleton<ScriptingEngine> ScriptingEngineSingleton;
-
-
 #endif

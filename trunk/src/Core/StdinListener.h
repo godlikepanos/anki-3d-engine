@@ -28,7 +28,4 @@ class StdinListener
 };
 
 
-typedef Singleton<StdinListener> StdinListenerSingleton;
-
-
 #endif

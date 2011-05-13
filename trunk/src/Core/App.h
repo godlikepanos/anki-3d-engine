@@ -92,7 +92,4 @@ class App
 };
 
 
-typedef Singleton<App> AppSingleton;
-
-
 #endif

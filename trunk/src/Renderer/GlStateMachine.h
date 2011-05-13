@@ -19,7 +19,8 @@ class GlStateMachine
 
 		/// @name Set the Fixed Function Pipeline, Call the OpenGL functions only when needed
 		/// @{
-		void enable(GLenum flag, bool enable);
+		void enable(GLenum flag, bool enable = true);
+		void disable(GLenum flag) {enable(flag, false);}
 		bool isEnabled(GLenum flag);
 
 		void useShaderProg(GLuint id);
@@ -60,13 +61,6 @@ inline GLuint GlStateMachine::getCurrentProgramGlId()
 	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
 	return i;
 }
-
-
-//======================================================================================================================
-// Other                                                                                                               =
-//======================================================================================================================
-
-typedef Singleton<GlStateMachine> GlStateMachineSingleton; ///< Make the GlStateMachine singleton class
 
 
 #endif

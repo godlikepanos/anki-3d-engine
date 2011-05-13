@@ -2,6 +2,7 @@
 #include "ScriptingEngine.h"
 #include "Exception.h"
 #include "Logger.h"
+#include "Globals.h"
 
 
 extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp by boost::python
