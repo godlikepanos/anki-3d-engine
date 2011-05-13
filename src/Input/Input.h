@@ -49,7 +49,4 @@ class Input
 };
 
 
-typedef Singleton<Input> InputSingleton;
-
-
 #endif

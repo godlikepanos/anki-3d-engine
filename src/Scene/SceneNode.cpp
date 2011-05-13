@@ -2,6 +2,7 @@
 #include <boost/lexical_cast.hpp>
 #include "SceneNode.h"
 #include "Scene.h"
+#include "Globals.h"
 
 
 //======================================================================================================================

@@ -56,7 +56,4 @@ inline MainRenderer::MainRenderer():
 {}
 
 
-typedef Singleton<MainRenderer> MainRendererSingleton; ///< Make the MainRenderer singleton class
-
-
 #endif

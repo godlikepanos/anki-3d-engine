@@ -12,6 +12,7 @@
 #include "StdinListener.h"
 #include "Input.h"
 #include "Logger.h"
+#include "Globals.h"
 
 
 //======================================================================================================================
@@ -219,6 +220,7 @@ void App::initRenderer()
 	initializer.pps.blurringEnabled = true;
 	initializer.pps.blurringIterationsNum = 2;
 	initializer.mainRendererQuality = 1.0;
+
 	MainRendererSingleton::getInstance().init(initializer);
 }
 

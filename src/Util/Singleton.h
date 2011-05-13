@@ -1,6 +1,10 @@
 #ifndef SINGLETON_H
 #define SINGLETON_H
 
+#ifndef NULL
+	#define NULL 0
+#endif
+
 
 /// This template makes a class singleton
 template<typename Type>

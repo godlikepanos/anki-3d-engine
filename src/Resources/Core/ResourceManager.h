@@ -116,7 +116,4 @@ inline void ResourceManager::postProcessFinishedLoadingRequests(uint maxTime)
 #include "ResourceManager.inl.h"
 
 
-typedef Singleton<ResourceManager> ResourceManagerSingleton;
-
-
 #endif

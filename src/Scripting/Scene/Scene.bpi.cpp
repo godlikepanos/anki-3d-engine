@@ -20,6 +20,3 @@ WRAP(Scene)
 		     return_value_policy<reference_existing_object>())
 	;
 }
-
-
-WRAP_SINGLETON(SceneSingleton)

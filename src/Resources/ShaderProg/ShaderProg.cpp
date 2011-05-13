@@ -9,6 +9,7 @@
 #include "GlException.h"
 #include "Logger.h"
 #include "Util.h"
+#include "Globals.h"
 
 
 #define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + rsrcFilename + "\": " + x)
