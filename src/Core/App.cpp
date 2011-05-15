@@ -217,8 +217,9 @@ void App::initRenderer()
 	initializer.pps.ssao.blurringIterationsNum = 4;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.renderingQuality = 0.3;
-	initializer.pps.blurringEnabled = true;
-	initializer.pps.blurringIterationsNum = 2;
+	initializer.pps.bl.enabled = true;
+	initializer.pps.bl.blurringIterationsNum = 2;
+	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.mainRendererQuality = 1.0;
 
 	MainRendererSingleton::getInstance().init(initializer);

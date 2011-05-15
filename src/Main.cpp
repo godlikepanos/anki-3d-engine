@@ -51,6 +51,8 @@ SpotLight* spot_lights[2];
 ParticleEmitter* partEmitter;
 PhyCharacter* character;
 
+Ui::Painter* painter;
+
 
 // Physics
 Vec<btRigidBody*> boxes;
@@ -120,7 +122,7 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	//Ui::init();
+	painter = new Ui::Painter;
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
@@ -293,7 +295,8 @@ void mainLoopExtra()
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K)) AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K))
+		AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
 		character->moveForward(0.1);
@@ -364,6 +367,12 @@ void mainLoop()
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
+		painter->setPosition(Vec2(0.0, 0.0));
+		painter->setFontSize(Vec2(0.03, 0.03 * MainRendererSingleton::getInstance().getAspectRatio()));
+		painter->setColor(Vec4(1.0));
+
+		painter->drawText("Once upon a time in a place\ncalled \"Kickapoo\"");
+
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
 		{
 			break;
@@ -422,20 +431,6 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	/*float depth = 0.5;
-
-	Vec3 vViewVector(1.0264, 0.57735, -1);
-	Vec2 planes(-1.00251, -0.501253);
-
-	Vec3 fragPosVspace;
-	Vec3 vposn = vViewVector.getNormalized();
-	fragPosVspace.z() = -planes.y() / (planes.x() + depth);
-	fragPosVspace.x() = vposn.x() * (fragPosVspace.z() / vposn.z());
-	fragPosVspace.y() = vposn.y() * (fragPosVspace.z() / vposn.z());
-	std::cout << fragPosVspace << std::endl;
-
-	return 0;*/
-
 	try
 	{
 		AppSingleton::getInstance().init(argc, argv);

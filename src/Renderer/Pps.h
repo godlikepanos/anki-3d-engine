@@ -7,6 +7,7 @@
 #include "RsrcPtr.h"
 #include "Hdr.h"
 #include "Ssao.h"
+#include "Bl.h"
 
 
 class ShaderProg;
@@ -27,9 +28,9 @@ class Pps: private RenderingPass
 		/// @{
 		GETTER_R(Hdr, hdr, getHdr)
 		GETTER_R(Ssao, ssao, getSsao)
+		GETTER_R(Bl, bl, getBl)
 		GETTER_R(Texture, prePassFai, getPrePassFai)
 		GETTER_R(Texture, postPassFai, getPostPassFai)
-		GETTER_SETTER_BY_VAL(bool, blurringEnabled, isBlurringEnabled, setBlurringEnabled)
 		/// @}
 
 	private:
@@ -37,27 +38,17 @@ class Pps: private RenderingPass
 		/// @{
 		Hdr hdr;
 		Ssao ssao;
+		Bl bl;
 		/// @}
 
 		Fbo prePassFbo;
 		Fbo postPassFbo;
-		Fbo hBlurFbo; ///< Fbo that writes to blurFai
-		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
-		Fbo sideBlurFbo;
+
 		RsrcPtr<ShaderProg> prePassSProg;
 		RsrcPtr<ShaderProg> postPassSProg;
-		RsrcPtr<ShaderProg> hBlurSProg;
-		RsrcPtr<ShaderProg> vBlurSProg;
-		RsrcPtr<ShaderProg> sideBlurSProg;
+
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2
-		Texture blurFai; ///< Temp FAI for blurring
-		RsrcPtr<Texture> sideBlur;
-		bool blurringEnabled;
-		uint blurringIterationsNum;
-
-		void runBlur();
-		void runSideBlur();
 };
 
 

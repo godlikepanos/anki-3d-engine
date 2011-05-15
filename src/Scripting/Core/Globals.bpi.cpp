@@ -14,7 +14,7 @@ WRAP_SINGLETON(SceneSingleton)
 WRAP_SINGLETON(AppSingleton)
 
 
-void wrapAllGlobals()
+void boostPythonWrapAllGlobals()
 {
 	CALL_WRAP(LoggerSingleton);
 	CALL_WRAP(MainRendererSingleton);

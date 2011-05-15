@@ -37,6 +37,7 @@ class Painter
 		Vec2 pos;
 		Vec2 fontSize;
 		Vec4 col;
+		uint tabSize;
 
 		Vbo qPositionsVbo;
 		Vbo qIndecesVbo;
