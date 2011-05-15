@@ -1,6 +1,5 @@
 #include <boost/python.hpp>
 #include "ScriptingCommon.h"
-#include "App.h"
 
 
 BOOST_PYTHON_MODULE(Anki)
@@ -20,6 +19,7 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(Scene);
 
 	CALL_WRAP(Hdr);
+	CALL_WRAP(Bl);
 	CALL_WRAP(Pps);
 	CALL_WRAP(Renderer);
 	CALL_WRAP(Dbg);
@@ -29,6 +29,5 @@ BOOST_PYTHON_MODULE(Anki)
 
 	CALL_WRAP(Input);
 
-	extern void wrapAllGlobals();
-	wrapAllGlobals();
+	CALL_WRAP(AllGlobals);
 }

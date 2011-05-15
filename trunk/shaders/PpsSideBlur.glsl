@@ -6,13 +6,16 @@
 
 #pragma anki fragShaderBegins
 
-uniform sampler2D tex;
 in vec2 vTexCoords;
+
+uniform sampler2D tex;
+uniform float factor = 1.0;
+
 layout(location = 0) out vec3 fFragColor;
 
 
 void main()
 {
-	float factor = texture2D(tex, vTexCoords).r;
-	fFragColor = vec3(0.0, 0.0, factor * 2.0);
+	float f = texture2D(tex, vTexCoords).r;
+	fFragColor = vec3(0.0, 0.0, f * factor);
 }

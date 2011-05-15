@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec2 position;
 
-uniform mat3 tranformation; ///< Position transformation
+uniform mat3 transformation; ///< Position transformation
 uniform mat3 textureTranformation; ///< Texture transformation
 
 out vec2 vTexCoords;
@@ -10,8 +10,9 @@ out vec2 vTexCoords;
 
 void main(void)
 {
-	vTexCoords = (textureTranformation * vec3(position, 1.0)).xy;
-	gl_Position = vec4(tranformation * position, 1.0);
+	vec3 pos3d = vec3(position, 1.0);
+	vTexCoords = (textureTranformation * pos3d).xy;
+	gl_Position = vec4(transformation * pos3d, 1.0);
 }
 
 #pragma anki fragShaderBegins
@@ -29,4 +30,5 @@ void main()
 	vec4 texCol = texture2D(texture, vTexCoords).rgba * color;
 
 	fColor = texCol;
+	//fColor = texCol - texCol + vec4(1.0, 0.0, 1.0, 0.1);
 }
