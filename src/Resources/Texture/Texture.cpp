@@ -147,6 +147,9 @@ void Texture::create(const Initializer& init_)
 	glGenTextures(1, &glId);
 	bind(LAST_TEX_UNIT);
 	target = GL_TEXTURE_2D;
+	internalFormat = init.internalFormat;
+	format = init.format;
+	type = init.type;
 
 	if(init.data == NULL)
 	{

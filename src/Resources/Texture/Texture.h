@@ -54,9 +54,20 @@ class Texture
 			size_t dataSize; ///< For compressed textures
 		};
 
+		/// Default constructor
 		Texture();
+
+		/// Desrcuctor
 		~Texture();
+
+
+		/// @name Accessors
+		/// @{
 		uint getGlId() const;
+		uint getInternalFormat() const;
+		uint getFormat() const;
+		uint getType() const;
+		/// @}
 
 		/// @name Create tex funcs
 		/// @{
@@ -88,6 +99,9 @@ class Texture
 	private:
 		uint glId; ///< Identification for OGL
 		uint target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+		uint internalFormat; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+		uint format; ///< GL_RED, GL_RG, GL_RGB etc
+		uint type; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
 
 		/// @name Variables set by the renderer
 		/// Set upon OpenGL initialization
@@ -109,6 +123,27 @@ inline uint Texture::getGlId() const
 {
 	ASSERT(isLoaded());
 	return glId;
+}
+
+
+inline uint Texture::getInternalFormat() const
+{
+	ASSERT(isLoaded());
+	return internalFormat;
+}
+
+
+inline uint Texture::getFormat() const
+{
+	ASSERT(isLoaded());
+	return format;
+}
+
+
+inline uint Texture::getType() const
+{
+	ASSERT(isLoaded());
+	return type;
 }
 
 

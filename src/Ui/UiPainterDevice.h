@@ -3,6 +3,7 @@
 
 #include "Fbo.h"
 #include "Math.h"
+#include "Accessors.h"
 
 
 class Texture;
@@ -11,15 +12,26 @@ class Texture;
 namespace Ui {
 
 
-/// @todo
+/// This actually and FBO but with size info
 class PainterDevice: public Fbo
 {
 	public:
-		PainterDevice(const Vec2& size, Texture& colorFai);
+		/// Constructor
+		PainterDevice(Texture& colorFai);
+
+		/// @name Accessors
+		/// @{
+		Vec2 getSize() const;
+		/// @}
+
+	private:
+		Texture& colorFai;
+
+		void create();
 };
 
 
-} // end namesapce
+} // end namespace
 
 
 #endif
