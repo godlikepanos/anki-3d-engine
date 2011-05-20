@@ -17,16 +17,16 @@ Token::Token(const Token& b):
 {
 	switch(b.dataType)
 	{
-		case Scanner::DT_FLOAT:
+		case DT_FLOAT:
 			value.float_ = b.value.float_;
 			break;
-		case Scanner::DT_INT:
+		case DT_INT:
 			value.int_ = b.value.int_;
 			break;
-		case Scanner::DT_CHAR:
+		case DT_CHAR:
 			value.char_ = b.value.char_;
 			break;
-		case Scanner::DT_STR:
+		case DT_STR:
 			value.string = b.value.string;
 			break;
 	}

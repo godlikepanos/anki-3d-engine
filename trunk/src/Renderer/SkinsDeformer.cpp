@@ -41,13 +41,13 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 		sProg = tfHwSkinningPosSProg.get();
 	}
 
-	tfHwSkinningAllSProg->bind();
+	sProg->bind();
 
 	// Uniforms
-	tfHwSkinningAllSProg->findUniVar("skinningRotations")->set(&skinNode->getBoneRotations()[0],
+	sProg->findUniVar("skinningRotations")->set(&skinNode->getBoneRotations()[0],
 	                                                           skinNode->getBoneRotations().size());
 
-	tfHwSkinningAllSProg->findUniVar("skinningTranslations")->set(&skinNode->getBoneTranslations()[0],
+	sProg->findUniVar("skinningTranslations")->set(&skinNode->getBoneTranslations()[0],
 	                                                              skinNode->getBoneTranslations().size());
 
 	node.getTfVao().bind();
