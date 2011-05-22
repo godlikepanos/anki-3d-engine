@@ -2,7 +2,10 @@
 #define UI_FONT_H
 
 #include <memory>
-#include "Texture.h"
+#include "StdTypes.h"
+
+
+class Texture;
 
 
 namespace Ui {
@@ -12,10 +15,18 @@ namespace Ui {
 class Font
 {
 	public:
-		Font(const char* fontFilename, uint nominalWidth, uintNominalHeight);
+		Font(const char* fontFilename, uint nominalWidth, uint NominalHeight);
 
 	private:
+		/// @todo
+		struct FtGlyph
+		{
+
+		};
+
 		std::auto_ptr<Texture> map;
+
+
 };
 
 

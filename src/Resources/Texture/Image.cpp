@@ -28,7 +28,7 @@ void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 	height = header6[3] * 256 + header6[2];
 	bpp = header6[4];
 
-	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
+	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
 		throw EXCEPTION("Invalid image information");
 	}
@@ -45,7 +45,7 @@ void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 	}
 
 	// swap red with blue
-	for(int i=0; i<int(imageSize); i+=bytesPerPxl)
+	for(int i = 0; i < int(imageSize); i += bytesPerPxl)
 	{
 		uint temp = data[i];
 		data[i] = data[i + 2];

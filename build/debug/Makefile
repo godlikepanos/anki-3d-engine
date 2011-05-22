@@ -3,11 +3,11 @@
 CXX = g++
 CFLAGS = -DPLATFORM_LINUX -DMATH_INTEL_SIMD -DREVISION=\"`svnversion ../..`\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -g3 -fsingle-precision-constant -msse4
 PHFLAGS = 
-LFLAGS = -rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread
+LFLAGS = -rdynamic -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread -lfreetype
 EXECUTABLE = anki
-INCPATH = -I./ -I../../src -I../../src/Misc -I../../src/Input -I../../src/Math -I../../src/Scripting -I../../src/Scripting/Input -I../../src/Scripting/Math -I../../src/Scripting/Renderer -I../../src/Scripting/Scene -I../../src/Scripting/Scene/MaterialRuntime -I../../src/Scripting/Core -I../../src/Scripting/Util -I../../src/Ui -I../../src/Collision -I../../src/Renderer -I../../src/Renderer/Drawers -I../../src/Renderer/BufferObjects -I../../src/Scene -I../../src/Scene/Cameras -I../../src/Scene/MaterialRuntime -I../../src/Scene/Controllers -I../../src/Scene/Lights -I../../src/Core -I../../src/Resources -I../../src/Resources/Material -I../../src/Resources/Model -I../../src/Resources/ShaderProg -I../../src/Resources/Core -I../../src/Resources/Mesh -I../../src/Resources/Texture -I../../src/Util -I../../src/Util/Scanner -I../../src/Physics -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 
-SOURCES = ../../src/Main.cpp ../../src/Misc/skybox.cpp ../../src/Misc/TestHeader.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/map.cpp ../../src/Input/Input.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Input/Input.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Bl.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Core/Globals.bpi.cpp ../../src/Ui/UiPainterDevice.cpp ../../src/Ui/UiPainter.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Sphere.cpp ../../src/Collision/LineSegment.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/GlStateMachine.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Bl.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/Fbo.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Core/App.cpp ../../src/Core/JobManager.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Core/Logger.cpp ../../src/Core/Object.cpp ../../src/Resources/Skin.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Script.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcLoadingRequests.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Texture/Image.cpp ../../src/Util/HighRezTimer.cpp ../../src/Util/Exception.cpp ../../src/Util/Util.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Scanner/ScannerToken.cpp ../../src/Util/Scanner/ScannerException.cpp ../../src/Util/Scanner/Scanner.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Physics/Physics.cpp 
-OBJECTS = Main.o skybox.o TestHeader.o PropertyTree.o map.o Input.o ScriptingEngine.o BoostPythonInterfaces.o Input.bpi.o Vec2.bpi.o Vec4.bpi.o Vec3.bpi.o Renderer.bpi.o Pps.bpi.o Dbg.bpi.o Hdr.bpi.o Bl.bpi.o MainRenderer.bpi.o Scene.bpi.o ModelNode.bpi.o SceneNode.bpi.o ModelPatchNode.bpi.o Camera.bpi.o PatchNode.bpi.o MaterialRuntime.bpi.o Logger.bpi.o App.bpi.o Globals.bpi.o UiPainterDevice.o UiPainter.o Ray.o Plane.o Obb.o Sphere.o LineSegment.o Dbg.o GlStateMachine.o Ssao.o MainRenderer.o Hdr.o Bs.o Smo.o Bl.o Sm.o Ez.o Is.o SkinsDeformer.o Pps.o Ms.o Renderer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDbgDrawer.o SceneDrawer.o BufferObject.o Vao.o Fbo.o ModelNode.o ParticleEmitter.o ModelPatchNode.o SkinPatchNode.o SceneNode.o Scene.o PatchNode.o SkinNode.o VisibilityTester.o PerspectiveCamera.o Camera.o OrthographicCamera.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o Controller.o SkelAnimModelNodeCtrl.o SpotLight.o Light.o App.o JobManager.o AsyncLoader.o StdinListener.o Logger.o Object.o Skin.o Extension.o Script.o SkelAnim.o LightRsrc.o DummyRsrc.o Skeleton.o ParticleEmitterProps.o MtlUserDefinedVar.o Material.o ModelPatch.o Model.o ShaderProg.o SProgUniVar.o ShaderPrePreprocessor.o ResourceManager.o RsrcLoadingRequests.o RsrcAsyncLoadingReqsHandler.o MeshData.o Mesh.o Texture.o Image.o HighRezTimer.o Exception.o Util.o BinaryStream.o ScannerToken.o ScannerException.o Scanner.o RigidBody.o PhyCharacter.o Physics.o 
+INCPATH = -I./ -I../../src -I../../src/Resources -I../../src/Resources/Model -I../../src/Resources/Material -I../../src/Resources/Texture -I../../src/Resources/Mesh -I../../src/Resources/Core -I../../src/Resources/ShaderProg -I../../src/Physics -I../../src/Math -I../../src/Misc -I../../src/Ui -I../../src/Core -I../../src/Scene -I../../src/Scene/Controllers -I../../src/Scene/MaterialRuntime -I../../src/Scene/Cameras -I../../src/Scene/Lights -I../../src/Util -I../../src/Util/Scanner -I../../src/Input -I../../src/Renderer -I../../src/Renderer/BufferObjects -I../../src/Renderer/Drawers -I../../src/Collision -I../../src/Scripting -I../../src/Scripting/Math -I../../src/Scripting/Core -I../../src/Scripting/Scene -I../../src/Scripting/Scene/MaterialRuntime -I../../src/Scripting/Util -I../../src/Scripting/Input -I../../src/Scripting/Renderer -I../../extern/include -I../../extern/include/bullet -I/usr/include/python2.6 -I/usr/include/freetype2 
+SOURCES = ../../src/Main.cpp ../../src/Resources/DummyRsrc.cpp ../../src/Resources/Skin.cpp ../../src/Resources/SkelAnim.cpp ../../src/Resources/LightRsrc.cpp ../../src/Resources/Script.cpp ../../src/Resources/Skeleton.cpp ../../src/Resources/ParticleEmitterProps.cpp ../../src/Resources/Extension.cpp ../../src/Resources/Model/ModelPatch.cpp ../../src/Resources/Model/Model.cpp ../../src/Resources/Material/MtlUserDefinedVar.cpp ../../src/Resources/Material/Material.cpp ../../src/Resources/Texture/Image.cpp ../../src/Resources/Texture/Texture.cpp ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/MeshData.cpp ../../src/Resources/Core/ResourceManager.cpp ../../src/Resources/Core/RsrcLoadingRequests.cpp ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp ../../src/Resources/ShaderProg/ShaderProg.cpp ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp ../../src/Resources/ShaderProg/SProgUniVar.cpp ../../src/Physics/Physics.cpp ../../src/Physics/RigidBody.cpp ../../src/Physics/PhyCharacter.cpp ../../src/Misc/skybox.cpp ../../src/Misc/map.cpp ../../src/Misc/PropertyTree.cpp ../../src/Misc/TestHeader.cpp ../../src/Ui/UiFont.cpp ../../src/Ui/UiPainter.cpp ../../src/Ui/UiPainterDevice.cpp ../../src/Core/Object.cpp ../../src/Core/Logger.cpp ../../src/Core/JobManager.cpp ../../src/Core/App.cpp ../../src/Core/AsyncLoader.cpp ../../src/Core/StdinListener.cpp ../../src/Scene/SkinPatchNode.cpp ../../src/Scene/PatchNode.cpp ../../src/Scene/Scene.cpp ../../src/Scene/SkinNode.cpp ../../src/Scene/SceneNode.cpp ../../src/Scene/ModelNode.cpp ../../src/Scene/ParticleEmitter.cpp ../../src/Scene/VisibilityTester.cpp ../../src/Scene/ModelPatchNode.cpp ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp ../../src/Scene/Controllers/Controller.cpp ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp ../../src/Scene/Cameras/OrthographicCamera.cpp ../../src/Scene/Cameras/Camera.cpp ../../src/Scene/Cameras/PerspectiveCamera.cpp ../../src/Scene/Lights/SpotLight.cpp ../../src/Scene/Lights/Light.cpp ../../src/Util/BinaryStream.cpp ../../src/Util/Util.cpp ../../src/Util/Exception.cpp ../../src/Util/HighRezTimer.cpp ../../src/Util/Scanner/ScannerToken.cpp ../../src/Util/Scanner/ScannerException.cpp ../../src/Util/Scanner/Scanner.cpp ../../src/Input/Input.cpp ../../src/Renderer/SkinsDeformer.cpp ../../src/Renderer/Bl.cpp ../../src/Renderer/Renderer.cpp ../../src/Renderer/Hdr.cpp ../../src/Renderer/Bs.cpp ../../src/Renderer/GlStateMachine.cpp ../../src/Renderer/Sm.cpp ../../src/Renderer/Dbg.cpp ../../src/Renderer/Smo.cpp ../../src/Renderer/Pps.cpp ../../src/Renderer/Ms.cpp ../../src/Renderer/MainRenderer.cpp ../../src/Renderer/Is.cpp ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ez.cpp ../../src/Renderer/BufferObjects/Vao.cpp ../../src/Renderer/BufferObjects/BufferObject.cpp ../../src/Renderer/BufferObjects/Fbo.cpp ../../src/Renderer/Drawers/SceneDbgDrawer.cpp ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp ../../src/Renderer/Drawers/PhyDbgDrawer.cpp ../../src/Renderer/Drawers/SceneDrawer.cpp ../../src/Collision/Ray.cpp ../../src/Collision/Obb.cpp ../../src/Collision/Plane.cpp ../../src/Collision/Sphere.cpp ../../src/Collision/LineSegment.cpp ../../src/Scripting/ScriptingEngine.cpp ../../src/Scripting/BoostPythonInterfaces.cpp ../../src/Scripting/Math/Vec4.bpi.cpp ../../src/Scripting/Math/Vec3.bpi.cpp ../../src/Scripting/Math/Vec2.bpi.cpp ../../src/Scripting/Core/Logger.bpi.cpp ../../src/Scripting/Core/Globals.bpi.cpp ../../src/Scripting/Core/App.bpi.cpp ../../src/Scripting/Scene/Camera.bpi.cpp ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp ../../src/Scripting/Scene/ModelNode.bpi.cpp ../../src/Scripting/Scene/SceneNode.bpi.cpp ../../src/Scripting/Scene/PatchNode.bpi.cpp ../../src/Scripting/Scene/Scene.bpi.cpp ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp ../../src/Scripting/Input/Input.bpi.cpp ../../src/Scripting/Renderer/MainRenderer.bpi.cpp ../../src/Scripting/Renderer/Dbg.bpi.cpp ../../src/Scripting/Renderer/Bl.bpi.cpp ../../src/Scripting/Renderer/Hdr.bpi.cpp ../../src/Scripting/Renderer/Pps.bpi.cpp ../../src/Scripting/Renderer/Renderer.bpi.cpp 
+OBJECTS = Main.o DummyRsrc.o Skin.o SkelAnim.o LightRsrc.o Script.o Skeleton.o ParticleEmitterProps.o Extension.o ModelPatch.o Model.o MtlUserDefinedVar.o Material.o Image.o Texture.o Mesh.o MeshData.o ResourceManager.o RsrcLoadingRequests.o RsrcAsyncLoadingReqsHandler.o ShaderProg.o ShaderPrePreprocessor.o SProgUniVar.o Physics.o RigidBody.o PhyCharacter.o skybox.o map.o PropertyTree.o TestHeader.o UiFont.o UiPainter.o UiPainterDevice.o Object.o Logger.o JobManager.o App.o AsyncLoader.o StdinListener.o SkinPatchNode.o PatchNode.o Scene.o SkinNode.o SceneNode.o ModelNode.o ParticleEmitter.o VisibilityTester.o ModelPatchNode.o SkelAnimModelNodeCtrl.o Controller.o MaterialRuntimeUserDefinedVar.o MaterialRuntime.o OrthographicCamera.o Camera.o PerspectiveCamera.o SpotLight.o Light.o BinaryStream.o Util.o Exception.o HighRezTimer.o ScannerToken.o ScannerException.o Scanner.o Input.o SkinsDeformer.o Bl.o Renderer.o Hdr.o Bs.o GlStateMachine.o Sm.o Dbg.o Smo.o Pps.o Ms.o MainRenderer.o Is.o Ssao.o Ez.o Vao.o BufferObject.o Fbo.o SceneDbgDrawer.o CollisionDbgDrawer.o PhyDbgDrawer.o SceneDrawer.o Ray.o Obb.o Plane.o Sphere.o LineSegment.o ScriptingEngine.o BoostPythonInterfaces.o Vec4.bpi.o Vec3.bpi.o Vec2.bpi.o Logger.bpi.o Globals.bpi.o App.bpi.o Camera.bpi.o ModelPatchNode.bpi.o ModelNode.bpi.o SceneNode.bpi.o PatchNode.bpi.o Scene.bpi.o MaterialRuntime.bpi.o Input.bpi.o MainRenderer.bpi.o Dbg.bpi.o Bl.bpi.o Hdr.bpi.o Pps.bpi.o Renderer.bpi.o 
 PRECOMPILED_HEADERS = 
 
 all: $(PRECOMPILED_HEADERS) $(SOURCES) $(EXECUTABLE)
@@ -272,6 +272,1407 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
 	@echo Compiling ../../src/Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Main.cpp -o Main.o
 
+DummyRsrc.o: ../../src/Resources/DummyRsrc.cpp \
+ ../../src/Resources/DummyRsrc.h
+	@echo Compiling ../../src/Resources/DummyRsrc.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/DummyRsrc.cpp -o DummyRsrc.o
+
+Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Model/Model.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Resources/Skeleton.h \
+ ../../src/Resources/SkelAnim.h ../../src/Resources/Mesh/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Model/ModelPatch.h
+	@echo Compiling ../../src/Resources/Skin.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Skin.cpp -o Skin.o
+
+SkelAnim.o: ../../src/Resources/SkelAnim.cpp \
+ ../../src/Resources/SkelAnim.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Misc/Parser.h \
+ ../../src/Util/Exception.h ../../src/Util/Scanner/Scanner.h \
+ ../../src/Util/Scanner/ScannerToken.h \
+ ../../src/Util/Scanner/ScannerCommon.h ../../src/Misc/Parser.inl.h \
+ ../../src/Misc/Parser.h
+	@echo Compiling ../../src/Resources/SkelAnim.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/SkelAnim.cpp -o SkelAnim.o
+
+LightRsrc.o: ../../src/Resources/LightRsrc.cpp \
+ ../../src/Resources/LightRsrc.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Misc/PropertyTree.h
+	@echo Compiling ../../src/Resources/LightRsrc.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/LightRsrc.cpp -o LightRsrc.o
+
+Script.o: ../../src/Resources/Script.cpp ../../src/Resources/Script.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Exception.h
+	@echo Compiling ../../src/Resources/Script.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Script.cpp -o Script.o
+
+Skeleton.o: ../../src/Resources/Skeleton.cpp \
+ ../../src/Resources/Skeleton.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Util/BinaryStream.h ../../src/Util/Exception.h \
+ ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Resources/Skeleton.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Skeleton.cpp -o Skeleton.o
+
+ParticleEmitterProps.o: ../../src/Resources/ParticleEmitterProps.cpp \
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Util/Exception.h
+	@echo Compiling ../../src/Resources/ParticleEmitterProps.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ParticleEmitterProps.cpp -o ParticleEmitterProps.o
+
+Extension.o: ../../src/Resources/Extension.cpp \
+ ../../src/Resources/Extension.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h
+	@echo Compiling ../../src/Resources/Extension.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Extension.cpp -o Extension.o
+
+ModelPatch.o: ../../src/Resources/Model/ModelPatch.cpp \
+ ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh/Mesh.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../extern/include/GL/glew.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h
+	@echo Compiling ../../src/Resources/Model/ModelPatch.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model/ModelPatch.cpp -o ModelPatch.o
+
+Model.o: ../../src/Resources/Model/Model.cpp \
+ ../../src/Resources/Model/Model.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/SkelAnim.h ../../src/Resources/Skeleton.h
+	@echo Compiling ../../src/Resources/Model/Model.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model/Model.cpp -o Model.o
+
+MtlUserDefinedVar.o: ../../src/Resources/Material/MtlUserDefinedVar.cpp \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture/Texture.h
+	@echo Compiling ../../src/Resources/Material/MtlUserDefinedVar.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Material/MtlUserDefinedVar.cpp -o MtlUserDefinedVar.o
+
+Material.o: ../../src/Resources/Material/Material.cpp \
+ ../../src/Resources/Material/Material.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h ../../src/Misc/Parser.h \
+ ../../src/Util/Scanner/Scanner.h ../../src/Util/Scanner/ScannerToken.h \
+ ../../src/Util/Scanner/ScannerCommon.h ../../src/Misc/Parser.inl.h \
+ ../../src/Misc/Parser.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Core/App.h ../../src/Misc/PropertyTree.h
+	@echo Compiling ../../src/Resources/Material/Material.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Material/Material.cpp -o Material.o
+
+Image.o: ../../src/Resources/Texture/Image.cpp \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Resources/Texture/Image.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Texture/Image.cpp -o Image.o
+
+Texture.o: ../../src/Resources/Texture/Texture.cpp \
+ ../../extern/include/GL/glew.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Assert.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Misc/GlException.h \
+ ../../src/Util/Exception.h ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h
+	@echo Compiling ../../src/Resources/Texture/Texture.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Texture/Texture.cpp -o Texture.o
+
+Mesh.o: ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/Mesh.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../extern/include/GL/glew.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Mesh/MeshData.h
+	@echo Compiling ../../src/Resources/Mesh/Mesh.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Mesh/Mesh.cpp -o Mesh.o
+
+MeshData.o: ../../src/Resources/Mesh/MeshData.cpp \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Util/BinaryStream.h ../../src/Util/Exception.h \
+ ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Resources/Mesh/MeshData.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Mesh/MeshData.cpp -o MeshData.o
+
+ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Resources/Skeleton.h \
+ ../../src/Resources/SkelAnim.h ../../src/Resources/LightRsrc.h \
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h \
+ ../../src/Resources/Model/Model.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Core/Object.h ../../src/Misc/GlException.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Resources/Skin.h \
+ ../../src/Resources/DummyRsrc.h
+	@echo Compiling ../../src/Resources/Core/ResourceManager.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/ResourceManager.cpp -o ResourceManager.o
+
+RsrcLoadingRequests.o: ../../src/Resources/Core/RsrcLoadingRequests.cpp \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Util/Accessors.h ../../src/Resources/Texture/Image.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Util/Assert.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h
+	@echo Compiling ../../src/Resources/Core/RsrcLoadingRequests.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcLoadingRequests.cpp -o RsrcLoadingRequests.o
+
+RsrcAsyncLoadingReqsHandler.o: \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h ../../src/Util/HighRezTimer.h \
+ ../../src/Util/StdTypes.h ../../src/Core/Globals.h
+	@echo Compiling ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp -o RsrcAsyncLoadingReqsHandler.o
+
+ShaderProg.o: ../../src/Resources/ShaderProg/ShaderProg.cpp \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Util/Assert.h ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Resources/ShaderProg/ShaderPrePreprocessor.h \
+ ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Exception.h \
+ ../../src/Misc/GlException.h ../../src/Core/Logger.h \
+ ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Resources/ShaderProg/ShaderProg.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/ShaderProg.cpp -o ShaderProg.o
+
+ShaderPrePreprocessor.o: \
+ ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp \
+ ../../src/Resources/ShaderProg/ShaderPrePreprocessor.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Accessors.h ../../src/Misc/Parser.h \
+ ../../src/Util/Exception.h ../../src/Util/Scanner/Scanner.h \
+ ../../src/Util/Scanner/ScannerToken.h \
+ ../../src/Util/Scanner/ScannerCommon.h ../../src/Misc/Parser.inl.h \
+ ../../src/Misc/Parser.h ../../src/Util/Util.h ../../src/Util/Vec.h \
+ ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp -o ShaderPrePreprocessor.o
+
+SProgUniVar.o: ../../src/Resources/ShaderProg/SProgUniVar.cpp \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Resources/Texture/Texture.h
+	@echo Compiling ../../src/Resources/ShaderProg/SProgUniVar.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/SProgUniVar.cpp -o SProgUniVar.o
+
+Physics.o: ../../src/Physics/Physics.cpp \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../src/Physics/Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Physics/PhyCharacter.h ../../src/Core/Object.h \
+ ../../src/Physics/MotionState.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h
+	@echo Compiling ../../src/Physics/Physics.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics/Physics.cpp -o Physics.o
+
+RigidBody.o: ../../src/Physics/RigidBody.cpp \
+ ../../src/Physics/RigidBody.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Physics/Physics.h ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
+ ../../src/Util/Singleton.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Physics/MotionState.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h
+	@echo Compiling ../../src/Physics/RigidBody.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics/RigidBody.cpp -o RigidBody.o
+
+PhyCharacter.o: ../../src/Physics/PhyCharacter.cpp \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
+ ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
+ ../../src/Physics/PhyCharacter.h ../../src/Physics/Physics.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Core/Object.h \
+ ../../src/Physics/MotionState.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Physics/RigidBody.h
+	@echo Compiling ../../src/Physics/PhyCharacter.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics/PhyCharacter.cpp -o PhyCharacter.o
+
 skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
  ../../src/Util/Assert.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
@@ -498,21 +1899,9 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
 	@echo Compiling ../../src/Misc/skybox.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/skybox.cpp -o skybox.o
 
-TestHeader.o: ../../src/Misc/TestHeader.cpp ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
-	@echo Compiling ../../src/Misc/TestHeader.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/TestHeader.cpp -o TestHeader.o
+map.o: ../../src/Misc/map.cpp
+	@echo Compiling ../../src/Misc/map.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/map.cpp -o map.o
 
 PropertyTree.o: ../../src/Misc/PropertyTree.cpp \
  ../../src/Misc/PropertyTree.h ../../src/Math/Math.h \
@@ -532,17 +1921,7 @@ PropertyTree.o: ../../src/Misc/PropertyTree.cpp \
 	@echo Compiling ../../src/Misc/PropertyTree.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/PropertyTree.cpp -o PropertyTree.o
 
-map.o: ../../src/Misc/map.cpp
-	@echo Compiling ../../src/Misc/map.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/map.cpp -o map.o
-
-Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h ../../src/Math/Math.h \
+TestHeader.o: ../../src/Misc/TestHeader.cpp ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -554,9 +1933,143 @@ Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Util/Singleton.h ../../extern/include/SDL/SDL.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
+	@echo Compiling ../../src/Misc/TestHeader.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Misc/TestHeader.cpp -o TestHeader.o
+
+UiFont.o: ../../src/Ui/UiFont.cpp \
+ /usr/include/freetype2/freetype/freetype.h \
+ /usr/include/freetype2/freetype/config/ftconfig.h \
+ /usr/include/freetype2/freetype/config/ftoption.h \
+ /usr/include/freetype2/freetype/config/ftstdlib.h \
+ /usr/include/freetype2/freetype/fterrors.h \
+ /usr/include/freetype2/freetype/ftmoderr.h \
+ /usr/include/freetype2/freetype/fterrdef.h \
+ /usr/include/freetype2/freetype/fttypes.h \
+ /usr/include/freetype2/freetype/ftsystem.h \
+ /usr/include/freetype2/freetype/ftimage.h \
+ /usr/include/freetype2/freetype/ftglyph.h ../../src/Ui/UiFont.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Assert.h ../../src/Util/Exception.h
+	@echo Compiling ../../src/Ui/UiFont.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui/UiFont.cpp -o UiFont.o
+
+UiPainter.o: ../../src/Ui/UiPainter.cpp ../../src/Ui/UiPainter.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../extern/include/GL/glew.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Texture/Texture.h
+	@echo Compiling ../../src/Ui/UiPainter.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui/UiPainter.cpp -o UiPainter.o
+
+UiPainterDevice.o: ../../src/Ui/UiPainterDevice.cpp \
+ ../../src/Ui/UiPainterDevice.h ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../extern/include/GL/glew.h ../../src/Util/Assert.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Exception.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/Texture/Texture.h
+	@echo Compiling ../../src/Ui/UiPainterDevice.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui/UiPainterDevice.cpp -o UiPainterDevice.o
+
+Object.o: ../../src/Core/Object.cpp ../../src/Core/Object.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Assert.h \
+ ../../src/Util/Exception.h
+	@echo Compiling ../../src/Core/Object.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/Object.cpp -o Object.o
+
+Logger.o: ../../src/Core/Logger.cpp ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Core/Logger.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/Logger.cpp -o Logger.o
+
+JobManager.o: ../../src/Core/JobManager.cpp ../../src/Core/JobManager.h
+	@echo Compiling ../../src/Core/JobManager.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/JobManager.cpp -o JobManager.o
+
+App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
  ../../extern/include/SDL/SDL_atomic.h \
  ../../extern/include/SDL/SDL_audio.h \
  ../../extern/include/SDL/SDL_error.h \
@@ -587,134 +2100,11 @@ Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
  ../../extern/include/SDL/SDL_timer.h \
  ../../extern/include/SDL/SDL_version.h \
  ../../extern/include/SDL/SDL_compat.h ../../src/Core/App.h \
- ../../src/Util/Exception.h ../../src/Core/Logger.h \
- ../../src/Core/Globals.h
-	@echo Compiling ../../src/Input/Input.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Input/Input.cpp -o Input.o
-
-ScriptingEngine.o: ../../src/Scripting/ScriptingEngine.cpp \
- /usr/include/python2.6/Python.h /usr/include/python2.6/patchlevel.h \
- /usr/include/python2.6/pyconfig.h /usr/include/python2.6/pymacconfig.h \
- /usr/include/python2.6/pyport.h /usr/include/python2.6/pymath.h \
- /usr/include/python2.6/pymem.h /usr/include/python2.6/object.h \
- /usr/include/python2.6/objimpl.h /usr/include/python2.6/pydebug.h \
- /usr/include/python2.6/unicodeobject.h \
- /usr/include/python2.6/intobject.h /usr/include/python2.6/boolobject.h \
- /usr/include/python2.6/longobject.h /usr/include/python2.6/floatobject.h \
- /usr/include/python2.6/complexobject.h \
- /usr/include/python2.6/rangeobject.h \
- /usr/include/python2.6/stringobject.h \
- /usr/include/python2.6/bufferobject.h \
- /usr/include/python2.6/bytesobject.h \
- /usr/include/python2.6/bytearrayobject.h \
- /usr/include/python2.6/tupleobject.h /usr/include/python2.6/listobject.h \
- /usr/include/python2.6/dictobject.h /usr/include/python2.6/enumobject.h \
- /usr/include/python2.6/setobject.h /usr/include/python2.6/methodobject.h \
- /usr/include/python2.6/moduleobject.h \
- /usr/include/python2.6/funcobject.h /usr/include/python2.6/classobject.h \
- /usr/include/python2.6/fileobject.h /usr/include/python2.6/cobject.h \
- /usr/include/python2.6/traceback.h /usr/include/python2.6/sliceobject.h \
- /usr/include/python2.6/cellobject.h /usr/include/python2.6/iterobject.h \
- /usr/include/python2.6/genobject.h /usr/include/python2.6/descrobject.h \
- /usr/include/python2.6/warnings.h /usr/include/python2.6/weakrefobject.h \
- /usr/include/python2.6/codecs.h /usr/include/python2.6/pyerrors.h \
- /usr/include/python2.6/pystate.h /usr/include/python2.6/pyarena.h \
- /usr/include/python2.6/modsupport.h /usr/include/python2.6/pythonrun.h \
- /usr/include/python2.6/ceval.h /usr/include/python2.6/sysmodule.h \
- /usr/include/python2.6/intrcheck.h /usr/include/python2.6/import.h \
- /usr/include/python2.6/abstract.h /usr/include/python2.6/compile.h \
- /usr/include/python2.6/code.h /usr/include/python2.6/eval.h \
- /usr/include/python2.6/pystrtod.h /usr/include/python2.6/pystrcmp.h \
- /usr/include/python2.6/pyfpe.h ../../src/Scripting/ScriptingEngine.h \
- ../../src/Util/Singleton.h ../../src/Util/Exception.h \
- ../../src/Core/Logger.h ../../src/Core/Globals.h
-	@echo Compiling ../../src/Scripting/ScriptingEngine.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/ScriptingEngine.cpp -o ScriptingEngine.o
-
-BoostPythonInterfaces.o: ../../src/Scripting/BoostPythonInterfaces.cpp \
- ../../src/Scripting/ScriptingCommon.h
-	@echo Compiling ../../src/Scripting/BoostPythonInterfaces.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/BoostPythonInterfaces.cpp -o BoostPythonInterfaces.o
-
-Input.bpi.o: ../../src/Scripting/Input/Input.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Input/Input.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Scripting/Input/Input.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Input/Input.bpi.cpp -o Input.bpi.o
-
-Vec2.bpi.o: ../../src/Scripting/Math/Vec2.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
-	@echo Compiling ../../src/Scripting/Math/Vec2.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Math/Vec2.bpi.cpp -o Vec2.bpi.o
-
-Vec4.bpi.o: ../../src/Scripting/Math/Vec4.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
-	@echo Compiling ../../src/Scripting/Math/Vec4.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Math/Vec4.bpi.cpp -o Vec4.bpi.o
-
-Vec3.bpi.o: ../../src/Scripting/Math/Vec3.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
-	@echo Compiling ../../src/Scripting/Math/Vec3.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Math/Vec3.bpi.cpp -o Vec3.bpi.o
-
-Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Renderer.h \
+ ../../src/Util/Exception.h ../../src/Util/Singleton.h \
+ ../../src/Renderer/RendererInitializer.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -725,437 +2115,19 @@ Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Core/Globals.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
- ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bl.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
-	@echo Compiling ../../src/Scripting/Renderer/Renderer.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Renderer.bpi.cpp -o Renderer.bpi.o
-
-Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Bl.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Bl.h
-	@echo Compiling ../../src/Scripting/Renderer/Pps.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Pps.bpi.cpp -o Pps.bpi.o
-
-Dbg.bpi.o: ../../src/Scripting/Renderer/Dbg.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h
-	@echo Compiling ../../src/Scripting/Renderer/Dbg.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Dbg.bpi.cpp -o Dbg.bpi.o
-
-Hdr.bpi.o: ../../src/Scripting/Renderer/Hdr.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h
-	@echo Compiling ../../src/Scripting/Renderer/Hdr.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Hdr.bpi.cpp -o Hdr.bpi.o
-
-Bl.bpi.o: ../../src/Scripting/Renderer/Bl.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Bl.h \
- ../../src/Renderer/RenderingPass.h ../../src/Util/Accessors.h \
- ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h
-	@echo Compiling ../../src/Scripting/Renderer/Bl.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Bl.bpi.cpp -o Bl.bpi.o
-
-MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/MainRenderer.h \
- ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
@@ -1181,13 +2153,225 @@ MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/Dbg.h
-	@echo Compiling ../../src/Scripting/Renderer/MainRenderer.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/MainRenderer.bpi.cpp -o MainRenderer.bpi.o
+ ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h \
+ ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h \
+ ../../src/Core/Logger.h ../../src/Core/Globals.h
+	@echo Compiling ../../src/Core/App.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/App.cpp -o App.o
 
-Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Scene/Scene.h \
- ../../src/Physics/Physics.h \
+AsyncLoader.o: ../../src/Core/AsyncLoader.cpp \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h ../../src/Core/App.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h
+	@echo Compiling ../../src/Core/AsyncLoader.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/AsyncLoader.cpp -o AsyncLoader.o
+
+StdinListener.o: ../../src/Core/StdinListener.cpp \
+ ../../src/Core/StdinListener.h ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Core/StdinListener.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/StdinListener.cpp -o StdinListener.o
+
+SkinPatchNode.o: ../../src/Scene/SkinPatchNode.cpp \
+ ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Core/Object.h ../../src/Misc/GlException.h \
+ ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/SceneNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Scene/SkinNode.h ../../src/Renderer/SkinsDeformer.h
+	@echo Compiling ../../src/Scene/SkinPatchNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SkinPatchNode.cpp -o SkinPatchNode.o
+
+PatchNode.o: ../../src/Scene/PatchNode.cpp ../../src/Scene/PatchNode.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Core/Object.h ../../src/Misc/GlException.h \
+ ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/SceneNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h
+	@echo Compiling ../../src/Scene/PatchNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/PatchNode.cpp -o PatchNode.o
+
+Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -1338,7 +2522,7 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
  ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
  ../../src/Core/Object.h ../../src/Collision/Obb.h \
- ../../src/Scene/ModelNode.h ../../src/Scene/SceneNode.h \
+ ../../src/Scene/Lights/Light.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
@@ -1381,10 +2565,51 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
  ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelPatchNode.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightRsrc.h \
+ ../../src/Scene/Controllers/Controller.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
+ ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
+ ../../src/Scene/ModelNode.h ../../src/Scene/ModelPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h
+	@echo Compiling ../../src/Scene/Scene.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Scene.cpp -o Scene.o
+
+SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Scene/SkinPatchNode.h \
  ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
  ../../extern/include/GL/glew.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
@@ -1392,22 +2617,220 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Util/Singleton.h \
+ ../../src/Core/Globals.h ../../src/Misc/GlException.h \
+ ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scripting/Scene/Scene.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/Scene.bpi.cpp -o Scene.bpi.o
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/Skin.h ../../src/Resources/Model/Model.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Resources/Skeleton.h
+	@echo Compiling ../../src/Scene/SkinNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SkinNode.cpp -o SkinNode.o
 
-ModelNode.bpi.o: ../../src/Scripting/Scene/ModelNode.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Scene/ModelNode.h \
+SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Scene/Scene.h \
+ ../../src/Physics/Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Util/Singleton.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Core/Globals.h
+	@echo Compiling ../../src/Scene/SceneNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SceneNode.cpp -o SceneNode.o
+
+ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
@@ -1487,12 +2910,141 @@ ModelNode.bpi.o: ../../src/Scripting/Scene/ModelNode.bpi.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scripting/Scene/ModelNode.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/ModelNode.bpi.cpp -o ModelNode.bpi.o
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/Model/Model.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Resources/Skeleton.h
+	@echo Compiling ../../src/Scene/ModelNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNode.cpp -o ModelNode.o
 
-SceneNode.bpi.o: ../../src/Scripting/Scene/SceneNode.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Scene/SceneNode.h \
+ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -1507,21 +3059,98 @@ SceneNode.bpi.o: ../../src/Scripting/Scene/SceneNode.bpi.cpp \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
  ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h
-	@echo Compiling ../../src/Scripting/Scene/SceneNode.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/SceneNode.bpi.cpp -o SceneNode.bpi.o
-
-ModelPatchNode.bpi.o: ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Scene/ModelPatchNode.h \
- ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../extern/include/GL/glew.h ../../src/Util/StdTypes.h \
+ ../../src/Collision/Obb.inl.h ../../src/Scene/GhostNode.h \
+ ../../src/Resources/ParticleEmitterProps.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Physics/RigidBody.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
+ ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
+ ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Scene/ParticleEmitter.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ParticleEmitter.cpp -o ParticleEmitter.o
+
+VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
+ ../../src/Scene/VisibilityTester.h ../../src/Util/Accessors.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
  ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
  ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
@@ -1529,14 +3158,143 @@ ModelPatchNode.bpi.o: ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Core/Object.h ../../src/Misc/GlException.h \
- ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Singleton.h \
+ ../../src/Scene/ModelNode.h ../../src/Scene/SceneNode.h \
+ ../../src/Core/Object.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
@@ -1578,48 +3336,43 @@ ModelPatchNode.bpi.o: ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
- ../../src/Scene/SceneNode.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Scene/ModelPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp -o ModelPatchNode.bpi.o
-
-Camera.bpi.o: ../../src/Scripting/Scene/Camera.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Scene/Cameras/Camera.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h \
  ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
-	@echo Compiling ../../src/Scripting/Scene/Camera.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/Camera.bpi.cpp -o Camera.bpi.o
+ ../../src/Scene/Lights/PointLight.h ../../src/Scene/Lights/Light.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Scene/SceneNode.h \
+ ../../src/Resources/LightRsrc.h ../../src/Scene/Lights/SpotLight.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Ray.h \
+ ../../src/Collision/LineSegment.h
+	@echo Compiling ../../src/Scene/VisibilityTester.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/VisibilityTester.cpp -o VisibilityTester.o
 
-PatchNode.bpi.o: ../../src/Scripting/Scene/PatchNode.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Scene/PatchNode.h \
+ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
+ ../../src/Scene/ModelPatchNode.h ../../src/Scene/PatchNode.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
@@ -1695,13 +3448,375 @@ PatchNode.bpi.o: ../../src/Scripting/Scene/PatchNode.bpi.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scripting/Scene/PatchNode.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/PatchNode.bpi.cpp -o PatchNode.bpi.o
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Scene/ModelNode.h
+	@echo Compiling ../../src/Scene/ModelPatchNode.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelPatchNode.cpp -o ModelPatchNode.o
 
-MaterialRuntime.bpi.o: \
- ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h \
+SkelAnimModelNodeCtrl.o: \
+ ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp \
+ ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Scene/Controllers/Controller.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/SkelAnim.h \
+ ../../src/Resources/Skeleton.h ../../src/Scene/SkinNode.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Obb.inl.h ../../src/Scene/SkinPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../extern/include/GL/glew.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/Model/Model.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Resources/Skin.h
+	@echo Compiling ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp -o SkelAnimModelNodeCtrl.o
+
+Controller.o: ../../src/Scene/Controllers/Controller.cpp \
+ ../../src/Scene/Controllers/Controller.h ../../src/Scene/Scene.h \
+ ../../src/Physics/Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Singleton.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Core/App.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Exception.h \
+ ../../src/Core/Globals.h
+	@echo Compiling ../../src/Scene/Controllers/Controller.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/Controller.cpp -o Controller.o
+
+MaterialRuntimeUserDefinedVar.o: \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h
+	@echo Compiling ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp -o MaterialRuntimeUserDefinedVar.o
+
+MaterialRuntime.o: ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -1773,64 +3888,16 @@ MaterialRuntime.bpi.o: \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
  ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp -o MaterialRuntime.bpi.o
+	@echo Compiling ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp -o MaterialRuntime.o
 
-Logger.bpi.o: ../../src/Scripting/Core/Logger.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Scripting/Core/Logger.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/Logger.bpi.cpp -o Logger.bpi.o
-
-App.bpi.o: ../../src/Scripting/Core/App.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/StdTypes.h \
- ../../src/Util/Accessors.h ../../src/Util/Exception.h \
- ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Scripting/Core/App.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/App.bpi.cpp -o App.bpi.o
-
-Globals.bpi.o: ../../src/Scripting/Core/Globals.bpi.cpp \
- ../../src/Scripting/ScriptingCommon.h ../../src/Core/Globals.h \
- ../../src/Util/Singleton.h ../../src/Core/Logger.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+OrthographicCamera.o: ../../src/Scene/Cameras/OrthographicCamera.cpp \
+ ../../src/Scene/Cameras/OrthographicCamera.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -1841,20 +3908,85 @@ Globals.bpi.o: ../../src/Scripting/Core/Globals.bpi.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h
+	@echo Compiling ../../src/Scene/Cameras/OrthographicCamera.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/OrthographicCamera.cpp -o OrthographicCamera.o
+
+Camera.o: ../../src/Scene/Cameras/Camera.cpp \
+ ../../src/Scene/Cameras/Camera.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h
+	@echo Compiling ../../src/Scene/Cameras/Camera.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/Camera.cpp -o Camera.o
+
+PerspectiveCamera.o: ../../src/Scene/Cameras/PerspectiveCamera.cpp \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h
+	@echo Compiling ../../src/Scene/Cameras/PerspectiveCamera.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/PerspectiveCamera.cpp -o PerspectiveCamera.o
+
+SpotLight.o: ../../src/Scene/Lights/SpotLight.cpp \
+ ../../src/Scene/Lights/SpotLight.h ../../src/Scene/Lights/Light.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Assert.h ../../src/Scene/SceneNode.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Core/Object.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
  ../../extern/include/SDL/SDL_config.h \
  ../../extern/include/SDL/SDL_platform.h \
@@ -1895,166 +4027,20 @@ Globals.bpi.o: ../../src/Scripting/Core/Globals.bpi.cpp \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/RsrcLoadingRequests.h \
  ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
- ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightRsrc.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bl.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h \
- ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/VisibilityTester.h ../../src/Core/App.h
-	@echo Compiling ../../src/Scripting/Core/Globals.bpi.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/Globals.bpi.cpp -o Globals.bpi.o
+ ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h
+	@echo Compiling ../../src/Scene/Lights/SpotLight.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Lights/SpotLight.cpp -o SpotLight.o
 
-UiPainterDevice.o: ../../src/Ui/UiPainterDevice.cpp \
- ../../src/Ui/UiPainterDevice.h ../../src/Renderer/BufferObjects/Fbo.h \
- ../../extern/include/GL/glew.h ../../src/Util/Assert.h \
- ../../src/Util/StdTypes.h ../../src/Util/Exception.h \
+Light.o: ../../src/Scene/Lights/Light.cpp ../../src/Scene/Lights/Light.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Assert.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
  ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
@@ -2066,12 +4052,158 @@ UiPainterDevice.o: ../../src/Ui/UiPainterDevice.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/Texture/Texture.h
-	@echo Compiling ../../src/Ui/UiPainterDevice.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui/UiPainterDevice.cpp -o UiPainterDevice.o
-
-UiPainter.o: ../../src/Ui/UiPainter.cpp ../../src/Ui/UiPainter.h \
+ ../../src/Math/Transform.inl.h ../../src/Core/Object.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightRsrc.h
+	@echo Compiling ../../src/Scene/Lights/Light.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Lights/Light.cpp -o Light.o
+
+BinaryStream.o: ../../src/Util/BinaryStream.cpp \
+ ../../src/Util/BinaryStream.h ../../src/Util/Exception.h \
+ ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Util/BinaryStream.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/BinaryStream.cpp -o BinaryStream.o
+
+Util.o: ../../src/Util/Util.cpp ../../src/Util/Util.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h
+	@echo Compiling ../../src/Util/Util.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Util.cpp -o Util.o
+
+Exception.o: ../../src/Util/Exception.cpp ../../src/Util/Exception.h
+	@echo Compiling ../../src/Util/Exception.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Exception.cpp -o Exception.o
+
+HighRezTimer.o: ../../src/Util/HighRezTimer.cpp \
+ ../../src/Util/HighRezTimer.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Assert.h
+	@echo Compiling ../../src/Util/HighRezTimer.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/HighRezTimer.cpp -o HighRezTimer.o
+
+ScannerToken.o: ../../src/Util/Scanner/ScannerToken.cpp \
+ ../../src/Util/Scanner/ScannerToken.h \
+ ../../src/Util/Scanner/ScannerCommon.h ../../src/Util/StdTypes.h
+	@echo Compiling ../../src/Util/Scanner/ScannerToken.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Scanner/ScannerToken.cpp -o ScannerToken.o
+
+ScannerException.o: ../../src/Util/Scanner/ScannerException.cpp \
+ ../../src/Util/Scanner/ScannerException.h ../../src/Util/Exception.h
+	@echo Compiling ../../src/Util/Scanner/ScannerException.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Scanner/ScannerException.cpp -o ScannerException.o
+
+Scanner.o: ../../src/Util/Scanner/Scanner.cpp \
+ ../../src/Util/Scanner/Scanner.h ../../src/Util/Scanner/ScannerToken.h \
+ ../../src/Util/Scanner/ScannerCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Util/Assert.h \
+ ../../src/Util/Scanner/ScannerException.h
+	@echo Compiling ../../src/Util/Scanner/Scanner.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Scanner/Scanner.cpp -o Scanner.o
+
+Input.o: ../../src/Input/Input.cpp ../../src/Input/Input.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Util/Singleton.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Core/App.h \
+ ../../src/Util/Exception.h ../../src/Core/Logger.h \
+ ../../src/Core/Globals.h
+	@echo Compiling ../../src/Input/Input.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Input/Input.cpp -o Input.o
+
+SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
@@ -2131,450 +4263,125 @@ UiPainter.o: ../../src/Ui/UiPainter.cpp ../../src/Ui/UiPainter.h \
  ../../src/Util/Exception.h ../../src/Core/Globals.h \
  ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h ../../src/Scene/SkinPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Core/Object.h ../../src/Misc/GlException.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/SceneNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h
+	@echo Compiling ../../src/Renderer/SkinsDeformer.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/SkinsDeformer.cpp -o SkinsDeformer.o
+
+Bl.o: ../../src/Renderer/Bl.cpp ../../src/Renderer/Bl.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Renderer/RendererInitializer.h ../../src/Renderer/Renderer.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Texture/Texture.h
-	@echo Compiling ../../src/Ui/UiPainter.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui/UiPainter.cpp -o UiPainter.o
-
-Ray.o: ../../src/Collision/Ray.cpp ../../src/Collision/Ray.h \
- ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Plane.h
-	@echo Compiling ../../src/Collision/Ray.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Ray.cpp -o Ray.o
-
-Plane.o: ../../src/Collision/Plane.cpp ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
-	@echo Compiling ../../src/Collision/Plane.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Plane.cpp -o Plane.o
-
-Obb.o: ../../src/Collision/Obb.cpp ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Obb.inl.h ../../src/Collision/Plane.h
-	@echo Compiling ../../src/Collision/Obb.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Obb.cpp -o Obb.o
-
-Sphere.o: ../../src/Collision/Sphere.cpp ../../src/Collision/Sphere.h \
- ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Plane.h
-	@echo Compiling ../../src/Collision/Sphere.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Sphere.cpp -o Sphere.o
-
-LineSegment.o: ../../src/Collision/LineSegment.cpp \
- ../../src/Collision/LineSegment.h ../../src/Collision/CollisionShape.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Plane.h
-	@echo Compiling ../../src/Collision/LineSegment.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/LineSegment.cpp -o LineSegment.o
-
-Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Renderer.h ../../src/Resources/Texture/Texture.h \
- ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
- ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
- ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
- ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/VisibilityTester.h ../../src/Scene/Lights/Light.h \
- ../../src/Resources/LightRsrc.h ../../src/Renderer/RendererInitializer.h \
- ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
- ../../src/Scene/RenderableNode.h ../../src/Scene/SkinNode.h \
- ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/Lights/SpotLight.h ../../src/Scene/Lights/Light.h \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h
-	@echo Compiling ../../src/Renderer/Dbg.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Dbg.cpp -o Dbg.o
-
-GlStateMachine.o: ../../src/Renderer/GlStateMachine.cpp \
- ../../src/Renderer/GlStateMachine.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Renderer/GlStateMachine.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/GlStateMachine.cpp -o GlStateMachine.o
-
-Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
- ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
- ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
- ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
  ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/RendererInitializer.h \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h
-	@echo Compiling ../../src/Renderer/Ssao.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ssao.cpp -o Ssao.o
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
+	@echo Compiling ../../src/Renderer/Bl.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Bl.cpp -o Bl.o
 
-MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
- ../../src/Misc/GlException.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Renderer/MainRenderer.h \
- ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -2586,8 +4393,8 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture/Texture.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
@@ -2598,7 +4405,7 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
@@ -2661,9 +4468,11 @@ MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Core/App.h ../../src/Renderer/RendererInitializer.h
-	@echo Compiling ../../src/Renderer/MainRenderer.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/MainRenderer.cpp -o MainRenderer.o
+ ../../src/Renderer/RendererInitializer.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h
+	@echo Compiling ../../src/Renderer/Renderer.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Renderer.cpp -o Renderer.o
 
 Hdr.o: ../../src/Renderer/Hdr.cpp ../../src/Renderer/Hdr.h \
  ../../src/Renderer/RenderingPass.h \
@@ -2990,196 +4799,11 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
 	@echo Compiling ../../src/Renderer/Bs.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Bs.cpp -o Bs.o
 
-Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Scene/Cameras/Camera.h \
- ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
- ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Renderer/Renderer.h \
- ../../src/Resources/Texture/Texture.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Scene/Lights/Light.h ../../src/Resources/LightRsrc.h \
- ../../src/Scene/Lights/PointLight.h ../../src/Scene/Lights/Light.h \
- ../../src/Scene/Lights/SpotLight.h \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h \
- ../../src/Scene/Cameras/OrthographicCamera.h \
- ../../src/Resources/Mesh/Mesh.h
-	@echo Compiling ../../src/Renderer/Smo.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Smo.cpp -o Smo.o
-
-Bl.o: ../../src/Renderer/Bl.cpp ../../src/Renderer/Bl.h \
- ../../src/Renderer/RenderingPass.h ../../src/Util/Accessors.h \
- ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
- ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Renderer/RendererInitializer.h ../../src/Renderer/Renderer.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bs.h \
- ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
-	@echo Compiling ../../src/Renderer/Bl.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Bl.cpp -o Bl.o
+GlStateMachine.o: ../../src/Renderer/GlStateMachine.cpp \
+ ../../src/Renderer/GlStateMachine.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Renderer/GlStateMachine.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/GlStateMachine.cpp -o GlStateMachine.o
 
 Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../src/Renderer/RenderingPass.h \
@@ -3405,13 +5029,15 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
 	@echo Compiling ../../src/Renderer/Sm.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Sm.cpp -o Sm.o
 
-Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
+Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../src/Renderer/RenderingPass.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Util/Accessors.h \
- ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -3421,18 +5047,11 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
@@ -3476,25 +5095,29 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Resources/Core/RsrcLoadingRequests.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Renderer/Bl.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Renderer.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
+ ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Core/App.h ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -3625,10 +5248,401 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../src/Physics/BtAndAnkiConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/VisibilityTester.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Scene/Lights/Light.h \
+ ../../src/Resources/LightRsrc.h ../../src/Renderer/RendererInitializer.h \
+ ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
+ ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
+ ../../src/Scene/RenderableNode.h ../../src/Scene/SkinNode.h \
+ ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Scene/Lights/SpotLight.h ../../src/Scene/Lights/Light.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h
+	@echo Compiling ../../src/Renderer/Dbg.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Dbg.cpp -o Dbg.o
+
+Smo.o: ../../src/Renderer/Smo.cpp ../../src/Renderer/Smo.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Scene/Cameras/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Renderer.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/Lights/Light.h ../../src/Resources/LightRsrc.h \
+ ../../src/Scene/Lights/PointLight.h ../../src/Scene/Lights/Light.h \
+ ../../src/Scene/Lights/SpotLight.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h \
+ ../../src/Scene/Cameras/OrthographicCamera.h \
+ ../../src/Resources/Mesh/Mesh.h
+	@echo Compiling ../../src/Renderer/Smo.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Smo.cpp -o Smo.o
+
+Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Bl.h \
+ ../../src/Renderer/Renderer.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Renderer/RendererInitializer.h
-	@echo Compiling ../../src/Renderer/Ez.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ez.cpp -o Ez.o
+	@echo Compiling ../../src/Renderer/Pps.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Pps.cpp -o Pps.o
+
+Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Assert.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Util/Accessors.h \
+ ../../src/Renderer/Ez.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Is.h \
+ ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
+ ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Sphere.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
+ ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
+ ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
+ ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Scene/RenderableNode.h ../../src/Scene/SceneNode.h
+	@echo Compiling ../../src/Renderer/Ms.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ms.cpp -o Ms.o
+
+MainRenderer.o: ../../src/Renderer/MainRenderer.cpp \
+ ../../src/Misc/GlException.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Renderer/BufferObjects/Fbo.h \
+ ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bl.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Core/App.h ../../src/Renderer/RendererInitializer.h
+	@echo Compiling ../../src/Renderer/MainRenderer.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/MainRenderer.cpp -o MainRenderer.o
 
 Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../src/Renderer/RenderingPass.h \
@@ -3860,212 +5874,30 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
 	@echo Compiling ../../src/Renderer/Is.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Is.cpp -o Is.o
 
-SkinsDeformer.o: ../../src/Renderer/SkinsDeformer.cpp \
- ../../src/Renderer/SkinsDeformer.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Scene/SkinPatchNode.h \
- ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../src/Core/Object.h ../../src/Misc/GlException.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
- ../../src/Scene/SceneNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h
-	@echo Compiling ../../src/Renderer/SkinsDeformer.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/SkinsDeformer.cpp -o SkinsDeformer.o
-
-Pps.o: ../../src/Renderer/Pps.cpp ../../src/Renderer/Pps.h \
+Ssao.o: ../../src/Renderer/Ssao.cpp ../../src/Renderer/Ssao.h \
  ../../src/Renderer/RenderingPass.h \
  ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
  ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
- ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Bl.h \
- ../../src/Renderer/Renderer.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/RendererInitializer.h
-	@echo Compiling ../../src/Renderer/Pps.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Pps.cpp -o Pps.o
-
-Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingPass.h ../../src/Resources/Texture/Texture.h \
- ../../src/Util/StdTypes.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Util/Accessors.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
  ../../extern/include/SDL/SDL_stdinc.h \
@@ -4109,7 +5941,12 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Resources/Core/RsrcLoadingRequests.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Is.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Renderer.h \
+ ../../src/Renderer/Ms.h ../../src/Renderer/Ez.h ../../src/Renderer/Is.h \
  ../../src/Renderer/Sm.h ../../src/Scene/VisibilityTester.h \
  ../../src/Renderer/Smo.h ../../src/Scene/Cameras/Camera.h \
  ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
@@ -4118,21 +5955,26 @@ Ms.o: ../../src/Renderer/Ms.cpp ../../src/Renderer/Ms.h \
  ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
  ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
  ../../src/Collision/Obb.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h \
+ ../../src/Renderer/Dbg.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Scene/RenderableNode.h ../../src/Scene/SceneNode.h
-	@echo Compiling ../../src/Renderer/Ms.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ms.cpp -o Ms.o
+ ../../src/Renderer/RendererInitializer.h \
+ ../../src/Scene/Cameras/PerspectiveCamera.h \
+ ../../src/Scene/Cameras/Camera.h
+	@echo Compiling ../../src/Renderer/Ssao.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ssao.cpp -o Ssao.o
 
-Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Util/Accessors.h \
+ ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -4142,9 +5984,7 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Math/Transform.inl.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
@@ -4200,7 +6040,6 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
  ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
  ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
  ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
@@ -4218,11 +6057,371 @@ Renderer.o: ../../src/Renderer/Renderer.cpp ../../src/Renderer/Renderer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/RendererInitializer.h \
+ ../../src/Core/App.h ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Scene/VisibilityTester.h \
+ ../../src/Renderer/RendererInitializer.h
+	@echo Compiling ../../src/Renderer/Ez.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Ez.cpp -o Ez.o
+
+Vao.o: ../../src/Renderer/BufferObjects/Vao.cpp \
+ ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
+ ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Core/Object.h ../../src/Misc/GlException.h \
+ ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h
+	@echo Compiling ../../src/Renderer/BufferObjects/Vao.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/Vao.cpp -o Vao.o
+
+BufferObject.o: ../../src/Renderer/BufferObjects/BufferObject.cpp \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../extern/include/GL/glew.h ../../src/Util/Assert.h \
+ ../../src/Util/StdTypes.h ../../src/Misc/GlException.h \
+ ../../src/Util/Exception.h
+	@echo Compiling ../../src/Renderer/BufferObjects/BufferObject.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/BufferObject.cpp -o BufferObject.o
+
+Fbo.o: ../../src/Renderer/BufferObjects/Fbo.cpp \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h
+	@echo Compiling ../../src/Renderer/BufferObjects/Fbo.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/Fbo.cpp -o Fbo.o
+
+SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Scene/Lights/Light.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/LightRsrc.h ../../src/Scene/ParticleEmitter.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../src/Scene/SceneNode.h ../../src/Scene/GhostNode.h \
+ ../../src/Resources/ParticleEmitterProps.h ../../src/Scene/SkinNode.h \
+ ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h
-	@echo Compiling ../../src/Renderer/Renderer.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Renderer.cpp -o Renderer.o
+ ../../src/Scene/Cameras/Camera.h \
+ ../../src/Scene/Cameras/OrthographicCamera.h
+	@echo Compiling ../../src/Renderer/Drawers/SceneDbgDrawer.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/SceneDbgDrawer.cpp -o SceneDbgDrawer.o
 
 CollisionDbgDrawer.o: ../../src/Renderer/Drawers/CollisionDbgDrawer.cpp \
  ../../src/Renderer/Drawers/CollisionDbgDrawer.h ../../src/Renderer/Dbg.h \
@@ -4527,195 +6726,6 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
 	@echo Compiling ../../src/Renderer/Drawers/PhyDbgDrawer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/PhyDbgDrawer.cpp -o PhyDbgDrawer.o
 
-SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
- ../../src/Scene/Lights/Light.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/LightRsrc.h ../../src/Scene/ParticleEmitter.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../src/Scene/SceneNode.h ../../src/Scene/GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Scene/SkinNode.h \
- ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h \
- ../../src/Scene/Cameras/OrthographicCamera.h
-	@echo Compiling ../../src/Renderer/Drawers/SceneDbgDrawer.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/SceneDbgDrawer.cpp -o SceneDbgDrawer.o
-
 SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
@@ -4948,17 +6958,495 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
 	@echo Compiling ../../src/Renderer/Drawers/SceneDrawer.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/Drawers/SceneDrawer.cpp -o SceneDrawer.o
 
-BufferObject.o: ../../src/Renderer/BufferObjects/BufferObject.cpp \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Util/Assert.h \
- ../../src/Util/StdTypes.h ../../src/Misc/GlException.h \
- ../../src/Util/Exception.h
-	@echo Compiling ../../src/Renderer/BufferObjects/BufferObject.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/BufferObject.cpp -o BufferObject.o
+Ray.o: ../../src/Collision/Ray.cpp ../../src/Collision/Ray.h \
+ ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Plane.h
+	@echo Compiling ../../src/Collision/Ray.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Ray.cpp -o Ray.o
 
-Vao.o: ../../src/Renderer/BufferObjects/Vao.cpp \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
+Obb.o: ../../src/Collision/Obb.cpp ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Obb.inl.h ../../src/Collision/Plane.h
+	@echo Compiling ../../src/Collision/Obb.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Obb.cpp -o Obb.o
+
+Plane.o: ../../src/Collision/Plane.cpp ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
+	@echo Compiling ../../src/Collision/Plane.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Plane.cpp -o Plane.o
+
+Sphere.o: ../../src/Collision/Sphere.cpp ../../src/Collision/Sphere.h \
+ ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Sphere.inl.h ../../src/Collision/Plane.h
+	@echo Compiling ../../src/Collision/Sphere.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/Sphere.cpp -o Sphere.o
+
+LineSegment.o: ../../src/Collision/LineSegment.cpp \
+ ../../src/Collision/LineSegment.h ../../src/Collision/CollisionShape.h \
+ ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
+ ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Plane.h
+	@echo Compiling ../../src/Collision/LineSegment.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Collision/LineSegment.cpp -o LineSegment.o
+
+ScriptingEngine.o: ../../src/Scripting/ScriptingEngine.cpp \
+ /usr/include/python2.6/Python.h /usr/include/python2.6/patchlevel.h \
+ /usr/include/python2.6/pyconfig.h /usr/include/python2.6/pymacconfig.h \
+ /usr/include/python2.6/pyport.h /usr/include/python2.6/pymath.h \
+ /usr/include/python2.6/pymem.h /usr/include/python2.6/object.h \
+ /usr/include/python2.6/objimpl.h /usr/include/python2.6/pydebug.h \
+ /usr/include/python2.6/unicodeobject.h \
+ /usr/include/python2.6/intobject.h /usr/include/python2.6/boolobject.h \
+ /usr/include/python2.6/longobject.h /usr/include/python2.6/floatobject.h \
+ /usr/include/python2.6/complexobject.h \
+ /usr/include/python2.6/rangeobject.h \
+ /usr/include/python2.6/stringobject.h \
+ /usr/include/python2.6/bufferobject.h \
+ /usr/include/python2.6/bytesobject.h \
+ /usr/include/python2.6/bytearrayobject.h \
+ /usr/include/python2.6/tupleobject.h /usr/include/python2.6/listobject.h \
+ /usr/include/python2.6/dictobject.h /usr/include/python2.6/enumobject.h \
+ /usr/include/python2.6/setobject.h /usr/include/python2.6/methodobject.h \
+ /usr/include/python2.6/moduleobject.h \
+ /usr/include/python2.6/funcobject.h /usr/include/python2.6/classobject.h \
+ /usr/include/python2.6/fileobject.h /usr/include/python2.6/cobject.h \
+ /usr/include/python2.6/traceback.h /usr/include/python2.6/sliceobject.h \
+ /usr/include/python2.6/cellobject.h /usr/include/python2.6/iterobject.h \
+ /usr/include/python2.6/genobject.h /usr/include/python2.6/descrobject.h \
+ /usr/include/python2.6/warnings.h /usr/include/python2.6/weakrefobject.h \
+ /usr/include/python2.6/codecs.h /usr/include/python2.6/pyerrors.h \
+ /usr/include/python2.6/pystate.h /usr/include/python2.6/pyarena.h \
+ /usr/include/python2.6/modsupport.h /usr/include/python2.6/pythonrun.h \
+ /usr/include/python2.6/ceval.h /usr/include/python2.6/sysmodule.h \
+ /usr/include/python2.6/intrcheck.h /usr/include/python2.6/import.h \
+ /usr/include/python2.6/abstract.h /usr/include/python2.6/compile.h \
+ /usr/include/python2.6/code.h /usr/include/python2.6/eval.h \
+ /usr/include/python2.6/pystrtod.h /usr/include/python2.6/pystrcmp.h \
+ /usr/include/python2.6/pyfpe.h ../../src/Scripting/ScriptingEngine.h \
+ ../../src/Util/Singleton.h ../../src/Util/Exception.h \
+ ../../src/Core/Logger.h ../../src/Core/Globals.h
+	@echo Compiling ../../src/Scripting/ScriptingEngine.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/ScriptingEngine.cpp -o ScriptingEngine.o
+
+BoostPythonInterfaces.o: ../../src/Scripting/BoostPythonInterfaces.cpp \
+ ../../src/Scripting/ScriptingCommon.h
+	@echo Compiling ../../src/Scripting/BoostPythonInterfaces.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/BoostPythonInterfaces.cpp -o BoostPythonInterfaces.o
+
+Vec4.bpi.o: ../../src/Scripting/Math/Vec4.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
+	@echo Compiling ../../src/Scripting/Math/Vec4.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Math/Vec4.bpi.cpp -o Vec4.bpi.o
+
+Vec3.bpi.o: ../../src/Scripting/Math/Vec3.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
+	@echo Compiling ../../src/Scripting/Math/Vec3.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Math/Vec3.bpi.cpp -o Vec3.bpi.o
+
+Vec2.bpi.o: ../../src/Scripting/Math/Vec2.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h
+	@echo Compiling ../../src/Scripting/Math/Vec2.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Math/Vec2.bpi.cpp -o Vec2.bpi.o
+
+Logger.bpi.o: ../../src/Scripting/Core/Logger.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Scripting/Core/Logger.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/Logger.bpi.cpp -o Logger.bpi.o
+
+Globals.bpi.o: ../../src/Scripting/Core/Globals.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Core/Globals.h \
+ ../../src/Util/Singleton.h ../../src/Core/Logger.h \
+ ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bl.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h \
+ ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/LinearMath/btScalar.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/LinearMath/btVector3.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btQuadWord.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/LinearMath/btTransformUtil.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
+ ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
+ ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
+ ../../extern/include/bullet/LinearMath/btMinMax.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/LinearMath/btStackAlloc.h \
+ ../../extern/include/bullet/LinearMath/btHashMap.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
+ ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
+ ../../extern/include/bullet/LinearMath/btQuaternion.h \
+ ../../extern/include/bullet/LinearMath/btTransform.h \
+ ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
+ ../../extern/include/bullet/LinearMath/btMotionState.h \
+ ../../extern/include/bullet/LinearMath/btQuickprof.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../extern/include/bullet/LinearMath/btSerializer.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/Drawers/PhyDbgDrawer.h \
+ ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Core/App.h
+	@echo Compiling ../../src/Scripting/Core/Globals.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/Globals.bpi.cpp -o Globals.bpi.o
+
+App.bpi.o: ../../src/Scripting/Core/App.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Core/App.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Accessors.h ../../src/Util/Exception.h \
+ ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Scripting/Core/App.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Core/App.bpi.cpp -o App.bpi.o
+
+Camera.bpi.o: ../../src/Scripting/Scene/Camera.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Scene/Cameras/Camera.h \
+ ../../src/Util/Vec.h ../../src/Util/Assert.h \
+ ../../src/Collision/Collision.h ../../src/Collision/Plane.h \
+ ../../src/Collision/CollisionShape.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
+ ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
+ ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
+ ../../src/Collision/Obb.h
+	@echo Compiling ../../src/Scripting/Scene/Camera.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/Camera.bpi.cpp -o Camera.bpi.o
+
+ModelPatchNode.bpi.o: ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Scene/ModelPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
+ ../../extern/include/GL/glew.h ../../src/Util/StdTypes.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
@@ -4978,18 +7466,66 @@ Vao.o: ../../src/Renderer/BufferObjects/Vao.cpp \
  ../../src/Util/Singleton.h ../../src/Core/Globals.h \
  ../../src/Core/Object.h ../../src/Misc/GlException.h \
  ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h
-	@echo Compiling ../../src/Renderer/BufferObjects/Vao.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/Vao.cpp -o Vao.o
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Obb.h \
+ ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/SceneNode.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
+ ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/Material/Material.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h
+	@echo Compiling ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/ModelPatchNode.bpi.cpp -o ModelPatchNode.bpi.o
 
-Fbo.o: ../../src/Renderer/BufferObjects/Fbo.cpp \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h
-	@echo Compiling ../../src/Renderer/BufferObjects/Fbo.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Renderer/BufferObjects/Fbo.cpp -o Fbo.o
-
-ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
+ModelNode.bpi.o: ../../src/Scripting/Scene/ModelNode.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Scene/ModelNode.h \
  ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
  ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
  ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
@@ -5069,141 +7605,12 @@ ModelNode.o: ../../src/Scene/ModelNode.cpp ../../src/Scene/ModelNode.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/Model/Model.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Resources/Skeleton.h
-	@echo Compiling ../../src/Scene/ModelNode.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelNode.cpp -o ModelNode.o
+ ../../src/Resources/Material/MtlUserDefinedVar.h
+	@echo Compiling ../../src/Scripting/Scene/ModelNode.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/ModelNode.bpi.cpp -o ModelNode.bpi.o
 
-ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
+SceneNode.bpi.o: ../../src/Scripting/Scene/SceneNode.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Scene/SceneNode.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -5218,94 +7625,12 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
  ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Physics/RigidBody.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
- ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../src/Misc/GlException.h \
- ../../src/Renderer/Ms.h ../../src/Renderer/RenderingPass.h \
- ../../src/Renderer/Ez.h ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Core/App.h ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/VisibilityTester.h ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Scene/ParticleEmitter.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ParticleEmitter.cpp -o ParticleEmitter.o
+ ../../src/Collision/Obb.inl.h
+	@echo Compiling ../../src/Scripting/Scene/SceneNode.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/SceneNode.bpi.cpp -o SceneNode.bpi.o
 
-ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
- ../../src/Scene/ModelPatchNode.h ../../src/Scene/PatchNode.h \
+PatchNode.bpi.o: ../../src/Scripting/Scene/PatchNode.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Scene/PatchNode.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
  ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
@@ -5381,247 +7706,13 @@ ModelPatchNode.o: ../../src/Scene/ModelPatchNode.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/ModelNode.h
-	@echo Compiling ../../src/Scene/ModelPatchNode.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/ModelPatchNode.cpp -o ModelPatchNode.o
+ ../../src/Resources/Material/MtlUserDefinedVar.h
+	@echo Compiling ../../src/Scripting/Scene/PatchNode.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/PatchNode.bpi.cpp -o PatchNode.bpi.o
 
-SkinPatchNode.o: ../../src/Scene/SkinPatchNode.cpp \
- ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Core/Object.h ../../src/Misc/GlException.h \
- ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
- ../../src/Scene/SceneNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/SkinNode.h ../../src/Renderer/SkinsDeformer.h
-	@echo Compiling ../../src/Scene/SkinPatchNode.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SkinPatchNode.cpp -o SkinPatchNode.o
-
-SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/Scene.h \
+Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Scene/Scene.h \
  ../../src/Physics/Physics.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Util/Singleton.h ../../src/Scene/VisibilityTester.h \
- ../../src/Core/Globals.h
-	@echo Compiling ../../src/Scene/SceneNode.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SceneNode.cpp -o SceneNode.o
-
-Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
- ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -5772,391 +7863,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Collision/Obb.inl.h ../../src/Collision/Ray.h \
  ../../src/Collision/LineSegment.h ../../src/Scene/SceneNode.h \
  ../../src/Core/Object.h ../../src/Collision/Obb.h \
- ../../src/Scene/Lights/Light.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightRsrc.h \
- ../../src/Scene/Controllers/Controller.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
- ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
- ../../src/Scene/ModelNode.h ../../src/Scene/ModelPatchNode.h \
- ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../src/Misc/GlException.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h
-	@echo Compiling ../../src/Scene/Scene.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Scene.cpp -o Scene.o
-
-PatchNode.o: ../../src/Scene/PatchNode.cpp ../../src/Scene/PatchNode.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Util/StdTypes.h ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h ../../src/Util/Assert.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Core/Object.h ../../src/Misc/GlException.h \
- ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
- ../../src/Scene/SceneNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scene/PatchNode.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/PatchNode.cpp -o PatchNode.o
-
-SkinNode.o: ../../src/Scene/SkinNode.cpp ../../src/Scene/SkinNode.h \
- ../../src/Scene/SceneNode.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SkinPatchNode.h \
- ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../extern/include/GL/glew.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Util/Singleton.h \
- ../../src/Core/Globals.h ../../src/Misc/GlException.h \
- ../../src/Util/Exception.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/Skin.h ../../src/Resources/Model/Model.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Resources/Skeleton.h
-	@echo Compiling ../../src/Scene/SkinNode.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/SkinNode.cpp -o SkinNode.o
-
-VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
- ../../src/Scene/VisibilityTester.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Singleton.h \
  ../../src/Scene/ModelNode.h ../../src/Scene/SceneNode.h \
- ../../src/Core/Object.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
  ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
@@ -6220,164 +7927,13 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Scene/Lights/PointLight.h ../../src/Scene/Lights/Light.h \
- ../../src/Resources/Texture/Texture.h ../../src/Scene/SceneNode.h \
- ../../src/Resources/LightRsrc.h ../../src/Scene/Lights/SpotLight.h \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Obb.h ../../src/Collision/Ray.h \
- ../../src/Collision/LineSegment.h
-	@echo Compiling ../../src/Scene/VisibilityTester.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/VisibilityTester.cpp -o VisibilityTester.o
+ ../../src/Resources/Material/MtlUserDefinedVar.h
+	@echo Compiling ../../src/Scripting/Scene/Scene.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/Scene.bpi.cpp -o Scene.bpi.o
 
-PerspectiveCamera.o: ../../src/Scene/Cameras/PerspectiveCamera.cpp \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
-	@echo Compiling ../../src/Scene/Cameras/PerspectiveCamera.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/PerspectiveCamera.cpp -o PerspectiveCamera.o
-
-Camera.o: ../../src/Scene/Cameras/Camera.cpp \
- ../../src/Scene/Cameras/Camera.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
-	@echo Compiling ../../src/Scene/Cameras/Camera.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/Camera.cpp -o Camera.o
-
-OrthographicCamera.o: ../../src/Scene/Cameras/OrthographicCamera.cpp \
- ../../src/Scene/Cameras/OrthographicCamera.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
- ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h
-	@echo Compiling ../../src/Scene/Cameras/OrthographicCamera.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Cameras/OrthographicCamera.cpp -o OrthographicCamera.o
-
-MaterialRuntimeUserDefinedVar.o: \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h
-	@echo Compiling ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.cpp -o MaterialRuntimeUserDefinedVar.o
-
-MaterialRuntime.o: ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp \
+MaterialRuntime.bpi.o: \
+ ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -6449,140 +8005,17 @@ MaterialRuntime.o: ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp \
  ../../src/Resources/ShaderProg/SProgAttribVar.h \
  ../../src/Renderer/GlStateMachine.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h
-	@echo Compiling ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/MaterialRuntime/MaterialRuntime.cpp -o MaterialRuntime.o
+	@echo Compiling ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Scene/MaterialRuntime/MaterialRuntime.bpi.cpp -o MaterialRuntime.bpi.o
 
-Controller.o: ../../src/Scene/Controllers/Controller.cpp \
- ../../src/Scene/Controllers/Controller.h ../../src/Scene/Scene.h \
- ../../src/Physics/Physics.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+Input.bpi.o: ../../src/Scripting/Input/Input.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Input/Input.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -6595,55 +8028,14 @@ Controller.o: ../../src/Scene/Controllers/Controller.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Singleton.h \
- ../../src/Scene/VisibilityTester.h ../../src/Core/App.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Exception.h \
- ../../src/Core/Globals.h
-	@echo Compiling ../../src/Scene/Controllers/Controller.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/Controller.cpp -o Controller.o
+ ../../src/Util/Singleton.h
+	@echo Compiling ../../src/Scripting/Input/Input.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Input/Input.bpi.cpp -o Input.bpi.o
 
-SkelAnimModelNodeCtrl.o: \
- ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp \
- ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Scene/Controllers/Controller.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+MainRenderer.bpi.o: ../../src/Scripting/Renderer/MainRenderer.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/MainRenderer.h \
+ ../../src/Renderer/Renderer.h ../../src/Math/Math.h \
+ ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
@@ -6655,302 +8047,56 @@ SkelAnimModelNodeCtrl.o: \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/SkelAnim.h \
- ../../src/Resources/Skeleton.h ../../src/Scene/SkinNode.h \
- ../../src/Scene/SceneNode.h ../../src/Core/Object.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Scene/SkinPatchNode.h \
- ../../src/Scene/PatchNode.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../extern/include/GL/glew.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Misc/GlException.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
- ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/Model/Model.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture/Texture.h ../../src/Renderer/Ms.h \
- ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
- ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
- ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
- ../../src/Scene/SceneNode.h ../../src/Renderer/Pps.h \
- ../../src/Renderer/Hdr.h ../../src/Renderer/Ssao.h \
- ../../src/Renderer/Bl.h ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
- ../../src/Renderer/Drawers/SceneDbgDrawer.h \
- ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
- ../../src/Renderer/Drawers/SceneDrawer.h \
- ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Resources/Skin.h
-	@echo Compiling ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.cpp -o SkelAnimModelNodeCtrl.o
-
-SpotLight.o: ../../src/Scene/Lights/SpotLight.cpp \
- ../../src/Scene/Lights/SpotLight.h ../../src/Scene/Lights/Light.h \
- ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
- ../../src/Util/Assert.h ../../src/Scene/SceneNode.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Core/Object.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightRsrc.h \
- ../../src/Scene/Cameras/PerspectiveCamera.h \
- ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
- ../../src/Collision/Plane.h ../../src/Collision/Sphere.h \
- ../../src/Collision/Sphere.inl.h ../../src/Collision/Obb.h \
- ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h
-	@echo Compiling ../../src/Scene/Lights/SpotLight.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Lights/SpotLight.cpp -o SpotLight.o
-
-Light.o: ../../src/Scene/Lights/Light.cpp ../../src/Scene/Lights/Light.h \
- ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
- ../../src/Util/Assert.h ../../src/Scene/SceneNode.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/Accessors.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Core/Object.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/LightRsrc.h
-	@echo Compiling ../../src/Scene/Lights/Light.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scene/Lights/Light.cpp -o Light.o
-
-App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
- ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Core/App.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Util/Exception.h ../../src/Util/Singleton.h \
- ../../src/Renderer/RendererInitializer.h \
- ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/BufferObjects/Fbo.h \
- ../../src/Resources/Texture/Texture.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
  ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Resources/ShaderProg/SProgVar.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Core/Globals.h ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
  ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
  ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
  ../../src/Resources/Core/RsrcHook.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
@@ -6976,170 +8122,20 @@ App.o: ../../src/Core/App.cpp ../../extern/include/GL/glew.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h \
- ../../src/Input/Input.h ../../extern/include/SDL/SDL_scancode.h \
- ../../src/Core/Logger.h ../../src/Core/Globals.h
-	@echo Compiling ../../src/Core/App.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/App.cpp -o App.o
+ ../../src/Renderer/Dbg.h
+	@echo Compiling ../../src/Scripting/Renderer/MainRenderer.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/MainRenderer.bpi.cpp -o MainRenderer.bpi.o
 
-JobManager.o: ../../src/Core/JobManager.cpp ../../src/Core/JobManager.h
-	@echo Compiling ../../src/Core/JobManager.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/JobManager.cpp -o JobManager.o
-
-AsyncLoader.o: ../../src/Core/AsyncLoader.cpp \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h ../../src/Core/App.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h
-	@echo Compiling ../../src/Core/AsyncLoader.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/AsyncLoader.cpp -o AsyncLoader.o
-
-StdinListener.o: ../../src/Core/StdinListener.cpp \
- ../../src/Core/StdinListener.h ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Core/StdinListener.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/StdinListener.cpp -o StdinListener.o
-
-Logger.o: ../../src/Core/Logger.cpp ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Core/Logger.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/Logger.cpp -o Logger.o
-
-Object.o: ../../src/Core/Object.cpp ../../src/Core/Object.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Assert.h \
- ../../src/Util/Exception.h
-	@echo Compiling ../../src/Core/Object.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Core/Object.cpp -o Object.o
-
-Skin.o: ../../src/Resources/Skin.cpp ../../src/Resources/Skin.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+Dbg.bpi.o: ../../src/Scripting/Renderer/Dbg.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Model/Model.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/Exception.h ../../src/Resources/ShaderProg/ShaderProg.h \
  ../../src/Util/CharPtrHashMap.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Resources/Skeleton.h \
- ../../src/Resources/SkelAnim.h ../../src/Resources/Mesh/Mesh.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/Model/ModelPatch.h
-	@echo Compiling ../../src/Resources/Skin.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Skin.cpp -o Skin.o
-
-Extension.o: ../../src/Resources/Extension.cpp \
- ../../src/Resources/Extension.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h
-	@echo Compiling ../../src/Resources/Extension.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Extension.cpp -o Extension.o
-
-Script.o: ../../src/Resources/Script.cpp ../../src/Resources/Script.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Util/StdTypes.h ../../src/Util/Exception.h
-	@echo Compiling ../../src/Resources/Script.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Script.cpp -o Script.o
-
-SkelAnim.o: ../../src/Resources/SkelAnim.cpp \
- ../../src/Resources/SkelAnim.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
+ ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -7149,209 +8145,7 @@ SkelAnim.o: ../../src/Resources/SkelAnim.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Misc/Parser.h \
- ../../src/Util/Exception.h ../../src/Util/Scanner/Scanner.h \
- ../../src/Util/Scanner/ScannerToken.h \
- ../../src/Util/Scanner/ScannerCommon.h ../../src/Misc/Parser.inl.h \
- ../../src/Misc/Parser.h
-	@echo Compiling ../../src/Resources/SkelAnim.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/SkelAnim.cpp -o SkelAnim.o
-
-LightRsrc.o: ../../src/Resources/LightRsrc.cpp \
- ../../src/Resources/LightRsrc.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture/Texture.h \
- ../../src/Misc/PropertyTree.h
-	@echo Compiling ../../src/Resources/LightRsrc.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/LightRsrc.cpp -o LightRsrc.o
-
-DummyRsrc.o: ../../src/Resources/DummyRsrc.cpp \
- ../../src/Resources/DummyRsrc.h
-	@echo Compiling ../../src/Resources/DummyRsrc.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/DummyRsrc.cpp -o DummyRsrc.o
-
-Skeleton.o: ../../src/Resources/Skeleton.cpp \
- ../../src/Resources/Skeleton.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Util/BinaryStream.h ../../src/Util/Exception.h \
- ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Resources/Skeleton.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Skeleton.cpp -o Skeleton.o
-
-ParticleEmitterProps.o: ../../src/Resources/ParticleEmitterProps.cpp \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Util/Exception.h
-	@echo Compiling ../../src/Resources/ParticleEmitterProps.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ParticleEmitterProps.cpp -o ParticleEmitterProps.o
-
-MtlUserDefinedVar.o: ../../src/Resources/Material/MtlUserDefinedVar.cpp \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Texture/Texture.h
-	@echo Compiling ../../src/Resources/Material/MtlUserDefinedVar.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Material/MtlUserDefinedVar.cpp -o MtlUserDefinedVar.o
-
-Material.o: ../../src/Resources/Material/Material.cpp \
- ../../src/Resources/Material/Material.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Math/Transform.inl.h \
  ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
  ../../src/Util/Singleton.h ../../src/Core/Globals.h \
@@ -7397,499 +8191,22 @@ Material.o: ../../src/Resources/Material/Material.cpp \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
  ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
  ../../src/Resources/Core/RsrcPtr.inl.h \
  ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h ../../src/Misc/Parser.h \
- ../../src/Util/Scanner/Scanner.h ../../src/Util/Scanner/ScannerToken.h \
- ../../src/Util/Scanner/ScannerCommon.h ../../src/Misc/Parser.inl.h \
- ../../src/Misc/Parser.h ../../src/Resources/Texture/Texture.h \
- ../../src/Core/App.h ../../src/Misc/PropertyTree.h
-	@echo Compiling ../../src/Resources/Material/Material.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Material/Material.cpp -o Material.o
-
-ModelPatch.o: ../../src/Resources/Model/ModelPatch.cpp \
- ../../src/Resources/Model/ModelPatch.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h ../../src/Resources/Mesh/Mesh.h \
  ../../src/Renderer/BufferObjects/Vbo.h \
  ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h
-	@echo Compiling ../../src/Resources/Model/ModelPatch.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model/ModelPatch.cpp -o ModelPatch.o
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h
+	@echo Compiling ../../src/Scripting/Renderer/Dbg.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Dbg.bpi.cpp -o Dbg.bpi.o
 
-Model.o: ../../src/Resources/Model/Model.cpp \
- ../../src/Resources/Model/Model.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vao.h ../../extern/include/GL/glew.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Core/Object.h \
- ../../src/Misc/GlException.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Resources/Material/Material.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Resources/SkelAnim.h ../../src/Resources/Skeleton.h
-	@echo Compiling ../../src/Resources/Model/Model.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Model/Model.cpp -o Model.o
-
-ShaderProg.o: ../../src/Resources/ShaderProg/ShaderProg.cpp \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Util/Assert.h ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../src/Util/Accessors.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Math/Vec2.inl.h \
- ../../src/Math/MathCommon.inl.h ../../src/Math/Vec3.h \
- ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/ShaderProg/ShaderPrePreprocessor.h \
- ../../src/Core/App.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Exception.h \
- ../../src/Misc/GlException.h ../../src/Core/Logger.h \
- ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Resources/ShaderProg/ShaderProg.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/ShaderProg.cpp -o ShaderProg.o
-
-SProgUniVar.o: ../../src/Resources/ShaderProg/SProgUniVar.cpp \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h ../../extern/include/GL/glew.h \
- ../../src/Util/Accessors.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/StdTypes.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
- ../../src/Util/Singleton.h ../../src/Core/Globals.h \
- ../../src/Resources/Texture/Texture.h
-	@echo Compiling ../../src/Resources/ShaderProg/SProgUniVar.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/SProgUniVar.cpp -o SProgUniVar.o
-
-ShaderPrePreprocessor.o: \
- ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp \
- ../../src/Resources/ShaderProg/ShaderPrePreprocessor.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Accessors.h ../../src/Misc/Parser.h \
- ../../src/Util/Exception.h ../../src/Util/Scanner/Scanner.h \
- ../../src/Util/Scanner/ScannerToken.h \
- ../../src/Util/Scanner/ScannerCommon.h ../../src/Misc/Parser.inl.h \
- ../../src/Misc/Parser.h ../../src/Util/Util.h ../../src/Util/Vec.h \
- ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/ShaderProg/ShaderPrePreprocessor.cpp -o ShaderPrePreprocessor.o
-
-ResourceManager.o: ../../src/Resources/Core/ResourceManager.cpp \
- ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Core/RsrcHook.h \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Texture/Texture.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../extern/include/GL/glew.h ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Resources/Skeleton.h \
- ../../src/Resources/SkelAnim.h ../../src/Resources/LightRsrc.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Resources/Script.h \
- ../../src/Resources/Model/Model.h ../../src/Renderer/BufferObjects/Vao.h \
- ../../src/Core/Object.h ../../src/Misc/GlException.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Resources/Skin.h \
- ../../src/Resources/DummyRsrc.h
-	@echo Compiling ../../src/Resources/Core/ResourceManager.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/ResourceManager.cpp -o ResourceManager.o
-
-RsrcLoadingRequests.o: ../../src/Resources/Core/RsrcLoadingRequests.cpp \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Util/Accessors.h ../../src/Resources/Texture/Image.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Texture/Texture.h ../../src/Util/Assert.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h
-	@echo Compiling ../../src/Resources/Core/RsrcLoadingRequests.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcLoadingRequests.cpp -o RsrcLoadingRequests.o
-
-RsrcAsyncLoadingReqsHandler.o: \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp \
- ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
- ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
- ../../extern/include/SDL/SDL_main.h \
- ../../extern/include/SDL/SDL_stdinc.h \
- ../../extern/include/SDL/SDL_config.h \
- ../../extern/include/SDL/SDL_platform.h \
- ../../extern/include/SDL/begin_code.h \
- ../../extern/include/SDL/close_code.h \
- ../../extern/include/SDL/SDL_atomic.h \
- ../../extern/include/SDL/SDL_audio.h \
- ../../extern/include/SDL/SDL_error.h \
- ../../extern/include/SDL/SDL_endian.h \
- ../../extern/include/SDL/SDL_mutex.h \
- ../../extern/include/SDL/SDL_thread.h \
- ../../extern/include/SDL/SDL_rwops.h \
- ../../extern/include/SDL/SDL_clipboard.h \
- ../../extern/include/SDL/SDL_cpuinfo.h \
- ../../extern/include/SDL/SDL_events.h \
- ../../extern/include/SDL/SDL_video.h \
- ../../extern/include/SDL/SDL_pixels.h \
- ../../extern/include/SDL/SDL_rect.h \
- ../../extern/include/SDL/SDL_surface.h \
- ../../extern/include/SDL/SDL_blendmode.h \
- ../../extern/include/SDL/SDL_keyboard.h \
- ../../extern/include/SDL/SDL_keysym.h \
- ../../extern/include/SDL/SDL_scancode.h \
- ../../extern/include/SDL/SDL_mouse.h \
- ../../extern/include/SDL/SDL_joystick.h \
- ../../extern/include/SDL/SDL_quit.h \
- ../../extern/include/SDL/SDL_gesture.h \
- ../../extern/include/SDL/SDL_touch.h \
- ../../extern/include/SDL/SDL_hints.h \
- ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
- ../../extern/include/SDL/SDL_power.h \
- ../../extern/include/SDL/SDL_render.h \
- ../../extern/include/SDL/SDL_timer.h \
- ../../extern/include/SDL/SDL_version.h \
- ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Texture/Texture.h ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h ../../src/Util/HighRezTimer.h \
- ../../src/Util/StdTypes.h ../../src/Core/Globals.h
-	@echo Compiling ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.cpp -o RsrcAsyncLoadingReqsHandler.o
-
-MeshData.o: ../../src/Resources/Mesh/MeshData.cpp \
- ../../src/Resources/Mesh/MeshData.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Util/BinaryStream.h ../../src/Util/Exception.h \
- ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Resources/Mesh/MeshData.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Mesh/MeshData.cpp -o MeshData.o
-
-Mesh.o: ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/Mesh.h \
- ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Resources/Core/RsrcPtr.h \
+Bl.bpi.o: ../../src/Scripting/Renderer/Bl.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Bl.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Texture/Texture.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Assert.h ../../src/Resources/Core/RsrcPtr.h \
  ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
  ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
  ../../extern/include/SDL/SDL_main.h \
@@ -7932,36 +8249,7 @@ Mesh.o: ../../src/Resources/Mesh/Mesh.cpp ../../src/Resources/Mesh/Mesh.h \
  ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
  ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
  ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
- ../../src/Resources/Core/RsrcLoadingRequests.h \
- ../../src/Resources/Core/ResourceManager.inl.h \
- ../../src/Util/Exception.h ../../src/Core/Globals.h \
- ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
- ../../src/Resources/Core/RsrcPtr.h \
- ../../src/Renderer/BufferObjects/Vbo.h \
- ../../src/Renderer/BufferObjects/BufferObject.h \
- ../../extern/include/GL/glew.h ../../src/Collision/Obb.h \
- ../../src/Collision/CollisionShape.h ../../src/Collision/Obb.inl.h \
- ../../src/Resources/Material/Material.h \
- ../../src/Resources/ShaderProg/ShaderProg.h \
- ../../src/Util/CharPtrHashMap.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/ShaderProg/SProgVar.h \
- ../../src/Resources/ShaderProg/SProgAttribVar.h \
- ../../src/Renderer/GlStateMachine.h \
- ../../src/Resources/Material/MtlUserDefinedVar.h \
- ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Resources/Mesh/MeshData.h
-	@echo Compiling ../../src/Resources/Mesh/Mesh.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Mesh/Mesh.cpp -o Mesh.o
-
-Texture.o: ../../src/Resources/Texture/Texture.cpp \
- ../../extern/include/GL/glew.h ../../src/Resources/Texture/Texture.h \
- ../../src/Util/StdTypes.h ../../src/Util/Assert.h \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h ../../src/Misc/GlException.h \
- ../../src/Util/Exception.h ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h ../../src/Math/Math.h ../../src/Math/Vec2.h \
- ../../src/Math/MathCommon.h ../../src/Util/Accessors.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
  ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
  ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
@@ -7971,188 +8259,163 @@ Texture.o: ../../src/Resources/Texture/Texture.cpp \
  ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h
-	@echo Compiling ../../src/Resources/Texture/Texture.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Texture/Texture.cpp -o Texture.o
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h \
+ ../../src/Util/Exception.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h
+	@echo Compiling ../../src/Scripting/Renderer/Bl.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Bl.bpi.cpp -o Bl.bpi.o
 
-Image.o: ../../src/Resources/Texture/Image.cpp \
- ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+Hdr.bpi.o: ../../src/Scripting/Renderer/Hdr.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
  ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Core/Logger.h \
- ../../src/Util/Singleton.h
-	@echo Compiling ../../src/Resources/Texture/Image.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Resources/Texture/Image.cpp -o Image.o
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h
+	@echo Compiling ../../src/Scripting/Renderer/Hdr.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Hdr.bpi.cpp -o Hdr.bpi.o
 
-HighRezTimer.o: ../../src/Util/HighRezTimer.cpp \
- ../../src/Util/HighRezTimer.h ../../src/Util/StdTypes.h \
- ../../src/Util/Assert.h
-	@echo Compiling ../../src/Util/HighRezTimer.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/HighRezTimer.cpp -o HighRezTimer.o
+Pps.bpi.o: ../../src/Scripting/Renderer/Pps.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Pps.h \
+ ../../src/Renderer/RenderingPass.h \
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Util/Singleton.h \
+ ../../src/Core/AsyncLoader.h ../../extern/include/SDL/SDL.h \
+ ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h ../../src/Util/Accessors.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
+ ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
+ ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
+ ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
+ ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
+ ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
+ ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
+ ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
+ ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
+ ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
+ ../../src/Math/Transform.inl.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Globals.h \
+ ../../src/Core/Logger.h ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h \
+ ../../src/Renderer/GlStateMachine.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Renderer/Bl.h \
+ ../../src/Renderer/Hdr.h ../../src/Renderer/Bl.h
+	@echo Compiling ../../src/Scripting/Renderer/Pps.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Pps.bpi.cpp -o Pps.bpi.o
 
-Exception.o: ../../src/Util/Exception.cpp ../../src/Util/Exception.h
-	@echo Compiling ../../src/Util/Exception.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Exception.cpp -o Exception.o
-
-Util.o: ../../src/Util/Util.cpp ../../src/Util/Util.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h
-	@echo Compiling ../../src/Util/Util.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Util.cpp -o Util.o
-
-BinaryStream.o: ../../src/Util/BinaryStream.cpp \
- ../../src/Util/BinaryStream.h ../../src/Util/Exception.h \
- ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Util/BinaryStream.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/BinaryStream.cpp -o BinaryStream.o
-
-ScannerToken.o: ../../src/Util/Scanner/ScannerToken.cpp \
- ../../src/Util/Scanner/ScannerToken.h \
- ../../src/Util/Scanner/ScannerCommon.h ../../src/Util/StdTypes.h
-	@echo Compiling ../../src/Util/Scanner/ScannerToken.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Scanner/ScannerToken.cpp -o ScannerToken.o
-
-ScannerException.o: ../../src/Util/Scanner/ScannerException.cpp \
- ../../src/Util/Scanner/ScannerException.h ../../src/Util/Exception.h
-	@echo Compiling ../../src/Util/Scanner/ScannerException.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Scanner/ScannerException.cpp -o ScannerException.o
-
-Scanner.o: ../../src/Util/Scanner/Scanner.cpp \
- ../../src/Util/Scanner/Scanner.h ../../src/Util/Scanner/ScannerToken.h \
- ../../src/Util/Scanner/ScannerCommon.h ../../src/Util/StdTypes.h \
- ../../src/Util/Exception.h ../../src/Util/Assert.h \
- ../../src/Util/Scanner/ScannerException.h
-	@echo Compiling ../../src/Util/Scanner/Scanner.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Util/Scanner/Scanner.cpp -o Scanner.o
-
-RigidBody.o: ../../src/Physics/RigidBody.cpp \
- ../../src/Physics/RigidBody.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
+Renderer.bpi.o: ../../src/Scripting/Renderer/Renderer.bpi.cpp \
+ ../../src/Scripting/ScriptingCommon.h ../../src/Renderer/Renderer.h \
  ../../src/Math/Math.h ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -8165,328 +8428,83 @@ RigidBody.o: ../../src/Physics/RigidBody.cpp \
  ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Core/Object.h ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Physics/Physics.h ../../src/Physics/BtAndAnkiConvertors.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Scene/Scene.h ../../src/Physics/Physics.h \
- ../../src/Util/Singleton.h ../../src/Scene/VisibilityTester.h \
- ../../src/Physics/MotionState.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h
-	@echo Compiling ../../src/Physics/RigidBody.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics/RigidBody.cpp -o RigidBody.o
-
-PhyCharacter.o: ../../src/Physics/PhyCharacter.cpp \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/Character/btKinematicCharacterController.h \
- ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
- ../../src/Physics/PhyCharacter.h ../../src/Physics/Physics.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Core/Object.h \
- ../../src/Physics/MotionState.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h ../../src/Physics/RigidBody.h
-	@echo Compiling ../../src/Physics/PhyCharacter.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics/PhyCharacter.cpp -o PhyCharacter.o
-
-Physics.o: ../../src/Physics/Physics.cpp \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btGhostObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/LinearMath/btScalar.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btQuadWord.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btAlignedAllocator.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/LinearMath/btVector3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDispatcher.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btPersistentManifold.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/LinearMath/btTransformUtil.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btManifoldResult.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btDiscreteCollisionDetectorInterface.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btBroadphaseProxy.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../src/Physics/Physics.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btPolyhedralConvexShape.h \
- ../../extern/include/bullet/LinearMath/btMatrix3x3.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexInternalShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCollisionMargin.h \
- ../../extern/include/bullet/LinearMath/btAabbUtil2.h \
- ../../extern/include/bullet/LinearMath/btMinMax.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCapsuleShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCylinderShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBoxShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConeShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStaticPlaneShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConcaveShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleCallback.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexHullShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMesh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btStridingMeshInterface.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btConvexTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btOptimizedBvh.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btQuantizedBvh.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleInfoMap.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/LinearMath/btAlignedObjectArray.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/LinearMath/btStackAlloc.h \
- ../../extern/include/bullet/LinearMath/btHashMap.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleMeshShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btCompoundShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btTetrahedronShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btEmptyShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btMultiSphereShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionShapes/btUniformScalingShape.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btSphereSphereCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionCreateFunc.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionConfiguration.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionDispatcher.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btSimpleBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btOverlappingPairCache.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btAxisSweep3.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvt.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btMultiSapBroadphase.h \
- ../../extern/include/bullet/BulletCollision/BroadphaseCollision/btDbvtBroadphase.h \
- ../../extern/include/bullet/LinearMath/btQuaternion.h \
- ../../extern/include/bullet/LinearMath/btTransform.h \
- ../../extern/include/bullet/LinearMath/btDefaultMotionState.h \
- ../../extern/include/bullet/LinearMath/btMotionState.h \
- ../../extern/include/bullet/LinearMath/btQuickprof.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../extern/include/bullet/LinearMath/btSerializer.h \
- ../../extern/include/bullet/btBulletDynamicsCommon.h \
- ../../extern/include/bullet/btBulletCollisionCommon.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
- ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
- ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
- ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
- ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
- ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
- ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
- ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
- ../../src/Math/Vec3.h ../../src/Math/Vec3.inl.h ../../src/Math/Vec4.h \
- ../../src/Math/Vec4.inl.h ../../src/Math/Quat.h \
- ../../src/Math/Quat.inl.h ../../src/Math/Axisang.h \
- ../../src/Math/Axisang.inl.h ../../src/Math/Euler.h \
- ../../src/Math/Euler.inl.h ../../src/Math/Mat3.h \
- ../../src/Math/Mat3.inl.h ../../src/Math/Mat4.h \
- ../../src/Math/Mat4.inl.h ../../src/Math/MathFuncs.h \
- ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
- ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
- ../../src/Renderer/Drawers/PhyDbgDrawer.h \
- ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
- ../../src/Util/Vec.h ../../src/Util/Assert.h \
- ../../src/Physics/PhyCharacter.h ../../src/Core/Object.h \
- ../../src/Physics/MotionState.h ../../src/Scene/SceneNode.h \
- ../../src/Collision/Obb.h ../../src/Collision/CollisionShape.h \
- ../../src/Collision/Obb.inl.h
-	@echo Compiling ../../src/Physics/Physics.cpp...
-	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Physics/Physics.cpp -o Physics.o
+ ../../src/Renderer/BufferObjects/Fbo.h ../../extern/include/GL/glew.h \
+ ../../src/Util/Exception.h ../../src/Resources/Texture/Texture.h \
+ ../../src/Resources/ShaderProg/ShaderProg.h \
+ ../../src/Util/CharPtrHashMap.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Resources/ShaderProg/SProgVar.h \
+ ../../src/Resources/ShaderProg/SProgAttribVar.h ../../src/Util/Vec.h \
+ ../../src/Util/Assert.h ../../src/Renderer/GlStateMachine.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h \
+ ../../src/Renderer/BufferObjects/Vbo.h \
+ ../../src/Renderer/BufferObjects/BufferObject.h \
+ ../../src/Renderer/BufferObjects/Vao.h ../../src/Core/Object.h \
+ ../../src/Misc/GlException.h ../../src/Resources/Core/RsrcPtr.h \
+ ../../src/Resources/Core/ResourceManager.h ../../src/Core/AsyncLoader.h \
+ ../../extern/include/SDL/SDL.h ../../extern/include/SDL/SDL_main.h \
+ ../../extern/include/SDL/SDL_stdinc.h \
+ ../../extern/include/SDL/SDL_config.h \
+ ../../extern/include/SDL/SDL_platform.h \
+ ../../extern/include/SDL/begin_code.h \
+ ../../extern/include/SDL/close_code.h \
+ ../../extern/include/SDL/SDL_atomic.h \
+ ../../extern/include/SDL/SDL_audio.h \
+ ../../extern/include/SDL/SDL_error.h \
+ ../../extern/include/SDL/SDL_endian.h \
+ ../../extern/include/SDL/SDL_mutex.h \
+ ../../extern/include/SDL/SDL_thread.h \
+ ../../extern/include/SDL/SDL_rwops.h \
+ ../../extern/include/SDL/SDL_clipboard.h \
+ ../../extern/include/SDL/SDL_cpuinfo.h \
+ ../../extern/include/SDL/SDL_events.h \
+ ../../extern/include/SDL/SDL_video.h \
+ ../../extern/include/SDL/SDL_pixels.h \
+ ../../extern/include/SDL/SDL_rect.h \
+ ../../extern/include/SDL/SDL_surface.h \
+ ../../extern/include/SDL/SDL_blendmode.h \
+ ../../extern/include/SDL/SDL_keyboard.h \
+ ../../extern/include/SDL/SDL_keysym.h \
+ ../../extern/include/SDL/SDL_scancode.h \
+ ../../extern/include/SDL/SDL_mouse.h \
+ ../../extern/include/SDL/SDL_joystick.h \
+ ../../extern/include/SDL/SDL_quit.h \
+ ../../extern/include/SDL/SDL_gesture.h \
+ ../../extern/include/SDL/SDL_touch.h \
+ ../../extern/include/SDL/SDL_hints.h \
+ ../../extern/include/SDL/SDL_loadso.h ../../extern/include/SDL/SDL_log.h \
+ ../../extern/include/SDL/SDL_power.h \
+ ../../extern/include/SDL/SDL_render.h \
+ ../../extern/include/SDL/SDL_timer.h \
+ ../../extern/include/SDL/SDL_version.h \
+ ../../extern/include/SDL/SDL_compat.h \
+ ../../src/Resources/Core/RsrcHook.h \
+ ../../src/Resources/Core/RsrcAsyncLoadingReqsHandler.h \
+ ../../src/Resources/Texture/Image.h ../../src/Resources/Mesh/MeshData.h \
+ ../../src/Resources/Core/RsrcLoadingRequests.h \
+ ../../src/Resources/Core/ResourceManager.inl.h ../../src/Core/Logger.h \
+ ../../src/Resources/Core/RsrcPtr.inl.h \
+ ../../src/Resources/Core/RsrcPtr.h ../../src/Renderer/Ms.h \
+ ../../src/Renderer/RenderingPass.h ../../src/Renderer/Ez.h \
+ ../../src/Renderer/Is.h ../../src/Renderer/Sm.h \
+ ../../src/Scene/VisibilityTester.h ../../src/Renderer/Smo.h \
+ ../../src/Scene/Cameras/Camera.h ../../src/Collision/Collision.h \
+ ../../src/Collision/Plane.h ../../src/Collision/CollisionShape.h \
+ ../../src/Collision/Sphere.h ../../src/Collision/Sphere.inl.h \
+ ../../src/Collision/Obb.h ../../src/Collision/Obb.inl.h \
+ ../../src/Collision/Ray.h ../../src/Collision/LineSegment.h \
+ ../../src/Scene/SceneNode.h ../../src/Collision/Obb.h \
+ ../../src/Renderer/Pps.h ../../src/Renderer/Hdr.h \
+ ../../src/Renderer/Ssao.h ../../src/Renderer/Bl.h \
+ ../../src/Renderer/Bs.h ../../src/Renderer/Dbg.h \
+ ../../src/Renderer/Drawers/SceneDbgDrawer.h \
+ ../../src/Renderer/Drawers/CollisionDbgDrawer.h \
+ ../../src/Renderer/Drawers/SceneDrawer.h \
+ ../../src/Resources/Material/MtlUserDefinedVar.h \
+ ../../src/Resources/ShaderProg/SProgUniVar.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Renderer/GlStateMachine.h
+	@echo Compiling ../../src/Scripting/Renderer/Renderer.bpi.cpp...
+	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Scripting/Renderer/Renderer.bpi.cpp -o Renderer.bpi.o
 
 clean:
 	rm -f *.o
