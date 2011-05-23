@@ -23,6 +23,7 @@ inline FT_Int toPixels(FT_Int a)
 }
 
 
+/// Get 127 glyphs from a face
 static void getGlyphs(FT_Face& face, Vec<Glyph>& glyphs)
 {
 	const uint MAX_GLYPHS = 127;
@@ -52,6 +53,7 @@ static void getGlyphs(FT_Face& face, Vec<Glyph>& glyphs)
 }
 
 
+/// Copy one bitmap to another
 static void copyBitmap(const unsigned char* srcImg, const FT_Vector& srcSize, const FT_Vector& pos,
                        Vec<uchar>& destImg, const FT_Vector& destSize)
 {
@@ -60,15 +62,14 @@ static void copyBitmap(const unsigned char* srcImg, const FT_Vector& srcSize, co
 		for(int j = 0; j < srcSize.x; j++)
 		{
 			int jj = j + pos.x;
-			ASSERT(jj < destSize.x);
 			int ii = i + pos.y;
-			ASSERT(ii < destSize.y);
 			destImg[ii * destSize.x + jj] = srcImg[i * srcSize.x + j];
 		}
 	}
 }
 
 
+/// Compute the size of the image with all the glyphs
 static void computeImageSize(const Vec<Glyph>& glyphs, FT_Vector& size)
 {
 	size.x = 0;
@@ -76,25 +77,48 @@ static void computeImageSize(const Vec<Glyph>& glyphs, FT_Vector& size)
 
 	BOOST_FOREACH(const Glyph& glyph, glyphs)
 	{
-		size.x += glyph.metrics.width >> 6;
-		if(size.y < glyph.metrics.height >> 6)
+		// Inc the width
+		size.x += toPixels(glyph.metrics.width);
+
+		// Chose the max height
+		if(size.y < toPixels(glyph.metrics.height))
 		{
-			size.y = glyph.metrics.height >> 6;
+			size.y = toPixels(glyph.metrics.height);
 		}
 	}
 }
 
 
-static void createImage(Vec<Glyph>& glyphs, Vec<uchar>& img)
+/// Given a filename and a font size create an image with all the glyphs
+static void createImage(const char* filename, const FT_Vector& fontSize,
+                        Vec<Glyph>& glyphs, Vec<uchar>& img, FT_Vector& imgSize)
 {
-	FT_Vector imgSize;
+	FT_Library library;
+	FT_Face face;
+	FT_Error error;
+
+	// Create lib
+	error = FT_Init_FreeType(&library);
+	if(error)
+	{
+		throw EXCEPTION("FT_Init_FreeType failed");
+	}
+
+	// Create face and set glyph size
+	error = FT_New_Face(library, filename, 0, &face);
+	FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
+
+	// Get all glyphs
+	getGlyphs(face, glyphs);
+
+	// Get final image size and create image buffer
 	computeImageSize(glyphs, imgSize);
 
 	size_t size = imgSize.x * imgSize.y * 2 * sizeof(uchar);
 	img.resize(size, 128);
 
+	// Draw all glyphs to the image
 	FT_Vector pos = {0, 0};
-
 	BOOST_FOREACH(Glyph& glyph, glyphs)
 	{
 		FT_Glyph_To_Bitmap(&glyph.glyph, FT_RENDER_MODE_NORMAL, 0, 0);
@@ -106,6 +130,15 @@ static void createImage(Vec<Glyph>& glyphs, Vec<uchar>& img)
 
 		pos.x += toPixels(glyph.metrics.width);
 	}
+
+	// Clean
+	BOOST_FOREACH(Glyph& glyph, glyphs)
+	{
+		FT_Done_Glyph(glyph.glyph);
+	}
+
+	FT_Done_Face(face);
+	FT_Done_FreeType(library);
 
 	//save_image(image, imgSize.x, imgSize.y);
 }
