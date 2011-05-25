@@ -10,7 +10,10 @@
 #include "Assert.h"
 
 
-struct Glyph
+namespace Ui {
+
+
+struct FtGlyph
 {
 	FT_Glyph glyph;
 	FT_Glyph_Metrics metrics;
@@ -24,7 +27,7 @@ inline FT_Int toPixels(FT_Int a)
 
 
 /// Get 127 glyphs from a face
-static void getGlyphs(FT_Face& face, Vec<Glyph>& glyphs)
+static void getGlyphs(FT_Face& face, Vec<FtGlyph>& glyphs)
 {
 	const uint MAX_GLYPHS = 127;
 	ASSERT(glyphs.size() == 0);
@@ -70,12 +73,12 @@ static void copyBitmap(const unsigned char* srcImg, const FT_Vector& srcSize, co
 
 
 /// Compute the size of the image with all the glyphs
-static void computeImageSize(const Vec<Glyph>& glyphs, FT_Vector& size)
+static void computeImageSize(const Vec<FtGlyph>& glyphs, FT_Vector& size)
 {
 	size.x = 0;
 	size.y = 0;
 
-	BOOST_FOREACH(const Glyph& glyph, glyphs)
+	BOOST_FOREACH(const FtGlyph& glyph, glyphs)
 	{
 		// Inc the width
 		size.x += toPixels(glyph.metrics.width);
@@ -91,7 +94,7 @@ static void computeImageSize(const Vec<Glyph>& glyphs, FT_Vector& size)
 
 /// Given a filename and a font size create an image with all the glyphs
 static void createImage(const char* filename, const FT_Vector& fontSize,
-                        Vec<Glyph>& glyphs, Vec<uchar>& img, FT_Vector& imgSize)
+                        Vec<FtGlyph>& glyphs, Vec<uchar>& img, FT_Vector& imgSize)
 {
 	FT_Library library;
 	FT_Face face;
@@ -119,7 +122,7 @@ static void createImage(const char* filename, const FT_Vector& fontSize,
 
 	// Draw all glyphs to the image
 	FT_Vector pos = {0, 0};
-	BOOST_FOREACH(Glyph& glyph, glyphs)
+	BOOST_FOREACH(FtGlyph& glyph, glyphs)
 	{
 		FT_Glyph_To_Bitmap(&glyph.glyph, FT_RENDER_MODE_NORMAL, 0, 0);
 		FT_BitmapGlyph bit = (FT_BitmapGlyph) glyph.glyph;
@@ -132,7 +135,7 @@ static void createImage(const char* filename, const FT_Vector& fontSize,
 	}
 
 	// Clean
-	BOOST_FOREACH(Glyph& glyph, glyphs)
+	BOOST_FOREACH(FtGlyph& glyph, glyphs)
 	{
 		FT_Done_Glyph(glyph.glyph);
 	}
@@ -142,3 +145,55 @@ static void createImage(const char* filename, const FT_Vector& fontSize,
 
 	//save_image(image, imgSize.x, imgSize.y);
 }
+
+
+/// Save image to TGA. For debuging purposes
+static void saveImage(const char* filename, const Vec<uchar>& buff, int w, int h)
+{
+	char tgaHeader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+	FILE* fp = fopen(filename, "wb");
+
+	fwrite(tgaHeader, 1, sizeof(tgaHeader), fp);
+
+	unsigned char header6[6];
+
+	header6[0] = w % 256;
+	header6[1] = w / 256;
+	header6[2] = h % 256;
+	header6[3] = h / 256;
+	header6[4] = 24;
+	header6[5] = 0;
+
+	fwrite(header6, 1, sizeof(header6), fp);
+
+	for(int i = h - 1; i > -1; i--)
+	{
+		for(int j = 0; j < w; j++)
+		{
+			fwrite(&buff[i * w + j], 1, sizeof(unsigned char), fp);
+			fwrite(&buff[i * w + j], 1, sizeof(unsigned char), fp);
+			fwrite(&buff[i * w + j], 1, sizeof(unsigned char), fp);
+		}
+	}
+
+	fclose(fp);
+}
+
+
+//======================================================================================================================
+// create                                                                                                              =
+//======================================================================================================================
+void Font::create(const char* fontFilename, uint nominalWidth, uint NominalHeight)
+{
+	Vec<FtGlyph> glyphs;
+	Vec<uchar> img;
+	FT_Vector imgSize;
+	FT_Vector fontSize = {nominalWidth, NominalHeight};
+	createImage(fontFilename, fontSize, glyphs, img, imgSize);
+
+	saveImage("/tmp/test.tga", img, imgSize.x, imgSize.y);
+}
+
+
+} // end namespace

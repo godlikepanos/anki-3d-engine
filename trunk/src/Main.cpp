@@ -40,6 +40,7 @@
 #include "Skin.h"
 #include "MaterialRuntime.h"
 #include "Globals.h"
+#include "UiFtFontLoader.h"
 
 
 // map (hard coded)
@@ -431,6 +432,12 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
+	FT_Vector s = {100, 100};
+	Ui::FtFontLoader fnt("/users/panoscc/src/godlike-projects/libfreetype/Ruritania-Outline.ttf", s);
+	fnt.saveImage("/tmp/test.tga");
+
+	return 0;
+
 	try
 	{
 		AppSingleton::getInstance().init(argc, argv);
