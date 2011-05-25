@@ -105,8 +105,6 @@ void FtFontLoader::computeImageSize()
 //======================================================================================================================
 void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 {
-	FT_Library library;
-	FT_Face face;
 	FT_Error error;
 
 	// Create lib
@@ -118,6 +116,11 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 
 	// Create face and set glyph size
 	error = FT_New_Face(library, filename, 0, &face);
+	if(error)
+	{
+		throw EXCEPTION("FT_New_Face failed with filename \"" + filename + "\"");
+	}
+
 	FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
 
 	// Get all glyphs

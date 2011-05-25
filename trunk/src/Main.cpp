@@ -433,7 +433,7 @@ void mainLoop()
 int main(int argc, char* argv[])
 {
 	FT_Vector s = {100, 100};
-	Ui::FtFontLoader fnt("/users/panoscc/src/godlike-projects/libfreetype/Ruritania-Outline.ttf", s);
+	Ui::FtFontLoader fnt("/home/godlike/src/google-code-repo/libfreetype/Ruritania-Outline.ttf", s);
 	fnt.saveImage("/tmp/test.tga");
 
 	return 0;
