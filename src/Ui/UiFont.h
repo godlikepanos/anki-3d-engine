@@ -17,7 +17,8 @@ namespace Ui {
 class Font
 {
 	public:
-		Font(const char* fontFilename, uint nominalWidth, uint NominalHeight);
+		/// Constructor
+		Font(const char* fontFilename, uint nominalWidth, uint nominalHeight);
 
 	private:
 		struct Glyph
@@ -31,8 +32,14 @@ class Font
 		std::auto_ptr<Texture> map; ///< The texture map that contains all the glyphs
 		boost::ptr_vector<Glyph> glyphs; ///< A set of glyphs from ' ' to ' ' + 128
 
-
+		void create(const char* fontFilename, uint nominalWidth, uint NominalHeight);
 };
+
+
+inline Font::Font(const char* fontFilename, uint nominalWidth, uint nominalHeight)
+{
+	create(fontFilename, nominalWidth, nominalHeight);
+}
 
 
 } // end namespace
