@@ -6,6 +6,7 @@
 #include FT_GLYPH_H
 #include "Vec.h"
 #include "StdTypes.h"
+#include "Math.h"
 
 
 namespace Ui {
@@ -15,8 +16,12 @@ namespace Ui {
 class FtFontLoader
 {
 	public:
-		static const uint GLYPHS_NUM = 128;
-		static const uint GLYPHS_PER_ROW = 16;
+		enum
+		{
+			GLYPHS_NUM = 128,
+			GLYPH_COLUMNS = 16,
+			GLYPH_ROWS = 8
+		};
 
 		FtFontLoader(const char* filename, const FT_Vector& fontSize);
 
@@ -28,6 +33,7 @@ class FtFontLoader
 		{
 			FT_Glyph glyph;
 			FT_Glyph_Metrics metrics;
+			Mat3 textureMat;
 		};
 
 		/// @name Data
