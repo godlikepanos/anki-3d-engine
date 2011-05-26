@@ -1,6 +1,8 @@
 #include <boost/foreach.hpp>
 #include "UiFtFontLoader.h"
 #include "Exception.h"
+#include "Logger.h"
+#include "Globals.h"
 
 
 namespace Ui {
@@ -13,7 +15,7 @@ void FtFontLoader::getGlyphs()
 {
 	glyphs.resize(GLYPHS_NUM);
 
-	for(uint n = 1; n < GLYPHS_NUM; n++)
+	for(uint n = 0; n < GLYPHS_NUM; n++)
 	{
 		char c = ' ' + n;
 
@@ -34,7 +36,7 @@ void FtFontLoader::getGlyphs()
 		}
 	}
 
-	glyphs[0].metrics.width = glyphs['_' - ' '].metrics.width;
+	//glyphs[0].metrics.width = glyphs['_' - ' '].metrics.width;
 }
 
 
@@ -74,7 +76,7 @@ void FtFontLoader::computeImageSize()
 		}
 	}
 
-	imgSize.y = GLYPHS_NUM / GLYPHS_PER_ROW * imgSize.y;
+	imgSize.y = GLYPH_ROWS * imgSize.y;
 
 	//
 	// Get img width
@@ -82,13 +84,14 @@ void FtFontLoader::computeImageSize()
 
 
 	// For all rows
-	for(uint i = 0; i < GLYPHS_NUM / GLYPHS_PER_ROW; i++)
+	for(uint i = 0; i < GLYPH_ROWS; i++)
 	{
 		uint rowSize = 0;
 		// For all columns
-		for(uint j = 0; j < GLYPHS_PER_ROW; j++)
+		for(uint j = 0; j < GLYPH_COLUMNS; j++)
 		{
-			rowSize += toPixels(glyphs[i * GLYPHS_PER_ROW + j].metrics.width);
+			uint pos = i * GLYPH_COLUMNS + j;
+			rowSize += toPixels(glyphs[pos].metrics.width);
 		}
 
 		if(rowSize > imgSize.x)
@@ -121,7 +124,11 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 		throw EXCEPTION("FT_New_Face failed with filename \"" + filename + "\"");
 	}
 
-	FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
+	error = FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
+	if(error)
+	{
+		throw EXCEPTION("FT_Set_Pixel_Sizes failed");
+	}
 
 	// Get all glyphs
 	getGlyphs();
@@ -133,26 +140,45 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 	img.resize(size, 128);
 
 	// Draw all glyphs to the image
-	FT_Vector pos = {0, 0};
+	FT_Vector pos = {0, 0}; // the (0,0) is the top left
 	// For all rows
-	for(uint i = 0; i < GLYPHS_NUM / GLYPHS_PER_ROW; i++)
+	for(uint i = 0; i < GLYPH_ROWS; i++)
 	{
 		// For all columns
-		for(uint j = 0; j < GLYPHS_PER_ROW; j++)
+		for(uint j = 0; j < GLYPH_COLUMNS; j++)
 		{
-			Glyph& glyph = glyphs[i * GLYPHS_PER_ROW + j];
+			Glyph& glyph = glyphs[i * GLYPH_COLUMNS + j];
 
-			FT_Glyph_To_Bitmap(&glyph.glyph, FT_RENDER_MODE_NORMAL, 0, 0);
-			FT_BitmapGlyph bit = (FT_BitmapGlyph) glyph.glyph;
+			// Set texture matrix
+			float scaleX = toPixels(glyph.metrics.width) / float(imgSize.x); // glyph width
+			float scaleY = toPixels(glyph.metrics.height) / float(imgSize.y); // glyph height
+			float tslX = pos.x / float(imgSize.x);
+			float tslY = (imgSize.y - toPixels(glyph.metrics.height) - pos.y) / float(imgSize.y);
 
-			FT_Vector srcSize = {toPixels(glyph.metrics.width), toPixels(glyph.metrics.height)};
+			glyph.textureMat = Mat3::getIdentity();
+			glyph.textureMat(0, 0) = scaleX;
+			glyph.textureMat(1, 1) = scaleY;
+			glyph.textureMat(0, 2) = tslX;
+			glyph.textureMat(1, 2) = tslY;
 
-			copyBitmap(bit->bitmap.buffer, srcSize, pos);
+			std::cout << glyph.textureMat << std::endl;
+
+			// If not ' '
+			if(i != 0 || j != 0)
+			{
+				FT_Glyph_To_Bitmap(&glyph.glyph, FT_RENDER_MODE_NORMAL, 0, 0);
+				FT_BitmapGlyph bit = (FT_BitmapGlyph) glyph.glyph;
+
+				FT_Vector srcSize = {toPixels(glyph.metrics.width), toPixels(glyph.metrics.height)};
+
+				copyBitmap(bit->bitmap.buffer, srcSize, pos);
+			}
 
 			pos.x += toPixels(glyph.metrics.width);
 		}
 
-		pos.y += imgSize.y / (GLYPHS_NUM / GLYPHS_PER_ROW);
+		pos.x = 0;
+		pos.y += imgSize.y / (GLYPH_ROWS);
 	}
 
 	// Clean

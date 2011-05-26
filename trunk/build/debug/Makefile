@@ -269,7 +269,17 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Util/Util.h ../../src/Util/Vec.h ../../src/Util/StdTypes.h \
  ../../src/Util/HighRezTimer.h ../../src/Scene/SkinNode.h \
  ../../src/Scene/SkinPatchNode.h ../../src/Resources/Skin.h \
- ../../src/Ui/UiFont.h
+ ../../src/Ui/UiFtFontLoader.h /usr/include/freetype2/freetype/freetype.h \
+ /usr/include/freetype2/freetype/config/ftconfig.h \
+ /usr/include/freetype2/freetype/config/ftoption.h \
+ /usr/include/freetype2/freetype/config/ftstdlib.h \
+ /usr/include/freetype2/freetype/fterrors.h \
+ /usr/include/freetype2/freetype/ftmoderr.h \
+ /usr/include/freetype2/freetype/fterrdef.h \
+ /usr/include/freetype2/freetype/fttypes.h \
+ /usr/include/freetype2/freetype/ftsystem.h \
+ /usr/include/freetype2/freetype/ftimage.h \
+ /usr/include/freetype2/freetype/ftglyph.h
 	@echo Compiling ../../src/Main.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Main.cpp -o Main.o
 
@@ -2064,7 +2074,9 @@ UiFtFontLoader.o: ../../src/Ui/UiFtFontLoader.cpp \
  /usr/include/freetype2/freetype/ftsystem.h \
  /usr/include/freetype2/freetype/ftimage.h \
  /usr/include/freetype2/freetype/ftglyph.h ../../src/Util/Vec.h \
- ../../src/Util/Assert.h
+ ../../src/Util/Assert.h ../../src/Util/StdTypes.h \
+ ../../src/Util/Exception.h ../../src/Core/Logger.h \
+ ../../src/Util/Singleton.h ../../src/Core/Globals.h
 	@echo Compiling ../../src/Ui/UiFtFontLoader.cpp...
 	@$(CXX) $(INCPATH) $(CFLAGS) ../../src/Ui/UiFtFontLoader.cpp -o UiFtFontLoader.o
 
