@@ -10,11 +10,11 @@ TEST(ScannerTests, Numbers)
 	std::stringstream ss;	
 	ss << "12345678901234 1.12 0.00000000000001 0.01e1 1e- 10.123e-7 1ab";
 
-	std::auto_ptr<Scanner> scanner_;
+	std::auto_ptr<Scanner::Scanner> scanner_;
 	const Scanner::Token* token;
 	
-	EXPECT_NO_THROW(scanner_.reset(new Scanner(ss, "numbers")));
-	Scanner& scanner = *scanner_;
+	EXPECT_NO_THROW(scanner_.reset(new Scanner::Scanner(ss, "numbers")));
+	Scanner::Scanner& scanner = *scanner_;
 
 	// 12345678901234
 	EXPECT_NO_THROW(token = &scanner.getNextToken());
@@ -63,11 +63,11 @@ TEST(ScannerTests, Identifiers)
 	std::stringstream ss;	
 	ss << "1 la0_la ha\n_ha";
 
-	std::auto_ptr<Scanner> scanner_;
+	std::auto_ptr<Scanner::Scanner> scanner_;
 	const Scanner::Token* token;
 	
-	EXPECT_NO_THROW(scanner_.reset(new Scanner(ss, "identifiers")));
-	Scanner& scanner = *scanner_;
+	EXPECT_NO_THROW(scanner_.reset(new Scanner::Scanner(ss, "identifiers")));
+	Scanner::Scanner& scanner = *scanner_;
 	
 	// 1
 	EXPECT_NO_THROW(token = &scanner.getNextToken());

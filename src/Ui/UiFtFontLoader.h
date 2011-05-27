@@ -7,15 +7,29 @@
 #include "Vec.h"
 #include "StdTypes.h"
 #include "Math.h"
+#include "Accessors.h"
 
 
 namespace Ui {
 
 
-/// A helper class that uses libfreetype to load glyphs from a font file and gather the metrics for each glyhp
+/// A helper class that uses libfreetype to load glyphs from a font file and gather the metrics for each glyph
 class FtFontLoader
 {
 	public:
+		/// Contains info about the glyphs
+		class Glyph
+		{
+			friend class FtFontLoader;
+
+			public:
+				GETTER_R(FT_Glyph_Metrics, metrics, getMetrics)
+
+			private:
+				FT_Glyph glyph;
+				FT_Glyph_Metrics metrics;
+		};
+
 		enum
 		{
 			GLYPHS_NUM = 128,
@@ -23,19 +37,22 @@ class FtFontLoader
 			GLYPH_ROWS = 8
 		};
 
+		/// One and only constructor
 		FtFontLoader(const char* filename, const FT_Vector& fontSize);
+
+		/// @name Accessors
+		/// @{
+		GETTER_R(Vec<uchar>, img, getImage)
+		GETTER_R(FT_Vector, imgSize, getImageSize)
+		GETTER_R(Vec<Glyph>, glyphs, getGlyphs)
+		/// @}
 
 		/// Save the image (img) to TGA. Its for debugging purposes
 		void saveImage(const char* filename) const;
 
-	private:
-		struct Glyph
-		{
-			FT_Glyph glyph;
-			FT_Glyph_Metrics metrics;
-			Mat3 textureMat;
-		};
+		static FT_Int toPixels(FT_Int a) {return a >> 6;}
 
+	private:
 		/// @name Data
 		/// @{
 		FT_Library library;
@@ -45,10 +62,8 @@ class FtFontLoader
 		FT_Vector imgSize;
 		/// @}
 
-		FT_Int toPixels(FT_Int a) {return a >> 6;}
-
 		/// Reads the face and extracts the glyphs
-		void getGlyphs();
+		void getAllGlyphs();
 
 		/// Copy one bitmap to img
 		void copyBitmap(const uchar* srcImg, const FT_Vector& srcSize, const FT_Vector& pos);

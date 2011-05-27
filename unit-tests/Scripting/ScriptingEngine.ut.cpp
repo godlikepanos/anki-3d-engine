@@ -2,6 +2,7 @@
 #include "ScriptingEngine.h"
 #include "Math.h"
 #include "Logger.h"
+#include "Globals.h"
 
 
 TEST(ScriptingTests, ScriptingEngine)

@@ -9,9 +9,9 @@ namespace Ui {
 
 
 //======================================================================================================================
-// getGlyphs                                                                                                           =
+// getAllGlyphs                                                                                                        =
 //======================================================================================================================
-void FtFontLoader::getGlyphs()
+void FtFontLoader::getAllGlyphs()
 {
 	glyphs.resize(GLYPHS_NUM);
 
@@ -131,7 +131,7 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 	}
 
 	// Get all glyphs
-	getGlyphs();
+	getAllGlyphs();
 
 	// Get final image size and create image buffer
 	computeImageSize();
@@ -148,20 +148,6 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 		for(uint j = 0; j < GLYPH_COLUMNS; j++)
 		{
 			Glyph& glyph = glyphs[i * GLYPH_COLUMNS + j];
-
-			// Set texture matrix
-			float scaleX = toPixels(glyph.metrics.width) / float(imgSize.x); // glyph width
-			float scaleY = toPixels(glyph.metrics.height) / float(imgSize.y); // glyph height
-			float tslX = pos.x / float(imgSize.x);
-			float tslY = (imgSize.y - toPixels(glyph.metrics.height) - pos.y) / float(imgSize.y);
-
-			glyph.textureMat = Mat3::getIdentity();
-			glyph.textureMat(0, 0) = scaleX;
-			glyph.textureMat(1, 1) = scaleY;
-			glyph.textureMat(0, 2) = tslX;
-			glyph.textureMat(1, 2) = tslY;
-
-			std::cout << glyph.textureMat << std::endl;
 
 			// If not ' '
 			if(i != 0 || j != 0)
