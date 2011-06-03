@@ -320,7 +320,7 @@ void Is::run()
 	// light passes
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
 	glBlendFunc(GL_ONE, GL_ONE);
-	glEnable(GL_STENCIL_TEST);
+	GlStateMachineSingleton::getInstance().enable(GL_STENCIL_TEST);
 
 	// for all lights
 	BOOST_FOREACH(const PointLight* light, r.getCamera().getVisiblePointLights())
@@ -334,7 +334,7 @@ void Is::run()
 	}
 	
 
-	glDisable(GL_STENCIL_TEST);
+	GlStateMachineSingleton::getInstance().disable(GL_STENCIL_TEST);
 
 	// FBO
 	//fbo.unbind();

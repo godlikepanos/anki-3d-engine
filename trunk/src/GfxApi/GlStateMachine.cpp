@@ -9,6 +9,7 @@ GLenum GlStateMachine::flagEnums[] =
 {
 	GL_DEPTH_TEST,
 	GL_BLEND,
+	GL_STENCIL_TEST,
 	0
 };
 
