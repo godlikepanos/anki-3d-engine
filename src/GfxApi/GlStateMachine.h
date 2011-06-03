@@ -4,7 +4,6 @@
 #include <GL/glew.h>
 #include <boost/unordered_map.hpp>
 #include "Assert.h"
-#include "Singleton.h"
 
 
 /// Access the GL state machine.
