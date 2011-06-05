@@ -41,6 +41,7 @@
 #include "MaterialRuntime.h"
 #include "Globals.h"
 #include "UiFtFontLoader.h"
+#include "UiFont.h"
 
 
 // map (hard coded)
@@ -123,7 +124,8 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	painter = new Ui::Painter;
+	painter = new Ui::Painter(AppSingleton::getInstance().getWindowWidth(), AppSingleton::getInstance().getWindowHeight());
+	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
@@ -368,11 +370,12 @@ void mainLoop()
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
-		painter->setPosition(Vec2(0.0, 0.0));
+		painter->setPosition(Vec2(0.0, 0.5));
 		painter->setFontSize(Vec2(0.03, 0.03 * MainRendererSingleton::getInstance().getAspectRatio()));
 		painter->setColor(Vec4(1.0));
 
-		painter->drawText("Once upon a time in a place\ncalled \"Kickapoo\"");
+		//painter->drawText("A");
+		painter->drawText("Once uppon a time in a place called Kickapoo.");
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
 		{
@@ -432,11 +435,11 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	FT_Vector s = {100, 100};
+	/*FT_Vector s = {100, 100};
 	Ui::FtFontLoader fnt("engine-rsrc/ModernAntiqua.ttf", s);
 	fnt.saveImage("/tmp/test.tga");
 
-	return 0;
+	return 0;*/
 
 	try
 	{

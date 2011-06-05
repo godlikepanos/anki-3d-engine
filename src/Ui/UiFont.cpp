@@ -18,6 +18,8 @@ void Font::create(const char* fontFilename, uint nominalWidth, uint NominalHeigh
 	FT_Vector ftSize = {nominalWidth, NominalHeight};
 	FtFontLoader ft(fontFilename, ftSize);
 
+	ft.saveImage("/tmp/test.tga");
+
 	// - Create glyphs
 	// - Get metrics
 	BOOST_FOREACH(const FtFontLoader::Glyph& ftGlyph, ft.getGlyphs())
@@ -60,13 +62,13 @@ void Font::create(const char* fontFilename, uint nominalWidth, uint NominalHeigh
 			glyph.textureMat(0, 2) = tslX;
 			glyph.textureMat(1, 2) = tslY;
 
-			std::cout << glyph.textureMat << std::endl;
+			//std::cout << glyph.textureMat << std::endl;
 
 			posX += glyph.width;
 		}
 
 		posX = 0;
-		posY += ft.getImageSize().y / FtFontLoader::GLYPH_ROWS;
+		posY += ft.getLineHeight();
 	}
 
 	//
@@ -77,14 +79,16 @@ void Font::create(const char* fontFilename, uint nominalWidth, uint NominalHeigh
 	tinit.height = ft.getImageSize().y;
 	tinit.internalFormat = GL_RED;
 	tinit.format = GL_RED;
-	tinit.type = GL_UNSIGNED_INT;
+	tinit.type = GL_UNSIGNED_BYTE;
 	tinit.data = &ft.getImage()[0];
 	tinit.mipmapping = false;
 	tinit.filteringType = Texture::TFT_NEAREST;
 	tinit.anisotropyLevel = 0;
+	tinit.dataCompression = Texture::DC_NONE;
 
 	map.reset(new Texture());
 	map->create(tinit);
+	map->setRepeat(false);
 }
 
 

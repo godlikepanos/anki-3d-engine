@@ -103,7 +103,6 @@ void Hdr::run()
 	toneSProg->findUniVar("fai")->set(r.getPps().getPrePassFai(), 0);
 	r.drawQuad();
 
-
 	// blurring passes
 	hblurFai.setRepeat(false);
 	fai.setRepeat(false);

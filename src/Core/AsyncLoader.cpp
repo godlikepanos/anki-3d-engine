@@ -34,11 +34,11 @@ void AsyncLoader::load(const char* filename, LoadCallback loadCallback, void* st
 //======================================================================================================================
 void AsyncLoader::workingFunc()
 {
-	glContext = SDL_GL_CreateContext(AppSingleton::getInstance().getWindowId());
+	/*glContext = SDL_GL_CreateContext(AppSingleton::getInstance().getWindowId());
 	if(SDL_GL_MakeCurrent(AppSingleton::getInstance().getWindowId(), glContext) != 0)
 	{
 		throw EXCEPTION("Cannot select GL context");
-	}
+	}*/
 
 
 	while(1)
