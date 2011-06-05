@@ -36,7 +36,7 @@ void FtFontLoader::getAllGlyphs()
 		}
 	}
 
-	//glyphs[0].metrics.width = glyphs['_' - ' '].metrics.width;
+	glyphs[0].metrics = glyphs['_' - ' '].metrics;
 }
 
 
@@ -64,19 +64,21 @@ void FtFontLoader::computeImageSize()
 {
 	imgSize.x = 0;
 	imgSize.y = 0;
+	lineHeight = 0;
 
 	//
 	// Get img height
 	//
 	BOOST_FOREACH(const Glyph& glyph, glyphs)
 	{
-		if(toPixels(glyph.metrics.height) > imgSize.y)
+		if(toPixels(glyph.metrics.height) > int(lineHeight))
 		{
-			imgSize.y = toPixels(glyph.metrics.height);
+			lineHeight = toPixels(glyph.metrics.height);
 		}
 	}
 
-	imgSize.y = GLYPH_ROWS * imgSize.y;
+	float exp = ceil(log2(GLYPH_ROWS * lineHeight));
+	imgSize.y = pow(2, exp);
 
 	//
 	// Get img width
@@ -99,6 +101,9 @@ void FtFontLoader::computeImageSize()
 			imgSize.x = rowSize;
 		}
 	}
+
+	exp = ceil(log2(imgSize.x));
+	imgSize.x = pow(2, exp);
 }
 
 
@@ -136,7 +141,7 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 	// Get final image size and create image buffer
 	computeImageSize();
 
-	size_t size = imgSize.x * imgSize.y * 2 * sizeof(uchar);
+	size_t size = imgSize.x * imgSize.y * 1 * sizeof(uchar);
 	img.resize(size, 128);
 
 	// Draw all glyphs to the image
@@ -164,7 +169,18 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 		}
 
 		pos.x = 0;
-		pos.y += imgSize.y / (GLYPH_ROWS);
+		pos.y += lineHeight;
+	}
+
+	// Flip image y
+	for(int i = 0; i < imgSize.y / 2; i++)
+	{
+		for(int j = 0; j < imgSize.x; j++)
+		{
+			uchar tmp = img[i * imgSize.x + j];
+			img[i * imgSize.x + j] = img[(imgSize.y - i - 1) * imgSize.x + j];
+			img[(imgSize.y - i - 1) * imgSize.x + j] = tmp;
+		}
 	}
 
 	// Clean
@@ -200,7 +216,7 @@ void FtFontLoader::saveImage(const char* filename) const
 
 	fwrite(header6, 1, sizeof(header6), fp);
 
-	for(int i = imgSize.y - 1; i > -1; i--)
+	for(int i = 0; i < imgSize.y; i++)
 	{
 		for(int j = 0; j < imgSize.x; j++)
 		{

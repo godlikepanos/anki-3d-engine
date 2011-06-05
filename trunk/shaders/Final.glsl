@@ -13,7 +13,11 @@ layout(location = 0) out vec3 fFragColor;
 
 void main()
 {
-	//if( gl_FragCoord.x > 0.5 ) discard;
+	/*if(vTexCoords.y > 0.5)
+	{
+		fFragColor = vec3(1.0, 0.0, 1.0);
+		return;
+	}*/
 
 	fFragColor = texture2D(rasterImage, vTexCoords).rgb;
 	//fFragColor = vec3(texture2D(rasterImage, vTexCoords).b);

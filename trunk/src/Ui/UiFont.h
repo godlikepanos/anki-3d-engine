@@ -25,6 +25,10 @@ class Font
 		const Mat3& getGlyphTextureMatrix(char c) const {return glyphs[c - ' '].textureMat;}
 		uint getGlyphWidth(char c) const {return glyphs[c - ' '].width;}
 		uint getGlyphHeight(char c) const {return glyphs[c - ' '].height;}
+		int getGlyphAdvance(char c) const {return glyphs[c - ' '].horizAdvance;}
+		int getGlyphBearingX(char c) const {return glyphs[c - ' '].horizBearingX;}
+		int getGlyphBearingY(char c) const {return glyphs[c - ' '].horizBearingY;}
+		const Texture& getMap() const {return *map;}
 		/// @}
 
 	private:
@@ -46,7 +50,7 @@ class Font
 		/// @param[in] fontFilename The filename of the font to load
 		/// @param[in] nominalWidth The nominal glyph width in pixels
 		/// @param[in] nominalHeight The nominal glyph height in pixels
-		void create(const char* fontFilename, uint nominalWidth, uint NominalHeight);
+		void create(const char* fontFilename, uint nominalWidth, uint nominalHeight);
 };
 
 

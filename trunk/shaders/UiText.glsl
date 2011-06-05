@@ -27,8 +27,9 @@ layout(location = 0) out vec4 fColor;
 
 void main()
 {
-	vec4 texCol = texture2D(texture, vTexCoords).rgba * color;
+	float r = texture2D(texture, vTexCoords).r;
 
-	fColor = texCol;
+	fColor = vec4(r) * color;
 	//fColor = texCol - texCol + vec4(1.0, 0.0, 1.0, 0.1);
+	//fColor = texCol - texCol + vec4(texture2D(texture, vTexCoords).r);
 }

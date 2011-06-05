@@ -45,6 +45,7 @@ class FtFontLoader
 		GETTER_R(Vec<uchar>, img, getImage)
 		GETTER_R(FT_Vector, imgSize, getImageSize)
 		GETTER_R(Vec<Glyph>, glyphs, getGlyphs)
+		GETTER_R_BY_VAL(uint, lineHeight, getLineHeight)
 		/// @}
 
 		/// Save the image (img) to TGA. Its for debugging purposes
@@ -60,6 +61,7 @@ class FtFontLoader
 		Vec<Glyph> glyphs;
 		Vec<uchar> img;
 		FT_Vector imgSize;
+		uint lineHeight; ///< Calculated as the max height among all glyphs
 		/// @}
 
 		/// Reads the face and extracts the glyphs
