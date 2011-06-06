@@ -12,9 +12,8 @@ namespace Ui {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Painter::Painter(uint deviceWidth, uint deviceHeight):
-	deviceWidth(deviceWidth),
-	deviceHeight(deviceHeight)
+Painter::Painter(const Vec2& deviceSize_):
+	deviceSize(deviceSize_)
 {
 	init();
 }
@@ -34,10 +33,12 @@ void Painter::setFont(const char* fontFilename, uint nominalWidth, uint nominalH
 //======================================================================================================================
 void Painter::init()
 {
-	// Map
-	fontMap.loadRsrc("engine-rsrc/fontmap.png");
-	columns = 16;
-	rows = 8;
+	// Default font
+	float dfltFontWidth = 0.2 * deviceSize.x();
+	font.reset(new Font("engine-rsrc/ModernAntiqua.ttf", dfltFontWidth,
+	                    deviceSize.x() / deviceSize.y() * dfltFontWidth));
+
+	// Misc
 	tabSize = 4;
 
 	// SProg
@@ -80,53 +81,48 @@ void Painter::drawText(const char* text)
 	// Iterate
 	Vec2 p; // in NDC
 	p.x() = 2.0 * pos.x() - 1.0;
-	p.y() = 2.0 * -pos.y() - 1.0;
+	p.y() = 2.0 * (1.0 - pos.y()) - 1.0;
 	const char* c = text;
 	while(*c != '\0')
 	{
 		char cc = *c;
-		// Check if special
+
 		if(cc == ' ')
 		{
-			// do nothing
+			p.x() += 2.0 * font->getGlyphWidth(cc) / deviceSize.x();
 		}
 		else if(cc == '\n')
 		{
-			/*p.y() += verticalMoving;
-			p.x() = pos.x();
-			++c;
-			continue;*/
+			p.x() = 2.0 * pos.x() - 1.0;
+			p.y() += 2.0 * font->getLineHeight() / deviceSize.y();
 		}
 		else if(cc == '\t') // tab
 		{
-			p.x() +=  font->getGlyphWidth(' ') * (tabSize - 1);
-			cc = ' ';
+			p.x() +=  font->getGlyphWidth(' ') * tabSize;
 		}
 		else if(cc < ' ' || cc > '~') // out of range
 		{
-			cc = '~' + 1;
+			ERROR("Char out of range (" << cc << "). Ignoring");
 		}
 		else
 		{
 			Mat3 trfM = Mat3::getIdentity();
-			trfM(0, 0) = 2.0 * float(font->getGlyphWidth(cc)) / deviceWidth;
-			trfM(1, 1) = 2.0 * float(font->getGlyphHeight(cc)) / deviceHeight;
-			trfM(0, 2) = p.x() /*+ (font->getGlyphBearingX(cc) / float(deviceWidth))*/;
-
-			trfM(1, 2) = 2 * (font->getGlyphBearingY(cc) - int(font->getGlyphHeight(cc))) / float(deviceHeight);
+			trfM(0, 0) = 2.0 * float(font->getGlyphWidth(cc)) / deviceSize.x();
+			trfM(1, 1) = 2.0 * float(font->getGlyphHeight(cc)) / deviceSize.y();
+			trfM(0, 2) = p.x();
+			trfM(1, 2) = p.y() + 2.0 * (font->getGlyphBearingY(cc) - int(font->getGlyphHeight(cc))) / deviceSize.y();
 
 			sProg->findUniVar("transformation")->set(&trfM);
 			sProg->findUniVar("textureTranformation")->set(&font->getGlyphTextureMatrix(cc));
 
-
 			// Render
 			glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+
+			// Inc
+			p.x() += 2.0 * font->getGlyphWidth(cc) / deviceSize.x();
 		}
 
-		// Inc
 		++c;
-		//p.x() += 2 * font->getGlyphAdvance(cc) / float(deviceWidth);
-		p.x() += 2 * font->getGlyphWidth(cc) / float(deviceWidth);
 	}
 }
 

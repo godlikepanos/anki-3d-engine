@@ -29,6 +29,7 @@ class Font
 		int getGlyphBearingX(char c) const {return glyphs[c - ' '].horizBearingX;}
 		int getGlyphBearingY(char c) const {return glyphs[c - ' '].horizBearingY;}
 		const Texture& getMap() const {return *map;}
+		GETTER_R_BY_VAL(uint, lineHeight, getLineHeight)
 		/// @}
 
 	private:
@@ -46,6 +47,7 @@ class Font
 
 		std::auto_ptr<Texture> map; ///< The texture map that contains all the glyphs
 		boost::ptr_vector<Glyph> glyphs; ///< A set of glyphs from ' ' to ' ' + 128
+		uint lineHeight;
 
 		/// @param[in] fontFilename The filename of the font to load
 		/// @param[in] nominalWidth The nominal glyph width in pixels
