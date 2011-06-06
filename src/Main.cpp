@@ -124,7 +124,8 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	painter = new Ui::Painter(AppSingleton::getInstance().getWindowWidth(), AppSingleton::getInstance().getWindowHeight());
+	painter = new Ui::Painter(Vec2(AppSingleton::getInstance().getWindowWidth(),
+	                               AppSingleton::getInstance().getWindowHeight()));
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
@@ -371,7 +372,6 @@ void mainLoop()
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
 		painter->setPosition(Vec2(0.0, 0.5));
-		painter->setFontSize(Vec2(0.03, 0.03 * MainRendererSingleton::getInstance().getAspectRatio()));
 		painter->setColor(Vec4(1.0));
 
 		//painter->drawText("A");

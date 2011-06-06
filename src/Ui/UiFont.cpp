@@ -18,7 +18,9 @@ void Font::create(const char* fontFilename, uint nominalWidth, uint NominalHeigh
 	FT_Vector ftSize = {nominalWidth, NominalHeight};
 	FtFontLoader ft(fontFilename, ftSize);
 
-	ft.saveImage("/tmp/test.tga");
+	lineHeight = ft.getLineHeight();
+
+	//ft.saveImage("/tmp/test.tga");
 
 	// - Create glyphs
 	// - Get metrics
