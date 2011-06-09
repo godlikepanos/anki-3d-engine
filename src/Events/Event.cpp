@@ -30,13 +30,15 @@ Event& Event::operator=(const Event& b)
 //======================================================================================================================
 // update                                                                                                              =
 //======================================================================================================================
-void Event::update(uint timeUpdate)
+void Event::update(uint prevUpdateTime, uint crntTime)
 {
-	ASSERT(!isFinished());
+	ASSERT(!isDead(crntTime));
 
-	updateSp(timeUpdate);
-
-	duration -= timeUpdate;
+	// Dont update if its not the right time yet
+	if(startTime >= crntTime)
+	{
+		updateSp(prevUpdateTime, crntTime);
+	}
 }
 
 

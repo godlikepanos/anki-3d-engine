@@ -19,7 +19,7 @@ class HighRezTimer
 		/// Get the time elapsed between start and stop (if its stopped) or between start and the current time
 		uint getElapsedTime() const;
 
-		/// Get the current date's millisecond
+		/// Get the current date's milliseconds
 		static uint getCrntTime();
 
 	private:

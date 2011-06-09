@@ -14,5 +14,9 @@ typedef Singleton<class StdinListener> StdinListenerSingleton;
 typedef Singleton<class GlStateMachine> GlStateMachineSingleton;
 typedef Singleton<class ScriptingEngine> ScriptingEngineSingleton;
 
+namespace Event {
+typedef Singleton<class Manager> ManagerSingleton;
+}
+
 
 #endif
