@@ -16,15 +16,16 @@ class SceneColor: public Event
 		SceneColor(uint startTime, int duration, const Vec3& finalColor);
 
 		/// Copy constructor
-		SceneColor(const SceneColor& b) {*this = b;}
+		SceneColor(const SceneColor& b);
 
 		/// Copy
 		SceneColor& operator=(const SceneColor& b);
 
 		/// Implements Event::updateSp
-		void updateSp(uint timeUpdate);
+		void updateSp(uint prevUpdateTime, uint crntTime);
 
 	private:
+		Vec3 originalColor; ///< Original scene color. The constructor sets it
 		Vec3 finalColor;
 };
 

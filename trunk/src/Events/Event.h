@@ -31,21 +31,23 @@ class Event
 		GETTER_R(uint, startTime, getStartTime)
 		GETTER_R(int, duration, getDuration)
 		GETTER_R(EventType, type, getEventType)
-		bool isFinished() const {return duration < 0;}
+		bool isDead(uint crntTime) const {return crntTime >= startTime + duration;}
 		/// @}
 
 		/// Copy
 		Event& operator=(const Event& b);
 
-		/// @param[in] timeUpdate The time between this update and the previous
-		void update(uint timeUpdate);
-		virtual void updateSp(uint timeUpdate) = 0;
+		/// @param[in] prevUpdateTime The time of the previous update (ms)
+		/// @param[in] crntTime The current time (ms)
+		void update(uint prevUpdateTime, uint crntTime);
+
+	protected:
+		virtual void updateSp(uint prevUpdateTime, uint crntTime) = 0;
 
 	private:
 		EventType type; ///< Self explanatory
 		uint startTime; ///< The time the event will start. Eg 23:00
-		/// The duration of the event. < 0 means finished, 0 means no limit and > 0 is the actual duration
-		int duration;
+		int duration; ///< The duration of the event
 };
 
 

@@ -42,6 +42,8 @@
 #include "Globals.h"
 #include "UiFtFontLoader.h"
 #include "UiFont.h"
+#include "EventManager.h"
+#include "EventSceneColor.h"
 
 
 // map (hard coded)
@@ -312,6 +314,13 @@ void mainLoopExtra()
 	}
 
 
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F))
+	{
+		Event::ManagerSingleton::getInstance().createEvent(Event::SceneColor(HighRezTimer::getCrntTime() + 4000, 5000,
+		                                                                     Vec3(1.0, 0.0, 0.0)));
+	}
+
+
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)
 	{
 		btRigidBody* body = static_cast<btRigidBody*>(boxes[0]);
@@ -351,8 +360,13 @@ void mainLoop()
 
 	HighRezTimer mainLoopTimer;
 	mainLoopTimer.start();
+	uint prevUpdateTime = HighRezTimer::getCrntTime();
+	uint crntTime = prevUpdateTime;
 	do
 	{
+		prevUpdateTime = crntTime;
+		crntTime = HighRezTimer::getCrntTime();
+
 		HighRezTimer timer;
 		timer.start();
 
@@ -362,12 +376,8 @@ void mainLoop()
 		SceneSingleton::getInstance().getPhysics().update(timer.getCrntTime());
 		SceneSingleton::getInstance().updateAllWorldStuff();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
-		/*SceneSingleton::getInstance().doVisibilityTests(spot_lights[0]->getCamera());
-		AppSingleton::getInstance().getActiveCam()->getVisibleMsRenderableNodes().clear();
-		AppSingleton::getInstance().getActiveCam()->getVisibleMsRenderableNodes() = spot_lights[0]->getCamera().getVisibleMsRenderableNodes();
-		AppSingleton::getInstance().getActiveCam()->getVisiblePointLights() = spot_lights[0]->getCamera().getVisiblePointLights();
-		AppSingleton::getInstance().getActiveCam()->getVisibleSpotLights() = spot_lights[0]->getCamera().getVisibleSpotLights();*/
 		SceneSingleton::getInstance().updateAllControllers();
+		Event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
@@ -375,7 +385,7 @@ void mainLoop()
 		painter->setColor(Vec4(1.0));
 
 		//painter->drawText("A");
-		painter->drawText("Once uppon a time in a place called Kickapoo.");
+		painter->drawText("Once upon a time in a place called Kickapoo.");
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
 		{
@@ -435,7 +445,7 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	/*FT_Vector s = {100, 100};
+	/*FT_Vector s = {25, 25};
 	Ui::FtFontLoader fnt("engine-rsrc/ModernAntiqua.ttf", s);
 	fnt.saveImage("/tmp/test.tga");
 
