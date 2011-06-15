@@ -8,7 +8,7 @@ namespace Event {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Event::Event(EventType type_, uint startTime_, int duration_):
+Event::Event(EventType type_, uint startTime_, uint duration_):
 	type(type_),
 	startTime(startTime_),
 	duration(duration_)
@@ -35,7 +35,7 @@ void Event::update(uint prevUpdateTime, uint crntTime)
 	ASSERT(!isDead(crntTime));
 
 	// Dont update if its not the right time yet
-	if(startTime >= crntTime)
+	if(startTime <= crntTime)
 	{
 		updateSp(prevUpdateTime, crntTime);
 	}

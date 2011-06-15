@@ -22,7 +22,7 @@ class Event
 {
 	public:
 		/// Constructor
-		Event(EventType type, uint startTime, int duration);
+		Event(EventType type, uint startTime, uint duration);
 
 		/// Copy constructor
 		Event(const Event& b) {*this = b;}
@@ -30,7 +30,7 @@ class Event
 		/// @name Accessors
 		/// @{
 		GETTER_R(uint, startTime, getStartTime)
-		GETTER_R(int, duration, getDuration)
+		GETTER_R(uint, duration, getDuration)
 		GETTER_R(EventType, type, getEventType)
 		bool isDead(uint crntTime) const {return crntTime >= startTime + duration;}
 		/// @}
@@ -56,7 +56,7 @@ class Event
 	private:
 		EventType type; ///< Self explanatory
 		uint startTime; ///< The time the event will start. Eg 23:00
-		int duration; ///< The duration of the event
+		uint duration; ///< The duration of the event
 };
 
 

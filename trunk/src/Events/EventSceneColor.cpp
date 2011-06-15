@@ -1,6 +1,7 @@
 #include "EventSceneColor.h"
 #include "Scene.h"
 #include "Globals.h"
+#include "Logger.h"
 
 
 namespace Event {
@@ -9,7 +10,7 @@ namespace Event {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-SceneColor::SceneColor(uint startTime, int duration, const Vec3& finalColor_):
+SceneColor::SceneColor(uint startTime, uint duration, const Vec3& finalColor_):
 	Event(SCENE_COLOR, startTime, duration),
 	finalColor(finalColor_)
 {
@@ -33,6 +34,7 @@ SceneColor::SceneColor(const SceneColor& b):
 SceneColor& SceneColor::operator=(const SceneColor& b)
 {
 	Event::operator=(b);
+	originalColor = b.originalColor;
 	finalColor = b.finalColor;
 	return *this;
 }
@@ -44,7 +46,7 @@ SceneColor& SceneColor::operator=(const SceneColor& b)
 void SceneColor::updateSp(uint /*prevUpdateTime*/, uint crntTime)
 {
 	float d = crntTime - getStartTime(); // delta
-	float dp = d / getDuration(); // delta as persentage
+	float dp = d / float(getDuration()); // delta as persentage
 
 	SceneSingleton::getInstance().setAmbientCol(interpolate(originalColor, finalColor, dp));
 }

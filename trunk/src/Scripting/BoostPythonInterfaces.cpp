@@ -4,6 +4,8 @@
 
 BOOST_PYTHON_MODULE(Anki)
 {
+	CALL_WRAP(HighRezTimer);
+
 	CALL_WRAP(Vec2);
 	CALL_WRAP(Vec3);
 	CALL_WRAP(Vec4);
