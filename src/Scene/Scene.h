@@ -1,7 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include "Physics.h"
 #include "Assert.h"
 #include "Accessors.h"
@@ -73,8 +73,8 @@ class Scene
 		/// @}
 
 		Vec3 ambientCol; ///< The global ambient color
-		std::auto_ptr<Physics> physics; ///< Connection with Bullet wrapper
-		std::auto_ptr<VisibilityTester> visibilityTester;
+		boost::scoped_ptr<Physics> physics; ///< Connection with Bullet wrapper
+		boost::scoped_ptr<VisibilityTester> visibilityTester;
 
 		/// Adds a node in a container
 		template<typename ContainerType, typename Type>

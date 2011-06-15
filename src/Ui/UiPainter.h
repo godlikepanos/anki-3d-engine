@@ -1,7 +1,7 @@
 #ifndef UI_PAINTER_H
 #define UI_PAINTER_H
 
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include "RsrcPtr.h"
 #include "Math.h"
 #include "Accessors.h"
@@ -34,7 +34,7 @@ class Painter
 	private:
 		/// @name Data
 		/// @{
-		std::auto_ptr<Font> font;
+		boost::scoped_ptr<Font> font;
 		RsrcPtr<ShaderProg> sProg;
 
 		Vec2 pos;

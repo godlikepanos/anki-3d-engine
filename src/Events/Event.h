@@ -12,6 +12,7 @@ namespace Event {
 enum EventType
 {
 	SCENE_COLOR,
+	MAIN_RENDERER_PPS_HDR,
 	EVENT_TYPES_NUM
 };
 
@@ -42,13 +43,28 @@ class Event
 		void update(uint prevUpdateTime, uint crntTime);
 
 	protected:
+		/// This method should be implemented by the derived classes
 		virtual void updateSp(uint prevUpdateTime, uint crntTime) = 0;
+
+		/// Linear interpolation between values
+		/// @param[in] from Starting value
+		/// @param[in] to Ending value
+		/// @param[in] delta The percentage from the from "from" value. Values from [0.0, 1.0]
+		template<typename Type>
+		static Type interpolate(const Type& from, const Type& to, float delta);
 
 	private:
 		EventType type; ///< Self explanatory
 		uint startTime; ///< The time the event will start. Eg 23:00
 		int duration; ///< The duration of the event
 };
+
+
+template<typename Type>
+Type Event::interpolate(const Type& from, const Type& to, float delta)
+{
+	return from * (1.0 - delta) + to * delta;
+}
 
 
 } // end namespace
