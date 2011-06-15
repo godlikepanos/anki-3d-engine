@@ -9,7 +9,7 @@ namespace Event {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-MainRendererPpsHdr::MainRendererPpsHdr(uint startTime, int duration,
+MainRendererPpsHdr::MainRendererPpsHdr(uint startTime, uint duration,
                                        float exposure_, uint blurringIterationsNum_, float blurringDist_):
 	Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
 {

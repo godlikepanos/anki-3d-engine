@@ -44,6 +44,7 @@
 #include "UiFont.h"
 #include "EventManager.h"
 #include "EventSceneColor.h"
+#include "EventMainRendererPpsHdr.h"
 
 
 // map (hard coded)
@@ -314,10 +315,10 @@ void mainLoopExtra()
 	}
 
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F))
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
 	{
-		Event::ManagerSingleton::getInstance().createEvent(Event::SceneColor(HighRezTimer::getCrntTime() + 4000, 5000,
-		                                                                     Vec3(1.0, 0.0, 0.0)));
+		Event::ManagerSingleton::getInstance().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5000,
+			5000, MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
 	}
 
 
@@ -381,7 +382,7 @@ void mainLoop()
 
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
-		painter->setPosition(Vec2(0.0, 0.5));
+		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
 
 		//painter->drawText("A");

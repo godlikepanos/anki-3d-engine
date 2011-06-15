@@ -12,7 +12,7 @@ class MainRendererPpsHdr: public Event
 {
 	public:
 		/// Constructor
-		MainRendererPpsHdr(uint startTime, int duration,
+		MainRendererPpsHdr(uint startTime, uint duration,
 		                   float exposure, uint blurringIterationsNum, float blurringDist);
 
 		/// Copy constructor
