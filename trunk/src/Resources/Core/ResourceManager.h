@@ -2,7 +2,7 @@
 #define RESOURCE_MANAGER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <memory.h>
+#include <boost/scoped_ptr.hpp>
 #include <string>
 #include "Singleton.h"
 #include "AsyncLoader.h"
@@ -38,6 +38,10 @@ class ResourceManager
 			typedef typename Container::iterator Iterator;
 			typedef typename Container::const_iterator ConstIterator;
 		};
+
+		ResourceManager();
+		~ResourceManager();
+
 
 		/// Load a resource
 		/// See if its already loaded, if its not:
@@ -76,9 +80,9 @@ class ResourceManager
 		
 		/// This will be used in every new texture until the async loader is finished with the loading of the actual
 		/// texture. Its initialized when its first needed so that we wont have conflicts with opengl initialization.
-		std::auto_ptr<Texture> dummyTex;
+		boost::scoped_ptr<Texture> dummyTex;
 
-		std::auto_ptr<Texture> dummyNormTex; ///< The same as dummyTex but for normals
+		boost::scoped_ptr<Texture> dummyNormTex; ///< The same as dummyTex but for normals
 
 		/// Find a resource using the filename
 		template<typename Type>

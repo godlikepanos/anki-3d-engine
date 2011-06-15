@@ -46,8 +46,7 @@ void SceneColor::updateSp(uint /*prevUpdateTime*/, uint crntTime)
 	float d = crntTime - getStartTime(); // delta
 	float dp = d / getDuration(); // delta as persentage
 
-	Vec3 col = originalColor * (1.0 - dp) + finalColor * dp;
-	SceneSingleton::getInstance().setAmbientCol(col);
+	SceneSingleton::getInstance().setAmbientCol(interpolate(originalColor, finalColor, dp));
 }
 
 

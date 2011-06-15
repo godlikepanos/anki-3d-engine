@@ -1,7 +1,7 @@
 #ifndef UI_FONT_H
 #define UI_FONT_H
 
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "StdTypes.h"
 #include "Math.h"
@@ -45,7 +45,7 @@ class Font
 			int horizAdvance;
 		};
 
-		std::auto_ptr<Texture> map; ///< The texture map that contains all the glyphs
+		boost::scoped_ptr<Texture> map; ///< The texture map that contains all the glyphs
 		boost::ptr_vector<Glyph> glyphs; ///< A set of glyphs from ' ' to ' ' + 128
 		uint lineHeight;
 

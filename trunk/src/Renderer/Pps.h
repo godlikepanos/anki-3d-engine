@@ -26,9 +26,9 @@ class Pps: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Hdr, hdr, getHdr)
-		GETTER_R(Ssao, ssao, getSsao)
-		GETTER_R(Bl, bl, getBl)
+		GETTER_RW(Hdr, hdr, getHdr)
+		GETTER_RW(Ssao, ssao, getSsao)
+		GETTER_RW(Bl, bl, getBl)
 		GETTER_R(Texture, prePassFai, getPrePassFai)
 		GETTER_R(Texture, postPassFai, getPostPassFai)
 		/// @}

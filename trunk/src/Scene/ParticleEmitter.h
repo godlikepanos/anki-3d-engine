@@ -2,8 +2,8 @@
 #define PARTICLEEMITTER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <btBulletCollisionCommon.h>
 #include <memory>
+#include <btBulletCollisionCommon.h>
 #include "SceneNode.h"
 #include "GhostNode.h"
 #include "ParticleEmitterProps.h"

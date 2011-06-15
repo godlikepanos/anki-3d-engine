@@ -1,7 +1,7 @@
 #ifndef PATCH_NODE_H
 #define PATCH_NODE_H
 
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include "Vao.h"
 #include "Vbo.h"
 #include "Mesh.h" // For the Vbos enum
@@ -44,8 +44,8 @@ class PatchNode: public RenderableNode
 		const ModelPatch& rsrc;
 		Vao dpVao; /// VAO for depth passes. All VBOs could be attached except for the vert weights
 		Vao cpVao; /// VAO for MS and BS. All VBOs could be attached except for the vert weights
-		std::auto_ptr<MaterialRuntime> cpMtlRun;
-		std::auto_ptr<MaterialRuntime> dpMtlRun;
+		boost::scoped_ptr<MaterialRuntime> cpMtlRun;
+		boost::scoped_ptr<MaterialRuntime> dpMtlRun;
 
 		/// Create a VAO given a material and an array of VBOs
 		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
