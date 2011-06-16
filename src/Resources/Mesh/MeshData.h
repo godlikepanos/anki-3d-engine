@@ -97,7 +97,7 @@ class MeshData
 		void createVertTangents();
 		void createVertIndeces();
 
-		/// This func does some sanity checks and creates normals, tangents, VBOs etc
+		/// This method does some sanity checks and creates normals, tangents, VBOs etc
 		/// @exception Exception
 		void doPostLoad();
 };

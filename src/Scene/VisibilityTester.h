@@ -17,9 +17,6 @@ class SceneNode;
 /// Performs visibility determination tests and fills a few containers with the visible scene nodes
 class VisibilityTester
 {
-	//====================================================================================================================
-	// Public                                                                                                            =
-	//====================================================================================================================
 	public:
 		/// Constructor
 		VisibilityTester(Scene& scene);
@@ -31,9 +28,6 @@ class VisibilityTester
 		/// - For every spot light that casts shadow get the visible renderables
 		void test(Camera& cam);
 
-	//====================================================================================================================
-	// Private                                                                                                           =
-	//====================================================================================================================
 	private:
 		/// Used in sorting. Compare the length of 2 nodes from the camera
 		struct CmpDistanceFromOrigin

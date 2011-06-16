@@ -17,7 +17,7 @@ enum EventType
 };
 
 
-/// Abstract class for all events
+/// Abstract class for all events. All Event derived classes should be copy-able
 class Event
 {
 	public:
