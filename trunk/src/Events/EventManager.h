@@ -22,7 +22,17 @@ class Manager
 		void updateAllEvents(uint prevUpdateTime, uint crntTime);
 
 	private:
+		enum
+		{
+			MAX_EVENTS_SIZE = 1000
+		};
+
 		EventsContainer events;
+		uint prevUpdateTime;
+		uint crntTime;
+
+		/// Find a dead event of a certain type
+		EventsContainer::iterator findADeadEvent(EventType type);
 };
 
 

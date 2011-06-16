@@ -21,12 +21,12 @@ class SceneColor: public Event
 		/// Copy
 		SceneColor& operator=(const SceneColor& b);
 
-		/// Implements Event::updateSp
-		void updateSp(uint prevUpdateTime, uint crntTime);
-
 	private:
 		Vec3 originalColor; ///< Original scene color. The constructor sets it
 		Vec3 finalColor;
+
+		/// Implements Event::updateSp
+		void updateSp(uint prevUpdateTime, uint crntTime);
 };
 
 
