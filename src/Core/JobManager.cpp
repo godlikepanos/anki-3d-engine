@@ -32,7 +32,7 @@ void WorkerThread::workingFunc()
 		}
 
 		// Exec
-		job(id, jobParams);
+		job(jobParams, *this);
 
 		// Nullify
 		{
@@ -46,14 +46,15 @@ void WorkerThread::workingFunc()
 
 
 //======================================================================================================================
-// Constructor                                                                                                         =
+// init                                                                                                                =
 //======================================================================================================================
-JobManager::JobManager(uint threadsNum):
-	barrier(threadsNum + 1)
+void JobManager::init(uint threadsNum)
 {
+	barrier.reset(new boost::barrier(threadsNum + 1));
+
 	for(uint i = 0; i < threadsNum; i++)
 	{
-		workers.push_back(new WorkerThread(i, &barrier));
+		workers.push_back(new WorkerThread(i, *this, barrier.get()));
 	}
 }
 

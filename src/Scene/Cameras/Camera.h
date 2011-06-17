@@ -8,6 +8,7 @@
 #include "Collision.h"
 #include "SceneNode.h"
 #include "Accessors.h"
+#include "VisibilityInfo.h"
 
 
 class RenderableNode;
@@ -16,7 +17,7 @@ class PointLight;
 
 
 /// Camera SceneNode
-class Camera: public SceneNode
+class Camera: public SceneNode, public VisibilityInfo
 {
 	public:
 		enum CameraType
@@ -54,11 +55,6 @@ class Camera: public SceneNode
 
 		/// See the declaration of invProjectionMat for info
 		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;}
-
-		GETTER_RW(std::deque<const RenderableNode*>, msRenderableNodes, getVisibleMsRenderableNodes)
-		GETTER_RW(std::deque<const RenderableNode*>, bsRenderableNodes, getVisibleBsRenderableNodes)
-		GETTER_RW(Vec<const PointLight*>, pointLights, getVisiblePointLights)
-		GETTER_RW(Vec<SpotLight*>, spotLights, getVisibleSpotLights)
 
 		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const {return wspaceFrustumPlanes[id];}
 		/// @}
@@ -110,21 +106,13 @@ class Camera: public SceneNode
 		Mat4 invProjectionMat;
 		/// @}
 
-		/// @name Visible nodes. They are in separate containers for faster shorting
-		/// @{
-		std::deque<const RenderableNode*> msRenderableNodes;
-		std::deque<const RenderableNode*> bsRenderableNodes;
-		Vec<const PointLight*> pointLights;
-		Vec<SpotLight*> spotLights;
-		/// @}
-
 		/// Calculate projectionMat and invProjectionMat
 		virtual void calcProjectionMatrix() = 0;
 		virtual void calcLSpaceFrustumPlanes() = 0;
 		void updateViewMatrix();
 		void updateWSpaceFrustumPlanes();
 
-		/// @todo
+		/// Get the edge points of the camera
 		virtual void getExtremePoints(Vec3* pointsArr, uint& pointsNum) const = 0;
 };
 
