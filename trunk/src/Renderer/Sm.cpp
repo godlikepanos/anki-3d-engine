@@ -5,6 +5,8 @@
 #include "Scene.h"
 #include "LightRsrc.h"
 #include "Camera.h"
+#include "Light.h"
+#include "SpotLight.h"
 #include "RendererInitializer.h"
 
 
@@ -91,7 +93,7 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 //======================================================================================================================
 // run                                                                                                                 =
 //======================================================================================================================
-void Sm::run(const Camera& cam, float distance)
+void Sm::run(const Light& light, float distance)
 {
 	if(!enabled)
 	{
@@ -131,9 +133,20 @@ void Sm::run(const Camera& cam, float distance)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node, cam.getVisibleMsRenderableNodes())
+	BOOST_FOREACH(const RenderableNode* node, light.getVisibleMsRenderableNodes())
 	{
-		r.getSceneDrawer().renderRenderableNode(*node, cam, SceneDrawer::RPT_DEPTH);
+		switch(light.getType())
+		{
+			case Light::LT_SPOT:
+			{
+				const SpotLight& sl = static_cast<const SpotLight&>(light);
+				r.getSceneDrawer().renderRenderableNode(*node, sl.getCamera(), SceneDrawer::RPT_DEPTH);
+				break;
+			}
+
+			default:
+				ASSERT(0);
+		}
 	}
 
 	// restore GL

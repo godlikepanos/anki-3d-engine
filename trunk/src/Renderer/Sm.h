@@ -8,7 +8,7 @@
 #include "VisibilityTester.h"
 
 
-class Camera;
+class Light;
 
 
 /// Shadowmapping pass
@@ -29,9 +29,9 @@ class Sm: private RenderingPass
 		void init(const RendererInitializer& initializer);
 
 		/// Render the scene only with depth and store the result in the shadowMap
-		/// @param[in] cam The light camera
+		/// @param[in] light The light
 		/// @param[in] distance The distance between the viewers camera and the light
-		void run(const Camera& cam, float distance);
+		void run(const Light& light, float distance);
 
 	private:
 		/// The shadowmap levels of detail

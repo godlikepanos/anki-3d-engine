@@ -3,16 +3,27 @@
 
 #include <boost/thread.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_ptr.hpp>
+#include "Accessors.h"
 
 
-/// @todo
+class JobManager;
+
+
+/// The thread that executes a job
 class WorkerThread
 {
 	public:
-		typedef void (*JobCallback)(uint jobId, void*);
+		typedef void (*JobCallback)(void*, const WorkerThread&);
 
 		/// Constructor
-		WorkerThread(int id, boost::barrier* barrier);
+		WorkerThread(int id, const JobManager& jobManager, boost::barrier* barrier);
+
+		/// @name Accessors
+		/// @{
+		GETTER_R(uint, id, getId)
+		const JobManager& getJobManager() const {return jobManager;}
+		/// @}
 
 		/// Assign new job to the thread
 		void assignNewJob(JobCallback job, void* jobParams);
@@ -25,6 +36,7 @@ class WorkerThread
 		boost::barrier* barrier;
 		JobCallback job; ///< Its NULL if there are no pending jobs
 		void* jobParams;
+		const JobManager& jobManager; ///< Know your father and pass him to the jobs
 
 		/// Start thread
 		void start();
@@ -34,10 +46,11 @@ class WorkerThread
 };
 
 
-inline WorkerThread::WorkerThread(int id_, boost::barrier* barrier_):
+inline WorkerThread::WorkerThread(int id_, const JobManager& jobManager_, boost::barrier* barrier_):
 	id(id_),
 	barrier(barrier_),
-	job(NULL)
+	job(NULL),
+	jobManager(jobManager_)
 {
 	start();
 }
@@ -53,8 +66,14 @@ inline void WorkerThread::start()
 class JobManager
 {
 	public:
-		/// Constructor
-		JobManager(uint threadsNum);
+		/// Default constructor
+		JobManager() {}
+
+		/// Constructor #2
+		JobManager(uint threadsNum) {init(threadsNum);}
+
+		/// Init the manager
+		void init(uint threadsNum);
 
 		/// Assign a job to a working thread
 		void assignNewJob(uint threadId, WorkerThread::JobCallback job, void* jobParams);
@@ -65,8 +84,8 @@ class JobManager
 		uint getThreadsNum() const {return workers.size();}
 
 	private:
-		boost::ptr_vector<WorkerThread> workers;
-		boost::barrier barrier;
+		boost::ptr_vector<WorkerThread> workers; ///< Worker threads
+		boost::scoped_ptr<boost::barrier> barrier; ///< Synchronization barrier
 };
 
 
@@ -78,7 +97,7 @@ inline void JobManager::assignNewJob(uint threadId, WorkerThread::JobCallback jo
 
 inline void JobManager::waitForAllJobsToFinish()
 {
-	barrier.wait();
+	barrier->wait();
 }
 
 

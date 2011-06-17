@@ -13,6 +13,7 @@
 #include "Input.h"
 #include "Logger.h"
 #include "Globals.h"
+#include "JobManager.h"
 
 
 //======================================================================================================================
@@ -107,6 +108,7 @@ void App::init(int argc, char* argv[])
 
 	initWindow();
 	initRenderer();
+	JobManagerSingleton::getInstance().init(4);
 
 	// other
 	activeCam = NULL;

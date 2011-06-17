@@ -206,7 +206,7 @@ void Is::spotLightPass(const SpotLight& light)
 
 		float dist = seg.testPlane(plane);
 
-		sm.run(light.getCamera(), dist);
+		sm.run(light, dist);
 
 		// restore the IS FBO
 		fbo.bind();

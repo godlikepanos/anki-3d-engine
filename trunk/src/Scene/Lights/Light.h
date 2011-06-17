@@ -5,6 +5,7 @@
 #include "SceneNode.h"
 #include "RsrcPtr.h"
 #include "LightRsrc.h"
+#include "VisibilityInfo.h"
 
 
 /// Light scene node. It can be spot or point
@@ -23,7 +24,7 @@
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode
+class Light: public SceneNode, public VisibilityInfo
 {
 	public:
 		enum LightType
