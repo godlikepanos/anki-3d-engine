@@ -1,15 +1,17 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
-#include "Physics.h"
-#include "PhyCharacter.h"
-#include "MotionState.h"
+#include "PhysMasterContainer.h"
+#include "PhysCharacter.h"
+#include "PhysMotionState.h"
+
+
+namespace Phys {
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Physics::Physics():
-	defaultContactProcessingThreshold(BT_LARGE_FLOAT),
-	time(0.0)
+MasterContainer::MasterContainer():
+	defaultContactProcessingThreshold(BT_LARGE_FLOAT)
 {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new	btCollisionDispatcher(collisionConfiguration);
@@ -18,21 +20,18 @@ Physics::Physics():
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, sol, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0,-10, 0));
 
-	debugDrawer = new PhyDbgDrawer;
+	/*debugDrawer = new PhyDbgDrawer;
 	dynamicsWorld->setDebugDrawer(debugDrawer);
-	dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+	dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe);*/
 }
 
 
 //======================================================================================================================
 // update                                                                                                              =
 //======================================================================================================================
-void Physics::update(float crntTime)
+void MasterContainer::update(uint prevUpdateTime, uint crntTime)
 {
-	float dt = crntTime - time;
-	time = crntTime;
-
-	dynamicsWorld->stepSimulation(dt);
+	dynamicsWorld->stepSimulation((crntTime - prevUpdateTime) * 1000.0);
 
 	// updateNonRigidBodiesMotionStates
 	for(uint i=0; i<characters.size(); i++)
@@ -40,3 +39,6 @@ void Physics::update(float crntTime)
 		characters[i]->motionState->setWorldTransform(characters[i]->ghostObject->getWorldTransform());
 	}
 }
+
+
+} // end namespace

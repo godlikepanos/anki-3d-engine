@@ -2,7 +2,7 @@
 #define SCENE_H
 
 #include <boost/scoped_ptr.hpp>
-#include "Physics.h"
+#include "PhysMasterContainer.h"
 #include "Assert.h"
 #include "Accessors.h"
 #include "Singleton.h"
@@ -47,8 +47,8 @@ class Scene
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER(Vec3, ambientCol, getAmbientCol, setAmbientCol)
-		Physics& getPhysics() {return *physics;}
-		const Physics& getPhysics() const {return *physics;}
+		Phys::MasterContainer& getPhysMasterContainer() {return *physMasterContainer;}
+		const Phys::MasterContainer& getPhysMasterContainer() const {return *physMasterContainer;}
 		const VisibilityTester& getVisibilityTester() const {return *visibilityTester;}
 
 		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
@@ -73,7 +73,7 @@ class Scene
 		/// @}
 
 		Vec3 ambientCol; ///< The global ambient color
-		boost::scoped_ptr<Physics> physics; ///< Connection with Bullet wrapper
+		boost::scoped_ptr<Phys::MasterContainer> physMasterContainer; ///< Connection with Bullet wrapper
 		boost::scoped_ptr<VisibilityTester> visibilityTester;
 
 		/// Adds a node in a container

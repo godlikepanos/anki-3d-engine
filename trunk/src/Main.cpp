@@ -22,12 +22,12 @@
 #include "LightRsrc.h"
 #include "Parser.h"
 #include "ParticleEmitter.h"
-#include "PhyCharacter.h"
+#include "PhysCharacter.h"
 #include "Renderer.h"
 #include "RendererInitializer.h"
 #include "MainRenderer.h"
-#include "PhyCharacter.h"
-#include "RigidBody.h"
+#include "PhysCharacter.h"
+#include "PhysRigidBody.h"
 #include "ScriptingEngine.h"
 #include "StdinListener.h"
 #include "ModelNode.h"
@@ -54,7 +54,7 @@ SkinNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 ParticleEmitter* partEmitter;
-PhyCharacter* character;
+Phys::Character* character;
 
 Ui::Painter* painter;
 
@@ -82,12 +82,12 @@ void initPhysics()
 	groundTransform.setIdentity();
 	groundTransform.setOrigin(Vec3(0,-50, 0));
 
-	RigidBody::Initializer init;
+	Phys::RigidBody::Initializer init;
 	init.mass = 0.0;
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new RigidBody(SceneSingleton::getInstance().getPhysics(), init);
+	new Phys::RigidBody(SceneSingleton::getInstance().getPhysMasterContainer(), init);
 
 
 	/*{

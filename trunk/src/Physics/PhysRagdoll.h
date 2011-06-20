@@ -1,12 +1,9 @@
-#ifndef _RAGDOLL_H_
+/*#ifndef _RAGDOLL_H_
 #define _RAGDOLL_H_
 
 #include "PhyCommon.h"
 
 
-/**
- *
- */
 class Ragdoll
 {
 	public:
@@ -60,4 +57,4 @@ class Ragdoll
 };
 
 
-#endif
+#endif */

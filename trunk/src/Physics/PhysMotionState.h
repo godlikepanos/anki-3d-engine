@@ -1,16 +1,18 @@
-#ifndef MOTIONSTATE_H
-#define MOTIONSTATE_H
+#ifndef PHYS_MOTION_STATE_H
+#define PHYS_MOTION_STATE_H
 
 #include <LinearMath/btMotionState.h>
 #include "SceneNode.h"
-#include "Object.h"
+
+
+namespace Phys {
 
 
 /// A custom motion state
-class MotionState: public btMotionState, public Object
+class MotionState: public btMotionState
 {
 	public:
-		MotionState(const Transform& initialTransform, SceneNode* node_, Object* parent);
+		MotionState(const Transform& initialTransform, SceneNode* node_);
 		~MotionState() {}
 
 		/// @name Bullet implementation of virtuals
@@ -26,12 +28,7 @@ class MotionState: public btMotionState, public Object
 };
 
 
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
-
-inline MotionState::MotionState(const Transform& initialTransform, SceneNode* node_, Object* parent):
-	Object(parent),
+inline MotionState::MotionState(const Transform& initialTransform, SceneNode* node_):
 	worldTransform(toBt(initialTransform)),
 	node(node_)
 {}
@@ -61,6 +58,9 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 		nodeTrf.setScale(originalScale);
 	}
 }
+
+
+} // end namespace
 
 
 #endif
