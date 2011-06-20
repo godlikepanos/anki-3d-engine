@@ -2,15 +2,15 @@
 #define PARTICLEEMITTER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include <btBulletCollisionCommon.h>
 #include "SceneNode.h"
 #include "GhostNode.h"
 #include "ParticleEmitterProps.h"
 #include "RsrcPtr.h"
+#include "PhysRigidBody.h"
 
 
-class RigidBody;
 class btCollisionShape;
 
 
@@ -23,7 +23,7 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterPropsStruct
 		{
 			public:
 				float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
-				std::auto_ptr<RigidBody> body;
+				boost::scoped_ptr<Phys::RigidBody> body;
 
 				Particle();
 				void render();

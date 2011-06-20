@@ -1,29 +1,30 @@
-#ifndef PHYSICS_H
-#define PHYSICS_H
+#ifndef PHYS_MASTER_CONTAINER_H
+#define PHYS_MASTER_CONTAINER_H
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #include "BtAndAnkiConvertors.h"
-#include "PhyDbgDrawer.h"
+#include "PhyDbgDrawer.h" ///< @todo Remove this crap from here. Its Renderer's stuff
 #include "Vec.h"
 
 
+namespace Phys {
 class PhyCharacter;
 class RigidBody;
+}
 
 
-/**
- * The master container for all physics related stuff.
- */
-class Physics
+namespace Phys {
+
+
+/// The master container for all physics related stuff.
+class MasterContainer
 {
 	friend class PhyCharacter; ///< For registering and unregistering
 	friend class RigidBody;  ///< For registering and unregistering
 
 	public:
-		/**
-		 * Collision groups
-		 */
+		/// Collision groups
 		enum CollisionGroup
 		{
 			CG_NOTHING = 0,
@@ -33,16 +34,15 @@ class Physics
 		};
 
 	public:
-		Physics();
-		void update(float crntTime);
-		void debugDraw();
+		MasterContainer();
 
-		/**
-		 * @name Accessors
-		 */
-		/**@{*/
+		/// @name Accessors
+		/// @{
 		btDiscreteDynamicsWorld& getWorld() {return *dynamicsWorld;}
-		/**@}*/
+		/// @}
+
+		/// Time as always in ms
+		void update(uint prevUpdateTime, uint crntTime);
 
 	private:
 		btDiscreteDynamicsWorld* dynamicsWorld;
@@ -50,16 +50,12 @@ class Physics
 		btCollisionDispatcher* dispatcher;
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
-		PhyDbgDrawer* debugDrawer;
+		PhyDbgDrawer* debugDrawer; ///< @todo Remove this crap from here. Its Renderer's stuff
 		float defaultContactProcessingThreshold;
 		Vec<PhyCharacter*> characters;
-		float time; ///< Time of prev update
 };
 
 
-inline void Physics::debugDraw()
-{
-	dynamicsWorld->debugDrawWorld();
-}
+} // end namespace
 
 #endif

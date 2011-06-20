@@ -3,22 +3,39 @@
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
-#include "PhyCharacter.h"
-#include "Physics.h"
-#include "MotionState.h"
-#include "RigidBody.h"
+#include "PhysCharacter.h"
+#include "PhysMasterContainer.h"
+#include "PhysMotionState.h"
+#include "PhysRigidBody.h"
+
+
+namespace Phys {
 
 
 //======================================================================================================================
 // Contructor                                                                                                          =
 //======================================================================================================================
-PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init, Object* parent):
+inline Character::Initializer::Initializer():
+	characterHeight(2.0),
+	characterWidth(0.75),
+	stepHeight(1.0),
+	jumpSpeed(10.0),
+	maxJumpHeight(0.0),
+	sceneNode(NULL),
+	startTrf(Transform::getIdentity())
+{}
+
+
+//======================================================================================================================
+// Contructor                                                                                                          =
+//======================================================================================================================
+Character::Character(MasterContainer& masterContainer_, const Initializer& init, Object* parent):
 	Object(parent),
-	physics(physics_)
+	masterContainer(masterContainer_)
 {
 	ghostObject = new btPairCachingGhostObject();
 
-	motionState = new MotionState(init.startTrf, init.sceneNode, this);
+	motionState = new MotionState(init.startTrf, init.sceneNode);
 
 	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(physics.broadphase);
 	ASSERT(sweepBp != NULL);
@@ -50,7 +67,7 @@ PhyCharacter::PhyCharacter(Physics& physics_, const Initializer& init, Object* p
 //======================================================================================================================
 // Destructor                                                                                                          =
 //======================================================================================================================
-PhyCharacter::~PhyCharacter()
+Character::~Character()
 {
 	physics.characters.erase(std::find(physics.characters.begin(), physics.characters.end(), this));
 	physics.dynamicsWorld->removeAction(character);
@@ -66,7 +83,7 @@ PhyCharacter::~PhyCharacter()
 //======================================================================================================================
 // rotate                                                                                                              =
 //======================================================================================================================
-void PhyCharacter::rotate(float angle)
+void Character::rotate(float angle)
 {
 	btMatrix3x3 rot = ghostObject->getWorldTransform().getBasis();
 	rot *= btMatrix3x3(btQuaternion(btVector3(0, 1, 0), angle));
@@ -77,7 +94,7 @@ void PhyCharacter::rotate(float angle)
 //======================================================================================================================
 // moveForward                                                                                                         =
 //======================================================================================================================
-void PhyCharacter::moveForward(float distance)
+void Character::moveForward(float distance)
 {
 	btVector3 forward = -ghostObject->getWorldTransform().getBasis().getColumn(2);
 	character->setWalkDirection(forward * distance);
@@ -87,7 +104,10 @@ void PhyCharacter::moveForward(float distance)
 //======================================================================================================================
 // jump                                                                                                                =
 //======================================================================================================================
-void PhyCharacter::jump()
+void Character::jump()
 {
 	character->jump();
 }
+
+
+} // end namespace

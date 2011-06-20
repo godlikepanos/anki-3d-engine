@@ -1,31 +1,32 @@
-#ifndef PHY_CHARACTER_H
-#define PHY_CHARACTER_H
+#ifndef PHYS_CHARACTER_H
+#define PHYS_CHARACTER_H
 
-#include "Physics.h"
+#include "PhysMasterContainer.h"
 #include "Math.h"
 #include "Object.h"
 
 
-class Physics;
 class btPairCachingGhostObject;
 class btConvexShape;
 class btKinematicCharacterController;
 class btGhostPairCallback;
-class MotionState;
 class SceneNode;
+namespace Phys {
+class MasterContainer;
+class MotionState;
+}
 
 
-/**
- * Its basically a wrapper around bullet character
- */
-class PhyCharacter: public Object
+namespace Phys {
+
+
+/// Its basically a wrapper around bullet character
+class Character
 {
-	friend class Physics;
+	friend class MasterContainer;
 
 	public:
-		/**
-		 * Initializer class
-		 */
+		/// Initializer class
 		struct Initializer
 		{
 			float characterHeight;
@@ -39,14 +40,14 @@ class PhyCharacter: public Object
 			Initializer();
 		};
 
-		PhyCharacter(Physics& physics_, const Initializer& init, Object* parent = NULL);
-		~PhyCharacter();
+		Character(MasterContainer& masterContainer_, const Initializer& init);
+		~Character();
 		void rotate(float angle);
 		void moveForward(float distance);
 		void jump();
 
 	private:
-		Physics& physics; ///< Know your father
+		MasterContainer& masterContainer; ///< Know your father
 		btPairCachingGhostObject* ghostObject;
 		btConvexShape* convexShape;
 		btKinematicCharacterController* character;
@@ -55,15 +56,7 @@ class PhyCharacter: public Object
 };
 
 
-inline PhyCharacter::Initializer::Initializer():
-	characterHeight(2.0),
-	characterWidth(0.75),
-	stepHeight(1.0),
-	jumpSpeed(10.0),
-	maxJumpHeight(0.0),
-	sceneNode(NULL),
-	startTrf(Transform::getIdentity())
-{}
+} // end namespace
 
 
 #endif

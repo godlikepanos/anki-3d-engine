@@ -1,16 +1,31 @@
-#include "RigidBody.h"
-#include "Physics.h"
+#include "PhysRigidBody.h"
+#include "PhysMasterContainer.h"
 #include "Scene.h"
-#include "MotionState.h"
+#include "PhysMotionState.h"
+
+
+namespace Phys {
 
 
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-RigidBody::RigidBody(Physics& physics_, const Initializer& init, Object* parent):
+RigidBody::Initializer::Initializer():
+	mass(0.0),
+	startTrf(Transform::getIdentity()),
+	shape(NULL),
+	sceneNode(NULL),
+	group(-1),
+	mask(-1)
+{}
+
+
+//======================================================================================================================
+// Constructor                                                                                                         =
+//======================================================================================================================
+RigidBody::RigidBody(MasterContainer& masterContainer_, const Initializer& init):
   btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL, btVector3(0.0, 0.0, 0.0))), // dummy init
-  Object(parent),
-  physics(physics_)
+  masterContainer(masterContainer_)
 {
 	ASSERT(init.shape != NULL && init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
@@ -18,13 +33,17 @@ RigidBody::RigidBody(Physics& physics_, const Initializer& init, Object* parent)
 
 	btVector3 localInertia;
 	if(isDynamic)
+	{
 		init.shape->calculateLocalInertia(init.mass, localInertia);
+	}
 	else
+	{
 		localInertia = btVector3(0.0, 0.0, 0.0);
+	}
 
-	motionState = new MotionState(init.startTrf, init.sceneNode, this);
+	motionState.reset(new MotionState(init.startTrf, init.sceneNode));
 
-	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState, init.shape, localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState.get(), init.shape, localInertia);
 
 	setupRigidBody(cInfo);
 
@@ -33,10 +52,14 @@ RigidBody::RigidBody(Physics& physics_, const Initializer& init, Object* parent)
 	forceActivationState(ISLAND_SLEEPING);
 
 	// register
-	if(init.mask==-1 || init.group==-1)
-		physics.dynamicsWorld->addRigidBody(this);
+	if(init.mask == -1 || init.group == -1)
+	{
+		masterContainer.dynamicsWorld->addRigidBody(this);
+	}
 	else
-		physics.dynamicsWorld->addRigidBody(this, init.group, init.mask);
+	{
+		masterContainer.dynamicsWorld->addRigidBody(this, init.group, init.mask);
+	}
 }
 
 
@@ -47,3 +70,6 @@ RigidBody::~RigidBody()
 {
 	physics.dynamicsWorld->removeRigidBody(this);
 }
+
+
+} // end namespace

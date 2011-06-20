@@ -1,7 +1,7 @@
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #include "ParticleEmitter.h"
-#include "RigidBody.h"
+#include "PhysRigidBody.h"
 #include "MainRenderer.h"
 #include "App.h"
 #include "Scene.h"
@@ -58,7 +58,7 @@ void ParticleEmitter::init(const char* filename)
 		init.sceneNode = particle;
 		init.group = Physics::CG_PARTICLE;
 		init.mask = Physics::CG_ALL ^ Physics::CG_PARTICLE;
-		RigidBody* body = new RigidBody(SceneSingleton::getInstance().getPhysics(), init);
+		Phys::RigidBody* body = new Phys::RigidBody(SceneSingleton::getInstance().getPhysics(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 
