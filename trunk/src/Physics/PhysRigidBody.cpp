@@ -47,7 +47,7 @@ RigidBody::RigidBody(MasterContainer& masterContainer_, const Initializer& init)
 
 	setupRigidBody(cInfo);
 
-	setContactProcessingThreshold(physics.defaultContactProcessingThreshold);
+	setContactProcessingThreshold(masterContainer.defaultContactProcessingThreshold);
 
 	forceActivationState(ISLAND_SLEEPING);
 
@@ -68,7 +68,7 @@ RigidBody::RigidBody(MasterContainer& masterContainer_, const Initializer& init)
 //======================================================================================================================
 RigidBody::~RigidBody()
 {
-	physics.dynamicsWorld->removeRigidBody(this);
+	masterContainer.dynamicsWorld->removeRigidBody(this);
 }
 
 

@@ -76,7 +76,7 @@ class TokenDataVal
 
 
 /// The Token class
-struct Token
+class Token
 {
 	friend class Scanner;
 

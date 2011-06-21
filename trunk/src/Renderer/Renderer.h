@@ -20,7 +20,7 @@
 
 
 class Camera;
-class RendererInitializer;
+struct RendererInitializer;
 class ModelNode;
 
 

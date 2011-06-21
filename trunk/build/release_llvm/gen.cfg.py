@@ -1,8 +1,14 @@
-include_paths = [ "../../src/math/", "../../src/tokenizer/", "../../src/uncategorized/", "../../src/", "../../src/renderer/", "../../src/scene/", "../../src/resources/", "../../src/utility/", "../../src/ui/" ]
-precompiled_headers = []
-executable_name = "AnKi.bin"
-compiler = "/usr/lib/llvm/llvm/gcc-4.2/bin/llvm-g++"
-common_flags = "-emit-llvm"
-compiler_flags = "-c `sdl-config --cflags` -O3 -D_TERMINAL_COLORING_ -D_PLATFORM_LINUX_"
-precompiled_headers_flags = ""
-linker_flags = "-lGL -lGLU -lGLEW -lSDL_image `sdl-config --static-libs` -ljpeg -lgomp"
+sourcePaths = ["../../src"]
+sourcePaths.extend(list(walkDir("../../src")))
+
+includePaths = ["./"]
+includePaths.extend(list(sourcePaths))
+includePaths.extend(["../../extern/include", "../../extern/include/bullet", "/usr/include/python2.6", "/usr/include/freetype2"])
+
+executableName = "anki"
+
+compiler = "clang++"
+
+compilerFlags = "-DPLATFORM_LINUX -DMATH_INTEL_SIMD -DNDEBUG -DBOOST_DISABLE_ASSERTS -DREVISION=\\\"`svnversion ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -msse4 -O3 -mtune=core2 -ffast-math"
+
+linkerFlags = "-rdynamic -flto -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread -lfreetype"

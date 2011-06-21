@@ -51,14 +51,14 @@ void ParticleEmitter::init(const char* filename)
 
 		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
 
-		RigidBody::Initializer init;
+		Phys::RigidBody::Initializer init;
 		init.mass = mass;
 		init.startTrf = toAnki(startingTrf);
 		init.shape = collShape.get();
 		init.sceneNode = particle;
-		init.group = Physics::CG_PARTICLE;
-		init.mask = Physics::CG_ALL ^ Physics::CG_PARTICLE;
-		Phys::RigidBody* body = new Phys::RigidBody(SceneSingleton::getInstance().getPhysics(), init);
+		init.group = Phys::MasterContainer::CG_PARTICLE;
+		init.mask = Phys::MasterContainer::CG_ALL ^ Phys::MasterContainer::CG_PARTICLE;
+		Phys::RigidBody* body = new Phys::RigidBody(SceneSingleton::getInstance().getPhysMasterContainer(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 

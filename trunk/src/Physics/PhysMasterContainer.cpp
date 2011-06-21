@@ -14,7 +14,7 @@ MasterContainer::MasterContainer():
 	defaultContactProcessingThreshold(BT_LARGE_FLOAT)
 {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
-	dispatcher = new	btCollisionDispatcher(collisionConfiguration);
+	dispatcher = new btCollisionDispatcher(collisionConfiguration);
 	broadphase = new btAxisSweep3(btVector3(-1000, -1000, -1000), btVector3(1000, 1000, 1000));
 	sol = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, sol, collisionConfiguration);
