@@ -31,21 +31,17 @@ class SceneDrawer
 
 	private:
 		/// Set the uniform using this visitor
-		class UsrDefVarVisitor: public boost::static_visitor<void>
+		class UsrDefVarVisitor: public boost::static_visitor<>
 		{
 			public:
 				const MaterialRuntimeUserDefinedVar& udvr;
 				const Renderer& r;
-				mutable uint& texUnit;
+				uint& texUnit;
 
 				UsrDefVarVisitor(const MaterialRuntimeUserDefinedVar& udvr, const Renderer& r, uint& texUnit);
 
-				void operator()(float x) const;
-				void operator()(const Vec2& x) const;
-				void operator()(const Vec3& x) const;
-				void operator()(const Vec4& x) const;
-				void operator()(const RsrcPtr<Texture>* x) const;
-				void operator()(MtlUserDefinedVar::Fai x) const;
+				template<typename Type>
+				void operator()(const Type& x) const;
 		};
 
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff from it

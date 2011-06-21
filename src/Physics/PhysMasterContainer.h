@@ -3,13 +3,13 @@
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "BtAndAnkiConvertors.h"
+#include "PhysConvertors.h"
 #include "PhyDbgDrawer.h" ///< @todo Remove this crap from here. Its Renderer's stuff
 #include "Vec.h"
 
 
 namespace Phys {
-class PhyCharacter;
+class Character;
 class RigidBody;
 }
 
@@ -20,7 +20,7 @@ namespace Phys {
 /// The master container for all physics related stuff.
 class MasterContainer
 {
-	friend class PhyCharacter; ///< For registering and unregistering
+	friend class Character; ///< For registering and unregistering
 	friend class RigidBody;  ///< For registering and unregistering
 
 	public:
@@ -45,14 +45,14 @@ class MasterContainer
 		void update(uint prevUpdateTime, uint crntTime);
 
 	private:
-		btDiscreteDynamicsWorld* dynamicsWorld;
+		btDiscreteDynamicsWorld* dynamicsWorld; ///< Container for rigid bodied and constraints
 		btDefaultCollisionConfiguration* collisionConfiguration;
-		btCollisionDispatcher* dispatcher;
+		btCollisionDispatcher* dispatcher; ///< Contains the algorithms of collision
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
 		PhyDbgDrawer* debugDrawer; ///< @todo Remove this crap from here. Its Renderer's stuff
 		float defaultContactProcessingThreshold;
-		Vec<PhyCharacter*> characters;
+		Vec<Character*> characters;
 };
 
 

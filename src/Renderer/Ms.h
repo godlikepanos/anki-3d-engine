@@ -8,9 +8,6 @@
 #include "Ez.h"
 
 
-class RendererInitializer;
-
-
 /// Material stage
 class Ms: public RenderingPass
 {

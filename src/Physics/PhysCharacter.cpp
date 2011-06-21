@@ -29,15 +29,14 @@ inline Character::Initializer::Initializer():
 //======================================================================================================================
 // Contructor                                                                                                          =
 //======================================================================================================================
-Character::Character(MasterContainer& masterContainer_, const Initializer& init, Object* parent):
-	Object(parent),
+Character::Character(MasterContainer& masterContainer_, const Initializer& init):
 	masterContainer(masterContainer_)
 {
 	ghostObject = new btPairCachingGhostObject();
 
 	motionState = new MotionState(init.startTrf, init.sceneNode);
 
-	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(physics.broadphase);
+	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(masterContainer.broadphase);
 	ASSERT(sweepBp != NULL);
 
 	ghostPairCallback = new btGhostPairCallback();
@@ -55,12 +54,12 @@ Character::Character(MasterContainer& masterContainer_, const Initializer& init,
 	character->setMaxJumpHeight(init.maxJumpHeight);
 
 	// register
-	physics.dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
-																						btBroadphaseProxy::StaticFilter|btBroadphaseProxy::DefaultFilter);
+	masterContainer.dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
+		btBroadphaseProxy::StaticFilter|btBroadphaseProxy::DefaultFilter);
 
-	physics.dynamicsWorld->addAction(character);
+	masterContainer.dynamicsWorld->addAction(character);
 
-	physics.characters.push_back(this);
+	masterContainer.characters.push_back(this);
 }
 
 
@@ -69,9 +68,10 @@ Character::Character(MasterContainer& masterContainer_, const Initializer& init,
 //======================================================================================================================
 Character::~Character()
 {
-	physics.characters.erase(std::find(physics.characters.begin(), physics.characters.end(), this));
-	physics.dynamicsWorld->removeAction(character);
-	physics.dynamicsWorld->removeCollisionObject(ghostObject);
+	masterContainer.characters.erase(std::find(masterContainer.characters.begin(),
+		masterContainer.characters.end(), this));
+	masterContainer.dynamicsWorld->removeAction(character);
+	masterContainer.dynamicsWorld->removeCollisionObject(ghostObject);
 
 	delete character;
 	delete convexShape;

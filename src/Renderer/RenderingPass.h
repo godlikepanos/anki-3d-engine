@@ -3,7 +3,7 @@
 
 
 class Renderer;
-class RendererInitializer;
+struct RendererInitializer;
 
 
 /// Rendering pass

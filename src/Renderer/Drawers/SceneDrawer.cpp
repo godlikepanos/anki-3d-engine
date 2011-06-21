@@ -25,35 +25,26 @@ SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MaterialRuntimeUserDefined
 // Visitor functors                                                                                                    =
 //======================================================================================================================
 
-void SceneDrawer::UsrDefVarVisitor::operator()(float x) const
+
+template<typename Type>
+void SceneDrawer::UsrDefVarVisitor::operator()(const Type& x) const
 {
 	udvr.getUniVar().set(&x);
 }
 
-void SceneDrawer::UsrDefVarVisitor::operator()(const Vec2& x) const
-{
-	udvr.getUniVar().set(&x);
-}
 
-void SceneDrawer::UsrDefVarVisitor::operator()(const Vec3& x) const
-{
-	udvr.getUniVar().set(&x);
-}
+typedef const Texture* ConstTex;
 
-void SceneDrawer::UsrDefVarVisitor::operator()(const Vec4& x) const
+template<>
+void SceneDrawer::UsrDefVarVisitor::operator()(const ConstTex& x) const
 {
-	udvr.getUniVar().set(&x);
-}
-
-void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>* x) const
-{
-	const RsrcPtr<Texture>& texPtr = *x;
-	//texPtr->setRepeat(true);
-	udvr.getUniVar().set(*texPtr, texUnit);
+	udvr.getUniVar().set(*x, texUnit);
 	++texUnit;
 }
 
-void SceneDrawer::UsrDefVarVisitor::operator()(MtlUserDefinedVar::Fai x) const
+
+template<>
+void SceneDrawer::UsrDefVarVisitor::operator()(const MtlUserDefinedVar::Fai& x) const
 {
 	switch(x)
 	{

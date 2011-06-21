@@ -464,6 +464,7 @@ void Image::load(const char* filename)
 // DDS                                                                                                                 =
 //======================================================================================================================
 
+/*
 //  little-endian, of course
 #define DDS_MAGIC 0x20534444
 
@@ -611,11 +612,11 @@ DdsLoadInfo loadInfoBGRA8 = {false, false, false, 1, 4};
 DdsLoadInfo loadInfoBGR8 = {false, false, false, 1, 3};
 DdsLoadInfo loadInfoBGR5A1 = {false, true, false, 1, 2};
 DdsLoadInfo loadInfoBGR565 = {false, true, false, 1, 2};
-DdsLoadInfo loadInfoIndex8 = {false, false, true, 1, 1};
+DdsLoadInfo loadInfoIndex8 = {false, false, true, 1, 1};*/
 
 void Image::loadDds(const char* filename)
 {
-	std::fstream in;
+	/*std::fstream in;
 	in.open(filename, std::ios::in | std::ios::binary);
 
 	if(!in.is_open())
@@ -675,8 +676,8 @@ void Image::loadDds(const char* filename)
 	if(li->compressed)
 	{
 		size_t size = std::max(li->divSize, x) / li->divSize * std::max(li->divSize, y) / li->divSize * li->blockBytes;
-		/*assert( size == hdr.dwPitchOrLinearSize );
-		assert( hdr.dwFlags & DDSD_LINEARSIZE );*/
+		//assert( size == hdr.dwPitchOrLinearSize );
+		//assert( hdr.dwFlags & DDSD_LINEARSIZE );
 		data.resize(size);
 		in.read((char*)(&data[0]), size);
 	}
@@ -685,5 +686,5 @@ void Image::loadDds(const char* filename)
 	width = hdr.data.dwWidth;
 	height = hdr.data.dwHeight;
 
-	in.close();
+	in.close();*/
 }

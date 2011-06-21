@@ -374,7 +374,7 @@ void mainLoop()
 		mainLoopExtra();
 
 		AppSingleton::getInstance().execStdinScpripts();
-		SceneSingleton::getInstance().getPhysics().update(timer.getCrntTime());
+		SceneSingleton::getInstance().getPhysMasterContainer().update(prevUpdateTime, crntTime);
 		SceneSingleton::getInstance().updateAllWorldStuff();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 		SceneSingleton::getInstance().updateAllControllers();

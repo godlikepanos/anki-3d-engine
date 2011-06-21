@@ -244,7 +244,7 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Util/Scanner/Scanner.h \
@@ -255,14 +255,14 @@ Main.o: ../../src/Main.cpp ../../src/Input/Input.h \
  ../../src/Misc/Parser.h ../../src/Scene/ParticleEmitter.h \
  ../../src/Scene/SceneNode.h ../../src/Scene/GhostNode.h \
  ../../src/Resources/ParticleEmitterProps.h \
- ../../src/Physics/PhysCharacter.h \
+ ../../src/Physics/PhysRigidBody.h ../../src/Physics/PhysCharacter.h \
  ../../src/Physics/PhysMasterContainer.h \
  ../../src/Renderer/RendererInitializer.h \
  ../../src/Renderer/MainRenderer.h ../../src/Renderer/Renderer.h \
- ../../src/Physics/PhysRigidBody.h ../../src/Scripting/ScriptingEngine.h \
- ../../src/Core/StdinListener.h ../../src/Scene/ModelNode.h \
- ../../src/Scene/ModelPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
+ ../../src/Scripting/ScriptingEngine.h ../../src/Core/StdinListener.h \
+ ../../src/Scene/ModelNode.h ../../src/Scene/ModelPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Resources/Model/ModelPatch.h \
+ ../../src/Scene/RenderableNode.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Scene/Controllers/SkelAnimModelNodeCtrl.h \
@@ -507,7 +507,7 @@ skybox.o: ../../src/Misc/skybox.cpp ../../src/Misc/skybox.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Core/App.h \
@@ -1327,7 +1327,7 @@ Scene.bpi.o: ../../src/Scripting/Scene/Scene.bpi.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Physics/PhysConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -2102,7 +2102,7 @@ Globals.bpi.o: ../../src/Scripting/Core/Globals.bpi.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Core/App.h \
@@ -2574,17 +2574,17 @@ Dbg.o: ../../src/Renderer/Dbg.cpp ../../src/Renderer/Dbg.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Scene/Lights/Light.h \
  ../../src/Resources/LightRsrc.h ../../src/Renderer/RendererInitializer.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
  ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
- ../../src/Scene/RenderableNode.h ../../src/Scene/SkinNode.h \
- ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
+ ../../src/Physics/PhysRigidBody.h ../../src/Scene/RenderableNode.h \
+ ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Resources/Mesh/Mesh.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/Material.h \
@@ -3093,7 +3093,7 @@ Bs.o: ../../src/Renderer/Bs.cpp ../../src/Renderer/Bs.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Resources/Model/Model.h \
@@ -3514,7 +3514,7 @@ Sm.o: ../../src/Renderer/Sm.cpp ../../src/Renderer/Sm.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Resources/LightRsrc.h \
@@ -3742,7 +3742,7 @@ Ez.o: ../../src/Renderer/Ez.cpp ../../src/Renderer/Ez.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h \
@@ -3970,7 +3970,7 @@ Is.o: ../../src/Renderer/Is.cpp ../../src/Renderer/Is.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h
@@ -4518,8 +4518,7 @@ PhyDbgDrawer.o: ../../src/Renderer/Drawers/PhyDbgDrawer.cpp \
  ../../src/Renderer/Drawers/SceneDrawer.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
- ../../src/Renderer/SkinsDeformer.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Renderer/SkinsDeformer.h ../../src/Physics/PhysConvertors.h \
  ../../extern/include/bullet/btBulletCollisionCommon.h \
  ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
  ../../extern/include/bullet/LinearMath/btVector3.h \
@@ -4815,10 +4814,47 @@ SceneDbgDrawer.o: ../../src/Renderer/Drawers/SceneDbgDrawer.cpp \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../extern/include/bullet/LinearMath/btSerializer.h \
  ../../src/Scene/SceneNode.h ../../src/Scene/GhostNode.h \
- ../../src/Resources/ParticleEmitterProps.h ../../src/Scene/SkinNode.h \
- ../../src/Scene/SkinPatchNode.h ../../src/Scene/PatchNode.h \
- ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
- ../../src/Scene/RenderableNode.h \
+ ../../src/Resources/ParticleEmitterProps.h \
+ ../../src/Physics/PhysRigidBody.h \
+ ../../extern/include/bullet/btBulletDynamicsCommon.h \
+ ../../extern/include/bullet/btBulletCollisionCommon.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDynamicsWorld.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactSolverInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btContinuousDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btSimpleDynamicsWorld.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletCollision/CollisionDispatch/btCollisionObject.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btJacobianEntry.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSolverBody.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHingeConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConeTwistConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSliderConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btUniversalConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btHinge2Constraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btConstraintSolver.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btContactConstraint.h \
+ ../../extern/include/bullet/BulletCollision/NarrowPhaseCollision/btManifoldPoint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btRaycastVehicle.h \
+ ../../extern/include/bullet/BulletDynamics/ConstraintSolver/btTypedConstraint.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btVehicleRaycaster.h \
+ ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
+ ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
+ ../../src/Scene/SkinNode.h ../../src/Scene/SkinPatchNode.h \
+ ../../src/Scene/PatchNode.h ../../src/Resources/Mesh/Mesh.h \
+ ../../src/Resources/Model/ModelPatch.h ../../src/Scene/RenderableNode.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntime.h \
  ../../src/Scene/MaterialRuntime/MaterialRuntimeUserDefinedVar.h \
  ../../src/Resources/Material/MtlUserDefinedVar.h \
@@ -5054,7 +5090,7 @@ SceneDrawer.o: ../../src/Renderer/Drawers/SceneDrawer.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h \
@@ -5370,7 +5406,7 @@ ParticleEmitter.o: ../../src/Scene/ParticleEmitter.cpp \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Renderer/SkinsDeformer.h ../../src/Core/App.h \
  ../../src/Scene/Scene.h ../../src/Physics/PhysMasterContainer.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Scene/VisibilityTester.h ../../src/Util/Util.h \
@@ -5686,7 +5722,7 @@ SceneNode.o: ../../src/Scene/SceneNode.cpp ../../src/Scene/SceneNode.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/Singleton.h ../../src/Scene/VisibilityTester.h \
@@ -5823,7 +5859,7 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Physics/PhysConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -5904,9 +5940,10 @@ Scene.o: ../../src/Scene/Scene.cpp ../../src/Util/Exception.h \
  ../../src/Resources/ShaderProg/SProgUniVar.h \
  ../../src/Scene/ParticleEmitter.h ../../src/Scene/SceneNode.h \
  ../../src/Scene/GhostNode.h ../../src/Resources/ParticleEmitterProps.h \
- ../../src/Scene/ModelNode.h ../../src/Scene/ModelPatchNode.h \
- ../../src/Scene/PatchNode.h ../../src/GfxApi/BufferObjects/Vao.h \
- ../../src/Misc/GlException.h ../../src/GfxApi/BufferObjects/Vbo.h \
+ ../../src/Physics/PhysRigidBody.h ../../src/Scene/ModelNode.h \
+ ../../src/Scene/ModelPatchNode.h ../../src/Scene/PatchNode.h \
+ ../../src/GfxApi/BufferObjects/Vao.h ../../src/Misc/GlException.h \
+ ../../src/GfxApi/BufferObjects/Vbo.h \
  ../../src/GfxApi/BufferObjects/BufferObject.h \
  ../../src/Resources/Mesh/Mesh.h ../../src/Resources/Model/ModelPatch.h \
  ../../src/Scene/RenderableNode.h \
@@ -6224,7 +6261,7 @@ VisibilityTester.o: ../../src/Scene/VisibilityTester.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Singleton.h \
@@ -6657,7 +6694,7 @@ Controller.o: ../../src/Scene/Controllers/Controller.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Physics/PhysConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -7105,7 +7142,7 @@ EventSceneColor.o: ../../src/Events/EventSceneColor.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Util/Singleton.h \
@@ -8537,7 +8574,7 @@ PhysMasterContainer.o: ../../src/Physics/PhysMasterContainer.cpp \
  ../../extern/include/bullet/BulletDynamics/Vehicle/btWheelInfo.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btActionInterface.h \
  ../../extern/include/bullet/BulletDynamics/Dynamics/btRigidBody.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Physics/PhysConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -8695,7 +8732,7 @@ PhysCharacter.o: ../../src/Physics/PhysCharacter.cpp \
  ../../extern/include/bullet/BulletDynamics/Character/btCharacterControllerInterface.h \
  ../../src/Physics/PhysCharacter.h \
  ../../src/Physics/PhysMasterContainer.h \
- ../../src/Physics/BtAndAnkiConvertors.h ../../src/Math/Math.h \
+ ../../src/Physics/PhysConvertors.h ../../src/Math/Math.h \
  ../../src/Math/Vec2.h ../../src/Math/MathCommon.h \
  ../../src/Util/StdTypes.h ../../src/Util/Accessors.h \
  ../../src/Math/Vec2.inl.h ../../src/Math/MathCommon.inl.h \
@@ -8859,7 +8896,7 @@ PhysRigidBody.o: ../../src/Physics/PhysRigidBody.cpp \
  ../../src/Math/MathFuncs.inl.h ../../src/Math/Transform.h \
  ../../src/Math/Transform.inl.h ../../src/Util/Assert.h \
  ../../src/Physics/PhysMasterContainer.h \
- ../../src/Physics/BtAndAnkiConvertors.h \
+ ../../src/Physics/PhysConvertors.h \
  ../../src/Renderer/Drawers/PhyDbgDrawer.h \
  ../../extern/include/bullet/LinearMath/btIDebugDraw.h \
  ../../src/Util/Vec.h ../../src/Util/Assert.h ../../src/Scene/Scene.h \
