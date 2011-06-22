@@ -5,9 +5,13 @@
 WRAP(Hdr)
 {
 	class_<Hdr, noncopyable>("Hdr", no_init)
-		.add_property("blurringIterationsNum", (uint (Hdr::*)() const)(&Hdr::getBlurringIterationsNum),
-		              &Hdr::setBlurringIterationsNum)
-		.add_property("exposure", (float (Hdr::*)() const)(&Hdr::getExposure), &Hdr::setExposure)
-		.add_property("blurringDist", (float (Hdr::*)() const)(&Hdr::getBlurringDist), &Hdr::setBlurringDist)
+		.def("getBlurringIterationsNum", (uint (Hdr::*)() const)(&Hdr::getBlurringIterationsNum))
+		.def("setBlurringIterationsNum", &Hdr::setBlurringIterationsNum)
+
+		.def("getExposure", (float (Hdr::*)() const)(&Hdr::getExposure))
+		.def("setExposure", &Hdr::setExposure)
+
+		.def("getBlurringDist", (float (Hdr::*)() const)(&Hdr::getBlurringDist))
+		.def("setBlurringDist", &Hdr::setBlurringDist)
 	;
 }

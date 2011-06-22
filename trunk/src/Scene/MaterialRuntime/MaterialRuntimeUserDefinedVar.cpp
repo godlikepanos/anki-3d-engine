@@ -7,7 +7,7 @@
 template <>
 void MaterialRuntimeUserDefinedVar::ConstructVisitor::operator()<RsrcPtr<Texture> >(const RsrcPtr<Texture>& x) const
 {
-	udvr.data = x.get();
+	udvr.data = &x;
 }
 
 

@@ -5,6 +5,7 @@
 WRAP(Dbg)
 {
 	class_<Dbg, noncopyable>("Dbg", no_init)
-		.add_property("enabled", (bool (Dbg::*)() const)(&Dbg::isEnabled), &Dbg::setEnabled)
+		.def("isEnabled", (bool (Dbg::*)() const)(&Dbg::isEnabled))
+		.def("setEnabled", &Dbg::setEnabled)
 	;
 }

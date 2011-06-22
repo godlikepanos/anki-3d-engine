@@ -11,7 +11,7 @@ class MaterialRuntimeUserDefinedVar
 
 	public:
 		/// The data union. The Texture resource is read-only at runtime
-		typedef boost::variant<float, Vec2, Vec3, Vec4, const Texture*, MtlUserDefinedVar::Fai> DataVariant;
+		typedef boost::variant<float, Vec2, Vec3, Vec4, const RsrcPtr<Texture>*, MtlUserDefinedVar::Fai> DataVariant;
 
 		/// The one and only constructor
 		MaterialRuntimeUserDefinedVar(const MtlUserDefinedVar& rsrc);

@@ -9,6 +9,7 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "JobManager.h"
+#include "Logger.h"
 
 
 //======================================================================================================================
@@ -233,12 +234,9 @@ void VisibilityTester::getRenderableNodesJobCallback(void* args, const WorkerThr
 		to = nodesSize;
 	}
 
-
-	Scene::Types<ModelNode>::Iterator it = scene.getModelNodes().begin() + from;
-	while(it != scene.getModelNodes().begin() + to)
+	for(uint i = from; i < to; i++)
 	{
-		ASSERT(it != scene.getModelNodes().end());
-		ModelNode* node = *it;
+		ModelNode* node = scene.getModelNodes()[i];
 
 		// Skip if the ModeNode is not visible
 		if(!test(*node, *visTester->cam))
@@ -279,52 +277,48 @@ void VisibilityTester::getRenderableNodesJobCallback(void* args, const WorkerThr
 	//
 	// SkinNodes
 	//
-	{
-		nodesSize = scene.getSkinNodes().size();
-		count = nodesSize / threadsNum;
-		from = count * id;
-		to = count * (id + 1);
+	nodesSize = scene.getSkinNodes().size();
+	count = nodesSize / threadsNum;
+	from = count * id;
+	to = count * (id + 1);
 
-		if(id == threadsNum - 1) // The last job will get the rest
+	if(id == threadsNum - 1) // The last job will get the rest
+	{
+		to = nodesSize;
+	}
+
+	for(uint i = from; i < to; i++)
+	{
+		SkinNode* node = scene.getSkinNodes()[i];
+
+		// Skip if the SkinNode is not visible
+		if(!test(*node, *visTester->cam))
 		{
-			to = nodesSize;
+			continue;
 		}
 
-		Scene::Types<SkinNode>::Iterator it = scene.getSkinNodes().begin() + from;
-		while(it != scene.getSkinNodes().begin() + to)
-		{
-			ASSERT(it != scene.getSkinNodes().end());
-			SkinNode* node = *it;
+		node->setVisible(true);
 
-			// Skip if the SkinNode is not visible
-			if(!test(*node, *visTester->cam))
+		// Put all the patches into the visible container
+		BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
+		{
+			// Skip shadowless
+			if(visTester->skipShadowless && !patchNode->getCpMtl().castsShadow())
 			{
 				continue;
 			}
 
-			node->setVisible(true);
-
-			// Put all the patches into the visible container
-			BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
+			if(patchNode->getCpMtl().renderInBlendingStage())
 			{
-				// Skip shadowless
-				if(visTester->skipShadowless && !patchNode->getCpMtl().castsShadow())
-				{
-					continue;
-				}
-
-				if(patchNode->getCpMtl().renderInBlendingStage())
-				{
-					boost::mutex::scoped_lock lock(visTester->bsRenderableNodesMtx);
-					visTester->visibilityInfo->getVisibleBsRenderableNodes().push_back(patchNode);
-				}
-				else
-				{
-					boost::mutex::scoped_lock lock(visTester->msRenderableNodesMtx);
-					visTester->visibilityInfo->getVisibleMsRenderableNodes().push_back(patchNode);
-				}
-				patchNode->setVisible(true);
+				boost::mutex::scoped_lock lock(visTester->bsRenderableNodesMtx);
+				visTester->visibilityInfo->getVisibleBsRenderableNodes().push_back(patchNode);
 			}
+			else
+			{
+				boost::mutex::scoped_lock lock(visTester->msRenderableNodesMtx);
+				visTester->visibilityInfo->getVisibleMsRenderableNodes().push_back(patchNode);
+			}
+			patchNode->setVisible(true);
 		}
 	}
 }

@@ -42,6 +42,8 @@ class SceneDrawer
 
 				template<typename Type>
 				void operator()(const Type& x) const;
+
+				void operator()(const RsrcPtr<Texture>* x) const;
 		};
 
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff from it
