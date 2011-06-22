@@ -33,12 +33,11 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const Type& x) const
 }
 
 
-typedef const Texture* ConstTex;
-
-template<>
-void SceneDrawer::UsrDefVarVisitor::operator()(const ConstTex& x) const
+void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>* x) const
 {
-	udvr.getUniVar().set(*x, texUnit);
+	const RsrcPtr<Texture>& texPtr = *x;
+	texPtr->setRepeat(true);
+	udvr.getUniVar().set(*texPtr, texUnit);
 	++texUnit;
 }
 

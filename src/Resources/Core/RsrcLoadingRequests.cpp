@@ -1,6 +1,8 @@
 #include "RsrcLoadingRequests.h"
 #include "Texture.h"
 #include "AsyncLoader.h"
+#include "Logger.h"
+#include "Globals.h"
 
 
 //======================================================================================================================
@@ -30,5 +32,6 @@ void RsrcTextureLoadingRequest::doPostLoading()
 {
 	Texture* tex = new Texture;
 	tex->load(img);
+	INFO(tex->getGlId());
 	*pTex = tex;
 }
