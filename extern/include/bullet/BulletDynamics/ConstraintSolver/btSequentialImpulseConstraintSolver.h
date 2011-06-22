@@ -13,8 +13,8 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
-#define SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
+#ifndef BT_SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
+#define BT_SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
 
 #include "btConstraintSolver.h"
 class btIDebugDraw;
@@ -81,12 +81,8 @@ protected:
 	void	resolveSingleConstraintRowLowerLimitSIMD(btRigidBody& body1,btRigidBody& body2,const btSolverConstraint& contactConstraint);
 		
 protected:
-	static btRigidBody& getFixedBody()
-	{
-		static btRigidBody s_fixed(0, 0,0);
-		s_fixed.setMassProps(btScalar(0.),btVector3(btScalar(0.),btScalar(0.),btScalar(0.)));
-		return s_fixed;
-	}	
+	static btRigidBody& getFixedBody();
+	
 	virtual void solveGroupCacheFriendlySplitImpulseIterations(btCollisionObject** bodies,int numBodies,btPersistentManifold** manifoldPtr, int numManifolds,btTypedConstraint** constraints,int numConstraints,const btContactSolverInfo& infoGlobal,btIDebugDraw* debugDrawer,btStackAlloc* stackAlloc);
 	virtual btScalar solveGroupCacheFriendlyFinish(btCollisionObject** bodies ,int numBodies,btPersistentManifold** manifoldPtr, int numManifolds,btTypedConstraint** constraints,int numConstraints,const btContactSolverInfo& infoGlobal,btIDebugDraw* debugDrawer,btStackAlloc* stackAlloc);
 	btScalar solveSingleIteration(int iteration, btCollisionObject** bodies ,int numBodies,btPersistentManifold** manifoldPtr, int numManifolds,btTypedConstraint** constraints,int numConstraints,const btContactSolverInfo& infoGlobal,btIDebugDraw* debugDrawer,btStackAlloc* stackAlloc);
@@ -128,5 +124,5 @@ typedef btSequentialImpulseConstraintSolver btSequentialImpulseConstraintSolverP
 #endif
 
 
-#endif //SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
+#endif //BT_SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
 

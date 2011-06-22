@@ -13,8 +13,8 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef OBB_BOX_MINKOWSKI_H
-#define OBB_BOX_MINKOWSKI_H
+#ifndef BT_OBB_BOX_MINKOWSKI_H
+#define BT_OBB_BOX_MINKOWSKI_H
 
 #include "btPolyhedralConvexShape.h"
 #include "btCollisionMargin.h"
@@ -145,7 +145,7 @@ public:
 
 	virtual void getVertex(int i,btVector3& vtx) const
 	{
-		btVector3 halfExtents = getHalfExtentsWithoutMargin();
+		btVector3 halfExtents = getHalfExtentsWithMargin();
 
 		vtx = btVector3(
 				halfExtents.x() * (1-(i&1)) - halfExtents.x() * (i&1),
@@ -313,6 +313,6 @@ public:
 };
 
 
-#endif //OBB_BOX_MINKOWSKI_H
+#endif //BT_OBB_BOX_MINKOWSKI_H
 
 

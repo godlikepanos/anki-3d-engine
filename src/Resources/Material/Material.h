@@ -193,9 +193,8 @@ class Material: private MaterialProps
 		/// @param[in] defines The acceptable defines array
 		/// @param[in] pt The property tree. Its not the root tree
 		/// @param[out] source The source to feed to ShaderProg::createSrcCodeToCache
-		/// @param[out] prefix The prefix of file to feed to ShaderProg::createSrcCodeToCache
 		static void parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
-		                              std::string& source, std::string& prefix);
+		                              std::string& source);
 };
 
 

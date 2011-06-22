@@ -13,8 +13,8 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CONTACT_SOLVER_INFO
-#define CONTACT_SOLVER_INFO
+#ifndef BT_CONTACT_SOLVER_INFO
+#define BT_CONTACT_SOLVER_INFO
 
 enum	btSolverMode
 {
@@ -35,7 +35,7 @@ struct btContactSolverInfoData
 	
 
 	btScalar	m_tau;
-	btScalar	m_damping;
+	btScalar	m_damping;//global non-contact constraint damping, can be locally overridden by constraints during 'getInfo2'.
 	btScalar	m_friction;
 	btScalar	m_timeStep;
 	btScalar	m_restitution;
@@ -84,4 +84,4 @@ struct btContactSolverInfo : public btContactSolverInfoData
 	}
 };
 
-#endif //CONTACT_SOLVER_INFO
+#endif //BT_CONTACT_SOLVER_INFO

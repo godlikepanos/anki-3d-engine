@@ -62,8 +62,8 @@ subject to the following restrictions:
  
  
 
-#ifndef COLLISION_WORLD_H
-#define COLLISION_WORLD_H
+#ifndef BT_COLLISION_WORLD_H
+#define BT_COLLISION_WORLD_H
 
 class btStackAlloc;
 class btCollisionShape;
@@ -261,6 +261,45 @@ public:
 			}
 			m_hitPointWorld.setInterpolate3(m_rayFromWorld,m_rayToWorld,rayResult.m_hitFraction);
 			return rayResult.m_hitFraction;
+		}
+	};
+
+	struct	AllHitsRayResultCallback : public RayResultCallback
+	{
+		AllHitsRayResultCallback(const btVector3&	rayFromWorld,const btVector3&	rayToWorld)
+		:m_rayFromWorld(rayFromWorld),
+		m_rayToWorld(rayToWorld)
+		{
+		}
+
+		btAlignedObjectArray<btCollisionObject*>		m_collisionObjects;
+
+		btVector3	m_rayFromWorld;//used to calculate hitPointWorld from hitFraction
+		btVector3	m_rayToWorld;
+
+		btAlignedObjectArray<btVector3>	m_hitNormalWorld;
+		btAlignedObjectArray<btVector3>	m_hitPointWorld;
+		btAlignedObjectArray<btScalar> m_hitFractions;
+			
+		virtual	btScalar	addSingleResult(LocalRayResult& rayResult,bool normalInWorldSpace)
+		{
+			m_collisionObject = rayResult.m_collisionObject;
+			m_collisionObjects.push_back(rayResult.m_collisionObject);
+			btVector3 hitNormalWorld;
+			if (normalInWorldSpace)
+			{
+				hitNormalWorld = rayResult.m_hitNormalLocal;
+			} else
+			{
+				///need to transform normal into worldspace
+				hitNormalWorld = m_collisionObject->getWorldTransform().getBasis()*rayResult.m_hitNormalLocal;
+			}
+			m_hitNormalWorld.push_back(hitNormalWorld);
+			btVector3 hitPointWorld;
+			hitPointWorld.setInterpolate3(m_rayFromWorld,m_rayToWorld,rayResult.m_hitFraction);
+			m_hitPointWorld.push_back(hitPointWorld);
+			m_hitFractions.push_back(rayResult.m_hitFraction);
+			return m_closestHitFraction;
 		}
 	};
 
@@ -467,4 +506,4 @@ public:
 };
 
 
-#endif //COLLISION_WORLD_H
+#endif //BT_COLLISION_WORLD_H

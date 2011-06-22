@@ -6,12 +6,14 @@ EXTERN_DIR=$PWD
 
 cd ../../bullet
 svn update
-#rm CMakeCache.txt
-cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_EXTRAS=OFF -DBUILD_DEMOS=OFF -DCMAKE_INSTALL_PREFIX=$PWD/install -DEXECUTABLE_OUTPUT_PATH=$PWD/install -DINCLUDE_INSTALL_DIR=$PWD/install -DLIBRARY_OUTPUT_PATH=$PWD/install -DLIB_DESTINATION=$PWD/install -DPKGCONFIG_INSTALL_PREFIX=$PWD/install
+rm CMakeCache.txt
+rm -rf CMakeFiles
+rm -rf install
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_EXTRAS=OFF -DBUILD_DEMOS=OFF -DCMAKE_INSTALL_PREFIX=$PWD/install
 nice make -j `cat /proc/cpuinfo | grep processor | wc -l`
 make install
 cd $EXTERN_DIR
-rsync -avuzb --exclude .svn ../../bullet/install/include/* include/bullet
+rsync -avuzb --exclude .svn ../../bullet/install/include/bullet/* include/bullet
 rsync -avuzb --exclude .svn ../../bullet/install/lib/* lib-x86-64-linux
 
 cd ../../SDL

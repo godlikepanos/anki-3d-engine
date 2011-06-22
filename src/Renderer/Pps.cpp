@@ -46,15 +46,12 @@ void Pps::init(const RendererInitializer& initializer)
 
 	// SProg
 	std::string pps = "";
-	std::string prefix = "";
 	if(ssao.isEnabled())
 	{
 		pps += "#define SSAO_ENABLED\n";
-		prefix += "Ssao";
 	}
 
-	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str(),
-	                                                       prefix.c_str()).c_str());
+	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str()).c_str());
 
 	//
 	// Init post pass
@@ -78,16 +75,13 @@ void Pps::init(const RendererInitializer& initializer)
 
 	// SProg
 	pps = "";
-	prefix = "";
 
 	if(hdr.isEnabled())
 	{
 		pps += "#define HDR_ENABLED\n";
-		prefix += "Hdr";
 	}
 
-	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str(),
-	                                                        prefix.c_str()).c_str());
+	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str()).c_str());
 
 	//
 	// Init Bl after

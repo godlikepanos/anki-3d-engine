@@ -41,8 +41,7 @@ void Bl::init(const RendererInitializer& initializer)
 		throw EXCEPTION("Cannot create horizontal blur post-processing stage FBO: " + e.what());
 	}
 
-	hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define HPASS\n",
-														 "h").c_str());
+	hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
 	try
@@ -58,8 +57,7 @@ void Bl::init(const RendererInitializer& initializer)
 		throw EXCEPTION("Cannot create vertical blur post-processing stage FBO: " + e.what());
 	}
 
-	vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define VPASS\n",
-														 "v").c_str());
+	vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur
 	try
