@@ -108,25 +108,20 @@ void Is::init(const RendererInitializer& initializer)
 
 	// point light
 	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                          "#define POINT_LIGHT_ENABLED\n",
-	                                                          "Point").c_str());
+	                                                          "#define POINT_LIGHT_ENABLED\n").c_str());
 
 	// spot light no shadow
 	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                 "#define SPOT_LIGHT_ENABLED\n",
-	                                                                 "Spot_NoShadow").c_str());
+	                                                                 "#define SPOT_LIGHT_ENABLED\n").c_str());
 
 	// spot light w/t shadow
 	std::string pps = std::string("#define SPOT_LIGHT_ENABLED\n"
 	                              "#define SHADOW_ENABLED\n");
-	std::string prefix = "Spot_Shadow";
 	if(sm.isPcfEnabled())
 	{
 		pps += "#define PCF_ENABLED\n";
-		prefix += "_Pcf";
 	}
-	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", pps.c_str(),
-	                                                               prefix.c_str()).c_str());
+	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
 
 	// init the rest
 	initCopy();

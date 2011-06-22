@@ -1,6 +1,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/functional/hash.hpp>
 #include <fstream>
 #include <sstream>
 #include "ShaderProg.h"
@@ -299,16 +300,21 @@ bool ShaderProg::attribVarExists(const char* name) const
 //======================================================================================================================
 // createSrcCodeToCache                                                                                                =
 //======================================================================================================================
-std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
-                                             const char* newFNamePrefix)
+std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode)
 {
-	if(strlen(preAppendedSrcCode) < 1 || strlen(newFNamePrefix) < 1)
+	if(strlen(preAppendedSrcCode) < 1)
 	{
 		return sProgFPathName;
 	}
 
+	// Create suffix
+	boost::hash<std::string> stringHash;
+	std::size_t h = stringHash(preAppendedSrcCode);
+	std::string suffix = boost::lexical_cast<std::string>(h);
+
+	//
 	boost::filesystem::path newfPathName = AppSingleton::getInstance().getCachePath() /
-			(std::string(newFNamePrefix) + "_" + boost::filesystem::path(sProgFPathName).filename());
+		(boost::filesystem::path(sProgFPathName).filename() + "." + suffix);
 
 	if(boost::filesystem::exists(newfPathName))
 	{

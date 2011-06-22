@@ -863,23 +863,23 @@ inline void		btDbvt::collideTT(	const btDbvtNode* root0,
 					{
 						if(p.b->isinternal())
 						{					
-							stkStack[depth++]=sStkNN(p.a->objChilds[0],p.b->objChilds[0]);
-							stkStack[depth++]=sStkNN(p.a->objChilds[1],p.b->objChilds[0]);
-							stkStack[depth++]=sStkNN(p.a->objChilds[0],p.b->objChilds[1]);
-							stkStack[depth++]=sStkNN(p.a->objChilds[1],p.b->objChilds[1]);
+							stkStack[depth++]=sStkNN(p.a->childs[0],p.b->childs[0]);
+							stkStack[depth++]=sStkNN(p.a->childs[1],p.b->childs[0]);
+							stkStack[depth++]=sStkNN(p.a->childs[0],p.b->childs[1]);
+							stkStack[depth++]=sStkNN(p.a->childs[1],p.b->childs[1]);
 						}
 						else
 						{
-							stkStack[depth++]=sStkNN(p.a->objChilds[0],p.b);
-							stkStack[depth++]=sStkNN(p.a->objChilds[1],p.b);
+							stkStack[depth++]=sStkNN(p.a->childs[0],p.b);
+							stkStack[depth++]=sStkNN(p.a->childs[1],p.b);
 						}
 					}
 					else
 					{
 						if(p.b->isinternal())
 						{
-							stkStack[depth++]=sStkNN(p.a,p.b->objChilds[0]);
-							stkStack[depth++]=sStkNN(p.a,p.b->objChilds[1]);
+							stkStack[depth++]=sStkNN(p.a,p.b->childs[0]);
+							stkStack[depth++]=sStkNN(p.a,p.b->childs[1]);
 						}
 						else
 						{

@@ -14,8 +14,8 @@ subject to the following restrictions:
 
 
 
-#ifndef SIMD__VECTOR3_H
-#define SIMD__VECTOR3_H
+#ifndef BT_VECTOR3_H
+#define BT_VECTOR3_H
 
 
 #include "btScalar.h"
@@ -171,10 +171,10 @@ public:
   /**@brief Return a normalized version of this vector */
 	SIMD_FORCE_INLINE btVector3 normalized() const;
 
-  /**@brief Rotate this vector 
+  /**@brief Return a rotated version of this vector
    * @param wAxis The axis to rotate about 
    * @param angle The angle to rotate by */
-	SIMD_FORCE_INLINE btVector3 rotate( const btVector3& wAxis, const btScalar angle );
+	SIMD_FORCE_INLINE btVector3 rotate( const btVector3& wAxis, const btScalar angle ) const;
 
   /**@brief Return the angle between this and another vector
    * @param v The other vector */
@@ -491,7 +491,7 @@ SIMD_FORCE_INLINE btVector3 btVector3::normalized() const
 	return *this / length();
 } 
 
-SIMD_FORCE_INLINE btVector3 btVector3::rotate( const btVector3& wAxis, const btScalar angle )
+SIMD_FORCE_INLINE btVector3 btVector3::rotate( const btVector3& wAxis, const btScalar angle ) const
 {
 	// wAxis must be a unit lenght vector
 
@@ -763,4 +763,4 @@ SIMD_FORCE_INLINE void	btVector3::deSerialize(const struct	btVector3Data& dataIn
 }
 
 
-#endif //SIMD__VECTOR3_H
+#endif //BT_VECTOR3_H

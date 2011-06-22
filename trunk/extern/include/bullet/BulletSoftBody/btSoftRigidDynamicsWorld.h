@@ -44,6 +44,7 @@ protected:
 
 	void	solveSoftBodiesConstraints( btScalar timeStep );
 
+	void	serializeSoftBodies(btSerializer* serializer);
 
 public:
 
@@ -72,6 +73,10 @@ public:
 		return m_sbi;
 	}
 
+	virtual btDynamicsWorldType	getWorldType() const
+	{
+		return	BT_SOFT_RIGID_DYNAMICS_WORLD;
+	}
 
 	btSoftBodyArray& getSoftBodyArray()
 	{
@@ -95,6 +100,7 @@ public:
 					  const btTransform& colObjWorldTransform,
 					  RayResultCallback& resultCallback);
 
+	virtual	void	serialize(btSerializer* serializer);
 
 };
 

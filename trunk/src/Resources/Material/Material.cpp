@@ -155,22 +155,20 @@ void Material::load(const char* filename)
 		else if(customMsSProgTree)
 		{
 			std::string source;
-			std::string prefix;
 
-			parseCustomShader(msGenericDefines, customMsSProgTree.get(), source, prefix);
+			parseCustomShader(msGenericDefines, customMsSProgTree.get(), source);
 			std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
-																		  source.c_str(), prefix.c_str());
+																		  source.c_str());
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		// customDpSProg
 		else if(customDpSProgTree)
 		{
 			std::string source;
-			std::string prefix;
 
-			parseCustomShader(dpGenericDefines, customDpSProgTree.get(), source, prefix);
+			parseCustomShader(dpGenericDefines, customDpSProgTree.get(), source);
 			std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
-																		  source.c_str(), prefix.c_str());
+																		  source.c_str());
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		// Error
@@ -389,7 +387,7 @@ void Material::initStdShaderVars()
 // parseCustomShader                                                                                                   =
 //======================================================================================================================
 void Material::parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
-                                 std::string& source, std::string& prefix)
+                                 std::string& source)
 {
 	using namespace boost::property_tree;
 
@@ -424,8 +422,5 @@ void Material::parseCustomShader(const PreprocDefines defines[], const boost::pr
 		}
 
 		source += "#define " + define + "\n";
-		prefix.push_back(def->prefix);
 	}
-
-	std::sort(prefix.begin(), prefix.end());
 }

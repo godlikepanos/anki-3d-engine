@@ -72,8 +72,7 @@ class ShaderProg
 		/// @param preAppendedSrcCode The source code we want to write on top of the shader prog
 		/// @param newFNamePrefix The prefix of the new shader prog
 		/// @return The file pathname of the new shader prog. Its $HOME/.anki/cache/newFNamePrefix_fName
-		static std::string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode,
-		                                        const char* newFNamePrefix);
+		static std::string createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode);
 
 		/// Relink the program. Used in transform feedback
 		void relink() const {link();}
