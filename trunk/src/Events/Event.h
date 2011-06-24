@@ -22,29 +22,29 @@ class Event
 {
 	public:
 		/// Constructor
-		Event(EventType type, uint startTime, uint duration);
+		Event(EventType type, float startTime, float duration);
 
 		/// Copy constructor
 		Event(const Event& b) {*this = b;}
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(uint, startTime, getStartTime)
-		GETTER_R(uint, duration, getDuration)
+		GETTER_R(float, startTime, getStartTime)
+		GETTER_R(float, duration, getDuration)
 		GETTER_R(EventType, type, getEventType)
-		bool isDead(uint crntTime) const {return crntTime >= startTime + duration;}
+		bool isDead(float crntTime) const {return crntTime >= startTime + duration;}
 		/// @}
 
 		/// Copy
 		Event& operator=(const Event& b);
 
-		/// @param[in] prevUpdateTime The time of the previous update (ms)
-		/// @param[in] crntTime The current time (ms)
-		void update(uint prevUpdateTime, uint crntTime);
+		/// @param[in] prevUpdateTime The time of the previous update (sec)
+		/// @param[in] crntTime The current time (sec)
+		void update(float prevUpdateTime, float crntTime);
 
 	protected:
 		/// This method should be implemented by the derived classes
-		virtual void updateSp(uint prevUpdateTime, uint crntTime) = 0;
+		virtual void updateSp(float prevUpdateTime, float crntTime) = 0;
 
 		/// Linear interpolation between values
 		/// @param[in] from Starting value
@@ -55,8 +55,8 @@ class Event
 
 	private:
 		EventType type; ///< Self explanatory
-		uint startTime; ///< The time the event will start. Eg 23:00
-		uint duration; ///< The duration of the event
+		float startTime; ///< The time the event will start. Eg 23:00
+		float duration; ///< The duration of the event
 };
 
 

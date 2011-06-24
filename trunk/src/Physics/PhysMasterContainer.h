@@ -41,8 +41,8 @@ class MasterContainer
 		btDiscreteDynamicsWorld& getWorld() {return *dynamicsWorld;}
 		/// @}
 
-		/// Time as always in ms
-		void update(uint prevUpdateTime, uint crntTime);
+		/// Time as always in sec
+		void update(float prevUpdateTime, float crntTime);
 
 	private:
 		btDiscreteDynamicsWorld* dynamicsWorld; ///< Container for rigid bodied and constraints

@@ -19,7 +19,7 @@ class Manager
 		void createEvent(const EventType& event);
 
 		/// Update
-		void updateAllEvents(uint prevUpdateTime, uint crntTime);
+		void updateAllEvents(float prevUpdateTime, float crntTime);
 
 	private:
 		enum
@@ -28,8 +28,8 @@ class Manager
 		};
 
 		EventsContainer events;
-		uint prevUpdateTime;
-		uint crntTime;
+		float prevUpdateTime;
+		float crntTime;
 
 		/// Find a dead event of a certain type
 		EventsContainer::iterator findADeadEvent(EventType type);

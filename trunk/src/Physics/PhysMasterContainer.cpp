@@ -29,12 +29,12 @@ MasterContainer::MasterContainer():
 //======================================================================================================================
 // update                                                                                                              =
 //======================================================================================================================
-void MasterContainer::update(uint prevUpdateTime, uint crntTime)
+void MasterContainer::update(float prevUpdateTime, float crntTime)
 {
-	dynamicsWorld->stepSimulation((crntTime - prevUpdateTime) * 1000.0);
+	dynamicsWorld->stepSimulation(crntTime - prevUpdateTime);
 
 	// updateNonRigidBodiesMotionStates
-	for(uint i=0; i<characters.size(); i++)
+	for(uint i = 0; i < characters.size(); i++)
 	{
 		characters[i]->motionState->setWorldTransform(characters[i]->ghostObject->getWorldTransform());
 	}

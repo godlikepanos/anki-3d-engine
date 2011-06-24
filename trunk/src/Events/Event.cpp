@@ -8,7 +8,7 @@ namespace Event {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Event::Event(EventType type_, uint startTime_, uint duration_):
+Event::Event(EventType type_, float startTime_, float duration_):
 	type(type_),
 	startTime(startTime_),
 	duration(duration_)
@@ -30,7 +30,7 @@ Event& Event::operator=(const Event& b)
 //======================================================================================================================
 // update                                                                                                              =
 //======================================================================================================================
-void Event::update(uint prevUpdateTime, uint crntTime)
+void Event::update(float prevUpdateTime, float crntTime)
 {
 	ASSERT(!isDead(crntTime));
 

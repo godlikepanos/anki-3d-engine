@@ -58,7 +58,7 @@ class App
 		Camera* getActiveCam() {return activeCam;}
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 
-		GETTER_SETTER(uint, timerTick, getTimerTick, setTimerTick)
+		GETTER_SETTER(float, timerTick, getTimerTick, setTimerTick)
 		GETTER_R_BY_VAL(bool, terminalColoringEnabled, isTerminalColoringEnabled)
 		GETTER_R_BY_VAL(uint, windowW, getWindowWidth)
 		GETTER_R(uint, windowH, getWindowHeight)
@@ -72,9 +72,8 @@ class App
 		uint windowH; ///< The main window height
 		boost::filesystem::path settingsPath; ///< The path that holds the configuration
 		boost::filesystem::path cachePath; ///< This is used as a cache
-		uint timerTick;
+		float timerTick;
 		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
-		uint time;
 		SDL_WindowID windowId;
 		SDL_GLContext glContext;
 		SDL_Surface* iconImage;

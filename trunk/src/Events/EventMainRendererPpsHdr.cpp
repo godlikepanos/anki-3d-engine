@@ -9,7 +9,7 @@ namespace Event {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-MainRendererPpsHdr::MainRendererPpsHdr(uint startTime, uint duration,
+MainRendererPpsHdr::MainRendererPpsHdr(float startTime, float duration,
                                        float exposure_, uint blurringIterationsNum_, float blurringDist_):
 	Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
 {
@@ -49,10 +49,10 @@ MainRendererPpsHdr& MainRendererPpsHdr::operator=(const MainRendererPpsHdr& b)
 //======================================================================================================================
 // updateSp                                                                                                            =
 //======================================================================================================================
-void MainRendererPpsHdr::updateSp(uint /*prevUpdateTime*/, uint crntTime)
+void MainRendererPpsHdr::updateSp(float /*prevUpdateTime*/, float crntTime)
 {
 	float d = crntTime - getStartTime(); // delta
-	float dp = d / getDuration(); // delta as persentage
+	float dp = d / getDuration(); // delta as percentage
 
 	MainRendererSingleton::getInstance().getPps().getHdr().setExposure(
 		interpolate(originalData.exposure, finalData.exposure, dp));

@@ -4,10 +4,12 @@
 #include "StdTypes.h"
 
 
-/// High resoluton timer. All time in milliseconds
+/// High resolution timer. All time in seconds
 class HighRezTimer
 {
 	public:
+		typedef double Scalar; ///< The type that the timer manipulates the results
+
 		HighRezTimer();
 
 		/// Start the timer
@@ -17,14 +19,14 @@ class HighRezTimer
 		void stop();
 
 		/// Get the time elapsed between start and stop (if its stopped) or between start and the current time
-		uint getElapsedTime() const;
+		Scalar getElapsedTime() const;
 
-		/// Get the current date's milliseconds
-		static uint getCrntTime();
+		/// Get the current date's seconds
+		static Scalar getCrntTime();
 
 	private:
-		uint startTime;
-		uint stopTime;
+		Scalar startTime;
+		Scalar stopTime;
 };
 
 

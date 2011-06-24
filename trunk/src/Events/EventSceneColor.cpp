@@ -10,7 +10,7 @@ namespace Event {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-SceneColor::SceneColor(uint startTime, uint duration, const Vec3& finalColor_):
+SceneColor::SceneColor(float startTime, float duration, const Vec3& finalColor_):
 	Event(SCENE_COLOR, startTime, duration),
 	finalColor(finalColor_)
 {
@@ -43,7 +43,7 @@ SceneColor& SceneColor::operator=(const SceneColor& b)
 //======================================================================================================================
 // updateSp                                                                                                            =
 //======================================================================================================================
-void SceneColor::updateSp(uint /*prevUpdateTime*/, uint crntTime)
+void SceneColor::updateSp(float /*prevUpdateTime*/, float crntTime)
 {
 	float d = crntTime - getStartTime(); // delta
 	float dp = d / float(getDuration()); // delta as persentage

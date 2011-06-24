@@ -8,7 +8,7 @@ namespace Event {
 //======================================================================================================================
 // updateAllEvents                                                                                                     =
 //======================================================================================================================
-void Manager::updateAllEvents(uint prevUpdateTime_, uint crntTime_)
+void Manager::updateAllEvents(float prevUpdateTime_, float crntTime_)
 {
 	prevUpdateTime = prevUpdateTime_;
 	crntTime = crntTime_;

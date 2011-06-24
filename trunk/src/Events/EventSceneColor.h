@@ -13,7 +13,7 @@ class SceneColor: public Event
 {
 	public:
 		/// Constructor
-		SceneColor(uint startTime, uint duration, const Vec3& finalColor);
+		SceneColor(float startTime, float duration, const Vec3& finalColor);
 
 		/// Copy constructor
 		SceneColor(const SceneColor& b);
@@ -26,7 +26,7 @@ class SceneColor: public Event
 		Vec3 finalColor;
 
 		/// Implements Event::updateSp
-		void updateSp(uint prevUpdateTime, uint crntTime);
+		void updateSp(float prevUpdateTime, float crntTime);
 };
 
 

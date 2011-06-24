@@ -112,8 +112,7 @@ void App::init(int argc, char* argv[])
 
 	// other
 	activeCam = NULL;
-	timerTick = 1000 / 40; // in ms. 1000/Hz
-	time = 0;
+	timerTick = 1.0 / 40.0; // in sec. 1.0 / period
 
 	INFO("Engine initialization ends");
 }
