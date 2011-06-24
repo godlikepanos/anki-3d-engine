@@ -12,7 +12,7 @@ class MainRendererPpsHdr: public Event
 {
 	public:
 		/// Constructor
-		MainRendererPpsHdr(uint startTime, uint duration,
+		MainRendererPpsHdr(float startTime, float duration,
 		                   float exposure, uint blurringIterationsNum, float blurringDist);
 
 		/// Copy constructor
@@ -33,7 +33,7 @@ class MainRendererPpsHdr: public Event
 		Data finalData; ///< Where do we want to go
 
 		/// Implements Event::updateSp
-		void updateSp(uint prevUpdateTime, uint crntTime);
+		void updateSp(float prevUpdateTime, float crntTime);
 };
 
 

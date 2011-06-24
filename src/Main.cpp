@@ -315,11 +315,11 @@ void mainLoopExtra()
 	}
 
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
+	/*if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
 	{
-		Event::ManagerSingleton::getInstance().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5000,
-			5000, MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
-	}
+		Event::ManagerSingleton::getInstance().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5,
+			5, MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
+	}*/
 
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)
@@ -361,15 +361,16 @@ void mainLoop()
 
 	HighRezTimer mainLoopTimer;
 	mainLoopTimer.start();
-	uint prevUpdateTime = HighRezTimer::getCrntTime();
-	uint crntTime = prevUpdateTime;
-	do
-	{
-		prevUpdateTime = crntTime;
-		crntTime = HighRezTimer::getCrntTime();
+	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCrntTime();
+	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
+	while(1)
+	{
 		HighRezTimer timer;
 		timer.start();
+
+		prevUpdateTime = crntTime;
+		crntTime = HighRezTimer::getCrntTime();
 
 		mainLoopExtra();
 
@@ -405,16 +406,16 @@ void mainLoop()
 
 		AppSingleton::getInstance().swapBuffers();
 
-		uint a = timer.getElapsedTime();
-		uint b = AppSingleton::getInstance().getTimerTick();
-		uint timeToSpendForRsrcPostProcess;
+		HighRezTimer::Scalar a = timer.getElapsedTime();
+		HighRezTimer::Scalar b = AppSingleton::getInstance().getTimerTick();
+		HighRezTimer::Scalar timeToSpendForRsrcPostProcess;
 		if(a < b)
 		{
 			timeToSpendForRsrcPostProcess = b - a;
 		}
 		else
 		{
-			timeToSpendForRsrcPostProcess = 1;
+			timeToSpendForRsrcPostProcess = 0.001;
 		}
 		ResourceManagerSingleton::getInstance().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
 
@@ -435,7 +436,7 @@ void mainLoop()
 				break;
 			}
 		}
-	}while(true);
+	}
 
 	INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << ")");
 }

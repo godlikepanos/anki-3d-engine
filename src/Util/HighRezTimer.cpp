@@ -7,8 +7,8 @@
 // Constructor                                                                                                         =
 //======================================================================================================================
 HighRezTimer::HighRezTimer():
-	startTime(0),
-	stopTime(0)
+	startTime(0.0),
+	stopTime(0.0)
 {}
 
 
@@ -20,7 +20,7 @@ void HighRezTimer::start()
 	ASSERT(startTime == 0);
 	ASSERT(stopTime == 0);
 	startTime = getCrntTime();
-	stopTime = 0;
+	stopTime = 0.0;
 }
 
 
@@ -29,8 +29,8 @@ void HighRezTimer::start()
 //======================================================================================================================
 void HighRezTimer::stop()
 {
-	ASSERT(startTime != 0);
-	ASSERT(stopTime == 0);
+	ASSERT(startTime != 0.0);
+	ASSERT(stopTime == 0.0);
 	stopTime = getCrntTime();
 }
 
@@ -38,7 +38,7 @@ void HighRezTimer::stop()
 //======================================================================================================================
 // getElapsedTime                                                                                                      =
 //======================================================================================================================
-uint HighRezTimer::getElapsedTime() const
+HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 {
 	if(stopTime == 0)
 	{
@@ -54,9 +54,9 @@ uint HighRezTimer::getElapsedTime() const
 //======================================================================================================================
 // getCrntTime                                                                                                        =
 //======================================================================================================================
-uint HighRezTimer::getCrntTime()
+HighRezTimer::Scalar HighRezTimer::getCrntTime()
 {
 	using namespace boost::posix_time;
-	uint ms = ptime(microsec_clock::local_time()).time_of_day().total_milliseconds();
-	return ms;
+	ulong ms = ptime(microsec_clock::local_time()).time_of_day().total_milliseconds();
+	return Scalar(ms) / 1000.0;
 }

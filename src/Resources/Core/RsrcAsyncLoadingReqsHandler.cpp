@@ -21,7 +21,7 @@ void RsrcAsyncLoadingReqsHandler::sendNewLoadingRequest<Texture>(const char* fil
 //======================================================================================================================
 // postProcessFinishedRequests                                                                                         =
 //======================================================================================================================
-void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(uint maxTime)
+void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(float maxTime)
 {
 	HighRezTimer t;
 	t.start();

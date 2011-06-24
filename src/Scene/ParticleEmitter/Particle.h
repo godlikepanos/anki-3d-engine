@@ -1,6 +1,7 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+#include <boost/scoped_ptr.hpp>
 #include "ModelNode.h"
 
 
@@ -17,7 +18,7 @@ class Particle: public ModelNode
 		~Particle();
 
 		GETTER_SETTER(uint, timeOfDeath, getTimeOfDeath, setTimeOfDeath)
-		void setNewRigidBody(Phys::RigidBody* body_) {body.reset(body_);}
+		void setNewRigidBody(Phys::RigidBody* body_);
 
 	private:
 		uint timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
