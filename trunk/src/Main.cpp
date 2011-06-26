@@ -372,20 +372,20 @@ void mainLoop()
 		prevUpdateTime = crntTime;
 		crntTime = HighRezTimer::getCrntTime();
 
+		//
+		// Update
+		//
 		mainLoopExtra();
-
 		AppSingleton::getInstance().execStdinScpripts();
 		SceneSingleton::getInstance().getPhysMasterContainer().update(prevUpdateTime, crntTime);
 		SceneSingleton::getInstance().updateAllWorldStuff();
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 		SceneSingleton::getInstance().updateAllControllers();
 		Event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
-
 		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
 		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
-
 		//painter->drawText("A");
 		painter->drawText("Once upon a time in a place called Kickapoo.");
 
@@ -406,39 +406,42 @@ void mainLoop()
 
 		AppSingleton::getInstance().swapBuffers();
 
-		HighRezTimer::Scalar a = timer.getElapsedTime();
-		HighRezTimer::Scalar b = AppSingleton::getInstance().getTimerTick();
-		HighRezTimer::Scalar timeToSpendForRsrcPostProcess;
-		if(a < b)
-		{
-			timeToSpendForRsrcPostProcess = b - a;
-		}
-		else
-		{
-			timeToSpendForRsrcPostProcess = 0.001;
-		}
-		ResourceManagerSingleton::getInstance().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
 
-		if(1)
+		//
+		// Async resource loading
+		//
+		if(ResourceManagerSingleton::getInstance().getAsyncLoadingRequestsNum() > 0)
 		{
-			//AppSingleton::getInstance().waitForNextFrame();
+			HighRezTimer::Scalar a = timer.getElapsedTime();
+			HighRezTimer::Scalar b = AppSingleton::getInstance().getTimerTick();
+			HighRezTimer::Scalar timeToSpendForRsrcPostProcess;
+			if(a < b)
+			{
+				timeToSpendForRsrcPostProcess = b - a;
+			}
+			else
+			{
+				timeToSpendForRsrcPostProcess = 0.001;
+			}
+			ResourceManagerSingleton::getInstance().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
+		}
 
-			timer.stop();
-			if(timer.getElapsedTime() < AppSingleton::getInstance().getTimerTick())
-			{
-				SDL_Delay(AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime());
-			}
-		}
-		else
+		//
+		// Sleep
+		//
+		timer.stop();
+		if(timer.getElapsedTime() < AppSingleton::getInstance().getTimerTick())
 		{
-			if(MainRendererSingleton::getInstance().getFramesNum() == 100)
-			{
-				break;
-			}
+			SDL_Delay((AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime()) * 1000.0);
 		}
+
+		/*if(MainRendererSingleton::getInstance().getFramesNum() == 100)
+		{
+			break;
+		}*/
 	}
 
-	INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << ")");
+	INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");
 }
 
 

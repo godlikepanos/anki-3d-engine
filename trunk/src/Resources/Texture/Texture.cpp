@@ -14,7 +14,7 @@
 //======================================================================================================================
 int Texture::textureUnitsNum = -1;
 bool Texture::mipmappingEnabled = true;
-bool Texture::compressionEnabled = false;
+bool Texture::compressionEnabled = true;
 int Texture::anisotropyLevel = 8;
 
 

@@ -42,7 +42,6 @@ class ResourceManager
 		ResourceManager();
 		~ResourceManager();
 
-
 		/// Load a resource
 		/// See if its already loaded, if its not:
 		/// - Create an instance
@@ -57,7 +56,10 @@ class ResourceManager
 		void unload(const typename Types<Type>::Hook& info);
 		
 		/// See RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests
-		void postProcessFinishedLoadingRequests(uint maxTime);
+		void postProcessFinishedLoadingRequests(float maxTime);
+
+		/// Get the number of total pending requests
+		size_t getAsyncLoadingRequestsNum() const {return rsrcAsyncLoadingReqsHandler.getRequestsNum();}
 
 	private:
 		/// @name Containers
@@ -111,7 +113,7 @@ class ResourceManager
 };
 
 
-inline void ResourceManager::postProcessFinishedLoadingRequests(uint maxTime)
+inline void ResourceManager::postProcessFinishedLoadingRequests(float maxTime)
 {
 	rsrcAsyncLoadingReqsHandler.postProcessFinishedRequests(maxTime);
 }

@@ -32,6 +32,5 @@ void RsrcTextureLoadingRequest::doPostLoading()
 {
 	Texture* tex = new Texture;
 	tex->load(img);
-	INFO(tex->getGlId());
 	*pTex = tex;
 }
