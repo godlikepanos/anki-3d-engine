@@ -35,6 +35,9 @@ class RsrcAsyncLoadingReqsHandler
 		/// again.
 		/// In seconds
 		void postProcessFinishedRequests(float maxTime);
+
+		/// Get the number of total pending requests
+		size_t getRequestsNum() const {return requests.size();}
 	
 	private:
 		AsyncLoader al; ///< Asynchronous loader
