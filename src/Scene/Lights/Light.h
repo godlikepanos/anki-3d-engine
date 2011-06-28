@@ -48,7 +48,7 @@ class Light: public SceneNode, public VisibilityInfo
 		void init(const char* filename);
 
 		void moveUpdate() {}
-		void frameUpdate() {}
+		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	protected:
 		RsrcPtr<LightRsrc> lightData;

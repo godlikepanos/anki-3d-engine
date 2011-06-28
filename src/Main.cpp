@@ -378,7 +378,7 @@ void mainLoop()
 		mainLoopExtra();
 		AppSingleton::getInstance().execStdinScpripts();
 		SceneSingleton::getInstance().getPhysMasterContainer().update(prevUpdateTime, crntTime);
-		SceneSingleton::getInstance().updateAllWorldStuff();
+		SceneSingleton::getInstance().updateAllWorldStuff(prevUpdateTime, crntTime);
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 		SceneSingleton::getInstance().updateAllControllers();
 		Event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
@@ -450,11 +450,12 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	/*FT_Vector s = {25, 25};
-	Ui::FtFontLoader fnt("engine-rsrc/ModernAntiqua.ttf", s);
-	fnt.saveImage("/tmp/test.tga");
+	std::stringstream ss("lala\n\n\n\n1a");
+	Scanner::Scanner scanner(ss);
 
-	return 0;*/
+	scanner.getAllPrintAll();
+
+	return 0;
 
 	try
 	{

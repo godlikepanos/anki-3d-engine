@@ -16,7 +16,7 @@ class Manager
 
 		/// Create a new event
 		template<typename EventType>
-		void createEvent(const EventType& event);
+		EventType& createEvent(const EventType& event);
 
 		/// Update
 		void updateAllEvents(float prevUpdateTime, float crntTime);

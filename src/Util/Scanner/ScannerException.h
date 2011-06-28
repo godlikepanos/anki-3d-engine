@@ -1,20 +1,18 @@
 #ifndef SCANNER_EXCEPTION_H
 #define SCANNER_EXCEPTION_H
 
-#include "Exception.h"
+#include <exception>
+#include <string>
 
 
 namespace Scanner {
 
 
-class Exception: public ::Exception
+class Exception: public std::exception
 {
 	public:
-		typedef ::Exception BaseClass;
-
 		/// Constructor
-		Exception(const std::string& err, const std::string& scriptFilename, int scriptLineNmbr,
-				  const char* file = "unknown", int line = -1, const char* func = "unknown");
+		Exception(const std::string& err, int errNo, const std::string& scriptFilename, int scriptLineNmbr);
 
 		/// Copy constructor
 		Exception(const Exception& e);
@@ -26,8 +24,11 @@ class Exception: public ::Exception
 		virtual const char* what() const throw();
 
 	private:
+		std::string error;
+		int errNo; ///< Error number
 		std::string scriptFilename;
 		int scriptLineNmbr;
+		mutable std::string errWhat;
 };
 
 

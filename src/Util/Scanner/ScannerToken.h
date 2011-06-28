@@ -4,7 +4,6 @@
 #include <string>
 #include <boost/array.hpp>
 #include "ScannerCommon.h"
-#include "StdTypes.h"
 
 
 namespace Scanner {
@@ -58,17 +57,17 @@ class TokenDataVal
 		/// @name Accessors
 		/// @{
 		char getChar() const {return char_;} ///< Access the data as C char
-		ulong getInt() const {return int_;} ///< Access the data as unsigned int
+		unsigned long getInt() const {return int_;} ///< Access the data as unsigned int
 		double getFloat() const {return float_;} ///< Access the data as double
 		const char* getString() const {return string;} ///< Access the data as C string
 		/// @}
 
 	private:
-		/// The data as unamed union
+		/// The data as unnamed union
 		union
 		{
 			char char_;
-			ulong int_;
+			unsigned long int_;
 			double float_;
 			char* string; ///< points to @ref Token::asString if the token is string or identifier
 		};

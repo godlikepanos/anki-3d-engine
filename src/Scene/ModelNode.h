@@ -17,7 +17,8 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
-		ModelNode(): SceneNode(SNT_MODEL, true, NULL) {}
+		ModelNode(SceneNode* parent = NULL): SceneNode(SNT_MODEL, true, parent) {}
+		virtual ~ModelNode();
 
 		/// @name Accessors
 		/// @{
@@ -33,7 +34,7 @@ class ModelNode: public SceneNode
 		/// Update the bounding shape
 		void moveUpdate();
 
-		void frameUpdate() {}
+		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	private:
 		RsrcPtr<Model> model;

@@ -18,7 +18,7 @@ class Mesh;
 class Skeleton;
 class SkelAnim;
 class LightRsrc;
-class ParticleEmitterProps;
+class ParticleEmitterRsrc;
 class Script;
 class Model;
 class Skin;
@@ -71,7 +71,7 @@ class ResourceManager
 		Types<Skeleton>::Container skeletons;
 		Types<SkelAnim>::Container skelAnims;
 		Types<LightRsrc>::Container lightProps;
-		Types<ParticleEmitterProps>::Container particleEmitterProps;
+		Types<ParticleEmitterRsrc>::Container particleEmitterProps;
 		Types<Script>::Container scripts;
 		Types<Model>::Container models;
 		Types<Skin>::Container skins;

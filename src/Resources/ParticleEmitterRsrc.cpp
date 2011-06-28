@@ -1,5 +1,5 @@
 #include <cstring>
-#include "ParticleEmitterProps.h"
+#include "ParticleEmitterRsrc.h"
 #include "Exception.h"
 
 
@@ -12,19 +12,19 @@ static const char* errMsg = "Incorrect or missing value ";
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-ParticleEmitterPropsStruct::ParticleEmitterPropsStruct():
+ParticleEmitterRsrc::ParticleEmitterRsrc():
 	particleLife(0.0),
-	particleLifeMargin(0.0),
+	particleLifeDeviation(0.0),
 	forceDirection(0.0),
-	forceDirectionMargin(0.0),
+	forceDirectionDeviation(0.0),
 	forceMagnitude(0.0),
-	forceMagnitudeMargin(0.0),
+	forceMagnitudeDeviation(0.0),
 	particleMass(0.0),
-	particleMassMargin(0.0),
+	particleMassDeviation(0.0),
 	gravity(0.0),
-	gravityMargin(0.0),
+	gravityDeviation(0.0),
 	startingPos(0.0),
-	startingPosMargin(0.0),
+	startingPosDeviation(0.0),
 	size(0.0)
 {}
 
@@ -32,7 +32,7 @@ ParticleEmitterPropsStruct::ParticleEmitterPropsStruct():
 //======================================================================================================================
 // Constructor [copy]                                                                                                  =
 //======================================================================================================================
-ParticleEmitterPropsStruct::ParticleEmitterPropsStruct(const ParticleEmitterPropsStruct& a)
+ParticleEmitterRsrc::ParticleEmitterRsrc(const ParticleEmitterRsrc& a)
 {
 	(*this) = a;
 }
@@ -41,9 +41,26 @@ ParticleEmitterPropsStruct::ParticleEmitterPropsStruct(const ParticleEmitterProp
 //======================================================================================================================
 //                                                                                                                     =
 //======================================================================================================================
-ParticleEmitterPropsStruct& ParticleEmitterPropsStruct::operator=(const ParticleEmitterPropsStruct& a)
+ParticleEmitterRsrc& ParticleEmitterRsrc::operator=(const ParticleEmitterRsrc& b)
 {
-	memcpy(this, &(const_cast<ParticleEmitterPropsStruct&>(a)), sizeof(ParticleEmitterPropsStruct));
+	particleLife = b.particleLife;
+	particleLifeDeviation = b.particleLifeDeviation;
+	forceDirection = b.forceDirection;
+	forceDirectionDeviation = b.forceDirectionDeviation;
+	forceMagnitude = b.forceMagnitude;
+	forceMagnitudeDeviation = b.forceMagnitudeDeviation;
+	particleMass = b.particleMass;
+	particleMassDeviation = b.particleMassDeviation;
+	gravity = b.gravity;
+	gravityDeviation = b.gravityDeviation;
+	startingPos = b.startingPos;
+	startingPosDeviation = b.startingPosDeviation;
+	size = b.size;
+	maxNumOfParticles = b.maxNumOfParticles;
+	emissionPeriod = b.emissionPeriod;
+	particlesPerEmittion = b.particlesPerEmittion;
+	modelName = b.modelName;
+
 	return *this;
 }
 
@@ -51,17 +68,18 @@ ParticleEmitterPropsStruct& ParticleEmitterPropsStruct::operator=(const Particle
 //======================================================================================================================
 // hasForce                                                                                                            =
 //======================================================================================================================
-bool ParticleEmitterPropsStruct::hasForce() const
+bool ParticleEmitterRsrc::hasForce() const
 {
-	return (!M::isZero(forceDirection.getLengthSquared()) || !M::isZero(forceDirectionMargin.getLengthSquared())) &&
-	       (forceMagnitude != 0.0 || forceMagnitudeMargin != 0.0);
+	return (!M::isZero(forceDirection.getLengthSquared()) ||
+		!M::isZero(forceDirectionDeviation.getLengthSquared())) &&
+			(forceMagnitude != 0.0 || forceMagnitudeDeviation != 0.0);
 }
 
 
 //======================================================================================================================
 // usingWorldGrav                                                                                                      =
 //======================================================================================================================
-bool ParticleEmitterPropsStruct::usingWorldGrav() const
+bool ParticleEmitterRsrc::usingWorldGrav() const
 {
 	return M::isZero(gravity.getLengthSquared());
 }
@@ -70,29 +88,30 @@ bool ParticleEmitterPropsStruct::usingWorldGrav() const
 //======================================================================================================================
 // load                                                                                                                =
 //======================================================================================================================
-void ParticleEmitterProps::load(const char* /*filename*/)
+void ParticleEmitterRsrc::load(const char* /*filename*/)
 {
 	// dummy load
 	particleLife = 7.0;
-	particleLifeMargin = 2.0;
+	particleLifeDeviation = 2.0;
 
 	forceDirection = Vec3(0.0, 0.1, 0.0);
-	forceDirectionMargin = Vec3(0.0, 0.0, 0.0);
+	forceDirectionDeviation = Vec3(0.0, 0.0, 0.0);
 	forceMagnitude = 900.0;
-	forceMagnitudeMargin = 100.0;
+	forceMagnitudeDeviation = 100.0;
 
 	particleMass = 1.0;
-	particleMassMargin = 0.0;
+	particleMassDeviation = 0.0;
 
 	/*gravity = Vec3(0.0, 10.0, 0.0);
-	gravityMargin = Vec3(0.0, 0.0, 0.0);*/
+	gravityDeviation = Vec3(0.0, 0.0, 0.0);*/
 
 	startingPos = Vec3(0.0, 1.0, 0.0);
-	startingPosMargin = Vec3(0.0, 0.0, 0.0);
+	startingPosDeviation = Vec3(0.0, 0.0, 0.0);
 	size = 0.5;
 	maxNumOfParticles = 50;
-	emittionPeriod = 1.5;
+	emissionPeriod = 1.5;
 	particlesPerEmittion = 2;
+	modelName = "*todo*";
 
 	// sanity checks
 	if(particleLife <= 0.0)
@@ -100,9 +119,9 @@ void ParticleEmitterProps::load(const char* /*filename*/)
 		throw PE_EXCEPTION(errMsg + "particleLife");
 	}
 
-	if(particleLife - particleLifeMargin <= 0.0)
+	if(particleLife - particleLifeDeviation <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "particleLifeMargin");
+		throw PE_EXCEPTION(errMsg + "particleLifeDeviation");
 	}
 
 	if(size <= 0.0)
@@ -115,9 +134,9 @@ void ParticleEmitterProps::load(const char* /*filename*/)
 		throw PE_EXCEPTION(errMsg + "maxNumOfParticles");
 	}
 
-	if(emittionPeriod <= 0.0)
+	if(emissionPeriod <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "emittionPeriod");
+		throw PE_EXCEPTION(errMsg + "emissionPeriod");
 	}
 
 	if(particlesPerEmittion < 1)

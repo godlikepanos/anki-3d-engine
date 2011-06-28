@@ -40,7 +40,7 @@ class Scene
 		void registerController(Controller* controller);
 		void unregisterController(Controller* controller);
 
-		void updateAllWorldStuff();
+		void updateAllWorldStuff(float prevUpdateTime, float crntTime);
 		void updateAllControllers();
 		void doVisibilityTests(Camera& cam) {visibilityTester->test(cam);}
 

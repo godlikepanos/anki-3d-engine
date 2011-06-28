@@ -20,7 +20,7 @@ class Scanner
 	public:
 		/// Constructor #1
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
-		Scanner(bool newlinesAsWhitespace = true) {init(newlinesAsWhitespace);}
+		Scanner(bool newlinesAsWhitespace = true);
 
 		/// Constructor #2
 		/// @see loadFile
@@ -155,20 +155,6 @@ class Scanner
 		/// Unloads the file
 		void unload();
 }; // end class Scanner
-
-
-inline Scanner::Scanner(const char* filename, bool newlinesAsWhitespace)
-{
-	init(newlinesAsWhitespace);
-	loadFile(filename);
-}
-
-
-inline Scanner::Scanner(std::istream& istream_, const char* scriptName_, bool newlinesAsWhitespace)
-{
-	init(newlinesAsWhitespace);
-	loadIstream(istream_, scriptName_);
-}
 
 
 } // end namespace

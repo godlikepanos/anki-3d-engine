@@ -7,8 +7,9 @@ includePaths.extend(["../../extern/include", "../../extern/include/bullet", "/us
 
 executableName = "anki"
 
-compiler = "g++-4.5"
+#compiler = "g++-4.5"
+compiler = "g++"
 
-compilerFlags = "-DPLATFORM_LINUX -DMATH_INTEL_SIMD -DNDEBUG -DBOOST_DISABLE_ASSERTS -DREVISION=\\\"`svnversion ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -fsingle-precision-constant -msse4 -O3 -mtune=core2 -ffast-math -flto"
+compilerFlags = "-DPLATFORM_LINUX -DMATH_INTEL_SIMD -DNDEBUG -DBOOST_DISABLE_ASSERTS -DREVISION=\\\"`svnversion ../..`\\\" -c -pedantic-errors -pedantic -ansi -Wall -Wextra -W -Wno-long-long -pipe -fsingle-precision-constant -msse4 -O3 -mtune=core2 -ffast-math"
 
 linkerFlags = "-rdynamic -flto -L../../extern/lib-x86-64-linux -Wl,-Bstatic -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lGLU -Wl,-Bdynamic -lGL -ljpeg -lSDL -lpng -lpython2.6 -lboost_system -lboost_python -lboost_filesystem -lboost_thread -lfreetype"

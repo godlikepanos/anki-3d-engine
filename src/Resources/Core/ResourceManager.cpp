@@ -7,7 +7,7 @@
 #include "Skeleton.h"
 #include "SkelAnim.h"
 #include "LightRsrc.h"
-#include "ParticleEmitterProps.h"
+#include "ParticleEmitterRsrc.h"
 #include "Script.h"
 #include "Model.h"
 #include "Skin.h"
@@ -54,7 +54,7 @@ SPECIALIZE_TEMPLATE_STUFF(Mesh, meshes)
 SPECIALIZE_TEMPLATE_STUFF(Skeleton, skeletons)
 SPECIALIZE_TEMPLATE_STUFF(SkelAnim, skelAnims)
 SPECIALIZE_TEMPLATE_STUFF(LightRsrc, lightProps)
-SPECIALIZE_TEMPLATE_STUFF(ParticleEmitterProps, particleEmitterProps)
+SPECIALIZE_TEMPLATE_STUFF(ParticleEmitterRsrc, particleEmitterProps)
 SPECIALIZE_TEMPLATE_STUFF(Script, scripts)
 SPECIALIZE_TEMPLATE_STUFF(Model, models)
 SPECIALIZE_TEMPLATE_STUFF(Skin, skins)

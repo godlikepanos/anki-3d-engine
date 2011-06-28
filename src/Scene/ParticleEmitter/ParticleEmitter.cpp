@@ -1,6 +1,8 @@
+#include <boost/foreach.hpp>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #include "ParticleEmitter.h"
+#include "Particle.h"
 #include "PhysRigidBody.h"
 #include "MainRenderer.h"
 #include "App.h"
@@ -12,20 +14,39 @@ btTransform ParticleEmitter::startingTrf(toBt(Mat3::getIdentity()), btVector3(10
 
 
 //======================================================================================================================
-// render                                                                                                              =
+// Destructor                                                                                                          =
 //======================================================================================================================
-void ParticleEmitter::Particle::render()
+ParticleEmitter::~ParticleEmitter()
+{}
+
+
+//======================================================================================================================
+// getRandom                                                                                                           =
+//======================================================================================================================
+float ParticleEmitter::getRandom(float initial, float deviation)
 {
-	/*if(lifeTillDeath < 0) return;
+	return (deviation == 0.0) ?  initial : initial + Util::randFloat(deviation) * 2.0 - deviation;
+}
 
-	glPushMatrix();
-	app->getMainRenderer()->multMatrix(getWorldTransform());
 
-	glBegin(GL_POINTS);
-		glVertex3fv(&(Vec3(0.0))[0]);
-	glEnd();
-
-	glPopMatrix();*/
+//======================================================================================================================
+// getRandom                                                                                                           =
+//======================================================================================================================
+Vec3 ParticleEmitter::getRandom(const Vec3& initial, const Vec3& deviation)
+{
+	if(deviation == Vec3(0.0))
+	{
+		return initial;
+	}
+	else
+	{
+		Vec3 out;
+		for(int i = 0; i < 3; i++)
+		{
+			out[i] = getRandom(initial[i], deviation[i]);
+		}
+		return out;
+	}
 }
 
 
@@ -37,8 +58,8 @@ void ParticleEmitter::init(const char* filename)
 	particleEmitterProps.loadRsrc(filename);
 
 	// copy the resource to me
-	ParticleEmitterPropsStruct& me = *this;
-	ParticleEmitterPropsStruct& other = *particleEmitterProps.get();
+	ParticleEmitterRsrc& me = *this;
+	ParticleEmitterRsrc& other = *particleEmitterProps.get();
 	me = other;
 
 	// create the particles
@@ -46,10 +67,12 @@ void ParticleEmitter::init(const char* filename)
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		Particle* particle = new Particle;
+		Particle* particle = new Particle(-1.0, this);
+		particle->init(modelName.c_str());
+
 		particles.push_back(particle);
 
-		float mass = particleMass + Util::randFloat(particleMassMargin) * 2.0 - particleMassMargin;
+		float mass = particleMass + Util::randFloat(particleMassDeviation) * 2.0 - particleMassDeviation;
 
 		Phys::RigidBody::Initializer init;
 		init.mass = mass;
@@ -62,7 +85,7 @@ void ParticleEmitter::init(const char* filename)
 
 		body->forceActivationState(DISABLE_SIMULATION);
 
-		particle->body.reset(body);
+		particle->setNewRigidBody(body);
 	}
 }
 
@@ -70,27 +93,25 @@ void ParticleEmitter::init(const char* filename)
 //======================================================================================================================
 // frameUpdate                                                                                                         =
 //======================================================================================================================
-void ParticleEmitter::frameUpdate()
+void ParticleEmitter::frameUpdate(float prevUpdateTime, float crntTime)
 {
-	//float crntTime = AppSingleton::getInstance().getTicks() / 1000.0;
-	float crntTime;
-	/// @todo correct this
-
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
 	bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
 
 	// deactivate the dead particles
-	for(uint i=0; i<particles.size(); i++)
+	BOOST_FOREACH(Particle* p, particles)
 	{
-		Particle& p = particles[i];
-		if(p.timeOfDeath < 0.0) continue; // its already dead so dont deactivate it again
+		if(p->isDead()) // its already dead so dont deactivate it again
+		{
+			continue;
+		}
 
-		if(p.timeOfDeath < crntTime)
+		if(p->getTimeOfDeath() < crntTime)
 		{
 			//cout << "Killing " << i << " " << p.timeOfDeath << endl;
-			p.body->setActivationState(DISABLE_SIMULATION);
-			p.body->setWorldTransform(startingTrf);
-			p.timeOfDeath = -1.0;
+			p->getRigidBody().setActivationState(DISABLE_SIMULATION);
+			p->getRigidBody().setWorldTransform(startingTrf);
+			p->setTimeOfDeath(-1.0);
 		}
 	}
 
@@ -98,116 +119,86 @@ void ParticleEmitter::frameUpdate()
 	bool forceFlag = hasForce();
 	bool worldGravFlag = usingWorldGrav();
 
-	if((crntTime - timeOfPrevEmittion) > emittionPeriod)
+	if(timeLeftForNextEmission <= 0.0)
 	{
 		uint partNum = 0;
-		for(uint i=0; i<particles.size(); i++)
+		BOOST_FOREACH(Particle* pp, particles)
 		{
-			Particle& p = particles[i];
-			if(p.timeOfDeath > 0.0) continue; // its alive so skip it
+			Particle& p = *pp;
+			if(!p.isDead())
+			{
+				// its alive so skip it
+				continue;
+			}
 
 			//INFO("Reiniting " << i);
 
 			// life
-			if(particleLifeMargin != 0.0)
-				p.timeOfDeath = crntTime + particleLife + Util::randFloat(particleLifeMargin) * 2.0 - particleLifeMargin;
-			else
-				p.timeOfDeath = crntTime + particleLife;
+			p.setTimeOfDeath(getRandom(crntTime + particleLife, particleLifeDeviation));
 
 			//cout << "Time of death " << p.timeOfDeath << endl;
 			//cout << "Particle life " << p.timeOfDeath - crntTime << endl;
 
 			// activate it (Bullet stuff)
-			p.body->forceActivationState(ACTIVE_TAG);
-			p.body->activate();
-			p.body->clearForces();
-			p.body->setLinearVelocity(btVector3(0.0, 0.0, 0.0));
-			p.body->setAngularVelocity(btVector3(0.0, 0.0, 0.0));
+			p.getRigidBody().forceActivationState(ACTIVE_TAG);
+			p.getRigidBody().activate();
+			p.getRigidBody().clearForces();
+			p.getRigidBody().setLinearVelocity(btVector3(0.0, 0.0, 0.0));
+			p.getRigidBody().setAngularVelocity(btVector3(0.0, 0.0, 0.0));
 
 			//cout << p.body->internalGetDeltaAngularVelocity() << endl;
 
 			// force
 			if(forceFlag)
 			{
-				Vec3 forceDir;
-				if(forceDirectionMargin != Vec3(0.0))
-				{
-					for(int i=0; i<3; i++)
-					{
-						forceDir[i] = forceDirection[i] + Util::randFloat(forceDirectionMargin[i]) * 2.0 - forceDirectionMargin[i];
-					}
-				}
-				else
-				{
-					forceDir = forceDirection;
-				}
+				Vec3 forceDir = getRandom(forceDirection, forceDirectionDeviation);
 				forceDir.normalize();
 
 				if(!identRot)
 				{
-					forceDir = getWorldTransform().getRotation() * forceDir; // the forceDir depends on the particle emitter rotation
+					// the forceDir depends on the particle emitter rotation
+					forceDir = getWorldTransform().getRotation() * forceDir;
 				}
 
-				Vec3 force;
-
-				if(forceMagnitudeMargin != 0.0)
-					force = forceDir * (forceMagnitude + Util::randFloat(forceMagnitudeMargin) * 2.0 - forceMagnitudeMargin);
-				else
-					force = forceDir * forceMagnitude;
-
-				p.body->applyCentralForce(toBt(force));
+				float forceMag = getRandom(forceMagnitude, forceMagnitudeDeviation);
+				p.getRigidBody().applyCentralForce(toBt(forceDir * forceMag));
 			}
 
 			// gravity
 			if(!worldGravFlag)
 			{
-				Vec3 grav;
-				if(gravityMargin != Vec3(0.0))
-				{
-					for(int i=0; i<3; i++)
-					{
-						grav[i] = gravity[i] + Util::randFloat(gravityMargin[i]) * 2.0 - gravityMargin[i];
-					}
-				}
-				else
-				{
-					grav = gravity;
-				}
-				p.body->setGravity(toBt(grav));
+				p.getRigidBody().setGravity(toBt(getRandom(gravity, gravityDeviation)));
 			}
 
 			// starting pos
-			Vec3 pos; // in local space
-			if(startingPosMargin != Vec3(0.0))
-			{
-				for(int i=0; i<3; i++)
-				{
-					pos[i] = startingPos[i] + Util::randFloat(startingPosMargin[i]) * 2.0 - startingPosMargin[i];
-				}
-			}
-			else
-			{
-				pos = startingPos;
-			}
+			Vec3 pos = getRandom(startingPos, startingPosDeviation); // in local space
 
 			if(identRot)
+			{
 				pos += getWorldTransform().getOrigin();
+			}
 			else
+			{
 				pos.transform(getWorldTransform());
+			}
 
 			btTransform trf;
 			trf.setIdentity();
 			trf.setOrigin(toBt(pos));
-			p.body->setWorldTransform(trf);
+			p.getRigidBody().setWorldTransform(trf);
 
 			// do the rest
 			++partNum;
 			if(partNum >= particlesPerEmittion)
+			{
 				break;
+			}
 		} // end for all particles
 
-		timeOfPrevEmittion = crntTime;
+		timeLeftForNextEmission = emissionPeriod;
 	} // end if can emit
-
-	timeOfPrevUpdate = crntTime;
+	else
+	{
+		timeLeftForNextEmission -= crntTime - prevUpdateTime;
+	}
 }
