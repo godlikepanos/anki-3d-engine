@@ -67,7 +67,7 @@ class Camera: public SceneNode, public VisibilityInfo
 		void moveUpdate();
 
 		/// Do nothing
-		void frameUpdate() {}
+		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 		/// Do nothing
 		void init(const char*) {}

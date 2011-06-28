@@ -58,7 +58,7 @@ class SceneNode: public Object
 		/// @{
 
 		/// This is called every frame
-		virtual void frameUpdate() = 0;
+		virtual void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) = 0;
 
 		/// This is called if the node moved
 		virtual void moveUpdate() = 0;

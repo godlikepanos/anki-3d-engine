@@ -8,19 +8,23 @@ namespace Event {
 //  createEvent                                                                                                        =
 //======================================================================================================================
 template<typename EventType>
-void Manager::createEvent(const EventType& event)
+EventType& Manager::createEvent(const EventType& event)
 {
 	EventsContainer::iterator it = findADeadEvent(event.getEventType());
+	EventType* ev;
 
 	if(it == events.end()) // No dead event found
 	{
-		events.push_back(new EventType(event));
+		ev = new EventType(event);
+		events.push_back(ev);
 	}
 	else // Re-use a dead event
 	{
-		Event& ev = *it;
-		static_cast<EventType&>(ev) = event;
+		ev = &static_cast<EventType&>(*it);
+		*ev = event;
 	}
+
+	return *ev;
 }
 
 

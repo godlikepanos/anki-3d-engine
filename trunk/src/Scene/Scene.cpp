@@ -109,7 +109,7 @@ void Scene::unregisterController(Controller* controller)
 //======================================================================================================================
 // updateAllWorldStuff                                                                                                 =
 //======================================================================================================================
-void Scene::updateAllWorldStuff()
+void Scene::updateAllWorldStuff(float prevUpdateTime, float crntTime)
 {
 	ASSERT(nodes.size() <= 1024);
 	boost::array<SceneNode*, 1024> queue;
@@ -132,7 +132,7 @@ void Scene::updateAllWorldStuff()
 		SceneNode* pnode = queue[head++]; // queue pop
 
 		pnode->updateWorldTransform();
-		pnode->frameUpdate();
+		pnode->frameUpdate(prevUpdateTime, crntTime);
 		pnode->moveUpdate();
 		++num;
 

@@ -37,7 +37,7 @@ class SkinNode: public SceneNode
 		/// from the previous frame
 		void moveUpdate();
 
-		void frameUpdate() {}
+		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	private:
 		RsrcPtr<Skin> skin; ///< The resource

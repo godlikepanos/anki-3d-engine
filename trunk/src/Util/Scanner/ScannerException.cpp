@@ -8,9 +8,9 @@ namespace Scanner {
 //======================================================================================================================
 // Constructor                                                                                                         =
 //======================================================================================================================
-Exception::Exception(const std::string& err, const std::string& scriptFilename_, int scriptLineNmbr_,
-                     const char* file, int line, const char* func):
-	BaseClass(err, file, line, func),
+Exception::Exception(const std::string& err, int errNo_, const std::string& scriptFilename_, int scriptLineNmbr_):
+	error(err),
+	errNo(errNo_),
 	scriptFilename(scriptFilename_),
 	scriptLineNmbr(scriptLineNmbr_)
 {}
@@ -20,7 +20,8 @@ Exception::Exception(const std::string& err, const std::string& scriptFilename_,
 // Copy constructor                                                                                                    =
 //======================================================================================================================
 Exception::Exception(const Exception& e):
-	BaseClass(e),
+	error(e.error),
+	errNo(e.errNo),
 	scriptFilename(e.scriptFilename),
 	scriptLineNmbr(e.scriptLineNmbr)
 {}
@@ -31,8 +32,8 @@ Exception::Exception(const Exception& e):
 //======================================================================================================================
 const char* Exception::what() const throw()
 {
-	errWhat = "\n" + getInfoStr() + " Scanner exception (" + scriptFilename + ':' +
-	          boost::lexical_cast<std::string>(scriptLineNmbr) + ") " + err;
+	errWhat = "Scanner exception #" + boost::lexical_cast<std::string>(errNo) + " (" + scriptFilename + ':' +
+		boost::lexical_cast<std::string>(scriptLineNmbr) + ") " + error;
 	return errWhat.c_str();
 }
 

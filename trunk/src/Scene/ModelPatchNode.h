@@ -17,7 +17,7 @@ class ModelPatchNode: public PatchNode
 		const Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
 
 		virtual void moveUpdate(); ///< Update the visibility shape
-		virtual void frameUpdate() {}
+		virtual void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	private:
 		const ModelPatch& modelPatch;

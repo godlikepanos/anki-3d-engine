@@ -2,19 +2,18 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <cassert>
 #include <sstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
 #include "Scanner.h"
-#include "Exception.h"
-#include "Assert.h"
 #include "ScannerException.h"
 
 
 namespace Scanner {
 
 #define SCANNER_EXCEPTION(x) \
-	Exception(std::string() + x, scriptName, lineNmbr, __FILE__, __LINE__, __func__)
+	Exception(std::string() + x, __LINE__, scriptName, lineNmbr)
 
 
 //======================================================================================================================
@@ -61,6 +60,33 @@ Scanner::ResWord* Scanner::rwTable [] =  // reserved word table
 
 // ascii table
 Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
+
+
+//======================================================================================================================
+// Constructors                                                                                                        =
+//======================================================================================================================
+
+Scanner::Scanner(bool newlinesAsWhitespace)
+{
+	strcpy(scriptName, "unnamed-script");
+	init(newlinesAsWhitespace);
+}
+
+
+Scanner::Scanner(const char* filename, bool newlinesAsWhitespace)
+{
+	strcpy(scriptName, "unnamed-script");
+	init(newlinesAsWhitespace);
+	loadFile(filename);
+}
+
+
+Scanner::Scanner(std::istream& istream_, const char* scriptName_, bool newlinesAsWhitespace)
+{
+	strcpy(scriptName, "unnamed-script");
+	init(newlinesAsWhitespace);
+	loadIstream(istream_, scriptName_);
+}
 
 
 //======================================================================================================================
@@ -138,7 +164,7 @@ void Scanner::getLine()
 		++lineNmbr;
 	}
 
-	ASSERT(inStream->gcount() <= MAX_SCRIPT_LINE_LEN - 10); // too big line
+	assert(inStream->gcount() <= MAX_SCRIPT_LINE_LEN - 10); // too big line
 }
 
 
@@ -192,7 +218,8 @@ void Scanner::getAllPrintAll()
 	do
 	{
 		getNextToken();
-		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() << ": " << crntToken.getInfoStr() << std::endl;
+		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() << ": " <<
+			crntToken.getInfoStr() << std::endl;
 	} while(crntToken.code != TC_EOF);
 }
 
@@ -205,7 +232,7 @@ void Scanner::loadFile(const char* filename_)
 	inFstream.open(filename_);
 	if(!inFstream.is_open())
 	{
-		throw EXCEPTION("Cannot open file \"" + filename_ + '\"');
+		throw SCANNER_EXCEPTION("Cannot open file \"" + filename_ + '\"');
 	}
 
 	loadIstream(inFstream, filename_);
@@ -219,13 +246,13 @@ void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 {
 	if(inStream != NULL)
 	{
-		throw EXCEPTION("Tokenizer already initialized");
+		throw SCANNER_EXCEPTION("Tokenizer already initialized");
 	}
 
 	inStream = &istream_;
 
 	// init globals
-	ASSERT(strlen(scriptName_) <= sizeof(scriptName) / sizeof(char) - 1); // Too big name
+	assert(strlen(scriptName_) <= sizeof(scriptName) / sizeof(char) - 1); // Too big name
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
 	strcpy(scriptName, scriptName_);
