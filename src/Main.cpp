@@ -186,7 +186,6 @@ void init()
 
 	imp->addChild(*cam);
 
-	return;
 
 	// sarge
 	/*sarge = new MeshNode();
@@ -226,12 +225,12 @@ void init()
 	node->init("maps/sponza/dark-marbles.mesh");*/
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
-	return;
-
 	// particle emitter
 	partEmitter = new ParticleEmitter;
 	partEmitter->init("asdf");
 	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
+
+	return;
 
 	// character
 	/*PhyCharacter::Initializer init;
@@ -450,12 +449,12 @@ void mainLoop()
 //======================================================================================================================
 int main(int argc, char* argv[])
 {
-	std::stringstream ss("lala\n\n\n\n1a");
+	/*std::stringstream ss("lala\n\n\n\n1a");
 	Scanner::Scanner scanner(ss);
 
 	scanner.getAllPrintAll();
 
-	return 0;
+	return 0;*/
 
 	try
 	{
