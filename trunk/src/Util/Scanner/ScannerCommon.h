@@ -4,7 +4,8 @@
 
 namespace Scanner {
 
-const int MAX_SCRIPT_LINE_LEN = 1024; ///< The max allowed length of a script line
+/// The max allowed length of a script line
+const int MAX_SCRIPT_LINE_LEN = 1024;
 
 }
 

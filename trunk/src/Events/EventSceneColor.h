@@ -32,4 +32,5 @@ class SceneColor: public Event
 
 } // end namespace
 
+
 #endif

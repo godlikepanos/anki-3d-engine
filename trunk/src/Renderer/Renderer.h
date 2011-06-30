@@ -25,12 +25,10 @@ class ModelNode;
 
 
 /// Offscreen renderer
-/// It is a class and not a namespace because we may need external renderers for security cameras for example
+/// It is a class and not a namespace because we may need external renderers
+/// for security cameras for example
 class Renderer
 {
-	//==================================================================================================================
-	// Public                                                                                                          =
-	//==================================================================================================================
 	public:
 		/// The types of rendering a ModelNode
 		enum ModelNodeRenderType
@@ -75,35 +73,40 @@ class Renderer
 		/// @param projectionMat The projection matrix
 		/// @param view The view vector
 		/// @return The unprojected coords
-		static Vec3 unproject(const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat,
-		                      const int view[4]);
+		static Vec3 unproject(const Vec3& windowCoords,
+			const Mat4& modelViewMat, const Mat4& projectionMat,
+			const int view[4]);
 
 		/// OpenGL wrapper
-		static void setViewport(uint x, uint y, uint w, uint h) {glViewport(x, y, w, h);}
+		static void setViewport(uint x, uint y, uint w, uint h);
 
-		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
+		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
+		/// longer support quads
 		void drawQuad();
 
 		/// Create FAI texture
-		static void createFai(uint width, uint height, int internalFormat, int format, int type, Texture& fai);
+		static void createFai(uint width, uint height, int internalFormat,
+			int format, int type, Texture& fai);
 
-		/// Calculate the planes needed for the calculation of the fragment position z in view space.
-		/// Having the fragment's depth, the camera's zNear and zFar the z of the fragment is being calculated inside
-		/// the fragment shader from:
-		/// @code z = (- zFar * zNear) / (zFar - depth * (zFar - zNear)) @endcode
-		/// The above can be optimized and this method actually precalculates a few things in order to lift a few
-		/// calculations from the fragment shader. So the z is:
+		/// Calculate the planes needed for the calculation of the fragment
+		/// position z in view space. Having the fragment's depth, the camera's
+		/// zNear and zFar the z of the fragment is being calculated inside the
+		/// fragment shader from:
+		/// @code z = (- zFar * zNear) / (zFar - depth * (zFar - zNear))
+		/// @endcode
+		/// The above can be optimized and this method actually precalculates a
+		/// few things in order to lift a few calculations from the fragment
+		/// shader. So the z is:
 		/// @code z =  -planes.y / (planes.x + depth) @endcode
 		/// @param[in] cameraRange The zNear, zFar
 		/// @param[out] planes The planes
 		static void calcPlanes(const Vec2& cameraRange, Vec2& planes);
 
-		/// Calculates two values needed for the calculation of the fragment position in view space.
-		static void calcLimitsOfNearPlane(const PerspectiveCamera& cam, Vec2& limitsOfNearPlane);
+		/// Calculates two values needed for the calculation of the fragment
+		/// position in view space.
+		static void calcLimitsOfNearPlane(const PerspectiveCamera& cam,
+			Vec2& limitsOfNearPlane);
 
-	//==================================================================================================================
-	// Protected                                                                                                       =
-	//==================================================================================================================
 	protected:
 		/// @name Rendering stages
 		/// @{
@@ -113,25 +116,32 @@ class Renderer
 		Bs bs; ///< Blending stage
 		/// @}
 
-		uint width; ///< Width of the rendering. Dont confuse with the window width
-		uint height; ///< Height of the rendering. Dont confuse with the window width
+		/// Width of the rendering. Don't confuse with the window width
+		uint width;
+		/// Height of the rendering. Don't confuse with the window width
+		uint height;
 		float aspectRatio; ///< Just a precalculated value
 		const Camera* cam; ///< Current camera
-		static int maxColorAtachments; ///< Max color attachments an FBO can accept
+		/// Max color attachments an FBO can accept
+		static int maxColorAtachments;
 		SceneDrawer sceneDrawer;
 		SkinsDeformer skinsDeformer;
 
 		/// @name Optimization vars
 		/// Used in other stages
 		/// @{
-		Vec2 planes; ///< Used to to calculate the frag pos in view space inside a few shader programs
-		Vec2 limitsOfNearPlane; ///< Used to to calculate the frag pos in view space inside a few shader programs
-		Vec2 limitsOfNearPlane2; ///< Used to to calculate the frag pos in view space inside a few shader programs
+
+		/// Used to to calculate the frag pos in view space inside a few shader
+		/// programs
+		Vec2 planes;
+		/// Used to to calculate the frag pos in view space inside a few shader
+		/// programs
+		Vec2 limitsOfNearPlane;
+		/// Used to to calculate the frag pos in view space inside a few shader
+		/// programs
+		Vec2 limitsOfNearPlane2;
 		/// @}
 
-	//==================================================================================================================
-	// Protected                                                                                                       =
-	//==================================================================================================================
 	private:
 		uint framesNum; ///< Frame number
 		Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it
@@ -143,6 +153,12 @@ class Renderer
 		Vao quadVao; ///< This VAO is used everywhere except material stage
 		/// @}
 };
+
+
+inline void Renderer::setViewport(uint x, uint y, uint w, uint h)
+{
+	glViewport(x, y, w, h);
+}
 
 
 #endif

@@ -1,8 +1,8 @@
 #ifndef EVENT_MANAGER_H
 #define EVENT_MANAGER_H
 
-#include <boost/ptr_container/ptr_deque.hpp>
 #include "Event.h"
+#include <boost/ptr_container/ptr_deque.hpp>
 
 
 namespace Event {
