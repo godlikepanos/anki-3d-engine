@@ -12,7 +12,8 @@ class Exception: public std::exception
 {
 	public:
 		/// Constructor
-		Exception(const std::string& err, int errNo, const std::string& scriptFilename, int scriptLineNmbr);
+		Exception(const std::string& err, int errNo,
+			const std::string& scriptFilename, int scriptLineNmbr);
 
 		/// Copy constructor
 		Exception(const Exception& e);

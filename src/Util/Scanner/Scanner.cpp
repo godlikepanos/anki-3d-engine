@@ -3,11 +3,11 @@
 #include <cstring>
 #include <cmath>
 #include <cassert>
+#include "Scanner.h"
+#include "ScannerException.h"
 #include <sstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
-#include "Scanner.h"
-#include "ScannerException.h"
 
 
 namespace Scanner {
@@ -16,9 +16,9 @@ namespace Scanner {
 	Exception(std::string() + x, __LINE__, scriptName, lineNmbr)
 
 
-//======================================================================================================================
-// statics                                                                                                             =
-//======================================================================================================================
+//==============================================================================
+// statics                                                                     =
+//==============================================================================
 char Scanner::eofChar = 0x7F;
 
 
@@ -62,9 +62,9 @@ Scanner::ResWord* Scanner::rwTable [] =  // reserved word table
 Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
 
 
-//======================================================================================================================
-// Constructors                                                                                                        =
-//======================================================================================================================
+//==============================================================================
+// Constructors                                                                =
+//==============================================================================
 
 Scanner::Scanner(bool newlinesAsWhitespace)
 {
@@ -81,7 +81,8 @@ Scanner::Scanner(const char* filename, bool newlinesAsWhitespace)
 }
 
 
-Scanner::Scanner(std::istream& istream_, const char* scriptName_, bool newlinesAsWhitespace)
+Scanner::Scanner(std::istream& istream_, const char* scriptName_,
+	bool newlinesAsWhitespace)
 {
 	strcpy(scriptName, "unnamed-script");
 	init(newlinesAsWhitespace);
@@ -89,9 +90,9 @@ Scanner::Scanner(std::istream& istream_, const char* scriptName_, bool newlinesA
 }
 
 
-//======================================================================================================================
-// initAsciiMap                                                                                                        =
-//======================================================================================================================
+//==============================================================================
+// initAsciiMap                                                                =
+//==============================================================================
 void Scanner::initAsciiMap()
 {
 	memset(&asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable));
@@ -110,18 +111,22 @@ void Scanner::initAsciiMap()
 		asciiLookupTable[x] = AC_DIGIT;
 	}
 
-	asciiLookupTable[':'] = asciiLookupTable['['] = asciiLookupTable[']'] = asciiLookupTable['('] = AC_SPECIAL;
-	asciiLookupTable[')'] = asciiLookupTable['.'] = asciiLookupTable['{'] = asciiLookupTable['}'] = AC_SPECIAL;
-	asciiLookupTable[','] = asciiLookupTable[';'] = asciiLookupTable['?'] = asciiLookupTable['='] = AC_SPECIAL;
-	asciiLookupTable['!'] = asciiLookupTable['<'] = asciiLookupTable['>'] = asciiLookupTable['|'] = AC_SPECIAL;
-	asciiLookupTable['&'] = asciiLookupTable['+'] = asciiLookupTable['-'] = asciiLookupTable['*'] = AC_SPECIAL;
-	asciiLookupTable['/'] = asciiLookupTable['~'] = asciiLookupTable['%'] = asciiLookupTable['#'] = AC_SPECIAL;
-	asciiLookupTable['^'] = AC_SPECIAL;
+	asciiLookupTable[':'] = asciiLookupTable['['] = asciiLookupTable[']'] =
+		asciiLookupTable['('] = asciiLookupTable[')'] = asciiLookupTable['.'] =
+		asciiLookupTable['{'] = asciiLookupTable['}'] = asciiLookupTable[','] =
+		asciiLookupTable[';'] = asciiLookupTable['?'] = asciiLookupTable['='] =
+		asciiLookupTable['!'] = asciiLookupTable['<'] = asciiLookupTable['>'] =
+		asciiLookupTable['|'] = asciiLookupTable['&'] = asciiLookupTable['+'] =
+		asciiLookupTable['-'] = asciiLookupTable['*'] = asciiLookupTable['/'] =
+		asciiLookupTable['~'] = asciiLookupTable['%'] = asciiLookupTable['#'] =
+		asciiLookupTable['^'] = AC_SPECIAL;
 
-	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] = AC_WHITESPACE;
+	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] =
+		AC_WHITESPACE;
 	asciiLookupTable['\n'] = AC_ERROR; // newline is unacceptable char
 
-	asciiLookupTable['@'] = asciiLookupTable['`'] = asciiLookupTable['$'] = AC_ACCEPTABLE_IN_COMMENTS;
+	asciiLookupTable['@'] = asciiLookupTable['`'] = asciiLookupTable['$'] =
+		AC_ACCEPTABLE_IN_COMMENTS;
 
 	asciiLookupTable['\"']         = AC_DOUBLEQUOTE;
 	asciiLookupTable['\'']         = AC_QUOTE;
@@ -130,9 +135,9 @@ void Scanner::initAsciiMap()
 }
 
 
-//======================================================================================================================
-// init                                                                                                                =
-//======================================================================================================================
+//==============================================================================
+// init                                                                        =
+//==============================================================================
 void Scanner::init(bool newlinesAsWhitespace_)
 {
 	newlinesAsWhitespace = newlinesAsWhitespace_;
@@ -149,9 +154,9 @@ void Scanner::init(bool newlinesAsWhitespace_)
 }
 
 
-//======================================================================================================================
-// getLine                                                                                                             =
-//======================================================================================================================
+//==============================================================================
+// getLine                                                                     =
+//==============================================================================
 void Scanner::getLine()
 {
 	if(!inStream->getline(line, MAX_SCRIPT_LINE_LEN - 1, '\n'))
@@ -168,9 +173,9 @@ void Scanner::getLine()
 }
 
 
-//======================================================================================================================
-// getNextChar                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// getNextChar                                                                 =
+//==============================================================================
 char Scanner::getNextChar()
 {
 	if(*pchar=='\0')
@@ -189,16 +194,16 @@ char Scanner::getNextChar()
 	else if(lookupAscii(*pchar) == AC_ERROR)
 	{
 		throw SCANNER_EXCEPTION("Unacceptable char '" + *pchar + "' 0x" +
-		                        boost::lexical_cast<std::string>(static_cast<uint>(*pchar)));
+			boost::lexical_cast<std::string>(static_cast<uint>(*pchar)));
 	}
 
 	return *pchar;
 }
 
 
-//======================================================================================================================
-// putBackChar                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// putBackChar                                                                 =
+//==============================================================================
 char Scanner::putBackChar()
 {
 	if(pchar != line && *pchar != eofChar)
@@ -210,23 +215,23 @@ char Scanner::putBackChar()
 }
 
 
-//======================================================================================================================
-// getAllPrintAll                                                                                                      =
-//======================================================================================================================
+//==============================================================================
+// getAllPrintAll                                                              =
+//==============================================================================
 void Scanner::getAllPrintAll()
 {
 	do
 	{
 		getNextToken();
-		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() << ": " <<
-			crntToken.getInfoStr() << std::endl;
+		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() <<
+			": " << crntToken.getInfoStr() << std::endl;
 	} while(crntToken.code != TC_EOF);
 }
 
 
-//======================================================================================================================
-// loadFile                                                                                                            =
-//======================================================================================================================
+//==============================================================================
+// loadFile                                                                    =
+//==============================================================================
 void Scanner::loadFile(const char* filename_)
 {
 	inFstream.open(filename_);
@@ -239,9 +244,9 @@ void Scanner::loadFile(const char* filename_)
 }
 
 
-//======================================================================================================================
-// loadIstream                                                                                                        =
-//======================================================================================================================
+//==============================================================================
+// loadIstream                                                                 =
+//==============================================================================
 void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 {
 	if(inStream != NULL)
@@ -252,7 +257,9 @@ void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 	inStream = &istream_;
 
 	// init globals
-	assert(strlen(scriptName_) <= sizeof(scriptName) / sizeof(char) - 1); // Too big name
+
+	// Too big name
+	assert(strlen(scriptName_) <= sizeof(scriptName) / sizeof(char) - 1);
 	crntToken.code = TC_ERROR;
 	lineNmbr = 0;
 	strcpy(scriptName, scriptName_);
@@ -261,18 +268,18 @@ void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 }
 
 
-//======================================================================================================================
-// unload                                                                                                              =
-//======================================================================================================================
+//==============================================================================
+// unload                                                                      =
+//==============================================================================
 void Scanner::unload()
 {
 	inFstream.close();
 }
 
 
-//======================================================================================================================
-// getNextToken                                                                                                        =
-//======================================================================================================================
+//==============================================================================
+// getNextToken                                                                =
+//==============================================================================
 const Token& Scanner::getNextToken()
 {
 	start:
@@ -283,7 +290,9 @@ const Token& Scanner::getNextToken()
 	{
 		crntToken.code = TC_NEWLINE;
 		--commentedLines;
-		++lineNmbr; // the ultimate hack. I should remember not to do such crap in the future
+		// the ultimate hack. I should remember not to do such crap in the
+		// future
+		++lineNmbr;
 	}
 	else if(*pchar == '/')
 	{
@@ -356,7 +365,8 @@ const Token& Scanner::getNextToken()
 			case AC_ERROR:
 			default:
 				getNextChar();
-				throw SCANNER_EXCEPTION("Unexpected character \'" + *pchar + '\'');
+				throw SCANNER_EXCEPTION("Unexpected character \'" + *pchar +
+					'\'');
 				goto start;
 		}
 	}
@@ -375,9 +385,9 @@ const Token& Scanner::getNextToken()
 	return crntToken;
 }
 
-//======================================================================================================================
-// checkWord                                                                                                           =
-//======================================================================================================================
+//==============================================================================
+// checkWord                                                                   =
+//==============================================================================
 void Scanner::checkWord()
 {
 	char* tmpStr = &crntToken.asString[0];
@@ -419,9 +429,9 @@ void Scanner::checkWord()
 }
 
 
-//======================================================================================================================
-// checkComment                                                                                                        =
-//======================================================================================================================
+//==============================================================================
+// checkComment                                                                =
+//==============================================================================
 void Scanner::checkComment()
 {
 	// Beginning
@@ -489,19 +499,22 @@ void Scanner::checkComment()
 }
 
 
-//======================================================================================================================
-// checkNumber                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// checkNumber                                                                 =
+//==============================================================================
 void Scanner::checkNumber()
 {
-	// This func is working great, dont try to understand it and dont even think to try touching it.
+	// This func is working great, dont try to understand it and dont even
+	// think to try touching it.
 
 	//RASSERT_THROW_EXCEPTION(sizeof(long) != 8); // ulong must be 64bit
 	long num = 0;     // value of the number & part of the float num before '.'
 	long fnum = 0;    // part of the float num after '.'
 	long dad = 0;     // digits after dot (for floats)
-	bool expSign = 0; // exponent sign in case float is represented in mant/exp format. 0 means positive and 1 negative
-	long exp = 0;     // the exponent in case float is represented in mant/exp format
+	bool expSign = 0; // exponent sign in case float is represented in mant/exp
+	                  // format. 0 means positive and 1 negative
+	long exp = 0;     // the exponent in case float is represented in mant/exp
+	                  // format
 	char* tmpStr = &crntToken.asString[0];
 	crntToken.dataType = DT_INT;
 	uint asc;
@@ -791,13 +804,14 @@ void Scanner::checkNumber()
 		}
 
 		*tmpStr = '\0';
-		throw SCANNER_EXCEPTION("Bad number suffix \"" + &crntToken.asString[0] + '\"');
+		throw SCANNER_EXCEPTION("Bad number suffix \"" +
+			&crntToken.asString[0] + '\"');
 }
 
 
-//======================================================================================================================
-// checkString                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// checkString                                                                 =
+//==============================================================================
 void Scanner::checkString()
 {
 	char* tmpStr = &crntToken.asString[0];
@@ -810,7 +824,8 @@ void Scanner::checkString()
 		{
 			crntToken.code = TC_ERROR;
 			*tmpStr = '\0';
-			throw SCANNER_EXCEPTION("Incorrect string ending \"" + &crntToken.asString[0] + '\"');
+			throw SCANNER_EXCEPTION("Incorrect string ending \"" +
+				&crntToken.asString[0] + '\"');
 			return;
 		}
 		// Escape Codes
@@ -821,7 +836,8 @@ void Scanner::checkString()
 			{
 				crntToken.code = TC_ERROR;
 				*tmpStr = '\0';
-				throw SCANNER_EXCEPTION("Incorrect string ending \"" + &crntToken.asString[0] + '\"');
+				throw SCANNER_EXCEPTION("Incorrect string ending \"" +
+					&crntToken.asString[0] + '\"');
 				return;
 			}
 
@@ -860,7 +876,8 @@ void Scanner::checkString()
 				case '\0':
 					break; // not an escape char but works almost the same
 				default:
-					throw SCANNER_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
+					throw SCANNER_EXCEPTION(
+						"Unrecognized escape character \'\\" + ch + '\'');
 					*tmpStr++ = ch;
 			}
 		}
@@ -884,9 +901,9 @@ void Scanner::checkString()
 }
 
 
-//======================================================================================================================
-// checkChar                                                                                                           =
-//======================================================================================================================
+//==============================================================================
+// checkChar                                                                   =
+//==============================================================================
 void Scanner::checkChar()
 {
 	char ch = getNextChar();
@@ -953,7 +970,8 @@ void Scanner::checkChar()
 				break;
 			default:
 				ch0 = ch;
-				throw SCANNER_EXCEPTION("Unrecognized escape character \'\\" + ch + '\'');
+				throw SCANNER_EXCEPTION("Unrecognized escape character \'\\" +
+					ch + '\'');
 		}
 		crntToken.value.char_ = ch0;
 	}
@@ -975,9 +993,9 @@ void Scanner::checkChar()
 }
 
 
-//======================================================================================================================
-// checkSpecial                                                                                                        =
-//======================================================================================================================
+//==============================================================================
+// checkSpecial                                                                =
+//==============================================================================
 void Scanner::checkSpecial()
 {
 	char ch = *pchar;

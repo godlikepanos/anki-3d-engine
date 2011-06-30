@@ -32,7 +32,7 @@ class Event
 		GETTER_R(float, startTime, getStartTime)
 		GETTER_R(float, duration, getDuration)
 		GETTER_R(EventType, type, getEventType)
-		bool isDead(float crntTime) const {return crntTime >= startTime + duration;}
+		bool isDead(float crntTime) const;
 		/// @}
 
 		/// Copy
@@ -49,7 +49,8 @@ class Event
 		/// Linear interpolation between values
 		/// @param[in] from Starting value
 		/// @param[in] to Ending value
-		/// @param[in] delta The percentage from the from "from" value. Values from [0.0, 1.0]
+		/// @param[in] delta The percentage from the from "from" value. Values
+		/// from [0.0, 1.0]
 		template<typename Type>
 		static Type interpolate(const Type& from, const Type& to, float delta);
 
@@ -58,6 +59,12 @@ class Event
 		float startTime; ///< The time the event will start. Eg 23:00
 		float duration; ///< The duration of the event
 };
+
+
+inline bool Event::isDead(float crntTime) const
+{
+	return crntTime >= startTime + duration;
+}
 
 
 template<typename Type>

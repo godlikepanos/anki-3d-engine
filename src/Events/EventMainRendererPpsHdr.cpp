@@ -6,37 +6,39 @@
 namespace Event {
 
 
-//======================================================================================================================
-// Constructor                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// Constructor                                                                 =
+//==============================================================================
 MainRendererPpsHdr::MainRendererPpsHdr(float startTime, float duration,
-                                       float exposure_, uint blurringIterationsNum_, float blurringDist_):
-	Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
+	float exposure_, uint blurringIterationsNum_, float blurringDist_)
+:	Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
 {
 	finalData.exposure = exposure_;
 	finalData.blurringIterationsNum = blurringIterationsNum_;
 	finalData.blurringDist = blurringDist_;
 
-	originalData.exposure = MainRendererSingleton::getInstance().getPps().getHdr().getExposure();
-	originalData.blurringIterationsNum =
-		MainRendererSingleton::getInstance().getPps().getHdr().getBlurringIterationsNum();
-	originalData.blurringDist = MainRendererSingleton::getInstance().getPps().getHdr().getBlurringDist();
+	originalData.exposure = MainRendererSingleton::getInstance().getPps().
+		getHdr().getExposure();
+	originalData.blurringIterationsNum = MainRendererSingleton::getInstance().
+		getPps().getHdr().getBlurringIterationsNum();
+	originalData.blurringDist = MainRendererSingleton::getInstance().getPps().
+		getHdr().getBlurringDist();
 }
 
 
-//======================================================================================================================
-// Constructor                                                                                                         =
-//======================================================================================================================
-MainRendererPpsHdr::MainRendererPpsHdr(const MainRendererPpsHdr& b):
-	Event(MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
+//==============================================================================
+// Copy constructor                                                            =
+//==============================================================================
+MainRendererPpsHdr::MainRendererPpsHdr(const MainRendererPpsHdr& b)
+:	Event(MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
 {
 	*this = b;
 }
 
 
-//======================================================================================================================
-// operator=                                                                                                           =
-//======================================================================================================================
+//==============================================================================
+// operator=                                                                   =
+//==============================================================================
 MainRendererPpsHdr& MainRendererPpsHdr::operator=(const MainRendererPpsHdr& b)
 {
 	Event::operator=(b);
@@ -46,9 +48,9 @@ MainRendererPpsHdr& MainRendererPpsHdr::operator=(const MainRendererPpsHdr& b)
 }
 
 
-//======================================================================================================================
-// updateSp                                                                                                            =
-//======================================================================================================================
+//==============================================================================
+// updateSp                                                                    =
+//==============================================================================
 void MainRendererPpsHdr::updateSp(float /*prevUpdateTime*/, float crntTime)
 {
 	float d = crntTime - getStartTime(); // delta
@@ -57,8 +59,9 @@ void MainRendererPpsHdr::updateSp(float /*prevUpdateTime*/, float crntTime)
 	MainRendererSingleton::getInstance().getPps().getHdr().setExposure(
 		interpolate(originalData.exposure, finalData.exposure, dp));
 
-	MainRendererSingleton::getInstance().getPps().getHdr().setBlurringIterationsNum(
-		interpolate(originalData.blurringIterationsNum, finalData.blurringIterationsNum, dp));
+	MainRendererSingleton::getInstance().getPps().getHdr().
+		setBlurringIterationsNum(interpolate(originalData.blurringIterationsNum,
+		finalData.blurringIterationsNum, dp));
 
 	MainRendererSingleton::getInstance().getPps().getHdr().setBlurringDist(
 		interpolate(originalData.blurringDist, finalData.blurringDist, dp));

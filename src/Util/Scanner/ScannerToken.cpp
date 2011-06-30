@@ -1,18 +1,18 @@
+#include "ScannerToken.h"
 #include <cstring>
 #include <cstdio>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
-#include "ScannerToken.h"
 
 
 namespace Scanner {
 
 
-//======================================================================================================================
-// Copy constructor                                                                                                    =
-//======================================================================================================================
-Token::Token(const Token& b):
-	code(b.code),
+//==============================================================================
+// Copy constructor                                                            =
+//==============================================================================
+Token::Token(const Token& b)
+:	code(b.code),
 	dataType(b.dataType)
 {
 	switch(b.dataType)
@@ -34,9 +34,9 @@ Token::Token(const Token& b):
 }
 
 
-//======================================================================================================================
-// getInfoStr                                                                                                          =
-//======================================================================================================================
+//==============================================================================
+// getInfoStr                                                                  =
+//==============================================================================
 std::string Token::getInfoStr() const
 {
 	char tokenInfoStr[512];
@@ -52,13 +52,18 @@ std::string Token::getInfoStr() const
 			sprintf(tokenInfoStr, "string \"%s\"", value.string);
 			break;
 		case TC_CHAR:
-			sprintf(tokenInfoStr, "char '%c' (\"%s\")", value.char_, &asString[0]);
+			sprintf(tokenInfoStr, "char '%c' (\"%s\")", value.char_,
+				&asString[0]);
 			break;
 		case TC_NUMBER:
 			if(dataType == DT_FLOAT)
-				sprintf(tokenInfoStr, "float %f or %e (\"%s\")", value.float_, value.float_, &asString[0]);
+			{
+				sprintf(tokenInfoStr, "float %f or %e (\"%s\")", value.float_,
+					value.float_, &asString[0]);
+			}
 			else
-				sprintf(tokenInfoStr, "int %lu (\"%s\")", value.int_, &asString[0]);
+				sprintf(tokenInfoStr, "int %lu (\"%s\")", value.int_,
+					&asString[0]);
 			break;
 		case TC_IDENTIFIER:
 			sprintf(tokenInfoStr, "identifier \"%s\"", value.string);
@@ -73,7 +78,8 @@ std::string Token::getInfoStr() const
 			}
 			else if(code>=TC_SCOPERESOLUTION && code<=TC_ASSIGNOR)
 			{
-				sprintf(tokenInfoStr, "operator no %d", code - TC_SCOPERESOLUTION);
+				sprintf(tokenInfoStr, "operator no %d",
+					code - TC_SCOPERESOLUTION);
 			}
 	}
 
@@ -81,9 +87,9 @@ std::string Token::getInfoStr() const
 }
 
 
-//======================================================================================================================
-// print                                                                                                               =
-//======================================================================================================================
+//==============================================================================
+// print                                                                       =
+//==============================================================================
 void Token::print() const
 {
 	std::cout << "Token: " << getInfoStr() << std::endl;

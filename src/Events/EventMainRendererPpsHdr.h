@@ -13,7 +13,7 @@ class MainRendererPpsHdr: public Event
 	public:
 		/// Constructor
 		MainRendererPpsHdr(float startTime, float duration,
-		                   float exposure, uint blurringIterationsNum, float blurringDist);
+			float exposure, uint blurringIterationsNum, float blurringDist);
 
 		/// Copy constructor
 		MainRendererPpsHdr(const MainRendererPpsHdr& b);

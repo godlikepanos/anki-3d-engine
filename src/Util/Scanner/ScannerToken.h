@@ -13,7 +13,8 @@ namespace Scanner {
 enum TokenCode
 {
 	// general codes
-	TC_ERROR, TC_EOF, TC_COMMENT, TC_NUMBER, TC_CHAR, TC_STRING, TC_IDENTIFIER, TC_NEWLINE,
+	TC_ERROR, TC_EOF, TC_COMMENT, TC_NUMBER, TC_CHAR, TC_STRING, TC_IDENTIFIER,
+	TC_NEWLINE,
 
 	// keywords listed by strlen (dummy keywords at the moment)
 	TC_KE,
@@ -57,9 +58,11 @@ class TokenDataVal
 		/// @name Accessors
 		/// @{
 		char getChar() const {return char_;} ///< Access the data as C char
-		unsigned long getInt() const {return int_;} ///< Access the data as unsigned int
+		/// Access the data as unsigned int
+		unsigned long getInt() const {return int_;}
 		double getFloat() const {return float_;} ///< Access the data as double
-		const char* getString() const {return string;} ///< Access the data as C string
+		/// Access the data as C string
+		const char* getString() const {return string;}
 		/// @}
 
 	private:
@@ -69,7 +72,9 @@ class TokenDataVal
 			char char_;
 			unsigned long int_;
 			double float_;
-			char* string; ///< points to @ref Token::asString if the token is string or identifier
+			/// Points to @ref Token::asString if the token is string or
+			/// identifier
+			char* string;
 		};
 }; // end class TokenDataVal
 
@@ -82,7 +87,8 @@ class Token
 	public:
 		Token(): code(TC_ERROR) {}
 		Token(const Token& b);
-		std::string getInfoStr() const; ///< Get a string with the info of the token
+		/// Get a string with the info of the token
+		std::string getInfoStr() const;
 		void print() const; ///< Print info of the token
 
 		/// @name accessors
@@ -96,9 +102,10 @@ class Token
 	private:
 		boost::array<char, MAX_SCRIPT_LINE_LEN> asString;
 		TokenCode code; ///< The first thing you should know about a token
-		TokenDataType dataType; ///< Additional info in case @ref code is @ref TC_NUMBER
+		/// Additional info in case @ref code is @ref TC_NUMBER
+		TokenDataType dataType;
 		TokenDataVal value; ///< A value variant
-}; // end class Token
+};
 
 
 } // end namespace

@@ -1,8 +1,8 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#include <fstream>
 #include "ScannerToken.h"
+#include <fstream>
 
 
 namespace Scanner {
@@ -10,13 +10,11 @@ namespace Scanner {
 
 /// C++ Tokenizer
 ///
-/// The Scanner loads a file or an already loaded iostream and extracts the tokens. The script must be in C++ format.
-/// The class does not make any kind of memory allocations so it can be fast.
+/// The Scanner loads a file or an already loaded iostream and extracts the
+/// tokens. The script must be in C++ format. The class does not make any kind
+/// of memory allocations so it can be fast.
 class Scanner
 {
-	//==================================================================================================================
-	// Public                                                                                                          =
-	//==================================================================================================================
 	public:
 		/// Constructor #1
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
@@ -32,7 +30,9 @@ class Scanner
 		/// @see loadIstream
 		/// @param newlinesAsWhitespace @see newlinesAsWhitespace
 		/// @exception Exception
-		Scanner(std::istream& istream_, const char* scriptName_ = "unamed-istream", bool newlinesAsWhitespace = true);
+		Scanner(std::istream& istream_,
+			const char* scriptName_ = "unamed-istream",
+			bool newlinesAsWhitespace = true);
 
 		/// It only unloads the file if file is chosen
 		~Scanner() {unload();}
@@ -46,12 +46,14 @@ class Scanner
 		/// @param istream_ The stream from where to read
 		/// @param scriptName_ The name of the stream. For error reporting
 		/// @exception Exception
-		void loadIstream(std::istream& istream_, const char* scriptName_ = "unamed-istream");
+		void loadIstream(std::istream& istream_,
+			const char* scriptName_ = "unamed-istream");
 
 		/// Extracts all tokens and prints them. Used for debugging
 		void getAllPrintAll();
 
-		/// Get the next token from the stream. Its virtual and you can override it
+		/// Get the next token from the stream. Its virtual and you can
+		/// override it
 		/// @return The next Token
 		/// @exception Exception
 		virtual const Token& getNextToken();
@@ -66,11 +68,9 @@ class Scanner
 		/// Get the current line the Scanner is processing
 		int getLineNumber() const {return lineNmbr;}
 
-	//==================================================================================================================
-	// Protected                                                                                                       =
-	//==================================================================================================================
 	protected:
-		/// Every char in the Ascii table is binded with one characteristic code type. This helps the scanning
+		/// Every char in the Ascii table is binded with one characteristic
+		/// code type. This helps the scanning
 		enum AsciiFlag
 		{
 			AC_ERROR = 0,
@@ -84,7 +84,8 @@ class Scanner
 			AC_ACCEPTABLE_IN_COMMENTS = 128 ///< Only accepted in comments
 		};
 
-		/// Reserved words like "int" "const" etc. Currently the reserved words list is being populated with dummy data
+		/// Reserved words like "int" "const" etc. Currently the reserved words
+		/// list is being populated with dummy data
 		struct ResWord
 		{
 			const char* string;
@@ -93,7 +94,8 @@ class Scanner
 
 		static char eofChar; ///< Special end of file character
 
-		static AsciiFlag asciiLookupTable[]; ///< The array contains one AsciiFlag for every symbol of the ASCII table
+		/// The array contains one AsciiFlag for every symbol of the ASCII table
+		static AsciiFlag asciiLookupTable[];
 
 		/// @name Reserved words
 		/// Groups of ResWord grouped by the length of the ResWord::string
@@ -101,26 +103,35 @@ class Scanner
 		static ResWord rw2[], rw3[], rw4[], rw5[], rw6[], rw7[];
 		/// @}
 
-		static ResWord* rwTable[]; ///< The array contains all the groups of ResWord
+		/// The array contains all the groups of ResWord
+		static ResWord* rwTable[];
 
 		Token crntToken; ///< The current token
-		char  line[MAX_SCRIPT_LINE_LEN]; ///< In contains the current line's text
+		/// In contains the current line's text
+		char  line[MAX_SCRIPT_LINE_LEN];
 		char* pchar; ///< Points somewhere to @ref line
 		int   lineNmbr; ///< The number of the current line
 
-		/// Treat newlines as whitespace. If false means that the Scanner returns (among others) newline tokens
+		/// Treat newlines as whitespace. If false means that the Scanner
+		/// returns (among others) newline tokens
 		bool newlinesAsWhitespace;
 
 		/// Commented lines number
-		/// Used to keep track of the newlines in multiline comments so we can then return the correct number of newlines
+		/// Used to keep track of the newlines in multiline comments so we can
+		/// then return the correct number of newlines
 		/// in case of newlinesAsWhitespace is false
 		int commentedLines;
 
 		/// @name Input
 		/// @{
-		std::ifstream inFstream; ///< The file stream. Used if the @ref Scanner is initiated using @ref loadFile
-		std::istream* inStream; ///< Points to either @ref inFstream or an external std::istream
-		char scriptName[512]; ///< The name of the input stream. Mainly used for error messaging
+
+		/// The file stream. Used if the @ref Scanner is initiated using
+		/// @ref loadFile
+		std::ifstream inFstream;
+		/// Points to either @ref inFstream or an external std::istream
+		std::istream* inStream;
+		/// The name of the input stream. Mainly used for error messaging
+		char scriptName[512];
 		/// @}
 
 		/// @name Checkers
@@ -133,17 +144,20 @@ class Scanner
 		void checkSpecial();
 		/// @}
 
-		/// It reads a new line from the iostream and it points @ref pchar to the beginning of that line
+		/// It reads a new line from the iostream and it points @ref pchar to
+		/// the beginning of that line
 		void getLine();
 
-		/// Get the next char from the @ref line. If @ref line empty then get new line. It returns '\\0' if we are in the
+		/// Get the next char from the @ref line. If @ref line empty then get
+		/// new line. It returns '\\0' if we are in the
 		/// end of the line
 		char getNextChar();
 
 		/// Put the char that @ref getNextChar got back to the current line
 		char putBackChar();
 
-		/// Initializes the asciiLookupTable. It runs only once in the construction of the first Scanner @see Scanner()
+		/// Initializes the asciiLookupTable. It runs only once in the
+		/// construction of the first Scanner @see Scanner()
 		static void initAsciiMap();
 
 		/// To save us from typing
@@ -154,7 +168,7 @@ class Scanner
 
 		/// Unloads the file
 		void unload();
-}; // end class Scanner
+};
 
 
 } // end namespace
