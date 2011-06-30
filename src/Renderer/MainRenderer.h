@@ -2,7 +2,7 @@
 #define MAIN_RENDERER_H
 
 #include "Renderer.h"
-#include "Singleton.h"
+#include "Util/Singleton.h"
 
 
 /// Main onscreen renderer

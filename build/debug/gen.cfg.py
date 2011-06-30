@@ -3,6 +3,8 @@ sourcePaths.extend(list(walkDir("../../src")))
 
 includePaths = ["./"]
 includePaths.extend(list(sourcePaths))
+includePaths.remove("../../src/Scripting/Events")
+print(includePaths)
 includePaths.extend(["../../extern/include", "../../extern/include/bullet", "/usr/include/python2.6", "/usr/include/freetype2"])
 
 executableName = "anki"

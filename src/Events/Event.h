@@ -1,8 +1,8 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include "StdTypes.h"
-#include "Accessors.h"
+#include "Util/StdTypes.h"
+#include "Util/Accessors.h"
 
 
 namespace Event {

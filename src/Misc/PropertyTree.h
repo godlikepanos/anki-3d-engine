@@ -3,7 +3,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
-#include "Math.h"
+#include "Math/Math.h"
 
 
 namespace PropertyTree {

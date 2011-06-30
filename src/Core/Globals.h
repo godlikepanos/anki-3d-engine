@@ -1,7 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "Singleton.h"
+#include "Util/Singleton.h"
 
 
 typedef Singleton<class Logger> LoggerSingleton;

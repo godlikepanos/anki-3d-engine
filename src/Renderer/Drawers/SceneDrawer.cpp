@@ -1,5 +1,5 @@
 #include "SceneDrawer.h"
-#include "Math.h"
+#include "Math/Math.h"
 #include "Material.h"
 #include "RenderableNode.h"
 #include "Camera.h"
@@ -7,12 +7,12 @@
 #include "App.h"
 #include "Scene.h"
 #include "MaterialRuntime.h"
-#include "GlStateMachine.h"
+#include "GfxApi/GlStateMachine.h"
 
 
-//======================================================================================================================
-// Constructor                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// Constructor                                                                 =
+//==============================================================================
 SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MaterialRuntimeUserDefinedVar& udvr_,
                                                 const Renderer& r_, uint& texUnit_):
 	udvr(udvr_),
@@ -21,9 +21,9 @@ SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MaterialRuntimeUserDefined
 {}
 
 
-//======================================================================================================================
-// Visitor functors                                                                                                    =
-//======================================================================================================================
+//==============================================================================
+// Visitor functors                                                            =
+//==============================================================================
 
 
 template<typename Type>
@@ -67,9 +67,9 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const MtlUserDefinedVar::Fai& x) 
 
 
 
-//======================================================================================================================
-// setupShaderProg                                                                                                     =
-//======================================================================================================================
+//==============================================================================
+// setupShaderProg                                                             =
+//==============================================================================
 void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& nodeWorldTransform, const Camera& cam,
                                   const Renderer& r, float blurring)
 {
@@ -238,9 +238,9 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 }
 
 
-//======================================================================================================================
-// renderRenderableNode                                                                                                =
-//======================================================================================================================
+//==============================================================================
+// renderRenderableNode                                                        =
+//==============================================================================
 void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const Camera& cam,
                                        RenderingPassType rtype) const
 {

@@ -1,11 +1,14 @@
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
-#include "Assert.h"
+#include "Util/Assert.h"
 
 
-//======================================================================================================================
-// set                                                                                                                 =
-//======================================================================================================================
+namespace Col {
+
+
+//==============================================================================
+// set                                                                         =
+//==============================================================================
 template<typename Container>
 void Sphere::set(const Container& container)
 {
@@ -15,7 +18,8 @@ void Sphere::set(const Container& container)
 	Vec3 max(container.front());
 
 	// for all the Vec3 calc the max and min
-	BOOST_FOREACH(const Vec3& v, boost::make_iterator_range(container.begin() + 1, container.end()))
+	BOOST_FOREACH(const Vec3& v,
+		boost::make_iterator_range(container.begin() + 1, container.end()))
 	{
 		for(int j = 0; j < 3; j++)
 		{
@@ -32,8 +36,11 @@ void Sphere::set(const Container& container)
 
 	center = (min + max) * 0.5; // average
 
-	float maxDist = (container.front() - center).getLengthSquared(); // max distance between center and the vec3 arr
-	BOOST_FOREACH(const Vec3& v, boost::make_iterator_range(container.begin() + 1, container.end()))
+	// max distance between center and the vec3 arr
+	float maxDist = (container.front() - center).getLengthSquared();
+
+	BOOST_FOREACH(const Vec3& v,
+		boost::make_iterator_range(container.begin() + 1, container.end()))
 	{
 		float dist = (v - center).getLengthSquared();
 		if(dist > maxDist)
@@ -44,3 +51,6 @@ void Sphere::set(const Container& container)
 
 	radius = M::sqrt(maxDist);
 }
+
+
+} // end namespace

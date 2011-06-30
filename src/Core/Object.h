@@ -1,7 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "Vec.h"
+#include "Util/Vec.h"
 
 
 /// A class for automatic garbage collection. Cause we -the programmers- get bored when it comes to deallocation. Dont

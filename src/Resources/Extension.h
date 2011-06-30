@@ -1,7 +1,7 @@
 #ifndef EXTENSION_H
 #define EXTENSION_H
 
-#include "StdTypes.h"
+#include "Util/StdTypes.h"
 
 
 /// Extension @ref Resource resource

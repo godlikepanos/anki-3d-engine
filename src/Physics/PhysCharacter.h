@@ -2,8 +2,8 @@
 #define PHYS_CHARACTER_H
 
 #include "PhysMasterContainer.h"
-#include "Math.h"
-#include "Object.h"
+#include "Math/Math.h"
+#include "Core/Object.h"
 
 
 class btPairCachingGhostObject;

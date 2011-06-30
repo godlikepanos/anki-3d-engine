@@ -2,9 +2,9 @@
 #define FBO_H
 
 #include <GL/glew.h>
-#include "Assert.h"
-#include "StdTypes.h"
-#include "Exception.h"
+#include "Util/Assert.h"
+#include "Util/StdTypes.h"
+#include "Util/Exception.h"
 
 
 /// The class is actually a wrapper to avoid common mistakes
@@ -50,9 +50,9 @@ class Fbo
 };
 
 
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
+//==============================================================================
+// Inlines                                                                     =
+//==============================================================================
 
 inline void Fbo::create()
 {

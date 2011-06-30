@@ -4,15 +4,15 @@
 #include <boost/array.hpp>
 #include <map>
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "ShaderProg.h"
-#include "RsrcPtr.h"
-#include "Math.h"
-#include "Vbo.h"
-#include "Vao.h"
-#include "SceneDbgDrawer.h"
-#include "CollisionDbgDrawer.h"
-#include "Accessors.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/ShaderProg.h"
+#include "Resources/RsrcPtr.h"
+#include "Math/Math.h"
+#include "GfxApi/BufferObjects/Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
+#include "Drawers/SceneDbgDrawer.h"
+#include "Drawers/CollisionDbgDrawer.h"
+#include "Util/Accessors.h"
 
 
 /// Debugging stage

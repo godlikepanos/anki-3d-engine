@@ -2,8 +2,8 @@
 #define SCENE_DRAWER_H
 
 #include <boost/variant.hpp>
-#include "Math.h"
-#include "MtlUserDefinedVar.h"
+#include "Math/Math.h"
+#include "Resources/MtlUserDefinedVar.h"
 
 
 class RenderableNode;

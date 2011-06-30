@@ -7,9 +7,9 @@
 namespace Phys {
 
 
-//======================================================================================================================
-// Constructor                                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// Constructor                                                                 =
+//==============================================================================
 MasterContainer::MasterContainer():
 	defaultContactProcessingThreshold(BT_LARGE_FLOAT)
 {
@@ -19,16 +19,32 @@ MasterContainer::MasterContainer():
 	sol = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, sol, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0,-10, 0));
-
-	/*debugDrawer = new PhyDbgDrawer;
-	dynamicsWorld->setDebugDrawer(debugDrawer);
-	dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe);*/
 }
 
 
-//======================================================================================================================
-// update                                                                                                              =
-//======================================================================================================================
+//==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+MasterContainer::~MasterContainer()
+{
+	/// @todo
+}
+
+
+//==============================================================================
+// setDebugDrawer                                                              =
+//==============================================================================
+void MasterContainer::setDebugDrawer(btIDebugDraw* newDebugDrawer)
+{
+	debugDrawer.reset(newDebugDrawer);
+	dynamicsWorld->setDebugDrawer(debugDrawer.get());
+	debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+}
+
+
+//==============================================================================
+// update                                                                      =
+//==============================================================================
 void MasterContainer::update(float prevUpdateTime, float crntTime)
 {
 	dynamicsWorld->stepSimulation(crntTime - prevUpdateTime);

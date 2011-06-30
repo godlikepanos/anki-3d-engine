@@ -1,7 +1,7 @@
 #ifndef MAT3_H
 #define MAT3_H
 
-#include "MathCommon.h"
+#include "Common.h"
 
 
 namespace M {

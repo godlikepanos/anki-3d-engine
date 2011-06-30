@@ -3,10 +3,10 @@
 
 #include <boost/array.hpp>
 #include "SceneNode.h"
-#include "RsrcPtr.h"
-#include "Accessors.h"
+#include "Resources/RsrcPtr.h"
+#include "Util/Accessors.h"
 #include "ModelPatchNode.h"
-#include "Vec.h"
+#include "Util/Vec.h"
 #include "Obb.h"
 
 

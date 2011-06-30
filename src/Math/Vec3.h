@@ -1,7 +1,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#include "MathCommon.h"
+#include "Common.h"
 
 
 namespace M {

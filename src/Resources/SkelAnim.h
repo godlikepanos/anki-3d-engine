@@ -1,9 +1,9 @@
 #ifndef SKEL_ANIM_H
 #define SKEL_ANIM_H
 
-#include "Math.h"
-#include "Vec.h"
-#include "Accessors.h"
+#include "Math/Math.h"
+#include "Util/Vec.h"
+#include "Util/Accessors.h"
 
 
 /// Bone pose

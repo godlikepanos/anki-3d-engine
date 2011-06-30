@@ -1,8 +1,11 @@
-#ifndef LINE_SEGMENT_H
-#define LINE_SEGMENT_H
+#ifndef COL_LINE_SEGMENT_H
+#define COL_LINE_SEGMENT_H
 
 #include "CollisionShape.h"
-#include "Math.h"
+#include "Math/Math.h"
+
+
+namespace Col {
 
 
 class LineSegment: public CollisionShape
@@ -35,18 +38,21 @@ class LineSegment: public CollisionShape
 };
 
 
-inline LineSegment::LineSegment(const Vec3& origin_, const Vec3& direction):
-	CollisionShape(CST_LINE_SEG),
+inline LineSegment::LineSegment(const Vec3& origin_, const Vec3& direction)
+:	CollisionShape(CST_LINE_SEG),
 	origin(origin_),
 	dir(direction)
 {}
 
 
-inline LineSegment::LineSegment(const LineSegment& b):
-	CollisionShape(CST_LINE_SEG),
+inline LineSegment::LineSegment(const LineSegment& b)
+:	CollisionShape(CST_LINE_SEG),
 	origin(b.origin),
 	dir(b.dir)
 {}
+
+
+} // end namespace
 
 
 #endif

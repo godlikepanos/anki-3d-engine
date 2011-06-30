@@ -3,7 +3,7 @@
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "Math.h"
+#include "Math/Math.h"
 
 
 inline Vec3 toAnki(const btVector3& v)

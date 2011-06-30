@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Logger.h"
+#include "Core/Logger.h"
 
 
 WRAP(Logger)

@@ -128,10 +128,10 @@ void Scanner::initAsciiMap()
 	asciiLookupTable['@'] = asciiLookupTable['`'] = asciiLookupTable['$'] =
 		AC_ACCEPTABLE_IN_COMMENTS;
 
-	asciiLookupTable['\"']         = AC_DOUBLEQUOTE;
-	asciiLookupTable['\'']         = AC_QUOTE;
+	asciiLookupTable['\"'] = AC_DOUBLEQUOTE;
+	asciiLookupTable['\''] = AC_QUOTE;
 	asciiLookupTable[(int)eofChar] = AC_EOF;
-	asciiLookupTable['_']          = AC_LETTER;
+	asciiLookupTable['_'] = AC_LETTER;
 }
 
 

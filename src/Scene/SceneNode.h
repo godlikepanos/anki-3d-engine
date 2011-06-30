@@ -3,10 +3,10 @@
 
 #include <memory>
 #include <string>
-#include "Math.h"
-#include "Object.h"
-#include "Obb.h"
-#include "Accessors.h"
+#include "Math/Math.h"
+#include "Core/Object.h"
+#include "Collision/Obb.h"
+#include "Util/Accessors.h"
 
 
 class Material;

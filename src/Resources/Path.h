@@ -1,7 +1,7 @@
 #ifndef PATH_H
 #define PATH_H
 
-#include "Math.h"
+#include "Math/Math.h"
 
 
 /// Path @ref Resource resource

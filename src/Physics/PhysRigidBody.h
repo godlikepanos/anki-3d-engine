@@ -4,7 +4,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
-#include "Math.h"
+#include "Math/Math.h"
 
 
 class SceneNode;

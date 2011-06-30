@@ -1,7 +1,7 @@
 #ifndef SKINS_DEFORMER_H
 #define SKINS_DEFORMER_H
 
-#include "RsrcPtr.h"
+#include "Resources/RsrcPtr.h"
 
 
 class ShaderProg;

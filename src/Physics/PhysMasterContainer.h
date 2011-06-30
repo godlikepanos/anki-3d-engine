@@ -1,13 +1,14 @@
 #ifndef PHYS_MASTER_CONTAINER_H
 #define PHYS_MASTER_CONTAINER_H
 
+#include "PhysConvertors.h"
+#include "Util/Vec.h"
+#include <boost/scoped_ptr.hpp>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "PhysConvertors.h"
-#include "PhyDbgDrawer.h" ///< @todo Remove this crap from here. Its Renderer's stuff
-#include "Vec.h"
 
 
+class btIDebugDraw;
 namespace Phys {
 class Character;
 class RigidBody;
@@ -35,10 +36,12 @@ class MasterContainer
 
 	public:
 		MasterContainer();
+		~MasterContainer();
 
 		/// @name Accessors
 		/// @{
 		btDiscreteDynamicsWorld& getWorld() {return *dynamicsWorld;}
+		void setDebugDrawer(btIDebugDraw* newDebugDrawer);
 		/// @}
 
 		/// Time as always in sec
@@ -50,7 +53,7 @@ class MasterContainer
 		btCollisionDispatcher* dispatcher; ///< Contains the algorithms of collision
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
-		PhyDbgDrawer* debugDrawer; ///< @todo Remove this crap from here. Its Renderer's stuff
+		boost::scoped_ptr<btIDebugDraw> debugDrawer; ///< Keep here for garbage collection
 		float defaultContactProcessingThreshold;
 		Vec<Character*> characters;
 };

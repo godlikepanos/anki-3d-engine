@@ -2,12 +2,12 @@
 #define SMO_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "ShaderProg.h"
-#include "RsrcPtr.h"
-#include "Vbo.h"
-#include "Vao.h"
-#include "Camera.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/ShaderProg.h"
+#include "Resources/RsrcPtr.h"
+#include "GfxApi/BufferObjects/Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
+#include "Scene/Camera.h"
 
 
 class PointLight;

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "Material.h"
-#include "RsrcPtr.h"
+#include "Resources/RsrcPtr.h"
 
 
 TEST(MaterialTests, Test)

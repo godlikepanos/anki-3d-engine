@@ -2,8 +2,8 @@
 #define EZ_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "Accessors.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Util/Accessors.h"
 
 
 /// Material stage EarlyZ pass

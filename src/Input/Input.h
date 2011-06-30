@@ -3,9 +3,9 @@
 
 #include <SDL/SDL_scancode.h>
 #include <boost/array.hpp>
-#include "Math.h"
-#include "Singleton.h"
-#include "Accessors.h"
+#include "Math/Math.h"
+#include "Util/Singleton.h"
+#include "Util/Accessors.h"
 
 
 /// Handle the SDL input

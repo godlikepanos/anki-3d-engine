@@ -1,11 +1,11 @@
 #include "ScriptingCommon.h"
-#include "Globals.h"
-#include "Logger.h"
+#include "Core/Globals.h"
+#include "Core/Logger.h"
 #include "MainRenderer.h"
 #include "Input.h"
 #include "Scene.h"
 #include "App.h"
-#include "EventManager.h"
+#include "Events/Manager.h"
 
 
 WRAP_SINGLETON(LoggerSingleton)

@@ -2,10 +2,10 @@
 #define SM_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "Texture.h"
-#include "Accessors.h"
-#include "VisibilityTester.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/Texture.h"
+#include "Util/Accessors.h"
+#include "Scene/VisibilityTester.h"
 
 
 class Light;

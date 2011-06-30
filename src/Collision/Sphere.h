@@ -1,8 +1,11 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef COL_SPHERE_H
+#define COL_SPHERE_H
 
 #include "CollisionShape.h"
-#include "Math.h"
+#include "Math/Math.h"
+
+
+namespace Col {
 
 
 class Plane;
@@ -34,8 +37,8 @@ class Sphere: public CollisionShape
 
 		Sphere getTransformed(const Transform& transform) const;
 
-		/// Get the sphere that includes this sphere and the given. See a drawing in the docs dir for more info about the
-		/// algorithm
+		/// Get the sphere that includes this sphere and the given. See a
+		/// drawing in the docs dir for more info about the algorithm
 		Sphere getCompoundShape(const Sphere& b) const;
 
 		/// @see CollisionShape::testPlane
@@ -51,18 +54,21 @@ class Sphere: public CollisionShape
 };
 
 
-inline Sphere::Sphere(const Sphere& b):
-	CollisionShape(CST_SPHERE),
+inline Sphere::Sphere(const Sphere& b)
+:	CollisionShape(CST_SPHERE),
 	center(b.center),
 	radius(b.radius)
 {}
 
 
-inline Sphere::Sphere(const Vec3& center_, float radius_):
-	CollisionShape(CST_SPHERE),
+inline Sphere::Sphere(const Vec3& center_, float radius_)
+:	CollisionShape(CST_SPHERE),
 	center(center_),
 	radius(radius_)
 {}
+
+
+} // end namespace
 
 
 #include "Sphere.inl.h"

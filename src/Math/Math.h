@@ -11,7 +11,7 @@
 #include "Euler.h"
 #include "Mat3.h"
 #include "Mat4.h"
-#include "MathFuncs.h"
+#include "Funcs.h"
 #include "Transform.h"
 
 
