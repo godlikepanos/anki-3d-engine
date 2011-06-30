@@ -2,8 +2,8 @@
 #define VISIBILITY_INFO_H
 
 #include <deque>
-#include "Vec.h"
-#include "Accessors.h"
+#include "Util/Vec.h"
+#include "Util/Accessors.h"
 
 
 class RenderableNode;

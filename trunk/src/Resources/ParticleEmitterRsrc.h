@@ -1,7 +1,7 @@
 #ifndef PARTICLE_EMITTER_RSRC_H
 #define PARTICLE_EMITTER_RSRC_H
 
-#include "Math.h"
+#include "Math/Math.h"
 
 
 /// This is the properties of the particle emitter resource

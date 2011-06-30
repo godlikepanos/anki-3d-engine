@@ -4,7 +4,7 @@
 #include <boost/thread.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "Accessors.h"
+#include "Util/Accessors.h"
 
 
 class JobManager;

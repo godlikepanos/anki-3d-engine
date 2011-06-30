@@ -2,21 +2,25 @@
 #include "Plane.h"
 
 
-//======================================================================================================================
-// getTransformed                                                                                                      =
-//======================================================================================================================
+namespace Col {
+
+
+//==============================================================================
+// getTransformed                                                              =
+//==============================================================================
 Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;
-	newSphere.center = center.getTransformed(transform.getOrigin(), transform.getRotation(), transform.getScale());
+	newSphere.center = center.getTransformed(transform.getOrigin(),
+		transform.getRotation(), transform.getScale());
 	newSphere.radius = radius * transform.getScale();
 	return newSphere;
 }
 
 
-//======================================================================================================================
-// getCompoundShape                                                                                                   =
-//======================================================================================================================
+//==============================================================================
+// getCompoundShape                                                            =
+//==============================================================================
 Sphere Sphere::getCompoundShape(const Sphere& b) const
 {
 	const Sphere& a = *this;
@@ -43,11 +47,13 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	{
 		float l = sqrt(lenSqr);
 		float t = (l + b.radius - a.radius) / (2.0 * l);
-		return Sphere(a.center + t * centerDiff, (l + a.radius + b.radius) / 2.0);
+		return Sphere(a.center + t * centerDiff, (l + a.radius + b.radius) /
+			2.0);
 	}
 	*/
 
-	Vec3 c = b.getCenter() - a.getCenter(); // vector from one center to the other
+	Vec3 c = b.getCenter() - a.getCenter(); // Vector from one center to the
+	                                        // other
 	float cLen = c.getLength();
 
 	if(cLen + b.getRadius() < a.getRadius())
@@ -68,9 +74,9 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 }
 
 
-//======================================================================================================================
-// testPlane                                                                                                           =
-//======================================================================================================================
+//==============================================================================
+// testPlane                                                                   =
+//==============================================================================
 float Sphere::testPlane(const Plane& plane) const
 {
 	float dist = plane.test(center);
@@ -88,3 +94,6 @@ float Sphere::testPlane(const Plane& plane) const
 		return 0.0;
 	}
 }
+
+
+} // end namespace

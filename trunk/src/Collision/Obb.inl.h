@@ -2,9 +2,12 @@
 #include <boost/range/iterator_range.hpp>
 
 
-//======================================================================================================================
-// set                                                                                                                 =
-//======================================================================================================================
+namespace Col {
+
+
+//==============================================================================
+// set                                                                         =
+//==============================================================================
 template<typename Container>
 void Obb::set(const Container& container)
 {
@@ -14,7 +17,8 @@ void Obb::set(const Container& container)
 	Vec3 max(container.front());
 
 	// for all the Vec3s calc the max and min
-	BOOST_FOREACH(const Vec3& v, boost::make_iterator_range(container.begin() + 1, container.end()))
+	BOOST_FOREACH(const Vec3& v,
+		boost::make_iterator_range(container.begin() + 1, container.end()))
 	{
 		for(int j = 0; j < 3; j++)
 		{
@@ -34,3 +38,6 @@ void Obb::set(const Container& container)
 	rotation = Mat3::getIdentity();
 	extends = max - center;
 }
+
+
+} // end namespace

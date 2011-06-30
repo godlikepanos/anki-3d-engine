@@ -3,9 +3,9 @@
 
 #include "SceneNode.h"
 #include "SkinPatchNode.h"
-#include "Vec.h"
-#include "Math.h"
-#include "Accessors.h"
+#include "Util/Vec.h"
+#include "Math/Math.h"
+#include "Util/Accessors.h"
 
 
 class Skin;

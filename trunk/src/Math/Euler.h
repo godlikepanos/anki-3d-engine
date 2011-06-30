@@ -1,7 +1,7 @@
 #ifndef EULER_H
 #define EULER_H
 
-#include "MathCommon.h"
+#include "Common.h"
 
 
 namespace M {

@@ -2,10 +2,10 @@
 #define PATCH_NODE_H
 
 #include <boost/scoped_ptr.hpp>
-#include "Vao.h"
-#include "Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
+#include "GfxApi/BufferObjects/Vbo.h"
 #include "Mesh.h" // For the Vbos enum
-#include "RsrcPtr.h"
+#include "Resources/RsrcPtr.h"
 #include "ModelPatch.h"
 #include "RenderableNode.h"
 #include "MaterialRuntime.h"

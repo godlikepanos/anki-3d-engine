@@ -1,7 +1,7 @@
 #ifndef QUAT_H
 #define QUAT_H
 
-#include "MathCommon.h"
+#include "Common.h"
 
 
 namespace M {

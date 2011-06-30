@@ -2,9 +2,9 @@
 #define PPS_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "Texture.h"
-#include "RsrcPtr.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/Texture.h"
+#include "Resources/RsrcPtr.h"
 #include "Hdr.h"
 #include "Ssao.h"
 #include "Bl.h"

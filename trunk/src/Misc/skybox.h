@@ -1,10 +1,10 @@
 #ifndef _SKYBOX_H_
 #define _SKYBOX_H_
 
-#include "Texture.h"
-#include "Math.h"
-#include "RsrcPtr.h"
-#include "ShaderProg.h"
+#include "Resources/Texture.h"
+#include "Math/Math.h"
+#include "Resources/RsrcPtr.h"
+#include "Resources/ShaderProg.h"
 
 class Skybox
 {

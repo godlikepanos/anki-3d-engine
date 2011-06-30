@@ -3,8 +3,8 @@
 
 #include <boost/array.hpp>
 #include "PatchNode.h"
-#include "Vbo.h"
-#include "Vao.h"
+#include "GfxApi/BufferObjects/Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
 
 
 class SkinNode;

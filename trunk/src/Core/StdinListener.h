@@ -5,7 +5,7 @@
 #include <boost/thread/mutex.hpp>
 #include <string>
 #include <queue>
-#include "Singleton.h"
+#include "Util/Singleton.h"
 
 
 /// The listener of the stdin.

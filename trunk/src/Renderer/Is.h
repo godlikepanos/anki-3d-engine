@@ -2,13 +2,13 @@
 #define IS_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "Texture.h"
-#include "RsrcPtr.h"
-#include "ShaderProg.h"
-#include "Math.h"
-#include "Vbo.h"
-#include "Vao.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/Texture.h"
+#include "Resources/RsrcPtr.h"
+#include "Resources/ShaderProg.h"
+#include "Math/Math.h"
+#include "GfxApi/BufferObjects/Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
 #include "Sm.h"
 #include "Smo.h"
 

@@ -2,12 +2,12 @@
 #define SSAO_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "Texture.h"
-#include "ShaderProg.h"
-#include "RsrcPtr.h"
-#include "Vbo.h"
-#include "Vao.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/Texture.h"
+#include "Resources/ShaderProg.h"
+#include "Resources/RsrcPtr.h"
+#include "GfxApi/BufferObjects/Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
 
 
 /// Screen space ambient occlusion pass

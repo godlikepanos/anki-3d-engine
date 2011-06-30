@@ -1,10 +1,10 @@
 #ifndef LIGHT_PROPS_H
 #define LIGHT_PROPS_H
 
-#include "Math.h"
+#include "Math/Math.h"
 #include "RsrcPtr.h"
-#include "Texture.h"
-#include "Accessors.h"
+#include "Resources/Texture.h"
+#include "Util/Accessors.h"
 
 
 /// Properties common for all lights

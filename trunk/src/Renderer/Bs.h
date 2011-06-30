@@ -2,9 +2,9 @@
 #define BS_H
 
 #include "RenderingPass.h"
-#include "Fbo.h"
-#include "RsrcPtr.h"
-#include "Texture.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/RsrcPtr.h"
+#include "Resources/Texture.h"
 
 
 class ShaderProg;

@@ -2,7 +2,7 @@
 #define SCRIPTING_ENGINE_H
 
 #include <boost/python.hpp>
-#include "Singleton.h"
+#include "Util/Singleton.h"
 
 
 /// The scripting engine using Python

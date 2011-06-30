@@ -1,22 +1,22 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "Math.h"
-#include "Fbo.h"
-#include "Texture.h"
-#include "ShaderProg.h"
-#include "Vbo.h"
-#include "Vao.h"
-#include "RsrcPtr.h"
+#include "Math/Math.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Resources/Texture.h"
+#include "Resources/ShaderProg.h"
+#include "GfxApi/BufferObjects/Vbo.h"
+#include "GfxApi/BufferObjects/Vao.h"
+#include "Resources/RsrcPtr.h"
 #include "Ms.h"
 #include "Is.h"
 #include "Pps.h"
 #include "Bs.h"
 #include "Dbg.h"
-#include "GlException.h"
-#include "SceneDrawer.h"
+#include "GfxApi/GlException.h"
+#include "Drawers/SceneDrawer.h"
 #include "SkinsDeformer.h"
-#include "GlStateMachine.h"
+#include "GfxApi/GlStateMachine.h"
 
 
 class Camera;

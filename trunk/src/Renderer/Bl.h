@@ -2,10 +2,10 @@
 #define BL_H
 
 #include "RenderingPass.h"
-#include "Accessors.h"
-#include "Texture.h"
-#include "RsrcPtr.h"
-#include "Fbo.h"
+#include "Util/Accessors.h"
+#include "Resources/Texture.h"
+#include "Resources/RsrcPtr.h"
+#include "GfxApi/BufferObjects/Fbo.h"
 
 
 class ShaderProg;

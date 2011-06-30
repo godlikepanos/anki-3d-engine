@@ -2,8 +2,8 @@
 #define BUFFER_OBJECT_H
 
 #include <GL/glew.h>
-#include "Assert.h"
-#include "StdTypes.h"
+#include "Util/Assert.h"
+#include "Util/StdTypes.h"
 
 
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
@@ -70,9 +70,9 @@ class BufferObject
 };
 
 
-//======================================================================================================================
-// Inlines                                                                                                             =
-//======================================================================================================================
+//==============================================================================
+// Inlines                                                                     =
+//==============================================================================
 
 inline BufferObject::BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage):
 	glId(0)

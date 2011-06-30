@@ -32,9 +32,9 @@ using namespace boost::python;
 #define CALL_WRAP(x) extern void boostPythonWrap##x(); boostPythonWrap##x()
 
 
-//======================================================================================================================
-// Property for simple types                                                                                           =
-//======================================================================================================================
+//==============================================================================
+// Property for simple types                                                   =
+//==============================================================================
 
 template<typename ClassType, typename RetType, const RetType& (ClassType::* accessor)() const>
 RetType getterSv(const ClassType* t)
@@ -55,9 +55,9 @@ void setterSv(ClassType* t, InType in)
 	              &setterSv<Class__, Type__, &Class__::setter__>)
 
 
-//======================================================================================================================
-// Math library stuff                                                                                                  =
-//======================================================================================================================
+//==============================================================================
+// Math library stuff                                                          =
+//==============================================================================
 
 template<typename ClassType, typename RetType, RetType (ClassType::* accessor)() const>
 RetType getM(const ClassType* t)

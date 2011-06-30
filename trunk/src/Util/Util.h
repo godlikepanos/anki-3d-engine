@@ -2,8 +2,8 @@
 #define UTIL_H
 
 #include <string>
-#include "Vec.h"
-#include "StdTypes.h"
+#include "Util/Vec.h"
+#include "Util/StdTypes.h"
 
 
 /// The namespace contains a few useful functions

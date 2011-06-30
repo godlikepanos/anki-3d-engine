@@ -1,7 +1,7 @@
 #ifndef MAT4_H
 #define MAT4_H
 
-#include "MathCommon.h"
+#include "Common.h"
 
 
 namespace M {

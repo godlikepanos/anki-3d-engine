@@ -2,7 +2,7 @@
 #define PARSER_H
 
 #include <boost/lexical_cast.hpp>
-#include "Exception.h"
+#include "Util/Exception.h"
 #include "Scanner.h"
 
 

@@ -1,7 +1,7 @@
 #ifndef HIGH_REZ_TIMER_H
 #define HIGH_REZ_TIMER_H
 
-#include "StdTypes.h"
+#include "Util/StdTypes.h"
 
 
 /// High resolution timer. All time in seconds

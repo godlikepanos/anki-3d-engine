@@ -1,9 +1,12 @@
-#ifndef RAY_H
-#define RAY_H
+#ifndef COL_RAY_H
+#define COL_RAY_H
 
 #include "CollisionShape.h"
-#include "Math.h"
-#include "Accessors.h"
+#include "Math/Math.h"
+#include "Util/Accessors.h"
+
+
+namespace Col {
 
 
 class Plane;
@@ -40,18 +43,21 @@ class Ray: public CollisionShape
 };
 
 
-inline Ray::Ray(const Ray& other):
-	CollisionShape(CST_RAY),
+inline Ray::Ray(const Ray& other)
+:	CollisionShape(CST_RAY),
 	origin(other.origin),
 	dir(other.dir)
 {}
 
 
-inline Ray::Ray(const Vec3& origin_, const Vec3& direction_):
-	CollisionShape(CST_RAY),
+inline Ray::Ray(const Vec3& origin_, const Vec3& direction_)
+:	CollisionShape(CST_RAY),
 	origin(origin_),
 	dir(direction_)
 {}
+
+
+} // end namespace
 
 
 #endif

@@ -3,10 +3,10 @@
 
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
-#include "StdTypes.h"
-#include "Accessors.h"
-#include "Exception.h"
-#include "Singleton.h"
+#include "Util/StdTypes.h"
+#include "Util/Accessors.h"
+#include "Util/Exception.h"
+#include "Util/Singleton.h"
 
 
 class StdinListener;

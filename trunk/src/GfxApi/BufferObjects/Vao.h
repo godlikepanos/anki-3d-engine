@@ -2,10 +2,10 @@
 #define VAO_H
 
 #include <GL/glew.h>
-#include "StdTypes.h"
-#include "ShaderProg.h"
-#include "Object.h"
-#include "GlException.h"
+#include "Util/StdTypes.h"
+#include "Resources/ShaderProg.h"
+#include "Core/Object.h"
+#include "GfxApi/GlException.h"
 
 
 class Vbo;

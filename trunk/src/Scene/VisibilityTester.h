@@ -1,10 +1,10 @@
 #ifndef VISIBILITY_TESTER_H
 #define VISIBILITY_TESTER_H
 
+#include "Util/Accessors.h"
+#include "Math/Math.h"
 #include <deque>
 #include <boost/thread.hpp>
-#include "Accessors.h"
-#include "Math.h"
 
 
 class Camera;

@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Math.h"
+#include "Math/Math.h"
 
 
 WRAP(Vec4)

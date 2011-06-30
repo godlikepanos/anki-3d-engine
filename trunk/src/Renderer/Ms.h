@@ -2,9 +2,9 @@
 #define MS_H
 
 #include "RenderingPass.h"
-#include "Texture.h"
-#include "Fbo.h"
-#include "Accessors.h"
+#include "Resources/Texture.h"
+#include "GfxApi/BufferObjects/Fbo.h"
+#include "Util/Accessors.h"
 #include "Ez.h"
 
 

@@ -1,10 +1,10 @@
-#include "Vao.h"
+#include "GfxApi/BufferObjects/Vao.h"
 #include "Vbo.h"
 
 
-//======================================================================================================================
-// attachArrayBufferVbo                                                                                                =
-//======================================================================================================================
+//==============================================================================
+// attachArrayBufferVbo                                                        =
+//==============================================================================
 void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint size, GLenum type,
 		                       GLboolean normalized, GLsizei stride, const GLvoid* pointer)
 {
@@ -27,9 +27,9 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint siz
 }
 
 
-//======================================================================================================================
-// attachArrayBufferVbo                                                                                                =
-//======================================================================================================================
+//==============================================================================
+// attachArrayBufferVbo                                                        =
+//==============================================================================
 void Vao::attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar, GLint size, GLenum type,
 		                       GLboolean normalized, GLsizei stride, const GLvoid* pointer)
 {
@@ -37,9 +37,9 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar, 
 }
 
 
-//======================================================================================================================
-// attachElementArrayBufferVbo                                                                                         =
-//======================================================================================================================
+//==============================================================================
+// attachElementArrayBufferVbo                                                 =
+//==============================================================================
 void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 {
 	ASSERT(isCreated());

@@ -1,9 +1,9 @@
 #ifndef SKELETON_H
 #define SKELETON_H
 
-#include "Math.h"
-#include "Accessors.h"
-#include "Vec.h"
+#include "Math/Math.h"
+#include "Util/Accessors.h"
+#include "Util/Vec.h"
 
 
 /// Skeleton bone

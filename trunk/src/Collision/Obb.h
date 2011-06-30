@@ -1,9 +1,12 @@
-#ifndef OBB_H
-#define OBB_H
+#ifndef COL_OBB_H
+#define COL_OBB_H
 
-#include <boost/array.hpp>
 #include "CollisionShape.h"
-#include "Math.h"
+#include "Math/Math.h"
+#include <boost/array.hpp>
+
+
+namespace Col {
 
 
 /// Object oriented bounding box
@@ -26,7 +29,8 @@ class Obb: public CollisionShape
 
 		Obb getTransformed(const Transform& transform) const;
 
-		/// Get a collision shape that includes this and the given. Its not very accurate
+		/// Get a collision shape that includes this and the given. Its not
+		/// very accurate
 		Obb getCompoundShape(const Obb& b) const;
 
 		/// @see CollisionShape::testPlane
@@ -41,7 +45,9 @@ class Obb: public CollisionShape
 		/// @{
 		Vec3 center;
 		Mat3 rotation;
-		Vec3 extends; ///< With identity rotation this points to max (front, right, top in our case)
+		/// With identity rotation this points to max (front, right, top in
+		/// our case)
+		Vec3 extends;
 		/// @}
 
 		/// Get extreme points in 3D space
@@ -49,20 +55,24 @@ class Obb: public CollisionShape
 };
 
 
-inline Obb::Obb(const Obb& b):
-	CollisionShape(CST_OBB),
+inline Obb::Obb(const Obb& b)
+:	CollisionShape(CST_OBB),
 	center(b.center),
 	rotation(b.rotation),
 	extends(b.extends)
 {}
 
 
-inline Obb::Obb(const Vec3& center_, const Mat3& rotation_, const Vec3& extends_):
-	CollisionShape(CST_OBB),
+inline Obb::Obb(const Vec3& center_, const Mat3& rotation_,
+	const Vec3& extends_)
+:	CollisionShape(CST_OBB),
 	center(center_),
 	rotation(rotation_),
 	extends(extends_)
 {}
+
+
+} // end namespace
 
 
 #include "Obb.inl.h"

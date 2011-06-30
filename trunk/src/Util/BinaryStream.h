@@ -2,8 +2,8 @@
 #define BINARY_STREAM_H
 
 #include <iostream>
-#include "Exception.h"
-#include "StdTypes.h"
+#include "Util/Exception.h"
+#include "Util/StdTypes.h"
 
 
 /// Read from binary streams. You can read/write data as if it is an iostream but it also contains methods for
