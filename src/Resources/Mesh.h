@@ -5,7 +5,7 @@
 #include "Math/Math.h"
 #include "RsrcPtr.h"
 #include "GfxApi/BufferObjects/Vbo.h"
-#include "Obb.h"
+#include "Collision/Obb.h"
 #include "Util/Accessors.h"
 
 
@@ -38,7 +38,7 @@ class Mesh
 		/// @{
 		const Vbo& getVbo(Vbos id) const {return vbos[id];}
 		GETTER_R_BY_VAL(uint, vertIdsNum, getVertIdsNum)
-		GETTER_R(Obb, visibilityShape, getVisibilityShape)
+		GETTER_R(Col::Obb, visibilityShape, getVisibilityShape)
 		GETTER_R_BY_VAL(uint, vertsNum, getVertsNum)
 		/// @}
 
@@ -55,7 +55,7 @@ class Mesh
 	private:
 		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
 		uint vertIdsNum; ///< The number of vertex IDs
-		Obb visibilityShape;
+		Col::Obb visibilityShape;
 		uint vertsNum;
 
 		/// Create the VBOs

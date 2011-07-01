@@ -3,7 +3,6 @@
 
 #include <boost/array.hpp>
 #include <deque>
-
 #include "Util/Vec.h"
 #include "Collision/Collision.h"
 #include "SceneNode.h"
@@ -56,7 +55,7 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// See the declaration of invProjectionMat for info
 		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;}
 
-		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const {return wspaceFrustumPlanes[id];}
+		const Col::Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const;
 		/// @}
 
 		void lookAtPoint(const Vec3& point);
@@ -75,11 +74,12 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// @name Frustum checks
 		/// @{
 
-		/// Check if the given camera is inside the frustum clipping planes. This is used mainly to test if the projected
-		/// lights are visible
-		bool insideFrustum(const CollisionShape& vol) const;
+		/// Check if the given camera is inside the frustum clipping planes.
+		/// This is used mainly to test if the projected lights are visible
+		bool insideFrustum(const Col::CollisionShape& vol) const;
 
-		/// Check if another camera is inside our view (used for projected lights)
+		/// Check if another camera is inside our view (used for projected
+		/// lights)
 		bool insideFrustum(const Camera& cam) const;
 		/// @}
 
@@ -90,8 +90,8 @@ class Camera: public SceneNode, public VisibilityInfo
 
 		/// @name The frustum planes in local and world space
 		/// @{
-		boost::array<Plane, FP_NUM> lspaceFrustumPlanes;
-		boost::array<Plane, FP_NUM> wspaceFrustumPlanes;
+		boost::array<Col::Plane, FP_NUM> lspaceFrustumPlanes;
+		boost::array<Col::Plane, FP_NUM> wspaceFrustumPlanes;
 		/// @}
 
 		/// @name Matrices
@@ -99,10 +99,12 @@ class Camera: public SceneNode, public VisibilityInfo
 		Mat4 projectionMat;
 		Mat4 viewMat;
 
-		/// Used in deferred shading for the calculation of view vector (see CalcViewVector). The reason we store this
-		/// matrix here is that we dont want it to be re-calculated all the time but only when the projection params
-		/// (fovX, fovY, zNear, zFar) change. Fortunately the projection params change rarely. Note that the Camera as
-		/// we all know re-calculates the matrices only when the parameters change!!
+		/// Used in deferred shading for the calculation of view vector (see
+		/// CalcViewVector). The reason we store this matrix here is that we
+		/// don't want it to be re-calculated all the time but only when the
+		/// projection params (fovX, fovY, zNear, zFar) change. Fortunately
+		/// the projection params change rarely. Note that the Camera as we all
+		/// know re-calculates the matrices only when the parameters change!!
 		Mat4 invProjectionMat;
 		/// @}
 
@@ -113,16 +115,23 @@ class Camera: public SceneNode, public VisibilityInfo
 		void updateWSpaceFrustumPlanes();
 
 		/// Get the edge points of the camera
-		virtual void getExtremePoints(Vec3* pointsArr, uint& pointsNum) const = 0;
+		virtual void getExtremePoints(Vec3* pointsArr,
+			uint& pointsNum) const = 0;
 };
 
 
 
-inline Camera::Camera(CameraType camType, bool compoundFlag, SceneNode* parent):
-	SceneNode(SNT_CAMERA, compoundFlag, parent),
+inline Camera::Camera(CameraType camType, bool compoundFlag, SceneNode* parent)
+:	SceneNode(SNT_CAMERA, compoundFlag, parent),
 	type(camType)
 {
 	name = "Camera:" + name;
+}
+
+
+inline const Col::Plane& Camera::getWSpaceFrustumPlane(FrustrumPlanes id) const
+{
+	return wspaceFrustumPlanes[id];
 }
 
 

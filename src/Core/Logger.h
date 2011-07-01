@@ -7,8 +7,8 @@
 #include <boost/thread/mutex.hpp>
 
 
-/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. Its
-/// thread safe
+/// The logger singleton class. The logger cannot print errors or throw
+/// exceptions, it has to recover somehow. Its thread safe
 class Logger
 {
 	private:
@@ -21,7 +21,8 @@ class Logger
 		};
 
 	public:
-		typedef boost::signals2::signal<void (const char*, int, const char*, const char*)> Signal; ///< Signal type
+		typedef boost::signals2::signal<void (const char*, int, const char*,
+			const char*)> Signal; ///< Signal type
 
 		Logger() {execCommonConstructionCode();}
 
@@ -30,16 +31,16 @@ class Logger
 
 		/// @name Operators for numbers
 		/// @{
-		Logger& operator<<(const bool& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const short& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const unsigned short& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const int& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const unsigned int& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const long& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const unsigned long& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const float& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const double& val) {return appendUsingLexicalCast(val);}
-		Logger& operator<<(const long double& val) {return appendUsingLexicalCast(val);}
+		Logger& operator<<(const bool& val);
+		Logger& operator<<(const short& val);
+		Logger& operator<<(const unsigned short& val);
+		Logger& operator<<(const int& val);
+		Logger& operator<<(const unsigned int& val);
+		Logger& operator<<(const long& val);
+		Logger& operator<<(const unsigned long& val);
+		Logger& operator<<(const float& val);
+		Logger& operator<<(const double& val);
+		Logger& operator<<(const long double& val);
 		/// @}
 
 		/// @name Operators for other types
@@ -55,7 +56,8 @@ class Logger
 		/// @{
 
 		/// Help the Logger to set the sender
-		static LoggerSender setSender(const char* file, int line, const char* func);
+		static LoggerSender setSender(const char* file, int line,
+			const char* func);
 
 		/// Add a new line and flush the Logger
 		static Logger& endl(Logger& logger) {return logger;}
@@ -66,7 +68,8 @@ class Logger
 		/// @}
 
 		/// An alternative method to write in the Logger
-		void write(const char* file, int line, const char* func, const char* msg);
+		void write(const char* file, int line, const char* func,
+			const char* msg);
 
 		/// Mutex lock
 		void lock() {mutex.lock();}
@@ -99,32 +102,7 @@ class Logger
 };
 
 
-//==============================================================================
-// Inlines                                                                     =
-//==============================================================================
-
-inline Logger::LoggerSender Logger::setSender(const char* file, int line, const char* func)
-{
-	LoggerSender sender = {file, line, func};
-	return sender;
-}
-
-
-template<typename Type>
-Logger& Logger::appendUsingLexicalCast(const Type& val)
-{
-	std::string out;
-	try
-	{
-		out = boost::lexical_cast<std::string>(val);
-	}
-	catch(...)
-	{
-		out = "*error*";
-	}
-	append(out.c_str(), out.length());
-	return *this;
-}
+#include "Logger.inl.h"
 
 
 //==============================================================================
@@ -135,7 +113,8 @@ Logger& Logger::appendUsingLexicalCast(const Type& val)
 	do \
 	{ \
 		LoggerSingleton::getInstance().lock(); \
-		LoggerSingleton::getInstance()  << Logger::setSender(__FILE__, __LINE__, __func__) << x << Logger::endl; \
+		LoggerSingleton::getInstance()  << Logger::setSender(__FILE__, \
+			__LINE__, __func__) << x << Logger::endl; \
 		LoggerSingleton::getInstance().unlock(); \
 	} while(false);
 

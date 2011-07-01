@@ -4,8 +4,9 @@
 #include "Util/Vec.h"
 
 
-/// A class for automatic garbage collection. Cause we -the programmers- get bored when it comes to deallocation. Dont
-/// even think to put as a parent an object that has not created dynamically
+/// A class for automatic garbage collection. Cause we -the programmers- get
+/// bored when it comes to deallocation. Dont even think to put as a parent an
+/// object that has not created dynamically
 class Object
 {
 	public:

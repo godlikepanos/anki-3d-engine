@@ -21,15 +21,18 @@
 //==============================================================================
 // handleMessageHanlderMsgs                                                    =
 //==============================================================================
-void App::handleMessageHanlderMsgs(const char* file, int line, const char* func, const char* msg)
+void App::handleMessageHanlderMsgs(const char* file, int line,
+	const char* func, const char* msg)
 {
 	if(boost::find_first(msg, "Warning") || boost::find_first(msg, "Error"))
 	{
-		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg << std::flush;
+		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg <<
+			std::flush;
 	}
 	else
 	{
-		std::cout << "(" << file << ":" << line << " "<< func << ") " << msg << std::flush;
+		std::cout << "(" << file << ":" << line << " "<< func << ") " << msg <<
+			std::flush;
 	}
 }
 
@@ -52,7 +55,8 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 		}
 		else
 		{
-			std::cerr << "Incorrect command line argument \"" << arg << "\"" << std::endl;
+			std::cerr << "Incorrect command line argument \"" << arg << "\"" <<
+				std::endl;
 			abort();
 		}
 	}
@@ -70,8 +74,8 @@ void App::init(int argc, char* argv[])
 	fullScreenFlag = false;
 
 	// send output to handleMessageHanlderMsgs
-	LoggerSingleton::getInstance().getSignal().connect(boost::bind(&App::handleMessageHanlderMsgs,
-	                                                               this, _1, _2, _3, _4));
+	LoggerSingleton::getInstance().getSignal().connect(
+		boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
 	INFO("Initializing the engine...");
 
@@ -84,26 +88,28 @@ void App::init(int argc, char* argv[])
 
 	// create the subsystems. WATCH THE ORDER
 	const char* commonPythonCode =
-	"import sys\n"
-	"from Anki import *\n"
-	"\n"
-	"class StdoutCatcher:\n"
-	"\tdef write(self, str_):\n"
-	"\t\tif str_ == \"\\n\": return\n"
-	"\t\tline = sys._getframe(1).f_lineno\n"
-	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
-	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-	"\t\tLoggerSingleton.getInstance().write(file, line, func, str_ + \"\\n\")\n"
-	"\n"
-	"class StderrCatcher:\n"
-	"\tdef write(self, str_):\n"
-	"\t\tline = sys._getframe(1).f_lineno\n"
-	"\t\tfile = sys._getframe(1).f_code.co_filename\n"
-	"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-	"\t\tLoggerSingleton.getInstance().write(file, line, func, str_)\n"
-	"\n"
-	"sys.stdout = StdoutCatcher()\n"
-	"sys.stderr = StderrCatcher()\n";
+		"import sys\n"
+		"from Anki import *\n"
+		"\n"
+		"class StdoutCatcher:\n"
+		"\tdef write(self, str_):\n"
+		"\t\tif str_ == \"\\n\": return\n"
+		"\t\tline = sys._getframe(1).f_lineno\n"
+		"\t\tfile = sys._getframe(1).f_code.co_filename\n"
+		"\t\tfunc = sys._getframe(1).f_code.co_name\n"
+		"\t\tLoggerSingleton.getInstance().write(file, line, "
+		"func, str_ + \"\\n\")\n"
+		"\n"
+		"class StderrCatcher:\n"
+		"\tdef write(self, str_):\n"
+		"\t\tline = sys._getframe(1).f_lineno\n"
+		"\t\tfile = sys._getframe(1).f_code.co_filename\n"
+		"\t\tfunc = sys._getframe(1).f_code.co_name\n"
+		"\t\tLoggerSingleton.getInstance().write(file, line, func, str_)\n"
+		"\n"
+		"sys.stdout = StdoutCatcher()\n"
+		"sys.stderr = StderrCatcher()\n";
+
 	ScriptingEngineSingleton::getInstance().execScript(commonPythonCode);
 
 	StdinListenerSingleton::getInstance().start();
@@ -111,7 +117,8 @@ void App::init(int argc, char* argv[])
 	initWindow();
 	initRenderer();
 	JobManagerSingleton::getInstance().init(4);
-	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(new PhyDbgDrawer);
+	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
+		new PhyDbgDrawer);
 
 	// other
 	activeCam = NULL;
@@ -143,13 +150,15 @@ void App::initWindow()
 	// set GL attribs
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8); // WARNING: Set this low only in deferred shading
+	// WARNING: Set this low only in deferred shading
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
 	// OpenWindow
-	windowId = SDL_CreateWindow("AnKi 3D Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowW, windowH,
-	                            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+	windowId = SDL_CreateWindow("AnKi 3D Engine", SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED, windowW, windowH,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
 	if(!windowId)
 	{
@@ -290,9 +299,9 @@ void App::printAppInfo()
 	#endif
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
-	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' << int(v->patch) << ", ";
-	msg << "build date " __DATE__ << ", ";
-	msg << "rev " << REVISION;
+	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' <<
+		int(v->patch) << ", " << "build date " __DATE__ << ", " <<
+		"rev " << REVISION;
 
 	INFO(msg.str());
 }
@@ -338,7 +347,8 @@ void App::execStdinScpripts()
 
 		try
 		{
-			ScriptingEngineSingleton::getInstance().execScript(cmd.c_str(), "command line input");
+			ScriptingEngineSingleton::getInstance().execScript(cmd.c_str(),
+				"command line input");
 		}
 		catch(Exception& e)
 		{

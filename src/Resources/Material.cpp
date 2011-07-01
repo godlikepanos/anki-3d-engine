@@ -4,11 +4,9 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Material.h"
-#include "Parser.h"
 #include "Resources/Texture.h"
 #include "Resources/ShaderProg.h"
-#include "App.h"
-#include "PropertyTree.h"
+#include "Misc/PropertyTree.h"
 
 
 //==============================================================================

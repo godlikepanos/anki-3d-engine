@@ -6,7 +6,7 @@
 #include <boost/lexical_cast.hpp>
 #include "LightRsrc.h"
 #include "Resources/Texture.h"
-#include "PropertyTree.h"
+#include "Misc/PropertyTree.h"
 
 
 //==============================================================================

@@ -2,4 +2,4 @@ PROJECT(ANKI_PROJ)
 
 INCLUDE_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR})
 
-SUBDIRS(Util Math Collision GfxApi Events)
+SUBDIRS(Util Math Collision GfxApi Events Input Resources)

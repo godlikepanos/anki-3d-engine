@@ -44,8 +44,8 @@ class App
 		/// Wrapper for an SDL function that swaps the buffers
 		void swapBuffers();
 
-		/// The func pools the stdinListener for string in the console, if there are any it executes them with
-		/// scriptingEngine
+		/// The func pools the stdinListener for string in the console, if
+		/// there are any it executes them with scriptingEngine
 		void execStdinScpripts();
 
 		static void printAppInfo();
@@ -59,7 +59,8 @@ class App
 		void setActiveCam(Camera* cam) {activeCam = cam;}
 
 		GETTER_SETTER(float, timerTick, getTimerTick, setTimerTick)
-		GETTER_R_BY_VAL(bool, terminalColoringEnabled, isTerminalColoringEnabled)
+		GETTER_R_BY_VAL(bool, terminalColoringEnabled,
+			isTerminalColoringEnabled)
 		GETTER_R_BY_VAL(uint, windowW, getWindowWidth)
 		GETTER_R(uint, windowH, getWindowHeight)
 		GETTER_R(boost::filesystem::path, settingsPath, getSettingsPath)
@@ -70,10 +71,13 @@ class App
 	private:
 		uint windowW; ///< The main window width
 		uint windowH; ///< The main window height
-		boost::filesystem::path settingsPath; ///< The path that holds the configuration
-		boost::filesystem::path cachePath; ///< This is used as a cache
+		/// The path that holds the configuration
+		boost::filesystem::path settingsPath;
+		/// This is used as a cache
+		boost::filesystem::path cachePath;
 		float timerTick;
-		bool terminalColoringEnabled; ///< Terminal coloring for Unix terminals. Default on
+		/// Terminal coloring for Unix terminals. Default on
+		bool terminalColoringEnabled;
 		SDL_WindowID windowId;
 		SDL_GLContext glContext;
 		SDL_Surface* iconImage;
@@ -83,7 +87,8 @@ class App
 		void parseCommandLineArgs(int argc, char* argv[]);
 
 		/// A slot to handle the messageHandler's signal
-		void handleMessageHanlderMsgs(const char* file, int line, const char* func, const char* msg);
+		void handleMessageHanlderMsgs(const char* file, int line,
+			const char* func, const char* msg);
 
 		void initWindow();
 		void initDirs();

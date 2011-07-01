@@ -3,7 +3,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include "Util/Exception.h"
-#include "Scanner.h"
+#include "Util/Scanner/Scanner.h"
 
 
 /// It contains some functions and macros that are used pretty often while parsing

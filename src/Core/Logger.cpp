@@ -65,7 +65,8 @@ Logger& Logger::operator<<(const LoggerSender& sender)
 //==============================================================================
 // write                                                                       =
 //==============================================================================
-void Logger::write(const char* file_, int line_, const char* func_, const char* msg)
+void Logger::write(const char* file_, int line_, const char* func_,
+	const char* msg)
 {
 	file = file_;
 	line = line_;
@@ -99,7 +100,8 @@ void Logger::append(const char* cstr, int len)
 		len = sizeof(ERR);
 	}
 
-	int charsLeft = &streamBuf[STREAM_SIZE - 1] - sptr; // Leaving an extra char for the '\0'
+	int charsLeft = &streamBuf[STREAM_SIZE - 1] - sptr; // Leaving an extra
+	                                                    // char for the '\0'
 
 	// Overflow
 	if(len > charsLeft)
