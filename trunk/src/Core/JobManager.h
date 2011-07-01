@@ -17,7 +17,8 @@ class WorkerThread
 		typedef void (*JobCallback)(void*, const WorkerThread&);
 
 		/// Constructor
-		WorkerThread(int id, const JobManager& jobManager, boost::barrier* barrier);
+		WorkerThread(int id, const JobManager& jobManager,
+			boost::barrier* barrier);
 
 		/// @name Accessors
 		/// @{
@@ -36,7 +37,8 @@ class WorkerThread
 		boost::barrier* barrier;
 		JobCallback job; ///< Its NULL if there are no pending jobs
 		void* jobParams;
-		const JobManager& jobManager; ///< Know your father and pass him to the jobs
+		/// Know your father and pass him to the jobs
+		const JobManager& jobManager;
 
 		/// Start thread
 		void start();
@@ -46,8 +48,9 @@ class WorkerThread
 };
 
 
-inline WorkerThread::WorkerThread(int id_, const JobManager& jobManager_, boost::barrier* barrier_):
-	id(id_),
+inline WorkerThread::WorkerThread(int id_, const JobManager& jobManager_,
+	boost::barrier* barrier_)
+:	id(id_),
 	barrier(barrier_),
 	job(NULL),
 	jobManager(jobManager_)
@@ -76,7 +79,8 @@ class JobManager
 		void init(uint threadsNum);
 
 		/// Assign a job to a working thread
-		void assignNewJob(uint threadId, WorkerThread::JobCallback job, void* jobParams);
+		void assignNewJob(uint threadId, WorkerThread::JobCallback job,
+			void* jobParams);
 
 		/// Wait for all jobs to finish
 		void waitForAllJobsToFinish();
@@ -89,7 +93,8 @@ class JobManager
 };
 
 
-inline void JobManager::assignNewJob(uint threadId, WorkerThread::JobCallback job, void* jobParams)
+inline void JobManager::assignNewJob(uint threadId,
+	WorkerThread::JobCallback job, void* jobParams)
 {
 	workers[threadId].assignNewJob(job, jobParams);
 }

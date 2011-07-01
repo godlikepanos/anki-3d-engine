@@ -10,9 +10,10 @@
 
 /// Asynchronous loader
 ///
-/// It creates a thread that loads files on demand. It accepts requests (in the form of a filename of the file to load,
-/// a pointer to a function for the way to load the file and a generic pointer for the data to load them to). Its not
-/// meant to be destroyed because of a deadlock.
+/// It creates a thread that loads files on demand. It accepts requests (in the
+/// form of a filename of the file to load, a pointer to a function for the way
+/// to load the file and a generic pointer for the data to load them to). Its
+/// not meant to be destroyed because of a deadlock.
 class AsyncLoader
 {
 	public:
@@ -25,13 +26,17 @@ class AsyncLoader
 		/// Do nothing
 		~AsyncLoader() {}
 
-		/// Tell me what to load, how to load it and where to store it. This puts a new loading request in the stack
+		/// Tell me what to load, how to load it and where to store it. This
+		/// puts a new loading request in the stack
 		/// @param filename The file to load
-		/// @param loadCallback How to load the file. The function should gets a filename (const char*) and the storage.
+		/// @param loadCallback How to load the file. The function should gets
+		/// a filename (const char*) and the storage.
 		/// It can throw an exception in case of a loading error
-		/// @param storage This points to the storage that the loader will store the data. The storage should not be
-		/// destroyed from other threads
-		void load(const char* filename, LoadCallback loadCallback, void* storage);
+		/// @param storage This points to the storage that the loader will
+		/// store the data. The storage should not be destroyed from other
+		/// threads
+		void load(const char* filename, LoadCallback loadCallback,
+			void* storage);
 
 		/// Query the loader and see if its got something
 		/// @param[out] filename The file that finished loading
@@ -66,7 +71,9 @@ class AsyncLoader
 		boost::thread thread;
 		boost::condition_variable condVar;
 
-		void workingFunc(); ///< The thread function. It waits for something in the requests container
+		/// The thread function. It waits for something in the requests
+		/// container
+		void workingFunc();
 		void start(); ///< Start thread
 };
 

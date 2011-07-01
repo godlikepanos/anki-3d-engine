@@ -4,7 +4,7 @@
 #include <boost/foreach.hpp>
 
 #include "MeshData.h"
-#include "BinaryStream.h"
+#include "Util/BinaryStream.h"
 
 
 //==============================================================================

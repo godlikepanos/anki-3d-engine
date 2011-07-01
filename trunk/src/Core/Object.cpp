@@ -57,7 +57,8 @@ void Object::removeChild(Object* child)
 {
 	ASSERT(child != NULL);
 
-	Container::iterator it = std::find(objChilds.begin(), objChilds.end(), child);
+	Container::iterator it = std::find(objChilds.begin(), objChilds.end(),
+		child);
 
 	if(it == objChilds.end())
 	{

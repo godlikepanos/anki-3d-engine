@@ -9,7 +9,8 @@
 
 
 /// The listener of the stdin.
-/// It initiates a thread that constantly reads the stdin and puts the results in a queue
+/// It initiates a thread that constantly reads the stdin and puts the results
+/// in a queue
 class StdinListener
 {
 	public:

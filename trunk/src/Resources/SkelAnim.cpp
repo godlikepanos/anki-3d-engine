@@ -1,5 +1,5 @@
 #include "SkelAnim.h"
-#include "Parser.h"
+#include "Misc/Parser.h"
 
 
 //==============================================================================

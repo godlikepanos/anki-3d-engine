@@ -1,8 +1,8 @@
-#include "Input.h"
-#include <SDL/SDL.h>
-#include "App.h"
+#include "Core/App.h"
 #include "Core/Logger.h"
 #include "Core/Globals.h"
+#include "Input.h"
+#include <SDL/SDL.h>
 
 
 //==============================================================================
@@ -85,20 +85,24 @@ void Input::handleEvents()
 				mousePos.x() = event_.button.x;
 				mousePos.y() = event_.button.y;
 
-				mousePosNdc.x() = (2.0 * mousePos.x()) / (float)AppSingleton::getInstance().getWindowWidth() - 1.0;
-				mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) / (float)AppSingleton::getInstance().getWindowHeight();
+				mousePosNdc.x() = (2.0 * mousePos.x()) /
+					(float)AppSingleton::getInstance().getWindowWidth() - 1.0;
+				mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) /
+					(float)AppSingleton::getInstance().getWindowHeight();
 
 				if(warpMouseFlag)
 				{
-					// the SDL_WarpMouse pushes an event in the event queue. This check is so we wont process...
-					// ...the event of the SDL_WarpMouse function
+					// the SDL_WarpMouse pushes an event in the event queue.
+					// This check is so we wont process the event of the
+					// SDL_WarpMouse function
 					if(mousePosNdc == Vec2(0.0))
 					{
 						break;
 					}
 
-					SDL_WarpMouse(AppSingleton::getInstance().getWindowWidth() / 2,
-					              AppSingleton::getInstance().getWindowHeight() / 2);
+					uint w = AppSingleton::getInstance().getWindowWidth();
+					uint h = AppSingleton::getInstance().getWindowHeight();
+					SDL_WarpMouse(w / 2, h / 2);
 				}
 
 				mouseVelocity = mousePosNdc - prevMousePosNdc;
@@ -110,10 +114,4 @@ void Input::handleEvents()
 				break;
 		}
 	}
-
-	//cout << fixed << " velocity: " << mouseVelocity.x() << ' ' << mouseVelocity.y() << endl;
-	//cout << fixed << mousePosNdc.x() << ' ' << mousePosNdc.y() << endl;
-	//cout << crnt_keys[SDLK_m] << ' ' << prev_keys[SDLK_m] << "      " << keys[SDLK_m] << endl;
-	//cout << mouseBtns[SDL_BUTTON_LEFT] << endl;
-
 }
