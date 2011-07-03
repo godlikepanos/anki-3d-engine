@@ -1,11 +1,11 @@
 #include "SceneDbgDrawer.h"
-#include "Dbg.h"
-#include "Camera.h"
-#include "Light.h"
-#include "ParticleEmitter.h"
-#include "SkinNode.h"
-#include "PerspectiveCamera.h"
-#include "OrthographicCamera.h"
+#include "../Dbg.h"
+#include "Scene/Camera.h"
+#include "Scene/Light.h"
+#include "Scene/ParticleEmitter.h"
+#include "Scene/SkinNode.h"
+#include "Scene/PerspectiveCamera.h"
+#include "Scene/OrthographicCamera.h"
 
 
 //==============================================================================

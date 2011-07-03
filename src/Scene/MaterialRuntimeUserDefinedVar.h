@@ -1,7 +1,7 @@
 #ifndef MATERIAL_RUNTIME_USER_DEFINED_VAR_H
 #define MATERIAL_RUNTIME_USER_DEFINED_VAR_H
 
-#include "MtlUserDefinedVar.h"
+#include "Resources/MtlUserDefinedVar.h"
 
 
 /// This holds a copy of the MtlUserDefinedVar's data in order to be changed inside the main loop

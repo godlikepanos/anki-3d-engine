@@ -2,7 +2,7 @@
 #define PHYS_MOTION_STATE_H
 
 #include <LinearMath/btMotionState.h>
-#include "SceneNode.h"
+#include "Scene/SceneNode.h"
 
 
 namespace Phys {

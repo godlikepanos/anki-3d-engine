@@ -1,12 +1,12 @@
 #include <boost/foreach.hpp>
 #include "Sm.h"
 #include "Renderer.h"
-#include "App.h"
-#include "Scene.h"
-#include "LightRsrc.h"
-#include "Camera.h"
-#include "Light.h"
-#include "SpotLight.h"
+#include "Core/App.h"
+#include "Scene/Scene.h"
+#include "Resources/LightRsrc.h"
+#include "Scene/Camera.h"
+#include "Scene/Light.h"
+#include "Scene/SpotLight.h"
 #include "RendererInitializer.h"
 
 

@@ -4,9 +4,9 @@
 #include <boost/scoped_ptr.hpp>
 #include "GfxApi/BufferObjects/Vao.h"
 #include "GfxApi/BufferObjects/Vbo.h"
-#include "Mesh.h" // For the Vbos enum
+#include "Resources/Mesh.h" // For the Vbos enum
 #include "Resources/RsrcPtr.h"
-#include "ModelPatch.h"
+#include "Resources/ModelPatch.h"
 #include "RenderableNode.h"
 #include "MaterialRuntime.h"
 

@@ -1,6 +1,6 @@
 #include "ScriptingCommon.h"
-#include "MainRenderer.h"
-#include "Dbg.h"
+#include "Renderer/MainRenderer.h"
+#include "Renderer/Dbg.h"
 
 
 WRAP(MainRenderer)

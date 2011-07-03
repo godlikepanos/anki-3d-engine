@@ -1,7 +1,7 @@
 #include "Ez.h"
 #include "Renderer.h"
-#include "App.h"
-#include "Scene.h"
+#include "Core/App.h"
+#include "Scene/Scene.h"
 #include "RendererInitializer.h"
 
 

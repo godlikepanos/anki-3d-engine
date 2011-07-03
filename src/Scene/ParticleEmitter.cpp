@@ -3,11 +3,10 @@
 #include <btBulletDynamicsCommon.h>
 #include "ParticleEmitter.h"
 #include "Particle.h"
-#include "PhysRigidBody.h"
-#include "MainRenderer.h"
-#include "App.h"
+#include "Physics/PhysRigidBody.h"
+#include "Core/App.h"
 #include "Scene.h"
-#include "Util.h"
+#include "Util/Util.h"
 
 
 btTransform ParticleEmitter::startingTrf(toBt(Mat3::getIdentity()), btVector3(10000000.0, 10000000.0, 10000000.0));

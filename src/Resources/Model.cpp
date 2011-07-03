@@ -5,7 +5,7 @@
 #include <boost/assign.hpp>
 #include <boost/range/iterator_range.hpp>
 #include "Model.h"
-#include "Material.h"
+#include "Resources/Material.h"
 #include "Mesh.h"
 #include "SkelAnim.h"
 #include "MeshData.h"

@@ -4,11 +4,11 @@
 #include "ModelNode.h"
 #include "SkinNode.h"
 #include "ModelPatchNode.h"
-#include "Material.h"
-#include "Sphere.h"
+#include "Resources/Material.h"
+#include "Collision/Sphere.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "JobManager.h"
+#include "Core/JobManager.h"
 #include "Core/Logger.h"
 
 
@@ -58,7 +58,7 @@ void VisibilityTester::test(Camera& cam)
 			{
 				PointLight* pointl = static_cast<PointLight*>(light);
 
-				Sphere sphere(pointl->getWorldTransform().getOrigin(), pointl->getRadius());
+				Col::Sphere sphere(pointl->getWorldTransform().getOrigin(), pointl->getRadius());
 				if(cam.insideFrustum(sphere))
 				{
 					cam.getVisiblePointLights().push_back(pointl);

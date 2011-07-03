@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Renderer.h"
+#include "Renderer/Renderer.h"
 
 
 WRAP(Renderer)

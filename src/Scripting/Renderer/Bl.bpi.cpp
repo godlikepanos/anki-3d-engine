@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Bl.h"
+#include "Renderer/Bl.h"
 
 
 WRAP(Bl)

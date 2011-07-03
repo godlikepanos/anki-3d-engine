@@ -1,15 +1,15 @@
-#include <boost/foreach.hpp>
 #include "Dbg.h"
 #include "Renderer.h"
-#include "Scene.h"
-#include "Camera.h"
-#include "Light.h"
+#include "Scene/RenderableNode.h"
+#include "Scene/Scene.h"
+#include "Scene/Camera.h"
+#include "Scene/Light.h"
+#include "Scene/ParticleEmitter.h"
 #include "RendererInitializer.h"
-#include "SceneDbgDrawer.h"
-#include "ParticleEmitter.h"
-#include "RenderableNode.h"
-#include "SkinNode.h"
-#include "SpotLight.h"
+#include "Drawers/SceneDbgDrawer.h"
+#include "Scene/SkinNode.h"
+#include "Scene/SpotLight.h"
+#include <boost/foreach.hpp>
 
 
 //==============================================================================

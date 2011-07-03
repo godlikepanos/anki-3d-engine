@@ -6,16 +6,16 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include "App.h"
-#include "RendererInitializer.h"
-#include "MainRenderer.h"
-#include "ScriptingEngine.h"
+#include "Renderer/RendererInitializer.h"
+#include "Renderer/MainRenderer.h"
+#include "Scripting/ScriptingEngine.h"
 #include "StdinListener.h"
-#include "Input.h"
+#include "Input/Input.h"
 #include "Logger.h"
 #include "Core/Globals.h"
 #include "JobManager.h"
-#include "PhyDbgDrawer.h"
-#include "Scene.h"
+#include "Renderer/Drawers/PhyDbgDrawer.h"
+#include "Scene/Scene.h"
 
 
 //==============================================================================

@@ -4,8 +4,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include "ShaderPrePreprocessor.h"
-#include "Parser.h"
-#include "Util.h"
+#include "Misc/Parser.h"
+#include "Util/Util.h"
 #include "Util/Exception.h"
 
 

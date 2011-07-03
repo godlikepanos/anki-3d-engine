@@ -1,13 +1,12 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "Bs.h"
 #include "Renderer.h"
-#include "App.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 #include "Resources/ShaderProg.h"
-#include "Model.h"
-#include "ModelNode.h"
-#include "Material.h"
-#include "Mesh.h"
+#include "Resources/Model.h"
+#include "Scene/ModelNode.h"
+#include "Resources/Material.h"
+#include "Resources/Mesh.h"
 
 
 //==============================================================================

@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "PatchNode.h"
+#include "Scene/PatchNode.h"
 
 
 WRAP(PatchNode)

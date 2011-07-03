@@ -4,7 +4,7 @@
 #include "Resources/Texture.h"
 #include "SceneNode.h"
 #include "Resources/RsrcPtr.h"
-#include "LightRsrc.h"
+#include "Resources/LightRsrc.h"
 #include "VisibilityInfo.h"
 
 

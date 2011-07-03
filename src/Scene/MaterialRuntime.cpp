@@ -1,6 +1,6 @@
 #include <boost/foreach.hpp>
 #include "MaterialRuntime.h"
-#include "Material.h"
+#include "Resources/Material.h"
 #include "Util/Exception.h"
 
 

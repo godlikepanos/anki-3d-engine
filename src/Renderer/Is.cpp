@@ -4,16 +4,16 @@
 
 #include "Is.h"
 #include "Renderer.h"
-#include "Camera.h"
-#include "Light.h"
-#include "PointLight.h"
-#include "SpotLight.h"
-#include "LightRsrc.h"
-#include "App.h"
-#include "LightRsrc.h"
+#include "Scene/Camera.h"
+#include "Scene/Light.h"
+#include "Scene/PointLight.h"
+#include "Scene/SpotLight.h"
+#include "Resources/LightRsrc.h"
+#include "Core/App.h"
+#include "Resources/LightRsrc.h"
 #include "Sm.h"
 #include "Smo.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 
 
 //==============================================================================
@@ -41,12 +41,14 @@ void Is::initFbo()
 		fbo.setNumOfColorAttachements(1);
 
 		// create the FAI
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, fai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+			GL_FLOAT, fai);
 
 		// attach
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
-		                       copyMsDepthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, fai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+			GL_TEXTURE_2D, copyMsDepthFai.getGlId(), 0);
 
 		// test if success
 		fbo.checkIfGood();
@@ -56,7 +58,8 @@ void Is::initFbo()
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create deferred shading illumination stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create deferred shading illumination "
+			"stage FBO: " + e.what());
 	}
 }
 
@@ -72,24 +75,25 @@ void Is::initCopy()
 		readFbo.create();
 		readFbo.bind();
 		readFbo.setNumOfColorAttachements(0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
-		                       r.getMs().getDepthFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
 		readFbo.unbind();
 
 		// Write
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
-		                    GL_UNSIGNED_INT_24_8, copyMsDepthFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8,
+			GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, copyMsDepthFai);
 
 		writeFbo.create();
 		writeFbo.bind();
 		writeFbo.setNumOfColorAttachements(0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
-		                       copyMsDepthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+			GL_TEXTURE_2D, copyMsDepthFai.getGlId(), 0);
 		writeFbo.unbind();
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create deferred shading illumination stage additional FBO: " + e.what());
+		throw EXCEPTION("Cannot create deferred shading illumination stage "
+			"additional FBO: " + e.what());
 	}
 }
 
@@ -107,12 +111,12 @@ void Is::init(const RendererInitializer& initializer)
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
 
 	// point light
-	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                          "#define POINT_LIGHT_ENABLED\n").c_str());
+	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n").c_str());
 
 	// spot light no shadow
-	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl",
-	                                                                 "#define SPOT_LIGHT_ENABLED\n").c_str());
+	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/IsLpGeneric.glsl", "#define SPOT_LIGHT_ENABLED\n").c_str());
 
 	// spot light w/t shadow
 	std::string pps = std::string("#define SPOT_LIGHT_ENABLED\n"
@@ -121,7 +125,8 @@ void Is::init(const RendererInitializer& initializer)
 	{
 		pps += "#define PCF_ENABLED\n";
 	}
-	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
+	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
 
 	// init the rest
 	initCopy();
@@ -141,7 +146,8 @@ void Is::ambientPass(const Vec3& color)
 
 	// set the uniforms
 	ambientPassSProg->findUniVar("ambientCol")->set(&color);
-	ambientPassSProg->findUniVar("sceneColMap")->set(r.getMs().getDiffuseFai(), 0);
+	ambientPassSProg->findUniVar("sceneColMap")->set(r.getMs().getDiffuseFai(),
+		0);
 
 	// Draw quad
 	r.drawQuad();
@@ -172,7 +178,8 @@ void Is::pointLightPass(const PointLight& light)
 	shader.findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
 	float zNear = cam.getZNear();
 	shader.findUniVar("zNear")->set(&zNear);
-	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
+	const Vec3& origin = light.getWorldTransform().getOrigin();
+	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
 	shader.findUniVar("lightPos")->set(&lightPosEyeSpace);
 	shader.findUniVar("lightRadius")->set(&light.getRadius());
 	shader.findUniVar("lightDiffuseCol")->set(&light.getDiffuseCol());
@@ -194,10 +201,10 @@ void Is::spotLightPass(const SpotLight& light)
 	if(light.castsShadow() && sm.isEnabled())
 	{
 		Vec3 zAxis = light.getWorldTransform().getRotation().getColumn(2);
-		LineSegment seg(light.getWorldTransform().getOrigin(),
-		                -zAxis * light.getCamera().getZFar());
+		Col::LineSegment seg(light.getWorldTransform().getOrigin(),
+			-zAxis * light.getCamera().getZFar());
 
-		const Plane& plane = cam.getWSpaceFrustumPlane(Camera::FP_NEAR);
+		const Col::Plane& plane = cam.getWSpaceFrustumPlane(Camera::FP_NEAR);
 
 		float dist = seg.testPlane(plane);
 
@@ -248,7 +255,8 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->findUniVar("zNear")->set(&zNear);
 
 	// the light params
-	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().getTransformed(cam.getViewMatrix());
+	const Vec3& origin = light.getWorldTransform().getOrigin();
+	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
 	shdr->findUniVar("lightPos")->set(&lightPosEyeSpace);
 	float tmp = light.getDistance();
 	shdr->findUniVar("lightRadius")->set(&tmp);
@@ -258,10 +266,12 @@ void Is::spotLightPass(const SpotLight& light)
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)
-	static Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+	static Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5,
+		0.5, 0.0, 0.0, 0.0, 1.0);
 	Mat4 texProjectionMat;
 	texProjectionMat = biasMat4 * light.getCamera().getProjectionMatrix() *
-	                   Mat4::combineTransformations(light.getCamera().getViewMatrix(), Mat4(cam.getWorldTransform()));
+		Mat4::combineTransformations(light.getCamera().getViewMatrix(),
+		Mat4(cam.getWorldTransform()));
 	shdr->findUniVar("texProjectionMat")->set(&texProjectionMat);
 
 	// the shadowmap
@@ -318,7 +328,8 @@ void Is::run()
 	GlStateMachineSingleton::getInstance().enable(GL_STENCIL_TEST);
 
 	// for all lights
-	BOOST_FOREACH(const PointLight* light, r.getCamera().getVisiblePointLights())
+	BOOST_FOREACH(const PointLight* light,
+		r.getCamera().getVisiblePointLights())
 	{
 		pointLightPass(*light);
 	}

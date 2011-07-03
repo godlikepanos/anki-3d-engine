@@ -1,7 +1,7 @@
 #include "SkinsDeformer.h"
 #include "Resources/ShaderProg.h"
-#include "SkinPatchNode.h"
-#include "SkinNode.h"
+#include "Scene/SkinPatchNode.h"
+#include "Scene/SkinNode.h"
 
 
 //==============================================================================

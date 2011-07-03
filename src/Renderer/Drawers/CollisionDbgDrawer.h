@@ -3,9 +3,11 @@
 
 
 class Dbg;
+namespace Col {
 class Sphere;
 class Obb;
 class Plane;
+}
 
 
 /// Contains methods to render the collision shapes
@@ -16,13 +18,13 @@ class CollisionDbgDrawer
 		CollisionDbgDrawer(Dbg& dbg_): dbg(dbg_) {}
 
 		/// Draw Sphere
-		virtual void draw(const Sphere& sphere);
+		virtual void draw(const Col::Sphere& sphere);
 
 		/// Draw Obb
-		virtual void draw(const Obb& obb);
+		virtual void draw(const Col::Obb& obb);
 
 		/// Draw Plane
-		virtual void draw(const Plane& plane);
+		virtual void draw(const Col::Plane& plane);
 
 	private:
 		Dbg& dbg; ///< The debug stage

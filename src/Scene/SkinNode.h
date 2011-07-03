@@ -27,7 +27,7 @@ class SkinNode: public SceneNode
 		GETTER_RW(Vec<Mat3>, boneRotations, getBoneRotations)
 		GETTER_RW(Vec<Vec3>, boneTranslations, getBoneTranslations)
 		GETTER_R(Skin, *skin, getSkin)
-		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+		GETTER_R(Col::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 		GETTER_R(Vec<SkinPatchNode*>, patches, getPatcheNodes)
 		/// @}
 
@@ -42,7 +42,7 @@ class SkinNode: public SceneNode
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
 		Vec<SkinPatchNode*> patches;
-		Obb visibilityShapeWSpace;
+		Col::Obb visibilityShapeWSpace;
 
 		/// @name Bone data
 		/// @{

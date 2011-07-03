@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Input.h"
+#include "Input/Input.h"
 
 
 WRAP(Input)

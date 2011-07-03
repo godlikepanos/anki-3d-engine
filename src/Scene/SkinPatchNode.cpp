@@ -1,6 +1,6 @@
 #include "SkinPatchNode.h"
 #include "SkinNode.h"
-#include "SkinsDeformer.h"
+#include "Renderer/SkinsDeformer.h"
 
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
