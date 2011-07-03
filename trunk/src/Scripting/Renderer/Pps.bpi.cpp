@@ -1,7 +1,7 @@
 #include "ScriptingCommon.h"
-#include "Pps.h"
-#include "Hdr.h"
-#include "Bl.h"
+#include "Renderer/Pps.h"
+#include "Renderer/Hdr.h"
+#include "Renderer/Bl.h"
 
 
 WRAP(Pps)

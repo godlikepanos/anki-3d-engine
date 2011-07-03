@@ -1,11 +1,11 @@
 /*
 #include <limits>
 #include "map.h"
-#include "Mesh.h"
+#include "Resources/Mesh.h"
 #include "Scanner.h"
 #include "Parser.h"
 #include "Resource.h"
-#include "Camera.h"
+#include "Scene/Camera.h"
 
 
 

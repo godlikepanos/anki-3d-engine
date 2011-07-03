@@ -1,6 +1,6 @@
 #include "ModelPatch.h"
 #include "Mesh.h"
-#include "Material.h"
+#include "Resources/Material.h"
 
 
 //==============================================================================

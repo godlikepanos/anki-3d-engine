@@ -1,10 +1,10 @@
 #include "skybox.h"
-#include "Renderer.h"
+#include "Renderer/Renderer.h"
 #include "Math/Math.h"
-#include "Camera.h"
-#include "Scene.h"
-#include "App.h"
-#include "MainRenderer.h"
+#include "Scene/Camera.h"
+#include "Scene/Scene.h"
+#include "Core/App.h"
+#include "Renderer/MainRenderer.h"
 
 
 /*static float coords [][4][3] =

@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "MaterialRuntime.h"
+#include "Scene/MaterialRuntime.h"
 
 
 WRAP(MaterialRuntime)

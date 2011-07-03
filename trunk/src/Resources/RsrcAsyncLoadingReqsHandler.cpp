@@ -1,7 +1,7 @@
 #include "RsrcAsyncLoadingReqsHandler.h"
 #include "Resources/Texture.h"
 #include "Core/Logger.h"
-#include "HighRezTimer.h"
+#include "Util/HighRezTimer.h"
 #include "Util/Assert.h"
 #include "Core/Globals.h"
 

@@ -7,7 +7,7 @@
 #include "Util/Accessors.h"
 #include "ModelPatchNode.h"
 #include "Util/Vec.h"
-#include "Obb.h"
+#include "Collision/Obb.h"
 
 
 class Model;
@@ -24,7 +24,7 @@ class ModelNode: public SceneNode
 		/// @{
 		GETTER_RW(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
 		const Model& getModel() const {return *model;}
-		const Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
+		const Col::Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
 		/// @}
 
 		/// Initialize the node
@@ -39,7 +39,7 @@ class ModelNode: public SceneNode
 	private:
 		RsrcPtr<Model> model;
 		Vec<ModelPatchNode*> patches;
-		Obb visibilityShapeWSpace;
+		Col::Obb visibilityShapeWSpace;
 };
 
 

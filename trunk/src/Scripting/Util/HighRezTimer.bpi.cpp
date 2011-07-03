@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "HighRezTimer.h"
+#include "Util/HighRezTimer.h"
 
 
 WRAP(HighRezTimer)

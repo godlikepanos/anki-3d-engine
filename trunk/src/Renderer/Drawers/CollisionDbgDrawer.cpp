@@ -1,12 +1,12 @@
 #include "CollisionDbgDrawer.h"
-#include "Dbg.h"
-#include "Collision.h"
+#include "../Dbg.h"
+#include "Collision/Collision.h"
 
 
 //==============================================================================
 // draw (Sphere)                                                               =
 //==============================================================================
-void CollisionDbgDrawer::draw(const Sphere& sphere)
+void CollisionDbgDrawer::draw(const Col::Sphere& sphere)
 {
 	dbg.setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
 	dbg.drawSphere(sphere.getRadius());
@@ -16,7 +16,7 @@ void CollisionDbgDrawer::draw(const Sphere& sphere)
 //==============================================================================
 // draw (Obb)                                                                  =
 //==============================================================================
-void CollisionDbgDrawer::draw(const Obb& obb)
+void CollisionDbgDrawer::draw(const Col::Obb& obb)
 {
 	Mat4 scale(Mat4::getIdentity());
 	scale(0, 0) = obb.getExtend().x();
@@ -48,7 +48,7 @@ void CollisionDbgDrawer::draw(const Obb& obb)
 //==============================================================================
 // draw (Plane)                                                                =
 //==============================================================================
-void CollisionDbgDrawer::draw(const Plane& plane)
+void CollisionDbgDrawer::draw(const Col::Plane& plane)
 {
 	const Vec3& n = plane.getNormal();
 	const float& o = plane.getOffset();

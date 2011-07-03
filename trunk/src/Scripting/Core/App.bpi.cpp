@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "App.h"
+#include "Core/App.h"
 
 
 WRAP(App)

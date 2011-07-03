@@ -6,7 +6,7 @@
 #include <boost/algorithm/string.hpp>
 #include "GfxApi/GlException.h"
 #include "MainRenderer.h"
-#include "App.h"
+#include "Core/App.h"
 #include "RendererInitializer.h"
 #include "Ssao.h"
 #include "Core/Logger.h"

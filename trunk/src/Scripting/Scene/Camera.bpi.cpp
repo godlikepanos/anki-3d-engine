@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Camera.h"
+#include "Scene/Camera.h"
 
 
 WRAP(Camera)

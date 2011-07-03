@@ -1,7 +1,7 @@
 #include "ResourceManager.h"
 
 #include "Resources/Texture.h"
-#include "Material.h"
+#include "Resources/Material.h"
 #include "Resources/ShaderProg.h"
 #include "Mesh.h"
 #include "Skeleton.h"

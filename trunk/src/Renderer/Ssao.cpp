@@ -1,9 +1,9 @@
 #include <boost/lexical_cast.hpp>
 #include "Ssao.h"
 #include "Renderer.h"
-#include "Camera.h"
+#include "Scene/Camera.h"
 #include "RendererInitializer.h"
-#include "PerspectiveCamera.h"
+#include "Scene/PerspectiveCamera.h"
 
 
 //==============================================================================

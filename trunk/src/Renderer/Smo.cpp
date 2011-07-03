@@ -1,15 +1,15 @@
 #include "Smo.h"
 #include "Renderer.h"
-#include "Light.h"
-#include "LightRsrc.h"
-#include "PointLight.h"
-#include "SpotLight.h"
-#include "Camera.h"
+#include "Scene/Light.h"
+#include "Resources/LightRsrc.h"
+#include "Scene/PointLight.h"
+#include "Scene/SpotLight.h"
+#include "Scene/Camera.h"
 #include "GfxApi/BufferObjects/Vao.h"
 #include "GfxApi/BufferObjects/Vbo.h"
-#include "PerspectiveCamera.h"
-#include "OrthographicCamera.h"
-#include "Mesh.h"
+#include "Scene/PerspectiveCamera.h"
+#include "Scene/OrthographicCamera.h"
+#include "Resources/Mesh.h"
 
 
 const float THRESHOLD = 0.2;
@@ -135,8 +135,9 @@ void Smo::run(const SpotLight& light)
 {
 	const Camera& lcam = light.getCamera();
 
-	bool inside =  lcam.insideFrustum(Sphere(r.getCamera().getWorldTransform().getOrigin(),
-	                                         r.getCamera().getZNear() + THRESHOLD));
+	const Vec3& origin = r.getCamera().getWorldTransform().getOrigin();
+	float radius = r.getCamera().getZNear() + THRESHOLD;
+	bool inside =  lcam.insideFrustum(Col::Sphere(origin, radius));
 
 	// set GL state
 	setUpGl(inside);

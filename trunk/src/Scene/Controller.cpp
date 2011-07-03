@@ -1,6 +1,6 @@
 #include "Controller.h"
 #include "Scene.h"
-#include "App.h"
+#include "Core/App.h"
 #include "Core/Globals.h"
 
 

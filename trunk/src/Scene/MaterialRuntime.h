@@ -5,7 +5,7 @@
 #include "MaterialRuntimeUserDefinedVar.h"
 #include "Util/Accessors.h"
 #include "Util/CharPtrHashMap.h"
-#include "Material.h"
+#include "Resources/Material.h"
 
 
 

@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "SceneNode.h"
+#include "Scene/SceneNode.h"
 
 
 WRAP(SceneNode)

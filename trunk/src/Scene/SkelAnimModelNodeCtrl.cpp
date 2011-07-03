@@ -1,12 +1,12 @@
 #include <boost/foreach.hpp>
 #include "SkelAnimModelNodeCtrl.h"
-#include "SkelAnim.h"
-#include "Skeleton.h"
 #include "SkinNode.h"
-#include "Model.h"
-#include "MainRenderer.h"
-#include "Skin.h"
+#include "Resources/SkelAnim.h"
+#include "Resources/Skeleton.h"
+#include "Resources/Model.h"
+#include "Resources/Skin.h"
 #include "Core/Globals.h"
+#include "Renderer/MainRenderer.h"
 
 
 //==============================================================================

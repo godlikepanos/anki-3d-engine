@@ -1,6 +1,6 @@
 #include "PhyDbgDrawer.h"
-#include "MainRenderer.h"
-#include "PhysConvertors.h"
+#include "../MainRenderer.h"
+#include "Physics/PhysConvertors.h"
 #include "Core/Logger.h"
 #include "Core/Globals.h"
 

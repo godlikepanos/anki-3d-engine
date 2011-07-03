@@ -1,10 +1,10 @@
 #include "ScriptingCommon.h"
 #include "Core/Globals.h"
 #include "Core/Logger.h"
-#include "MainRenderer.h"
-#include "Input.h"
-#include "Scene.h"
-#include "App.h"
+#include "Renderer/MainRenderer.h"
+#include "Input/Input.h"
+#include "Scene/Scene.h"
+#include "Core/App.h"
 #include "Events/Manager.h"
 
 

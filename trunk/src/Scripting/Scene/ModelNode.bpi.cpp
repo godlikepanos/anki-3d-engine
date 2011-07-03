@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "ModelNode.h"
+#include "Scene/ModelNode.h"
 
 
 WRAP(ModelNode)

@@ -6,10 +6,10 @@
 #include <sstream>
 #include "Resources/ShaderProg.h"
 #include "ShaderPrePreprocessor.h"
-#include "App.h" // To get cache dir
+#include "Core/App.h" // To get cache dir
 #include "GfxApi/GlException.h"
 #include "Core/Logger.h"
-#include "Util.h"
+#include "Util/Util.h"
 #include "Core/Globals.h"
 
 

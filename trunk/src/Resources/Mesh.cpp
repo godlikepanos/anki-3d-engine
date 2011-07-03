@@ -1,7 +1,7 @@
 #include <fstream>
 #include <boost/lexical_cast.hpp>
 #include "Mesh.h"
-#include "Material.h"
+#include "Resources/Material.h"
 #include "MeshData.h"
 #include "GfxApi/BufferObjects/Vbo.h"
 

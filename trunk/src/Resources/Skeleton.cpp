@@ -1,7 +1,7 @@
 #include <cstring>
 #include <fstream>
 #include "Skeleton.h"
-#include "BinaryStream.h"
+#include "Util/BinaryStream.h"
 
 
 //==============================================================================

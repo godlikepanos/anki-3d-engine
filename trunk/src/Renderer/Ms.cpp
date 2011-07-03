@@ -1,9 +1,9 @@
 #include <boost/foreach.hpp>
 #include "Ms.h"
 #include "Renderer.h"
-#include "Camera.h"
+#include "Scene/Camera.h"
 #include "Ez.h"
-#include "RenderableNode.h"
+#include "Scene/RenderableNode.h"
 
 
 //==============================================================================

@@ -1,5 +1,5 @@
 #include "PatchNode.h"
-#include "Material.h"
+#include "Resources/Material.h"
 #include "MaterialRuntime.h"
 
 

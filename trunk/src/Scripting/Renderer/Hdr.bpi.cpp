@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Hdr.h"
+#include "Renderer/Hdr.h"
 
 
 WRAP(Hdr)

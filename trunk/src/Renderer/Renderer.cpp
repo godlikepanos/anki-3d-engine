@@ -1,8 +1,7 @@
 #include "Renderer.h"
-#include "Camera.h"
 #include "RendererInitializer.h"
 #include "Util/Exception.h"
-#include "PerspectiveCamera.h"
+#include "Scene/PerspectiveCamera.h"
 
 
 //==============================================================================

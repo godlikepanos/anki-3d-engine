@@ -3,7 +3,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Material.h"
+#include "Resources/Material.h"
 #include "Resources/Texture.h"
 #include "Resources/ShaderProg.h"
 #include "Misc/PropertyTree.h"

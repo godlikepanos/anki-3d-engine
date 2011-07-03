@@ -1,5 +1,5 @@
 #include "ScriptingCommon.h"
-#include "Dbg.h"
+#include "Renderer/Dbg.h"
 
 
 WRAP(Dbg)
