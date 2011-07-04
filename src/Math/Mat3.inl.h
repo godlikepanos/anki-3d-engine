@@ -30,7 +30,8 @@ inline Mat3::Mat3(float arr [])
 }
 
 // many floats
-inline Mat3::Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22)
+inline Mat3::Mat3(float m00, float m01, float m02, float m10, float m11,
+	float m12, float m20, float m21, float m22)
 {
 	SELF(0, 0) = m00;
 	SELF(0, 1) = m01;
@@ -55,7 +56,8 @@ inline Mat3::Mat3(const Mat3& b)
 // Quat
 inline Mat3::Mat3(const Quat& q)
 {
-	ASSERT(fabs(1.0 - q.getLength()) <= 0.002); // If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
+	// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
+	ASSERT(fabs(1.0 - q.getLength()) <= 0.002);
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
@@ -133,7 +135,7 @@ inline Mat3::Mat3(const Axisang& axisang)
 
 
 //==============================================================================
-// Accessors                                                                    =
+// Accessors                                                                   =
 //==============================================================================
 
 inline float& Mat3::operator()(const uint i, const uint j)
@@ -217,15 +219,24 @@ inline Mat3& Mat3::operator-=(const Mat3& b)
 inline Mat3 Mat3::operator*(const Mat3& b) const
 {
 	Mat3 c;
-	c(0, 0) = SELF(0, 0) * b(0, 0) + SELF(0, 1) * b(1, 0) + SELF(0, 2) * b(2, 0);
-	c(0, 1) = SELF(0, 0) * b(0, 1) + SELF(0, 1) * b(1, 1) + SELF(0, 2) * b(2, 1);
-	c(0, 2) = SELF(0, 0) * b(0, 2) + SELF(0, 1) * b(1, 2) + SELF(0, 2) * b(2, 2);
-	c(1, 0) = SELF(1, 0) * b(0, 0) + SELF(1, 1) * b(1, 0) + SELF(1, 2) * b(2, 0);
-	c(1, 1) = SELF(1, 0) * b(0, 1) + SELF(1, 1) * b(1, 1) + SELF(1, 2) * b(2, 1);
-	c(1, 2) = SELF(1, 0) * b(0, 2) + SELF(1, 1) * b(1, 2) + SELF(1, 2) * b(2, 2);
-	c(2, 0) = SELF(2, 0) * b(0, 0) + SELF(2, 1) * b(1, 0) + SELF(2, 2) * b(2, 0);
-	c(2, 1) = SELF(2, 0) * b(0, 1) + SELF(2, 1) * b(1, 1) + SELF(2, 2) * b(2, 1);
-	c(2, 2) = SELF(2, 0) * b(0, 2) + SELF(2, 1) * b(1, 2) + SELF(2, 2) * b(2, 2);
+	c(0, 0) = SELF(0, 0) * b(0, 0) + SELF(0, 1) * b(1, 0) +
+		SELF(0, 2) * b(2, 0);
+	c(0, 1) = SELF(0, 0) * b(0, 1) + SELF(0, 1) * b(1, 1) +
+		SELF(0, 2) * b(2, 1);
+	c(0, 2) = SELF(0, 0) * b(0, 2) + SELF(0, 1) * b(1, 2) +
+		SELF(0, 2) * b(2, 2);
+	c(1, 0) = SELF(1, 0) * b(0, 0) + SELF(1, 1) * b(1, 0) +
+		SELF(1, 2) * b(2, 0);
+	c(1, 1) = SELF(1, 0) * b(0, 1) + SELF(1, 1) * b(1, 1) +
+		SELF(1, 2) * b(2, 1);
+	c(1, 2) = SELF(1, 0) * b(0, 2) + SELF(1, 1) * b(1, 2) +
+		SELF(1, 2) * b(2, 2);
+	c(2, 0) = SELF(2, 0) * b(0, 0) + SELF(2, 1) * b(1, 0) +
+		SELF(2, 2) * b(2, 0);
+	c(2, 1) = SELF(2, 0) * b(0, 1) + SELF(2, 1) * b(1, 1) +
+		SELF(2, 2) * b(2, 1);
+	c(2, 2) = SELF(2, 0) * b(0, 2) + SELF(2, 1) * b(1, 2) +
+		SELF(2, 2) * b(2, 2);
 	return c;
 }
 
@@ -584,9 +595,10 @@ inline void Mat3::setRotationZ(float rad)
 // rotateXAxis
 /*
  * the slow code is in comments and above the comments the optimized one
- * If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in mat's
- * columns. This means that: mat3.colomn[0] == i*mat3. rotateXAxis() rotates rad angle not from i vector (aka x axis)
- * but from the vector from colomn 0
+ * If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3.
+ * The 3 rotated vectors are in mat's columns. This means that:
+ * mat3.colomn[0] == i*mat3. rotateXAxis() rotates rad angle not from i vector
+ * (aka x axis) but from the vector from colomn 0
  */
 inline void Mat3::rotateXAxis(float rad)
 {
@@ -602,7 +614,8 @@ inline void Mat3::rotateXAxis(float rad)
 	SELF(2, 2) = SELF(2, 2) * cosa - SELF(2, 1) * sina;
 
 	// zAxis.normalize();
-	float len = sqrt(SELF(0, 2) * SELF(0, 2) + SELF(1, 2) * SELF(1, 2) + SELF(2, 2) * SELF(2, 2));
+	float len = sqrt(SELF(0, 2) * SELF(0, 2) + SELF(1, 2) * SELF(1, 2) +
+		SELF(2, 2) * SELF(2, 2));
 	SELF(0, 2) /= len;
 	SELF(1, 2) /= len;
 	SELF(2, 2) /= len;
@@ -613,7 +626,8 @@ inline void Mat3::rotateXAxis(float rad)
 	SELF(2, 1) = SELF(0, 2) * SELF(1, 0) - SELF(1, 2) * SELF(0, 0);
 
 	// yAxis.normalize();
-	/*len = invSqrt(SELF(0, 1) * SELF(0, 1) + SELF(1, 1) * SELF(1, 1) + SELF(2, 1) * SELF(2, 1));
+	/*len = invSqrt(SELF(0, 1) * SELF(0, 1) + SELF(1, 1) * SELF(1, 1) +
+		SELF(2, 1) * SELF(2, 1));
 	SELF(0, 1) *= len;
 	SELF(1, 1) *= len;
 	SELF(2, 1) *= len;*/
@@ -637,7 +651,8 @@ inline void Mat3::rotateYAxis(float rad)
 	SELF(2, 2) = SELF(2, 2)*cosa + SELF(2, 0)*sina;
 
 	// zAxis.normalize();
-	float len = sqrt(SELF(0, 2) * SELF(0, 2) + SELF(1, 2) * SELF(1, 2) + SELF(2, 2) * SELF(2, 2));
+	float len = sqrt(SELF(0, 2) * SELF(0, 2) + SELF(1, 2) * SELF(1, 2) +
+		SELF(2, 2) * SELF(2, 2));
 	SELF(0, 2) /= len;
 	SELF(1, 2) /= len;
 	SELF(2, 2) /= len;
@@ -648,7 +663,8 @@ inline void Mat3::rotateYAxis(float rad)
 	SELF(2, 0) = SELF(1, 2) * SELF(0, 1) - SELF(0, 2) * SELF(1, 1);
 
 	// xAxis.normalize();
-	/*len = invSqrt(SELF(0, 0) * SELF(0, 0) + SELF(1, 0) * SELF(1, 0) + SELF(2, 0) * SELF(2, 0));
+	/*len = invSqrt(SELF(0, 0) * SELF(0, 0) + SELF(1, 0) * SELF(1, 0) +
+		SELF(2, 0) * SELF(2, 0));
 	SELF(0, 0) *= len;
 	SELF(1, 0) *= len;
 	SELF(2, 0) *= len;*/
@@ -672,7 +688,8 @@ inline void Mat3::rotateZAxis(float rad)
 	SELF(2, 0) = SELF(2, 0)*cosa + SELF(2, 1)*sina;
 
 	// xAxis.normalize();
-	float len = sqrt(SELF(0, 0) * SELF(0, 0) + SELF(1, 0) * SELF(1, 0) + SELF(2, 0) * SELF(2, 0));
+	float len = sqrt(SELF(0, 0) * SELF(0, 0) + SELF(1, 0) * SELF(1, 0) +
+		SELF(2, 0) * SELF(2, 0));
 	SELF(0, 0) /= len;
 	SELF(1, 0) /= len;
 	SELF(2, 0) /= len;
@@ -683,7 +700,8 @@ inline void Mat3::rotateZAxis(float rad)
 	SELF(2, 1) = SELF(0, 2) * SELF(1, 0) - SELF(1, 2) * SELF(0, 0);
 
 	// yAxis.normalize();
-	/*len = invSqrt(SELF(0, 1) * SELF(0, 1) + SELF(1, 1) * SELF(1, 1) + SELF(2, 1) * SELF(2, 1));
+	/*len = invSqrt(SELF(0, 1) * SELF(0, 1) + SELF(1, 1) * SELF(1, 1) +
+		SELF(2, 1) * SELF(2, 1));
 	SELF(0, 1) *= len;
 	SELF(1, 1) *= len;
 	SELF(2, 1) *= len;*/
@@ -750,9 +768,11 @@ inline void Mat3::reorthogonalize()
 // Determinant
 inline float Mat3::getDet() const
 {
-	/* accurate method:
-	return SELF(0, 0) * SELF(1, 1) * SELF(2, 2) + SELF(0, 1) * SELF(1, 2) * SELF(2, 0) + SELF(0, 2) * SELF(1, 0) * SELF(2, 1)
-	- SELF(0, 0) * SELF(1, 2) * SELF(2, 1) - SELF(0, 1) * SELF(1, 0) * SELF(2, 2) - SELF(0, 2) * SELF(1, 1) * SELF(2, 0);*/
+	/* Accurate method:
+	return SELF(0, 0) * SELF(1, 1) * SELF(2, 2) + SELF(0, 1) * SELF(1, 2) *
+		SELF(2, 0) + SELF(0, 2) * SELF(1, 0) * SELF(2, 1) -
+		SELF(0, 0) * SELF(1, 2) * SELF(2, 1) - SELF(0, 1) * SELF(1, 0) *
+		SELF(2, 2) - SELF(0, 2) * SELF(1, 1) * SELF(2, 0); */
 	return SELF(0, 0)*(SELF(1, 1) * SELF(2, 2) - SELF(1, 2) * SELF(2, 1)) -
 	SELF(0, 1)*(SELF(1, 0) * SELF(2, 2) - SELF(1, 2) * SELF(2, 0)) +
 	SELF(0, 2)*(SELF(0, 1) * SELF(2, 1) - SELF(1, 1) * SELF(2, 0));
@@ -768,7 +788,8 @@ inline Mat3 Mat3::getInverse() const
 	float cofactor0 = SELF(1, 1) * SELF(2, 2) - SELF(1, 2) * SELF(2, 1);
 	float cofactor3 = SELF(0, 2) * SELF(2, 1) - SELF(0, 1) * SELF(2, 2);
 	float cofactor6 = SELF(0, 1) * SELF(1, 2) - SELF(0, 2) * SELF(1, 1);
-	float det = SELF(0, 0) * cofactor0 + SELF(1, 0) * cofactor3 + SELF(2, 0) * cofactor6;
+	float det = SELF(0, 0) * cofactor0 + SELF(1, 0) * cofactor3 + SELF(2, 0) *
+		cofactor6;
 
 	ASSERT(!isZero(det)); // Cannot invert det == 0
 
@@ -829,5 +850,6 @@ inline std::ostream& operator<<(std::ostream& s, const Mat3& m)
 	}
 	return s;
 }
+
 
 } // end namespace

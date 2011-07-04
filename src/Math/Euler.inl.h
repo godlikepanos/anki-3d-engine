@@ -52,9 +52,11 @@ inline Euler::Euler(const Quat& q)
 	float sqx = q.x() * q.x();
 	float sqy = q.y() * q.y();
 	float sqz = q.z() * q.z();
-	y() = atan2(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(), 1.0 - 2.0 * sqy - 2.0 * sqz);
+	y() = atan2(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(),
+		1.0 - 2.0 * sqy - 2.0 * sqz);
 	z() = asin(2.0 * test);
-	x() = atan2(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(), 1.0 - 2.0 * sqx - 2.0 * sqz);
+	x() = atan2(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(),
+	    1.0 - 2.0 * sqx - 2.0 * sqz);
 }
 
 // mat3

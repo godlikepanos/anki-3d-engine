@@ -54,8 +54,8 @@ inline bool isZero(float f)
 //  combineTransformations
 //  mat4(t0,r0,s0)*mat4(t1,r1,s1) == mat4(tf,rf,sf)
 inline void combineTransformations(const Vec3& t0, const Mat3& r0, float s0,
-                                   const Vec3& t1, const Mat3& r1, float s1,
-                                   Vec3& tf, Mat3& rf, float& sf)
+	const Vec3& t1, const Mat3& r1, float s1,
+	Vec3& tf, Mat3& rf, float& sf)
 {
 	tf = t1.getTransformed(t0, r0, s0);
 	rf = r0 * r1;
@@ -64,7 +64,8 @@ inline void combineTransformations(const Vec3& t0, const Mat3& r0, float s0,
 
 
 //  combineTransformations as the above but without scale
-inline void combineTransformations(const Vec3& t0, const Mat3& r0, const Vec3& t1, const Mat3& r1, Vec3& tf, Mat3& rf)
+inline void combineTransformations(const Vec3& t0, const Mat3& r0,
+	const Vec3& t1, const Mat3& r1, Vec3& tf, Mat3& rf)
 {
 	tf = t1.getTransformed(t0, r0);
 	rf = r0 * r1;

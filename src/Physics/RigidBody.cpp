@@ -1,7 +1,7 @@
-#include "PhysRigidBody.h"
-#include "PhysMasterContainer.h"
+#include "RigidBody.h"
+#include "MasterContainer.h"
 #include "Scene/Scene.h"
-#include "PhysMotionState.h"
+#include "MotionState.h"
 
 
 namespace Phys {
@@ -23,11 +23,14 @@ RigidBody::Initializer::Initializer():
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-RigidBody::RigidBody(MasterContainer& masterContainer_, const Initializer& init):
-  btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL, btVector3(0.0, 0.0, 0.0))), // dummy init
-  masterContainer(masterContainer_)
+RigidBody::RigidBody(MasterContainer& masterContainer_,
+	const Initializer& init)
+:	btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL,
+		btVector3(0.0, 0.0, 0.0))), // dummy init
+	masterContainer(masterContainer_)
 {
-	ASSERT(init.shape != NULL && init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
+	ASSERT(init.shape != NULL &&
+		init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
 	bool isDynamic = (init.mass != 0.0);
 
@@ -43,11 +46,13 @@ RigidBody::RigidBody(MasterContainer& masterContainer_, const Initializer& init)
 
 	motionState.reset(new MotionState(init.startTrf, init.sceneNode));
 
-	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass, motionState.get(), init.shape, localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass,
+		motionState.get(), init.shape, localInertia);
 
 	setupRigidBody(cInfo);
 
-	setContactProcessingThreshold(masterContainer.defaultContactProcessingThreshold);
+	setContactProcessingThreshold(
+		masterContainer.defaultContactProcessingThreshold);
 
 	forceActivationState(ISLAND_SLEEPING);
 
@@ -58,7 +63,8 @@ RigidBody::RigidBody(MasterContainer& masterContainer_, const Initializer& init)
 	}
 	else
 	{
-		masterContainer.dynamicsWorld->addRigidBody(this, init.group, init.mask);
+		masterContainer.dynamicsWorld->addRigidBody(this, init.group,
+			init.mask);
 	}
 }
 

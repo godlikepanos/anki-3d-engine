@@ -2,7 +2,7 @@
 #define SCENE_H
 
 #include <boost/scoped_ptr.hpp>
-#include "Physics/PhysMasterContainer.h"
+#include "Physics/MasterContainer.h"
 #include "Util/Assert.h"
 #include "Util/Accessors.h"
 #include "VisibilityTester.h"

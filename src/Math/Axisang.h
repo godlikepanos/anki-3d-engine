@@ -1,5 +1,5 @@
-#ifndef AXISANG_H
-#define AXISANG_H
+#ifndef M_AXISANG_H
+#define M_AXISANG_H
 
 #include "Common.h"
 

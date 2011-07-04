@@ -9,20 +9,20 @@ namespace M {
 //==============================================================================
 
 // Default
-inline Axisang::Axisang():
-	ang(0.0),
+inline Axisang::Axisang()
+:	ang(0.0),
 	axis(0.0)
 {}
 
-// Axisang
-inline Axisang::Axisang(const Axisang& b):
-	ang(b.ang),
+// Copy
+inline Axisang::Axisang(const Axisang& b)
+:	ang(b.ang),
 	axis(b.axis)
 {}
 
 // float, axis
-inline Axisang::Axisang(float rad, const Vec3& axis_):
-	ang(rad),
+inline Axisang::Axisang(float rad, const Vec3& axis_)
+:	ang(rad),
 	axis(axis_)
 {}
 
@@ -45,11 +45,15 @@ inline Axisang::Axisang(const Quat& q)
 // constructor [mat3]
 inline Axisang::Axisang(const Mat3& m3)
 {
-	if((fabs(m3(0, 1)-m3(1, 0))< EPSILON)  && (fabs(m3(0, 2)-m3(2, 0))< EPSILON) && (fabs(m3(1, 2)-m3(2, 1)) < EPSILON))
+	if((fabs(m3(0, 1) - m3(1, 0)) < EPSILON) &&
+		(fabs(m3(0, 2) - m3(2, 0)) < EPSILON) &&
+		(fabs(m3(1, 2) - m3(2, 1)) < EPSILON))
 	{
 
-		if((fabs(m3(0, 1)+m3(1, 0)) < 0.1) && (fabs(m3(0, 2)+m3(2, 0)) < 0.1) && (fabs(m3(1, 2)+m3(2, 1)) < 0.1) &&
-		   (fabs(m3(0, 0)+m3(1, 1)+m3(2, 2))-3) < 0.1)
+		if((fabs(m3(0, 1) + m3(1, 0)) < 0.1) &&
+			(fabs(m3(0, 2) + m3(2, 0)) < 0.1) &&
+			(fabs(m3(1, 2) + m3(2, 1)) < 0.1) &&
+			(fabs(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < 0.1)
 		{
 			axis = Vec3(1.0, 0.0, 0.0);
 			ang = 0.0;
@@ -117,8 +121,9 @@ inline Axisang::Axisang(const Mat3& m3)
 		return;
 	}
 
-	float s = M::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) + (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0)) +
-	                  (m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
+	float s = M::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) +
+		(m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0)) +
+		(m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
 
 	if(fabs(s) < 0.001)
 	{

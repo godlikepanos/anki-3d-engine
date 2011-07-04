@@ -1,5 +1,5 @@
-#ifndef EULER_H
-#define EULER_H
+#ifndef M_EULER_H
+#define M_EULER_H
 
 #include "Common.h"
 

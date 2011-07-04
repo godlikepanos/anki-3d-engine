@@ -3,10 +3,10 @@
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
-#include "PhysCharacter.h"
-#include "PhysMasterContainer.h"
-#include "PhysMotionState.h"
-#include "PhysRigidBody.h"
+#include "Character.h"
+#include "MasterContainer.h"
+#include "MotionState.h"
+#include "RigidBody.h"
 
 
 namespace Phys {
@@ -29,32 +29,39 @@ inline Character::Initializer::Initializer():
 //==============================================================================
 // Contructor                                                                  =
 //==============================================================================
-Character::Character(MasterContainer& masterContainer_, const Initializer& init):
-	masterContainer(masterContainer_)
+Character::Character(MasterContainer& masterContainer_,
+	const Initializer& init)
+:	masterContainer(masterContainer_)
 {
 	ghostObject = new btPairCachingGhostObject();
 
 	motionState = new MotionState(init.startTrf, init.sceneNode);
 
-	btAxisSweep3* sweepBp = dynamic_cast<btAxisSweep3*>(masterContainer.broadphase);
+	btAxisSweep3* sweepBp =
+		dynamic_cast<btAxisSweep3*>(masterContainer.broadphase);
 	ASSERT(sweepBp != NULL);
 
 	ghostPairCallback = new btGhostPairCallback();
-	sweepBp->getOverlappingPairCache()->setInternalGhostPairCallback(ghostPairCallback);
-	//collisionShape = new btCapsuleShape(init.characterWidth, init.characterHeight);
-	convexShape = new btCylinderShape(btVector3(init.characterWidth, init.characterHeight, init.characterWidth));
+	sweepBp->getOverlappingPairCache()->setInternalGhostPairCallback(
+		ghostPairCallback);
+	//collisionShape = new btCapsuleShape(init.characterWidth,
+	//	init.characterHeight);
+	convexShape = new btCylinderShape(btVector3(init.characterWidth,
+		init.characterHeight, init.characterWidth));
 
 	ghostObject->setCollisionShape(convexShape);
 	//ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 	ghostObject->setWorldTransform(toBt(init.startTrf));
 
-	character = new btKinematicCharacterController(ghostObject, convexShape, init.stepHeight);
+	character = new btKinematicCharacterController(ghostObject, convexShape,
+		init.stepHeight);
 
 	character->setJumpSpeed(init.jumpSpeed);
 	character->setMaxJumpHeight(init.maxJumpHeight);
 
 	// register
-	masterContainer.dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
+	masterContainer.dynamicsWorld->addCollisionObject(ghostObject,
+		btBroadphaseProxy::CharacterFilter,
 		btBroadphaseProxy::StaticFilter|btBroadphaseProxy::DefaultFilter);
 
 	masterContainer.dynamicsWorld->addAction(character);
@@ -68,7 +75,8 @@ Character::Character(MasterContainer& masterContainer_, const Initializer& init)
 //==============================================================================
 Character::~Character()
 {
-	masterContainer.characters.erase(std::find(masterContainer.characters.begin(),
+	masterContainer.characters.erase(std::find(
+		masterContainer.characters.begin(),
 		masterContainer.characters.end(), this));
 	masterContainer.dynamicsWorld->removeAction(character);
 	masterContainer.dynamicsWorld->removeCollisionObject(ghostObject);
@@ -96,7 +104,8 @@ void Character::rotate(float angle)
 //==============================================================================
 void Character::moveForward(float distance)
 {
-	btVector3 forward = -ghostObject->getWorldTransform().getBasis().getColumn(2);
+	btVector3 forward =
+		-ghostObject->getWorldTransform().getBasis().getColumn(2);
 	character->setWalkDirection(forward * distance);
 }
 

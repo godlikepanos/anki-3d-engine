@@ -1,7 +1,7 @@
 #ifndef PHYS_CHARACTER_H
 #define PHYS_CHARACTER_H
 
-#include "PhysMasterContainer.h"
+#include "MasterContainer.h"
 #include "Math/Math.h"
 #include "Core/Object.h"
 
