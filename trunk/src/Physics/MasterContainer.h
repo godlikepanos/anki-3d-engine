@@ -1,7 +1,7 @@
 #ifndef PHYS_MASTER_CONTAINER_H
 #define PHYS_MASTER_CONTAINER_H
 
-#include "PhysConvertors.h"
+#include "Convertors.h"
 #include "Util/Vec.h"
 #include <boost/scoped_ptr.hpp>
 #include <btBulletCollisionCommon.h>
@@ -48,12 +48,15 @@ class MasterContainer
 		void update(float prevUpdateTime, float crntTime);
 
 	private:
-		btDiscreteDynamicsWorld* dynamicsWorld; ///< Container for rigid bodied and constraints
+		/// Container for rigid bodied and constraints
+		btDiscreteDynamicsWorld* dynamicsWorld;
 		btDefaultCollisionConfiguration* collisionConfiguration;
-		btCollisionDispatcher* dispatcher; ///< Contains the algorithms of collision
+		/// Contains the algorithms of collision
+		btCollisionDispatcher* dispatcher;
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
-		boost::scoped_ptr<btIDebugDraw> debugDrawer; ///< Keep here for garbage collection
+		/// Keep here for garbage collection
+		boost::scoped_ptr<btIDebugDraw> debugDrawer;
 		float defaultContactProcessingThreshold;
 		Vec<Character*> characters;
 };

@@ -28,8 +28,9 @@ class MotionState: public btMotionState
 };
 
 
-inline MotionState::MotionState(const Transform& initialTransform, SceneNode* node_):
-	worldTransform(toBt(initialTransform)),
+inline MotionState::MotionState(const Transform& initialTransform,
+	SceneNode* node_)
+:	worldTransform(toBt(initialTransform)),
 	node(node_)
 {}
 

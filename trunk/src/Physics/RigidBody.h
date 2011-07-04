@@ -42,7 +42,8 @@ class RigidBody: public btRigidBody
 
 	private:
 		MasterContainer& masterContainer; ///< Know your father
-		boost::scoped_ptr<MotionState> motionState; ///< Keep it here for garbage collection
+		/// Keep it here for garbage collection
+		boost::scoped_ptr<MotionState> motionState;
 };
 
 

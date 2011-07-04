@@ -1,5 +1,5 @@
-#ifndef MAT3_H
-#define MAT3_H
+#ifndef M_MAT3_H
+#define M_MAT3_H
 
 #include "Common.h"
 
@@ -7,7 +7,8 @@
 namespace M {
 
 
-/// Mainly used for rotations. It includes many helpful member functions. Its row major
+/// Mainly used for rotations. It includes many helpful member functions.
+/// Its row major
 class Mat3
 {
 	public:
@@ -15,7 +16,8 @@ class Mat3
 		/// @{
 		explicit Mat3() {};
 		explicit Mat3(float f);
-		explicit Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
+		explicit Mat3(float m00, float m01, float m02, float m10, float m11,
+			float m12, float m20, float m21, float m22);
 		explicit Mat3(float arr[]);
 		         Mat3(const Mat3& b);
 		explicit Mat3(const Quat& q); ///< Quat to Mat3. 12 muls, 12 adds
@@ -82,7 +84,9 @@ class Mat3
 		void setRotationX(float rad);
 		void setRotationY(float rad);
 		void setRotationZ(float rad);
-		void rotateXAxis(float rad); ///< It rotates "this" in the axis defined by the rotation AND not the world axis
+		/// It rotates "this" in the axis defined by the rotation AND not the
+		/// world axis
+		void rotateXAxis(float rad);
 		void rotateYAxis(float rad);
 		void rotateZAxis(float rad);
 		void transpose();
