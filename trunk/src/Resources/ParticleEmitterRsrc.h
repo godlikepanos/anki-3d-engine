@@ -26,7 +26,9 @@ class ParticleEmitterRsrc
 		float particleLife; ///< Required and > 0.0. In seconds
 		float particleLifeDeviation;
 
-		Vec3 forceDirection; ///< Not-required, any value, Default 0.0, If not set only the gravity applies
+		/// Not-required, any value, Default 0.0, If not set only the gravity
+		/// applies
+		Vec3 forceDirection;
 		Vec3 forceDirectionDeviation;
 		float forceMagnitude; ///< Default 0.0
 		float forceMagnitudeDeviation;
@@ -34,7 +36,8 @@ class ParticleEmitterRsrc
 		float particleMass; ///< Required and > 0.0
 		float particleMassDeviation;
 
-		Vec3 gravity; ///< Not-required, any value. If not set then it uses the world's default
+		/// Not-required, any value. If not set then it uses the world's default
+		Vec3 gravity;
 		Vec3 gravityDeviation;
 
 		Vec3 startingPos; ///< If not set the default is zero
@@ -46,8 +49,10 @@ class ParticleEmitterRsrc
 		/// @name Emitter specific properties
 		/// @{
 		uint maxNumOfParticles; ///< The size of the particles vector. Required
-		float emissionPeriod; ///< How often the emitter emits new particles. In secs. Required
-		uint particlesPerEmittion; ///< How many particles are emitted every emission. Required
+		/// How often the emitter emits new particles. In secs. Required
+		float emissionPeriod;
+		/// How many particles are emitted every emission. Required
+		uint particlesPerEmittion;
 		std::string modelName;
 		/// @}
 };

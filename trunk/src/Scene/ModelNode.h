@@ -43,7 +43,7 @@ class ModelNode: public SceneNode
 };
 
 
-inline ModelNode::ModelNode(SceneNode* parent = NULL)
+inline ModelNode::ModelNode(SceneNode* parent)
 :	SceneNode(SNT_MODEL, true, parent)
 {}
 

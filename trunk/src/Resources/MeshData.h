@@ -8,7 +8,8 @@
 #include "Util/Vec.h"
 
 
-/// Mesh data. This class loads the mesh file and the Mesh class loads it to the GPU
+/// Mesh data. This class loads the mesh file and the Mesh class loads it to
+/// the GPU
 ///
 /// Binary file format:
 ///
@@ -34,7 +35,8 @@
 ///
 /// // Bone weights
 /// uint: bone weights number (equal to verts number)
-/// uint: bones number for vert 0, uint: bone id for vert 0 and weight 0, float: weight for vert 0 and weight 0, ...
+/// uint: bones number for vert 0, uint: bone id for vert 0 and weight 0,
+///       float: weight for vert 0 and weight 0, ...
 /// ...
 /// @endcode
 class MeshData
@@ -44,7 +46,8 @@ class MeshData
 		class VertexWeight
 		{
 			public:
-				/// Dont change this or prepare to change the skinning code in shader
+				/// Dont change this or prepare to change the skinning code in
+				/// shader
 				static const uint MAX_BONES_PER_VERT = 4;
 
 				/// @todo change the vals to uint when change drivers
@@ -57,7 +60,8 @@ class MeshData
 		class Triangle
 		{
 			public:
-				uint vertIds[3]; ///< an array with the vertex indexes in the mesh class
+				/// An array with the vertex indexes in the mesh class
+				uint vertIds[3];
 				Vec3 normal;
 		};
 
@@ -66,13 +70,13 @@ class MeshData
 
 		/// @name Accessors
 		/// @{
-		const Vec<Vec3>& getVertCoords() const {return vertCoords;}
-		const Vec<Vec3>& getVertNormals() const {return vertNormals;}
-		const Vec<Vec4>& getVertTangents() const {return vertTangents;}
-		const Vec<Vec2>& getTexCoords() const {return texCoords;}
-		const Vec<VertexWeight>& getVertWeights() const {return vertWeights;}
-		const Vec<Triangle>& getTris() const {return tris;}
-		const Vec<ushort>& getVertIndeces() const {return vertIndeces;}
+		GETTER_R(Vec<Vec3>, vertCoords, getVertCoords)
+		GETTER_R(Vec<Vec3>, vertNormals, getVertNormals)
+		GETTER_R(Vec<Vec4>, vertTangents, getVertTangents)
+		GETTER_R(Vec<Vec2>, texCoords, getTexCoords)
+		GETTER_R(Vec<VertexWeight>, vertWeights, getVertWeights)
+		GETTER_R(Vec<Triangle>, tris, getTris)
+		GETTER_R(Vec<ushort>, vertIndeces, getVertIndeces)
 		/// @}
 
 	private:
@@ -81,7 +85,8 @@ class MeshData
 		Vec<Vec3> vertCoords; ///< Loaded from file
 		Vec<Vec3> vertNormals; ///< Generated
 		Vec<Vec4> vertTangents; ///< Generated
-		Vec<Vec2> texCoords; ///< Optional. One for every vert so we can use vertex arrays & VBOs
+		/// Optional. One for every vert so we can use vertex arrays & VBOs
+		Vec<Vec2> texCoords;
 		Vec<VertexWeight> vertWeights; ///< Optional
 		Vec<Triangle> tris; ///< Required
 		Vec<ushort> vertIndeces; ///< Generated. Used for vertex arrays & VBOs
@@ -97,7 +102,8 @@ class MeshData
 		void createVertTangents();
 		void createVertIndeces();
 
-		/// This method does some sanity checks and creates normals, tangents, VBOs etc
+		/// This method does some sanity checks and creates normals,
+		/// tangents, VBOs etc
 		/// @exception Exception
 		void doPostLoad();
 };

@@ -102,7 +102,8 @@ void MeshData::load(const char* filename)
 			{
 				uint tmp = VertexWeight::MAX_BONES_PER_VERT;
 				throw EXCEPTION("Cannot have more than " +
-				                boost::lexical_cast<std::string>(tmp) + " bones per vertex");
+					boost::lexical_cast<std::string>(tmp) +
+					" bones per vertex");
 			}
 			vw.bonesNum = boneConnections;
 
@@ -140,11 +141,13 @@ void MeshData::doPostLoad()
 	}
 	if(texCoords.size() != 0 && texCoords.size() != vertCoords.size())
 	{
-		throw EXCEPTION("Tex coords num must be zero or equal to the vertex coords num");
+		throw EXCEPTION("Tex coords num must be zero or equal to the vertex "
+			"coords num");
 	}
 	if(vertWeights.size() != 0 && vertWeights.size() != vertCoords.size())
 	{
-		throw EXCEPTION("Vert weights num must be zero or equal to the vertex coords num");
+		throw EXCEPTION("Vert weights num must be zero or equal to the "
+			"vertex coords num");
 	}
 
 	createAllNormals();
@@ -243,7 +246,8 @@ void MeshData::createVertTangents()
 		Vec2 uvedge02 = texCoords[i2] - texCoords[i0];
 
 
-		float det = (uvedge01.y() * uvedge02.x()) - (uvedge01.x() * uvedge02.y());
+		float det = (uvedge01.y() * uvedge02.x()) -
+			(uvedge01.x() * uvedge02.y());
 		if(isZero(det))
 		{
 			//WARNING(getRsrcName() << ": det == " << fixed << det);

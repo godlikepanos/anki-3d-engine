@@ -112,7 +112,8 @@ void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
 		const Bone& boned = skeleton.getBones()[boneId];
 
 		// bone.final_transform = MA * ANIM * MAi
-		// where MA is bone matrix at armature space and ANIM the interpolated transformation.
+		// where MA is bone matrix at armature space and ANIM the interpolated
+		// transformation.
 		combineTransformations(boneTranslations[boneId], boneRotations[boneId],
 			boned.getTslSkelSpaceInv(), boned.getRotSkelSpaceInv(),
 			boneTranslations[boneId], boneRotations[boneId]);
@@ -192,7 +193,7 @@ void SkelAnimModelNodeCtrl::update(float)
 			skinNode.getHeads(), skinNode.getTails());
 	}
 
-	const SkinsDeformer& sd =
+	SkinsDeformer& sd =
 		MainRendererSingleton::getInstance().getSkinsDeformer();
 
 	BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())

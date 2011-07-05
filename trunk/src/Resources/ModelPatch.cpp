@@ -33,7 +33,8 @@ bool ModelPatch::supportsTangents() const
 //==============================================================================
 // load                                                                        =
 //==============================================================================
-void ModelPatch::load(const char* meshFName, const char* cpMtlFName, const char* dpMtlFName)
+void ModelPatch::load(const char* meshFName, const char* cpMtlFName,
+	const char* dpMtlFName)
 {
 	// Load
 	mesh.loadRsrc(meshFName);
@@ -60,13 +61,15 @@ void ModelPatch::doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl)
 		}
 
 		// Normals
-		if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL && !mesh.hasNormalsAndTangents())
+		if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL &&
+			!mesh.hasNormalsAndTangents())
 		{
 			throw EXCEPTION("Normals");
 		}
 
 		// Tangents
-		if(mtl.getStdAttribVar(Material::SAV_TANGENT) != NULL && !mesh.hasNormalsAndTangents())
+		if(mtl.getStdAttribVar(Material::SAV_TANGENT) != NULL &&
+			!mesh.hasNormalsAndTangents())
 		{
 			throw EXCEPTION("Tangents");
 		}

@@ -29,10 +29,10 @@ class Skin
 
 		/// @name Accessors
 		/// @{
-		const Model& getModel() const {return *model;}
-		const boost::ptr_vector<ModelPatch>& getModelPatches() const {return model->getModelPatches();}
-		const Skeleton& getSkeleton() const {return *skeleton;}
-		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const {return skelAnims;}
+		const Model& getModel() const;
+		const boost::ptr_vector<ModelPatch>& getModelPatches() const;
+		const Skeleton& getSkeleton() const;
+		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const;
 		/// @}
 
 	private:
@@ -43,6 +43,30 @@ class Skin
 		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
 		/// @}
 };
+
+
+inline const Model& Skin::getModel() const
+{
+	return *model;
+}
+
+
+inline const boost::ptr_vector<ModelPatch>& Skin::getModelPatches() const
+{
+	return model->getModelPatches();
+}
+
+
+inline const Skeleton& Skin::getSkeleton() const
+{
+	return *skeleton;
+}
+
+
+inline const Vec<RsrcPtr<SkelAnim> >& Skin::getSkelAnims() const
+{
+	return skelAnims;
+}
 
 
 #endif

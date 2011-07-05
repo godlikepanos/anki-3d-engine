@@ -203,13 +203,17 @@ void VisibilityTester::getRenderableNodesJobCallback(void* args,
 			{
 				if(modelPatchNode->getCpMtl().renderInBlendingStage())
 				{
-					boost::mutex::scoped_lock lock(visTester->bsRenderableNodesMtx);
-					visTester->visibilityInfo->getVisibleBsRenderableNodes().push_back(modelPatchNode);
+					boost::mutex::scoped_lock lock(
+						visTester->bsRenderableNodesMtx);
+					visTester->visibilityInfo->getVisibleBsRenderableNodes().
+						push_back(modelPatchNode);
 				}
 				else
 				{
-					boost::mutex::scoped_lock lock(visTester->msRenderableNodesMtx);
-					visTester->visibilityInfo->getVisibleMsRenderableNodes().push_back(modelPatchNode);
+					boost::mutex::scoped_lock lock(
+						visTester->msRenderableNodesMtx);
+					visTester->visibilityInfo->getVisibleMsRenderableNodes().
+						push_back(modelPatchNode);
 				}
 				modelPatchNode->setVisible(true);
 			}
@@ -246,7 +250,8 @@ void VisibilityTester::getRenderableNodesJobCallback(void* args,
 		BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
 		{
 			// Skip shadowless
-			if(visTester->skipShadowless && !patchNode->getCpMtl().castsShadow())
+			if(visTester->skipShadowless &&
+				!patchNode->getCpMtl().castsShadow())
 			{
 				continue;
 			}
@@ -254,12 +259,14 @@ void VisibilityTester::getRenderableNodesJobCallback(void* args,
 			if(patchNode->getCpMtl().renderInBlendingStage())
 			{
 				boost::mutex::scoped_lock lock(visTester->bsRenderableNodesMtx);
-				visTester->visibilityInfo->getVisibleBsRenderableNodes().push_back(patchNode);
+				visTester->visibilityInfo->getVisibleBsRenderableNodes().
+					push_back(patchNode);
 			}
 			else
 			{
 				boost::mutex::scoped_lock lock(visTester->msRenderableNodesMtx);
-				visTester->visibilityInfo->getVisibleMsRenderableNodes().push_back(patchNode);
+				visTester->visibilityInfo->getVisibleMsRenderableNodes().
+					push_back(patchNode);
 			}
 			patchNode->setVisible(true);
 		}

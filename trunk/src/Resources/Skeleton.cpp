@@ -84,7 +84,8 @@ void Skeleton::load(const char* filename)
 
 			if(childsNum > Bone::MAX_CHILDS_PER_BONE)
 			{
-				throw EXCEPTION("Children for bone \"" + bone.getName() + "\" exceed the max");
+				throw EXCEPTION("Children for bone \"" + bone.getName() +
+					"\" exceed the max");
 			}
 
 			bone.childsNum = childsNum;

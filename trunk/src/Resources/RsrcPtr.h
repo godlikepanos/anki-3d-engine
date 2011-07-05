@@ -4,8 +4,9 @@
 #include "ResourceManager.h"
 
 
-/// This is a special smart pointer that points to Resource derivatives. It looks like auto_ptr but the main difference
-/// is that when its out of scope it tries to unload the resource.
+/// This is a special smart pointer that points to Resource derivatives. It
+/// looks like auto_ptr but the main difference is that when its out of scope
+/// it tries to unload the resource.
 template<typename Type>
 class RsrcPtr
 {
@@ -18,8 +19,8 @@ class RsrcPtr
 
 		~RsrcPtr() {unload();}
 
-		/// Loads a resource and sets the RsrcPtr::p. The implementation of the function is different for every Resource
-		/// (see RsrcPtr.cpp)
+		/// Loads a resource and sets the RsrcPtr::p. The implementation of the
+		/// function is different for every Resource (see RsrcPtr.cpp)
 		/// @param filename
 		/// @return True on success
 		void loadRsrc(const char* filename);

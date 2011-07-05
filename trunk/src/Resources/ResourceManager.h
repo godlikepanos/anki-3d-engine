@@ -58,7 +58,7 @@ class ResourceManager
 		void postProcessFinishedLoadingRequests(float maxTime);
 
 		/// Get the number of total pending requests
-		size_t getAsyncLoadingRequestsNum() const {return rsrcAsyncLoadingReqsHandler.getRequestsNum();}
+		size_t getAsyncLoadingRequestsNum() const;
 
 	private:
 		/// @name Containers
@@ -79,15 +79,19 @@ class ResourceManager
 
 		RsrcAsyncLoadingReqsHandler rsrcAsyncLoadingReqsHandler;
 		
-		/// This will be used in every new texture until the async loader is finished with the loading of the actual
-		/// texture. Its initialized when its first needed so that we wont have conflicts with opengl initialization.
+		/// This will be used in every new texture until the async loader is
+		/// finished with the loading of the actual texture. Its initialized
+		/// when its first needed so that we wont have conflicts with opengl
+		/// initialization.
 		boost::scoped_ptr<Texture> dummyTex;
 
-		boost::scoped_ptr<Texture> dummyNormTex; ///< The same as dummyTex but for normals
+		/// The same as dummyTex but for normals
+		boost::scoped_ptr<Texture> dummyNormTex;
 
 		/// Find a resource using the filename
 		template<typename Type>
-		typename Types<Type>::Iterator find(const char* filename, typename Types<Type>::Container& container);
+		typename Types<Type>::Iterator find(const char* filename,
+			typename Types<Type>::Container& container);
 
 		/// Specialized func
 		template<typename Type>
@@ -98,15 +102,16 @@ class ResourceManager
 		void unloadR(const typename Types<Type>::Hook& info);
 		
 		/// Allocate and load a resource.
-		/// This method allocates memory for a resource and loads it (calls the load method). Its been used by the load
-		/// method. Its a separate method because we want to specialize it for async loaded resources
+		/// This method allocates memory for a resource and loads it (calls the
+		/// load method). Its been used by the load method. Its a separate
+		/// method because we want to specialize it for async loaded resources
 		template<typename Type>
 		void allocAndLoadRsrc(const char* filename, Type*& ptr);
 
 		/// Dealocate the resource. Its separate for two reasons:
 		/// - Because we want to specialize it for the async loaded resources
-		/// - Because we cannot have the operator delete in a template body. Apparently the compiler is to dump to
-		///   decide
+		/// - Because we cannot have the operator delete in a template body.
+		///   Apparently the compiler is to dump to decide
 		template<typename Type>
 		void deallocRsrc(Type* rsrc);
 };
@@ -115,6 +120,12 @@ class ResourceManager
 inline void ResourceManager::postProcessFinishedLoadingRequests(float maxTime)
 {
 	rsrcAsyncLoadingReqsHandler.postProcessFinishedRequests(maxTime);
+}
+
+
+inline size_t ResourceManager::getAsyncLoadingRequestsNum() const
+{
+	return rsrcAsyncLoadingReqsHandler.getRequestsNum();
 }
 
 

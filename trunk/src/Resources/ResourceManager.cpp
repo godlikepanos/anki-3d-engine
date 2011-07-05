@@ -34,7 +34,8 @@ ResourceManager::~ResourceManager()
 // Because we are bored to write the same
 #define SPECIALIZE_TEMPLATE_STUFF(type__, container__) \
 	template<> \
-	ResourceManager::Types<type__>::Container& ResourceManager::choseContainer<type__>() \
+	ResourceManager::Types<type__>::Container& \
+		ResourceManager::choseContainer<type__>() \
 	{ \
 		return container__; \
 	} \
@@ -65,7 +66,8 @@ SPECIALIZE_TEMPLATE_STUFF(DummyRsrc, dummies)
 //==============================================================================
 
 template<>
-ResourceManager::Types<Texture>::Container& ResourceManager::choseContainer<Texture>()
+ResourceManager::Types<Texture>::Container&
+	ResourceManager::choseContainer<Texture>()
 {
 	return textures;
 }

@@ -34,20 +34,25 @@ void Model::load(const char* filename)
 		{
 			const std::string& mesh = v.second.get<std::string>("mesh");
 			const std::string& material = v.second.get<std::string>("material");
-			const std::string& dpMaterial = v.second.get<std::string>("dpMaterial");
+			const std::string& dpMaterial =
+				v.second.get<std::string>("dpMaterial");
 
 			ModelPatch* patch = new ModelPatch();
 			modelPatches.push_back(patch);
 			patch->load(mesh.c_str(), material.c_str(), dpMaterial.c_str());
 
-			visibilityShape = visibilityShape.getCompoundShape(patch->getMesh().getVisibilityShape());
+			visibilityShape = visibilityShape.getCompoundShape(
+				patch->getMesh().getVisibilityShape());
 		}
 
 		// Bounding volume
 		visibilityShape = modelPatches[0].getMesh().getVisibilityShape();
-		BOOST_FOREACH(const ModelPatch& patch, boost::make_iterator_range(modelPatches.begin() + 1, modelPatches.end()))
+		BOOST_FOREACH(const ModelPatch& patch,
+			boost::make_iterator_range(modelPatches.begin() + 1,
+				modelPatches.end()))
 		{
-			visibilityShape = visibilityShape.getCompoundShape(patch.getMesh().getVisibilityShape());
+			visibilityShape = visibilityShape.getCompoundShape(
+				patch.getMesh().getVisibilityShape());
 		}
 	}
 	catch(std::exception& e)

@@ -29,9 +29,19 @@ std::string ShaderProg::stdSourceCode(
 
 
 //==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+ShaderProg::~ShaderProg()
+{
+	/// @todo add code
+}
+
+
+//==============================================================================
 // createAndCompileShader                                                      =
 //==============================================================================
-uint ShaderProg::createAndCompileShader(const char* sourceCode, const char* preproc, int type) const
+uint ShaderProg::createAndCompileShader(const char* sourceCode,
+	const char* preproc, int type) const
 {
 	uint glId = 0;
 	const char* sourceStrs[2] = {NULL, NULL};
@@ -73,7 +83,8 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode, const char* prep
 			default:
 				ASSERT(0); // Not supported
 		}
-		throw SPROG_EXCEPTION(shaderType + " compiler error log follows:\n" + infoLog);
+		throw SPROG_EXCEPTION(shaderType + " compiler error log follows:\n" +
+			infoLog);
 	}
 
 	return glId;
@@ -123,15 +134,17 @@ void ShaderProg::getUniAndAttribVars()
 	glGetProgramiv(glId, GL_ACTIVE_ATTRIBUTES, &num);
 	for(int i = 0; i < num; i++) // loop all attributes
 	{
-		glGetActiveAttrib(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, &name_[0]);
+		glGetActiveAttrib(glId, i, sizeof(name_) / sizeof(char), &length,
+			&size, &type, &name_[0]);
 		name_[length] = '\0';
 
 		// check if its FFP location
 		int loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" << rsrcFilename << "\": You are using FFP vertex attributes (\"" <<
-			        &name_[0] << "\")");
+			WARNING("Shader prog: \"" << rsrcFilename <<
+				"\": You are using FFP vertex attributes (\"" <<
+				&name_[0] << "\")");
 			continue;
 		}
 
@@ -146,15 +159,17 @@ void ShaderProg::getUniAndAttribVars()
 	uniVars.reserve(num);
 	for(int i=0; i<num; i++) // loop all uniforms
 	{
-		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length, &size, &type, &name_[0]);
+		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length,
+			&size, &type, &name_[0]);
 		name_[length] = '\0';
 
 		// check if its FFP location
 		int loc = glGetUniformLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" << rsrcFilename << "\": You are using FFP vertex uniforms (\"" <<
-			        &name_[0] << "\")");
+			WARNING("Shader prog: \"" << rsrcFilename <<
+				"\": You are using FFP vertex uniforms (\"" <<
+				&name_[0] << "\")");
 			continue;
 		}
 
@@ -183,8 +198,9 @@ void ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
 		}
 		catch(std::exception& e)
 		{
-			throw SPROG_EXCEPTION("Something went wrong for attrib \"" + name + "\" and location " +
-			                      boost::lexical_cast<std::string>(loc) + ": " + e.what());
+			throw SPROG_EXCEPTION("Something went wrong for attrib \"" +
+				name + "\" and location " +
+				boost::lexical_cast<std::string>(loc) + ": " + e.what());
 		}
 	}
 }
@@ -202,11 +218,15 @@ void ShaderProg::load(const char* filename)
 
 	// 1) create and compile the shaders
 	std::string preprocSource = stdSourceCode;
-	vertShaderGlId = createAndCompileShader(pars.getOutput().getVertShaderSource().c_str(), preprocSource.c_str(),
-	                                        GL_VERTEX_SHADER);
+	vertShaderGlId = createAndCompileShader(
+		pars.getOutput().getVertShaderSource().c_str(),
+		preprocSource.c_str(),
+		GL_VERTEX_SHADER);
 
-	fragShaderGlId = createAndCompileShader(pars.getOutput().getFragShaderSource().c_str(), preprocSource.c_str(),
-	                                        GL_FRAGMENT_SHADER);
+	fragShaderGlId = createAndCompileShader(
+		pars.getOutput().getFragShaderSource().c_str(),
+		preprocSource.c_str(),
+		GL_FRAGMENT_SHADER);
 
 	// 2) create program and attach shaders
 	glId = glCreateProgram();
@@ -228,21 +248,13 @@ void ShaderProg::load(const char* filename)
 		{
 			varsArr[i] = pars.getOutput().getTrffbVaryings()[i].name.c_str();
 		}
-		glTransformFeedbackVaryings(glId, pars.getOutput().getTrffbVaryings().size(), &varsArr[0], GL_SEPARATE_ATTRIBS);
+		glTransformFeedbackVaryings(glId,
+			pars.getOutput().getTrffbVaryings().size(), &varsArr[0],
+			GL_SEPARATE_ATTRIBS);
 	}
 
 	// 6) link
 	link();
-	
-	/*if(pars.getOutput().getTrffbVaryings().size() > 0)
-	{
-		char name[128] = {'\0'};
-		GLsizei size;
-		GLsizei len;
-		GLenum type;
-		glGetTransformFeedbackVarying(glId, 0, 128, &len, &size, &type, name);
-		INFO(name);
-	}*/
 
 	// init the rest
 	getUniAndAttribVars();
@@ -300,7 +312,8 @@ bool ShaderProg::attribVarExists(const char* name) const
 //==============================================================================
 // createSrcCodeToCache                                                        =
 //==============================================================================
-std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const char* preAppendedSrcCode)
+std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName,
+	const char* preAppendedSrcCode)
 {
 	if(strlen(preAppendedSrcCode) < 1)
 	{
@@ -313,7 +326,8 @@ std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const c
 	std::string suffix = boost::lexical_cast<std::string>(h);
 
 	//
-	boost::filesystem::path newfPathName = AppSingleton::getInstance().getCachePath() /
+	boost::filesystem::path newfPathName =
+		AppSingleton::getInstance().getCachePath() /
 		(boost::filesystem::path(sProgFPathName).filename() + "." + suffix);
 
 	if(boost::filesystem::exists(newfPathName))
@@ -327,7 +341,8 @@ std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName, const c
 	std::ofstream f(newfPathName.string().c_str());
 	if(!f.is_open())
 	{
-		throw EXCEPTION("Cannot open file for writing \"" + newfPathName.string() + "\"");
+		throw EXCEPTION("Cannot open file for writing \"" +
+			newfPathName.string() + "\"");
 	}
 
 	f.write(src.c_str(), src.length());

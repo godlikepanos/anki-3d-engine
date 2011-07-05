@@ -35,7 +35,8 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 // load                                                                        =
 //==============================================================================
 template<typename Type>
-typename ResourceManager::Types<Type>::Hook& ResourceManager::load(const char* filename)
+typename ResourceManager::Types<Type>::Hook& ResourceManager::load(
+	const char* filename)
 {
 	// Chose container
 	typename Types<Type>::Container& c = choseContainer<Type>();
@@ -103,7 +104,8 @@ void ResourceManager::unload(const typename Types<Type>::Hook& hook)
 		INFO(it->uuid << " " << hook.uuid);
 	}
 
-	ERROR(it->uuid << " " << hook.uuid << " " << it->resource << " " << hook.resource << " " << dummyTex.get());
+	ERROR(it->uuid << " " << hook.uuid << " " << it->resource << " " <<
+		hook.resource << " " << dummyTex.get());
 	ASSERT(it->uuid == hook.uuid);
 	ASSERT(it->referenceCounter == hook.referenceCounter);
 
@@ -122,8 +124,8 @@ void ResourceManager::unload(const typename Types<Type>::Hook& hook)
 // find [char*]                                                                =
 //==============================================================================
 template<typename Type>
-typename ResourceManager::Types<Type>::Iterator
-ResourceManager::find(const char* filename, typename Types<Type>::Container& container)
+typename ResourceManager::Types<Type>::Iterator ResourceManager::find(
+	const char* filename, typename Types<Type>::Container& container)
 {
 	typename Types<Type>::Iterator it = container.begin();
 	for(; it != container.end(); it++)

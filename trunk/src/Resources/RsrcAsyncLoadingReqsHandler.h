@@ -15,8 +15,8 @@ class Texture;
 class Mesh;
 
 
-/// Handles the loading requests on behalf of the resource manager. Its a different class because we want to keep the
-/// source of the manager clean
+/// Handles the loading requests on behalf of the resource manager. Its a
+/// different class because we want to keep the source of the manager clean
 class RsrcAsyncLoadingReqsHandler
 {
 	public:
@@ -25,14 +25,17 @@ class RsrcAsyncLoadingReqsHandler
 		/// Send a loading request to an AsyncLoader
 		/// @tparam Type It should be Texture or Mesh
 		/// @param filename The file to load
-		/// @param objToLoad Pointer to a pointer to the object to load asynchronously
+		/// @param objToLoad Pointer to a pointer to the object to load
+		/// asynchronously
 		template<typename Type>
 		void sendNewLoadingRequest(const char* filename, Type** objToLoad);
 		
-		/// Serve the finished requests. This should be called once every loop of the main loop
-		/// @param maxTime The max time to spend serving finished requests. If for example there are many that need
-		/// more time than the max the method will return. The pending requests will be served when it will be called
-		/// again.
+		/// Serve the finished requests. This should be called once every loop
+		/// of the main loop
+		/// @param maxTime The max time to spend serving finished requests. If
+		/// for example there are many that need more time than the max the
+		/// method will return. The pending requests will be served when it
+		/// will be called again.
 		/// In seconds
 		void postProcessFinishedRequests(float maxTime);
 
@@ -42,7 +45,8 @@ class RsrcAsyncLoadingReqsHandler
 	private:
 		AsyncLoader al; ///< Asynchronous loader
 		boost::ptr_list<RsrcLoadingRequestBase> requests; ///< Loading requests
-		uint frameServedRequestsNum; ///< The number of served requests for this frame
+		/// The number of served requests for this frame
+		uint frameServedRequestsNum;
 };
 
 

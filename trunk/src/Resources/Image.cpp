@@ -183,7 +183,8 @@ void Image::loadTga(const char* filename)
 	{
 		loadUncompressedTga(fs, bpp);
 	}
-	else if(memcmp(tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
+	else if(memcmp(tgaHeaderCompressed, &myTgaHeader[0],
+		sizeof(myTgaHeader)) == 0)
 	{
 		loadCompressedTga(fs, bpp);
 	}
@@ -287,11 +288,13 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	// Init io
 	//
 	png_init_io(pngPtr, file);
-	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE); // PNG lib knows that we already have read the header
+	// PNG lib knows that we already have read the header
+	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE);
 
 	//
 	// Read info and make conversions
-	// This loop reads info, if not acceptable it calls libpng funcs to change them and re-runs the loop
+	// This loop reads info, if not acceptable it calls libpng funcs to change
+	// them and re-runs the loop
 	//
 	png_read_info(pngPtr, infoPtr);
 	while(true)
@@ -306,7 +309,8 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		switch(colorType)
 		{
 			case PNG_COLOR_TYPE_PALETTE:
-				err = "Converting PNG_COLOR_TYPE_PALETTE to PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA";
+				err = "Converting PNG_COLOR_TYPE_PALETTE to "
+					"PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA";
 				png_set_palette_to_rgb(pngPtr);
 				goto again;
 				break;
@@ -314,7 +318,8 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 				// do nothing
 				break;
 			case PNG_COLOR_TYPE_GRAY_ALPHA:
-				err = "Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. Converting to PNG_COLOR_TYPE_GRAY";
+				err = "Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. "
+					"Converting to PNG_COLOR_TYPE_GRAY";
 				png_set_strip_alpha(pngPtr);
 				goto again;
 				break;
@@ -351,7 +356,9 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 
 	// Sanity checks
 	if((bitDepth != 8) ||
-		 (colorType != PNG_COLOR_TYPE_GRAY && colorType != PNG_COLOR_TYPE_RGB && colorType != PNG_COLOR_TYPE_RGBA))
+		(colorType != PNG_COLOR_TYPE_GRAY &&
+			colorType != PNG_COLOR_TYPE_RGB &&
+			colorType != PNG_COLOR_TYPE_RGBA))
 	{
 		err = "Sanity checks failed";
 		goto cleanup;
@@ -630,8 +637,9 @@ void Image::loadDds(const char* filename)
 	DDS_header hdr;
 	in.read((char*)&hdr, sizeof(hdr));
 
-	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124 || !(hdr.data.dwFlags & DDSD_PIXELFORMAT) ||
-	   !(hdr.data.dwFlags & DDSD_CAPS))
+	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124 ||
+		!(hdr.data.dwFlags & DDSD_PIXELFORMAT) ||
+		!(hdr.data.dwFlags & DDSD_CAPS))
 	{
 		throw EXCEPTION("Incorrect DDS header");
 	}
@@ -664,7 +672,8 @@ void Image::loadDds(const char* filename)
 	//
 	// Load the data
 	//
-	uint mipMapCount = (hdr.data.dwFlags & DDSD_MIPMAPCOUNT) ? hdr.data.dwMipMapCount : 1;
+	uint mipMapCount = (hdr.data.dwFlags & DDSD_MIPMAPCOUNT) ?
+		hdr.data.dwMipMapCount : 1;
 	if(mipMapCount != 1)
 	{
 		throw EXCEPTION("Currently mipmaps are not supported in DDS");
@@ -675,7 +684,9 @@ void Image::loadDds(const char* filename)
 
 	if(li->compressed)
 	{
-		size_t size = std::max(li->divSize, x) / li->divSize * std::max(li->divSize, y) / li->divSize * li->blockBytes;
+		size_t size = std::max(li->divSize, x) /
+			li->divSize * std::max(li->divSize, y) /
+			li->divSize * li->blockBytes;
 		//assert( size == hdr.dwPitchOrLinearSize );
 		//assert( hdr.dwFlags & DDSD_LINEARSIZE );
 		data.resize(size);

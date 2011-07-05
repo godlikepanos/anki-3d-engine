@@ -17,7 +17,8 @@ void RsrcTextureLoadingRequest::postRequest(AsyncLoader& al)
 //==============================================================================
 // loadImageCallback                                                           =
 //==============================================================================
-void RsrcTextureLoadingRequest::loadImageCallback(const char* filename, void* img_)
+void RsrcTextureLoadingRequest::loadImageCallback(const char* filename,
+	void* img_)
 {
 	Image* img = (Image*)img_;
 	img->load(filename);
