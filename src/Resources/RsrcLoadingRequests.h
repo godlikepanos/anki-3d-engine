@@ -43,8 +43,9 @@ class RsrcTextureLoadingRequest: public RsrcLoadingRequestBase
 };
 
 
-inline RsrcTextureLoadingRequest::RsrcTextureLoadingRequest(const char* filename_, Texture** pTex_):
-	RsrcLoadingRequestBase(filename_),
+inline RsrcTextureLoadingRequest::RsrcTextureLoadingRequest(
+	const char* filename_, Texture** pTex_)
+:	RsrcLoadingRequestBase(filename_),
 	pTex(pTex_)
 {}
 

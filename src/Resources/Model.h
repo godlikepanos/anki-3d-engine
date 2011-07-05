@@ -8,7 +8,8 @@
 #include "Collision/Obb.h"
 
 
-/// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
+/// Model is an entity that acts as a container for other resources. Models are
+/// all the non static objects in a map.
 ///
 /// XML file format:
 /// @code
@@ -38,12 +39,13 @@ class Model
 
 		/// @name Accessors
 		/// @{
-		const boost::ptr_vector<ModelPatch>& getModelPatches() const {return modelPatches;}
-		const Col::Obb& getVisibilityShape() const {return visibilityShape;}
+		GETTER_R(boost::ptr_vector<ModelPatch>, modelPatches, getModelPatches)
+		GETTER_R(Col::Obb, visibilityShape, getVisibilityShape)
 		/// @}
 
 	private:
-		boost::ptr_vector<ModelPatch> modelPatches; ///< The vector of ModelPatch
+		/// The vector of ModelPatch
+		boost::ptr_vector<ModelPatch> modelPatches;
 		Col::Obb visibilityShape;
 };
 

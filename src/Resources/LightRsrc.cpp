@@ -58,7 +58,8 @@ void LightRsrc::load(const char* filename)
 		//
 		// diffuseCol
 		//
-		boost::optional<const ptree&> diffColTree = pt.get_child_optional("diffuseCol");
+		boost::optional<const ptree&> diffColTree =
+			pt.get_child_optional("diffuseCol");
 		if(diffColTree)
 		{
 			diffuseCol = PropertyTree::getVec3(diffColTree.get());
@@ -67,7 +68,8 @@ void LightRsrc::load(const char* filename)
 		//
 		// specularCol
 		//
-		boost::optional<const ptree&> specColTree = pt.get_child_optional("specularCol");
+		boost::optional<const ptree&> specColTree =
+			pt.get_child_optional("specularCol");
 		if(specColTree)
 		{
 			specularCol = PropertyTree::getVec3(specColTree.get());
@@ -76,7 +78,8 @@ void LightRsrc::load(const char* filename)
 		//
 		// castsShadow
 		//
-		boost::optional<bool> castsShadow_ = PropertyTree::getBoolOptional(pt, "castsShadow");
+		boost::optional<bool> castsShadow_ =
+			PropertyTree::getBoolOptional(pt, "castsShadow");
 		if(castsShadow_)
 		{
 			castsShadowFlag = castsShadow_.get();
@@ -92,7 +95,8 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_SPOT)
 			{
-				WARNING("File \"" << filename << "\": No radius for spot lights");
+				WARNING("File \"" << filename <<
+					"\": No radius for spot lights");
 			}
 		}
 
@@ -106,7 +110,8 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename << "\": No distance for point lights");
+				WARNING("File \"" << filename <<
+					"\": No distance for point lights");
 			}
 		}
 
@@ -120,7 +125,8 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename << "\": No fovX for point lights");
+				WARNING("File \"" << filename <<
+					"\": No fovX for point lights");
 			}
 		}
 
@@ -134,7 +140,8 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename << "\": No fovY for point lights");
+				WARNING("File \"" << filename <<
+					"\": No fovY for point lights");
 			}
 		}
 
@@ -148,7 +155,8 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename << "\": No width for point lights");
+				WARNING("File \"" << filename <<
+					"\": No width for point lights");
 			}
 		}
 
@@ -162,28 +170,32 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename << "\": No height for point lights");
+				WARNING("File \"" << filename <<
+					"\": No height for point lights");
 			}
 		}
 
 		//
 		// texture
 		//
-		boost::optional<std::string> tex = pt.get_optional<std::string>("texture");
+		boost::optional<std::string> tex =
+			pt.get_optional<std::string>("texture");
 		if(tex)
 		{
 			texture.loadRsrc(tex.get().c_str());
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename << "\": No texture for point lights");
+				WARNING("File \"" << filename <<
+					"\": No texture for point lights");
 			}
 		}
 
 		//
 		// cameraType
 		//
-		boost::optional<std::string> cam = pt.get_optional<std::string>("cameraType");
+		boost::optional<std::string> cam =
+			pt.get_optional<std::string>("cameraType");
 		if(cam)
 		{
 			if(cam.get() == "PERSPECTIVE")

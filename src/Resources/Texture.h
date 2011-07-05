@@ -3,6 +3,7 @@
 
 #include "Util/StdTypes.h"
 #include "Util/Assert.h"
+#include "Util/Accessors.h"
 #include <limits>
 
 
@@ -11,16 +12,13 @@ class Image;
 
 /// Texture resource class
 ///
-/// It loads or creates an image and then loads it in the GPU. Its an OpenGL container. It supports compressed and
-/// uncompressed TGAs and some of the formats of PNG (PNG loading uses libpng)
+/// It loads or creates an image and then loads it in the GPU. Its an OpenGL
+/// container. It supports compressed and uncompressed TGAs and some of the
+/// formats of PNG (PNG loading uses libpng)
 ///
 /// @note The last texture unit is reserved and you cannot use it
 class Texture
 {
-	friend class Renderer; /// @todo Remove this when remove the SSAO load noise map crap
-	friend class Ssao;
-	friend class MainRenderer;
-
 	public:
 		enum TextureFilteringType
 		{
@@ -67,6 +65,7 @@ class Texture
 		uint getInternalFormat() const;
 		uint getFormat() const;
 		uint getType() const;
+		static int& getTextureUnitsNum() {return textureUnitsNum;}
 		/// @}
 
 		/// @name Create tex funcs

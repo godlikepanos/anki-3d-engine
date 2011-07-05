@@ -17,7 +17,8 @@ class VisibilityInfo;
 class WorkerThread;
 
 
-/// Performs visibility determination tests and fills a few containers with the visible scene nodes
+/// Performs visibility determination tests and fills a few containers with the
+/// visible scene nodes
 class VisibilityTester
 {
 	public:
@@ -44,8 +45,8 @@ class VisibilityTester
 		Scene& scene; ///< Know your father
 
 		/// @name Needed by getRenderableNodesJobCallback
-		/// The vars of this group are needed by the static getRenderableNodesJobCallback and kept here so it can
-		/// access them
+		/// The vars of this group are needed by the static
+		/// getRenderableNodesJobCallback and kept here so it can access them
 		/// @{
 		const Camera* cam;
 		bool skipShadowless;
@@ -59,14 +60,18 @@ class VisibilityTester
 		static bool test(const Type& tested, const Camera& cam);
 
 		/// Get renderable nodes for a given camera
-		/// @param[in] skipShadowless Skip shadowless nodes. If the cam is a light cam
+		/// @param[in] skipShadowless Skip shadowless nodes. If the cam is a
+		/// light cam
 		/// @param[in] cam The camera to test and gather renderable nodes
-		/// @param[out] storage The VisibilityInfo of where we will store the visible nodes
-		void getRenderableNodes(bool skipShadowless, const Camera& cam, VisibilityInfo& storage);
+		/// @param[out] storage The VisibilityInfo of where we will store the
+		/// visible nodes
+		void getRenderableNodes(bool skipShadowless, const Camera& cam,
+			VisibilityInfo& storage);
 
 		/// This static method will be fed into the JobManager
 		/// @param data This is actually a pointer to VisibilityTester
-		static void getRenderableNodesJobCallback(void* data, const WorkerThread& workerThread);
+		static void getRenderableNodesJobCallback(void* data,
+			const WorkerThread& workerThread);
 };
 
 

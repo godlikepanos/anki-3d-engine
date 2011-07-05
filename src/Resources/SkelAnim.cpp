@@ -12,17 +12,20 @@ void SkelAnim::load(const char* filename)
 
 	// keyframes
 	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+	if(token->getCode() != Scanner::TC_NUMBER ||
+		token->getDataType() != Scanner::DT_INT)
 	{
 		throw PARSER_EXCEPTION_EXPECTED("integer");
 	}
 	keyframes.resize(token->getValue().getInt());
 
-	Parser::parseArrOfNumbers(scanner, false, false, keyframes.size(), &keyframes[0]);
+	Parser::parseArrOfNumbers(scanner, false, false, keyframes.size(),
+		&keyframes[0]);
 
 	// bones num
 	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+	if(token->getCode() != Scanner::TC_NUMBER ||
+		token->getDataType() != Scanner::DT_INT)
 	{
 		throw PARSER_EXCEPTION_EXPECTED("integer");
 	}
@@ -33,7 +36,8 @@ void SkelAnim::load(const char* filename)
 	{
 		// has anim?
 		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_NUMBER || token->getDataType() != Scanner::DT_INT)
+		if(token->getCode() != Scanner::TC_NUMBER ||
+			token->getDataType() != Scanner::DT_INT)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("integer");
 		}
@@ -51,11 +55,12 @@ void SkelAnim::load(const char* filename)
 				Vec3 trs;
 				Parser::parseArrOfNumbers(scanner, false, true, 3, &trs[0]);
 
-				boneAnims[i].bonePoses.push_back(BonePose(Quat(tmp[1], tmp[2], tmp[3], tmp[0]), trs));
+				boneAnims[i].bonePoses.push_back(BonePose(Quat(tmp[1], tmp[2],
+					tmp[3], tmp[0]), trs));
 			}
 		}
 	} // end for all bones
 
 
-	framesNum = keyframes[keyframes.size()-1] + 1;
+	framesNum = keyframes[keyframes.size() - 1] + 1;
 }

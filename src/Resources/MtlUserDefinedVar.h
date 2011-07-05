@@ -11,7 +11,8 @@
 class Texture;
 
 
-/// Class for user defined material variables that will be passes in to the shader
+/// Class for user defined material variables that will be passes in to the
+/// shader
 class MtlUserDefinedVar
 {
 	public:
@@ -25,7 +26,8 @@ class MtlUserDefinedVar
 		};
 
 		/// The data union
-		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture>, Fai> DataVariant;
+		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture>, Fai>
+			DataVariant;
 
 		/// Contructor
 		/// @tparam Type Can be std::string, Fai, float, Vec2, Vec3, Vec4
@@ -39,7 +41,8 @@ class MtlUserDefinedVar
 		const DataVariant& getDataVariant() const {return data;}
 
 		/// Get the value of the variant
-		/// @exception boost::exception when you try to get the incorrect data type
+		/// @exception boost::exception when you try to get the incorrect data
+		/// type
 		template<typename Type>
 		const Type& get() const {return boost::get<Type>(data);}
 		/// @}

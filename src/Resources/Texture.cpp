@@ -68,25 +68,29 @@ void Texture::load(const Image& img)
 	switch(img.getColorType())
 	{
 		case Image::CT_R:
-			init.internalFormat = (compressionEnabled) ? GL_COMPRESSED_RED : GL_RED;
+			init.internalFormat = (compressionEnabled) ?
+				GL_COMPRESSED_RED : GL_RED;
 			init.format = GL_RED;
 			init.type = GL_UNSIGNED_BYTE;
 			break;
 
 		case Image::CT_RGB:
-			init.internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGB : GL_RGB;
+			init.internalFormat = (compressionEnabled) ?
+				GL_COMPRESSED_RGB : GL_RGB;
 			init.format = GL_RGB;
 			init.type = GL_UNSIGNED_BYTE;
 			break;
 
 		case Image::CT_RGBA:
-			init.internalFormat = (compressionEnabled) ? GL_COMPRESSED_RGBA : GL_RGBA;
+			init.internalFormat = (compressionEnabled) ?
+				GL_COMPRESSED_RGBA : GL_RGBA;
 			init.format = GL_RGBA;
 			init.type = GL_UNSIGNED_BYTE;
 			break;
 
 		default:
-			throw EXCEPTION("See file: " + boost::lexical_cast<std::string>(img.getColorType()));
+			throw EXCEPTION("See file: " +
+				boost::lexical_cast<std::string>(img.getColorType()));
 	}
 
 	switch(img.getDataCompression())
@@ -159,15 +163,15 @@ void Texture::create(const Initializer& init_)
 	switch(init.dataCompression)
 	{
 		case DC_NONE:
-			glTexImage2D(target, 0, init.internalFormat, init.width, init.height, 0, init.format,
-			             init.type, init.data);
+			glTexImage2D(target, 0, init.internalFormat, init.width,
+				init.height, 0, init.format, init.type, init.data);
 			break;
 
 		case DC_DXT1:
 		case DC_DXT3:
 		case DC_DXT5:
-			glCompressedTexImage2D(target, 0, init.internalFormat, init.width, init.height, 0,
-			                       init.dataSize, init.data);
+			glCompressedTexImage2D(target, 0, init.internalFormat,
+				init.width, init.height, 0, init.dataSize, init.data);
 			break;
 
 		default:
@@ -193,7 +197,8 @@ void Texture::create(const Initializer& init_)
 
 	if(init.anisotropyLevel > 1)
 	{
-		setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT, float(init.anisotropyLevel));
+		setTexParameter(GL_TEXTURE_MAX_ANISOTROPY_EXT,
+			float(init.anisotropyLevel));
 	}
 
 	ON_GL_FAIL_THROW_EXCEPTION();
@@ -371,7 +376,8 @@ void Texture::setFiltering(TextureFilteringType filterType)
 			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			break;
 		case TFT_TRILINEAR:
-			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
+				GL_LINEAR_MIPMAP_LINEAR);
 			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 }

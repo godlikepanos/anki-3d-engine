@@ -13,7 +13,8 @@
 #define STD_SET_UNI_CHECK() \
 	ASSERT(getLoc() != -1); \
 	ASSERT(ShaderProg::getCurrentProgramGlId() == getFatherSProg().getGlId()); \
-	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(), getName().c_str()) == getLoc());
+	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(), \
+		getName().c_str()) == getLoc());
 
 
 void SProgUniVar::set(const float f[], uint size) const
@@ -84,7 +85,8 @@ void SProgUniVar::set(const Mat4 m4[], uint size) const
 void SProgUniVar::set(const Texture& tex, uint texUnit) const
 {
 	STD_SET_UNI_CHECK();
-	ASSERT(getGlDataType() == GL_SAMPLER_2D || getGlDataType() == GL_SAMPLER_2D_SHADOW);
+	ASSERT(getGlDataType() == GL_SAMPLER_2D ||
+		getGlDataType() == GL_SAMPLER_2D_SHADOW);
 	tex.bind(texUnit);
 	glUniform1i(getLoc(), texUnit);
 }

@@ -13,7 +13,8 @@ class ModelPatch
 {
 	public:
 		/// Load the resources
-		void load(const char* meshFName, const char* mtlFName, const char* dpMtlFName);
+		void load(const char* meshFName, const char* mtlFName,
+			const char* dpMtlFName);
 
 		/// @name Accessors
 		/// @{
@@ -37,7 +38,8 @@ class ModelPatch
 		RsrcPtr<Material> dpMtl; ///< Material for depth passes
 
 		/// Checks if a mesh and a material are compatible
-		static void doMeshAndMtlSanityChecks(const Mesh& mesh, const Material& mtl);
+		static void doMeshAndMtlSanityChecks(const Mesh& mesh,
+			const Material& mtl);
 };
 
 

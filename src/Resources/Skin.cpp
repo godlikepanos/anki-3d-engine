@@ -32,7 +32,8 @@ void Skin::load(const char* filename)
 		skeleton.loadRsrc(pt.get<std::string>("skeleton").c_str());
 
 		// Anims
-		boost::optional<const ptree&> skelAnimsTree = pt.get_child_optional("skelAnims");
+		boost::optional<const ptree&> skelAnimsTree =
+			pt.get_child_optional("skelAnims");
 		if(skelAnimsTree)
 		{
 			BOOST_FOREACH(const ptree::value_type& v, skelAnimsTree.get())
@@ -58,8 +59,9 @@ void Skin::load(const char* filename)
 			// Bone number problem
 			if(skelAnim->getBoneAnims().size() != skeleton->getBones().size())
 			{
-				throw EXCEPTION("Skeleton animation \"" + skelAnim.getRsrcName() + "\" and skeleton \"" +
-								skeleton.getRsrcName() + "\" dont have equal bone count");
+				throw EXCEPTION("Skeleton animation \"" +
+					skelAnim.getRsrcName() + "\" and skeleton \"" +
+					skeleton.getRsrcName() + "\" dont have equal bone count");
 			}
 		}
 

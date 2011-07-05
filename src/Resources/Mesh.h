@@ -65,7 +65,8 @@ class Mesh
 
 inline bool Mesh::hasNormalsAndTangents() const
 {
-	return vbos[VBO_VERT_NORMALS].isCreated() && vbos[VBO_VERT_TANGENTS].isCreated();
+	return vbos[VBO_VERT_NORMALS].isCreated() &&
+		vbos[VBO_VERT_TANGENTS].isCreated();
 }
 
 

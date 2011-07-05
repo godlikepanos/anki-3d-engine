@@ -10,10 +10,10 @@
 struct BonePose
 {
 	public:
-		BonePose(const Quat& r, const Vec3& trs): rotation(r), translation(trs) {}
+		BonePose(const Quat& r, const Vec3& trs);
 
 		/// Copy constructor
-		BonePose(const BonePose& b): rotation(b.rotation), translation(b.translation) {}
+		BonePose(const BonePose& b);
 
 		/// @name Accessors
 		/// @{
@@ -25,6 +25,18 @@ struct BonePose
 		Quat rotation;
 		Vec3 translation;
 };
+
+
+inline BonePose::BonePose(const Quat& r, const Vec3& trs)
+:	rotation(r),
+ 	translation(trs)
+{}
+
+
+inline BonePose::BonePose(const BonePose& b)
+:	rotation(b.rotation),
+ 	translation(b.translation)
+{}
 
 
 /// Bone animation
@@ -39,7 +51,9 @@ class BoneAnim
 		/// @}
 
 	private:
-		Vec<BonePose> bonePoses; ///< The poses for every keyframe. Its empty if the bone doesnt have any animation
+		/// The poses for every keyframe. Its empty if the bone doesnt have
+		/// any animation
+		Vec<BonePose> bonePoses;
 };
 
 

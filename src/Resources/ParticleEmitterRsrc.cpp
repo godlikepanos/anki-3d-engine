@@ -39,9 +39,10 @@ ParticleEmitterRsrc::ParticleEmitterRsrc(const ParticleEmitterRsrc& a)
 
 
 //==============================================================================
-//                                                                             =
+// operator=                                                                   =
 //==============================================================================
-ParticleEmitterRsrc& ParticleEmitterRsrc::operator=(const ParticleEmitterRsrc& b)
+ParticleEmitterRsrc& ParticleEmitterRsrc::operator=(
+	const ParticleEmitterRsrc& b)
 {
 	particleLife = b.particleLife;
 	particleLifeDeviation = b.particleLifeDeviation;

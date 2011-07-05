@@ -12,7 +12,8 @@
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
-boost::array<Material::StdVarNameAndGlDataTypePair, Material::SAV_NUM> Material::stdAttribVarInfos =
+boost::array<Material::StdVarNameAndGlDataTypePair, Material::SAV_NUM>
+	Material::stdAttribVarInfos =
 {{
 	{"position", GL_FLOAT_VEC3},
 	{"tangent", GL_FLOAT_VEC4},
@@ -20,7 +21,8 @@ boost::array<Material::StdVarNameAndGlDataTypePair, Material::SAV_NUM> Material:
 	{"texCoords", GL_FLOAT_VEC2}
 }};
 
-boost::array<Material::StdVarNameAndGlDataTypePair, Material::SUV_NUM> Material::stdUniVarInfos =
+boost::array<Material::StdVarNameAndGlDataTypePair, Material::SUV_NUM>
+	Material::stdUniVarInfos =
 {{
 	{"modelMat", GL_FLOAT_MAT4},
 	{"viewMat", GL_FLOAT_MAT4},
@@ -140,9 +142,12 @@ void Material::load(const char* filename)
 		//
 		const ptree& shaderProgTree = pt.get_child("shaderProg");
 
-		boost::optional<std::string> file = shaderProgTree.get_optional<std::string>("file");
-		boost::optional<const ptree&> customMsSProgTree = shaderProgTree.get_child_optional("customMsSProg");
-		boost::optional<const ptree&> customDpSProgTree = shaderProgTree.get_child_optional("customDpSProg");
+		boost::optional<std::string> file =
+			shaderProgTree.get_optional<std::string>("file");
+		boost::optional<const ptree&> customMsSProgTree =
+			shaderProgTree.get_child_optional("customMsSProg");
+		boost::optional<const ptree&> customDpSProgTree =
+			shaderProgTree.get_child_optional("customDpSProg");
 
 		// Just file
 		if(file)
@@ -154,9 +159,11 @@ void Material::load(const char* filename)
 		{
 			std::string source;
 
-			parseCustomShader(msGenericDefines, customMsSProgTree.get(), source);
-			std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
-																		  source.c_str());
+			parseCustomShader(msGenericDefines, customMsSProgTree.get(),
+				source);
+			std::string shaderFilename =
+				ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
+					source.c_str());
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		// customDpSProg
@@ -164,9 +171,11 @@ void Material::load(const char* filename)
 		{
 			std::string source;
 
-			parseCustomShader(dpGenericDefines, customDpSProgTree.get(), source);
-			std::string shaderFilename = ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
-																		  source.c_str());
+			parseCustomShader(dpGenericDefines, customDpSProgTree.get(),
+				source);
+			std::string shaderFilename =
+				ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
+					source.c_str());
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
 		// Error
@@ -178,7 +187,8 @@ void Material::load(const char* filename)
 		//
 		// renderInBlendingStageFlag
 		//
-		boost::optional<bool> blendingStage_ = PropertyTree::getBoolOptional(pt, "blendingStage");
+		boost::optional<bool> blendingStage_ =
+			PropertyTree::getBoolOptional(pt, "blendingStage");
 		if(blendingStage_)
 		{
 			renderInBlendingStageFlag = blendingStage_.get();
@@ -187,24 +197,29 @@ void Material::load(const char* filename)
 		//
 		// blendFuncs
 		//
-		boost::optional<const ptree&> blendFuncsTree = pt.get_child_optional("blendFuncs");
+		boost::optional<const ptree&> blendFuncsTree =
+			pt.get_child_optional("blendFuncs");
 		if(blendFuncsTree)
 		{
 			int glEnum;
 
 			// sFactor
-			std::string sFactor_ = blendFuncsTree.get().get<std::string>("sFactor");
+			std::string sFactor_ =
+				blendFuncsTree.get().get<std::string>("sFactor");
 			if(!searchBlendEnum(sFactor_.c_str(), glEnum))
 			{
-				throw EXCEPTION("Incorrect blending factor \"" + sFactor_ + "\"");
+				throw EXCEPTION("Incorrect blending factor \"" +
+					sFactor_ + "\"");
 			}
 			blendingSfactor = glEnum;
 
 			// dFactor
-			std::string dFactor_ = blendFuncsTree.get().get<std::string>("dFactor");
+			std::string dFactor_ =
+				blendFuncsTree.get().get<std::string>("dFactor");
 			if(!searchBlendEnum(dFactor_.c_str(), glEnum))
 			{
-				throw EXCEPTION("Incorrect blending factor \"" + dFactor_ + "\"");
+				throw EXCEPTION("Incorrect blending factor \"" + dFactor_ +
+					"\"");
 			}
 			blendingDfactor = glEnum;
 		}
@@ -212,7 +227,8 @@ void Material::load(const char* filename)
 		//
 		// depthTesting
 		//
-		boost::optional<bool> depthTesting_ = PropertyTree::getBoolOptional(pt, "depthTesting");
+		boost::optional<bool> depthTesting_ =
+			PropertyTree::getBoolOptional(pt, "depthTesting");
 		if(depthTesting_)
 		{
 			depthTesting = depthTesting_.get();
@@ -221,7 +237,8 @@ void Material::load(const char* filename)
 		//
 		// wireframe
 		//
-		boost::optional<bool> wireframe_ = PropertyTree::getBoolOptional(pt, "wireframe");
+		boost::optional<bool> wireframe_ =
+			PropertyTree::getBoolOptional(pt, "wireframe");
 		if(wireframe_)
 		{
 			wireframe = wireframe_.get();
@@ -230,28 +247,33 @@ void Material::load(const char* filename)
 		//
 		// userDefinedVars
 		//
-		boost::optional<const ptree&> userDefinedVarsTree = pt.get_child_optional("userDefinedVars");
+		boost::optional<const ptree&> userDefinedVarsTree =
+			pt.get_child_optional("userDefinedVars");
 		if(userDefinedVarsTree)
 		{
 			BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get())
 			{
 				if(v.first != "userDefinedVar")
 				{
-					throw EXCEPTION("Expected userDefinedVar and not " + v.first);
+					throw EXCEPTION("Expected userDefinedVar and not " +
+						v.first);
 				}
 
 				const ptree& userDefinedVarTree = v.second;
-				std::string varName = userDefinedVarTree.get<std::string>("name");
+				std::string varName =
+					userDefinedVarTree.get<std::string>("name");
 
 				// check if the uniform exists
 				if(!shaderProg->uniVarExists(varName.c_str()))
 				{
-					throw EXCEPTION("The variable \"" + varName + "\" is not an active uniform");
+					throw EXCEPTION("The variable \"" + varName +
+						"\" is not an active uniform");
 				}
 
 				const ptree& valueTree = userDefinedVarTree.get_child("value");
 
-				const SProgUniVar& uni = *shaderProg->findUniVar(varName.c_str());
+				const SProgUniVar& uni =
+					*shaderProg->findUniVar(varName.c_str());
 
 				// read the values
 				switch(uni.getGlDataType())
@@ -259,60 +281,28 @@ void Material::load(const char* filename)
 					// texture
 					case GL_SAMPLER_2D:
 					{
-						boost::optional<std::string> texture = valueTree.get_optional<std::string>("texture");
-						boost::optional<std::string> fai = valueTree.get_optional<std::string>("fai");
-
-						if(texture)
-						{
-							userDefinedVars.push_back(new MtlUserDefinedVar(uni, texture.get()));
-						}
-						else if(fai)
-						{
-							if(fai.get() == "msDepthFai")
-							{
-								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::MS_DEPTH_FAI));
-							}
-							else if(fai.get() == "isFai")
-							{
-								userDefinedVars.push_back(new MtlUserDefinedVar(uni, MtlUserDefinedVar::IS_FAI));
-							}
-							else if(fai.get() == "ppsPrePassFai")
-							{
-								userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-								                                                MtlUserDefinedVar::PPS_PRE_PASS_FAI));
-							}
-							else if(fai.get() == "ppsPostPassFai")
-							{
-								userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-								                                                MtlUserDefinedVar::PPS_POST_PASS_FAI));
-							}
-							else
-							{
-								throw EXCEPTION("incorrect FAI");
-							}
-						}
-						else
-						{
-							throw EXCEPTION("texture or fai expected");
-						}
-
+						parseTextureTag(valueTree, uni);
 						break;
 					}
 					// float
 					case GL_FLOAT:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getFloat(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+							PropertyTree::getFloat(valueTree)));
 						break;
 					// vec2
 					case GL_FLOAT_VEC2:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec2(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+							PropertyTree::getVec2(valueTree)));
 						break;
 					// vec3
 					case GL_FLOAT_VEC3:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec3(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+							PropertyTree::getVec3(valueTree)));
 						break;
 					// vec4
 					case GL_FLOAT_VEC4:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni, PropertyTree::getVec4(valueTree)));
+						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+							PropertyTree::getVec4(valueTree)));
 						break;
 				};
 			} // end for all userDefinedVars
@@ -327,6 +317,56 @@ void Material::load(const char* filename)
 
 
 //==============================================================================
+// parseTextureTag                                                             =
+//==============================================================================
+void Material::parseTextureTag(const boost::property_tree::ptree& pt,
+	const SProgUniVar& uni)
+{
+	boost::optional<std::string> texture =
+		pt.get_optional<std::string>("texture");
+
+	boost::optional<std::string> fai =
+		pt.get_optional<std::string>("fai");
+
+	if(texture)
+	{
+		userDefinedVars.push_back(new MtlUserDefinedVar(uni, texture.get()));
+	}
+	else if(fai)
+	{
+		if(fai.get() == "msDepthFai")
+		{
+			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+				MtlUserDefinedVar::MS_DEPTH_FAI));
+		}
+		else if(fai.get() == "isFai")
+		{
+			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+				MtlUserDefinedVar::IS_FAI));
+		}
+		else if(fai.get() == "ppsPrePassFai")
+		{
+			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+				MtlUserDefinedVar::PPS_PRE_PASS_FAI));
+		}
+		else if(fai.get() == "ppsPostPassFai")
+		{
+			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
+				MtlUserDefinedVar::PPS_POST_PASS_FAI));
+		}
+		else
+		{
+			throw EXCEPTION("incorrect FAI");
+		}
+	}
+	else
+	{
+		throw EXCEPTION("texture or fai expected");
+	}
+}
+
+
+//==============================================================================
 // initStdShaderVars                                                           =
 //==============================================================================
 void Material::initStdShaderVars()
@@ -334,7 +374,8 @@ void Material::initStdShaderVars()
 	// sanity checks
 	if(!shaderProg.get())
 	{
-		throw EXCEPTION("Material without shader program is like cake without sugar");
+		throw EXCEPTION("Material without shader program is like cake "
+			"without sugar");
 	}
 
 	// the attributes
@@ -348,13 +389,16 @@ void Material::initStdShaderVars()
 		}
 
 		// set the std var
-		stdAttribVars[i] = shaderProg->findAttribVar(stdAttribVarInfos[i].varName);
+		stdAttribVars[i] = shaderProg->findAttribVar(
+			stdAttribVarInfos[i].varName);
 
-		// check if the shader has different GL data type from that it suppose to have
+		// check if the shader has different GL data type from that it suppose
+		// to have
 		if(stdAttribVars[i]->getGlDataType() != stdAttribVarInfos[i].dataType)
 		{
 			throw EXCEPTION("The \"" + stdAttribVarInfos[i].varName +
-			                "\" attribute var has incorrect GL data type from the expected");
+				"\" attribute var has incorrect GL data type "
+				"from the expected");
 		}
 	}
 
@@ -371,11 +415,12 @@ void Material::initStdShaderVars()
 		// set the std var
 		stdUniVars[i] = shaderProg->findUniVar(stdUniVarInfos[i].varName);
 
-		// check if the shader has different GL data type from that it suppose to have
+		// check if the shader has different GL data type from that it
+		// suppose to have
 		if(stdUniVars[i]->getGlDataType() != stdUniVarInfos[i].dataType)
 		{
 			throw EXCEPTION("The \"" + stdUniVarInfos[i].varName +
-			                "\" uniform var has incorrect GL data type from the expected");
+				"\" uniform var has incorrect GL data type from the expected");
 		}
 	}
 }
@@ -384,12 +429,13 @@ void Material::initStdShaderVars()
 //==============================================================================
 // parseCustomShader                                                           =
 //==============================================================================
-void Material::parseCustomShader(const PreprocDefines defines[], const boost::property_tree::ptree& pt,
-                                 std::string& source)
+void Material::parseCustomShader(const PreprocDefines defines[],
+	const boost::property_tree::ptree& pt, std::string& source)
 {
 	using namespace boost::property_tree;
 
-	boost::optional<const ptree&> definesTree = pt.get_child_optional("defines");
+	boost::optional<const ptree&> definesTree =
+		pt.get_child_optional("defines");
 	if(!definesTree)
 	{
 		return;

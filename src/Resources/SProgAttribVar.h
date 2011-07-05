@@ -8,13 +8,14 @@
 class SProgAttribVar: public SProgVar
 {
 	public:
-		SProgAttribVar(int loc_, const char* name_, GLenum glDataType_, const ShaderProg& fatherSProg_);
+		SProgAttribVar(int loc_, const char* name_, GLenum glDataType_,
+			const ShaderProg& fatherSProg_);
 };
 
 
-inline SProgAttribVar::SProgAttribVar(int loc_, const char* name_, GLenum glDataType_,
-                                      const ShaderProg& fatherSProg_):
-	SProgVar(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
+inline SProgAttribVar::SProgAttribVar(int loc_, const char* name_,
+	GLenum glDataType_, const ShaderProg& fatherSProg_)
+:	SProgVar(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
 {}
 
 

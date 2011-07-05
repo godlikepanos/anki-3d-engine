@@ -10,9 +10,11 @@
 // sendNewLoadingRequest <Texture>                                             =
 //==============================================================================
 template<>
-void RsrcAsyncLoadingReqsHandler::sendNewLoadingRequest<Texture>(const char* filename, Texture** objToLoad)
+void RsrcAsyncLoadingReqsHandler::sendNewLoadingRequest<Texture>(
+	const char* filename, Texture** objToLoad)
 {
-	RsrcTextureLoadingRequest* req = new RsrcTextureLoadingRequest(filename, objToLoad);
+	RsrcTextureLoadingRequest* req = new RsrcTextureLoadingRequest(filename,
+		objToLoad);
 	requests.push_back(req);
 	req->postRequest(al);
 }
@@ -47,7 +49,8 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(float maxTime)
 		}
 		catch(std::exception& e)
 		{
-			ERROR("Post-loading failed for \"" << filename << "\": " << e.what());
+			ERROR("Post-loading failed for \"" << filename << "\": " <<
+				e.what());
 		}
 		
 		++frameServedRequestsNum;
@@ -63,7 +66,8 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(float maxTime)
 
 	if(frameServedRequestsNum > 0)
 	{
-		INFO(frameServedRequestsNum << " requests served. Time: " << t.getElapsedTime() << ", max time: " << maxTime);
+		INFO(frameServedRequestsNum << " requests served. Time: " <<
+			t.getElapsedTime() << ", max time: " << maxTime);
 	}
 }
 

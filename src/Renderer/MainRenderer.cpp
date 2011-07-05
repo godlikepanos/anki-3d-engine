@@ -55,7 +55,8 @@ void MainRenderer::initGl()
 
 	// get max texture units
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
-	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Texture::textureUnitsNum);
+	int& tun = Texture::getTextureUnitsNum();
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tun);
 	glClearColor(0.1, 0.1, 0.1, 1.0);
 	glClearDepth(1.0);
 	glClearStencil(0);
