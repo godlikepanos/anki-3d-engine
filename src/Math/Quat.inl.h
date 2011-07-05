@@ -1,8 +1,6 @@
 #include "Common.inl.h"
 
 
-#define ME (*this)
-
 namespace M {
 
 
@@ -134,7 +132,7 @@ inline Quat::Quat(const Axisang& axisang)
 	float lengthsq = axisang.getAxis().getLengthSquared();
 	if(isZero(lengthsq))
 	{
-		ME = getIdentity();
+		(*this) = getIdentity();
 		return;
 	}
 
@@ -209,16 +207,15 @@ inline Quat& Quat::operator=(const Quat& b)
 	y() = b.y();
 	z() = b.z();
 	w() = b.w();
-	return SELF;
+	return *this;
 }
 
 // *
 inline Quat Quat::operator *(const Quat& b) const
 {
-	return Quat(
-		 x() * b.w() + y() * b.z() - z() * b.y() + w() * b.x(),
+	return Quat(x() * b.w() + y() * b.z() - z() * b.y() + w() * b.x(),
 		-x() * b.z() + y() * b.w() + z() * b.x() + w() * b.y(),
-		 x() * b.y() - y() * b.x() + z() * b.w() + w() * b.z(),
+		x() * b.y() - y() * b.x() + z() * b.w() + w() * b.z(),
 		-x() * b.x() - y() * b.y() - z() * b.z() + w() * b.w()
 	);
 }
@@ -226,20 +223,22 @@ inline Quat Quat::operator *(const Quat& b) const
 // *=
 inline Quat& Quat::operator *=(const Quat& b)
 {
-	ME = ME * b;
-	return ME;
+	(*this) = (*this) * b;
+	return (*this);
 }
 
 // ==
 inline bool Quat::operator ==(const Quat& b) const
 {
-	return isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()) && isZero(w() - b.w());
+	return isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()) &&
+		isZero(w() - b.w());
 }
 
 // !=
 inline bool Quat::operator !=(const Quat& b) const
 {
-	return !(isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()) && isZero(w() - b.w()));
+	return !(isZero(x() - b.x()) && isZero(y() - b.y()) &&
+		isZero(z() - b.z()) && isZero(w() - b.w()));
 }
 
 
@@ -264,13 +263,13 @@ inline Quat Quat::getConjugated() const
 // Normalized
 inline Quat Quat::getNormalized() const
 {
-	return Quat(Vec4(ME).getNormalized());
+	return Quat(Vec4((*this)).getNormalized());
 }
 
 // normalize
 inline void Quat::normalize()
 {
-	ME = getNormalized();
+	(*this) = getNormalized();
 }
 
 // getLength
@@ -294,14 +293,14 @@ inline Quat Quat::getInverted() const
 // invert
 inline void Quat::invert()
 {
-	ME = getInverted();
+	(*this) = getInverted();
 }
 
 // CalcFromVecVec
 inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 {
 	Vec3 axis(from.cross(to));
-	ME = Quat(axis.x(), axis.y(), axis.z(), from.dot(to));
+	(*this) = Quat(axis.x(), axis.y(), axis.z(), from.dot(to));
 	normalize();
 	w() += 1.0;
 
@@ -309,11 +308,11 @@ inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 	{
 		if(from.z() * from.z() > from.x() * from.x())
 		{
-			ME = Quat(0.0, from.z(), -from.y(), 0.0);
+			(*this) = Quat(0.0, from.z(), -from.y(), 0.0);
 		}
 		else
 		{
-			ME = Quat(from.y(), -from.x(), 0.0, 0.0);
+			(*this) = Quat(from.y(), -from.x(), 0.0, 0.0);
 		}
 	}
 	normalize();
@@ -322,13 +321,13 @@ inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 // getRotated
 inline Quat Quat::getRotated(const Quat& b) const
 {
-	return ME * b;
+	return (*this) * b;
 }
 
 // rotate
 inline void Quat::rotate(const Quat& b)
 {
-	ME = getRotated(b);
+	(*this) = getRotated(b);
 }
 
 // dot
@@ -340,9 +339,10 @@ inline float Quat::dot(const Quat& b) const
 // SLERP
 inline Quat Quat::slerp(const Quat& q1_, float t) const
 {
-	const Quat& q0 = ME;
+	const Quat& q0 = (*this);
 	Quat q1(q1_);
-	float cosHalfTheta = q0.w() * q1.w() + q0.x() * q1.x() + q0.y() * q1.y() + q0.z() * q1.z();
+	float cosHalfTheta = q0.w() * q1.w() + q0.x() * q1.x() + q0.y() * q1.y() +
+		q0.z() * q1.z();
 	if(cosHalfTheta < 0.0)
 	{
 		q1 = Quat(-Vec4(q1)); // quat changes
@@ -390,5 +390,6 @@ inline std::ostream& operator<<(std::ostream& s, const Quat& q)
 	s << q.w() << ' ' << q.x() << ' ' << q.y() << ' ' << q.z();
 	return s;
 }
+
 
 } // end namespace

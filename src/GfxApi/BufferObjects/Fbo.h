@@ -68,15 +68,6 @@ inline uint Fbo::getGlId() const
 }
 
 
-inline Fbo::~Fbo()
-{
-	if(isCreated())
-	{
-		destroy();
-	}
-}
-
-
 inline void Fbo::bind(GLenum target_)
 {
 	ASSERT(isCreated());

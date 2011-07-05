@@ -15,6 +15,7 @@ namespace Ui {
 class Font;
 
 
+/// @todo
 class Painter
 {
 	public:

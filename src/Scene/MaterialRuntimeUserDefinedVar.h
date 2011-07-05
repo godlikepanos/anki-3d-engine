@@ -4,14 +4,16 @@
 #include "Resources/MtlUserDefinedVar.h"
 
 
-/// This holds a copy of the MtlUserDefinedVar's data in order to be changed inside the main loop
+/// This holds a copy of the MtlUserDefinedVar's data in order to be changed
+/// inside the main loop
 class MaterialRuntimeUserDefinedVar
 {
 	friend class ConstructVisitor;
 
 	public:
 		/// The data union. The Texture resource is read-only at runtime
-		typedef boost::variant<float, Vec2, Vec3, Vec4, const RsrcPtr<Texture>*, MtlUserDefinedVar::Fai> DataVariant;
+		typedef boost::variant<float, Vec2, Vec3, Vec4,
+			const RsrcPtr<Texture>*, MtlUserDefinedVar::Fai> DataVariant;
 
 		/// The one and only constructor
 		MaterialRuntimeUserDefinedVar(const MtlUserDefinedVar& rsrc);
@@ -25,12 +27,14 @@ class MaterialRuntimeUserDefinedVar
 		GETTER_RW(DataVariant, data, getDataVariant)
 
 		/// Get the value of the variant
-		/// @exception boost::exception when you try to get the incorrect data type
+		/// @exception boost::exception when you try to get the incorrect data
+		/// type
 		template<typename Type>
 		const Type& get() const {return boost::get<Type>(data);}
 
 		/// Get the value of the variant
-		/// @exception boost::exception when you try to get the incorrect data type
+		/// @exception boost::exception when you try to get the incorrect data
+		/// type
 		template<typename Type>
 		Type& get() {return boost::get<Type>(data);}
 
@@ -45,9 +49,10 @@ class MaterialRuntimeUserDefinedVar
 			public:
 				MaterialRuntimeUserDefinedVar& udvr;
 
-				ConstructVisitor(MaterialRuntimeUserDefinedVar& udvr_): udvr(udvr_) {}
+				ConstructVisitor(MaterialRuntimeUserDefinedVar& udvr_);
 
-				/// Template method that applies to all DataVariant values except texture resource
+				/// Template method that applies to all DataVariant values
+				/// except texture resource
 				template<typename Type>
 				void operator()(const Type& x) const {udvr.data = x;}
 		};
@@ -55,6 +60,12 @@ class MaterialRuntimeUserDefinedVar
 		DataVariant data;
 		const MtlUserDefinedVar& rsrc; ///< Know the resource
 };
+
+
+inline MaterialRuntimeUserDefinedVar::ConstructVisitor::ConstructVisitor(
+	MaterialRuntimeUserDefinedVar& udvr_)
+:	udvr(udvr_)
+{}
 
 
 #endif

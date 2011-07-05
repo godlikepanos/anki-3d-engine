@@ -1,5 +1,5 @@
-#ifndef QUAT_H
-#define QUAT_H
+#ifndef M_QUAT_H
+#define M_QUAT_H
 
 #include "Common.h"
 
@@ -48,7 +48,9 @@ class Quat
 
 		/// @name Other
 		/// @{
-		void  setFrom2Vec3(const Vec3& v0, const Vec3& v1); ///< calculates a quat from v0 to v1
+
+		/// Calculates a quat from v0 to v1
+		void  setFrom2Vec3(const Vec3& v0, const Vec3& v1);
 		float getLength() const;
 		Quat  getInverted() const;
 		void  invert();
@@ -57,7 +59,8 @@ class Quat
 		void  normalize();
 		Quat  getNormalized() const;
 		float dot(const Quat& b) const;
-		Quat  slerp(const Quat& q1, float t) const; ///< returns slerp(this, q1, t)
+		/// Returns slerp(this, q1, t)
+		Quat  slerp(const Quat& q1, float t) const;
 		Quat  getRotated(const Quat& b) const; ///< The same as Quat * Quat
 		void  rotate(const Quat& b); ///< @see getRotated
 		void  setIdentity();

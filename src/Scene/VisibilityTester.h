@@ -23,6 +23,7 @@ class VisibilityTester
 	public:
 		/// Constructor
 		VisibilityTester(Scene& scene);
+		~VisibilityTester();
 
 		/// This method:
 		/// - Gets the visible renderable nodes

@@ -13,12 +13,20 @@
 
 
 //==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+VisibilityTester::~VisibilityTester()
+{}
+
+
+//==============================================================================
 // CmpDistanceFromOrigin::operator()                                           =
 //==============================================================================
-bool VisibilityTester::CmpDistanceFromOrigin::operator()(const SceneNode* a, const SceneNode* b) const
+bool VisibilityTester::CmpDistanceFromOrigin::operator()(const SceneNode* a,
+	const SceneNode* b) const
 {
 	return (a->getWorldTransform().getOrigin() - o).getLengthSquared() <
-	       (b->getWorldTransform().getOrigin() - o).getLengthSquared();
+		(b->getWorldTransform().getOrigin() - o).getLengthSquared();
 }
 
 
@@ -58,7 +66,8 @@ void VisibilityTester::test(Camera& cam)
 			{
 				PointLight* pointl = static_cast<PointLight*>(light);
 
-				Col::Sphere sphere(pointl->getWorldTransform().getOrigin(), pointl->getRadius());
+				Col::Sphere sphere(pointl->getWorldTransform().getOrigin(),
+					pointl->getRadius());
 				if(cam.insideFrustum(sphere))
 				{
 					cam.getVisiblePointLights().push_back(pointl);
@@ -110,7 +119,8 @@ bool VisibilityTester::test(const Type& tested, const Camera& cam)
 //==============================================================================
 // getRenderableNodes                                                          =
 //==============================================================================
-void VisibilityTester::getRenderableNodes(bool skipShadowless_, const Camera& cam_, VisibilityInfo& storage)
+void VisibilityTester::getRenderableNodes(bool skipShadowless_,
+	const Camera& cam_, VisibilityInfo& storage)
 {
 	cam = &cam_;
 	skipShadowless = skipShadowless_;
@@ -121,97 +131,28 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless_, const Camera& ca
 
 	for(uint i = 0; i < JobManagerSingleton::getInstance().getThreadsNum(); i++)
 	{
-		JobManagerSingleton::getInstance().assignNewJob(i, getRenderableNodesJobCallback, this);
+		JobManagerSingleton::getInstance().assignNewJob(i,
+			getRenderableNodesJobCallback, this);
 	}
 	JobManagerSingleton::getInstance().waitForAllJobsToFinish();
-
-	/*
-	//
-	// ModelNodes
-	//
-	BOOST_FOREACH(ModelNode* node, scene.getModelNodes())
-	{
-		// Skip if the ModeNode is not visible
-		if(!test(*node, *cam))
-		{
-			continue;
-		}
-
-		node->setVisible(true);
-
-		// If visible test every patch individually
-		BOOST_FOREACH(ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
-		{
-			// Skip shadowless
-			if(skipShadowless && !modelPatchNode->getCpMtl().castsShadow())
-			{
-				continue;
-			}
-
-			// Test if visible by main camera
-			if(test(*modelPatchNode, *cam))
-			{
-				if(modelPatchNode->getCpMtl().renderInBlendingStage())
-				{
-					storage.getVisibleBsRenderableNodes().push_back(modelPatchNode);
-				}
-				else
-				{
-					storage.getVisibleMsRenderableNodes().push_back(modelPatchNode);
-				}
-				modelPatchNode->setVisible(true);
-			}
-		}
-	}
-
-	//
-	// SkinNodes
-	//
-	BOOST_FOREACH(SkinNode* node, scene.getSkinNodes())
-	{
-		// Skip if the SkinNode is not visible
-		if(!test(*node, *cam))
-		{
-			continue;
-		}
-
-		node->setVisible(true);
-
-		// Put all the patches into the visible container
-		BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
-		{
-			// Skip shadowless
-			if(skipShadowless && !patchNode->getCpMtl().castsShadow())
-			{
-				continue;
-			}
-
-			if(patchNode->getCpMtl().renderInBlendingStage())
-			{
-				storage.getVisibleBsRenderableNodes().push_back(patchNode);
-			}
-			else
-			{
-				storage.getVisibleMsRenderableNodes().push_back(patchNode);
-			}
-			patchNode->setVisible(true);
-		}
-	}*/
 
 	//
 	// Sort the renderables from closest to the camera to the farthest
 	//
-	std::sort(storage.getVisibleMsRenderableNodes().begin(), storage.getVisibleMsRenderableNodes().end(),
-	          CmpDistanceFromOrigin(cam->getWorldTransform().getOrigin()));
-	std::sort(storage.getVisibleBsRenderableNodes().begin(), storage.getVisibleBsRenderableNodes().end(),
-	          CmpDistanceFromOrigin(cam->getWorldTransform().getOrigin()));
+	std::sort(storage.getVisibleMsRenderableNodes().begin(),
+		storage.getVisibleMsRenderableNodes().end(),
+		CmpDistanceFromOrigin(cam->getWorldTransform().getOrigin()));
+	std::sort(storage.getVisibleBsRenderableNodes().begin(),
+		storage.getVisibleBsRenderableNodes().end(),
+		CmpDistanceFromOrigin(cam->getWorldTransform().getOrigin()));
 }
 
 
 //==============================================================================
 // getRenderableNodesJobCallback                                               =
 //==============================================================================
-void VisibilityTester::getRenderableNodesJobCallback(void* args, const WorkerThread& workerThread)
+void VisibilityTester::getRenderableNodesJobCallback(void* args,
+	const WorkerThread& workerThread)
 {
 	uint id = workerThread.getId();
 	uint threadsNum = workerThread.getJobManager().getThreadsNum();
@@ -247,10 +188,12 @@ void VisibilityTester::getRenderableNodesJobCallback(void* args, const WorkerThr
 		node->setVisible(true);
 
 		// If visible test every patch individually
-		BOOST_FOREACH(ModelPatchNode* modelPatchNode, node->getModelPatchNodes())
+		BOOST_FOREACH(ModelPatchNode* modelPatchNode,
+			node->getModelPatchNodes())
 		{
 			// Skip shadowless
-			if(visTester->skipShadowless && !modelPatchNode->getCpMtl().castsShadow())
+			if(visTester->skipShadowless &&
+				!modelPatchNode->getCpMtl().castsShadow())
 			{
 				continue;
 			}

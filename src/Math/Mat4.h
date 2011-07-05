@@ -1,5 +1,5 @@
-#ifndef MAT4_H
-#define MAT4_H
+#ifndef M_MAT4_H
+#define M_MAT4_H
 
 #include "Common.h"
 
@@ -20,8 +20,9 @@ class Mat4
 		/// @{
 		explicit Mat4() {}
 		explicit Mat4(float f);
-		explicit Mat4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-		              float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33);
+		explicit Mat4(float m00, float m01, float m02, float m03, float m10,
+			float m11, float m12, float m13, float m20, float m21, float m22,
+			float m23, float m30, float m31, float m32, float m33);
 		explicit Mat4(const float arr[]);
 		         Mat4(const Mat4& b);
 		explicit Mat4(const Mat3& m3);
@@ -78,9 +79,11 @@ class Mat4
 
 		/// @name Other
 		/// @{
-		void  setRows(const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d);
+		void  setRows(const Vec4& a, const Vec4& b, const Vec4& c,
+			const Vec4& d);
 		void  setRow(uint i, const Vec4& v);
-		void  setColumns(const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d);
+		void  setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
+			const Vec4& d);
 		void  setColumn(uint i, const Vec4& v);
 		void  setRotationPart(const Mat3& m3);
 		void  setTranslationPart(const Vec4& v4);
@@ -95,7 +98,8 @@ class Mat4
 		Mat4  getInverseTransformation() const;
 		Mat4  lerp(const Mat4& b, float t) const;
 		void  setIdentity();
-		/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
+		/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching
+		/// the 4rth row and allot faster
 		static Mat4 combineTransformations(const Mat4& m0, const Mat4& m1);
 		static const Mat4& getIdentity();
 		static const Mat4& getZero();

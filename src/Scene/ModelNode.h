@@ -17,14 +17,14 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
-		ModelNode(SceneNode* parent = NULL): SceneNode(SNT_MODEL, true, parent) {}
+		ModelNode(SceneNode* parent = NULL);
 		virtual ~ModelNode();
 
 		/// @name Accessors
 		/// @{
 		GETTER_RW(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
 		const Model& getModel() const {return *model;}
-		const Col::Obb& getVisibilityShapeWSpace() const {return visibilityShapeWSpace;}
+		GETTER_R(Col::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 		/// @}
 
 		/// Initialize the node
@@ -41,6 +41,11 @@ class ModelNode: public SceneNode
 		Vec<ModelPatchNode*> patches;
 		Col::Obb visibilityShapeWSpace;
 };
+
+
+inline ModelNode::ModelNode(SceneNode* parent = NULL)
+:	SceneNode(SNT_MODEL, true, parent)
+{}
 
 
 #endif

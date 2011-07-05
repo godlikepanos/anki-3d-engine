@@ -1,9 +1,6 @@
 #include "Common.inl.h"
 
 
-#define SELF (*this)
-
-
 namespace M {
 
 
@@ -22,7 +19,7 @@ inline Mat4::Mat4(const Mat4& b)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] = b[i];
+			(*this)[i] = b[i];
 		}
 	#endif
 }
@@ -38,7 +35,7 @@ inline Mat4::Mat4(const float f)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] = f;
+			(*this)[i] = f;
 		}
 	#endif
 }
@@ -48,88 +45,90 @@ inline Mat4::Mat4(const float arr_[])
 {
 	for(int i = 0; i < 16; i++)
 	{
-		SELF[i] = arr_[i];
+		(*this)[i] = arr_[i];
 	}
 }
 
 // many floats
-inline Mat4::Mat4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20,
-                  float m21, float m22, float m23, float m30, float m31, float m32, float m33)
+inline Mat4::Mat4(float m00, float m01, float m02, float m03, float m10,
+	float m11, float m12, float m13, float m20, float m21, float m22,
+	float m23, float m30, float m31, float m32, float m33)
 {
-	SELF(0, 0) = m00;
-	SELF(0, 1) = m01;
-	SELF(0, 2) = m02;
-	SELF(0, 3) = m03;
-	SELF(1, 0) = m10;
-	SELF(1, 1) = m11;
-	SELF(1, 2) = m12;
-	SELF(1, 3) = m13;
-	SELF(2, 0) = m20;
-	SELF(2, 1) = m21;
-	SELF(2, 2) = m22;
-	SELF(2, 3) = m23;
-	SELF(3, 0) = m30;
-	SELF(3, 1) = m31;
-	SELF(3, 2) = m32;
-	SELF(3, 3) = m33;
+	(*this)(0, 0) = m00;
+	(*this)(0, 1) = m01;
+	(*this)(0, 2) = m02;
+	(*this)(0, 3) = m03;
+	(*this)(1, 0) = m10;
+	(*this)(1, 1) = m11;
+	(*this)(1, 2) = m12;
+	(*this)(1, 3) = m13;
+	(*this)(2, 0) = m20;
+	(*this)(2, 1) = m21;
+	(*this)(2, 2) = m22;
+	(*this)(2, 3) = m23;
+	(*this)(3, 0) = m30;
+	(*this)(3, 1) = m31;
+	(*this)(3, 2) = m32;
+	(*this)(3, 3) = m33;
 }
 
 // Mat3
 inline Mat4::Mat4(const Mat3& m3)
 {
-	SELF(0, 0) = m3(0, 0);
-	SELF(0, 1) = m3(0, 1);
-	SELF(0, 2) = m3(0, 2);
-	SELF(1, 0) = m3(1, 0);
-	SELF(1, 1) = m3(1, 1);
-	SELF(1, 2) = m3(1, 2);
-	SELF(2, 0) = m3(2, 0);
-	SELF(2, 1) = m3(2, 1);
-	SELF(2, 2) = m3(2, 2);
-	SELF(3, 0) = SELF(3, 1) = SELF(3, 2) = SELF(0, 3) = SELF(1, 3) = SELF(2, 3) = 0.0;
-	SELF(3, 3) = 1.0;
+	(*this)(0, 0) = m3(0, 0);
+	(*this)(0, 1) = m3(0, 1);
+	(*this)(0, 2) = m3(0, 2);
+	(*this)(1, 0) = m3(1, 0);
+	(*this)(1, 1) = m3(1, 1);
+	(*this)(1, 2) = m3(1, 2);
+	(*this)(2, 0) = m3(2, 0);
+	(*this)(2, 1) = m3(2, 1);
+	(*this)(2, 2) = m3(2, 2);
+	(*this)(3, 0) = (*this)(3, 1) = (*this)(3, 2) = (*this)(0, 3) =
+		(*this)(1, 3) = (*this)(2, 3) = 0.0;
+	(*this)(3, 3) = 1.0;
 }
 
 // Vec3
 inline Mat4::Mat4(const Vec3& v)
 {
-	SELF(0, 0) = 1.0;
-	SELF(0, 1) = 0.0;
-	SELF(0, 2) = 0.0;
-	SELF(0, 3) = v.x();
-	SELF(1, 0) = 0.0;
-	SELF(1, 1) = 1.0;
-	SELF(1, 2) = 0.0;
-	SELF(1, 3) = v.y();
-	SELF(2, 0) = 0.0;
-	SELF(2, 1) = 0.0;
-	SELF(2, 2) = 1.0;
-	SELF(2, 3) = v.z();
-	SELF(3, 0) = 0.0;
-	SELF(3, 1) = 0.0;
-	SELF(3, 2) = 0.0;
-	SELF(3, 3) = 1.0;
+	(*this)(0, 0) = 1.0;
+	(*this)(0, 1) = 0.0;
+	(*this)(0, 2) = 0.0;
+	(*this)(0, 3) = v.x();
+	(*this)(1, 0) = 0.0;
+	(*this)(1, 1) = 1.0;
+	(*this)(1, 2) = 0.0;
+	(*this)(1, 3) = v.y();
+	(*this)(2, 0) = 0.0;
+	(*this)(2, 1) = 0.0;
+	(*this)(2, 2) = 1.0;
+	(*this)(2, 3) = v.z();
+	(*this)(3, 0) = 0.0;
+	(*this)(3, 1) = 0.0;
+	(*this)(3, 2) = 0.0;
+	(*this)(3, 3) = 1.0;
 }
 
 // vec4
 inline Mat4::Mat4(const Vec4& v)
 {
-	SELF(0, 0) = 1.0;
-	SELF(0, 1) = 0.0;
-	SELF(0, 2) = 0.0;
-	SELF(0, 3) = v.x();
-	SELF(1, 0) = 0.0;
-	SELF(1, 1) = 1.0;
-	SELF(1, 2) = 0.0;
-	SELF(1, 3) = v.y();
-	SELF(2, 0) = 0.0;
-	SELF(2, 1) = 0.0;
-	SELF(2, 2) = 1.0;
-	SELF(2, 3) = v.z();
-	SELF(3, 0) = 0.0;
-	SELF(3, 1) = 0.0;
-	SELF(3, 2) = 0.0;
-	SELF(3, 3) = v.w();
+	(*this)(0, 0) = 1.0;
+	(*this)(0, 1) = 0.0;
+	(*this)(0, 2) = 0.0;
+	(*this)(0, 3) = v.x();
+	(*this)(1, 0) = 0.0;
+	(*this)(1, 1) = 1.0;
+	(*this)(1, 2) = 0.0;
+	(*this)(1, 3) = v.y();
+	(*this)(2, 0) = 0.0;
+	(*this)(2, 1) = 0.0;
+	(*this)(2, 2) = 1.0;
+	(*this)(2, 3) = v.z();
+	(*this)(3, 0) = 0.0;
+	(*this)(3, 1) = 0.0;
+	(*this)(3, 2) = 0.0;
+	(*this)(3, 3) = v.w();
 }
 
 // Vec3, Mat3
@@ -137,8 +136,8 @@ inline Mat4::Mat4(const Vec3& transl, const Mat3& rot)
 {
 	setRotationPart(rot);
 	setTranslationPart(transl);
-	SELF(3, 0) = SELF(3, 1) = SELF(3, 2) = 0.0;
-	SELF(3, 3) = 1.0;
+	(*this)(3, 0) = (*this)(3, 1) = (*this)(3, 2) = 0.0;
+	(*this)(3, 3) = 1.0;
 }
 
 // Vec3, Mat3, float
@@ -155,14 +154,14 @@ inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, float scale)
 
 	setTranslationPart(translate);
 
-	SELF(3, 0) = SELF(3, 1) = SELF(3, 2) = 0.0;
-	SELF(3, 3) = 1.0;
+	(*this)(3, 0) = (*this)(3, 1) = (*this)(3, 2) = 0.0;
+	(*this)(3, 3) = 1.0;
 }
 
 // Transform
 inline Mat4::Mat4(const Transform& t)
 {
-	SELF = Mat4(t.getOrigin(), t.getRotation(), t.getScale());
+	(*this) = Mat4(t.getOrigin(), t.getRotation(), t.getScale());
 }
 
 
@@ -217,10 +216,10 @@ inline Mat4& Mat4::operator=(const Mat4& b)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] = b[i];
+			(*this)[i] = b[i];
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // +
@@ -235,7 +234,7 @@ inline Mat4 Mat4::operator+(const Mat4& b) const
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			c[i] = SELF[i] + b[i];
+			c[i] = (*this)[i] + b[i];
 		}
 	#endif
 	return c;
@@ -252,10 +251,10 @@ inline Mat4& Mat4::operator+=(const Mat4& b)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] += b[i];
+			(*this)[i] += b[i];
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // -
@@ -270,7 +269,7 @@ inline Mat4 Mat4::operator-(const Mat4& b) const
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			c[i] = SELF[i] - b[i];
+			c[i] = (*this)[i] - b[i];
 		}
 	#endif
 	return c;
@@ -287,10 +286,10 @@ inline Mat4& Mat4::operator-=(const Mat4& b)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] -= b[i];
+			(*this)[i] -= b[i];
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // *
@@ -312,7 +311,8 @@ inline Mat4 Mat4::operator*(const Mat4& b) const
 		{
 			for(int j = 0; j < 4; j++)
 			{
-				c(i, j) = SELF(i, 0) * b(0, j) + SELF(i, 1) * b(1, j) + SELF(i, 2) * b(2, j) + SELF(i, 3) * b(3, j);
+				c(i, j) = (*this)(i, 0) * b(0, j) + (*this)(i, 1) * b(1, j) +
+					(*this)(i, 2) * b(2, j) + (*this)(i, 3) * b(3, j);
 			}
 		}
 	#endif
@@ -322,8 +322,8 @@ inline Mat4 Mat4::operator*(const Mat4& b) const
 // *=
 inline Mat4& Mat4::operator*=(const Mat4& b)
 {
-	SELF = SELF * b;
-	return SELF;
+	(*this) = (*this) * b;
+	return (*this);
 }
 
 // ==
@@ -331,7 +331,7 @@ inline bool Mat4::operator==(const Mat4& b) const
 {
 	for(int i = 0; i < 16; i++)
 	{
-		if(!isZero(SELF[i] - b[i]))
+		if(!isZero((*this)[i] - b[i]))
 		{
 			return false;
 		}
@@ -344,7 +344,7 @@ inline bool Mat4::operator!=(const Mat4& b) const
 {
 	for(int i = 0; i < 16; i++)
 	{
-		if(!isZero(SELF[i]-b[i]))
+		if(!isZero((*this)[i]-b[i]))
 		{
 			return true;
 		}
@@ -370,7 +370,7 @@ inline Mat4 Mat4::operator+(float f) const
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			c[i] = SELF[i] + f;
+			c[i] = (*this)[i] + f;
 		}
 	#endif
 	return c;
@@ -395,10 +395,10 @@ inline Mat4& Mat4::operator+=(float f)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] += f;
+			(*this)[i] += f;
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // 4x4 - float
@@ -415,7 +415,7 @@ inline Mat4 Mat4::operator-(float f) const
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			r[i] = SELF[i] - f;
+			r[i] = (*this)[i] - f;
 		}
 	#endif
 	return r;
@@ -454,10 +454,10 @@ inline Mat4& Mat4::operator-=(float f)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] -= f;
+			(*this)[i] -= f;
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // 4x4 * float
@@ -474,7 +474,7 @@ inline Mat4 Mat4::operator*(float f) const
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			r[i] = SELF[i] * f;
+			r[i] = (*this)[i] * f;
 		}
 	#endif
 	return r;
@@ -499,10 +499,10 @@ inline Mat4& Mat4::operator*=(float f)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] *= f;
+			(*this)[i] *= f;
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // 4x4 / float
@@ -519,7 +519,7 @@ inline Mat4 Mat4::operator/(float f) const
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			r[i] = SELF[i] / f;
+			r[i] = (*this)[i] / f;
 		}
 	#endif
 	return r;
@@ -558,10 +558,10 @@ inline Mat4& Mat4::operator/=(float f)
 	#else
 		for(int i = 0; i < 16; i++)
 		{
-			SELF[i] /= f;
+			(*this)[i] /= f;
 		}
 	#endif
-	return SELF;
+	return (*this);
 }
 
 
@@ -580,10 +580,14 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 		}
 		return v;
 	#else
-		return Vec4(SELF(0, 0) * b.x() + SELF(0, 1) * b.y() + SELF(0, 2) * b.z() + SELF(0, 3) * b.w(),
-		            SELF(1, 0) * b.x() + SELF(1, 1) * b.y() + SELF(1, 2) * b.z() + SELF(1, 3) * b.w(),
-		            SELF(2, 0) * b.x() + SELF(2, 1) * b.y() + SELF(2, 2) * b.z() + SELF(2, 3) * b.w(),
-		            SELF(3, 0) * b.x() + SELF(3, 1) * b.y() + SELF(3, 2) * b.z() + SELF(3, 3) * b.w());
+		return Vec4((*this)(0, 0) * b.x() + (*this)(0, 1) * b.y() +
+			(*this)(0, 2) * b.z() + (*this)(0, 3) * b.w(),
+			(*this)(1, 0) * b.x() + (*this)(1, 1) * b.y() +
+			(*this)(1, 2) * b.z() + (*this)(1, 3) * b.w(),
+			(*this)(2, 0) * b.x() + (*this)(2, 1) * b.y() +
+			(*this)(2, 2) * b.z() + (*this)(2, 3) * b.w(),
+			(*this)(3, 0) * b.x() + (*this)(3, 1) * b.y() +
+			(*this)(3, 2) * b.z() + (*this)(3, 3) * b.w());
 	#endif
 }
 
@@ -593,7 +597,8 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 //==============================================================================
 
 // setRows
-inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d)
+inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
+	const Vec4& d)
 {
 	#if defined(MATH_INTEL_SIMD)
 		arrMm[0] = a.getMm();
@@ -601,22 +606,22 @@ inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c, const Vec
 		arrMm[2] = c.getMm();
 		arrMm[3] = d.getMm();
 	#else
-		SELF(0, 0) = a.x();
-		SELF(0, 1) = a.y();
-		SELF(0, 2) = a.z();
-		SELF(0, 3) = a.w();
-		SELF(1, 0) = b.x();
-		SELF(1, 1) = b.y();
-		SELF(1, 2) = b.z();
-		SELF(1, 3) = b.w();
-		SELF(2, 0) = c.x();
-		SELF(2, 1) = c.y();
-		SELF(2, 2) = c.z();
-		SELF(2, 3) = c.w();
-		SELF(3, 0) = d.x();
-		SELF(3, 1) = d.y();
-		SELF(3, 2) = d.z();
-		SELF(3, 3) = d.w();
+		(*this)(0, 0) = a.x();
+		(*this)(0, 1) = a.y();
+		(*this)(0, 2) = a.z();
+		(*this)(0, 3) = a.w();
+		(*this)(1, 0) = b.x();
+		(*this)(1, 1) = b.y();
+		(*this)(1, 2) = b.z();
+		(*this)(1, 3) = b.w();
+		(*this)(2, 0) = c.x();
+		(*this)(2, 1) = c.y();
+		(*this)(2, 2) = c.z();
+		(*this)(2, 3) = c.w();
+		(*this)(3, 0) = d.x();
+		(*this)(3, 1) = d.y();
+		(*this)(3, 2) = d.z();
+		(*this)(3, 3) = d.w();
 	#endif
 }
 
@@ -626,41 +631,42 @@ inline void Mat4::setRow(uint i, const Vec4& v)
 	#if defined(MATH_INTEL_SIMD)
 		arrMm[i] = v.getMm();
 	#else
-		SELF(i, 0) = v.x();
-		SELF(i, 1) = v.y();
-		SELF(i, 2) = v.z();
-		SELF(i, 3) = v.w();
+		(*this)(i, 0) = v.x();
+		(*this)(i, 1) = v.y();
+		(*this)(i, 2) = v.z();
+		(*this)(i, 3) = v.w();
 	#endif
 }
 
 // setColumns
-inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d)
+inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
+	const Vec4& d)
 {
-	SELF(0, 0) = a.x();
-	SELF(1, 0) = a.y();
-	SELF(2, 0) = a.z();
-	SELF(3, 0) = a.w();
-	SELF(0, 1) = b.x();
-	SELF(1, 1) = b.y();
-	SELF(2, 1) = b.z();
-	SELF(3, 1) = b.w();
-	SELF(0, 2) = c.x();
-	SELF(1, 2) = c.y();
-	SELF(2, 2) = c.z();
-	SELF(3, 2) = c.w();
-	SELF(0, 3) = d.x();
-	SELF(1, 3) = d.y();
-	SELF(2, 3) = d.z();
-	SELF(3, 3) = d.w();
+	(*this)(0, 0) = a.x();
+	(*this)(1, 0) = a.y();
+	(*this)(2, 0) = a.z();
+	(*this)(3, 0) = a.w();
+	(*this)(0, 1) = b.x();
+	(*this)(1, 1) = b.y();
+	(*this)(2, 1) = b.z();
+	(*this)(3, 1) = b.w();
+	(*this)(0, 2) = c.x();
+	(*this)(1, 2) = c.y();
+	(*this)(2, 2) = c.z();
+	(*this)(3, 2) = c.w();
+	(*this)(0, 3) = d.x();
+	(*this)(1, 3) = d.y();
+	(*this)(2, 3) = d.z();
+	(*this)(3, 3) = d.w();
 }
 
 // setColumn
 inline void Mat4::setColumn(uint i, const Vec4& v)
 {
-	SELF(0, i) = v.x();
-	SELF(1, i) = v.y();
-	SELF(2, i) = v.z();
-	SELF(3, i) = v.w();
+	(*this)(0, i) = v.x();
+	(*this)(1, i) = v.y();
+	(*this)(2, i) = v.z();
+	(*this)(3, i) = v.w();
 }
 
 // transpose
@@ -669,24 +675,24 @@ inline void Mat4::transpose()
 	#if defined(MATH_INTEL_SIMD)
 		_MM_TRANSPOSE4_PS(arrMm[0], arrMm[1], arrMm[2], arrMm[3]);
 	#else
-		float tmp = SELF(0, 1);
-		SELF(0, 1) = SELF(1, 0);
-		SELF(1, 0) = tmp;
-		tmp = SELF(0, 2);
-		SELF(0, 2) = SELF(2, 0);
-		SELF(2, 0) = tmp;
-		tmp = SELF(0, 3);
-		SELF(0, 3) = SELF(3, 0);
-		SELF(3, 0) = tmp;
-		tmp = SELF(1, 2);
-		SELF(1, 2) = SELF(2, 1);
-		SELF(2, 1) = tmp;
-		tmp = SELF(1, 3);
-		SELF(1, 3) = SELF(3, 1);
-		SELF(3, 1) = tmp;
-		tmp = SELF(2, 3);
-		SELF(2, 3) = SELF(3, 2);
-		SELF(3, 2) = tmp;
+		float tmp = (*this)(0, 1);
+		(*this)(0, 1) = (*this)(1, 0);
+		(*this)(1, 0) = tmp;
+		tmp = (*this)(0, 2);
+		(*this)(0, 2) = (*this)(2, 0);
+		(*this)(2, 0) = tmp;
+		tmp = (*this)(0, 3);
+		(*this)(0, 3) = (*this)(3, 0);
+		(*this)(3, 0) = tmp;
+		tmp = (*this)(1, 2);
+		(*this)(1, 2) = (*this)(2, 1);
+		(*this)(2, 1) = tmp;
+		tmp = (*this)(1, 3);
+		(*this)(1, 3) = (*this)(3, 1);
+		(*this)(3, 1) = tmp;
+		tmp = (*this)(2, 3);
+		(*this)(2, 3) = (*this)(3, 2);
+		(*this)(3, 2) = tmp;
 	#endif
 }
 
@@ -694,82 +700,83 @@ inline void Mat4::transpose()
 inline Mat4 Mat4::getTransposed() const
 {
 	Mat4 m4;
-	m4[0] = SELF[0];
-	m4[1] = SELF[4];
-	m4[2] = SELF[8];
-	m4[3] = SELF[12];
-	m4[4] = SELF[1];
-	m4[5] = SELF[5];
-	m4[6] = SELF[9];
-	m4[7] = SELF[13];
-	m4[8] = SELF[2];
-	m4[9] = SELF[6];
-	m4[10] = SELF[10];
-	m4[11] = SELF[14];
-	m4[12] = SELF[3];
-	m4[13] = SELF[7];
-	m4[14] = SELF[11];
-	m4[15] = SELF[15];
+	m4[0] = (*this)[0];
+	m4[1] = (*this)[4];
+	m4[2] = (*this)[8];
+	m4[3] = (*this)[12];
+	m4[4] = (*this)[1];
+	m4[5] = (*this)[5];
+	m4[6] = (*this)[9];
+	m4[7] = (*this)[13];
+	m4[8] = (*this)[2];
+	m4[9] = (*this)[6];
+	m4[10] = (*this)[10];
+	m4[11] = (*this)[14];
+	m4[12] = (*this)[3];
+	m4[13] = (*this)[7];
+	m4[14] = (*this)[11];
+	m4[15] = (*this)[15];
 	return m4;
 }
 
 // setRotationPart
 inline void Mat4::setRotationPart(const Mat3& m3)
 {
-	SELF(0, 0) = m3(0, 0);
-	SELF(0, 1) = m3(0, 1);
-	SELF(0, 2) = m3(0, 2);
-	SELF(1, 0) = m3(1, 0);
-	SELF(1, 1) = m3(1, 1);
-	SELF(1, 2) = m3(1, 2);
-	SELF(2, 0) = m3(2, 0);
-	SELF(2, 1) = m3(2, 1);
-	SELF(2, 2) = m3(2, 2);
+	(*this)(0, 0) = m3(0, 0);
+	(*this)(0, 1) = m3(0, 1);
+	(*this)(0, 2) = m3(0, 2);
+	(*this)(1, 0) = m3(1, 0);
+	(*this)(1, 1) = m3(1, 1);
+	(*this)(1, 2) = m3(1, 2);
+	(*this)(2, 0) = m3(2, 0);
+	(*this)(2, 1) = m3(2, 1);
+	(*this)(2, 2) = m3(2, 2);
 }
 
 // getRotationPart
 inline Mat3 Mat4::getRotationPart() const
 {
 	Mat3 m3;
-	m3(0, 0) = SELF(0, 0);
-	m3(0, 1) = SELF(0, 1);
-	m3(0, 2) = SELF(0, 2);
-	m3(1, 0) = SELF(1, 0);
-	m3(1, 1) = SELF(1, 1);
-	m3(1, 2) = SELF(1, 2);
-	m3(2, 0) = SELF(2, 0);
-	m3(2, 1) = SELF(2, 1);
-	m3(2, 2) = SELF(2, 2);
+	m3(0, 0) = (*this)(0, 0);
+	m3(0, 1) = (*this)(0, 1);
+	m3(0, 2) = (*this)(0, 2);
+	m3(1, 0) = (*this)(1, 0);
+	m3(1, 1) = (*this)(1, 1);
+	m3(1, 2) = (*this)(1, 2);
+	m3(2, 0) = (*this)(2, 0);
+	m3(2, 1) = (*this)(2, 1);
+	m3(2, 2) = (*this)(2, 2);
 	return m3;
 }
 
 // setTranslationPart
 inline void Mat4::setTranslationPart(const Vec4& v)
 {
-	SELF(0, 3) = v.x();
-	SELF(1, 3) = v.y();
-	SELF(2, 3) = v.z();
-	SELF(3, 3) = v.w();
+	(*this)(0, 3) = v.x();
+	(*this)(1, 3) = v.y();
+	(*this)(2, 3) = v.z();
+	(*this)(3, 3) = v.w();
 }
 
 // setTranslationPart
 inline void Mat4::setTranslationPart(const Vec3& v)
 {
-	SELF(0, 3) = v.x();
-	SELF(1, 3) = v.y();
-	SELF(2, 3) = v.z();
+	(*this)(0, 3) = v.x();
+	(*this)(1, 3) = v.y();
+	(*this)(2, 3) = v.z();
 }
 
 // getTranslationPart
 inline Vec3 Mat4::getTranslationPart() const
 {
-	return Vec3(SELF(0, 3), SELF(1, 3), SELF(2, 3));
+	return Vec3((*this)(0, 3), (*this)(1, 3), (*this)(2, 3));
 }
 
 // getIdentity
 inline const Mat4& Mat4::getIdentity()
 {
-	static Mat4 ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+	static Mat4 ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+		0.0, 0.0, 0.0, 0.0, 1.0);
 	return ident;
 }
 
@@ -783,19 +790,31 @@ inline const Mat4& Mat4::getZero()
 // Determinant
 inline float Mat4::getDet() const
 {
-	return
-	SELF(0, 3) * SELF(1, 2) * SELF(2, 1) * SELF(3, 0) - SELF(0, 2) * SELF(1, 3) * SELF(2, 1) * SELF(3, 0) -
-	SELF(0, 3) * SELF(1, 1) * SELF(2, 2) * SELF(3, 0) + SELF(0, 1) * SELF(1, 3) * SELF(2, 2) * SELF(3, 0) +
-	SELF(0, 2) * SELF(1, 1) * SELF(2, 3) * SELF(3, 0) - SELF(0, 1) * SELF(1, 2) * SELF(2, 3) * SELF(3, 0) -
-	SELF(0, 3) * SELF(1, 2) * SELF(2, 0) * SELF(3, 1) + SELF(0, 2) * SELF(1, 3) * SELF(2, 0) * SELF(3, 1) +
-	SELF(0, 3) * SELF(1, 0) * SELF(2, 2) * SELF(3, 1) - SELF(0, 0) * SELF(1, 3) * SELF(2, 2) * SELF(3, 1) -
-	SELF(0, 2) * SELF(1, 0) * SELF(2, 3) * SELF(3, 1) + SELF(0, 0) * SELF(1, 2) * SELF(2, 3) * SELF(3, 1) +
-	SELF(0, 3) * SELF(1, 1) * SELF(2, 0) * SELF(3, 2) - SELF(0, 1) * SELF(1, 3) * SELF(2, 0) * SELF(3, 2) -
-	SELF(0, 3) * SELF(1, 0) * SELF(2, 1) * SELF(3, 2) + SELF(0, 0) * SELF(1, 3) * SELF(2, 1) * SELF(3, 2) +
-	SELF(0, 1) * SELF(1, 0) * SELF(2, 3) * SELF(3, 2) - SELF(0, 0) * SELF(1, 1) * SELF(2, 3) * SELF(3, 2) -
-	SELF(0, 2) * SELF(1, 1) * SELF(2, 0) * SELF(3, 3) + SELF(0, 1) * SELF(1, 2) * SELF(2, 0) * SELF(3, 3) +
-	SELF(0, 2) * SELF(1, 0) * SELF(2, 1) * SELF(3, 3) - SELF(0, 0) * SELF(1, 2) * SELF(2, 1) * SELF(3, 3) -
-	SELF(0, 1) * SELF(1, 0) * SELF(2, 2) * SELF(3, 3) + SELF(0, 0) * SELF(1, 1) * SELF(2, 2) * SELF(3, 3);
+	const Mat4& t = *this;
+	return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) -
+		t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0) -
+		t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0) +
+		t(0, 1) * t(1, 3) * t(2, 2) * t(3, 0) +
+		t(0, 2) * t(1, 1) * t(2, 3) * t(3, 0) -
+		t(0, 1) * t(1, 2) * t(2, 3) * t(3, 0) -
+		t(0, 3) * t(1, 2) * t(2, 0) * t(3, 1) +
+		t(0, 2) * t(1, 3) * t(2, 0) * t(3, 1) +
+		t(0, 3) * t(1, 0) * t(2, 2) * t(3, 1) -
+		t(0, 0) * t(1, 3) * t(2, 2) * t(3, 1) -
+		t(0, 2) * t(1, 0) * t(2, 3) * t(3, 1) +
+		t(0, 0) * t(1, 2) * t(2, 3) * t(3, 1) +
+		t(0, 3) * t(1, 1) * t(2, 0) * t(3, 2) -
+		t(0, 1) * t(1, 3) * t(2, 0) * t(3, 2) -
+		t(0, 3) * t(1, 0) * t(2, 1) * t(3, 2) +
+		t(0, 0) * t(1, 3) * t(2, 1) * t(3, 2) +
+		t(0, 1) * t(1, 0) * t(2, 3) * t(3, 2) -
+		t(0, 0) * t(1, 1) * t(2, 3) * t(3, 2) -
+		t(0, 2) * t(1, 1) * t(2, 0) * t(3, 3) +
+		t(0, 1) * t(1, 2) * t(2, 0) * t(3, 3) +
+		t(0, 2) * t(1, 0) * t(2, 1) * t(3, 3) -
+		t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3) -
+		t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) +
+		t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 }
 
 // getInverse
@@ -803,7 +822,7 @@ inline Mat4 Mat4::getInverse() const
 {
 	/// @todo test this
 	/*#if !defined(MATH_INTEL_SIMD)
-		Mat4 r(SELF);
+		Mat4 r((*this));
 		__m128 minor0, minor1, minor2, minor3;
 		__m128 det, tmp1;
 
@@ -829,7 +848,8 @@ inline Mat4 Mat4::getInverse() const
 		minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor3);
 		minor3 = _mm_shuffle_ps(minor3, minor3, 0x4E);
 
-		tmp1 = _mm_mul_ps(_mm_shuffle_ps(r.arrMm[1], r.arrMm[1], 0x4E), r.arrMm[3]);
+		tmp1 = _mm_mul_ps(_mm_shuffle_ps(r.arrMm[1], r.arrMm[1], 0x4E),
+			r.arrMm[3]);
 		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
 		r.arrMm[2] = _mm_shuffle_ps(r.arrMm[2], r.arrMm[2], 0x4E);
 		minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor0);
@@ -868,7 +888,8 @@ inline Mat4 Mat4::getInverse() const
 		det = _mm_add_ps(_mm_shuffle_ps(det, det, 0x4E), det);
 		det = _mm_add_ss(_mm_shuffle_ps(det, det, 0xB1), det);
 		tmp1 = _mm_rcp_ss(det);
-		det = _mm_sub_ss(_mm_add_ss(tmp1, tmp1), _mm_mul_ss(det, _mm_mul_ss(tmp1, tmp1)));
+		det = _mm_sub_ss(_mm_add_ss(tmp1, tmp1),
+			_mm_mul_ss(det, _mm_mul_ss(tmp1, tmp1)));
 		det = _mm_shuffle_ps(det, det, 0x00);
 
 		// Mul and store
@@ -885,7 +906,7 @@ inline Mat4 Mat4::getInverse() const
 	#else*/
 		float tmp[12];
 		float det;
-		const Mat4& in = SELF;
+		const Mat4& in = (*this);
 		Mat4 m4;
 
 		tmp[0] = in(2, 2) * in(3, 3);
@@ -948,7 +969,8 @@ inline Mat4 Mat4::getInverse() const
 		m4(3, 3) = tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
 		m4(3, 3)-= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
 
-		det = SELF(0, 0) * m4(0, 0) + SELF(1, 0) * m4(0, 1) + SELF(2, 0) * m4(0, 2) + SELF(3, 0) * m4(0, 3);
+		det = (*this)(0, 0) * m4(0, 0) + (*this)(1, 0) * m4(0, 1) +
+			(*this)(2, 0) * m4(0, 2) + (*this)(3, 0) * m4(0, 3);
 
 		ASSERT(!isZero(det)); // Cannot invert, det == 0
 		det = 1.0 / det;
@@ -960,7 +982,7 @@ inline Mat4 Mat4::getInverse() const
 // invert
 inline void Mat4::invert()
 {
-	SELF = getInverse();
+	(*this) = getInverse();
 }
 
 
@@ -976,13 +998,13 @@ inline Mat4 Mat4::getInverseTransformation() const
 // lerp
 inline Mat4 Mat4::lerp(const Mat4& b, float t) const
 {
-	return (SELF * (1.0 - t)) + (b * t);
+	return ((*this) * (1.0 - t)) + (b * t);
 }
 
 // setIdentity
 inline void Mat4::setIdentity()
 {
-	SELF = getIdentity();
+	(*this) = getIdentity();
 }
 
 // combineTransformations
@@ -990,13 +1012,17 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 {
 	/*
 	The clean code is:
-	Mat3 rot = m0.getRotationPart() * m1.getRotationPart();  // combine the rotations
-	Vec3 tra = (m1.getTranslationPart()).Transformed(m0.getTranslationPart(), m0.getRotationPart(), 1.0);
+	Mat3 rot = m0.getRotationPart() * m1.getRotationPart(); // combine the
+	                                                        // rotations
+	Vec3 tra = (m1.getTranslationPart()).Transformed(m0.getTranslationPart(),
+		m0.getRotationPart(), 1.0);
 	return Mat4(tra, rot);
 	and the optimized:
 	*/
+
+	// one of the 2 mat4 doesnt represent transformation
 	ASSERT(isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3)-1.0) &&
-	       isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3)-1.0)); // one of the 2 mat4 doesnt represent transformation
+		isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3)-1.0));
 
 	Mat4 m4;
 
@@ -1010,9 +1036,14 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	m4(2, 1) = m0(2, 0) * m1(0, 1) + m0(2, 1) * m1(1, 1) + m0(2, 2) * m1(2, 1);
 	m4(2, 2) = m0(2, 0) * m1(0, 2) + m0(2, 1) * m1(1, 2) + m0(2, 2) * m1(2, 2);
 
-	m4(0, 3) = m0(0, 0) * m1(0, 3) + m0(0, 1) * m1(1, 3) + m0(0, 2) * m1(2, 3) + m0(0, 3);
-	m4(1, 3) = m0(1, 0) * m1(0, 3) + m0(1, 1) * m1(1, 3) + m0(1, 2) * m1(2, 3) + m0(1, 3);
-	m4(2, 3) = m0(2, 0) * m1(0, 3) + m0(2, 1) * m1(1, 3) + m0(2, 2) * m1(2, 3) + m0(2, 3);
+	m4(0, 3) = m0(0, 0) * m1(0, 3) + m0(0, 1) * m1(1, 3) +
+		m0(0, 2) * m1(2, 3) + m0(0, 3);
+
+	m4(1, 3) = m0(1, 0) * m1(0, 3) + m0(1, 1) * m1(1, 3) +
+		m0(1, 2) * m1(2, 3) + m0(1, 3);
+
+	m4(2, 3) = m0(2, 0) * m1(0, 3) + m0(2, 1) * m1(1, 3) +
+		m0(2, 2) * m1(2, 3) + m0(2, 3);
 
 	m4(3, 0) = m4(3, 1) = m4(3, 2) = 0.0;
 	m4(3, 3) = 1.0;

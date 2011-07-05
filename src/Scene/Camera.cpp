@@ -22,7 +22,8 @@ void Camera::updateWSpaceFrustumPlanes()
 {
 	for(uint i = 0; i < FP_NUM; i++)
 	{
-		wspaceFrustumPlanes[i] = lspaceFrustumPlanes[i].getTransformed(getWorldTransform());
+		wspaceFrustumPlanes[i] =
+			lspaceFrustumPlanes[i].getTransformed(getWorldTransform());
 	}
 }
 
@@ -71,7 +72,9 @@ bool Camera::insideFrustum(const Camera& cam) const
 		}
 		if(failed == pointsNum)
 		{
-			return false; // if all points are behind the plane then the cam is not in frustum
+			// if all points are behind the plane then the cam is not in
+			// frustum
+			return false;
 		}
 	}
 
@@ -88,11 +91,13 @@ void Camera::updateViewMatrix()
 	 * The point at which the camera looks:
 	 * Vec3 viewpoint = translationLspace + z_axis;
 	 * as we know the up vector, we can easily use gluLookAt:
-	 * gluLookAt(translationLspace.x, translationLspace.x, translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x,
+	 * gluLookAt(translationLspace.x, translationLspace.x,
+	 *           translationLspace.z, z_axis.x, z_axis.y, z_axis.z, y_axis.x,
 	 *           y_axis.y, y_axis.z);
 	*/
 
-	// The view matrix is: Mview = camera.world_transform.Inverted(). Bus instead of inverting we do the following:
+	// The view matrix is: Mview = camera.world_transform.Inverted().
+	// But instead of inverting we do the following:
 	Mat3 camInvertedRot = getWorldTransform().getRotation().getTransposed();
 	camInvertedRot *= 1.0 / getWorldTransform().getScale();
 	Vec3 camInvertedTsl = -(camInvertedRot * getWorldTransform().getOrigin());

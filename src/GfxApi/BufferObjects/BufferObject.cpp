@@ -4,9 +4,22 @@
 
 
 //==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+BufferObject::~BufferObject()
+{
+	if(isCreated())
+	{
+		deleteBuff();
+	}
+}
+
+
+//==============================================================================
 // create                                                                      =
 //==============================================================================
-void BufferObject::create(GLenum target_, uint sizeInBytes_, const void* dataPtr, GLenum usage_)
+void BufferObject::create(GLenum target_, uint sizeInBytes_,
+	const void* dataPtr, GLenum usage_)
 {
 	ASSERT(!isCreated());
 	// unacceptable usage_

@@ -4,7 +4,8 @@
 //==============================================================================
 // setAll                                                                      =
 //==============================================================================
-void PerspectiveCamera::setAll(float fovx_, float fovy_, float znear_, float zfar_)
+void PerspectiveCamera::setAll(float fovx_, float fovy_, float znear_,
+	float zfar_)
 {
 	fovX = fovx_;
 	fovY = fovy_;

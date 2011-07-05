@@ -25,7 +25,8 @@ class OrthographicCamera: public Camera
 		void setBottom(float f);
 		/// @}
 
-		void setAll(float left, float right, float top, float bottom, float znear, float zfar);
+		void setAll(float left, float right, float top, float bottom,
+			float znear, float zfar);
 
 		/// It returns an orthographic projection matrix
 		/// @param left left vertical clipping plane
@@ -35,7 +36,8 @@ class OrthographicCamera: public Camera
 		/// @param near nearer distance of depth clipping plane
 		/// @param far farther distance of depth clipping plane
 		/// @return A 4x4 projection matrix
-		static Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
+		static Mat4 ortho(float left, float right, float bottom, float top,
+			float near, float far);
 
 	private:
 		/// @name Data
@@ -57,8 +59,9 @@ class OrthographicCamera: public Camera
 };
 
 
-inline OrthographicCamera::OrthographicCamera(bool compoundFlag, SceneNode* parent):
-	Camera(CT_ORTHOGRAPHIC, compoundFlag, parent)
+inline OrthographicCamera::OrthographicCamera(bool compoundFlag,
+	SceneNode* parent)
+:	Camera(CT_ORTHOGRAPHIC, compoundFlag, parent)
 {
 	name = "OrthographicCamera:" + name;
 }

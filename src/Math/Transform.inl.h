@@ -16,8 +16,8 @@ inline Transform::Transform()
 {}
 
 // Copy
-inline Transform::Transform(const Transform& b):
-	origin(b.origin),
+inline Transform::Transform(const Transform& b)
+:	origin(b.origin),
 	rotation(b.rotation),
 	scale(b.scale)
 {}
@@ -31,8 +31,9 @@ inline Transform::Transform(const Mat4& m4)
 }
 
 // Vec3, Quat, float
-inline Transform::Transform(const Vec3& origin, const Mat3& rotation_, float scale_):
-	origin(origin),
+inline Transform::Transform(const Vec3& origin, const Mat3& rotation_,
+	float scale_)
+:	origin(origin),
 	rotation(rotation_),
 	scale(scale_)
 {}
@@ -120,11 +121,15 @@ inline const Transform& Transform::getIdentity()
 }
 
 // combineTransformations
-inline Transform Transform::combineTransformations(const Transform& a, const Transform& b)
+inline Transform Transform::combineTransformations(const Transform& a,
+	const Transform& b)
 {
 	Transform out;
-	M::combineTransformations(a.origin, a.rotation, a.scale, b.origin, b.rotation, b.scale,
-	                          out.origin, out.rotation, out.scale);
+
+	M::combineTransformations(a.origin, a.rotation, a.scale,
+		b.origin, b.rotation, b.scale,
+		out.origin, out.rotation, out.scale);
+
 	return out;
 }
 

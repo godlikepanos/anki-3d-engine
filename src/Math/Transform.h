@@ -1,5 +1,5 @@
-#ifndef TRANSFORM_H
-#define TRANSFORM_H
+#ifndef M_TRANSFORM_H
+#define M_TRANSFORM_H
 
 #include "Common.h"
 
@@ -16,7 +16,8 @@ class Transform
 		explicit Transform();
 		         Transform(const Transform& b);
 		explicit Transform(const Mat4& m4);
-		explicit Transform(const Vec3& origin, const Mat3& rotation_, float scale_);
+		explicit Transform(const Vec3& origin, const Mat3& rotation_,
+			float scale_);
 		/// @}
 
 		/// @name Accessors
@@ -43,7 +44,8 @@ class Transform
 		/// @{
 		void setIdentity();
 		static const Transform& getIdentity();
-		static Transform combineTransformations(const Transform& a, const Transform& b); ///< @see M::combineTransformations
+		static Transform combineTransformations(const Transform& a,
+			const Transform& b); ///< @see M::combineTransformations
 		/// @}
 		
 	private:

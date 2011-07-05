@@ -17,7 +17,8 @@ using namespace boost::python;
 #define WRAP_SINGLETON(x) \
 	WRAP(x) { \
 		class_<x, noncopyable>(#x, no_init) \
-			.def("getInstance", & x ::getInstance, return_value_policy<reference_existing_object>()) \
+			.def("getInstance", & x ::getInstance, \
+				return_value_policy<reference_existing_object>()) \
 			.staticmethod("getInstance") \
 		; \
 	}
@@ -36,20 +37,23 @@ using namespace boost::python;
 // Property for simple types                                                   =
 //==============================================================================
 
-template<typename ClassType, typename RetType, const RetType& (ClassType::* accessor)() const>
+template<typename ClassType, typename RetType,
+	const RetType& (ClassType::* accessor)() const>
 RetType getterSv(const ClassType* t)
 {
 	return (t->*accessor)();
 }
 
 
-template<typename ClassType, typename InType, void (ClassType::* accessor)(const InType&)>
+template<typename ClassType, typename InType,
+	void (ClassType::* accessor)(const InType&)>
 void setterSv(ClassType* t, InType in)
 {
 	(t->*accessor)(in);
 }
 
-/// Boost python property for simple types (int, float etc) that cannot be wrapped by boost::python correctly
+/// Boost python property for simple types (int, float etc) that cannot be
+/// wrapped by boost::python correctly
 #define BP_PROPERTY_BASIC_TYPE(Type__, Class__, var__, getter__, setter__) \
 	.add_property(#var__, &getterSv<Class__, Type__, &Class__::getter__>, \
 	              &setterSv<Class__, Type__, &Class__::setter__>)
@@ -59,7 +63,8 @@ void setterSv(ClassType* t, InType in)
 // Math library stuff                                                          =
 //==============================================================================
 
-template<typename ClassType, typename RetType, RetType (ClassType::* accessor)() const>
+template<typename ClassType, typename RetType,
+	RetType (ClassType::* accessor)() const>
 RetType getM(const ClassType* t)
 {
 	return (t->*accessor)();

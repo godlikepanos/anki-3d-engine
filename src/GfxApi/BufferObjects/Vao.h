@@ -78,15 +78,6 @@ inline void Vao::create()
 }
 
 
-inline Vao::~Vao()
-{
-	if(isCreated())
-	{
-		destroy();
-	}
-}
-
-
 inline void Vao::destroy()
 {
 	ASSERT(isCreated());

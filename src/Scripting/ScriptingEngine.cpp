@@ -5,7 +5,8 @@
 #include "Core/Globals.h"
 
 
-extern "C" void initAnki(); /// Defined in BoostPythonInterfaces.cpp by boost::python
+/// Defined in BoostPythonInterfaces.cpp by boost::python
+extern "C" void initAnki();
 
 
 //==============================================================================
@@ -17,9 +18,11 @@ void ScriptingEngine::init()
 
 	PyImport_AppendInittab((char*)("Anki"), &initAnki);
 	Py_Initialize();
-	mainModule = boost::python::object(boost::python::handle<>(boost::python::borrowed(PyImport_AddModule("__main__"))));
+	mainModule = boost::python::object(boost::python::handle<>(
+		boost::python::borrowed(PyImport_AddModule("__main__"))));
 	mainNamespace = mainModule.attr("__dict__");
-	ankiModule = boost::python::object(boost::python::handle<>(PyImport_ImportModule("Anki")));
+	ankiModule = boost::python::object(
+		boost::python::handle<>(PyImport_ImportModule("Anki")));
 
 	INFO("Scripting engine initialized");
 }
@@ -32,7 +35,8 @@ void ScriptingEngine::execScript(const char* script, const char* scriptName)
 {
 	try
 	{
-		boost::python::handle<>ignored(PyRun_String(script, Py_file_input, mainNamespace.ptr(), mainNamespace.ptr()));
+		boost::python::handle<>ignored(PyRun_String(script, Py_file_input,
+			mainNamespace.ptr(), mainNamespace.ptr()));
 	}
 	catch(boost::python::error_already_set)
 	{

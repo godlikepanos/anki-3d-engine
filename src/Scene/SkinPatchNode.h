@@ -34,7 +34,8 @@ class SkinPatchNode: public PatchNode
 		virtual void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	private:
-		boost::array<Vbo, TFV_NUM> tfVbos; ///< VBOs that contain the deformed vertex attributes
+		/// VBOs that contain the deformed vertex attributes
+		boost::array<Vbo, TFV_NUM> tfVbos;
 		Vao tfVao; ///< For TF passes
 };
 

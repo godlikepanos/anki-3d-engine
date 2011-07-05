@@ -4,7 +4,8 @@
 //==============================================================================
 // setAll                                                                      =
 //==============================================================================
-void OrthographicCamera::setAll(float left_, float right_, float top_, float bottom_, float zNear_, float zFar_)
+void OrthographicCamera::setAll(float left_, float right_, float top_,
+	float bottom_, float zNear_, float zFar_)
 {
 	left = left_;
 	right = right_;
@@ -34,7 +35,8 @@ void OrthographicCamera::calcLSpaceFrustumPlanes()
 //==============================================================================
 // ortho                                                                       =
 //==============================================================================
-Mat4 OrthographicCamera::ortho(float left, float right, float bottom, float top, float near, float far)
+Mat4 OrthographicCamera::ortho(float left, float right, float bottom,
+	float top, float near, float far)
 {
 	float difx = right - left;
 	float dify = top - bottom;
@@ -78,7 +80,8 @@ void OrthographicCamera::calcProjectionMatrix()
 //==============================================================================
 // getExtremePoints                                                            =
 //==============================================================================
-void OrthographicCamera::getExtremePoints(Vec3* pointsArr, uint& pointsNum) const
+void OrthographicCamera::getExtremePoints(Vec3* pointsArr,
+	uint& pointsNum) const
 {
 	pointsArr[0] = Vec3(right, top, -zNear);
 	pointsArr[1] = Vec3(left, top, -zNear);

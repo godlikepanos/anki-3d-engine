@@ -81,15 +81,6 @@ inline BufferObject::BufferObject(GLenum target, uint sizeInBytes, const void* d
 }
 
 
-inline BufferObject::~BufferObject()
-{
-	if(isCreated())
-	{
-		deleteBuff();
-	}
-}
-
-
 inline uint BufferObject::getGlId() const
 {
 	ASSERT(isCreated());

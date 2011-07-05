@@ -17,9 +17,12 @@ class RenderableNode: public SceneNode
 
 		virtual const Vao& getCpVao() const = 0; ///< Get color pass VAO
 		virtual const Vao& getDpVao() const = 0; ///< Get depth pass VAO
-		virtual uint getVertIdsNum() const = 0;  ///< Get vert ids number for rendering
-		virtual const Material& getCpMtl() const = 0;  ///< Get color pass material
-		virtual const Material& getDpMtl() const = 0;  ///< Get depth pass material
+		/// Get vert ids number for rendering
+		virtual uint getVertIdsNum() const = 0;
+		/// Get color pass material
+		virtual const Material& getCpMtl() const = 0;
+		/// Get depth pass material
+		virtual const Material& getDpMtl() const = 0;
 		virtual MaterialRuntime& getCpMtlRun() = 0;
 		virtual MaterialRuntime& getDpMtlRun() = 0;
 		virtual const MaterialRuntime& getCpMtlRun() const = 0;
@@ -27,8 +30,8 @@ class RenderableNode: public SceneNode
 };
 
 
-inline RenderableNode::RenderableNode(SceneNode* parent):
-	SceneNode(SNT_RENDERABLE, false, parent)
+inline RenderableNode::RenderableNode(SceneNode* parent)
+:	SceneNode(SNT_RENDERABLE, false, parent)
 {}
 
 
