@@ -20,6 +20,7 @@ class Pps: private RenderingPass
 {
 	public:
 		Pps(Renderer& r_);
+		~Pps();
 		void init(const RendererInitializer& initializer);
 		void runPrePass();
 		void runPostPass();

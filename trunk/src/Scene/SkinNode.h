@@ -33,8 +33,8 @@ class SkinNode: public SceneNode
 
 		void init(const char* filename);
 
-		/// Update boundingShapeWSpace from bone tails (not heads as well cause its faster that way). The tails come
-		/// from the previous frame
+		/// Update boundingShapeWSpace from bone tails (not heads as well
+		/// cause its faster that way). The tails come from the previous frame
 		void moveUpdate();
 
 		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}

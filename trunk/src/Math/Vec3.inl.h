@@ -1,9 +1,6 @@
 #include "Common.inl.h"
 
 
-#define SELF (*this)
-
-
 namespace M {
 
 
@@ -126,7 +123,7 @@ inline Vec3& Vec3::operator=(const Vec3& b)
 	arr[0] = b.arr[0];
 	arr[1] = b.arr[1];
 	arr[2] = b.arr[2];
-	return SELF;
+	return (*this);
 }
 
 // +
@@ -141,7 +138,7 @@ inline Vec3& Vec3::operator+=(const Vec3& b)
 	x() += b.x();
 	y() += b.y();
 	z() += b.z();
-	return SELF;
+	return (*this);
 }
 
 // -
@@ -156,7 +153,7 @@ inline Vec3& Vec3::operator-=(const Vec3& b)
 	x() -= b.x();
 	y() -= b.y();
 	z() -= b.z();
-	return SELF;
+	return (*this);
 }
 
 // *
@@ -171,7 +168,7 @@ inline Vec3& Vec3::operator*=(const Vec3& b)
 	x() *= b.x();
 	y() *= b.y();
 	z() *= b.z();
-	return SELF;
+	return (*this);
 }
 
 // /
@@ -186,7 +183,7 @@ inline Vec3& Vec3::operator/=(const Vec3& b)
 	x() /= b.x();
 	y() /= b.y();
 	z() /= b.z();
-	return SELF;
+	return (*this);
 }
 
 // negative
@@ -215,7 +212,7 @@ inline bool Vec3::operator!=(const Vec3& b) const
 // Vec3 + float
 inline Vec3 Vec3::operator+(float f) const
 {
-	return SELF + Vec3(f);
+	return (*this) + Vec3(f);
 }
 
 // float + Vec3
@@ -227,14 +224,14 @@ inline Vec3 operator+(float f, const Vec3& v)
 // Vec3 += float
 inline Vec3& Vec3::operator+=(float f)
 {
-	SELF += Vec3(f);
-	return SELF;
+	(*this) += Vec3(f);
+	return (*this);
 }
 
 // Vec3 - float
 inline Vec3 Vec3::operator-(float f) const
 {
-	return SELF - Vec3(f);
+	return (*this) - Vec3(f);
 }
 
 // float - Vec3
@@ -246,14 +243,14 @@ inline Vec3 operator-(float f, const Vec3& v)
 // Vec3 -= float
 inline Vec3& Vec3::operator-=(float f)
 {
-	SELF -= Vec3(f);
-	return SELF;
+	(*this) -= Vec3(f);
+	return (*this);
 }
 
 // Vec3 * float
 inline Vec3 Vec3::operator*(float f) const
 {
-	return SELF * Vec3(f);
+	return (*this) * Vec3(f);
 }
 
 // float * Vec3
@@ -265,14 +262,14 @@ inline Vec3 operator*(float f, const Vec3& v)
 // Vec3 *= float
 inline Vec3& Vec3::operator*=(float f)
 {
-	SELF *= Vec3(f);
-	return SELF;
+	(*this) *= Vec3(f);
+	return (*this);
 }
 
 // Vec3 / float
 inline Vec3 Vec3::operator/(float f) const
 {
-	return SELF / Vec3(f);
+	return (*this) / Vec3(f);
 }
 
 // float / Vec3
@@ -284,8 +281,8 @@ inline Vec3 operator/(float f, const Vec3& v)
 // Vec3 /= float
 inline Vec3& Vec3::operator/=(float f)
 {
-	SELF /= Vec3(f);
-	return SELF;
+	(*this) /= Vec3(f);
+	return (*this);
 }
 
 
@@ -302,7 +299,9 @@ inline float Vec3::dot(const Vec3& b) const
 // cross prod
 inline Vec3 Vec3::cross(const Vec3& b) const
 {
-	return Vec3(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
+	return Vec3(y() * b.z() - z() * b.y(),
+		z() * b.x() - x() * b.z(),
+		x() * b.y() - y() * b.x());
 }
 
 // getLength
@@ -320,25 +319,25 @@ inline float Vec3::getLengthSquared() const
 // getDistanceSquared
 inline float Vec3::getDistanceSquared(const Vec3& b) const
 {
-	return (SELF - b).getLengthSquared();
+	return ((*this) - b).getLengthSquared();
 }
 
 // normalize
 inline void Vec3::normalize()
 {
-	SELF /= getLength();
+	(*this) /= getLength();
 }
 
 // getNormalized
 inline Vec3 Vec3::getNormalized() const
 {
-	return SELF / getLength();
+	return (*this) / getLength();
 }
 
 // getProjection
 inline Vec3 Vec3::getProjection(const Vec3& toThis) const
 {
-	return toThis * (SELF.dot(toThis) / (toThis.dot(toThis)));
+	return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
 }
 
 // getRotated
@@ -354,19 +353,19 @@ inline Vec3 Vec3::getRotated(const Quat& q) const
 							   pmult*y + vmult*q.y + crossmult*(q.z*x - q.x*z),
 	               pmult*z + vmult*q.z + crossmult*(q.x*y - q.y*x));*/
 	Vec3 qXyz(q);
-	return SELF + qXyz.cross(qXyz.cross(SELF) + SELF * q.w()) * 2.0;
+	return (*this) + qXyz.cross(qXyz.cross((*this)) + (*this) * q.w()) * 2.0;
 }
 
 // rotate
 inline void Vec3::rotate(const Quat& q)
 {
-	SELF = getRotated(q);
+	(*this) = getRotated(q);
 }
 
 // lerp
 inline Vec3 Vec3::lerp(const Vec3& v1, float t) const
 {
-	return (SELF * (1.0 - t)) + (v1 * t);
+	return ((*this) * (1.0 - t)) + (v1 * t);
 }
 
 
@@ -375,39 +374,44 @@ inline Vec3 Vec3::lerp(const Vec3& v1, float t) const
 //==============================================================================
 
 // Mat3
-inline Vec3 Vec3::getTransformed(const Vec3& translate, const Mat3& rotate, float scale) const
+inline Vec3 Vec3::getTransformed(const Vec3& translate, const Mat3& rotate,
+	float scale) const
 {
-	return (rotate * (SELF * scale)) + translate;
+	return (rotate * ((*this) * scale)) + translate;
 }
 
 // Mat3
-inline void Vec3::transform(const Vec3& translate, const Mat3& rotate, float scale)
+inline void Vec3::transform(const Vec3& translate, const Mat3& rotate,
+	float scale)
 {
-	SELF = getTransformed(translate, rotate, scale);
+	(*this) = getTransformed(translate, rotate, scale);
 }
 
 // Mat3 no scale
-inline Vec3 Vec3::getTransformed(const Vec3& translate, const Mat3& rotate) const
+inline Vec3 Vec3::getTransformed(const Vec3& translate,
+	const Mat3& rotate) const
 {
-	return (rotate * SELF) + translate;
+	return (rotate * (*this)) + translate;
 }
 
 // Mat3 no scale
 inline void Vec3::transform(const Vec3& translate, const Mat3& rotate)
 {
-	SELF = getTransformed(translate, rotate);
+	(*this) = getTransformed(translate, rotate);
 }
 
 // Quat
-inline Vec3 Vec3::getTransformed(const Vec3& translate, const Quat& rotate, float scale) const
+inline Vec3 Vec3::getTransformed(const Vec3& translate, const Quat& rotate,
+	float scale) const
 {
-	return (SELF * scale).getRotated(rotate) + translate;
+	return ((*this) * scale).getRotated(rotate) + translate;
 }
 
 // Quat
-inline void Vec3::transform(const Vec3& translate, const Quat& rotate, float scale)
+inline void Vec3::transform(const Vec3& translate, const Quat& rotate,
+	float scale)
 {
-	SELF = getTransformed(translate, rotate, scale);
+	(*this) = getTransformed(translate, rotate, scale);
 }
 
 // Mat4
@@ -415,17 +419,20 @@ inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 {
 	#if defined(MATH_INTEL_SIMD)
 		Vec3 out;
-		Vec4 v4(SELF, 1.0);
+		Vec4 v4((*this), 1.0);
 		for(int i = 0; i < 3; i++)
 		{
-			_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i), v4.getMm(), 0xF1));
+			_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i), v4.getMm(),
+				0xF1));
 		}
 		return out;
 	#else
-		return Vec3(
-			transform(0, 0) * x() + transform(0, 1) * y() + transform(0, 2) * z() + transform(0, 3),
-			transform(1, 0) * x() + transform(1, 1) * y() + transform(1, 2) * z() + transform(1, 3),
-			transform(2, 0) * x() + transform(2, 1) * y() + transform(2, 2) * z() + transform(2, 3)
+		return Vec3(transform(0, 0) * x() + transform(0, 1) * y() +
+			transform(0, 2) * z() + transform(0, 3),
+			transform(1, 0) * x() + transform(1, 1) * y() +
+			transform(1, 2) * z() + transform(1, 3),
+			transform(2, 0) * x() + transform(2, 1) * y() +
+			transform(2, 2) * z() + transform(2, 3)
 		);
 	#endif
 }
@@ -433,19 +440,20 @@ inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 // Mat4
 inline void Vec3::transform(const Mat4& transform)
 {
-	SELF = getTransformed(transform);
+	(*this) = getTransformed(transform);
 }
 
 // Transform
 inline Vec3 Vec3::getTransformed(const Transform& transform) const
 {
-	return (transform.getRotation() * (SELF * transform.getScale())) + transform.getOrigin();
+	return (transform.getRotation() * ((*this) * transform.getScale())) +
+		transform.getOrigin();
 }
 
 // Transform
 inline void Vec3::transform(const Transform& transform)
 {
-	SELF = getTransformed(transform);
+	(*this) = getTransformed(transform);
 }
 
 //==============================================================================
@@ -456,5 +464,6 @@ inline std::ostream& operator<<(std::ostream& s, const Vec3& v)
 	s << v.x() << ' ' << v.y() << ' ' << v.z();
 	return s;
 }
+
 
 } // end namespace

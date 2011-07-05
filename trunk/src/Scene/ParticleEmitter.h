@@ -13,7 +13,8 @@ class btCollisionShape;
 class Particle;
 
 
-/// The particle emitter scene node. This scene node emitts @ref ParticleEmitter:Particle particle nodes in space.
+/// The particle emitter scene node. This scene node emitts
+/// @ref ParticleEmitter:Particle particle nodes in space.
 class ParticleEmitter: public SceneNode, public ParticleEmitterRsrc
 {
 	public:
@@ -37,8 +38,8 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterRsrc
 };
 
 
-inline ParticleEmitter::ParticleEmitter():
-	SceneNode(SNT_PARTICLE_EMITTER, false, NULL)
+inline ParticleEmitter::ParticleEmitter()
+:	SceneNode(SNT_PARTICLE_EMITTER, false, NULL)
 {}
 
 

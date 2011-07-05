@@ -9,7 +9,8 @@
 #include "Util/Util.h"
 
 
-btTransform ParticleEmitter::startingTrf(toBt(Mat3::getIdentity()), btVector3(10000000.0, 10000000.0, 10000000.0));
+btTransform ParticleEmitter::startingTrf(toBt(Mat3::getIdentity()),
+	btVector3(10000000.0, 10000000.0, 10000000.0));
 
 
 //==============================================================================
@@ -24,7 +25,8 @@ ParticleEmitter::~ParticleEmitter()
 //==============================================================================
 float ParticleEmitter::getRandom(float initial, float deviation)
 {
-	return (deviation == 0.0) ?  initial : initial + Util::randFloat(deviation) * 2.0 - deviation;
+	return (deviation == 0.0) ?  initial :
+		initial + Util::randFloat(deviation) * 2.0 - deviation;
 }
 
 
@@ -71,7 +73,9 @@ void ParticleEmitter::init(const char* filename)
 
 		particles.push_back(particle);
 
-		float mass = particleMass + Util::randFloat(particleMassDeviation) * 2.0 - particleMassDeviation;
+		float mass = particleMass +
+			Util::randFloat(particleMassDeviation) * 2.0 -
+			particleMassDeviation;
 
 		Phys::RigidBody::Initializer init;
 		init.mass = mass;
@@ -79,8 +83,10 @@ void ParticleEmitter::init(const char* filename)
 		init.shape = collShape.get();
 		init.sceneNode = particle;
 		init.group = Phys::MasterContainer::CG_PARTICLE;
-		init.mask = Phys::MasterContainer::CG_ALL ^ Phys::MasterContainer::CG_PARTICLE;
-		Phys::RigidBody* body = new Phys::RigidBody(SceneSingleton::getInstance().getPhysMasterContainer(), init);
+		init.mask =
+			Phys::MasterContainer::CG_ALL ^ Phys::MasterContainer::CG_PARTICLE;
+		Phys::RigidBody* body = new Phys::RigidBody(
+			SceneSingleton::getInstance().getPhysMasterContainer(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 
@@ -94,7 +100,8 @@ void ParticleEmitter::init(const char* filename)
 //==============================================================================
 void ParticleEmitter::frameUpdate(float prevUpdateTime, float crntTime)
 {
-	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
+	// Opt: We dont have to make extra calculations if the ParticleEmitter's
+	// rotation is the identity
 	bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
 
 	// deactivate the dead particles
@@ -133,7 +140,8 @@ void ParticleEmitter::frameUpdate(float prevUpdateTime, float crntTime)
 			//INFO("Reiniting " << i);
 
 			// life
-			p.setTimeOfDeath(getRandom(crntTime + particleLife, particleLifeDeviation));
+			p.setTimeOfDeath(getRandom(crntTime + particleLife,
+				particleLifeDeviation));
 
 			//cout << "Time of death " << p.timeOfDeath << endl;
 			//cout << "Particle life " << p.timeOfDeath - crntTime << endl;
@@ -150,7 +158,8 @@ void ParticleEmitter::frameUpdate(float prevUpdateTime, float crntTime)
 			// force
 			if(forceFlag)
 			{
-				Vec3 forceDir = getRandom(forceDirection, forceDirectionDeviation);
+				Vec3 forceDir = getRandom(forceDirection,
+					forceDirectionDeviation);
 				forceDir.normalize();
 
 				if(!identRot)
@@ -159,18 +168,21 @@ void ParticleEmitter::frameUpdate(float prevUpdateTime, float crntTime)
 					forceDir = getWorldTransform().getRotation() * forceDir;
 				}
 
-				float forceMag = getRandom(forceMagnitude, forceMagnitudeDeviation);
+				float forceMag = getRandom(forceMagnitude,
+					forceMagnitudeDeviation);
+
 				p.getRigidBody().applyCentralForce(toBt(forceDir * forceMag));
 			}
 
 			// gravity
 			if(!worldGravFlag)
 			{
-				p.getRigidBody().setGravity(toBt(getRandom(gravity, gravityDeviation)));
+				p.getRigidBody().setGravity(toBt(getRandom(gravity,
+					gravityDeviation)));
 			}
 
-			// starting pos
-			Vec3 pos = getRandom(startingPos, startingPosDeviation); // in local space
+			// Starting pos. In local space
+			Vec3 pos = getRandom(startingPos, startingPosDeviation);
 
 			if(identRot)
 			{

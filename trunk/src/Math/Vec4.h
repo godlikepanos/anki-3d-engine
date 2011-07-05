@@ -1,5 +1,5 @@
-#ifndef VEC4_H
-#define VEC4_H
+#ifndef M_VEC4_H
+#define M_VEC4_H
 
 #include "Common.h"
 

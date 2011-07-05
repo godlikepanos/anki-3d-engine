@@ -16,6 +16,8 @@ class Bs: public RenderingPass
 {
 	public:
 		Bs(Renderer& r_): RenderingPass(r_) {}
+		~Bs();
+
 		void init(const RendererInitializer& initializer);
 		void run();
 

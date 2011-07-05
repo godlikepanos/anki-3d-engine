@@ -181,7 +181,7 @@ inline Axisang& Axisang::operator=(const Axisang& b)
 {
 	ang = b.ang;
 	axis = b.axis;
-	return SELF;
+	return *this;
 }
 
 

@@ -25,8 +25,9 @@ class PerspectiveCamera: public Camera
 		/// @name Data
 		/// @{
 
-		/// fovX is the angle in the y axis (imagine the cam positioned in the default OGL pos) Note that fovX > fovY
-		/// (most of the time) and aspectRatio = fovX/fovY
+		/// fovX is the angle in the y axis (imagine the cam positioned in
+		/// the default OGL pos) Note that fovX > fovY (most of the time) and
+		/// aspectRatio = fovX/fovY
 		float fovX;
 		float fovY; /// @see fovX
 		/// @}
@@ -42,11 +43,13 @@ class PerspectiveCamera: public Camera
 };
 
 
-inline PerspectiveCamera::PerspectiveCamera(bool compoundFlag, SceneNode* parent):
-	Camera(CT_PERSPECTIVE, compoundFlag, parent)
+inline PerspectiveCamera::PerspectiveCamera(bool compoundFlag,
+	SceneNode* parent)
+:	Camera(CT_PERSPECTIVE, compoundFlag, parent)
 {
 	name = "PerspectiveCamera:" + name;
 }
+
 
 inline void PerspectiveCamera::setFovX(float fovx_)
 {

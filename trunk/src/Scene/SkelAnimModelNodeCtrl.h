@@ -43,13 +43,16 @@ class SkelAnimModelNodeCtrl: public Controller
 		/// @param[in] frame Frame
 		/// @param[out] translations Translations vector
 		/// @param[out] rotations Rotations vector
-		static void interpolate(const SkelAnim& animation, float frame, Vec<Vec3>& translations, Vec<Mat3>& rotations);
+		static void interpolate(const SkelAnim& animation, float frame,
+			Vec<Vec3>& translations, Vec<Mat3>& rotations);
 
-		static void updateBoneTransforms(const Skeleton& skel, Vec<Vec3>& translations, Vec<Mat3>& rotations);
+		static void updateBoneTransforms(const Skeleton& skel,
+			Vec<Vec3>& translations, Vec<Mat3>& rotations);
 
 		/// Now with HW skinning it deforms only the debug skeleton
-		static void deform(const Skeleton& skel, const Vec<Vec3>& translations, const Vec<Mat3>& rotations,
-		                   Vec<Vec3>& heads, Vec<Vec3>& tails);
+		static void deform(const Skeleton& skel, const Vec<Vec3>& translations,
+			const Vec<Mat3>& rotations,
+			Vec<Vec3>& heads, Vec<Vec3>& tails);
 		/// @}
 };
 

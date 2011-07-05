@@ -34,7 +34,8 @@ class Scene
 		Scene();
 		~Scene() {}
 
-		void registerNode(SceneNode* node); ///< Put a node in the appropriate containers
+		/// Put a node in the appropriate containers
+		void registerNode(SceneNode* node);
 		void unregisterNode(SceneNode* node);
 		void registerController(Controller* controller);
 		void unregisterController(Controller* controller);
@@ -46,14 +47,15 @@ class Scene
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER(Vec3, ambientCol, getAmbientCol, setAmbientCol)
-		Phys::MasterContainer& getPhysMasterContainer() {return *physMasterContainer;}
-		const Phys::MasterContainer& getPhysMasterContainer() const {return *physMasterContainer;}
-		const VisibilityTester& getVisibilityTester() const {return *visibilityTester;}
+		Phys::MasterContainer& getPhysMasterContainer();
+		const Phys::MasterContainer& getPhysMasterContainer() const;
+		const VisibilityTester& getVisibilityTester() const;
 
 		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
 		GETTER_RW(Types<Light>::Container, lights, getLights)
 		GETTER_RW(Types<Camera>::Container, cameras, getCameras)
-		GETTER_RW(Types<ParticleEmitter>::Container, particleEmitters, getParticleEmitters)
+		GETTER_RW(Types<ParticleEmitter>::Container, particleEmitters,
+			getParticleEmitters)
 		GETTER_RW(Types<ModelNode>::Container, modelNodes, getModelNodes)
 		GETTER_RW(Types<SkinNode>::Container, skinNodes, getSkinNodes)
 		GETTER_RW(Types<Controller>::Container, controllers, getControllers)
@@ -72,7 +74,8 @@ class Scene
 		/// @}
 
 		Vec3 ambientCol; ///< The global ambient color
-		boost::scoped_ptr<Phys::MasterContainer> physMasterContainer; ///< Connection with Bullet wrapper
+		/// Connection with Bullet wrapper
+		boost::scoped_ptr<Phys::MasterContainer> physMasterContainer;
 		boost::scoped_ptr<VisibilityTester> visibilityTester;
 
 		/// Adds a node in a container
@@ -96,9 +99,28 @@ inline void Scene::putBackNode(ContainerType& container, Type* x)
 template<typename ContainerType, typename Type>
 inline void Scene::eraseNode(ContainerType& container, Type* x)
 {
-	typename ContainerType::iterator it = std::find(container.begin(), container.end(), x);
+	typename ContainerType::iterator it =
+		std::find(container.begin(), container.end(), x);
 	ASSERT(it != container.end());
 	container.erase(it);
+}
+
+
+inline Phys::MasterContainer& Scene::getPhysMasterContainer()
+{
+	return *physMasterContainer;
+}
+
+
+inline const Phys::MasterContainer& Scene::getPhysMasterContainer() const
+{
+	return *physMasterContainer;
+}
+
+
+inline const VisibilityTester& Scene::getVisibilityTester() const
+{
+	return *visibilityTester;
 }
 
 

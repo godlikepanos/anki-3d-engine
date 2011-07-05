@@ -34,7 +34,7 @@ class Light: public SceneNode, public VisibilityInfo
 		};
 
 		Light(LightType type, bool compoundFlag, SceneNode* parent = NULL);
-		~Light() {}
+		~Light();
 
 		/// @name Accessors
 		/// @{

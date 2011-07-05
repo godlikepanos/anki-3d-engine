@@ -13,6 +13,7 @@ class Ms: public RenderingPass
 {
 	public:
 		Ms(Renderer& r_);
+		~Ms();
 
 		/// @name Accessors
 		/// @{

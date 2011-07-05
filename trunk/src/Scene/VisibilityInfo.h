@@ -18,8 +18,10 @@ class VisibilityInfo
 	public:
 		/// @name Accessors
 		/// @{
-		GETTER_RW(std::deque<const RenderableNode*>, msRenderableNodes, getVisibleMsRenderableNodes)
-		GETTER_RW(std::deque<const RenderableNode*>, bsRenderableNodes, getVisibleBsRenderableNodes)
+		GETTER_RW(std::deque<const RenderableNode*>, msRenderableNodes,
+			getVisibleMsRenderableNodes)
+		GETTER_RW(std::deque<const RenderableNode*>, bsRenderableNodes,
+			getVisibleBsRenderableNodes)
 		GETTER_RW(Vec<const PointLight*>, pointLights, getVisiblePointLights)
 		GETTER_RW(Vec<SpotLight*>, spotLights, getVisibleSpotLights)
 		/// @}

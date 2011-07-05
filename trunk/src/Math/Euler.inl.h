@@ -147,7 +147,7 @@ inline Euler& Euler::operator=(const Euler& b)
 	x() = b.x();
 	y() = b.y();
 	z() = b.z();
-	return SELF;
+	return *this;
 }
 
 

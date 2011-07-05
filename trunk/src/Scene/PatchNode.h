@@ -14,8 +14,8 @@
 class Material;
 
 
-/// Inherited by ModelPatchNode and SkinPatchNode. It contains common code, the derived classes are responsible to
-/// initialize the VAOs
+/// Inherited by ModelPatchNode and SkinPatchNode. It contains common code,
+/// the derived classes are responsible to initialize the VAOs
 class PatchNode: public RenderableNode
 {
 	public:
@@ -42,13 +42,18 @@ class PatchNode: public RenderableNode
 
 	protected:
 		const ModelPatch& rsrc;
-		Vao dpVao; /// VAO for depth passes. All VBOs could be attached except for the vert weights
-		Vao cpVao; /// VAO for MS and BS. All VBOs could be attached except for the vert weights
+		/// VAO for depth passes. All VBOs could be attached except for the
+		/// vert weights
+		Vao dpVao;
+		/// VAO for MS and BS. All VBOs could be attached except for the
+		/// vert weights
+		Vao cpVao;
 		boost::scoped_ptr<MaterialRuntime> cpMtlRun;
 		boost::scoped_ptr<MaterialRuntime> dpMtlRun;
 
 		/// Create a VAO given a material and an array of VBOs
-		static void createVao(const Material& material, const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
+		static void createVao(const Material& material,
+			const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
 };
 
 

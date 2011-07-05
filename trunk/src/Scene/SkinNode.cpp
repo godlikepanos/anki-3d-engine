@@ -31,5 +31,6 @@ void SkinNode::init(const char* filename)
 void SkinNode::moveUpdate()
 {
 	visibilityShapeWSpace.set(tails);
-	visibilityShapeWSpace = visibilityShapeWSpace.getTransformed(getWorldTransform());
+	visibilityShapeWSpace = visibilityShapeWSpace.getTransformed(
+		getWorldTransform());
 }

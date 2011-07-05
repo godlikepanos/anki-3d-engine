@@ -94,13 +94,15 @@ void Scene::unregisterNode(SceneNode* node)
 //==============================================================================
 void Scene::registerController(Controller* controller)
 {
-	ASSERT(std::find(controllers.begin(), controllers.end(), controller) == controllers.end());
+	ASSERT(std::find(controllers.begin(), controllers.end(), controller) ==
+		controllers.end());
 	controllers.push_back(controller);
 }
 
 void Scene::unregisterController(Controller* controller)
 {
-	Vec<Controller*>::iterator it = std::find(controllers.begin(), controllers.end(), controller);
+	Vec<Controller*>::iterator it = std::find(controllers.begin(),
+		controllers.end(), controller);
 	ASSERT(it != controllers.end());
 	controllers.erase(it);
 }

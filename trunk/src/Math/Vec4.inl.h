@@ -1,9 +1,6 @@
 #include "Common.inl.h"
 
 
-#define SELF (*this)
-
-
 namespace M {
 
 
@@ -188,7 +185,7 @@ inline Vec4& Vec4::operator=(const Vec4& b)
 		z() = b.z();
 		w() = b.w();
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // +
@@ -212,7 +209,7 @@ inline Vec4& Vec4::operator+=(const Vec4& b)
 		z() += b.z();
 		w() += b.w();
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // -
@@ -236,7 +233,7 @@ inline Vec4& Vec4::operator-=(const Vec4& b)
 		z() -= b.z();
 		w() -= b.w();
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // *
@@ -260,7 +257,7 @@ inline Vec4& Vec4::operator*=(const Vec4& b)
 		z() *= b.z();
 		w() *= b.w();
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // /
@@ -284,7 +281,7 @@ inline Vec4& Vec4::operator/=(const Vec4& b)
 		z() /= b.z();
 		w() /= b.w();
 	#endif
-	return SELF;
+	return (*this);
 }
 
 // negative
@@ -296,15 +293,17 @@ inline Vec4 Vec4::operator-() const
 // ==
 inline bool Vec4::operator==(const Vec4& b) const
 {
-	Vec4 sub = SELF - b;
-	return isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) && isZero(sub.w());
+	Vec4 sub = (*this) - b;
+	return isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) &&
+		isZero(sub.w());
 }
 
 // !=
 inline bool Vec4::operator!=(const Vec4& b) const
 {
-	Vec4 sub = SELF - b;
-	return !(isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) && isZero(sub.w()));
+	Vec4 sub = (*this) - b;
+	return !(isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) &&
+		isZero(sub.w()));
 }
 
 
@@ -315,7 +314,7 @@ inline bool Vec4::operator!=(const Vec4& b) const
 // Vec4 + float
 inline Vec4 Vec4::operator+(float f) const
 {
-	return SELF + Vec4(f);
+	return (*this) + Vec4(f);
 }
 
 // float + Vec4
@@ -327,14 +326,14 @@ inline Vec4 operator+(float f, const Vec4& v4)
 // Vec4 += float
 inline Vec4& Vec4::operator+=(float f)
 {
-	SELF += Vec4(f);
-	return SELF;
+	(*this) += Vec4(f);
+	return (*this);
 }
 
 // Vec4 - float
 inline Vec4 Vec4::operator-(float f) const
 {
-	return SELF - Vec4(f);
+	return (*this) - Vec4(f);
 }
 
 // float - Vec4
@@ -346,14 +345,14 @@ inline Vec4 operator-(float f, const Vec4& v4)
 // Vec4 -= float
 inline Vec4& Vec4::operator-=(float f)
 {
-	SELF -= Vec4(f);
-	return SELF;
+	(*this) -= Vec4(f);
+	return (*this);
 }
 
 // Vec4 * float
 inline Vec4 Vec4::operator*(float f) const
 {
-	return SELF * Vec4(f);
+	return (*this) * Vec4(f);
 }
 
 // float * Vec4
@@ -365,14 +364,14 @@ inline Vec4 operator*(float f, const Vec4& v4)
 // Vec4 *= float
 inline Vec4& Vec4::operator*=(float f)
 {
-	SELF *= Vec4(f);
-	return SELF;
+	(*this) *= Vec4(f);
+	return (*this);
 }
 
 // Vec4 / float
 inline Vec4 Vec4::operator/(float f) const
 {
-	return SELF / Vec4(f);
+	return (*this) / Vec4(f);
 }
 
 // float / Vec4
@@ -384,8 +383,8 @@ inline Vec4 operator/(float f, const Vec4& v4)
 // Vec4 /= float
 inline Vec4& Vec4::operator/=(float f)
 {
-	SELF /= Vec4(f);
-	return SELF;
+	(*this) /= Vec4(f);
+	return (*this);
 }
 
 
@@ -424,19 +423,19 @@ inline float Vec4::dot(const Vec4& b) const
 // getLength
 inline float Vec4::getLength() const
 {
-	return M::sqrt(dot(SELF));
+	return M::sqrt(dot((*this)));
 }
 
 // getNormalized
 inline Vec4 Vec4::getNormalized() const
 {
-	return SELF / getLength();
+	return (*this) / getLength();
 }
 
 // normalize
 inline void Vec4::normalize()
 {
-	SELF /= getLength();
+	(*this) /= getLength();
 }
 
 

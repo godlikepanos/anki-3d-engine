@@ -23,12 +23,13 @@ SkelAnimModelNodeCtrl::SkelAnimModelNodeCtrl(SkinNode& skinNode_):
 // interpolate                                                                 =
 //==============================================================================
 void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
-                                        Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
+	Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
 {
 	ASSERT(frame < animation.getFramesNum());
 
-	// calculate the t (used in slerp and lerp) using the keyframs and the frame and
-	// calc the lPose and rPose witch indicate the pose IDs in witch the frame lies between
+	// calculate the t (used in slerp and lerp) using the keyframs and the
+	// frame and calc the lPose and rPose witch indicate the pose IDs in witch
+	// the frame lies between
 	const Vec<uint>& keyframes = animation.getKeyframes();
 	float t = 0.0;
 	uint lPose = 0, rPose = 0;
@@ -44,7 +45,8 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 		{
 			lPose = j-1;
 			rPose = j;
-			t = (frame - (float)keyframes[lPose]) / float(keyframes[rPose] - keyframes[lPose]);
+			t = (frame - (float)keyframes[lPose]) / float(keyframes[rPose] -
+				keyframes[lPose]);
 			break;
 		}
 	}
@@ -58,7 +60,8 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 		Mat3& localRot = boneRotations[i];
 		Vec3& localTransl = boneTranslations[i];
 
-		// if the bone has animations then slerp and lerp to find the rotation and translation
+		// if the bone has animations then slerp and lerp to find the rotation
+		// and translation
 		if(banim.getBonePoses().size() != 0)
 		{
 			const BonePose& lBpose = banim.getBonePoses()[lPose];
@@ -88,7 +91,7 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 // updateBoneTransforms                                                        =
 //==============================================================================
 void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
-                                                 Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
+	Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
 {
 	uint queue[128];
 	uint head = 0, tail = 0;
@@ -111,21 +114,24 @@ void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
 		// bone.final_transform = MA * ANIM * MAi
 		// where MA is bone matrix at armature space and ANIM the interpolated transformation.
 		combineTransformations(boneTranslations[boneId], boneRotations[boneId],
-		                       boned.getTslSkelSpaceInv(), boned.getRotSkelSpaceInv(),
-		                       boneTranslations[boneId], boneRotations[boneId]);
+			boned.getTslSkelSpaceInv(), boned.getRotSkelSpaceInv(),
+			boneTranslations[boneId], boneRotations[boneId]);
 
 		combineTransformations(boned.getTslSkelSpace(), boned.getRotSkelSpace(),
-		                       boneTranslations[boneId], boneRotations[boneId],
-		                       boneTranslations[boneId], boneRotations[boneId]);
+			boneTranslations[boneId], boneRotations[boneId],
+			boneTranslations[boneId], boneRotations[boneId]);
 
 		// and finaly add the parent's transform
 		if(boned.getParent())
 		{
 			// bone.final_final_transform = parent.transf * bone.final_transform
-			combineTransformations(boneTranslations[boned.getParent()->getPos()],
-			                       boneRotations[boned.getParent()->getPos()],
-			                       boneTranslations[boneId], boneRotations[boneId],
-			                       boneTranslations[boneId], boneRotations[boneId]);
+			combineTransformations(
+				boneTranslations[boned.getParent()->getPos()],
+				boneRotations[boned.getParent()->getPos()],
+				boneTranslations[boneId],
+				boneRotations[boneId],
+				boneTranslations[boneId],
+				boneRotations[boneId]);
 		}
 
 		// now add the bone's childes
@@ -140,8 +146,9 @@ void SkelAnimModelNodeCtrl::updateBoneTransforms(const Skeleton& skeleton,
 //==============================================================================
 // deform                                                                      =
 //==============================================================================
-void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& boneTranslations,
-                                   const Vec<Mat3>& boneRotations, Vec<Vec3>& heads, Vec<Vec3>& tails)
+void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton,
+	const Vec<Vec3>& boneTranslations, const Vec<Mat3>& boneRotations,
+	Vec<Vec3>& heads, Vec<Vec3>& tails)
 {
 	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{
@@ -160,7 +167,8 @@ void SkelAnimModelNodeCtrl::deform(const Skeleton& skeleton, const Vec<Vec3>& bo
 void SkelAnimModelNodeCtrl::update(float)
 {
 	frame += step;
-	if(frame > skelAnim->getFramesNum()) // if the crnt is finished then play the next or loop the crnt
+	// if the crnt is finished then play the next or loop the crnt
+	if(frame > skelAnim->getFramesNum())
 	{
 		frame = 0.0;
 	}
@@ -170,18 +178,25 @@ void SkelAnimModelNodeCtrl::update(float)
 		return;
 	}
 
-	interpolate(*skelAnim, frame, skinNode.getBoneTranslations(), skinNode.getBoneRotations());
-	updateBoneTransforms(skinNode.getSkin().getSkeleton(), skinNode.getBoneTranslations(), skinNode.getBoneRotations());
+	interpolate(*skelAnim, frame, skinNode.getBoneTranslations(),
+		skinNode.getBoneRotations());
+
+	updateBoneTransforms(skinNode.getSkin().getSkeleton(),
+		skinNode.getBoneTranslations(), skinNode.getBoneRotations());
 
 	if(MainRendererSingleton::getInstance().getDbg().isEnabled() &&
-	   MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
+		MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
 	{
-		deform(skinNode.getSkin().getSkeleton(), skinNode.getBoneTranslations(), skinNode.getBoneRotations(),
-		       skinNode.getHeads(), skinNode.getTails());
+		deform(skinNode.getSkin().getSkeleton(),
+			skinNode.getBoneTranslations(), skinNode.getBoneRotations(),
+			skinNode.getHeads(), skinNode.getTails());
 	}
+
+	const SkinsDeformer& sd =
+		MainRendererSingleton::getInstance().getSkinsDeformer();
 
 	BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())
 	{
-		MainRendererSingleton::getInstance().getSkinsDeformer().deform(*skinPatchNode);
+		sd.deform(*skinPatchNode);
 	}
 }

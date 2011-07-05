@@ -31,5 +31,7 @@ ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_, ModelNode* parent)
 //==============================================================================
 void ModelPatchNode::moveUpdate()
 {
-	visibilityShapeWSpace = modelPatch.getMesh().getVisibilityShape().getTransformed(getWorldTransform());
+	visibilityShapeWSpace =
+		modelPatch.getMesh().getVisibilityShape().getTransformed(
+		getWorldTransform());
 }

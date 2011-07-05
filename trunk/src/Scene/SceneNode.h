@@ -30,14 +30,17 @@ class SceneNode: public Object
 			SNT_RENDERABLE
 		};
 		
-		explicit SceneNode(SceneNodeType type_, bool compoundFlag, SceneNode* parent);
+		explicit SceneNode(SceneNodeType type_, bool compoundFlag,
+			SceneNode* parent);
 		virtual ~SceneNode();
 		virtual void init(const char*) = 0; ///< init using a script file
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Transform, localTransform, getLocalTransform, setLocalTransform)
-		GETTER_SETTER(Transform, worldTransform, getWorldTransform, setWorldTransform)
+		GETTER_SETTER(Transform, localTransform, getLocalTransform,
+			setLocalTransform)
+		GETTER_SETTER(Transform, worldTransform, getWorldTransform,
+			setWorldTransform)
 		GETTER_R(Transform, prevWorldTransform, getPrevWorldTransform)
 
 		GETTER_R_BY_VAL(SceneNodeType, type, getSceneNodeType)
@@ -53,12 +56,13 @@ class SceneNode: public Object
 		/// @}
 
 		/// @name Updates
-		/// Two separate updates for the main loop. The update happens anyway and the updateTrf only when the node is
-		/// being moved
+		/// Two separate updates for the main loop. The update happens anyway
+		/// and the updateTrf only when the node is being moved
 		/// @{
 
 		/// This is called every frame
-		virtual void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) = 0;
+		virtual void frameUpdate(float /*prevUpdateTime*/,
+			float /*crntTime*/) = 0;
 
 		/// This is called if the node moved
 		virtual void moveUpdate() = 0;
@@ -66,9 +70,9 @@ class SceneNode: public Object
 
 		/// @name Mess with the local transform
 		/// @{
-		void rotateLocalX(float angDegrees) {getLocalTransform().getRotation().rotateXAxis(angDegrees);}
-		void rotateLocalY(float angDegrees) {getLocalTransform().getRotation().rotateYAxis(angDegrees);}
-		void rotateLocalZ(float angDegrees) {getLocalTransform().getRotation().rotateZAxis(angDegrees);}
+		void rotateLocalX(float angDegrees);
+		void rotateLocalY(float angDegrees);
+		void rotateLocalZ(float angDegrees);
 		void moveLocalX(float distance);
 		void moveLocalY(float distance);
 		void moveLocalZ(float distance);
@@ -84,11 +88,15 @@ class SceneNode: public Object
 
 	private:
 		Transform localTransform; ///< The transformation in local space
-		Transform worldTransform; ///< The transformation in world space (local combined with parent's transformation)
+		/// The transformation in world space (local combined with parent's
+		/// transformation)
+		Transform worldTransform;
 		Transform prevWorldTransform;
 
 		SceneNodeType type;
-		bool compoundFlag; ///< This means that the children will inherit the world transform of this node
+		/// This means that the children will inherit the world transform of
+		/// this node
+		bool compoundFlag;
 
 		static uint uid; ///< Unique identifier
 
@@ -98,6 +106,24 @@ class SceneNode: public Object
 		bool moved;
 		/// @}
 };
+
+
+inline void SceneNode::rotateLocalX(float angDegrees)
+{
+	getLocalTransform().getRotation().rotateXAxis(angDegrees);
+}
+
+
+inline void SceneNode::rotateLocalY(float angDegrees)
+{
+	getLocalTransform().getRotation().rotateYAxis(angDegrees);
+}
+
+
+inline void SceneNode::rotateLocalZ(float angDegrees)
+{
+	getLocalTransform().getRotation().rotateZAxis(angDegrees);
+}
 
 
 #endif

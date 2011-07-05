@@ -1,9 +1,6 @@
 #include "Common.inl.h"
 
 
-#define ME (*this)
-
-
 namespace M {
 
 
@@ -103,7 +100,7 @@ inline Vec2& Vec2::operator=(const Vec2& b)
 {
 	x() = b.x();
 	y() = b.y();
-	return SELF;
+	return *this;
 }
 
 // +
@@ -117,7 +114,7 @@ inline Vec2& Vec2::operator+=(const Vec2& b)
 {
 	x() += b.x();
 	y() += b.y();
-	return ME;
+	return (*this);
 }
 
 // -
@@ -131,7 +128,7 @@ inline Vec2& Vec2::operator-=(const Vec2& b)
 {
 	x() -= b.x();
 	y() -= b.y();
-	return ME;
+	return (*this);
 }
 
 // *
@@ -145,7 +142,7 @@ inline Vec2& Vec2::operator*=(const Vec2& b)
 {
 	x() *= b.x();
 	y() *= b.y();
-	return ME;
+	return (*this);
 }
 
 // /
@@ -159,7 +156,7 @@ inline Vec2& Vec2::operator/=(const Vec2& b)
 {
 	x() /= b.x();
 	y() /= b.y();
-	return ME;
+	return (*this);
 }
 
 // negative
@@ -188,7 +185,7 @@ inline bool Vec2::operator!=(const Vec2& b) const
 // vec2 + float
 inline Vec2 Vec2::operator+(float f) const
 {
-	return ME + Vec2(f);
+	return (*this) + Vec2(f);
 }
 
 // float + vec2
@@ -200,14 +197,14 @@ inline Vec2 operator+(float f, const Vec2& v2)
 // vec2 += float
 inline Vec2& Vec2::operator+=(float f)
 {
-	ME += Vec2(f);
-	return ME;
+	(*this) += Vec2(f);
+	return (*this);
 }
 
 // vec2 - float
 inline Vec2 Vec2::operator-(float f) const
 {
-	return ME - Vec2(f);
+	return (*this) - Vec2(f);
 }
 
 // float - vec2
@@ -219,14 +216,14 @@ inline Vec2 operator-(float f, const Vec2& v2)
 // vec2 -= float
 inline Vec2& Vec2::operator-=(float f)
 {
-	ME -= Vec2(f);
-	return ME;
+	(*this) -= Vec2(f);
+	return (*this);
 }
 
 // vec2 * float
 inline Vec2 Vec2::operator*(float f) const
 {
-	return ME * Vec2(f);
+	return (*this) * Vec2(f);
 }
 
 // float * vec2
@@ -238,14 +235,14 @@ inline Vec2 operator*(float f, const Vec2& v2)
 // vec2 *= float
 inline Vec2& Vec2::operator*=(float f)
 {
-	ME *= Vec2(f);
-	return ME;
+	(*this) *= Vec2(f);
+	return (*this);
 }
 
 // vec2 / float
 inline Vec2 Vec2::operator/(float f) const
 {
-	return ME / Vec2(f);
+	return (*this) / Vec2(f);
 }
 
 // float / vec2
@@ -257,8 +254,8 @@ inline Vec2 operator/(float f, const Vec2& v2)
 // vec2 /= float
 inline Vec2& Vec2::operator/=(float f)
 {
-	ME /= Vec2(f);
-	return ME;
+	(*this) /= Vec2(f);
+	return (*this);
 }
 
 //==============================================================================
@@ -274,13 +271,13 @@ inline float Vec2::getLength() const
 // normalize
 inline void Vec2::normalize()
 {
-	ME /= getLength();
+	(*this) /= getLength();
 }
 
 // Normalized (return the normalized)
 inline Vec2 Vec2::getNormalized() const
 {
-	return ME / getLength();
+	return (*this) / getLength();
 }
 
 // dot

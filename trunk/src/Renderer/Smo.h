@@ -19,6 +19,7 @@ class Smo: public RenderingPass
 {
 	public:
 		Smo(Renderer& r_): RenderingPass(r_) {}
+		~Smo();
 		void init(const RendererInitializer& initializer);
 		void run(const PointLight& light);
 		void run(const SpotLight& light);
@@ -27,6 +28,9 @@ class Smo: public RenderingPass
 		/// @todo
 		struct Geom
 		{
+			Geom() {}
+			~Geom();
+
 			RsrcPtr<Mesh> mesh;
 			Vao vao;
 		};
