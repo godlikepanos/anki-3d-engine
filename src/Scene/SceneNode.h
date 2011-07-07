@@ -78,7 +78,8 @@ class SceneNode: public Object
 		void moveLocalZ(float distance);
 		/// @}
 
-		/// This update happens only when the object gets moved. Called only by the Scene
+		/// This update happens only when the object gets moved. Called only by
+		/// the Scene
 		void updateWorldTransform();
 
 		void addChild(SceneNode& node) {Object::addChild(&node);}

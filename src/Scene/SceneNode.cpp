@@ -51,7 +51,7 @@ void SceneNode::updateWorldTransform()
 	{
 		const SceneNode* parent = static_cast<const SceneNode*>(getObjParent());
 
-		if(compoundFlag)
+		if(parent->compoundFlag)
 		{
 			worldTransform = parent->getWorldTransform();
 		}
