@@ -137,6 +137,7 @@ void init()
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
 	AppSingleton::getInstance().setActiveCam(cam);
+	INFO(cam->getSceneNodeName());
 
 	OrthographicCamera* ocam = new OrthographicCamera(false, NULL);
 	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
