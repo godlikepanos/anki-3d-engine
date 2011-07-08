@@ -4,12 +4,15 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Scene/Light.h"
-#include "Scene/ParticleEmitter.h"
+#include "Scene/ParticleEmitterNode.h"
 #include "RendererInitializer.h"
 #include "Drawers/SceneDbgDrawer.h"
 #include "Scene/SkinNode.h"
 #include "Scene/SpotLight.h"
 #include <boost/foreach.hpp>
+
+
+namespace R {
 
 
 //==============================================================================
@@ -89,7 +92,7 @@ void Dbg::renderGrid()
 
 
 //==============================================================================
-// drawSphere                                                                =
+// drawSphere                                                                  =
 //==============================================================================
 void Dbg::drawSphere(float radius, int complexity)
 {
@@ -98,7 +101,8 @@ void Dbg::drawSphere(float radius, int complexity)
 	//
 	// Pre-calculate the sphere points5
 	//
-	std::map<uint, Vec<Vec3> >::iterator it = complexityToPreCalculatedSphere.find(complexity);
+	std::map<uint, Vec<Vec3> >::iterator it =
+		complexityToPreCalculatedSphere.find(complexity);
 
 	if(it != complexityToPreCalculatedSphere.end()) // Found
 	{
@@ -176,7 +180,8 @@ void Dbg::drawCube(float size)
 		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
 	}};
 
-	boost::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+	boost::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6,
+		7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin();
 		BOOST_FOREACH(uint id, indeces)
@@ -204,10 +209,10 @@ void Dbg::init(const RendererInitializer& initializer)
 
 		fbo.setNumOfColorAttachements(1);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-		                       r.getPps().getPostPassFai().getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(),
-		                       0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, r.getPps().getPostPassFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
 
 		fbo.checkIfGood();
 		fbo.unbind();
@@ -225,13 +230,16 @@ void Dbg::init(const RendererInitializer& initializer)
 	//
 	// VAO & VBOs
 	//
-	positionsVbo.create(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_DYNAMIC_DRAW);
+	positionsVbo.create(GL_ARRAY_BUFFER, sizeof(positions), NULL,
+		GL_DYNAMIC_DRAW);
 	colorsVbo.create(GL_ARRAY_BUFFER, sizeof(colors), NULL, GL_DYNAMIC_DRAW);
 	vao.create();
 	const int positionAttribLoc = 0;
-	vao.attachArrayBufferVbo(positionsVbo, positionAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	vao.attachArrayBufferVbo(positionsVbo, positionAttribLoc, 3, GL_FLOAT,
+		GL_FALSE, 0, NULL);
 	const int colorAttribLoc = 1;
-	vao.attachArrayBufferVbo(colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	vao.attachArrayBufferVbo(colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE,
+		0, NULL);
 
 	//
 	// Rest
@@ -264,7 +272,8 @@ void Dbg::run()
 	setModelMat(Mat4::getIdentity());
 	renderGrid();
 
-	BOOST_FOREACH(const SceneNode* node, SceneSingleton::getInstance().getAllNodes())
+	BOOST_FOREACH(const SceneNode* node,
+		SceneSingleton::getInstance().getAllNodes())
 	{
 		/*if(!node->isVisible())
 		{
@@ -276,18 +285,18 @@ void Dbg::run()
 		{
 			case SceneNode::SNT_CAMERA:
 				sceneDbgDrawer.drawCamera(static_cast<const Camera&>(*node));
-				//collisionDbgDrawer.draw(static_cast<const Camera&>(*node).wspaceFrustumPlanes[0]);
 				break;
 			case SceneNode::SNT_LIGHT:
 				sceneDbgDrawer.drawLight(static_cast<const Light&>(*node));
 				break;
 			case SceneNode::SNT_PARTICLE_EMITTER:
-				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitter&>(*node));
+				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitterNode&>(*node));
 				break;
 			case SceneNode::SNT_RENDERABLE:
 				/*if(showVisibilityBoundingShapesFlag)
 				{
-					const RenderableNode& rnode = static_cast<const RenderableNode&>(*node);
+					const RenderableNode& rnode =
+						static_cast<const RenderableNode&>(*node);
 					collisionDbgDrawer.draw(rnode. getVisibilityShapeWSpace());
 				}*/
 				break;
@@ -310,7 +319,8 @@ void Dbg::run()
 	/*setColor(Vec3(1));
 	Obb obb(Vec3(0.0), Mat3::getIdentity(), Vec3(1.0, 2.0, 1.0));
 	Obb obb2(Vec3(0.0), Mat3::getIdentity(), Vec3(1.0, 1.5, 1.0));
-	obb = obb.getTransformed(SceneSingleton::getInstance().getAllNodes()[1]->getWorldTransform());
+	obb = obb.getTransformed(SceneSingleton::getInstance().getAllNodes()[1]->
+		getWorldTransform());
 	collisionDbgDrawer.draw(obb.getCompoundShape(obb2));
 	collisionDbgDrawer.draw(obb);
 	collisionDbgDrawer.draw(obb2);
@@ -339,7 +349,8 @@ void Dbg::run()
 
 	Vec3 er = obb.getRotation() * obb.getExtend();
 
-	boost::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+	boost::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6,
+		7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	BOOST_FOREACH(uint id, indeces)
 	{
@@ -349,7 +360,8 @@ void Dbg::run()
 	///////////////
 
 
-	SceneSingleton::getInstance().getPhysMasterContainer().getWorld().debugDrawWorld();
+	SceneSingleton::getInstance().getPhysMasterContainer().getWorld().
+		debugDrawWorld();
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	setModelMat(Mat4::getIdentity());
@@ -363,7 +375,8 @@ void Dbg::run()
 //==============================================================================
 void Dbg::setModelMat(const Mat4& modelMat_)
 {
-	ASSERT(pointIndex == 0); // This means that the func called after begin and before end
+	ASSERT(pointIndex == 0); // This means that the func called after begin
+	                         // and before end
 	modelMat = modelMat_;
 }
 
@@ -409,3 +422,5 @@ void Dbg::pushBackVertex(const Vec3& pos)
 	++pointIndex;
 }
 
+
+} // end namespace

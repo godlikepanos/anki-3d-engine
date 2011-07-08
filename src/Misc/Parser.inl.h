@@ -10,7 +10,8 @@ namespace Parser {
 // parseArrOfNumbers                                                           =
 //==============================================================================
 template <typename Type>
-void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs, uint size, Type* arr)
+void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
+	uint size, Type* arr)
 {
 	const Scanner::Token* token;
 
@@ -117,12 +118,14 @@ void parseNumber(Scanner::Scanner& scanner, bool sign, Type& out)
 
 		if(token->getDataType() == Scanner::DT_FLOAT)
 		{
-			double d = negative ? -token->getValue().getFloat() : token->getValue().getFloat();
+			double d = negative ? -token->getValue().getFloat() :
+				token->getValue().getFloat();
 			out = static_cast<Type>(d);
 		}
 		else
 		{
-			ulong l = negative ? -token->getValue().getInt() : token->getValue().getInt();
+			ulong l = negative ? -token->getValue().getInt() :
+				token->getValue().getInt();
 			out = static_cast<Type>(l);
 		}
 	}
@@ -203,7 +206,8 @@ inline bool parseBool(Scanner::Scanner& scanner)
 //==============================================================================
 // parseIdentifier                                                             =
 //==============================================================================
-inline std::string parseIdentifier(Scanner::Scanner& scanner, const char* expectedIdentifier)
+inline std::string parseIdentifier(Scanner::Scanner& scanner,
+	const char* expectedIdentifier)
 {
 	const Scanner::Token* token = &scanner.getNextToken();
 	if(token->getCode() != Scanner::TC_IDENTIFIER)
@@ -218,7 +222,8 @@ inline std::string parseIdentifier(Scanner::Scanner& scanner, const char* expect
 		}
 	}
 
-	if(expectedIdentifier != NULL && strcmp(token->getValue().getString(), expectedIdentifier))
+	if(expectedIdentifier != NULL &&
+		strcmp(token->getValue().getString(), expectedIdentifier))
 	{
 		throw PARSER_EXCEPTION_EXPECTED("identifier " + expectedIdentifier);
 	}
@@ -232,7 +237,8 @@ inline std::string parseIdentifier(Scanner::Scanner& scanner, const char* expect
 //==============================================================================
 inline bool isIdentifier(const Scanner::Token* token, const char* str)
 {
-	return token->getCode() == Scanner::TC_IDENTIFIER && !strcmp(token->getValue().getString(), str);
+	return token->getCode() == Scanner::TC_IDENTIFIER &&
+		!strcmp(token->getValue().getString(), str);
 }
 
 

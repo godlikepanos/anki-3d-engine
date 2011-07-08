@@ -4,10 +4,10 @@
 
 WRAP(Renderer)
 {
-	typedef Pps& (Renderer::* getPpsAccessor)();
+	typedef R::Pps& (R::Renderer::* getPpsAccessor)();
 
-	class_<Renderer, noncopyable>("Renderer", no_init)
-		.def("getPps", (getPpsAccessor)(&Renderer::getPps),
+	class_<R::Renderer, noncopyable>("Renderer", no_init)
+		.def("getPps", (getPpsAccessor)(&R::Renderer::getPps),
 			return_value_policy<reference_existing_object>())
 	;
 }

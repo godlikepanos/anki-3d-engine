@@ -10,12 +10,16 @@
 #include "GfxApi/GlStateMachine.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(const MaterialRuntimeUserDefinedVar& udvr_,
-                                                const Renderer& r_, uint& texUnit_):
-	udvr(udvr_),
+SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(
+	const MaterialRuntimeUserDefinedVar& udvr_,
+	const Renderer& r_, uint& texUnit_)
+:	udvr(udvr_),
 	r(r_),
 	texUnit(texUnit_)
 {}
@@ -43,7 +47,8 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>* x) const
 
 
 template<>
-void SceneDrawer::UsrDefVarVisitor::operator()(const MtlUserDefinedVar::Fai& x) const
+void SceneDrawer::UsrDefVarVisitor::operator()(
+	const MtlUserDefinedVar::Fai& x) const
 {
 	switch(x)
 	{
@@ -70,8 +75,9 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const MtlUserDefinedVar::Fai& x) 
 //==============================================================================
 // setupShaderProg                                                             =
 //==============================================================================
-void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& nodeWorldTransform, const Camera& cam,
-                                  const Renderer& r, float blurring)
+void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr,
+	const Transform& nodeWorldTransform, const Camera& cam,
+	const Renderer& r, float blurring)
 {
 	uint textureUnit = 0;
 
@@ -80,13 +86,15 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	//
 	// FFP stuff
 	//
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, mtlr.isBlendingEnabled());
+	GlStateMachineSingleton::getInstance().enable(GL_BLEND,
+		mtlr.isBlendingEnabled());
 	if(mtlr.isBlendingEnabled())
 	{
 		glBlendFunc(mtlr.getBlendingSfactor(), mtlr.getBlendingDfactor());
 	}
 
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, mtlr.isDepthTestingEnabled());
+	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST,
+		mtlr.isDepthTestingEnabled());
 
 	if(mtlr.isWireframeEnabled())
 	{
@@ -147,7 +155,8 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 
 	if(mtlr.getStdUniVar(Material::SUV_VIEWPROJECTION_MAT))
 	{
-		mtlr.getStdUniVar(Material::SUV_VIEWPROJECTION_MAT)->set(&r.getViewProjectionMat());
+		mtlr.getStdUniVar(Material::SUV_VIEWPROJECTION_MAT)->set(
+			&r.getViewProjectionMat());
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_NORMAL_MAT))
@@ -159,7 +168,8 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	if(mtlr.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT))
 	{
 		modelViewProjectionMat = projectionMat * modelViewMat;
-		mtlr.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT)->set(&modelViewProjectionMat);
+		mtlr.getStdUniVar(Material::SUV_MODELVIEWPROJECTION_MAT)->set(
+			&modelViewProjectionMat);
 	}
 
 
@@ -168,37 +178,44 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	//
 	if(mtlr.getStdUniVar(Material::SUV_MS_NORMAL_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_MS_NORMAL_FAI)->set(r.getMs().getNormalFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_MS_NORMAL_FAI)->set(
+			r.getMs().getNormalFai(), textureUnit++);
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI)->set(r.getMs().getDiffuseFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_MS_DIFFUSE_FAI)->set(
+			r.getMs().getDiffuseFai(), textureUnit++);
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_MS_SPECULAR_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_MS_SPECULAR_FAI)->set(r.getMs().getSpecularFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_MS_SPECULAR_FAI)->set(
+			r.getMs().getSpecularFai(), textureUnit++);
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_MS_DEPTH_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_MS_DEPTH_FAI)->set(r.getMs().getDepthFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_MS_DEPTH_FAI)->set(
+			r.getMs().getDepthFai(), textureUnit++);
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_IS_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_IS_FAI)->set(r.getIs().getFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_IS_FAI)->set(r.getIs().getFai(),
+			textureUnit++);
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI)->set(r.getPps().getPrePassFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_PPS_PRE_PASS_FAI)->set(
+			r.getPps().getPrePassFai(), textureUnit++);
 	}
 
 	if(mtlr.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI))
 	{
-		mtlr.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI)->set(r.getPps().getPostPassFai(), textureUnit++);
+		mtlr.getStdUniVar(Material::SUV_PPS_POST_PASS_FAI)->set(
+			r.getPps().getPostPassFai(), textureUnit++);
 	}
 
 
@@ -229,9 +246,11 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 	//
 	// set user defined vars
 	//
-	BOOST_FOREACH(const MaterialRuntimeUserDefinedVar& udvr, mtlr.getUserDefinedVars())
+	BOOST_FOREACH(const MaterialRuntimeUserDefinedVar& udvr,
+		mtlr.getUserDefinedVars())
 	{
-		boost::apply_visitor(UsrDefVarVisitor(udvr, r, textureUnit), udvr.getDataVariant());
+		boost::apply_visitor(UsrDefVarVisitor(udvr, r, textureUnit),
+			udvr.getDataVariant());
 	}
 
 	ON_GL_FAIL_THROW_EXCEPTION();
@@ -241,8 +260,8 @@ void SceneDrawer::setupShaderProg(const MaterialRuntime& mtlr, const Transform& 
 //==============================================================================
 // renderRenderableNode                                                        =
 //==============================================================================
-void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const Camera& cam,
-                                       RenderingPassType rtype) const
+void SceneDrawer::renderRenderableNode(const RenderableNode& renderable,
+	const Camera& cam, RenderingPassType rtype) const
 {
 	const MaterialRuntime* mtlr;
 	const Vao* vao;
@@ -255,7 +274,7 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const C
 			vao = &renderable.getCpVao();
 
 			blurring = (renderable.getWorldTransform().getOrigin() -
-			            renderable.getPrevWorldTransform().getOrigin()).getLength();
+				renderable.getPrevWorldTransform().getOrigin()).getLength();
 
 			break;
 
@@ -268,6 +287,11 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& renderable, const C
 	setupShaderProg(*mtlr, renderable.getWorldTransform(), cam, r, blurring);
 
 	vao->bind();
-	glDrawElements(GL_TRIANGLES, renderable.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, renderable.getVertIdsNum(),
+		GL_UNSIGNED_SHORT, 0);
 	vao->unbind();
 }
+
+
+} // end namespace
+

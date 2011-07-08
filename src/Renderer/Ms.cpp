@@ -6,11 +6,14 @@
 #include "Scene/RenderableNode.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-Ms::Ms(Renderer& r_):
-	RenderingPass(r_),
+Ms::Ms(Renderer& r_)
+:	RenderingPass(r_),
 	ez(r_)
 {}
 
@@ -38,20 +41,30 @@ void Ms::init(const RendererInitializer& initializer)
 
 		// create the FAIs
 
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB16F, GL_RGB, GL_FLOAT, normalFai);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB8, GL_RGB, GL_FLOAT, diffuseFai);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGBA8, GL_RGBA, GL_FLOAT, specularFai);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
-		                    GL_UNSIGNED_INT_24_8, depthFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB16F,
+			GL_RGB, GL_FLOAT, normalFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB8,
+			GL_RGB, GL_FLOAT, diffuseFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGBA8,
+			GL_RGBA, GL_FLOAT, specularFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(),
+			GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
+			GL_UNSIGNED_INT_24_8, depthFai);
 
 		// attach the buffers to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normalFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, specularFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, normalFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+			GL_TEXTURE_2D, diffuseFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,
+			GL_TEXTURE_2D, specularFai.getGlId(), 0);
 
-		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
-		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthFai.getGlId(), 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+		//	GL_TEXTURE_2D, depthFai.getGlId(), 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+		//	GL_TEXTURE_2D, depthFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+			GL_TEXTURE_2D, depthFai.getGlId(), 0);
 
 		// test if success
 		fbo.checkIfGood();
@@ -61,7 +74,8 @@ void Ms::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create deferred shading material stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create deferred shading material stage FBO: " +
+			e.what());
 	}
 
 	ez.init(initializer);
@@ -101,9 +115,11 @@ void Ms::run()
 	//glClear(GL_COLOR_BUFFER_BIT);
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node, r.getCamera().getVisibleMsRenderableNodes())
+	BOOST_FOREACH(const RenderableNode* node,
+		r.getCamera().getVisibleMsRenderableNodes())
 	{
-		r.getSceneDrawer().renderRenderableNode(*node, r.getCamera(), SceneDrawer::RPT_COLOR);
+		r.getSceneDrawer().renderRenderableNode(*node, r.getCamera(),
+			SceneDrawer::RPT_COLOR);
 	}
 
 	// restore depth
@@ -116,3 +132,6 @@ void Ms::run()
 	fbo.unbind();
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
+
+
+} // end namespace

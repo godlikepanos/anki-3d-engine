@@ -1,5 +1,5 @@
-#ifndef BS_H
-#define BS_H
+#ifndef R_BS_H
+#define R_BS_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -8,6 +8,9 @@
 
 
 class ShaderProg;
+
+
+namespace R {
 
 
 /// Blending stage.
@@ -30,6 +33,9 @@ class Bs: public RenderingPass
 		void createFbo();
 		void createRefractFbo();
 };
+
+
+} // end namespace
 
 
 #endif

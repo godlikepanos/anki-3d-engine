@@ -118,7 +118,7 @@ void App::init(int argc, char* argv[])
 	initRenderer();
 	JobManagerSingleton::getInstance().init(4);
 	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
-		new PhyDbgDrawer);
+		new R::PhyDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
 
 	// other
 	activeCam = NULL;
@@ -214,7 +214,7 @@ void App::initDirs()
 //==============================================================================
 void App::initRenderer()
 {
-	RendererInitializer initializer;
+	R::RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
@@ -235,7 +235,7 @@ void App::initRenderer()
 	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.mainRendererQuality = 1.0;
 
-	MainRendererSingleton::getInstance().init(initializer);
+	R::MainRendererSingleton::getInstance().init(initializer);
 }
 
 

@@ -17,7 +17,7 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
-		ModelNode(SceneNode* parent = NULL);
+		ModelNode(bool inheritParentTrfFlag, SceneNode* parent);
 		virtual ~ModelNode();
 
 		/// @name Accessors
@@ -43,8 +43,8 @@ class ModelNode: public SceneNode
 };
 
 
-inline ModelNode::ModelNode(SceneNode* parent)
-:	SceneNode(SNT_MODEL, true, parent)
+inline ModelNode::ModelNode(bool inheritParentTrfFlag, SceneNode* parent)
+:	SceneNode(SNT_MODEL, inheritParentTrfFlag, parent)
 {}
 
 

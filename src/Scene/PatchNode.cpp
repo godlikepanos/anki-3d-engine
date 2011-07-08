@@ -6,8 +6,8 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent):
-	RenderableNode(parent),
+PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent)
+:	RenderableNode(true, parent),
 	rsrc(modelPatch)
 {
 	cpMtlRun.reset(new MaterialRuntime(rsrc.getCpMtl()));

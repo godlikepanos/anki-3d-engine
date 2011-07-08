@@ -5,6 +5,9 @@
 #include "RendererInitializer.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -27,8 +30,8 @@ void Ez::init(const RendererInitializer& initializer)
 
 		fbo.setNumOfColorAttachements(0);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-		                       r.getMs().getDepthFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
 
 		fbo.checkIfGood();
 
@@ -65,8 +68,12 @@ void Ez::run()
 
 	BOOST_FOREACH(const RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
-		r.getSceneDrawer().renderRenderableNode(*node, cam, SceneDrawer::RPT_DEPTH);
+		r.getSceneDrawer().renderRenderableNode(*node, cam,
+			SceneDrawer::RPT_DEPTH);
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
+
+
+} // end namespace

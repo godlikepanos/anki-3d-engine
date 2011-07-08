@@ -4,6 +4,9 @@
 #include "Scene/SkinNode.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -22,8 +25,10 @@ void SkinsDeformer::init()
 //==============================================================================
 void SkinsDeformer::deform(SkinPatchNode& node)
 {
-	ASSERT(node.getParent() != NULL); // The SkinPatchNode are always have parent
-	ASSERT(static_cast<SceneNode*>(node.getParent())->getSceneNodeType() == SceneNode::SNT_SKIN);
+	ASSERT(node.getParent() != NULL); // The SkinPatchNode are always have
+	                                  // parent
+	ASSERT(static_cast<SceneNode*>(node.getParent())->getSceneNodeType() ==
+		SceneNode::SNT_SKIN);
 
 	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
 
@@ -44,32 +49,39 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 	sProg->bind();
 
 	// Uniforms
-	sProg->findUniVar("skinningRotations")->set(&skinNode->getBoneRotations()[0],
-	                                                           skinNode->getBoneRotations().size());
+	sProg->findUniVar("skinningRotations")->set(
+		&skinNode->getBoneRotations()[0], skinNode->getBoneRotations().size());
 
-	sProg->findUniVar("skinningTranslations")->set(&skinNode->getBoneTranslations()[0],
-	                                                              skinNode->getBoneTranslations().size());
+	sProg->findUniVar("skinningTranslations")->set(
+		&skinNode->getBoneTranslations()[0],
+		skinNode->getBoneTranslations().size());
 
 	node.getTfVao().bind();
 
 	// TF
-	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, node.getTfVbo(SkinPatchNode::TFV_POSITIONS).getGlId());
+	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0,
+		node.getTfVbo(SkinPatchNode::TFV_POSITIONS).getGlId());
 
 	if(sProg == tfHwSkinningAllSProg.get())
 	{
-		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, node.getTfVbo(SkinPatchNode::TFV_NORMALS).getGlId());
-		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, node.getTfVbo(SkinPatchNode::TFV_TANGENTS).getGlId());
+		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1,
+			node.getTfVbo(SkinPatchNode::TFV_NORMALS).getGlId());
+		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2,
+			node.getTfVbo(SkinPatchNode::TFV_TANGENTS).getGlId());
 	}
 
 	//glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, this->Query);
 	glBeginTransformFeedback(GL_POINTS);
-		glDrawArrays(GL_POINTS, 0, node.getModelPatchRsrc().getMesh().getVertsNum());
+		glDrawArrays(GL_POINTS, 0,
+		node.getModelPatchRsrc().getMesh().getVertsNum());
 	glEndTransformFeedback();
 	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 
 	glDisable(GL_RASTERIZER_DISCARD);
 }
 
+
+} // end namespace
 
 
 

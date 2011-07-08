@@ -10,8 +10,9 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_, ModelNode* parent):
-	PatchNode(modelPatch_, parent),
+ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_,
+	ModelNode* parent)
+:	PatchNode(modelPatch_, parent),
 	modelPatch(modelPatch_)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;

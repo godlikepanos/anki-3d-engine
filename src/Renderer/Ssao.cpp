@@ -6,6 +6,9 @@
 #include "Scene/PerspectiveCamera.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // createFbo                                                                   =
 //==============================================================================
@@ -27,7 +30,8 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai)
 		Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
 
 		// attach
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, fai.getGlId(), 0);
 
 		// test if success
 		fbo.checkIfGood();
@@ -37,7 +41,8 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create deferred shading post-processing stage SSAO blur FBO: " + e.what());
+		throw EXCEPTION("Cannot create deferred shading post-processing "
+			"stage SSAO blur FBO: " + e.what());
 	}
 }
 
@@ -73,10 +78,12 @@ void Ssao::init(const RendererInitializer& initializer)
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
 	std::string pps = "#define HPASS\n#define COL_R\n";
-	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+	hblurSProg.loadRsrc(
+		ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_R\n";
-	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+	vblurSProg.loadRsrc(
+		ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
 
 	//
 	// noise map
@@ -121,7 +128,8 @@ void Ssao::run()
 	ssaoSProg->findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
 
 	// limitsOfNearPlane2
-	ssaoSProg->findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
+	ssaoSProg->findUniVar("limitsOfNearPlane2")->set(
+		&r.getLimitsOfNearPlane2());
 
 	// zNear
 	float zNear = cam.getZNear();
@@ -182,3 +190,5 @@ void Ssao::run()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
 
+
+} // end namespace

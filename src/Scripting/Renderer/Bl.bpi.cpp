@@ -4,16 +4,16 @@
 
 WRAP(Bl)
 {
-	class_<Bl, noncopyable>("Bl", no_init)
-		.def("isEnabled", (bool (Bl::*)() const)(&Bl::isEnabled))
-		.def("setEnabled", &Bl::setEnabled)
+	class_<R::Bl, noncopyable>("Bl", no_init)
+		.def("isEnabled", (bool (R::Bl::*)() const)(&R::Bl::isEnabled))
+		.def("setEnabled", &R::Bl::setEnabled)
 
-		.def("getBlurringIterationsNum", (uint (Bl::*)() const)(
-			&Bl::getBlurringIterationsNum))
-		.def("setBlurringIterationsNum", &Bl::setBlurringIterationsNum)
+		.def("getBlurringIterationsNum", (uint (R::Bl::*)() const)(
+			&R::Bl::getBlurringIterationsNum))
+		.def("setBlurringIterationsNum", &R::Bl::setBlurringIterationsNum)
 
-		.def("getSideBlurFactor", (float (Bl::*)() const)(
-			&Bl::getSideBlurFactor))
-		.def("setSideBlurFactor", &Bl::setSideBlurFactor)
+		.def("getSideBlurFactor", (float (R::Bl::*)() const)(
+			&R::Bl::getSideBlurFactor))
+		.def("setSideBlurFactor", &R::Bl::setSideBlurFactor)
 	;
 }

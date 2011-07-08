@@ -1,5 +1,5 @@
-#ifndef DBG_H
-#define DBG_H
+#ifndef R_DBG_H
+#define R_DBG_H
 
 #include <boost/array.hpp>
 #include <map>
@@ -13,6 +13,9 @@
 #include "Drawers/SceneDbgDrawer.h"
 #include "Drawers/CollisionDbgDrawer.h"
 #include "Util/Accessors.h"
+
+
+namespace R {
 
 
 /// Debugging stage
@@ -31,7 +34,8 @@ class Dbg: public RenderingPass
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER_BY_VAL(bool, enabled, isEnabled, setEnabled)
-		GETTER_SETTER_BY_VAL(bool, showSkeletonsEnabled, isShowSkeletonsEnabled, setShowSkeletonsEnabled)
+		GETTER_SETTER_BY_VAL(bool, showSkeletonsEnabled,
+			isShowSkeletonsEnabled, setShowSkeletonsEnabled)
 		/// @todo add others
 		/// @}
 
@@ -40,8 +44,10 @@ class Dbg: public RenderingPass
 		void begin(); ///< Initiates the draw
 		void end(); ///< Draws
 		void pushBackVertex(const Vec3& pos); ///< Something like glVertex
-		void setColor(const Vec3& col) {crntCol = col;} ///< Something like glColor
-		void setColor(const Vec4& col) {crntCol = Vec3(col);} ///< Something like glColor
+		/// Something like glColor
+		void setColor(const Vec3& col) {crntCol = col;}
+		/// Something like glColor
+		void setColor(const Vec4& col) {crntCol = Vec3(col);}
 		void setModelMat(const Mat4& modelMat);
 		/// @}
 
@@ -67,10 +73,14 @@ class Dbg: public RenderingPass
 		CollisionDbgDrawer collisionDbgDrawer;
 
 
-		/// This is a container of some precalculated spheres. Its a map that from sphere complexity it returns a vector
-		/// of lines (Vec3s in pairs)
+		/// This is a container of some precalculated spheres. Its a map that
+		/// from sphere complexity it returns a vector of lines (Vec3s in
+		/// pairs)
 		std::map<uint, Vec<Vec3> > complexityToPreCalculatedSphere;
 };
+
+
+} // end namespace
 
 
 #endif

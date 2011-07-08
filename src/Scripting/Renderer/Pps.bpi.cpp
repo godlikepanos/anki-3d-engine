@@ -6,11 +6,11 @@
 
 WRAP(Pps)
 {
-	class_<Pps, noncopyable>("Pps", no_init)
-		.def("getHdr", (Hdr& (Pps::*)())(&Pps::getHdr),
+	class_<R::Pps, noncopyable>("Pps", no_init)
+		.def("getHdr", (R::Hdr& (R::Pps::*)())(&R::Pps::getHdr),
 			return_value_policy<reference_existing_object>())
 
-		.def("getBl", (Bl& (Pps::*)())(&Pps::getBl),
+		.def("getBl", (R::Bl& (R::Pps::*)())(&R::Pps::getBl),
 			return_value_policy<reference_existing_object>())
 	;
 }

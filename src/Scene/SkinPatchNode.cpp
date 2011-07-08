@@ -9,8 +9,8 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
-	PatchNode(modelPatch_, parent)
+SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
+:	PatchNode(modelPatch_, parent)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
 
@@ -38,7 +38,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 		vboArr[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TFV_POSITIONS];
 
 		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_POSITIONS),
-			SkinsDeformer::TFSPA_POSITION,
+			R::SkinsDeformer::TFSPA_POSITION,
 			3,
 			GL_FLOAT,
 			false,
@@ -57,7 +57,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 		vboArr[Mesh::VBO_VERT_NORMALS] = &tfVbos[TFV_NORMALS];
 
 		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_NORMALS),
-			SkinsDeformer::TFSPA_NORMAL,
+			R::SkinsDeformer::TFSPA_NORMAL,
 			3,
 			GL_FLOAT,
 			false,
@@ -76,7 +76,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 		vboArr[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TFV_TANGENTS];
 
 		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_TANGENTS),
-			SkinsDeformer::TFSPA_TANGENT,
+			R::SkinsDeformer::TFSPA_TANGENT,
 			4,
 			GL_FLOAT,
 			false,
@@ -88,7 +88,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 	ASSERT(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
-		SkinsDeformer::TFSPA_VERT_WEIGHT_BONES_NUM,
+		R::SkinsDeformer::TFSPA_VERT_WEIGHT_BONES_NUM,
 		1,
 		GL_FLOAT,
 		GL_FALSE,
@@ -97,7 +97,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
-		SkinsDeformer::TFSPA_VERT_WEIGHT_BONE_IDS,
+		R::SkinsDeformer::TFSPA_VERT_WEIGHT_BONE_IDS,
 		4,
 		GL_FLOAT,
 		GL_FALSE,
@@ -105,7 +105,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent):
 		BUFFER_OFFSET(4));
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
-		SkinsDeformer::TFSPA_VERT_WEIGHT_WEIGHTS,
+		R::SkinsDeformer::TFSPA_VERT_WEIGHT_WEIGHTS,
 		4,
 		GL_FLOAT,
 		GL_FALSE,

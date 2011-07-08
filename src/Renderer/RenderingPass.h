@@ -1,5 +1,8 @@
-#ifndef RENDERING_PASS_H
-#define RENDERING_PASS_H
+#ifndef R_RENDERING_PASS_H
+#define R_RENDERING_PASS_H
+
+
+namespace R {
 
 
 class Renderer;
@@ -18,6 +21,9 @@ class RenderingPass
 	protected:
 		Renderer& r; ///< Know your father
 };
+
+
+} // end namespace
 
 
 #endif

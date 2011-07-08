@@ -8,7 +8,7 @@
 #include "Light.h"
 #include "Controller.h"
 #include "Resources/Material.h"
-#include "ParticleEmitter.h"
+#include "ParticleEmitterNode.h"
 #include "ModelNode.h"
 #include "SkinNode.h"
 
@@ -43,7 +43,8 @@ void Scene::registerNode(SceneNode* node)
 			putBackNode(cameras, static_cast<Camera*>(node));
 			break;
 		case SceneNode::SNT_PARTICLE_EMITTER:
-			putBackNode(particleEmitters, static_cast<ParticleEmitter*>(node));
+			putBackNode(particleEmitterNodes,
+				static_cast<ParticleEmitterNode*>(node));
 			break;
 		case SceneNode::SNT_MODEL:
 			putBackNode(modelNodes, static_cast<ModelNode*>(node));
@@ -74,7 +75,8 @@ void Scene::unregisterNode(SceneNode* node)
 			eraseNode(cameras, static_cast<Camera*>(node));
 			break;
 		case SceneNode::SNT_PARTICLE_EMITTER:
-			eraseNode(particleEmitters, static_cast<ParticleEmitter*>(node));
+			eraseNode(particleEmitterNodes,
+				static_cast<ParticleEmitterNode*>(node));
 			break;
 		case SceneNode::SNT_MODEL:
 			eraseNode(modelNodes, static_cast<ModelNode*>(node));

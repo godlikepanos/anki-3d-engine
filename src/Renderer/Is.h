@@ -1,5 +1,5 @@
-#ifndef IS_H
-#define IS_H
+#ifndef R_IS_H
+#define R_IS_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -15,6 +15,9 @@
 
 class PointLight;
 class SpotLight;
+
+
+namespace R {
 
 
 /// Illumination stage
@@ -39,10 +42,14 @@ class Is: private RenderingPass
 		Texture copyMsDepthFai;
 		Fbo readFbo;
 		Fbo writeFbo;
-		RsrcPtr<ShaderProg> ambientPassSProg; ///< Illumination stage ambient pass shader program
-		RsrcPtr<ShaderProg> pointLightSProg; ///< Illumination stage point light shader program
-		RsrcPtr<ShaderProg> spotLightNoShadowSProg; ///< Illumination stage spot light w/o shadow shader program
-		RsrcPtr<ShaderProg> spotLightShadowSProg; ///< Illumination stage spot light w/ shadow shader program
+		/// Illumination stage ambient pass shader program
+		RsrcPtr<ShaderProg> ambientPassSProg;
+		/// Illumination stage point light shader program
+		RsrcPtr<ShaderProg> pointLightSProg;
+		/// Illumination stage spot light w/o shadow shader program
+		RsrcPtr<ShaderProg> spotLightNoShadowSProg;
+		/// Illumination stage spot light w/ shadow shader program
+		RsrcPtr<ShaderProg> spotLightShadowSProg;
 
 		/// The ambient pass
 		void ambientPass(const Vec3& color);
@@ -62,6 +69,9 @@ class Is: private RenderingPass
 		/// Copy the MS depth FAI to one of our own
 		void copyDepth();
 };
+
+
+} // end namespace
 
 
 #endif

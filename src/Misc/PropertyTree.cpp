@@ -21,7 +21,8 @@ bool getBool(const boost::property_tree::ptree& pt, const char* tag)
 	}
 	else
 	{
-		throw EXCEPTION("Expected true or false for tag " + tag + " and not " + str);
+		throw EXCEPTION("Expected true or false for tag " + tag +
+			" and not " + str);
 	}
 }
 
@@ -29,7 +30,8 @@ bool getBool(const boost::property_tree::ptree& pt, const char* tag)
 //==============================================================================
 // getBoolOptional                                                             =
 //==============================================================================
-extern boost::optional<bool> getBoolOptional(const boost::property_tree::ptree& pt, const char* tag)
+extern boost::optional<bool> getBoolOptional(
+	const boost::property_tree::ptree& pt, const char* tag)
 {
 	boost::optional<std::string> str = pt.get_optional<std::string>(tag);
 	if(str)
@@ -44,7 +46,8 @@ extern boost::optional<bool> getBoolOptional(const boost::property_tree::ptree& 
 		}
 		else
 		{
-			throw EXCEPTION("Expected true or false for tag " + tag + " and not " + str.get());
+			throw EXCEPTION("Expected true or false for tag " + tag +
+				" and not " + str.get());
 		}
 	}
 	return boost::optional<bool>();
@@ -76,7 +79,10 @@ Vec2 getVec2(const boost::property_tree::ptree& pt)
 Vec3 getVec3(const boost::property_tree::ptree& pt)
 {
 	const boost::property_tree::ptree& tree = pt.get_child("vec3");
-	return Vec3(tree.get<float>("x"), tree.get<float>("y"), tree.get<float>("z"));
+	return Vec3(
+		tree.get<float>("x"),
+		tree.get<float>("y"),
+		tree.get<float>("z"));
 }
 
 
@@ -86,7 +92,11 @@ Vec3 getVec3(const boost::property_tree::ptree& pt)
 Vec4 getVec4(const boost::property_tree::ptree& pt)
 {
 	const boost::property_tree::ptree& tree = pt.get_child("vec4");
-	return Vec4(tree.get<float>("x"), tree.get<float>("y"), tree.get<float>("z"), tree.get<float>("w"));
+	return Vec4(
+		tree.get<float>("x"),
+		tree.get<float>("y"),
+		tree.get<float>("z"),
+		tree.get<float>("w"));
 }
 
 

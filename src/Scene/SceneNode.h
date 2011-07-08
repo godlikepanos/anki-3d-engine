@@ -30,7 +30,7 @@ class SceneNode: public Object
 			SNT_RENDERABLE
 		};
 		
-		explicit SceneNode(SceneNodeType type_, bool compoundFlag,
+		explicit SceneNode(SceneNodeType type, bool inheritParentTrfFlag,
 			SceneNode* parent);
 		virtual ~SceneNode();
 		virtual void init(const char*) = 0; ///< init using a script file
@@ -62,10 +62,10 @@ class SceneNode: public Object
 
 		/// This is called every frame
 		virtual void frameUpdate(float /*prevUpdateTime*/,
-			float /*crntTime*/) = 0;
+			float /*crntTime*/) {}
 
 		/// This is called if the node moved
-		virtual void moveUpdate() = 0;
+		virtual void moveUpdate() {}
 		/// @}
 
 		/// @name Mess with the local transform
@@ -95,9 +95,10 @@ class SceneNode: public Object
 		Transform prevWorldTransform;
 
 		SceneNodeType type;
-		/// This means that the children will inherit the world transform of
-		/// this node
-		bool compoundFlag;
+		/// This means that the the node will inherit the world transform of
+		/// its parent (if there is one) and it will not take into account its
+		/// local transform at all
+		bool inheritParentTrfFlag;
 
 		static uint uid; ///< Unique identifier
 

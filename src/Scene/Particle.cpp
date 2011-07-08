@@ -6,7 +6,7 @@
 // Constructor                                                                 =
 //==============================================================================
 Particle::Particle(float timeOfDeath_, SceneNode* parent):
-	ModelNode(parent),
+	ModelNode(false, parent),
 	timeOfDeath(timeOfDeath_)
 {}
 

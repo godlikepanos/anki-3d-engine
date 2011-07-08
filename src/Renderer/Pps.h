@@ -1,5 +1,5 @@
-#ifndef PPS_H
-#define PPS_H
+#ifndef R_PPS_H
+#define R_PPS_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -13,9 +13,13 @@
 class ShaderProg;
 
 
+namespace R {
+
+
 /// Post-processing stage.
 ///
-/// This stage is divided into 2 two parts. The first happens before blending stage and the second after.
+/// This stage is divided into 2 two parts. The first happens before blending
+/// stage and the second after.
 class Pps: private RenderingPass
 {
 	public:
@@ -51,6 +55,9 @@ class Pps: private RenderingPass
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2
 };
+
+
+} // end namespace
 
 
 #endif

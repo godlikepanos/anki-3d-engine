@@ -1,9 +1,12 @@
-#ifndef EZ_H
-#define EZ_H
+#ifndef R_EZ_H
+#define R_EZ_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
 #include "Util/Accessors.h"
+
+
+namespace R {
 
 
 /// Material stage EarlyZ pass
@@ -21,6 +24,9 @@ class Ez: public RenderingPass
 		Fbo fbo; ///< Writes to MS depth FAI
 		bool enabled;
 };
+
+
+} // end namespace
 
 
 #endif

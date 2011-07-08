@@ -1,5 +1,5 @@
-#ifndef SSAO_H
-#define SSAO_H
+#ifndef R_SSAO_H
+#define R_SSAO_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -8,6 +8,9 @@
 #include "Resources/RsrcPtr.h"
 #include "GfxApi/BufferObjects/Vbo.h"
 #include "GfxApi/BufferObjects/Vao.h"
+
+
+namespace R {
 
 
 /// Screen space ambient occlusion pass
@@ -47,6 +50,9 @@ class Ssao: private RenderingPass
 
 		void createFbo(Fbo& fbo, Texture& fai);
 };
+
+
+} // end namespace
 
 
 #endif

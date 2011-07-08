@@ -5,11 +5,14 @@
 #include "RendererInitializer.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-Pps::Pps(Renderer& r_):
-	RenderingPass(r_),
+Pps::Pps(Renderer& r_)
+:	RenderingPass(r_),
 	hdr(r_),
 	ssao(r_),
 	bl(r_)
@@ -41,14 +44,17 @@ void Pps::init(const RendererInitializer& initializer)
 		prePassFbo.create();
 		prePassFbo.bind();
 		prePassFbo.setNumOfColorAttachements(1);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, prePassFai);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, prePassFai.getGlId(), 0);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+			GL_FLOAT, prePassFai);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, prePassFai.getGlId(), 0);
 		prePassFbo.checkIfGood();
 		prePassFbo.unbind();
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create pre-pass post-processing stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create pre-pass post-processing stage FBO: " +
+			e.what());
 	}
 
 	// SProg
@@ -58,7 +64,8 @@ void Pps::init(const RendererInitializer& initializer)
 		pps += "#define SSAO_ENABLED\n";
 	}
 
-	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPrePass.glsl", pps.c_str()).c_str());
+	prePassSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/PpsPrePass.glsl", pps.c_str()).c_str());
 
 	//
 	// Init post pass
@@ -70,14 +77,17 @@ void Pps::init(const RendererInitializer& initializer)
 		postPassFbo.create();
 		postPassFbo.bind();
 		postPassFbo.setNumOfColorAttachements(1);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, postPassFai);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postPassFai.getGlId(), 0);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+			GL_FLOAT, postPassFai);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, postPassFai.getGlId(), 0);
 		postPassFbo.checkIfGood();
 		postPassFbo.unbind();
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create post-pass post-processing stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create post-pass post-processing stage FBO: " +
+			e.what());
 	}
 
 	// SProg
@@ -88,7 +98,8 @@ void Pps::init(const RendererInitializer& initializer)
 		pps += "#define HDR_ENABLED\n";
 	}
 
-	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsPostPass.glsl", pps.c_str()).c_str());
+	postPassSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/PpsPostPass.glsl", pps.c_str()).c_str());
 
 	//
 	// Init Bl after
@@ -158,3 +169,6 @@ void Pps::runPostPass()
 	//
 	bl.run();
 }
+
+
+} // end namespace

@@ -2,6 +2,8 @@
 #include "../Dbg.h"
 #include "Collision/Collision.h"
 
+namespace R {
+
 
 //==============================================================================
 // draw (Sphere)                                                               =
@@ -61,3 +63,6 @@ void CollisionDbgDrawer::draw(const Col::Plane& plane)
 	dbg.setModelMat(trf);
 	dbg.renderGrid();
 }
+
+
+} // end namespace

@@ -10,6 +10,9 @@
 #include "RendererInitializer.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -31,7 +34,10 @@ void Sm::init(const RendererInitializer& initializer)
 	initLevel(resolution, level0Distance, bilinearEnabled, levels[0]);
 	for(uint i = 1; i < levels.size(); i++)
 	{
-		initLevel(levels[i - 1].resolution / 2, levels[i - 1].distance * 2.0, bilinearEnabled, levels[i]);
+		initLevel(levels[i - 1].resolution / 2,
+			levels[i - 1].distance * 2.0,
+			bilinearEnabled,
+			levels[i]);
 	}
 }
 
@@ -52,8 +58,8 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 		level.fbo.bind();
 
 		// texture
-		Renderer::createFai(level.resolution, level.resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT,
-		                    GL_FLOAT, level.shadowMap);
+		Renderer::createFai(level.resolution, level.resolution,
+			GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, level.shadowMap);
 		if(level.bilinear)
 		{
 			level.shadowMap.setFiltering(Texture::TFT_LINEAR);
@@ -62,12 +68,16 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 		{
 			level.shadowMap.setFiltering(Texture::TFT_NEAREST);
 		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
+			GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		/*
-		 * If you dont want to use the FFP for comparing the shadowmap (the above two lines) then you can make the comparison
-		 * inside the glsl shader. The GL_LEQUAL means that: shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:
-		 * R = _tex_coord2.z/_tex_coord2.w; and the Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
+		 * If you dont want to use the FFP for comparing the shadowmap
+		 * (the above two lines) then you can make the comparison
+		 * inside the glsl shader. The GL_LEQUAL means that:
+		 * shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:
+		 * R = _tex_coord2.z/_tex_coord2.w; and the
+		 * Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
 		 * Hardware filters like GL_LINEAR cannot be applied.
 		 */
 
@@ -75,7 +85,8 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 		level.fbo.setNumOfColorAttachements(0);
 
 		// attach the texture
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, level.shadowMap.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+			GL_TEXTURE_2D, level.shadowMap.getGlId(), 0);
 
 		// test if success
 		level.fbo.checkIfGood();
@@ -133,14 +144,16 @@ void Sm::run(const Light& light, float distance)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node, light.getVisibleMsRenderableNodes())
+	BOOST_FOREACH(const RenderableNode* node,
+		light.getVisibleMsRenderableNodes())
 	{
 		switch(light.getType())
 		{
 			case Light::LT_SPOT:
 			{
 				const SpotLight& sl = static_cast<const SpotLight&>(light);
-				r.getSceneDrawer().renderRenderableNode(*node, sl.getCamera(), SceneDrawer::RPT_DEPTH);
+				r.getSceneDrawer().renderRenderableNode(*node, sl.getCamera(),
+					SceneDrawer::RPT_DEPTH);
 				break;
 			}
 
@@ -157,3 +170,6 @@ void Sm::run(const Light& light, float distance)
 	// FBO
 	crntLevel->fbo.unbind();
 }
+
+
+} // end namespace

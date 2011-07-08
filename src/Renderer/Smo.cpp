@@ -12,6 +12,9 @@
 #include "Resources/Mesh.h"
 
 
+namespace R {
+
+
 const float THRESHOLD = 0.2;
 
 
@@ -43,9 +46,11 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 	// Sphere
 	sphereGeom.mesh.loadRsrc("engine-rsrc/sphere.mesh");
 	sphereGeom.vao.create();
-	sphereGeom.vao.attachArrayBufferVbo(sphereGeom.mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
-										*sProg->findAttribVar("position"), 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	sphereGeom.vao.attachElementArrayBufferVbo(sphereGeom.mesh->getVbo(Mesh::VBO_VERT_INDECES));
+	sphereGeom.vao.attachArrayBufferVbo(
+		sphereGeom.mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
+		*sProg->findAttribVar("position"), 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	sphereGeom.vao.attachElementArrayBufferVbo(
+		sphereGeom.mesh->getVbo(Mesh::VBO_VERT_INDECES));
 
 	// Cameras
 	initCamGeom();
@@ -57,15 +62,18 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 //==============================================================================
 void Smo::initCamGeom()
 {
-	boost::array<const char*, Camera::CT_NUM> files = {{"engine-rsrc/pyramid.mesh", "engine-rsrc/cube.mesh"}};
+	boost::array<const char*, Camera::CT_NUM> files = {{
+		"engine-rsrc/pyramid.mesh", "engine-rsrc/cube.mesh"}};
 
 	for(uint i = 0; i < Camera::CT_NUM; i++)
 	{
 		camGeom[i].mesh.loadRsrc(files[i]);
 		camGeom[i].vao.create();
-		camGeom[i].vao.attachArrayBufferVbo(camGeom[i].mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
-		                                    *sProg->findAttribVar("position"), 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		camGeom[i].vao.attachElementArrayBufferVbo(camGeom[i].mesh->getVbo(Mesh::VBO_VERT_INDECES));
+		camGeom[i].vao.attachArrayBufferVbo(
+			camGeom[i].mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
+			*sProg->findAttribVar("position"), 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		camGeom[i].vao.attachElementArrayBufferVbo(
+			camGeom[i].mesh->getVbo(Mesh::VBO_VERT_INDECES));
 	}
 }
 
@@ -120,7 +128,8 @@ void Smo::run(const PointLight& light)
 {
 	const Vec3& o = light.getWorldTransform().getOrigin();
 	const Vec3& c = r.getCamera().getWorldTransform().getOrigin();
-	bool inside =  (o - c).getLength() <= (light.getRadius() + r.getCamera().getZNear() + THRESHOLD);
+	bool inside =  (o - c).getLength() <=
+		(light.getRadius() + r.getCamera().getZNear() + THRESHOLD);
 
 	// set GL state
 	setUpGl(inside);
@@ -128,13 +137,15 @@ void Smo::run(const PointLight& light)
 	// set shared prog
 	const float SCALE = 1.0; // we scale the sphere a little
 	sProg->bind();
-	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(), Mat3::getIdentity(), light.getRadius() * SCALE);
+	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(),
+		Mat3::getIdentity(), light.getRadius() * SCALE);
 	Mat4 trf = r.getViewProjectionMat() * modelMat;
 	sProg->findUniVar("modelViewProjectionMat")->set(&trf);
 
 	// render sphere to the stencil buffer
 	sphereGeom.vao.bind();
-	glDrawElements(GL_TRIANGLES, sphereGeom.mesh->getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, sphereGeom.mesh->getVertIdsNum(),
+		GL_UNSIGNED_SHORT, 0);
 	sphereGeom.vao.unbind();
 
 	// restore GL
@@ -164,16 +175,20 @@ void Smo::run(const SpotLight& light)
 	{
 		case Camera::CT_PERSPECTIVE:
 		{
-			const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(lcam);
-			localMat(0, 0) = tan(pcam.getFovX() / 2.0) * pcam.getZFar(); // Scale in x
-			localMat(1, 1) = tan(pcam.getFovY() / 2.0) * pcam.getZFar(); // Scale in y
+			const PerspectiveCamera& pcam =
+				static_cast<const PerspectiveCamera&>(lcam);
+			// Scale in x
+			localMat(0, 0) = tan(pcam.getFovX() / 2.0) * pcam.getZFar();
+			// Scale in y
+			localMat(1, 1) = tan(pcam.getFovY() / 2.0) * pcam.getZFar();
 			localMat(2, 2) = pcam.getZFar(); // Scale in z
 			break;
 		}
 
 		case Camera::CT_ORTHOGRAPHIC:
 		{
-			const OrthographicCamera& ocam = static_cast<const OrthographicCamera&>(lcam);
+			const OrthographicCamera& ocam =
+				static_cast<const OrthographicCamera&>(lcam);
 			Vec3 tsl;
 			float left = ocam.getLeft();
 			float right = ocam.getRight();
@@ -213,9 +228,13 @@ void Smo::run(const SpotLight& light)
 	//mesh->get
 
 	cg.vao.bind();
-	glDrawElements(GL_TRIANGLES, cg.mesh->getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, cg.mesh->getVertIdsNum(),
+		GL_UNSIGNED_SHORT, 0);
 	cg.vao.unbind();
 
 	// restore GL state
 	restoreGl(inside);
 }
+
+
+} // end namespace

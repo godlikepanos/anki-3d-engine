@@ -31,7 +31,6 @@ class SkinPatchNode: public PatchNode
 		/// @}
 
 		virtual void moveUpdate() {}
-		virtual void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	private:
 		/// VBOs that contain the deformed vertex attributes

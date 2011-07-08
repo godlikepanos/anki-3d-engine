@@ -30,29 +30,41 @@ class Vao
 		/// Destroy
 		void destroy();
 
-		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml 
+		/// Attach an array buffer VBO. See @link
+		/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
 		/// @endlink
 		/// @param vbo The VBO to attach
 		/// @param attribVar For the shader attribute location
-		/// @param size Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4
+		/// @param size Specifies the number of components per generic vertex
+		/// attribute. Must be 1, 2, 3, 4
 		/// @param type GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
-		/// @param normalized Specifies whether fixed-point data values should be normalized
-		/// @param stride Specifies the byte offset between consecutive generic vertex attributes
-		/// @param pointer Specifies a offset of the first component of the first generic vertex attribute in the array
-		void attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar, GLint size, GLenum type,
-		                          GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+		/// @param normalized Specifies whether fixed-point data values should
+		/// be normalized
+		/// @param stride Specifies the byte offset between consecutive generic
+		/// vertex attributes
+		/// @param pointer Specifies a offset of the first component of the
+		/// first generic vertex attribute in the array
+		void attachArrayBufferVbo(const Vbo& vbo,
+			const SProgAttribVar& attribVar, GLint size, GLenum type,
+			GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 
-		/// Attach an array buffer VBO. See @link http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+		/// Attach an array buffer VBO. See @link
+		/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
 		/// @endlink
 		/// @param vbo The VBO to attach
 		/// @param attribVarLocation Shader attribute location
-		/// @param size Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4
+		/// @param size Specifies the number of components per generic vertex
+		/// attribute. Must be 1, 2, 3, 4
 		/// @param type GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
-		/// @param normalized Specifies whether fixed-point data values should be normalized
-		/// @param stride Specifies the byte offset between consecutive generic vertex attributes
-		/// @param pointer Specifies a offset of the first component of the first generic vertex attribute in the array
-		void attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint size, GLenum type,
-		                          GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+		/// @param normalized Specifies whether fixed-point data values should
+		/// be normalized
+		/// @param stride Specifies the byte offset between consecutive generic
+		/// vertex attributes
+		/// @param pointer Specifies a offset of the first component of the
+		/// first generic vertex attribute in the array
+		void attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
+			GLint size, GLenum type, GLboolean normalized, GLsizei stride,
+			const GLvoid* pointer);
 
 		/// Attach an element array buffer VBO
 		void attachElementArrayBufferVbo(const Vbo& vbo);

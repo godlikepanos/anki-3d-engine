@@ -9,7 +9,8 @@
 #include "Util/Exception.h"
 
 
-static const char* MULTIPLE_DEF_MSG = " already defined in the same place. Check for circular or multiple includance";
+static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
+	"Check for circular or multiple includance";
 
 
 //==============================================================================
@@ -166,7 +167,8 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename,
 					{
 						// play
 
-						// its defined in same place so there is probable circular includance
+						// its defined in same place so there is probable
+						// circular includance
 						if(geomShaderBegins.definedInLine ==
 							scanner.getLineNumber() &&
 							geomShaderBegins.definedInFile == filename)
@@ -326,9 +328,11 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename,
 							}
 
 							// all ok, push it back
-							output.trffbVaryings.push_back(TrffbVaryingPragma(filename, scanner.getLineNumber(),
-							                                                  varName));
-							sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
+							output.trffbVaryings.push_back(
+								TrffbVaryingPragma(filename,
+								scanner.getLineNumber(), varName));
+							sourceLines.push_back(
+								lines[scanner.getLineNumber() - 1]);
 						}
 						else
 						{
@@ -339,7 +343,7 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename,
 					// attribute
 					//
 					else if(token->getCode() == Scanner::TC_IDENTIFIER &&
-					        strcmp(token->getValue().getString(), "attribute") == 0)
+						strcmp(token->getValue().getString(), "attribute") == 0)
 					{
 						throw EXCEPTION("Deprecated feature");
 
@@ -348,42 +352,57 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename,
 						{
 							std::string varName = token->getValue().getString();
 							token = &scanner.getNextToken();
-							if(token->getCode() == Scanner::TC_NUMBER && token->getDataType() == Scanner::DT_INT)
+							if(token->getCode() == Scanner::TC_NUMBER &&
+								token->getDataType() == Scanner::DT_INT)
 							{
 								uint loc = token->getValue().getInt();
 
-								// check if already defined and for circular includance
-								Vec<ShaderVarPragma>::const_iterator attrib = findNamed(output.attributes, varName);
+								// check if already defined and for circular
+								// includance
+								Vec<ShaderVarPragma>::const_iterator attrib =
+									findNamed(output.attributes, varName);
 								if(attrib != output.attributes.end())
 								{
-									if(attrib->definedInLine == scanner.getLineNumber() &&
-									   attrib->definedInFile == filename)
+									if(attrib->definedInLine ==
+										scanner.getLineNumber() &&
+										attrib->definedInFile == filename)
 									{
-										throw PARSER_EXCEPTION("\"" + varName + "\"" + MULTIPLE_DEF_MSG);
+										throw PARSER_EXCEPTION("\"" + varName +
+											"\"" + MULTIPLE_DEF_MSG);
 									}
 									else
 									{
-										throw PARSER_EXCEPTION("Attribute \"" + varName + "\" already defined at " +
-										                       attrib->definedInFile + ":" +
-										                       boost::lexical_cast<std::string>(attrib->definedInLine));
+										throw PARSER_EXCEPTION(
+											"Attribute \"" + varName +
+											"\" already defined at " +
+											attrib->definedInFile + ":" +
+											boost::lexical_cast<std::string>(
+											attrib->definedInLine));
 									}
 								}
 								// search if another var has the same loc
-								for(attrib = output.attributes.begin(); attrib != output.attributes.end(); ++attrib)
+								for(attrib = output.attributes.begin();
+									attrib != output.attributes.end(); ++attrib)
 								{
 									if(attrib->customLoc == loc)
 									{
-										throw PARSER_EXCEPTION("The attributes \"" + attrib->name + "\" (" +
-										                       attrib->definedInFile + ":" +
-										                       boost::lexical_cast<std::string>(attrib->definedInLine) +
-										                       ") and \"" + varName + "\" share the same location");
+										throw PARSER_EXCEPTION(
+											"The attributes \"" +
+											attrib->name + "\" (" +
+											attrib->definedInFile + ":" +
+											boost::lexical_cast<std::string>(
+											attrib->definedInLine) +
+											") and \"" + varName +
+											"\" share the same location");
 									}
 								}
 
 								// all ok, push it back
-								output.attributes.push_back(ShaderVarPragma(filename, scanner.getLineNumber(),
-								                                            varName, loc));
-								sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
+								output.attributes.push_back(ShaderVarPragma(
+									filename, scanner.getLineNumber(), varName,
+									loc));
+								sourceLines.push_back(
+									lines[scanner.getLineNumber() - 1]);
 							}
 							else
 							{
@@ -397,12 +416,15 @@ void ShaderPrePreprocessor::parseFileForPragmas(const std::string& filename,
 					}
 					else
 					{
-						throw PARSER_EXCEPTION("#pragma anki followed by incorrect " + token->getInfoStr());
+						throw PARSER_EXCEPTION(
+							"#pragma anki followed by incorrect " +
+							token->getInfoStr());
 					}
 				} // end if anki
 
 				token = &scanner.getNextToken();
-				if(token->getCode()!=Scanner::TC_NEWLINE && token->getCode()!=Scanner::TC_EOF)
+				if(token->getCode()!=Scanner::TC_NEWLINE &&
+					token->getCode()!=Scanner::TC_EOF)
 				{
 					throw PARSER_EXCEPTION_EXPECTED("newline or end of file");
 				}
@@ -486,8 +508,8 @@ void ShaderPrePreprocessor::parseFile(const char* filename)
 			}
 
 			// vert shader code
-			int limit = (geomShaderBegins.definedInLine != -1) ? geomShaderBegins.globalLine-1 :
-			                                                     fragShaderBegins.globalLine-1;
+			int limit = (geomShaderBegins.definedInLine != -1) ?
+				geomShaderBegins.globalLine-1 : fragShaderBegins.globalLine-1;
 			for(int i = vertShaderBegins.globalLine - 1; i < limit; ++i)
 			{
 				output.vertShaderSource += sourceLines[i] + "\n";
@@ -496,14 +518,16 @@ void ShaderPrePreprocessor::parseFile(const char* filename)
 			// geom shader code
 			if(geomShaderBegins.definedInLine != -1)
 			{
-				for(int i = geomShaderBegins.globalLine - 1; i < fragShaderBegins.globalLine - 1; ++i)
+				for(int i = geomShaderBegins.globalLine - 1;
+					i < fragShaderBegins.globalLine - 1; ++i)
 				{
 					output.geomShaderSource += sourceLines[i] + "\n";
 				}
 			}
 
 			// frag shader code
-			for(int i = fragShaderBegins.globalLine - 1; i < int(sourceLines.size()); ++i)
+			for(int i = fragShaderBegins.globalLine - 1;
+				i < int(sourceLines.size()); ++i)
 			{
 				output.fragShaderSource += sourceLines[i] + "\n";
 			}

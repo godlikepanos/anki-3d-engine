@@ -46,20 +46,23 @@ class ShaderPrePreprocessor
 			std::string name;
 			uint customLoc;
 
-			ShaderVarPragma(const std::string& definedInFile_, int definedInLine_, const std::string& name_,
-			                uint customLoc_);
+			ShaderVarPragma(const std::string& definedInFile_,
+				int definedInLine_, const std::string& name_,
+				uint customLoc_);
 		};
 
 		struct TrffbVaryingPragma: Pragma
 		{
 			std::string name;
 
-			TrffbVaryingPragma(const std::string& definedInFile_, int definedInLine_, const std::string& name_);
+			TrffbVaryingPragma(const std::string& definedInFile_,
+				int definedInLine_, const std::string& name_);
 		};
 	
 		struct CodeBeginningPragma: Pragma
 		{
-			int globalLine; ///< The line number in the ShaderPrePreprocessor-compatible file
+			/// The line number in the ShaderPrePreprocessor-compatible file
+			int globalLine;
 
 			CodeBeginningPragma(): globalLine(-1) {}
 		};

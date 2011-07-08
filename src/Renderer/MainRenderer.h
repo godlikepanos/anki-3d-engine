@@ -1,8 +1,11 @@
-#ifndef MAIN_RENDERER_H
-#define MAIN_RENDERER_H
+#ifndef R_MAIN_RENDERER_H
+#define R_MAIN_RENDERER_H
 
 #include "Renderer.h"
 #include "Util/Singleton.h"
+
+
+namespace R {
 
 
 /// Main onscreen renderer
@@ -15,19 +18,23 @@ class MainRenderer: public Renderer
 
 		/// @name Setters & getters
 		/// @{
-		GETTER_SETTER_BY_VAL(int, screenshotJpegQuality, getScreenshotJpegQuality, setScreenshotJpegQuality)
+		GETTER_SETTER_BY_VAL(int, screenshotJpegQuality,
+			getScreenshotJpegQuality, setScreenshotJpegQuality)
 		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
 		GETTER_RW(Dbg, dbg, getDbg)
 		/// @}
 
-		/// The same as Renderer::init but with additional initialization. @see Renderer::init
+		/// The same as Renderer::init but with additional initialization.
+		/// @see Renderer::init
 		void init(const RendererInitializer& initializer);
 
-		/// The same as Renderer::render but in addition it renders the final FAI to the framebuffer
+		/// The same as Renderer::render but in addition it renders the final
+		/// FAI to the framebuffer
 		/// @param cam @see Renderer::render
 		void render(Camera& cam);
 
-		/// Save the color buffer to a tga (lossless & uncompressed & slow) or jpeg (lossy & compressed/// fast)
+		/// Save the color buffer to a tga (lossless & uncompressed & slow)
+		/// or jpeg (lossy & compressed fast)
 		/// @param filename The file to save
 		void takeScreenshot(const char* filename);
 
@@ -38,10 +45,11 @@ class MainRenderer: public Renderer
 		/// @}
 
 		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program
-		int screenshotJpegQuality; ///< The quality of the JPEG screenshots. From 0 to 100
+		int screenshotJpegQuality; ///< The quality of the JPEG screenshots.
+		                           ///< From 0 to 100
 
-		/// The global rendering quality of the raster image. Its a percentage of the application's window size. From
-		/// 0.0(low) to 1.0(high)
+		/// The global rendering quality of the raster image. Its a percentage
+		/// of the application's window size. From 0.0(low) to 1.0(high)
 		float renderingQuality;
 
 		void takeScreenshotTga(const char* filename);
@@ -54,6 +62,9 @@ inline MainRenderer::MainRenderer():
 	dbg(*this),
 	screenshotJpegQuality(90)
 {}
+
+
+} // end namespace
 
 
 #endif

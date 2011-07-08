@@ -8,13 +8,18 @@
 class PointLight: public Light
 {
 	public:
-		PointLight(SceneNode* parent = NULL): Light(LT_POINT, parent) {}
+		PointLight(bool inheritParentTrfFlag, SceneNode* parent);
 		GETTER_SETTER(float, radius, getRadius, setRadius)
 		void init(const char* filename);
 
 	private:
 		float radius;
 };
+
+
+inline PointLight::PointLight(bool inheritParentTrfFlag, SceneNode* parent)
+:	Light(LT_POINT, inheritParentTrfFlag, parent)
+{}
 
 
 inline void PointLight::init(const char* filename)

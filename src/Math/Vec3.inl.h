@@ -69,7 +69,7 @@ inline Vec3::Vec3(const Quat& q)
 }
 
 //==============================================================================
-// Accessors                                                                            =
+// Accessors                                                                   =
 //==============================================================================
 
 inline float& Vec3::x()
@@ -422,8 +422,8 @@ inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 		Vec4 v4((*this), 1.0);
 		for(int i = 0; i < 3; i++)
 		{
-			_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i), v4.getMm(),
-				0xF1));
+			_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i),
+				v4.getMm(), 0xF1));
 		}
 		return out;
 	#else

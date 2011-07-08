@@ -185,16 +185,16 @@ void SkelAnimModelNodeCtrl::update(float)
 	updateBoneTransforms(skinNode.getSkin().getSkeleton(),
 		skinNode.getBoneTranslations(), skinNode.getBoneRotations());
 
-	if(MainRendererSingleton::getInstance().getDbg().isEnabled() &&
-		MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
+	if(R::MainRendererSingleton::getInstance().getDbg().isEnabled() &&
+		R::MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
 	{
 		deform(skinNode.getSkin().getSkeleton(),
 			skinNode.getBoneTranslations(), skinNode.getBoneRotations(),
 			skinNode.getHeads(), skinNode.getTails());
 	}
 
-	SkinsDeformer& sd =
-		MainRendererSingleton::getInstance().getSkinsDeformer();
+	R::SkinsDeformer& sd =
+		R::MainRendererSingleton::getInstance().getSkinsDeformer();
 
 	BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())
 	{

@@ -12,6 +12,9 @@
 #include "Core/Logger.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -27,8 +30,10 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	//
 	RendererInitializer initializer = initializer_;
 	renderingQuality = initializer.mainRendererQuality;
-	initializer.width = AppSingleton::getInstance().getWindowWidth() * renderingQuality;
-	initializer.height = AppSingleton::getInstance().getWindowHeight() * renderingQuality;
+	initializer.width = AppSingleton::getInstance().getWindowWidth() *
+		renderingQuality;
+	initializer.height = AppSingleton::getInstance().getWindowHeight() *
+		renderingQuality;
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	INFO("Main renderer initialized");
@@ -50,8 +55,10 @@ void MainRenderer::initGl()
 	glGetError();
 
 	// print GL info
-	INFO("OpenGL info: OGL " << reinterpret_cast<const char*>(glGetString(GL_VERSION)) <<
-	     ", GLSL " << reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+	INFO("OpenGL info: OGL " <<
+		reinterpret_cast<const char*>(glGetString(GL_VERSION)) <<
+		", GLSL " << reinterpret_cast<const char*>(
+			glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// get max texture units
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
@@ -98,7 +105,8 @@ void MainRenderer::render(Camera& cam_)
 	//
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 
-	setViewport(0, 0, AppSingleton::getInstance().getWindowWidth(), AppSingleton::getInstance().getWindowHeight());
+	setViewport(0, 0, AppSingleton::getInstance().getWindowWidth(),
+		AppSingleton::getInstance().getWindowHeight());
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 	sProg->bind();
@@ -123,7 +131,8 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	}
 
 	// write headers
-	unsigned char tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	unsigned char tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0,
+		0, 0, 0, 0};
 	unsigned char header[6];
 
 	header[1] = getWidth() / 256;
@@ -139,7 +148,8 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	// write the buffer
 	char* buffer = (char*)calloc(getWidth()*getHeight()*3, sizeof(char));
 
-	glReadPixels(0, 0, getWidth(), getHeight(), GL_BGR, GL_UNSIGNED_BYTE, buffer);
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_BGR, GL_UNSIGNED_BYTE,
+		buffer);
 	fs.write(buffer, getWidth()*getHeight()*3);
 
 	// end
@@ -179,14 +189,16 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 
 	// read from OGL
 	char* buffer = (char*)malloc(getWidth()*getHeight()*3*sizeof(char));
-	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE,
+		buffer);
 
 	// write buffer to file
 	JSAMPROW row_pointer;
 
 	while(cinfo.next_scanline < cinfo.image_height)
 	{
-		row_pointer = (JSAMPROW) &buffer[(getHeight()-1-cinfo.next_scanline)*3*getWidth()];
+		row_pointer = (JSAMPROW)&buffer[(getHeight() - 1 -
+			cinfo.next_scanline) * 3 * getWidth()];
 		jpeg_write_scanlines(&cinfo, &row_pointer, 1);
 	}
 
@@ -221,4 +233,7 @@ void MainRenderer::takeScreenshot(const char* filename)
 	}
 	//INFO("Screenshot \"" << filename << "\" saved");
 }
+
+
+} // end namespace
 

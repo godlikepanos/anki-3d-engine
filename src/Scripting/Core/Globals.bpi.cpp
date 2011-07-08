@@ -9,7 +9,10 @@
 
 
 WRAP_SINGLETON(LoggerSingleton)
-WRAP_SINGLETON(MainRendererSingleton)
+
+typedef R::MainRendererSingleton RMainRendererSingleton;
+WRAP_SINGLETON(RMainRendererSingleton)
+
 WRAP_SINGLETON(InputSingleton)
 WRAP_SINGLETON(SceneSingleton)
 WRAP_SINGLETON(AppSingleton)
@@ -21,7 +24,7 @@ WRAP_SINGLETON(EventManagerSingleton)
 void boostPythonWrapAllGlobals()
 {
 	CALL_WRAP(LoggerSingleton);
-	CALL_WRAP(MainRendererSingleton);
+	CALL_WRAP(RMainRendererSingleton);
 	CALL_WRAP(InputSingleton);
 	CALL_WRAP(SceneSingleton);
 	CALL_WRAP(AppSingleton);

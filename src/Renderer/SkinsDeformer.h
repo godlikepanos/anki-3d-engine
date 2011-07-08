@@ -1,11 +1,14 @@
-#ifndef SKINS_DEFORMER_H
-#define SKINS_DEFORMER_H
+#ifndef R_SKINS_DEFORMER_H
+#define R_SKINS_DEFORMER_H
 
 #include "Resources/RsrcPtr.h"
 
 
 class ShaderProg;
 class SkinPatchNode;
+
+
+namespace R {
 
 
 /// @todo
@@ -29,6 +32,9 @@ class SkinsDeformer
 		RsrcPtr<ShaderProg> tfHwSkinningAllSProg;
 		RsrcPtr<ShaderProg> tfHwSkinningPosSProg;
 };
+
+
+} // end namespace
 
 
 #endif

@@ -4,8 +4,8 @@
 
 WRAP(Dbg)
 {
-	class_<Dbg, noncopyable>("Dbg", no_init)
-		.def("isEnabled", (bool (Dbg::*)() const)(&Dbg::isEnabled))
-		.def("setEnabled", &Dbg::setEnabled)
+	class_<R::Dbg, noncopyable>("Dbg", no_init)
+		.def("isEnabled", (bool (R::Dbg::*)() const)(&R::Dbg::isEnabled))
+		.def("setEnabled", &R::Dbg::setEnabled)
 	;
 }
