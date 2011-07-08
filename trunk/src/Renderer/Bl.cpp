@@ -4,6 +4,9 @@
 #include "Resources/ShaderProg.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -29,19 +32,23 @@ void Bl::init(const RendererInitializer& initializer)
 	// Horizontal
 	try
 	{
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB, GL_FLOAT, blurFai);
+		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+			GL_FLOAT, blurFai);
 
 		hBlurFbo.create();
 		hBlurFbo.bind();
 		hBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurFai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, blurFai.getGlId(), 0);
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create horizontal blur post-processing stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create horizontal blur post-processing stage "
+			"FBO: " + e.what());
 	}
 
-	hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
+	hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
 	try
@@ -49,15 +56,17 @@ void Bl::init(const RendererInitializer& initializer)
 		vBlurFbo.create();
 		vBlurFbo.bind();
 		vBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-		                       r.getPps().getPostPassFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, r.getPps().getPostPassFai().getGlId(), 0);
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create vertical blur post-processing stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create vertical blur post-processing stage "
+			"FBO: " + e.what());
 	}
 
-	vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache("shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
+	vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+		"shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur
 	try
@@ -65,12 +74,13 @@ void Bl::init(const RendererInitializer& initializer)
 		sideBlurFbo.create();
 		sideBlurFbo.bind();
 		sideBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-							   r.getMs().getNormalFai().getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, r.getMs().getNormalFai().getGlId(), 0);
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create side blur post-processing stage FBO: " + e.what());
+		throw EXCEPTION("Cannot create side blur post-processing stage FBO: " +
+			e.what());
 	}
 
 	sideBlurMap.loadRsrc("engine-rsrc/side-blur.png");
@@ -149,3 +159,5 @@ void Bl::run()
 	runBlur();
 }
 
+
+} // end namespace

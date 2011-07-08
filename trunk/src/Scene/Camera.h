@@ -37,7 +37,8 @@ class Camera: public SceneNode, public VisibilityInfo
 			FP_NUM
 		};
 
-		Camera(CameraType camType, bool compoundFlag, SceneNode* parent);
+		Camera(CameraType camType, bool inheritParentTrfFlag,
+			SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -121,8 +122,9 @@ class Camera: public SceneNode, public VisibilityInfo
 
 
 
-inline Camera::Camera(CameraType camType, bool compoundFlag, SceneNode* parent)
-:	SceneNode(SNT_CAMERA, compoundFlag, parent),
+inline Camera::Camera(CameraType camType, bool inheritParentTrfFlag,
+	SceneNode* parent)
+:	SceneNode(SNT_CAMERA, inheritParentTrfFlag, parent),
 	type(camType)
 {
 	name = "Camera:" + name;

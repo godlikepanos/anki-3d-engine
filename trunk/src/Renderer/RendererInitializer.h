@@ -1,10 +1,14 @@
-#ifndef RENDERER_INITIALIZER_H
-#define RENDERER_INITIALIZER_H
+#ifndef R_RENDERER_INITIALIZER_H
+#define R_RENDERER_INITIALIZER_H
 
 #include <cstring>
 
 
-/// A struct to initialize the renderer. It contains a few extra params for the MainRenderer
+namespace R {
+
+
+/// A struct to initialize the renderer. It contains a few extra params for
+/// the MainRenderer
 struct RendererInitializer
 {
 	// Ms
@@ -79,5 +83,9 @@ struct RendererInitializer
 		memcpy(this, &initializer, sizeof(RendererInitializer));
 	}
 };
+
+
+} // end namespace
+
 
 #endif

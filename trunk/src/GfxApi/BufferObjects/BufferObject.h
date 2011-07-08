@@ -6,14 +6,16 @@
 #include "Util/StdTypes.h"
 
 
-/// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc) to prevent us from making idiotic errors
+/// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
+/// to prevent us from making idiotic errors
 class BufferObject
 {
 	public:
 		BufferObject(): glId(0) {}
 
 		/// Default constructor @see create
-		BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
+		BufferObject(GLenum target, uint sizeInBytes,
+			const void* dataPtr, GLenum usage);
 
 		/// It deletes the BO from the GL context
 		virtual ~BufferObject();
@@ -32,20 +34,26 @@ class BufferObject
 		/// Unbind BO
 		void unbind() const;
 
-		/// Creates a new BO with the given parameters and checks if everything went OK. Throws exception if fails
+		/// Creates a new BO with the given parameters and checks if everything
+		/// went OK. Throws exception if fails
 		/// @param target Depends on the BO
-		/// @param sizeInBytes The size of the buffer that we will allocate in bytes
-		/// @param dataPtr Points to the data buffer to copy to the VGA memory. Put NULL if you want just to allocate memory
-		/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW only!!!!!!!!!
+		/// @param sizeInBytes The size of the buffer that we will allocate in
+		/// bytes
+		/// @param dataPtr Points to the data buffer to copy to the VGA memory.
+		/// Put NULL if you want just to allocate memory
+		/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or
+		/// GL_DYNAMIC_DRAW only!!!!!!!!!
 		/// @exception Exception
-		void create(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage);
+		void create(GLenum target, uint sizeInBytes, const void* dataPtr,
+			GLenum usage);
 
 		/// Delete the BO
 		void deleteBuff();
 
-		/// Write data to buffer. This means that maps the BO to local memory, writes the local memory and unmaps it.
-		/// Throws exception if the given size and the BO size are not equal. It throws an exception if the usage is
-		/// GL_STATIC_DRAW
+		/// Write data to buffer. This means that maps the BO to local memory,
+		/// writes the local memory and unmaps it. Throws exception if the
+		/// given size and the BO size are not equal. It throws an exception if
+		/// the usage is GL_STATIC_DRAW
 		/// @param[in] buff The buffer to copy to BO
 		void write(void* buff);
 
@@ -61,8 +69,9 @@ class BufferObject
 	private:
 		uint glId; ///< The OpenGL id of the BO
 
-		/// Used in glBindBuffer(target, glId) and its for easy access so we wont have to query the GL driver. Its the type
-		/// of the buffer eg GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
+		/// Used in glBindBuffer(target, glId) and its for easy access so we
+		/// wont have to query the GL driver. Its the type of the buffer eg
+		/// GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
 		GLenum target;
 
 		GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
@@ -74,8 +83,9 @@ class BufferObject
 // Inlines                                                                     =
 //==============================================================================
 
-inline BufferObject::BufferObject(GLenum target, uint sizeInBytes, const void* dataPtr, GLenum usage):
-	glId(0)
+inline BufferObject::BufferObject(GLenum target, uint sizeInBytes,
+	const void* dataPtr, GLenum usage)
+:	glId(0)
 {
 	create(target, sizeInBytes, dataPtr, usage);
 }

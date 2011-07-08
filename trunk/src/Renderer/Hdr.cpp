@@ -4,6 +4,9 @@
 #include "RendererInitializer.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // initFbo                                                                    =
 //==============================================================================
@@ -25,7 +28,8 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 		Renderer::createFai(width, height, GL_RGB, GL_RGB, GL_FLOAT, fai);
 
 		// attach
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fai.getGlId(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, fai.getGlId(), 0);
 
 		// test if success
 		fbo.checkIfGood();
@@ -35,7 +39,8 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create deferred shading post-processing stage HDR passes FBO: " + e.what());
+		throw EXCEPTION("Cannot create deferred shading post-processing "
+			"stage HDR passes FBO: " + e.what());
 	}
 }
 
@@ -70,10 +75,12 @@ void Hdr::init(const RendererInitializer& initializer)
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
 	std::string pps = "#define HPASS\n#define COL_RGB\n";
-	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME,
+		pps.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_RGB\n";
-	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME,
+		pps.c_str()).c_str());
 }
 
 
@@ -137,3 +144,6 @@ void Hdr::run()
 	// end
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
+
+
+} // end namespace

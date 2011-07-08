@@ -1,11 +1,14 @@
-#ifndef MS_H
-#define MS_H
+#ifndef R_MS_H
+#define R_MS_H
 
 #include "RenderingPass.h"
 #include "Resources/Texture.h"
 #include "GfxApi/BufferObjects/Fbo.h"
 #include "Util/Accessors.h"
 #include "Ez.h"
+
+
+namespace R {
 
 
 /// Material stage
@@ -34,6 +37,9 @@ class Ms: public RenderingPass
 		Texture specularFai; ///< The FAI for specular color and shininess
 		Texture depthFai; ///< The FAI for depth
 };
+
+
+} // end namespace
 
 
 #endif

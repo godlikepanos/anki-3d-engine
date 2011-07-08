@@ -19,7 +19,7 @@
 #include "Resources/SkelAnim.h"
 #include "Resources/LightRsrc.h"
 #include "Misc/Parser.h"
-#include "Scene/ParticleEmitter.h"
+#include "Scene/ParticleEmitterNode.h"
 #include "Physics/Character.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/RendererInitializer.h"
@@ -51,7 +51,7 @@ SkinNode* imp;
 //SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
-ParticleEmitter* partEmitter;
+ParticleEmitterNode* partEmitter;
 Phys::Character* character;
 
 Ui::Painter* painter;
@@ -131,8 +131,8 @@ void init()
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
-	//cam->setAll(toRad(100.0), toRad(100.0) / MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
-	cam->setAll(MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	//cam->setAll(toRad(100.0), toRad(100.0) / R::MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
+	cam->setAll(R::MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -143,40 +143,40 @@ void init()
 	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
 
 	// lights
-	point_lights[0] = new PointLight();
+	point_lights[0] = new PointLight(false, NULL);
 	point_lights[0]->init("maps/temple/light0.light");
 	point_lights[0]->setLocalTransform(Transform(Vec3(-1.0, 2.4, 1.0), Mat3::getIdentity(), 1.0));
-	point_lights[1] = new PointLight();
+	point_lights[1] = new PointLight(false, NULL);
 	point_lights[1]->init("maps/temple/light1.light");
 	point_lights[1]->setLocalTransform(Transform(Vec3(2.5, 1.4, 1.0), Mat3::getIdentity(), 1.0));
 
-	spot_lights[0] = new SpotLight();
+	spot_lights[0] = new SpotLight(false, NULL);
 	spot_lights[0]->init("maps/temple/light2.light");
 	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(toRad(-20), toRad(20), 0.0)), 1.0));
-	spot_lights[1] = new SpotLight();
+	spot_lights[1] = new SpotLight(false, NULL);
 	spot_lights[1]->init("maps/temple/light3.light");
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
 
 
 	// horse
-	horse = new ModelNode();
+	horse = new ModelNode(false, NULL);
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(), 1.0));
 
 	// Pentagram
-	pentagram = new ModelNode();
+	pentagram = new ModelNode(false, NULL);
 	pentagram->init("models/pentagram/pentagram.mdl");
 	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
 
 	// Sponza
-	ModelNode* sponza = new ModelNode();
+	ModelNode* sponza = new ModelNode(false, NULL);
 	//sponza->init("maps/sponza/sponza.mdl");
 	sponza->init("maps/sponza-crytek/sponza_crytek.mdl");
 	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));
 
 
 	// Imp
-	imp = new SkinNode();
+	imp = new SkinNode(false, NULL);
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.0, 0.0), Mat3::getIdentity(), 0.7));
 	imp->init("models/imp/imp.skin");
 	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
@@ -225,7 +225,7 @@ void init()
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
 	// particle emitter
-	partEmitter = new ParticleEmitter;
+	partEmitter = new ParticleEmitterNode(false, NULL);
 	partEmitter->init("asdf");
 	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
 
@@ -316,7 +316,7 @@ void mainLoopExtra()
 	/*if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
 	{
 		Event::ManagerSingleton::getInstance().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5,
-			5, MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
+			5, R::MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
 	}*/
 
 
@@ -380,7 +380,7 @@ void mainLoop()
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 		SceneSingleton::getInstance().updateAllControllers();
 		Event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
-		MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
+		R::MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
 		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
@@ -399,7 +399,7 @@ void mainLoop()
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F12) == 1)
 		{
-			MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
+			R::MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
 		}
 
 		AppSingleton::getInstance().swapBuffers();
@@ -433,7 +433,7 @@ void mainLoop()
 			SDL_Delay((AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime()) * 1000.0);
 		}
 
-		/*if(MainRendererSingleton::getInstance().getFramesNum() == 100)
+		/*if(R::MainRendererSingleton::getInstance().getFramesNum() == 100)
 		{
 			break;
 		}*/

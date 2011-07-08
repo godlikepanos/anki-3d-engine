@@ -72,7 +72,9 @@ inline void Fbo::bind(GLenum target_)
 {
 	ASSERT(isCreated());
 	target = target_;
-	ASSERT(target == GL_DRAW_FRAMEBUFFER || target == GL_READ_FRAMEBUFFER || target == GL_FRAMEBUFFER);
+	ASSERT(target == GL_DRAW_FRAMEBUFFER ||
+		target == GL_READ_FRAMEBUFFER ||
+		target == GL_FRAMEBUFFER);
 	glBindFramebuffer(target, glId);
 }
 

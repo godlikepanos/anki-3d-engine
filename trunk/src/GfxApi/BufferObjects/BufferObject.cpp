@@ -23,7 +23,11 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_,
 {
 	ASSERT(!isCreated());
 	// unacceptable usage_
-	ASSERT(usage_ == GL_STREAM_DRAW || usage_ == GL_STATIC_DRAW || usage_ == GL_DYNAMIC_DRAW);
+
+	ASSERT(usage_ == GL_STREAM_DRAW ||
+		usage_ == GL_STATIC_DRAW ||
+		usage_ == GL_DYNAMIC_DRAW);
+
 	ASSERT(sizeInBytes_ > 0); // unacceptable sizeInBytes
 
 	usage = usage_;

@@ -1,5 +1,5 @@
-#ifndef HDR_H
-#define HDR_H
+#ifndef R_HDR_H
+#define R_HDR_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -9,6 +9,9 @@
 
 
 class ShaderProg;
+
+
+namespace R {
 
 
 /// High dynamic range lighting pass
@@ -22,8 +25,10 @@ class Hdr: private RenderingPass
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER_BY_VAL(float, exposure, getExposure, setExposure)
-		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
-		GETTER_SETTER_BY_VAL(float, blurringDist, getBlurringDist, setBlurringDist)
+		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum,
+			getBlurringIterationsNum, setBlurringIterationsNum)
+		GETTER_SETTER_BY_VAL(float, blurringDist, getBlurringDist,
+			setBlurringDist)
 
 		GETTER_R_BY_VAL(bool, enabled, isEnabled);
 		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
@@ -50,6 +55,9 @@ class Hdr: private RenderingPass
 
 		void initFbo(Fbo& fbo, Texture& fai);
 };
+
+
+} // end namespace
 
 
 #endif

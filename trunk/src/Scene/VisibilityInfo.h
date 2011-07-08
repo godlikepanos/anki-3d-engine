@@ -16,6 +16,9 @@ class SpotLight;
 class VisibilityInfo
 {
 	public:
+		VisibilityInfo() {}
+		~VisibilityInfo();
+
 		/// @name Accessors
 		/// @{
 		GETTER_RW(std::deque<const RenderableNode*>, msRenderableNodes,

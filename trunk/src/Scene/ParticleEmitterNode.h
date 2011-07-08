@@ -1,5 +1,5 @@
-#ifndef PARTICLE_EMITTER_H
-#define PARTICLE_EMITTER_H
+#ifndef PARTICLE_EMITTER_NODE_H
+#define PARTICLE_EMITTER_NODE_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -15,11 +15,11 @@ class Particle;
 
 /// The particle emitter scene node. This scene node emitts
 /// @ref ParticleEmitter:Particle particle nodes in space.
-class ParticleEmitter: public SceneNode, public ParticleEmitterRsrc
+class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 {
 	public:
-		ParticleEmitter();
-		virtual ~ParticleEmitter();
+		ParticleEmitterNode(bool inheritParentTrfFlag, SceneNode* parent);
+		virtual ~ParticleEmitterNode();
 
 		void init(const char* filename);
 
@@ -38,8 +38,9 @@ class ParticleEmitter: public SceneNode, public ParticleEmitterRsrc
 };
 
 
-inline ParticleEmitter::ParticleEmitter()
-:	SceneNode(SNT_PARTICLE_EMITTER, false, NULL)
+inline ParticleEmitterNode::ParticleEmitterNode(bool inheritParentTrfFlag,
+	SceneNode* parent)
+:	SceneNode(SNT_PARTICLE_EMITTER, inheritParentTrfFlag, parent)
 {}
 
 

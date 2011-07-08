@@ -16,6 +16,9 @@
 #include "Scene/Scene.h"
 
 
+namespace R {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -294,10 +297,8 @@ void Is::copyDepth()
 {
 	readFbo.bind(GL_READ_FRAMEBUFFER);
 	writeFbo.bind(GL_DRAW_FRAMEBUFFER);
-	glBlitFramebuffer(0, 0, r.getWidth(), r.getHeight(),
-	                  0, 0, r.getWidth(), r.getHeight(),
-	                  GL_DEPTH_BUFFER_BIT,
-	                  GL_NEAREST);
+	glBlitFramebuffer(0, 0, r.getWidth(), r.getHeight(), 0, 0, r.getWidth(),
+	    r.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 
 
@@ -347,3 +348,6 @@ void Is::run()
 
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
+
+
+} // end namespace

@@ -17,8 +17,9 @@ Vao::~Vao()
 //==============================================================================
 // attachArrayBufferVbo                                                        =
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint size, GLenum type,
-		                       GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
+	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
+	const GLvoid* pointer)
 {
 	ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ARRAY_BUFFER)
@@ -30,7 +31,8 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint siz
 
 	bind();
 	vbo.bind();
-	glVertexAttribPointer(attribVarLocation, size, type, normalized, stride, pointer);
+	glVertexAttribPointer(attribVarLocation, size, type, normalized,
+		stride, pointer);
 	glEnableVertexAttribArray(attribVarLocation);
 	vbo.unbind();
 	unbind();
@@ -42,10 +44,12 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation, GLint siz
 //==============================================================================
 // attachArrayBufferVbo                                                        =
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar, GLint size, GLenum type,
-		                       GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+void Vao::attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar,
+	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
+	const GLvoid* pointer)
 {
-	attachArrayBufferVbo(vbo, attribVar.getLoc(), size, type, normalized, stride, pointer);
+	attachArrayBufferVbo(vbo, attribVar.getLoc(), size, type, normalized,
+		stride, pointer);
 }
 
 

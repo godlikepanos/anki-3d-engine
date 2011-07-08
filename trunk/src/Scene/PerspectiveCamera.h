@@ -8,7 +8,7 @@
 class PerspectiveCamera: public Camera
 {
 	public:
-		PerspectiveCamera(bool compoundFlag, SceneNode* parent);
+		PerspectiveCamera(bool inheritParentTrfFlag, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -43,9 +43,9 @@ class PerspectiveCamera: public Camera
 };
 
 
-inline PerspectiveCamera::PerspectiveCamera(bool compoundFlag,
+inline PerspectiveCamera::PerspectiveCamera(bool inheritParentTrfFlag,
 	SceneNode* parent)
-:	Camera(CT_PERSPECTIVE, compoundFlag, parent)
+:	Camera(CT_PERSPECTIVE, inheritParentTrfFlag, parent)
 {
 	name = "PerspectiveCamera:" + name;
 }

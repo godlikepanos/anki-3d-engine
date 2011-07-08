@@ -1,13 +1,18 @@
-#ifndef COLLISION_DBG_DRAWER_H
-#define COLLISION_DBG_DRAWER_H
+#ifndef R_COLLISION_DBG_DRAWER_H
+#define R_COLLISION_DBG_DRAWER_H
 
 
-class Dbg;
 namespace Col {
 class Sphere;
 class Obb;
 class Plane;
 }
+
+
+namespace R {
+
+
+class Dbg;
 
 
 /// Contains methods to render the collision shapes
@@ -29,6 +34,9 @@ class CollisionDbgDrawer
 	private:
 		Dbg& dbg; ///< The debug stage
 };
+
+
+} // end namespace
 
 
 #endif

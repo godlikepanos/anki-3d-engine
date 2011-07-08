@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef R_RENDERER_H
+#define R_RENDERER_H
 
 #include "Math/Math.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -22,6 +22,9 @@
 class Camera;
 struct RendererInitializer;
 class ModelNode;
+
+
+namespace R {
 
 
 /// Offscreen renderer
@@ -159,6 +162,9 @@ inline void Renderer::setViewport(uint x, uint y, uint w, uint h)
 {
 	glViewport(x, y, w, h);
 }
+
+
+} // end namespace
 
 
 #endif

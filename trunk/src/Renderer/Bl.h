@@ -1,5 +1,5 @@
-#ifndef BL_H
-#define BL_H
+#ifndef R_BL_H
+#define R_BL_H
 
 #include "RenderingPass.h"
 #include "Util/Accessors.h"
@@ -9,6 +9,9 @@
 
 
 class ShaderProg;
+
+
+namespace R {
 
 
 class Bl: private RenderingPass
@@ -21,8 +24,10 @@ class Bl: private RenderingPass
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER_BY_VAL(bool, enabled, isEnabled, setEnabled)
-		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum, getBlurringIterationsNum, setBlurringIterationsNum)
-		GETTER_SETTER_BY_VAL(float, sideBlurFactor, getSideBlurFactor, setSideBlurFactor)
+		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum,
+			getBlurringIterationsNum, setBlurringIterationsNum)
+		GETTER_SETTER_BY_VAL(float, sideBlurFactor, getSideBlurFactor,
+			setSideBlurFactor)
 		/// @}
 
 	private:
@@ -44,6 +49,9 @@ class Bl: private RenderingPass
 		void runBlur();
 		void runSideBlur();
 };
+
+
+} // end namespace
 
 
 #endif

@@ -12,7 +12,7 @@ class SceneNode;
 class Light;
 class Camera;
 class Controller;
-class ParticleEmitter;
+class ParticleEmitterNode;
 class ModelNode;
 class SkinNode;
 
@@ -54,7 +54,7 @@ class Scene
 		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
 		GETTER_RW(Types<Light>::Container, lights, getLights)
 		GETTER_RW(Types<Camera>::Container, cameras, getCameras)
-		GETTER_RW(Types<ParticleEmitter>::Container, particleEmitters,
+		GETTER_RW(Types<ParticleEmitterNode>::Container, particleEmitterNodes,
 			getParticleEmitters)
 		GETTER_RW(Types<ModelNode>::Container, modelNodes, getModelNodes)
 		GETTER_RW(Types<SkinNode>::Container, skinNodes, getSkinNodes)
@@ -67,7 +67,7 @@ class Scene
 		Types<SceneNode>::Container nodes;
 		Types<Light>::Container lights;
 		Types<Camera>::Container cameras;
-		Types<ParticleEmitter>::Container particleEmitters;
+		Types<ParticleEmitterNode>::Container particleEmitterNodes;
 		Types<ModelNode>::Container modelNodes;
 		Types<SkinNode>::Container skinNodes;
 		Types<Controller>::Container controllers;

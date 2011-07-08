@@ -33,7 +33,8 @@ class Light: public SceneNode, public VisibilityInfo
 			LT_SPOT
 		};
 
-		Light(LightType type, bool compoundFlag, SceneNode* parent = NULL);
+		Light(LightType type, bool inheritParentTrfFlag,
+			SceneNode* parent);
 		~Light();
 
 		/// @name Accessors
@@ -61,8 +62,9 @@ class Light: public SceneNode, public VisibilityInfo
 };
 
 
-inline Light::Light(LightType type_, bool compoundFlag, SceneNode* parent):
-	SceneNode(SNT_LIGHT, compoundFlag, parent),
+inline Light::Light(LightType type_, bool inheritParentTrfFlag,
+	SceneNode* parent)
+:	SceneNode(SNT_LIGHT, inheritParentTrfFlag, parent),
 	type(type_)
 {}
 

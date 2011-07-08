@@ -1,5 +1,5 @@
-#ifndef SMO_H
-#define SMO_H
+#ifndef R_SMO_H
+#define R_SMO_H
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
@@ -12,6 +12,9 @@
 
 class PointLight;
 class SpotLight;
+
+
+namespace R {
 
 
 /// Stencil masking optimizations
@@ -37,8 +40,8 @@ class Smo: public RenderingPass
 
 		Geom sphereGeom;
 
-		/// An array of geometry stuff. For perspective cameras the shape is a pyramid, see the blend file with the
-		/// vertex positions
+		/// An array of geometry stuff. For perspective cameras the shape is a
+		/// pyramid, see the blend file with the vertex positions
 		boost::array<Geom, Camera::CT_NUM> camGeom;
 
 		RsrcPtr<ShaderProg> sProg;
@@ -48,6 +51,9 @@ class Smo: public RenderingPass
 		void setUpGl(bool inside);
 		void restoreGl(bool inside);
 };
+
+
+} // end namespace
 
 
 #endif

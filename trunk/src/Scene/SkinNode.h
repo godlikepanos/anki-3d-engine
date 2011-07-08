@@ -18,7 +18,7 @@ class SkinNode: public SceneNode
 	public:
 		SkelAnimModelNodeCtrl* skelAnimModelNodeCtrl; ///< @todo fix this crap
 
-		SkinNode(): SceneNode(SNT_SKIN, true, NULL) {}
+		SkinNode(bool inheritParentTrfFlag, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -37,8 +37,6 @@ class SkinNode: public SceneNode
 		/// cause its faster that way). The tails come from the previous frame
 		void moveUpdate();
 
-		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
-
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
 		Vec<SkinPatchNode*> patches;
@@ -52,6 +50,11 @@ class SkinNode: public SceneNode
 		Vec<Vec3> boneTranslations;
 		/// @}
 };
+
+
+inline SkinNode::SkinNode(bool inheritParentTrfFlag, SceneNode* parent)
+:	SceneNode(SNT_SKIN, inheritParentTrfFlag, parent)
+{}
 
 
 #endif

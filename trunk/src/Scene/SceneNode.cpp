@@ -15,11 +15,11 @@ uint SceneNode::uid = 0;
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SceneNode::SceneNode(SceneNodeType type_, bool compoundFlag_,
+SceneNode::SceneNode(SceneNodeType type_, bool inheritParentTrfFlag_,
 	SceneNode* parent)
 :	Object(parent),
 	type(type_),
-	compoundFlag(compoundFlag_)
+	inheritParentTrfFlag(inheritParentTrfFlag_)
 {
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
@@ -51,7 +51,7 @@ void SceneNode::updateWorldTransform()
 	{
 		const SceneNode* parent = static_cast<const SceneNode*>(getObjParent());
 
-		if(parent->compoundFlag)
+		if(inheritParentTrfFlag)
 		{
 			worldTransform = parent->getWorldTransform();
 		}

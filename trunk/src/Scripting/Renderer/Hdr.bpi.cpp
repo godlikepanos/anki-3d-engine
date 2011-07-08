@@ -4,15 +4,16 @@
 
 WRAP(Hdr)
 {
-	class_<Hdr, noncopyable>("Hdr", no_init)
-		.def("getBlurringIterationsNum", (uint (Hdr::*)() const)(
-			&Hdr::getBlurringIterationsNum))
-		.def("setBlurringIterationsNum", &Hdr::setBlurringIterationsNum)
+	class_<R::Hdr, noncopyable>("Hdr", no_init)
+		.def("getBlurringIterationsNum", (uint (R::Hdr::*)() const)(
+			&R::Hdr::getBlurringIterationsNum))
+		.def("setBlurringIterationsNum", &R::Hdr::setBlurringIterationsNum)
 
-		.def("getExposure", (float (Hdr::*)() const)(&Hdr::getExposure))
-		.def("setExposure", &Hdr::setExposure)
+		.def("getExposure", (float (R::Hdr::*)() const)(&R::Hdr::getExposure))
+		.def("setExposure", &R::Hdr::setExposure)
 
-		.def("getBlurringDist", (float (Hdr::*)() const)(&Hdr::getBlurringDist))
-		.def("setBlurringDist", &Hdr::setBlurringDist)
+		.def("getBlurringDist", (float (R::Hdr::*)() const)(
+			&R::Hdr::getBlurringDist))
+		.def("setBlurringDist", &R::Hdr::setBlurringDist)
 	;
 }

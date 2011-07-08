@@ -8,6 +8,7 @@
 
 namespace PropertyTree {
 
+
 /// Get a bool from a ptree or throw exception if not found or incorrect.
 /// Get something like this: @code<tag>true</tag>@endcode
 /// @param[in] pt The ptree
@@ -18,7 +19,8 @@ extern bool getBool(const boost::property_tree::ptree& pt, const char* tag);
 /// Get something like this: @code<tag>true</tag>@endcode
 /// @param[in] pt The ptree
 /// @param[in] tag The name of tha tag
-extern boost::optional<bool> getBoolOptional(const boost::property_tree::ptree& pt, const char* tag);
+extern boost::optional<bool> getBoolOptional(
+	const boost::property_tree::ptree& pt, const char* tag);
 
 /// Get a @code<float>0.0</float>@endcode
 extern float getFloat(const boost::property_tree::ptree& pt);
@@ -32,6 +34,8 @@ extern Vec3 getVec3(const boost::property_tree::ptree& pt);
 /// Get a @code<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>@endcode
 extern Vec4 getVec4(const boost::property_tree::ptree& pt);
 
+
 } // end namespace
+
 
 #endif

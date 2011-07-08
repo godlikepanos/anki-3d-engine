@@ -13,7 +13,7 @@ class MaterialRuntime;
 class RenderableNode: public SceneNode
 {
 	public:
-		RenderableNode(SceneNode* parent);
+		RenderableNode(bool inheritParentTrfFlag, SceneNode* parent);
 
 		virtual const Vao& getCpVao() const = 0; ///< Get color pass VAO
 		virtual const Vao& getDpVao() const = 0; ///< Get depth pass VAO
@@ -30,8 +30,9 @@ class RenderableNode: public SceneNode
 };
 
 
-inline RenderableNode::RenderableNode(SceneNode* parent)
-:	SceneNode(SNT_RENDERABLE, false, parent)
+inline RenderableNode::RenderableNode(bool inheritParentTrfFlag,
+	SceneNode* parent)
+:	SceneNode(SNT_RENDERABLE, inheritParentTrfFlag, parent)
 {}
 
 

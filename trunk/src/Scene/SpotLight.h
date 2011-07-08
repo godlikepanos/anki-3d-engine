@@ -9,7 +9,7 @@
 class SpotLight: public Light
 {
 	public:
-		SpotLight(SceneNode* parent = NULL): Light(LT_SPOT, parent) {}
+		SpotLight(bool inheritParentTrfFlag, SceneNode* parent);
 		~SpotLight() {}
 		void init(const char* filename);
 
@@ -29,6 +29,11 @@ class SpotLight: public Light
 	private:
 		PerspectiveCamera* camera;
 };
+
+
+inline SpotLight::SpotLight(bool inheritParentTrfFlag, SceneNode* parent)
+:	Light(LT_SPOT, inheritParentTrfFlag, parent)
+{}
 
 
 #endif

@@ -1,34 +1,39 @@
 #include "PhyDbgDrawer.h"
-#include "../MainRenderer.h"
+#include "../Dbg.h"
 #include "Physics/Convertors.h"
 #include "Core/Logger.h"
-#include "Core/Globals.h"
+
+
+namespace R {
 
 
 //==============================================================================
 // drawLine                                                                    =
 //==============================================================================
-void PhyDbgDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
+void PhyDbgDrawer::drawLine(const btVector3& from, const btVector3& to,
+	const btVector3& color)
 {
-	MainRendererSingleton::getInstance().getDbg().drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
+	dbg.drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
 }
 
 
 //==============================================================================
 // drawSphere                                                                  =
 //==============================================================================
-void PhyDbgDrawer::drawSphere(btScalar radius, const btTransform& transform, const btVector3& color)
+void PhyDbgDrawer::drawSphere(btScalar radius, const btTransform& transform,
+	const btVector3& color)
 {
-	MainRendererSingleton::getInstance().getDbg().setColor(toAnki(color));
-	MainRendererSingleton::getInstance().getDbg().setModelMat(Mat4(toAnki(transform)));
-	MainRendererSingleton::getInstance().getDbg().drawSphere(radius);
+	dbg.setColor(toAnki(color));
+	dbg.setModelMat(Mat4(toAnki(transform)));
+	dbg.drawSphere(radius);
 }
 
 
 //==============================================================================
 // drawBox                                                                     =
 //==============================================================================
-void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btVector3& color)
+void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max,
+	const btVector3& color)
 {
 	Mat4 trf(Mat4::getIdentity());
 	trf(0, 0) = max.getX() - min.getX();
@@ -37,16 +42,17 @@ void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btV
 	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
-	MainRendererSingleton::getInstance().getDbg().setModelMat(trf);
-	MainRendererSingleton::getInstance().getDbg().setColor(toAnki(color));
-	MainRendererSingleton::getInstance().getDbg().drawCube(1.0);
+	dbg.setModelMat(trf);
+	dbg.setColor(toAnki(color));
+	dbg.drawCube(1.0);
 }
 
 
 //==============================================================================
 // drawBox                                                                     =
 //==============================================================================
-void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btTransform& trans, const btVector3& color)
+void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max,
+	const btTransform& trans, const btVector3& color)
 {
 	Mat4 trf(Mat4::getIdentity());
 	trf(0, 0) = max.getX() - min.getX();
@@ -56,17 +62,18 @@ void PhyDbgDrawer::drawBox(const btVector3& min, const btVector3& max, const btT
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
 	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
-	MainRendererSingleton::getInstance().getDbg().setModelMat(trf);
-	MainRendererSingleton::getInstance().getDbg().setColor(toAnki(color));
-	MainRendererSingleton::getInstance().getDbg().drawCube(1.0);
+	dbg.setModelMat(trf);
+	dbg.setColor(toAnki(color));
+	dbg.drawCube(1.0);
 }
 
 
 //==============================================================================
 // drawContactPoint                                                            =
 //==============================================================================
-void PhyDbgDrawer::drawContactPoint(const btVector3& /*pointOnB*/, const btVector3& /*normalOnB*/,
-                                          btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
+void PhyDbgDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
+	const btVector3& /*normalOnB*/,
+	btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
 {
 	//WARNING("Unimplemented");
 }
@@ -84,7 +91,12 @@ void PhyDbgDrawer::reportErrorWarning(const char* warningString)
 //==============================================================================
 // draw3dText                                                                  =
 //==============================================================================
-void PhyDbgDrawer::draw3dText(const btVector3& /*location*/, const char* /*textString*/)
+void PhyDbgDrawer::draw3dText(const btVector3& /*location*/,
+	const char* /*textString*/)
 {
 	//WARNING("Unimplemented");
 }
+
+
+} // end namespace
+

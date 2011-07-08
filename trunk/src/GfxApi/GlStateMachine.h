@@ -16,7 +16,8 @@ class GlStateMachine
 		/// Sync the local members with the opengl ones
 		void sync();
 
-		/// @name Set the Fixed Function Pipeline, Call the OpenGL functions only when needed
+		/// @name Set the Fixed Function Pipeline, Call the OpenGL functions
+		/// only when needed
 		/// @{
 		void enable(GLenum flag, bool enable = true);
 		void disable(GLenum flag) {enable(flag, false);}

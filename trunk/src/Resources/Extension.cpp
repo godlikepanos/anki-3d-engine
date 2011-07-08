@@ -19,7 +19,8 @@ void Extension::load(const char* /*filename*/)
 	foobarPtr = (int(*)(void*))(dlsym(libHandle, "FooBar"));
 	if(foobarPtr == NULL)
 	{
-		throw EXCEPTION("File \"" + filename + "\": \"FooBar\" entry symbol not found: " + dlerror());
+		throw EXCEPTION("File \"" + filename +
+			"\": \"FooBar\" entry symbol not found: " + dlerror());
 	}*/
 }
 

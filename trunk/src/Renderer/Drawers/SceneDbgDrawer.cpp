@@ -2,10 +2,13 @@
 #include "../Dbg.h"
 #include "Scene/Camera.h"
 #include "Scene/Light.h"
-#include "Scene/ParticleEmitter.h"
+#include "Scene/ParticleEmitterNode.h"
 #include "Scene/SkinNode.h"
 #include "Scene/PerspectiveCamera.h"
 #include "Scene/OrthographicCamera.h"
+
+
+namespace R {
 
 
 //==============================================================================
@@ -17,14 +20,16 @@ void SceneDbgDrawer::drawCamera(const Camera& cam) const
 	{
 		case Camera::CT_PERSPECTIVE:
 		{
-			const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
+			const PerspectiveCamera& pcam =
+				static_cast<const PerspectiveCamera&>(cam);
 			drawPerspectiveCamera(pcam);
 			break;
 		}
 
 		case Camera::CT_ORTHOGRAPHIC:
 		{
-			const OrthographicCamera& ocam = static_cast<const OrthographicCamera&>(cam);
+			const OrthographicCamera& ocam =
+				static_cast<const OrthographicCamera&>(cam);
 			drawOrthographicCamera(ocam);
 			break;
 		}
@@ -70,7 +75,8 @@ void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
 //==============================================================================
 // drawOrthographicCamera                                                      =
 //==============================================================================
-void SceneDbgDrawer::drawOrthographicCamera(const OrthographicCamera& ocam) const
+void SceneDbgDrawer::drawOrthographicCamera(
+	const OrthographicCamera& ocam) const
 {
 	dbg.setColor(Vec4(0.0, 1.0, 0.0, 1.0));
 	dbg.setModelMat(Mat4(ocam.getWorldTransform()));
@@ -122,7 +128,7 @@ void SceneDbgDrawer::drawLight(const Light& light) const
 //==============================================================================
 // drawParticleEmitter                                                         =
 //==============================================================================
-void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitter& pe) const
+void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitterNode& pe) const
 {
 	dbg.setColor(Vec4(1.0));
 	dbg.setModelMat(Mat4(pe.getWorldTransform()));
@@ -146,3 +152,6 @@ void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 	}
 	dbg.end();
 }
+
+
+} // end namespace

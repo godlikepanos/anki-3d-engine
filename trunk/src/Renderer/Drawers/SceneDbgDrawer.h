@@ -1,14 +1,19 @@
-#ifndef SCENE_DBG_DRAWER_H
-#define SCENE_DBG_DRAWER_H
+#ifndef R_SCENE_DBG_DRAWER_H
+#define R_SCENE_DBG_DRAWER_H
 
 
-class Dbg;
 class Camera;
 class Light;
-class ParticleEmitter;
+class ParticleEmitterNode;
 class SkinNode;
 class PerspectiveCamera;
 class OrthographicCamera;
+
+
+namespace R {
+
+
+class Dbg;
 
 
 /// This is a drawer for some scene nodes that need debug
@@ -24,8 +29,8 @@ class SceneDbgDrawer
 		/// Draw a Light
 		virtual void drawLight(const Light& light) const;
 
-		/// Draw a ParticleEmitter
-		virtual void drawParticleEmitter(const ParticleEmitter& pe) const;
+		/// Draw a ParticleEmitterNode
+		virtual void drawParticleEmitter(const ParticleEmitterNode& pe) const;
 
 		/// Draw a skeleton
 		virtual void drawSkinNodeSkeleton(const SkinNode& pe) const;
@@ -36,6 +41,9 @@ class SceneDbgDrawer
 		virtual void drawPerspectiveCamera(const PerspectiveCamera& cam) const;
 		virtual void drawOrthographicCamera(const OrthographicCamera& cam) const;
 };
+
+
+} // end namespace
 
 
 #endif

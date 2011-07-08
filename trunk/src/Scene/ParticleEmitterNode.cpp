@@ -1,7 +1,7 @@
 #include <boost/foreach.hpp>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include "ParticleEmitter.h"
+#include "ParticleEmitterNode.h"
 #include "Particle.h"
 #include "Physics/RigidBody.h"
 #include "Core/App.h"
@@ -9,21 +9,21 @@
 #include "Util/Util.h"
 
 
-btTransform ParticleEmitter::startingTrf(toBt(Mat3::getIdentity()),
+btTransform ParticleEmitterNode::startingTrf(toBt(Mat3::getIdentity()),
 	btVector3(10000000.0, 10000000.0, 10000000.0));
 
 
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
-ParticleEmitter::~ParticleEmitter()
+ParticleEmitterNode::~ParticleEmitterNode()
 {}
 
 
 //==============================================================================
 // getRandom                                                                   =
 //==============================================================================
-float ParticleEmitter::getRandom(float initial, float deviation)
+float ParticleEmitterNode::getRandom(float initial, float deviation)
 {
 	return (deviation == 0.0) ?  initial :
 		initial + Util::randFloat(deviation) * 2.0 - deviation;
@@ -33,7 +33,7 @@ float ParticleEmitter::getRandom(float initial, float deviation)
 //==============================================================================
 // getRandom                                                                   =
 //==============================================================================
-Vec3 ParticleEmitter::getRandom(const Vec3& initial, const Vec3& deviation)
+Vec3 ParticleEmitterNode::getRandom(const Vec3& initial, const Vec3& deviation)
 {
 	if(deviation == Vec3(0.0))
 	{
@@ -54,7 +54,7 @@ Vec3 ParticleEmitter::getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 // init                                                                        =
 //==============================================================================
-void ParticleEmitter::init(const char* filename)
+void ParticleEmitterNode::init(const char* filename)
 {
 	particleEmitterProps.loadRsrc(filename);
 
@@ -68,7 +68,7 @@ void ParticleEmitter::init(const char* filename)
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		ModelNode* md = new ModelNode(this);
+		ModelNode* md = new ModelNode(false, this);
 		md->init(modelName.c_str());
 		md->setLocalTransform(Transform(Vec3(Util::randFloat(i * 1.0)),
 			Mat3::getIdentity(), 1.0));
@@ -110,9 +110,9 @@ void ParticleEmitter::init(const char* filename)
 //==============================================================================
 // frameUpdate                                                                 =
 //==============================================================================
-void ParticleEmitter::frameUpdate(float prevUpdateTime, float crntTime)
+void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 {
-	// Opt: We dont have to make extra calculations if the ParticleEmitter's
+	// Opt: We dont have to make extra calculations if the ParticleEmitterNode's
 	// rotation is the identity
 	bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
 
