@@ -290,7 +290,8 @@ void Dbg::run()
 				sceneDbgDrawer.drawLight(static_cast<const Light&>(*node));
 				break;
 			case SceneNode::SNT_PARTICLE_EMITTER:
-				sceneDbgDrawer.drawParticleEmitter(static_cast<const ParticleEmitterNode&>(*node));
+				sceneDbgDrawer.drawParticleEmitter(
+					static_cast<const ParticleEmitterNode&>(*node));
 				break;
 			case SceneNode::SNT_RENDERABLE:
 				/*if(showVisibilityBoundingShapesFlag)

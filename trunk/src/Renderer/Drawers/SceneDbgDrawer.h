@@ -38,8 +38,10 @@ class SceneDbgDrawer
 	private:
 		Dbg& dbg; ///< The debug stage
 
-		virtual void drawPerspectiveCamera(const PerspectiveCamera& cam) const;
-		virtual void drawOrthographicCamera(const OrthographicCamera& cam) const;
+		virtual void drawPerspectiveCamera(const
+			PerspectiveCamera& cam) const;
+		virtual void drawOrthographicCamera(
+			const OrthographicCamera& cam) const;
 };
 
 
