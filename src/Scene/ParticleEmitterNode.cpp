@@ -68,19 +68,19 @@ void ParticleEmitterNode::init(const char* filename)
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		ModelNode* md = new ModelNode(false, this);
+		/*ModelNode* md = new ModelNode(false, this);
 		md->init(modelName.c_str());
 		md->setLocalTransform(Transform(Vec3(Util::randFloat(i * 1.0)),
 			Mat3::getIdentity(), 1.0));
 
-		continue;
+		continue;*/
 
-		Particle* particle = new Particle(-1.0, this);
+		Particle* particle = new Particle(-1.0, NULL);
 		particle->init(modelName.c_str());
-		particle->setLocalTransform(Transform(Vec3(Util::randFloat(i * 1.0)),
-			Mat3::getIdentity(), 1.0));
+		/*particle->setLocalTransform(Transform(Vec3(Util::randFloat(i * 1.0)),
+			Mat3::getIdentity(), 1.0));*/
 
-		continue;
+		//continue;
 
 		particles.push_back(particle);
 
@@ -92,7 +92,7 @@ void ParticleEmitterNode::init(const char* filename)
 		init.mass = mass;
 		init.startTrf = toAnki(startingTrf);
 		init.shape = collShape.get();
-		init.sceneNode = NULL;
+		init.sceneNode = particle;
 		init.group = Phys::MasterContainer::CG_PARTICLE;
 		init.mask = Phys::MasterContainer::CG_ALL ^
 			Phys::MasterContainer::CG_PARTICLE;

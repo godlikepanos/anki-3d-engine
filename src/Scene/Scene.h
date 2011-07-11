@@ -55,7 +55,7 @@ class Scene
 		GETTER_RW(Types<Light>::Container, lights, getLights)
 		GETTER_RW(Types<Camera>::Container, cameras, getCameras)
 		GETTER_RW(Types<ParticleEmitterNode>::Container, particleEmitterNodes,
-			getParticleEmitters)
+			getParticleEmitterNodes)
 		GETTER_RW(Types<ModelNode>::Container, modelNodes, getModelNodes)
 		GETTER_RW(Types<SkinNode>::Container, skinNodes, getSkinNodes)
 		GETTER_RW(Types<Controller>::Container, controllers, getControllers)

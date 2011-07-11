@@ -274,6 +274,8 @@ void mainLoopExtra()
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = imp;
+	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_7)) mover =
+		SceneSingleton::getInstance().getParticleEmitterNodes()[0];
 	//if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
