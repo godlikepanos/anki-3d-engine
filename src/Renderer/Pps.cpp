@@ -122,7 +122,8 @@ void Pps::runPrePass()
 
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
 	prePassSProg->findUniVar("isFai")->set(r.getIs().getFai(), 0);
@@ -153,7 +154,8 @@ void Pps::runPostPass()
 
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();
 	postPassSProg->findUniVar("ppsPrePassFai")->set(prePassFai, 0);

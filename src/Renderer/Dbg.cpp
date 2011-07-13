@@ -265,7 +265,8 @@ void Dbg::run()
 	sProg->bind();
 
 	// OGL stuff
-	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		r.getWidth(), r.getHeight());
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 

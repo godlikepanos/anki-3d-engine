@@ -220,7 +220,8 @@ void Is::spotLightPass(const SpotLight& light)
 		GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
 		glBlendFunc(GL_ONE, GL_ONE);
 		GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
-		Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+		GlStateMachineSingleton::getInstance().setViewport(0, 0,
+			r.getWidth(), r.getHeight());
 	}
 
 	// stencil optimization
@@ -308,7 +309,8 @@ void Is::copyDepth()
 void Is::run()
 {
 	// OGL stuff
-	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		r.getWidth(), r.getHeight());
 
 	// Copy
 	if(r.getFramesNum() % 2 == 0)

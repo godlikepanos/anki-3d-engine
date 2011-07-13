@@ -84,11 +84,36 @@ void Renderer::render(Camera& cam_)
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
-	ms.run();
-	is.run();
-	pps.runPrePass();
-	bs.run();
-	pps.runPostPass();
+	if(enableStageProfilingFlag)
+	{
+		msTq.begin();
+		ms.run();
+		msTime = msTq.end();
+
+		isTq.begin();
+		is.run();
+		isTime = isTq.end();
+
+		ppsTq.begin();
+		pps.runPrePass();
+		ppsTime = ppsTq.end();
+
+		bsTq.begin();
+		bs.run();
+		bsTime = bsTq.end();
+
+		ppsTq.begin();
+		pps.runPostPass();
+		ppsTime += ppsTq.end();
+	}
+	else
+	{
+		ms.run();
+		is.run();
+		pps.runPrePass();
+		bs.run();
+		pps.runPostPass();
+	}
 
 	++framesNum;
 }

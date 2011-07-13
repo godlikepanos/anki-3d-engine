@@ -96,7 +96,7 @@ void Hdr::run()
 
 	int w = renderingQuality * r.getWidth();
 	int h = renderingQuality * r.getHeight();
-	Renderer::setViewport(0, 0, w, h);
+	GlStateMachineSingleton::getInstance().setViewport(0, 0, w, h);
 
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);

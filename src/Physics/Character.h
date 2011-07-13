@@ -1,7 +1,6 @@
 #ifndef PHYS_CHARACTER_H
 #define PHYS_CHARACTER_H
 
-#include "MasterContainer.h"
 #include "Math/Math.h"
 #include "Core/Object.h"
 
@@ -11,13 +10,13 @@ class btConvexShape;
 class btKinematicCharacterController;
 class btGhostPairCallback;
 class SceneNode;
+
+
 namespace Phys {
+
+
 class MasterContainer;
 class MotionState;
-}
-
-
-namespace Phys {
 
 
 /// Its basically a wrapper around bullet character
@@ -40,7 +39,7 @@ class Character
 			Initializer();
 		};
 
-		Character(MasterContainer& masterContainer_, const Initializer& init);
+		Character(MasterContainer& masterContainer, const Initializer& init);
 		~Character();
 		void rotate(float angle);
 		void moveForward(float distance);

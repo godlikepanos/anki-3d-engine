@@ -7,6 +7,7 @@
 #include "MasterContainer.h"
 #include "MotionState.h"
 #include "RigidBody.h"
+#include "MasterContainer.h"
 
 
 namespace Phys {

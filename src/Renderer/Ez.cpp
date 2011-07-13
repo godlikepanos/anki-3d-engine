@@ -58,7 +58,8 @@ void Ez::run()
 
 	fbo.bind();
 
-	Renderer::setViewport(0, 0, r.getWidth(), r.getHeight());
+	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		r.getWidth(), r.getHeight());
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
