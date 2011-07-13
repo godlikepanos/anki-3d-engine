@@ -131,7 +131,8 @@ void Sm::run(const Light& light, float distance)
 	crntLevel->fbo.bind();
 
 	// set GL
-	Renderer::setViewport(0, 0, crntLevel->resolution, crntLevel->resolution);
+	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		crntLevel->resolution, crntLevel->resolution);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// disable color & blend & enable depth test

@@ -17,6 +17,7 @@
 #include "Drawers/SceneDrawer.h"
 #include "SkinsDeformer.h"
 #include "GfxApi/GlStateMachine.h"
+#include "GfxApi/TimeQuery.h"
 
 
 class Camera;
@@ -60,6 +61,12 @@ class Renderer
 		GETTER_R(Vec2, planes, getPlanes)
 		GETTER_R(Vec2, limitsOfNearPlane, getLimitsOfNearPlane)
 		GETTER_R(Vec2, limitsOfNearPlane2, getLimitsOfNearPlane2)
+		GETTER_R_BY_VAL(double, msTime, getMsTime)
+		GETTER_R_BY_VAL(double, isTime, getIsTime)
+		GETTER_R_BY_VAL(double, ppsTime, getPpsTime)
+		GETTER_R_BY_VAL(double, bsTime, getBsTime)
+		GETTER_SETTER_BY_VAL(bool, enableStageProfilingFlag,
+			isStageProfilingEnabled, setEnableStageProfiling)
 		/// @}
 
 		/// Init the renderer given an initialization class
@@ -80,9 +87,6 @@ class Renderer
 			const Mat4& modelViewMat, const Mat4& projectionMat,
 			const int view[4]);
 
-		/// OpenGL wrapper
-		static void setViewport(uint x, uint y, uint w, uint h);
-
 		/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 		/// longer support quads
 		void drawQuad();
@@ -97,7 +101,7 @@ class Renderer
 		/// fragment shader from:
 		/// @code z = (- zFar * zNear) / (zFar - depth * (zFar - zNear))
 		/// @endcode
-		/// The above can be optimized and this method actually precalculates a
+		/// The above can be optimized and this method actually pre-calculates a
 		/// few things in order to lift a few calculations from the fragment
 		/// shader. So the z is:
 		/// @code z =  -planes.y / (planes.x + depth) @endcode
@@ -117,6 +121,13 @@ class Renderer
 		Is is; ///< Illumination rendering stage
 		Pps pps; ///< Postprocessing rendering stage
 		Bs bs; ///< Blending stage
+		/// @}
+
+		/// @name Profiling stuff
+		/// @{
+		double msTime, isTime, ppsTime, bsTime;
+		TimeQuery msTq, isTq, ppsTq, bsTq;
+		bool enableStageProfilingFlag;
 		/// @}
 
 		/// Width of the rendering. Don't confuse with the window width
@@ -156,12 +167,6 @@ class Renderer
 		Vao quadVao; ///< This VAO is used everywhere except material stage
 		/// @}
 };
-
-
-inline void Renderer::setViewport(uint x, uint y, uint w, uint h)
-{
-	glViewport(x, y, w, h);
-}
 
 
 } // end namespace

@@ -112,7 +112,7 @@ void Ssao::run()
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 
 
-	Renderer::setViewport(0, 0, width, height);
+	GlStateMachineSingleton::getInstance().setViewport(0, 0, width, height);
 
 	//
 	// 1st pass

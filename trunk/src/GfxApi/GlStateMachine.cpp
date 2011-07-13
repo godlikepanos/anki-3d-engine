@@ -64,4 +64,55 @@ void GlStateMachine::sync()
 		flags[*flagEnum] = glIsEnabled(*flagEnum);
 		++flagEnum;
 	}
+
+	// viewport
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, &viewport[0]);
+	viewportX = viewport[0];
+	viewportY = viewport[1];
+	viewportW = viewport[2];
+	viewportH = viewport[3];
+}
+
+
+//==============================================================================
+// setViewport                                                                 =
+//==============================================================================
+void GlStateMachine::setViewport(uint x, uint y, uint w, uint h)
+{
+	if(x != (uint)viewportX || y != (uint)viewportY ||
+		w != (uint)viewportW || h != (uint)viewportH)
+	{
+		glViewport(x, y, w, h);
+		viewportX = x;
+		viewportY = y;
+		viewportW = w;
+		viewportH = h;
+	}
+}
+
+
+//==============================================================================
+// useShaderProg                                                               =
+//==============================================================================
+void GlStateMachine::useShaderProg(GLuint id)
+{
+	ASSERT(getCurrentProgramGlId() == sProgGlId);
+
+	if(sProgGlId != id)
+	{
+		glUseProgram(id);
+		sProgGlId = id;
+	}
+}
+
+
+//==============================================================================
+// getCurrentProgramGlId                                                       =
+//==============================================================================
+GLuint GlStateMachine::getCurrentProgramGlId()
+{
+	int i;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
+	return i;
 }

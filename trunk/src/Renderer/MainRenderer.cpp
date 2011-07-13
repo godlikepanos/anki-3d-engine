@@ -98,14 +98,25 @@ void MainRenderer::initGl()
 void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
-	dbg.run();
+
+	if(isStageProfilingEnabled())
+	{
+		dbgTq.begin();
+		dbg.run();
+		dbgTime = dbgTq.end();
+	}
+	else
+	{
+		dbg.run();
+	}
 
 	//
 	// Render the PPS FAI to the framebuffer
 	//
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 
-	setViewport(0, 0, AppSingleton::getInstance().getWindowWidth(),
+	GlStateMachineSingleton::getInstance().setViewport(
+		0, 0, AppSingleton::getInstance().getWindowWidth(),
 		AppSingleton::getInstance().getWindowHeight());
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);

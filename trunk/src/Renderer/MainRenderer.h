@@ -22,6 +22,7 @@ class MainRenderer: public Renderer
 			getScreenshotJpegQuality, setScreenshotJpegQuality)
 		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
 		GETTER_RW(Dbg, dbg, getDbg)
+		GETTER_R_BY_VAL(double, dbgTime, getDbgTime)
 		/// @}
 
 		/// The same as Renderer::init but with additional initialization.
@@ -42,6 +43,12 @@ class MainRenderer: public Renderer
 		/// @name Passes
 		/// @{
 		Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
+		/// @}
+
+		/// @name Profiling stuff
+		/// @{
+		double dbgTime;
+		TimeQuery dbgTq;
 		/// @}
 
 		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program

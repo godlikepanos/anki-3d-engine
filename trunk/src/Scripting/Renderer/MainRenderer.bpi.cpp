@@ -10,5 +10,7 @@ WRAP(MainRenderer)
 		.def("getDbg", (R::Dbg& (R::MainRenderer::*)())(
 			&R::MainRenderer::getDbg),
 			return_value_policy<reference_existing_object>())
+
+		.def("getDbgTime", &R::MainRenderer::getDbgTime)
 	;
 }

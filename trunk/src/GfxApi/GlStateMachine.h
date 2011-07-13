@@ -24,43 +24,26 @@ class GlStateMachine
 		bool isEnabled(GLenum flag);
 
 		void useShaderProg(GLuint id);
+
+		void setViewport(uint x, uint y, uint w, uint h);
 		/// @}
 
 	private:
 		/// @name The GL state
 		/// @{
-		GLuint sProgGlId;
+		GLuint sProgGlId; ///< Last used SProg ID
 
 		boost::unordered_map<GLenum, bool> flags;
 		static GLenum flagEnums[];
+
+		GLint viewportX;
+		GLint viewportY;
+		GLsizei viewportW;
+		GLsizei viewportH;
 		/// @}
 
 		static GLuint getCurrentProgramGlId();
 };
-
-
-//==============================================================================
-// Inlines                                                                     =
-//==============================================================================
-
-inline void GlStateMachine::useShaderProg(GLuint id)
-{
-	ASSERT(getCurrentProgramGlId() == sProgGlId);
-
-	if(sProgGlId != id)
-	{
-		glUseProgram(id);
-		sProgGlId = id;
-	}
-}
-
-
-inline GLuint GlStateMachine::getCurrentProgramGlId()
-{
-	int i;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
-	return i;
-}
 
 
 #endif
