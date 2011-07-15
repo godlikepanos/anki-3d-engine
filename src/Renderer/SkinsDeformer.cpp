@@ -25,15 +25,15 @@ void SkinsDeformer::init()
 //==============================================================================
 void SkinsDeformer::deform(SkinPatchNode& node)
 {
-	ASSERT(node.getParent() != NULL); // The SkinPatchNode are always have
-	                                  // parent
+	ASSERT(node.getParent() != NULL); // The SkinPatchNodes always have parent
 	ASSERT(static_cast<SceneNode*>(node.getParent())->getSceneNodeType() ==
-		SceneNode::SNT_SKIN);
+		SceneNode::SNT_SKIN); // And their parent must be
 
 	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
 
-	glEnable(GL_RASTERIZER_DISCARD);
+	GlStateMachineSingleton::getInstance().enable(GL_RASTERIZER_DISCARD);
 
+	// Chose sProg
 	const ShaderProg* sProg;
 
 	if(node.getModelPatchRsrc().supportsNormals() &&
@@ -73,11 +73,11 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 	//glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, this->Query);
 	glBeginTransformFeedback(GL_POINTS);
 		glDrawArrays(GL_POINTS, 0,
-		node.getModelPatchRsrc().getMesh().getVertsNum());
+			node.getModelPatchRsrc().getMesh().getVertsNum());
 	glEndTransformFeedback();
 	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 
-	glDisable(GL_RASTERIZER_DISCARD);
+	GlStateMachineSingleton::getInstance().disable(GL_RASTERIZER_DISCARD);
 }
 
 

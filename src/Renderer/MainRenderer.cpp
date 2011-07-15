@@ -70,13 +70,13 @@ void MainRenderer::initGl()
 	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
 	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
+	GlStateMachineSingleton.getInstance().enable(GL_CULL_FACE);
 
 	// defaults
 	//glDisable(GL_LIGHTING);
 	//glDisable(GL_TEXTURE_2D);
 	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	glDisable(GL_STENCIL_TEST);
+	GlStateMachineSingleton::getInstance().disable(GL_STENCIL_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(true);
 	glDepthFunc(GL_LESS);

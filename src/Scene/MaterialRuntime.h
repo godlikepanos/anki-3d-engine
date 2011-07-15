@@ -8,7 +8,6 @@
 #include "Resources/Material.h"
 
 
-
 /// One layer above material resource
 class MaterialRuntime: private MaterialProps
 {
