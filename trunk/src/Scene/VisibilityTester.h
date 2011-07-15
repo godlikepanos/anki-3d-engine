@@ -3,6 +3,7 @@
 
 #include "Util/Accessors.h"
 #include "Math/Math.h"
+#include "Core/ParallelJobs/Job.h"
 #include <deque>
 #include <boost/thread.hpp>
 
@@ -14,7 +15,6 @@ class SpotLight;
 class PointLight;
 class SceneNode;
 class VisibilityInfo;
-class WorkerThread;
 
 
 /// Performs visibility determination tests and fills a few containers with the
@@ -40,6 +40,12 @@ class VisibilityTester
 			Vec3 o; ///< The camera origin
 			CmpDistanceFromOrigin(const Vec3& o_): o(o_) {}
 			bool operator()(const SceneNode* a, const SceneNode* b) const;
+		};
+
+		/// The JobParameters that we feed in the ParallelJobs::Manager
+		struct JobParameters: ParallelJobs::JobParameters
+		{
+			VisibilityTester* visTester;
 		};
 
 		Scene& scene; ///< Know your father
@@ -68,10 +74,10 @@ class VisibilityTester
 		void getRenderableNodes(bool skipShadowless, const Camera& cam,
 			VisibilityInfo& storage);
 
-		/// This static method will be fed into the JobManager
+		/// This static method will be fed into the ParallelJobs::Manager
 		/// @param data This is actually a pointer to VisibilityTester
-		static void getRenderableNodesJobCallback(void* data,
-			const WorkerThread& workerThread);
+		static void getRenderableNodesJobCallback(
+			ParallelJobs::JobParameters& data);
 };
 
 
