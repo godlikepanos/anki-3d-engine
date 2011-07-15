@@ -71,15 +71,13 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
 			GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		/*
-		 * If you dont want to use the FFP for comparing the shadowmap
-		 * (the above two lines) then you can make the comparison
-		 * inside the glsl shader. The GL_LEQUAL means that:
-		 * shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:
-		 * R = _tex_coord2.z/_tex_coord2.w; and the
-		 * Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
-		 * Hardware filters like GL_LINEAR cannot be applied.
-		 */
+		/*If you dont want to use the FFP for comparing the shadowmap
+		(the above two lines) then you can make the comparison
+		inside the glsl shader. The GL_LEQUAL means that:
+		shadow = (R <= Dt) ? 1.0 : 0.0; . The R is given by:
+		R = _tex_coord2.z/_tex_coord2.w; and the
+		Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
+		Hardware filters like GL_LINEAR cannot be applied.*/
 
 		// inform the we wont write to color buffers
 		level.fbo.setNumOfColorAttachements(0);
@@ -142,7 +140,7 @@ void Sm::run(const Light& light, float distance)
 
 	// for artifacts
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	GlStateMachineSingleton::getInstance().enable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
 	BOOST_FOREACH(const RenderableNode* node,
@@ -164,9 +162,8 @@ void Sm::run(const Light& light, float distance)
 	}
 
 	// restore GL
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	GlStateMachineSingleton::getInstance().disable(GL_POLYGON_OFFSET_FILL);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
 
 	// FBO
 	crntLevel->fbo.unbind();

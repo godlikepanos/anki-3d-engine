@@ -3,6 +3,7 @@
 
 #include "CollisionShape.h"
 #include "Math/Math.h"
+#include "Util/Accessors.h"
 
 
 namespace Col {
@@ -29,13 +30,8 @@ class Plane: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		const Vec3& getNormal() const {return normal;}
-		Vec3& getNormal() {return normal;}
-		void setNormal(const Vec3& n) {normal = n;}
-
-		float getOffset() const {return offset;}
-		float& getOffset() {return offset;}
-		void setOffset(float o) {offset = o;}
+		GETTER_SETTER(Vec3, normal, getNormal, setNormal)
+		GETTER_SETTER_BY_VAL(float, offset, getOffset, setOffset)
 		/// @}
 
 		/// Return the transformed
