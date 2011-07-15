@@ -1,14 +1,31 @@
-#include "JobManager.h"
+#include "Job.h"
+#include "Manager.h"
+
+
+namespace ParallelJobs {
+
+
+//==============================================================================
+// Constructor                                                                 =
+//==============================================================================
+Job::Job(int id_, const Manager& manager_, boost::barrier& barrier_)
+:	id(id_),
+ 	barrier(barrier_),
+	callback(NULL),
+	manager(manager_)
+{
+	start();
+}
 
 
 //==============================================================================
 // assignNewJob                                                                =
 //==============================================================================
-void WorkerThread::assignNewJob(JobCallback job_, void* jobParams_)
+void Job::assignNewJob(JobCallback callback_, JobParameters& jobParams_)
 {
 	boost::mutex::scoped_lock lock(mutex);
-	job = job_;
-	jobParams = jobParams_;
+	callback = callback_;
+	params = &jobParams_;
 
 	lock.unlock();
 	condVar.notify_one();
@@ -18,45 +35,32 @@ void WorkerThread::assignNewJob(JobCallback job_, void* jobParams_)
 //==============================================================================
 // workingFunc                                                                 =
 //==============================================================================
-void WorkerThread::workingFunc()
+void Job::workingFunc()
 {
 	while(1)
 	{
 		// Wait for something
 		{
 			boost::mutex::scoped_lock lock(mutex);
-			while(job == NULL)
+			while(callback == NULL)
 			{
 				condVar.wait(lock);
 			}
 		}
 
 		// Exec
-		job(jobParams, *this);
+		params->job = this;
+		callback(*params);
 
 		// Nullify
 		{
 			boost::mutex::scoped_lock lock(mutex);
-			job = NULL;
+			callback = NULL;
 		}
 
-		barrier->wait();
+		barrier.wait();
 	}
 }
 
 
-//==============================================================================
-// init                                                                        =
-//==============================================================================
-void JobManager::init(uint threadsNum)
-{
-	barrier.reset(new boost::barrier(threadsNum + 1));
-
-	for(uint i = 0; i < threadsNum; i++)
-	{
-		workers.push_back(new WorkerThread(i, *this, barrier.get()));
-	}
-}
-
-
-
+} // end namespace

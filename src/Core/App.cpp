@@ -13,7 +13,7 @@
 #include "Input/Input.h"
 #include "Logger.h"
 #include "Core/Globals.h"
-#include "JobManager.h"
+#include "ParallelJobs/Manager.h"
 #include "Renderer/Drawers/PhyDbgDrawer.h"
 #include "Scene/Scene.h"
 
@@ -24,16 +24,8 @@
 void App::handleMessageHanlderMsgs(const char* file, int line,
 	const char* func, const char* msg)
 {
-	if(boost::find_first(msg, "Warning") || boost::find_first(msg, "Error"))
-	{
-		std::cerr << "(" << file << ":" << line << " "<< func << ") " << msg <<
-			std::flush;
-	}
-	else
-	{
-		std::cout << "(" << file << ":" << line << " "<< func << ") " << msg <<
-			std::flush;
-	}
+	std::cerr << "(" << file << ":" << line << " "<< func <<
+		") " << msg << std::flush;
 }
 
 
@@ -116,7 +108,7 @@ void App::init(int argc, char* argv[])
 
 	initWindow();
 	initRenderer();
-	JobManagerSingleton::getInstance().init(4);
+	ParallelJobs::ManagerSingleton::getInstance().init(4);
 	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
 		new R::PhyDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
 

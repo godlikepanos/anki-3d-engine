@@ -8,7 +8,7 @@
 #include "Collision/Sphere.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "Core/JobManager.h"
+#include "Core/ParallelJobs/Manager.h"
 #include "Core/Logger.h"
 
 
@@ -129,12 +129,16 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless_,
 	storage.getVisibleMsRenderableNodes().clear();
 	storage.getVisibleBsRenderableNodes().clear();
 
-	for(uint i = 0; i < JobManagerSingleton::getInstance().getThreadsNum(); i++)
+	// Run in parallel
+	JobParameters jobParameters;
+	jobParameters.visTester = this;
+	for(uint i = 0;
+		i < ParallelJobs::ManagerSingleton::getInstance().getThreadsNum(); i++)
 	{
-		JobManagerSingleton::getInstance().assignNewJob(i,
-			getRenderableNodesJobCallback, this);
+		ParallelJobs::ManagerSingleton::getInstance().assignNewJob(i,
+			getRenderableNodesJobCallback, jobParameters);
 	}
-	JobManagerSingleton::getInstance().waitForAllJobsToFinish();
+	ParallelJobs::ManagerSingleton::getInstance().waitForAllJobsToFinish();
 
 	//
 	// Sort the renderables from closest to the camera to the farthest
@@ -151,12 +155,14 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless_,
 //==============================================================================
 // getRenderableNodesJobCallback                                               =
 //==============================================================================
-void VisibilityTester::getRenderableNodesJobCallback(void* args,
-	const WorkerThread& workerThread)
+void VisibilityTester::getRenderableNodesJobCallback(
+	ParallelJobs::JobParameters& data)
 {
-	uint id = workerThread.getId();
-	uint threadsNum = workerThread.getJobManager().getThreadsNum();
-	VisibilityTester* visTester = reinterpret_cast<VisibilityTester*>(args);
+	JobParameters& jobParameters = static_cast<JobParameters&>(data);
+
+	uint id = jobParameters.job->getId();
+	uint threadsNum = jobParameters.job->getManager().getThreadsNum();
+	VisibilityTester* visTester = jobParameters.visTester;
 	Scene& scene = visTester->scene;
 
 	uint count, from, to;
