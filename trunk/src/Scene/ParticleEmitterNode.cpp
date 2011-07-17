@@ -68,19 +68,11 @@ void ParticleEmitterNode::init(const char* filename)
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		/*ModelNode* md = new ModelNode(false, this);
-		md->init(modelName.c_str());
-		md->setLocalTransform(Transform(Vec3(Util::randFloat(i * 1.0)),
-			Mat3::getIdentity(), 1.0));
-
-		continue;*/
-
 		Particle* particle = new Particle(-1.0, NULL);
 		particle->init(modelName.c_str());
-		/*particle->setLocalTransform(Transform(Vec3(Util::randFloat(i * 1.0)),
-			Mat3::getIdentity(), 1.0));*/
-
-		//continue;
+		particle->disableFlag(SceneNode::SNF_ACTIVE);
+		particle->setWorldTransform(Transform(Vec3(1000000.0),
+			Mat3::getIdentity(), 1.0));
 
 		particles.push_back(particle);
 
@@ -104,6 +96,8 @@ void ParticleEmitterNode::init(const char* filename)
 
 		particle->setNewRigidBody(body);
 	}
+
+	timeLeftForNextEmission = 0.0;
 }
 
 
@@ -129,6 +123,7 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 			//cout << "Killing " << i << " " << p.timeOfDeath << endl;
 			p->getRigidBody().setActivationState(DISABLE_SIMULATION);
 			p->getRigidBody().setWorldTransform(startingTrf);
+			p->disableFlag(SceneNode::SNF_ACTIVE);
 			p->setTimeOfDeath(-1.0);
 		}
 	}
@@ -149,7 +144,9 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 				continue;
 			}
 
-			//INFO("Reiniting " << i);
+			Phys::RigidBody& body = p.getRigidBody();
+
+			p.enableFlag(SceneNode::SNF_ACTIVE);
 
 			// life
 			p.setTimeOfDeath(getRandom(crntTime + particleLife,
@@ -159,11 +156,11 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 			//cout << "Particle life " << p.timeOfDeath - crntTime << endl;
 
 			// activate it (Bullet stuff)
-			p.getRigidBody().forceActivationState(ACTIVE_TAG);
-			p.getRigidBody().activate();
-			p.getRigidBody().clearForces();
-			p.getRigidBody().setLinearVelocity(btVector3(0.0, 0.0, 0.0));
-			p.getRigidBody().setAngularVelocity(btVector3(0.0, 0.0, 0.0));
+			body.forceActivationState(ACTIVE_TAG);
+			body.activate();
+			body.clearForces();
+			body.setLinearVelocity(btVector3(0.0, 0.0, 0.0));
+			body.setAngularVelocity(btVector3(0.0, 0.0, 0.0));
 
 			//cout << p.body->internalGetDeltaAngularVelocity() << endl;
 
@@ -183,14 +180,13 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 				float forceMag = getRandom(forceMagnitude,
 					forceMagnitudeDeviation);
 
-				p.getRigidBody().applyCentralForce(toBt(forceDir * forceMag));
+				body.applyCentralForce(toBt(forceDir * forceMag));
 			}
 
 			// gravity
 			if(!worldGravFlag)
 			{
-				p.getRigidBody().setGravity(toBt(getRandom(gravity,
-					gravityDeviation)));
+				body.setGravity(toBt(getRandom(gravity, gravityDeviation)));
 			}
 
 			// Starting pos. In local space
@@ -205,10 +201,9 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 				pos.transform(getWorldTransform());
 			}
 
-			btTransform trf;
-			trf.setIdentity();
-			trf.setOrigin(toBt(pos));
-			p.getRigidBody().setWorldTransform(trf);
+			btTransform trf(toBt(Transform(pos,
+				getWorldTransform().getRotation(), 1.0)));
+			body.setWorldTransform(trf);
 
 			// do the rest
 			++partNum;

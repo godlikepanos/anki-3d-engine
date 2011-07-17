@@ -36,7 +36,7 @@ void Painter::init()
 {
 	// Default font
 	float dfltFontWidth = 0.2 * deviceSize.x();
-	font.reset(new Font("engine-rsrc/ModernAntiqua.ttf", dfltFontWidth,
+	font.reset(new Font("engine-rsrc/ConsolaMono.ttf", dfltFontWidth,
 	                    deviceSize.x() / deviceSize.y() * dfltFontWidth));
 
 	// Misc

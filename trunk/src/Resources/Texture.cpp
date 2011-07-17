@@ -2,6 +2,7 @@
 #include "Resources/Texture.h"
 #include "Image.h"
 #include "GfxApi/GlException.h"
+#include "Util/Exception.h"
 #include "Core/Logger.h" /// @todo remove it
 #include "Math/Math.h"  /// @todo remove it
 

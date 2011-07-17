@@ -14,7 +14,7 @@
 #include "Logger.h"
 #include "Core/Globals.h"
 #include "ParallelJobs/Manager.h"
-#include "Renderer/Drawers/PhyDbgDrawer.h"
+#include "Renderer/Drawers/PhysDbgDrawer.h"
 #include "Scene/Scene.h"
 
 
@@ -24,7 +24,7 @@
 void App::handleMessageHanlderMsgs(const char* file, int line,
 	const char* func, const char* msg)
 {
-	std::cerr << "(" << file << ":" << line << " "<< func <<
+	std::cout << "(" << file << ":" << line << " "<< func <<
 		") " << msg << std::flush;
 }
 
@@ -110,7 +110,7 @@ void App::init(int argc, char* argv[])
 	initRenderer();
 	ParallelJobs::ManagerSingleton::getInstance().init(4);
 	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
-		new R::PhyDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
+		new R::PhysDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
 
 	// other
 	activeCam = NULL;
@@ -253,7 +253,7 @@ void App::swapBuffers()
 
 
 //==============================================================================
-// quit                                                                     =
+// quit                                                                        =
 //==============================================================================
 void App::quit(int code)
 {

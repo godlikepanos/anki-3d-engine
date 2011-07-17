@@ -31,6 +31,11 @@ class Scene
 				typedef typename Container::const_iterator ConstIterator;
 		};
 
+		enum
+		{
+			MAX_VISIBLE_NODES = 1000
+		};
+
 		Scene();
 		~Scene() {}
 

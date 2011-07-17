@@ -18,6 +18,15 @@ Renderer::Renderer():
 	width(640),
 	height(480),
 	sceneDrawer(*this)
+{
+	enableStagesProfilingFlag = false;
+}
+
+
+//==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+Renderer::~Renderer()
 {}
 
 
@@ -62,6 +71,11 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// Other
 	skinsDeformer.init();
+
+	msTq.reset(new TimeQuery);
+	isTq.reset(new TimeQuery);
+	ppsTq.reset(new TimeQuery);
+	bsTq.reset(new TimeQuery);
 }
 
 
@@ -84,27 +98,27 @@ void Renderer::render(Camera& cam_)
 
 	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 
-	if(enableStageProfilingFlag)
+	if(enableStagesProfilingFlag)
 	{
-		msTq.begin();
+		msTq->begin();
 		ms.run();
-		msTime = msTq.end();
+		msTime = msTq->end();
 
-		isTq.begin();
+		isTq->begin();
 		is.run();
-		isTime = isTq.end();
+		isTime = isTq->end();
 
-		ppsTq.begin();
+		ppsTq->begin();
 		pps.runPrePass();
-		ppsTime = ppsTq.end();
+		ppsTime = ppsTq->end();
 
-		bsTq.begin();
+		bsTq->begin();
 		bs.run();
-		bsTime = bsTq.end();
+		bsTime = bsTq->end();
 
-		ppsTq.begin();
+		ppsTq->begin();
 		pps.runPostPass();
-		ppsTime += ppsTq.end();
+		ppsTime += ppsTq->end();
 	}
 	else
 	{

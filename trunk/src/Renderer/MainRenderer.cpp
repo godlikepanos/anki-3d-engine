@@ -10,9 +10,17 @@
 #include "RendererInitializer.h"
 #include "Ssao.h"
 #include "Core/Logger.h"
+#include "GfxApi/TimeQuery.h"
 
 
 namespace R {
+
+
+//==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+MainRenderer::~MainRenderer()
+{}
 
 
 //==============================================================================
@@ -24,6 +32,8 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	initGl();
 
 	sProg.loadRsrc("shaders/Final.glsl");
+
+	dbgTq.reset(new TimeQuery);
 
 	//
 	// init the offscreen Renderer
@@ -70,7 +80,7 @@ void MainRenderer::initGl()
 	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
 	glCullFace(GL_BACK);
-	GlStateMachineSingleton.getInstance().enable(GL_CULL_FACE);
+	GlStateMachineSingleton::getInstance().enable(GL_CULL_FACE);
 
 	// defaults
 	//glDisable(GL_LIGHTING);
@@ -99,11 +109,11 @@ void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
 
-	if(isStageProfilingEnabled())
+	if(isStagesProfilingEnabled())
 	{
-		dbgTq.begin();
+		dbgTq->begin();
 		dbg.run();
-		dbgTime = dbgTq.end();
+		dbgTime = dbgTq->end();
 	}
 	else
 	{

@@ -5,7 +5,7 @@
 WRAP(EventMainRendererPpsHdr)
 {
 	class_<Event::MainRendererPpsHdr>("EventMainRendererPpsHdr", no_init)
-		.def(init<uint, uint, float, uint, float>())
+		.def(init<float, float, float, uint, float>())
 		.def(init<const Event::MainRendererPpsHdr&>())
 	;
 }

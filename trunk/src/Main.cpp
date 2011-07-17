@@ -387,7 +387,16 @@ void mainLoop()
 		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
 		//painter->drawText("A");
-		painter->drawText("Once upon a time in a place called Kickapoo.");
+		const R::MainRenderer& r = R::MainRendererSingleton::getInstance();
+		std::stringstream ss;
+		ss << "MS: " << r.getMsTime() * 1000000 << " IS: " <<
+			r.getIsTime() * 1000000 << " BS: " << r.getBsTime() * 1000000 <<
+			" PPS: " << r.getPpsTime() * 1000000 << " DBG: " <<
+			r.getDbgTime() * 1000000;
+
+		ss << "\n" << AppSingleton::getInstance().getActiveCam()->
+			getVisibleMsRenderableNodes().size();
+		painter->drawText(ss.str());
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
 		{

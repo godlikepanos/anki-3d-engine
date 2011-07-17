@@ -14,13 +14,11 @@ class Job;
 
 /// The base class of the parameters the we pass in the job
 struct JobParameters
-{
-	const Job* job;
-};
+{};
 
 
 /// The callback that we feed to the job
-typedef void (*JobCallback)(JobParameters&);
+typedef void (*JobCallback)(JobParameters&, const Job&);
 
 
 /// The thread that executes a JobCallback
@@ -48,7 +46,7 @@ class Job
 		JobCallback callback; ///< Its NULL if there are no pending job
 		JobParameters* params;
 		/// Know your father and pass him to the jobs
-		const Manager& manager; ///< Know your father
+		const Manager& manager;
 
 		/// Start thread
 		void start();
