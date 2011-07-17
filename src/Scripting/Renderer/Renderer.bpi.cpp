@@ -4,14 +4,19 @@
 
 WRAP(Renderer)
 {
-	typedef R::Pps& (R::Renderer::* getPpsAccessor)();
+	using namespace R;
 
-	class_<R::Renderer, noncopyable>("Renderer", no_init)
-		.def("getPps", (getPpsAccessor)(&R::Renderer::getPps),
+	typedef Pps& (Renderer::* getPpsAccessor)();
+
+	class_<Renderer, noncopyable>("Renderer", no_init)
+		.def("getPps", (getPpsAccessor)(&Renderer::getPps),
 			return_value_policy<reference_existing_object>())
-		.def("getMsTime", &R::Renderer::getMsTime)
-		.def("getIsTime", &R::Renderer::getIsTime)
-		.def("getPpsTime", &R::Renderer::getPpsTime)
-		.def("getBsTime", &R::Renderer::getBsTime)
+		.def("getMsTime", &Renderer::getMsTime)
+		.def("getIsTime", &Renderer::getIsTime)
+		.def("getPpsTime", &Renderer::getPpsTime)
+		.def("getBsTime", &Renderer::getBsTime)
+		.def("isStagesProfilingEnabled",
+			(bool (Renderer::*)() const)(&Renderer::isStagesProfilingEnabled))
+		.def("setEnableStagesProfiling", &Renderer::setEnableStagesProfiling)
 	;
 }

@@ -135,24 +135,6 @@ void Scene::updateAllWorldStuff(float prevUpdateTime, float crntTime)
 	{
 		SceneNode* pnode = queue[head++]; // queue pop
 
-		/*if(pnode->getSceneNodeName() == "PerspectiveCamera:Camera:0")
-		{
-			INFO("Delete me");
-		}
-
-		if(pnode->getSceneNodeType() == SceneNode::SNT_PARTICLE_EMITTER)
-		{
-			INFO("Delete me");
-		}
-
-		if(pnode->getSceneNodeType() == SceneNode::SNT_MODEL)
-		{
-			if(pnode->getParent())
-			{
-				INFO("Delete me " << static_cast<SceneNode*>(pnode->getParent())->getSceneNodeType());
-			}
-		}*/
-
 		pnode->updateWorldTransform();
 		pnode->frameUpdate(prevUpdateTime, crntTime);
 		pnode->moveUpdate();

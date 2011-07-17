@@ -1,5 +1,6 @@
 #include "TimeQuery.h"
 #include "Util/Assert.h"
+#include "GlException.h"
 
 
 //==============================================================================
@@ -28,7 +29,7 @@ void TimeQuery::begin()
 {
 	ASSERT(state == S_CREATED || state == S_ENDED);
 
-	glQueryCounter(GL_TIMESTAMP, glIds[0]);
+	glQueryCounter(glIds[0], GL_TIMESTAMP);
 
 	state = S_STARTED;
 }
@@ -41,7 +42,7 @@ double TimeQuery::end()
 {
 	ASSERT(state == S_STARTED);
 
-	glQueryCounter(GL_TIMESTAMP, glIds[1]);
+	glQueryCounter(glIds[1], GL_TIMESTAMP);
 
 	// Wait
 	GLint done = 0;

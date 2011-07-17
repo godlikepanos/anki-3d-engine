@@ -28,6 +28,9 @@ SceneNode::SceneNode(SceneNodeType type_, bool inheritParentTrfFlag_,
 	name = boost::lexical_cast<std::string>(uid);
 
 	++uid;
+
+	flags = SNF_NONE;
+	enableFlag(SNF_ACTIVE);
 }
 
 

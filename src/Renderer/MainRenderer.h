@@ -14,7 +14,7 @@ class MainRenderer: public Renderer
 	public:
 		MainRenderer();
 
-		~MainRenderer() throw() {}
+		~MainRenderer();
 
 		/// @name Setters & getters
 		/// @{
@@ -48,7 +48,7 @@ class MainRenderer: public Renderer
 		/// @name Profiling stuff
 		/// @{
 		double dbgTime;
-		TimeQuery dbgTq;
+		boost::scoped_ptr<TimeQuery> dbgTq;
 		/// @}
 
 		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program

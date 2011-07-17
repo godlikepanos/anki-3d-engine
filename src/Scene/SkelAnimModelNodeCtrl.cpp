@@ -174,7 +174,7 @@ void SkelAnimModelNodeCtrl::update(float)
 		frame = 0.0;
 	}
 
-	if(!controlledNode.isVisible())
+	if(!controlledNode.isFlagEnabled(SceneNode::SNF_VISIBLE))
 	{
 		return;
 	}

@@ -1,6 +1,7 @@
 #include <cstring>
 #include "BufferObject.h"
 #include "GfxApi/GlException.h"
+#include "Util/Exception.h"
 
 
 //==============================================================================

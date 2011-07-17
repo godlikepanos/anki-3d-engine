@@ -1,5 +1,6 @@
 #include "GfxApi/BufferObjects/Vao.h"
 #include "Vbo.h"
+#include "Util/Exception.h"
 
 
 //==============================================================================

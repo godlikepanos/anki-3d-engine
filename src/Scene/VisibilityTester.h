@@ -43,9 +43,14 @@ class VisibilityTester
 		};
 
 		/// The JobParameters that we feed in the ParallelJobs::Manager
-		struct JobParameters: ParallelJobs::JobParameters
+		struct VisJobParameters: ParallelJobs::JobParameters
 		{
-			VisibilityTester* visTester;
+			const Camera* cam;
+			bool skipShadowless;
+			VisibilityInfo* visibilityInfo;
+			Scene* scene;
+			boost::mutex* msRenderableNodesMtx;
+			boost::mutex* bsRenderableNodesMtx;
 		};
 
 		Scene& scene; ///< Know your father
@@ -54,9 +59,6 @@ class VisibilityTester
 		/// The vars of this group are needed by the static
 		/// getRenderableNodesJobCallback and kept here so it can access them
 		/// @{
-		const Camera* cam;
-		bool skipShadowless;
-		VisibilityInfo* visibilityInfo;
 		boost::mutex msRenderableNodesMtx;
 		boost::mutex bsRenderableNodesMtx;
 		/// @}
@@ -77,7 +79,8 @@ class VisibilityTester
 		/// This static method will be fed into the ParallelJobs::Manager
 		/// @param data This is actually a pointer to VisibilityTester
 		static void getRenderableNodesJobCallback(
-			ParallelJobs::JobParameters& data);
+			ParallelJobs::JobParameters& data,
+			const ParallelJobs::Job& job);
 };
 
 

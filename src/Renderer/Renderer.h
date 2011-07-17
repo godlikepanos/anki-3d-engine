@@ -18,14 +18,15 @@
 #include "SkinsDeformer.h"
 #include "GfxApi/GlStateMachine.h"
 #include "GfxApi/TimeQuery.h"
+#include <boost/scoped_ptr.hpp>
 
 
 class Camera;
 struct RendererInitializer;
 class ModelNode;
 
-
 namespace R {
+
 
 
 /// Offscreen renderer
@@ -43,7 +44,7 @@ class Renderer
 		};
 
 		Renderer();
-		~Renderer() throw() {}
+		~Renderer();
 
 		/// @name Accessors
 		/// @{
@@ -65,8 +66,8 @@ class Renderer
 		GETTER_R_BY_VAL(double, isTime, getIsTime)
 		GETTER_R_BY_VAL(double, ppsTime, getPpsTime)
 		GETTER_R_BY_VAL(double, bsTime, getBsTime)
-		GETTER_SETTER_BY_VAL(bool, enableStageProfilingFlag,
-			isStageProfilingEnabled, setEnableStageProfiling)
+		GETTER_SETTER_BY_VAL(bool, enableStagesProfilingFlag,
+			isStagesProfilingEnabled, setEnableStagesProfiling)
 		/// @}
 
 		/// Init the renderer given an initialization class
@@ -126,8 +127,8 @@ class Renderer
 		/// @name Profiling stuff
 		/// @{
 		double msTime, isTime, ppsTime, bsTime;
-		TimeQuery msTq, isTq, ppsTq, bsTq;
-		bool enableStageProfilingFlag;
+		boost::scoped_ptr<TimeQuery> msTq, isTq, ppsTq, bsTq;
+		bool enableStagesProfilingFlag;
 		/// @}
 
 		/// Width of the rendering. Don't confuse with the window width

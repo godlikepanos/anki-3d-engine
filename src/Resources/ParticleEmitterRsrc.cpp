@@ -110,8 +110,8 @@ void ParticleEmitterRsrc::load(const char* /*filename*/)
 	startingPosDeviation = Vec3(0.0, 0.0, 0.0);
 	size = 0.5;
 	maxNumOfParticles = 50;
-	emissionPeriod = 1.5;
-	particlesPerEmittion = 2;
+	emissionPeriod = 1.0;
+	particlesPerEmittion = 1;
 	modelName = "meshes/horse/horse.mdl";
 
 	// sanity checks

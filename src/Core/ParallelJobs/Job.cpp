@@ -49,8 +49,7 @@ void Job::workingFunc()
 		}
 
 		// Exec
-		params->job = this;
-		callback(*params);
+		callback(*params, *this);
 
 		// Nullify
 		{

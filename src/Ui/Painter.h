@@ -31,6 +31,7 @@ class Painter
 		/// @}
 
 		void drawText(const char* text);
+		void drawText(const std::string& str) {drawText(str.c_str());}
 		void drawFormatedText(const char* format, ...);
 
 	private:

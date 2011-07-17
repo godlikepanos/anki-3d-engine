@@ -48,7 +48,7 @@ void VisibilityTester::test(Camera& cam)
 	//
 	BOOST_FOREACH(SceneNode* node, scene.getAllNodes())
 	{
-		node->setVisible(false);
+		node->disableFlag(SceneNode::SNF_VISIBLE);
 	}
 
 	//
@@ -59,6 +59,11 @@ void VisibilityTester::test(Camera& cam)
 
 	BOOST_FOREACH(Light* light, scene.getLights())
 	{
+		if(!light->isFlagEnabled(SceneNode::SNF_ACTIVE))
+		{
+			continue;
+		}
+
 		switch(light->getType())
 		{
 			// Point
@@ -71,7 +76,7 @@ void VisibilityTester::test(Camera& cam)
 				if(cam.insideFrustum(sphere))
 				{
 					cam.getVisiblePointLights().push_back(pointl);
-					pointl->setVisible(true);
+					pointl->enableFlag(SceneNode::SNF_VISIBLE);
 				}
 				break;
 			}
@@ -83,8 +88,8 @@ void VisibilityTester::test(Camera& cam)
 				if(cam.insideFrustum(spotl->getCamera()))
 				{
 					cam.getVisibleSpotLights().push_back(spotl);
-					spotl->setVisible(true);
-					spotl->getCamera().setVisible(true);
+					spotl->enableFlag(SceneNode::SNF_VISIBLE);
+					spotl->getCamera().enableFlag(SceneNode::SNF_VISIBLE);
 				}
 				break;
 			}
@@ -119,19 +124,21 @@ bool VisibilityTester::test(const Type& tested, const Camera& cam)
 //==============================================================================
 // getRenderableNodes                                                          =
 //==============================================================================
-void VisibilityTester::getRenderableNodes(bool skipShadowless_,
-	const Camera& cam_, VisibilityInfo& storage)
+void VisibilityTester::getRenderableNodes(bool skipShadowless,
+	const Camera& cam, VisibilityInfo& storage)
 {
-	cam = &cam_;
-	skipShadowless = skipShadowless_;
-	visibilityInfo = &storage;
-
 	storage.getVisibleMsRenderableNodes().clear();
 	storage.getVisibleBsRenderableNodes().clear();
 
 	// Run in parallel
-	JobParameters jobParameters;
-	jobParameters.visTester = this;
+	VisJobParameters jobParameters;
+	jobParameters.cam = &cam;
+	jobParameters.skipShadowless = skipShadowless;
+	jobParameters.visibilityInfo = &storage;
+	jobParameters.scene = &scene;
+	jobParameters.msRenderableNodesMtx = &msRenderableNodesMtx;
+	jobParameters.bsRenderableNodesMtx = &bsRenderableNodesMtx;
+
 	for(uint i = 0;
 		i < ParallelJobs::ManagerSingleton::getInstance().getThreadsNum(); i++)
 	{
@@ -145,10 +152,10 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless_,
 	//
 	std::sort(storage.getVisibleMsRenderableNodes().begin(),
 		storage.getVisibleMsRenderableNodes().end(),
-		CmpDistanceFromOrigin(cam->getWorldTransform().getOrigin()));
+		CmpDistanceFromOrigin(cam.getWorldTransform().getOrigin()));
 	std::sort(storage.getVisibleBsRenderableNodes().begin(),
 		storage.getVisibleBsRenderableNodes().end(),
-		CmpDistanceFromOrigin(cam->getWorldTransform().getOrigin()));
+		CmpDistanceFromOrigin(cam.getWorldTransform().getOrigin()));
 }
 
 
@@ -156,17 +163,28 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless_,
 // getRenderableNodesJobCallback                                               =
 //==============================================================================
 void VisibilityTester::getRenderableNodesJobCallback(
-	ParallelJobs::JobParameters& data)
+	ParallelJobs::JobParameters& data,
+	const ParallelJobs::Job& job)
 {
-	JobParameters& jobParameters = static_cast<JobParameters&>(data);
+	VisJobParameters& jobParameters = static_cast<VisJobParameters&>(data);
 
-	uint id = jobParameters.job->getId();
-	uint threadsNum = jobParameters.job->getManager().getThreadsNum();
-	VisibilityTester* visTester = jobParameters.visTester;
-	Scene& scene = visTester->scene;
+	uint id = job.getId();
+	uint threadsNum = job.getManager().getThreadsNum();
+
+	const Camera& cam = *jobParameters.cam;
+	bool skipShadowless = jobParameters.skipShadowless;
+	VisibilityInfo& visibilityInfo = *jobParameters.visibilityInfo;
+	Scene& scene = *jobParameters.scene;
+	boost::mutex& msRenderableNodesMtx = *jobParameters.msRenderableNodesMtx;
+	boost::mutex& bsRenderableNodesMtx = *jobParameters.bsRenderableNodesMtx;
 
 	uint count, from, to;
 	size_t nodesSize;
+
+	boost::array<const RenderableNode*, Scene::MAX_VISIBLE_NODES> msVisibles,
+		bsVisibles;
+	uint msI = 0, bsI = 0;
+
 
 	//
 	// ModelNodes
@@ -185,43 +203,47 @@ void VisibilityTester::getRenderableNodesJobCallback(
 	{
 		ModelNode* node = scene.getModelNodes()[i];
 
-		// Skip if the ModeNode is not visible
-		if(!test(*node, *visTester->cam))
+		if(!node->isFlagEnabled(SceneNode::SNF_ACTIVE))
 		{
 			continue;
 		}
 
-		node->setVisible(true);
+		// Skip if the ModeNode is not visible
+		if(!test(*node, cam))
+		{
+			continue;
+		}
+
+		node->enableFlag(SceneNode::SNF_VISIBLE);
 
 		// If visible test every patch individually
 		BOOST_FOREACH(ModelPatchNode* modelPatchNode,
 			node->getModelPatchNodes())
 		{
+			if(!modelPatchNode->isFlagEnabled(SceneNode::SNF_ACTIVE))
+			{
+				continue;
+			}
+
 			// Skip shadowless
-			if(visTester->skipShadowless &&
+			if(skipShadowless &&
 				!modelPatchNode->getCpMtl().castsShadow())
 			{
 				continue;
 			}
 
 			// Test if visible by main camera
-			if(test(*modelPatchNode, *visTester->cam))
+			if(test(*modelPatchNode, cam))
 			{
 				if(modelPatchNode->getCpMtl().renderInBlendingStage())
 				{
-					boost::mutex::scoped_lock lock(
-						visTester->bsRenderableNodesMtx);
-					visTester->visibilityInfo->getVisibleBsRenderableNodes().
-						push_back(modelPatchNode);
+					bsVisibles[bsI++] = modelPatchNode;
 				}
 				else
 				{
-					boost::mutex::scoped_lock lock(
-						visTester->msRenderableNodesMtx);
-					visTester->visibilityInfo->getVisibleMsRenderableNodes().
-						push_back(modelPatchNode);
+					msVisibles[msI++] = modelPatchNode;
 				}
-				modelPatchNode->setVisible(true);
+				modelPatchNode->enableFlag(SceneNode::SNF_VISIBLE);
 			}
 		}
 	}
@@ -244,19 +266,29 @@ void VisibilityTester::getRenderableNodesJobCallback(
 	{
 		SkinNode* node = scene.getSkinNodes()[i];
 
-		// Skip if the SkinNode is not visible
-		if(!test(*node, *visTester->cam))
+		if(!node->isFlagEnabled(SceneNode::SNF_ACTIVE))
 		{
 			continue;
 		}
 
-		node->setVisible(true);
+		// Skip if the SkinNode is not visible
+		if(!test(*node, cam))
+		{
+			continue;
+		}
+
+		node->enableFlag(SceneNode::SNF_VISIBLE);
 
 		// Put all the patches into the visible container
 		BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
 		{
+			if(!patchNode->isFlagEnabled(SceneNode::SNF_ACTIVE))
+			{
+				continue;
+			}
+
 			// Skip shadowless
-			if(visTester->skipShadowless &&
+			if(skipShadowless &&
 				!patchNode->getCpMtl().castsShadow())
 			{
 				continue;
@@ -264,17 +296,37 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 			if(patchNode->getCpMtl().renderInBlendingStage())
 			{
-				boost::mutex::scoped_lock lock(visTester->bsRenderableNodesMtx);
-				visTester->visibilityInfo->getVisibleBsRenderableNodes().
-					push_back(patchNode);
+				bsVisibles[bsI++] = patchNode;
 			}
 			else
 			{
-				boost::mutex::scoped_lock lock(visTester->msRenderableNodesMtx);
-				visTester->visibilityInfo->getVisibleMsRenderableNodes().
-					push_back(patchNode);
+				msVisibles[msI++] = patchNode;
 			}
-			patchNode->setVisible(true);
+			patchNode->enableFlag(SceneNode::SNF_VISIBLE);
+		}
+	}
+
+
+	//
+	// Copy the temps to the global
+	//
+	{
+		boost::mutex::scoped_lock lock(bsRenderableNodesMtx);
+
+		for(uint i = 0; i < bsI; i++)
+		{
+			visibilityInfo.getVisibleBsRenderableNodes().push_back(
+				bsVisibles[i]);
+		}
+	}
+
+	{
+		boost::mutex::scoped_lock lock(msRenderableNodesMtx);
+
+		for(uint i = 0; i < msI; i++)
+		{
+			visibilityInfo.getVisibleMsRenderableNodes().push_back(
+				msVisibles[i]);
 		}
 	}
 }

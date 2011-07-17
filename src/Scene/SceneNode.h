@@ -30,6 +30,14 @@ class SceneNode: public Object
 			SNT_RENDERABLE
 		};
 		
+		enum SceneNodeFlags
+		{
+			SNF_NONE = 0,
+			SNF_VISIBLE = 1,
+			SNF_ACTIVE = 2,
+			SNF_MOVED = 4
+		};
+
 		explicit SceneNode(SceneNodeType type, bool inheritParentTrfFlag,
 			SceneNode* parent);
 		virtual ~SceneNode();
@@ -50,9 +58,15 @@ class SceneNode: public Object
 		const Object::Container& getChildren() const {return getObjChildren();}
 		Object::Container& getChildren() {return getObjChildren();}
 
-		GETTER_SETTER_BY_VAL(bool, visible, isVisible, setVisible)
-
 		GETTER_R(std::string, name, getSceneNodeName)
+		/// @}
+
+		/// @name Flag manipulation
+		/// @{
+		void enableFlag(SceneNodeFlags flag, bool enable = true);
+		void disableFlag(SceneNodeFlags flag) {enableFlag(flag, false);}
+		bool isFlagEnabled(SceneNodeFlags flag) const;
+		ulong getFlags() const {return flags;}
 		/// @}
 
 		/// @name Updates
@@ -102,11 +116,7 @@ class SceneNode: public Object
 
 		static uint uid; ///< Unique identifier
 
-		/// @name Runtime info
-		/// @{
-		bool visible; ///< Visible by any camera
-		bool moved;
-		/// @}
+		ulong flags; ///< The state flags
 };
 
 
@@ -125,6 +135,25 @@ inline void SceneNode::rotateLocalY(float angDegrees)
 inline void SceneNode::rotateLocalZ(float angDegrees)
 {
 	getLocalTransform().getRotation().rotateZAxis(angDegrees);
+}
+
+
+inline void SceneNode::enableFlag(SceneNodeFlags flag, bool enable)
+{
+	if(enable)
+	{
+		flags |= flag;
+	}
+	else
+	{
+		flags &= ~flag;
+	}
+}
+
+
+inline bool SceneNode::isFlagEnabled(SceneNodeFlags flag) const
+{
+	return flags & flag;
 }
 
 
