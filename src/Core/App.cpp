@@ -269,26 +269,26 @@ void App::quit(int code)
 // printAppInfo                                                                =
 //==============================================================================
 #if !defined(REVISION)
-	#define REVISION "unknown"
+#	define REVISION "unknown"
 #endif
 
 void App::printAppInfo()
 {
 	std::stringstream msg;
 	msg << "App info: Build: ";
-	#if defined(NDEBUG)
-		msg << "release, ";
-	#else
-		msg << "debug, ";
-	#endif
+#if defined(NDEBUG)
+	msg << "release, ";
+#else
+	msg << "debug, ";
+#endif
 	msg << "platform ";
-	#if defined(PLATFORM_LINUX)
-		msg << "Linux, ";
-	#elif defined(PLATFORM_WIN)
-		msg << "Windows, ";
-	#else
-		#error "See file"
-	#endif
+#if defined(PLATFORM_LINUX)
+	msg << "Linux, ";
+#elif defined(PLATFORM_WIN)
+	msg << "Windows, ";
+#else
+#	error "See file"
+#endif
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
 	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' <<

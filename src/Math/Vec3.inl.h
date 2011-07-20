@@ -417,24 +417,23 @@ inline void Vec3::transform(const Vec3& translate, const Quat& rotate,
 // Mat4
 inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		Vec3 out;
-		Vec4 v4((*this), 1.0);
-		for(int i = 0; i < 3; i++)
-		{
-			_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i),
-				v4.getMm(), 0xF1));
-		}
-		return out;
-	#else
-		return Vec3(transform(0, 0) * x() + transform(0, 1) * y() +
-			transform(0, 2) * z() + transform(0, 3),
-			transform(1, 0) * x() + transform(1, 1) * y() +
-			transform(1, 2) * z() + transform(1, 3),
-			transform(2, 0) * x() + transform(2, 1) * y() +
-			transform(2, 2) * z() + transform(2, 3)
-		);
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	Vec3 out;
+	Vec4 v4((*this), 1.0);
+	for(int i = 0; i < 3; i++)
+	{
+		_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i), v4.getMm(), 0xF1));
+	}
+	return out;
+#else
+	return Vec3(transform(0, 0) * x() + transform(0, 1) * y() +
+		transform(0, 2) * z() + transform(0, 3),
+		transform(1, 0) * x() + transform(1, 1) * y() +
+		transform(1, 2) * z() + transform(1, 3),
+		transform(2, 0) * x() + transform(2, 1) * y() +
+		transform(2, 2) * z() + transform(2, 3)
+	);
+#endif
 }
 
 // Mat4

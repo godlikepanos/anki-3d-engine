@@ -1,12 +1,12 @@
 #ifndef S_PROG_LOADER_H
 #define S_PROG_LOADER_H
 
+#include "Util/Vec.h"
+#include <string>
+#include <boost/property_tree/ptree_fwd.hpp>
 
-namespace boost { namespace property_tree {
-class ptree;
-}}
 
-
+/// @todo
 class SProgLoader
 {
 	public:
@@ -27,6 +27,13 @@ class SProgLoader
 			std::string geomShaderSource; ///< The geom shader source
 			std::string fragShaderSource; ///< The frag shader source
 		};
+
+		/// Parse the: @code <shaderProg>...</shaderProg> @endcode
+		static void parseShaderProgBlock(const boost::property_tree::ptree& pt,
+			Output& out);
+
+		static void parseShaderBlock(const boost::property_tree::ptree& pt,
+			std::string& src);
 };
 
 

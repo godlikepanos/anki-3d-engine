@@ -11,33 +11,33 @@ namespace M {
 // Copy
 inline Mat4::Mat4(const Mat4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = b.arrMm[i];
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] = b[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = b.arrMm[i];
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] = b[i];
+	}
+#endif
 }
 
 // float
 inline Mat4::Mat4(const float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_set1_ps(f);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] = f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_set1_ps(f);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] = f;
+	}
+#endif
 }
 
 // float[]
@@ -190,15 +190,15 @@ inline const float& Mat4::operator[](const uint i) const
 }
 
 #if defined(MATH_INTEL_SIMD)
-	inline const __m128& Mat4::getMm(uint i) const
-	{
-		return arrMm[i];
-	}
-	
-	inline __m128& Mat4::getMm(uint i)
-	{
-		return arrMm[i];
-	}
+inline const __m128& Mat4::getMm(uint i) const
+{
+	return arrMm[i];
+}
+
+inline __m128& Mat4::getMm(uint i)
+{
+	return arrMm[i];
+}
 #endif
 
 //==============================================================================
@@ -208,17 +208,17 @@ inline const float& Mat4::operator[](const uint i) const
 // =
 inline Mat4& Mat4::operator=(const Mat4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = b.arrMm[i];
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] = b[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = b.arrMm[i];
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] = b[i];
+	}
+#endif
 	return (*this);
 }
 
@@ -226,34 +226,34 @@ inline Mat4& Mat4::operator=(const Mat4& b)
 inline Mat4 Mat4::operator+(const Mat4& b) const
 {
 	Mat4 c;
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			c.arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			c[i] = (*this)[i] + b[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		c.arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		c[i] = (*this)[i] + b[i];
+	}
+#endif
 	return c;
 }
 
 // +=
 inline Mat4& Mat4::operator+=(const Mat4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] += b[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] += b[i];
+	}
+#endif
 	return (*this);
 }
 
@@ -261,34 +261,34 @@ inline Mat4& Mat4::operator+=(const Mat4& b)
 inline Mat4 Mat4::operator-(const Mat4& b) const
 {
 	Mat4 c;
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			c.arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			c[i] = (*this)[i] - b[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		c.arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		c[i] = (*this)[i] - b[i];
+	}
+#endif
 	return c;
 }
 
 // -=
 inline Mat4& Mat4::operator-=(const Mat4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] -= b[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] -= b[i];
+	}
+#endif
 	return (*this);
 }
 
@@ -296,26 +296,26 @@ inline Mat4& Mat4::operator-=(const Mat4& b)
 inline Mat4 Mat4::operator*(const Mat4& b) const
 {
 	Mat4 c;
-	#if defined(MATH_INTEL_SIMD)
-		Mat4 t(b);
-		t.transpose();
-		for(int i = 0; i < 4; i++)
+#if defined(MATH_INTEL_SIMD)
+	Mat4 t(b);
+	t.transpose();
+	for(int i = 0; i < 4; i++)
+	{
+		for(int j = 0; j < 4; j++)
 		{
-			for(int j = 0; j < 4; j++)
-			{
-				_mm_store_ss(&c(i, j), _mm_dp_ps(arrMm[i], t.arrMm[j], 0xF1));
-			}
+			_mm_store_ss(&c(i, j), _mm_dp_ps(arrMm[i], t.arrMm[j], 0xF1));
 		}
-	#else
-		for(int i = 0; i < 4; i++)
+	}
+#else
+	for(int i = 0; i < 4; i++)
+	{
+		for(int j = 0; j < 4; j++)
 		{
-			for(int j = 0; j < 4; j++)
-			{
-				c(i, j) = (*this)(i, 0) * b(0, j) + (*this)(i, 1) * b(1, j) +
-					(*this)(i, 2) * b(2, j) + (*this)(i, 3) * b(3, j);
-			}
+			c(i, j) = (*this)(i, 0) * b(0, j) + (*this)(i, 1) * b(1, j) +
+				(*this)(i, 2) * b(2, j) + (*this)(i, 3) * b(3, j);
 		}
-	#endif
+	}
+#endif
 	return c;
 }
 
@@ -360,19 +360,19 @@ inline bool Mat4::operator!=(const Mat4& b) const
 inline Mat4 Mat4::operator+(float f) const
 {
 	Mat4 c;
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			c.arrMm[i] = _mm_add_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			c[i] = (*this)[i] + f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		c.arrMm[i] = _mm_add_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		c[i] = (*this)[i] + f;
+	}
+#endif
 	return c;
 }
 
@@ -385,19 +385,19 @@ inline Mat4 operator+(float f, const Mat4& m4)
 // 4x4 += float
 inline Mat4& Mat4::operator+=(float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_add_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] += f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_add_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] += f;
+	}
+#endif
 	return (*this);
 }
 
@@ -405,19 +405,19 @@ inline Mat4& Mat4::operator+=(float f)
 inline Mat4 Mat4::operator-(float f) const
 {
 	Mat4 r;
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			r.arrMm[i] = _mm_sub_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			r[i] = (*this)[i] - f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		r.arrMm[i] = _mm_sub_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		r[i] = (*this)[i] - f;
+	}
+#endif
 	return r;
 }
 
@@ -425,38 +425,38 @@ inline Mat4 Mat4::operator-(float f) const
 inline Mat4 operator-(float f, const Mat4& m4)
 {
 	Mat4 r;
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			r.arrMm[i] = _mm_sub_ps(mm, m4.arrMm[i]);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			r[i] = f - m4[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		r.arrMm[i] = _mm_sub_ps(mm, m4.arrMm[i]);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		r[i] = f - m4[i];
+	}
+#endif
 	return r;
 }
 
 // 4x4 -= float
 inline Mat4& Mat4::operator-=(float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_sub_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] -= f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_sub_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] -= f;
+	}
+#endif
 	return (*this);
 }
 
@@ -464,19 +464,19 @@ inline Mat4& Mat4::operator-=(float f)
 inline Mat4 Mat4::operator*(float f) const
 {
 	Mat4 r;
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			r.arrMm[i] = _mm_mul_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			r[i] = (*this)[i] * f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		r.arrMm[i] = _mm_mul_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		r[i] = (*this)[i] * f;
+	}
+#endif
 	return r;
 }
 
@@ -489,19 +489,19 @@ inline Mat4 operator*(float f, const Mat4& m4)
 // 4x4 *= float
 inline Mat4& Mat4::operator*=(float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_mul_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] *= f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_mul_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] *= f;
+	}
+#endif
 	return (*this);
 }
 
@@ -509,19 +509,19 @@ inline Mat4& Mat4::operator*=(float f)
 inline Mat4 Mat4::operator/(float f) const
 {
 	Mat4 r;
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			r.arrMm[i] = _mm_div_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			r[i] = (*this)[i] / f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		r.arrMm[i] = _mm_div_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		r[i] = (*this)[i] / f;
+	}
+#endif
 	return r;
 }
 
@@ -529,38 +529,38 @@ inline Mat4 Mat4::operator/(float f) const
 inline Mat4 operator/(float f, const Mat4& m4)
 {
 	Mat4 r;
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			r.arrMm[i] = _mm_div_ps(mm, m4.arrMm[i]);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			r[i] = f / m4[i];
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		r.arrMm[i] = _mm_div_ps(mm, m4.arrMm[i]);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		r[i] = f / m4[i];
+	}
+#endif
 	return r;
 }
 
 // 4x4 /= float
 inline Mat4& Mat4::operator/=(float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm;
-		mm = _mm_set1_ps(f);
-		for(int i = 0; i < 4; i++)
-		{
-			arrMm[i] = _mm_div_ps(arrMm[i], mm);
-		}
-	#else
-		for(int i = 0; i < 16; i++)
-		{
-			(*this)[i] /= f;
-		}
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm;
+	mm = _mm_set1_ps(f);
+	for(int i = 0; i < 4; i++)
+	{
+		arrMm[i] = _mm_div_ps(arrMm[i], mm);
+	}
+#else
+	for(int i = 0; i < 16; i++)
+	{
+		(*this)[i] /= f;
+	}
+#endif
 	return (*this);
 }
 
@@ -572,23 +572,23 @@ inline Mat4& Mat4::operator/=(float f)
 // Mat4 * Vec4
 inline Vec4 Mat4::operator*(const Vec4& b) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		Vec4 v;
-		for(int i = 0; i < 4; i++)
-		{
-			_mm_store_ss(&v[i], _mm_dp_ps(arrMm[i], b.getMm(), 0xF1));
-		}
-		return v;
-	#else
-		return Vec4((*this)(0, 0) * b.x() + (*this)(0, 1) * b.y() +
-			(*this)(0, 2) * b.z() + (*this)(0, 3) * b.w(),
-			(*this)(1, 0) * b.x() + (*this)(1, 1) * b.y() +
-			(*this)(1, 2) * b.z() + (*this)(1, 3) * b.w(),
-			(*this)(2, 0) * b.x() + (*this)(2, 1) * b.y() +
-			(*this)(2, 2) * b.z() + (*this)(2, 3) * b.w(),
-			(*this)(3, 0) * b.x() + (*this)(3, 1) * b.y() +
-			(*this)(3, 2) * b.z() + (*this)(3, 3) * b.w());
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	Vec4 v;
+	for(int i = 0; i < 4; i++)
+	{
+		_mm_store_ss(&v[i], _mm_dp_ps(arrMm[i], b.getMm(), 0xF1));
+	}
+	return v;
+#else
+	return Vec4((*this)(0, 0) * b.x() + (*this)(0, 1) * b.y() +
+		(*this)(0, 2) * b.z() + (*this)(0, 3) * b.w(),
+		(*this)(1, 0) * b.x() + (*this)(1, 1) * b.y() +
+		(*this)(1, 2) * b.z() + (*this)(1, 3) * b.w(),
+		(*this)(2, 0) * b.x() + (*this)(2, 1) * b.y() +
+		(*this)(2, 2) * b.z() + (*this)(2, 3) * b.w(),
+		(*this)(3, 0) * b.x() + (*this)(3, 1) * b.y() +
+		(*this)(3, 2) * b.z() + (*this)(3, 3) * b.w());
+#endif
 }
 
 
@@ -600,42 +600,42 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 	const Vec4& d)
 {
-	#if defined(MATH_INTEL_SIMD)
-		arrMm[0] = a.getMm();
-		arrMm[1] = b.getMm();
-		arrMm[2] = c.getMm();
-		arrMm[3] = d.getMm();
-	#else
-		(*this)(0, 0) = a.x();
-		(*this)(0, 1) = a.y();
-		(*this)(0, 2) = a.z();
-		(*this)(0, 3) = a.w();
-		(*this)(1, 0) = b.x();
-		(*this)(1, 1) = b.y();
-		(*this)(1, 2) = b.z();
-		(*this)(1, 3) = b.w();
-		(*this)(2, 0) = c.x();
-		(*this)(2, 1) = c.y();
-		(*this)(2, 2) = c.z();
-		(*this)(2, 3) = c.w();
-		(*this)(3, 0) = d.x();
-		(*this)(3, 1) = d.y();
-		(*this)(3, 2) = d.z();
-		(*this)(3, 3) = d.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	arrMm[0] = a.getMm();
+	arrMm[1] = b.getMm();
+	arrMm[2] = c.getMm();
+	arrMm[3] = d.getMm();
+#else
+	(*this)(0, 0) = a.x();
+	(*this)(0, 1) = a.y();
+	(*this)(0, 2) = a.z();
+	(*this)(0, 3) = a.w();
+	(*this)(1, 0) = b.x();
+	(*this)(1, 1) = b.y();
+	(*this)(1, 2) = b.z();
+	(*this)(1, 3) = b.w();
+	(*this)(2, 0) = c.x();
+	(*this)(2, 1) = c.y();
+	(*this)(2, 2) = c.z();
+	(*this)(2, 3) = c.w();
+	(*this)(3, 0) = d.x();
+	(*this)(3, 1) = d.y();
+	(*this)(3, 2) = d.z();
+	(*this)(3, 3) = d.w();
+#endif
 }
 
 // setRow
 inline void Mat4::setRow(uint i, const Vec4& v)
 {
-	#if defined(MATH_INTEL_SIMD)
-		arrMm[i] = v.getMm();
-	#else
-		(*this)(i, 0) = v.x();
-		(*this)(i, 1) = v.y();
-		(*this)(i, 2) = v.z();
-		(*this)(i, 3) = v.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	arrMm[i] = v.getMm();
+#else
+	(*this)(i, 0) = v.x();
+	(*this)(i, 1) = v.y();
+	(*this)(i, 2) = v.z();
+	(*this)(i, 3) = v.w();
+#endif
 }
 
 // setColumns
@@ -672,28 +672,28 @@ inline void Mat4::setColumn(uint i, const Vec4& v)
 // transpose
 inline void Mat4::transpose()
 {
-	#if defined(MATH_INTEL_SIMD)
-		_MM_TRANSPOSE4_PS(arrMm[0], arrMm[1], arrMm[2], arrMm[3]);
-	#else
-		float tmp = (*this)(0, 1);
-		(*this)(0, 1) = (*this)(1, 0);
-		(*this)(1, 0) = tmp;
-		tmp = (*this)(0, 2);
-		(*this)(0, 2) = (*this)(2, 0);
-		(*this)(2, 0) = tmp;
-		tmp = (*this)(0, 3);
-		(*this)(0, 3) = (*this)(3, 0);
-		(*this)(3, 0) = tmp;
-		tmp = (*this)(1, 2);
-		(*this)(1, 2) = (*this)(2, 1);
-		(*this)(2, 1) = tmp;
-		tmp = (*this)(1, 3);
-		(*this)(1, 3) = (*this)(3, 1);
-		(*this)(3, 1) = tmp;
-		tmp = (*this)(2, 3);
-		(*this)(2, 3) = (*this)(3, 2);
-		(*this)(3, 2) = tmp;
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	_MM_TRANSPOSE4_PS(arrMm[0], arrMm[1], arrMm[2], arrMm[3]);
+#else
+	float tmp = (*this)(0, 1);
+	(*this)(0, 1) = (*this)(1, 0);
+	(*this)(1, 0) = tmp;
+	tmp = (*this)(0, 2);
+	(*this)(0, 2) = (*this)(2, 0);
+	(*this)(2, 0) = tmp;
+	tmp = (*this)(0, 3);
+	(*this)(0, 3) = (*this)(3, 0);
+	(*this)(3, 0) = tmp;
+	tmp = (*this)(1, 2);
+	(*this)(1, 2) = (*this)(2, 1);
+	(*this)(2, 1) = tmp;
+	tmp = (*this)(1, 3);
+	(*this)(1, 3) = (*this)(3, 1);
+	(*this)(3, 1) = tmp;
+	tmp = (*this)(2, 3);
+	(*this)(2, 3) = (*this)(3, 2);
+	(*this)(3, 2) = tmp;
+#endif
 }
 
 // getTransposed
@@ -821,162 +821,162 @@ inline float Mat4::getDet() const
 inline Mat4 Mat4::getInverse() const
 {
 	/// @todo test this
-	/*#if !defined(MATH_INTEL_SIMD)
-		Mat4 r((*this));
-		__m128 minor0, minor1, minor2, minor3;
-		__m128 det, tmp1;
+/*#if !defined(MATH_INTEL_SIMD)
+	Mat4 r((*this));
+	__m128 minor0, minor1, minor2, minor3;
+	__m128 det, tmp1;
 
-		// Transpose
-		r.transpose();
+	// Transpose
+	r.transpose();
 
-		// Calc coeffs
-		tmp1 = _mm_mul_ps(r.arrMm[2], r.arrMm[3]);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
-		minor0 = _mm_mul_ps(r.arrMm[1], tmp1);
-		minor1 = _mm_mul_ps(r.arrMm[0], tmp1);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
-		minor0 = _mm_sub_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor0);
-		minor1 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor1);
-		minor1 = _mm_shuffle_ps(minor1, minor1, 0x4E);
+	// Calc coeffs
+	tmp1 = _mm_mul_ps(r.arrMm[2], r.arrMm[3]);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+	minor0 = _mm_mul_ps(r.arrMm[1], tmp1);
+	minor1 = _mm_mul_ps(r.arrMm[0], tmp1);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+	minor0 = _mm_sub_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor0);
+	minor1 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor1);
+	minor1 = _mm_shuffle_ps(minor1, minor1, 0x4E);
 
-		tmp1 = _mm_mul_ps(r.arrMm[1], r.arrMm[2]);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
-		minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor0);
-		minor3 = _mm_mul_ps(r.arrMm[0], tmp1);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
-		minor0 = _mm_sub_ps(minor0, _mm_mul_ps(r.arrMm[3], tmp1));
-		minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor3);
-		minor3 = _mm_shuffle_ps(minor3, minor3, 0x4E);
+	tmp1 = _mm_mul_ps(r.arrMm[1], r.arrMm[2]);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+	minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor0);
+	minor3 = _mm_mul_ps(r.arrMm[0], tmp1);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+	minor0 = _mm_sub_ps(minor0, _mm_mul_ps(r.arrMm[3], tmp1));
+	minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor3);
+	minor3 = _mm_shuffle_ps(minor3, minor3, 0x4E);
 
-		tmp1 = _mm_mul_ps(_mm_shuffle_ps(r.arrMm[1], r.arrMm[1], 0x4E),
-			r.arrMm[3]);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
-		r.arrMm[2] = _mm_shuffle_ps(r.arrMm[2], r.arrMm[2], 0x4E);
-		minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor0);
-		minor2 = _mm_mul_ps(r.arrMm[0], tmp1);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
-		minor0 = _mm_sub_ps(minor0, _mm_mul_ps(r.arrMm[2], tmp1));
-		minor2 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor2);
-		minor2 = _mm_shuffle_ps(minor2, minor2, 0x4E);
+	tmp1 = _mm_mul_ps(_mm_shuffle_ps(r.arrMm[1], r.arrMm[1], 0x4E),
+		r.arrMm[3]);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+	r.arrMm[2] = _mm_shuffle_ps(r.arrMm[2], r.arrMm[2], 0x4E);
+	minor0 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor0);
+	minor2 = _mm_mul_ps(r.arrMm[0], tmp1);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+	minor0 = _mm_sub_ps(minor0, _mm_mul_ps(r.arrMm[2], tmp1));
+	minor2 = _mm_sub_ps(_mm_mul_ps(r.arrMm[0], tmp1), minor2);
+	minor2 = _mm_shuffle_ps(minor2, minor2, 0x4E);
 
-		tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[1]);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
-		minor2 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor2);
-		minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor3);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
-		minor2 = _mm_sub_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor2);
-		minor3 = _mm_sub_ps(minor3, _mm_mul_ps(r.arrMm[2], tmp1));
+	tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[1]);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+	minor2 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor2);
+	minor3 = _mm_sub_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor3);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+	minor2 = _mm_sub_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor2);
+	minor3 = _mm_sub_ps(minor3, _mm_mul_ps(r.arrMm[2], tmp1));
 
-		tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[3]);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
-		minor1 = _mm_sub_ps(minor1, _mm_mul_ps(r.arrMm[2], tmp1));
-		minor2 = _mm_add_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor2);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
-		minor1 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor1);
-		minor2 = _mm_sub_ps(minor2, _mm_mul_ps(r.arrMm[1], tmp1));
+	tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[3]);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+	minor1 = _mm_sub_ps(minor1, _mm_mul_ps(r.arrMm[2], tmp1));
+	minor2 = _mm_add_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor2);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+	minor1 = _mm_add_ps(_mm_mul_ps(r.arrMm[2], tmp1), minor1);
+	minor2 = _mm_sub_ps(minor2, _mm_mul_ps(r.arrMm[1], tmp1));
 
-		tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[2]);
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
-		minor1 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor1);
-		minor3 = _mm_sub_ps(minor3, _mm_mul_ps(r.arrMm[1], tmp1));
-		tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
-		minor1 = _mm_sub_ps(minor1, _mm_mul_ps(r.arrMm[3], tmp1));
-		minor3 = _mm_add_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor3);
+	tmp1 = _mm_mul_ps(r.arrMm[0], r.arrMm[2]);
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+	minor1 = _mm_add_ps(_mm_mul_ps(r.arrMm[3], tmp1), minor1);
+	minor3 = _mm_sub_ps(minor3, _mm_mul_ps(r.arrMm[1], tmp1));
+	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+	minor1 = _mm_sub_ps(minor1, _mm_mul_ps(r.arrMm[3], tmp1));
+	minor3 = _mm_add_ps(_mm_mul_ps(r.arrMm[1], tmp1), minor3);
 
-		// 1 / det
-		det = _mm_mul_ps(r.arrMm[0], minor0);
-		det = _mm_add_ps(_mm_shuffle_ps(det, det, 0x4E), det);
-		det = _mm_add_ss(_mm_shuffle_ps(det, det, 0xB1), det);
-		tmp1 = _mm_rcp_ss(det);
-		det = _mm_sub_ss(_mm_add_ss(tmp1, tmp1),
-			_mm_mul_ss(det, _mm_mul_ss(tmp1, tmp1)));
-		det = _mm_shuffle_ps(det, det, 0x00);
+	// 1 / det
+	det = _mm_mul_ps(r.arrMm[0], minor0);
+	det = _mm_add_ps(_mm_shuffle_ps(det, det, 0x4E), det);
+	det = _mm_add_ss(_mm_shuffle_ps(det, det, 0xB1), det);
+	tmp1 = _mm_rcp_ss(det);
+	det = _mm_sub_ss(_mm_add_ss(tmp1, tmp1),
+		_mm_mul_ss(det, _mm_mul_ss(tmp1, tmp1)));
+	det = _mm_shuffle_ps(det, det, 0x00);
 
-		// Mul and store
-		minor0 = _mm_mul_ps(det, minor0);
-		r.arrMm[0] = minor0;
-		minor1 = _mm_mul_ps(det, minor1);
-		r.arrMm[1] = minor1;
-		minor2 = _mm_mul_ps(det, minor2);
-		r.arrMm[2] = minor2;
-		minor3 = _mm_mul_ps(det, minor3);
-		r.arrMm[3] = minor3;
+	// Mul and store
+	minor0 = _mm_mul_ps(det, minor0);
+	r.arrMm[0] = minor0;
+	minor1 = _mm_mul_ps(det, minor1);
+	r.arrMm[1] = minor1;
+	minor2 = _mm_mul_ps(det, minor2);
+	r.arrMm[2] = minor2;
+	minor3 = _mm_mul_ps(det, minor3);
+	r.arrMm[3] = minor3;
 
-		return r;
-	#else*/
-		float tmp[12];
-		float det;
-		const Mat4& in = (*this);
-		Mat4 m4;
+	return r;
+#else*/
+	float tmp[12];
+	float det;
+	const Mat4& in = (*this);
+	Mat4 m4;
 
-		tmp[0] = in(2, 2) * in(3, 3);
-		tmp[1] = in(3, 2) * in(2, 3);
-		tmp[2] = in(1, 2) * in(3, 3);
-		tmp[3] = in(3, 2) * in(1, 3);
-		tmp[4] = in(1, 2) * in(2, 3);
-		tmp[5] = in(2, 2) * in(1, 3);
-		tmp[6] = in(0, 2) * in(3, 3);
-		tmp[7] = in(3, 2) * in(0, 3);
-		tmp[8] = in(0, 2) * in(2, 3);
-		tmp[9] = in(2, 2) * in(0, 3);
-		tmp[10] = in(0, 2) * in(1, 3);
-		tmp[11] = in(1, 2) * in(0, 3);
+	tmp[0] = in(2, 2) * in(3, 3);
+	tmp[1] = in(3, 2) * in(2, 3);
+	tmp[2] = in(1, 2) * in(3, 3);
+	tmp[3] = in(3, 2) * in(1, 3);
+	tmp[4] = in(1, 2) * in(2, 3);
+	tmp[5] = in(2, 2) * in(1, 3);
+	tmp[6] = in(0, 2) * in(3, 3);
+	tmp[7] = in(3, 2) * in(0, 3);
+	tmp[8] = in(0, 2) * in(2, 3);
+	tmp[9] = in(2, 2) * in(0, 3);
+	tmp[10] = in(0, 2) * in(1, 3);
+	tmp[11] = in(1, 2) * in(0, 3);
 
-		m4(0, 0) =  tmp[0] * in(1, 1) + tmp[3] * in(2, 1) + tmp[4] * in(3, 1);
-		m4(0, 0) -= tmp[1] * in(1, 1) + tmp[2] * in(2, 1) + tmp[5] * in(3, 1);
-		m4(0, 1) =  tmp[1] * in(0, 1) + tmp[6] * in(2, 1) + tmp[9] * in(3, 1);
-		m4(0, 1) -= tmp[0] * in(0, 1) + tmp[7] * in(2, 1) + tmp[8] * in(3, 1);
-		m4(0, 2) =  tmp[2] * in(0, 1) + tmp[7] * in(1, 1) + tmp[10] * in(3, 1);
-		m4(0, 2) -= tmp[3] * in(0, 1) + tmp[6] * in(1, 1) + tmp[11] * in(3, 1);
-		m4(0, 3) =  tmp[5] * in(0, 1) + tmp[8] * in(1, 1) + tmp[11] * in(2, 1);
-		m4(0, 3) -= tmp[4] * in(0, 1) + tmp[9] * in(1, 1) + tmp[10] * in(2, 1);
-		m4(1, 0) =  tmp[1] * in(1, 0) + tmp[2] * in(2, 0) + tmp[5] * in(3, 0);
-		m4(1, 0) -= tmp[0] * in(1, 0) + tmp[3] * in(2, 0) + tmp[4] * in(3, 0);
-		m4(1, 1) =  tmp[0] * in(0, 0) + tmp[7] * in(2, 0) + tmp[8] * in(3, 0);
-		m4(1, 1) -= tmp[1] * in(0, 0) + tmp[6] * in(2, 0) + tmp[9] * in(3, 0);
-		m4(1, 2) =  tmp[3] * in(0, 0) + tmp[6] * in(1, 0) + tmp[11] * in(3, 0);
-		m4(1, 2) -= tmp[2] * in(0, 0) + tmp[7] * in(1, 0) + tmp[10] * in(3, 0);
-		m4(1, 3) =  tmp[4] * in(0, 0) + tmp[9] * in(1, 0) + tmp[10] * in(2, 0);
-		m4(1, 3) -= tmp[5] * in(0, 0) + tmp[8] * in(1, 0) + tmp[11] * in(2, 0);
+	m4(0, 0) =  tmp[0] * in(1, 1) + tmp[3] * in(2, 1) + tmp[4] * in(3, 1);
+	m4(0, 0) -= tmp[1] * in(1, 1) + tmp[2] * in(2, 1) + tmp[5] * in(3, 1);
+	m4(0, 1) =  tmp[1] * in(0, 1) + tmp[6] * in(2, 1) + tmp[9] * in(3, 1);
+	m4(0, 1) -= tmp[0] * in(0, 1) + tmp[7] * in(2, 1) + tmp[8] * in(3, 1);
+	m4(0, 2) =  tmp[2] * in(0, 1) + tmp[7] * in(1, 1) + tmp[10] * in(3, 1);
+	m4(0, 2) -= tmp[3] * in(0, 1) + tmp[6] * in(1, 1) + tmp[11] * in(3, 1);
+	m4(0, 3) =  tmp[5] * in(0, 1) + tmp[8] * in(1, 1) + tmp[11] * in(2, 1);
+	m4(0, 3) -= tmp[4] * in(0, 1) + tmp[9] * in(1, 1) + tmp[10] * in(2, 1);
+	m4(1, 0) =  tmp[1] * in(1, 0) + tmp[2] * in(2, 0) + tmp[5] * in(3, 0);
+	m4(1, 0) -= tmp[0] * in(1, 0) + tmp[3] * in(2, 0) + tmp[4] * in(3, 0);
+	m4(1, 1) =  tmp[0] * in(0, 0) + tmp[7] * in(2, 0) + tmp[8] * in(3, 0);
+	m4(1, 1) -= tmp[1] * in(0, 0) + tmp[6] * in(2, 0) + tmp[9] * in(3, 0);
+	m4(1, 2) =  tmp[3] * in(0, 0) + tmp[6] * in(1, 0) + tmp[11] * in(3, 0);
+	m4(1, 2) -= tmp[2] * in(0, 0) + tmp[7] * in(1, 0) + tmp[10] * in(3, 0);
+	m4(1, 3) =  tmp[4] * in(0, 0) + tmp[9] * in(1, 0) + tmp[10] * in(2, 0);
+	m4(1, 3) -= tmp[5] * in(0, 0) + tmp[8] * in(1, 0) + tmp[11] * in(2, 0);
 
-		tmp[0] = in(2, 0) * in(3, 1);
-		tmp[1] = in(3, 0) * in(2, 1);
-		tmp[2] = in(1, 0) * in(3, 1);
-		tmp[3] = in(3, 0) * in(1, 1);
-		tmp[4] = in(1, 0) * in(2, 1);
-		tmp[5] = in(2, 0) * in(1, 1);
-		tmp[6] = in(0, 0) * in(3, 1);
-		tmp[7] = in(3, 0) * in(0, 1);
-		tmp[8] = in(0, 0) * in(2, 1);
-		tmp[9] = in(2, 0) * in(0, 1);
-		tmp[10] = in(0, 0) * in(1, 1);
-		tmp[11] = in(1, 0) * in(0, 1);
+	tmp[0] = in(2, 0) * in(3, 1);
+	tmp[1] = in(3, 0) * in(2, 1);
+	tmp[2] = in(1, 0) * in(3, 1);
+	tmp[3] = in(3, 0) * in(1, 1);
+	tmp[4] = in(1, 0) * in(2, 1);
+	tmp[5] = in(2, 0) * in(1, 1);
+	tmp[6] = in(0, 0) * in(3, 1);
+	tmp[7] = in(3, 0) * in(0, 1);
+	tmp[8] = in(0, 0) * in(2, 1);
+	tmp[9] = in(2, 0) * in(0, 1);
+	tmp[10] = in(0, 0) * in(1, 1);
+	tmp[11] = in(1, 0) * in(0, 1);
 
-		m4(2, 0) = tmp[0] * in(1, 3) + tmp[3] * in(2, 3) + tmp[4] * in(3, 3);
-		m4(2, 0)-= tmp[1] * in(1, 3) + tmp[2] * in(2, 3) + tmp[5] * in(3, 3);
-		m4(2, 1) = tmp[1] * in(0, 3) + tmp[6] * in(2, 3) + tmp[9] * in(3, 3);
-		m4(2, 1)-= tmp[0] * in(0, 3) + tmp[7] * in(2, 3) + tmp[8] * in(3, 3);
-		m4(2, 2) = tmp[2] * in(0, 3) + tmp[7] * in(1, 3) + tmp[10] * in(3, 3);
-		m4(2, 2)-= tmp[3] * in(0, 3) + tmp[6] * in(1, 3) + tmp[11] * in(3, 3);
-		m4(2, 3) = tmp[5] * in(0, 3) + tmp[8] * in(1, 3) + tmp[11] * in(2, 3);
-		m4(2, 3)-= tmp[4] * in(0, 3) + tmp[9] * in(1, 3) + tmp[10] * in(2, 3);
-		m4(3, 0) = tmp[2] * in(2, 2) + tmp[5] * in(3, 2) + tmp[1] * in(1, 2);
-		m4(3, 0)-= tmp[4] * in(3, 2) + tmp[0] * in(1, 2) + tmp[3] * in(2, 2);
-		m4(3, 1) = tmp[8] * in(3, 2) + tmp[0] * in(0, 2) + tmp[7] * in(2, 2);
-		m4(3, 1)-= tmp[6] * in(2, 2) + tmp[9] * in(3, 2) + tmp[1] * in(0, 2);
-		m4(3, 2) = tmp[6] * in(1, 2) + tmp[11] * in(3, 2) + tmp[3] * in(0, 2);
-		m4(3, 2)-= tmp[10] * in(3, 2) + tmp[2] * in(0, 2) + tmp[7] * in(1, 2);
-		m4(3, 3) = tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
-		m4(3, 3)-= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
+	m4(2, 0) = tmp[0] * in(1, 3) + tmp[3] * in(2, 3) + tmp[4] * in(3, 3);
+	m4(2, 0)-= tmp[1] * in(1, 3) + tmp[2] * in(2, 3) + tmp[5] * in(3, 3);
+	m4(2, 1) = tmp[1] * in(0, 3) + tmp[6] * in(2, 3) + tmp[9] * in(3, 3);
+	m4(2, 1)-= tmp[0] * in(0, 3) + tmp[7] * in(2, 3) + tmp[8] * in(3, 3);
+	m4(2, 2) = tmp[2] * in(0, 3) + tmp[7] * in(1, 3) + tmp[10] * in(3, 3);
+	m4(2, 2)-= tmp[3] * in(0, 3) + tmp[6] * in(1, 3) + tmp[11] * in(3, 3);
+	m4(2, 3) = tmp[5] * in(0, 3) + tmp[8] * in(1, 3) + tmp[11] * in(2, 3);
+	m4(2, 3)-= tmp[4] * in(0, 3) + tmp[9] * in(1, 3) + tmp[10] * in(2, 3);
+	m4(3, 0) = tmp[2] * in(2, 2) + tmp[5] * in(3, 2) + tmp[1] * in(1, 2);
+	m4(3, 0)-= tmp[4] * in(3, 2) + tmp[0] * in(1, 2) + tmp[3] * in(2, 2);
+	m4(3, 1) = tmp[8] * in(3, 2) + tmp[0] * in(0, 2) + tmp[7] * in(2, 2);
+	m4(3, 1)-= tmp[6] * in(2, 2) + tmp[9] * in(3, 2) + tmp[1] * in(0, 2);
+	m4(3, 2) = tmp[6] * in(1, 2) + tmp[11] * in(3, 2) + tmp[3] * in(0, 2);
+	m4(3, 2)-= tmp[10] * in(3, 2) + tmp[2] * in(0, 2) + tmp[7] * in(1, 2);
+	m4(3, 3) = tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
+	m4(3, 3)-= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
 
-		det = (*this)(0, 0) * m4(0, 0) + (*this)(1, 0) * m4(0, 1) +
-			(*this)(2, 0) * m4(0, 2) + (*this)(3, 0) * m4(0, 3);
+	det = (*this)(0, 0) * m4(0, 0) + (*this)(1, 0) * m4(0, 1) +
+		(*this)(2, 0) * m4(0, 2) + (*this)(3, 0) * m4(0, 3);
 
-		ASSERT(!isZero(det)); // Cannot invert, det == 0
-		det = 1.0 / det;
-		m4 *= det;
-		return m4;
-	//#endif
+	ASSERT(!isZero(det)); // Cannot invert, det == 0
+	det = 1.0 / det;
+	m4 *= det;
+	return m4;
+//#endif
 }
 
 // invert
