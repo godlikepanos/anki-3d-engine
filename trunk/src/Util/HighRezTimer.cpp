@@ -52,11 +52,12 @@ HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 
 
 //==============================================================================
-// getCrntTime                                                                =
+// getCrntTime                                                                 =
 //==============================================================================
 HighRezTimer::Scalar HighRezTimer::getCrntTime()
 {
 	using namespace boost::posix_time;
-	ulong ms = ptime(microsec_clock::local_time()).time_of_day().total_milliseconds();
+	ulong ms = ptime(microsec_clock::local_time()).time_of_day().
+		total_milliseconds();
 	return Scalar(ms) / 1000.0;
 }

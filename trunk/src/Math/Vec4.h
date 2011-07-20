@@ -21,9 +21,9 @@ class Vec4
 		explicit Vec4(const Vec3& v3, float w);
 		         Vec4(const Vec4& b);
 		explicit Vec4(const Quat& q);
-		#if defined(MATH_INTEL_SIMD)
-			explicit Vec4(const __m128& mm);
-		#endif
+#if defined(MATH_INTEL_SIMD)
+		explicit Vec4(const __m128& mm);
+#endif
 		/// @}
 
 		/// @name Accessors
@@ -38,10 +38,10 @@ class Vec4
 		float w() const;
 		float& operator[](uint i);
 		float operator[](uint i) const;
-		#if defined(MATH_INTEL_SIMD)
-			__m128& getMm();
-			const __m128& getMm() const;
-		#endif
+#if defined(MATH_INTEL_SIMD)
+		__m128& getMm();
+		const __m128& getMm() const;
+#endif
 		/// @}
 
 		/// @name Operators with same
@@ -97,9 +97,9 @@ class Vec4
 
 			boost::array<float, 4> arr;
 
-			#if defined(MATH_INTEL_SIMD)
-				__m128 mm;
-			#endif
+#if defined(MATH_INTEL_SIMD)
+			__m128 mm;
+#endif
 		};
 		/// @}
 };

@@ -4,7 +4,7 @@
 
 #if defined(PLATFORM_LINUX)
 
-	#include <malloc.h>
+#	include <malloc.h>
 
 	typedef struct mallinfo Mallinfo;
 
@@ -27,9 +27,9 @@
 		printMallInfo(diff);
 	}
 
-	#define MALLINFO_BEGIN Mallinfo __m__ = GetMallInfo();
+#	define MALLINFO_BEGIN Mallinfo __m__ = GetMallInfo();
 
-	#define MALLINFO_END printMallInfoDiff(__m__, GetMallInfo());
+#	define MALLINFO_END printMallInfoDiff(__m__, GetMallInfo());
 
 #endif
 

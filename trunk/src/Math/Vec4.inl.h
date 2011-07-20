@@ -11,47 +11,47 @@ namespace M {
 // default
 inline Vec4::Vec4()
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_setzero_ps();
-	#else
-		arr[0] = arr[1] = arr[2] = arr[3] = 0.0;
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_setzero_ps();
+#else
+	arr[0] = arr[1] = arr[2] = arr[3] = 0.0;
+#endif
 }
 
 // float
 inline Vec4::Vec4(float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_set1_ps(f);
-	#else
-		arr[0] = arr[1] = arr[2] = arr[3] = f;
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_set1_ps(f);
+#else
+	arr[0] = arr[1] = arr[2] = arr[3] = f;
+#endif
 }
 
 // float[]
 inline Vec4::Vec4(float arr_[])
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_load_ps(arr_);
-	#else
-		arr[0] = arr_[0];
-		arr[1] = arr_[1];
-		arr[2] = arr_[2];
-		arr[3] = arr_[3];
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_load_ps(arr_);
+#else
+	arr[0] = arr_[0];
+	arr[1] = arr_[1];
+	arr[2] = arr_[2];
+	arr[3] = arr_[3];
+#endif
 }
 
 // float, float, float, float
 inline Vec4::Vec4(float x_, float y_, float z_, float w_)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_set_ps(w_, z_, y_, x_);
-	#else
-		x() = x_;
-		y() = y_;
-		z() = z_;
-		w() = w_;
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_set_ps(w_, z_, y_, x_);
+#else
+	x() = x_;
+	y() = y_;
+	z() = z_;
+	w() = w_;
+#endif
 }
 
 // vec2, float, float
@@ -75,14 +75,14 @@ inline Vec4::Vec4(const Vec3& v3, float w_)
 // Copy
 inline Vec4::Vec4(const Vec4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = b.mm;
-	#else
-		x() = b.x();
-		y() = b.y();
-		z() = b.z();
-		w() = b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = b.mm;
+#else
+	x() = b.x();
+	y() = b.y();
+	z() = b.z();
+	w() = b.w();
+#endif
 }
 
 // quat
@@ -96,10 +96,10 @@ inline Vec4::Vec4(const Quat& q)
 
 // __m128
 #if defined(MATH_INTEL_SIMD)
-	inline Vec4::Vec4(const __m128& mm_)
-	{
-		mm = mm_;
-	}
+inline Vec4::Vec4(const __m128& mm_)
+{
+	mm = mm_;
+}
 #endif
 
 
@@ -158,15 +158,15 @@ inline float Vec4::w() const
 }
 
 #if defined(MATH_INTEL_SIMD)
-	inline __m128& Vec4::getMm()
-	{
-		return mm;
-	}
+inline __m128& Vec4::getMm()
+{
+	return mm;
+}
 
-	inline const __m128& Vec4::getMm() const
-	{
-		return mm;
-	}
+inline const __m128& Vec4::getMm() const
+{
+	return mm;
+}
 #endif
 
 
@@ -177,110 +177,110 @@ inline float Vec4::w() const
 // =
 inline Vec4& Vec4::operator=(const Vec4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = b.mm;
-	#else
-		x() = b.x();
-		y() = b.y();
-		z() = b.z();
-		w() = b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = b.mm;
+#else
+	x() = b.x();
+	y() = b.y();
+	z() = b.z();
+	w() = b.w();
+#endif
 	return (*this);
 }
 
 // +
 inline Vec4 Vec4::operator+(const Vec4& b) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		return Vec4(_mm_add_ps(mm, b.mm));
-	#else
-		return Vec4(x() + b.x(), y() + b.y(), z() + b.z(), w() + b.w());
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	return Vec4(_mm_add_ps(mm, b.mm));
+#else
+	return Vec4(x() + b.x(), y() + b.y(), z() + b.z(), w() + b.w());
+#endif
 }
 
 // +=
 inline Vec4& Vec4::operator+=(const Vec4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_add_ps(mm, b.mm);
-	#else
-		x() += b.x();
-		y() += b.y();
-		z() += b.z();
-		w() += b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_add_ps(mm, b.mm);
+#else
+	x() += b.x();
+	y() += b.y();
+	z() += b.z();
+	w() += b.w();
+#endif
 	return (*this);
 }
 
 // -
 inline Vec4 Vec4::operator-(const Vec4& b) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		return Vec4(_mm_sub_ps(mm, b.mm));
-	#else
-		return Vec4(x() - b.x(), y() - b.y(), z() - b.z(), w() - b.w());
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	return Vec4(_mm_sub_ps(mm, b.mm));
+#else
+	return Vec4(x() - b.x(), y() - b.y(), z() - b.z(), w() - b.w());
+#endif
 }
 
 // -=
 inline Vec4& Vec4::operator-=(const Vec4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_sub_ps(mm, b.mm);
-	#else
-		x() -= b.x();
-		y() -= b.y();
-		z() -= b.z();
-		w() -= b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_sub_ps(mm, b.mm);
+#else
+	x() -= b.x();
+	y() -= b.y();
+	z() -= b.z();
+	w() -= b.w();
+#endif
 	return (*this);
 }
 
 // *
 inline Vec4 Vec4::operator*(const Vec4& b) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		return Vec4(_mm_mul_ps(mm, b.mm));
-	#else
-		return Vec4(x() * b.x(), y() * b.y(), z() * b.z(), w() * b.w());
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	return Vec4(_mm_mul_ps(mm, b.mm));
+#else
+	return Vec4(x() * b.x(), y() * b.y(), z() * b.z(), w() * b.w());
+#endif
 }
 
 // *=
 inline Vec4& Vec4::operator*=(const Vec4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_mul_ps(mm, b.mm);
-	#else
-		x() *= b.x();
-		y() *= b.y();
-		z() *= b.z();
-		w() *= b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_mul_ps(mm, b.mm);
+#else
+	x() *= b.x();
+	y() *= b.y();
+	z() *= b.z();
+	w() *= b.w();
+#endif
 	return (*this);
 }
 
 // /
 inline Vec4 Vec4::operator/(const Vec4& b) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		return Vec4(_mm_div_ps(mm, b.mm));
-	#else
-		return Vec4(x() / b.x(), y() / b.y(), z() / b.z(), w() / b.w());
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	return Vec4(_mm_div_ps(mm, b.mm));
+#else
+	return Vec4(x() / b.x(), y() / b.y(), z() / b.z(), w() / b.w());
+#endif
 }
 
 // /=
 inline Vec4& Vec4::operator/=(const Vec4& b)
 {
-	#if defined(MATH_INTEL_SIMD)
-		mm = _mm_div_ps(mm, b.mm);
-	#else
-		x() /= b.x();
-		y() /= b.y();
-		z() /= b.z();
-		w() /= b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	mm = _mm_div_ps(mm, b.mm);
+#else
+	x() /= b.x();
+	y() /= b.y();
+	z() /= b.z();
+	w() /= b.w();
+#endif
 	return (*this);
 }
 
@@ -411,13 +411,13 @@ inline Vec4 Vec4::operator*(const Mat4& m4) const
 // dot
 inline float Vec4::dot(const Vec4& b) const
 {
-	#if defined(MATH_INTEL_SIMD)
-		float o;
-		_mm_store_ss(&o, _mm_dp_ps(mm, b.mm, 0xF1));
-		return o;
-	#else
-		return x() * b.x() + y() * b.y() + z() * b.z() + w() * b.w();
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	float o;
+	_mm_store_ss(&o, _mm_dp_ps(mm, b.mm, 0xF1));
+	return o;
+#else
+	return x() * b.x() + y() * b.y() + z() * b.z() + w() * b.w();
+#endif
 }
 
 // getLength

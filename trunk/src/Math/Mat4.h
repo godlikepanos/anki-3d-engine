@@ -39,10 +39,10 @@ class Mat4
 		const float& operator()(const uint i, const uint j) const;
 		float& operator[](const uint i);
 		const float& operator[](const uint i) const;
-		#if defined(MATH_INTEL_SIMD)
-			__m128& getMm(uint i);
-			const __m128& getMm(uint i) const;
-		#endif
+#if defined(MATH_INTEL_SIMD)
+		__m128& getMm(uint i);
+		const __m128& getMm(uint i) const;
+#endif
 		/// @}
 
 		/// @name Operators with same type
@@ -112,9 +112,9 @@ class Mat4
 		{
 			boost::array<float, 16> arr1;
 			boost::array<boost::array<float, 4>, 4> arr2;
-			#if defined(MATH_INTEL_SIMD)
-				boost::array<__m128, 4> arrMm;
-			#endif
+#if defined(MATH_INTEL_SIMD)
+			boost::array<__m128, 4> arrMm;
+#endif
 		};
 		/// @}
 };

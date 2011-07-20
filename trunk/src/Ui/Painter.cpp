@@ -97,7 +97,7 @@ void Painter::drawText(const char* text)
 		else if(cc == '\n')
 		{
 			p.x() = 2.0 * pos.x() - 1.0;
-			p.y() += 2.0 * font->getLineHeight() / deviceSize.y();
+			p.y() -= 2.0 * font->getLineHeight() / deviceSize.y();
 		}
 		else if(cc == '\t') // tab
 		{

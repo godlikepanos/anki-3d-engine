@@ -9,15 +9,15 @@ namespace M {
 //==============================================================================
 inline float sqrt(float f)
 {
-	#if defined(MATH_INTEL_SIMD)
-		__m128 mm = _mm_set_ss(f);
-		mm = _mm_sqrt_ss(mm);
-		float o;
-		_mm_store_ss(&o, mm);
-		return o;
-	#else
-		return ::sqrtf(f);
-	#endif
+#if defined(MATH_INTEL_SIMD)
+	__m128 mm = _mm_set_ss(f);
+	mm = _mm_sqrt_ss(mm);
+	float o;
+	_mm_store_ss(&o, mm);
+	return o;
+#else
+	return ::sqrtf(f);
+#endif
 }
 
 
