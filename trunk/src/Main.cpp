@@ -43,6 +43,7 @@
 #include "Events/Manager.h"
 #include "Events/SceneColor.h"
 #include "Events/MainRendererPpsHdr.h"
+#include "Resources/SProgLoader.h"
 
 
 // map (hard coded)
@@ -459,15 +460,14 @@ void mainLoop()
 //==============================================================================
 int main(int argc, char* argv[])
 {
-	/*std::stringstream ss("lala\n\n\n\n1a");
-	Scanner::Scanner scanner(ss);
-
-	scanner.getAllPrintAll();
-
-	return 0;*/
-
 	try
 	{
+		SProgLoader l("lala.sprog");
+		std::cout << "$$$" << l.getVertexShaderSource() << "$$$" << std::endl;
+		std::cerr << "$$$" << l.getFragmentShaderSource() << "$$$" << std::endl;
+
+		return 0;
+
 		AppSingleton::getInstance().init(argc, argv);
 		init();
 
@@ -480,6 +480,7 @@ int main(int argc, char* argv[])
 	catch(std::exception& e)
 	{
 		ERROR("Aborting: " << e.what());
+		std::cerr << "Aborting: " << e.what() << std::endl;
 		//abort();
 		return 1;
 	}

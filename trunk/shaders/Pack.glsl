@@ -1,13 +1,7 @@
 /// Pack 3D normal to 2D vector
+/// See the clean code in commends in revision < r467
 vec2 packNormal(in vec3 normal)
 {
-    /*original code:
-    const float SCALE = 1.7777;
-    vec2 _enc = _normal.xy / (_normal.z+1.0);
-    _enc /= SCALE;
-    _enc = _enc*0.5 + 0.5;
-    return _enc;*/
-
     const float SCALE = 1.7777;
     float scalar1 = (normal.z + 1.0) * (SCALE * 2.0);
     return normal.xy / scalar1 + 0.5;

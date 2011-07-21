@@ -23,12 +23,12 @@ uniform float lightRadius;
 uniform vec3 lightDiffuseCol;
 uniform vec3 lightSpecularCol;
 #if defined(SPOT_LIGHT_ENABLED)
-	uniform sampler2D lightTex;
-	uniform mat4 texProjectionMat;
-	#if defined(SHADOW_ENABLED)
-		uniform sampler2DShadow shadowMap;
-		uniform float shadowMapSize;
-	#endif
+uniform sampler2D lightTex;
+uniform mat4 texProjectionMat;
+#	if defined(SHADOW_ENABLED)
+uniform sampler2DShadow shadowMap;
+uniform float shadowMapSize;
+#	endif
 #endif
 /// @}
 
