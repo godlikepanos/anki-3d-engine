@@ -1,5 +1,5 @@
-#ifndef SHADER_PARSER_H
-#define SHADER_PARSER_H
+#ifndef SHADER_PROGRAM_PRE_PREPROCESSOR_H
+#define SHADER_PROGRAM_PRE_PREPROCESSOR_H
 
 #include <limits>
 #include "Util/Vec.h"
@@ -7,25 +7,45 @@
 #include "Util/Accessors.h"
 
 
+namespace Scanner {
+class Scanner;
+}
+
+
 /// Helper class used for shader program loading
 ///
 /// The class fills some of the GLSL spec deficiencies. It adds the include
 /// preprocessor directive and the support to have all the shaders in the same
 /// file. The file that includes all the shaders is called
-/// ShaderPrePreprocessor-compatible.
+/// ShaderProgramPrePreprocessor-compatible.
 ///
 /// The preprocessor pragmas are:
 ///
-/// - #pragma anki vertShaderBegins
-/// - #pragma anki geomShaderBegins
-/// - #pragma anki fragShaderBegins
-/// - #pragma anki attribute <varName> <customLocation>
+/// - #pragma anki start <vertexShader | geometryShader | fragmentShader>
 /// - #pragma anki include "<filename>"
 /// - #pragma anki transformFeedbackVarying <varName>
 ///
 /// @note The order of the *ShaderBegins is important
-class ShaderPrePreprocessor
+class ShaderProgramPrePreprocessor
 {
+	public:
+		/// It loads a file and parses it
+		/// @param[in] filename The file to load
+		/// @exception Exception
+		ShaderProgramPrePreprocessor(const char* filename)
+			{parseFile(filename);}
+
+		/// Destructor does nothing
+		~ShaderProgramPrePreprocessor() {}
+
+		/// @name Accessors
+		/// @{
+		GETTER_R(Vec<std::string>, trffbVaryings, getTranformFeedbackVaryings)
+		GETTER_R(std::string, output.vertShaderSource, getVertexShaderSource)
+		GETTER_R(std::string, output.geomShaderSource, getGeometryShaderSource)
+		GETTER_R(std::string, output.fragShaderSource, getFragmentShaderSource)
+		/// @}
+
 	protected:
 		/// The pragma base class
 		struct Pragma
@@ -40,16 +60,6 @@ class ShaderPrePreprocessor
 		{
 			std::string filename;
 		};
-		
-		struct ShaderVarPragma: Pragma
-		{
-			std::string name;
-			uint customLoc;
-
-			ShaderVarPragma(const std::string& definedInFile_,
-				int definedInLine_, const std::string& name_,
-				uint customLoc_);
-		};
 
 		struct TrffbVaryingPragma: Pragma
 		{
@@ -61,7 +71,8 @@ class ShaderPrePreprocessor
 	
 		struct CodeBeginningPragma: Pragma
 		{
-			/// The line number in the ShaderPrePreprocessor-compatible file
+			/// The line number in the ShaderProgramPrePreprocessor-compatible
+			/// file
 			int globalLine;
 
 			CodeBeginningPragma(): globalLine(-1) {}
@@ -70,47 +81,24 @@ class ShaderPrePreprocessor
 		/// The output of the class packed in this struct
 		struct Output
 		{
-			friend class ShaderPrePreprocessor;
+			friend class ShaderProgramPrePreprocessor;
 
-			public:
-				GETTER_R(Vec<ShaderVarPragma>, attributes, getAttribLocs)
-				GETTER_R(Vec<TrffbVaryingPragma>, trffbVaryings,
-					getTrffbVaryings)
-				GETTER_R(std::string, vertShaderSource, getVertShaderSource)
-				GETTER_R(std::string, geomShaderSource, getGeomShaderSource)
-				GETTER_R(std::string, fragShaderSource, getFragShaderSource)
-			
-			private:
-				/// It holds the name and the custom location
-				Vec<ShaderVarPragma> attributes;
-				/// Names and and ids for transform feedback varyings
-				Vec<TrffbVaryingPragma> trffbVaryings;
-				std::string vertShaderSource; ///< The vert shader source
-				std::string geomShaderSource; ///< The geom shader source
-				std::string fragShaderSource; ///< The frag shader source
+			/// Names and and ids for transform feedback varyings
+			Vec<TrffbVaryingPragma> trffbVaryings;
+			std::string vertShaderSource; ///< The vert shader source
+			std::string geomShaderSource; ///< The geom shader source
+			std::string fragShaderSource; ///< The frag shader source
 		};
-		
 
-	public:
-		/// It loads a file and parses it
-		/// @param[in] filename The file to load
-		/// @exception Exception
-		ShaderPrePreprocessor(const char* filename) {parseFile(filename);}
-
-		/// Destructor does nothing
-		~ShaderPrePreprocessor() {}
-		
-		GETTER_R(Output, output, getOutput)
-
-	protected:
 		Output output; ///< The most important variable
+		Vec<std::string> trffbVaryings;
 		Vec<std::string> sourceLines;  ///< The parseFileForPragmas fills this
 		CodeBeginningPragma vertShaderBegins;
 		CodeBeginningPragma geomShaderBegins;
 		CodeBeginningPragma fragShaderBegins;
 
-		/// Parse a ShaderPrePreprocessor formated GLSL file. Use getOutput to
-		/// get the output
+		/// Parse a ShaderProgramPrePreprocessor formated GLSL file. Use
+		/// the accessors to get the output
 		/// @param filename The file to parse
 		/// @exception Ecxeption
 		void parseFile(const char* filename);
@@ -124,12 +112,20 @@ class ShaderPrePreprocessor
 		/// @exception Ecxeption
 		void parseFileForPragmas(const std::string& filename, int depth = 0);
 
-		/// Searches inside the Output::uniforms or Output::attributes vectors
-		/// @param vec Output::uniforms or Output::attributes
-		/// @param name The name of the location
-		/// @return Iterator to the vector
-		Vec<ShaderVarPragma>::iterator findShaderVar(Vec<ShaderVarPragma>& vec,
-			const std::string& name) const;
+		/// @todo
+		void parseStartPragma(Scanner::Scanner& scanner,
+			const std::string& filename, uint depth,
+			const Vec<std::string>& lines);
+
+		/// @todo
+		void parseIncludePragma(Scanner::Scanner& scanner,
+			const std::string& filename, uint depth,
+			const Vec<std::string>& lines);
+
+		/// @todo
+		void parseTrffbVarying(Scanner::Scanner& scanner,
+			const std::string& filename, uint depth,
+			const Vec<std::string>& lines);
 
 		/// Searches inside the Output::attributes or Output::trffbVaryings
 		/// vectors
@@ -141,7 +137,6 @@ class ShaderPrePreprocessor
 			const std::string& what) const;
 
 		void printSourceLines() const;  ///< For debugging
-		void printShaderVars() const;  ///< For debugging
 };
 
 
@@ -149,23 +144,14 @@ class ShaderPrePreprocessor
 // Inlines                                                                     =
 //==============================================================================
 
-inline ShaderPrePreprocessor::Pragma::Pragma(const std::string& definedInFile_,
-	int definedInLine_)
+inline ShaderProgramPrePreprocessor::Pragma::Pragma(
+	const std::string& definedInFile_, int definedInLine_)
 :	definedInFile(definedInFile_),
 	definedInLine(definedInLine_)
 {}
 
 
-inline ShaderPrePreprocessor::ShaderVarPragma::ShaderVarPragma(
-	const std::string& definedInFile_, int definedInLine_,
-	const std::string& name_, uint customLoc_)
-:	Pragma(definedInFile_, definedInLine_),
-	name(name_),
-	customLoc(customLoc_)
-{}
-
-
-inline ShaderPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
+inline ShaderProgramPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
 	const std::string& definedInFile_,
 	int definedInLine_, const std::string& name_)
 :	Pragma(definedInFile_, definedInLine_),
@@ -174,7 +160,7 @@ inline ShaderPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
 
 
 template<typename Type>
-typename Vec<Type>::const_iterator ShaderPrePreprocessor::findNamed(
+typename Vec<Type>::const_iterator ShaderProgramPrePreprocessor::findNamed(
 	const Vec<Type>& vec, const std::string& what) const
 {
 	typename Vec<Type>::const_iterator it = vec.begin();

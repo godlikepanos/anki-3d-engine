@@ -60,7 +60,7 @@ extern std::string parseIdentifier(Scanner::Scanner& scanner,
 	const char* expectedIdentifier = NULL);
 
 /// Is identifier
-extern bool isIdentifier(const Scanner::Token* token, const char* str);
+extern bool isIdentifier(const Scanner::Token& token, const char* str);
 
 /// Parse string
 extern std::string parseString(Scanner::Scanner& scanner);

@@ -235,10 +235,10 @@ inline std::string parseIdentifier(Scanner::Scanner& scanner,
 //==============================================================================
 // isIdentifier                                                                =
 //==============================================================================
-inline bool isIdentifier(const Scanner::Token* token, const char* str)
+inline bool isIdentifier(const Scanner::Token& token, const char* str)
 {
-	return token->getCode() == Scanner::TC_IDENTIFIER &&
-		!strcmp(token->getValue().getString(), str);
+	return token.getCode() == Scanner::TC_IDENTIFIER &&
+		!strcmp(token.getValue().getString(), str);
 }
 
 

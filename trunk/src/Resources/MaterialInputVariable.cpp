@@ -13,6 +13,7 @@ MaterialInputVariable::MaterialInputVariable(const SProgUniVar& svar, float val)
 {
 	ASSERT(svar.getGlDataType() == GL_FLOAT);
 	scalar = val;
+	type = T_FLOAT;
 }
 
 
@@ -22,6 +23,7 @@ MaterialInputVariable::MaterialInputVariable(const SProgUniVar& svar,
 {
 	ASSERT(svar.getGlDataType() == GL_FLOAT_VEC2);
 	vec2 = val;
+	type = T_VEC2;
 }
 
 
@@ -31,6 +33,7 @@ MaterialInputVariable::MaterialInputVariable(const SProgUniVar& svar,
 {
 	ASSERT(svar.getGlDataType() == GL_FLOAT_VEC3);
 	vec3 = val;
+	type = T_VEC3;
 }
 
 
@@ -40,6 +43,7 @@ MaterialInputVariable::MaterialInputVariable(const SProgUniVar& svar,
 {
 	ASSERT(svar.getGlDataType() == GL_FLOAT_VEC4);
 	vec4 = val;
+	type = T_VEC4;
 }
 
 
@@ -48,6 +52,7 @@ MaterialInputVariable::MaterialInputVariable(const SProgUniVar& svar, Fai val)
 {
 	ASSERT(svar.getGlDataType() == GL_SAMPLER_2D);
 	fai = val;
+	type = T_FAI;
 }
 
 
@@ -57,6 +62,7 @@ MaterialInputVariable::MaterialInputVariable(const SProgUniVar& svar,
 {
 	ASSERT(svar.getGlDataType() == GL_SAMPLER_2D);
 	texture.loadRsrc(texFilename);
+	type = T_TEXTURE;
 }
 
 

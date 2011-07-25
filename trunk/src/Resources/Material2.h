@@ -14,12 +14,15 @@ class SProgAttribVar;
 class SProgUniVar;
 class ShaderProg;
 class MaterialUserInputVariable;
+namespace Scanner {
+class Scanner;
+}
 
 
 /// Contains a few properties that other classes may use
 struct MaterialProperties
 {
-	///< Used in depth passes of shadowmapping and not in other depth passes
+	/// Used in depth passes of shadowmapping and not in other depth passes
 	/// like EarlyZ
 	bool castsShadowFlag;
 	/// The entities with blending are being rendered in blending stage and
@@ -34,42 +37,49 @@ struct MaterialProperties
 
 /// @code
 /// <material>
+/// 	<castsShadow>true | false</castsShadow>
+///
 /// 	<renderInBlendingStage>true | false</renderInBlendingStage>
 ///
-/// 	<blendFuncs>
+/// 	<blendFunctions>
 /// 		<sFactor>GL_SOMETHING</sFactor>
 /// 		<dFactor>GL_SOMETHING</dFactor>
-/// 	</blendFuncs>
+/// 	</blendFunctions>
 ///
 /// 	<depthTesting>true | false</depthTesting>
 ///
 /// 	<wireframe>true | false</wireframe>
 ///
-/// 	<castsShadow>true | false</castsShadow>
-///
 /// 	<shaderProgram>
-/// 		<include>file.glsl</include>
+/// 		<includes>
+/// 			<include>file.glsl</include>
+/// 			<include>file2.glsl</include>
+/// 		</includes>
 ///
-/// 		<in>
-/// 			<name>xx</name>
-/// 			<value>
-/// 				<fai>msDepthFai | isFai | ppsPrePassFai |
-/// 				     ppsPostPassFai</fai> |
-/// 				<float>0.0</float> |
-/// 				<vec2><x>0.0</x><y>0.0</y></vec2> |
-/// 				<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
-/// 				<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>
-/// 			</value>
-/// 		</in>
+/// 		<ins>
+/// 			<in>
+/// 				<name>xx</name>
+/// 				<value>
+/// 					<fai>msDepthFai | isFai | ppsPrePassFai |
+/// 					     ppsPostPassFai</fai> |
+/// 					<float>0.0</float> |
+/// 					<vec2><x>0.0</x><y>0.0</y></vec2> |
+/// 					<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
+/// 					<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>
+/// 				</value>
+/// 			</in>
+/// 		</ins>
 ///
-/// 		<operation>
-/// 			<id>x</id>
-/// 			<function>functionName</function>
-/// 			<parameters>
-/// 				<parameter>xx</parameter>
-/// 				<parameter>yy</parameter>
-/// 			</parameters>
-/// 		</operation>
+/// 		<operations>
+/// 			<operation>
+/// 				<id>x</id>
+/// 				<function>functionName</function>
+/// 				<parameters>
+/// 					<parameter>xx</parameter>
+/// 					<parameter>yy</parameter>
+/// 				</parameters>
+/// 			</operation>
+/// 		</operations>
 ///
 /// 	</shaderProgram>
 /// </material>
@@ -156,7 +166,7 @@ class Material2: private MaterialProperties
 		/// Load a material file
 		void load(const char* filename);
 
-	private:
+	public: /// XXX
 		//======================================================================
 		// Nested                                                              =
 		//======================================================================
@@ -204,6 +214,13 @@ class Material2: private MaterialProperties
 			GLenum dataType; ///< aka GL data type
 		};
 
+		/// Simple pair structure
+		struct BlendParam
+		{
+			int glEnum;
+			const char* str;
+		};
+
 		//======================================================================
 		// Members                                                             =
 		//======================================================================
@@ -224,16 +241,37 @@ class Material2: private MaterialProperties
 		/// The most important aspect of materials
 		RsrcPtr<ShaderProg> shaderProg;
 
+		/// Used to go from text to actual GL enum
+		static BlendParam blendingParams[];
+
 		//======================================================================
 		// Methods                                                             =
 		//======================================================================
 
-		/// XXX
+		/// XXX Appends
 		static void parseShaderFileForFunctionDefinitions(const char* filename,
 			boost::ptr_vector<FuncDefinition>& out);
 
+		/// XXX
+		/// Used by parseShaderFileForFunctionDefinitions. Takes into account
+		/// the backslashes
+		static void parseUntilNewline(Scanner::Scanner& scanner);
+
+		/// It being used by parseShaderFileForFunctionDefinitions and it
+		/// skips until newline after a '#' found. It takes into account the
+		/// back slashes that the preprocessos may have
+		static void getNextTokenAndSkipNewline(Scanner::Scanner& scanner);
+
+		/// Searches the blendingParams array for text. It throw exception if
+		/// not found
+		static int getGlBlendEnumFromText(const char* str);
+
 		/// Parse what is within the @code <material></material> @endcode
 		void parseMaterialTag(const boost::property_tree::ptree& pt);
+
+		/// Parse what is within the
+		/// @code <shaderProgram></shaderProgram> @endcode
+		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
 };
 
 

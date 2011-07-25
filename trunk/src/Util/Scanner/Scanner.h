@@ -1,7 +1,7 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#include "ScannerToken.h"
+#include "Token.h"
 #include <fstream>
 
 

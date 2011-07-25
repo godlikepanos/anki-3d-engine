@@ -14,6 +14,18 @@ class SProgUniVar;
 class MaterialInputVariable
 {
 	public:
+		/// The type of the variable
+		enum Type
+		{
+			T_FAI,
+			T_TEXTURE,
+			T_FLOAT,
+			T_VEC2,
+			T_VEC3,
+			T_VEC4,
+			T_NUM
+		};
+
 		/// The renderer's FAIs
 		enum Fai
 		{
@@ -46,10 +58,12 @@ class MaterialInputVariable
 		const Texture& getTexture() const;
 
 		GETTER_R(SProgUniVar, sProgVar, getShaderProgramUniformVariable)
+		GETTER_R_BY_VAL(Type, type, getType)
 		/// @}
 
 	private:
 		const SProgUniVar& sProgVar; ///< The shader program's uniform
+		Type type;
 
 		/// @name Data
 		/// @{

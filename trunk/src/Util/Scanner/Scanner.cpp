@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cassert>
 #include "Scanner.h"
-#include "ScannerException.h"
+#include "Exception.h"
 #include <sstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
@@ -119,7 +119,7 @@ void Scanner::initAsciiMap()
 		asciiLookupTable['|'] = asciiLookupTable['&'] = asciiLookupTable['+'] =
 		asciiLookupTable['-'] = asciiLookupTable['*'] = asciiLookupTable['/'] =
 		asciiLookupTable['~'] = asciiLookupTable['%'] = asciiLookupTable['#'] =
-		asciiLookupTable['^'] = AC_SPECIAL;
+		asciiLookupTable['^'] = asciiLookupTable['\\'] = AC_SPECIAL;
 
 	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] =
 		AC_WHITESPACE;
@@ -1255,6 +1255,10 @@ void Scanner::checkSpecial()
 					putBackChar();
 					code = TC_XOR;
 			}
+			break;
+
+		case '\\':
+			code = TC_BACK_SLASH;
 			break;
 	}
 
