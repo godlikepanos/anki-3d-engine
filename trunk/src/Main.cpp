@@ -463,9 +463,8 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		boost::ptr_vector<Material2::FuncDefinition> defs;
-		Material2::parseShaderFileForFunctionDefinitions(
-			"lala.glsl", defs);
+		Material2 mtl;
+		mtl.load("lala.mtl");
 
 
 		return 0;

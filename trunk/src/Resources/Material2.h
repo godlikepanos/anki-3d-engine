@@ -13,7 +13,7 @@
 class SProgAttribVar;
 class SProgUniVar;
 class ShaderProg;
-class MaterialUserInputVariable;
+class MaterialInputVariable;
 namespace Scanner {
 class Scanner;
 }
@@ -142,13 +142,17 @@ class Material2: private MaterialProperties
 		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
-		GETTER_R(boost::ptr_vector<MaterialUserInputVariable>, inVars,
-			getMaterialUserInputVariables)
+		GETTER_R(boost::ptr_vector<MaterialInputVariable>, inVars,
+			getMaterialInputVariables)
 
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
 
-		const ShaderProg& getShaderProgram() const {return *shaderProg;}
+		const ShaderProg& getColorPassShaderProgram() const
+			{return *cpShaderProg;}
+
+		const ShaderProg& getDepthPassShaderProgram() const
+			{return *dpShaderProg;}
 
 		/// Return NULL if the variable is not present in the shader program
 		const SProgAttribVar* getStandardAttributeVariable(
@@ -226,7 +230,7 @@ class Material2: private MaterialProperties
 		//======================================================================
 
 		/// The input variables
-		boost::ptr_vector<MaterialUserInputVariable> inVars;
+		boost::ptr_vector<MaterialInputVariable> inVars;
 
 		/// Used to check if a var exists in the shader program
 		static boost::array<StdVarNameAndGlDataTypePair, SAV_NUM>
@@ -238,8 +242,12 @@ class Material2: private MaterialProperties
 		boost::array<const SProgAttribVar*, SAV_NUM> stdAttribVars;
 		boost::array<const SProgUniVar*, SUV_NUM> stdUniVars;
 
-		/// The most important aspect of materials
-		RsrcPtr<ShaderProg> shaderProg;
+		/// The most important aspect of materials. Shader program for color
+		/// passes
+		RsrcPtr<ShaderProg> cpShaderProg;
+
+		/// Shader program for depth passes
+		RsrcPtr<ShaderProg> dpShaderProg;
 
 		/// Used to go from text to actual GL enum
 		static BlendParam blendingParams[];
@@ -272,6 +280,8 @@ class Material2: private MaterialProperties
 		/// Parse what is within the
 		/// @code <shaderProgram></shaderProgram> @endcode
 		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
+
+		static bool compareStrings(const std::string& a, const std::string& b);
 };
 
 
