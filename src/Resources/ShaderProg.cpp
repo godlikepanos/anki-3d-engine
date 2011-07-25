@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include "Resources/ShaderProg.h"
-#include "ShaderPrePreprocessor.h"
+#include "ShaderProgramPrePreprocessor.h"
 #include "Core/App.h" // To get cache dir
 #include "GfxApi/GlException.h"
 #include "Core/Logger.h"
@@ -181,32 +181,6 @@ void ShaderProg::getUniAndAttribVars()
 
 
 //==============================================================================
-// bindCustomAttribLocs                                                        =
-//==============================================================================
-void ShaderProg::bindCustomAttribLocs(const ShaderPrePreprocessor& pars) const
-{
-	for(uint i=0; i<pars.getOutput().getAttribLocs().size(); ++i)
-	{
-		const std::string& name = pars.getOutput().getAttribLocs()[i].name;
-		int loc = pars.getOutput().getAttribLocs()[i].customLoc;
-		glBindAttribLocation(glId, loc, name.c_str());
-
-		// check for error
-		try
-		{
-			ON_GL_FAIL_THROW_EXCEPTION();
-		}
-		catch(std::exception& e)
-		{
-			throw SPROG_EXCEPTION("Something went wrong for attrib \"" +
-				name + "\" and location " +
-				boost::lexical_cast<std::string>(loc) + ": " + e.what());
-		}
-	}
-}
-
-
-//==============================================================================
 // load                                                                        =
 //==============================================================================
 void ShaderProg::load(const char* filename)
@@ -214,17 +188,17 @@ void ShaderProg::load(const char* filename)
 	rsrcFilename = filename;
 	ASSERT(glId == std::numeric_limits<uint>::max());
 
-	ShaderPrePreprocessor pars(filename);
+	ShaderProgramPrePreprocessor pars(filename);
 
 	// 1) create and compile the shaders
 	std::string preprocSource = stdSourceCode;
 	vertShaderGlId = createAndCompileShader(
-		pars.getOutput().getVertShaderSource().c_str(),
+		pars.getVertexShaderSource().c_str(),
 		preprocSource.c_str(),
 		GL_VERTEX_SHADER);
 
 	fragShaderGlId = createAndCompileShader(
-		pars.getOutput().getFragShaderSource().c_str(),
+		pars.getFragmentShaderSource().c_str(),
 		preprocSource.c_str(),
 		GL_FRAGMENT_SHADER);
 
@@ -237,23 +211,20 @@ void ShaderProg::load(const char* filename)
 	glAttachShader(glId, vertShaderGlId);
 	glAttachShader(glId, fragShaderGlId);
 
-	// 3) bind the custom attrib locs
-	bindCustomAttribLocs(pars);
-
-	// 5) set the TRFFB varyings
-	if(pars.getOutput().getTrffbVaryings().size() > 0)
+	// 3) set the TRFFB varyings
+	if(pars.getTranformFeedbackVaryings().size() > 0)
 	{
 		boost::array<const char*, 128> varsArr;
-		for(uint i=0; i<pars.getOutput().getTrffbVaryings().size(); i++)
+		for(uint i = 0; i < pars.getTranformFeedbackVaryings().size(); i++)
 		{
-			varsArr[i] = pars.getOutput().getTrffbVaryings()[i].name.c_str();
+			varsArr[i] = pars.getTranformFeedbackVaryings()[i].c_str();
 		}
 		glTransformFeedbackVaryings(glId,
-			pars.getOutput().getTrffbVaryings().size(), &varsArr[0],
+			pars.getTranformFeedbackVaryings().size(), &varsArr[0],
 			GL_SEPARATE_ATTRIBS);
 	}
 
-	// 6) link
+	// 4) link
 	link();
 
 	// init the rest

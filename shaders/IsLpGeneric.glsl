@@ -2,19 +2,21 @@
 ///
 /// Illumination stage lighting pass general shader program
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 #pragma anki include "shaders/SimpleVert.glsl"
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 #pragma anki include "shaders/Pack.glsl"
 
 /// @name Uniforms
 /// @{
 uniform vec2 planes; ///< for the calculation of frag pos in view space
-uniform vec2 limitsOfNearPlane; ///< for the calculation of frag pos in view space
-uniform vec2 limitsOfNearPlane2; ///< This is an optimization see PpsSsao.glsl and r403 for the clean one
+/// for the calculation of frag pos in view space
+uniform vec2 limitsOfNearPlane; 
+/// This is an optimization see PpsSsao.glsl and r403 for the clean one
+uniform vec2 limitsOfNearPlane2; 
 uniform float zNear; ///< for the calculation of frag pos in view space
 
 uniform sampler2D msNormalFai, msDiffuseFai, msSpecularFai, msDepthFai;
@@ -46,9 +48,9 @@ out vec3 fColor;
 const float MAX_SHININESS = 128.0;
 
 
-//======================================================================================================================
-// getFragPosVSpace                                                                                                    =
-//======================================================================================================================
+//==============================================================================
+// getFragPosVSpace                                                            =
+//==============================================================================
 /// @return frag pos in view space
 vec3 getFragPosVSpace()
 {
@@ -71,10 +73,11 @@ vec3 getFragPosVSpace()
 }
 
 
-//======================================================================================================================
-// getAttenuation                                                                                                      =
-//======================================================================================================================
-/// @return The attenuation factor given the distance from the frag to the light source
+//==============================================================================
+// getAttenuation                                                              =
+//==============================================================================
+/// @return The attenuation factor given the distance from the frag to the
+/// light source
 float getAttenuation(in float fragLightDist)
 {
 	return clamp(1.0 - sqrt(fragLightDist) / lightRadius, 0.0, 1.0);
@@ -82,9 +85,9 @@ float getAttenuation(in float fragLightDist)
 }
 
 
-//======================================================================================================================
-// pcfLow                                                                                                              =
-//======================================================================================================================
+//==============================================================================
+// pcfLow                                                                      =
+//==============================================================================
 #if defined(SPOT_LIGHT_ENABLED) && defined(SHADOW_ENABLED)
 
 /// @return The blurred shadow
@@ -118,9 +121,9 @@ float pcfLow(in vec3 shadowUv)
 #endif
 
 
-//======================================================================================================================
-// doPhong                                                                                                             =
-//======================================================================================================================
+//==============================================================================
+// doPhong                                                                     =
+//==============================================================================
 /// Performs phong lighting using the MS FAIs and a few other things
 /// @param fragPosVspace The fragment position in view space
 /// @param fragLightDist Output needed for the attenuation calculation
@@ -130,8 +133,8 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	// get the vector from the frag to the light
 	vec3 frag2LightVec = lightPos - fragPosVspace;
 
-	// Instead of using normalize(frag2LightVec) we brake the operation because we want fragLightDist for the calc of
-	// the attenuation
+	// Instead of using normalize(frag2LightVec) we brake the operation 
+	// because we want fragLightDist for the calc of the attenuation
 	fragLightDist = dot(frag2LightVec, frag2LightVec);
 	vec3 lightDir = frag2LightVec * inversesqrt(fragLightDist);
 
@@ -153,7 +156,8 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	vec3 color = diffuse * lambertTerm;
 
 	// Specular
-	vec4 specularMix = texture2D(msSpecularFai, vTexCoords); // the MS specular FAI has the color and the shininess
+	vec4 specularMix = texture2D(msSpecularFai, vTexCoords); // the MS specular
+	                                      // FAI has the color and the shininess
 	vec3 specular = specularMix.xyz;
 	float shininess = specularMix.w * MAX_SHININESS;
 
@@ -167,71 +171,81 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 }
 
 
-//======================================================================================================================
-// main                                                                                                                =
-//======================================================================================================================
+//==============================================================================
+// doPointLight                                                                =
+//==============================================================================
+vec3 doPointLight(in vec3 fragPosVspace)
+{
+	// The func doPhong calculates the frag to light distance 
+	// (fragLightDist) and be cause we need that distance latter for other 
+	// calculations we export it
+	float fragLightDist;
+	vec3 color = doPhong(fragPosVspace, fragLightDist);
+	return color * getAttenuation(fragLightDist);
+}
+
+
+//==============================================================================
+// doSpotLight                                                                 =
+//==============================================================================
+vec3 doSpotLight(in vec3 fragPosVspace)
+{
+	vec4 texCoords2 = texProjectionMat * vec4(fragPosVspace, 1.0);
+	vec3 texCoords3 = texCoords2.xyz / texCoords2.w;
+
+	if(texCoords2.w > 0.0 &&
+	   texCoords3.x > 0.0 &&
+	   texCoords3.x < 1.0 &&
+	   texCoords3.y > 0.0 &&
+	   texCoords3.y < 1.0 &&
+	   texCoords2.w < lightRadius)
+	{
+		// Get shadow
+#if defined(SHADOW_ENABLED)
+#	if defined(PCF_ENABLED)
+		float shadowCol = pcfLow(texCoords3);
+#	else
+		float shadowCol = shadow2D(shadowMap, texCoords3).r;
+#	endif
+
+		if(shadowCol == 0.0)
+		{
+			discard;
+		}
+#endif
+
+		float fragLightDist;
+		vec3 color = doPhong(fragPosVspace, fragLightDist);
+
+		vec3 lightTexCol = texture2DProj(lightTex, texCoords2.xyz).rgb;
+		float att = getAttenuation(fragLightDist);
+
+#if defined(SHADOW_ENABLED)
+		return lightTexCol * color * (shadowCol * att);
+#else
+		return lightTexCol * color * att;
+#endif
+	}
+	else
+	{
+		discard;
+	}
+}
+
+
+//==============================================================================
+// main                                                                        =
+//==============================================================================
 void main()
 {
 	// get frag pos in view space
 	vec3 fragPosVspace = getFragPosVSpace();
 
-	//
-	// Point light
-	//
-	#if defined(POINT_LIGHT_ENABLED)
-		// The func doPhong calculates the frag to light distance (fragLightDist) and be cause we need that distance
-		// latter for other calculations we export it
-		float fragLightDist;
-		vec3 color = doPhong(fragPosVspace, fragLightDist);
-		fColor = color * getAttenuation(fragLightDist);
-
-	//
-	// Spot light
-	//
-	#elif defined(SPOT_LIGHT_ENABLED)
-		vec4 texCoords2 = texProjectionMat * vec4(fragPosVspace, 1.0);
-		vec3 texCoords3 = texCoords2.xyz / texCoords2.w;
-
-		if(texCoords2.w > 0.0 &&
-		   texCoords3.x > 0.0 &&
-		   texCoords3.x < 1.0 &&
-		   texCoords3.y > 0.0 &&
-		   texCoords3.y < 1.0 &&
-		   texCoords2.w < lightRadius)
-		{
-			// Get shadow
-			#if defined(SHADOW_ENABLED)
-				#if defined(PCF_ENABLED)
-					float shadowCol = pcfLow(texCoords3);
-				#else
-					float shadowCol = shadow2D(shadowMap, texCoords3).r;
-				#endif
-
-				if(shadowCol == 0.0)
-				{
-					discard;
-				}
-			#endif
-
-			float fragLightDist;
-			vec3 color = doPhong(fragPosVspace, fragLightDist);
-
-			vec3 lightTexCol = texture2DProj(lightTex, texCoords2.xyz).rgb;
-			float att = getAttenuation(fragLightDist);
-
-			#if defined(SHADOW_ENABLED)
-				fColor = lightTexCol * color * (shadowCol * att);
-			#else
-				fColor = lightTexCol * color * att;
-			#endif
-		}
-		else
-		{
-			discard;
-		}
-	#endif // spot light
-
-
+#if defined(POINT_LIGHT_ENABLED)
+	fColor = doPointLight(fragLightDist);
+#elif defined(SPOT_LIGHT_ENABLED)
+	fColor = doSpotLight(fragLightDist);
+#endif // spot light
 
 	
 	//fColor = fColor - fColor + vec3(1, 0, 1);

@@ -43,7 +43,8 @@
 #include "Events/Manager.h"
 #include "Events/SceneColor.h"
 #include "Events/MainRendererPpsHdr.h"
-#include "Resources/SProgLoader.h"
+#include "Resources/ShaderProgramPrePreprocessor.h"
+#include "Resources/Material2.h"
 
 
 // map (hard coded)
@@ -462,9 +463,10 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		SProgLoader l("lala.sprog");
-		std::cout << "$$$" << l.getVertexShaderSource() << "$$$" << std::endl;
-		std::cerr << "$$$" << l.getFragmentShaderSource() << "$$$" << std::endl;
+		boost::ptr_vector<Material2::FuncDefinition> defs;
+		Material2::parseShaderFileForFunctionDefinitions(
+			"lala.glsl", defs);
+
 
 		return 0;
 

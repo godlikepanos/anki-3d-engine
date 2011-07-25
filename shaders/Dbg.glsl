@@ -1,5 +1,4 @@
-///
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 color;
@@ -14,7 +13,7 @@ void main()
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 in vec3 vColor;
 

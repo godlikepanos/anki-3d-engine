@@ -1,4 +1,4 @@
-#include "ScannerException.h"
+#include "Exception.h"
 #include <boost/lexical_cast.hpp>
 
 
@@ -33,9 +33,10 @@ Exception::Exception(const Exception& e)
 //==============================================================================
 const char* Exception::what() const throw()
 {
-	errWhat = "Scanner exception #" + boost::lexical_cast<std::string>(errNo) +
-		" (" + scriptFilename + ':' +
-		boost::lexical_cast<std::string>(scriptLineNmbr) + ") " + error;
+	errWhat = "Scanner exception (#" +
+		boost::lexical_cast<std::string>(errNo) +
+		":" + scriptFilename + ':' +
+		boost::lexical_cast<std::string>(scriptLineNmbr) + "): " + error;
 	return errWhat.c_str();
 }
 

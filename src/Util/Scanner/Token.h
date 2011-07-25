@@ -3,7 +3,7 @@
 
 #include <string>
 #include <boost/array.hpp>
-#include "ScannerCommon.h"
+#include "Common.h"
 
 
 namespace Scanner {
@@ -34,7 +34,7 @@ enum TokenCode
 	TC_MOD, TC_XOR, TC_INC, TC_DEC, TC_SHL,
 	TC_SHR, TC_ASSIGN, TC_ASSIGNADD, TC_ASSIGNSUB, TC_ASSIGNMUL,
 	TC_ASSIGNDIV, TC_ASSIGNMOD, TC_ASSIGNSHL, TC_ASSIGNSHR, TC_ASSIGNAND,
-	TC_ASSIGNXOR, TC_ASSIGNOR
+	TC_ASSIGNXOR, TC_ASSIGNOR, TC_BACK_SLASH
 }; // end enum TokenCode
 
 

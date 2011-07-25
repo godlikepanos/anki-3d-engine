@@ -8,13 +8,14 @@
 /// ENVIRONMENT_MAPPING, ALPHA_TESTING
  
 #if defined(ALPHA_TESTING) && !defined(DIFFUSE_MAPPING)
-	#error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
+#	error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
 #endif
  
-#if defined(DIFFUSE_MAPPING) || defined(NORMAL_MAPPING) || defined(SPECULAR_MAPPING)
-	#define NEEDS_TEX_MAPPING 1
+#if defined(DIFFUSE_MAPPING) || defined(NORMAL_MAPPING) || \
+	defined(SPECULAR_MAPPING)
+#	define NEEDS_TEX_MAPPING 1
 #else
-	#define NEEDS_TEX_MAPPING 0
+#	define NEEDS_TEX_MAPPING 0
 #endif
 
 
@@ -25,7 +26,7 @@
 #endif
 
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 /// @name Attributes
 /// @{
@@ -68,31 +69,26 @@ void main()
 	// calculate the vert pos, normal and tangent
 	vNormal = normalMat * normal;
 
-	#if NEEDS_TANGENT
-		vTangent = normalMat * vec3(tangent);
-	#endif
-
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 
 	// calculate the rest
 
-	#if NEEDS_TEX_MAPPING
-		vTexCoords = texCoords;
-	#endif
+#if NEEDS_TEX_MAPPING
+	vTexCoords = texCoords;
+#endif
 
+#if NEEDS_TANGENT
+	vTangent = normalMat * vec3(tangent);
+	vTangentW = tangent.w;
+#endif
 
-	#if NEEDS_TANGENT
-		vTangentW = tangent.w;
-	#endif
-
-
-	#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
-		vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
-	#endif
+#if defined(ENVIRONMENT_MAPPING) || defined(PARALLAX_MAPPING)
+	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+#endif
 }
 
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 /// @note The process of calculating the diffuse color for the diffuse MSFAI is 
 /// divided into two parts. The first happens before the normal calculation and 
@@ -108,26 +104,26 @@ void main()
 
 
 #if defined(DIFFUSE_MAPPING)
-	uniform sampler2D diffuseMap;
+uniform sampler2D diffuseMap;
 #endif
 #if defined(NORMAL_MAPPING)
-	uniform sampler2D normalMap;
+uniform sampler2D normalMap;
 #endif
 #if defined(SPECULAR_MAPPING)
-	uniform sampler2D specularMap;
+uniform sampler2D specularMap;
 #endif
 #if defined(PARALLAX_MAPPING)
-	uniform sampler2D heightMap;
+uniform sampler2D heightMap;
 #endif
 #if defined(ENVIRONMENT_MAPPING)
-	uniform sampler2D environmentMap;
+uniform sampler2D environmentMap;
 #endif
 uniform float shininess = 50.0;
 uniform vec3 diffuseCol = vec3(1.0, 0.0, 1.0);
 uniform vec3 specularCol = vec3(1.0, 0.0, 1.0);
 #if defined(ALPHA_TESTING)
-	/// Below this value the pixels are getting discarded 
-	uniform float alphaTestingTolerance = 0.5; 
+/// Below this value the pixels are getting discarded 
+uniform float alphaTestingTolerance = 0.5; 
 #endif
 uniform float blurring = 0.0;
 
@@ -229,41 +225,41 @@ void main()
 	// The code below reads the height map, makes some calculations and returns 
 	// a new texCoords
 	//
-	#if defined(PARALLAX_MAPPING)
-		/*const float _scale = 0.04;
-		const float _bias = scale * 0.4;
+#if defined(PARALLAX_MAPPING)
+	/*const float _scale = 0.04;
+	const float _bias = scale * 0.4;
 
-		vec3 _norm_eye = normalize(eye);
+	vec3 _norm_eye = normalize(eye);
 
-		float _h = texture2D(heightMap, vTexCoords).r;
-		float _height = _scale * _h - _bias;
+	float _h = texture2D(heightMap, vTexCoords).r;
+	float _height = _scale * _h - _bias;
 
-		vec2 _superTexCoords__v2f = _height * _norm_eye.xy + vTexCoords;*/
+	vec2 _superTexCoords__v2f = _height * _norm_eye.xy + vTexCoords;*/
 
-		vec2 _superTexCoords_ = vTexCoords;
-		const float maxStepCount = 100.0;
-		float nSteps = maxStepCount * length(_superTexCoords_);
+	vec2 _superTexCoords_ = vTexCoords;
+	const float maxStepCount = 100.0;
+	float nSteps = maxStepCount * length(_superTexCoords_);
 
-		vec3 dir = vVertPosViewSpace;
-		dir.xy /= 8.0;
-		dir /= -nSteps * dir.z;
+	vec3 dir = vVertPosViewSpace;
+	dir.xy /= 8.0;
+	dir /= -nSteps * dir.z;
 
-		float diff0, diff1 = 1.0 - texture2D(heightMap, _superTexCoords_).a;
-		if(diff1 > 0.0)
+	float diff0, diff1 = 1.0 - texture2D(heightMap, _superTexCoords_).a;
+	if(diff1 > 0.0)
+	{
+		do 
 		{
-			do 
-			{
-				_superTexCoords_ += dir.xy;
+			_superTexCoords_ += dir.xy;
 
-				diff0 = diff1;
-				diff1 = texture2D(heightMap, _superTexCoords_).w;
-			} while(diff1 > 0.0);
+			diff0 = diff1;
+			diff1 = texture2D(heightMap, _superTexCoords_).w;
+		} while(diff1 > 0.0);
 
-			_superTexCoords_.xy += (diff1 / (diff0 - diff1)) * dir.xy;
-		}
-	#else
-		#define _superTexCoords_ vTexCoords
-	#endif
+		_superTexCoords_.xy += (diff1 / (diff0 - diff1)) * dir.xy;
+	}
+#else
+#	define _superTexCoords_ vTexCoords
+#endif
 
 
 	//
@@ -272,19 +268,18 @@ void main()
 	// and alpha is zero
 	//
 	vec3 _diffColl_;
-	#if defined(DIFFUSE_MAPPING)
+#if defined(DIFFUSE_MAPPING)
 
-		#if defined(ALPHA_TESTING)
-			_diffColl_ = doAlpha(diffuseMap, alphaTestingTolerance, 
-				_superTexCoords_);
-		#else // no alpha
-			_diffColl_ = texture2D(diffuseMap, _superTexCoords_).rgb;
-		#endif
+#	if defined(ALPHA_TESTING)
+	_diffColl_ = doAlpha(diffuseMap, alphaTestingTolerance, _superTexCoords_);
+#	else // no alpha
+	_diffColl_ = texture2D(diffuseMap, _superTexCoords_).rgb;
+#	endif
 
-		_diffColl_ *= diffuseCol.rgb;
-	#else // no diff mapping
-		_diffColl_ = diffuseCol.rgb;
-	#endif
+	_diffColl_ *= diffuseCol.rgb;
+#else // no diff mapping
+	_diffColl_ = diffuseCol.rgb;
+#endif
 
 
 	//
@@ -292,12 +287,12 @@ void main()
 	// Either use a normap map and make some calculations or use the vertex 
 	// normal
 	//
-	#if defined(NORMAL_MAPPING)
-		vec3 _normal_ = getNormalUsingMap(vNormal, vTangent, vTangentW, 
-			normalMap, _superTexCoords_);
-	#else
-		vec3 _normal_ = getNormalSimple(vNormal);
-	#endif
+#if defined(NORMAL_MAPPING)
+	vec3 _normal_ = getNormalUsingMap(vNormal, vTangent, vTangentW, 
+		normalMap, _superTexCoords_);
+#else
+	vec3 _normal_ = getNormalSimple(vNormal);
+#endif
 
 
 	//
@@ -306,22 +301,22 @@ void main()
 	// environmentMap and the _normal_) and
 	// combine colors of SEM and the _diffColl_
 	//
-	#if defined(ENVIRONMENT_MAPPING)
-		// blend existing color with the SEM texture map
-		_diffColl_ += doEnvMapping(vVertPosViewSpace, _normal_, environmentMap); 
-	#endif
+#if defined(ENVIRONMENT_MAPPING)
+	// blend existing color with the SEM texture map
+	_diffColl_ += doEnvMapping(vVertPosViewSpace, _normal_, environmentMap); 
+#endif
 
 
 	//
 	// Specular Calculations
 	//
-	#if defined(SPECULAR_MAPPING)
-		vec4 _specularCol_ = vec4(
-			texture2D(specularMap, _superTexCoords_).rgb * specularCol,
-			shininess / MAX_SHININESS);
-	#else // no specular map
-		vec4 _specularCol_ = vec4(specularCol, shininess / MAX_SHININESS);
-	#endif
+#if defined(SPECULAR_MAPPING)
+	vec4 _specularCol_ = vec4(
+		texture2D(specularMap, _superTexCoords_).rgb * specularCol,
+		shininess / MAX_SHININESS);
+#else // no specular map
+	vec4 _specularCol_ = vec4(specularCol, shininess / MAX_SHININESS);
+#endif
 
 
 	//

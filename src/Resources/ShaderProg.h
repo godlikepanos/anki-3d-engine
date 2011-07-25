@@ -13,7 +13,7 @@
 #include "Core/Globals.h"
 
 
-class ShaderPrePreprocessor;
+class ShaderProgramPrePreprocessor;
 
 
 /// Shader program @ref Resource
@@ -111,10 +111,6 @@ class ShaderProg
 		/// Query the driver to get the vars. After the linking of the shader
 		/// prog is done gather all the vars in custom containers
 		void getUniAndAttribVars();
-
-		/// Uses glBindAttribLocation for every parser attrib location
-		/// @exception Exception
-		void bindCustomAttribLocs(const class ShaderPrePreprocessor& pars) const;
 
 		/// Create and compile shader
 		/// @return The shader's OpenGL id
