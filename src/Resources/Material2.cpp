@@ -30,7 +30,7 @@ boost::array<Material2::StdVarNameAndGlDataTypePair, Material2::SUV_NUM>
 	{"viewMat", GL_FLOAT_MAT4},
 	{"projectionMat", GL_FLOAT_MAT4},
 	{"modelViewMat", GL_FLOAT_MAT4},
-	{"ViewProjectionMat", GL_FLOAT_MAT4},
+	{"viewProjectionMat", GL_FLOAT_MAT4},
 	{"normalMat", GL_FLOAT_MAT3},
 	{"modelViewProjectionMat", GL_FLOAT_MAT4},
 	{"msNormalFai", GL_SAMPLER_2D},
@@ -61,6 +61,27 @@ Material2::BlendParam Material2::blendingParams[] =
 	{GL_ONE_MINUS_SRC_COLOR, "GL_ONE_MINUS_SRC_COLOR"},
 	{0, NULL}
 };
+
+
+//==============================================================================
+// Constructor                                                                 =
+//==============================================================================
+Material2::Material2()
+{
+	renderInBlendingStageFlag = false;
+	blendingSfactor = GL_ONE;
+	blendingDfactor = GL_ZERO;
+	depthTesting = true;
+	wireframe = false;
+	castsShadowFlag = true;
+}
+
+
+//==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+Material2::~Material2()
+{}
 
 
 //==============================================================================
@@ -423,12 +444,13 @@ void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
-	std::stringstream sprogSrc;
+	Vec<std::string> srcLines;
 
 	//
-	// inputs
+	// <includes></includes>
 	//
 	boost::ptr_vector<FuncDefinition> funcDefs;
+	Vec<std::string> includeLines;
 
 	const ptree& includesPt = pt.get_child("includes");
 	BOOST_FOREACH(const ptree::value_type& v, includesPt)
@@ -439,17 +461,67 @@ void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
 		}
 
 		const std::string& fname = v.second.data();
-		parseShaderFileForFunctionDefinitions(fname.c_str(), funcDefs);
+		//parseShaderFileForFunctionDefinitions(fname.c_str(), funcDefs);
 
-		sprogSrc << "#pragma anki include " << fname << std::endl;
+		includeLines.push_back("#pragma anki include \"" + fname + "\"");
 	}
 
+	std::sort(includeLines.begin(), includeLines.end(), compareStrings);
+	srcLines.assign(includeLines.begin(), includeLines.end());
+
 	//
-	// ins
+	// <ins></ins>
 	//
-	boost::optional<const ptree&> insPt = pt.get_optional("ins");
-	if(ins)
+	boost::optional<const ptree&> insPt = pt.get_child_optional("ins");
+	if(insPt)
 	{
+		BOOST_FOREACH(const ptree::value_type& v, insPt.get())
+		{
+			if(v.first != "include")
+			{
+				throw EXCEPTION("Expected include and not: " + v.first);
+			}
 
+			const std::string& name = v.second.data();
+		}
 	}
+
+	//
+	//
+	//
+	std::string src;
+	BOOST_FOREACH(const std::string& line, srcLines)
+	{
+		src += line + "\n";
+	}
+
+	std::cout << src << std::endl;
+}
+
+
+//==============================================================================
+// load                                                                        =
+//==============================================================================
+void Material2::load(const char* filename)
+{
+	try
+	{
+		using namespace boost::property_tree;
+		ptree pt;
+		read_xml(filename, pt);
+		parseMaterialTag(pt.get_child("material"));
+	}
+	catch(std::exception& e)
+	{
+		throw EXCEPTION("File \"" + filename + "\" failed: " + e.what());
+	}
+}
+
+
+//==============================================================================
+// compareStrings                                                              =
+//==============================================================================
+bool Material2::compareStrings(const std::string& a, const std::string& b)
+{
+	return a < b;
 }
