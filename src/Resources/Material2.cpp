@@ -1,5 +1,5 @@
 #include "Material2.h"
-#include "MaterialInputVariable.h"
+#include "MaterialVariable.h"
 #include "Util/Scanner/Scanner.h"
 #include "Misc/Parser.h"
 #include "Misc/PropertyTree.h"
@@ -12,39 +12,6 @@
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
-
-boost::array<Material2::StdVarNameAndGlDataTypePair, Material2::SAV_NUM>
-	Material2::stdAttribVarInfos =
-{{
-	{"position", GL_FLOAT_VEC3},
-	{"tangent", GL_FLOAT_VEC4},
-	{"normal", GL_FLOAT_VEC3},
-	{"texCoords", GL_FLOAT_VEC2}
-}};
-
-
-boost::array<Material2::StdVarNameAndGlDataTypePair, Material2::SUV_NUM>
-	Material2::stdUniVarInfos =
-{{
-	{"modelMat", GL_FLOAT_MAT4},
-	{"viewMat", GL_FLOAT_MAT4},
-	{"projectionMat", GL_FLOAT_MAT4},
-	{"modelViewMat", GL_FLOAT_MAT4},
-	{"viewProjectionMat", GL_FLOAT_MAT4},
-	{"normalMat", GL_FLOAT_MAT3},
-	{"modelViewProjectionMat", GL_FLOAT_MAT4},
-	{"msNormalFai", GL_SAMPLER_2D},
-	{"msDiffuseFai", GL_SAMPLER_2D},
-	{"msSpecularFai", GL_SAMPLER_2D},
-	{"msDepthFai", GL_SAMPLER_2D},
-	{"isFai", GL_SAMPLER_2D},
-	{"ppsPrePassFai", GL_SAMPLER_2D},
-	{"ppsPostPassFai", GL_SAMPLER_2D},
-	{"rendererSize", GL_FLOAT_VEC2},
-	{"sceneAmbientColor", GL_FLOAT_VEC3},
-	{"blurring", GL_FLOAT},
-}};
-
 
 Material2::BlendParam Material2::blendingParams[] =
 {
@@ -472,17 +439,52 @@ void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
 	//
 	// <ins></ins>
 	//
+	Vec<std::string> uniformsLines; // Store the source of the uniform vars
+
 	boost::optional<const ptree&> insPt = pt.get_child_optional("ins");
 	if(insPt)
 	{
 		BOOST_FOREACH(const ptree::value_type& v, insPt.get())
 		{
-			if(v.first != "include")
+			if(v.first != "in")
 			{
-				throw EXCEPTION("Expected include and not: " + v.first);
+				throw EXCEPTION("Expected in and not: " + v.first);
 			}
 
-			const std::string& name = v.second.data();
+			const ptree& inPt = v.second;
+
+			const std::string& name = inPt.get<std::string>("name");
+
+			std::string line;
+
+			if(inPt.get_child_optional("float"))
+			{
+				line += "float";
+			}
+			else if(inPt.get_child_optional("vec2"))
+			{
+				line += "vec2";
+			}
+			else if(inPt.get_child_optional("vec3"))
+			{
+			}
+			else if(inPt.get_child_optional("vec4"))
+			{
+			}
+			else if(inPt.get_child_optional("sampler2D"))
+			{
+			}
+			else
+			{
+				BuildinMaterialVariable::BuildinVariable tmp;
+				GLenum dataType;
+
+				if(BuildinMaterialVariable::isBuildin(name.c_str(),
+					&tmp, &dataType))
+				{
+					throw EXCEPTION("The variable is not build in: " + name);
+				}
+			}
 		}
 	}
 
