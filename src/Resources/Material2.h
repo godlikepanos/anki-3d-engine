@@ -184,6 +184,13 @@ class Material2: private MaterialProperties
 			const char* str;
 		};
 
+		/// Simple pair structure
+		struct GlDataToText
+		{
+			GLenum dataType;
+			const char* txt;
+		};
+
 		//======================================================================
 		// Members                                                             =
 		//======================================================================
@@ -205,6 +212,9 @@ class Material2: private MaterialProperties
 
 		/// Used to go from text to actual GL enum
 		static BlendParam blendingParams[];
+
+		/// XXX
+		static GlDataToText glDataToText[];
 
 		//======================================================================
 		// Methods                                                             =
@@ -235,7 +245,15 @@ class Material2: private MaterialProperties
 		/// @code <shaderProgram></shaderProgram> @endcode
 		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
 
+		/// Parse what is within the @code <in></in> @endcode
+		void parseInTag(const boost::property_tree::ptree& pt,
+			Vec<std::string>& sourceLines);
+
+		/// Used in std::sort
 		static bool compareStrings(const std::string& a, const std::string& b);
+
+		/// XXX
+		static const char* getTextFromGlType(GLenum dataType);
 };
 
 
