@@ -30,6 +30,19 @@ Material2::BlendParam Material2::blendingParams[] =
 };
 
 
+Material2::GlDataToText Material2::glDataToText[] =
+{
+	{GL_FLOAT, "float"},
+	{GL_FLOAT_VEC2, "vec2"},
+	{GL_FLOAT_VEC3, "vec3"},
+	{GL_FLOAT_VEC4, "vec4"},
+	{GL_SAMPLER_2D, "sampler2D"},
+	{GL_FLOAT_MAT3, "mat3"},
+	{GL_FLOAT_MAT4, "mat4"},
+	{0, NULL},
+};
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -434,7 +447,7 @@ void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
 	}
 
 	std::sort(includeLines.begin(), includeLines.end(), compareStrings);
-	srcLines.assign(includeLines.begin(), includeLines.end());
+	srcLines.insert(srcLines.end(), includeLines.begin(), includeLines.end());
 
 	//
 	// <ins></ins>
@@ -452,40 +465,12 @@ void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
 			}
 
 			const ptree& inPt = v.second;
+			parseInTag(inPt, uniformsLines);
+		} // end for all ins
 
-			const std::string& name = inPt.get<std::string>("name");
-
-			std::string line;
-
-			if(inPt.get_child_optional("float"))
-			{
-				line += "float";
-			}
-			else if(inPt.get_child_optional("vec2"))
-			{
-				line += "vec2";
-			}
-			else if(inPt.get_child_optional("vec3"))
-			{
-			}
-			else if(inPt.get_child_optional("vec4"))
-			{
-			}
-			else if(inPt.get_child_optional("sampler2D"))
-			{
-			}
-			else
-			{
-				BuildinMaterialVariable::BuildinVariable tmp;
-				GLenum dataType;
-
-				if(BuildinMaterialVariable::isBuildin(name.c_str(),
-					&tmp, &dataType))
-				{
-					throw EXCEPTION("The variable is not build in: " + name);
-				}
-			}
-		}
+		std::sort(uniformsLines.begin(), uniformsLines.end(), compareStrings);
+		srcLines.insert(srcLines.end(), uniformsLines.begin(),
+			uniformsLines.end());
 	}
 
 	//
@@ -498,6 +483,54 @@ void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
 	}
 
 	std::cout << src << std::endl;
+}
+
+
+//==============================================================================
+// parseInTag                                                                  =
+//==============================================================================
+void Material2::parseInTag(const boost::property_tree::ptree& pt,
+	Vec<std::string>& sourceLines)
+{
+	const std::string& name = pt.get<std::string>("name");
+
+	std::string line = "uniform ";
+
+	if(pt.get_child_optional("float"))
+	{
+		line += "float";
+	}
+	else if(pt.get_child_optional("vec2"))
+	{
+		line += "vec2";
+	}
+	else if(pt.get_child_optional("vec3"))
+	{
+		line += "vec3";
+	}
+	else if(pt.get_child_optional("vec4"))
+	{
+		line += "vec4";
+	}
+	else if(pt.get_child_optional("sampler2D"))
+	{
+		line += "sampler2D";
+	}
+	else
+	{
+		BuildinMaterialVariable::BuildinVariable tmp;
+		GLenum dataType;
+
+		if(!BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &dataType))
+		{
+			throw EXCEPTION("The variable is not build in: " + name);
+		}
+
+		line += getTextFromGlType(dataType);
+	}
+
+	line += " " + name + ";";
+	sourceLines.push_back(line);
 }
 
 
@@ -527,3 +560,28 @@ bool Material2::compareStrings(const std::string& a, const std::string& b)
 {
 	return a < b;
 }
+
+
+//==============================================================================
+// getTextFromGlType                                                           =
+//==============================================================================
+const char* Material2::getTextFromGlType(GLenum dataType)
+{
+	GlDataToText* ptr = &glDataToText[0];
+
+	while(true)
+	{
+		if(ptr->txt == NULL)
+		{
+			throw EXCEPTION("Incorrect GL data type");
+		}
+
+		if(ptr->dataType == dataType)
+		{
+			return ptr->txt;
+		}
+
+		++ptr;
+	}
+}
+
