@@ -2,6 +2,9 @@
 #define MATERIAL_2_H
 
 #include "Util/Accessors.h"
+#include "Util/CharPtrHashMap.h"
+#include "UserMaterialVariable.h"
+#include "BuildinMaterialVariable.h"
 #include "RsrcPtr.h"
 #include <GL/glew.h>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -13,7 +16,6 @@
 class SProgAttribVar;
 class SProgUniVar;
 class ShaderProg;
-class MaterialInputVariable;
 namespace Scanner {
 class Scanner;
 }
@@ -60,12 +62,11 @@ struct MaterialProperties
 /// 			<in>
 /// 				<name>xx</name>
 /// 				<value>
-/// 					<fai>msDepthFai | isFai | ppsPrePassFai |
-/// 					     ppsPostPassFai</fai> |
 /// 					<float>0.0</float> |
 /// 					<vec2><x>0.0</x><y>0.0</y></vec2> |
 /// 					<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
-/// 					<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>
+/// 					<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4> |
+/// 					<sampler2D>path/to/image.tga</sampler2D>
 /// 				</value>
 /// 			</in>
 /// 		</ins>
@@ -87,48 +88,6 @@ struct MaterialProperties
 class Material2: private MaterialProperties
 {
 	public:
-		/// Standard attribute variables that are acceptable inside the @ref
-		/// ShaderProg
-		enum StandardAtributeVariables
-		{
-			SAV_POSITION,
-			SAV_TANGENT,
-			SAV_NORMAL,
-			SAV_TEX_COORDS,
-			SAV_NUM
-		};
-
-		/// Standard uniform variables. The Renderer sees what are applicable
-		/// and sets them
-		/// After changing the enum update also:
-		/// - Some statics in Material.cpp
-		/// - Renderer::setupShaderProg
-		enum StandardUniformVariables
-		{
-			// Matrices
-			SUV_MODEL_MAT,
-			SUV_VIEW_MAT,
-			SUV_PROJECTION_MAT,
-			SUV_MODELVIEW_MAT,
-			SUV_VIEWPROJECTION_MAT,
-			SUV_NORMAL_MAT,
-			SUV_MODELVIEWPROJECTION_MAT,
-			// FAIs (for materials in blending stage)
-			SUV_MS_NORMAL_FAI,
-			SUV_MS_DIFFUSE_FAI,
-			SUV_MS_SPECULAR_FAI,
-			SUV_MS_DEPTH_FAI,
-			SUV_IS_FAI,
-			SUV_PPS_PRE_PASS_FAI,
-			SUV_PPS_POST_PASS_FAI,
-			// Other
-			SUV_RENDERER_SIZE,
-			SUV_SCENE_AMBIENT_COLOR,
-			SUV_BLURRING,
-			// num
-			SUV_NUM ///< The number of standard uniform variables
-		};
-
 		/// Initialize with default values
 		Material2();
 
@@ -142,8 +101,8 @@ class Material2: private MaterialProperties
 		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
-		GETTER_R(boost::ptr_vector<MaterialInputVariable>, inVars,
-			getMaterialInputVariables)
+		GETTER_R(boost::ptr_vector<MaterialVariable>, mtlVars,
+			getMaterialVariables)
 
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
@@ -154,13 +113,13 @@ class Material2: private MaterialProperties
 		const ShaderProg& getDepthPassShaderProgram() const
 			{return *dpShaderProg;}
 
-		/// Return NULL if the variable is not present in the shader program
+		/*/// Return NULL if the variable is not present in the shader program
 		const SProgAttribVar* getStandardAttributeVariable(
 			StandardAtributeVariables id) const;
 
 		/// Return NULL if the variable is not present in the shader program
 		const SProgUniVar* getStandardUniformVariable(
-			StandardUniformVariables id) const;
+			StandardUniformVariables id) const;*/
 		/// @}
 
 		/// Return false if blendingSfactor is equal to GL_ONE and
@@ -211,8 +170,8 @@ class Material2: private MaterialProperties
 			ArgDataType returnArg;
 		};
 
-		/// Information for the standard shader program variables
-		struct StdVarNameAndGlDataTypePair
+		/// Information for the build-in shader program variables
+		struct BuildinVar
 		{
 			const char* varName;
 			GLenum dataType; ///< aka GL data type
@@ -229,18 +188,13 @@ class Material2: private MaterialProperties
 		// Members                                                             =
 		//======================================================================
 
-		/// The input variables
-		boost::ptr_vector<MaterialInputVariable> inVars;
+		/// All the material variables. Both buildins and user
+		boost::ptr_vector<MaterialVariable> mtlVars;
 
-		/// Used to check if a var exists in the shader program
-		static boost::array<StdVarNameAndGlDataTypePair, SAV_NUM>
-			stdAttribVarInfos;
-		/// Used to check if a var exists in the shader program
-		static boost::array<StdVarNameAndGlDataTypePair, SUV_NUM>
-			stdUniVarInfos;
-		/// The standard attribute variables
-		boost::array<const SProgAttribVar*, SAV_NUM> stdAttribVars;
-		boost::array<const SProgUniVar*, SUV_NUM> stdUniVars;
+		boost::unordered_map<BuildinMaterialVariable::BuildinVariable,
+			BuildinMaterialVariable*> enumToBuildinMtlVar;
+
+		Vec<UserMaterialVariable*> userMtlVars;
 
 		/// The most important aspect of materials. Shader program for color
 		/// passes
@@ -291,7 +245,7 @@ inline bool Material2::isBlendingEnabled() const
 }
 
 
-inline const SProgAttribVar* Material2::getStandardAttributeVariable(
+/*inline const SProgAttribVar* Material2::getStandardAttributeVariable(
 	StandardAtributeVariables id) const
 {
 	return stdAttribVars[id];
@@ -302,7 +256,7 @@ inline const SProgUniVar* Material2::getStandardUniformVariable(
 	StandardUniformVariables id) const
 {
 	return stdUniVars[id];
-}
+}*/
 
 
 #endif
