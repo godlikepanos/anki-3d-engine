@@ -1,6 +1,7 @@
 #include "SProgUniVar.h"
 #include "Resources/ShaderProg.h"
 #include "Resources/Texture.h"
+#include "GfxApi/GlStateMachine.h"
 
 
 //==============================================================================
@@ -12,7 +13,8 @@
 /// - if the GL driver gives the same location as the one the var has
 #define STD_SET_UNI_CHECK() \
 	ASSERT(getLoc() != -1); \
-	ASSERT(ShaderProg::getCurrentProgramGlId() == getFatherSProg().getGlId()); \
+	ASSERT(GlStateMachineSingleton::getInstance().getCurrentProgramGlId() == \
+		getFatherSProg().getGlId()); \
 	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(), \
 		getName().c_str()) == getLoc());
 

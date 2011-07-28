@@ -4,7 +4,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "MaterialRuntimeUserDefinedVar.h"
 #include "Util/Accessors.h"
-#include "Util/CharPtrHashMap.h"
+#include "Util/ConstCharPtrHashMap.h"
 #include "Resources/Material.h"
 
 
@@ -76,7 +76,8 @@ class MaterialRuntime: private MaterialProps
 		const Material& mtl; ///< The resource
 		MaterialRuntimeUserDefinedVarContainer userDefVars;
 		/// For fast finding the variables
-		CharPtrHashMap<MaterialRuntimeUserDefinedVar*> userDefVarsHashMap;
+		ConstCharPtrHashMap<MaterialRuntimeUserDefinedVar*>::Type
+			userDefVarsHashMap;
 };
 
 

@@ -29,7 +29,7 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_):
 MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(
 	const char* name)
 {
-	CharPtrHashMap<MaterialRuntimeUserDefinedVar*>::iterator it =
+	ConstCharPtrHashMap<MaterialRuntimeUserDefinedVar*>::Type::iterator it =
 		userDefVarsHashMap.find(name);
 	if(it == userDefVarsHashMap.end())
 	{
@@ -46,8 +46,8 @@ MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(
 const MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(
 	const char* name) const
 {
-	CharPtrHashMap<MaterialRuntimeUserDefinedVar*>::const_iterator it =
-		userDefVarsHashMap.find(name);
+	ConstCharPtrHashMap<MaterialRuntimeUserDefinedVar*>::Type::const_iterator
+		it = userDefVarsHashMap.find(name);
 	if(it == userDefVarsHashMap.end())
 	{
 		throw EXCEPTION("Cannot get user defined variable with name \"" +
