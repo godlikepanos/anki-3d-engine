@@ -4,6 +4,7 @@
 #include "MaterialShaderProgramCreator.h"
 #include "Core/App.h"
 #include "Core/Globals.h"
+#include "ShaderProg.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -151,8 +152,11 @@ void Material2::parseMaterialTag(const boost::property_tree::ptree& pt)
 	const std::string& cpSrc = mspc.getShaderProgramSource();
 	std::string dpSrc = "#define DEPTH_PASS\n" + cpSrc;
 
-	createShaderProgSourceToCache(cpSrc);
-	createShaderProgSourceToCache(dpSrc);
+	std::string cfile = createShaderProgSourceToCache(cpSrc);
+	std::string dfile = createShaderProgSourceToCache(dpSrc);
+
+	cpShaderProg.loadRsrc(cfile.c_str());
+	dpShaderProg.loadRsrc(dfile.c_str());
 }
 
 
@@ -166,11 +170,9 @@ std::string Material2::createShaderProgSourceToCache(const std::string& source)
 	std::size_t h = stringHash(source);
 	std::string prefix = boost::lexical_cast<std::string>(h);
 
-	// Create path XXX
-	/*boost::filesystem::path newfPathName =
-		AppSingleton::getInstance().getCachePath() / (prefix + ".glsl");*/
+	// Create path
 	boost::filesystem::path newfPathName =
-		boost::filesystem::path("/users/panoscc/.anki/cache") / (prefix + ".glsl");
+		AppSingleton::getInstance().getCachePath() / (prefix + ".glsl");
 
 
 	// If file not exists write it
@@ -209,3 +211,10 @@ void Material2::load(const char* filename)
 	}
 }
 
+
+//==============================================================================
+// getVariables                                                                =
+//==============================================================================
+void Material2::getVariables()
+{
+}

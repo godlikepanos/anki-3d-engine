@@ -32,8 +32,7 @@ class ShaderProg
 		/// @name Accessors
 		/// @{
 		GLuint getGlId() const;
-		/*GETTER_R(boost::ptr_vector<SProgUniVar>, uniVars, getUniVars)
-		GETTER_R(boost::ptr_vector<SProgAttribVar>, attribVars, getAttribVars)*/
+		GETTER_R(boost::ptr_vector<SProgVar>, vars, getVariables)
 		/// @}
 
 		/// Resource load
@@ -41,32 +40,23 @@ class ShaderProg
 
 		/// Bind the shader program
 		void bind() const;
-		
-		/// Unbind all shader programs
-		//static void unbind() {glUseProgram(0);}
 
-		/// Query the GL driver for the current shader program GL ID
-		/// @return Shader program GL id
-		//static uint getCurrentProgramGlId();
+		/// @name Variable getters
+		/// Used to find and return the variable. They throw exception if
+		/// variable not found so ask if the variable with that name exists
+		/// prior using any of these
+		/// @{
+		const SProgVar& getVariable(const char* varName) const;
+		const SProgUniVar& getUniformVariable(const char* varName) const;
+		const SProgAttribVar& getAttributeVariable(const char* varName) const;
+		/// @}
 
-		/// Find uniform variable. On failure it throws an exception so use
-		/// @ref uniVarExists to check if var exists
-		/// @param varName The name of the var
-		/// @return It returns a uniform variable
-		/// @exception Exception
-		const SProgUniVar* findUniVar(const char* varName) const;
-
-		/// Find Attribute variable
-		/// @see findUniVar
-		const SProgAttribVar* findAttribVar(const char* varName) const;
-
-		/// Uniform variable exits
-		/// @return True if uniform variable exits
-		bool uniVarExists(const char* varName) const;
-
-		/// Attribute variable exits
-		/// @return True if attribute variable exits
-		bool attribVarExists(const char* varName) const;
+		/// @name Check for variable existance
+		/// @{
+		bool variableExists(const char* varName) const;
+		bool uniformVariableExists(const char* varName) const;
+		bool attributeVariableExists(const char* varName) const;
+		/// @}
 
 		/// Used by @ref Material and @ref Renderer to create custom shaders in
 		/// the cache
@@ -79,35 +69,35 @@ class ShaderProg
 		static std::string createSrcCodeToCache(const char* sProgFPathName,
 			const char* preAppendedSrcCode);
 
-		/// Relink the program. Used in transform feedback
-		void relink() const {link();}
-
 		/// For debuging
 		std::string getShaderInfoString() const;
 
 	private:
-		/// Uniform variable name to variable iterator
-		typedef ConstCharPtrHashMap<SProgUniVar*>::Type::const_iterator
-			NameToSProgUniVarIterator;
-		/// Attribute variable name to variable iterator
-		typedef ConstCharPtrHashMap<SProgAttribVar*>::Type::const_iterator
-			NameToSProgAttribVarIterator;
+		/// XXX
+		typedef ConstCharPtrHashMap<SProgVar*>::Type VarsHashMap;
+
+		/// XXX
+		typedef ConstCharPtrHashMap<SProgUniVar*>::Type UniVarsHashMap;
+
+		/// XXX
+		typedef ConstCharPtrHashMap<SProgAttribVar*>::Type AttribVarsHashMap;
 
 		std::string rsrcFilename;
 		GLuint glId; ///< The OpenGL ID of the shader program
 		GLuint vertShaderGlId; ///< Vertex shader OpenGL id
 		GLuint geomShaderGlId; ///< Geometry shader OpenGL id
 		GLuint fragShaderGlId; ///< Fragment shader OpenGL id
+
 		/// Shader source that is used in ALL shader programs
 		static std::string stdSourceCode;
-		/// All the uniform variables
-		boost::ptr_vector<SProgUniVar> uniVars;
-		/// All the attribute variables
-		boost::ptr_vector<SProgAttribVar> attribVars;
-		/// A UnorderedMap for fast variable searching
-		ConstCharPtrHashMap<SProgUniVar*>::Type uniNameToVar;
-		///< @see uniNameToVar
-		ConstCharPtrHashMap<SProgAttribVar*>::Type attribNameToVar;
+
+		/// @name Containers
+		/// @{
+		boost::ptr_vector<SProgVar> vars; ///< All the vars
+		VarsHashMap nameToVar; ///< Variable searching
+		UniVarsHashMap nameToUniVar; ///< Uniform searching
+		AttribVarsHashMap nameToAttribVar; ///< Attribute searching
+		/// @}
 
 		/// Query the driver to get the vars. After the linking of the shader
 		/// prog is done gather all the vars in custom containers
@@ -146,14 +136,6 @@ inline void ShaderProg::bind() const
 	ASSERT(glId != std::numeric_limits<uint>::max());
 	GlStateMachineSingleton::getInstance().useShaderProg(glId);
 }
-
-
-/*inline uint ShaderProg::getCurrentProgramGlId()
-{
-	int i;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
-	return i;
-}*/
 
 
 #endif

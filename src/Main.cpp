@@ -463,11 +463,11 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		Material2 mtl;
+		/*Material2 mtl;
 		mtl.load("lala.mtl");
 
 
-		return 0;
+		return 0;*/
 
 		AppSingleton::getInstance().init(argc, argv);
 		init();
@@ -480,7 +480,7 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		ERROR("Aborting: " << e.what());
+		//ERROR("Aborting: " << e.what());
 		std::cerr << "Aborting: " << e.what() << std::endl;
 		//abort();
 		return 1;

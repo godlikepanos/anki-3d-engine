@@ -101,6 +101,19 @@ struct MaterialProperties
 class Material2: private MaterialProperties
 {
 	public:
+		//======================================================================
+		// Nested                                                              =
+		//======================================================================
+
+		typedef boost::ptr_vector<MaterialVariable> VarsContainer;
+
+		typedef boost::unordered_map<BuildinMaterialVariable::BuildinVariable,
+			BuildinMaterialVariable*> BuildinEnumToBuildinHashMap;
+
+		//======================================================================
+		// Methods                                                             =
+		//======================================================================
+
 		/// Initialize with default values
 		Material2();
 
@@ -114,8 +127,8 @@ class Material2: private MaterialProperties
 		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
-		GETTER_R(boost::ptr_vector<MaterialVariable>, mtlVars,
-			getMaterialVariables)
+
+		GETTER_R(VarsContainer, mtlVars, getMaterialVariables)
 
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
@@ -140,12 +153,11 @@ class Material2: private MaterialProperties
 		//======================================================================
 
 		/// All the material variables. Both buildins and user
-		boost::ptr_vector<MaterialVariable> mtlVars;
+		VarsContainer mtlVars;
 
-		boost::unordered_map<BuildinMaterialVariable::BuildinVariable,
-			BuildinMaterialVariable*> enumToBuildinMtlVar;
+		BuildinEnumToBuildinHashMap enumToBuildinMtlVar; ///< To find
 
-		Vec<UserMaterialVariable*> userMtlVars;
+		Vec<UserMaterialVariable*> userMtlVars; ///< To find
 
 		/// The most important aspect of materials. Shader program for color
 		/// passes
@@ -166,6 +178,9 @@ class Material2: private MaterialProperties
 
 		/// XXX
 		std::string createShaderProgSourceToCache(const std::string& source);
+
+		/// XXX
+		void getVariables();
 };
 
 

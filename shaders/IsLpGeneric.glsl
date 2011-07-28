@@ -24,14 +24,10 @@ uniform vec3 lightPos; ///< Light pos in eye space
 uniform float lightRadius;
 uniform vec3 lightDiffuseCol;
 uniform vec3 lightSpecularCol;
-#if defined(SPOT_LIGHT_ENABLED)
 uniform sampler2D lightTex;
 uniform mat4 texProjectionMat;
-#	if defined(SHADOW_ENABLED)
 uniform sampler2DShadow shadowMap;
 uniform float shadowMapSize;
-#	endif
-#endif
 /// @}
 
 /// @name Varyings
@@ -242,9 +238,9 @@ void main()
 	vec3 fragPosVspace = getFragPosVSpace();
 
 #if defined(POINT_LIGHT_ENABLED)
-	fColor = doPointLight(fragLightDist);
+	fColor = doPointLight(fragPosVspace);
 #elif defined(SPOT_LIGHT_ENABLED)
-	fColor = doSpotLight(fragLightDist);
+	fColor = doSpotLight(fragPosVspace);
 #endif // spot light
 
 	

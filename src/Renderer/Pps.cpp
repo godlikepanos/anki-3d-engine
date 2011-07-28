@@ -126,11 +126,11 @@ void Pps::runPrePass()
 		r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
-	prePassSProg->findUniVar("isFai")->set(r.getIs().getFai(), 0);
+	prePassSProg->getUniformVariable("isFai").set(r.getIs().getFai(), 0);
 
 	if(ssao.isEnabled())
 	{
-		prePassSProg->findUniVar("ppsSsaoFai")->set(ssao.getFai(), 1);
+		prePassSProg->getUniformVariable("ppsSsaoFai").set(ssao.getFai(), 1);
 	}
 
 	r.drawQuad();
@@ -158,10 +158,10 @@ void Pps::runPostPass()
 		r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();
-	postPassSProg->findUniVar("ppsPrePassFai")->set(prePassFai, 0);
+	postPassSProg->getUniformVariable("ppsPrePassFai").set(prePassFai, 0);
 	if(hdr.isEnabled())
 	{
-		postPassSProg->findUniVar("ppsHdrFai")->set(hdr.getFai(), 1);
+		postPassSProg->getUniformVariable("ppsHdrFai").set(hdr.getFai(), 1);
 	}
 
 	r.drawQuad();
