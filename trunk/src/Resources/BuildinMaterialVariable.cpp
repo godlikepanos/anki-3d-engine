@@ -1,38 +1,63 @@
 #include "BuildinMaterialVariable.h"
 #include "Util/Exception.h"
+#include "Util/Assert.h"
 #include <cstring>
 #include <boost/lexical_cast.hpp>
+#include <boost/assign/list_of.hpp>
 
 
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
 
-boost::array<BuildinMaterialVariable::BuildinVarInfo,
-	BuildinMaterialVariable::BV_NUM> BuildinMaterialVariable::infos =
-{{
-	{"position", GL_FLOAT_VEC3},
-	{"tangent", GL_FLOAT_VEC4},
-	{"normal", GL_FLOAT_VEC3},
-	{"texCoords", GL_FLOAT_VEC2},
-	{"modelMat", GL_FLOAT_MAT4},
-	{"viewMat", GL_FLOAT_MAT4},
-	{"projectionMat", GL_FLOAT_MAT4},
-	{"modelViewMat", GL_FLOAT_MAT4},
-	{"viewProjectionMat", GL_FLOAT_MAT4},
-	{"normalMat", GL_FLOAT_MAT3},
-	{"modelViewProjectionMat", GL_FLOAT_MAT4},
-	{"msNormalFai", GL_SAMPLER_2D},
-	{"msDiffuseFai", GL_SAMPLER_2D},
-	{"msSpecularFai", GL_SAMPLER_2D},
-	{"msDepthFai", GL_SAMPLER_2D},
-	{"isFai", GL_SAMPLER_2D},
-	{"ppsPrePassFai", GL_SAMPLER_2D},
-	{"ppsPostPassFai", GL_SAMPLER_2D},
-	{"rendererSize", GL_FLOAT_VEC2},
-	{"sceneAmbientColor", GL_FLOAT_VEC3},
-	{"blurring", GL_FLOAT},
-}};
+ConstCharPtrHashMap<BuildinMaterialVariable::BuildinVariable>::Type
+	BuildinMaterialVariable::buildinNameToEnum = boost::assign::map_list_of
+	("position", BV_POSITION)
+	("tangent", BV_TANGENT)
+	("normal", BV_NORMAL)
+	("texCoords", BV_TEX_COORDS)
+	("modelMat", BV_MODEL_MAT)
+	("viewMat", BV_VIEW_MAT)
+	("projectionMat", BV_PROJECTION_MAT)
+	("modelViewMat", BV_MODELVIEW_MAT)
+	("viewProjectionMat", BV_VIEWPROJECTION_MAT)
+	("normalMat", BV_NORMAL_MAT)
+	("modelViewProjectionMat", BV_MODELVIEWPROJECTION_MAT)
+	("msNormalFai", BV_MS_NORMAL_FAI)
+	("msDiffuseFai", BV_MS_DIFFUSE_FAI)
+	("msSpecularFai", BV_MS_SPECULAR_FAI)
+	("msDepthFai", BV_MS_DEPTH_FAI)
+	("isFai", BV_IS_FAI)
+	("ppsPrePassFai", BV_PPS_PRE_PASS_FAI)
+	("ppsPostPassFai", BV_PPS_POST_PASS_FAI)
+	("rendererSize", BV_RENDERER_SIZE)
+	("sceneAmbientColor", BV_SCENE_AMBIENT_COLOR)
+	("blurring", BV_BLURRING);
+
+
+boost::unordered_map<BuildinMaterialVariable::BuildinVariable, GLenum>
+	BuildinMaterialVariable::buildinToGlType = boost::assign::map_list_of
+	(BV_POSITION, GL_FLOAT_VEC3)
+	(BV_TANGENT, GL_FLOAT_VEC4)
+	(BV_NORMAL, GL_FLOAT_VEC3)
+	(BV_TEX_COORDS, GL_FLOAT_VEC2)
+	(BV_MODEL_MAT, GL_FLOAT_MAT4)
+	(BV_VIEW_MAT, GL_FLOAT_MAT4)
+	(BV_PROJECTION_MAT, GL_FLOAT_MAT4)
+	(BV_PROJECTION_MAT, GL_FLOAT_MAT4)
+	(BV_VIEWPROJECTION_MAT, GL_FLOAT_MAT4)
+	(BV_NORMAL_MAT, GL_FLOAT_MAT3)
+	(BV_MODELVIEWPROJECTION_MAT, GL_FLOAT_MAT4)
+	(BV_MS_NORMAL_FAI, GL_SAMPLER_2D)
+	(BV_MS_DIFFUSE_FAI, GL_SAMPLER_2D)
+	(BV_MS_SPECULAR_FAI, GL_SAMPLER_2D)
+	(BV_MS_DEPTH_FAI, GL_SAMPLER_2D)
+	(BV_IS_FAI, GL_SAMPLER_2D)
+	(BV_PPS_PRE_PASS_FAI, GL_SAMPLER_2D)
+	(BV_PPS_POST_PASS_FAI, GL_SAMPLER_2D)
+	(BV_RENDERER_SIZE, GL_FLOAT_VEC2)
+	(BV_SCENE_AMBIENT_COLOR, GL_FLOAT_VEC3)
+	(BV_BLURRING, GL_FLOAT);
 
 
 //==============================================================================
@@ -66,22 +91,28 @@ BuildinMaterialVariable::BuildinMaterialVariable(
 bool BuildinMaterialVariable::isBuildin(const char* name,
 	BuildinVariable* var, GLenum* dataType)
 {
-	for(uint i = 0; i < BV_NUM; i++)
-	{
-		if(!strcmp(infos[i].name, name))
-		{
-			if(var)
-			{
-				*var = static_cast<BuildinVariable>(i);
-			}
+	ConstCharPtrHashMap<BuildinVariable>::Type::const_iterator it =
+		buildinNameToEnum.find(name);
 
-			if(dataType)
-			{
-				*dataType = infos[i].dataType;
-			}
-			return true;
-		}
+	if(it == buildinNameToEnum.end())
+	{
+		return false;
 	}
 
-	return false;
+	if(var)
+	{
+		*var = it->second;
+	}
+
+	if(dataType)
+	{
+		boost::unordered_map<BuildinVariable, GLenum>::const_iterator it2 =
+			buildinToGlType.find(it->second);
+
+		ASSERT(it2 != buildinToGlType.end());
+
+		*dataType = it2->second;
+	}
+
+	return true;
 }

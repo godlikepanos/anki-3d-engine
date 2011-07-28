@@ -2,7 +2,7 @@
 #define MATERIAL_2_H
 
 #include "Util/Accessors.h"
-#include "Util/CharPtrHashMap.h"
+#include "Util/ConstCharPtrHashMap.h"
 #include "UserMaterialVariable.h"
 #include "BuildinMaterialVariable.h"
 #include "RsrcPtr.h"
@@ -37,6 +37,18 @@ struct MaterialProperties
 };
 
 
+/// Material resource
+///
+/// Every material keeps info of how to render a RenedrableNode. Using a node
+/// based logic it creates a couple of shader programs dynamically. One for
+/// color passes and one for depth. It also keeps two sets of material
+/// variables. The first is the build in and the second the user defined.
+/// During the renderer's shader setup the buildins will be set automatically,
+/// for the user variables the user needs to have its value in the material
+/// file. Some material variables may be present in both shader programs and
+/// some in only one of them
+///
+/// Material XML file format:
 /// @code
 /// <material>
 /// 	<castsShadow>true | false</castsShadow>
@@ -59,7 +71,7 @@ struct MaterialProperties
 /// 		</includes>
 ///
 /// 		<ins>
-/// 			<in>
+/// 			<in> *
 /// 				<name>xx</name>
 /// 				<value>
 /// 					<float>0.0</float> |
@@ -75,16 +87,17 @@ struct MaterialProperties
 /// 			<operation>
 /// 				<id>x</id>
 /// 				<function>functionName</function>
-/// 				<parameters>
-/// 					<parameter>xx</parameter>
-/// 					<parameter>yy</parameter>
-/// 				</parameters>
+/// 				<arguments>
+/// 					<argument>xx</argument>
+/// 					<argument>yy</argument>
+/// 				</arguments>
 /// 			</operation>
 /// 		</operations>
 ///
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
+/// *: For "in" if the value is not set then the in variable will be build in
 class Material2: private MaterialProperties
 {
 	public:
@@ -112,14 +125,6 @@ class Material2: private MaterialProperties
 
 		const ShaderProg& getDepthPassShaderProgram() const
 			{return *dpShaderProg;}
-
-		/*/// Return NULL if the variable is not present in the shader program
-		const SProgAttribVar* getStandardAttributeVariable(
-			StandardAtributeVariables id) const;
-
-		/// Return NULL if the variable is not present in the shader program
-		const SProgUniVar* getStandardUniformVariable(
-			StandardUniformVariables id) const;*/
 		/// @}
 
 		/// Return false if blendingSfactor is equal to GL_ONE and
@@ -130,67 +135,6 @@ class Material2: private MaterialProperties
 		void load(const char* filename);
 
 	public: /// XXX
-		//======================================================================
-		// Nested                                                              =
-		//======================================================================
-
-		/// Function argument data type
-		enum ArgDataType
-		{
-			AT_TEXTURE,
-			AT_FLOAT,
-			AT_VEC2,
-			AT_VEC3,
-			AT_VEC4,
-			AT_VOID
-		};
-
-		/// Function argument data call type
-		enum ArgCallType
-		{
-			ACT_IN,
-			ACT_OUT,
-			ACT_INOUT
-		};
-
-		/// Function argument definition
-		struct ArgDefinition
-		{
-			std::string name;
-			ArgDataType dataType;
-			ArgCallType callType;
-		};
-
-		/// Function definition. It contains information about a function (eg
-		/// return type and the arguments)
-		struct FuncDefinition
-		{
-			std::string name; ///< Function name
-			boost::ptr_vector<ArgDefinition> argDefinitions;
-			ArgDataType returnArg;
-		};
-
-		/// Information for the build-in shader program variables
-		struct BuildinVar
-		{
-			const char* varName;
-			GLenum dataType; ///< aka GL data type
-		};
-
-		/// Simple pair structure
-		struct BlendParam
-		{
-			int glEnum;
-			const char* str;
-		};
-
-		/// Simple pair structure
-		struct GlDataToText
-		{
-			GLenum dataType;
-			const char* txt;
-		};
-
 		//======================================================================
 		// Members                                                             =
 		//======================================================================
@@ -210,50 +154,18 @@ class Material2: private MaterialProperties
 		/// Shader program for depth passes
 		RsrcPtr<ShaderProg> dpShaderProg;
 
-		/// Used to go from text to actual GL enum
-		static BlendParam blendingParams[];
-
-		/// XXX
-		static GlDataToText glDataToText[];
+		/// From "GL_ZERO" return GL_ZERO
+		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
 
 		//======================================================================
 		// Methods                                                             =
 		//======================================================================
 
-		/// XXX Appends
-		static void parseShaderFileForFunctionDefinitions(const char* filename,
-			boost::ptr_vector<FuncDefinition>& out);
-
-		/// XXX
-		/// Used by parseShaderFileForFunctionDefinitions. Takes into account
-		/// the backslashes
-		static void parseUntilNewline(Scanner::Scanner& scanner);
-
-		/// It being used by parseShaderFileForFunctionDefinitions and it
-		/// skips until newline after a '#' found. It takes into account the
-		/// back slashes that the preprocessos may have
-		static void getNextTokenAndSkipNewline(Scanner::Scanner& scanner);
-
-		/// Searches the blendingParams array for text. It throw exception if
-		/// not found
-		static int getGlBlendEnumFromText(const char* str);
-
 		/// Parse what is within the @code <material></material> @endcode
 		void parseMaterialTag(const boost::property_tree::ptree& pt);
 
-		/// Parse what is within the
-		/// @code <shaderProgram></shaderProgram> @endcode
-		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
-
-		/// Parse what is within the @code <in></in> @endcode
-		void parseInTag(const boost::property_tree::ptree& pt,
-			Vec<std::string>& sourceLines);
-
-		/// Used in std::sort
-		static bool compareStrings(const std::string& a, const std::string& b);
-
 		/// XXX
-		static const char* getTextFromGlType(GLenum dataType);
+		std::string createShaderProgSourceToCache(const std::string& source);
 };
 
 
@@ -261,20 +173,6 @@ inline bool Material2::isBlendingEnabled() const
 {
 	return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
 }
-
-
-/*inline const SProgAttribVar* Material2::getStandardAttributeVariable(
-	StandardAtributeVariables id) const
-{
-	return stdAttribVars[id];
-}
-
-
-inline const SProgUniVar* Material2::getStandardUniformVariable(
-	StandardUniformVariables id) const
-{
-	return stdUniVars[id];
-}*/
 
 
 #endif

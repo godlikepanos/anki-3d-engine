@@ -2,6 +2,7 @@
 #define BUILDIN_MATERIAL_VARIABLE_H
 
 #include "MaterialVariable.h"
+#include "Util/ConstCharPtrHashMap.h"
 #include <boost/array.hpp>
 
 
@@ -43,13 +44,6 @@ class BuildinMaterialVariable: public MaterialVariable
 			BV_NUM ///< The number of all variables
 		};
 
-		/// Information for the build-in shader program variables
-		struct BuildinVarInfo
-		{
-			const char* name; ///< Variable name
-			GLenum dataType; ///< aka GL data type
-		};
-
 		BuildinMaterialVariable(const SProgVar* cpSProgVar,
 			const SProgVar* dpSProgVar, const char* name);
 
@@ -59,7 +53,12 @@ class BuildinMaterialVariable: public MaterialVariable
 			GLenum* dataType = NULL);
 
 	private:
-		static boost::array<BuildinVarInfo, BV_NUM> infos;
+		/// Given a name of a variable find its BuildinVariable enum
+		static ConstCharPtrHashMap<BuildinVariable>::Type buildinNameToEnum;
+
+		/// Given a BuildinVariable enum it gives the GL type
+		static boost::unordered_map<BuildinVariable, GLenum> buildinToGlType;
+
 		BuildinVariable var;
 };
 

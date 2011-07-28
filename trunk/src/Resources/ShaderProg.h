@@ -4,7 +4,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <limits>
-#include "Util/CharPtrHashMap.h"
+#include "Util/ConstCharPtrHashMap.h"
 #include "Util/Assert.h"
 #include "SProgUniVar.h"
 #include "SProgAttribVar.h"
@@ -32,8 +32,8 @@ class ShaderProg
 		/// @name Accessors
 		/// @{
 		GLuint getGlId() const;
-		GETTER_R(boost::ptr_vector<SProgUniVar>, uniVars, getUniVars)
-		GETTER_R(boost::ptr_vector<SProgAttribVar>, attribVars, getAttribVars)
+		/*GETTER_R(boost::ptr_vector<SProgUniVar>, uniVars, getUniVars)
+		GETTER_R(boost::ptr_vector<SProgAttribVar>, attribVars, getAttribVars)*/
 		/// @}
 
 		/// Resource load
@@ -43,11 +43,11 @@ class ShaderProg
 		void bind() const;
 		
 		/// Unbind all shader programs
-		static void unbind() {glUseProgram(0);}
+		//static void unbind() {glUseProgram(0);}
 
 		/// Query the GL driver for the current shader program GL ID
 		/// @return Shader program GL id
-		static uint getCurrentProgramGlId();
+		//static uint getCurrentProgramGlId();
 
 		/// Find uniform variable. On failure it throws an exception so use
 		/// @ref uniVarExists to check if var exists
@@ -87,10 +87,10 @@ class ShaderProg
 
 	private:
 		/// Uniform variable name to variable iterator
-		typedef CharPtrHashMap<SProgUniVar*>::const_iterator
+		typedef ConstCharPtrHashMap<SProgUniVar*>::Type::const_iterator
 			NameToSProgUniVarIterator;
 		/// Attribute variable name to variable iterator
-		typedef CharPtrHashMap<SProgAttribVar*>::const_iterator
+		typedef ConstCharPtrHashMap<SProgAttribVar*>::Type::const_iterator
 			NameToSProgAttribVarIterator;
 
 		std::string rsrcFilename;
@@ -105,8 +105,9 @@ class ShaderProg
 		/// All the attribute variables
 		boost::ptr_vector<SProgAttribVar> attribVars;
 		/// A UnorderedMap for fast variable searching
-		CharPtrHashMap<SProgUniVar*> uniNameToVar;
-		CharPtrHashMap<SProgAttribVar*> attribNameToVar; ///< @see uniNameToVar
+		ConstCharPtrHashMap<SProgUniVar*>::Type uniNameToVar;
+		///< @see uniNameToVar
+		ConstCharPtrHashMap<SProgAttribVar*>::Type attribNameToVar;
 
 		/// Query the driver to get the vars. After the linking of the shader
 		/// prog is done gather all the vars in custom containers
@@ -147,12 +148,12 @@ inline void ShaderProg::bind() const
 }
 
 
-inline uint ShaderProg::getCurrentProgramGlId()
+/*inline uint ShaderProg::getCurrentProgramGlId()
 {
 	int i;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
 	return i;
-}
+}*/
 
 
 #endif

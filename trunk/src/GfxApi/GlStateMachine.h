@@ -26,6 +26,8 @@ class GlStateMachine
 		void useShaderProg(GLuint id);
 
 		void setViewport(uint x, uint y, uint w, uint h);
+
+		static GLuint getCurrentProgramGlId();
 		/// @}
 
 	private:
@@ -41,8 +43,6 @@ class GlStateMachine
 		GLsizei viewportW;
 		GLsizei viewportH;
 		/// @}
-
-		static GLuint getCurrentProgramGlId();
 };
 
 

@@ -1,46 +1,38 @@
 #include "Material2.h"
 #include "MaterialVariable.h"
-#include "Util/Scanner/Scanner.h"
-#include "Misc/Parser.h"
 #include "Misc/PropertyTree.h"
-#include <sstream>
+#include "MaterialShaderProgramCreator.h"
+#include "Core/App.h"
+#include "Core/Globals.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/assign/list_of.hpp>
+#include <boost/functional/hash.hpp>
 
 
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
 
-Material2::BlendParam Material2::blendingParams[] =
-{
-	{GL_ZERO, "GL_ZERO"},
-	{GL_ONE, "GL_ONE"},
-	{GL_DST_COLOR, "GL_DST_COLOR"},
-	{GL_ONE_MINUS_DST_COLOR, "GL_ONE_MINUS_DST_COLOR"},
-	{GL_SRC_ALPHA, "GL_SRC_ALPHA"},
-	{GL_ONE_MINUS_SRC_ALPHA, "GL_ONE_MINUS_SRC_ALPHA"},
-	{GL_DST_ALPHA, "GL_DST_ALPHA"},
-	{GL_ONE_MINUS_DST_ALPHA, "GL_ONE_MINUS_DST_ALPHA"},
-	{GL_SRC_ALPHA_SATURATE, "GL_SRC_ALPHA_SATURATE"},
-	{GL_SRC_COLOR, "GL_SRC_COLOR"},
-	{GL_ONE_MINUS_SRC_COLOR, "GL_ONE_MINUS_SRC_COLOR"},
-	{0, NULL}
-};
+// Dont make idiotic mistakes
+#define TXT_AND_ENUM(x) \
+	(#x, x)
 
 
-Material2::GlDataToText Material2::glDataToText[] =
-{
-	{GL_FLOAT, "float"},
-	{GL_FLOAT_VEC2, "vec2"},
-	{GL_FLOAT_VEC3, "vec3"},
-	{GL_FLOAT_VEC4, "vec4"},
-	{GL_SAMPLER_2D, "sampler2D"},
-	{GL_FLOAT_MAT3, "mat3"},
-	{GL_FLOAT_MAT4, "mat4"},
-	{0, NULL},
-};
+ConstCharPtrHashMap<GLenum>::Type Material2::txtToBlengGlEnum =
+	boost::assign::map_list_of
+	TXT_AND_ENUM(GL_ZERO)
+	TXT_AND_ENUM(GL_ONE)
+	TXT_AND_ENUM(GL_DST_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
+	TXT_AND_ENUM(GL_SRC_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
+	TXT_AND_ENUM(GL_DST_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
+	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
+	TXT_AND_ENUM(GL_SRC_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
 
 
 //==============================================================================
@@ -62,289 +54,6 @@ Material2::Material2()
 //==============================================================================
 Material2::~Material2()
 {}
-
-
-//==============================================================================
-// parseShaderFileForFunctionDefinitions                                       =
-//==============================================================================
-void Material2::parseShaderFileForFunctionDefinitions(const char* filename,
-	boost::ptr_vector<FuncDefinition>& out)
-{
-	Scanner::Scanner scanner(filename, false);
-	const Scanner::Token* token = &scanner.getCrntToken();
-
-	// Forever
-	while(true)
-	{
-		getNextTokenAndSkipNewline(scanner);
-		FuncDefinition* funcDef = NULL;
-
-		// EOF
-		if(token->getCode() == Scanner::TC_EOF)
-		{
-			break;
-		}
-		// #
-		else if(token->getCode() == Scanner::TC_SHARP)
-		{
-			parseUntilNewline(scanner);
-			continue;
-		}
-		// Type
-		else if(token->getCode() == Scanner::TC_IDENTIFIER)
-		{
-			funcDef = new FuncDefinition;
-			out.push_back(funcDef);
-
-			if(!strcmp(token->getValue().getString(), "float"))
-			{
-				funcDef->returnArg = AT_FLOAT;
-			}
-			else if(!strcmp(token->getValue().getString(), "vec2"))
-			{
-				funcDef->returnArg = AT_VEC2;
-			}
-			else if(!strcmp(token->getValue().getString(), "vec3"))
-			{
-				funcDef->returnArg = AT_VEC3;
-			}
-			else if(!strcmp(token->getValue().getString(), "vec4"))
-			{
-				funcDef->returnArg = AT_VEC4;
-			}
-			else if(!strcmp(token->getValue().getString(), "void"))
-			{
-				funcDef->returnArg = AT_VOID;
-			}
-			else
-			{
-				throw PARSER_EXCEPTION_EXPECTED("float or vec2 or vec3"
-					" or vec4 or void");
-			}
-		}
-		else
-		{
-			throw PARSER_EXCEPTION_EXPECTED("identifier");
-		}
-
-		// Function name
-		getNextTokenAndSkipNewline(scanner);
-		if(token->getCode() != Scanner::TC_IDENTIFIER)
-		{
-			throw PARSER_EXCEPTION_EXPECTED("identifier");
-		}
-
-		funcDef->name = token->getValue().getString();
-
-		// (
-		getNextTokenAndSkipNewline(scanner);
-		if(token->getCode() != Scanner::TC_LPAREN)
-		{
-			throw PARSER_EXCEPTION_EXPECTED("(");
-		}
-
-		// Arguments
-		while(true)
-		{
-			ArgDefinition* argDef = new ArgDefinition;
-			funcDef->argDefinitions.push_back(argDef);
-
-			// Call type
-			getNextTokenAndSkipNewline(scanner);
-			if(token->getCode() != Scanner::TC_IDENTIFIER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("identifier");
-			}
-
-			if(!strcmp(token->getValue().getString(), "in"))
-			{
-				argDef->callType = ACT_IN;
-			}
-			else if(!strcmp(token->getValue().getString(), "out"))
-			{
-				argDef->callType = ACT_OUT;
-			}
-			else if(!strcmp(token->getValue().getString(), "inout"))
-			{
-				argDef->callType = ACT_INOUT;
-			}
-			else
-			{
-				throw PARSER_EXCEPTION_EXPECTED("in or out or inout");
-			}
-
-			// Type
-			getNextTokenAndSkipNewline(scanner);
-			if(token->getCode() != Scanner::TC_IDENTIFIER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("identifier");
-			}
-
-			if(!strcmp(token->getValue().getString(), "float"))
-			{
-				argDef->dataType = AT_FLOAT;
-			}
-			else if(!strcmp(token->getValue().getString(), "vec2"))
-			{
-				argDef->dataType = AT_VEC2;
-			}
-			else if(!strcmp(token->getValue().getString(), "vec3"))
-			{
-				argDef->dataType = AT_VEC3;
-			}
-			else if(!strcmp(token->getValue().getString(), "vec4"))
-			{
-				argDef->dataType = AT_VEC4;
-			}
-			else if(!strcmp(token->getValue().getString(), "sampler2D"))
-			{
-				argDef->dataType = AT_TEXTURE;
-			}
-			else
-			{
-				throw PARSER_EXCEPTION_EXPECTED("float or vec2 or vec3 or"
-					" vec4 or sampler2D");
-			}
-
-			// Name
-			getNextTokenAndSkipNewline(scanner);
-			if(token->getCode() != Scanner::TC_IDENTIFIER)
-			{
-				throw PARSER_EXCEPTION_EXPECTED("identifier");
-			}
-
-			argDef->name = token->getValue().getString();
-
-			// ,
-			getNextTokenAndSkipNewline(scanner);
-			if(token->getCode() == Scanner::TC_COMMA)
-			{
-				continue;
-			}
-			// )
-			else if(token->getCode() == Scanner::TC_RPAREN)
-			{
-				break;
-			}
-			else
-			{
-				throw PARSER_EXCEPTION_UNEXPECTED();
-			}
-		} // End arguments
-
-
-		// {
-		getNextTokenAndSkipNewline(scanner);
-		if(token->getCode() != Scanner::TC_LBRACKET)
-		{
-			throw PARSER_EXCEPTION_EXPECTED("{");
-		}
-
-		// Skip until closing bracket
-		int bracketsNum = 0;
-		while(true)
-		{
-			getNextTokenAndSkipNewline(scanner);
-
-			if(token->getCode() == Scanner::TC_RBRACKET)
-			{
-				if(bracketsNum == 0)
-				{
-					break;
-				}
-				--bracketsNum;
-			}
-			else if(token->getCode() == Scanner::TC_LBRACKET)
-			{
-				++bracketsNum;
-			}
-			else if(token->getCode() == Scanner::TC_EOF)
-			{
-				throw PARSER_EXCEPTION_UNEXPECTED();
-			}
-			else
-			{
-				continue;
-			}
-		} // End until closing bracket
-
-		/*std::stringstream ss;
-		ss << "Func def: " << funcDef->returnArg << " " << funcDef->name << " ";
-		BOOST_FOREACH(const ArgDefinition& adef, funcDef->argDefinitions)
-		{
-			ss << adef.callType << " " << adef.dataType << " " <<
-				adef.name << ", ";
-		}
-		std::cout << ss.str() << std::endl;*/
-	} // End for all functions
-}
-
-
-//==============================================================================
-// parseUntilNewline                                                           =
-//==============================================================================
-void Material2::parseUntilNewline(Scanner::Scanner& scanner)
-{
-	const Scanner::Token* token = &scanner.getCrntToken();
-	Scanner::TokenCode prevTc;
-
-	while(true)
-	{
-		prevTc = token->getCode();
-		scanner.getNextToken();
-
-		if(token->getCode() == Scanner::TC_EOF)
-		{
-			break;
-		}
-		else if(token->getCode() == Scanner::TC_NEWLINE &&
-			prevTc != Scanner::TC_BACK_SLASH)
-		{
-			break;
-		}
-	}
-}
-
-
-//==============================================================================
-// getNextTokenAndSkipNewline                                                  =
-//==============================================================================
-void Material2::getNextTokenAndSkipNewline(Scanner::Scanner& scanner)
-{
-	const Scanner::Token* token;
-
-	while(true)
-	{
-		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_NEWLINE)
-		{
-			break;
-		}
-	}
-}
-
-
-//==============================================================================
-// getGlBlendEnumFromText                                                      =
-//==============================================================================
-int Material2::getGlBlendEnumFromText(const char* str)
-{
-	BlendParam* ptr = &blendingParams[0];
-	while(true)
-	{
-		if(ptr->str == NULL)
-		{
-			throw EXCEPTION("Incorrect blending factor: " + str);
-		}
-
-		if(!strcmp(ptr->str, str))
-		{
-			return ptr->glEnum;
-		}
-
-		++ptr;
-	}
-}
 
 
 //==============================================================================
@@ -382,12 +91,36 @@ void Material2::parseMaterialTag(const boost::property_tree::ptree& pt)
 	if(blendFuncsTree)
 	{
 		// sFactor
-		blendingSfactor = getGlBlendEnumFromText(
-			blendFuncsTree.get().get<std::string>("sFactor").c_str());
+		{
+			const std::string& tmp =
+				blendFuncsTree.get().get<std::string>("sFactor");
+
+			ConstCharPtrHashMap<GLenum>::Type::const_iterator it =
+				txtToBlengGlEnum.find(tmp.c_str());
+
+			if(it == txtToBlengGlEnum.end())
+			{
+				throw EXCEPTION("Incorrect blend enum: " + tmp);
+			}
+
+			blendingSfactor = it->second;
+		}
 
 		// dFactor
-		blendingDfactor = getGlBlendEnumFromText(
-			blendFuncsTree.get().get<std::string>("dFactor").c_str());
+		{
+			const std::string& tmp =
+				blendFuncsTree.get().get<std::string>("dFactor");
+
+			ConstCharPtrHashMap<GLenum>::Type::const_iterator it =
+				txtToBlengGlEnum.find(tmp.c_str());
+
+			if(it == txtToBlengGlEnum.end())
+			{
+				throw EXCEPTION("Incorrect blend enum: " + tmp);
+			}
+
+			blendingDfactor = it->second;
+		}
 	}
 
 	//
@@ -413,124 +146,48 @@ void Material2::parseMaterialTag(const boost::property_tree::ptree& pt)
 	//
 	// shaderProgram
 	//
-	parseShaderProgramTag(pt.get_child("shaderProgram"));
+	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
+
+	const std::string& cpSrc = mspc.getShaderProgramSource();
+	std::string dpSrc = "#define DEPTH_PASS\n" + cpSrc;
+
+	createShaderProgSourceToCache(cpSrc);
+	createShaderProgSourceToCache(dpSrc);
 }
 
 
 //==============================================================================
-// parseShaderProgramTag                                                       =
+// createShaderProgSourceToCache                                               =
 //==============================================================================
-void Material2::parseShaderProgramTag(const boost::property_tree::ptree& pt)
+std::string Material2::createShaderProgSourceToCache(const std::string& source)
 {
-	using namespace boost::property_tree;
+	// Create the hash
+	boost::hash<std::string> stringHash;
+	std::size_t h = stringHash(source);
+	std::string prefix = boost::lexical_cast<std::string>(h);
 
-	Vec<std::string> srcLines;
+	// Create path XXX
+	/*boost::filesystem::path newfPathName =
+		AppSingleton::getInstance().getCachePath() / (prefix + ".glsl");*/
+	boost::filesystem::path newfPathName =
+		boost::filesystem::path("/users/panoscc/.anki/cache") / (prefix + ".glsl");
 
-	//
-	// <includes></includes>
-	//
-	boost::ptr_vector<FuncDefinition> funcDefs;
-	Vec<std::string> includeLines;
 
-	const ptree& includesPt = pt.get_child("includes");
-	BOOST_FOREACH(const ptree::value_type& v, includesPt)
+	// If file not exists write it
+	if(!boost::filesystem::exists(newfPathName))
 	{
-		if(v.first != "include")
+		// If not create it
+		std::ofstream f(newfPathName.string().c_str());
+		if(!f.is_open())
 		{
-			throw EXCEPTION("Expected include and not: " + v.first);
+			throw EXCEPTION("Cannot open file for writing: " +
+				newfPathName.string());
 		}
 
-		const std::string& fname = v.second.data();
-		//parseShaderFileForFunctionDefinitions(fname.c_str(), funcDefs);
-
-		includeLines.push_back("#pragma anki include \"" + fname + "\"");
+		f.write(source.c_str(), source.length());
 	}
 
-	std::sort(includeLines.begin(), includeLines.end(), compareStrings);
-	srcLines.insert(srcLines.end(), includeLines.begin(), includeLines.end());
-
-	//
-	// <ins></ins>
-	//
-	Vec<std::string> uniformsLines; // Store the source of the uniform vars
-
-	boost::optional<const ptree&> insPt = pt.get_child_optional("ins");
-	if(insPt)
-	{
-		BOOST_FOREACH(const ptree::value_type& v, insPt.get())
-		{
-			if(v.first != "in")
-			{
-				throw EXCEPTION("Expected in and not: " + v.first);
-			}
-
-			const ptree& inPt = v.second;
-			parseInTag(inPt, uniformsLines);
-		} // end for all ins
-
-		std::sort(uniformsLines.begin(), uniformsLines.end(), compareStrings);
-		srcLines.insert(srcLines.end(), uniformsLines.begin(),
-			uniformsLines.end());
-	}
-
-	//
-	//
-	//
-	std::string src;
-	BOOST_FOREACH(const std::string& line, srcLines)
-	{
-		src += line + "\n";
-	}
-
-	std::cout << src << std::endl;
-}
-
-
-//==============================================================================
-// parseInTag                                                                  =
-//==============================================================================
-void Material2::parseInTag(const boost::property_tree::ptree& pt,
-	Vec<std::string>& sourceLines)
-{
-	const std::string& name = pt.get<std::string>("name");
-
-	std::string line = "uniform ";
-
-	if(pt.get_child_optional("float"))
-	{
-		line += "float";
-	}
-	else if(pt.get_child_optional("vec2"))
-	{
-		line += "vec2";
-	}
-	else if(pt.get_child_optional("vec3"))
-	{
-		line += "vec3";
-	}
-	else if(pt.get_child_optional("vec4"))
-	{
-		line += "vec4";
-	}
-	else if(pt.get_child_optional("sampler2D"))
-	{
-		line += "sampler2D";
-	}
-	else
-	{
-		BuildinMaterialVariable::BuildinVariable tmp;
-		GLenum dataType;
-
-		if(!BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &dataType))
-		{
-			throw EXCEPTION("The variable is not build in: " + name);
-		}
-
-		line += getTextFromGlType(dataType);
-	}
-
-	line += " " + name + ";";
-	sourceLines.push_back(line);
+	return newfPathName.string();
 }
 
 
@@ -549,39 +206,6 @@ void Material2::load(const char* filename)
 	catch(std::exception& e)
 	{
 		throw EXCEPTION("File \"" + filename + "\" failed: " + e.what());
-	}
-}
-
-
-//==============================================================================
-// compareStrings                                                              =
-//==============================================================================
-bool Material2::compareStrings(const std::string& a, const std::string& b)
-{
-	return a < b;
-}
-
-
-//==============================================================================
-// getTextFromGlType                                                           =
-//==============================================================================
-const char* Material2::getTextFromGlType(GLenum dataType)
-{
-	GlDataToText* ptr = &glDataToText[0];
-
-	while(true)
-	{
-		if(ptr->txt == NULL)
-		{
-			throw EXCEPTION("Incorrect GL data type");
-		}
-
-		if(ptr->dataType == dataType)
-		{
-			return ptr->txt;
-		}
-
-		++ptr;
 	}
 }
 
