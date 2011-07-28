@@ -148,9 +148,9 @@ void Is::ambientPass(const Vec3& color)
 	ambientPassSProg->bind();
 
 	// set the uniforms
-	ambientPassSProg->findUniVar("ambientCol")->set(&color);
-	ambientPassSProg->findUniVar("sceneColMap")->set(r.getMs().getDiffuseFai(),
-		0);
+	ambientPassSProg->getUniformVariable("ambientCol").set(&color);
+	ambientPassSProg->getUniformVariable("sceneColMap").set(
+		r.getMs().getDiffuseFai(), 0);
 
 	// Draw quad
 	r.drawQuad();
@@ -172,21 +172,26 @@ void Is::pointLightPass(const PointLight& light)
 	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
 	shader.bind();
 
-	shader.findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 0);
-	shader.findUniVar("msDiffuseFai")->set(r.getMs().getDiffuseFai(), 1);
-	shader.findUniVar("msSpecularFai")->set(r.getMs().getSpecularFai(), 2);
-	shader.findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 3);
-	shader.findUniVar("planes")->set(&r.getPlanes());
-	shader.findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
-	shader.findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
+	shader.getUniformVariable("msNormalFai").set(
+		r.getMs().getNormalFai(), 0);
+	shader.getUniformVariable("msDiffuseFai").set(
+		r.getMs().getDiffuseFai(), 1);
+	shader.getUniformVariable("msSpecularFai").set(
+		r.getMs().getSpecularFai(), 2);
+	shader.getUniformVariable("msDepthFai").set(r.getMs().getDepthFai(), 3);
+	shader.getUniformVariable("planes").set(&r.getPlanes());
+	shader.getUniformVariable("limitsOfNearPlane").set(
+		&r.getLimitsOfNearPlane());
+	shader.getUniformVariable("limitsOfNearPlane2").set(
+		&r.getLimitsOfNearPlane2());
 	float zNear = cam.getZNear();
-	shader.findUniVar("zNear")->set(&zNear);
+	shader.getUniformVariable("zNear").set(&zNear);
 	const Vec3& origin = light.getWorldTransform().getOrigin();
 	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
-	shader.findUniVar("lightPos")->set(&lightPosEyeSpace);
-	shader.findUniVar("lightRadius")->set(&light.getRadius());
-	shader.findUniVar("lightDiffuseCol")->set(&light.getDiffuseCol());
-	shader.findUniVar("lightSpecularCol")->set(&light.getSpecularCol());
+	shader.getUniformVariable("lightPos").set(&lightPosEyeSpace);
+	shader.getUniformVariable("lightRadius").set(&light.getRadius());
+	shader.getUniformVariable("lightDiffuseCol").set(&light.getDiffuseCol());
+	shader.getUniformVariable("lightSpecularCol").set(&light.getSpecularCol());
 
 	// render quad
 	r.drawQuad();
@@ -246,27 +251,32 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->bind();
 
 	// bind the FAIs
-	shdr->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 0);
-	shdr->findUniVar("msDiffuseFai")->set(r.getMs().getDiffuseFai(), 1);
-	shdr->findUniVar("msSpecularFai")->set(r.getMs().getSpecularFai(), 2);
-	shdr->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 3);
+	shdr->getUniformVariable("msNormalFai").set(
+		r.getMs().getNormalFai(), 0);
+	shdr->getUniformVariable("msDiffuseFai").set(
+		r.getMs().getDiffuseFai(), 1);
+	shdr->getUniformVariable("msSpecularFai").set(
+		r.getMs().getSpecularFai(), 2);
+	shdr->getUniformVariable("msDepthFai").set(r.getMs().getDepthFai(), 3);
 
 	// the ???
-	shdr->findUniVar("planes")->set(&r.getPlanes());
-	shdr->findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
-	shdr->findUniVar("limitsOfNearPlane2")->set(&r.getLimitsOfNearPlane2());
+	shdr->getUniformVariable("planes").set(&r.getPlanes());
+	shdr->getUniformVariable("limitsOfNearPlane").set(
+		&r.getLimitsOfNearPlane());
+	shdr->getUniformVariable("limitsOfNearPlane2").set(
+		&r.getLimitsOfNearPlane2());
 	float zNear = cam.getZNear();
-	shdr->findUniVar("zNear")->set(&zNear);
+	shdr->getUniformVariable("zNear").set(&zNear);
 
 	// the light params
 	const Vec3& origin = light.getWorldTransform().getOrigin();
 	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
-	shdr->findUniVar("lightPos")->set(&lightPosEyeSpace);
+	shdr->getUniformVariable("lightPos").set(&lightPosEyeSpace);
 	float tmp = light.getDistance();
-	shdr->findUniVar("lightRadius")->set(&tmp);
-	shdr->findUniVar("lightDiffuseCol")->set(&light.getDiffuseCol());
-	shdr->findUniVar("lightSpecularCol")->set(&light.getSpecularCol());
-	shdr->findUniVar("lightTex")->set(light.getTexture(), 4);
+	shdr->getUniformVariable("lightRadius").set(&tmp);
+	shdr->getUniformVariable("lightDiffuseCol").set(&light.getDiffuseCol());
+	shdr->getUniformVariable("lightSpecularCol").set(&light.getSpecularCol());
+	shdr->getUniformVariable("lightTex").set(light.getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
 	// Bias * P_light * V_light * inv(V_cam)
@@ -276,14 +286,14 @@ void Is::spotLightPass(const SpotLight& light)
 	texProjectionMat = biasMat4 * light.getCamera().getProjectionMatrix() *
 		Mat4::combineTransformations(light.getCamera().getViewMatrix(),
 		Mat4(cam.getWorldTransform()));
-	shdr->findUniVar("texProjectionMat")->set(&texProjectionMat);
+	shdr->getUniformVariable("texProjectionMat").set(&texProjectionMat);
 
 	// the shadowmap
 	if(light.castsShadow() && sm.isEnabled())
 	{
-		shdr->findUniVar("shadowMap")->set(sm.getShadowMap(), 5);
+		shdr->getUniformVariable("shadowMap").set(sm.getShadowMap(), 5);
 		float smSize = sm.getShadowMap().getWidth();
-		shdr->findUniVar("shadowMapSize")->set(&smSize);
+		shdr->getUniformVariable("shadowMapSize").set(&smSize);
 	}
 
 	// render quad

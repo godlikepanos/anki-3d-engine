@@ -1,11 +1,11 @@
 /// @file
 /// Illumination stage ambient pass shader program
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 #pragma anki include "shaders/SimpleVert.glsl"
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 uniform vec3 ambientCol;
 uniform sampler2D sceneColMap;

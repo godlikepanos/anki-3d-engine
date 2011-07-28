@@ -13,7 +13,8 @@
 #include "Core/Globals.h"
 
 
-#define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + rsrcFilename + "\": " + x)
+#define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + rsrcFilename + \
+	"\": " + x)
 
 
 //==============================================================================
@@ -65,11 +66,12 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode,
 		// print info log
 		int infoLen = 0;
 		int charsWritten = 0;
-		std::string infoLog;
+		Vec<char> infoLog;
 
 		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
 		infoLog.resize(infoLen + 1);
 		glGetShaderInfoLog(glId, infoLen, &charsWritten, &infoLog[0]);
+		infoLog[charsWritten] = '\0';
 		
 		const char* shaderType = "*dummy*";
 		switch(type)
@@ -83,8 +85,10 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode,
 			default:
 				ASSERT(0); // Not supported
 		}
-		throw SPROG_EXCEPTION(shaderType + " compiler error log follows:\n" +
-			infoLog);
+		throw SPROG_EXCEPTION(shaderType + " compiler error log follows:\n"
+			"===================================\n" +
+			&infoLog[0] +
+			"\n===================================\n" + sourceCode);
 	}
 
 	return glId;
@@ -149,14 +153,14 @@ void ShaderProg::getUniAndAttribVars()
 		}
 
 		SProgAttribVar* var = new SProgAttribVar(loc, &name_[0], type, *this);
-		attribVars.push_back(var);
-		attribNameToVar[attribVars.back().getName().c_str()] = var;
+		vars.push_back(var);
+		nameToVar[var->getName().c_str()] = var;
+		nameToAttribVar[var->getName().c_str()] = var;
 	}
 
 
 	// uni locations
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
-	uniVars.reserve(num);
 	for(int i=0; i<num; i++) // loop all uniforms
 	{
 		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length,
@@ -174,8 +178,9 @@ void ShaderProg::getUniAndAttribVars()
 		}
 
 		SProgUniVar* var = new SProgUniVar(loc, &name_[0], type, *this);
-		uniVars.push_back(var);
-		uniNameToVar[uniVars.back().getName().c_str()] = var;
+		vars.push_back(var);
+		nameToVar[var->getName().c_str()] = var;
+		nameToUniVar[var->getName().c_str()] = var;
 	}
 }
 
@@ -233,50 +238,74 @@ void ShaderProg::load(const char* filename)
 
 
 //==============================================================================
-// findUniVar                                                                  =
+// getVariable                                                                 =
 //==============================================================================
-const SProgUniVar* ShaderProg::findUniVar(const char* name) const
+const SProgVar& ShaderProg::getVariable(const char* name) const
 {
-	NameToSProgUniVarIterator it = uniNameToVar.find(name);
-	if(it == uniNameToVar.end())
+	VarsHashMap::const_iterator it = nameToVar.find(name);
+	if(it == nameToVar.end())
 	{
-		throw SPROG_EXCEPTION("Cannot get uniform loc \"" + name + '\"');
+		throw SPROG_EXCEPTION("Cannot get variable: " + name);
 	}
-	return it->second;
+	return *(it->second);
 }
 
 
 //==============================================================================
-// findAttribVar                                                               =
+// getAttributeVariable                                                        =
 //==============================================================================
-const SProgAttribVar* ShaderProg::findAttribVar(const char* name) const
+const SProgAttribVar& ShaderProg::getAttributeVariable(const char* name) const
 {
-	NameToSProgAttribVarIterator it = attribNameToVar.find(name);
-	if(it == attribNameToVar.end())
+	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
+	if(it == nameToAttribVar.end())
 	{
-		throw SPROG_EXCEPTION("Cannot get attribute loc \"" + name + '\"');
+		throw SPROG_EXCEPTION("Cannot get attribute loc: " + name);
 	}
-	return it->second;
+	return *(it->second);
 }
 
 
 //==============================================================================
-// uniVarExists                                                                =
+// getUniformVariable                                                          =
 //==============================================================================
-bool ShaderProg::uniVarExists(const char* name) const
+const SProgUniVar& ShaderProg::getUniformVariable(const char* name) const
 {
-	NameToSProgUniVarIterator it = uniNameToVar.find(name);
-	return it != uniNameToVar.end();
+	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
+	if(it == nameToUniVar.end())
+	{
+		throw SPROG_EXCEPTION("Cannot get uniform loc: " + name);
+	}
+	return *(it->second);
 }
 
 
 //==============================================================================
-// attribVarExists                                                             =
+// variableExists                                                              =
 //==============================================================================
-bool ShaderProg::attribVarExists(const char* name) const
+bool ShaderProg::variableExists(const char* name) const
 {
-	NameToSProgAttribVarIterator it = attribNameToVar.find(name);
-	return it != attribNameToVar.end();
+	VarsHashMap::const_iterator it = nameToVar.find(name);
+	return it != nameToVar.end();
+}
+
+
+//==============================================================================
+// uniformVariableExists                                                       =
+//==============================================================================
+bool ShaderProg::uniformVariableExists(const char* name) const
+{
+	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
+	return it != nameToUniVar.end();
+}
+
+
+//==============================================================================
+// attributeVariableExists                                                     =
+//==============================================================================
+bool ShaderProg::attributeVariableExists(const char* name) const
+{
+	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
+	return it != nameToAttribVar.end();
 }
 
 
@@ -329,16 +358,18 @@ std::string ShaderProg::getShaderInfoString() const
 {
 	std::stringstream ss;
 
-	ss << "Uniform vars:\n";
-	BOOST_FOREACH(const SProgUniVar& var, uniVars)
+	ss << "Variables:\n";
+	BOOST_FOREACH(const SProgVar& var, vars)
 	{
-		ss << var.getName() << " " << var.getLoc() << "\n";
-	}
-
-	ss << "\nAttribute vars:\n";
-	BOOST_FOREACH(const SProgAttribVar& var, attribVars)
-	{
-		ss << var.getName() << " " << var.getLoc() << "\n";
+		ss << var.getName() << " " << var.getLoc() << " ";
+		if(var.getType() == SProgVar::SVT_ATTRIBUTE)
+		{
+			ss << "attribute";
+		}
+		else
+		{
+			ss << "uniform";
+		}
 	}
 
 	return ss.str();

@@ -2,7 +2,7 @@
 ///
 /// Ilunimation stage stencil masking optimizations shader program
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 layout(location = 0) in vec3 position;
 
@@ -13,7 +13,7 @@ void main()
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 void main()
 {

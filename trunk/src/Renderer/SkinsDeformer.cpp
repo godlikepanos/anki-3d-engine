@@ -49,10 +49,10 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 	sProg->bind();
 
 	// Uniforms
-	sProg->findUniVar("skinningRotations")->set(
+	sProg->getUniformVariable("skinningRotations").set(
 		&skinNode->getBoneRotations()[0], skinNode->getBoneRotations().size());
 
-	sProg->findUniVar("skinningTranslations")->set(
+	sProg->getUniformVariable("skinningTranslations").set(
 		&skinNode->getBoneTranslations()[0],
 		skinNode->getBoneTranslations().size());
 

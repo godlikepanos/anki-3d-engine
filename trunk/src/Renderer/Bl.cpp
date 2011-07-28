@@ -104,8 +104,8 @@ void Bl::runSideBlur()
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	sideBlurSProg->bind();
-	sideBlurSProg->findUniVar("tex")->set(*sideBlurMap, 0);
-	sideBlurSProg->findUniVar("factor")->set(&sideBlurFactor);
+	sideBlurSProg->getUniformVariable("tex").set(*sideBlurMap, 0);
+	sideBlurSProg->getUniformVariable("factor").set(&sideBlurFactor);
 
 	r.drawQuad();
 }
@@ -124,10 +124,12 @@ void Bl::runBlur()
 		hBlurFbo.bind();
 
 		hBlurSProg->bind();
-		hBlurSProg->findUniVar("img")->set(r.getPps().getPostPassFai(), 0);
-		hBlurSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 1);
+		hBlurSProg->getUniformVariable("img").set(
+			r.getPps().getPostPassFai(), 0);
+		hBlurSProg->getUniformVariable("msNormalFai").set(
+			r.getMs().getNormalFai(), 1);
 		float tmp = r.getWidth();
-		hBlurSProg->findUniVar("imgDimension")->set(&tmp);
+		hBlurSProg->getUniformVariable("imgDimension").set(&tmp);
 
 		r.drawQuad();
 
@@ -135,10 +137,11 @@ void Bl::runBlur()
 		vBlurFbo.bind();
 
 		vBlurSProg->bind();
-		vBlurSProg->findUniVar("img")->set(blurFai, 0);
-		vBlurSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 1);
+		vBlurSProg->getUniformVariable("img").set(blurFai, 0);
+		vBlurSProg->getUniformVariable("msNormalFai").set(
+			r.getMs().getNormalFai(), 1);
 		tmp = r.getHeight();
-		vBlurSProg->findUniVar("imgDimension")->set(&tmp);
+		vBlurSProg->getUniformVariable("imgDimension").set(&tmp);
 
 		r.drawQuad();
 	}

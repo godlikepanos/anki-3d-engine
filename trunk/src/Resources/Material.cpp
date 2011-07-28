@@ -264,7 +264,7 @@ void Material::load(const char* filename)
 					userDefinedVarTree.get<std::string>("name");
 
 				// check if the uniform exists
-				if(!shaderProg->uniVarExists(varName.c_str()))
+				if(!shaderProg->uniformVariableExists(varName.c_str()))
 				{
 					throw EXCEPTION("The variable \"" + varName +
 						"\" is not an active uniform");
@@ -273,7 +273,7 @@ void Material::load(const char* filename)
 				const ptree& valueTree = userDefinedVarTree.get_child("value");
 
 				const SProgUniVar& uni =
-					*shaderProg->findUniVar(varName.c_str());
+					shaderProg->getUniformVariable(varName.c_str());
 
 				// read the values
 				switch(uni.getGlDataType())
@@ -382,14 +382,14 @@ void Material::initStdShaderVars()
 	for(uint i = 0; i < SAV_NUM; i++)
 	{
 		// if the var is not in the sProg then... bye
-		if(!shaderProg->attribVarExists(stdAttribVarInfos[i].varName))
+		if(!shaderProg->attributeVariableExists(stdAttribVarInfos[i].varName))
 		{
 			stdAttribVars[i] = NULL;
 			continue;
 		}
 
 		// set the std var
-		stdAttribVars[i] = shaderProg->findAttribVar(
+		stdAttribVars[i] = &shaderProg->getAttributeVariable(
 			stdAttribVarInfos[i].varName);
 
 		// check if the shader has different GL data type from that it suppose
@@ -406,14 +406,15 @@ void Material::initStdShaderVars()
 	for(uint i = 0; i < SUV_NUM; i++)
 	{
 		// if the var is not in the sProg then... bye
-		if(!shaderProg->uniVarExists(stdUniVarInfos[i].varName))
+		if(!shaderProg->uniformVariableExists(stdUniVarInfos[i].varName))
 		{
 			stdUniVars[i] = NULL;
 			continue;
 		}
 
 		// set the std var
-		stdUniVars[i] = shaderProg->findUniVar(stdUniVarInfos[i].varName);
+		stdUniVars[i] =
+			&shaderProg->getUniformVariable(stdUniVarInfos[i].varName);
 
 		// check if the shader has different GL data type from that it
 		// suppose to have

@@ -122,35 +122,37 @@ void Ssao::run()
 	ssaoSProg->bind();
 	
 	// planes
-	ssaoSProg->findUniVar("planes")->set(&r.getPlanes());
+	ssaoSProg->getUniformVariable("planes").set(&r.getPlanes());
 
 	// limitsOfNearPlane
-	ssaoSProg->findUniVar("limitsOfNearPlane")->set(&r.getLimitsOfNearPlane());
+	ssaoSProg->getUniformVariable("limitsOfNearPlane").set(
+		&r.getLimitsOfNearPlane());
 
 	// limitsOfNearPlane2
-	ssaoSProg->findUniVar("limitsOfNearPlane2")->set(
+	ssaoSProg->getUniformVariable("limitsOfNearPlane2").set(
 		&r.getLimitsOfNearPlane2());
 
 	// zNear
 	float zNear = cam.getZNear();
-	ssaoSProg->findUniVar("zNear")->set(&zNear);
+	ssaoSProg->getUniformVariable("zNear").set(&zNear);
 
 	// msDepthFai
-	ssaoSProg->findUniVar("msDepthFai")->set(r.getMs().getDepthFai(), 0);
+	ssaoSProg->getUniformVariable("msDepthFai").set(r.getMs().getDepthFai(), 0);
 
 	// noiseMap
-	ssaoSProg->findUniVar("noiseMap")->set(*noiseMap, 1);
+	ssaoSProg->getUniformVariable("noiseMap").set(*noiseMap, 1);
 
 	// noiseMapSize
 	float noiseMapSize = noiseMap->getWidth();
-	ssaoSProg->findUniVar("noiseMapSize")->set(&noiseMapSize);
+	ssaoSProg->getUniformVariable("noiseMapSize").set(&noiseMapSize);
 
 	// screenSize
 	Vec2 screenSize(width * 2, height * 2);
-	ssaoSProg->findUniVar("screenSize")->set(&screenSize);
+	ssaoSProg->getUniformVariable("screenSize").set(&screenSize);
 
 	// msNormalFai
-	ssaoSProg->findUniVar("msNormalFai")->set(r.getMs().getNormalFai(), 2);
+	ssaoSProg->getUniformVariable("msNormalFai").set(
+		r.getMs().getNormalFai(), 2);
 
 	r.drawQuad();
 
@@ -167,22 +169,22 @@ void Ssao::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniVar("img")->set(ssaoFai, 0);
+			hblurSProg->getUniformVariable("img").set(ssaoFai, 0);
 		}
 		else
 		{
-			hblurSProg->findUniVar("img")->set(fai, 0);
+			hblurSProg->getUniformVariable("img").set(fai, 0);
 		}
 		float tmp = width;
-		hblurSProg->findUniVar("imgDimension")->set(&tmp);
+		hblurSProg->getUniformVariable("imgDimension").set(&tmp);
 		r.drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
-		vblurSProg->findUniVar("img")->set(hblurFai, 0);
+		vblurSProg->getUniformVariable("img").set(hblurFai, 0);
 		tmp = height;
-		vblurSProg->findUniVar("imgDimension")->set(&tmp);
+		vblurSProg->getUniformVariable("imgDimension").set(&tmp);
 		r.drawQuad();
 	}
 
