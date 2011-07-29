@@ -1,13 +1,13 @@
-#ifndef SHADER_PROG_H
-#define SHADER_PROG_H
+#ifndef SHADER_PROGRAM_H
+#define SHADER_PROGRAM_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <limits>
 #include "Util/ConstCharPtrHashMap.h"
 #include "Util/Assert.h"
-#include "SProgUniVar.h"
-#include "SProgAttribVar.h"
+#include "UniformShaderProgramVariable.h"
+#include "AttributeShaderProgramVariable.h"
 #include "Util/Vec.h"
 #include "GfxApi/GlStateMachine.h"
 #include "Core/Globals.h"
@@ -23,16 +23,16 @@ class ShaderProgramPrePreprocessor;
 /// vector of attribute variables. Every variable is a struct that contains
 /// the variable's name, location, OpenGL data type and if it is a uniform or
 /// an attribute var.
-class ShaderProg
+class ShaderProgram
 {
 	public:
-		ShaderProg();
-		~ShaderProg();
+		ShaderProgram();
+		~ShaderProgram();
 
 		/// @name Accessors
 		/// @{
 		GLuint getGlId() const;
-		GETTER_R(boost::ptr_vector<SProgVar>, vars, getVariables)
+		GETTER_R(boost::ptr_vector<ShaderProgramVariable>, vars, getVariables)
 		/// @}
 
 		/// Resource load
@@ -46,9 +46,11 @@ class ShaderProg
 		/// variable not found so ask if the variable with that name exists
 		/// prior using any of these
 		/// @{
-		const SProgVar& getVariable(const char* varName) const;
-		const SProgUniVar& getUniformVariable(const char* varName) const;
-		const SProgAttribVar& getAttributeVariable(const char* varName) const;
+		const ShaderProgramVariable& getVariable(const char* varName) const;
+		const UniformShaderProgramVariable&
+			getUniformVariable(const char* varName) const;
+		const AttributeShaderProgramVariable&
+			getAttributeVariable(const char* varName) const;
 		/// @}
 
 		/// @name Check for variable existance
@@ -74,13 +76,15 @@ class ShaderProg
 
 	private:
 		/// XXX
-		typedef ConstCharPtrHashMap<SProgVar*>::Type VarsHashMap;
+		typedef ConstCharPtrHashMap<ShaderProgramVariable*>::Type VarsHashMap;
 
 		/// XXX
-		typedef ConstCharPtrHashMap<SProgUniVar*>::Type UniVarsHashMap;
+		typedef ConstCharPtrHashMap<UniformShaderProgramVariable*>::Type
+			UniVarsHashMap;
 
 		/// XXX
-		typedef ConstCharPtrHashMap<SProgAttribVar*>::Type AttribVarsHashMap;
+		typedef ConstCharPtrHashMap<AttributeShaderProgramVariable*>::Type
+			AttribVarsHashMap;
 
 		std::string rsrcFilename;
 		GLuint glId; ///< The OpenGL ID of the shader program
@@ -93,7 +97,7 @@ class ShaderProg
 
 		/// @name Containers
 		/// @{
-		boost::ptr_vector<SProgVar> vars; ///< All the vars
+		boost::ptr_vector<ShaderProgramVariable> vars; ///< All the vars
 		VarsHashMap nameToVar; ///< Variable searching
 		UniVarsHashMap nameToUniVar; ///< Uniform searching
 		AttribVarsHashMap nameToAttribVar; ///< Attribute searching
@@ -119,19 +123,19 @@ class ShaderProg
 // Inlines                                                                     =
 //==============================================================================
 
-inline ShaderProg::ShaderProg():
-	glId(std::numeric_limits<uint>::max())
+inline ShaderProgram::ShaderProgram()
+:	glId(std::numeric_limits<uint>::max())
 {}
 
 
-inline GLuint ShaderProg::getGlId() const
+inline GLuint ShaderProgram::getGlId() const
 {
 	ASSERT(glId != std::numeric_limits<uint>::max());
 	return glId;
 }
 
 
-inline void ShaderProg::bind() const
+inline void ShaderProgram::bind() const
 {
 	ASSERT(glId != std::numeric_limits<uint>::max());
 	GlStateMachineSingleton::getInstance().useShaderProg(glId);

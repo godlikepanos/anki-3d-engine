@@ -4,7 +4,7 @@
 #include "Math/Math.h"
 #include "GfxApi/BufferObjects/Fbo.h"
 #include "Resources/Texture.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "GfxApi/BufferObjects/Vbo.h"
 #include "GfxApi/BufferObjects/Vao.h"
 #include "Resources/RsrcPtr.h"

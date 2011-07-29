@@ -10,7 +10,7 @@
 #include "Bl.h"
 
 
-class ShaderProg;
+class ShaderProgram;
 
 
 namespace R {
@@ -49,8 +49,8 @@ class Pps: private RenderingPass
 		Fbo prePassFbo;
 		Fbo postPassFbo;
 
-		RsrcPtr<ShaderProg> prePassSProg;
-		RsrcPtr<ShaderProg> postPassSProg;
+		RsrcPtr<ShaderProgram> prePassSProg;
+		RsrcPtr<ShaderProgram> postPassSProg;
 
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2

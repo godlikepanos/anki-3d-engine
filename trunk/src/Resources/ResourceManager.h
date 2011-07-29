@@ -11,7 +11,7 @@
 
 
 class Texture;
-class ShaderProg;
+class ShaderProgram;
 class Material;
 class Mesh;
 class Skeleton;
@@ -64,7 +64,7 @@ class ResourceManager
 		/// @name Containers
 		/// @{
 		Types<Texture>::Container textures;
-		Types<ShaderProg>::Container shaderProgs;
+		Types<ShaderProgram>::Container shaderProgs;
 		Types<Material>::Container materials;
 		Types<Mesh>::Container meshes;
 		Types<Skeleton>::Container skeletons;

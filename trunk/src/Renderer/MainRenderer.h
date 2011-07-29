@@ -51,7 +51,7 @@ class MainRenderer: public Renderer
 		boost::scoped_ptr<TimeQuery> dbgTq;
 		/// @}
 
-		RsrcPtr<ShaderProg> sProg; ///< Final pass' shader program
+		RsrcPtr<ShaderProgram> sProg; ///< Final pass' shader program
 		int screenshotJpegQuality; ///< The quality of the JPEG screenshots.
 		                           ///< From 0 to 100
 

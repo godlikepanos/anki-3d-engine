@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include "Util/StdTypes.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Core/Object.h"
 #include "GfxApi/GlException.h"
 
@@ -45,7 +45,7 @@ class Vao
 		/// @param pointer Specifies a offset of the first component of the
 		/// first generic vertex attribute in the array
 		void attachArrayBufferVbo(const Vbo& vbo,
-			const SProgAttribVar& attribVar, GLint size, GLenum type,
+			const AttributeShaderProgramVariable& attribVar, GLint size, GLenum type,
 			GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 
 		/// Attach an array buffer VBO. See @link

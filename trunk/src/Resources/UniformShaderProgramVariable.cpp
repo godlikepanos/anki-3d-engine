@@ -1,5 +1,5 @@
-#include "SProgUniVar.h"
-#include "Resources/ShaderProg.h"
+#include "UniformShaderProgramVariable.h"
+#include "Resources/ShaderProgram.h"
 #include "Resources/Texture.h"
 #include "GfxApi/GlStateMachine.h"
 
@@ -19,7 +19,7 @@
 		getName().c_str()) == getLoc());
 
 
-void SProgUniVar::set(const float f[], uint size) const
+void UniformShaderProgramVariable::set(const float f[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT);
@@ -34,7 +34,7 @@ void SProgUniVar::set(const float f[], uint size) const
 	}
 }
 
-void SProgUniVar::set(const Vec2 v2[], uint size) const
+void UniformShaderProgramVariable::set(const Vec2 v2[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
@@ -48,7 +48,7 @@ void SProgUniVar::set(const Vec2 v2[], uint size) const
 	}
 }
 
-void SProgUniVar::set(const Vec3 v3[], uint size) const
+void UniformShaderProgramVariable::set(const Vec3 v3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
@@ -63,28 +63,28 @@ void SProgUniVar::set(const Vec3 v3[], uint size) const
 	}
 }
 
-void SProgUniVar::set(const Vec4 v4[], uint size) const
+void UniformShaderProgramVariable::set(const Vec4 v4[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
 	glUniform4fv(getLoc(), size, &(const_cast<Vec4&>(v4[0]))[0]);
 }
 
-void SProgUniVar::set(const Mat3 m3[], uint size) const
+void UniformShaderProgramVariable::set(const Mat3 m3[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_MAT3);
 	glUniformMatrix3fv(getLoc(), size, true, &(m3[0])[0]);
 }
 
-void SProgUniVar::set(const Mat4 m4[], uint size) const
+void UniformShaderProgramVariable::set(const Mat4 m4[], uint size) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_FLOAT_MAT4);
 	glUniformMatrix4fv(getLoc(), size, true, &(m4[0])[0]);
 }
 
-void SProgUniVar::set(const Texture& tex, uint texUnit) const
+void UniformShaderProgramVariable::set(const Texture& tex, uint texUnit) const
 {
 	STD_SET_UNI_CHECK();
 	ASSERT(getGlDataType() == GL_SAMPLER_2D ||

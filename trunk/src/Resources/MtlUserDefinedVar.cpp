@@ -7,7 +7,7 @@
 //==============================================================================
 
 template<>
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Fai& fai_)
+MtlUserDefinedVar::MtlUserDefinedVar(const UniformShaderProgramVariable& var, const Fai& fai_)
 :	sProgVar(var)
 {
 	ASSERT(var.getGlDataType() == GL_SAMPLER_2D);
@@ -16,7 +16,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Fai& fai_)
 
 
 template<>
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const float& f)
+MtlUserDefinedVar::MtlUserDefinedVar(const UniformShaderProgramVariable& var, const float& f)
 :	sProgVar(var)
 {
 	ASSERT(var.getGlDataType() == GL_FLOAT);
@@ -25,7 +25,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const float& f)
 
 
 template<>
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Vec2& v)
+MtlUserDefinedVar::MtlUserDefinedVar(const UniformShaderProgramVariable& var, const Vec2& v)
 :	sProgVar(var)
 {
 	ASSERT(var.getGlDataType() == GL_FLOAT_VEC2);
@@ -34,7 +34,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Vec2& v)
 
 
 template<>
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Vec3& v)
+MtlUserDefinedVar::MtlUserDefinedVar(const UniformShaderProgramVariable& var, const Vec3& v)
 :	sProgVar(var)
 {
 	ASSERT(var.getGlDataType() == GL_FLOAT_VEC3);
@@ -43,7 +43,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Vec3& v)
 
 
 template<>
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Vec4& v)
+MtlUserDefinedVar::MtlUserDefinedVar(const UniformShaderProgramVariable& var, const Vec4& v)
 :	sProgVar(var)
 {
 	ASSERT(var.getGlDataType() == GL_FLOAT_VEC4);
@@ -52,7 +52,7 @@ MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var, const Vec4& v)
 
 
 template<>
-MtlUserDefinedVar::MtlUserDefinedVar(const SProgUniVar& var,
+MtlUserDefinedVar::MtlUserDefinedVar(const UniformShaderProgramVariable& var,
 	const std::string& texFilename)
 :	sProgVar(var)
 {

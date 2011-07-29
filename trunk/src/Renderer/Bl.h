@@ -8,7 +8,7 @@
 #include "GfxApi/BufferObjects/Fbo.h"
 
 
-class ShaderProg;
+class ShaderProgram;
 
 
 namespace R {
@@ -35,9 +35,9 @@ class Bl: private RenderingPass
 		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
 		Fbo sideBlurFbo;
 
-		RsrcPtr<ShaderProg> hBlurSProg;
-		RsrcPtr<ShaderProg> vBlurSProg;
-		RsrcPtr<ShaderProg> sideBlurSProg;
+		RsrcPtr<ShaderProgram> hBlurSProg;
+		RsrcPtr<ShaderProgram> vBlurSProg;
+		RsrcPtr<ShaderProgram> sideBlurSProg;
 
 		Texture blurFai; ///< Temp FAI for blurring
 		RsrcPtr<Texture> sideBlurMap;

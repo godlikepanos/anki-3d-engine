@@ -64,7 +64,8 @@ boost::unordered_map<BuildinMaterialVariable::BuildinVariable, GLenum>
 // Constructor                                                                 =
 //==============================================================================
 BuildinMaterialVariable::BuildinMaterialVariable(
-	const SProgVar* cpSProgVar, const SProgVar* dpSProgVar,
+	const ShaderProgramVariable* cpSProgVar,
+	const ShaderProgramVariable* dpSProgVar,
 	const char* name)
 :	MaterialVariable(T_BUILDIN, cpSProgVar, dpSProgVar),
  	var(BV_NUM)

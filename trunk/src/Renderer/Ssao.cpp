@@ -79,11 +79,11 @@ void Ssao::init(const RendererInitializer& initializer)
 
 	std::string pps = "#define HPASS\n#define COL_R\n";
 	hblurSProg.loadRsrc(
-		ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_R\n";
 	vblurSProg.loadRsrc(
-		ShaderProg::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
 
 	//
 	// noise map

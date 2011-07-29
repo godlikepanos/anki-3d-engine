@@ -5,7 +5,7 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/array.hpp>
 #include "Math/Math.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "RsrcPtr.h"
 #include "MtlUserDefinedVar.h"
 
@@ -144,9 +144,10 @@ class Material: private MaterialProps
 
 		/// @name Accessors
 		/// @{
-		const SProgAttribVar* getStdAttribVar(StdAttribVars id) const;
-		const SProgUniVar* getStdUniVar(StdUniVars id) const;
-		const ShaderProg& getShaderProg() const;
+		const AttributeShaderProgramVariable* getStdAttribVar(
+			StdAttribVars id) const;
+		const UniformShaderProgramVariable* getStdUniVar(StdUniVars id) const;
+		const ShaderProgram& getShaderProg() const;
 		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
 		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, renderInBlendingStage)
 		GETTER_R_BY_VAL(int, blendingSfactor, getBlendingSfactor)
@@ -191,10 +192,11 @@ class Material: private MaterialProps
 			stdAttribVarInfos;
 		static boost::array<StdVarNameAndGlDataTypePair, SUV_NUM>
 			stdUniVarInfos;
-		boost::array<const SProgAttribVar*, SAV_NUM> stdAttribVars;
-		boost::array<const SProgUniVar*, SUV_NUM> stdUniVars;
+		boost::array<const AttributeShaderProgramVariable*, SAV_NUM>
+			stdAttribVars;
+		boost::array<const UniformShaderProgramVariable*, SUV_NUM> stdUniVars;
 		/// The most important aspect of materials
-		RsrcPtr<ShaderProg> shaderProg;
+		RsrcPtr<ShaderProgram> shaderProg;
 
 		/// The func sweeps all the variables of the shader program to find
 		/// standard shader program variables. It updates the stdAttribVars and
@@ -206,30 +208,32 @@ class Material: private MaterialProps
 		/// @param[in] defines The acceptable defines array
 		/// @param[in] pt The property tree. Its not the root tree
 		/// @param[out] source The source to feed to
-		/// ShaderProg::createSrcCodeToCache
+		/// ShaderProgram::createSrcCodeToCache
 		static void parseCustomShader(const PreprocDefines defines[],
 			const boost::property_tree::ptree& pt,
 			std::string& source);
 
 		/// Parse the texture tag
 		void parseTextureTag(const boost::property_tree::ptree& pt,
-			const SProgUniVar& uni);
+			const UniformShaderProgramVariable& uni);
 };
 
 
-inline const SProgAttribVar* Material::getStdAttribVar(StdAttribVars id) const
+inline const AttributeShaderProgramVariable* Material::getStdAttribVar(
+	StdAttribVars id) const
 {
 	return stdAttribVars[id];
 }
 
 
-inline const SProgUniVar* Material::getStdUniVar(StdUniVars id) const
+inline const UniformShaderProgramVariable* Material::getStdUniVar(
+	StdUniVars id) const
 {
 	return stdUniVars[id];
 }
 
 
-inline const ShaderProg& Material::getShaderProg() const
+inline const ShaderProgram& Material::getShaderProg() const
 {
 	return *shaderProg;
 }

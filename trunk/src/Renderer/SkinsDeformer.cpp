@@ -1,5 +1,5 @@
 #include "SkinsDeformer.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Scene/SkinPatchNode.h"
 #include "Scene/SkinNode.h"
 
@@ -34,7 +34,7 @@ void SkinsDeformer::deform(SkinPatchNode& node)
 	GlStateMachineSingleton::getInstance().enable(GL_RASTERIZER_DISCARD);
 
 	// Chose sProg
-	const ShaderProg* sProg;
+	const ShaderProgram* sProg;
 
 	if(node.getModelPatchRsrc().supportsNormals() &&
 	   node.getModelPatchRsrc().supportsTangents())

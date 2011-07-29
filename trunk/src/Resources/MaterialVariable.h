@@ -6,7 +6,7 @@
 #include <string>
 
 
-class SProgVar;
+class ShaderProgramVariable;
 
 
 /// XXX
@@ -22,14 +22,14 @@ class MaterialVariable
 		};
 
 		/// XXX
-		MaterialVariable(Type type, const SProgVar* cpSProgVar,
-			const SProgVar* dpSProgVar);
+		MaterialVariable(Type type, const ShaderProgramVariable* cpSProgVar,
+			const ShaderProgramVariable* dpSProgVar);
 
 		/// @name Accessors
 		/// @{
 		GETTER_R_BY_VAL(Type, type, getType)
-		const SProgVar& getColorPassShaderProgramVariable() const;
-		const SProgVar& getDepthPassShaderProgramVariable() const;
+		const ShaderProgramVariable& getColorPassShaderProgramVariable() const;
+		const ShaderProgramVariable& getDepthPassShaderProgramVariable() const;
 		/// Applies to the color pass shader program
 		bool isColorPass() const {return cpSProgVar != NULL;}
 		/// Applies to the depth pass shader program
@@ -40,8 +40,10 @@ class MaterialVariable
 
 	private:
 		Type type;
-		const SProgVar* cpSProgVar; ///< The color pass shader program variable
-		const SProgVar* dpSProgVar; ///< The depth pass shader program variable
+		/// The color pass shader program variable
+		const ShaderProgramVariable* cpSProgVar;
+		/// The depth pass shader program variable
+		const ShaderProgramVariable* dpSProgVar;
 };
 
 

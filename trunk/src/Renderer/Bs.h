@@ -7,7 +7,7 @@
 #include "Resources/Texture.h"
 
 
-class ShaderProg;
+class ShaderProgram;
 
 
 namespace R {
@@ -27,7 +27,7 @@ class Bs: public RenderingPass
 	private:
 		Fbo fbo; ///< Writes to Pps::prePassFai
 		Fbo refractFbo; ///< Writes to refractFai
-		RsrcPtr<ShaderProg> refractSProg;
+		RsrcPtr<ShaderProgram> refractSProg;
 		Texture refractFai;
 
 		void createFbo();

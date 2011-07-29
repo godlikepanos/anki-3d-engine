@@ -1,5 +1,5 @@
 #include "MaterialVariable.h"
-#include "SProgVar.h"
+#include "ShaderProgramVariable.h"
 #include "Util/Assert.h"
 #include "Util/Exception.h"
 
@@ -7,8 +7,9 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-MaterialVariable::MaterialVariable(Type type_, const SProgVar* cpSProgVar_,
-	const SProgVar* dpSProgVar_)
+MaterialVariable::MaterialVariable(Type type_,
+	const ShaderProgramVariable* cpSProgVar_,
+	const ShaderProgramVariable* dpSProgVar_)
 :	type(type_),
  	cpSProgVar(cpSProgVar_),
  	dpSProgVar(dpSProgVar_)
@@ -34,7 +35,8 @@ MaterialVariable::MaterialVariable(Type type_, const SProgVar* cpSProgVar_,
 //==============================================================================
 // getColorPassShaderProgramVariable                                           =
 //==============================================================================
-const SProgVar& MaterialVariable::getColorPassShaderProgramVariable() const
+const ShaderProgramVariable&
+	MaterialVariable::getColorPassShaderProgramVariable() const
 {
 	ASSERT(isColorPass());
 	return *cpSProgVar;
@@ -44,7 +46,8 @@ const SProgVar& MaterialVariable::getColorPassShaderProgramVariable() const
 //==============================================================================
 // getDepthPassShaderProgramVariable                                           =
 //==============================================================================
-const SProgVar& MaterialVariable::getDepthPassShaderProgramVariable() const
+const ShaderProgramVariable&
+	MaterialVariable::getDepthPassShaderProgramVariable() const
 {
 	ASSERT(isDepthPass());
 	return *dpSProgVar;

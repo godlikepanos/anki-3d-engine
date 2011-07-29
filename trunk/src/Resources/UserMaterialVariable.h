@@ -7,7 +7,7 @@
 
 
 class Texture;
-class SProgUniVar;
+class UniformShaderProgramVariable;
 
 
 /// XXX
@@ -26,16 +26,16 @@ class UserMaterialVariable: public MaterialVariable
 
 		/// @name Constructors
 		/// @{
-		UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-			const SProgUniVar* dpSProgUniVar, float val);
-		UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-			const SProgUniVar* dpSProgUniVar, const Vec2& val);
-		UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-			const SProgUniVar* dpSProgUniVar, const Vec3& val);
-		UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-			const SProgUniVar* dpSProgUniVar, const Vec4& val);
-		UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-			const SProgUniVar* dpSProgUniVar, const char* texFilename);
+		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
+			const UniformShaderProgramVariable* dpUni, float val);
+		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
+			const UniformShaderProgramVariable* dpUni, const Vec2& val);
+		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
+			const UniformShaderProgramVariable* dpUni, const Vec3& val);
+		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
+			const UniformShaderProgramVariable* dpUni, const Vec4& val);
+		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
+			const UniformShaderProgramVariable* dpUni, const char* texFilename);
 		/// @}
 
 		/// @name Accessors

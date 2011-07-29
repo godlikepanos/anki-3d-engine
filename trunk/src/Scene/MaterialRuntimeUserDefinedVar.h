@@ -20,7 +20,7 @@ class MaterialRuntimeUserDefinedVar
 
 		/// @name Accessors
 		/// @{
-		const SProgUniVar& getUniVar() const {return rsrc.getUniVar();}
+		const UniformShaderProgramVariable& getUniVar() const {return rsrc.getUniVar();}
 
 		const std::string& getName() const {return getUniVar().getName();}
 

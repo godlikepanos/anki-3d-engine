@@ -2,7 +2,7 @@
 #include "Bs.h"
 #include "Renderer.h"
 #include "Scene/Scene.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Resources/Model.h"
 #include "Scene/ModelNode.h"
 #include "Resources/Material.h"

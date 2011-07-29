@@ -4,7 +4,7 @@
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
 #include "Resources/Texture.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Resources/RsrcPtr.h"
 #include "GfxApi/BufferObjects/Vbo.h"
 #include "GfxApi/BufferObjects/Vao.h"
@@ -44,9 +44,9 @@ class Ssao: private RenderingPass
 		Fbo hblurFbo;
 		Fbo vblurFbo;
 		RsrcPtr<Texture> noiseMap;
-		RsrcPtr<ShaderProg> ssaoSProg;
-		RsrcPtr<ShaderProg> hblurSProg;
-		RsrcPtr<ShaderProg> vblurSProg;
+		RsrcPtr<ShaderProgram> ssaoSProg;
+		RsrcPtr<ShaderProgram> hblurSProg;
+		RsrcPtr<ShaderProgram> vblurSProg;
 
 		void createFbo(Fbo& fbo, Texture& fai);
 };
