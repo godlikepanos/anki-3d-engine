@@ -1,5 +1,5 @@
 #include "UserMaterialVariable.h"
-#include "SProgUniVar.h"
+#include "UniformShaderProgramVariable.h"
 #include "Texture.h"
 
 
@@ -7,45 +7,55 @@
 // Constructors                                                                =
 //==============================================================================
 
-UserMaterialVariable::UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-	const SProgUniVar* dpSProgUniVar, float val)
-:	MaterialVariable(T_USER, cpSProgUniVar, dpSProgUniVar)
+UserMaterialVariable::UserMaterialVariable(
+	const UniformShaderProgramVariable* cpUni,
+	const UniformShaderProgramVariable* dpUni,
+	float val)
+:	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT);
 	data.scalar = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-	const SProgUniVar* dpSProgUniVar, const Vec2& val)
-:	MaterialVariable(T_USER, cpSProgUniVar, dpSProgUniVar)
+UserMaterialVariable::UserMaterialVariable(
+	const UniformShaderProgramVariable* cpUni,
+	const UniformShaderProgramVariable* dpUni,
+	const Vec2& val)
+:	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
 	data.vec2 = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-	const SProgUniVar* dpSProgUniVar, const Vec3& val)
-:	MaterialVariable(T_USER, cpSProgUniVar, dpSProgUniVar)
+UserMaterialVariable::UserMaterialVariable(
+	const UniformShaderProgramVariable* cpUni,
+	const UniformShaderProgramVariable* dpUni,
+	const Vec3& val)
+:	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
 	data.vec3 = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-	const SProgUniVar* dpSProgUniVar, const Vec4& val)
-:	MaterialVariable(T_USER, cpSProgUniVar, dpSProgUniVar)
+UserMaterialVariable::UserMaterialVariable(
+	const UniformShaderProgramVariable* cpUni,
+	const UniformShaderProgramVariable* dpUni,
+	const Vec4& val)
+:	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
 	data.vec4 = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(const SProgUniVar* cpSProgUniVar,
-	const SProgUniVar* dpSProgUniVar, const char* texFilename)
-:	MaterialVariable(T_USER, cpSProgUniVar, dpSProgUniVar)
+UserMaterialVariable::UserMaterialVariable(
+	const UniformShaderProgramVariable* cpUni,
+	const UniformShaderProgramVariable* dpUni,
+	const char* texFilename)
+:	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_SAMPLER_2D);
 	data.texture.loadRsrc(texFilename);

@@ -8,7 +8,7 @@
 #include "Util/Accessors.h"
 
 
-class ShaderProg;
+class ShaderProgram;
 
 
 namespace R {
@@ -46,9 +46,9 @@ class Hdr: private RenderingPass
 		Fbo toneFbo;
 		Fbo hblurFbo;
 		Fbo vblurFbo;
-		RsrcPtr<ShaderProg> toneSProg;
-		RsrcPtr<ShaderProg> hblurSProg;
-		RsrcPtr<ShaderProg> vblurSProg;
+		RsrcPtr<ShaderProgram> toneSProg;
+		RsrcPtr<ShaderProgram> hblurSProg;
+		RsrcPtr<ShaderProgram> vblurSProg;
 		Texture toneFai; ///< Vertical blur pass FAI
 		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 		Texture fai; ///< The final FAI

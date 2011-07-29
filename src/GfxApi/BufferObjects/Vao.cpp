@@ -45,7 +45,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 //==============================================================================
 // attachArrayBufferVbo                                                        =
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, const SProgAttribVar& attribVar,
+void Vao::attachArrayBufferVbo(const Vbo& vbo, const AttributeShaderProgramVariable& attribVar,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
 	const GLvoid* pointer)
 {

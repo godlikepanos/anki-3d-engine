@@ -49,9 +49,6 @@ ConstCharPtrHashMap<MaterialShaderProgramCreator::ArgQualifier>::Type
 	("inout", AQ_INOUT);
 
 
-const char* MaterialShaderProgramCreator::depthPassDefine = "DEPTH_PASS";
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -415,6 +412,7 @@ void MaterialShaderProgramCreator::parseInTag(
 
 	const std::string& name = pt.get<std::string>("name");
 	boost::optional<const ptree&> valuePt = pt.get_child_optional("value");
+	GLenum glType;
 
 	line = "uniform ";
 
@@ -422,15 +420,14 @@ void MaterialShaderProgramCreator::parseInTag(
 	if(!valuePt)
 	{
 		BuildinMaterialVariable::BuildinVariable tmp;
-		GLenum dataType;
 
-		if(!BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &dataType))
+		if(!BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &glType))
 		{
 			throw EXCEPTION("The variable is not build in: " + name);
 		}
 
 		boost::unordered_map<GLenum, const char*>::const_iterator it =
-			glTypeToTxt.find(dataType);
+			glTypeToTxt.find(glType);
 
 		ASSERT(it != glTypeToTxt.end() &&
 			"Buildin's type is not registered");
@@ -453,7 +450,10 @@ void MaterialShaderProgramCreator::parseInTag(
 				name);
 		}
 
-		line += v.first;
+		const std::string& typeTxt = v.first;
+
+		line += typeTxt;
+		glType = txtToGlType.at(typeTxt.c_str());
 	}
 
 	line += " " + name + ";";

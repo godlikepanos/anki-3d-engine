@@ -4,7 +4,7 @@
 #include "Resources/RsrcPtr.h"
 
 
-class ShaderProg;
+class ShaderProgram;
 class SkinPatchNode;
 
 
@@ -29,8 +29,8 @@ class SkinsDeformer
 		void deform(SkinPatchNode& node);
 
 	private:
-		RsrcPtr<ShaderProg> tfHwSkinningAllSProg;
-		RsrcPtr<ShaderProg> tfHwSkinningPosSProg;
+		RsrcPtr<ShaderProgram> tfHwSkinningAllSProg;
+		RsrcPtr<ShaderProgram> tfHwSkinningPosSProg;
 };
 
 

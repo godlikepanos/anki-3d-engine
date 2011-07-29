@@ -75,11 +75,11 @@ void Hdr::init(const RendererInitializer& initializer)
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
 	std::string pps = "#define HPASS\n#define COL_RGB\n";
-	hblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME,
+	hblurSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(SHADER_FILENAME,
 		pps.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_RGB\n";
-	vblurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(SHADER_FILENAME,
+	vblurSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(SHADER_FILENAME,
 		pps.c_str()).c_str());
 }
 

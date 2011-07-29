@@ -4,7 +4,7 @@
 #include <boost/variant.hpp>
 #include "Util/Accessors.h"
 #include "Math/Math.h"
-#include "SProgUniVar.h"
+#include "UniformShaderProgramVariable.h"
 #include "RsrcPtr.h"
 
 
@@ -32,11 +32,11 @@ class MtlUserDefinedVar
 		/// Contructor
 		/// @tparam Type Can be std::string, Fai, float, Vec2, Vec3, Vec4
 		template<typename Type>
-		MtlUserDefinedVar(const SProgUniVar& sProgVar, const Type& val);
+		MtlUserDefinedVar(const UniformShaderProgramVariable& sProgVar, const Type& val);
 
 		/// @name Accessors
 		/// @{
-		const SProgUniVar& getUniVar() const {return sProgVar;}
+		const UniformShaderProgramVariable& getUniVar() const {return sProgVar;}
 
 		const DataVariant& getDataVariant() const {return data;}
 
@@ -49,7 +49,7 @@ class MtlUserDefinedVar
 
 	private:
 		DataVariant data;
-		const SProgUniVar& sProgVar; ///< Know a part of the ShaderProg resource
+		const UniformShaderProgramVariable& sProgVar; ///< Know a part of the ShaderProg resource
 };
 
 

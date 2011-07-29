@@ -3,6 +3,7 @@
 
 #include "Util/ConstCharPtrHashMap.h"
 #include "Util/Vec.h"
+#include "Util/Accessors.h"
 #include <GL/glew.h>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -22,9 +23,6 @@ class MaterialShaderProgramCreator
 
 		/// XXX
 		const std::string& getShaderProgramSource() const {return source;}
-
-		/// XXX
-		static const char* getDepthPassDefine() {return depthPassDefine;}
 
 	private:
 		//======================================================================
@@ -79,14 +77,12 @@ class MaterialShaderProgramCreator
 		/// Container that holds the function definitions
 		boost::ptr_vector<FuncDefinition> funcDefs;
 
-		/// Go from funtion name to function definition
+		/// Go from function name to function definition
 		ConstCharPtrHashMap<FuncDefinition*>::Type funcNameToDef;
 
 		Vec<std::string> srcLines; ///< The lines of the shader program source
 
 		std::string source; ///< Shader program final source
-
-		static const char* depthPassDefine; ///< XXX
 
 		//======================================================================
 		// Methods                                                             =
@@ -118,7 +114,7 @@ class MaterialShaderProgramCreator
 		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
 
 		/// Parse what is within the @code <in></in> @endcode
-		static void parseInTag(const boost::property_tree::ptree& pt,
+		void parseInTag(const boost::property_tree::ptree& pt,
 			std::string& line);
 
 		/// Parse what is within the @code <operation></operation> @endcode

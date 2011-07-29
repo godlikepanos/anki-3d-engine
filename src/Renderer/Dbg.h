@@ -5,7 +5,7 @@
 #include <map>
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Resources/RsrcPtr.h"
 #include "Math/Math.h"
 #include "GfxApi/BufferObjects/Vbo.h"
@@ -59,7 +59,7 @@ class Dbg: public RenderingPass
 		bool showCamerasEnabled;
 		bool showVisibilityBoundingShapesFlag;
 		Fbo fbo;
-		RsrcPtr<ShaderProg> sProg;
+		RsrcPtr<ShaderProgram> sProg;
 		static const uint MAX_POINTS_PER_DRAW = 256;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> colors;

@@ -132,7 +132,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 }
 
 
-//==============================================================================
+//=============================================================================/
 // parseFile                                                                   =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseFile(const char* filename)

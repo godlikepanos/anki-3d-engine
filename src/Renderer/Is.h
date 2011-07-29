@@ -5,7 +5,7 @@
 #include "GfxApi/BufferObjects/Fbo.h"
 #include "Resources/Texture.h"
 #include "Resources/RsrcPtr.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Math/Math.h"
 #include "GfxApi/BufferObjects/Vbo.h"
 #include "GfxApi/BufferObjects/Vao.h"
@@ -43,13 +43,13 @@ class Is: private RenderingPass
 		Fbo readFbo;
 		Fbo writeFbo;
 		/// Illumination stage ambient pass shader program
-		RsrcPtr<ShaderProg> ambientPassSProg;
+		RsrcPtr<ShaderProgram> ambientPassSProg;
 		/// Illumination stage point light shader program
-		RsrcPtr<ShaderProg> pointLightSProg;
+		RsrcPtr<ShaderProgram> pointLightSProg;
 		/// Illumination stage spot light w/o shadow shader program
-		RsrcPtr<ShaderProg> spotLightNoShadowSProg;
+		RsrcPtr<ShaderProgram> spotLightNoShadowSProg;
 		/// Illumination stage spot light w/ shadow shader program
-		RsrcPtr<ShaderProg> spotLightShadowSProg;
+		RsrcPtr<ShaderProgram> spotLightShadowSProg;
 
 		/// The ambient pass
 		void ambientPass(const Vec3& color);

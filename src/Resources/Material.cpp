@@ -5,7 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include "Resources/Material.h"
 #include "Resources/Texture.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Misc/PropertyTree.h"
 
 
@@ -162,7 +162,7 @@ void Material::load(const char* filename)
 			parseCustomShader(msGenericDefines, customMsSProgTree.get(),
 				source);
 			std::string shaderFilename =
-				ShaderProg::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
+				ShaderProgram::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
 					source.c_str());
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
@@ -174,7 +174,7 @@ void Material::load(const char* filename)
 			parseCustomShader(dpGenericDefines, customDpSProgTree.get(),
 				source);
 			std::string shaderFilename =
-				ShaderProg::createSrcCodeToCache("shaders/DpGeneric.glsl",
+				ShaderProgram::createSrcCodeToCache("shaders/DpGeneric.glsl",
 					source.c_str());
 			shaderProg.loadRsrc(shaderFilename.c_str());
 		}
@@ -272,7 +272,7 @@ void Material::load(const char* filename)
 
 				const ptree& valueTree = userDefinedVarTree.get_child("value");
 
-				const SProgUniVar& uni =
+				const UniformShaderProgramVariable& uni =
 					shaderProg->getUniformVariable(varName.c_str());
 
 				// read the values
@@ -320,7 +320,7 @@ void Material::load(const char* filename)
 // parseTextureTag                                                             =
 //==============================================================================
 void Material::parseTextureTag(const boost::property_tree::ptree& pt,
-	const SProgUniVar& uni)
+	const UniformShaderProgramVariable& uni)
 {
 	boost::optional<std::string> texture =
 		pt.get_optional<std::string>("texture");

@@ -1,7 +1,7 @@
 #include "Bl.h"
 #include "RendererInitializer.h"
 #include "Renderer.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 
 
 namespace R {
@@ -47,7 +47,7 @@ void Bl::init(const RendererInitializer& initializer)
 			"FBO: " + e.what());
 	}
 
-	hBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+	hBlurSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
@@ -65,7 +65,7 @@ void Bl::init(const RendererInitializer& initializer)
 			"FBO: " + e.what());
 	}
 
-	vBlurSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+	vBlurSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur

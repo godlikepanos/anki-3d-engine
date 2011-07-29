@@ -114,11 +114,11 @@ void Is::init(const RendererInitializer& initializer)
 	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
 
 	// point light
-	pointLightSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+	pointLightSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n").c_str());
 
 	// spot light no shadow
-	spotLightNoShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+	spotLightNoShadowSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", "#define SPOT_LIGHT_ENABLED\n").c_str());
 
 	// spot light w/t shadow
@@ -128,7 +128,7 @@ void Is::init(const RendererInitializer& initializer)
 	{
 		pps += "#define PCF_ENABLED\n";
 	}
-	spotLightShadowSProg.loadRsrc(ShaderProg::createSrcCodeToCache(
+	spotLightShadowSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
 
 	// init the rest
@@ -169,7 +169,7 @@ void Is::pointLightPass(const PointLight& light)
 	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
 
 	// shader prog
-	const ShaderProg& shader = *pointLightSProg; // ensure the const-ness
+	const ShaderProgram& shader = *pointLightSProg; // ensure the const-ness
 	shader.bind();
 
 	shader.getUniformVariable("msNormalFai").set(
@@ -237,7 +237,7 @@ void Is::spotLightPass(const SpotLight& light)
 	//light.getTexture().setRepeat(false);
 
 	// shader prog
-	const ShaderProg* shdr;
+	const ShaderProgram* shdr;
 
 	if(light.castsShadow() && sm.isEnabled())
 	{

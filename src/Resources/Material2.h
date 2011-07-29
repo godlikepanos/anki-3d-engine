@@ -13,9 +13,9 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 
 
-class SProgAttribVar;
-class SProgUniVar;
-class ShaderProg;
+class AttributeShaderProgramVariable;
+class UniformShaderProgramVariable;
+class ShaderProgram;
 namespace Scanner {
 class Scanner;
 }
@@ -133,10 +133,10 @@ class Material2: private MaterialProperties
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
 
-		const ShaderProg& getColorPassShaderProgram() const
+		const ShaderProgram& getColorPassShaderProgram() const
 			{return *cpShaderProg;}
 
-		const ShaderProg& getDepthPassShaderProgram() const
+		const ShaderProgram& getDepthPassShaderProgram() const
 			{return *dpShaderProg;}
 		/// @}
 
@@ -157,14 +157,14 @@ class Material2: private MaterialProperties
 
 		BuildinEnumToBuildinHashMap enumToBuildinMtlVar; ///< To find
 
-		Vec<UserMaterialVariable*> userMtlVars; ///< To find
+		Vec<UserMaterialVariable*> userMtlVars; ///< To iterate
 
 		/// The most important aspect of materials. Shader program for color
 		/// passes
-		RsrcPtr<ShaderProg> cpShaderProg;
+		RsrcPtr<ShaderProgram> cpShaderProg;
 
 		/// Shader program for depth passes
-		RsrcPtr<ShaderProg> dpShaderProg;
+		RsrcPtr<ShaderProgram> dpShaderProg;
 
 		/// From "GL_ZERO" return GL_ZERO
 		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
@@ -180,7 +180,7 @@ class Material2: private MaterialProperties
 		std::string createShaderProgSourceToCache(const std::string& source);
 
 		/// XXX
-		void getVariables();
+		void getVariables(const boost::property_tree::ptree& pt);
 };
 
 

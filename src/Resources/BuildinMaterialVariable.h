@@ -44,8 +44,8 @@ class BuildinMaterialVariable: public MaterialVariable
 			BV_NUM ///< The number of all variables
 		};
 
-		BuildinMaterialVariable(const SProgVar* cpSProgVar,
-			const SProgVar* dpSProgVar, const char* name);
+		BuildinMaterialVariable(const ShaderProgramVariable* cpSProgVar,
+			const ShaderProgramVariable* dpSProgVar, const char* name);
 
 		GETTER_R_BY_VAL(BuildinVariable, var, getVariableEnum)
 

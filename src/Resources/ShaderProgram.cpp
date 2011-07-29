@@ -4,7 +4,7 @@
 #include <boost/functional/hash.hpp>
 #include <fstream>
 #include <sstream>
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "ShaderProgramPrePreprocessor.h"
 #include "Core/App.h" // To get cache dir
 #include "GfxApi/GlException.h"
@@ -21,7 +21,7 @@
 // Statics                                                                     =
 //==============================================================================
 
-std::string ShaderProg::stdSourceCode(
+std::string ShaderProgram::stdSourceCode(
 	"#version 330 core\n"
 	"precision lowp float;\n"
 	"#pragma optimize(on)\n"
@@ -32,7 +32,7 @@ std::string ShaderProg::stdSourceCode(
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
-ShaderProg::~ShaderProg()
+ShaderProgram::~ShaderProgram()
 {
 	/// @todo add code
 }
@@ -41,7 +41,7 @@ ShaderProg::~ShaderProg()
 //==============================================================================
 // createAndCompileShader                                                      =
 //==============================================================================
-uint ShaderProg::createAndCompileShader(const char* sourceCode,
+uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	const char* preproc, int type) const
 {
 	uint glId = 0;
@@ -98,7 +98,7 @@ uint ShaderProg::createAndCompileShader(const char* sourceCode,
 //==============================================================================
 // link                                                                        =
 //==============================================================================
-void ShaderProg::link() const
+void ShaderProgram::link() const
 {
 	// link
 	glLinkProgram(glId);
@@ -125,7 +125,7 @@ void ShaderProg::link() const
 //==============================================================================
 // getUniAndAttribVars                                                         =
 //==============================================================================
-void ShaderProg::getUniAndAttribVars()
+void ShaderProgram::getUniAndAttribVars()
 {
 	int num;
 	boost::array<char, 256> name_;
@@ -152,7 +152,8 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		SProgAttribVar* var = new SProgAttribVar(loc, &name_[0], type, *this);
+		AttributeShaderProgramVariable* var =
+			new AttributeShaderProgramVariable(loc, &name_[0], type, *this);
 		vars.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToAttribVar[var->getName().c_str()] = var;
@@ -177,7 +178,8 @@ void ShaderProg::getUniAndAttribVars()
 			continue;
 		}
 
-		SProgUniVar* var = new SProgUniVar(loc, &name_[0], type, *this);
+		UniformShaderProgramVariable* var =
+			new UniformShaderProgramVariable(loc, &name_[0], type, *this);
 		vars.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToUniVar[var->getName().c_str()] = var;
@@ -188,7 +190,7 @@ void ShaderProg::getUniAndAttribVars()
 //==============================================================================
 // load                                                                        =
 //==============================================================================
-void ShaderProg::load(const char* filename)
+void ShaderProgram::load(const char* filename)
 {
 	rsrcFilename = filename;
 	ASSERT(glId == std::numeric_limits<uint>::max());
@@ -240,7 +242,7 @@ void ShaderProg::load(const char* filename)
 //==============================================================================
 // getVariable                                                                 =
 //==============================================================================
-const SProgVar& ShaderProg::getVariable(const char* name) const
+const ShaderProgramVariable& ShaderProgram::getVariable(const char* name) const
 {
 	VarsHashMap::const_iterator it = nameToVar.find(name);
 	if(it == nameToVar.end())
@@ -254,7 +256,8 @@ const SProgVar& ShaderProg::getVariable(const char* name) const
 //==============================================================================
 // getAttributeVariable                                                        =
 //==============================================================================
-const SProgAttribVar& ShaderProg::getAttributeVariable(const char* name) const
+const AttributeShaderProgramVariable& ShaderProgram::getAttributeVariable(
+	const char* name) const
 {
 	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
 	if(it == nameToAttribVar.end())
@@ -268,7 +271,8 @@ const SProgAttribVar& ShaderProg::getAttributeVariable(const char* name) const
 //==============================================================================
 // getUniformVariable                                                          =
 //==============================================================================
-const SProgUniVar& ShaderProg::getUniformVariable(const char* name) const
+const UniformShaderProgramVariable& ShaderProgram::getUniformVariable(
+	const char* name) const
 {
 	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
 	if(it == nameToUniVar.end())
@@ -282,7 +286,7 @@ const SProgUniVar& ShaderProg::getUniformVariable(const char* name) const
 //==============================================================================
 // variableExists                                                              =
 //==============================================================================
-bool ShaderProg::variableExists(const char* name) const
+bool ShaderProgram::variableExists(const char* name) const
 {
 	VarsHashMap::const_iterator it = nameToVar.find(name);
 	return it != nameToVar.end();
@@ -292,7 +296,7 @@ bool ShaderProg::variableExists(const char* name) const
 //==============================================================================
 // uniformVariableExists                                                       =
 //==============================================================================
-bool ShaderProg::uniformVariableExists(const char* name) const
+bool ShaderProgram::uniformVariableExists(const char* name) const
 {
 	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
 	return it != nameToUniVar.end();
@@ -302,7 +306,7 @@ bool ShaderProg::uniformVariableExists(const char* name) const
 //==============================================================================
 // attributeVariableExists                                                     =
 //==============================================================================
-bool ShaderProg::attributeVariableExists(const char* name) const
+bool ShaderProgram::attributeVariableExists(const char* name) const
 {
 	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
 	return it != nameToAttribVar.end();
@@ -312,7 +316,7 @@ bool ShaderProg::attributeVariableExists(const char* name) const
 //==============================================================================
 // createSrcCodeToCache                                                        =
 //==============================================================================
-std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName,
+std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 	const char* preAppendedSrcCode)
 {
 	if(strlen(preAppendedSrcCode) < 1)
@@ -354,15 +358,15 @@ std::string ShaderProg::createSrcCodeToCache(const char* sProgFPathName,
 //==============================================================================
 // getShaderInfoString                                                         =
 //==============================================================================
-std::string ShaderProg::getShaderInfoString() const
+std::string ShaderProgram::getShaderInfoString() const
 {
 	std::stringstream ss;
 
 	ss << "Variables:\n";
-	BOOST_FOREACH(const SProgVar& var, vars)
+	BOOST_FOREACH(const ShaderProgramVariable& var, vars)
 	{
 		ss << var.getName() << " " << var.getLoc() << " ";
-		if(var.getType() == SProgVar::SVT_ATTRIBUTE)
+		if(var.getType() == ShaderProgramVariable::SVT_ATTRIBUTE)
 		{
 			ss << "attribute";
 		}

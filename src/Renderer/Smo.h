@@ -3,7 +3,7 @@
 
 #include "RenderingPass.h"
 #include "GfxApi/BufferObjects/Fbo.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Resources/RsrcPtr.h"
 #include "GfxApi/BufferObjects/Vbo.h"
 #include "GfxApi/BufferObjects/Vao.h"
@@ -44,7 +44,7 @@ class Smo: public RenderingPass
 		/// pyramid, see the blend file with the vertex positions
 		boost::array<Geom, Camera::CT_NUM> camGeom;
 
-		RsrcPtr<ShaderProg> sProg;
+		RsrcPtr<ShaderProgram> sProg;
 
 		void initCamGeom();
 

@@ -38,7 +38,7 @@ class Painter
 		/// @name Data
 		/// @{
 		boost::scoped_ptr<Font> font;
-		RsrcPtr<ShaderProg> sProg;
+		RsrcPtr<ShaderProgram> sProg;
 
 		Vec2 pos;
 		Vec4 col;

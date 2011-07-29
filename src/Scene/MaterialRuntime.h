@@ -64,10 +64,11 @@ class MaterialRuntime: private MaterialProps
 		GETTER_SETTER_BY_VAL(bool, wireframe, isWireframeEnabled,
 			setWireframeEnabled)
 
-		const SProgAttribVar* getStdAttribVar(
+		const AttributeShaderProgramVariable* getStdAttribVar(
 			Material::StdAttribVars id) const;
-		const SProgUniVar* getStdUniVar(Material::StdUniVars id) const;
-		const ShaderProg& getShaderProg() const {return mtl.getShaderProg();}
+		const UniformShaderProgramVariable*
+			getStdUniVar(Material::StdUniVars id) const;
+		const ShaderProgram& getShaderProg() const {return mtl.getShaderProg();}
 		/// @}
 
 		bool isBlendingEnabled() const;
@@ -102,14 +103,14 @@ void MaterialRuntime::setUserDefVarValue(const char* name, const Type& value)
 }
 
 
-inline const SProgAttribVar* MaterialRuntime::getStdAttribVar(
+inline const AttributeShaderProgramVariable* MaterialRuntime::getStdAttribVar(
 	Material::StdAttribVars id) const
 {
 	return mtl.getStdAttribVar(id);
 }
 
 
-inline const SProgUniVar* MaterialRuntime::getStdUniVar(
+inline const UniformShaderProgramVariable* MaterialRuntime::getStdUniVar(
 	Material::StdUniVars id) const
 {
 	return mtl.getStdUniVar(id);

@@ -2,7 +2,7 @@
 
 #include "Resources/Texture.h"
 #include "Resources/Material.h"
-#include "Resources/ShaderProg.h"
+#include "Resources/ShaderProgram.h"
 #include "Mesh.h"
 #include "Skeleton.h"
 #include "SkelAnim.h"
@@ -49,7 +49,7 @@ ResourceManager::~ResourceManager()
 
 
 //SPECIALIZE_TEMPLATE_STUFF(Texture, textures)
-SPECIALIZE_TEMPLATE_STUFF(ShaderProg, shaderProgs)
+SPECIALIZE_TEMPLATE_STUFF(ShaderProgram, shaderProgs)
 SPECIALIZE_TEMPLATE_STUFF(Material, materials)
 SPECIALIZE_TEMPLATE_STUFF(Mesh, meshes)
 SPECIALIZE_TEMPLATE_STUFF(Skeleton, skeletons)
