@@ -1,9 +1,3 @@
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
-#include <boost/functional/hash.hpp>
-#include <fstream>
-#include <sstream>
 #include "Resources/ShaderProgram.h"
 #include "ShaderProgramPrePreprocessor.h"
 #include "Core/App.h" // To get cache dir
@@ -11,6 +5,13 @@
 #include "Core/Logger.h"
 #include "Util/Util.h"
 #include "Core/Globals.h"
+#include "Util/Exception.h"
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+#include <boost/functional/hash.hpp>
+#include <fstream>
+#include <sstream>
 
 
 #define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + rsrcFilename + \
@@ -21,12 +22,11 @@
 // Statics                                                                     =
 //==============================================================================
 
-std::string ShaderProgram::stdSourceCode(
+const char* ShaderProgram::stdSourceCode =
 	"#version 330 core\n"
 	"precision lowp float;\n"
 	"#pragma optimize(on)\n"
-	"#pragma debug(off)\n"
-);
+	"#pragma debug(off)\n";
 
 
 //==============================================================================
@@ -162,7 +162,7 @@ void ShaderProgram::getUniAndAttribVars()
 
 	// uni locations
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
-	for(int i=0; i<num; i++) // loop all uniforms
+	for(int i = 0; i < num; i++) // loop all uniforms
 	{
 		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length,
 			&size, &type, &name_[0]);
@@ -374,6 +374,7 @@ std::string ShaderProgram::getShaderInfoString() const
 		{
 			ss << "uniform";
 		}
+		ss << std::endl;
 	}
 
 	return ss.str();

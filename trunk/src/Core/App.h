@@ -5,8 +5,6 @@
 #include <boost/filesystem.hpp>
 #include "Util/StdTypes.h"
 #include "Util/Accessors.h"
-#include "Util/Exception.h"
-#include "Util/Singleton.h"
 
 
 class StdinListener;
@@ -43,10 +41,6 @@ class App
 
 		/// Wrapper for an SDL function that swaps the buffers
 		void swapBuffers();
-
-		/// The func pools the stdinListener for string in the console, if
-		/// there are any it executes them with scriptingEngine
-		void execStdinScpripts();
 
 		static void printAppInfo();
 

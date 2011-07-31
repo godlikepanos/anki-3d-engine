@@ -17,7 +17,7 @@ class AttributeShaderProgramVariable: public ShaderProgramVariable
 inline AttributeShaderProgramVariable::AttributeShaderProgramVariable(
 	int loc_, const char* name_,
 	GLenum glDataType_, const ShaderProgram& fatherSProg_)
-:	ShaderProgramVariable(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
+:	ShaderProgramVariable(loc_, name_, glDataType_, SVT_ATTRIBUTE, fatherSProg_)
 {}
 
 

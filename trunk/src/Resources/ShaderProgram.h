@@ -93,7 +93,7 @@ class ShaderProgram
 		GLuint fragShaderGlId; ///< Fragment shader OpenGL id
 
 		/// Shader source that is used in ALL shader programs
-		static std::string stdSourceCode;
+		static const char* stdSourceCode;
 
 		/// @name Containers
 		/// @{

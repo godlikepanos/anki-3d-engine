@@ -1,6 +1,7 @@
 #include "Painter.h"
 #include "GfxApi/GlStateMachine.h"
 #include "Resources/Texture.h"
+#include "Resources/ShaderProgram.h"
 #include "Core/Logger.h"
 #include "Font.h"
 #include <cstdarg>

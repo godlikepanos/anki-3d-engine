@@ -1,8 +1,8 @@
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 #pragma anki include "shaders/SimpleVert.glsl"
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 uniform sampler2D isFai;
 uniform sampler2D ppsSsaoFai;
@@ -11,10 +11,6 @@ in vec2 vTexCoords;
 
 layout(location = 0) out vec3 fFragColor;
 
-
-//======================================================================================================================
-// main                                                                                                                =
-//======================================================================================================================
 void main(void)
 {
 	fFragColor = texture2D(isFai, vTexCoords).rgb;

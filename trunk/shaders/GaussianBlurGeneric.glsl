@@ -1,12 +1,13 @@
 /// @file
-/// Generic shader program for Gaussian blur inspired by Daniel Rakos' article
+/// Generic shader program for Gaussian blur inspired by Daniel Rakos'
+/// article
 /// http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
 ///
 /// Switches: VPASS or HPASS, COL_RGBA or COL_RGB or COL_R
 ///
 /// This is an optimized version. See the clean one at r213
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 layout(location = 0) in vec2 position;
 
@@ -30,7 +31,7 @@ void main()
 }
 
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 
 // Preprocessor switches sanity checks

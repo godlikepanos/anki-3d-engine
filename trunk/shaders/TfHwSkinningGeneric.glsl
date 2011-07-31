@@ -1,7 +1,7 @@
 /// @file
 ///
 /// Switches: NORMAL_ENABLED, TANGENT_ENABLED
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 
 //
@@ -68,7 +68,7 @@ void main()
 	#endif
 }
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 void main()
 {

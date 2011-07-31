@@ -3,12 +3,12 @@
 
 #include <GL/glew.h>
 #include "Util/StdTypes.h"
-#include "Resources/ShaderProgram.h"
 #include "Core/Object.h"
-#include "GfxApi/GlException.h"
+#include "../GlException.h"
 
 
 class Vbo;
+class AttributeShaderProgramVariable;
 
 
 /// Vertex array object
@@ -44,9 +44,14 @@ class Vao
 		/// vertex attributes
 		/// @param pointer Specifies a offset of the first component of the
 		/// first generic vertex attribute in the array
-		void attachArrayBufferVbo(const Vbo& vbo,
-			const AttributeShaderProgramVariable& attribVar, GLint size, GLenum type,
-			GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+		void attachArrayBufferVbo(
+			const Vbo& vbo,
+			const AttributeShaderProgramVariable& attribVar,
+			GLint size,
+			GLenum type,
+			GLboolean normalized,
+			GLsizei stride,
+			const GLvoid* pointer);
 
 		/// Attach an array buffer VBO. See @link
 		/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
@@ -62,8 +67,13 @@ class Vao
 		/// vertex attributes
 		/// @param pointer Specifies a offset of the first component of the
 		/// first generic vertex attribute in the array
-		void attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
-			GLint size, GLenum type, GLboolean normalized, GLsizei stride,
+		void attachArrayBufferVbo(
+			const Vbo& vbo,
+			uint attribVarLocation,
+			GLint size,
+			GLenum type,
+			GLboolean normalized,
+			GLsizei stride,
 			const GLvoid* pointer);
 
 		/// Attach an element array buffer VBO

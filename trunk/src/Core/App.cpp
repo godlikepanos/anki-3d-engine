@@ -1,3 +1,7 @@
+#include "App.h"
+#include "Logger.h"
+#include "Core/Globals.h"
+#include "Util/Exception.h"
 #include <GL/glew.h>
 #include <sstream>
 #include <SDL/SDL.h>
@@ -5,17 +9,6 @@
 #include <iomanip>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
-#include "App.h"
-#include "Renderer/RendererInitializer.h"
-#include "Renderer/MainRenderer.h"
-#include "Scripting/ScriptingEngine.h"
-#include "StdinListener.h"
-#include "Input/Input.h"
-#include "Logger.h"
-#include "Core/Globals.h"
-#include "ParallelJobs/Manager.h"
-#include "Renderer/Drawers/PhysDbgDrawer.h"
-#include "Scene/Scene.h"
 
 
 //==============================================================================
@@ -69,54 +62,14 @@ void App::init(int argc, char* argv[])
 	LoggerSingleton::getInstance().getSignal().connect(
 		boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
-	INFO("Initializing the engine...");
-
 	parseCommandLineArgs(argc, argv);
-
 	printAppInfo();
-
-	// dirs
 	initDirs();
-
-	// create the subsystems. WATCH THE ORDER
-	const char* commonPythonCode =
-		"import sys\n"
-		"from Anki import *\n"
-		"\n"
-		"class StdoutCatcher:\n"
-		"\tdef write(self, str_):\n"
-		"\t\tif str_ == \"\\n\": return\n"
-		"\t\tline = sys._getframe(1).f_lineno\n"
-		"\t\tfile = sys._getframe(1).f_code.co_filename\n"
-		"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-		"\t\tLoggerSingleton.getInstance().write(file, line, "
-		"func, str_ + \"\\n\")\n"
-		"\n"
-		"class StderrCatcher:\n"
-		"\tdef write(self, str_):\n"
-		"\t\tline = sys._getframe(1).f_lineno\n"
-		"\t\tfile = sys._getframe(1).f_code.co_filename\n"
-		"\t\tfunc = sys._getframe(1).f_code.co_name\n"
-		"\t\tLoggerSingleton.getInstance().write(file, line, func, str_)\n"
-		"\n"
-		"sys.stdout = StdoutCatcher()\n"
-		"sys.stderr = StderrCatcher()\n";
-
-	ScriptingEngineSingleton::getInstance().execScript(commonPythonCode);
-
-	StdinListenerSingleton::getInstance().start();
-
 	initWindow();
-	initRenderer();
-	ParallelJobs::ManagerSingleton::getInstance().init(4);
-	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
-		new R::PhysDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
 
 	// other
 	activeCam = NULL;
 	timerTick = 1.0 / 40.0; // in sec. 1.0 / period
-
-	INFO("Engine initialization ends");
 }
 
 
@@ -202,36 +155,6 @@ void App::initDirs()
 
 
 //==============================================================================
-// initRenderer                                                                =
-//==============================================================================
-void App::initRenderer()
-{
-	R::RendererInitializer initializer;
-	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
-	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.sm.enabled = true;
-	initializer.is.sm.pcfEnabled = true;
-	initializer.is.sm.resolution = 1024;
-	initializer.is.sm.level0Distance = 3.0;
-	initializer.pps.hdr.enabled = true;
-	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterationsNum = 2;
-	initializer.pps.hdr.exposure = 4.0;
-	initializer.pps.ssao.blurringIterationsNum = 4;
-	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.renderingQuality = 0.3;
-	initializer.pps.bl.enabled = true;
-	initializer.pps.bl.blurringIterationsNum = 2;
-	initializer.pps.bl.sideBlurFactor = 1.0;
-	initializer.mainRendererQuality = 1.0;
-
-	R::MainRendererSingleton::getInstance().init(initializer);
-}
-
-
-//==============================================================================
 // togleFullScreen                                                             =
 //==============================================================================
 void App::togleFullScreen()
@@ -275,12 +198,13 @@ void App::quit(int code)
 void App::printAppInfo()
 {
 	std::stringstream msg;
-	msg << "App info: Build: ";
+	msg << "App info: ";
 #if defined(NDEBUG)
-	msg << "release, ";
+	msg << "Release";
 #else
-	msg << "debug, ";
+	msg << "Debug";
 #endif
+	msg << " build, ";
 	msg << "platform ";
 #if defined(PLATFORM_LINUX)
 	msg << "Linux, ";
@@ -320,31 +244,4 @@ uint App::getDesktopHeight() const
 	/// @todo re-enable it
 	//SDL_GetDesktopDisplayMode(&mode);
 	return mode.h;
-}
-
-
-//==============================================================================
-// execStdinScpripts                                                           =
-//==============================================================================
-void App::execStdinScpripts()
-{
-	while(1)
-	{
-		std::string cmd = StdinListenerSingleton::getInstance().getLine();
-
-		if(cmd.length() < 1)
-		{
-			break;
-		}
-
-		try
-		{
-			ScriptingEngineSingleton::getInstance().execScript(cmd.c_str(),
-				"command line input");
-		}
-		catch(Exception& e)
-		{
-			ERROR(e.what());
-		}
-	}
 }

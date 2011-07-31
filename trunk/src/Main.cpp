@@ -45,6 +45,8 @@
 #include "Events/MainRendererPpsHdr.h"
 #include "Resources/ShaderProgramPrePreprocessor.h"
 #include "Resources/Material2.h"
+#include "Core/ParallelJobs/Manager.h"
+#include "Renderer/Drawers/PhysDbgDrawer.h"
 
 
 // map (hard coded)
@@ -124,6 +126,9 @@ void initPhysics()
 void init()
 {
 	INFO("Other init...");
+
+	Material2 mtl;
+	mtl.load("lala.mtl");
 
 	srand(unsigned(time(NULL)));
 
@@ -378,7 +383,8 @@ void mainLoop()
 		// Update
 		//
 		mainLoopExtra();
-		AppSingleton::getInstance().execStdinScpripts();
+		void execStdinScpripts();
+		execStdinScpripts();
 		SceneSingleton::getInstance().getPhysMasterContainer().update(prevUpdateTime, crntTime);
 		SceneSingleton::getInstance().updateAllWorldStuff(prevUpdateTime, crntTime);
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
@@ -457,32 +463,128 @@ void mainLoop()
 
 
 //==============================================================================
+// initSubsystems                                                              =
+//==============================================================================
+void initSubsystems(int argc, char* argv[])
+{
+	// App
+	AppSingleton::getInstance().init(argc, argv);
+
+	// Main renderer
+	R::RendererInitializer initializer;
+	initializer.ms.ez.enabled = true;
+	initializer.dbg.enabled = true;
+	initializer.is.sm.bilinearEnabled = true;
+	initializer.is.sm.enabled = true;
+	initializer.is.sm.pcfEnabled = true;
+	initializer.is.sm.resolution = 1024;
+	initializer.is.sm.level0Distance = 3.0;
+	initializer.pps.hdr.enabled = true;
+	initializer.pps.hdr.renderingQuality = 0.25;
+	initializer.pps.hdr.blurringDist = 1.0;
+	initializer.pps.hdr.blurringIterationsNum = 2;
+	initializer.pps.hdr.exposure = 4.0;
+	initializer.pps.ssao.blurringIterationsNum = 4;
+	initializer.pps.ssao.enabled = true;
+	initializer.pps.ssao.renderingQuality = 0.3;
+	initializer.pps.bl.enabled = true;
+	initializer.pps.bl.blurringIterationsNum = 2;
+	initializer.pps.bl.sideBlurFactor = 1.0;
+	initializer.mainRendererQuality = 1.0;
+
+	R::MainRendererSingleton::getInstance().init(initializer);
+
+	// Scripting engine
+	const char* commonPythonCode =
+		"import sys\n"
+		"from Anki import *\n"
+		"\n"
+		"class StdoutCatcher:\n"
+		"    def write(self, str_):\n"
+		"        if str_ == \"\\n\": return\n"
+		"        line = sys._getframe(1).f_lineno\n"
+		"        file = sys._getframe(1).f_code.co_filename\n"
+		"        func = sys._getframe(1).f_code.co_name\n"
+		"        LoggerSingleton.getInstance().write(file, line, "
+		"func, str_ + \"\\n\")\n"
+		"\n"
+		"class StderrCatcher:\n"
+		"    def write(self, str_):\n"
+		"        line = sys._getframe(1).f_lineno\n"
+		"        file = sys._getframe(1).f_code.co_filename\n"
+		"        func = sys._getframe(1).f_code.co_name\n"
+		"        LoggerSingleton.getInstance().write(file, line, func, str_)\n"
+		"\n"
+		"sys.stdout = StdoutCatcher()\n"
+		"sys.stderr = StderrCatcher()\n";
+
+	ScriptingEngineSingleton::getInstance().execScript(commonPythonCode);
+
+	// Stdin listener
+	StdinListenerSingleton::getInstance().start();
+
+	// Parallel jobs
+	ParallelJobs::ManagerSingleton::getInstance().init(4);
+
+	// Add drawer to physics
+	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
+		new R::PhysDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
+}
+
+
+//==============================================================================
+// execStdinScpripts                                                           =
+//==============================================================================
+/// The func pools the stdinListener for string in the console, if
+/// there are any it executes them with scriptingEngine
+void execStdinScpripts()
+{
+	while(1)
+	{
+		std::string cmd = StdinListenerSingleton::getInstance().getLine();
+
+		if(cmd.length() < 1)
+		{
+			break;
+		}
+
+		try
+		{
+			ScriptingEngineSingleton::getInstance().execScript(cmd.c_str(),
+				"command line input");
+		}
+		catch(Exception& e)
+		{
+			ERROR(e.what());
+		}
+	}
+}
+
+//==============================================================================
 // main                                                                        =
 //==============================================================================
 int main(int argc, char* argv[])
 {
+	int exitCode;
+
 	try
 	{
-		/*Material2 mtl;
-		mtl.load("lala.mtl");
-
-
-		return 0;*/
-
-		AppSingleton::getInstance().init(argc, argv);
+		initSubsystems(argc, argv);
 		init();
 
 		mainLoop();
 
 		INFO("Exiting...");
 		AppSingleton::getInstance().quit(EXIT_SUCCESS);
-		return 0;
+		exitCode = 0;
 	}
 	catch(std::exception& e)
 	{
 		//ERROR("Aborting: " << e.what());
 		std::cerr << "Aborting: " << e.what() << std::endl;
 		//abort();
-		return 1;
+		exitCode = 1;
 	}
+
+	return exitCode;
 }

@@ -1,6 +1,7 @@
-#include "GfxApi/BufferObjects/Vao.h"
+#include "Vao.h"
 #include "Vbo.h"
 #include "Util/Exception.h"
+#include "Resources/AttributeShaderProgramVariable.h"
 
 
 //==============================================================================
@@ -45,7 +46,8 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 //==============================================================================
 // attachArrayBufferVbo                                                        =
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, const AttributeShaderProgramVariable& attribVar,
+void Vao::attachArrayBufferVbo(const Vbo& vbo,
+	const AttributeShaderProgramVariable& attribVar,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
 	const GLvoid* pointer)
 {
