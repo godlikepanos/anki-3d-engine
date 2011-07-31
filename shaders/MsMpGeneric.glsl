@@ -11,8 +11,7 @@
 #	error "Cannot have ALPHA_TESTING without DIFFUSE_MAPPING"
 #endif
  
-#if defined(DIFFUSE_MAPPING) || defined(NORMAL_MAPPING) || \
-	defined(SPECULAR_MAPPING)
+#if defined(DIFFUSE_MAPPING) || defined(NORMAL_MAPPING) || defined(SPECULAR_MAPPING)
 #	define NEEDS_TEX_MAPPING 1
 #else
 #	define NEEDS_TEX_MAPPING 0

@@ -1,10 +1,10 @@
 // The final pass
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 #pragma anki include "shaders/SimpleVert.glsl"
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 in vec2 vTexCoords;
 

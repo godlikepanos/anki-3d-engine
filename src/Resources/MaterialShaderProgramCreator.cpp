@@ -314,9 +314,11 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 {
 	using namespace boost::property_tree;
 
-	srcLines.push_back("#pragma anki start vertexShader");
-	srcLines.push_back("#pragma anki include \"shaders/MaterialVert.glsl\"");
-	srcLines.push_back("#pragma anki start fragmentShader");
+	srcLines.push_back(
+		"#pragma anki start vertexShader\n"
+		"#pragma anki include \"shaders/MaterialVertex.glsl\"\n"
+		"#pragma anki start fragmentShader\n"
+		"#pragma anki include \"shaders/MaterialFragmentVariables.glsl\"");
 
 	//
 	// <includes></includes>
@@ -371,9 +373,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	//
 	// <operators></operators>
 	//
-	srcLines.push_back("\n#pragma anki include "
-		"\"shaders/MaterialFragmentVariables.glsl\"\n"
-		"\nvoid main()\n{");
+	srcLines.push_back("\nvoid main()\n{");
 
 	const ptree& opsPt = pt.get_child("operators");
 
@@ -511,7 +511,8 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 
 		}
 
-		line << v.second.data();
+		const std::string& argName = v.second.data();
+		line << argName;
 
 		// Add a comma
 		++i;

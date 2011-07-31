@@ -1,4 +1,4 @@
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 layout(location = 0) in vec2 position;
 
@@ -15,7 +15,7 @@ void main(void)
 	gl_Position = vec4(transformation * pos3d, 1.0);
 }
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 in vec2 vTexCoords;
 

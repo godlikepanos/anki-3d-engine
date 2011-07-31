@@ -177,6 +177,9 @@ void Material2::parseMaterialTag(const boost::property_tree::ptree& pt)
 	cpShaderProg.loadRsrc(cfile.c_str());
 	dpShaderProg.loadRsrc(dfile.c_str());
 
+	INFO(cpShaderProg->getShaderInfoString());
+	INFO(dpShaderProg->getShaderInfoString());
+
 	//boost::optional<>
 	getVariables(pt.get_child("shaderProgram.ins"));
 }
@@ -209,6 +212,7 @@ std::string Material2::createShaderProgSourceToCache(const std::string& source)
 		}
 
 		f.write(source.c_str(), source.length());
+		f.close();
 	}
 
 	return newfPathName.string();
@@ -261,7 +265,7 @@ void Material2::getVariables(const boost::property_tree::ptree& pt)
 			}
 
 			// Find the ptree that contains the value
-			const ptree* inPt = NULL;
+			const ptree* valuePt = NULL;
 			BOOST_FOREACH(const ptree::value_type& v, pt)
 			{
 				if(v.first != "in")
@@ -271,12 +275,12 @@ void Material2::getVariables(const boost::property_tree::ptree& pt)
 
 				if(v.second.get<std::string>("name") == svName)
 				{
-					inPt = &v.second;
+					valuePt = &v.second.get_child("value");
 					break;
 				}
 			}
 
-			if(inPt == NULL)
+			if(valuePt == NULL)
 			{
 				throw EXCEPTION("Variable not buildin and not found: " +
 					svName);
@@ -288,27 +292,27 @@ void Material2::getVariables(const boost::property_tree::ptree& pt)
 				// sampler2D
 				case GL_SAMPLER_2D:
 					mv = new UserMaterialVariable(uniC, uniD,
-						inPt->get<std::string>("sampler2D").c_str());
+						valuePt->get<std::string>("sampler2D").c_str());
 					break;
 				// float
 				case GL_FLOAT:
 					mv = new UserMaterialVariable(uniC, uniD,
-						PropertyTree::getFloat(*inPt));
+						PropertyTree::getFloat(*valuePt));
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
 					mv = new UserMaterialVariable(uniC, uniD,
-						PropertyTree::getVec2(*inPt));
+						PropertyTree::getVec2(*valuePt));
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
 					mv = new UserMaterialVariable(uniC, uniD,
-						PropertyTree::getVec3(*inPt));
+						PropertyTree::getVec3(*valuePt));
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
 					mv = new UserMaterialVariable(uniC, uniD,
-						PropertyTree::getVec4(*inPt));
+						PropertyTree::getVec4(*valuePt));
 					break;
 				// default is error
 				default:

@@ -9,8 +9,8 @@ SUBDIRS(${ANKI_DIRS})
 
 ADD_EXECUTABLE(anki Main.cpp)
 
-SET(ANKI_LIBS Scripting Core Renderer Scene Ui Events 
-	Input Physics Resources Misc GfxApi Collision Math Core Util)
+SET(ANKI_LIBS Scripting Renderer Scene Ui Events 
+	Input Physics Resources Core Misc GfxApi Collision Math Util)
 
 TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics 
 	BulletCollision LinearMath GLEW GLU GL jpeg SDL png python2.6

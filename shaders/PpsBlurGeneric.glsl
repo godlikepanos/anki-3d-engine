@@ -1,15 +1,18 @@
-/// For information about the blurring you can see the code and the comments of GaussianBlurGeneric.glsl
+/// For information about the blurring you can see the code and the comments
+/// of GaussianBlurGeneric.glsl
 
-#pragma anki vertShaderBegins
+#pragma anki start vertexShader
 
 layout(location = 0) in vec2 position;
 
 out vec2 vTexCoords;
 out vec2 vOffsets; ///< For side pixels
 
-uniform float imgDimension = 0.0; ///< the img width for hspass or the img height for vpass
+/// The img width for hspass or the img height for vpass
+uniform float imgDimension = 0.0;
 
-const vec2 BLURRING_OFFSET = vec2(1.3846153846, 3.2307692308); ///< The offset of side pixels
+/// The offset of side pixels
+const vec2 BLURRING_OFFSET = vec2(1.3846153846, 3.2307692308);
 
 
 void main()
@@ -22,7 +25,7 @@ void main()
 }
 
 
-#pragma anki fragShaderBegins
+#pragma anki start fragmentShader
 
 
 uniform sampler2D img; ///< Input FAI
@@ -54,19 +57,21 @@ void main()
 		// side pixels
 		for(int i = 0; i < 2; i++)
 		{
-			#if defined(HPASS)
-				vec2 texCoords = vec2(vTexCoords.x + vOffsets[i] * blurringDist, vTexCoords.y);
-				col += texture2D(img, texCoords).rgb * WEIGHTS[i];
+#if defined(HPASS)
+			vec2 texCoords = vec2(vTexCoords.x + vOffsets[i] * blurringDist,
+				vTexCoords.y);
+			col += texture2D(img, texCoords).rgb * WEIGHTS[i];
 
-				texCoords.x = vTexCoords.x - blurringDist * vOffsets[i];
-				col += texture2D(img, texCoords).rgb * WEIGHTS[i];
-			#elif defined(VPASS)
-				vec2 texCoords = vec2(vTexCoords.x, vTexCoords.y + blurringDist * vOffsets[i]);
-				col += texture2D(img, texCoords).rgb * WEIGHTS[i];
+			texCoords.x = vTexCoords.x - blurringDist * vOffsets[i];
+			col += texture2D(img, texCoords).rgb * WEIGHTS[i];
+#elif defined(VPASS)
+			vec2 texCoords = vec2(vTexCoords.x,
+				vTexCoords.y + blurringDist * vOffsets[i]);
+			col += texture2D(img, texCoords).rgb * WEIGHTS[i];
 
-				texCoords.y = vTexCoords.y - blurringDist * vOffsets[i];
-				col += texture2D(img, texCoords).rgb * WEIGHTS[i];
-			#endif
+			texCoords.y = vTexCoords.y - blurringDist * vOffsets[i];
+			col += texture2D(img, texCoords).rgb * WEIGHTS[i];
+#endif
 		}
 
 		fFragColor = col;
