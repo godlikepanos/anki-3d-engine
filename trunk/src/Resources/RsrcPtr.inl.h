@@ -1,6 +1,7 @@
 #include "RsrcPtr.h"
 #include "Util/Exception.h"
 #include "Util/Assert.h"
+#include <boost/checked_delete.hpp>
 
 
 //==============================================================================
@@ -14,6 +15,16 @@ RsrcPtr<Type>::RsrcPtr(const RsrcPtr& a):
 	{
 		++hook->referenceCounter;
 	}
+}
+
+
+//==============================================================================
+// Constructor                                                                 =
+//==============================================================================
+template<typename Type>
+RsrcPtr<Type>::~RsrcPtr()
+{
+	unload();
 }
 
 

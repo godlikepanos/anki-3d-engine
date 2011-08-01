@@ -24,6 +24,9 @@ class SkelAnim;
 class Skin
 {
 	public:
+		Skin();
+		~Skin();
+
 		/// Implements Resource::load
 		void load(const char*);
 

@@ -87,6 +87,9 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::load(
 template<typename Type>
 void ResourceManager::unload(const typename Types<Type>::Hook& hook)
 {
+	typedef char TypeMustBeComplete[sizeof(Type) ? 1 : -1];
+    (void) sizeof(TypeMustBeComplete);
+
 	// Chose container
 	typename Types<Type>::Container& c = choseContainer<Type>();
 

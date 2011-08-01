@@ -168,8 +168,8 @@ void Material2::parseMaterialTag(const boost::property_tree::ptree& pt)
 	//
 	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
 
-	const std::string& cpSrc = mspc.getShaderProgramSource();
-	std::string dpSrc = "#define DEPTH_PASS\n" + cpSrc;
+	std::string cpSrc = "#define COLOR_PASS\n" + mspc.getShaderProgramSource();
+	std::string dpSrc = "#define DEPTH_PASS\n" + mspc.getShaderProgramSource();
 
 	std::string cfile = createShaderProgSourceToCache(cpSrc);
 	std::string dfile = createShaderProgSourceToCache(dpSrc);

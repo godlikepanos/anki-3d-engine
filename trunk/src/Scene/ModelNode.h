@@ -43,9 +43,4 @@ class ModelNode: public SceneNode
 };
 
 
-inline ModelNode::ModelNode(bool inheritParentTrfFlag, SceneNode* parent)
-:	SceneNode(SNT_MODEL, inheritParentTrfFlag, parent)
-{}
-
-
 #endif

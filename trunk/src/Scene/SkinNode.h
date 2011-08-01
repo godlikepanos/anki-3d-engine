@@ -19,6 +19,7 @@ class SkinNode: public SceneNode
 		SkelAnimModelNodeCtrl* skelAnimModelNodeCtrl; ///< @todo fix this crap
 
 		SkinNode(bool inheritParentTrfFlag, SceneNode* parent);
+		~SkinNode();
 
 		/// @name Accessors
 		/// @{
@@ -50,11 +51,6 @@ class SkinNode: public SceneNode
 		Vec<Vec3> boneTranslations;
 		/// @}
 };
-
-
-inline SkinNode::SkinNode(bool inheritParentTrfFlag, SceneNode* parent)
-:	SceneNode(SNT_SKIN, inheritParentTrfFlag, parent)
-{}
 
 
 #endif

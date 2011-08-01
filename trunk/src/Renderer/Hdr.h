@@ -18,7 +18,8 @@ namespace R {
 class Hdr: private RenderingPass
 {
 	public:
-		Hdr(Renderer& r_): RenderingPass(r_) {}
+		Hdr(Renderer& r_);
+		~Hdr();
 		void init(const RendererInitializer& initializer);
 		void run();
 
