@@ -181,7 +181,7 @@ void Material2::parseMaterialTag(const boost::property_tree::ptree& pt)
 	INFO(dpShaderProg->getShaderInfoString());
 
 	//boost::optional<>
-	getVariables(pt.get_child("shaderProgram.ins"));
+	getVariables(pt.get_child("shaderProgram.inputs"));
 }
 
 
@@ -268,7 +268,7 @@ void Material2::getVariables(const boost::property_tree::ptree& pt)
 			const ptree* valuePt = NULL;
 			BOOST_FOREACH(const ptree::value_type& v, pt)
 			{
-				if(v.first != "in")
+				if(v.first != "input")
 				{
 					throw EXCEPTION("XXX"); // XXX
 				}

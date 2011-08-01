@@ -4,9 +4,16 @@
 /// @name Attributes
 /// @{
 in vec3 position;
+
+#if defined(USING_TEX_COORDS_ATTRIB)
 in vec2 texCoords;
-#if !defined(DEPTH_PASS)
+#endif
+
+#if defined(USING_NORMAL_ATTRIB)
 in vec3 normal;
+#endif
+
+#if defined(USING_TANGENT_ATTRIB)
 in vec4 tangent;
 #endif
 /// @}
@@ -14,21 +21,26 @@ in vec4 tangent;
 /// @name Uniforms
 /// @{
 uniform mat4 modelViewProjectionMat;
-#if !defined(DEPTH_PASS)
 uniform mat3 normalMat;
 uniform mat4 modelViewMat;
-#endif
 /// @}
 
 /// @name Varyings
 /// @{
+#if defined(USING_TEX_COORDS_ATTRIB)
 out vec2 vTexCoords;
-#if !defined(DEPTH_PASS)
+#endif
+
+#if defined(USING_NORMAL_ATTRIB)
 out vec3 vNormal;
+#endif
+
+#if defined(USING_TANGENT_ATTRIB)
 out vec3 vTangent;
 out float vTangentW;
-out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 #endif
+
+out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 /// @}
 
 
@@ -38,16 +50,20 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 //==============================================================================
 void main()
 {
-#if !defined(DEPTH_PASS)
-	// calculate the vert pos, normal and tangent
+#if defined(USING_NORMAL_ATTRIB)
 	vNormal = normalMat * normal;
-
-	vTangent = normalMat * vec3(tangent);
-	vTangentW = tangent.w;
-	
-	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
 #endif
 
+#if defined(USING_TANGENT_ATTRIB)
+	vTangent = normalMat * vec3(tangent);
+	vTangentW = tangent.w;
+#endif
+	
+	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+
+#if defined(USING_TEX_COORDS_ATTRIB)
 	vTexCoords = texCoords;
+#endif
+
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }

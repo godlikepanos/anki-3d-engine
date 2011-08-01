@@ -70,8 +70,8 @@ struct MaterialProperties
 /// 			<include>file2.glsl</include>
 /// 		</includes>
 ///
-/// 		<ins>
-/// 			<in> *
+/// 		<inputs>
+/// 			<input> *
 /// 				<name>xx</name>
 /// 				<value>
 /// 					<float>0.0</float> |
@@ -80,8 +80,8 @@ struct MaterialProperties
 /// 					<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4> |
 /// 					<sampler2D>path/to/image.tga</sampler2D>
 /// 				</value>
-/// 			</in>
-/// 		</ins>
+/// 			</input>
+/// 		</inputs>
 ///
 /// 		<operations>
 /// 			<operation>
@@ -97,7 +97,8 @@ struct MaterialProperties
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
-/// *: For "in" if the value is not set then the in variable will be build in
+/// *: For if the value is not set then the in variable will be build in or
+///    standard varying
 class Material2: private MaterialProperties
 {
 	public:
