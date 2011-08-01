@@ -31,7 +31,7 @@ class Smo: public RenderingPass
 		/// @todo
 		struct Geom
 		{
-			Geom() {}
+			Geom();
 			~Geom();
 
 			RsrcPtr<Mesh> mesh;

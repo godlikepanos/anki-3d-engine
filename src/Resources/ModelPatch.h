@@ -12,6 +12,9 @@ class Material;
 class ModelPatch
 {
 	public:
+		ModelPatch();
+		~ModelPatch();
+
 		/// Load the resources
 		void load(const char* meshFName, const char* mtlFName,
 			const char* dpMtlFName);

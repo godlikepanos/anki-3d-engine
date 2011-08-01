@@ -17,7 +17,7 @@ class RsrcPtr
 		/// Copy constructor
 		RsrcPtr(const RsrcPtr<Type>& a);
 
-		~RsrcPtr() {unload();}
+		~RsrcPtr();
 
 		/// Loads a resource and sets the RsrcPtr::p. The implementation of the
 		/// function is different for every Resource (see RsrcPtr.cpp)

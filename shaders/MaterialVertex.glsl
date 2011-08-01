@@ -4,17 +4,16 @@
 /// @name Attributes
 /// @{
 in vec3 position;
-
 #if defined(USING_TEX_COORDS_ATTRIB)
 in vec2 texCoords;
 #endif
-
-#if defined(USING_NORMAL_ATTRIB)
+#if defined(COLOR_PASS)
+#	if defined(USING_NORMAL_ATTRIB)
 in vec3 normal;
-#endif
-
-#if defined(USING_TANGENT_ATTRIB)
+#	endif
+#	if defined(USING_TANGENT_ATTRIB)
 in vec4 tangent;
+#	endif
 #endif
 /// @}
 
@@ -30,17 +29,16 @@ uniform mat4 modelViewMat;
 #if defined(USING_TEX_COORDS_ATTRIB)
 out vec2 vTexCoords;
 #endif
-
-#if defined(USING_NORMAL_ATTRIB)
+#if defined(COLOR_PASS)
+#	if defined(USING_NORMAL_ATTRIB)
 out vec3 vNormal;
-#endif
-
-#if defined(USING_TANGENT_ATTRIB)
+#	endif
+#	if defined(USING_TANGENT_ATTRIB)
 out vec3 vTangent;
 out float vTangentW;
-#endif
-
+#	endif
 out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
+#endif
 /// @}
 
 
@@ -50,16 +48,16 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 //==============================================================================
 void main()
 {
-#if defined(USING_NORMAL_ATTRIB)
+#if defined(COLOR_PASS)
+#	if defined(USING_NORMAL_ATTRIB)
 	vNormal = normalMat * normal;
-#endif
-
-#if defined(USING_TANGENT_ATTRIB)
+#	endif
+#	if defined(USING_TANGENT_ATTRIB)
 	vTangent = normalMat * vec3(tangent);
 	vTangentW = tangent.w;
-#endif
-	
+#	endif
 	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+#endif
 
 #if defined(USING_TEX_COORDS_ATTRIB)
 	vTexCoords = texCoords;
