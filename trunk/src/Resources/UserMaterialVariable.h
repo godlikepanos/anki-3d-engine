@@ -14,16 +14,6 @@ class UniformShaderProgramVariable;
 class UserMaterialVariable: public MaterialVariable
 {
 	public:
-		/// XXX
-		struct Data
-		{
-			float scalar;
-			Vec2 vec2;
-			Vec3 vec3;
-			Vec4 vec4;
-			RsrcPtr<Texture> texture;
-		};
-
 		/// @name Constructors
 		/// @{
 		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
@@ -48,6 +38,16 @@ class UserMaterialVariable: public MaterialVariable
 		/// @}
 
 	private:
+		/// XXX
+		struct Data
+		{
+			float scalar;
+			Vec2 vec2;
+			Vec3 vec3;
+			Vec4 vec4;
+			RsrcPtr<Texture> texture;
+		};
+
 		Data data;
 };
 

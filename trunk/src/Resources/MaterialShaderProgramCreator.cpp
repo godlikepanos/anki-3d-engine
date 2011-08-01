@@ -49,6 +49,16 @@ ConstCharPtrHashMap<MaterialShaderProgramCreator::ArgQualifier>::Type
 	("inout", AQ_INOUT);
 
 
+ConstCharPtrHashMap<GLenum>::Type
+	MaterialShaderProgramCreator::varyingNameToGlType =
+	boost::assign::map_list_of
+	("vTexCoords", GL_FLOAT_VEC2)
+	("vNormal", GL_FLOAT_VEC3)
+	("vTangent", GL_FLOAT_VEC3)
+	("vTangentW", GL_FLOAT)
+	("vVertPosViewSpace", GL_FLOAT_VEC3);
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -312,6 +322,8 @@ void MaterialShaderProgramCreator::getNextTokenAndSkipNewlines(
 void MaterialShaderProgramCreator::parseShaderProgramTag(
 	const boost::property_tree::ptree& pt)
 {
+	usingTexCoordsAttrib = usingNormalAttrib = usingTangentAttrib = false;
+
 	using namespace boost::property_tree;
 
 	srcLines.push_back(
@@ -348,19 +360,19 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	//
 	Vec<std::string> uniformsLines; // Store the source of the uniform vars
 
-	boost::optional<const ptree&> insPt = pt.get_child_optional("ins");
+	boost::optional<const ptree&> insPt = pt.get_child_optional("inputs");
 	if(insPt)
 	{
 		BOOST_FOREACH(const ptree::value_type& v, insPt.get())
 		{
-			if(v.first != "in")
+			if(v.first != "input")
 			{
 				throw EXCEPTION("Expected in and not: " + v.first);
 			}
 
 			const ptree& inPt = v.second;
 			std::string line;
-			parseInTag(inPt, line);
+			parseInputTag(inPt, line);
 			uniformsLines.push_back(line);
 		} // end for all ins
 
@@ -393,6 +405,21 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	//
 	// Create the output
 	//
+	if(usingTexCoordsAttrib)
+	{
+		srcLines.insert(srcLines.begin(), "#define USING_TEX_COORDS_ATTRIB");
+	}
+
+	if(usingNormalAttrib)
+	{
+		srcLines.insert(srcLines.begin(), "#define USING_NORMAL_ATTRIB");
+	}
+
+	if(usingTangentAttrib)
+	{
+		srcLines.insert(srcLines.begin(), "#define USING_TANGENT_ATTRIB");
+	}
+
 	BOOST_FOREACH(const std::string& line, srcLines)
 	{
 		source += line + "\n";
@@ -403,9 +430,9 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 
 
 //==============================================================================
-// parseInTag                                                                  =
+// parseInputTag                                                               =
 //==============================================================================
-void MaterialShaderProgramCreator::parseInTag(
+void MaterialShaderProgramCreator::parseInputTag(
 	const boost::property_tree::ptree& pt, std::string& line)
 {
 	using namespace boost::property_tree;
@@ -414,25 +441,44 @@ void MaterialShaderProgramCreator::parseInTag(
 	boost::optional<const ptree&> valuePt = pt.get_child_optional("value");
 	GLenum glType;
 
-	line = "uniform ";
-
-	// Buildin
+	// Buildin or varying
 	if(!valuePt)
 	{
 		BuildinMaterialVariable::BuildinVariable tmp;
 
-		if(!BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &glType))
+		if(BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &glType))
 		{
-			throw EXCEPTION("The variable is not build in: " + name);
+			const char* glTypeTxt = glTypeToTxt.at(glType);
+			line += "uniform ";
+			line += glTypeTxt;
 		}
+		else if(varyingNameToGlType.find(name.c_str()) !=
+			varyingNameToGlType.end())
+		{
+			glType = varyingNameToGlType.at(name.c_str());
+			const char* glTypeTxt = glTypeToTxt.at(glType);
 
-		boost::unordered_map<GLenum, const char*>::const_iterator it =
-			glTypeToTxt.find(glType);
+			line += "in ";
+			line += glTypeTxt;
 
-		ASSERT(it != glTypeToTxt.end() &&
-			"Buildin's type is not registered");
-
-		line += it->second;
+			// Set a few flags
+			if(name == "vTexCoords")
+			{
+				usingTexCoordsAttrib = true;
+			}
+			else if(name == "vNormal")
+			{
+				usingNormalAttrib = true;
+			}
+			else if(name == "vTangent" || name == "vTangentW")
+			{
+				usingTangentAttrib = true;
+			}
+		}
+		else
+		{
+			throw EXCEPTION("The variable is not build-in or varying: " + name);
+		}
 	}
 	else
 	{
@@ -452,7 +498,7 @@ void MaterialShaderProgramCreator::parseInTag(
 
 		const std::string& typeTxt = v.first;
 
-		line += typeTxt;
+		line += "uniform " + typeTxt;
 		glType = txtToGlType.at(typeTxt.c_str());
 	}
 
@@ -474,16 +520,16 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 	std::stringstream line;
 
 	// Find func def
-	ConstCharPtrHashMap<FuncDefinition*>::Type::const_iterator it =
-		funcNameToDef.find(funcName.c_str());
-
-	if(it == funcNameToDef.end())
+	const FuncDefinition* def = NULL;
+	try
+	{
+		def = funcNameToDef.at(funcName.c_str());
+	}
+	catch(std::exception& e)
 	{
 		throw EXCEPTION("Function is not defined in any include file: " +
 			funcName);
 	}
-
-	const FuncDefinition* def = it->second;
 
 	// Check args size
 	if(argsPt.size() != def->argDefinitions.size())

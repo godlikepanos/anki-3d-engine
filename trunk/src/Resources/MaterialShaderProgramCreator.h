@@ -74,6 +74,24 @@ class MaterialShaderProgramCreator
 		/// Go from "AQ_SOMETHING" string to AQ_SOMETHING enum
 		static ConstCharPtrHashMap<ArgQualifier>::Type txtToArgQualifier;
 
+		/// This holds the varyings that come from the vertex shader to the
+		/// fragment. These varyings can be used in the ins
+		/// - vTexCoords
+		/// - vNormal
+		/// - vTangent
+		/// - vTangentW
+		/// - vVertPosViewSpace
+		static ConstCharPtrHashMap<GLenum>::Type varyingNameToGlType;
+
+		/// @name Using attribute flag
+		/// Keep a few flags here to set a few defines in the shader program
+		/// source. The parseInputTag sets them
+		/// @{
+		bool usingTexCoordsAttrib;
+		bool usingNormalAttrib;
+		bool usingTangentAttrib;
+		/// @}
+
 		/// Container that holds the function definitions
 		boost::ptr_vector<FuncDefinition> funcDefs;
 
@@ -113,8 +131,8 @@ class MaterialShaderProgramCreator
 		/// @code <shaderProgram></shaderProgram> @endcode
 		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
 
-		/// Parse what is within the @code <in></in> @endcode
-		void parseInTag(const boost::property_tree::ptree& pt,
+		/// Parse what is within the @code <input></input> @endcode
+		void parseInputTag(const boost::property_tree::ptree& pt,
 			std::string& line);
 
 		/// Parse what is within the @code <operation></operation> @endcode

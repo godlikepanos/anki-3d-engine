@@ -1,11 +1,16 @@
-AnKi 3D Engine
-Copyright (c) 2009, 2011 Panagiotis Christopoulos-Charitos
+AnKi 3D Engine Project
+Copyright (c) 2009 - 2011 Panagiotis Christopoulos Charitos
 All rights reserved.
 
-AnKi 3D Engine source code is available under dual license. GPLv3 and commercial
-license. The commercial license applies in cases where this source code or parts
+AnKi 3D Engine source code is available under multiple licences. The source 
+files under the directory src/Util/Scanner are licensed under MIT license and
+the above copyright notice and this permission notice shall be included in all 
+copies or substantial portions of the software. 
+
+Every other source file is under dual license. GPLv3 and commercial license. 
+The commercial license applies in cases where this source code or parts
 of this source code will be used in software that won't be licensed under GPLv3.
-To use the commercial license contact Panagiotis Christopoulos-Charitos
+To use the commercial license contact Panagiotis Christopoulos Charitos
 
 THIS SOFTWARE IS PROVIDED BY PANAGIOTIS CHRISTOPOULOS-CHARITOS ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
