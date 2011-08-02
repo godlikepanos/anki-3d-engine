@@ -4,6 +4,7 @@
 #include "MaterialVariable.h"
 #include "Math/Math.h"
 #include "RsrcPtr.h"
+#include <boost/variant.hpp>
 
 
 class Texture;
@@ -14,7 +15,11 @@ class UniformShaderProgramVariable;
 class UserMaterialVariable: public MaterialVariable
 {
 	public:
-		/// @name Constructors
+		/// The data union
+		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture> >
+			DataVariant;
+
+		/// @name Constructors & destructor
 		/// @{
 		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
 			const UniformShaderProgramVariable* dpUni, float val);
@@ -26,29 +31,29 @@ class UserMaterialVariable: public MaterialVariable
 			const UniformShaderProgramVariable* dpUni, const Vec4& val);
 		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
 			const UniformShaderProgramVariable* dpUni, const char* texFilename);
+
+		~UserMaterialVariable();
 		/// @}
 
 		/// @name Accessors
 		/// @{
-		float getFloat() const;
-		const Vec2& getVec2() const;
-		const Vec3& getVec3() const;
-		const Vec4& getVec4() const;
-		const Texture& getTexture() const;
+		const DataVariant& getDataVariant() const {return data;}
+
+		/// Get the value of the variant
+		/// @exception boost::exception when you try to get the incorrect data
+		/// type
+		template<typename Type>
+		const Type& get() const {return boost::get<Type>(data);}
+
+		const UniformShaderProgramVariable&
+			getColorPassUniformShaderProgramVariable() const;
+
+		const UniformShaderProgramVariable&
+			getDepthPassUniformShaderProgramVariable() const;
 		/// @}
 
 	private:
-		/// XXX
-		struct Data
-		{
-			float scalar;
-			Vec2 vec2;
-			Vec3 vec3;
-			Vec4 vec4;
-			RsrcPtr<Texture> texture;
-		};
-
-		Data data;
+		DataVariant data;
 };
 
 

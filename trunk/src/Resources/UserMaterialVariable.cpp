@@ -4,7 +4,7 @@
 
 
 //==============================================================================
-// Constructors                                                                =
+// Constructors & destructor                                                   =
 //==============================================================================
 
 UserMaterialVariable::UserMaterialVariable(
@@ -14,7 +14,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT);
-	data.scalar = val;
+	data = val;
 }
 
 
@@ -25,7 +25,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	data.vec2 = val;
+	data = val;
 }
 
 
@@ -36,7 +36,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	data.vec3 = val;
+	data = val;
 }
 
 
@@ -47,7 +47,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	data.vec4 = val;
+	data = val;
 }
 
 
@@ -58,44 +58,30 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(T_USER, cpUni, dpUni)
 {
 	ASSERT(getGlDataType() == GL_SAMPLER_2D);
-	data.texture.loadRsrc(texFilename);
+	data = RsrcPtr<Texture>();
+	boost::get<RsrcPtr<Texture> >(data).loadRsrc(texFilename);
 }
+
+
+UserMaterialVariable::~UserMaterialVariable()
+{}
 
 
 //==============================================================================
 // Accessors                                                                   =
 //==============================================================================
 
-float UserMaterialVariable::getFloat() const
+const UniformShaderProgramVariable&
+	UserMaterialVariable::getColorPassUniformShaderProgramVariable() const
 {
-	ASSERT(getGlDataType() == GL_FLOAT);
-	return data.scalar;
+	return static_cast<const UniformShaderProgramVariable&>(
+		getColorPassShaderProgramVariable());
 }
 
 
-const Vec2& UserMaterialVariable::getVec2() const
+const UniformShaderProgramVariable&
+	UserMaterialVariable::getDepthPassUniformShaderProgramVariable() const
 {
-	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	return data.vec2;
-}
-
-
-const Vec3& UserMaterialVariable::getVec3() const
-{
-	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	return data.vec3;
-}
-
-
-const Vec4& UserMaterialVariable::getVec4() const
-{
-	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	return data.vec4;
-}
-
-
-const Texture& UserMaterialVariable::getTexture() const
-{
-	ASSERT(getGlDataType() == GL_SAMPLER_2D);
-	return *data.texture;
+	return static_cast<const UniformShaderProgramVariable&>(
+		getDepthPassShaderProgramVariable());
 }

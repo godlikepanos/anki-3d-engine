@@ -28,7 +28,9 @@ class MaterialVariable
 		/// @name Accessors
 		/// @{
 		GETTER_R_BY_VAL(Type, type, getType)
+		/// @exception If the material variable is for depth only
 		const ShaderProgramVariable& getColorPassShaderProgramVariable() const;
+		/// @exception If the material variable is for color only
 		const ShaderProgramVariable& getDepthPassShaderProgramVariable() const;
 		/// Applies to the color pass shader program
 		bool isColorPass() const {return cpSProgVar != NULL;}
