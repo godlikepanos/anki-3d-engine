@@ -123,7 +123,7 @@ class Material2: private MaterialProperties
 		/// @name Accessors
 		/// @{
 		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
-		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, renderInBlendingStage)
+		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, rendersInBlendingStage)
 		GETTER_R_BY_VAL(int, blendingSfactor, getBlendingSfactor)
 		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
