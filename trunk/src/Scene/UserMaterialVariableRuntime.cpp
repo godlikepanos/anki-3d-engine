@@ -14,7 +14,7 @@ void UserMaterialVariableRuntime::ConstructVisitor::
 
 
 //==============================================================================
-// Constructor                                                                =
+// Constructor                                                                 =
 //==============================================================================
 UserMaterialVariableRuntime::UserMaterialVariableRuntime(
 	const UserMaterialVariable& umv_)
