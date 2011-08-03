@@ -1,16 +1,18 @@
 #ifndef MATERIAL_RUNTIME_2_H
 #define MATERIAL_RUNTIME_2_H
 
-#include "Resources/Material.h"
+#include "Resources/Material2.h"
 #include "Util/Accessors.h"
+#include "Util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 
 
 class UserMaterialVariableRuntime;
+class Material2;
 
 
 /// One layer above material resource
-class MaterialRuntime2: private MaterialProps
+class MaterialRuntime2: private MaterialProperties
 {
 	public:
 		/// A type
@@ -51,7 +53,7 @@ class MaterialRuntime2: private MaterialProps
 
 		/// The const version of getUserDefinedVarByName
 		/// @see getUserDefinedVarByName
-		const MaterialRuntimeUserDefinedVar& findVariableByName(
+		const UserMaterialVariableRuntime& findVariableByName(
 			const char* name) const;
 
 		bool isBlendingEnabled() const;
@@ -59,6 +61,8 @@ class MaterialRuntime2: private MaterialProps
 	private:
 		const Material2& mtl; ///< The resource
 		VariablesContainer vars;
+		ConstCharPtrHashMap<UserMaterialVariableRuntime*>::Type
+			varNameToVar;
 };
 
 

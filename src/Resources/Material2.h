@@ -129,7 +129,8 @@ class Material2: private MaterialProperties
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
 
-		GETTER_R(VarsContainer, mtlVars, getMaterialVariables)
+		GETTER_R(VarsContainer, mtlVars, getVariables)
+		GETTER_R(Vec<UserMaterialVariable*>, userMtlVars, getUserVariables)
 
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
