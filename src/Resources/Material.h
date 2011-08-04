@@ -1,19 +1,30 @@
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#ifndef MATERIAL_2_H
+#define MATERIAL_2_H
 
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/property_tree/ptree_fwd.hpp>
-#include <boost/array.hpp>
-#include "Math/Math.h"
-#include "Resources/ShaderProgram.h"
+#include "Util/Accessors.h"
+#include "Util/ConstCharPtrHashMap.h"
+#include "UserMaterialVariable.h"
+#include "BuildinMaterialVariable.h"
 #include "RsrcPtr.h"
-#include "MtlUserDefinedVar.h"
+#include <GL/glew.h>
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/array.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
+
+
+class AttributeShaderProgramVariable;
+class UniformShaderProgramVariable;
+class ShaderProgram;
+namespace Scanner {
+class Scanner;
+}
 
 
 /// Contains a few properties that other classes may use
-struct MaterialProps
+struct MaterialProperties
 {
-	///< Used in depth passes of shadowmapping and not in other depth passes
+	/// Used in depth passes of shadowmapping and not in other depth passes
 	/// like EarlyZ
 	bool castsShadowFlag;
 	/// The entities with blending are being rendered in blending stage and
@@ -26,223 +37,153 @@ struct MaterialProps
 };
 
 
-/// Mesh material Resource
+/// Material resource
 ///
-/// Every material keeps info of how to render a MeshNode. Among this info it
-/// keeps the locations of attribute and uniform variables. The variables can
-/// be standard or user defined. The standard variables have standard names
-/// inside the shader program and we dont have to mention them in the .mtl
-/// files. The material init func scoops the shader program for standard
-/// variables and keeps a pointer to the variable. The standard variables are
-/// like the GL build-in variables (that we cannot longer use on GL >3) with a
-/// few additions. The user defined variables are defined and values inside
-/// the .mtl file. The attribute variables cannot be user defined, the uniform
-/// on the other hand can.
+/// Every material keeps info of how to render a RenedrableNode. Using a node
+/// based logic it creates a couple of shader programs dynamically. One for
+/// color passes and one for depth. It also keeps two sets of material
+/// variables. The first is the build in and the second the user defined.
+/// During the renderer's shader setup the buildins will be set automatically,
+/// for the user variables the user needs to have its value in the material
+/// file. Some material variables may be present in both shader programs and
+/// some in only one of them
 ///
-/// XML file format:
+/// Material XML file format:
 /// @code
 /// <material>
-/// 	<shaderProg>
-/// 		<file>path/file.glsl</file> |
-/// 		<customMsSProg>
-/// 			[<defines>
-/// 				<define>DEFINE_SOMETHING</define>
-/// 				...
-/// 				<define>DEFINE_SOMETHING_ELSE</define>
-/// 			</defines>]
-/// 		</customMsSProg> |
-/// 		<customDpSProg>...</customDpSProg>
-/// 	</shaderProg>
+/// 	<castsShadow>true | false</castsShadow>
 ///
-/// 	[<renderInBlendingStageFlag>true|false</renderInBlendingStageFlag>]
+/// 	<renderInBlendingStage>true | false</renderInBlendingStage>
 ///
-/// 	[<blendFuncs> *
+/// 	<blendFunctions>
 /// 		<sFactor>GL_SOMETHING</sFactor>
 /// 		<dFactor>GL_SOMETHING</dFactor>
-/// 	</blendFuncs>]
+/// 	</blendFunctions>
 ///
-/// 	[<depthTesting>true|false</depthTesting>]
+/// 	<depthTesting>true | false</depthTesting>
 ///
-/// 	[<wireframe>true|false</wireframe>]
+/// 	<wireframe>true | false</wireframe>
 ///
-/// 	[<castsShadowFlag>true|false</castsShadowFlag>]
+/// 	<shaderProgram>
+/// 		<includes>
+/// 			<include>file.glsl</include>
+/// 			<include>file2.glsl</include>
+/// 		</includes>
 ///
-/// 	[<userDefinedVars>
-/// 		<userDefinedVar>
-/// 			<name>varNameInShader</name>
-/// 			<value> **
-/// 				<texture>path/tex.png</texture> |
-/// 				<fai>msDepthFai | isFai | ppsPrePassFai |
-///                 	ppsPostPassFai</fai> |
-/// 				<float>0.0</float> |
-/// 				<vec2><x>0.0</x><y>0.0</y></vec2> |
-/// 				<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
-/// 				<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4>
-/// 			</value>
-/// 		</userDefinedVar>
-/// 		...
-/// 		<userDefinedVar>...</userDefinedVar>
-/// 	</userDefinedVars>]
+/// 		<inputs>
+/// 			<input> *
+/// 				<name>xx</name>
+/// 				<value>
+/// 					<float>0.0</float> |
+/// 					<vec2><x>0.0</x><y>0.0</y></vec2> |
+/// 					<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
+/// 					<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4> |
+/// 					<sampler2D>path/to/image.tga</sampler2D>
+/// 				</value>
+/// 			</input>
+/// 		</inputs>
+///
+/// 		<operations>
+/// 			<operation>
+/// 				<id>x</id>
+/// 				<function>functionName</function>
+/// 				<arguments>
+/// 					<argument>xx</argument>
+/// 					<argument>yy</argument>
+/// 				</arguments>
+/// 			</operation>
+/// 		</operations>
+///
+/// 	</shaderProgram>
 /// </material>
-///
-/// *: Has nothing to do with the renderInBlendingStageFlag. blendFuncs can be
-///    in material stage as well
-/// **: Depends on the type of the var
 /// @endcode
-class Material: private MaterialProps
+/// *: For if the value is not set then the in variable will be build in or
+///    standard varying
+class Material: private MaterialProperties
 {
 	public:
-		/// Standard attribute variables that are acceptable inside the @ref
-		/// ShaderProg
-		enum StdAttribVars
-		{
-			SAV_POSITION,
-			SAV_TANGENT,
-			SAV_NORMAL,
-			SAV_TEX_COORDS,
-			SAV_NUM
-		};
+		//======================================================================
+		// Nested                                                              =
+		//======================================================================
 
-		/// Standard uniform variables. The Renderer sees what are applicable
-		/// and sets them
-		/// After changing the enum update also:
-		/// - Some statics in Material.cpp
-		/// - Renderer::setupShaderProg
-		/// - The generic material GLSL shader (maybe)
-		enum StdUniVars
-		{
-			// Matrices
-			SUV_MODEL_MAT,
-			SUV_VIEW_MAT,
-			SUV_PROJECTION_MAT,
-			SUV_MODELVIEW_MAT,
-			SUV_VIEWPROJECTION_MAT,
-			SUV_NORMAL_MAT,
-			SUV_MODELVIEWPROJECTION_MAT,
-			// FAIs (for materials in blending stage)
-			SUV_MS_NORMAL_FAI,
-			SUV_MS_DIFFUSE_FAI,
-			SUV_MS_SPECULAR_FAI,
-			SUV_MS_DEPTH_FAI,
-			SUV_IS_FAI,
-			SUV_PPS_PRE_PASS_FAI,
-			SUV_PPS_POST_PASS_FAI,
-			// Other
-			SUV_RENDERER_SIZE,
-			SUV_SCENE_AMBIENT_COLOR,
-			SUV_BLURRING,
-			// num
-			SUV_NUM ///< The number of standard uniform variables
-		};
+		typedef boost::ptr_vector<MaterialVariable> VarsContainer;
 
+		typedef boost::unordered_map<BuildinMaterialVariable::BuildinVariable,
+			BuildinMaterialVariable*> BuildinEnumToBuildinHashMap;
+
+		//======================================================================
+		// Methods                                                             =
+		//======================================================================
 
 		/// Initialize with default values
 		Material();
 
-		/// @see Resource::load
-		void load(const char* filename);
+		~Material();
 
 		/// @name Accessors
 		/// @{
-		const AttributeShaderProgramVariable* getStdAttribVar(
-			StdAttribVars id) const;
-		const UniformShaderProgramVariable* getStdUniVar(StdUniVars id) const;
-		const ShaderProgram& getShaderProg() const;
 		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
-		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, renderInBlendingStage)
+		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, rendersInBlendingStage)
 		GETTER_R_BY_VAL(int, blendingSfactor, getBlendingSfactor)
 		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
-		GETTER_R(boost::ptr_vector<MtlUserDefinedVar>, userDefinedVars,
-			getUserDefinedVars)
+
+		GETTER_R(VarsContainer, mtlVars, getVariables)
+		GETTER_R(Vec<UserMaterialVariable*>, userMtlVars, getUserVariables)
 
 		/// Access the base class just for copying in other classes
-		GETTER_R(MaterialProps, *this, accessMaterialPropsBaseClass)
+		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
+
+		const ShaderProgram& getColorPassShaderProgram() const
+			{return *cpShaderProg;}
+
+		const ShaderProgram& getDepthPassShaderProgram() const
+			{return *dpShaderProg;}
 		/// @}
 
-		/// @return Return true if the shader has references to texture
-		/// coordinates
-		bool hasTexCoords() const;
-
+		/// Return false if blendingSfactor is equal to GL_ONE and
+		/// blendingDfactor to GL_ZERO
 		bool isBlendingEnabled() const;
 
-	private:
-		/// A simple pair-like structure
-		struct PreprocDefines
-		{
-			const char* switchName;
-			const char prefix;
-		};
+		/// Load a material file
+		void load(const char* filename);
 
-		/// Information for the standard shader program variables
-		struct StdVarNameAndGlDataTypePair
-		{
-			const char* varName;
-			GLenum dataType; ///< aka GL data type
-		};
+	public: /// XXX
+		//======================================================================
+		// Members                                                             =
+		//======================================================================
 
-		boost::ptr_vector<MtlUserDefinedVar> userDefinedVars;
+		/// All the material variables. Both buildins and user
+		VarsContainer mtlVars;
 
-		/// Material stage defines accepted in MsGeneric.glsl
-		static PreprocDefines msGenericDefines[];
-		/// Depth pass defines accepted in DpGeneric.glsl
-		static PreprocDefines dpGenericDefines[];
-		static boost::array<StdVarNameAndGlDataTypePair, SAV_NUM>
-			stdAttribVarInfos;
-		static boost::array<StdVarNameAndGlDataTypePair, SUV_NUM>
-			stdUniVarInfos;
-		boost::array<const AttributeShaderProgramVariable*, SAV_NUM>
-			stdAttribVars;
-		boost::array<const UniformShaderProgramVariable*, SUV_NUM> stdUniVars;
-		/// The most important aspect of materials
-		RsrcPtr<ShaderProgram> shaderProg;
+		BuildinEnumToBuildinHashMap enumToBuildinMtlVar; ///< To find
 
-		/// The func sweeps all the variables of the shader program to find
-		/// standard shader program variables. It updates the stdAttribVars and
-		/// stdUniVars arrays.
-		/// @exception Exception
-		void initStdShaderVars();
+		Vec<UserMaterialVariable*> userMtlVars; ///< To iterate
 
-		/// Parse for a custom shader
-		/// @param[in] defines The acceptable defines array
-		/// @param[in] pt The property tree. Its not the root tree
-		/// @param[out] source The source to feed to
-		/// ShaderProgram::createSrcCodeToCache
-		static void parseCustomShader(const PreprocDefines defines[],
-			const boost::property_tree::ptree& pt,
-			std::string& source);
+		/// The most important aspect of materials. Shader program for color
+		/// passes
+		RsrcPtr<ShaderProgram> cpShaderProg;
 
-		/// Parse the texture tag
-		void parseTextureTag(const boost::property_tree::ptree& pt,
-			const UniformShaderProgramVariable& uni);
+		/// Shader program for depth passes
+		RsrcPtr<ShaderProgram> dpShaderProg;
+
+		/// From "GL_ZERO" return GL_ZERO
+		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
+
+		//======================================================================
+		// Methods                                                             =
+		//======================================================================
+
+		/// Parse what is within the @code <material></material> @endcode
+		void parseMaterialTag(const boost::property_tree::ptree& pt);
+
+		/// XXX
+		std::string createShaderProgSourceToCache(const std::string& source);
+
+		/// XXX
+		void getVariables(const boost::property_tree::ptree& pt);
 };
-
-
-inline const AttributeShaderProgramVariable* Material::getStdAttribVar(
-	StdAttribVars id) const
-{
-	return stdAttribVars[id];
-}
-
-
-inline const UniformShaderProgramVariable* Material::getStdUniVar(
-	StdUniVars id) const
-{
-	return stdUniVars[id];
-}
-
-
-inline const ShaderProgram& Material::getShaderProg() const
-{
-	return *shaderProg;
-}
-
-
-inline bool Material::hasTexCoords() const
-{
-	return stdAttribVars[SAV_TEX_COORDS] != NULL;
-}
 
 
 inline bool Material::isBlendingEnabled() const

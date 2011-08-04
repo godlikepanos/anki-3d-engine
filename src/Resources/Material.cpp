@@ -1,113 +1,39 @@
-#include <cstring>
+#include "Material.h"
+#include "MaterialVariable.h"
+#include "Misc/PropertyTree.h"
+#include "MaterialShaderProgramCreator.h"
+#include "Core/App.h"
+#include "Core/Globals.h"
+#include "ShaderProgram.h"
+#include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include "Resources/Material.h"
-#include "Resources/Texture.h"
-#include "Resources/ShaderProgram.h"
-#include "Misc/PropertyTree.h"
+#include <boost/assign/list_of.hpp>
+#include <boost/functional/hash.hpp>
 
 
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
-boost::array<Material::StdVarNameAndGlDataTypePair, Material::SAV_NUM>
-	Material::stdAttribVarInfos =
-{{
-	{"position", GL_FLOAT_VEC3},
-	{"tangent", GL_FLOAT_VEC4},
-	{"normal", GL_FLOAT_VEC3},
-	{"texCoords", GL_FLOAT_VEC2}
-}};
 
-boost::array<Material::StdVarNameAndGlDataTypePair, Material::SUV_NUM>
-	Material::stdUniVarInfos =
-{{
-	{"modelMat", GL_FLOAT_MAT4},
-	{"viewMat", GL_FLOAT_MAT4},
-	{"projectionMat", GL_FLOAT_MAT4},
-	{"modelViewMat", GL_FLOAT_MAT4},
-	{"ViewProjectionMat", GL_FLOAT_MAT4},
-	{"normalMat", GL_FLOAT_MAT3},
-	{"modelViewProjectionMat", GL_FLOAT_MAT4},
-	{"msNormalFai", GL_SAMPLER_2D},
-	{"msDiffuseFai", GL_SAMPLER_2D},
-	{"msSpecularFai", GL_SAMPLER_2D},
-	{"msDepthFai", GL_SAMPLER_2D},
-	{"isFai", GL_SAMPLER_2D},
-	{"ppsPrePassFai", GL_SAMPLER_2D},
-	{"ppsPostPassFai", GL_SAMPLER_2D},
-	{"rendererSize", GL_FLOAT_VEC2},
-	{"sceneAmbientColor", GL_FLOAT_VEC3},
-	{"blurring", GL_FLOAT},
-}};
-
-Material::PreprocDefines Material::msGenericDefines[] =
-{
-	{"DIFFUSE_MAPPING", 'd'},
-	{"NORMAL_MAPPING", 'n'},
-	{"SPECULAR_MAPPING", 's'},
-	{"PARALLAX_MAPPING", 'p'},
-	{"ENVIRONMENT_MAPPING", 'e'},
-	{"ALPHA_TESTING", 'a'},
-	{0, 0}
-};
-
-Material::PreprocDefines Material::dpGenericDefines[] =
-{
-	{"ALPHA_TESTING", 'a'},
-	{0, 0}
-};
+// Dont make idiotic mistakes
+#define TXT_AND_ENUM(x) \
+	(#x, x)
 
 
-//==============================================================================
-// Blending stuff                                                              =
-//==============================================================================
-
-struct BlendParam
-{
-	int glEnum;
-	const char* str;
-};
-
-static BlendParam blendingParams[] =
-{
-	{GL_ZERO, "GL_ZERO"},
-	{GL_ONE, "GL_ONE"},
-	{GL_DST_COLOR, "GL_DST_COLOR"},
-	{GL_ONE_MINUS_DST_COLOR, "GL_ONE_MINUS_DST_COLOR"},
-	{GL_SRC_ALPHA, "GL_SRC_ALPHA"},
-	{GL_ONE_MINUS_SRC_ALPHA, "GL_ONE_MINUS_SRC_ALPHA"},
-	{GL_DST_ALPHA, "GL_DST_ALPHA"},
-	{GL_ONE_MINUS_DST_ALPHA, "GL_ONE_MINUS_DST_ALPHA"},
-	{GL_SRC_ALPHA_SATURATE, "GL_SRC_ALPHA_SATURATE"},
-	{GL_SRC_COLOR, "GL_SRC_COLOR"},
-	{GL_ONE_MINUS_SRC_COLOR, "GL_ONE_MINUS_SRC_COLOR"},
-	{0, NULL}
-};
-
-static bool searchBlendEnum(const char* str, int& gl_enum)
-{
-	BlendParam* ptr = &blendingParams[0];
-	while(true)
-	{
-		if(ptr->str == NULL)
-		{
-			break;
-		}
-
-		if(!strcmp(ptr->str, str))
-		{
-			gl_enum = ptr->glEnum;
-			return true;
-		}
-
-		++ptr;
-	}
-
-	return false;
-}
+ConstCharPtrHashMap<GLenum>::Type Material::txtToBlengGlEnum =
+	boost::assign::map_list_of
+	TXT_AND_ENUM(GL_ZERO)
+	TXT_AND_ENUM(GL_ONE)
+	TXT_AND_ENUM(GL_DST_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
+	TXT_AND_ENUM(GL_SRC_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
+	TXT_AND_ENUM(GL_DST_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
+	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
+	TXT_AND_ENUM(GL_SRC_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
 
 
 //==============================================================================
@@ -125,6 +51,13 @@ Material::Material()
 
 
 //==============================================================================
+// Destructor                                                                  =
+//==============================================================================
+Material::~Material()
+{}
+
+
+//==============================================================================
 // load                                                                        =
 //==============================================================================
 void Material::load(const char* filename)
@@ -132,340 +65,259 @@ void Material::load(const char* filename)
 	try
 	{
 		using namespace boost::property_tree;
-		ptree rpt;
-		read_xml(filename, rpt);
-
-		const ptree& pt = rpt.get_child("material");
-
-		//
-		// shaderProg
-		//
-		const ptree& shaderProgTree = pt.get_child("shaderProg");
-
-		boost::optional<std::string> file =
-			shaderProgTree.get_optional<std::string>("file");
-		boost::optional<const ptree&> customMsSProgTree =
-			shaderProgTree.get_child_optional("customMsSProg");
-		boost::optional<const ptree&> customDpSProgTree =
-			shaderProgTree.get_child_optional("customDpSProg");
-
-		// Just file
-		if(file)
-		{
-			shaderProg.loadRsrc(file.get().c_str());
-		}
-		// customMsSProg
-		else if(customMsSProgTree)
-		{
-			std::string source;
-
-			parseCustomShader(msGenericDefines, customMsSProgTree.get(),
-				source);
-			std::string shaderFilename =
-				ShaderProgram::createSrcCodeToCache("shaders/MsMpGeneric.glsl",
-					source.c_str());
-			shaderProg.loadRsrc(shaderFilename.c_str());
-		}
-		// customDpSProg
-		else if(customDpSProgTree)
-		{
-			std::string source;
-
-			parseCustomShader(dpGenericDefines, customDpSProgTree.get(),
-				source);
-			std::string shaderFilename =
-				ShaderProgram::createSrcCodeToCache("shaders/DpGeneric.glsl",
-					source.c_str());
-			shaderProg.loadRsrc(shaderFilename.c_str());
-		}
-		// Error
-		else
-		{
-			throw EXCEPTION("Expected file or customMsSProg or customDpSProg");
-		}
-
-		//
-		// renderInBlendingStageFlag
-		//
-		boost::optional<bool> blendingStage_ =
-			PropertyTree::getBoolOptional(pt, "blendingStage");
-		if(blendingStage_)
-		{
-			renderInBlendingStageFlag = blendingStage_.get();
-		}
-
-		//
-		// blendFuncs
-		//
-		boost::optional<const ptree&> blendFuncsTree =
-			pt.get_child_optional("blendFuncs");
-		if(blendFuncsTree)
-		{
-			int glEnum;
-
-			// sFactor
-			std::string sFactor_ =
-				blendFuncsTree.get().get<std::string>("sFactor");
-			if(!searchBlendEnum(sFactor_.c_str(), glEnum))
-			{
-				throw EXCEPTION("Incorrect blending factor \"" +
-					sFactor_ + "\"");
-			}
-			blendingSfactor = glEnum;
-
-			// dFactor
-			std::string dFactor_ =
-				blendFuncsTree.get().get<std::string>("dFactor");
-			if(!searchBlendEnum(dFactor_.c_str(), glEnum))
-			{
-				throw EXCEPTION("Incorrect blending factor \"" + dFactor_ +
-					"\"");
-			}
-			blendingDfactor = glEnum;
-		}
-
-		//
-		// depthTesting
-		//
-		boost::optional<bool> depthTesting_ =
-			PropertyTree::getBoolOptional(pt, "depthTesting");
-		if(depthTesting_)
-		{
-			depthTesting = depthTesting_.get();
-		}
-
-		//
-		// wireframe
-		//
-		boost::optional<bool> wireframe_ =
-			PropertyTree::getBoolOptional(pt, "wireframe");
-		if(wireframe_)
-		{
-			wireframe = wireframe_.get();
-		}
-
-		//
-		// userDefinedVars
-		//
-		boost::optional<const ptree&> userDefinedVarsTree =
-			pt.get_child_optional("userDefinedVars");
-		if(userDefinedVarsTree)
-		{
-			BOOST_FOREACH(const ptree::value_type& v, userDefinedVarsTree.get())
-			{
-				if(v.first != "userDefinedVar")
-				{
-					throw EXCEPTION("Expected userDefinedVar and not " +
-						v.first);
-				}
-
-				const ptree& userDefinedVarTree = v.second;
-				std::string varName =
-					userDefinedVarTree.get<std::string>("name");
-
-				// check if the uniform exists
-				if(!shaderProg->uniformVariableExists(varName.c_str()))
-				{
-					throw EXCEPTION("The variable \"" + varName +
-						"\" is not an active uniform");
-				}
-
-				const ptree& valueTree = userDefinedVarTree.get_child("value");
-
-				const UniformShaderProgramVariable& uni =
-					shaderProg->getUniformVariable(varName.c_str());
-
-				// read the values
-				switch(uni.getGlDataType())
-				{
-					// texture
-					case GL_SAMPLER_2D:
-					{
-						parseTextureTag(valueTree, uni);
-						break;
-					}
-					// float
-					case GL_FLOAT:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-							PropertyTree::getFloat(valueTree)));
-						break;
-					// vec2
-					case GL_FLOAT_VEC2:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-							PropertyTree::getVec2(valueTree)));
-						break;
-					// vec3
-					case GL_FLOAT_VEC3:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-							PropertyTree::getVec3(valueTree)));
-						break;
-					// vec4
-					case GL_FLOAT_VEC4:
-						userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-							PropertyTree::getVec4(valueTree)));
-						break;
-				};
-			} // end for all userDefinedVars
-		} // end userDefinedVars
-		initStdShaderVars();
+		ptree pt;
+		read_xml(filename, pt);
+		parseMaterialTag(pt.get_child("material"));
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Material \"" + filename + "\": " + e.what());
+		throw EXCEPTION("File \"" + filename + "\" failed: " + e.what());
 	}
 }
 
 
 //==============================================================================
-// parseTextureTag                                                             =
+// parseMaterialTag                                                            =
 //==============================================================================
-void Material::parseTextureTag(const boost::property_tree::ptree& pt,
-	const UniformShaderProgramVariable& uni)
-{
-	boost::optional<std::string> texture =
-		pt.get_optional<std::string>("texture");
-
-	boost::optional<std::string> fai =
-		pt.get_optional<std::string>("fai");
-
-	if(texture)
-	{
-		userDefinedVars.push_back(new MtlUserDefinedVar(uni, texture.get()));
-	}
-	else if(fai)
-	{
-		if(fai.get() == "msDepthFai")
-		{
-			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-				MtlUserDefinedVar::MS_DEPTH_FAI));
-		}
-		else if(fai.get() == "isFai")
-		{
-			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-				MtlUserDefinedVar::IS_FAI));
-		}
-		else if(fai.get() == "ppsPrePassFai")
-		{
-			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-				MtlUserDefinedVar::PPS_PRE_PASS_FAI));
-		}
-		else if(fai.get() == "ppsPostPassFai")
-		{
-			userDefinedVars.push_back(new MtlUserDefinedVar(uni,
-				MtlUserDefinedVar::PPS_POST_PASS_FAI));
-		}
-		else
-		{
-			throw EXCEPTION("incorrect FAI");
-		}
-	}
-	else
-	{
-		throw EXCEPTION("texture or fai expected");
-	}
-}
-
-
-//==============================================================================
-// initStdShaderVars                                                           =
-//==============================================================================
-void Material::initStdShaderVars()
-{
-	// sanity checks
-	if(!shaderProg.get())
-	{
-		throw EXCEPTION("Material without shader program is like cake "
-			"without sugar");
-	}
-
-	// the attributes
-	for(uint i = 0; i < SAV_NUM; i++)
-	{
-		// if the var is not in the sProg then... bye
-		if(!shaderProg->attributeVariableExists(stdAttribVarInfos[i].varName))
-		{
-			stdAttribVars[i] = NULL;
-			continue;
-		}
-
-		// set the std var
-		stdAttribVars[i] = &shaderProg->getAttributeVariable(
-			stdAttribVarInfos[i].varName);
-
-		// check if the shader has different GL data type from that it suppose
-		// to have
-		if(stdAttribVars[i]->getGlDataType() != stdAttribVarInfos[i].dataType)
-		{
-			throw EXCEPTION("The \"" + stdAttribVarInfos[i].varName +
-				"\" attribute var has incorrect GL data type "
-				"from the expected");
-		}
-	}
-
-	// the uniforms
-	for(uint i = 0; i < SUV_NUM; i++)
-	{
-		// if the var is not in the sProg then... bye
-		if(!shaderProg->uniformVariableExists(stdUniVarInfos[i].varName))
-		{
-			stdUniVars[i] = NULL;
-			continue;
-		}
-
-		// set the std var
-		stdUniVars[i] =
-			&shaderProg->getUniformVariable(stdUniVarInfos[i].varName);
-
-		// check if the shader has different GL data type from that it
-		// suppose to have
-		if(stdUniVars[i]->getGlDataType() != stdUniVarInfos[i].dataType)
-		{
-			throw EXCEPTION("The \"" + stdUniVarInfos[i].varName +
-				"\" uniform var has incorrect GL data type from the expected");
-		}
-	}
-}
-
-
-//==============================================================================
-// parseCustomShader                                                           =
-//==============================================================================
-void Material::parseCustomShader(const PreprocDefines defines[],
-	const boost::property_tree::ptree& pt, std::string& source)
+void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
-	boost::optional<const ptree&> definesTree =
-		pt.get_child_optional("defines");
-	if(!definesTree)
+	//
+	// castsShadow
+	//
+	boost::optional<bool> shadow =
+		PropertyTree::getBoolOptional(pt, "castsShadow");
+	if(shadow)
 	{
-		return;
+		castsShadowFlag = shadow.get();
 	}
 
-	BOOST_FOREACH(const ptree::value_type& v, definesTree.get())
+	//
+	// renderInBlendingStage
+	//
+	boost::optional<bool> bs =
+		PropertyTree::getBoolOptional(pt, "renderInBlendingStage");
+	if(bs)
 	{
-		if(v.first != "define")
-		{
-			throw EXCEPTION("Found " + v.first + " in defines");
-		}
+		renderInBlendingStageFlag = bs.get();
+	}
 
-		const std::string& define = v.second.data();
-
-		const PreprocDefines* def = defines;
-		while(def->switchName != NULL)
+	//
+	// blendFunctions
+	//
+	boost::optional<const ptree&> blendFuncsTree =
+		pt.get_child_optional("blendFunctions");
+	if(blendFuncsTree)
+	{
+		// sFactor
 		{
-			if (define == def->switchName)
+			const std::string& tmp =
+				blendFuncsTree.get().get<std::string>("sFactor");
+
+			ConstCharPtrHashMap<GLenum>::Type::const_iterator it =
+				txtToBlengGlEnum.find(tmp.c_str());
+
+			if(it == txtToBlengGlEnum.end())
 			{
-				break;
+				throw EXCEPTION("Incorrect blend enum: " + tmp);
 			}
-			++def;
+
+			blendingSfactor = it->second;
 		}
 
-		if(def->switchName == NULL)
+		// dFactor
 		{
-			throw EXCEPTION("Not acceptable define " + define);
+			const std::string& tmp =
+				blendFuncsTree.get().get<std::string>("dFactor");
+
+			ConstCharPtrHashMap<GLenum>::Type::const_iterator it =
+				txtToBlengGlEnum.find(tmp.c_str());
+
+			if(it == txtToBlengGlEnum.end())
+			{
+				throw EXCEPTION("Incorrect blend enum: " + tmp);
+			}
+
+			blendingDfactor = it->second;
+		}
+	}
+
+	//
+	// depthTesting
+	//
+	boost::optional<bool> dp =
+		PropertyTree::getBoolOptional(pt, "depthTesting");
+	if(dp)
+	{
+		depthTesting = dp.get();
+	}
+
+	//
+	// wireframe
+	//
+	boost::optional<bool> wf =
+		PropertyTree::getBoolOptional(pt, "wireframe");
+	if(wf)
+	{
+		wireframe = wf.get();
+	}
+
+	//
+	// shaderProgram
+	//
+	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
+
+	std::string cpSrc = "#define COLOR_PASS\n" + mspc.getShaderProgramSource();
+	std::string dpSrc = "#define DEPTH_PASS\n" + mspc.getShaderProgramSource();
+
+	std::string cfile = createShaderProgSourceToCache(cpSrc);
+	std::string dfile = createShaderProgSourceToCache(dpSrc);
+
+	cpShaderProg.loadRsrc(cfile.c_str());
+	dpShaderProg.loadRsrc(dfile.c_str());
+
+	INFO(cpShaderProg->getShaderInfoString());
+	INFO(dpShaderProg->getShaderInfoString());
+
+	//boost::optional<>
+	getVariables(pt.get_child("shaderProgram.inputs"));
+}
+
+
+//==============================================================================
+// createShaderProgSourceToCache                                               =
+//==============================================================================
+std::string Material::createShaderProgSourceToCache(const std::string& source)
+{
+	// Create the hash
+	boost::hash<std::string> stringHash;
+	std::size_t h = stringHash(source);
+	std::string prefix = boost::lexical_cast<std::string>(h);
+
+	// Create path
+	boost::filesystem::path newfPathName =
+		AppSingleton::getInstance().getCachePath() / (prefix + ".glsl");
+
+
+	// If file not exists write it
+	if(!boost::filesystem::exists(newfPathName))
+	{
+		// If not create it
+		std::ofstream f(newfPathName.string().c_str());
+		if(!f.is_open())
+		{
+			throw EXCEPTION("Cannot open file for writing: " +
+				newfPathName.string());
 		}
 
-		source += "#define " + define + "\n";
+		f.write(source.c_str(), source.length());
+		f.close();
+	}
+
+	return newfPathName.string();
+}
+
+
+//==============================================================================
+// getVariables                                                                =
+//==============================================================================
+void Material::getVariables(const boost::property_tree::ptree& pt)
+{
+	using namespace boost::property_tree;
+
+	BOOST_FOREACH(const ShaderProgramVariable& sv,
+		cpShaderProg->getVariables())
+	{
+		const char* svName = sv.getName().c_str();
+
+		// XXX
+		const ShaderProgramVariable* dpSv = NULL;
+		if(dpShaderProg->variableExists(svName))
+		{
+			dpSv = &dpShaderProg->getVariable(svName);
+		}
+
+		MaterialVariable* mv = NULL;
+
+		// Buildin or user defined?
+		if(BuildinMaterialVariable::isBuildin(svName))
+		{
+			mv = new BuildinMaterialVariable(&sv, dpSv, svName);
+		}
+		else
+		{
+			// Get uniforms
+			if(sv.getType() != ShaderProgramVariable::SVT_UNIFORM)
+			{
+				throw EXCEPTION("XXX"); // XXX
+			}
+
+			const UniformShaderProgramVariable* uniC =
+				static_cast<const UniformShaderProgramVariable*>(&sv);
+
+			const UniformShaderProgramVariable* uniD = NULL;
+
+			if(dpSv)
+			{
+				const UniformShaderProgramVariable* uniD =
+					static_cast<const UniformShaderProgramVariable*>(dpSv);
+			}
+
+			// Find the ptree that contains the value
+			const ptree* valuePt = NULL;
+			BOOST_FOREACH(const ptree::value_type& v, pt)
+			{
+				if(v.first != "input")
+				{
+					throw EXCEPTION("XXX"); // XXX
+				}
+
+				if(v.second.get<std::string>("name") == svName)
+				{
+					valuePt = &v.second.get_child("value");
+					break;
+				}
+			}
+
+			if(valuePt == NULL)
+			{
+				throw EXCEPTION("Variable not buildin and not found: " +
+					svName);
+			}
+
+			// Get the value
+			switch(sv.getGlDataType())
+			{
+				// sampler2D
+				case GL_SAMPLER_2D:
+					mv = new UserMaterialVariable(uniC, uniD,
+						valuePt->get<std::string>("sampler2D").c_str());
+					break;
+				// float
+				case GL_FLOAT:
+					mv = new UserMaterialVariable(uniC, uniD,
+						PropertyTree::getFloat(*valuePt));
+					break;
+				// vec2
+				case GL_FLOAT_VEC2:
+					mv = new UserMaterialVariable(uniC, uniD,
+						PropertyTree::getVec2(*valuePt));
+					break;
+				// vec3
+				case GL_FLOAT_VEC3:
+					mv = new UserMaterialVariable(uniC, uniD,
+						PropertyTree::getVec3(*valuePt));
+					break;
+				// vec4
+				case GL_FLOAT_VEC4:
+					mv = new UserMaterialVariable(uniC, uniD,
+						PropertyTree::getVec4(*valuePt));
+					break;
+				// default is error
+				default:
+					ASSERT(0);
+			}
+		}
 	}
 }

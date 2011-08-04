@@ -16,14 +16,12 @@ class ModelPatch
 		~ModelPatch();
 
 		/// Load the resources
-		void load(const char* meshFName, const char* mtlFName,
-			const char* dpMtlFName);
+		void load(const char* meshFName, const char* mtlFName);
 
 		/// @name Accessors
 		/// @{
 		const Mesh& getMesh() const {return *mesh;}
-		const Material& getCpMtl() const {return *cpMtl;}
-		const Material& getDpMtl() const {return *dpMtl;}
+		const Material& getMaterial() const {return *cpMtl;}
 		/// @}
 
 		/// This only checks the mesh for vertex weights
@@ -38,7 +36,6 @@ class ModelPatch
 	private:
 		RsrcPtr<Mesh> mesh; ///< The geometry
 		RsrcPtr<Material> cpMtl; ///< Material for MS and BS
-		RsrcPtr<Material> dpMtl; ///< Material for depth passes
 
 		/// Checks if a mesh and a material are compatible
 		static void doMeshAndMtlSanityChecks(const Mesh& mesh,

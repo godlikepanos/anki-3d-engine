@@ -18,7 +18,6 @@
 /// 		<modelPatch>
 /// 			<mesh>path/to/mesh.mesh</mesh>
 /// 			<material>path/to/material.mtl</material>
-/// 			<dpMaterial>path/to/dp.mtl</dpMaterial>
 /// 		</modelPatch>
 /// 		...
 /// 		<modelPatch>...</modelPatch>
