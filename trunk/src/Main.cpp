@@ -44,7 +44,7 @@
 #include "Events/SceneColor.h"
 #include "Events/MainRendererPpsHdr.h"
 #include "Resources/ShaderProgramPrePreprocessor.h"
-#include "Resources/Material2.h"
+#include "Resources/Material.h"
 #include "Core/ParallelJobs/Manager.h"
 #include "Renderer/Drawers/PhysDbgDrawer.h"
 
@@ -127,7 +127,7 @@ void init()
 {
 	INFO("Other init...");
 
-	Material2 mtl;
+	Material mtl;
 	mtl.load("lala.mtl");
 
 	srand(unsigned(time(NULL)));

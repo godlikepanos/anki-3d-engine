@@ -1,37 +1,47 @@
-#include <boost/foreach.hpp>
 #include "MaterialRuntime.h"
 #include "Resources/Material.h"
-#include "Util/Exception.h"
+#include "UserMaterialVariableRuntime.h"
+#include <boost/foreach.hpp>
 
 
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-MaterialRuntime::MaterialRuntime(const Material& mtl_):
-	mtl(mtl_)
+MaterialRuntime::MaterialRuntime(const Material& mtl_)
+:	mtl(mtl_)
 {
-	MaterialProps& me = *this;
-	const MaterialProps& he = mtl.accessMaterialPropsBaseClass();
+	// Copy props
+	MaterialProperties& me = *this;
+	const MaterialProperties& he = mtl.accessMaterialPropertiesBaseClass();
 	me = he;
 
-	BOOST_FOREACH(const MtlUserDefinedVar& udv, mtl.getUserDefinedVars())
+	// Create vars
+	BOOST_FOREACH(const UserMaterialVariable* var, mtl.getUserVariables())
 	{
-		MaterialRuntimeUserDefinedVar* udvr = new MaterialRuntimeUserDefinedVar(udv);
-		userDefVars.push_back(udvr);
-		userDefVarsHashMap[udvr->getName().c_str()] = udvr;
+		UserMaterialVariableRuntime* varr =
+			new UserMaterialVariableRuntime(*var);
+		vars.push_back(varr);
+		varNameToVar[varr->getUserMaterialVariable().getName().c_str()] = varr;
 	}
 }
 
 
 //==============================================================================
-// getUserDefinedVarByName                                                     =
+// Destructor                                                                  =
 //==============================================================================
-MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(
+MaterialRuntime::~MaterialRuntime()
+{}
+
+
+//==============================================================================
+// findVariableByName                                                          =
+//==============================================================================
+UserMaterialVariableRuntime& MaterialRuntime::findVariableByName(
 	const char* name)
 {
-	ConstCharPtrHashMap<MaterialRuntimeUserDefinedVar*>::Type::iterator it =
-		userDefVarsHashMap.find(name);
-	if(it == userDefVarsHashMap.end())
+	ConstCharPtrHashMap<UserMaterialVariableRuntime*>::Type::iterator it =
+		varNameToVar.find(name);
+	if(it == varNameToVar.end())
 	{
 		throw EXCEPTION("Cannot get user defined variable with name \"" +
 			name + '\"');
@@ -41,14 +51,14 @@ MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(
 
 
 //==============================================================================
-// getUserDefinedVarByName                                                     =
+// findVariableByName                                                          =
 //==============================================================================
-const MaterialRuntimeUserDefinedVar& MaterialRuntime::getUserDefinedVarByName(
+const UserMaterialVariableRuntime& MaterialRuntime::findVariableByName(
 	const char* name) const
 {
-	ConstCharPtrHashMap<MaterialRuntimeUserDefinedVar*>::Type::const_iterator
-		it = userDefVarsHashMap.find(name);
-	if(it == userDefVarsHashMap.end())
+	ConstCharPtrHashMap<UserMaterialVariableRuntime*>::Type::const_iterator
+		it = varNameToVar.find(name);
+	if(it == varNameToVar.end())
 	{
 		throw EXCEPTION("Cannot get user defined variable with name \"" +
 			name + '\"');

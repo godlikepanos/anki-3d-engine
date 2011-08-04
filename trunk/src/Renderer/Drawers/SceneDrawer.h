@@ -29,7 +29,7 @@ class SceneDrawer
 			RPT_DEPTH
 		};
 
-		/// The one and only contructor
+		/// The one and only constructor
 		SceneDrawer(const Renderer& r_): r(r_) {}
 
 		void renderRenderableNode(const RenderableNode& renderable,
