@@ -21,25 +21,12 @@ class ModelPatch
 		/// @name Accessors
 		/// @{
 		const Mesh& getMesh() const {return *mesh;}
-		const Material& getMaterial() const {return *cpMtl;}
+		const Material& getMaterial() const {return *mtl;}
 		/// @}
-
-		/// This only checks the mesh for vertex weights
-		bool supportsHwSkinning() const;
-
-		/// This checks if any of the materials need normals
-		bool supportsNormals() const;
-
-		/// This checks if any of the materials need tangents
-		bool supportsTangents() const;
 
 	private:
 		RsrcPtr<Mesh> mesh; ///< The geometry
-		RsrcPtr<Material> cpMtl; ///< Material for MS and BS
-
-		/// Checks if a mesh and a material are compatible
-		static void doMeshAndMtlSanityChecks(const Mesh& mesh,
-			const Material& mtl);
+		RsrcPtr<Material> mtl; ///< Material for MS and BS
 };
 
 

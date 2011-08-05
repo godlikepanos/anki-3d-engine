@@ -111,6 +111,8 @@ class Material: private MaterialProperties
 		typedef boost::unordered_map<BuildinMaterialVariable::BuildinVariable,
 			BuildinMaterialVariable*> BuildinEnumToBuildinHashMap;
 
+		typedef Vec<RsrcPtr<ShaderProgram> > ShaderProgams;
+
 		//======================================================================
 		// Methods                                                             =
 		//======================================================================
@@ -129,9 +131,6 @@ class Material: private MaterialProperties
 		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
 		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
 
-		GETTER_R(VarsContainer, mtlVars, getVariables)
-		GETTER_R(Vec<UserMaterialVariable*>, userMtlVars, getUserVariables)
-
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
 
@@ -140,6 +139,12 @@ class Material: private MaterialProperties
 
 		const ShaderProgram& getDepthPassShaderProgram() const
 			{return *dpShaderProg;}
+
+		// Variable accessors
+		GETTER_R(VarsContainer, mtlVars, getVariables)
+		GETTER_R(Vec<UserMaterialVariable*>, userMtlVars, getUserVariables)
+		const BuildinMaterialVariable& getBuildinVariable(
+			BuildinMaterialVariable::BuildinVariable e) const;
 		/// @}
 
 		/// Return false if blendingSfactor is equal to GL_ONE and
@@ -149,27 +154,28 @@ class Material: private MaterialProperties
 		/// Load a material file
 		void load(const char* filename);
 
-	public: /// XXX
+		/// Check if a buildin variable exists
+		bool buildinVariableExits(BuildinMaterialVariable::BuildinVariable e)
+			const {return buildinsArr[e] != NULL;}
+
+	private:
 		//======================================================================
 		// Members                                                             =
 		//======================================================================
 
+		/// From "GL_ZERO" return GL_ZERO
+		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
+
 		/// All the material variables. Both buildins and user
 		VarsContainer mtlVars;
 
-		BuildinEnumToBuildinHashMap enumToBuildinMtlVar; ///< To find
+		boost::array<BuildinMaterialVariable*, BuildinMaterialVariable::BV_NUM>
+			buildinsArr; ///< To find. Initialize to int
 
 		Vec<UserMaterialVariable*> userMtlVars; ///< To iterate
 
-		/// The most important aspect of materials. Shader program for color
-		/// passes
-		RsrcPtr<ShaderProgram> cpShaderProg;
-
-		/// Shader program for depth passes
-		RsrcPtr<ShaderProgram> dpShaderProg;
-
-		/// From "GL_ZERO" return GL_ZERO
-		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
+		/// The most important aspect of materials
+		ShaderPrograms sProgs;
 
 		//======================================================================
 		// Methods                                                             =
@@ -182,13 +188,21 @@ class Material: private MaterialProperties
 		std::string createShaderProgSourceToCache(const std::string& source);
 
 		/// XXX
-		void getVariables(const boost::property_tree::ptree& pt);
+		void populateVariables(const boost::property_tree::ptree& pt);
 };
 
 
 inline bool Material::isBlendingEnabled() const
 {
 	return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
+}
+
+
+inline const BuildinMaterialVariable& Material::getBuildinVariable(
+	BuildinMaterialVariable::BuildinVariable e) const
+{
+	ASSERT(buildinVariableExits(e));
+	return *buildinsArr[e];
 }
 
 

@@ -32,8 +32,6 @@
 class Model
 {
 	public:
-		Model() {}
-
 		void load(const char* filename);
 
 		/// @name Accessors

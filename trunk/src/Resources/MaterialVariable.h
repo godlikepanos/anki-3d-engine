@@ -2,10 +2,14 @@
 #define MATERIAL_VARIABLE_H
 
 #include "Util/Accessors.h"
+#include "ShaderProgramVariable.h"
+#include "Util/Assert.h"
 #include <GL/glew.h>
 #include <string>
+#include <boost/array.hpp>
 
 
+class ShaderProgram;
 class ShaderProgramVariable;
 
 
@@ -16,37 +20,66 @@ class MaterialVariable
 		/// The type
 		enum Type
 		{
-			T_USER,
-			T_BUILDIN,
-			T_NUM
+			USER,
+			BUILDIN
 		};
 
 		/// XXX
-		MaterialVariable(Type type, const ShaderProgramVariable* cpSProgVar,
-			const ShaderProgramVariable* dpSProgVar);
+		enum PassType
+		{
+			COLOR_PASS,
+			DEPTH_PASS,
+			PASS_TYPES_NUM
+		};
+
+		/// XXX Used for initialization in the constructor
+		typedef boost::array<const ShaderProgram*, PASS_TYPES_NUM>
+			ShaderPrograms;
+
+		/// XXX
+		typedef boost::array<const ShaderProgramVariable*,
+			PASS_TYPES_NUM> ShaderProgramVariables;
+
+		/// XXX
+		MaterialVariable(
+			Type type,
+			const char* shaderProgVarName,
+			const ShaderPrograms& shaderProgsArr);
 
 		/// @name Accessors
 		/// @{
 		GETTER_R_BY_VAL(Type, type, getType)
-		/// @exception If the material variable is for depth only
-		const ShaderProgramVariable& getColorPassShaderProgramVariable() const;
-		/// @exception If the material variable is for color only
-		const ShaderProgramVariable& getDepthPassShaderProgramVariable() const;
-		/// Applies to the color pass shader program
-		bool isColorPass() const {return cpSProgVar != NULL;}
-		/// Applies to the depth pass shader program
-		bool isDepthPass() const {return dpSProgVar != NULL;}
-		GLenum getGlDataType() const;
-		const std::string& getName() const;
+
+		/// XXX
+		const ShaderProgramVariable& getShaderProgramVariable(
+			PassType p) const;
+
+		/// XXX
+		bool inPass(PassType p) const {return sProgsVars[p] != NULL;}
+
+		/// Get the GL data type of all the shader program variables
+		GLenum getGlDataType() const {return oneSProgVar->getGlDataType();}
+
+		/// Get the name of all the shader program variables
+		const char* getName() const {return oneSProgVar->getName().c_str();}
 		/// @}
 
 	private:
 		Type type;
-		/// The color pass shader program variable
-		const ShaderProgramVariable* cpSProgVar;
-		/// The depth pass shader program variable
-		const ShaderProgramVariable* dpSProgVar;
+		ShaderProgramVariables sProgsVars;
+
+		/// Keep one ShaderProgramVariable here for easy access of the common
+		/// variable stuff like name or GL data type etc
+		const ShaderProgramVariable* oneSProgVar;
 };
+
+
+inline const ShaderProgramVariable& MaterialVariable::getShaderProgramVariable(
+	PassType p) const
+{
+	ASSERT(inPass(p));
+	return *sProgsVars[p];
+}
 
 
 #endif

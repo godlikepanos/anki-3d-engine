@@ -8,10 +8,10 @@
 //==============================================================================
 
 UserMaterialVariable::UserMaterialVariable(
-	const UniformShaderProgramVariable* cpUni,
-	const UniformShaderProgramVariable* dpUni,
+	const char* shaderProgVarName,
+	const ShaderPrograms& shaderProgsArr,
 	float val)
-:	MaterialVariable(T_USER, cpUni, dpUni)
+:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT);
 	data = val;
@@ -19,10 +19,10 @@ UserMaterialVariable::UserMaterialVariable(
 
 
 UserMaterialVariable::UserMaterialVariable(
-	const UniformShaderProgramVariable* cpUni,
-	const UniformShaderProgramVariable* dpUni,
+	const char* shaderProgVarName,
+	const ShaderPrograms& shaderProgsArr,
 	const Vec2& val)
-:	MaterialVariable(T_USER, cpUni, dpUni)
+:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
 	data = val;
@@ -30,10 +30,10 @@ UserMaterialVariable::UserMaterialVariable(
 
 
 UserMaterialVariable::UserMaterialVariable(
-	const UniformShaderProgramVariable* cpUni,
-	const UniformShaderProgramVariable* dpUni,
+	const char* shaderProgVarName,
+	const ShaderPrograms& shaderProgsArr,
 	const Vec3& val)
-:	MaterialVariable(T_USER, cpUni, dpUni)
+:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
 	data = val;
@@ -41,10 +41,10 @@ UserMaterialVariable::UserMaterialVariable(
 
 
 UserMaterialVariable::UserMaterialVariable(
-	const UniformShaderProgramVariable* cpUni,
-	const UniformShaderProgramVariable* dpUni,
+	const char* shaderProgVarName,
+	const ShaderPrograms& shaderProgsArr,
 	const Vec4& val)
-:	MaterialVariable(T_USER, cpUni, dpUni)
+:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
 	data = val;
@@ -52,10 +52,10 @@ UserMaterialVariable::UserMaterialVariable(
 
 
 UserMaterialVariable::UserMaterialVariable(
-	const UniformShaderProgramVariable* cpUni,
-	const UniformShaderProgramVariable* dpUni,
+	const char* shaderProgVarName,
+	const ShaderPrograms& shaderProgsArr,
 	const char* texFilename)
-:	MaterialVariable(T_USER, cpUni, dpUni)
+:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_SAMPLER_2D);
 	data = RsrcPtr<Texture>();
