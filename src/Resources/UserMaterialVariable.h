@@ -21,16 +21,30 @@ class UserMaterialVariable: public MaterialVariable
 
 		/// @name Constructors & destructor
 		/// @{
-		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
-			const UniformShaderProgramVariable* dpUni, float val);
-		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
-			const UniformShaderProgramVariable* dpUni, const Vec2& val);
-		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
-			const UniformShaderProgramVariable* dpUni, const Vec3& val);
-		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
-			const UniformShaderProgramVariable* dpUni, const Vec4& val);
-		UserMaterialVariable(const UniformShaderProgramVariable* cpUni,
-			const UniformShaderProgramVariable* dpUni, const char* texFilename);
+		UserMaterialVariable(
+			const char* shaderProgVarName,
+			const ShaderPrograms& shaderProgsArr,
+			float val);
+
+		UserMaterialVariable(
+			const char* shaderProgVarName,
+			const ShaderPrograms& shaderProgsArr,
+			const Vec2& val);
+
+		UserMaterialVariable(
+			const char* shaderProgVarName,
+			const ShaderPrograms& shaderProgsArr,
+			const Vec3& val);
+
+		UserMaterialVariable(
+			const char* shaderProgVarName,
+			const ShaderPrograms& shaderProgsArr,
+			const Vec4& val);
+
+		UserMaterialVariable(
+			const char* shaderProgVarName,
+			const ShaderPrograms& shaderProgsArr,
+			const char* texFilename);
 
 		~UserMaterialVariable();
 		/// @}

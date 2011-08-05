@@ -10,6 +10,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/functional/hash.hpp>
+#include <algorithm>
 
 
 //==============================================================================
@@ -47,6 +48,9 @@ Material::Material()
 	depthTesting = true;
 	wireframe = false;
 	castsShadowFlag = true;
+
+	// Reset tha array
+	std::fill(buildinsArr.begin(), buildinsArr.end(), NULL);
 }
 
 
@@ -174,14 +178,13 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	std::string cfile = createShaderProgSourceToCache(cpSrc);
 	std::string dfile = createShaderProgSourceToCache(dpSrc);
 
-	cpShaderProg.loadRsrc(cfile.c_str());
-	dpShaderProg.loadRsrc(dfile.c_str());
+	sProgs[MaterialVariable::COLOR_PASS].loadRsrc(cfile.c_str());
+	sProgs[MaterialVariable::DEPTH_PASS].loadRsrc(dfile.c_str());
 
-	INFO(cpShaderProg->getShaderInfoString());
-	INFO(dpShaderProg->getShaderInfoString());
+	/*INFO(cpShaderProg->getShaderInfoString());
+	INFO(dpShaderProg->getShaderInfoString());*/
 
-	//boost::optional<>
-	getVariables(pt.get_child("shaderProgram.inputs"));
+	populateVariables(pt.get_child("shaderProgram.inputs"));
 }
 
 
@@ -220,18 +223,29 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 
 
 //==============================================================================
-// getVariables                                                                =
+// populateVariables                                                           =
 //==============================================================================
-void Material::getVariables(const boost::property_tree::ptree& pt)
+void Material::populateVariables(const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
+	//
+	// Get all names of all shader prog vars. Dont duplicate
+	//
+	std::map<std::string, bool> allVarNames;
+
+	BOOST_FOREACH(const RsrcPtr<ShaderProgram>& sProg, sProgs)
+	{
+		BOOST_FOREACH(const ShaderProgramVariable)
+	}
+
+	// Iterate shader program variables
 	BOOST_FOREACH(const ShaderProgramVariable& sv,
-		cpShaderProg->getVariables())
+		cpShaderProg->populateVariables())
 	{
 		const char* svName = sv.getName().c_str();
 
-		// XXX
+		// Get (if exists) the depth pass shader variable
 		const ShaderProgramVariable* dpSv = NULL;
 		if(dpShaderProg->variableExists(svName))
 		{
@@ -240,17 +254,22 @@ void Material::getVariables(const boost::property_tree::ptree& pt)
 
 		MaterialVariable* mv = NULL;
 
-		// Buildin or user defined?
+		// Buildin?
 		if(BuildinMaterialVariable::isBuildin(svName))
 		{
-			mv = new BuildinMaterialVariable(&sv, dpSv, svName);
+			BuildinMaterialVariable* v =
+				new BuildinMaterialVariable(&sv, dpSv, svName);
+
+			mtlVars.push_back(v);
+			buildinsArr[v->getVariableEnum()] = v;
 		}
+		// User defined
 		else
 		{
 			// Get uniforms
 			if(sv.getType() != ShaderProgramVariable::SVT_UNIFORM)
 			{
-				throw EXCEPTION("XXX"); // XXX
+				throw EXCEPTION("Variable should be uniform: " + sv.getName());
 			}
 
 			const UniformShaderProgramVariable* uniC =
@@ -270,7 +289,7 @@ void Material::getVariables(const boost::property_tree::ptree& pt)
 			{
 				if(v.first != "input")
 				{
-					throw EXCEPTION("XXX"); // XXX
+					throw EXCEPTION("Error parsing the property_tree");
 				}
 
 				if(v.second.get<std::string>("name") == svName)
@@ -286,38 +305,42 @@ void Material::getVariables(const boost::property_tree::ptree& pt)
 					svName);
 			}
 
+			UserMaterialVariable* v = NULL;
 			// Get the value
 			switch(sv.getGlDataType())
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					mv = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(uniC, uniD,
 						valuePt->get<std::string>("sampler2D").c_str());
 					break;
 				// float
 				case GL_FLOAT:
-					mv = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(uniC, uniD,
 						PropertyTree::getFloat(*valuePt));
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					mv = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(uniC, uniD,
 						PropertyTree::getVec2(*valuePt));
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					mv = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(uniC, uniD,
 						PropertyTree::getVec3(*valuePt));
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					mv = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(uniC, uniD,
 						PropertyTree::getVec4(*valuePt));
 					break;
 				// default is error
 				default:
 					ASSERT(0);
 			}
+
+			mtlVars.push_back(v);
+			userMtlVars.push_back(v);
 		}
-	}
+	} // end for all sprog vars
 }

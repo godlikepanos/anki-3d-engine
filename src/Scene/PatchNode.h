@@ -26,13 +26,8 @@ class PatchNode: public RenderableNode
 
 		/// @name Accessors
 		/// @{
-		const Material& getCpMtl() const {return rsrc.getCpMtl();}
-		const Material& getDpMtl() const {return rsrc.getDpMtl();}
-
-		MaterialRuntime& getCpMtlRun() {return *cpMtlRun;}
-		MaterialRuntime& getDpMtlRun() {return *dpMtlRun;}
+		MaterialRuntime& getMaterialRuntime() {return *mtlRun;}
 		const MaterialRuntime& getCpMtlRun() const {return *cpMtlRun;}
-		const MaterialRuntime& getDpMtlRun() const {return *dpMtlRun;}
 
 		const ModelPatch& getModelPatchRsrc() const {return rsrc;}
 		const Vao& getCpVao() const {return cpVao;}
