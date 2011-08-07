@@ -50,7 +50,8 @@ Material::Material()
 	castsShadowFlag = true;
 
 	// Reset tha array
-	std::fill(buildinsArr.begin(), buildinsArr.end(), NULL);
+	std::fill(buildinsArr.begin(), buildinsArr.end(),
+		static_cast<BuildinMaterialVariable*>(NULL));
 }
 
 
@@ -232,33 +233,36 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	//
 	// Get all names of all shader prog vars. Dont duplicate
 	//
-	std::map<std::string, bool> allVarNames;
+	std::map<std::string, GLenum> allVarNames;
 
 	BOOST_FOREACH(const RsrcPtr<ShaderProgram>& sProg, sProgs)
 	{
-		BOOST_FOREACH(const ShaderProgramVariable)
+		BOOST_FOREACH(const ShaderProgramVariable& v, sProg->getVariables())
+		{
+			allVarNames[v.getName()] = v.getGlDataType();
+		}
 	}
 
+	//
 	// Iterate shader program variables
-	BOOST_FOREACH(const ShaderProgramVariable& sv,
-		cpShaderProg->populateVariables())
+	//
+	MaterialVariable::ShaderPrograms sProgs_;
+	for(uint i = 0; i < MaterialVariable::PASS_TYPES_NUM; i++)
 	{
-		const char* svName = sv.getName().c_str();
+		sProgs_[i] = sProgs[i].get();
+	}
 
-		// Get (if exists) the depth pass shader variable
-		const ShaderProgramVariable* dpSv = NULL;
-		if(dpShaderProg->variableExists(svName))
-		{
-			dpSv = &dpShaderProg->getVariable(svName);
-		}
-
-		MaterialVariable* mv = NULL;
+	std::map<std::string, GLenum>::const_iterator it = allVarNames.begin();
+	for(; it != allVarNames.end(); it++)
+	{
+		const char* svName = it->first.c_str();
+		GLenum dataType = it->second;
 
 		// Buildin?
 		if(BuildinMaterialVariable::isBuildin(svName))
 		{
 			BuildinMaterialVariable* v =
-				new BuildinMaterialVariable(&sv, dpSv, svName);
+				new BuildinMaterialVariable(svName, sProgs_);
 
 			mtlVars.push_back(v);
 			buildinsArr[v->getVariableEnum()] = v;
@@ -266,30 +270,13 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		// User defined
 		else
 		{
-			// Get uniforms
-			if(sv.getType() != ShaderProgramVariable::SVT_UNIFORM)
-			{
-				throw EXCEPTION("Variable should be uniform: " + sv.getName());
-			}
-
-			const UniformShaderProgramVariable* uniC =
-				static_cast<const UniformShaderProgramVariable*>(&sv);
-
-			const UniformShaderProgramVariable* uniD = NULL;
-
-			if(dpSv)
-			{
-				const UniformShaderProgramVariable* uniD =
-					static_cast<const UniformShaderProgramVariable*>(dpSv);
-			}
-
 			// Find the ptree that contains the value
 			const ptree* valuePt = NULL;
 			BOOST_FOREACH(const ptree::value_type& v, pt)
 			{
 				if(v.first != "input")
 				{
-					throw EXCEPTION("Error parsing the property_tree");
+					throw EXCEPTION("Expecting <input> and not: " + v.first);
 				}
 
 				if(v.second.get<std::string>("name") == svName)
@@ -307,31 +294,31 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 			UserMaterialVariable* v = NULL;
 			// Get the value
-			switch(sv.getGlDataType())
+			switch(dataType)
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					v = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(svName, sProgs_,
 						valuePt->get<std::string>("sampler2D").c_str());
 					break;
 				// float
 				case GL_FLOAT:
-					v = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(svName, sProgs_,
 						PropertyTree::getFloat(*valuePt));
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					v = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(svName, sProgs_,
 						PropertyTree::getVec2(*valuePt));
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					v = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(svName, sProgs_,
 						PropertyTree::getVec3(*valuePt));
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					v = new UserMaterialVariable(uniC, uniD,
+					v = new UserMaterialVariable(svName, sProgs_,
 						PropertyTree::getVec4(*valuePt));
 					break;
 				// default is error

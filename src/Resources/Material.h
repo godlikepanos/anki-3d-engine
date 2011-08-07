@@ -24,16 +24,22 @@ class Scanner;
 /// Contains a few properties that other classes may use
 struct MaterialProperties
 {
-	/// Used in depth passes of shadowmapping and not in other depth passes
-	/// like EarlyZ
-	bool castsShadowFlag;
-	/// The entities with blending are being rendered in blending stage and
-	/// those without in material stage
-	bool renderInBlendingStageFlag;
-	int blendingSfactor; ///< Default GL_ONE
-	int blendingDfactor; ///< Default GL_ZERO
-	bool depthTesting;
-	bool wireframe;
+	public:
+		/// Check if blending is enabled
+		bool isBlendingEnabled() const
+			{return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;}
+
+	protected:
+		/// Used in depth passes of shadowmapping and not in other depth passes
+		/// like EarlyZ
+		bool castsShadowFlag;
+		/// The entities with blending are being rendered in blending stage and
+		/// those without in material stage
+		bool renderInBlendingStageFlag;
+		int blendingSfactor; ///< Default GL_ONE
+		int blendingDfactor; ///< Default GL_ZERO
+		bool depthTesting;
+		bool wireframe;
 };
 
 
@@ -108,10 +114,11 @@ class Material: private MaterialProperties
 
 		typedef boost::ptr_vector<MaterialVariable> VarsContainer;
 
-		typedef boost::unordered_map<BuildinMaterialVariable::BuildinVariable,
+		typedef boost::unordered_map<BuildinMaterialVariable::BuildinEnum,
 			BuildinMaterialVariable*> BuildinEnumToBuildinHashMap;
 
-		typedef Vec<RsrcPtr<ShaderProgram> > ShaderProgams;
+		typedef boost::array<BuildinMaterialVariable*,
+			BuildinMaterialVariable::BUILDINS_NUM> BuildinsArr;
 
 		//======================================================================
 		// Methods                                                             =
@@ -134,31 +141,30 @@ class Material: private MaterialProperties
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessMaterialPropertiesBaseClass)
 
-		const ShaderProgram& getColorPassShaderProgram() const
-			{return *cpShaderProg;}
-
-		const ShaderProgram& getDepthPassShaderProgram() const
-			{return *dpShaderProg;}
+		const ShaderProgram& getShaderProgram(
+			MaterialVariable::PassType p) const {return *sProgs[p];}
 
 		// Variable accessors
 		GETTER_R(VarsContainer, mtlVars, getVariables)
 		GETTER_R(Vec<UserMaterialVariable*>, userMtlVars, getUserVariables)
 		const BuildinMaterialVariable& getBuildinVariable(
-			BuildinMaterialVariable::BuildinVariable e) const;
+			BuildinMaterialVariable::BuildinEnum e) const;
 		/// @}
-
-		/// Return false if blendingSfactor is equal to GL_ONE and
-		/// blendingDfactor to GL_ZERO
-		bool isBlendingEnabled() const;
 
 		/// Load a material file
 		void load(const char* filename);
 
 		/// Check if a buildin variable exists
-		bool buildinVariableExits(BuildinMaterialVariable::BuildinVariable e)
+		bool buildinVariableExits(BuildinMaterialVariable::BuildinEnum e)
 			const {return buildinsArr[e] != NULL;}
 
 	private:
+		//======================================================================
+		// Nested                                                              =
+		//======================================================================
+
+		typedef Vec<RsrcPtr<ShaderProgram> > ShaderPrograms;
+
 		//======================================================================
 		// Members                                                             =
 		//======================================================================
@@ -169,8 +175,7 @@ class Material: private MaterialProperties
 		/// All the material variables. Both buildins and user
 		VarsContainer mtlVars;
 
-		boost::array<BuildinMaterialVariable*, BuildinMaterialVariable::BV_NUM>
-			buildinsArr; ///< To find. Initialize to int
+		BuildinsArr buildinsArr; ///< To find. Initialize to int
 
 		Vec<UserMaterialVariable*> userMtlVars; ///< To iterate
 
@@ -192,14 +197,8 @@ class Material: private MaterialProperties
 };
 
 
-inline bool Material::isBlendingEnabled() const
-{
-	return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
-}
-
-
 inline const BuildinMaterialVariable& Material::getBuildinVariable(
-	BuildinMaterialVariable::BuildinVariable e) const
+	BuildinMaterialVariable::BuildinEnum e) const
 {
 	ASSERT(buildinVariableExits(e));
 	return *buildinsArr[e];

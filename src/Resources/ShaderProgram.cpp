@@ -366,7 +366,7 @@ std::string ShaderProgram::getShaderInfoString() const
 	BOOST_FOREACH(const ShaderProgramVariable& var, vars)
 	{
 		ss << var.getName() << " " << var.getLoc() << " ";
-		if(var.getType() == ShaderProgramVariable::SVT_ATTRIBUTE)
+		if(var.getType() == ShaderProgramVariable::ATTRIBUTE)
 		{
 			ss << "attribute";
 		}

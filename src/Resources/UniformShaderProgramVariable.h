@@ -32,7 +32,7 @@ class UniformShaderProgramVariable: public ShaderProgramVariable
 inline UniformShaderProgramVariable::UniformShaderProgramVariable(
 	int loc_, const char* name_,
 	GLenum glDataType_, const ShaderProgram& fatherSProg_)
-:	ShaderProgramVariable(loc_, name_, glDataType_, SVT_UNIFORM, fatherSProg_)
+:	ShaderProgramVariable(loc_, name_, glDataType_, UNIFORM, fatherSProg_)
 {}
 
 

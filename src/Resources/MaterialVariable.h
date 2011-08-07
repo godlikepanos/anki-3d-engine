@@ -10,7 +10,6 @@
 
 
 class ShaderProgram;
-class ShaderProgramVariable;
 
 
 /// XXX
@@ -62,6 +61,10 @@ class MaterialVariable
 
 		/// Get the name of all the shader program variables
 		const char* getName() const {return oneSProgVar->getName().c_str();}
+
+		/// Get the type of all the shader program variables
+		ShaderProgramVariable::Type getShaderProgramVariableType() const
+			{return oneSProgVar->getType();}
 		/// @}
 
 	private:

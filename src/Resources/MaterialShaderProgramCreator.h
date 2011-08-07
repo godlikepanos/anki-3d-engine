@@ -113,7 +113,7 @@ class MaterialShaderProgramCreator
 		/// Used by parseShaderFileForFunctionDefinitions to skip preprocessor
 		/// definitions. Takes into account the backslashes. For example for
 		/// @code
-		/// #define lala \
+		/// #define lala \\
 		/// 	10
 		/// @endcode
 		/// it skips from define to 10

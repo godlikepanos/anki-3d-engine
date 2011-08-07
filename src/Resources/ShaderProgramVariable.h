@@ -15,14 +15,14 @@ class ShaderProgramVariable: public boost::noncopyable
 {
 	public:
 		/// Shader var types
-		enum ShaderVarType
+		enum Type
 		{
-			SVT_ATTRIBUTE, ///< SVT_ATTRIBUTE
-			SVT_UNIFORM    ///< SVT_UNIFORM
+			ATTRIBUTE,
+			UNIFORM
 		};
 
 		ShaderProgramVariable(GLint loc_, const char* name_,
-			GLenum glDataType_, ShaderVarType type_,
+			GLenum glDataType_, Type type_,
 			const ShaderProgram& fatherSProg_);
 
 		/// @name Accessors
@@ -31,7 +31,7 @@ class ShaderProgramVariable: public boost::noncopyable
 		GETTER_R(GLint, loc, getLoc)
 		GETTER_R(std::string, name, getName)
 		GETTER_R(GLenum, glDataType, getGlDataType)
-		GETTER_R(ShaderVarType, type, getType)
+		GETTER_R(Type, type, getType)
 		/// @}
 
 	private:
@@ -40,7 +40,7 @@ class ShaderProgramVariable: public boost::noncopyable
 		/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
 		/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
 		GLenum glDataType;
-		ShaderVarType type; ///< @ref SVT_ATTRIBUTE or @ref SVT_UNIFORM
+		Type type; ///< @ref ATTRIBUTE or @ref UNIFORM
 		/// We need the ShaderProg of this variable mainly for sanity checks
 		const ShaderProgram& fatherSProg;
 };
@@ -48,7 +48,7 @@ class ShaderProgramVariable: public boost::noncopyable
 
 inline ShaderProgramVariable::ShaderProgramVariable(GLint loc_,
 	const char* name_, GLenum glDataType_,
-	ShaderVarType type_, const ShaderProgram& fatherSProg_)
+	Type type_, const ShaderProgram& fatherSProg_)
 :	loc(loc_),
 	name(name_),
 	glDataType(glDataType_),

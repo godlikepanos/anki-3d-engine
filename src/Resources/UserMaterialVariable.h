@@ -4,11 +4,11 @@
 #include "MaterialVariable.h"
 #include "Math/Math.h"
 #include "RsrcPtr.h"
+#include "UniformShaderProgramVariable.h"
 #include <boost/variant.hpp>
 
 
 class Texture;
-class UniformShaderProgramVariable;
 
 
 /// XXX
@@ -57,18 +57,24 @@ class UserMaterialVariable: public MaterialVariable
 		/// @exception boost::exception when you try to get the incorrect data
 		/// type
 		template<typename Type>
-		const Type& get() const {return boost::get<Type>(data);}
+		const Type& getValue() const {return boost::get<Type>(data);}
 
+		/// Uses static cast to get the uniform
 		const UniformShaderProgramVariable&
-			getColorPassUniformShaderProgramVariable() const;
-
-		const UniformShaderProgramVariable&
-			getDepthPassUniformShaderProgramVariable() const;
+			getShaderProgramUniformVariable(PassType p) const;
 		/// @}
 
 	private:
 		DataVariant data;
 };
+
+
+inline const UniformShaderProgramVariable&
+	UserMaterialVariable::getShaderProgramUniformVariable(PassType p) const
+{
+	return static_cast<const UniformShaderProgramVariable&>(
+		getShaderProgramVariable(p));
+}
 
 
 #endif
