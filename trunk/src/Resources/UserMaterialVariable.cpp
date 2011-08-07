@@ -14,6 +14,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT);
+	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
 	data = val;
 }
 
@@ -25,6 +26,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
+	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
 	data = val;
 }
 
@@ -36,6 +38,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
+	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
 	data = val;
 }
 
@@ -47,6 +50,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
+	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
 	data = val;
 }
 
@@ -58,6 +62,7 @@ UserMaterialVariable::UserMaterialVariable(
 :	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_SAMPLER_2D);
+	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
 	data = RsrcPtr<Texture>();
 	boost::get<RsrcPtr<Texture> >(data).loadRsrc(texFilename);
 }
@@ -65,23 +70,3 @@ UserMaterialVariable::UserMaterialVariable(
 
 UserMaterialVariable::~UserMaterialVariable()
 {}
-
-
-//==============================================================================
-// Accessors                                                                   =
-//==============================================================================
-
-const UniformShaderProgramVariable&
-	UserMaterialVariable::getColorPassUniformShaderProgramVariable() const
-{
-	return static_cast<const UniformShaderProgramVariable&>(
-		getColorPassShaderProgramVariable());
-}
-
-
-const UniformShaderProgramVariable&
-	UserMaterialVariable::getDepthPassUniformShaderProgramVariable() const
-{
-	return static_cast<const UniformShaderProgramVariable&>(
-		getDepthPassShaderProgramVariable());
-}
