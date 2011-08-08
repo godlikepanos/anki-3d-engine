@@ -1,19 +1,22 @@
-#ifndef USER_MATERIAL_VARIABLE_RUNTIME_H
-#define USER_MATERIAL_VARIABLE_RUNTIME_H
+#ifndef MATERIAL_RUNTIME_VARIABLE_H
+#define MATERIAL_RUNTIME_VARIABLE_H
 
 #include "Util/Accessors.h"
 #include "Math/Math.h"
 #include "Resources/RsrcPtr.h"
+#include "Resources/material/Fwd.h"
 #include <boost/variant.hpp>
 
 
-class UserVariable;
 class Texture;
+
+
+namespace material_runtime {
 
 
 /// This holds a copy of the MtlUserDefinedVar's data in order to be changed
 /// inside the main loop
-class UserVariableRuntime
+class Variable
 {
 	public:
 		typedef const RsrcPtr<Texture>* ConstPtrRsrcPtrTexture;
@@ -25,13 +28,13 @@ class UserVariableRuntime
 			ConstPtrRsrcPtrTexture> DataVariant;
 
 		/// Constructor
-		UserVariableRuntime(const UserVariable& umv);
+		Variable(const material::UserVariable& umv);
 		/// Destructor
-		~UserVariableRuntime();
+		~Variable();
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(UserVariable, umv, getUserVariable)
+		GETTER_R(material::UserVariable, umv, getUserVariable)
 		GETTER_RW(DataVariant, data, getDataVariant)
 
 		/// Get the value of the variant
@@ -55,9 +58,9 @@ class UserVariableRuntime
 		class ConstructVisitor: public boost::static_visitor<void>
 		{
 			public:
-				UserVariableRuntime& udvr;
+				Variable& udvr;
 
-				ConstructVisitor(UserVariableRuntime& udmvr);
+				ConstructVisitor(Variable& udmvr);
 
 				/// Template method that applies to all DataVariant values
 				/// except texture resource
@@ -66,15 +69,18 @@ class UserVariableRuntime
 					{udvr.getDataVariant() = x;}
 		};
 
-		const UserVariable& umv; ///< Know the resource
+		const material::UserVariable& umv; ///< Know the resource
 		DataVariant data; /// The data
 };
 
 
-inline UserVariableRuntime::ConstructVisitor::ConstructVisitor(
-	UserVariableRuntime& udvr_)
+inline Variable::ConstructVisitor::ConstructVisitor(
+	material::UserVariable& udvr_)
 :	udvr(udvr_)
 {}
+
+
+} // end namespace
 
 
 #endif

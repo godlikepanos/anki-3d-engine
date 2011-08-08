@@ -2,6 +2,9 @@
 #include "Resources/UserVariable.h"
 
 
+namespace material_runtime {
+
+
 //==============================================================================
 // ConstructVisitor::operator() <RsrcPtr<Texture> >                            =
 //==============================================================================
@@ -54,3 +57,6 @@ void UserVariableRuntime::setValue<
 	throw EXCEPTION("You shouldn't call this setter");
 	boost::get<ConstPtrRsrcPtrTexture>(data) = v;
 }
+
+
+} // end namespace
