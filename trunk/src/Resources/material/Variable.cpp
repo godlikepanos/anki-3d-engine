@@ -1,14 +1,17 @@
-#include "MaterialVariable.h"
-#include "ShaderProgramVariable.h"
-#include "ShaderProgram.h"
+#include "Variable.h"
+#include "../shader_program/Variable.h"
+#include "../ShaderProgram.h"
 #include "Util/Assert.h"
 #include "Util/Exception.h"
+
+
+namespace material {
 
 
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-MaterialVariable::MaterialVariable(
+Variable::Variable(
 	Type type_,
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr)
@@ -44,3 +47,6 @@ MaterialVariable::MaterialVariable(
 					shaderProgVarName);
 	}
 }
+
+
+} // end namespace

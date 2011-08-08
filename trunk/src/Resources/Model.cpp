@@ -35,9 +35,13 @@ void Model::load(const char* filename)
 			const std::string& mesh = v.second.get<std::string>("mesh");
 			const std::string& material = v.second.get<std::string>("material");
 
-			ModelPatch* patch = new ModelPatch();
+			ModelPatch* patch = new ModelPatch(mesh.c_str(), material.c_str());
 			modelPatches.push_back(patch);
-			patch->load(mesh.c_str(), material.c_str());
+		}
+
+		if(modelPatches.size() < 1)
+		{
+			throw EXCEPTION("Zero number of model patches");
 		}
 
 		// Bounding volume

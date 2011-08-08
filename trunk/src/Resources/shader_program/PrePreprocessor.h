@@ -12,12 +12,15 @@ class Scanner;
 }
 
 
+namespace shader_program {
+
+
 /// Helper class used for shader program loading
 ///
 /// The class fills some of the GLSL spec deficiencies. It adds the include
 /// preprocessor directive and the support to have all the shaders in the same
 /// file. The file that includes all the shaders is called
-/// ShaderProgramPrePreprocessor-compatible.
+/// PrePreprocessor-compatible.
 ///
 /// The preprocessor pragmas are:
 ///
@@ -26,17 +29,17 @@ class Scanner;
 /// - #pragma anki transformFeedbackVarying <varName>
 ///
 /// @note The order of the *ShaderBegins is important
-class ShaderProgramPrePreprocessor
+class PrePreprocessor
 {
 	public:
 		/// It loads a file and parses it
 		/// @param[in] filename The file to load
 		/// @exception Exception
-		ShaderProgramPrePreprocessor(const char* filename)
+		PrePreprocessor(const char* filename)
 			{parseFile(filename);}
 
 		/// Destructor does nothing
-		~ShaderProgramPrePreprocessor() {}
+		~PrePreprocessor() {}
 
 		/// @name Accessors
 		/// @{
@@ -71,7 +74,7 @@ class ShaderProgramPrePreprocessor
 	
 		struct CodeBeginningPragma: Pragma
 		{
-			/// The line number in the ShaderProgramPrePreprocessor-compatible
+			/// The line number in the PrePreprocessor-compatible
 			/// file
 			int globalLine;
 
@@ -81,7 +84,7 @@ class ShaderProgramPrePreprocessor
 		/// The output of the class packed in this struct
 		struct Output
 		{
-			friend class ShaderProgramPrePreprocessor;
+			friend class PrePreprocessor;
 
 			/// Names and and ids for transform feedback varyings
 			Vec<TrffbVaryingPragma> trffbVaryings;
@@ -97,7 +100,7 @@ class ShaderProgramPrePreprocessor
 		CodeBeginningPragma geomShaderBegins;
 		CodeBeginningPragma fragShaderBegins;
 
-		/// Parse a ShaderProgramPrePreprocessor formated GLSL file. Use
+		/// Parse a PrePreprocessor formated GLSL file. Use
 		/// the accessors to get the output
 		/// @param filename The file to parse
 		/// @exception Ecxeption
@@ -144,14 +147,14 @@ class ShaderProgramPrePreprocessor
 // Inlines                                                                     =
 //==============================================================================
 
-inline ShaderProgramPrePreprocessor::Pragma::Pragma(
+inline PrePreprocessor::Pragma::Pragma(
 	const std::string& definedInFile_, int definedInLine_)
 :	definedInFile(definedInFile_),
 	definedInLine(definedInLine_)
 {}
 
 
-inline ShaderProgramPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
+inline PrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
 	const std::string& definedInFile_,
 	int definedInLine_, const std::string& name_)
 :	Pragma(definedInFile_, definedInLine_),
@@ -160,7 +163,7 @@ inline ShaderProgramPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
 
 
 template<typename Type>
-typename Vec<Type>::const_iterator ShaderProgramPrePreprocessor::findNamed(
+typename Vec<Type>::const_iterator PrePreprocessor::findNamed(
 	const Vec<Type>& vec, const std::string& what) const
 {
 	typename Vec<Type>::const_iterator it = vec.begin();
@@ -170,6 +173,9 @@ typename Vec<Type>::const_iterator ShaderProgramPrePreprocessor::findNamed(
 	}
 	return it;
 }
+
+
+} // end namespace
 
 
 #endif

@@ -27,7 +27,7 @@ class PatchNode: public RenderableNode
 		/// @name Accessors
 		/// @{
 		MaterialRuntime& getMaterialRuntime() {return *mtlRun;}
-		const MaterialRuntime& getCpMtlRun() const {return *cpMtlRun;}
+		const MaterialRuntime& getMaterialRuntime() const {return *mtlRun;}
 
 		const ModelPatch& getModelPatchRsrc() const {return rsrc;}
 		const Vao& getCpVao() const {return cpVao;}
@@ -43,8 +43,7 @@ class PatchNode: public RenderableNode
 		/// VAO for MS and BS. All VBOs could be attached except for the
 		/// vert weights
 		Vao cpVao;
-		boost::scoped_ptr<MaterialRuntime> cpMtlRun;
-		boost::scoped_ptr<MaterialRuntime> dpMtlRun;
+		boost::scoped_ptr<MaterialRuntime> mtlRun;
 
 		/// Create a VAO given a material and an array of VBOs
 		static void createVao(const Material& material,

@@ -1,12 +1,12 @@
-#include "UserMaterialVariableRuntime.h"
-#include "Resources/UserMaterialVariable.h"
+#include "UserVariableRuntime.h"
+#include "Resources/UserVariable.h"
 
 
 //==============================================================================
 // ConstructVisitor::operator() <RsrcPtr<Texture> >                            =
 //==============================================================================
 template <>
-void UserMaterialVariableRuntime::ConstructVisitor::
+void UserVariableRuntime::ConstructVisitor::
 	operator()<RsrcPtr<Texture> >(const RsrcPtr<Texture>& x) const
 {
 	udvr.data = &x;
@@ -16,8 +16,8 @@ void UserMaterialVariableRuntime::ConstructVisitor::
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-UserMaterialVariableRuntime::UserMaterialVariableRuntime(
-	const UserMaterialVariable& umv_)
+UserVariableRuntime::UserVariableRuntime(
+	const UserVariable& umv_)
 :	umv(umv_)
 {
 	// Initialize the data using a visitor
@@ -28,7 +28,7 @@ UserMaterialVariableRuntime::UserMaterialVariableRuntime(
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
-UserMaterialVariableRuntime::~UserMaterialVariableRuntime()
+UserVariableRuntime::~UserVariableRuntime()
 {}
 
 
@@ -37,9 +37,9 @@ UserMaterialVariableRuntime::~UserMaterialVariableRuntime()
 //==============================================================================
 
 template<>
-UserMaterialVariableRuntime::ConstPtrRsrcPtrTexture&
-	UserMaterialVariableRuntime::getValue<
-	UserMaterialVariableRuntime::ConstPtrRsrcPtrTexture>()
+UserVariableRuntime::ConstPtrRsrcPtrTexture&
+	UserVariableRuntime::getValue<
+	UserVariableRuntime::ConstPtrRsrcPtrTexture>()
 {
 	throw EXCEPTION("You shouldn't call this getter");
 	return boost::get<ConstPtrRsrcPtrTexture>(data);
@@ -47,8 +47,8 @@ UserMaterialVariableRuntime::ConstPtrRsrcPtrTexture&
 
 
 template<>
-void UserMaterialVariableRuntime::setValue<
-	UserMaterialVariableRuntime::ConstPtrRsrcPtrTexture>(
+void UserVariableRuntime::setValue<
+	UserVariableRuntime::ConstPtrRsrcPtrTexture>(
 	const ConstPtrRsrcPtrTexture& v)
 {
 	throw EXCEPTION("You shouldn't call this setter");

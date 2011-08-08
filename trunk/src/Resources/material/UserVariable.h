@@ -1,18 +1,21 @@
-#ifndef USER_MATERIAL_VARIABLE_H
-#define USER_MATERIAL_VARIABLE_H
+#ifndef MATERIAL_USER_VARIABLE_H
+#define MATERIAL_USER_VARIABLE_H
 
-#include "MaterialVariable.h"
+#include "Variable.h"
 #include "Math/Math.h"
-#include "RsrcPtr.h"
-#include "UniformShaderProgramVariable.h"
+#include "../RsrcPtr.h"
+#include "../shader_program/UniformVariable.h"
 #include <boost/variant.hpp>
 
 
 class Texture;
 
 
+namespace material {
+
+
 /// XXX
-class UserMaterialVariable: public MaterialVariable
+class UserVariable: public Variable
 {
 	public:
 		/// The data union
@@ -21,32 +24,32 @@ class UserMaterialVariable: public MaterialVariable
 
 		/// @name Constructors & destructor
 		/// @{
-		UserMaterialVariable(
+		UserVariable(
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr,
 			float val);
 
-		UserMaterialVariable(
+		UserVariable(
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr,
 			const Vec2& val);
 
-		UserMaterialVariable(
+		UserVariable(
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr,
 			const Vec3& val);
 
-		UserMaterialVariable(
+		UserVariable(
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr,
 			const Vec4& val);
 
-		UserMaterialVariable(
+		UserVariable(
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr,
 			const char* texFilename);
 
-		~UserMaterialVariable();
+		~UserVariable();
 		/// @}
 
 		/// @name Accessors
@@ -60,7 +63,7 @@ class UserMaterialVariable: public MaterialVariable
 		const Type& getValue() const {return boost::get<Type>(data);}
 
 		/// Uses static cast to get the uniform
-		const UniformShaderProgramVariable&
+		const shader_program::UniformVariable&
 			getShaderProgramUniformVariable(PassType p) const;
 		/// @}
 
@@ -69,12 +72,15 @@ class UserMaterialVariable: public MaterialVariable
 };
 
 
-inline const UniformShaderProgramVariable&
-	UserMaterialVariable::getShaderProgramUniformVariable(PassType p) const
+inline const shader_program::UniformVariable&
+	UserVariable::getShaderProgramUniformVariable(PassType p) const
 {
-	return static_cast<const UniformShaderProgramVariable&>(
+	return static_cast<const shader_program::UniformVariable&>(
 		getShaderProgramVariable(p));
 }
+
+
+} // end namespace
 
 
 #endif

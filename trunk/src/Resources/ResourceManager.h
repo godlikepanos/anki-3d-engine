@@ -12,8 +12,8 @@
 
 class Texture;
 class ShaderProgram;
-class Material;
 class Mesh;
+class Material;
 class Skeleton;
 class SkelAnim;
 class LightRsrc;

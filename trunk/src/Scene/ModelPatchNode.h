@@ -17,7 +17,6 @@ class ModelPatchNode: public PatchNode
 		GETTER_R(Col::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 
 		virtual void moveUpdate(); ///< Update the visibility shape
-		virtual void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 	private:
 		const ModelPatch& modelPatch;
