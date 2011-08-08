@@ -9,7 +9,8 @@ class Material;
 class MaterialRuntime;
 
 
-/// Abstract class that acts as an interface for the renderable objects of the scene
+/// Abstract class that acts as an interface for the renderable objects of the
+/// scene
 class RenderableNode: public SceneNode
 {
 	public:
@@ -17,16 +18,14 @@ class RenderableNode: public SceneNode
 
 		virtual const Vao& getCpVao() const = 0; ///< Get color pass VAO
 		virtual const Vao& getDpVao() const = 0; ///< Get depth pass VAO
+
 		/// Get vert ids number for rendering
 		virtual uint getVertIdsNum() const = 0;
-		/// Get color pass material
-		virtual const Material& getCpMtl() const = 0;
-		/// Get depth pass material
-		virtual const Material& getDpMtl() const = 0;
-		virtual MaterialRuntime& getCpMtlRun() = 0;
-		virtual MaterialRuntime& getDpMtlRun() = 0;
-		virtual const MaterialRuntime& getCpMtlRun() const = 0;
-		virtual const MaterialRuntime& getDpMtlRun() const = 0;
+
+		virtual const Material& getMaterial() const = 0;
+
+		virtual MaterialRuntime& getMaterialRuntime() = 0;
+		virtual const MaterialRuntime& getMaterialRuntime() const = 0;
 };
 
 

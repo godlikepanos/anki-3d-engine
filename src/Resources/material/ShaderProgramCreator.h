@@ -14,12 +14,15 @@ class Scanner;
 }
 
 
+namespace material {
+
+
 /// XXX
-class MaterialShaderProgramCreator
+class ShaderProgramCreator
 {
 	public:
-		MaterialShaderProgramCreator(const boost::property_tree::ptree& pt);
-		~MaterialShaderProgramCreator();
+		ShaderProgramCreator(const boost::property_tree::ptree& pt);
+		~ShaderProgramCreator();
 
 		/// XXX
 		const std::string& getShaderProgramSource() const {return source;}
@@ -139,5 +142,7 @@ class MaterialShaderProgramCreator
 		void parseOperatorTag(const boost::property_tree::ptree& pt);
 };
 
+
+} // end namespace
 
 #endif

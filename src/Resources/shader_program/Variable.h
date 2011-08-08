@@ -1,17 +1,18 @@
 #ifndef SHADER_PROGRAM_VARIABLE_H
 #define SHADER_PROGRAM_VARIABLE_H
 
+#include "Util/Accessors.h"
 #include <GL/glew.h>
 #include <string>
 #include <boost/noncopyable.hpp>
-#include "Util/Accessors.h"
+#include "Fwd.h"
 
 
-class ShaderProgram;
+namespace shader_program {
 
 
 /// Shader program variable. The type is attribute or uniform
-class ShaderProgramVariable: public boost::noncopyable
+class Variable: public boost::noncopyable
 {
 	public:
 		/// Shader var types
@@ -21,12 +22,14 @@ class ShaderProgramVariable: public boost::noncopyable
 			UNIFORM
 		};
 
-		ShaderProgramVariable(GLint loc_, const char* name_,
-			GLenum glDataType_, Type type_,
-			const ShaderProgram& fatherSProg_);
+		Variable(GLint loc, const char* name,
+			GLenum glDataType, Type type,
+			const ShaderProgram& fatherSProg);
 
 		/// @name Accessors
 		/// @{
+
+		/// XXX: refactor
 		const ShaderProgram& getFatherSProg() const {return fatherSProg;}
 		GETTER_R(GLint, loc, getLoc)
 		GETTER_R(std::string, name, getName)
@@ -46,15 +49,18 @@ class ShaderProgramVariable: public boost::noncopyable
 };
 
 
-inline ShaderProgramVariable::ShaderProgramVariable(GLint loc_,
+inline Variable::Variable(GLint loc_,
 	const char* name_, GLenum glDataType_,
-	Type type_, const ShaderProgram& fatherSProg_)
+	Type type_, const ShaderProgram& fatherSHADER_PROGRAM_)
 :	loc(loc_),
 	name(name_),
 	glDataType(glDataType_),
 	type(type_),
-	fatherSProg(fatherSProg_)
+	fatherSProg(fatherSHADER_PROGRAM_)
 {}
+
+
+} // end namespace
 
 
 #endif

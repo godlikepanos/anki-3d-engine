@@ -1,13 +1,16 @@
-#ifndef BUILDIN_MATERIAL_VARIABLE_H
-#define BUILDIN_MATERIAL_VARIABLE_H
+#ifndef MATERIAL_BUILDIN_VARIABLE_H
+#define MATERIAL_BUILDIN_VARIABLE_H
 
-#include "MaterialVariable.h"
+#include "Variable.h"
 #include "Util/ConstCharPtrHashMap.h"
 #include <boost/array.hpp>
 
 
+namespace material {
+
+
 /// XXX
-class BuildinMaterialVariable: public MaterialVariable
+class BuildinVariable: public Variable
 {
 	public:
 		/// Standard attribute variables that are acceptable inside the
@@ -44,7 +47,7 @@ class BuildinMaterialVariable: public MaterialVariable
 			BUILDINS_NUM ///< The number of all buildin variables
 		};
 
-		BuildinMaterialVariable(
+		BuildinVariable(
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr);
 
@@ -63,5 +66,7 @@ class BuildinMaterialVariable: public MaterialVariable
 		BuildinEnum bEnum;
 };
 
+
+} // end namespace
 
 #endif

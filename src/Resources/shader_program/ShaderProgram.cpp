@@ -1,5 +1,5 @@
 #include "Resources/ShaderProgram.h"
-#include "ShaderProgramPrePreprocessor.h"
+#include "PrePreprocessor.h"
 #include "Core/App.h" // To get cache dir
 #include "GfxApi/GlException.h"
 #include "Core/Logger.h"
@@ -14,7 +14,10 @@
 #include <sstream>
 
 
-#define SPROG_EXCEPTION(x) EXCEPTION("Shader prog \"" + rsrcFilename + \
+namespace shader_program {
+
+
+#define SHADER_PROGRAM_EXCEPTION(x) EXCEPTION("Shader prog \"" + rsrcFilename + \
 	"\": " + x)
 
 
@@ -85,7 +88,7 @@ uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 			default:
 				ASSERT(0); // Not supported
 		}
-		throw SPROG_EXCEPTION(shaderType + " compiler error log follows:\n"
+		throw SHADER_PROGRAM_EXCEPTION(shaderType + " compiler error log follows:\n"
 			"===================================\n" +
 			&infoLog[0] +
 			"\n===================================\n" + sourceCode);
@@ -117,7 +120,7 @@ void ShaderProgram::link() const
 
 		infoLogTxt.resize(info_len + 1);
 		glGetProgramInfoLog(glId, info_len, &charsWritten, &infoLogTxt[0]);
-		throw SPROG_EXCEPTION("Link error log follows:\n" + infoLogTxt);
+		throw SHADER_PROGRAM_EXCEPTION("Link error log follows:\n" + infoLogTxt);
 	}
 }
 
@@ -152,8 +155,8 @@ void ShaderProgram::getUniAndAttribVars()
 			continue;
 		}
 
-		AttributeShaderProgramVariable* var =
-			new AttributeShaderProgramVariable(loc, &name_[0], type, *this);
+		AttributeVariable* var =
+			new AttributeVariable(loc, &name_[0], type, *this);
 		vars.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToAttribVar[var->getName().c_str()] = var;
@@ -178,8 +181,8 @@ void ShaderProgram::getUniAndAttribVars()
 			continue;
 		}
 
-		UniformShaderProgramVariable* var =
-			new UniformShaderProgramVariable(loc, &name_[0], type, *this);
+		UniformVariable* var =
+			new UniformVariable(loc, &name_[0], type, *this);
 		vars.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToUniVar[var->getName().c_str()] = var;
@@ -195,7 +198,7 @@ void ShaderProgram::load(const char* filename)
 	rsrcFilename = filename;
 	ASSERT(glId == std::numeric_limits<uint>::max());
 
-	ShaderProgramPrePreprocessor pars(filename);
+	PrePreprocessor pars(filename);
 
 	// 1) create and compile the shaders
 	std::string preprocSource = stdSourceCode;
@@ -213,7 +216,7 @@ void ShaderProgram::load(const char* filename)
 	glId = glCreateProgram();
 	if(glId == 0)
 	{
-		throw SPROG_EXCEPTION("glCreateProgram failed");
+		throw SHADER_PROGRAM_EXCEPTION("glCreateProgram failed");
 	}
 	glAttachShader(glId, vertShaderGlId);
 	glAttachShader(glId, fragShaderGlId);
@@ -242,12 +245,12 @@ void ShaderProgram::load(const char* filename)
 //==============================================================================
 // getVariable                                                                 =
 //==============================================================================
-const ShaderProgramVariable& ShaderProgram::getVariable(const char* name) const
+const Variable& ShaderProgram::getVariable(const char* name) const
 {
 	VarsHashMap::const_iterator it = nameToVar.find(name);
 	if(it == nameToVar.end())
 	{
-		throw SPROG_EXCEPTION("Cannot get variable: " + name);
+		throw SHADER_PROGRAM_EXCEPTION("Cannot get variable: " + name);
 	}
 	return *(it->second);
 }
@@ -256,13 +259,13 @@ const ShaderProgramVariable& ShaderProgram::getVariable(const char* name) const
 //==============================================================================
 // getAttributeVariable                                                        =
 //==============================================================================
-const AttributeShaderProgramVariable& ShaderProgram::getAttributeVariable(
+const AttributeVariable& ShaderProgram::getAttributeVariable(
 	const char* name) const
 {
 	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
 	if(it == nameToAttribVar.end())
 	{
-		throw SPROG_EXCEPTION("Cannot get attribute loc: " + name);
+		throw SHADER_PROGRAM_EXCEPTION("Cannot get attribute loc: " + name);
 	}
 	return *(it->second);
 }
@@ -271,13 +274,13 @@ const AttributeShaderProgramVariable& ShaderProgram::getAttributeVariable(
 //==============================================================================
 // getUniformVariable                                                          =
 //==============================================================================
-const UniformShaderProgramVariable& ShaderProgram::getUniformVariable(
+const UniformVariable& ShaderProgram::getUniformVariable(
 	const char* name) const
 {
 	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
 	if(it == nameToUniVar.end())
 	{
-		throw SPROG_EXCEPTION("Cannot get uniform loc: " + name);
+		throw SHADER_PROGRAM_EXCEPTION("Cannot get uniform loc: " + name);
 	}
 	return *(it->second);
 }
@@ -363,10 +366,10 @@ std::string ShaderProgram::getShaderInfoString() const
 	std::stringstream ss;
 
 	ss << "Variables:\n";
-	BOOST_FOREACH(const ShaderProgramVariable& var, vars)
+	BOOST_FOREACH(const Variable& var, vars)
 	{
 		ss << var.getName() << " " << var.getLoc() << " ";
-		if(var.getType() == ShaderProgramVariable::ATTRIBUTE)
+		if(var.getType() == Variable::ATTRIBUTE)
 		{
 			ss << "attribute";
 		}
@@ -380,3 +383,5 @@ std::string ShaderProgram::getShaderInfoString() const
 	return ss.str();
 }
 
+
+} // end namespace

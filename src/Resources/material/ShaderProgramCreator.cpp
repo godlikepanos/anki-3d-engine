@@ -1,10 +1,13 @@
-#include "MaterialShaderProgramCreator.h"
+#include "ShaderProgramCreator.h"
 #include "Util/Scanner/Scanner.h"
 #include "Misc/Parser.h"
-#include "BuildinMaterialVariable.h"
+#include "BuildinVariable.h"
 #include <boost/assign/list_of.hpp>
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
+
+
+namespace material {
 
 
 //==============================================================================
@@ -12,7 +15,7 @@
 //==============================================================================
 
 boost::unordered_map<GLenum, const char*>
-MaterialShaderProgramCreator::glTypeToTxt = boost::assign::map_list_of
+ShaderProgramCreator::glTypeToTxt = boost::assign::map_list_of
 	(GL_FLOAT, "float")
 	(GL_FLOAT_VEC2, "vec2")
 	(GL_FLOAT_VEC3, "vec3")
@@ -23,7 +26,7 @@ MaterialShaderProgramCreator::glTypeToTxt = boost::assign::map_list_of
 	(GL_NONE, "void");
 
 
-ConstCharPtrHashMap<GLenum>::Type MaterialShaderProgramCreator::txtToGlType =
+ConstCharPtrHashMap<GLenum>::Type ShaderProgramCreator::txtToGlType =
 	boost::assign::map_list_of
 	("float", GL_FLOAT)
 	("vec2", GL_FLOAT_VEC2)
@@ -35,22 +38,22 @@ ConstCharPtrHashMap<GLenum>::Type MaterialShaderProgramCreator::txtToGlType =
 	("void", GL_NONE);
 
 
-boost::unordered_map<MaterialShaderProgramCreator::ArgQualifier, const char*>
-	MaterialShaderProgramCreator::argQualifierToTxt = boost::assign::map_list_of
+boost::unordered_map<ShaderProgramCreator::ArgQualifier, const char*>
+	ShaderProgramCreator::argQualifierToTxt = boost::assign::map_list_of
 	(AQ_IN, "in")
 	(AQ_OUT, "out")
 	(AQ_INOUT, "inout");
 
 
-ConstCharPtrHashMap<MaterialShaderProgramCreator::ArgQualifier>::Type
-	MaterialShaderProgramCreator::txtToArgQualifier = boost::assign::map_list_of
+ConstCharPtrHashMap<ShaderProgramCreator::ArgQualifier>::Type
+	ShaderProgramCreator::txtToArgQualifier = boost::assign::map_list_of
 	("in", AQ_IN)
 	("out", AQ_OUT)
 	("inout", AQ_INOUT);
 
 
 ConstCharPtrHashMap<GLenum>::Type
-	MaterialShaderProgramCreator::varyingNameToGlType =
+	ShaderProgramCreator::varyingNameToGlType =
 	boost::assign::map_list_of
 	("vTexCoords", GL_FLOAT_VEC2)
 	("vNormal", GL_FLOAT_VEC3)
@@ -62,7 +65,7 @@ ConstCharPtrHashMap<GLenum>::Type
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-MaterialShaderProgramCreator::MaterialShaderProgramCreator(
+ShaderProgramCreator::ShaderProgramCreator(
 	const boost::property_tree::ptree& pt)
 {
 	parseShaderProgramTag(pt);
@@ -72,14 +75,14 @@ MaterialShaderProgramCreator::MaterialShaderProgramCreator(
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
-MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
+ShaderProgramCreator::~ShaderProgramCreator()
 {}
 
 
 //==============================================================================
 // parseShaderFileForFunctionDefinitions                                       =
 //==============================================================================
-void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
+void ShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 	const char* filename)
 {
 	Scanner::Scanner scanner(filename, false);
@@ -274,7 +277,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 //==============================================================================
 // parseUntilNewline                                                           =
 //==============================================================================
-void MaterialShaderProgramCreator::parseUntilNewline(Scanner::Scanner& scanner)
+void ShaderProgramCreator::parseUntilNewline(Scanner::Scanner& scanner)
 {
 	const Scanner::Token* token = &scanner.getCrntToken();
 	Scanner::TokenCode prevTc;
@@ -300,7 +303,7 @@ void MaterialShaderProgramCreator::parseUntilNewline(Scanner::Scanner& scanner)
 //==============================================================================
 // getNextTokenAndSkipNewlines                                                 =
 //==============================================================================
-void MaterialShaderProgramCreator::getNextTokenAndSkipNewlines(
+void ShaderProgramCreator::getNextTokenAndSkipNewlines(
 	Scanner::Scanner& scanner)
 {
 	const Scanner::Token* token;
@@ -319,7 +322,7 @@ void MaterialShaderProgramCreator::getNextTokenAndSkipNewlines(
 //==============================================================================
 // parseShaderProgramTag                                                       =
 //==============================================================================
-void MaterialShaderProgramCreator::parseShaderProgramTag(
+void ShaderProgramCreator::parseShaderProgramTag(
 	const boost::property_tree::ptree& pt)
 {
 	usingTexCoordsAttrib = usingNormalAttrib = usingTangentAttrib = false;
@@ -432,7 +435,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 //==============================================================================
 // parseInputTag                                                               =
 //==============================================================================
-void MaterialShaderProgramCreator::parseInputTag(
+void ShaderProgramCreator::parseInputTag(
 	const boost::property_tree::ptree& pt, std::string& line)
 {
 	using namespace boost::property_tree;
@@ -444,9 +447,9 @@ void MaterialShaderProgramCreator::parseInputTag(
 	// Buildin or varying
 	if(!valuePt)
 	{
-		BuildinMaterialVariable::BuildinVariable tmp;
+		BuildinVariable::BuildinEnum tmp;
 
-		if(BuildinMaterialVariable::isBuildin(name.c_str(), &tmp, &glType))
+		if(BuildinVariable::isBuildin(name.c_str(), &tmp, &glType))
 		{
 			const char* glTypeTxt = glTypeToTxt.at(glType);
 			line += "uniform ";
@@ -509,7 +512,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 //==============================================================================
 // parseOperatorTag                                                            =
 //==============================================================================
-void MaterialShaderProgramCreator::parseOperatorTag(
+void ShaderProgramCreator::parseOperatorTag(
 	const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
@@ -576,8 +579,11 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 //==============================================================================
 // compareStrings                                                              =
 //==============================================================================
-bool MaterialShaderProgramCreator::compareStrings(
+bool ShaderProgramCreator::compareStrings(
 	const std::string& a, const std::string& b)
 {
 	return a < b;
 }
+
+
+} // end namespace

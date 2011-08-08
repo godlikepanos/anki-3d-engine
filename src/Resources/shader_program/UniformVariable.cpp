@@ -1,27 +1,32 @@
-#include "UniformShaderProgramVariable.h"
+#include "UniformVariable.h"
 #include "Resources/ShaderProgram.h"
 #include "Resources/Texture.h"
 #include "GfxApi/GlStateMachine.h"
 
 
+namespace shader_program {
+
+
+//==============================================================================
+// doSanityChecks                                                              =
+//==============================================================================
+void UniformVariable::doSanityChecks() const
+{
+	ASSERT(getLoc() != -1);
+	ASSERT(GlStateMachineSingleton::getInstance().getCurrentProgramGlId() ==
+		getFatherSProg().getGlId());
+	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(),
+		getName().c_str()) == getLoc());
+}
+
+
 //==============================================================================
 // set uniforms                                                                =
 //==============================================================================
-/// Standard set uniform checks
-/// - Check if initialized
-/// - if the current shader program is the var's shader program
-/// - if the GL driver gives the same location as the one the var has
-#define STD_SET_UNI_CHECK() \
-	ASSERT(getLoc() != -1); \
-	ASSERT(GlStateMachineSingleton::getInstance().getCurrentProgramGlId() == \
-		getFatherSProg().getGlId()); \
-	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(), \
-		getName().c_str()) == getLoc());
 
-
-void UniformShaderProgramVariable::set(const float f[], uint size) const
+void UniformVariable::set(const float f[], uint size) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_FLOAT);
 
 	if(size == 1)
@@ -34,9 +39,10 @@ void UniformShaderProgramVariable::set(const float f[], uint size) const
 	}
 }
 
-void UniformShaderProgramVariable::set(const Vec2 v2[], uint size) const
+
+void UniformVariable::set(const Vec2 v2[], uint size) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
 	if(size == 1)
 	{
@@ -48,9 +54,10 @@ void UniformShaderProgramVariable::set(const Vec2 v2[], uint size) const
 	}
 }
 
-void UniformShaderProgramVariable::set(const Vec3 v3[], uint size) const
+
+void UniformVariable::set(const Vec3 v3[], uint size) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
 
 	if(size == 1)
@@ -63,32 +70,39 @@ void UniformShaderProgramVariable::set(const Vec3 v3[], uint size) const
 	}
 }
 
-void UniformShaderProgramVariable::set(const Vec4 v4[], uint size) const
+
+void UniformVariable::set(const Vec4 v4[], uint size) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
 	glUniform4fv(getLoc(), size, &(const_cast<Vec4&>(v4[0]))[0]);
 }
 
-void UniformShaderProgramVariable::set(const Mat3 m3[], uint size) const
+
+void UniformVariable::set(const Mat3 m3[], uint size) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_FLOAT_MAT3);
 	glUniformMatrix3fv(getLoc(), size, true, &(m3[0])[0]);
 }
 
-void UniformShaderProgramVariable::set(const Mat4 m4[], uint size) const
+
+void UniformVariable::set(const Mat4 m4[], uint size) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_FLOAT_MAT4);
 	glUniformMatrix4fv(getLoc(), size, true, &(m4[0])[0]);
 }
 
-void UniformShaderProgramVariable::set(const Texture& tex, uint texUnit) const
+
+void UniformVariable::set(const Texture& tex, uint texUnit) const
 {
-	STD_SET_UNI_CHECK();
+	doSanityChecks();
 	ASSERT(getGlDataType() == GL_SAMPLER_2D ||
 		getGlDataType() == GL_SAMPLER_2D_SHADOW);
 	tex.bind(texUnit);
 	glUniform1i(getLoc(), texUnit);
 }
+
+
+} // end namespace

@@ -1,16 +1,19 @@
 #include "Material.h"
-#include "MaterialVariable.h"
+#include "Variable.h"
 #include "Misc/PropertyTree.h"
-#include "MaterialShaderProgramCreator.h"
+#include "ShaderProgramCreator.h"
 #include "Core/App.h"
 #include "Core/Globals.h"
-#include "ShaderProgram.h"
+#include "../ShaderProgram.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/functional/hash.hpp>
 #include <algorithm>
+
+
+namespace material {
 
 
 //==============================================================================
@@ -51,7 +54,7 @@ Material::Material()
 
 	// Reset tha array
 	std::fill(buildinsArr.begin(), buildinsArr.end(),
-		static_cast<BuildinMaterialVariable*>(NULL));
+		static_cast<BuildinVariable*>(NULL));
 }
 
 
@@ -171,19 +174,17 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	//
 	// shaderProgram
 	//
-	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
+	ShaderProgramCreator mspc(pt.get_child("shaderProgram"));
 
-	std::string cpSrc = "#define COLOR_PASS\n" + mspc.getShaderProgramSource();
-	std::string dpSrc = "#define DEPTH_PASS\n" + mspc.getShaderProgramSource();
+	for(uint i = 0; i < PASS_TYPES_NUM; i++)
+	{
+		std::string src = std::string("#define ") + passNames[i] + "\n" +
+			mspc.getShaderProgramSource();
 
-	std::string cfile = createShaderProgSourceToCache(cpSrc);
-	std::string dfile = createShaderProgSourceToCache(dpSrc);
+		std::string filename = createShaderProgSourceToCache(src);
 
-	sProgs[MaterialVariable::COLOR_PASS].loadRsrc(cfile.c_str());
-	sProgs[MaterialVariable::DEPTH_PASS].loadRsrc(dfile.c_str());
-
-	/*INFO(cpShaderProg->getShaderInfoString());
-	INFO(dpShaderProg->getShaderInfoString());*/
+		sProgs[i].loadRsrc(filename.c_str());
+	}
 
 	populateVariables(pt.get_child("shaderProgram.inputs"));
 }
@@ -237,7 +238,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 	BOOST_FOREACH(const RsrcPtr<ShaderProgram>& sProg, sProgs)
 	{
-		BOOST_FOREACH(const ShaderProgramVariable& v, sProg->getVariables())
+		BOOST_FOREACH(const shader_program::Variable& v, sProg->getVariables())
 		{
 			allVarNames[v.getName()] = v.getGlDataType();
 		}
@@ -246,8 +247,8 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	//
 	// Iterate shader program variables
 	//
-	MaterialVariable::ShaderPrograms sProgs_;
-	for(uint i = 0; i < MaterialVariable::PASS_TYPES_NUM; i++)
+	Variable::ShaderPrograms sProgs_;
+	for(uint i = 0; i < PASS_TYPES_NUM; i++)
 	{
 		sProgs_[i] = sProgs[i].get();
 	}
@@ -259,10 +260,10 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		GLenum dataType = it->second;
 
 		// Buildin?
-		if(BuildinMaterialVariable::isBuildin(svName))
+		if(BuildinVariable::isBuildin(svName))
 		{
-			BuildinMaterialVariable* v =
-				new BuildinMaterialVariable(svName, sProgs_);
+			BuildinVariable* v =
+				new BuildinVariable(svName, sProgs_);
 
 			mtlVars.push_back(v);
 			buildinsArr[v->getVariableEnum()] = v;
@@ -292,33 +293,33 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 					svName);
 			}
 
-			UserMaterialVariable* v = NULL;
+			UserVariable* v = NULL;
 			// Get the value
 			switch(dataType)
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					v = new UserMaterialVariable(svName, sProgs_,
+					v = new UserVariable(svName, sProgs_,
 						valuePt->get<std::string>("sampler2D").c_str());
 					break;
 				// float
 				case GL_FLOAT:
-					v = new UserMaterialVariable(svName, sProgs_,
+					v = new UserVariable(svName, sProgs_,
 						PropertyTree::getFloat(*valuePt));
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					v = new UserMaterialVariable(svName, sProgs_,
+					v = new UserVariable(svName, sProgs_,
 						PropertyTree::getVec2(*valuePt));
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					v = new UserMaterialVariable(svName, sProgs_,
+					v = new UserVariable(svName, sProgs_,
 						PropertyTree::getVec3(*valuePt));
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					v = new UserMaterialVariable(svName, sProgs_,
+					v = new UserVariable(svName, sProgs_,
 						PropertyTree::getVec4(*valuePt));
 					break;
 				// default is error
@@ -331,3 +332,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		}
 	} // end for all sprog vars
 }
+
+
+} // end namespace

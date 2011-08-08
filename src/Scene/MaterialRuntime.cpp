@@ -1,6 +1,6 @@
 #include "MaterialRuntime.h"
 #include "Resources/Material.h"
-#include "UserMaterialVariableRuntime.h"
+#include "UserVariableRuntime.h"
 #include <boost/foreach.hpp>
 
 
@@ -16,12 +16,12 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_)
 	me = he;
 
 	// Create vars
-	BOOST_FOREACH(const UserMaterialVariable* var, mtl.getUserVariables())
+	BOOST_FOREACH(const UserVariable* var, mtl.getUserVariables())
 	{
-		UserMaterialVariableRuntime* varr =
-			new UserMaterialVariableRuntime(*var);
+		UserVariableRuntime* varr =
+			new UserVariableRuntime(*var);
 		vars.push_back(varr);
-		varNameToVar[varr->getUserMaterialVariable().getName().c_str()] = varr;
+		varNameToVar[varr->getUserVariable().getName().c_str()] = varr;
 	}
 }
 
@@ -36,10 +36,10 @@ MaterialRuntime::~MaterialRuntime()
 //==============================================================================
 // findVariableByName                                                          =
 //==============================================================================
-UserMaterialVariableRuntime& MaterialRuntime::findVariableByName(
+UserVariableRuntime& MaterialRuntime::findVariableByName(
 	const char* name)
 {
-	ConstCharPtrHashMap<UserMaterialVariableRuntime*>::Type::iterator it =
+	ConstCharPtrHashMap<UserVariableRuntime*>::Type::iterator it =
 		varNameToVar.find(name);
 	if(it == varNameToVar.end())
 	{
@@ -53,10 +53,10 @@ UserMaterialVariableRuntime& MaterialRuntime::findVariableByName(
 //==============================================================================
 // findVariableByName                                                          =
 //==============================================================================
-const UserMaterialVariableRuntime& MaterialRuntime::findVariableByName(
+const UserVariableRuntime& MaterialRuntime::findVariableByName(
 	const char* name) const
 {
-	ConstCharPtrHashMap<UserMaterialVariableRuntime*>::Type::const_iterator
+	ConstCharPtrHashMap<UserVariableRuntime*>::Type::const_iterator
 		it = varNameToVar.find(name);
 	if(it == varNameToVar.end())
 	{

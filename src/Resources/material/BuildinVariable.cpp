@@ -1,4 +1,4 @@
-#include "BuildinMaterialVariable.h"
+#include "BuildinVariable.h"
 #include "Util/Exception.h"
 #include "Util/Assert.h"
 #include <cstring>
@@ -6,12 +6,15 @@
 #include <boost/assign/list_of.hpp>
 
 
+namespace material {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
 
-ConstCharPtrHashMap<BuildinMaterialVariable::BuildinEnum>::Type
-	BuildinMaterialVariable::buildinNameToEnum = boost::assign::map_list_of
+ConstCharPtrHashMap<BuildinVariable::BuildinEnum>::Type
+	BuildinVariable::buildinNameToEnum = boost::assign::map_list_of
 	("position", POSITION)
 	("tangent", TANGENT)
 	("normal", NORMAL)
@@ -35,8 +38,8 @@ ConstCharPtrHashMap<BuildinMaterialVariable::BuildinEnum>::Type
 	("blurring", BLURRING);
 
 
-boost::unordered_map<BuildinMaterialVariable::BuildinEnum, GLenum>
-	BuildinMaterialVariable::buildinToGlType = boost::assign::map_list_of
+boost::unordered_map<BuildinVariable::BuildinEnum, GLenum>
+	BuildinVariable::buildinToGlType = boost::assign::map_list_of
 	(POSITION, GL_FLOAT_VEC3)
 	(TANGENT, GL_FLOAT_VEC4)
 	(NORMAL, GL_FLOAT_VEC3)
@@ -63,10 +66,10 @@ boost::unordered_map<BuildinMaterialVariable::BuildinEnum, GLenum>
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-BuildinMaterialVariable::BuildinMaterialVariable(
+BuildinVariable::BuildinVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr)
-:	MaterialVariable(BUILDIN, shaderProgVarName, shaderProgsArr),
+:	Variable(BUILDIN, shaderProgVarName, shaderProgsArr),
  	bEnum(BUILDINS_NUM)
 {
 	GLenum dataType;
@@ -88,7 +91,7 @@ BuildinMaterialVariable::BuildinMaterialVariable(
 //==============================================================================
 // isBuildin                                                                   =
 //==============================================================================
-bool BuildinMaterialVariable::isBuildin(const char* name,
+bool BuildinVariable::isBuildin(const char* name,
 	BuildinEnum* var, GLenum* dataType)
 {
 	ConstCharPtrHashMap<BuildinEnum>::Type::const_iterator it =
@@ -116,3 +119,6 @@ bool BuildinMaterialVariable::isBuildin(const char* name,
 
 	return true;
 }
+
+
+} // end namespace

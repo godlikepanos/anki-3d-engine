@@ -34,8 +34,6 @@ class ModelNode: public SceneNode
 		/// Update the bounding shape
 		void moveUpdate();
 
-		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
-
 	private:
 		RsrcPtr<Model> model;
 		Vec<ModelPatchNode*> patches;

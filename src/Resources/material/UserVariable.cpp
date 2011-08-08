@@ -1,72 +1,82 @@
-#include "UserMaterialVariable.h"
-#include "UniformShaderProgramVariable.h"
-#include "Texture.h"
+#include "UserVariable.h"
+#include "../Texture.h"
+
+
+namespace material {
 
 
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
 
-UserMaterialVariable::UserMaterialVariable(
+UserVariable::UserVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr,
 	float val)
-:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
+:	Variable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT);
-	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
+	ASSERT(getShaderProgramVariableType() ==
+		shader_program::Variable::UNIFORM);
 	data = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(
+UserVariable::UserVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr,
 	const Vec2& val)
-:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
+:	Variable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
+	ASSERT(getShaderProgramVariableType() ==
+		shader_program::Variable::UNIFORM);
 	data = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(
+UserVariable::UserVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr,
 	const Vec3& val)
-:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
+:	Variable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
+	ASSERT(getShaderProgramVariableType() ==
+		shader_program::Variable::UNIFORM);
 	data = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(
+UserVariable::UserVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr,
 	const Vec4& val)
-:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
+:	Variable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
+	ASSERT(getShaderProgramVariableType() ==
+		shader_program::Variable::UNIFORM);
 	data = val;
 }
 
 
-UserMaterialVariable::UserMaterialVariable(
+UserVariable::UserVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr,
 	const char* texFilename)
-:	MaterialVariable(USER, shaderProgVarName, shaderProgsArr)
+:	Variable(USER, shaderProgVarName, shaderProgsArr)
 {
 	ASSERT(getGlDataType() == GL_SAMPLER_2D);
-	ASSERT(getShaderProgramVariableType() == ShaderProgramVariable::UNIFORM);
+	ASSERT(getShaderProgramVariableType() ==
+		shader_program::Variable::UNIFORM);
 	data = RsrcPtr<Texture>();
 	boost::get<RsrcPtr<Texture> >(data).loadRsrc(texFilename);
 }
 
 
-UserMaterialVariable::~UserMaterialVariable()
+UserVariable::~UserVariable()
 {}
+
+
+} // end namespace

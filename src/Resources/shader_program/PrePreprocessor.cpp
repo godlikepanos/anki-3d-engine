@@ -1,12 +1,15 @@
+#include "PrePreprocessor.h"
+#include "Misc/Parser.h"
+#include "Util/Util.h"
+#include "Util/Exception.h"
 #include <iomanip>
 #include <cstring>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
-#include "ShaderProgramPrePreprocessor.h"
-#include "Misc/Parser.h"
-#include "Util/Util.h"
-#include "Util/Exception.h"
+
+
+namespace shader_program {
 
 
 static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
@@ -16,7 +19,7 @@ static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
 //==============================================================================
 // printSourceLines                                                            =
 //==============================================================================
-void ShaderProgramPrePreprocessor::printSourceLines() const
+void PrePreprocessor::printSourceLines() const
 {
 	for(uint i = 0; i < sourceLines.size(); ++i)
 	{
@@ -29,7 +32,7 @@ void ShaderProgramPrePreprocessor::printSourceLines() const
 //==============================================================================
 // parseFileForPragmas                                                         =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseFileForPragmas(
+void PrePreprocessor::parseFileForPragmas(
 	const std::string& filename, int depth)
 {
 	// first check the depth
@@ -135,7 +138,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 //=============================================================================/
 // parseFile                                                                   =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseFile(const char* filename)
+void PrePreprocessor::parseFile(const char* filename)
 {
 	try
 	{
@@ -218,7 +221,7 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 //==============================================================================
 // parseStartPragma                                                            =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseStartPragma(Scanner::Scanner& scanner,
+void PrePreprocessor::parseStartPragma(Scanner::Scanner& scanner,
 	const std::string& filename, uint depth, const Vec<std::string>& lines)
 {
 	const Scanner::Token* token = &scanner.getNextToken();
@@ -275,7 +278,7 @@ void ShaderProgramPrePreprocessor::parseStartPragma(Scanner::Scanner& scanner,
 //==============================================================================
 // parseIncludePragma                                                          =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseIncludePragma(
+void PrePreprocessor::parseIncludePragma(
 	Scanner::Scanner& scanner, const std::string& /*filename*/, uint depth,
 	const Vec<std::string>& lines)
 {
@@ -307,7 +310,7 @@ void ShaderProgramPrePreprocessor::parseIncludePragma(
 //==============================================================================
 // parseTrffbVarying                                                           =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseTrffbVarying(Scanner::Scanner& scanner,
+void PrePreprocessor::parseTrffbVarying(Scanner::Scanner& scanner,
 	const std::string& filename, uint /*depth*/, const Vec<std::string>& lines)
 {
 	const Scanner::Token* token = &scanner.getNextToken();
@@ -349,3 +352,5 @@ void ShaderProgramPrePreprocessor::parseTrffbVarying(Scanner::Scanner& scanner,
 	}
 }
 
+
+} // end namespace

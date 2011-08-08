@@ -12,11 +12,8 @@ class Material;
 class ModelPatch
 {
 	public:
-		ModelPatch();
+		ModelPatch(const char* meshFName, const char* mtlFName);
 		~ModelPatch();
-
-		/// Load the resources
-		void load(const char* meshFName, const char* mtlFName);
 
 		/// @name Accessors
 		/// @{
@@ -24,9 +21,14 @@ class ModelPatch
 		const Material& getMaterial() const {return *mtl;}
 		/// @}
 
+		bool supportsHwSkinning() const;
+
 	private:
 		RsrcPtr<Mesh> mesh; ///< The geometry
 		RsrcPtr<Material> mtl; ///< Material for MS and BS
+
+		/// Load the resources
+		void load(const char* meshFName, const char* mtlFName);
 };
 
 

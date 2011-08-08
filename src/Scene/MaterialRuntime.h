@@ -7,7 +7,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 
-class UserMaterialVariableRuntime;
+class UserVariableRuntime;
 class Material;
 
 
@@ -16,7 +16,7 @@ class MaterialRuntime: private MaterialProperties
 {
 	public:
 		/// A type
-		typedef boost::ptr_vector<UserMaterialVariableRuntime>
+		typedef boost::ptr_vector<UserVariableRuntime>
 			VariablesContainer;
 
 		/// @name Constructors & destructors
@@ -48,12 +48,12 @@ class MaterialRuntime: private MaterialProperties
 		/// @param[in] name The name of the var
 		/// @return It returns a MaterialRuntimeUserDefinedVar
 		/// @exception Exception
-		UserMaterialVariableRuntime& findVariableByName(
+		UserVariableRuntime& findVariableByName(
 			const char* name);
 
 		/// The const version of getUserDefinedVarByName
 		/// @see getUserDefinedVarByName
-		const UserMaterialVariableRuntime& findVariableByName(
+		const UserVariableRuntime& findVariableByName(
 			const char* name) const;
 
 		bool isBlendingEnabled() const;
@@ -61,7 +61,7 @@ class MaterialRuntime: private MaterialProperties
 	private:
 		const Material& mtl; ///< The resource
 		VariablesContainer vars;
-		ConstCharPtrHashMap<UserMaterialVariableRuntime*>::Type
+		ConstCharPtrHashMap<UserVariableRuntime*>::Type
 			varNameToVar;
 };
 
