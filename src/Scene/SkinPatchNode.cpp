@@ -1,6 +1,5 @@
 #include "SkinPatchNode.h"
 #include "SkinNode.h"
-#include "Renderer/SkinsDeformer.h"
 
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -38,7 +37,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 		vboArr[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TFV_POSITIONS];
 
 		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_POSITIONS),
-			R::SkinsDeformer::TFSPA_POSITION,
+			POSITION_LOC,
 			3,
 			GL_FLOAT,
 			false,
@@ -57,7 +56,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 		vboArr[Mesh::VBO_VERT_NORMALS] = &tfVbos[TFV_NORMALS];
 
 		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_NORMALS),
-			R::SkinsDeformer::TFSPA_NORMAL,
+			NORMAL_LOC,
 			3,
 			GL_FLOAT,
 			false,
@@ -76,7 +75,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 		vboArr[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TFV_TANGENTS];
 
 		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_TANGENTS),
-			R::SkinsDeformer::TFSPA_TANGENT,
+			TANGENT_LOC,
 			4,
 			GL_FLOAT,
 			false,
@@ -88,7 +87,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 	ASSERT(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
-		R::SkinsDeformer::TFSPA_VERT_WEIGHT_BONES_NUM,
+		VERT_WEIGHT_BONES_NUM_LOC,
 		1,
 		GL_FLOAT,
 		GL_FALSE,
@@ -97,7 +96,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
-		R::SkinsDeformer::TFSPA_VERT_WEIGHT_BONE_IDS,
+		VERT_WEIGHT_BONE_IDS_LOC,
 		4,
 		GL_FLOAT,
 		GL_FALSE,
@@ -105,14 +104,16 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 		BUFFER_OFFSET(4));
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
-		R::SkinsDeformer::TFSPA_VERT_WEIGHT_WEIGHTS,
+		VERT_WEIGHT_WEIGHTS_LOC,
 		4,
 		GL_FLOAT,
 		GL_FALSE,
 		sizeof(MeshData::VertexWeight),
 		BUFFER_OFFSET(20));
 
-	// Rendering VAOs
-	createVao(rsrc.getCpMtl(), vboArr, cpVao);
-	createVao(rsrc.getDpMtl(), vboArr, dpVao);
+	// Create the rendering VAOs
+	for(uint i = 0; i < PASS_TYPES_NUM; i++)
+	{
+		createVao(rsrc.getMaterial(), vboArr, vaos[i]);
+	}
 }

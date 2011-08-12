@@ -12,8 +12,7 @@
 //==============================================================================
 ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_,
 	ModelNode* parent)
-:	PatchNode(modelPatch_, parent),
-	modelPatch(modelPatch_)
+:	PatchNode(modelPatch_, parent)
 {
 	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
 
@@ -22,8 +21,11 @@ ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_,
 		vboArr[i] = &rsrc.getMesh().getVbo((Mesh::Vbos)i);
 	}
 
-	createVao(rsrc.getCpMtl(), vboArr, cpVao);
-	createVao(rsrc.getDpMtl(), vboArr, dpVao);
+
+	for(uint i = 0; i < PASS_TYPES_NUM; i++)
+	{
+		createVao(rsrc.getMaterial(), vboArr, vaos[i]);
+	}
 }
 
 
@@ -33,6 +35,6 @@ ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_,
 void ModelPatchNode::moveUpdate()
 {
 	visibilityShapeWSpace =
-		modelPatch.getMesh().getVisibilityShape().getTransformed(
+		rsrc.getMesh().getVisibilityShape().getTransformed(
 		getWorldTransform());
 }

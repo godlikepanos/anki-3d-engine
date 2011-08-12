@@ -2,6 +2,7 @@
 #define RENDERABLE_NODE_H
 
 #include "SceneNode.h"
+#include "Resources/MaterialCommon.h"
 
 
 class Vao;
@@ -16,15 +17,19 @@ class RenderableNode: public SceneNode
 	public:
 		RenderableNode(bool inheritParentTrfFlag, SceneNode* parent);
 
-		virtual const Vao& getCpVao() const = 0; ///< Get color pass VAO
-		virtual const Vao& getDpVao() const = 0; ///< Get depth pass VAO
+		/// Get VAO depending the rendering pass
+		virtual const Vao& getVao(PassType p) const;
 
 		/// Get vert ids number for rendering
 		virtual uint getVertIdsNum() const = 0;
 
+		/// Get the material resource
 		virtual const Material& getMaterial() const = 0;
 
+		/// Get the material runtime
 		virtual MaterialRuntime& getMaterialRuntime() = 0;
+
+		/// Const version of getMaterialRuntime
 		virtual const MaterialRuntime& getMaterialRuntime() const = 0;
 };
 
