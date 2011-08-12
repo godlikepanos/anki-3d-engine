@@ -8,7 +8,7 @@
 #include "Collision/Sphere.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include "Core/ParallelJobs/Manager.h"
+#include "Core/parallel/Manager.h"
 #include "Core/Logger.h"
 
 
@@ -140,12 +140,12 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless,
 	jobParameters.bsRenderableNodesMtx = &bsRenderableNodesMtx;
 
 	for(uint i = 0;
-		i < ParallelJobs::ManagerSingleton::getInstance().getThreadsNum(); i++)
+		i < parallel::ManagerSingleton::getInstance().getThreadsNum(); i++)
 	{
-		ParallelJobs::ManagerSingleton::getInstance().assignNewJob(i,
+		parallel::ManagerSingleton::getInstance().assignNewJob(i,
 			getRenderableNodesJobCallback, jobParameters);
 	}
-	ParallelJobs::ManagerSingleton::getInstance().waitForAllJobsToFinish();
+	parallel::ManagerSingleton::getInstance().waitForAllJobsToFinish();
 
 	//
 	// Sort the renderables from closest to the camera to the farthest
@@ -163,8 +163,8 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless,
 // getRenderableNodesJobCallback                                               =
 //==============================================================================
 void VisibilityTester::getRenderableNodesJobCallback(
-	ParallelJobs::JobParameters& data,
-	const ParallelJobs::Job& job)
+	parallel::JobParameters& data,
+	const parallel::Job& job)
 {
 	VisJobParameters& jobParameters = static_cast<VisJobParameters&>(data);
 
@@ -227,7 +227,7 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 			// Skip shadowless
 			if(skipShadowless &&
-				!modelPatchNode->getCpMtl().castsShadow())
+				!modelPatchNode->getMaterialRuntime().castsShadow())
 			{
 				continue;
 			}
@@ -235,7 +235,8 @@ void VisibilityTester::getRenderableNodesJobCallback(
 			// Test if visible by main camera
 			if(test(*modelPatchNode, cam))
 			{
-				if(modelPatchNode->getCpMtl().renderInBlendingStage())
+				if(modelPatchNode->getMaterialRuntime().
+					rendersInBlendingStage())
 				{
 					bsVisibles[bsI++] = modelPatchNode;
 				}
@@ -280,7 +281,8 @@ void VisibilityTester::getRenderableNodesJobCallback(
 		node->enableFlag(SceneNode::SNF_VISIBLE);
 
 		// Put all the patches into the visible container
-		BOOST_FOREACH(SkinPatchNode* patchNode, node->getPatcheNodes())
+		BOOST_FOREACH(SkinPatchNode* patchNode,
+			node->getPatcheNodes())
 		{
 			if(!patchNode->isFlagEnabled(SceneNode::SNF_ACTIVE))
 			{
@@ -289,12 +291,12 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 			// Skip shadowless
 			if(skipShadowless &&
-				!patchNode->getCpMtl().castsShadow())
+				!patchNode->getMaterialRuntime().castsShadow())
 			{
 				continue;
 			}
 
-			if(patchNode->getCpMtl().renderInBlendingStage())
+			if(patchNode->getMaterialRuntime().rendersInBlendingStage())
 			{
 				bsVisibles[bsI++] = patchNode;
 			}

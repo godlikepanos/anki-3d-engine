@@ -45,7 +45,7 @@
 #include "Events/MainRendererPpsHdr.h"
 #include "Resources/ShaderProgramPrePreprocessor.h"
 #include "Resources/Material.h"
-#include "Core/ParallelJobs/Manager.h"
+#include "Core/parallel/Manager.h"
 #include "Renderer/Drawers/PhysDbgDrawer.h"
 
 
@@ -524,7 +524,7 @@ void initSubsystems(int argc, char* argv[])
 	StdinListenerSingleton::getInstance().start();
 
 	// Parallel jobs
-	ParallelJobs::ManagerSingleton::getInstance().init(4);
+	parallel::ManagerSingleton::getInstance().init(4);
 
 	// Add drawer to physics
 	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(

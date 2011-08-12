@@ -3,16 +3,16 @@
 
 /// @name Attributes
 /// @{
-in vec3 position;
+layout(location = 0) in vec3 position;
 #if defined(USING_TEX_COORDS_ATTRIB)
-in vec2 texCoords;
+layout(location = 3) in vec2 texCoords;
 #endif
 #if defined(COLOR_PASS)
 #	if defined(USING_NORMAL_ATTRIB)
-in vec3 normal;
+layout(location = 1) in vec3 normal;
 #	endif
 #	if defined(USING_TANGENT_ATTRIB)
-in vec4 tangent;
+layout(location = 2) in vec4 tangent;
 #	endif
 #endif
 /// @}

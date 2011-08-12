@@ -19,7 +19,6 @@ class ModelPatchNode: public PatchNode
 		virtual void moveUpdate(); ///< Update the visibility shape
 
 	private:
-		const ModelPatch& modelPatch;
 		Col::Obb visibilityShapeWSpace;
 };
 

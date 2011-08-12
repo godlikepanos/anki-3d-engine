@@ -3,6 +3,7 @@
 #include "Util/Exception.h"
 #include "Scene.h"
 #include "VisibilityTester.h"
+#include "SkinPatchNodeDeformer.h"
 
 #include "Camera.h"
 #include "Light.h"
@@ -14,17 +15,22 @@
 
 
 //==============================================================================
-// Constructor                                                                 =
+// Constructors & destructor                                                   =
 //==============================================================================
+
 Scene::Scene()
 {
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 4;
 	//sunPos = Vec3(0.0, 1.0, -1.0) * 50.0;
 
 	physMasterContainer.reset(new Phys::MasterContainer);
-
 	visibilityTester.reset(new VisibilityTester(*this));
+	skinsDeformer.reset(new SkinPatchNodeDeformer);
 }
+
+
+Scene::~Scene()
+{}
 
 
 //==============================================================================

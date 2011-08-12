@@ -8,11 +8,9 @@
 //==============================================================================
 PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent)
 :	RenderableNode(true, parent),
-	rsrc(modelPatch)
-{
-	cpMtlRun.reset(new MaterialRuntime(rsrc.getCpMtl()));
-	dpMtlRun.reset(new MaterialRuntime(rsrc.getDpMtl()));
-}
+	rsrc(modelPatch),
+	mtlRun(new MaterialRuntime(rsrc.getMaterial()))
+{}
 
 
 //==============================================================================
@@ -23,32 +21,34 @@ void PatchNode::createVao(const Material& mtl, const boost::array<const Vbo*,
 {
 	vao.create();
 
-	if(mtl.getStdAttribVar(Material::SAV_POSITION) != NULL)
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::POSITION))
 	{
+		ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
+
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_POSITIONS],
-			*mtl.getStdAttribVar(Material::SAV_POSITION),
-			3, GL_FLOAT, GL_FALSE, 0, NULL);
+			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getStdAttribVar(Material::SAV_NORMAL) != NULL)
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::NORMAL))
 	{
+		ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
+
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_NORMALS],
-			*mtl.getStdAttribVar(Material::SAV_NORMAL),
-			3, GL_FLOAT, GL_FALSE, 0, NULL);
+			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getStdAttribVar(Material::SAV_TANGENT) != NULL)
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::TANGENT))
 	{
+		ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
+
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_TANGENTS],
-			*mtl.getStdAttribVar(Material::SAV_TANGENT),
-			4, GL_FLOAT, GL_FALSE, 0, NULL);
+			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getStdAttribVar(Material::SAV_TEX_COORDS) != NULL)
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::TEX_COORDS))
 	{
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_TEX_COORDS],
-			*mtl.getStdAttribVar(Material::SAV_TEX_COORDS),
-			2, GL_FLOAT, GL_FALSE, 0, NULL);
+			3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
 	vao.attachElementArrayBufferVbo(*vbos[Mesh::VBO_VERT_INDECES]);

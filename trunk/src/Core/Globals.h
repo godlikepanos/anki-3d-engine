@@ -22,7 +22,7 @@ namespace Event {
 typedef Singleton<class Manager> ManagerSingleton;
 }
 
-namespace ParallelJobs {
+namespace parallel {
 typedef Singleton<class Manager> ManagerSingleton;
 }
 

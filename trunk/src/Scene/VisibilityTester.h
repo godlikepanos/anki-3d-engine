@@ -3,7 +3,7 @@
 
 #include "Util/Accessors.h"
 #include "Math/Math.h"
-#include "Core/ParallelJobs/Job.h"
+#include "Core/parallel/Job.h"
 #include <deque>
 #include <boost/thread.hpp>
 
@@ -42,8 +42,8 @@ class VisibilityTester
 			bool operator()(const SceneNode* a, const SceneNode* b) const;
 		};
 
-		/// The JobParameters that we feed in the ParallelJobs::Manager
-		struct VisJobParameters: ParallelJobs::JobParameters
+		/// The JobParameters that we feed in the parallel::Manager
+		struct VisJobParameters: parallel::JobParameters
 		{
 			const Camera* cam;
 			bool skipShadowless;
@@ -76,11 +76,11 @@ class VisibilityTester
 		void getRenderableNodes(bool skipShadowless, const Camera& cam,
 			VisibilityInfo& storage);
 
-		/// This static method will be fed into the ParallelJobs::Manager
+		/// This static method will be fed into the parallel::Manager
 		/// @param data This is actually a pointer to VisibilityTester
 		static void getRenderableNodesJobCallback(
-			ParallelJobs::JobParameters& data,
-			const ParallelJobs::Job& job);
+			parallel::JobParameters& data,
+			const parallel::Job& job);
 };
 
 

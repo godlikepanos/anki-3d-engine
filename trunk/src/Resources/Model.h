@@ -1,5 +1,5 @@
-#ifndef MODEL_H
-#define MODEL_H
+#ifndef MODEL_MODEL_H
+#define MODEL_MODEL_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "RsrcPtr.h"

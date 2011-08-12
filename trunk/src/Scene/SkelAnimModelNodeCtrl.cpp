@@ -6,7 +6,8 @@
 #include "Resources/Model.h"
 #include "Resources/Skin.h"
 #include "Core/Globals.h"
-#include "Renderer/MainRenderer.h"
+#include "SkinPatchNodeDeformer.h"
+#include "Scene.h"
 
 
 //==============================================================================
@@ -33,7 +34,7 @@ void SkelAnimModelNodeCtrl::interpolate(const SkelAnim& animation, float frame,
 	const Vec<uint>& keyframes = animation.getKeyframes();
 	float t = 0.0;
 	uint lPose = 0, rPose = 0;
-	for(uint j=0; j<keyframes.size(); j++)
+	for(uint j = 0; j < keyframes.size(); j++)
 	{
 		if((float)keyframes[j] == frame)
 		{
@@ -185,18 +186,20 @@ void SkelAnimModelNodeCtrl::update(float)
 	updateBoneTransforms(skinNode.getSkin().getSkeleton(),
 		skinNode.getBoneTranslations(), skinNode.getBoneRotations());
 
-	if(R::MainRendererSingleton::getInstance().getDbg().isEnabled() &&
-		R::MainRendererSingleton::getInstance().getDbg().isShowSkeletonsEnabled())
+	/*if(R::MainRendererSingleton::getInstance().getDbg().isEnabled() &&
+		R::MainRendererSingleton::getInstance().getDbg().
+			isShowSkeletonsEnabled())
 	{
 		deform(skinNode.getSkin().getSkeleton(),
 			skinNode.getBoneTranslations(), skinNode.getBoneRotations(),
 			skinNode.getHeads(), skinNode.getTails());
-	}
+	}*/
 
-	R::SkinsDeformer& sd =
-		R::MainRendererSingleton::getInstance().getSkinsDeformer();
+	const SkinPatchNodeDeformer& sd =
+		SceneSingleton::getInstance().getSkinPatchNodeDeformer();
 
-	BOOST_FOREACH(SkinPatchNode* skinPatchNode, skinNode.getPatcheNodes())
+	BOOST_FOREACH(SkinPatchNode* skinPatchNode,
+		skinNode.getPatcheNodes())
 	{
 		sd.deform(*skinPatchNode);
 	}
