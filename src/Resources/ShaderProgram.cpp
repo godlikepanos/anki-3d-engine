@@ -86,7 +86,8 @@ uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 			default:
 				ASSERT(0); // Not supported
 		}
-		throw SHADER_PROGRAM_EXCEPTION(shaderType + " compiler error log follows:\n"
+		throw SHADER_PROGRAM_EXCEPTION(shaderType + 
+			" compiler error log follows:\n"
 			"===================================\n" +
 			&infoLog[0] +
 			"\n===================================\n" + sourceCode);
@@ -118,7 +119,8 @@ void ShaderProgram::link() const
 
 		infoLogTxt.resize(info_len + 1);
 		glGetProgramInfoLog(glId, info_len, &charsWritten, &infoLogTxt[0]);
-		throw SHADER_PROGRAM_EXCEPTION("Link error log follows:\n" + infoLogTxt);
+		throw SHADER_PROGRAM_EXCEPTION("Link error log follows:\n" +
+			infoLogTxt);
 	}
 }
 
