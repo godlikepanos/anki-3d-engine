@@ -12,7 +12,8 @@ class Light;
 	public:
 		Light* light;
 		
-		LightPropsScriptCtrl(Light* light_): controller(CT_LIGHT), light(light_) {}
+		LightPropsScriptCtrl(Light* light_): 
+			controller(CT_LIGHT), light(light_) {}
 		void update(float) {  ToDo  }
 };*/
 
