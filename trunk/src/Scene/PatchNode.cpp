@@ -21,7 +21,7 @@ void PatchNode::createVao(const Material& mtl, const boost::array<const Vbo*,
 {
 	vao.create();
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::POSITION))
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_POSITION))
 	{
 		ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
 
@@ -29,7 +29,7 @@ void PatchNode::createVao(const Material& mtl, const boost::array<const Vbo*,
 			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::NORMAL))
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_NORMAL))
 	{
 		ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
 
@@ -37,7 +37,7 @@ void PatchNode::createVao(const Material& mtl, const boost::array<const Vbo*,
 			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::TANGENT))
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_TANGENT))
 	{
 		ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
 
@@ -45,7 +45,7 @@ void PatchNode::createVao(const Material& mtl, const boost::array<const Vbo*,
 			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::TEX_COORDS))
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_TEX_COORDS))
 	{
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_TEX_COORDS],
 			3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
