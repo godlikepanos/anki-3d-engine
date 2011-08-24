@@ -7,13 +7,13 @@
 //==============================================================================
 void SkelAnim::load(const char* filename)
 {
-	Scanner::Scanner scanner(filename);
-	const Scanner::Token* token;
+	scanner::Scanner scanner(filename);
+	const scanner::Token* token;
 
 	// keyframes
 	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER ||
-		token->getDataType() != Scanner::DT_INT)
+	if(token->getCode() != scanner::TC_NUMBER ||
+		token->getDataType() != scanner::DT_INT)
 	{
 		throw PARSER_EXCEPTION_EXPECTED("integer");
 	}
@@ -24,8 +24,8 @@ void SkelAnim::load(const char* filename)
 
 	// bones num
 	token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_NUMBER ||
-		token->getDataType() != Scanner::DT_INT)
+	if(token->getCode() != scanner::TC_NUMBER ||
+		token->getDataType() != scanner::DT_INT)
 	{
 		throw PARSER_EXCEPTION_EXPECTED("integer");
 	}
@@ -36,8 +36,8 @@ void SkelAnim::load(const char* filename)
 	{
 		// has anim?
 		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_NUMBER ||
-			token->getDataType() != Scanner::DT_INT)
+		if(token->getCode() != scanner::TC_NUMBER ||
+			token->getDataType() != scanner::DT_INT)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("integer");
 		}

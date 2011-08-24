@@ -3,19 +3,19 @@
 
 
 #ifndef uchar
-	typedef unsigned char uchar;
+typedef unsigned char uchar;
 #endif
 
 #ifndef uint
-	typedef unsigned int uint;
+typedef unsigned int uint;
 #endif
 
 #ifndef ushort
-	typedef unsigned short int ushort;
+typedef unsigned short int ushort;
 #endif
 
 #ifndef ulong
-	typedef unsigned long int ulong;
+typedef unsigned long int ulong;
 #endif
 
 

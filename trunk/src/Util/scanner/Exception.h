@@ -5,7 +5,7 @@
 #include <string>
 
 
-namespace Scanner {
+namespace scanner {
 
 
 class Exception: public std::exception

@@ -15,7 +15,7 @@
 #include "Scene/SpotLight.h"
 #include "Resources/Material.h"
 #include "Scene/Scene.h"
-#include "Util/Scanner/Scanner.h"
+#include "Util/scanner/Scanner.h"
 #include "Resources/SkelAnim.h"
 #include "Resources/LightRsrc.h"
 #include "Misc/Parser.h"

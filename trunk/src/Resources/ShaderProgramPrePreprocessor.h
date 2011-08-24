@@ -7,7 +7,7 @@
 #include "Util/Accessors.h"
 
 
-namespace Scanner {
+namespace scanner {
 class Scanner;
 }
 
@@ -113,17 +113,17 @@ class ShaderProgramPrePreprocessor
 		void parseFileForPragmas(const std::string& filename, int depth = 0);
 
 		/// @todo
-		void parseStartPragma(Scanner::Scanner& scanner,
+		void parseStartPragma(scanner::Scanner& scanner,
 			const std::string& filename, uint depth,
 			const Vec<std::string>& lines);
 
 		/// @todo
-		void parseIncludePragma(Scanner::Scanner& scanner,
+		void parseIncludePragma(scanner::Scanner& scanner,
 			const std::string& filename, uint depth,
 			const Vec<std::string>& lines);
 
 		/// @todo
-		void parseTrffbVarying(Scanner::Scanner& scanner,
+		void parseTrffbVarying(scanner::Scanner& scanner,
 			const std::string& filename, uint depth,
 			const Vec<std::string>& lines);
 

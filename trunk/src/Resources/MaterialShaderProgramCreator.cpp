@@ -1,5 +1,5 @@
 #include "MaterialShaderProgramCreator.h"
-#include "Util/Scanner/Scanner.h"
+#include "Util/scanner/Scanner.h"
 #include "Misc/Parser.h"
 #include "MaterialBuildinVariable.h"
 #include <boost/assign/list_of.hpp>
@@ -82,8 +82,8 @@ MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
 void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 	const char* filename)
 {
-	Scanner::Scanner scanner(filename, false);
-	const Scanner::Token* token = &scanner.getCrntToken();
+	scanner::Scanner scanner(filename, false);
+	const scanner::Token* token = &scanner.getCrntToken();
 
 	// Forever
 	while(true)
@@ -92,18 +92,18 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 		FuncDefinition* funcDef = NULL;
 
 		// EOF
-		if(token->getCode() == Scanner::TC_EOF)
+		if(token->getCode() == scanner::TC_END)
 		{
 			break;
 		}
 		// #
-		else if(token->getCode() == Scanner::TC_SHARP)
+		else if(token->getCode() == scanner::TC_SHARP)
 		{
 			parseUntilNewline(scanner);
 			continue;
 		}
 		// Return type
-		else if(token->getCode() == Scanner::TC_IDENTIFIER)
+		else if(token->getCode() == scanner::TC_IDENTIFIER)
 		{
 			funcDef = new FuncDefinition;
 			funcDefs.push_back(funcDef);
@@ -128,7 +128,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 		// Function name
 		getNextTokenAndSkipNewlines(scanner);
-		if(token->getCode() != Scanner::TC_IDENTIFIER)
+		if(token->getCode() != scanner::TC_IDENTIFIER)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("identifier");
 		}
@@ -139,7 +139,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 		// (
 		getNextTokenAndSkipNewlines(scanner);
-		if(token->getCode() != Scanner::TC_LPAREN)
+		if(token->getCode() != scanner::TC_L_PAREN)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("(");
 		}
@@ -152,7 +152,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 			// Argument qualifier
 			getNextTokenAndSkipNewlines(scanner);
-			if(token->getCode() != Scanner::TC_IDENTIFIER)
+			if(token->getCode() != scanner::TC_IDENTIFIER)
 			{
 				throw PARSER_EXCEPTION_EXPECTED("identifier");
 			}
@@ -179,7 +179,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 			// Type
 			getNextTokenAndSkipNewlines(scanner);
-			if(token->getCode() != Scanner::TC_IDENTIFIER)
+			if(token->getCode() != scanner::TC_IDENTIFIER)
 			{
 				throw PARSER_EXCEPTION_EXPECTED("identifier");
 			}
@@ -199,7 +199,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 			// Name
 			getNextTokenAndSkipNewlines(scanner);
-			if(token->getCode() != Scanner::TC_IDENTIFIER)
+			if(token->getCode() != scanner::TC_IDENTIFIER)
 			{
 				throw PARSER_EXCEPTION_EXPECTED("identifier");
 			}
@@ -208,12 +208,12 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 			// ,
 			getNextTokenAndSkipNewlines(scanner);
-			if(token->getCode() == Scanner::TC_COMMA)
+			if(token->getCode() == scanner::TC_COMMA)
 			{
 				continue;
 			}
 			// )
-			else if(token->getCode() == Scanner::TC_RPAREN)
+			else if(token->getCode() == scanner::TC_R_PAREN)
 			{
 				break;
 			}
@@ -226,7 +226,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 
 		// {
 		getNextTokenAndSkipNewlines(scanner);
-		if(token->getCode() != Scanner::TC_LBRACKET)
+		if(token->getCode() != scanner::TC_L_BRACKET)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("{");
 		}
@@ -237,7 +237,7 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 		{
 			getNextTokenAndSkipNewlines(scanner);
 
-			if(token->getCode() == Scanner::TC_RBRACKET)
+			if(token->getCode() == scanner::TC_R_BRACKET)
 			{
 				if(bracketsNum == 0)
 				{
@@ -245,11 +245,11 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 				}
 				--bracketsNum;
 			}
-			else if(token->getCode() == Scanner::TC_LBRACKET)
+			else if(token->getCode() == scanner::TC_L_BRACKET)
 			{
 				++bracketsNum;
 			}
-			else if(token->getCode() == Scanner::TC_EOF)
+			else if(token->getCode() == scanner::TC_END)
 			{
 				throw PARSER_EXCEPTION_UNEXPECTED();
 			}
@@ -274,22 +274,22 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 //==============================================================================
 // parseUntilNewline                                                           =
 //==============================================================================
-void MaterialShaderProgramCreator::parseUntilNewline(Scanner::Scanner& scanner)
+void MaterialShaderProgramCreator::parseUntilNewline(scanner::Scanner& scanner)
 {
-	const Scanner::Token* token = &scanner.getCrntToken();
-	Scanner::TokenCode prevTc;
+	const scanner::Token* token = &scanner.getCrntToken();
+	scanner::TokenCode prevTc;
 
 	while(true)
 	{
 		prevTc = token->getCode();
 		scanner.getNextToken();
 
-		if(token->getCode() == Scanner::TC_EOF)
+		if(token->getCode() == scanner::TC_END)
 		{
 			break;
 		}
-		else if(token->getCode() == Scanner::TC_NEWLINE &&
-			prevTc != Scanner::TC_BACK_SLASH)
+		else if(token->getCode() == scanner::TC_NEWLINE &&
+			prevTc != scanner::TC_BACK_SLASH)
 		{
 			break;
 		}
@@ -301,14 +301,14 @@ void MaterialShaderProgramCreator::parseUntilNewline(Scanner::Scanner& scanner)
 // getNextTokenAndSkipNewlines                                                 =
 //==============================================================================
 void MaterialShaderProgramCreator::getNextTokenAndSkipNewlines(
-	Scanner::Scanner& scanner)
+	scanner::Scanner& scanner)
 {
-	const Scanner::Token* token;
+	const scanner::Token* token;
 
 	while(true)
 	{
 		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_NEWLINE)
+		if(token->getCode() != scanner::TC_NEWLINE)
 		{
 			break;
 		}
@@ -444,7 +444,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 	// Buildin or varying
 	if(!valuePt)
 	{
-		MaterialBuildinVariable::BuildinEnum tmp;
+		MaterialBuildinVariable::MatchingVariable tmp;
 
 		if(MaterialBuildinVariable::isBuildin(name.c_str(), &tmp, &glType))
 		{

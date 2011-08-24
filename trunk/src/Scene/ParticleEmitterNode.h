@@ -24,7 +24,6 @@ class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 		void init(const char* filename);
 
 		void frameUpdate(float prevUpdateTime, float crntTime);
-		void moveUpdate() {}
 
 	private:
 		boost::scoped_ptr<btCollisionShape> collShape;

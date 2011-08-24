@@ -17,8 +17,8 @@ class ShaderProgramVariable: public boost::noncopyable
 		/// Shader var types
 		enum Type
 		{
-			ATTRIBUTE,
-			UNIFORM
+			T_ATTRIBUTE,
+			T_UNIFORM
 		};
 
 		ShaderProgramVariable(GLint loc, const char* name,

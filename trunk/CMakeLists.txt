@@ -11,18 +11,25 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 	ADD_DEFINITIONS("-DPLATFORM_LINUX")
 ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 	ADD_DEFINITIONS("-DPLATFORM_WINDOWS")
-ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+ENDIF()
 
 
 FIND_PACKAGE(Subversion)
 IF(Subversion_FOUND)
 	Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} ER)
 	ADD_DEFINITIONS("-DREVISION=${ER_WC_REVISION}")
-ELSE(Subversion_FOUND)
+ELSE()
 	ADD_DEFINITIONS("-DREVISION=???")
-ENDIF(Subversion_FOUND)
+ENDIF()
 
-ADD_DEFINITIONS("-DMATH_INTEL_SIMD -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -fsingle-precision-constant -msse4")
+ADD_DEFINITIONS("-DMATH_INTEL_SIMD -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -msse4")
+
+# Add a few compiler specific stuff 
+IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	
+	# Do nothing
+ELSE()
+	ADD_DEFINITIONS("-fsingle-precision-constant")
+ENDIF()
 
 IF(CMAKE_BUILD_TYPE STREQUAL Release OR CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
 	ADD_DEFINITIONS("-DBOOST_DISABLE_ASSERTS -mtune=core2 -ffast-math")

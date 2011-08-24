@@ -43,11 +43,12 @@ class ShaderProgram
 		/// variable not found so ask if the variable with that name exists
 		/// prior using any of these
 		/// @{
-		const ShaderProgramVariable& getVariable(const char* varName) const;
-		const ShaderProgramUniformVariable&
-			getUniformVariable(const char* varName) const;
-		const ShaderProgramAttributeVariable&
-			getAttributeVariable(const char* varName) const;
+		const ShaderProgramVariable& getVariableByName(
+			const char* varName) const;
+		const ShaderProgramUniformVariable& getUniformVariableByName(
+			const char* varName) const;
+		const ShaderProgramAttributeVariable& getAttributeVariableByName(
+			const char* varName) const;
 		/// @}
 
 		/// @name Check for variable existance

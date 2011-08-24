@@ -263,7 +263,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 				new MaterialBuildinVariable(svName, sProgs_);
 
 			mtlVars.push_back(v);
-			buildinsArr[v->getVariableEnum()] = v;
+			buildinsArr[v->getMatchingVariable()] = v;
 		}
 		// User defined
 		else

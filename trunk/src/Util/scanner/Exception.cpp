@@ -2,7 +2,7 @@
 #include <boost/lexical_cast.hpp>
 
 
-namespace Scanner {
+namespace scanner {
 
 
 //==============================================================================

@@ -282,7 +282,7 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 		// Put all the patches into the visible container
 		BOOST_FOREACH(SkinPatchNode* patchNode,
-			node->getPatcheNodes())
+			node->getPatchNodes())
 		{
 			if(!patchNode->isFlagEnabled(SceneNode::SNF_ACTIVE))
 			{

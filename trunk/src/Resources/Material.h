@@ -88,11 +88,11 @@ class Material: private MaterialProperties
 
 		typedef boost::ptr_vector<MaterialVariable> VarsContainer;
 
-		typedef boost::unordered_map<MaterialBuildinVariable::BuildinEnum,
-			MaterialBuildinVariable*> BuildinEnumToBuildinHashMap;
+		typedef boost::unordered_map<MaterialBuildinVariable::MatchingVariable,
+			MaterialBuildinVariable*> MatchingVariableToBuildinHashMap;
 
 		typedef boost::array<MaterialBuildinVariable*,
-			MaterialBuildinVariable::BUILDINS_NUM> BuildinsArr;
+			MaterialBuildinVariable::MV_NUM> BuildinsArr;
 
 		//======================================================================
 		// Methods                                                             =
@@ -122,15 +122,19 @@ class Material: private MaterialProperties
 		GETTER_R(VarsContainer, mtlVars, getVariables)
 		GETTER_R(Vec<MaterialUserVariable*>, userMtlVars, getUserVariables)
 		const MaterialBuildinVariable& getBuildinVariable(
-			MaterialBuildinVariable::BuildinEnum e) const;
+			MaterialBuildinVariable::MatchingVariable e) const;
 		/// @}
 
 		/// Load a material file
 		void load(const char* filename);
 
-		/// Check if a buildin variable exists
-		bool buildinVariableExits(MaterialBuildinVariable::BuildinEnum e)
-			const {return buildinsArr[e] != NULL;}
+		/// Check if a buildin variable exists in a pass type
+		bool buildinVariableExits(MaterialBuildinVariable::MatchingVariable e,
+			PassType p) const;
+
+		/// Check if a buildin variable exists in a any pass type
+		bool buildinVariableExits(MaterialBuildinVariable::MatchingVariable e) const
+			{return buildinsArr[e] != NULL;}
 
 	private:
 		//======================================================================
@@ -173,10 +177,19 @@ class Material: private MaterialProperties
 
 
 inline const MaterialBuildinVariable& Material::getBuildinVariable(
-	MaterialBuildinVariable::BuildinEnum e) const
+	MaterialBuildinVariable::MatchingVariable e) const
 {
 	ASSERT(buildinVariableExits(e));
 	return *buildinsArr[e];
+}
+
+
+inline bool Material::buildinVariableExits(
+	MaterialBuildinVariable::MatchingVariable e,
+	PassType p) const
+
+{
+	return buildinsArr[e] != NULL && buildinsArr[e]->inPass(p);
 }
 
 

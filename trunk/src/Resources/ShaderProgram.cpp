@@ -243,9 +243,10 @@ void ShaderProgram::load(const char* filename)
 
 
 //==============================================================================
-// getVariable                                                                 =
+// getVariableByName                                                           =
 //==============================================================================
-const ShaderProgramVariable& ShaderProgram::getVariable(const char* name) const
+const ShaderProgramVariable& ShaderProgram::getVariableByName(
+	const char* name) const
 {
 	VarsHashMap::const_iterator it = nameToVar.find(name);
 	if(it == nameToVar.end())
@@ -257,9 +258,9 @@ const ShaderProgramVariable& ShaderProgram::getVariable(const char* name) const
 
 
 //==============================================================================
-// getAttributeVariable                                                        =
+// getAttributeVariableByName                                                  =
 //==============================================================================
-const ShaderProgramAttributeVariable& ShaderProgram::getAttributeVariable(
+const ShaderProgramAttributeVariable& ShaderProgram::getAttributeVariableByName(
 	const char* name) const
 {
 	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
@@ -272,9 +273,9 @@ const ShaderProgramAttributeVariable& ShaderProgram::getAttributeVariable(
 
 
 //==============================================================================
-// getUniformVariable                                                          =
+// getUniformVariableByName                                                    =
 //==============================================================================
-const ShaderProgramUniformVariable& ShaderProgram::getUniformVariable(
+const ShaderProgramUniformVariable& ShaderProgram::getUniformVariableByName(
 	const char* name) const
 {
 	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
@@ -369,7 +370,7 @@ std::string ShaderProgram::getShaderInfoString() const
 	BOOST_FOREACH(const ShaderProgramVariable& var, vars)
 	{
 		ss << var.getName() << " " << var.getLoc() << " ";
-		if(var.getType() == ShaderProgramVariable::ATTRIBUTE)
+		if(var.getType() == ShaderProgramVariable::T_ATTRIBUTE)
 		{
 			ss << "attribute";
 		}
