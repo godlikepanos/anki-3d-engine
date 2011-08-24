@@ -1,16 +1,16 @@
 #ifndef R_SCENE_DRAWER_H
 #define R_SCENE_DRAWER_H
 
-#include <boost/variant.hpp>
 #include "Math/Math.h"
-#include "Resources/MtlUserDefinedVar.h"
+#include "Resources/MaterialCommon.h"
+#include <boost/variant.hpp>
 
 
 class RenderableNode;
 class Camera;
 class Material;
 class MaterialRuntime;
-class MaterialRuntimeUserDefinedVar;
+class MaterialRuntimeVariable;
 
 
 namespace R {
@@ -23,34 +23,27 @@ class Renderer;
 class SceneDrawer
 {
 	public:
-		enum RenderingPassType
-		{
-			RPT_COLOR,
-			RPT_DEPTH
-		};
-
 		/// The one and only constructor
 		SceneDrawer(const Renderer& r_): r(r_) {}
 
 		void renderRenderableNode(const RenderableNode& renderable,
-			const Camera& cam, RenderingPassType rtype) const;
+			const Camera& cam, PassType passType) const;
 
 	private:
 		/// Set the uniform using this visitor
 		class UsrDefVarVisitor: public boost::static_visitor<>
 		{
 			public:
-				const MaterialRuntimeUserDefinedVar& udvr;
+				const MaterialRuntimeVariable& udvr;
 				const Renderer& r;
 				uint& texUnit;
 
-				UsrDefVarVisitor(const MaterialRuntimeUserDefinedVar& udvr,
+				UsrDefVarVisitor(const MaterialRuntimeVariable& udvr,
 					const Renderer& r, uint& texUnit);
 
+				/// Functor. Its specialized for the texture case
 				template<typename Type>
 				void operator()(const Type& x) const;
-
-				void operator()(const RsrcPtr<Texture>* x) const;
 		};
 
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff

@@ -13,7 +13,6 @@ class GhostNode: public SceneNode
 		virtual ~GhostNode() {}
 		void init(const char*) {}
 
-		void moveUpdate() {}
 		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 };
 

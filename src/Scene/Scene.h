@@ -15,7 +15,6 @@ class Controller;
 class ParticleEmitterNode;
 class ModelNode;
 class SkinNode;
-class SkinPatchNodeDeformer;
 
 
 /// The Scene contains all the dynamic entities
@@ -56,8 +55,6 @@ class Scene
 		Phys::MasterContainer& getPhysMasterContainer();
 		const Phys::MasterContainer& getPhysMasterContainer() const;
 		const VisibilityTester& getVisibilityTester() const;
-		const SkinPatchNodeDeformer& getSkinPatchNodeDeformer() const
-			{return *skinsDeformer;}
 
 		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
 		GETTER_RW(Types<Light>::Container, lights, getLights)
@@ -85,7 +82,6 @@ class Scene
 		/// Connection with Bullet wrapper
 		boost::scoped_ptr<Phys::MasterContainer> physMasterContainer;
 		boost::scoped_ptr<VisibilityTester> visibilityTester;
-		boost::scoped_ptr<SkinPatchNodeDeformer> skinsDeformer;
 
 		/// Adds a node in a container
 		template<typename ContainerType, typename Type>

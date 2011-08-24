@@ -2,7 +2,7 @@
 #define SCANNER_COMMON_H
 
 
-namespace Scanner {
+namespace scanner {
 
 /// The max allowed length of a script line
 const int MAX_SCRIPT_LINE_LEN = 1024;

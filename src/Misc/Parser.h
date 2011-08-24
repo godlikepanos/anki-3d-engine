@@ -3,7 +3,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include "Util/Exception.h"
-#include "Util/Scanner/Scanner.h"
+#include "Util/scanner/Scanner.h"
 
 
 /// It contains some functions and macros that are used pretty often while
@@ -37,7 +37,7 @@ namespace Parser {
 /// @param arr The array that the func returns the numbers
 /// @exception Exception
 template <typename Type>
-void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
+void parseArrOfNumbers(scanner::Scanner& scanner, bool bracket, bool signs,
 	uint size, Type* arr);
 
 /// Parse a single number
@@ -45,25 +45,25 @@ void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
 /// @param sign If true expect sign or not
 /// @param out The output number
 template <typename Type>
-void parseNumber(Scanner::Scanner& scanner, bool sign, Type& out);
+void parseNumber(scanner::Scanner& scanner, bool sign, Type& out);
 
 /// Parses a math structure (Vec3, Vec4, Mat3 etc) with leading and following
 /// brackets. Eg {0.1 0.2 0.3}
 template <typename Type>
-void parseMathVector(Scanner::Scanner& scanner, Type& out);
+void parseMathVector(scanner::Scanner& scanner, Type& out);
 
 /// Parse true or false identifiers
-extern bool parseBool(Scanner::Scanner& scanner);
+extern bool parseBool(scanner::Scanner& scanner);
 
 /// Parse identifier
-extern std::string parseIdentifier(Scanner::Scanner& scanner,
+extern std::string parseIdentifier(scanner::Scanner& scanner,
 	const char* expectedIdentifier = NULL);
 
 /// Is identifier
-extern bool isIdentifier(const Scanner::Token& token, const char* str);
+extern bool isIdentifier(const scanner::Token& token, const char* str);
 
 /// Parse string
-extern std::string parseString(Scanner::Scanner& scanner);
+extern std::string parseString(scanner::Scanner& scanner);
 
 
 } // end namespace Parser

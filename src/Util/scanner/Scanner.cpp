@@ -10,7 +10,7 @@
 #include <boost/lexical_cast.hpp>
 
 
-namespace Scanner {
+namespace scanner {
 
 #define SCANNER_EXCEPTION(x) \
 	Exception(std::string() + x, __LINE__, scriptName, lineNmbr)
@@ -96,42 +96,42 @@ Scanner::Scanner(std::istream& istream_, const char* scriptName_,
 void Scanner::initAsciiMap()
 {
 	memset(&asciiLookupTable[0], AC_ERROR, sizeof(asciiLookupTable));
-	for(uint x='a'; x<='z'; x++)
+	for(uint x = 'a'; x <= 'z'; x++)
 	{
-		asciiLookupTable[x] = AC_LETTER;
+		lookupAscii(x) = AC_LETTER;
 	}
 
-	for(uint x='A'; x<='Z'; x++)
+	for(uint x = 'A'; x <= 'Z'; x++)
 	{
-		asciiLookupTable[x] = AC_LETTER;
+		lookupAscii(x) = AC_LETTER;
 	}
 
-	for(uint x='0'; x<='9'; x++)
+	for(uint x = '0'; x <= '9'; x++)
 	{
-		asciiLookupTable[x] = AC_DIGIT;
+		lookupAscii(x) = AC_DIGIT;
 	}
 
-	asciiLookupTable[':'] = asciiLookupTable['['] = asciiLookupTable[']'] =
-		asciiLookupTable['('] = asciiLookupTable[')'] = asciiLookupTable['.'] =
-		asciiLookupTable['{'] = asciiLookupTable['}'] = asciiLookupTable[','] =
-		asciiLookupTable[';'] = asciiLookupTable['?'] = asciiLookupTable['='] =
-		asciiLookupTable['!'] = asciiLookupTable['<'] = asciiLookupTable['>'] =
-		asciiLookupTable['|'] = asciiLookupTable['&'] = asciiLookupTable['+'] =
-		asciiLookupTable['-'] = asciiLookupTable['*'] = asciiLookupTable['/'] =
-		asciiLookupTable['~'] = asciiLookupTable['%'] = asciiLookupTable['#'] =
-		asciiLookupTable['^'] = asciiLookupTable['\\'] = AC_SPECIAL;
+	lookupAscii(':') = lookupAscii('[') = lookupAscii(']') =
+		lookupAscii('(') = lookupAscii(')') = lookupAscii('.') =
+		lookupAscii('{') = lookupAscii('}') = lookupAscii(',') =
+		lookupAscii(';') = lookupAscii('?') = lookupAscii('=') =
+		lookupAscii('!') = lookupAscii('<') = lookupAscii('>') =
+		lookupAscii('|') = lookupAscii('&') = lookupAscii('+') =
+		lookupAscii('-') = lookupAscii('*') = lookupAscii('/') =
+		lookupAscii('~') = lookupAscii('%') = lookupAscii('#') =
+		lookupAscii('^') = lookupAscii('\\') = AC_SPECIAL;
 
-	asciiLookupTable['\t'] = asciiLookupTable[' '] = asciiLookupTable['\0'] =
+	lookupAscii('\t') = lookupAscii(' ') = lookupAscii('\0') =
 		AC_WHITESPACE;
-	asciiLookupTable['\n'] = AC_ERROR; // newline is unacceptable char
+	lookupAscii('\n') = AC_ERROR; // newline is unacceptable char
 
-	asciiLookupTable['@'] = asciiLookupTable['`'] = asciiLookupTable['$'] =
+	lookupAscii('@') = lookupAscii('`') = lookupAscii('$') =
 		AC_ACCEPTABLE_IN_COMMENTS;
 
-	asciiLookupTable['\"'] = AC_DOUBLEQUOTE;
-	asciiLookupTable['\''] = AC_QUOTE;
-	asciiLookupTable[(int)eofChar] = AC_EOF;
-	asciiLookupTable['_'] = AC_LETTER;
+	lookupAscii('\"') = AC_DOUBLEQUOTE;
+	lookupAscii('\'') = AC_QUOTE;
+	lookupAscii((int)eofChar) = AC_EOF;
+	lookupAscii('_') = AC_LETTER;
 }
 
 
@@ -144,7 +144,7 @@ void Scanner::init(bool newlinesAsWhitespace_)
 	commentedLines = 0;
 	inStream = NULL;
 
-	if(asciiLookupTable['a'] != AC_LETTER)
+	if(lookupAscii('a') != AC_LETTER)
 	{
 		initAsciiMap();
 	}
@@ -225,7 +225,7 @@ void Scanner::getAllPrintAll()
 		getNextToken();
 		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() <<
 			": " << crntToken.getInfoStr() << std::endl;
-	} while(crntToken.code != TC_EOF);
+	} while(crntToken.code != TC_END);
 }
 
 
@@ -329,7 +329,7 @@ const Token& Scanner::getNextToken()
 	{
 		if(lookupAscii(getNextChar()) == AC_EOF)
 		{
-			crntToken.code = TC_EOF;
+			crntToken.code = TC_END;
 		}
 		else
 		{
@@ -360,7 +360,7 @@ const Token& Scanner::getNextToken()
 				checkString();
 				break;
 			case AC_EOF:
-				crntToken.code = TC_EOF;
+				crntToken.code = TC_END;
 				break;
 			case AC_ERROR:
 			default:
@@ -984,7 +984,7 @@ void Scanner::checkChar()
 	if(ch=='\'')    //end
 	{
 		*tmpStr = '\0';
-		crntToken.code = TC_CHAR;
+		crntToken.code = TC_CHARACTER;
 		getNextChar();
 		return;
 	}
@@ -1013,35 +1013,35 @@ void Scanner::checkSpecial()
 			code = TC_PERIOD;
 			break;
 		case '(':
-			code = TC_LPAREN;
+			code = TC_L_PAREN;
 			break;
 		case ')':
-			code = TC_RPAREN;
+			code = TC_R_PAREN;
 			break;
 		case '[':
-			code = TC_LSQBRACKET;
+			code = TC_L_SQ_BRACKET;
 			break;
 		case ']':
-			code = TC_RSQBRACKET;
+			code = TC_R_SQ_BRACKET;
 			break;
 		case '{':
-			code = TC_LBRACKET;
+			code = TC_L_BRACKET;
 			break;
 		case '}':
-			code = TC_RBRACKET;
+			code = TC_R_BRACKET;
 			break;
 		case '?':
 			code = TC_QUESTIONMARK;
 			break;
 		case '~':
-			code = TC_ONESCOMPLEMENT;
+			code = TC_UNARAY_COMPLEMENT;
 			break;
 		case '.':
 			ch = getNextChar();
 			switch(ch)
 			{
 				case '*':
-					code = TC_POINTERTOMEMBER;
+					code = TC_POINTER_TO_MEMBER;
 					break;
 				default:
 					putBackChar();
@@ -1054,7 +1054,7 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case ':':
-					code = TC_SCOPERESOLUTION;
+					code = TC_SCOPE_RESOLUTION;
 					break;
 				default:
 					putBackChar();
@@ -1067,13 +1067,13 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '>':
-					code = TC_POINTERTOMEMBER;
+					code = TC_POINTER_TO_MEMBER;
 					break;
 				case '-':
 					code = TC_DEC;
 					break;
 				case '=':
-					code = TC_ASSIGNSUB;
+					code = TC_ASSIGN_SUB;
 					break;
 				default:
 					putBackChar();
@@ -1099,7 +1099,7 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_NOTEQUAL;
+					code = TC_NOT_EQUAL;
 					break;
 				default:
 					putBackChar();
@@ -1112,14 +1112,14 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_LESSEQUAL;
+					code = TC_LESS_EQUAL;
 					break;
 				case '<':
 					ch = getNextChar();
 					switch(ch)
 					{
 						case '=':
-							code = TC_ASSIGNSHL;
+							code = TC_ASSIGN_SHL;
 							break;
 						default:
 							putBackChar();
@@ -1137,14 +1137,14 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_GREATEREQUAL;
+					code = TC_GREATER_EQUAL;
 					break;
 				case '>':
 					ch = getNextChar();
 					switch(ch)
 					{
 						case '=':
-							code = TC_ASSIGNSHR;
+							code = TC_ASSIGN_SHR;
 							break;
 						default:
 							putBackChar();
@@ -1162,14 +1162,14 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '|':
-					code = TC_LOGICALOR;
+					code = TC_LOGICAL_OR;
 					break;
 				case '=':
-					code = TC_ASSIGNOR;
+					code = TC_ASSIGN_OR;
 					break;
 				default:
 					putBackChar();
-					code = TC_BITWISEOR;
+					code = TC_BITWISE_OR;
 			}
 			break;
 
@@ -1178,14 +1178,14 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '&':
-					code = TC_LOGICALAND;
+					code = TC_LOGICAL_AND;
 					break;
 				case '=':
-					code = TC_ASSIGNAND;
+					code = TC_ASSIGN_AND;
 					break;
 				default:
 					putBackChar();
-					code = TC_BITWISEAND;
+					code = TC_BITWISE_AND;
 			}
 			break;
 
@@ -1197,7 +1197,7 @@ void Scanner::checkSpecial()
 					code = TC_INC;
 					break;
 				case '=':
-					code = TC_ASSIGNADD;
+					code = TC_ASSIGN_ADD;
 					break;
 				default:
 					putBackChar();
@@ -1210,7 +1210,7 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_ASSIGNMUL;
+					code = TC_ASSIGN_MUL;
 					break;
 				default:
 					putBackChar();
@@ -1223,7 +1223,7 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_ASSIGNDIV;
+					code = TC_ASSIGN_DIV;
 					break;
 				default:
 					putBackChar();
@@ -1236,7 +1236,7 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_ASSIGNMOD;
+					code = TC_ASSIGN_MOD;
 					break;
 				default:
 					putBackChar();
@@ -1249,7 +1249,7 @@ void Scanner::checkSpecial()
 			switch(ch)
 			{
 				case '=':
-					code = TC_ASSIGNXOR;
+					code = TC_ASSIGN_XOR;
 					break;
 				default:
 					putBackChar();

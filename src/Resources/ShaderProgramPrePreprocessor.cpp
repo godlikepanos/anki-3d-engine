@@ -46,15 +46,15 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		throw EXCEPTION("File \"" + filename + "\": Cannot open or empty");
 	}
 
-	Scanner::Scanner scanner(filename.c_str(), false);
-	const Scanner::Token* token;
+	scanner::Scanner scanner(filename.c_str(), false);
+	const scanner::Token* token;
 
 	while(true)
 	{
 		token = &scanner.getNextToken();
 
 		// #
-		if(token->getCode() == Scanner::TC_SHARP)
+		if(token->getCode() == scanner::TC_SHARP)
 		{
 			token = &scanner.getNextToken();
 			// pragma
@@ -91,13 +91,13 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 				} // end if anki
 
 				token = &scanner.getNextToken();
-				if(token->getCode()!=Scanner::TC_NEWLINE &&
-					token->getCode()!=Scanner::TC_EOF)
+				if(token->getCode()!=scanner::TC_NEWLINE &&
+					token->getCode()!=scanner::TC_END)
 				{
 					throw PARSER_EXCEPTION_EXPECTED("newline or end of file");
 				}
 
-				if(token->getCode() == Scanner::TC_EOF)
+				if(token->getCode() == scanner::TC_END)
 				{
 					break;
 				}
@@ -107,7 +107,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		//
 		// newline
 		//
-		else if(token->getCode() == Scanner::TC_NEWLINE)
+		else if(token->getCode() == scanner::TC_NEWLINE)
 		{
 			sourceLines.push_back(lines[scanner.getLineNumber() - 2]);
 			//PRINT(lines[scanner.getLineNmbr() - 2])
@@ -115,7 +115,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		//
 		// EOF
 		//
-		else if(token->getCode() == Scanner::TC_EOF)
+		else if(token->getCode() == scanner::TC_END)
 		{
 			sourceLines.push_back(lines[scanner.getLineNumber() - 1]);
 			//PRINT(lines[scanner.getLineNmbr() - 1])
@@ -124,7 +124,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		//
 		// error
 		//
-		else if(token->getCode() == Scanner::TC_ERROR)
+		else if(token->getCode() == scanner::TC_ERROR)
 		{
 			// It will never get here
 		}
@@ -218,10 +218,10 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 //==============================================================================
 // parseStartPragma                                                            =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseStartPragma(Scanner::Scanner& scanner,
+void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
 	const std::string& filename, uint depth, const Vec<std::string>& lines)
 {
-	const Scanner::Token* token = &scanner.getNextToken();
+	const scanner::Token* token = &scanner.getNextToken();
 
 	// Chose the correct pragma
 	CodeBeginningPragma* cbp;
@@ -276,12 +276,12 @@ void ShaderProgramPrePreprocessor::parseStartPragma(Scanner::Scanner& scanner,
 // parseIncludePragma                                                          =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseIncludePragma(
-	Scanner::Scanner& scanner, const std::string& /*filename*/, uint depth,
+	scanner::Scanner& scanner, const std::string& /*filename*/, uint depth,
 	const Vec<std::string>& lines)
 {
-	const Scanner::Token* token = &scanner.getNextToken();
+	const scanner::Token* token = &scanner.getNextToken();
 
-	if(token->getCode() == Scanner::TC_STRING)
+	if(token->getCode() == scanner::TC_STRING)
 	{
 		std::string filename = token->getValue().getString();
 
@@ -307,12 +307,12 @@ void ShaderProgramPrePreprocessor::parseIncludePragma(
 //==============================================================================
 // parseTrffbVarying                                                           =
 //==============================================================================
-void ShaderProgramPrePreprocessor::parseTrffbVarying(Scanner::Scanner& scanner,
+void ShaderProgramPrePreprocessor::parseTrffbVarying(scanner::Scanner& scanner,
 	const std::string& filename, uint /*depth*/, const Vec<std::string>& lines)
 {
-	const Scanner::Token* token = &scanner.getNextToken();
+	const scanner::Token* token = &scanner.getNextToken();
 
-	if(token->getCode() == Scanner::TC_IDENTIFIER)
+	if(token->getCode() == scanner::TC_IDENTIFIER)
 	{
 		std::string varName = token->getValue().getString();
 

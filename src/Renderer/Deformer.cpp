@@ -1,28 +1,33 @@
-#include "SkinPatchNodeDeformer.h"
+#include "Deformer.h"
 #include "Resources/ShaderProgram.h"
 #include "Resources/Material.h"
-#include "SkinPatchNode.h"
-#include "SkinNode.h"
+#include "Scene/SkinPatchNode.h"
+#include "Scene/SkinNode.h"
+#include "MainRenderer.h"
+
+
+namespace R {
 
 
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
 
-SkinPatchNodeDeformer::SkinPatchNodeDeformer()
+Deformer::Deformer(const MainRenderer& mainR_)
+:	mainR(mainR_)
 {
 	init();
 }
 
 
-SkinPatchNodeDeformer::~SkinPatchNodeDeformer()
+Deformer::~Deformer()
 {}
 
 
 //==============================================================================
 // init                                                                        =
 //==============================================================================
-void SkinPatchNodeDeformer::init()
+void Deformer::init()
 {
 	//
 	// Load the shaders
@@ -35,11 +40,13 @@ void SkinPatchNodeDeformer::init()
 //==============================================================================
 // deform                                                                      =
 //==============================================================================
-void SkinPatchNodeDeformer::deform(SkinPatchNode& node) const
+void Deformer::deform(SkinPatchNode& node) const
 {
 	ASSERT(node.getParent() != NULL); // The SkinPatchNodes always have parent
 	ASSERT(static_cast<SceneNode*>(node.getParent())->getSceneNodeType() ==
-		SceneNode::SNT_SKIN); // And their parent must be
+		SceneNode::SNT_SKIN); // And their parent must be SkinNode
+	ASSERT(node.isFlagEnabled(SceneNode::SNF_VISIBLE)); // And it should be
+	                                                    // visible
 
 	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
 
@@ -92,3 +99,6 @@ void SkinPatchNodeDeformer::deform(SkinPatchNode& node) const
 
 	GlStateMachineSingleton::getInstance().disable(GL_RASTERIZER_DISCARD);
 }
+
+
+} // end namespace

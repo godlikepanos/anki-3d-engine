@@ -15,7 +15,7 @@ class Image
 		{
 			CT_R, ///< Red only
 			CT_RGB, ///< RGB
-			CT_RGBA /// RGB plus alpha
+			CT_RGBA ///< RGB plus alpha
 		};
 
 		/// The data compression

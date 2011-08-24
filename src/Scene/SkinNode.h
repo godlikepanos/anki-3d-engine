@@ -29,7 +29,12 @@ class SkinNode: public SceneNode
 		GETTER_RW(Vec<Vec3>, boneTranslations, getBoneTranslations)
 		GETTER_R(Skin, *skin, getSkin)
 		GETTER_R(Col::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
-		GETTER_R(Vec<SkinPatchNode*>, patches, getPatcheNodes)
+		GETTER_R(Vec<SkinPatchNode*>, patches, getPatchNodes)
+
+		GETTER_SETTER_BY_VAL(float, step, getStep, setStep)
+		GETTER_SETTER_BY_VAL(float, frame, getFrame, setFrame)
+		void setAnimation(const SkelAnim& anim_) {anim = &anim_;}
+		const SkelAnim* getAnimation() const {return anim;}
 		/// @}
 
 		void init(const char* filename);
@@ -38,10 +43,20 @@ class SkinNode: public SceneNode
 		/// cause its faster that way). The tails come from the previous frame
 		void moveUpdate();
 
+		/// Update the animation stuff
+		void frameUpdate(float prevUpdateTime, float crntTime);
+
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
 		Vec<SkinPatchNode*> patches;
 		Col::Obb visibilityShapeWSpace;
+
+		/// @name Animation stuff
+		/// @{
+		float step;
+		float frame;
+		const SkelAnim* anim; ///< The active skeleton animation
+		/// @}
 
 		/// @name Bone data
 		/// @{
@@ -50,6 +65,23 @@ class SkinNode: public SceneNode
 		Vec<Mat3> boneRotations;
 		Vec<Vec3> boneTranslations;
 		/// @}
+
+		/// Interpolate
+		/// @param[in] animation Animation
+		/// @param[in] frame Frame
+		/// @param[out] translations Translations vector
+		/// @param[out] rotations Rotations vector
+		static void interpolate(const SkelAnim& animation, float frame,
+			Vec<Vec3>& translations, Vec<Mat3>& rotations);
+
+		/// Calculate the global pose
+		static void updateBoneTransforms(const Skeleton& skel,
+			Vec<Vec3>& translations, Vec<Mat3>& rotations);
+
+		/// Deform the heads and tails
+		static void deformHeadsTails(const Skeleton& skeleton,
+		    const Vec<Vec3>& boneTranslations, const Vec<Mat3>& boneRotations,
+		    Vec<Vec3>& heads, Vec<Vec3>& tails);
 };
 
 

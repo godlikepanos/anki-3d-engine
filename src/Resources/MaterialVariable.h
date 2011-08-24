@@ -20,8 +20,8 @@ class MaterialVariable
 		/// The type
 		enum Type
 		{
-			USER,
-			BUILDIN
+			T_USER,
+			T_BUILDIN
 		};
 
 		/// XXX Used for initialization in the constructor

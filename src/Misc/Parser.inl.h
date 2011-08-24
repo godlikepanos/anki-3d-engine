@@ -10,16 +10,16 @@ namespace Parser {
 // parseArrOfNumbers                                                           =
 //==============================================================================
 template <typename Type>
-void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
+void parseArrOfNumbers(scanner::Scanner& scanner, bool bracket, bool signs,
 	uint size, Type* arr)
 {
-	const Scanner::Token* token;
+	const scanner::Token* token;
 
 	// first of all the left bracket
 	if(bracket)
 	{
 		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_LBRACKET)
+		if(token->getCode() != scanner::TC_L_BRACKET)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("{");
 		}
@@ -35,19 +35,19 @@ void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
 		bool sign = 0; // sign of the number. 0 for positive and 1 for negative
 		if(signs)
 		{
-			if(token->getCode() == Scanner::TC_MINUS)
+			if(token->getCode() == scanner::TC_MINUS)
 			{
 				sign = 1;
 				token = &scanner.getNextToken();
 			}
-			else if(token->getCode() == Scanner::TC_PLUS)
+			else if(token->getCode() == scanner::TC_PLUS)
 			{
 				sign = 0;
 				token = &scanner.getNextToken();
 			}
 
 			// check if not number
-			if(token->getCode() != Scanner::TC_NUMBER)
+			if(token->getCode() != scanner::TC_NUMBER)
 			{
 				throw PARSER_EXCEPTION_EXPECTED("number");
 			}
@@ -56,7 +56,7 @@ void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
 		// put the number in the arr and do typecasting from int to float
 		Type nmbr;
 
-		if(token->getDataType() == Scanner::DT_FLOAT)
+		if(token->getDataType() == scanner::DT_FLOAT)
 		{
 			nmbr = static_cast<Type>(token->getValue().getFloat());
 		}
@@ -72,7 +72,7 @@ void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
 	if(bracket)
 	{
 		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_RBRACKET)
+		if(token->getCode() != scanner::TC_R_BRACKET)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("}");
 		}
@@ -84,39 +84,39 @@ void parseArrOfNumbers(Scanner::Scanner& scanner, bool bracket, bool signs,
 // parseNumber                                                                 =
 //==============================================================================
 template <typename Type>
-void parseNumber(Scanner::Scanner& scanner, bool sign, Type& out)
+void parseNumber(scanner::Scanner& scanner, bool sign, Type& out)
 {
 	try
 	{
-		const Scanner::Token* token = &scanner.getNextToken();
+		const scanner::Token* token = &scanner.getNextToken();
 		bool negative = false;
 
 		// check the sign if any
 		if(sign)
 		{
-			if(token->getCode() == Scanner::TC_PLUS)
+			if(token->getCode() == scanner::TC_PLUS)
 			{
 				negative = false;
 				token = &scanner.getNextToken();
 			}
-			else if(token->getCode() == Scanner::TC_MINUS)
+			else if(token->getCode() == scanner::TC_MINUS)
 			{
 				negative = true;
 				token = &scanner.getNextToken();
 			}
-			else if(token->getCode() != Scanner::TC_NUMBER)
+			else if(token->getCode() != scanner::TC_NUMBER)
 			{
 				throw PARSER_EXCEPTION_EXPECTED("number or sign");
 			}
 		}
 
 		// check the number
-		if(token->getCode() != Scanner::TC_NUMBER)
+		if(token->getCode() != scanner::TC_NUMBER)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("number");
 		}
 
-		if(token->getDataType() == Scanner::DT_FLOAT)
+		if(token->getDataType() == scanner::DT_FLOAT)
 		{
 			double d = negative ? -token->getValue().getFloat() :
 				token->getValue().getFloat();
@@ -140,15 +140,15 @@ void parseNumber(Scanner::Scanner& scanner, bool sign, Type& out)
 // parseMathVector                                                             =
 //==============================================================================
 template <typename Type>
-void parseMathVector(Scanner::Scanner& scanner, Type& out)
+void parseMathVector(scanner::Scanner& scanner, Type& out)
 {
 	try
 	{
-		const Scanner::Token* token = &scanner.getNextToken();
+		const scanner::Token* token = &scanner.getNextToken();
 		uint elementsNum = sizeof(Type) / sizeof(float);
 
 		// {
-		if(token->getCode() != Scanner::TC_LBRACKET)
+		if(token->getCode() != scanner::TC_L_BRACKET)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("{");
 		}
@@ -163,7 +163,7 @@ void parseMathVector(Scanner::Scanner& scanner, Type& out)
 
 		// }
 		token = &scanner.getNextToken();
-		if(token->getCode() != Scanner::TC_RBRACKET)
+		if(token->getCode() != scanner::TC_R_BRACKET)
 		{
 			throw PARSER_EXCEPTION_EXPECTED("}");
 		}
@@ -178,12 +178,12 @@ void parseMathVector(Scanner::Scanner& scanner, Type& out)
 //==============================================================================
 // parseBool                                                                   =
 //==============================================================================
-inline bool parseBool(Scanner::Scanner& scanner)
+inline bool parseBool(scanner::Scanner& scanner)
 {
 	const char* errMsg = "identifier true or false";
 
-	const Scanner::Token* token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_IDENTIFIER)
+	const scanner::Token* token = &scanner.getNextToken();
+	if(token->getCode() != scanner::TC_IDENTIFIER)
 	{
 		throw PARSER_EXCEPTION_EXPECTED(errMsg);
 	}
@@ -206,11 +206,11 @@ inline bool parseBool(Scanner::Scanner& scanner)
 //==============================================================================
 // parseIdentifier                                                             =
 //==============================================================================
-inline std::string parseIdentifier(Scanner::Scanner& scanner,
+inline std::string parseIdentifier(scanner::Scanner& scanner,
 	const char* expectedIdentifier)
 {
-	const Scanner::Token* token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_IDENTIFIER)
+	const scanner::Token* token = &scanner.getNextToken();
+	if(token->getCode() != scanner::TC_IDENTIFIER)
 	{
 		if(expectedIdentifier == NULL)
 		{
@@ -235,9 +235,9 @@ inline std::string parseIdentifier(Scanner::Scanner& scanner,
 //==============================================================================
 // isIdentifier                                                                =
 //==============================================================================
-inline bool isIdentifier(const Scanner::Token& token, const char* str)
+inline bool isIdentifier(const scanner::Token& token, const char* str)
 {
-	return token.getCode() == Scanner::TC_IDENTIFIER &&
+	return token.getCode() == scanner::TC_IDENTIFIER &&
 		!strcmp(token.getValue().getString(), str);
 }
 
@@ -245,10 +245,10 @@ inline bool isIdentifier(const Scanner::Token& token, const char* str)
 //==============================================================================
 // parseString                                                                 =
 //==============================================================================
-inline std::string parseString(Scanner::Scanner& scanner)
+inline std::string parseString(scanner::Scanner& scanner)
 {
-	const Scanner::Token* token = &scanner.getNextToken();
-	if(token->getCode() != Scanner::TC_STRING)
+	const scanner::Token* token = &scanner.getNextToken();
+	if(token->getCode() != scanner::TC_STRING)
 	{
 		throw PARSER_EXCEPTION_EXPECTED("string");
 	}

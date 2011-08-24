@@ -11,14 +11,22 @@
 #include "Ssao.h"
 #include "Core/Logger.h"
 #include "GfxApi/TimeQuery.h"
+#include "Deformer.h"
 
 
 namespace R {
 
 
 //==============================================================================
-// Destructor                                                                  =
+// Constructors & destructor                                                   =
 //==============================================================================
+MainRenderer::MainRenderer():
+	dbg(*this),
+	screenshotJpegQuality(90),
+	deformer(new Deformer(*this))
+{}
+
+
 MainRenderer::~MainRenderer()
 {}
 

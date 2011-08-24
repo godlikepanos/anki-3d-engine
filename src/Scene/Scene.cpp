@@ -3,7 +3,6 @@
 #include "Util/Exception.h"
 #include "Scene.h"
 #include "VisibilityTester.h"
-#include "SkinPatchNodeDeformer.h"
 
 #include "Camera.h"
 #include "Light.h"
@@ -25,7 +24,6 @@ Scene::Scene()
 
 	physMasterContainer.reset(new Phys::MasterContainer);
 	visibilityTester.reset(new VisibilityTester(*this));
-	skinsDeformer.reset(new SkinPatchNodeDeformer);
 }
 
 

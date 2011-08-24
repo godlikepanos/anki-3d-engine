@@ -5,7 +5,7 @@
 #include <boost/lexical_cast.hpp>
 
 
-namespace Scanner {
+namespace scanner {
 
 
 //==============================================================================
@@ -46,12 +46,12 @@ std::string Token::getInfoStr() const
 			return "comment";
 		case TC_NEWLINE:
 			return "newline";
-		case TC_EOF:
+		case TC_END:
 			return "end of file";
 		case TC_STRING:
 			sprintf(tokenInfoStr, "string \"%s\"", value.string);
 			break;
-		case TC_CHAR:
+		case TC_CHARACTER:
 			sprintf(tokenInfoStr, "char '%c' (\"%s\")", value.char_,
 				&asString[0]);
 			break;
@@ -76,10 +76,10 @@ std::string Token::getInfoStr() const
 			{
 				sprintf(tokenInfoStr, "reserved word \"%s\"", value.string);
 			}
-			else if(code>=TC_SCOPERESOLUTION && code<=TC_ASSIGNOR)
+			else if(code>=TC_SCOPE_RESOLUTION && code<=TC_ASSIGN_OR)
 			{
 				sprintf(tokenInfoStr, "operator no %d",
-					code - TC_SCOPERESOLUTION);
+					code - TC_SCOPE_RESOLUTION);
 			}
 	}
 

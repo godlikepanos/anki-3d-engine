@@ -10,54 +10,54 @@
 // Statics                                                                     =
 //==============================================================================
 
-ConstCharPtrHashMap<MaterialBuildinVariable::BuildinEnum>::Type
+ConstCharPtrHashMap<MaterialBuildinVariable::MatchingVariable>::Type
 	MaterialBuildinVariable::buildinNameToEnum = boost::assign::map_list_of
-	("position", POSITION)
-	("tangent", TANGENT)
-	("normal", NORMAL)
-	("texCoords", TEX_COORDS)
-	("modelMat", MODEL_MAT)
-	("viewMat", VIEW_MAT)
-	("projectionMat", PROJECTION_MAT)
-	("modelViewMat", MODELVIEW_MAT)
-	("viewProjectionMat", VIEWPROJECTION_MAT)
-	("normalMat", NORMAL_MAT)
-	("modelViewProjectionMat", MODELVIEWPROJECTION_MAT)
-	("msNormalFai", MS_NORMAL_FAI)
-	("msDiffuseFai", MS_DIFFUSE_FAI)
-	("msSpecularFai", MS_SPECULAR_FAI)
-	("msDepthFai", MS_DEPTH_FAI)
-	("isFai", IS_FAI)
-	("ppsPrePassFai", PPS_PRE_PASS_FAI)
-	("ppsPostPassFai", PPS_POST_PASS_FAI)
-	("rendererSize", RENDERER_SIZE)
-	("sceneAmbientColor", SCENE_AMBIENT_COLOR)
-	("blurring", BLURRING);
+	("position", MV_POSITION)
+	("tangent", MV_TANGENT)
+	("normal", MV_NORMAL)
+	("texCoords", MV_TEX_COORDS)
+	("modelMat", MV_MODEL_MAT)
+	("viewMat", MV_VIEW_MAT)
+	("projectionMat", MV_PROJECTION_MAT)
+	("modelViewMat", MV_MODELVIEW_MAT)
+	("viewProjectionMat", MV_VIEWPROJECTION_MAT)
+	("normalMat", MV_NORMAL_MAT)
+	("modelViewProjectionMat", MV_MODELVIEWPROJECTION_MAT)
+	("msNormalFai", MV_MS_NORMAL_FAI)
+	("msDiffuseFai", MV_MS_DIFFUSE_FAI)
+	("msSpecularFai", MV_MS_SPECULAR_FAI)
+	("msDepthFai", MV_MS_DEPTH_FAI)
+	("isFai", MV_IS_FAI)
+	("ppsPrePassFai", MV_PPS_PRE_PASS_FAI)
+	("ppsPostPassFai", MV_PPS_POST_PASS_FAI)
+	("rendererSize", MV_RENDERER_SIZE)
+	("sceneAmbientColor", MV_SCENE_AMBIENT_COLOR)
+	("blurring", MV_BLURRING);
 
 
-boost::unordered_map<MaterialBuildinVariable::BuildinEnum, GLenum>
+boost::unordered_map<MaterialBuildinVariable::MatchingVariable, GLenum>
 	MaterialBuildinVariable::buildinToGlType = boost::assign::map_list_of
-	(POSITION, GL_FLOAT_VEC3)
-	(TANGENT, GL_FLOAT_VEC4)
-	(NORMAL, GL_FLOAT_VEC3)
-	(TEX_COORDS, GL_FLOAT_VEC2)
-	(MODEL_MAT, GL_FLOAT_MAT4)
-	(VIEW_MAT, GL_FLOAT_MAT4)
-	(PROJECTION_MAT, GL_FLOAT_MAT4)
-	(PROJECTION_MAT, GL_FLOAT_MAT4)
-	(VIEWPROJECTION_MAT, GL_FLOAT_MAT4)
-	(NORMAL_MAT, GL_FLOAT_MAT3)
-	(MODELVIEWPROJECTION_MAT, GL_FLOAT_MAT4)
-	(MS_NORMAL_FAI, GL_SAMPLER_2D)
-	(MS_DIFFUSE_FAI, GL_SAMPLER_2D)
-	(MS_SPECULAR_FAI, GL_SAMPLER_2D)
-	(MS_DEPTH_FAI, GL_SAMPLER_2D)
-	(IS_FAI, GL_SAMPLER_2D)
-	(PPS_PRE_PASS_FAI, GL_SAMPLER_2D)
-	(PPS_POST_PASS_FAI, GL_SAMPLER_2D)
-	(RENDERER_SIZE, GL_FLOAT_VEC2)
-	(SCENE_AMBIENT_COLOR, GL_FLOAT_VEC3)
-	(BLURRING, GL_FLOAT);
+	(MV_POSITION, GL_FLOAT_VEC3)
+	(MV_TANGENT, GL_FLOAT_VEC4)
+	(MV_NORMAL, GL_FLOAT_VEC3)
+	(MV_TEX_COORDS, GL_FLOAT_VEC2)
+	(MV_MODEL_MAT, GL_FLOAT_MAT4)
+	(MV_VIEW_MAT, GL_FLOAT_MAT4)
+	(MV_PROJECTION_MAT, GL_FLOAT_MAT4)
+	(MV_PROJECTION_MAT, GL_FLOAT_MAT4)
+	(MV_VIEWPROJECTION_MAT, GL_FLOAT_MAT4)
+	(MV_NORMAL_MAT, GL_FLOAT_MAT3)
+	(MV_MODELVIEWPROJECTION_MAT, GL_FLOAT_MAT4)
+	(MV_MS_NORMAL_FAI, GL_SAMPLER_2D)
+	(MV_MS_DIFFUSE_FAI, GL_SAMPLER_2D)
+	(MV_MS_SPECULAR_FAI, GL_SAMPLER_2D)
+	(MV_MS_DEPTH_FAI, GL_SAMPLER_2D)
+	(MV_IS_FAI, GL_SAMPLER_2D)
+	(MV_PPS_PRE_PASS_FAI, GL_SAMPLER_2D)
+	(MV_PPS_POST_PASS_FAI, GL_SAMPLER_2D)
+	(MV_RENDERER_SIZE, GL_FLOAT_VEC2)
+	(MV_SCENE_AMBIENT_COLOR, GL_FLOAT_VEC3)
+	(MV_BLURRING, GL_FLOAT);
 
 
 //==============================================================================
@@ -66,8 +66,8 @@ boost::unordered_map<MaterialBuildinVariable::BuildinEnum, GLenum>
 MaterialBuildinVariable::MaterialBuildinVariable(
 	const char* shaderProgVarName,
 	const ShaderPrograms& shaderProgsArr)
-:	MaterialVariable(BUILDIN, shaderProgVarName, shaderProgsArr),
- 	bEnum(BUILDINS_NUM)
+:	MaterialVariable(T_BUILDIN, shaderProgVarName, shaderProgsArr),
+ 	bEnum(MV_NUM)
 {
 	GLenum dataType;
 	// Sanity checks
@@ -89,9 +89,9 @@ MaterialBuildinVariable::MaterialBuildinVariable(
 // isBuildin                                                                   =
 //==============================================================================
 bool MaterialBuildinVariable::isBuildin(const char* name,
-	BuildinEnum* var, GLenum* dataType)
+	MatchingVariable* var, GLenum* dataType)
 {
-	ConstCharPtrHashMap<BuildinEnum>::Type::const_iterator it =
+	ConstCharPtrHashMap<MatchingVariable>::Type::const_iterator it =
 		buildinNameToEnum.find(name);
 
 	if(it == buildinNameToEnum.end())
@@ -106,7 +106,7 @@ bool MaterialBuildinVariable::isBuildin(const char* name,
 
 	if(dataType)
 	{
-		boost::unordered_map<BuildinEnum, GLenum>::const_iterator it2 =
+		boost::unordered_map<MatchingVariable, GLenum>::const_iterator it2 =
 			buildinToGlType.find(it->second);
 
 		ASSERT(it2 != buildinToGlType.end());

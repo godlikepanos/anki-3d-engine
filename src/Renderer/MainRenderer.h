@@ -3,9 +3,13 @@
 
 #include "Renderer.h"
 #include "Util/Singleton.h"
+#include <boost/scoped_ptr.hpp>
 
 
 namespace R {
+
+
+class Deformer;
 
 
 /// Main onscreen renderer
@@ -59,16 +63,12 @@ class MainRenderer: public Renderer
 		/// of the application's window size. From 0.0(low) to 1.0(high)
 		float renderingQuality;
 
+		boost::scoped_ptr<Deformer> deformer;
+
 		void takeScreenshotTga(const char* filename);
 		void takeScreenshotJpeg(const char* filename);
 		static void initGl();
 };
-
-
-inline MainRenderer::MainRenderer():
-	dbg(*this),
-	screenshotJpegQuality(90)
-{}
 
 
 } // end namespace

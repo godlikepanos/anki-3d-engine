@@ -5,7 +5,7 @@
 #include <fstream>
 
 
-namespace Scanner {
+namespace scanner {
 
 
 /// C++ Tokenizer
@@ -160,8 +160,9 @@ class Scanner
 		/// construction of the first Scanner @see Scanner()
 		static void initAsciiMap();
 
-		/// To save us from typing
-		AsciiFlag lookupAscii(char ch_) {return asciiLookupTable[(int)ch_];}
+		/// A function to save us from typing
+		static AsciiFlag& lookupAscii(char c)
+			{return asciiLookupTable[static_cast<int>(c)];}
 
 		/// Common initialization code
 		void init(bool newlinesAsWhitespace_);

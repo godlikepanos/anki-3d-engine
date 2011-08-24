@@ -6,15 +6,15 @@
 #include "Common.h"
 
 
-namespace Scanner {
+namespace scanner {
 
 
 /// The TokenCode is an enum that defines the Token type
 enum TokenCode
 {
 	// general codes
-	TC_ERROR, TC_EOF, TC_COMMENT, TC_NUMBER, TC_CHAR, TC_STRING, TC_IDENTIFIER,
-	TC_NEWLINE,
+	TC_ERROR, TC_END, TC_COMMENT, TC_NUMBER, TC_CHARACTER, TC_STRING,
+	TC_IDENTIFIER, TC_NEWLINE,
 
 	// keywords listed by strlen (dummy keywords at the moment)
 	TC_KE,
@@ -24,22 +24,22 @@ enum TokenCode
 	TC_KEYWOR,
 	TC_KEYWORD,
 
-	// operators (in 5s)
-	TC_SCOPERESOLUTION, TC_LSQBRACKET, TC_RSQBRACKET, TC_LPAREN, TC_RPAREN,
-	TC_DOT, TC_POINTERTOMEMBER, TC_LBRACKET, TC_RBRACKET, TC_COMMA,
+	// operators
+	TC_SCOPE_RESOLUTION, TC_L_SQ_BRACKET, TC_R_SQ_BRACKET, TC_L_PAREN, TC_R_PAREN,
+	TC_DOT, TC_POINTER_TO_MEMBER, TC_L_BRACKET, TC_R_BRACKET, TC_COMMA,
 	TC_PERIOD, TC_UPDOWNDOT, TC_QUESTIONMARK, TC_SHARP, TC_EQUAL,
-	TC_NOTEQUAL, TC_LESS, TC_GREATER, TC_LESSEQUAL, TC_GREATEREQUAL,
-	TC_LOGICALOR, TC_LOGICALAND, TC_PLUS, TC_MINUS, TC_STAR,
-	TC_BSLASH, TC_NOT, TC_BITWISEAND, TC_BITWISEOR, TC_ONESCOMPLEMENT,
+	TC_NOT_EQUAL, TC_LESS, TC_GREATER, TC_LESS_EQUAL, TC_GREATER_EQUAL,
+	TC_LOGICAL_OR, TC_LOGICAL_AND, TC_PLUS, TC_MINUS, TC_STAR,
+	TC_BSLASH, TC_NOT, TC_BITWISE_AND, TC_BITWISE_OR, TC_UNARAY_COMPLEMENT,
 	TC_MOD, TC_XOR, TC_INC, TC_DEC, TC_SHL,
-	TC_SHR, TC_ASSIGN, TC_ASSIGNADD, TC_ASSIGNSUB, TC_ASSIGNMUL,
-	TC_ASSIGNDIV, TC_ASSIGNMOD, TC_ASSIGNSHL, TC_ASSIGNSHR, TC_ASSIGNAND,
-	TC_ASSIGNXOR, TC_ASSIGNOR, TC_BACK_SLASH
+	TC_SHR, TC_ASSIGN, TC_ASSIGN_ADD, TC_ASSIGN_SUB, TC_ASSIGN_MUL,
+	TC_ASSIGN_DIV, TC_ASSIGN_MOD, TC_ASSIGN_SHL, TC_ASSIGN_SHR, TC_ASSIGN_AND,
+	TC_ASSIGN_XOR, TC_ASSIGN_OR, TC_BACK_SLASH
 }; // end enum TokenCode
 
 
 /// The value of Token::dataType
-enum TokenDataType
+enum DataType
 {
 	DT_FLOAT,
 	DT_INT,
@@ -95,7 +95,7 @@ class Token
 		/// @{
 		const char* getString() const {return &asString[0];}
 		TokenCode getCode() const {return code;}
-		TokenDataType getDataType() const {return dataType;}
+		DataType getDataType() const {return dataType;}
 		const TokenDataVal& getValue() const {return value;}
 		/// @}
 
@@ -103,7 +103,7 @@ class Token
 		boost::array<char, MAX_SCRIPT_LINE_LEN> asString;
 		TokenCode code; ///< The first thing you should know about a token
 		/// Additional info in case @ref code is @ref TC_NUMBER
-		TokenDataType dataType;
+		DataType dataType;
 		TokenDataVal value; ///< A value variant
 };
 

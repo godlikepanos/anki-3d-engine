@@ -9,7 +9,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 
-namespace Scanner {
+namespace scanner {
 class Scanner;
 }
 
@@ -117,12 +117,12 @@ class MaterialShaderProgramCreator
 		/// 	10
 		/// @endcode
 		/// it skips from define to 10
-		static void parseUntilNewline(Scanner::Scanner& scanner);
+		static void parseUntilNewline(scanner::Scanner& scanner);
 
 		/// It being used by parseShaderFileForFunctionDefinitions and it
 		/// skips until newline after a '#' found. It takes into account the
 		/// back slashes that the preprocessor may have
-		static void getNextTokenAndSkipNewlines(Scanner::Scanner& scanner);
+		static void getNextTokenAndSkipNewlines(scanner::Scanner& scanner);
 
 		/// Used for shorting vectors of strings. Used in std::sort
 		static bool compareStrings(const std::string& a, const std::string& b);

@@ -41,8 +41,6 @@ class SkinPatchNode: public PatchNode
 		const Vbo& getTfVbo(uint i) const {return tfVbos[i];}
 		/// @}
 
-		virtual void moveUpdate() {}
-
 	private:
 		/// VBOs that contain the deformed vertex attributes
 		boost::array<Vbo, TFV_NUM> tfVbos;
