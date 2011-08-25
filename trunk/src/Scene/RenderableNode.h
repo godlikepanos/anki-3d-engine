@@ -16,9 +16,10 @@ class RenderableNode: public SceneNode
 {
 	public:
 		RenderableNode(bool inheritParentTrfFlag, SceneNode* parent);
+		virtual ~RenderableNode();
 
 		/// Get VAO depending the rendering pass
-		virtual const Vao& getVao(PassType p) const;
+		virtual const Vao& getVao(PassType p) const = 0;
 
 		/// Get vert ids number for rendering
 		virtual uint getVertIdsNum() const = 0;
@@ -32,12 +33,6 @@ class RenderableNode: public SceneNode
 		/// Const version of getMaterialRuntime
 		virtual const MaterialRuntime& getMaterialRuntime() const = 0;
 };
-
-
-inline RenderableNode::RenderableNode(bool inheritParentTrfFlag,
-	SceneNode* parent)
-:	SceneNode(SNT_RENDERABLE, inheritParentTrfFlag, parent)
-{}
 
 
 #endif

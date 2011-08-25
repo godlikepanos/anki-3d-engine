@@ -29,7 +29,6 @@
 #include "Scripting/ScriptingEngine.h"
 #include "Core/StdinListener.h"
 #include "Scene/ModelNode.h"
-#include "Scene/SkelAnimModelNodeCtrl.h"
 #include "Resources/Model.h"
 #include "Core/Logger.h"
 #include "Util/Util.h"
@@ -171,7 +170,7 @@ void init()
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(), 1.0));
 
 	// Pentagram
-	pentagram = new ModelNode(false, NULL);
+	/*pentagram = new ModelNode(false, NULL);
 	pentagram->init("models/pentagram/pentagram.mdl");
 	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
 
@@ -190,7 +189,7 @@ void init()
 	imp->skelAnimModelNodeCtrl->set(imp->getSkin().getSkelAnims()[0].get());
 	imp->skelAnimModelNodeCtrl->setStep(0.8);
 
-	imp->addChild(*cam);
+	imp->addChild(*cam);*/
 
 
 	// sarge
@@ -314,13 +313,6 @@ void mainLoopExtra()
 
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
 		character->moveForward(0.1);
-
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_T))
-	{
-		//pentagram->getModelPatchNodees()[0]->setUserDefVar(PatchNode::MT_BOTH, "specularCol", Vec3(10.0, -1.6, 1.6));
-		pentagram->getModelPatchNodes()[0]->getCpMtlRun().getUserDefinedVarByName("shininess").get<float>() = 10.0;
-	}
-
 
 	/*if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
 	{

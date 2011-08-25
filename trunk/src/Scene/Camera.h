@@ -10,7 +10,6 @@
 #include "VisibilityInfo.h"
 
 
-class RenderableNode;
 class SpotLight;
 class PointLight;
 
@@ -65,9 +64,6 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// - Update view matrix
 		/// - Update frustum planes
 		void moveUpdate();
-
-		/// Do nothing
-		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 
 		/// Do nothing
 		void init(const char*) {}
