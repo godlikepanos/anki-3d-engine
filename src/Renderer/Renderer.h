@@ -15,7 +15,6 @@
 #include "Dbg.h"
 #include "GfxApi/GlException.h"
 #include "Drawers/SceneDrawer.h"
-#include "SkinsDeformer.h"
 #include "GfxApi/GlStateMachine.h"
 #include "GfxApi/TimeQuery.h"
 #include <boost/scoped_ptr.hpp>
@@ -58,7 +57,6 @@ class Renderer
 		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat)
 		const Camera& getCamera() const {return *cam;}
 		GETTER_RW(SceneDrawer, sceneDrawer, getSceneDrawer)
-		GETTER_RW(SkinsDeformer, skinsDeformer, getSkinsDeformer)
 		GETTER_R(Vec2, planes, getPlanes)
 		GETTER_R(Vec2, limitsOfNearPlane, getLimitsOfNearPlane)
 		GETTER_R(Vec2, limitsOfNearPlane2, getLimitsOfNearPlane2)
@@ -140,7 +138,6 @@ class Renderer
 		/// Max color attachments an FBO can accept
 		static int maxColorAtachments;
 		SceneDrawer sceneDrawer;
-		SkinsDeformer skinsDeformer;
 
 		/// @name Optimization vars
 		/// Used in other stages

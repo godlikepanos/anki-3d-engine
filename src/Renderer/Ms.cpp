@@ -120,7 +120,7 @@ void Ms::run()
 		r.getCamera().getVisibleMsRenderableNodes())
 	{
 		r.getSceneDrawer().renderRenderableNode(*node, r.getCamera(),
-			SceneDrawer::RPT_COLOR);
+			COLOR_PASS);
 	}
 
 	// restore depth

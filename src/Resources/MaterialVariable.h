@@ -47,7 +47,7 @@ class MaterialVariable
 			PassType p) const;
 
 		/// XXX
-		bool inPass(PassType p) const {return sProgsVars[p] != NULL;}
+		bool inPass(PassType p) const {return sProgVars[p] != NULL;}
 
 		/// Get the GL data type of all the shader program variables
 		GLenum getGlDataType() const {return oneSProgVar->getGlDataType();}
@@ -62,7 +62,7 @@ class MaterialVariable
 
 	private:
 		Type type;
-		ShaderProgramVariables sProgsVars;
+		ShaderProgramVariables sProgVars;
 
 		/// Keep one ShaderProgramVariable here for easy access of the common
 		/// variable stuff like name or GL data type etc
@@ -74,7 +74,7 @@ inline const ShaderProgramVariable& MaterialVariable::getShaderProgramVariable(
 	PassType p) const
 {
 	ASSERT(inPass(p));
-	return *sProgsVars[p];
+	return *sProgVars[p];
 }
 
 

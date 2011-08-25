@@ -20,17 +20,17 @@ MaterialVariable::MaterialVariable(
 	{
 		if(shaderProgsArr[i]->variableExists(shaderProgVarName))
 		{
-			sProgsVars[i] = &shaderProgsArr[i]->getVariableByName(
+			sProgVars[i] = &shaderProgsArr[i]->getVariableByName(
 				shaderProgVarName);
 
 			if(!oneSProgVar)
 			{
-				oneSProgVar = sProgsVars[i];
+				oneSProgVar = sProgVars[i];
 			}
 
 			// All the sprog vars need to have same GL data type
-			if(oneSProgVar->getGlDataType() != sProgsVars[i]->getGlDataType() ||
-				oneSProgVar->getType() != sProgsVars[i]->getType())
+			if(oneSProgVar->getGlDataType() != sProgVars[i]->getGlDataType() ||
+				oneSProgVar->getType() != sProgVars[i]->getType())
 			{
 				throw EXCEPTION("Incompatible shader program variables: " +
 					shaderProgVarName);

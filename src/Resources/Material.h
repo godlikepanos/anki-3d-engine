@@ -79,7 +79,7 @@ class ShaderProgram;
 /// @endcode
 /// *: For if the value is not set then the in variable will be build in or
 ///    standard varying
-class Material: private MaterialProperties
+class Material: public MaterialProperties
 {
 	public:
 		//======================================================================

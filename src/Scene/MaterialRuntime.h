@@ -12,7 +12,7 @@ class MaterialRuntimeVariable;
 
 
 /// One layer above material resource
-class MaterialRuntime: private MaterialProperties
+class MaterialRuntime: public MaterialProperties
 {
 	public:
 		/// A type

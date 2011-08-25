@@ -53,7 +53,7 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 	sphereGeom.vao.create();
 	sphereGeom.vao.attachArrayBufferVbo(
 		sphereGeom.mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
-		sProg->getAttributeVariable("position"), 3, GL_FLOAT,
+		sProg->getAttributeVariableByName("position"), 3, GL_FLOAT,
 		GL_FALSE, 0, NULL);
 	sphereGeom.vao.attachElementArrayBufferVbo(
 		sphereGeom.mesh->getVbo(Mesh::VBO_VERT_INDECES));
@@ -77,7 +77,7 @@ void Smo::initCamGeom()
 		camGeom[i].vao.create();
 		camGeom[i].vao.attachArrayBufferVbo(
 			camGeom[i].mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
-			sProg->getAttributeVariable("position"), 3, GL_FLOAT,
+			sProg->getAttributeVariableByName("position"), 3, GL_FLOAT,
 			GL_FALSE, 0, NULL);
 		camGeom[i].vao.attachElementArrayBufferVbo(
 			camGeom[i].mesh->getVbo(Mesh::VBO_VERT_INDECES));
@@ -147,7 +147,7 @@ void Smo::run(const PointLight& light)
 	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(),
 		Mat3::getIdentity(), light.getRadius() * SCALE);
 	Mat4 trf = r.getViewProjectionMat() * modelMat;
-	sProg->getUniformVariable("modelViewProjectionMat").set(&trf);
+	sProg->getUniformVariableByName("modelViewProjectionMat").set(&trf);
 
 	// render sphere to the stencil buffer
 	sphereGeom.vao.bind();
@@ -227,7 +227,7 @@ void Smo::run(const SpotLight& light)
 	Mat4 modelMat = Mat4(lcam.getWorldTransform());
 
 	Mat4 trf = r.getViewProjectionMat() * modelMat * localMat;
-	sProg->getUniformVariable("modelViewProjectionMat").set(&trf);
+	sProg->getUniformVariableByName("modelViewProjectionMat").set(&trf);
 
 	//
 	// Render

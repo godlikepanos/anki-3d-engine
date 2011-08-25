@@ -70,8 +70,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 
 	// Other
-	skinsDeformer.init();
-
 	msTq.reset(new TimeQuery);
 	isTq.reset(new TimeQuery);
 	ppsTq.reset(new TimeQuery);

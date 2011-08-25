@@ -3,6 +3,7 @@
 
 #include "Math/Math.h"
 #include "Resources/MaterialCommon.h"
+#include "Resources/RsrcPtr.h"
 #include <boost/variant.hpp>
 
 
@@ -36,14 +37,18 @@ class SceneDrawer
 			public:
 				const MaterialRuntimeVariable& udvr;
 				const Renderer& r;
+				PassType pt;
 				uint& texUnit;
 
 				UsrDefVarVisitor(const MaterialRuntimeVariable& udvr,
-					const Renderer& r, uint& texUnit);
+					const Renderer& r, PassType pt, uint& texUnit);
 
-				/// Functor. Its specialized for the texture case
+				/// Functor
 				template<typename Type>
 				void operator()(const Type& x) const;
+
+				/// Functor
+				void operator()(const RsrcPtr<Texture>* x) const;
 		};
 
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff
@@ -58,9 +63,13 @@ class SceneDrawer
 		/// shader
 		/// @param cam Needed for some matrices (view & projection)
 		/// @param r The renderer, needed for some FAIs and some matrices
-		static void setupShaderProg(const MaterialRuntime& mtlr,
+		static void setupShaderProg(
+			const MaterialRuntime& mtlr,
+			PassType pt,
 			const Transform& nodeWorldTransform,
-			const Camera& cam, const Renderer& r, float blurring = 0.0);
+			const Camera& cam,
+			const Renderer& r,
+			float blurring);
 };
 
 
