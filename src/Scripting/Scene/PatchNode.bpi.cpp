@@ -5,11 +5,8 @@
 WRAP(PatchNode)
 {
 	class_<PatchNode, noncopyable>("PatchNode", no_init)
-		.def("getCpMtlRun", (MaterialRuntime& (PatchNode::*)())(
-			&PatchNode::getCpMtlRun),
-			return_value_policy<reference_existing_object>())
-		.def("getDpMtlRun", (MaterialRuntime& (PatchNode::*)())(
-			&PatchNode::getDpMtlRun),
+		.def("getMaterialRuntime", (MaterialRuntime& (PatchNode::*)())(
+			&PatchNode::getMaterialRuntime),
 			return_value_policy<reference_existing_object>())
 	;
 }
