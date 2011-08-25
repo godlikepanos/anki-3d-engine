@@ -56,8 +56,8 @@ void Deformer::deform(SkinPatchNode& node) const
 	const ShaderProgram* sProg;
 	const Material& mtl = node.getModelPatchRsrc().getMaterial();
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::NORMAL) &&
-	   mtl.buildinVariableExits(MaterialBuildinVariable::TANGENT))
+	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_NORMAL) &&
+	   mtl.buildinVariableExits(MaterialBuildinVariable::MV_TANGENT))
 	{
 		sProg = tfHwSkinningAllSProg.get();
 	}
@@ -69,10 +69,10 @@ void Deformer::deform(SkinPatchNode& node) const
 	sProg->bind();
 
 	// Uniforms
-	sProg->getUniformVariable("skinningRotations").set(
+	sProg->getUniformVariableByName("skinningRotations").set(
 		&skinNode->getBoneRotations()[0], skinNode->getBoneRotations().size());
 
-	sProg->getUniformVariable("skinningTranslations").set(
+	sProg->getUniformVariableByName("skinningTranslations").set(
 		&skinNode->getBoneTranslations()[0],
 		skinNode->getBoneTranslations().size());
 

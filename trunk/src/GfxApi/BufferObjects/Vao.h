@@ -8,7 +8,7 @@
 
 
 class Vbo;
-class AttributeShaderProgramVariable;
+class ShaderProgramAttributeVariable;
 
 
 /// Vertex array object
@@ -46,7 +46,7 @@ class Vao
 		/// first generic vertex attribute in the array
 		void attachArrayBufferVbo(
 			const Vbo& vbo,
-			const AttributeShaderProgramVariable& attribVar,
+			const ShaderProgramAttributeVariable& attribVar,
 			GLint size,
 			GLenum type,
 			GLboolean normalized,
