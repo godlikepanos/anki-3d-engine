@@ -265,16 +265,16 @@ void Dbg::run()
 	sProg->bind();
 
 	// OGL stuff
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		r.getWidth(), r.getHeight());
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 
 	setModelMat(Mat4::getIdentity());
 	renderGrid();
 
 	BOOST_FOREACH(const SceneNode* node,
-		SceneSingleton::getInstance().getAllNodes())
+		SceneSingleton::get().getAllNodes())
 	{
 		/*if(!node->isVisible())
 		{
@@ -321,7 +321,7 @@ void Dbg::run()
 	/*setColor(Vec3(1));
 	Obb obb(Vec3(0.0), Mat3::getIdentity(), Vec3(1.0, 2.0, 1.0));
 	Obb obb2(Vec3(0.0), Mat3::getIdentity(), Vec3(1.0, 1.5, 1.0));
-	obb = obb.getTransformed(SceneSingleton::getInstance().getAllNodes()[1]->
+	obb = obb.getTransformed(SceneSingleton::get().getAllNodes()[1]->
 		getWorldTransform());
 	collisionDbgDrawer.draw(obb.getCompoundShape(obb2));
 	collisionDbgDrawer.draw(obb);
@@ -362,7 +362,7 @@ void Dbg::run()
 	///////////////
 
 
-	SceneSingleton::getInstance().getPhysMasterContainer().getWorld().
+	SceneSingleton::get().getPhysMasterContainer().getWorld().
 		debugDrawWorld();
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

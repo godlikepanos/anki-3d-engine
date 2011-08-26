@@ -46,7 +46,8 @@ std::string readFile(const char* filename)
 		throw EXCEPTION(std::string("Cannot open file \"") + filename + "\"");
 	}
 
-	return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	return std::string((std::istreambuf_iterator<char>(file)),
+		std::istreambuf_iterator<char>());
 }
 
 

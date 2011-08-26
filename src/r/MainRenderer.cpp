@@ -48,9 +48,9 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	//
 	RendererInitializer initializer = initializer_;
 	renderingQuality = initializer.mainRendererQuality;
-	initializer.width = AppSingleton::getInstance().getWindowWidth() *
+	initializer.width = AppSingleton::get().getWindowWidth() *
 		renderingQuality;
-	initializer.height = AppSingleton::getInstance().getWindowHeight() *
+	initializer.height = AppSingleton::get().getWindowHeight() *
 		renderingQuality;
 	Renderer::init(initializer);
 	dbg.init(initializer);
@@ -88,13 +88,13 @@ void MainRenderer::initGl()
 	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
 	glCullFace(GL_BACK);
-	GlStateMachineSingleton::getInstance().enable(GL_CULL_FACE);
+	GlStateMachineSingleton::get().enable(GL_CULL_FACE);
 
 	// defaults
 	//glDisable(GL_LIGHTING);
 	//glDisable(GL_TEXTURE_2D);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	GlStateMachineSingleton::getInstance().disable(GL_STENCIL_TEST);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().disable(GL_STENCIL_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(true);
 	glDepthFunc(GL_LESS);
@@ -133,14 +133,15 @@ void MainRenderer::render(Camera& cam_)
 	//
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 
-	GlStateMachineSingleton::getInstance().setViewport(
-		0, 0, AppSingleton::getInstance().getWindowWidth(),
-		AppSingleton::getInstance().getWindowHeight());
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().setViewport(
+		0, 0, AppSingleton::get().getWindowWidth(),
+		AppSingleton::get().getWindowHeight());
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 	sProg->bind();
 	//sProg->getUniformVariableByName("rasterImage")->set(ms.getNormalFai(), 0);
-	//sProg->getUniformVariableByName("rasterImage")->set(pps.getSsao().getFai(), 0);
+	//sProg->getUniformVariableByName("rasterImage")->
+	//	set(pps.getSsao().getFai(), 0);
 	sProg->getUniformVariableByName("rasterImage").set(pps.getPostPassFai(), 0);
 	drawQuad();
 }

@@ -11,7 +11,7 @@ Controller::Controller(ControllerType type_, SceneNode& node):
 	controlledNode(node),
 	type(type_)
 {
-	SceneSingleton::getInstance().registerController(this);
+	SceneSingleton::get().registerController(this);
 }
 
 
@@ -20,5 +20,5 @@ Controller::Controller(ControllerType type_, SceneNode& node):
 //==============================================================================
 Controller::~Controller()
 {
-	SceneSingleton::getInstance().unregisterController(this);
+	SceneSingleton::get().unregisterController(this);
 }

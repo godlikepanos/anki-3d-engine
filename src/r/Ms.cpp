@@ -99,10 +99,10 @@ void Ms::run()
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		r.getWidth(), r.getHeight());
 
-	//GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
+	//GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
 	//app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
 	//glDepthFunc(GL_LEQUAL);
 

@@ -61,7 +61,7 @@ void SceneDrawer::setupShaderProg(
 {
 	typedef MaterialBuildinVariable Mvb; // Short name
 	uint textureUnit = 0;
-	GlStateMachine& gl = GlStateMachineSingleton::getInstance();
+	GlStateMachine& gl = GlStateMachineSingleton::get();
 	const Material& mtl = mtlr.getMaterial();
 	const ShaderProgram& sprog = mtl.getShaderProgram(pt);
 
@@ -221,7 +221,7 @@ void SceneDrawer::setupShaderProg(
 
 	if(mtl.buildinVariableExits(Mvb::MV_SCENE_AMBIENT_COLOR, pt))
 	{
-		Vec3 col(SceneSingleton::getInstance().getAmbientCol());
+		Vec3 col(SceneSingleton::get().getAmbientCol());
 		mtl.getBuildinVariable(Mvb::MV_SCENE_AMBIENT_COLOR).
 			getShaderProgramUniformVariable(pt).set(&col);
 	}

@@ -6,7 +6,7 @@ WRAP(EventSceneColor)
 {
 	using namespace event;
 
-	class_<SceneColor>("EventSceneColor", no_init)
+	class_<SceneColor>("event_EventSceneColor", no_init)
 		.def(init<float, float, const Vec3&>())
 		.def(init<const SceneColor&>())
 	;

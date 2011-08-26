@@ -199,7 +199,7 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 
 	// Create path
 	boost::filesystem::path newfPathName =
-		AppSingleton::getInstance().getCachePath() / (prefix + ".glsl");
+		AppSingleton::get().getCachePath() / (prefix + ".glsl");
 
 
 	// If file not exists write it

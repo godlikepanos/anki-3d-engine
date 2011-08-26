@@ -1,0 +1,2 @@
+#!/bin/sh
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DBUILD_SHARED_LIBS=ON ..

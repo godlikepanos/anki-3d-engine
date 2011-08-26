@@ -68,10 +68,10 @@ void Painter::init()
 void Painter::drawText(const char* text)
 {
 	// Set GL
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND);
-	//GlStateMachineSingleton::getInstance().disable(GL_BLEND);
+	GlStateMachineSingleton::get().enable(GL_BLEND);
+	//GlStateMachineSingleton::get().disable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GlStateMachineSingleton::getInstance().disable(GL_DEPTH_TEST);
+	GlStateMachineSingleton::get().disable(GL_DEPTH_TEST);
 
 	// SProg (some)
 	sProg->bind();

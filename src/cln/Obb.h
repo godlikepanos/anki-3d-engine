@@ -3,6 +3,7 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
+#include "util/Accessors.h"
 #include <boost/array.hpp>
 
 

@@ -140,12 +140,12 @@ void VisibilityTester::getRenderableNodes(bool skipShadowless,
 	jobParameters.bsRenderableNodesMtx = &bsRenderableNodesMtx;
 
 	for(uint i = 0;
-		i < parallel::ManagerSingleton::getInstance().getThreadsNum(); i++)
+		i < parallel::ManagerSingleton::get().getThreadsNum(); i++)
 	{
-		parallel::ManagerSingleton::getInstance().assignNewJob(i,
+		parallel::ManagerSingleton::get().assignNewJob(i,
 			getRenderableNodesJobCallback, jobParameters);
 	}
-	parallel::ManagerSingleton::getInstance().waitForAllJobsToFinish();
+	parallel::ManagerSingleton::get().waitForAllJobsToFinish();
 
 	//
 	// Sort the renderables from closest to the camera to the farthest

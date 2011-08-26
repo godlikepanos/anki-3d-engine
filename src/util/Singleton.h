@@ -11,7 +11,8 @@ template<typename Type>
 class Singleton
 {
 	public:
-		static Type& getInstance() {return *(instance ? instance : (instance = new Type));}
+		static Type& get()
+			{return *(instance ? instance : (instance = new Type));}
 
 	protected:
 		Singleton();

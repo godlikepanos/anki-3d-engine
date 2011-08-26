@@ -58,12 +58,12 @@ void Ez::run()
 
 	fbo.bind();
 
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		r.getWidth(), r.getHeight());
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 

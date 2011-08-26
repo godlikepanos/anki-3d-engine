@@ -136,7 +136,7 @@ inline GLuint ShaderProgram::getGlId() const
 inline void ShaderProgram::bind() const
 {
 	ASSERT(glId != std::numeric_limits<uint>::max());
-	GlStateMachineSingleton::getInstance().useShaderProg(glId);
+	GlStateMachineSingleton::get().useShaderProg(glId);
 }
 
 

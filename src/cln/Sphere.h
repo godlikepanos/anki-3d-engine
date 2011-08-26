@@ -3,6 +3,7 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
+#include "util/Accessors.h"
 
 
 namespace cln {
@@ -26,13 +27,8 @@ class Sphere: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		const Vec3& getCenter() const {return center;}
-		Vec3& getCenter() {return center;}
-		void setCenter(const Vec3& c) {center = c;}
-
-		float getRadius() const {return radius;}
-		float& getRadius() {return radius;}
-		void setRadius(float f) {radius = f;}
+		GETTER_SETTER(Vec3, center, getCenter, setCenter)
+		GETTER_SETTER_BY_VAL(float, radius, getRadius, setRadius)
 		/// @}
 
 		Sphere getTransformed(const Transform& transform) const;

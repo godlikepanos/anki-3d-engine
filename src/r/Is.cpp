@@ -142,7 +142,7 @@ void Is::init(const RendererInitializer& initializer)
 //==============================================================================
 void Is::ambientPass(const Vec3& color)
 {
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 
 	// set the shader
 	ambientPassSProg->bind();
@@ -166,7 +166,7 @@ void Is::pointLightPass(const PointLight& light)
 
 	// stencil optimization
 	smo.run(light);
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 
 	// shader prog
 	const ShaderProgram& shader = *pointLightSProg; // ensure the const-ness
@@ -178,7 +178,8 @@ void Is::pointLightPass(const PointLight& light)
 		r.getMs().getDiffuseFai(), 1);
 	shader.getUniformVariableByName("msSpecularFai").set(
 		r.getMs().getSpecularFai(), 2);
-	shader.getUniformVariableByName("msDepthFai").set(r.getMs().getDepthFai(), 3);
+	shader.getUniformVariableByName("msDepthFai").set(
+		r.getMs().getDepthFai(), 3);
 	shader.getUniformVariableByName("planes").set(&r.getPlanes());
 	shader.getUniformVariableByName("limitsOfNearPlane").set(
 		&r.getLimitsOfNearPlane());
@@ -190,8 +191,10 @@ void Is::pointLightPass(const PointLight& light)
 	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
 	shader.getUniformVariableByName("lightPos").set(&lightPosEyeSpace);
 	shader.getUniformVariableByName("lightRadius").set(&light.getRadius());
-	shader.getUniformVariableByName("lightDiffuseCol").set(&light.getDiffuseCol());
-	shader.getUniformVariableByName("lightSpecularCol").set(&light.getSpecularCol());
+	shader.getUniformVariableByName("lightDiffuseCol").set(
+		&light.getDiffuseCol());
+	shader.getUniformVariableByName("lightSpecularCol").set(
+		&light.getSpecularCol());
 
 	// render quad
 	r.drawQuad();
@@ -222,16 +225,16 @@ void Is::spotLightPass(const SpotLight& light)
 		fbo.bind();
 
 		// and restore blending and depth test
-		GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
+		GlStateMachineSingleton::get().enable(GL_BLEND, true);
 		glBlendFunc(GL_ONE, GL_ONE);
-		GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
-		GlStateMachineSingleton::getInstance().setViewport(0, 0,
+		GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+		GlStateMachineSingleton::get().setViewport(0, 0,
 			r.getWidth(), r.getHeight());
 	}
 
 	// stencil optimization
 	smo.run(light);
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 
 	// set the texture
 	//light.getTexture().setRepeat(false);
@@ -257,7 +260,8 @@ void Is::spotLightPass(const SpotLight& light)
 		r.getMs().getDiffuseFai(), 1);
 	shdr->getUniformVariableByName("msSpecularFai").set(
 		r.getMs().getSpecularFai(), 2);
-	shdr->getUniformVariableByName("msDepthFai").set(r.getMs().getDepthFai(), 3);
+	shdr->getUniformVariableByName("msDepthFai").set(
+		r.getMs().getDepthFai(), 3);
 
 	// the ???
 	shdr->getUniformVariableByName("planes").set(&r.getPlanes());
@@ -274,8 +278,10 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->getUniformVariableByName("lightPos").set(&lightPosEyeSpace);
 	float tmp = light.getDistance();
 	shdr->getUniformVariableByName("lightRadius").set(&tmp);
-	shdr->getUniformVariableByName("lightDiffuseCol").set(&light.getDiffuseCol());
-	shdr->getUniformVariableByName("lightSpecularCol").set(&light.getSpecularCol());
+	shdr->getUniformVariableByName("lightDiffuseCol").set(
+		&light.getDiffuseCol());
+	shdr->getUniformVariableByName("lightSpecularCol").set(
+		&light.getSpecularCol());
 	shdr->getUniformVariableByName("lightTex").set(light.getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
@@ -319,7 +325,7 @@ void Is::copyDepth()
 void Is::run()
 {
 	// OGL stuff
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		r.getWidth(), r.getHeight());
 
 	// Copy
@@ -332,13 +338,13 @@ void Is::run()
 	fbo.bind();
 
 	// ambient pass
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
-	ambientPass(SceneSingleton::getInstance().getAmbientCol());
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+	ambientPass(SceneSingleton::get().getAmbientCol());
 
 	// light passes
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, true);
+	GlStateMachineSingleton::get().enable(GL_BLEND, true);
 	glBlendFunc(GL_ONE, GL_ONE);
-	GlStateMachineSingleton::getInstance().enable(GL_STENCIL_TEST);
+	GlStateMachineSingleton::get().enable(GL_STENCIL_TEST);
 
 	// for all lights
 	BOOST_FOREACH(const PointLight* light,
@@ -353,7 +359,7 @@ void Is::run()
 	}
 	
 
-	GlStateMachineSingleton::getInstance().disable(GL_STENCIL_TEST);
+	GlStateMachineSingleton::get().disable(GL_STENCIL_TEST);
 
 	// FBO
 	//fbo.unbind();

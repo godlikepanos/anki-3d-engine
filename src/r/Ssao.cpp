@@ -79,11 +79,13 @@ void Ssao::init(const RendererInitializer& initializer)
 
 	std::string pps = "#define HPASS\n#define COL_R\n";
 	hblurSProg.loadRsrc(
-		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, 
+		pps.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_R\n";
 	vblurSProg.loadRsrc(
-		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, pps.c_str()).c_str());
+		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, 
+		pps.c_str()).c_str());
 
 	//
 	// noise map
@@ -108,11 +110,11 @@ void Ssao::run()
 	int height = renderingQuality * r.getHeight();
 	const Camera& cam = r.getCamera();
 
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 
 
-	GlStateMachineSingleton::getInstance().setViewport(0, 0, width, height);
+	GlStateMachineSingleton::get().setViewport(0, 0, width, height);
 
 	//
 	// 1st pass
@@ -137,7 +139,8 @@ void Ssao::run()
 	ssaoSProg->getUniformVariableByName("zNear").set(&zNear);
 
 	// msDepthFai
-	ssaoSProg->getUniformVariableByName("msDepthFai").set(r.getMs().getDepthFai(), 0);
+	ssaoSProg->getUniformVariableByName("msDepthFai").set(
+		r.getMs().getDepthFai(), 0);
 
 	// noiseMap
 	ssaoSProg->getUniformVariableByName("noiseMap").set(*noiseMap, 1);

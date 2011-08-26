@@ -5,7 +5,8 @@
 #include "util/Assert.h"
 
 
-/// This is a wrapper of std::vector that adds new functionality and assertions in operator[]
+/// This is a wrapper of std::vector that adds new functionality and assertions 
+/// in operator[]
 template<typename Type, typename Allocator = std::allocator<Type> >
 class Vec: public std::vector<Type, Allocator>
 {
@@ -15,10 +16,12 @@ class Vec: public std::vector<Type, Allocator>
 		/// @name Constructors/destructors
 		/// @{
 		Vec(const Allocator& al = Allocator()): Base(al) {}
-		Vec(size_t size, const Type& value = Type(), const Allocator& al = Allocator()): Base(size, value, al) {}
+		Vec(size_t size, const Type& value = Type(), 
+			const Allocator& al = Allocator()): Base(size, value, al) {}
 
 		template <typename InputIterator>
-		Vec(InputIterator first, InputIterator last, const Allocator& al = Allocator()): Base(first, last, al) {}
+		Vec(InputIterator first, InputIterator last, 
+			const Allocator& al = Allocator()): Base(first, last, al) {}
 
 		Vec(const Vec<Type, Allocator>& b): Base(b) {}
 		/// @}

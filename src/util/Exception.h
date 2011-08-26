@@ -5,12 +5,14 @@
 #include <string>
 
 
-/// Custom exception that takes file, line and function that throw it. Throw it using the EXCEPTION macro
+/// Custom exception that takes file, line and function that throw it. Throw 
+/// it using the EXCEPTION macro
 class Exception: public std::exception
 {
 	public:
 		/// Constructor
-		Exception(const std::string& err, const char* file = "unknown", int line = -1, const char* func = "unknown");
+		Exception(const std::string& err, const char* file = "unknown", 
+			int line = -1, const char* func = "unknown");
 
 		/// Copy constructor
 		Exception(const Exception& e);

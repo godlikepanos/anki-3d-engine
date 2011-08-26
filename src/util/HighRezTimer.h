@@ -8,7 +8,8 @@
 class HighRezTimer
 {
 	public:
-		typedef double Scalar; ///< The type that the timer manipulates the results
+		/// The type that the timer manipulates the results
+		typedef double Scalar;
 
 		HighRezTimer();
 
@@ -18,7 +19,8 @@ class HighRezTimer
 		/// Stop the timer
 		void stop();
 
-		/// Get the time elapsed between start and stop (if its stopped) or between start and the current time
+		/// Get the time elapsed between start and stop (if its stopped) or 
+		/// between start and the current time
 		Scalar getElapsedTime() const;
 
 		/// Get the current date's seconds

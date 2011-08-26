@@ -18,7 +18,7 @@ MainRendererPpsHdr::MainRendererPpsHdr(float startTime, float duration,
 	finalData.blurringDist = blurringDist_;
 
 	const r::Hdr& hdr =
-		r::MainRendererSingleton::getInstance().getPps().getHdr();
+		r::MainRendererSingleton::get().getPps().getHdr();
 	originalData.exposure = hdr.getExposure();
 	originalData.blurringIterationsNum = hdr.getBlurringIterationsNum();
 	originalData.blurringDist = hdr.getBlurringDist();
@@ -55,7 +55,7 @@ void MainRendererPpsHdr::updateSp(float /*prevUpdateTime*/, float crntTime)
 	float d = crntTime - getStartTime(); // delta
 	float dp = d / getDuration(); // delta as percentage
 
-	r::Hdr& hdr = r::MainRendererSingleton::getInstance().getPps().getHdr();
+	r::Hdr& hdr = r::MainRendererSingleton::get().getPps().getHdr();
 
 	hdr.setExposure(interpolate(originalData.exposure, finalData.exposure, dp));
 

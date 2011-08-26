@@ -86,9 +86,9 @@ void Input::handleEvents()
 				mousePos.y() = event_.button.y;
 
 				mousePosNdc.x() = (2.0 * mousePos.x()) /
-					(float)AppSingleton::getInstance().getWindowWidth() - 1.0;
+					(float)AppSingleton::get().getWindowWidth() - 1.0;
 				mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) /
-					(float)AppSingleton::getInstance().getWindowHeight();
+					(float)AppSingleton::get().getWindowHeight();
 
 				if(warpMouseFlag)
 				{
@@ -100,8 +100,8 @@ void Input::handleEvents()
 						break;
 					}
 
-					uint w = AppSingleton::getInstance().getWindowWidth();
-					uint h = AppSingleton::getInstance().getWindowHeight();
+					uint w = AppSingleton::get().getWindowWidth();
+					uint h = AppSingleton::get().getWindowHeight();
 					SDL_WarpMouse(w / 2, h / 2);
 				}
 
@@ -110,7 +110,7 @@ void Input::handleEvents()
 			}
 
 			case SDL_QUIT:
-				AppSingleton::getInstance().quit(1);
+				AppSingleton::get().quit(1);
 				break;
 		}
 	}

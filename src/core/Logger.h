@@ -112,10 +112,10 @@ class Logger
 #define LOGGER_MESSAGE(x) \
 	do \
 	{ \
-		LoggerSingleton::getInstance().lock(); \
-		LoggerSingleton::getInstance()  << Logger::setSender(__FILE__, \
+		LoggerSingleton::get().lock(); \
+		LoggerSingleton::get()  << Logger::setSender(__FILE__, \
 			__LINE__, __func__) << x << Logger::endl; \
-		LoggerSingleton::getInstance().unlock(); \
+		LoggerSingleton::get().unlock(); \
 	} while(false);
 
 #define INFO(x) LOGGER_MESSAGE("Info: " << x)
