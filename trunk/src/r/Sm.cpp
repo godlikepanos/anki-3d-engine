@@ -129,18 +129,18 @@ void Sm::run(const Light& light, float distance)
 	crntLevel->fbo.bind();
 
 	// set GL
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		crntLevel->resolution, crntLevel->resolution);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// disable color & blend & enable depth test
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 
 	// for artifacts
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
-	GlStateMachineSingleton::getInstance().enable(GL_POLYGON_OFFSET_FILL);
+	GlStateMachineSingleton::get().enable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
 	BOOST_FOREACH(const RenderableNode* node,
@@ -162,7 +162,7 @@ void Sm::run(const Light& light, float distance)
 	}
 
 	// restore GL
-	GlStateMachineSingleton::getInstance().disable(GL_POLYGON_OFFSET_FILL);
+	GlStateMachineSingleton::get().disable(GL_POLYGON_OFFSET_FILL);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	// FBO

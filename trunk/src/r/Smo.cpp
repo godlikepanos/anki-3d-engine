@@ -98,12 +98,12 @@ void Smo::setUpGl(bool inside)
 	if(inside)
 	{
 		glCullFace(GL_FRONT);
-		GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+		GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 	}
 	else
 	{
 		glDepthMask(GL_FALSE);
-		GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, true);
+		GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
 	}
 }
 

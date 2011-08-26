@@ -50,7 +50,7 @@ void Deformer::deform(SkinPatchNode& node) const
 
 	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
 
-	GlStateMachineSingleton::getInstance().enable(GL_RASTERIZER_DISCARD);
+	GlStateMachineSingleton::get().enable(GL_RASTERIZER_DISCARD);
 
 	// Chose sProg
 	const ShaderProgram* sProg;
@@ -97,7 +97,7 @@ void Deformer::deform(SkinPatchNode& node) const
 	glEndTransformFeedback();
 	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 
-	GlStateMachineSingleton::getInstance().disable(GL_RASTERIZER_DISCARD);
+	GlStateMachineSingleton::get().disable(GL_RASTERIZER_DISCARD);
 }
 
 

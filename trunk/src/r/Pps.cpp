@@ -120,9 +120,9 @@ void Pps::runPrePass()
 
 	prePassFbo.bind();
 
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		r.getWidth(), r.getHeight());
 
 	prePassSProg->bind();
@@ -130,7 +130,8 @@ void Pps::runPrePass()
 
 	if(ssao.isEnabled())
 	{
-		prePassSProg->getUniformVariableByName("ppsSsaoFai").set(ssao.getFai(), 1);
+		prePassSProg->getUniformVariableByName("ppsSsaoFai").set(
+			ssao.getFai(), 1);
 	}
 
 	r.drawQuad();
@@ -152,16 +153,18 @@ void Pps::runPostPass()
 
 	postPassFbo.bind();
 
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	GlStateMachineSingleton::getInstance().setViewport(0, 0,
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().setViewport(0, 0,
 		r.getWidth(), r.getHeight());
 
 	postPassSProg->bind();
-	postPassSProg->getUniformVariableByName("ppsPrePassFai").set(prePassFai, 0);
+	postPassSProg->getUniformVariableByName("ppsPrePassFai").set(
+		prePassFai, 0);
 	if(hdr.isEnabled())
 	{
-		postPassSProg->getUniformVariableByName("ppsHdrFai").set(hdr.getFai(), 1);
+		postPassSProg->getUniformVariableByName("ppsHdrFai").set(
+			hdr.getFai(), 1);
 	}
 
 	r.drawQuad();

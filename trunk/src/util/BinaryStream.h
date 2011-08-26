@@ -6,8 +6,8 @@
 #include "util/StdTypes.h"
 
 
-/// Read from binary streams. You can read/write data as if it is an iostream but it also contains methods for
-/// reading/writing binary data
+/// Read from binary streams. You can read/write data as if it is an iostream 
+/// but it also contains methods for reading/writing binary data
 class BinaryStream: public std::iostream
 {
 	public:
@@ -21,7 +21,8 @@ class BinaryStream: public std::iostream
 		/// The one and only constructor
 		/// @param sb An std::streambuf for in/out
 		/// @param byteOrder The stream's byte order
-		BinaryStream(std::streambuf* sb, ByteOrder byteOrder = BO_LITTLE_ENDIAN);
+		BinaryStream(std::streambuf* sb, 
+			ByteOrder byteOrder = BO_LITTLE_ENDIAN);
 
 		/// Read unsigned int (32bit)
 		/// @exception Exception
@@ -31,7 +32,8 @@ class BinaryStream: public std::iostream
 		/// @exception Exception
 		float readFloat();
 
-		/// Read a string. It reads the size as an unsigned int and then it reads the characters
+		/// Read a string. It reads the size as an unsigned int and then it 
+		/// reads the characters
 		/// @exception Exception
 		std::string readString();
 

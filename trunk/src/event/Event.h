@@ -1,5 +1,5 @@
-#ifndef EVENT_H
-#define EVENT_H
+#ifndef EVENT_EVENT_H
+#define EVENT_EVENT_H
 
 #include "util/StdTypes.h"
 #include "util/Accessors.h"

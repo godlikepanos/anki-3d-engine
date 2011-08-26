@@ -8,7 +8,7 @@
 TEST(ScriptingTests, ScriptingEngine)
 {
 	Vec4 v;
-	ScriptingEngineSingleton::getInstance().exposeVar<Vec4>("v", &v);
+	ScriptingEngineSingleton::get().exposeVar<Vec4>("v", &v);
 	
 	const char* src =
 		"from Anki import *\n" 
@@ -18,6 +18,6 @@ TEST(ScriptingTests, ScriptingEngine)
 		"v.w = 4.0\n"
 		"v += Vec4(1.0)\n";
 		
-	EXPECT_NO_THROW(ScriptingEngineSingleton::getInstance().execScript(src));
+	EXPECT_NO_THROW(ScriptingEngineSingleton::get().execScript(src));
 	EXPECT_EQ(v, Vec4(2.0, 3.0, 4.0, 5.0));
 }

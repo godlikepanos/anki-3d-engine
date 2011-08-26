@@ -57,7 +57,7 @@ template<typename Type>
 void RsrcPtr<Type>::loadRsrc(const char* filename)
 {
 	ASSERT(hook == NULL);
-	hook = &ResourceManagerSingleton::getInstance().load<Type>(filename);
+	hook = &ResourceManagerSingleton::get().load<Type>(filename);
 }
 
 
@@ -69,7 +69,7 @@ void RsrcPtr<Type>::unload()
 {
 	if(hook != NULL)
 	{
-		ResourceManagerSingleton::getInstance().unload<Type>(*hook);
+		ResourceManagerSingleton::get().unload<Type>(*hook);
 		hook = NULL;
 	}
 }

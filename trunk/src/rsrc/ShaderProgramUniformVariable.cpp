@@ -10,7 +10,7 @@
 void ShaderProgramUniformVariable::doSanityChecks() const
 {
 	ASSERT(getLoc() != -1);
-	ASSERT(GlStateMachineSingleton::getInstance().getCurrentProgramGlId() ==
+	ASSERT(GlStateMachineSingleton::get().getCurrentProgramGlId() ==
 		getFatherSProg().getGlId());
 	ASSERT(glGetUniformLocation(getFatherSProg().getGlId(),
 		getName().c_str()) == getLoc());

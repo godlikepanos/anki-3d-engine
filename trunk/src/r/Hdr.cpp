@@ -111,16 +111,17 @@ void Hdr::run()
 
 	int w = renderingQuality * r.getWidth();
 	int h = renderingQuality * r.getHeight();
-	GlStateMachineSingleton::getInstance().setViewport(0, 0, w, h);
+	GlStateMachineSingleton::get().setViewport(0, 0, w, h);
 
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND, false);
-	GlStateMachineSingleton::getInstance().enable(GL_DEPTH_TEST, false);
+	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 
 	// pass 0
 	toneFbo.bind();
 	toneSProg->bind();
 	toneSProg->getUniformVariableByName("exposure").set(&exposure);
-	toneSProg->getUniformVariableByName("fai").set(r.getPps().getPrePassFai(), 0);
+	toneSProg->getUniformVariableByName("fai").set(
+		r.getPps().getPrePassFai(), 0);
 	r.drawQuad();
 
 	// blurring passes

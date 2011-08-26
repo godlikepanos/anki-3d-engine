@@ -78,7 +78,8 @@ std::string BinaryStream::readString()
 	read(buff, size);
 	if(fail())
 	{
-		throw EXCEPTION("Failed to read " + boost::lexical_cast<std::string>(size) + " bytes");
+		throw EXCEPTION("Failed to read " + 
+			boost::lexical_cast<std::string>(size) + " bytes");
 	}
 	buff[size] = '\0';
 

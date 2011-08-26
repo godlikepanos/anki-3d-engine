@@ -3,6 +3,7 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
+#include "util/Accessors.h"
 
 
 namespace cln {

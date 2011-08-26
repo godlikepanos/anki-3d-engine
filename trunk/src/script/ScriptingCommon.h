@@ -17,9 +17,9 @@ using namespace boost::python;
 #define WRAP_SINGLETON(x) \
 	WRAP(x) { \
 		class_<x, noncopyable>(#x, no_init) \
-			.def("getInstance", & x ::getInstance, \
+			.def("get", & x ::get, \
 				return_value_policy<reference_existing_object>()) \
-			.staticmethod("getInstance") \
+			.staticmethod("get") \
 		; \
 	}
 

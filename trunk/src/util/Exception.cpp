@@ -5,8 +5,9 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-Exception::Exception(const std::string& err_, const char* file_, int line_, const char* func_):
-	err(err_),
+Exception::Exception(const std::string& err_, const char* file_, int line_, 
+	const char* func_)
+:	err(err_),
 	file(file_),
 	line(line_),
 	func(func_)
@@ -29,7 +30,8 @@ Exception::Exception(const Exception& e):
 //==============================================================================
 std::string Exception::getInfoStr() const
 {
-	return std::string("(") + file + ":" + boost::lexical_cast<std::string>(line) + " " + func + ")";
+	return std::string("(") + file + ":" + 
+		boost::lexical_cast<std::string>(line) + " " + func + ")";
 }
 
 

@@ -1,8 +1,6 @@
 #ifndef CLN_COLLISION_SHAPE
 #define CLN_COLLISION_SHAPE
 
-#include "util/Accessors.h"
-
 
 namespace cln {
 

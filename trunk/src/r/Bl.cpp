@@ -100,7 +100,7 @@ void Bl::runSideBlur()
 
 	sideBlurFbo.bind();
 
-	GlStateMachineSingleton::getInstance().enable(GL_BLEND);
+	GlStateMachineSingleton::get().enable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	sideBlurSProg->bind();
@@ -116,7 +116,7 @@ void Bl::runSideBlur()
 //==============================================================================
 void Bl::runBlur()
 {
-	GlStateMachineSingleton::getInstance().disable(GL_BLEND);
+	GlStateMachineSingleton::get().disable(GL_BLEND);
 
 	for(uint i = 0; i < blurringIterationsNum; i++)
 	{

@@ -59,7 +59,7 @@ void App::init(int argc, char* argv[])
 	fullScreenFlag = false;
 
 	// send output to handleMessageHanlderMsgs
-	LoggerSingleton::getInstance().getSignal().connect(
+	LoggerSingleton::get().getSignal().connect(
 		boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
 
 	parseCommandLineArgs(argc, argv);

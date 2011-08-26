@@ -133,7 +133,8 @@ class Material: public MaterialProperties
 			PassType p) const;
 
 		/// Check if a buildin variable exists in a any pass type
-		bool buildinVariableExits(MaterialBuildinVariable::MatchingVariable e) const
+		bool buildinVariableExits(
+			MaterialBuildinVariable::MatchingVariable e) const
 			{return buildinsArr[e] != NULL;}
 
 	private:

@@ -23,7 +23,7 @@ SceneNode::SceneNode(SceneNodeType type_, bool inheritParentTrfFlag_,
 {
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
-	SceneSingleton::getInstance().registerNode(this);
+	SceneSingleton::get().registerNode(this);
 
 	name = boost::lexical_cast<std::string>(uid);
 
@@ -39,7 +39,7 @@ SceneNode::SceneNode(SceneNodeType type_, bool inheritParentTrfFlag_,
 //==============================================================================
 SceneNode::~SceneNode()
 {
-	SceneSingleton::getInstance().unregisterNode(this);
+	SceneSingleton::get().unregisterNode(this);
 }
 
 

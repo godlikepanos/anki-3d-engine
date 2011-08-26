@@ -88,7 +88,7 @@ void initPhysics()
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new phys::RigidBody(SceneSingleton::getInstance().getPhysMasterContainer(), init);
+	new phys::RigidBody(SceneSingleton::get().getPhysMasterContainer(), init);
 
 
 	/*{
@@ -131,18 +131,18 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	painter = new ui::Painter(Vec2(AppSingleton::getInstance().getWindowWidth(),
-	                               AppSingleton::getInstance().getWindowHeight()));
+	painter = new ui::Painter(Vec2(AppSingleton::get().getWindowWidth(),
+	                               AppSingleton::get().getWindowHeight()));
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
-	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
-	cam->setAll(r::MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
+	cam->setAll(r::MainRendererSingleton::get().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
-	AppSingleton::getInstance().setActiveCam(cam);
+	AppSingleton::get().setActiveCam(cam);
 	INFO(cam->getSceneNodeName());
 
 	OrthographicCamera* ocam = new OrthographicCamera(false, NULL);
@@ -241,7 +241,7 @@ void init()
 	/*PhyCharacter::Initializer init;
 	init.sceneNode = imp;
 	init.startTrf = Transform(Vec3(0, 40, 0), Mat3::getIdentity(), 1.0);
-	character = new PhyCharacter(SceneSingleton::getInstance().getPhysics(), init);*/
+	character = new PhyCharacter(SceneSingleton::get().getPhysics(), init);*/
 
 	// crate
 	/*crate = new MeshNode;
@@ -265,63 +265,63 @@ void init()
 //==============================================================================
 void mainLoopExtra()
 {
-	InputSingleton::getInstance().handleEvents();
+	InputSingleton::get().handleEvents();
 
 	float dist = 0.2;
 	float ang = toRad(3.0);
 	float scale = 0.01;
 
 	// move the camera
-	static SceneNode* mover = AppSingleton::getInstance().getActiveCam();
+	static SceneNode* mover = AppSingleton::get().getActiveCam();
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_1)) mover = AppSingleton::getInstance().getActiveCam();
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_2)) mover = point_lights[0];
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_6)) mover = imp;
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_7)) mover =
-		SceneSingleton::getInstance().getParticleEmitterNodes()[0];
-	//if(InputSingleton::getInstance().getKey(SDL_SCANCODE_M) == 1) InputSingleton::getInstance().warpMouse = !InputSingleton::getInstance().warpMouse;
+	if(InputSingleton::get().getKey(SDL_SCANCODE_1)) mover = AppSingleton::get().getActiveCam();
+	if(InputSingleton::get().getKey(SDL_SCANCODE_2)) mover = point_lights[0];
+	if(InputSingleton::get().getKey(SDL_SCANCODE_3)) mover = spot_lights[0];
+	if(InputSingleton::get().getKey(SDL_SCANCODE_4)) mover = point_lights[1];
+	if(InputSingleton::get().getKey(SDL_SCANCODE_5)) mover = spot_lights[1];
+	if(InputSingleton::get().getKey(SDL_SCANCODE_6)) mover = imp;
+	if(InputSingleton::get().getKey(SDL_SCANCODE_7)) mover =
+		SceneSingleton::get().getParticleEmitterNodes()[0];
+	//if(InputSingleton::get().getKey(SDL_SCANCODE_M) == 1) InputSingleton::get().warpMouse = !InputSingleton::get().warpMouse;
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
-	if(!InputSingleton::getInstance().warpMouse())
+	if(InputSingleton::get().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
+	if(!InputSingleton::get().warpMouse())
 	{
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
+		if(InputSingleton::get().getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
+		if(InputSingleton::get().getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
+		if(InputSingleton::get().getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
+		if(InputSingleton::get().getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
 	}
 	else
 	{
 		float accel = 44.0;
-		mover->rotateLocalX(ang * InputSingleton::getInstance().mouseVelocity.y() * accel);
-		mover->rotateLocalY(-ang * InputSingleton::getInstance().mouseVelocity.x() * accel);
+		mover->rotateLocalX(ang * InputSingleton::get().mouseVelocity.y() * accel);
+		mover->rotateLocalY(-ang * InputSingleton::get().mouseVelocity.x() * accel);
 	}
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
+	if(InputSingleton::get().getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
+	if(InputSingleton::get().getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
+	if(InputSingleton::get().getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_K))
-		AppSingleton::getInstance().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
+	if(InputSingleton::get().getKey(SDL_SCANCODE_K))
+		AppSingleton::get().getActiveCam()->lookAtPoint(point_lights[0]->getWorldTransform().getOrigin());
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_I))
+	if(InputSingleton::get().getKey(SDL_SCANCODE_I))
 		character->moveForward(0.1);
 
-	/*if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
+	/*if(InputSingleton::get().getKey(SDL_SCANCODE_F) == 1)
 	{
-		Event::ManagerSingleton::getInstance().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5,
-			5, r::MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
+		Event::ManagerSingleton::get().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5,
+			5, r::MainRendererSingleton::get().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
 	}*/
 
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_O) == 1)
+	if(InputSingleton::get().getKey(SDL_SCANCODE_O) == 1)
 	{
 		btRigidBody* body = static_cast<btRigidBody*>(boxes[0]);
 		//body->getMotionState()->setWorldTransform(toBt(Mat4(Vec3(0.0, 10.0, 0.0), Mat3::getIdentity(), 1.0)));
@@ -330,10 +330,10 @@ void mainLoopExtra()
 		body->forceActivationState(ACTIVE_TAG);
 	}
 
-	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Y) == 1)
+	if(InputSingleton::get().getKey(SDL_SCANCODE_Y) == 1)
 	{
 		INFO("Exec script");
-		ScriptingEngineSingleton::getInstance().execScript(util::readFile("test.py").c_str());
+		ScriptingEngineSingleton::get().execScript(util::readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();
@@ -377,52 +377,52 @@ void mainLoop()
 		mainLoopExtra();
 		void execStdinScpripts();
 		execStdinScpripts();
-		SceneSingleton::getInstance().getPhysMasterContainer().update(prevUpdateTime, crntTime);
-		SceneSingleton::getInstance().updateAllWorldStuff(prevUpdateTime, crntTime);
-		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
-		SceneSingleton::getInstance().updateAllControllers();
-		event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
-		r::MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
+		SceneSingleton::get().getPhysMasterContainer().update(prevUpdateTime, crntTime);
+		SceneSingleton::get().updateAllWorldStuff(prevUpdateTime, crntTime);
+		SceneSingleton::get().doVisibilityTests(*AppSingleton::get().getActiveCam());
+		SceneSingleton::get().updateAllControllers();
+		event::ManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
+		r::MainRendererSingleton::get().render(*AppSingleton::get().getActiveCam());
 
 		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
 		//painter->drawText("A");
-		const r::MainRenderer& r = r::MainRendererSingleton::getInstance();
+		const r::MainRenderer& r = r::MainRendererSingleton::get();
 		std::stringstream ss;
 		ss << "MS: " << r.getMsTime() * 1000000 << " IS: " <<
 			r.getIsTime() * 1000000 << " BS: " << r.getBsTime() * 1000000 <<
 			" PPS: " << r.getPpsTime() * 1000000 << " DBG: " <<
 			r.getDbgTime() * 1000000;
 
-		ss << "\n" << AppSingleton::getInstance().getActiveCam()->
+		ss << "\n" << AppSingleton::get().getActiveCam()->
 			getVisibleMsRenderableNodes().size();
 		painter->drawText(ss.str());
 
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_ESCAPE))
+		if(InputSingleton::get().getKey(SDL_SCANCODE_ESCAPE))
 		{
 			break;
 		}
 
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F11))
+		if(InputSingleton::get().getKey(SDL_SCANCODE_F11))
 		{
-			AppSingleton::getInstance().togleFullScreen();
+			AppSingleton::get().togleFullScreen();
 		}
 
-		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F12) == 1)
+		if(InputSingleton::get().getKey(SDL_SCANCODE_F12) == 1)
 		{
-			r::MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
+			r::MainRendererSingleton::get().takeScreenshot("gfx/screenshot.jpg");
 		}
 
-		AppSingleton::getInstance().swapBuffers();
+		AppSingleton::get().swapBuffers();
 
 
 		//
 		// Async resource loading
 		//
-		if(ResourceManagerSingleton::getInstance().getAsyncLoadingRequestsNum() > 0)
+		if(ResourceManagerSingleton::get().getAsyncLoadingRequestsNum() > 0)
 		{
 			HighRezTimer::Scalar a = timer.getElapsedTime();
-			HighRezTimer::Scalar b = AppSingleton::getInstance().getTimerTick();
+			HighRezTimer::Scalar b = AppSingleton::get().getTimerTick();
 			HighRezTimer::Scalar timeToSpendForRsrcPostProcess;
 			if(a < b)
 			{
@@ -432,19 +432,19 @@ void mainLoop()
 			{
 				timeToSpendForRsrcPostProcess = 0.001;
 			}
-			ResourceManagerSingleton::getInstance().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
+			ResourceManagerSingleton::get().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
 		}
 
 		//
 		// Sleep
 		//
 		timer.stop();
-		if(timer.getElapsedTime() < AppSingleton::getInstance().getTimerTick())
+		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
-			SDL_Delay((AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime()) * 1000.0);
+			SDL_Delay((AppSingleton::get().getTimerTick() - timer.getElapsedTime()) * 1000.0);
 		}
 
-		/*if(r::MainRendererSingleton::getInstance().getFramesNum() == 100)
+		/*if(r::MainRendererSingleton::get().getFramesNum() == 100)
 		{
 			break;
 		}*/
@@ -460,7 +460,7 @@ void mainLoop()
 void initSubsystems(int argc, char* argv[])
 {
 	// App
-	AppSingleton::getInstance().init(argc, argv);
+	AppSingleton::get().init(argc, argv);
 
 	// Main renderer
 	r::RendererInitializer initializer;
@@ -484,7 +484,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.mainRendererQuality = 1.0;
 
-	r::MainRendererSingleton::getInstance().init(initializer);
+	r::MainRendererSingleton::get().init(initializer);
 
 	// Scripting engine
 	const char* commonPythonCode =
@@ -497,7 +497,7 @@ void initSubsystems(int argc, char* argv[])
 		"        line = sys._getframe(1).f_lineno\n"
 		"        file = sys._getframe(1).f_code.co_filename\n"
 		"        func = sys._getframe(1).f_code.co_name\n"
-		"        LoggerSingleton.getInstance().write(file, line, "
+		"        LoggerSingleton.get().write(file, line, "
 		"func, str_ + \"\\n\")\n"
 		"\n"
 		"class StderrCatcher:\n"
@@ -505,22 +505,22 @@ void initSubsystems(int argc, char* argv[])
 		"        line = sys._getframe(1).f_lineno\n"
 		"        file = sys._getframe(1).f_code.co_filename\n"
 		"        func = sys._getframe(1).f_code.co_name\n"
-		"        LoggerSingleton.getInstance().write(file, line, func, str_)\n"
+		"        LoggerSingleton.get().write(file, line, func, str_)\n"
 		"\n"
 		"sys.stdout = StdoutCatcher()\n"
 		"sys.stderr = StderrCatcher()\n";
 
-	ScriptingEngineSingleton::getInstance().execScript(commonPythonCode);
+	ScriptingEngineSingleton::get().execScript(commonPythonCode);
 
 	// Stdin listener
-	StdinListenerSingleton::getInstance().start();
+	StdinListenerSingleton::get().start();
 
 	// Parallel jobs
-	parallel::ManagerSingleton::getInstance().init(4);
+	parallel::ManagerSingleton::get().init(4);
 
 	// Add drawer to physics
-	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
-		new r::PhysDbgDrawer(r::MainRendererSingleton::getInstance().getDbg()));
+	SceneSingleton::get().getPhysMasterContainer().setDebugDrawer(
+		new r::PhysDbgDrawer(r::MainRendererSingleton::get().getDbg()));
 }
 
 
@@ -533,7 +533,7 @@ void execStdinScpripts()
 {
 	while(1)
 	{
-		std::string cmd = StdinListenerSingleton::getInstance().getLine();
+		std::string cmd = StdinListenerSingleton::get().getLine();
 
 		if(cmd.length() < 1)
 		{
@@ -542,7 +542,7 @@ void execStdinScpripts()
 
 		try
 		{
-			ScriptingEngineSingleton::getInstance().execScript(cmd.c_str(),
+			ScriptingEngineSingleton::get().execScript(cmd.c_str(),
 				"command line input");
 		}
 		catch(Exception& e)
@@ -567,7 +567,7 @@ int main(int argc, char* argv[])
 		mainLoop();
 
 		INFO("Exiting...");
-		AppSingleton::getInstance().quit(EXIT_SUCCESS);
+		AppSingleton::get().quit(EXIT_SUCCESS);
 		exitCode = 0;
 	}
 	catch(std::exception& e)

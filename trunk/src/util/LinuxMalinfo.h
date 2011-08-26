@@ -15,7 +15,8 @@
 
 	inline void printMallInfo(const Mallinfo& minfo)
 	{
-		PRINT("used:" << minfo.uordblks << " free:" << minfo.fordblks << " total:" << minfo.arena);
+		PRINT("used:" << minfo.uordblks << " free:" << minfo.fordblks << 
+			" total:" << minfo.arena);
 	}
 
 	inline void printMallInfoDiff(const Mallinfo& prev, const Mallinfo& now)
