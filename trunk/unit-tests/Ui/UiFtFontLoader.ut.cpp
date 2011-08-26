@@ -9,7 +9,7 @@ TEST(UiTests, UiFtFontLoader)
 	
 	{
 		FT_Vector ftSize = {20, 20};
-		Ui::FtFontLoader ft("engine-rsrc/ModernAntiqua.ttf", ftSize);
+		ui::FtFontLoader ft("engine-rsrc/ModernAntiqua.ttf", ftSize);
 	}
 	
 	struct mallinfo post = mallinfo();

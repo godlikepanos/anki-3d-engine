@@ -2,15 +2,12 @@ PROJECT(ANKI_PROJ)
 
 INCLUDE_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR})
 
-SET(ANKI_DIRS Scripting Misc Renderer Scene Ui Events 
-	Input Physics Resources GfxApi Collision Math Core Util)
+SET(ANKI_LIBS script r scene ui event 
+	i phys rsrc core misc gl cln m util)
 
-SUBDIRS(${ANKI_DIRS})
+SUBDIRS(${ANKI_LIBS})
 
 ADD_EXECUTABLE(anki Main.cpp)
-
-SET(ANKI_LIBS Scripting Renderer Scene Ui Events 
-	Input Physics Resources Core Misc GfxApi Collision Math Util)
 
 TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics 
 	BulletCollision LinearMath GLEW GLU GL jpeg SDL png python2.6

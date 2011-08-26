@@ -2,50 +2,50 @@
 #include <iostream>
 #include <fstream>
 
-#include "Input/Input.h"
-#include "Scene/PerspectiveCamera.h"
-#include "Scene/OrthographicCamera.h"
-#include "Math/Math.h"
-#include "Renderer/Renderer.h"
-#include "Ui/Painter.h"
-#include "Core/App.h"
-#include "Resources/Mesh.h"
-#include "Scene/Light.h"
-#include "Scene/PointLight.h"
-#include "Scene/SpotLight.h"
-#include "Resources/Material.h"
-#include "Scene/Scene.h"
-#include "Util/scanner/Scanner.h"
-#include "Resources/SkelAnim.h"
-#include "Resources/LightRsrc.h"
-#include "Misc/Parser.h"
-#include "Scene/ParticleEmitterNode.h"
-#include "Physics/Character.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/RendererInitializer.h"
-#include "Renderer/MainRenderer.h"
-#include "Physics/Character.h"
-#include "Physics/RigidBody.h"
-#include "Scripting/ScriptingEngine.h"
-#include "Core/StdinListener.h"
-#include "Scene/ModelNode.h"
-#include "Resources/Model.h"
-#include "Core/Logger.h"
-#include "Util/Util.h"
-#include "Util/HighRezTimer.h"
-#include "Scene/SkinNode.h"
-#include "Resources/Skin.h"
-#include "Scene/MaterialRuntime.h"
-#include "Core/Globals.h"
-#include "Ui/FtFontLoader.h"
-#include "Ui/Font.h"
-#include "Events/Manager.h"
-#include "Events/SceneColor.h"
-#include "Events/MainRendererPpsHdr.h"
-#include "Resources/ShaderProgramPrePreprocessor.h"
-#include "Resources/Material.h"
-#include "Core/parallel/Manager.h"
-#include "Renderer/Drawers/PhysDbgDrawer.h"
+#include "i/Input.h"
+#include "scene/PerspectiveCamera.h"
+#include "scene/OrthographicCamera.h"
+#include "m/Math.h"
+#include "r/Renderer.h"
+#include "ui/Painter.h"
+#include "core/App.h"
+#include "rsrc/Mesh.h"
+#include "scene/Light.h"
+#include "scene/PointLight.h"
+#include "scene/SpotLight.h"
+#include "rsrc/Material.h"
+#include "scene/Scene.h"
+#include "util/scanner/Scanner.h"
+#include "rsrc/SkelAnim.h"
+#include "rsrc/LightRsrc.h"
+#include "misc/Parser.h"
+#include "scene/ParticleEmitterNode.h"
+#include "phys/Character.h"
+#include "r/Renderer.h"
+#include "r/RendererInitializer.h"
+#include "r/MainRenderer.h"
+#include "phys/Character.h"
+#include "phys/RigidBody.h"
+#include "script/ScriptingEngine.h"
+#include "core/StdinListener.h"
+#include "scene/ModelNode.h"
+#include "rsrc/Model.h"
+#include "core/Logger.h"
+#include "util/Util.h"
+#include "util/HighRezTimer.h"
+#include "scene/SkinNode.h"
+#include "rsrc/Skin.h"
+#include "scene/MaterialRuntime.h"
+#include "core/Globals.h"
+#include "ui/FtFontLoader.h"
+#include "ui/Font.h"
+#include "event/Manager.h"
+#include "event/SceneColor.h"
+#include "event/MainRendererPpsHdr.h"
+#include "rsrc/ShaderProgramPrePreprocessor.h"
+#include "rsrc/Material.h"
+#include "core/parallel/Manager.h"
+#include "r/PhysDbgDrawer.h"
 
 
 // map (hard coded)
@@ -55,9 +55,9 @@ SkinNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 ParticleEmitterNode* partEmitter;
-Phys::Character* character;
+phys::Character* character;
 
-Ui::Painter* painter;
+ui::Painter* painter;
 
 
 // Physics
@@ -83,12 +83,12 @@ void initPhysics()
 	groundTransform.setIdentity();
 	groundTransform.setOrigin(Vec3(0,-50, 0));
 
-	Phys::RigidBody::Initializer init;
+	phys::RigidBody::Initializer init;
 	init.mass = 0.0;
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new Phys::RigidBody(SceneSingleton::getInstance().getPhysMasterContainer(), init);
+	new phys::RigidBody(SceneSingleton::getInstance().getPhysMasterContainer(), init);
 
 
 	/*{
@@ -131,14 +131,14 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	painter = new Ui::Painter(Vec2(AppSingleton::getInstance().getWindowWidth(),
+	painter = new ui::Painter(Vec2(AppSingleton::getInstance().getWindowWidth(),
 	                               AppSingleton::getInstance().getWindowHeight()));
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
-	//cam->setAll(toRad(100.0), toRad(100.0) / R::MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
-	cam->setAll(R::MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::getInstance().getAspectRatio(), 0.5, 200.0);
+	cam->setAll(r::MainRendererSingleton::getInstance().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -195,18 +195,18 @@ void init()
 	// sarge
 	/*sarge = new MeshNode();
 	sarge->init("meshes/sphere/sphere16.mesh");
-	//sarge->setLocalTransform(Vec3(0, -2.8, 1.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 1.1);
+	//sarge->setLocalTransform(Vec3(0, -2.8, 1.0), Mat3(Euler(-m::PI/2, 0.0, 0.0)), 1.1);
 	sarge->setLocalTransform(Transform(Vec3(0, 2.0, 2.0), Mat3::getIdentity(), 0.4));
 	
 	// floor
 	floor__ = new MeshNode();
 	floor__->init("maps/temple/Cube.019.mesh");
-	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.8));*/
+	floor__->setLocalTransform(Transform(Vec3(0.0, -0.19, 0.0), Mat3(Euler(-m::PI/2, 0.0, 0.0)), 0.8));*/
 
 	// imp	
 	/*imp = new SkelModelNode();
 	imp->init("models/imp/imp.smdl");
-	//imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-M::PI/2, 0.0, 0.0)), 0.7));
+	//imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-m::PI/2, 0.0, 0.0)), 0.7));
 	SkelAnimCtrl* ctrl = new SkelAnimCtrl(*imp->meshNodes[0]->meshSkelCtrl->skelNode);
 	ctrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
 	ctrl->step = 0.8;*/
@@ -317,7 +317,7 @@ void mainLoopExtra()
 	/*if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F) == 1)
 	{
 		Event::ManagerSingleton::getInstance().createEvent(Event::MainRendererPpsHdr(HighRezTimer::getCrntTime() + 5,
-			5, R::MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
+			5, r::MainRendererSingleton::getInstance().getPps().getHdr().getExposure() + 20.0, 3, 1.4));
 	}*/
 
 
@@ -333,7 +333,7 @@ void mainLoopExtra()
 	if(InputSingleton::getInstance().getKey(SDL_SCANCODE_Y) == 1)
 	{
 		INFO("Exec script");
-		ScriptingEngineSingleton::getInstance().execScript(Util::readFile("test.py").c_str());
+		ScriptingEngineSingleton::getInstance().execScript(util::readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();
@@ -381,13 +381,13 @@ void mainLoop()
 		SceneSingleton::getInstance().updateAllWorldStuff(prevUpdateTime, crntTime);
 		SceneSingleton::getInstance().doVisibilityTests(*AppSingleton::getInstance().getActiveCam());
 		SceneSingleton::getInstance().updateAllControllers();
-		Event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
-		R::MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
+		event::ManagerSingleton::getInstance().updateAllEvents(prevUpdateTime, crntTime);
+		r::MainRendererSingleton::getInstance().render(*AppSingleton::getInstance().getActiveCam());
 
 		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
 		//painter->drawText("A");
-		const R::MainRenderer& r = R::MainRendererSingleton::getInstance();
+		const r::MainRenderer& r = r::MainRendererSingleton::getInstance();
 		std::stringstream ss;
 		ss << "MS: " << r.getMsTime() * 1000000 << " IS: " <<
 			r.getIsTime() * 1000000 << " BS: " << r.getBsTime() * 1000000 <<
@@ -410,7 +410,7 @@ void mainLoop()
 
 		if(InputSingleton::getInstance().getKey(SDL_SCANCODE_F12) == 1)
 		{
-			R::MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
+			r::MainRendererSingleton::getInstance().takeScreenshot("gfx/screenshot.jpg");
 		}
 
 		AppSingleton::getInstance().swapBuffers();
@@ -444,7 +444,7 @@ void mainLoop()
 			SDL_Delay((AppSingleton::getInstance().getTimerTick() - timer.getElapsedTime()) * 1000.0);
 		}
 
-		/*if(R::MainRendererSingleton::getInstance().getFramesNum() == 100)
+		/*if(r::MainRendererSingleton::getInstance().getFramesNum() == 100)
 		{
 			break;
 		}*/
@@ -463,7 +463,7 @@ void initSubsystems(int argc, char* argv[])
 	AppSingleton::getInstance().init(argc, argv);
 
 	// Main renderer
-	R::RendererInitializer initializer;
+	r::RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
@@ -484,7 +484,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.mainRendererQuality = 1.0;
 
-	R::MainRendererSingleton::getInstance().init(initializer);
+	r::MainRendererSingleton::getInstance().init(initializer);
 
 	// Scripting engine
 	const char* commonPythonCode =
@@ -520,7 +520,7 @@ void initSubsystems(int argc, char* argv[])
 
 	// Add drawer to physics
 	SceneSingleton::getInstance().getPhysMasterContainer().setDebugDrawer(
-		new R::PhysDbgDrawer(R::MainRendererSingleton::getInstance().getDbg()));
+		new r::PhysDbgDrawer(r::MainRendererSingleton::getInstance().getDbg()));
 }
 
 
