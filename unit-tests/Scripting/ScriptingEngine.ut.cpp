@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include "ScriptingEngine.h"
 #include "Math.h"
-#include "Core/Logger.h"
-#include "Core/Globals.h"ls.h"
+#include "core/Logger.h"
+#include "core/Globals.h"ls.h"
 
 
 TEST(ScriptingTests, ScriptingEngine)
