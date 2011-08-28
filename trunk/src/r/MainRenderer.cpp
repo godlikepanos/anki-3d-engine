@@ -22,8 +22,7 @@ namespace r {
 //==============================================================================
 MainRenderer::MainRenderer():
 	dbg(*this),
-	screenshotJpegQuality(90),
-	deformer(new Deformer(*this))
+	screenshotJpegQuality(90)
 {}
 
 
@@ -54,6 +53,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 		renderingQuality;
 	Renderer::init(initializer);
 	dbg.init(initializer);
+	deformer.reset(new Deformer(*this));
 	INFO("Main renderer initialized");
 }
 
@@ -63,6 +63,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 //==============================================================================
 void MainRenderer::initGl()
 {
+	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	if(err != GLEW_OK)
 	{
@@ -82,7 +83,7 @@ void MainRenderer::initGl()
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
 	int& tun = Texture::getTextureUnitsNum();
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tun);
-	glClearColor(0.1, 0.1, 0.1, 1.0);
+	glClearColor(0.1, 0.1, 0.0, 1.0);
 	glClearDepth(1.0);
 	glClearStencil(0);
 	glDepthFunc(GL_LEQUAL);
@@ -139,9 +140,9 @@ void MainRenderer::render(Camera& cam_)
 	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 	sProg->bind();
-	//sProg->getUniformVariableByName("rasterImage")->set(ms.getNormalFai(), 0);
-	//sProg->getUniformVariableByName("rasterImage")->
-	//	set(pps.getSsao().getFai(), 0);
+	//sProg->getUniformVariableByName("rasterImage").set(ms.getDiffuseFai(), 0);
+	//sProg->getUniformVariableByName("rasterImage").
+	//	set(is.getFai(), 0);
 	sProg->getUniformVariableByName("rasterImage").set(pps.getPostPassFai(), 0);
 	drawQuad();
 }

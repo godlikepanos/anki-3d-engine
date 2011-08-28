@@ -1,7 +1,3 @@
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
-#include <boost/array.hpp>
-
 #include "Is.h"
 #include "Renderer.h"
 #include "scene/Camera.h"
@@ -15,8 +11,15 @@
 #include "Smo.h"
 #include "scene/Scene.h"
 
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+#include <boost/array.hpp>
+
 
 namespace r {
+
+
+#define BLEND_ENABLE true
 
 
 //==============================================================================
@@ -225,7 +228,7 @@ void Is::spotLightPass(const SpotLight& light)
 		fbo.bind();
 
 		// and restore blending and depth test
-		GlStateMachineSingleton::get().enable(GL_BLEND, true);
+		GlStateMachineSingleton::get().enable(GL_BLEND, BLEND_ENABLE);
 		glBlendFunc(GL_ONE, GL_ONE);
 		GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 		GlStateMachineSingleton::get().setViewport(0, 0,
@@ -339,10 +342,10 @@ void Is::run()
 
 	// ambient pass
 	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
-	ambientPass(SceneSingleton::get().getAmbientCol());
+	ambientPass(SceneSingleton::get().getAmbientColor());
 
 	// light passes
-	GlStateMachineSingleton::get().enable(GL_BLEND, true);
+	GlStateMachineSingleton::get().enable(GL_BLEND, BLEND_ENABLE);
 	glBlendFunc(GL_ONE, GL_ONE);
 	GlStateMachineSingleton::get().enable(GL_STENCIL_TEST);
 

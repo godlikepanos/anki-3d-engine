@@ -51,7 +51,7 @@ class Scene
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, ambientCol, getAmbientCol, setAmbientCol)
+		GETTER_SETTER(Vec3, ambientCol, getAmbientColor, setAmbientColor)
 		phys::MasterContainer& getPhysMasterContainer();
 		const phys::MasterContainer& getPhysMasterContainer() const;
 		const VisibilityTester& getVisibilityTester() const;

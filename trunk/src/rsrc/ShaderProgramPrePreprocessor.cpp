@@ -265,10 +265,8 @@ void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
 	cbp->definedInFile = filename;
 	cbp->definedInLine = scanner.getLineNumber();
 	cbp->globalLine = sourceLines.size() + 1;
-	sourceLines.push_back("#line " +
-		boost::lexical_cast<std::string>(scanner.getLineNumber()) +
-		' ' + boost::lexical_cast<std::string>(depth) +
-		" // " + lines[scanner.getLineNumber() - 1]);
+	addLinePreProcExpression(scanner.getLineNumber(), depth,
+		lines[scanner.getLineNumber() - 1].c_str());
 }
 
 
@@ -286,16 +284,13 @@ void ShaderProgramPrePreprocessor::parseIncludePragma(
 		std::string filename = token->getValue().getString();
 
 		//int line = sourceLines.size();
-		sourceLines.push_back("#line 0 " +
-			boost::lexical_cast<std::string>(depth + 1) +
-			" // " + lines[scanner.getLineNumber() - 1]);
+		addLinePreProcExpression(0, depth + 1,
+			lines[scanner.getLineNumber() - 1].c_str());
 
 		parseFileForPragmas(filename.c_str(), depth + 1);
 
-		sourceLines.push_back("#line " +
-			boost::lexical_cast<std::string>(scanner.getLineNumber()) + ' ' +
-			boost::lexical_cast<std::string>(depth) + " // end of " +
-			lines[scanner.getLineNumber() - 1]);
+		addLinePreProcExpression(scanner.getLineNumber(), depth,
+			(" // end of " + lines[scanner.getLineNumber() - 1]).c_str());
 	}
 	else
 	{
@@ -347,4 +342,19 @@ void ShaderProgramPrePreprocessor::parseTrffbVarying(scanner::Scanner& scanner,
 	{
 		throw PARSER_EXCEPTION_EXPECTED("identifier");
 	}
+}
+
+
+//==============================================================================
+// addLinePreProcExpression                                                    =
+//==============================================================================
+void ShaderProgramPrePreprocessor::addLinePreProcExpression(
+	uint line, uint depth, const char* cmnt)
+{
+	/*sourceLines.push_back("#line " +
+		boost::lexical_cast<std::string>(line) +
+		' ' +
+		boost::lexical_cast<std::string>(depth) +
+		" // " +
+		cmnt);*/
 }

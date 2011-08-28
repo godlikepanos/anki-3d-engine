@@ -14,7 +14,9 @@ class Scanner;
 }
 
 
-/// XXX
+/// Creator of shader programs. This class parses between
+/// <shaderProgam></shaderProgram> located inside a <material></material>
+/// and creates the source of a custom program.
 class MaterialShaderProgramCreator
 {
 	public:
@@ -113,7 +115,7 @@ class MaterialShaderProgramCreator
 		/// Used by parseShaderFileForFunctionDefinitions to skip preprocessor
 		/// definitions. Takes into account the backslashes. For example for
 		/// @code
-		/// #define lala \\
+		/// #define lala \\ _
 		/// 	10
 		/// @endcode
 		/// it skips from define to 10

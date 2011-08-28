@@ -15,7 +15,7 @@ SceneColor::SceneColor(float startTime, float duration,
 :	Event(SCENE_COLOR, startTime, duration),
 	finalColor(finalColor_)
 {
-	originalColor = SceneSingleton::get().getAmbientCol();
+	originalColor = SceneSingleton::get().getAmbientColor();
 }
 
 
@@ -49,7 +49,7 @@ void SceneColor::updateSp(float /*prevUpdateTime*/, float crntTime)
 	float d = crntTime - getStartTime(); // delta
 	float dp = d / float(getDuration()); // delta as persentage
 
-	SceneSingleton::get().setAmbientCol(
+	SceneSingleton::get().setAmbientColor(
 		interpolate(originalColor, finalColor, dp));
 }
 

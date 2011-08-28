@@ -184,6 +184,18 @@ void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
 				throw PARSER_EXCEPTION_EXPECTED("identifier");
 			}
 
+			/*if(token->getValue().getString() == std::string("lowp") ||
+				token->getValue().getString() == std::string("highp") ||
+				token->getValue().getString() == std::string("mediump"))
+			{
+				getNextTokenAndSkipNewlines(scanner);
+
+				if(token->getCode() != scanner::TC_IDENTIFIER)
+				{
+					throw PARSER_EXCEPTION_EXPECTED("identifier");
+				}
+			}*/
+
 			try
 			{
 				argDef->dataType = txtToGlType.at(
@@ -383,22 +395,22 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	}
 
 	//
-	// <operators></operators>
+	// <operations></operations>
 	//
 	srcLines.push_back("\nvoid main()\n{");
 
-	const ptree& opsPt = pt.get_child("operators");
+	const ptree& opsPt = pt.get_child("operations");
 
 	BOOST_FOREACH(const ptree::value_type& v, opsPt)
 	{
-		if(v.first != "operator")
+		if(v.first != "operation")
 		{
-			throw EXCEPTION("Expected operator and not: " + v.first);
+			throw EXCEPTION("Expected operation and not: " + v.first);
 		}
 
 		const ptree& opPt = v.second;
 		parseOperatorTag(opPt);
-	} // end for all operators
+	} // end for all operations
 
 	srcLines.push_back("}\n");
 
@@ -540,7 +552,7 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 	// Write return value
 	if(def->returnDataType != GL_NONE)
 	{
-		line << def->returnDataTypeTxt << " operatorOut" << id << " = ";
+		line << def->returnDataTypeTxt << " operationOut" << id << " = ";
 	}
 
 	// Func name
@@ -553,7 +565,7 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 		if(v.first != "argument")
 		{
 			throw EXCEPTION("Unexpected tag \"" + v.first +
-				"\" for operator: " + boost::lexical_cast<std::string>(id));
+				"\" for operation: " + boost::lexical_cast<std::string>(id));
 
 		}
 

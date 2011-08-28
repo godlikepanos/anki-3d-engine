@@ -126,8 +126,8 @@ void init()
 {
 	INFO("Other init...");
 
-	Material mtl;
-	mtl.load("lala.mtl");
+	/*Material mtl;
+	mtl.load("lala.mtl");*/
 
 	srand(unsigned(time(NULL)));
 
@@ -231,9 +231,11 @@ void init()
 	//node->setLocalTransform(Transform(Vec3(0.0, -0.0, 0.0), Mat3::getIdentity(), 0.01));
 
 	// particle emitter
+	/*
+	XXX
 	partEmitter = new ParticleEmitterNode(false, NULL);
 	partEmitter->init("asdf");
-	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));
+	partEmitter->getLocalTransform().setOrigin(Vec3(3.0, 0.0, 0.0));*/
 
 	return;
 
