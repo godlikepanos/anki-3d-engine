@@ -60,11 +60,19 @@ class MaterialBuildinVariable: public MaterialVariable
 			GLenum* dataType = NULL);
 
 	private:
+		/// From string to MatchingVariable
+		typedef ConstCharPtrHashMap<MatchingVariable>::Type
+			StrToMatchingVariable;
+
+		/// From MatchingVariable to GL type (GLenum)
+		typedef boost::unordered_map<MatchingVariable, GLenum>
+			MatchingVariableToGlType;
+
 		/// Given a name of a variable find its MaterialBuildinVariable enum
-		static ConstCharPtrHashMap<MatchingVariable>::Type buildinNameToEnum;
+		static StrToMatchingVariable strToMatchingVariable;
 
 		/// Given a MaterialBuildinVariable enum it gives the GL type
-		static boost::unordered_map<MatchingVariable, GLenum> buildinToGlType;
+		static MatchingVariableToGlType matchingVariableToGlType;
 
 		MatchingVariable bEnum;
 };

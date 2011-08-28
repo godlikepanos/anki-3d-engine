@@ -221,7 +221,7 @@ void SceneDrawer::setupShaderProg(
 
 	if(mtl.buildinVariableExits(Mvb::MV_SCENE_AMBIENT_COLOR, pt))
 	{
-		Vec3 col(SceneSingleton::get().getAmbientCol());
+		Vec3 col(SceneSingleton::get().getAmbientColor());
 		mtl.getBuildinVariable(Mvb::MV_SCENE_AMBIENT_COLOR).
 			getShaderProgramUniformVariable(pt).set(&col);
 	}
@@ -241,6 +241,11 @@ void SceneDrawer::setupShaderProg(
 	//
 	BOOST_FOREACH(const MaterialRuntimeVariable& udvr, mtlr.getVariables())
 	{
+		if(!udvr.getMaterialUserVariable().inPass(pt))
+		{
+			continue;
+		}
+
 		boost::apply_visitor(UsrDefVarVisitor(udvr, r, pt, textureUnit),
 			udvr.getDataVariant());
 	}

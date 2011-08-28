@@ -50,7 +50,7 @@ const float MAX_SHININESS = 128.0;
 /// @return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = texture2D(msDepthFai, vTexCoords).r;
+	float depth = texture(msDepthFai, vTexCoords).r;
 
 	/*if(depth == 1.0)
 	{
@@ -103,11 +103,11 @@ float pcfLow(in vec3 shadowUv)
 		vec2(-1.0, 0.0)
 	);
 	
-	float shadowCol = shadow2D(shadowMap, shadowUv).r;
+	float shadowCol = texture(shadowMap, shadowUv);
 	for(int i = 0; i < KERNEL_SIZE; i++)
 	{
 		vec3 uv = vec3(shadowUv.xy + (KERNEL[i] * mapScale), shadowUv.z);
-		shadowCol += shadow2D(shadowMap, uv).r;
+		shadowCol += texture(shadowMap, uv);
 	}
 	
 	shadowCol *= (1.0 / 9.0);
@@ -135,7 +135,7 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	vec3 lightDir = frag2LightVec * inversesqrt(fragLightDist);
 
 	// Read the normal
-	vec3 normal = unpackNormal(texture2D(msNormalFai, vTexCoords).rg);
+	vec3 normal = unpackNormal(texture(msNormalFai, vTexCoords).rg);
 
 	// Lambert term
 	float lambertTerm = dot(normal, lightDir);
@@ -147,12 +147,12 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	lambertTerm = max(0.0, lambertTerm);
 
 	// Diffuce
-	vec3 diffuse = texture2D(msDiffuseFai, vTexCoords).rgb;
+	vec3 diffuse = texture(msDiffuseFai, vTexCoords).rgb;
 	diffuse *= lightDiffuseCol;
 	vec3 color = diffuse * lambertTerm;
 
 	// Specular
-	vec4 specularMix = texture2D(msSpecularFai, vTexCoords); // the MS specular
+	vec4 specularMix = texture(msSpecularFai, vTexCoords); // the MS specular
 	                                      // FAI has the color and the shininess
 	vec3 specular = specularMix.xyz;
 	float shininess = specularMix.w * MAX_SHININESS;
@@ -177,7 +177,8 @@ vec3 doPointLight(in vec3 fragPosVspace)
 	// calculations we export it
 	float fragLightDist;
 	vec3 color = doPhong(fragPosVspace, fragLightDist);
-	return color * getAttenuation(fragLightDist);
+	vec3 ret = color * getAttenuation(fragLightDist);
+	return ret;
 }
 
 
@@ -201,7 +202,7 @@ vec3 doSpotLight(in vec3 fragPosVspace)
 #	if defined(PCF_ENABLED)
 		float shadowCol = pcfLow(texCoords3);
 #	else
-		float shadowCol = shadow2D(shadowMap, texCoords3).r;
+		float shadowCol = texture(shadowMap, texCoords3);
 #	endif
 
 		if(shadowCol == 0.0)
@@ -213,7 +214,7 @@ vec3 doSpotLight(in vec3 fragPosVspace)
 		float fragLightDist;
 		vec3 color = doPhong(fragPosVspace, fragLightDist);
 
-		vec3 lightTexCol = texture2DProj(lightTex, texCoords2.xyz).rgb;
+		vec3 lightTexCol = textureProj(lightTex, texCoords2.xyz).rgb;
 		float att = getAttenuation(fragLightDist);
 
 #if defined(SHADOW_ENABLED)
@@ -249,6 +250,6 @@ void main()
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
 	/*#if defined(SPOT_LIGHT_ENABLED)
 	fColor = fColor - fColor + vec3(1, 0, 1);
-	//gl_FragData[0] = vec4(texture2D(msDepthFai, vTexCoords).rg), 1.0);
+	//gl_FragData[0] = vec4(texture(msDepthFai, vTexCoords).rg), 1.0);
 	#endif*/
 }

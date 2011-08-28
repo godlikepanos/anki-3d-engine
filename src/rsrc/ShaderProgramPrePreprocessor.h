@@ -137,6 +137,9 @@ class ShaderProgramPrePreprocessor
 			const std::string& what) const;
 
 		void printSourceLines() const;  ///< For debugging
+
+		/// Add a in the source lines a: #line <line> <depth> // cmnt
+		void addLinePreProcExpression(uint line, uint depth, const char* cmnt);
 };
 
 

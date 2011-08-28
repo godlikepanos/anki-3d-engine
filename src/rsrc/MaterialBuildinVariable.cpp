@@ -10,8 +10,8 @@
 // Statics                                                                     =
 //==============================================================================
 
-ConstCharPtrHashMap<MaterialBuildinVariable::MatchingVariable>::Type
-	MaterialBuildinVariable::buildinNameToEnum = boost::assign::map_list_of
+MaterialBuildinVariable::StrToMatchingVariable
+	MaterialBuildinVariable::strToMatchingVariable = boost::assign::map_list_of
 	("position", MV_POSITION)
 	("tangent", MV_TANGENT)
 	("normal", MV_NORMAL)
@@ -35,8 +35,9 @@ ConstCharPtrHashMap<MaterialBuildinVariable::MatchingVariable>::Type
 	("blurring", MV_BLURRING);
 
 
-boost::unordered_map<MaterialBuildinVariable::MatchingVariable, GLenum>
-	MaterialBuildinVariable::buildinToGlType = boost::assign::map_list_of
+MaterialBuildinVariable::MatchingVariableToGlType
+	MaterialBuildinVariable::matchingVariableToGlType =
+	boost::assign::map_list_of
 	(MV_POSITION, GL_FLOAT_VEC3)
 	(MV_TANGENT, GL_FLOAT_VEC4)
 	(MV_NORMAL, GL_FLOAT_VEC3)
@@ -44,7 +45,7 @@ boost::unordered_map<MaterialBuildinVariable::MatchingVariable, GLenum>
 	(MV_MODEL_MAT, GL_FLOAT_MAT4)
 	(MV_VIEW_MAT, GL_FLOAT_MAT4)
 	(MV_PROJECTION_MAT, GL_FLOAT_MAT4)
-	(MV_PROJECTION_MAT, GL_FLOAT_MAT4)
+	(MV_MODELVIEW_MAT, GL_FLOAT_MAT4)
 	(MV_VIEWPROJECTION_MAT, GL_FLOAT_MAT4)
 	(MV_NORMAL_MAT, GL_FLOAT_MAT3)
 	(MV_MODELVIEWPROJECTION_MAT, GL_FLOAT_MAT4)
@@ -91,25 +92,26 @@ MaterialBuildinVariable::MaterialBuildinVariable(
 bool MaterialBuildinVariable::isBuildin(const char* name,
 	MatchingVariable* var, GLenum* dataType)
 {
-	ConstCharPtrHashMap<MatchingVariable>::Type::const_iterator it =
-		buildinNameToEnum.find(name);
+	StrToMatchingVariable::const_iterator it = strToMatchingVariable.find(name);
 
-	if(it == buildinNameToEnum.end())
+	if(it == strToMatchingVariable.end())
 	{
 		return false;
 	}
 
+	MatchingVariable mv = it->second;
+
 	if(var)
 	{
-		*var = it->second;
+		*var = mv;
 	}
 
 	if(dataType)
 	{
-		boost::unordered_map<MatchingVariable, GLenum>::const_iterator it2 =
-			buildinToGlType.find(it->second);
+		MatchingVariableToGlType::const_iterator it2 =
+			matchingVariableToGlType.find(mv);
 
-		ASSERT(it2 != buildinToGlType.end());
+		ASSERT(it2 != matchingVariableToGlType.end());
 
 		*dataType = it2->second;
 	}

@@ -22,7 +22,7 @@ vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 
 	mat3 tbnMat = mat3(t, b, n);
 
-	vec3 nAtTangentspace = (texture2D(map, texCoords).rgb - 0.5) * 2.0;
+	vec3 nAtTangentspace = (texture(map, texCoords).rgb - 0.5) * 2.0;
 
 	return normalize(tbnMat * nAtTangentspace);
 #else
@@ -66,7 +66,7 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	float m = 2.0 * length(r);
 	vec2 semTexCoords = r.xy / m + 0.5;
 
-	vec3 semCol = texture2D(map, semTexCoords).rgb;
+	vec3 semCol = texture(map, semTexCoords).rgb;
 	return semCol;
 #else
 	return vec3(0.0);
@@ -89,14 +89,14 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 	in float tolerance)
 {
 #if defined(COLOR_PASS)
-	vec4 col = texture2D(map, texCoords);
+	vec4 col = texture(map, texCoords);
 	if(col.a < tolerance)
 	{
 		discard;
 	}
 	return col.rgb;
 #else
-	float a = texture2D(map, texCoords).a;
+	float a = texture(map, texCoords).a;
 	if(a < tolerance)
 	{
 		discard;
@@ -107,13 +107,13 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 
 
 //==============================================================================
-// readColor3FromTexture                                                       =
+// readRgbFromTexture                                                          =
 //==============================================================================
 /// Just read the RGB color from texture
-vec3 readColor3FromTexture(in sampler2D tex, in vec2 texCoords)
+vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 {
 #if defined(COLOR_PASS)
-	return texture2D(tex, texCoords).rgb;
+	return texture(tex, texCoords).rgb;
 #else
 	return vec3(0.0);
 #endif
@@ -121,11 +121,24 @@ vec3 readColor3FromTexture(in sampler2D tex, in vec2 texCoords)
 
 
 //==============================================================================
+// add2Vec2                                                                    =
+//==============================================================================
+vec3 add2Vec2(in vec3 a, in vec3 b)
+{
+	return a + b;
+}
+
+
+//==============================================================================
 // writeFais                                                                   =
 //==============================================================================
 /// XXX
-void writeFais(in vec3 diffCol, in vec3 normal, in vec3 specularCol,
-	in float shininess, in float blurring)
+void writeFais(
+	in vec3 diffCol, 
+	in vec3 normal, 
+	in vec3 specularCol,
+	in float shininess, 
+	in float blurring)
 {
 #if defined(COLOR_PASS)
 	fMsNormalFai = vec3(packNormal(normal), blurring);

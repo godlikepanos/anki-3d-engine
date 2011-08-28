@@ -1,3 +1,17 @@
+/// @name Uniforms
+/// @{
+uniform float blurring;
+/// @}
+
+/// @name Varyings
+/// @{
+in vec2 vTexCoords;
+in vec3 vNormal;
+in vec3 vTangent;
+in float vTangentW;
+in vec3 vVertPosViewSpace;
+/// @}
+
 /// @name Fragment out
 /// @{
 #if defined(COLOR_PASS)

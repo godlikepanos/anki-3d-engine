@@ -28,13 +28,17 @@ MaterialVariable::MaterialVariable(
 				oneSProgVar = sProgVars[i];
 			}
 
-			// All the sprog vars need to have same GL data type
+			// Sanity check: All the sprog vars need to have same GL data type
 			if(oneSProgVar->getGlDataType() != sProgVars[i]->getGlDataType() ||
 				oneSProgVar->getType() != sProgVars[i]->getType())
 			{
 				throw EXCEPTION("Incompatible shader program variables: " +
 					shaderProgVarName);
 			}
+		}
+		else
+		{
+			sProgVars[i] = NULL;
 		}
 	}
 

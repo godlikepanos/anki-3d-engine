@@ -25,9 +25,14 @@
 
 const char* ShaderProgram::stdSourceCode =
 	"#version 330 core\n"
-	"precision lowp float;\n"
+	//"precision lowp float;\n"
+#if defined(NDEBUG)
 	"#pragma optimize(on)\n"
 	"#pragma debug(off)\n";
+#else
+	"#pragma optimize(of)\n"
+	"#pragma debug(on)\n";
+#endif
 
 
 //==============================================================================

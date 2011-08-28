@@ -32,7 +32,7 @@ class MaterialVariable
 		typedef boost::array<const ShaderProgramVariable*,
 			PASS_TYPES_NUM> ShaderProgramVariables;
 
-		/// XXX
+		/// Constructor
 		MaterialVariable(
 			Type type,
 			const char* shaderProgVarName,
@@ -46,7 +46,8 @@ class MaterialVariable
 		const ShaderProgramVariable& getShaderProgramVariable(
 			PassType p) const;
 
-		/// XXX
+		/// Check if pass p needs this variable. Check if the shader program
+		/// of p contains this variable or not
 		bool inPass(PassType p) const {return sProgVars[p] != NULL;}
 
 		/// Get the GL data type of all the shader program variables

@@ -70,20 +70,20 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 	height = header6[3] * 256 + header6[2];
 	bpp	= header6[4];
 
-	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp !=32)))
+	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
 		throw EXCEPTION("Invalid texture information");
 	}
 
 
 	int bytesPerPxl = (bpp / 8);
-	int image_size = bytesPerPxl * width * height;
-	data.resize(image_size);
+	int imageSize = bytesPerPxl * width * height;
+	data.resize(imageSize);
 
 	uint pixelcount = height * width;
 	uint currentpixel = 0;
-	uint currentbyte	= 0;
-	unsigned char colorbuffer [4];
+	uint currentbyte = 0;
+	unsigned char colorbuffer[4];
 
 	do
 	{
