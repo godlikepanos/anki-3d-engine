@@ -56,7 +56,7 @@ void setterSv(ClassType* t, InType in)
 /// wrapped by boost::python correctly
 #define BP_PROPERTY_BASIC_TYPE(Type__, Class__, var__, getter__, setter__) \
 	.add_property(#var__, &getterSv<Class__, Type__, &Class__::getter__>, \
-	              &setterSv<Class__, Type__, &Class__::setter__>)
+		&setterSv<Class__, Type__, &Class__::setter__>)
 
 
 //==============================================================================
@@ -80,5 +80,5 @@ void setM(ClassType* t, InType in)
 
 #define BP_PROPERTY_MATH(ClassType__, name__) \
 	.add_property(#name__, &getM<ClassType__, float, &ClassType__::name__>, \
-	              &setM<ClassType__, float, &ClassType__::name__>)
+		&setM<ClassType__, float, &ClassType__::name__>)
 
