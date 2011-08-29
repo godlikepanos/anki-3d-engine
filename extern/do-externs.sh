@@ -26,7 +26,7 @@ rsync -avuzb --exclude .hg ../../SDL/install/include/* include
 rsync -avuzb --exclude .hg ../../SDL/install/lib/* lib-x86-64-linux
 
 cd ../../glew
-svn update
+git pull
 cd auto
 make destroy
 cd ..

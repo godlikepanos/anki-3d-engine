@@ -3,6 +3,7 @@
 
 #include "Renderer.h"
 #include <boost/scoped_ptr.hpp>
+#include <GL/glew.h>
 
 
 namespace r {
@@ -64,9 +65,11 @@ class MainRenderer: public Renderer
 
 		boost::scoped_ptr<Deformer> deformer;
 
+		GLEWContext glContext;
+
 		void takeScreenshotTga(const char* filename);
 		void takeScreenshotJpeg(const char* filename);
-		static void initGl();
+		void initGl();
 };
 
 

@@ -22,7 +22,7 @@ ELSE()
 	ADD_DEFINITIONS("-DREVISION=???")
 ENDIF()
 
-ADD_DEFINITIONS("-DMATH_INTEL_SIMD -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -msse4")
+ADD_DEFINITIONS("-DMATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -msse4")
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	

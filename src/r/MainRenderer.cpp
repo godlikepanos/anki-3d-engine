@@ -14,6 +14,9 @@
 #include "Deformer.h"
 
 
+#define glewGetContext() (&glContext)
+
+
 namespace r {
 
 
