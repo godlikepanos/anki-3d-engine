@@ -46,6 +46,7 @@
 #include "rsrc/Material.h"
 #include "core/parallel/Manager.h"
 #include "r/PhysDbgDrawer.h"
+#include <boost/algorithm/string.hpp>
 
 
 // map (hard coded)
@@ -172,7 +173,7 @@ void init()
 	// Pentagram
 	/*pentagram = new ModelNode(false, NULL);
 	pentagram->init("models/pentagram/pentagram.mdl");
-	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));
+	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));*/
 
 	// Sponza
 	ModelNode* sponza = new ModelNode(false, NULL);
@@ -182,7 +183,7 @@ void init()
 
 
 	// Imp
-	imp = new SkinNode(false, NULL);
+	/*imp = new SkinNode(false, NULL);
 	imp->setLocalTransform(Transform(Vec3(0.0, 2.0, 0.0), Mat3::getIdentity(), 0.7));
 	imp->init("models/imp/imp.skin");
 	imp->skelAnimModelNodeCtrl = new SkelAnimModelNodeCtrl(*imp);
@@ -574,8 +575,9 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		//ERROR("Aborting: " << e.what());
-		std::cerr << "Aborting: " << e.what() << std::endl;
+		std::cerr << "Aborting: " <<
+			boost::replace_all_copy(std::string(e.what()), "AnKi exception: ",
+			"\n") << std::endl;
 		//abort();
 		exitCode = 1;
 	}

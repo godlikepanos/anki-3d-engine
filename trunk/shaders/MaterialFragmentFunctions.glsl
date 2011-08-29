@@ -121,9 +121,9 @@ vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 
 
 //==============================================================================
-// add2Vec2                                                                    =
+// add2Vec3                                                                    =
 //==============================================================================
-vec3 add2Vec2(in vec3 a, in vec3 b)
+vec3 add2Vec3(in vec3 a, in vec3 b)
 {
 	return a + b;
 }
