@@ -1,4 +1,4 @@
-#include "ScriptingCommon.h"
+#include "Common.h"
 #include "scene/Scene.h"
 #include "scene/Camera.h"
 #include "scene/ModelNode.h"

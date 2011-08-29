@@ -349,7 +349,7 @@ void ShaderProgramPrePreprocessor::parseTrffbVarying(scanner::Scanner& scanner,
 // addLinePreProcExpression                                                    =
 //==============================================================================
 void ShaderProgramPrePreprocessor::addLinePreProcExpression(
-	uint line, uint depth, const char* cmnt)
+	uint /*line*/, uint /*depth*/, const char* /*cmnt*/)
 {
 	/*sourceLines.push_back("#line " +
 		boost::lexical_cast<std::string>(line) +
