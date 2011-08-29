@@ -1,5 +1,5 @@
-#include <boost/lexical_cast.hpp>
 #include "util/Exception.h"
+#include <sstream>
 
 
 //==============================================================================
@@ -30,8 +30,10 @@ Exception::Exception(const Exception& e):
 //==============================================================================
 std::string Exception::getInfoStr() const
 {
-	return std::string("(") + file + ":" + 
-		boost::lexical_cast<std::string>(line) + " " + func + ")";
+	std::stringstream ss;
+	
+	ss << '(' << file << ':' << line << ' ' << func << ')';
+	return ss.str();
 }
 
 
@@ -40,6 +42,8 @@ std::string Exception::getInfoStr() const
 //==============================================================================
 const char* Exception::what() const throw()
 {
-	errWhat = "\n" + getInfoStr() + " " + err;
+	std::stringstream ss(errWhat);
+
+	ss << "AnKi exception: " << getInfoStr() << " " << err;
 	return errWhat.c_str();
 }

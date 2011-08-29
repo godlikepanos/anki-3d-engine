@@ -2,7 +2,6 @@
 #define INPUT_H
 
 #include "m/Math.h"
-#include "util/Singleton.h"
 #include "util/Accessors.h"
 #include <SDL/SDL_scancode.h>
 #include <boost/array.hpp>

@@ -1,3 +1,6 @@
+#ifndef SCRIPT_COMMON_H
+#define SCRIPT_COMMON_H
+
 /// @file
 /// This file is included by all the *.bpi.cpp files
 #include <boost/python.hpp>
@@ -59,26 +62,4 @@ void setterSv(ClassType* t, InType in)
 		&setterSv<Class__, Type__, &Class__::setter__>)
 
 
-//==============================================================================
-// Math library stuff                                                          =
-//==============================================================================
-
-template<typename ClassType, typename RetType,
-	RetType (ClassType::* accessor)() const>
-RetType getM(const ClassType* t)
-{
-	return (t->*accessor)();
-}
-
-
-template<typename ClassType, typename InType, InType& (ClassType::* accessor)()>
-void setM(ClassType* t, InType in)
-{
-	(t->*accessor)() = in;
-}
-
-
-#define BP_PROPERTY_MATH(ClassType__, name__) \
-	.add_property(#name__, &getM<ClassType__, float, &ClassType__::name__>, \
-		&setM<ClassType__, float, &ClassType__::name__>)
-
+#endif

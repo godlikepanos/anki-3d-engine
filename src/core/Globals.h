@@ -16,7 +16,10 @@ typedef Singleton<class Scene> SceneSingleton;
 typedef Singleton<class App> AppSingleton;
 typedef Singleton<class StdinListener> StdinListenerSingleton;
 typedef Singleton<class GlStateMachine> GlStateMachineSingleton;
-typedef Singleton<class ScriptingEngine> ScriptingEngineSingleton;
+
+namespace script {
+typedef Singleton<class Engine> EngineSingleton;
+}
 
 namespace event {
 typedef Singleton<class Manager> ManagerSingleton;

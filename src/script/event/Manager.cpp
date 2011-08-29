@@ -1,4 +1,4 @@
-#include "ScriptingCommon.h"
+#include "Common.h"
 #include "event/Manager.h"
 
 #include "event/SceneColor.h"

@@ -2,7 +2,6 @@
 #define R_MAIN_RENDERER_H
 
 #include "Renderer.h"
-#include "util/Singleton.h"
 #include <boost/scoped_ptr.hpp>
 
 

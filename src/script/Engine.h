@@ -1,15 +1,17 @@
-#ifndef SCRIPTING_ENGINE_H
-#define SCRIPTING_ENGINE_H
+#ifndef SCRIPT_ENGINE_H
+#define SCRIPT_ENGINE_H
 
 #include <boost/python.hpp>
-#include "util/Singleton.h"
+
+
+namespace script {
 
 
 /// The scripting engine using Python
-class ScriptingEngine
+class Engine
 {
 	public:
-		ScriptingEngine() {init();}
+		Engine() {init();}
 
 		/// Execute python script
 		/// @param script Script source
@@ -32,10 +34,13 @@ class ScriptingEngine
 
 
 template<typename Type>
-inline void ScriptingEngine::exposeVar(const char* varName, Type* var)
+inline void Engine::exposeVar(const char* varName, Type* var)
 {
 	boost::python::scope(ankiModule).attr(varName) = boost::python::ptr(var);
 }
+
+
+} // end namespace
 
 
 #endif
