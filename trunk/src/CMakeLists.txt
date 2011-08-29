@@ -10,5 +10,5 @@ SUBDIRS(${ANKI_LIBS})
 ADD_EXECUTABLE(anki Main.cpp)
 
 TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics 
-	BulletCollision LinearMath GLEW GLU GL jpeg SDL png python2.6
+	BulletCollision LinearMath GLEWmx GLU GL jpeg SDL png python2.6
 	boost_system boost_python boost_filesystem boost_thread freetype) 
