@@ -1,10 +1,12 @@
 #ifndef SHADER_PROGRAM_PRE_PREPROCESSOR_H
 #define SHADER_PROGRAM_PRE_PREPROCESSOR_H
 
-#include <limits>
 #include "util/Vec.h"
 #include "util/StdTypes.h"
 #include "util/Accessors.h"
+#include "ShaderProgramCommon.h"
+#include <limits>
+#include <boost/array.hpp>
 
 
 namespace scanner {
@@ -21,11 +23,12 @@ class Scanner;
 ///
 /// The preprocessor pragmas are:
 ///
-/// - #pragma anki start <vertexShader | geometryShader | fragmentShader>
+/// - #pragma anki start <vertexShader | tcShader | teShader |
+///                       geometryShader | fragmentShader>
 /// - #pragma anki include "<filename>"
 /// - #pragma anki transformFeedbackVarying <varName>
 ///
-/// @note The order of the *ShaderBegins is important
+/// @note The order of the "#pragma anki start" is important
 class ShaderProgramPrePreprocessor
 {
 	public:
@@ -41,9 +44,8 @@ class ShaderProgramPrePreprocessor
 		/// @name Accessors
 		/// @{
 		GETTER_R(Vec<std::string>, trffbVaryings, getTranformFeedbackVaryings)
-		GETTER_R(std::string, output.vertShaderSource, getVertexShaderSource)
-		GETTER_R(std::string, output.geomShaderSource, getGeometryShaderSource)
-		GETTER_R(std::string, output.fragShaderSource, getFragmentShaderSource)
+		const std::string& getShaderSource(ShaderType type) {
+			return output.shaderSources[type];}
 		/// @}
 
 	protected:
@@ -85,17 +87,14 @@ class ShaderProgramPrePreprocessor
 
 			/// Names and and ids for transform feedback varyings
 			Vec<TrffbVaryingPragma> trffbVaryings;
-			std::string vertShaderSource; ///< The vert shader source
-			std::string geomShaderSource; ///< The geom shader source
-			std::string fragShaderSource; ///< The frag shader source
+			boost::array<std::string, ST_NUM> shaderSources;
 		};
 
 		Output output; ///< The most important variable
 		Vec<std::string> trffbVaryings;
 		Vec<std::string> sourceLines;  ///< The parseFileForPragmas fills this
-		CodeBeginningPragma vertShaderBegins;
-		CodeBeginningPragma geomShaderBegins;
-		CodeBeginningPragma fragShaderBegins;
+		boost::array<CodeBeginningPragma, ST_NUM> shaderStarts;
+		static boost::array<const char*, ST_NUM> startTokens; ///< XXX
 
 		/// Parse a PrePreprocessor formated GLSL file. Use
 		/// the accessors to get the output
@@ -109,7 +108,7 @@ class ShaderProgramPrePreprocessor
 		/// @param depth The #line in GLSL does not support filename so an
 		/// depth it being used. It also tracks the
 		/// includance depth
-		/// @exception Ecxeption
+		/// @exception Exception
 		void parseFileForPragmas(const std::string& filename, int depth = 0);
 
 		/// @todo

@@ -43,7 +43,7 @@ std::string Exception::getInfoStr() const
 const char* Exception::what() const throw()
 {
 	std::stringstream ss;
-	ss << "AnKi exception: " << getInfoStr() << " " << err;
+	ss << "\n" << getInfoStr() << " " << err;
 	errWhat = ss.str();
 	return errWhat.c_str();
 }

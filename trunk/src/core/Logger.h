@@ -11,18 +11,25 @@
 /// exceptions, it has to recover somehow. Its thread safe
 class Logger
 {
-	private:
+	public:
+		enum MessageType
+		{
+			MT_NORMAL,
+			MT_ERROR,
+			MT_WARNING
+		};
+
 		/// Record the sender
-		struct LoggerSender
+		struct Info
 		{
 			const char* file;
 			int line;
 			const char* func;
+			MessageType type;
 		};
 
-	public:
 		typedef boost::signals2::signal<void (const char*, int, const char*,
-			const char*)> Signal; ///< Signal type
+			MessageType, const char*)> Signal; ///< Signal type
 
 		Logger() {execCommonConstructionCode();}
 
@@ -49,15 +56,15 @@ class Logger
 		Logger& operator<<(const char* val);
 		Logger& operator<<(const std::string& val);
 		Logger& operator<<(Logger& (*funcPtr)(Logger&));
-		Logger& operator<<(const LoggerSender& sender);
+		Logger& operator<<(const Info& sender);
 		/// @}
 
 		/// @name IO manipulation
 		/// @{
 
 		/// Help the Logger to set the sender
-		static LoggerSender setSender(const char* file, int line,
-			const char* func);
+		static Info setInfo(const char* file, int line,
+			const char* func, MessageType type);
 
 		/// Add a new line and flush the Logger
 		static Logger& endl(Logger& logger) {return logger;}
@@ -69,7 +76,11 @@ class Logger
 
 		/// An alternative method to write in the Logger
 		void write(const char* file, int line, const char* func,
-			const char* msg);
+			MessageType type, const char* msg);
+
+		/// Connect to signal
+		template<typename F, typename T>
+		void connect(F f, T t);
 
 		/// Mutex lock
 		void lock() {mutex.lock();}
@@ -85,12 +96,13 @@ class Logger
 		const char* func; ///< Sender info
 		const char* file; ///< Sender info
 		int line; ///< Sender info
+		MessageType type; ///< The type of the message
 		boost::mutex mutex; ///< For thread safety
 
 		/// Called by all the constructors
 		void execCommonConstructionCode();
 
-		/// Appends to streamBuf. On overflow it writes what it cans and flushes
+		/// Appends to streamBuf. On overflow it writes what it can and flushes
 		void append(const char* cstr, int len);
 
 		/// Append finalize streamBuf and send the signal
@@ -109,20 +121,20 @@ class Logger
 // Macros                                                                      =
 //==============================================================================
 
-#define LOGGER_MESSAGE(x) \
+#define LOGGER_MESSAGE(t, msg) \
 	do \
 	{ \
 		LoggerSingleton::get().lock(); \
-		LoggerSingleton::get()  << Logger::setSender(__FILE__, \
-			__LINE__, __func__) << x << Logger::endl; \
+		LoggerSingleton::get()  << Logger::setInfo(__FILE__, \
+			__LINE__, __func__, t) << msg << Logger::endl; \
 		LoggerSingleton::get().unlock(); \
 	} while(false);
 
-#define INFO(x) LOGGER_MESSAGE("Info: " << x)
+#define INFO(x) LOGGER_MESSAGE(Logger::MT_NORMAL, x)
 
-#define WARNING(x) LOGGER_MESSAGE("Warning: " << x)
+#define WARNING(x) LOGGER_MESSAGE(Logger::MT_WARNING, x)
 
-#define ERROR(x) LOGGER_MESSAGE("Error: " << x)
+#define ERROR(x) LOGGER_MESSAGE(Logger::MT_ERROR, x)
 
 
 #endif

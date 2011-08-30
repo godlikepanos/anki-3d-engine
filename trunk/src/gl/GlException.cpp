@@ -20,8 +20,8 @@ void glConditionalThrowException(const char* file, int line, const char* func)
 	throw Exception(std::string("OpenGL exception: ") + glerr, file, line,
 		func);
 #else
-	ERROR("OpenGL exception: " << glerr << " @ " << file << ":" << line <<
-		" " << func << ")");
+	ERROR("(" << file << ":" << line <<
+		" " << func << ") GL Error: " << glerr);
 	ASSERT(0);
 #endif
 }

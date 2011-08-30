@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 #include "util/StdTypes.h"
 #include "util/Accessors.h"
+#include "Logger.h"
 
 
 class StdinListener;
@@ -82,7 +83,7 @@ class App
 
 		/// A slot to handle the messageHandler's signal
 		void handleMessageHanlderMsgs(const char* file, int line,
-			const char* func, const char* msg);
+			const char* func, Logger::MessageType, const char* msg);
 
 		void initWindow();
 		void initDirs();
