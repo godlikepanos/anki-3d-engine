@@ -564,6 +564,14 @@ int main(int argc, char* argv[])
 
 	try
 	{
+		ShaderProgramPrePreprocessor p("lala.glsl");
+		std::cout << "VERT\n" << p.getShaderSource(ST_VERTEX) << std::endl;
+		std::cout << "TC\n" << p.getShaderSource(ST_TC) << std::endl;
+		std::cout << "TE\n" << p.getShaderSource(ST_TE) << std::endl;
+		std::cout << "GEOM\n" << p.getShaderSource(ST_GEOMETRY) << std::endl;
+		std::cout << "FRAG\n" << p.getShaderSource(ST_FRAGMENT) << std::endl;
+		return 0;
+
 		initSubsystems(argc, argv);
 		init();
 
@@ -575,9 +583,10 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		std::cerr << "Aborting: " <<
+		/*std::cerr << "Aborting: " <<
 			boost::replace_all_copy(std::string(e.what()), "AnKi exception: ",
-			"\n") << std::endl;
+			"\n") << std::endl;*/
+		std::cerr << "Aborting: " << e.what() << std::endl;
 		//abort();
 		exitCode = 1;
 	}

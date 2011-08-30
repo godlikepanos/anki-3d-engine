@@ -59,10 +59,10 @@ inline Logger& Logger::operator<<(const long double& val)
 }
 
 
-inline Logger::LoggerSender Logger::setSender(const char* file, int line,
-	const char* func)
+inline Logger::Info Logger::setInfo(const char* file, int line,
+	const char* func, MessageType type)
 {
-	LoggerSender sender = {file, line, func};
+	Info sender = {file, line, func, type};
 	return sender;
 }
 
@@ -81,4 +81,11 @@ Logger& Logger::appendUsingLexicalCast(const Type& val)
 	}
 	append(out.c_str(), out.length());
 	return *this;
+}
+
+
+template<typename F, typename T>
+void Logger::connect(F f, T t)
+{
+	sig.connect(boost::bind(f, t, _1, _2, _3, _4, _5));
 }

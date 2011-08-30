@@ -51,13 +51,14 @@ Logger& Logger::operator<<(Logger& (*funcPtr)(Logger&))
 
 
 //==============================================================================
-// operator<< [LoggerSender]                                                   =
+// operator<< [Info]                                                           =
 //==============================================================================
-Logger& Logger::operator<<(const LoggerSender& sender)
+Logger& Logger::operator<<(const Info& sender)
 {
 	file = sender.file;
 	line = sender.line;
 	func = sender.func;
+	type = sender.type;
 	return *this;
 }
 
@@ -66,11 +67,12 @@ Logger& Logger::operator<<(const LoggerSender& sender)
 // write                                                                       =
 //==============================================================================
 void Logger::write(const char* file_, int line_, const char* func_,
-	const char* msg)
+	MessageType type_, const char* msg)
 {
 	file = file_;
 	line = line_;
 	func = func_;
+	type = type_;
 	append(msg, strlen(msg));
 	realFlush();
 }
@@ -125,7 +127,7 @@ void Logger::append(const char* cstr, int len)
 void Logger::realFlush()
 {
 	*sptr = '\0';
-	sig(file, line, func, &streamBuf[0]);
+	sig(file, line, func, type, &streamBuf[0]);
 
 	// Reset
 	sptr = &streamBuf[0];

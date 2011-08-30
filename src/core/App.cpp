@@ -15,10 +15,31 @@
 // handleMessageHanlderMsgs                                                    =
 //==============================================================================
 void App::handleMessageHanlderMsgs(const char* file, int line,
-	const char* func, const char* msg)
+	const char* func, Logger::MessageType type, const char* msg)
 {
-	std::cout << "(" << file << ":" << line << " "<< func <<
-		") " << msg << std::flush;
+	std::ostream* out = NULL;
+	const char* x = NULL;
+
+	switch(type)
+	{
+		case Logger::MT_NORMAL:
+			out = &std::cout;
+			x = "Info";
+			break;
+
+		case Logger::MT_ERROR:
+			out = &std::cerr;
+			x = "Error";
+			break;
+
+		case Logger::MT_WARNING:
+			out = &std::cerr;
+			x = "Warn";
+			break;
+	}
+
+	(*out) << "(" << file << ":" << line << " "<< func <<
+		") " << x << ": " << msg << std::flush;
 }
 
 
@@ -59,8 +80,7 @@ void App::init(int argc, char* argv[])
 	fullScreenFlag = false;
 
 	// send output to handleMessageHanlderMsgs
-	LoggerSingleton::get().getSignal().connect(
-		boost::bind(&App::handleMessageHanlderMsgs, this, _1, _2, _3, _4));
+	LoggerSingleton::get().connect(&App::handleMessageHanlderMsgs, this);
 
 	parseCommandLineArgs(argc, argv);
 	printAppInfo();

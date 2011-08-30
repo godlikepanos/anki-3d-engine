@@ -13,6 +13,15 @@ static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
 	"Check for circular or multiple includance";
 
 
+boost::array<const char*, ST_NUM>
+	ShaderProgramPrePreprocessor::startTokens = {{
+	"vertexShader",
+	"tcShader",
+	"teShader",
+	"geometryShader",
+	"fragmentShader"}};
+
+
 //==============================================================================
 // printSourceLines                                                            =
 //==============================================================================
@@ -143,61 +152,59 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 		parseFileForPragmas(filename);
 	
 		// sanity checks
-		if(vertShaderBegins.globalLine == -1)
+		if(shaderStarts[ST_VERTEX].globalLine == -1)
 		{
-			throw EXCEPTION("Entry point \"vertexShader\" is not defined");
-		}
-		if(fragShaderBegins.globalLine == -1)
-		{
-			throw EXCEPTION("Entry point \"fragmentShader\" is not defined");
+			throw EXCEPTION("Entry point \""+ startTokens[ST_VERTEX] +
+				"\" is not defined");
 		}
 
-		// construct shader's source code
+		if(shaderStarts[ST_FRAGMENT].globalLine == -1)
 		{
-			// init
-			output.vertShaderSource = "";
-			output.geomShaderSource = "";
-			output.fragShaderSource = "";
+			throw EXCEPTION("Entry point \""+ startTokens[ST_FRAGMENT] +
+				"\" is not defined");
+		}
+
+		// construct shaders' source code
+		for(uint i = 0; i < ST_NUM; i++)
+		{
+			std::string& src = output.shaderSources[i];
+
+			src = "";
+
+			// If not defined bb
+			if(shaderStarts[i].definedInLine == -1)
+			{
+				continue;
+			}
 
 			// put global source code
-			for(int i = 0; i < vertShaderBegins.globalLine - 1; ++i)
+			for(int j = 0; j < shaderStarts[ST_VERTEX].globalLine - 1; ++j)
 			{
-				output.vertShaderSource += sourceLines[i] + "\n";
-
-				if(geomShaderBegins.definedInLine != -1)
-				{
-					output.geomShaderSource += sourceLines[i] + "\n";
-				}
-
-				output.fragShaderSource += sourceLines[i] + "\n";
+				src += sourceLines[j] + "\n";
 			}
 
-			// vert shader code
-			int limit = (geomShaderBegins.definedInLine != -1) ?
-				geomShaderBegins.globalLine-1 : fragShaderBegins.globalLine-1;
-			for(int i = vertShaderBegins.globalLine - 1; i < limit; ++i)
-			{
-				output.vertShaderSource += sourceLines[i] + "\n";
-			}
+			// put the actual code
+			uint from = i;
+			uint to;
 
-			// geom shader code
-			if(geomShaderBegins.definedInLine != -1)
+			for(to = i + 1; to < ST_NUM; to++)
 			{
-				for(int i = geomShaderBegins.globalLine - 1;
-					i < fragShaderBegins.globalLine - 1; ++i)
+				if(shaderStarts[to].definedInLine != -1)
 				{
-					output.geomShaderSource += sourceLines[i] + "\n";
+					break;
 				}
 			}
 
-			// frag shader code
-			for(int i = fragShaderBegins.globalLine - 1;
-				i < int(sourceLines.size()); ++i)
-			{
-				output.fragShaderSource += sourceLines[i] + "\n";
-			}
-		} // end construct shader's source code
+			int toLine = (to == ST_NUM) ? sourceLines.size():
+				shaderStarts[to].globalLine - 1;
 
+			for(int j = shaderStarts[from].globalLine - 1; j < toLine; ++j)
+			{
+				src += sourceLines[j] + "\n";
+			}
+		}
+
+		// TRF feedback varyings
 		BOOST_FOREACH(const TrffbVaryingPragma& trffbv, output.trffbVaryings)
 		{
 			trffbVaryings.push_back(trffbv.name);
@@ -224,27 +231,22 @@ void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
 	const scanner::Token* token = &scanner.getNextToken();
 
 	// Chose the correct pragma
-	CodeBeginningPragma* cbp;
-	std::string name;
-	if(Parser::isIdentifier(*token, "vertexShader"))
+	CodeBeginningPragma* cbp = NULL;
+	const char* name = NULL;
+
+	for(uint i = 0; i < ST_NUM; i++)
 	{
-		cbp = &vertShaderBegins;
-		name = "vertexShader";
+		if(Parser::isIdentifier(*token, startTokens[i]))
+		{
+			cbp = &shaderStarts[i];
+			name = startTokens[i];
+			break;
+		}
 	}
-	else if(Parser::isIdentifier(*token, "geometryShader"))
+
+	if(name == NULL)
 	{
-		cbp = &geomShaderBegins;
-		name = "geometryShader";
-	}
-	else if(Parser::isIdentifier(*token, "fragmentShader"))
-	{
-		cbp = &fragShaderBegins;
-		name = "fragmentShader";
-	}
-	else
-	{
-		throw PARSER_EXCEPTION_EXPECTED("vertexShader or geometryShader or "
-			"fragmentShader");
+		throw PARSER_EXCEPTION_UNEXPECTED();
 	}
 
 	// its defined in same place so there is probable circular includance

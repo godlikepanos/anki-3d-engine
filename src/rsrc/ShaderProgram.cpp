@@ -208,12 +208,12 @@ void ShaderProgram::load(const char* filename)
 	// 1) create and compile the shaders
 	std::string preprocSource = stdSourceCode;
 	vertShaderGlId = createAndCompileShader(
-		pars.getVertexShaderSource().c_str(),
+		pars.getShaderSource(ST_VERTEX).c_str(),
 		preprocSource.c_str(),
 		GL_VERTEX_SHADER);
 
 	fragShaderGlId = createAndCompileShader(
-		pars.getFragmentShaderSource().c_str(),
+		pars.getShaderSource(ST_FRAGMENT).c_str(),
 		preprocSource.c_str(),
 		GL_FRAGMENT_SHADER);
 
