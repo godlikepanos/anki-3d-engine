@@ -1,5 +1,5 @@
-#ifndef VAO_H
-#define VAO_H
+#ifndef GL_VAO_H
+#define GL_VAO_H
 
 #include <GL/glew.h>
 #include "util/StdTypes.h"
@@ -7,8 +7,13 @@
 #include "GlException.h"
 
 
-class Vbo;
 class ShaderProgramAttributeVariable;
+
+
+namespace gl {
+
+
+class Vbo;
 
 
 /// Vertex array object
@@ -112,6 +117,9 @@ inline uint Vao::getGlId() const
 	ASSERT(isCreated());
 	return glId;
 }
+
+
+} // end namespace
 
 
 #endif

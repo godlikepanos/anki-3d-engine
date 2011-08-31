@@ -5,6 +5,7 @@
 #include "util/Accessors.h"
 
 
+/// Events namespace
 namespace event {
 
 

@@ -2,6 +2,9 @@
 #include <boost/lexical_cast.hpp>
 
 
+namespace gl {
+
+
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -67,3 +70,6 @@ uint Fbo::getCurrentFbo()
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fboGlId);
 	return (uint)fboGlId;
 }
+
+
+} // end namespace

@@ -46,8 +46,8 @@ class Pps: private RenderingPass
 		Bl bl;
 		/// @}
 
-		Fbo prePassFbo;
-		Fbo postPassFbo;
+		gl::Fbo prePassFbo;
+		gl::Fbo postPassFbo;
 
 		RsrcPtr<ShaderProgram> prePassSProg;
 		RsrcPtr<ShaderProgram> postPassSProg;

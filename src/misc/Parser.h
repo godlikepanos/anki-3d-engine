@@ -8,7 +8,7 @@
 
 /// It contains some functions and macros that are used pretty often while
 /// parsing
-namespace Parser {
+namespace parser {
 
 /// Parser macros
 #define PARSER_EXCEPTION(x) \
@@ -66,7 +66,7 @@ extern bool isIdentifier(const scanner::Token& token, const char* str);
 extern std::string parseString(scanner::Scanner& scanner);
 
 
-} // end namespace Parser
+} // end namespace
 
 
 #include "Parser.inl.h"

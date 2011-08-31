@@ -4,6 +4,7 @@
 #include "Common.h"
 
 
+/// Math library namespace
 namespace m {
 
 

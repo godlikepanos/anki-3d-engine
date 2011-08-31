@@ -11,7 +11,7 @@
 SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
 :	PatchNode(modelPatch_, parent)
 {
-	boost::array<const Vbo*, Mesh::VBOS_NUM> vboArr;
+	VboArray vboArr;
 
 	for(uint i = 0; i < Mesh::VBOS_NUM; i++)
 	{

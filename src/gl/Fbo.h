@@ -1,10 +1,13 @@
-#ifndef FBO_H
-#define FBO_H
+#ifndef GL_FBO_H
+#define GL_FBO_H
 
 #include <GL/glew.h>
 #include "util/Assert.h"
 #include "util/StdTypes.h"
 #include "util/Exception.h"
+
+
+namespace gl {
 
 
 /// The class is actually a wrapper to avoid common mistakes
@@ -90,6 +93,9 @@ inline void Fbo::destroy()
 	ASSERT(isCreated());
 	glDeleteFramebuffers(1, &glId);
 }
+
+
+} // end namespace
 
 
 #endif

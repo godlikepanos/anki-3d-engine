@@ -5,7 +5,9 @@
 #include "rsrc/MaterialCommon.h"
 
 
+namespace gl {
 class Vao;
+}
 class Material;
 class MaterialRuntime;
 
@@ -19,7 +21,7 @@ class RenderableNode: public SceneNode
 		virtual ~RenderableNode();
 
 		/// Get VAO depending the rendering pass
-		virtual const Vao& getVao(PassType p) const = 0;
+		virtual const gl::Vao& getVao(PassType p) const = 0;
 
 		/// Get vert ids number for rendering
 		virtual uint getVertIdsNum() const = 0;

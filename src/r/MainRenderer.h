@@ -52,7 +52,7 @@ class MainRenderer: public Renderer
 		/// @name Profiling stuff
 		/// @{
 		double dbgTime;
-		boost::scoped_ptr<TimeQuery> dbgTq;
+		boost::scoped_ptr<gl::TimeQuery> dbgTq;
 		/// @}
 
 		RsrcPtr<ShaderProgram> sProg; ///< Final pass' shader program

@@ -25,8 +25,8 @@ class Bs: public RenderingPass
 		void run();
 
 	private:
-		Fbo fbo; ///< Writes to Pps::prePassFai
-		Fbo refractFbo; ///< Writes to refractFai
+		gl::Fbo fbo; ///< Writes to Pps::prePassFai
+		gl::Fbo refractFbo; ///< Writes to refractFai
 		RsrcPtr<ShaderProgram> refractSProg;
 		Texture refractFai;
 

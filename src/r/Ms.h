@@ -31,7 +31,7 @@ class Ms: public RenderingPass
 
 	private:
 		Ez ez; /// EarlyZ pass
-		Fbo fbo;
+		gl::Fbo fbo;
 		Texture normalFai; ///< The FAI for normals
 		Texture diffuseFai; ///< The FAI for diffuse color
 		Texture specularFai; ///< The FAI for specular color and shininess

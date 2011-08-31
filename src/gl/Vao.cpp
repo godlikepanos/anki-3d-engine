@@ -4,6 +4,9 @@
 #include "rsrc/ShaderProgramAttributeVariable.h"
 
 
+namespace gl {
+
+
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -72,3 +75,6 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	unbind();
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
+
+
+} // end namespace

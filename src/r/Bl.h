@@ -31,9 +31,9 @@ class Bl: private RenderingPass
 		/// @}
 
 	private:
-		Fbo hBlurFbo; ///< Fbo that writes to blurFai
-		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
-		Fbo sideBlurFbo;
+		gl::Fbo hBlurFbo; ///< Fbo that writes to blurFai
+		gl::Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
+		gl::Fbo sideBlurFbo;
 
 		RsrcPtr<ShaderProgram> hBlurSProg;
 		RsrcPtr<ShaderProgram> vBlurSProg;

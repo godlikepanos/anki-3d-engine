@@ -13,7 +13,7 @@ namespace ui {
 
 
 /// This actually and FBO but with size info
-class PainterDevice: public Fbo
+class PainterDevice: public gl::Fbo
 {
 	public:
 		/// Constructor

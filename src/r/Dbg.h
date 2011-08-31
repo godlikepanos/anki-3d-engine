@@ -58,7 +58,7 @@ class Dbg: public RenderingPass
 		bool showSkeletonsEnabled;
 		bool showCamerasEnabled;
 		bool showVisibilityBoundingShapesFlag;
-		Fbo fbo;
+		gl::Fbo fbo;
 		RsrcPtr<ShaderProgram> sProg;
 		static const uint MAX_POINTS_PER_DRAW = 256;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
@@ -66,9 +66,9 @@ class Dbg: public RenderingPass
 		Mat4 modelMat;
 		uint pointIndex;
 		Vec3 crntCol;
-		Vbo positionsVbo;
-		Vbo colorsVbo;
-		Vao vao;
+		gl::Vbo positionsVbo;
+		gl::Vbo colorsVbo;
+		gl::Vao vao;
 		SceneDbgDrawer sceneDbgDrawer;
 		CollisionDbgDrawer collisionDbgDrawer;
 

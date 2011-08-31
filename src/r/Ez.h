@@ -21,7 +21,7 @@ class Ez: public RenderingPass
 		void run();
 
 	private:
-		Fbo fbo; ///< Writes to MS depth FAI
+		gl::Fbo fbo; ///< Writes to MS depth FAI
 		bool enabled;
 };
 
