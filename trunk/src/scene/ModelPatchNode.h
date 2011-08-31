@@ -14,12 +14,12 @@ class ModelPatchNode: public PatchNode
 	public:
 		ModelPatchNode(const ModelPatch& modelPatch, ModelNode* parent);
 
-		GETTER_R(cln::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 
 		virtual void moveUpdate(); ///< Update the visibility shape
 
 	private:
-		cln::Obb visibilityShapeWSpace;
+		Obb visibilityShapeWSpace;
 };
 
 

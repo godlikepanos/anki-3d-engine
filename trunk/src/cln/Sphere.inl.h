@@ -3,9 +3,6 @@
 #include "util/Assert.h"
 
 
-namespace cln {
-
-
 //==============================================================================
 // set                                                                         =
 //==============================================================================
@@ -51,6 +48,3 @@ void Sphere::set(const Container& container)
 
 	radius = m::sqrt(maxDist);
 }
-
-
-} // end namespace

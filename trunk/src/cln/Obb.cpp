@@ -2,9 +2,6 @@
 #include "Plane.h"
 
 
-namespace cln {
-
-
 //==============================================================================
 // getTransformed                                                              =
 //==============================================================================
@@ -114,6 +111,3 @@ void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
 		point += center;
 	}
 }
-
-
-} // end namespace

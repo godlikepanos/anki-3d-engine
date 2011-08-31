@@ -1,15 +1,10 @@
-#ifndef R_COLLISION_DBG_DRAWER_H
-#define R_COLLISION_DBG_DRAWER_H
+#ifndef COLLISION_DBG_DRAWER_H
+#define COLLISION_DBG_DRAWER_H
 
 
-namespace cln {
 class Sphere;
 class Obb;
 class Plane;
-}
-
-
-namespace r {
 
 
 class Dbg;
@@ -23,20 +18,17 @@ class CollisionDbgDrawer
 		CollisionDbgDrawer(Dbg& dbg_): dbg(dbg_) {}
 
 		/// Draw Sphere
-		virtual void draw(const cln::Sphere& sphere);
+		virtual void draw(const Sphere& sphere);
 
 		/// Draw Obb
-		virtual void draw(const cln::Obb& obb);
+		virtual void draw(const Obb& obb);
 
 		/// Draw Plane
-		virtual void draw(const cln::Plane& plane);
+		virtual void draw(const Plane& plane);
 
 	private:
 		Dbg& dbg; ///< The debug stage
 };
-
-
-} // end namespace
 
 
 #endif

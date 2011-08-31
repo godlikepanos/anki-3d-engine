@@ -55,7 +55,7 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// See the declaration of invProjectionMat for info
 		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;}
 
-		const cln::Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const;
+		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const;
 		/// @}
 
 		void lookAtPoint(const Vec3& point);
@@ -73,7 +73,7 @@ class Camera: public SceneNode, public VisibilityInfo
 
 		/// Check if the given camera is inside the frustum clipping planes.
 		/// This is used mainly to test if the projected lights are visible
-		bool insideFrustum(const cln::CollisionShape& vol) const;
+		bool insideFrustum(const CollisionShape& vol) const;
 
 		/// Check if another camera is inside our view (used for projected
 		/// lights)
@@ -87,8 +87,8 @@ class Camera: public SceneNode, public VisibilityInfo
 
 		/// @name The frustum planes in local and world space
 		/// @{
-		boost::array<cln::Plane, FP_NUM> lspaceFrustumPlanes;
-		boost::array<cln::Plane, FP_NUM> wspaceFrustumPlanes;
+		boost::array<Plane, FP_NUM> lspaceFrustumPlanes;
+		boost::array<Plane, FP_NUM> wspaceFrustumPlanes;
 		/// @}
 
 		/// @name Matrices
@@ -127,7 +127,7 @@ inline Camera::Camera(CameraType camType, bool inheritParentTrfFlag,
 }
 
 
-inline const cln::Plane& Camera::getWSpaceFrustumPlane(FrustrumPlanes id) const
+inline const Plane& Camera::getWSpaceFrustumPlane(FrustrumPlanes id) const
 {
 	return wspaceFrustumPlanes[id];
 }

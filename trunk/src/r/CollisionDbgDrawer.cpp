@@ -2,13 +2,10 @@
 #include "Dbg.h"
 #include "cln/Collision.h"
 
-namespace r {
-
-
 //==============================================================================
 // draw (Sphere)                                                               =
 //==============================================================================
-void CollisionDbgDrawer::draw(const cln::Sphere& sphere)
+void CollisionDbgDrawer::draw(const Sphere& sphere)
 {
 	dbg.setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
 	dbg.drawSphere(sphere.getRadius());
@@ -18,7 +15,7 @@ void CollisionDbgDrawer::draw(const cln::Sphere& sphere)
 //==============================================================================
 // draw (Obb)                                                                  =
 //==============================================================================
-void CollisionDbgDrawer::draw(const cln::Obb& obb)
+void CollisionDbgDrawer::draw(const Obb& obb)
 {
 	Mat4 scale(Mat4::getIdentity());
 	scale(0, 0) = obb.getExtend().x();
@@ -50,7 +47,7 @@ void CollisionDbgDrawer::draw(const cln::Obb& obb)
 //==============================================================================
 // draw (Plane)                                                                =
 //==============================================================================
-void CollisionDbgDrawer::draw(const cln::Plane& plane)
+void CollisionDbgDrawer::draw(const Plane& plane)
 {
 	const Vec3& n = plane.getNormal();
 	const float& o = plane.getOffset();
@@ -63,6 +60,3 @@ void CollisionDbgDrawer::draw(const cln::Plane& plane)
 	dbg.setModelMat(trf);
 	dbg.renderGrid();
 }
-
-
-} // end namespace

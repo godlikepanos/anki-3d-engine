@@ -12,9 +12,6 @@
 #include <boost/foreach.hpp>
 
 
-namespace r {
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -423,6 +420,3 @@ void Dbg::pushBackVertex(const Vec3& pos)
 	colors[pointIndex] = crntCol;
 	++pointIndex;
 }
-
-
-} // end namespace

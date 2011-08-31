@@ -1,16 +1,13 @@
-#include "SceneColor.h"
+#include "SceneColorEvent.h"
 #include "scene/Scene.h"
 #include "core/Globals.h"
 #include "core/Logger.h"
 
 
-namespace event {
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SceneColor::SceneColor(float startTime, float duration,
+SceneColorEvent::SceneColorEvent(float startTime, float duration,
 	const Vec3& finalColor_)
 :	Event(SCENE_COLOR, startTime, duration),
 	finalColor(finalColor_)
@@ -22,7 +19,7 @@ SceneColor::SceneColor(float startTime, float duration,
 //==============================================================================
 // Constructor copy                                                            =
 //==============================================================================
-SceneColor::SceneColor(const SceneColor& b)
+SceneColorEvent::SceneColorEvent(const SceneColorEvent& b)
 :	Event(SCENE_COLOR, 0.0, 0.0)
 {
 	*this = b;
@@ -32,7 +29,7 @@ SceneColor::SceneColor(const SceneColor& b)
 //==============================================================================
 // operator=                                                                   =
 //==============================================================================
-SceneColor& SceneColor::operator=(const SceneColor& b)
+SceneColorEvent& SceneColorEvent::operator=(const SceneColorEvent& b)
 {
 	Event::operator=(b);
 	originalColor = b.originalColor;
@@ -44,7 +41,7 @@ SceneColor& SceneColor::operator=(const SceneColor& b)
 //==============================================================================
 // updateSp                                                                    =
 //==============================================================================
-void SceneColor::updateSp(float /*prevUpdateTime*/, float crntTime)
+void SceneColorEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 {
 	float d = crntTime - getStartTime(); // delta
 	float dp = d / float(getDuration()); // delta as persentage
@@ -52,6 +49,3 @@ void SceneColor::updateSp(float /*prevUpdateTime*/, float crntTime)
 	SceneSingleton::get().setAmbientColor(
 		interpolate(originalColor, finalColor, dp));
 }
-
-
-} // end namespace

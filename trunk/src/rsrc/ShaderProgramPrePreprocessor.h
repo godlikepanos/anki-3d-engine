@@ -56,6 +56,7 @@ class ShaderProgramPrePreprocessor
 			int definedInLine;
 			Pragma(): definedInLine(-1) {}
 			Pragma(const std::string& definedInFile_, int definedInLine_);
+			bool isDefined() const {return definedInLine != -1;}
 		};
 		
 		struct IncludePragma: Pragma

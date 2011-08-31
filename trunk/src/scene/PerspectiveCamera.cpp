@@ -53,20 +53,20 @@ void PerspectiveCamera::calcLSpaceFrustumPlanes()
 
 	sinCos(PI + fovX / 2, s, c);
 	// right
-	lspaceFrustumPlanes[FP_RIGHT] = cln::Plane(Vec3(c, 0.0, s), 0.0);
+	lspaceFrustumPlanes[FP_RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
 	// left
-	lspaceFrustumPlanes[FP_LEFT] = cln::Plane(Vec3(-c, 0.0, s), 0.0);
+	lspaceFrustumPlanes[FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
 
 	sinCos((3 * PI - fovY) * 0.5, s, c);
 	// top
-	lspaceFrustumPlanes[FP_TOP] = cln::Plane(Vec3(0.0, s, c), 0.0);
+	lspaceFrustumPlanes[FP_TOP] = Plane(Vec3(0.0, s, c), 0.0);
 	// bottom
-	lspaceFrustumPlanes[FP_BOTTOM] = cln::Plane(Vec3(0.0, -s, c), 0.0);
+	lspaceFrustumPlanes[FP_BOTTOM] = Plane(Vec3(0.0, -s, c), 0.0);
 
 	// near
-	lspaceFrustumPlanes[FP_NEAR] = cln::Plane(Vec3(0.0, 0.0, -1.0), zNear);
+	lspaceFrustumPlanes[FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), zNear);
 	// far
-	lspaceFrustumPlanes[FP_FAR] = cln::Plane(Vec3(0.0, 0.0, 1.0), -zFar);
+	lspaceFrustumPlanes[FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -zFar);
 }
 
 

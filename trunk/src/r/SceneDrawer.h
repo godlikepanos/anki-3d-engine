@@ -1,5 +1,5 @@
-#ifndef R_SCENE_DRAWER_H
-#define R_SCENE_DRAWER_H
+#ifndef SCENE_DRAWER_H
+#define SCENE_DRAWER_H
 
 #include "m/Math.h"
 #include "rsrc/MaterialCommon.h"
@@ -12,9 +12,6 @@ class Camera;
 class Material;
 class MaterialRuntime;
 class MaterialRuntimeVariable;
-
-
-namespace r {
 
 
 class Renderer;
@@ -71,9 +68,6 @@ class SceneDrawer
 			const Renderer& r,
 			float blurring);
 };
-
-
-} // end namespace
 
 
 #endif

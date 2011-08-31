@@ -1,5 +1,5 @@
-#ifndef R_SMO_H
-#define R_SMO_H
+#ifndef SMO_H
+#define SMO_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -12,9 +12,6 @@
 
 class PointLight;
 class SpotLight;
-
-
-namespace r {
 
 
 /// Stencil masking optimizations
@@ -35,7 +32,7 @@ class Smo: public RenderingPass
 			~Geom();
 
 			RsrcPtr<Mesh> mesh;
-			gl::Vao vao;
+			Vao vao;
 		};
 
 		Geom sphereGeom;
@@ -51,9 +48,6 @@ class Smo: public RenderingPass
 		void setUpGl(bool inside);
 		void restoreGl(bool inside);
 };
-
-
-} // end namespace
 
 
 #endif

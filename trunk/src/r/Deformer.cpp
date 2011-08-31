@@ -6,9 +6,6 @@
 #include "MainRenderer.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
@@ -99,6 +96,3 @@ void Deformer::deform(SkinPatchNode& node) const
 
 	GlStateMachineSingleton::get().disable(GL_RASTERIZER_DISCARD);
 }
-
-
-} // end namespace

@@ -1,25 +1,23 @@
-#ifndef EVENT_SCENE_COLOR_H
-#define EVENT_SCENE_COLOR_H
+#ifndef SCENE_COLOR_EVENT_H
+#define SCENE_COLOR_EVENT_H
 
 #include "Event.h"
 #include "m/Math.h"
 
 
-namespace event {
-
-
 /// Change the scene color
-class SceneColor: public Event
+class SceneColorEvent: public Event
 {
 	public:
 		/// Constructor
-		SceneColor(float startTime, float duration, const Vec3& finalColor);
+		SceneColorEvent(float startTime, float duration,
+			const Vec3& finalColor);
 
 		/// Copy constructor
-		SceneColor(const SceneColor& b);
+		SceneColorEvent(const SceneColorEvent& b);
 
 		/// Copy
-		SceneColor& operator=(const SceneColor& b);
+		SceneColorEvent& operator=(const SceneColorEvent& b);
 
 	private:
 		Vec3 originalColor; ///< Original scene color. The constructor sets it
@@ -28,9 +26,6 @@ class SceneColor: public Event
 		/// Implements Event::updateSp
 		void updateSp(float prevUpdateTime, float crntTime);
 };
-
-
-} // end namespace
 
 
 #endif

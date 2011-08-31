@@ -4,9 +4,6 @@
 #include "RendererInitializer.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -25,7 +22,7 @@ Hdr::~Hdr()
 //==============================================================================
 // initFbo                                                                    =
 //==============================================================================
-void Hdr::initFbo(gl::Fbo& fbo, Texture& fai)
+void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
 	try
 	{
@@ -160,6 +157,3 @@ void Hdr::run()
 	// end
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
-
-
-} // end namespace

@@ -39,9 +39,9 @@
 #include "core/Globals.h"
 #include "ui/FtFontLoader.h"
 #include "ui/Font.h"
-#include "event/Manager.h"
-#include "event/SceneColor.h"
-#include "event/MainRendererPpsHdr.h"
+#include "event/EventManager.h"
+#include "event/SceneColorEvent.h"
+#include "event/MainRendererPpsHdrEvent.h"
 #include "rsrc/ShaderProgramPrePreprocessor.h"
 #include "rsrc/Material.h"
 #include "core/parallel/Manager.h"
@@ -139,7 +139,7 @@ void init()
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
-	cam->setAll(r::MainRendererSingleton::get().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	cam->setAll(MainRendererSingleton::get().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -384,13 +384,13 @@ void mainLoop()
 		SceneSingleton::get().updateAllWorldStuff(prevUpdateTime, crntTime);
 		SceneSingleton::get().doVisibilityTests(*AppSingleton::get().getActiveCam());
 		SceneSingleton::get().updateAllControllers();
-		event::ManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
-		r::MainRendererSingleton::get().render(*AppSingleton::get().getActiveCam());
+		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
+		MainRendererSingleton::get().render(*AppSingleton::get().getActiveCam());
 
 		painter->setPosition(Vec2(0.0, 0.1));
 		painter->setColor(Vec4(1.0));
 		//painter->drawText("A");
-		const r::MainRenderer& r = r::MainRendererSingleton::get();
+		const MainRenderer& r = MainRendererSingleton::get();
 		std::stringstream ss;
 		ss << "MS: " << r.getMsTime() * 1000000 << " IS: " <<
 			r.getIsTime() * 1000000 << " BS: " << r.getBsTime() * 1000000 <<
@@ -413,7 +413,7 @@ void mainLoop()
 
 		if(InputSingleton::get().getKey(SDL_SCANCODE_F12) == 1)
 		{
-			r::MainRendererSingleton::get().takeScreenshot("gfx/screenshot.jpg");
+			MainRendererSingleton::get().takeScreenshot("gfx/screenshot.jpg");
 		}
 
 		AppSingleton::get().swapBuffers();
@@ -466,7 +466,7 @@ void initSubsystems(int argc, char* argv[])
 	AppSingleton::get().init(argc, argv);
 
 	// Main renderer
-	r::RendererInitializer initializer;
+	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
@@ -487,7 +487,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.mainRendererQuality = 1.0;
 
-	r::MainRendererSingleton::get().init(initializer);
+	MainRendererSingleton::get().init(initializer);
 
 	// Scripting engine
 	const char* commonPythonCode =
@@ -501,14 +501,15 @@ void initSubsystems(int argc, char* argv[])
 		"        file = sys._getframe(1).f_code.co_filename\n"
 		"        func = sys._getframe(1).f_code.co_name\n"
 		"        LoggerSingleton.get().write(file, line, "
-		"func, str_ + \"\\n\")\n"
+		"func, Logger.MessageType.MT_NORMAL, str_ + \"\\n\")\n"
 		"\n"
 		"class StderrCatcher:\n"
 		"    def write(self, str_):\n"
 		"        line = sys._getframe(1).f_lineno\n"
 		"        file = sys._getframe(1).f_code.co_filename\n"
 		"        func = sys._getframe(1).f_code.co_name\n"
-		"        LoggerSingleton.get().write(file, line, func, str_)\n"
+		"        LoggerSingleton.get().write(file, line, "
+		"func, Logger.MessageType.MT_ERROR, str_)\n"
 		"\n"
 		"sys.stdout = StdoutCatcher()\n"
 		"sys.stderr = StderrCatcher()\n";
@@ -523,7 +524,7 @@ void initSubsystems(int argc, char* argv[])
 
 	// Add drawer to physics
 	SceneSingleton::get().getPhysMasterContainer().setDebugDrawer(
-		new r::PhysDbgDrawer(r::MainRendererSingleton::get().getDbg()));
+		new PhysDbgDrawer(MainRendererSingleton::get().getDbg()));
 }
 
 
@@ -564,14 +565,13 @@ int main(int argc, char* argv[])
 
 	try
 	{
-		ShaderProgramPrePreprocessor p("lala.glsl");
+		/*ShaderProgramPrePreprocessor p("lala.glsl");
 		std::cout << "VERT\n" << p.getShaderSource(ST_VERTEX) << std::endl;
 		std::cout << "TC\n" << p.getShaderSource(ST_TC) << std::endl;
 		std::cout << "TE\n" << p.getShaderSource(ST_TE) << std::endl;
 		std::cout << "GEOM\n" << p.getShaderSource(ST_GEOMETRY) << std::endl;
 		std::cout << "FRAG\n" << p.getShaderSource(ST_FRAGMENT) << std::endl;
-		return 0;
-
+		return 0;*/
 		initSubsystems(argc, argv);
 		init();
 

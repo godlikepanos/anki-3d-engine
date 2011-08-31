@@ -24,7 +24,7 @@ class ModelNode: public SceneNode
 		/// @{
 		GETTER_RW(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
 		const Model& getModel() const {return *model;}
-		GETTER_R(cln::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 		/// @}
 
 		/// Initialize the node
@@ -37,7 +37,7 @@ class ModelNode: public SceneNode
 	private:
 		RsrcPtr<Model> model;
 		Vec<ModelPatchNode*> patches;
-		cln::Obb visibilityShapeWSpace;
+		Obb visibilityShapeWSpace;
 };
 
 

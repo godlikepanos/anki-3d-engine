@@ -1,10 +1,7 @@
-#ifndef R_PHY_DBG_DRAWER_H
-#define R_PHY_DBG_DRAWER_H
+#ifndef PHY_DBG_DRAWER_H
+#define PHY_DBG_DRAWER_H
 
 #include <LinearMath/btIDebugDraw.h>
-
-
-namespace r {
 
 
 class Dbg;
@@ -42,9 +39,6 @@ class PhysDbgDrawer: public btIDebugDraw
 		int debugMode;
 		Dbg& dbg;
 };
-
-
-} // end namespace
 
 
 #endif

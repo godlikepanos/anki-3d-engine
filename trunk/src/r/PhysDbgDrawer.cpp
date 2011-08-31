@@ -4,9 +4,6 @@
 #include "core/Logger.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // drawLine                                                                    =
 //==============================================================================
@@ -96,7 +93,4 @@ void PhysDbgDrawer::draw3dText(const btVector3& /*location*/,
 {
 	//WARNING("Unimplemented");
 }
-
-
-} // end namespace
 

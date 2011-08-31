@@ -1,12 +1,8 @@
-#ifndef EVENT_EVENT_H
-#define EVENT_EVENT_H
+#ifndef EVENT_H
+#define EVENT_H
 
 #include "util/StdTypes.h"
 #include "util/Accessors.h"
-
-
-/// Events namespace
-namespace event {
 
 
 /// The event type enum
@@ -73,9 +69,6 @@ Type Event::interpolate(const Type& from, const Type& to, float delta)
 {
 	return from * (1.0 - delta) + to * delta;
 }
-
-
-} // end namespace
 
 
 #endif

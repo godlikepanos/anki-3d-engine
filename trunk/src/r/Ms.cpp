@@ -6,9 +6,6 @@
 #include "scene/RenderableNode.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -133,6 +130,3 @@ void Ms::run()
 	fbo.unbind();
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
-
-
-} // end namespace

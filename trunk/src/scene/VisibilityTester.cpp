@@ -71,7 +71,7 @@ void VisibilityTester::test(Camera& cam)
 			{
 				PointLight* pointl = static_cast<PointLight*>(light);
 
-				cln::Sphere sphere(pointl->getWorldTransform().getOrigin(),
+				Sphere sphere(pointl->getWorldTransform().getOrigin(),
 					pointl->getRadius());
 				if(cam.insideFrustum(sphere))
 				{

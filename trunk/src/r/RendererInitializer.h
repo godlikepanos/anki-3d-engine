@@ -1,10 +1,7 @@
-#ifndef R_RENDERER_INITIALIZER_H
-#define R_RENDERER_INITIALIZER_H
+#ifndef RENDERER_INITIALIZER_H
+#define RENDERER_INITIALIZER_H
 
 #include <cstring>
-
-
-namespace r {
 
 
 /// A struct to initialize the renderer. It contains a few extra params for
@@ -83,9 +80,6 @@ struct RendererInitializer
 		memcpy(this, &initializer, sizeof(RendererInitializer));
 	}
 };
-
-
-} // end namespace
 
 
 #endif

@@ -8,9 +8,6 @@
 #include "scene/OrthographicCamera.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // drawCamera                                                                  =
 //==============================================================================
@@ -152,6 +149,3 @@ void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 	}
 	dbg.end();
 }
-
-
-} // end namespace

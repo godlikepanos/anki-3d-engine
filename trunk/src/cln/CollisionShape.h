@@ -1,9 +1,5 @@
-#ifndef CLN_COLLISION_SHAPE
-#define CLN_COLLISION_SHAPE
-
-
-/// Contains collision detection classes
-namespace cln {
+#ifndef COLLISION_SHAPE
+#define COLLISION_SHAPE
 
 
 class Plane;
@@ -38,9 +34,6 @@ class CollisionShape
 		/// then the b.v. lies behind the plane and if > 0 then in front of it
 		virtual float testPlane(const Plane&) const = 0;
 };
-
-
-} // end namespace
 
 
 #endif

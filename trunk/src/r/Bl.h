@@ -1,5 +1,5 @@
-#ifndef R_BL_H
-#define R_BL_H
+#ifndef BL_H
+#define BL_H
 
 #include "RenderingPass.h"
 #include "util/Accessors.h"
@@ -9,9 +9,6 @@
 
 
 class ShaderProgram;
-
-
-namespace r {
 
 
 class Bl: private RenderingPass
@@ -31,9 +28,9 @@ class Bl: private RenderingPass
 		/// @}
 
 	private:
-		gl::Fbo hBlurFbo; ///< Fbo that writes to blurFai
-		gl::Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
-		gl::Fbo sideBlurFbo;
+		Fbo hBlurFbo; ///< Fbo that writes to blurFai
+		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
+		Fbo sideBlurFbo;
 
 		RsrcPtr<ShaderProgram> hBlurSProg;
 		RsrcPtr<ShaderProgram> vBlurSProg;
@@ -49,9 +46,6 @@ class Bl: private RenderingPass
 		void runBlur();
 		void runSideBlur();
 };
-
-
-} // end namespace
 
 
 #endif

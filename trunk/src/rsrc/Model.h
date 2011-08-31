@@ -37,13 +37,13 @@ class Model
 		/// @name Accessors
 		/// @{
 		GETTER_R(boost::ptr_vector<ModelPatch>, modelPatches, getModelPatches)
-		GETTER_R(cln::Obb, visibilityShape, getVisibilityShape)
+		GETTER_R(Obb, visibilityShape, getVisibilityShape)
 		/// @}
 
 	private:
 		/// The vector of ModelPatch
 		boost::ptr_vector<ModelPatch> modelPatches;
-		cln::Obb visibilityShape;
+		Obb visibilityShape;
 };
 
 

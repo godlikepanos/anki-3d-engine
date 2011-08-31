@@ -1,5 +1,5 @@
-#ifndef R_SM_H
-#define R_SM_H
+#ifndef SM_H
+#define SM_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -9,9 +9,6 @@
 
 
 class Light;
-
-
-namespace r {
 
 
 /// Shadowmapping pass
@@ -46,7 +43,7 @@ class Sm: private RenderingPass
 		/// used
 		struct Level
 		{
-			gl::Fbo fbo; ///< Illumination stage shadowmapping FBO
+			Fbo fbo; ///< Illumination stage shadowmapping FBO
 			Texture shadowMap; ///< The shadowmap for that level
 			uint resolution; ///< The shadowmap's resolution
 			bool bilinear; ///< Enable bilinar filtering in shadowmap
@@ -74,9 +71,6 @@ class Sm: private RenderingPass
 		static void initLevel(uint resolution, float maxDistance,
 			bool bilinear, Level& level);
 };
-
-
-} // end namespace
 
 
 #endif

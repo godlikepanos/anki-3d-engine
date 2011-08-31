@@ -1,12 +1,9 @@
-#ifndef R_MAIN_RENDERER_H
-#define R_MAIN_RENDERER_H
+#ifndef MAIN_RENDERER_H
+#define MAIN_RENDERER_H
 
 #include "Renderer.h"
 #include <boost/scoped_ptr.hpp>
 #include <GL/glew.h>
-
-
-namespace r {
 
 
 class Deformer;
@@ -52,7 +49,7 @@ class MainRenderer: public Renderer
 		/// @name Profiling stuff
 		/// @{
 		double dbgTime;
-		boost::scoped_ptr<gl::TimeQuery> dbgTq;
+		boost::scoped_ptr<TimeQuery> dbgTq;
 		/// @}
 
 		RsrcPtr<ShaderProgram> sProg; ///< Final pass' shader program
@@ -71,9 +68,6 @@ class MainRenderer: public Renderer
 		void takeScreenshotJpeg(const char* filename);
 		void initGl();
 };
-
-
-} // end namespace
 
 
 #endif

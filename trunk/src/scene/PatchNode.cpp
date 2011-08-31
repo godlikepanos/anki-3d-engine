@@ -17,7 +17,7 @@ PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent)
 // createVao                                                                   =
 //==============================================================================
 void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
-	gl::Vao& vao)
+	Vao& vao)
 {
 	vao.create();
 

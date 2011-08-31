@@ -1,5 +1,5 @@
-#ifndef R_SSAO_H
-#define R_SSAO_H
+#ifndef SSAO_H
+#define SSAO_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -8,9 +8,6 @@
 #include "rsrc/RsrcPtr.h"
 #include "gl/Vbo.h"
 #include "gl/Vao.h"
-
-
-namespace r {
 
 
 /// Screen space ambient occlusion pass
@@ -40,19 +37,16 @@ class Ssao: private RenderingPass
 		bool enabled;
 		float renderingQuality;
 		float blurringIterationsNum;
-		gl::Fbo ssaoFbo;
-		gl::Fbo hblurFbo;
-		gl::Fbo vblurFbo;
+		Fbo ssaoFbo;
+		Fbo hblurFbo;
+		Fbo vblurFbo;
 		RsrcPtr<Texture> noiseMap;
 		RsrcPtr<ShaderProgram> ssaoSProg;
 		RsrcPtr<ShaderProgram> hblurSProg;
 		RsrcPtr<ShaderProgram> vblurSProg;
 
-		void createFbo(gl::Fbo& fbo, Texture& fai);
+		void createFbo(Fbo& fbo, Texture& fai);
 };
-
-
-} // end namespace
 
 
 #endif

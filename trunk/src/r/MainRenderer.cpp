@@ -17,9 +17,6 @@
 #define glewGetContext() (&glContext)
 
 
-namespace r {
-
-
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
@@ -43,7 +40,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	sProg.loadRsrc("shaders/Final.glsl");
 
-	dbgTq.reset(new gl::TimeQuery);
+	dbgTq.reset(new TimeQuery);
 
 	//
 	// init the offscreen Renderer
@@ -267,7 +264,4 @@ void MainRenderer::takeScreenshot(const char* filename)
 	}
 	//INFO("Screenshot \"" << filename << "\" saved");
 }
-
-
-} // end namespace
 

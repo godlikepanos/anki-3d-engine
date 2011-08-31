@@ -2,9 +2,6 @@
 #include "Plane.h"
 
 
-namespace cln {
-
-
 //==============================================================================
 // getTransformed                                                              =
 //==============================================================================
@@ -95,5 +92,3 @@ float Sphere::testPlane(const Plane& plane) const
 	}
 }
 
-
-} // end namespace

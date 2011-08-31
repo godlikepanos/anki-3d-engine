@@ -1,14 +1,11 @@
-#include "Manager.h"
-
-
-namespace event {
+#include "EventManager.h"
 
 
 //==============================================================================
 //  createEvent                                                                =
 //==============================================================================
 template<typename EventType>
-EventType& Manager::createEvent(const EventType& event)
+EventType& EventManager::createEvent(const EventType& event)
 {
 	EventsContainer::iterator it = findADeadEvent(event.getEventType());
 	EventType* ev;
@@ -26,6 +23,3 @@ EventType& Manager::createEvent(const EventType& event)
 
 	return *ev;
 }
-
-
-} // end namespace

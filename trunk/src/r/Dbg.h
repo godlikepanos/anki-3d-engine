@@ -1,5 +1,5 @@
-#ifndef R_DBG_H
-#define R_DBG_H
+#ifndef DBG_H
+#define DBG_H
 
 #include <boost/array.hpp>
 #include <map>
@@ -13,9 +13,6 @@
 #include "SceneDbgDrawer.h"
 #include "CollisionDbgDrawer.h"
 #include "util/Accessors.h"
-
-
-namespace r {
 
 
 /// Debugging stage
@@ -58,7 +55,7 @@ class Dbg: public RenderingPass
 		bool showSkeletonsEnabled;
 		bool showCamerasEnabled;
 		bool showVisibilityBoundingShapesFlag;
-		gl::Fbo fbo;
+		Fbo fbo;
 		RsrcPtr<ShaderProgram> sProg;
 		static const uint MAX_POINTS_PER_DRAW = 256;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
@@ -66,9 +63,9 @@ class Dbg: public RenderingPass
 		Mat4 modelMat;
 		uint pointIndex;
 		Vec3 crntCol;
-		gl::Vbo positionsVbo;
-		gl::Vbo colorsVbo;
-		gl::Vao vao;
+		Vbo positionsVbo;
+		Vbo colorsVbo;
+		Vao vao;
 		SceneDbgDrawer sceneDbgDrawer;
 		CollisionDbgDrawer collisionDbgDrawer;
 
@@ -78,9 +75,6 @@ class Dbg: public RenderingPass
 		/// pairs)
 		std::map<uint, Vec<Vec3> > complexityToPreCalculatedSphere;
 };
-
-
-} // end namespace
 
 
 #endif

@@ -17,7 +17,7 @@ class Controller;
 class SceneNode: public Object
 {
 	public:
-		typedef cln::Obb VisibilityCollisionShape;
+		typedef Obb VisibilityCollisionShape;
 
 		enum SceneNodeType
 		{

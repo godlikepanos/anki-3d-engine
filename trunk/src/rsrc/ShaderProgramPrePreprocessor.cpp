@@ -152,13 +152,13 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 		parseFileForPragmas(filename);
 	
 		// sanity checks
-		if(shaderStarts[ST_VERTEX].globalLine == -1)
+		if(!shaderStarts[ST_VERTEX].isDefined())
 		{
 			throw EXCEPTION("Entry point \""+ startTokens[ST_VERTEX] +
 				"\" is not defined");
 		}
 
-		if(shaderStarts[ST_FRAGMENT].globalLine == -1)
+		if(!shaderStarts[ST_FRAGMENT].isDefined())
 		{
 			throw EXCEPTION("Entry point \""+ startTokens[ST_FRAGMENT] +
 				"\" is not defined");
@@ -172,9 +172,34 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 			src = "";
 
 			// If not defined bb
-			if(shaderStarts[i].definedInLine == -1)
+			if(!shaderStarts[i].isDefined())
 			{
 				continue;
+			}
+
+			// Sanity check: Check the correct order of i
+			int k = (int)i - 1;
+			while(k > -1)
+			{
+				if(shaderStarts[k].isDefined() &&
+					shaderStarts[k].globalLine >= shaderStarts[i].globalLine)
+				{
+					throw EXCEPTION(startTokens[i] + " must be after " +
+						startTokens[k]);
+				}
+				--k;
+			}
+
+			k = (int)i + 1;
+			while(k < ST_NUM)
+			{
+				if(shaderStarts[k].isDefined() &&
+					shaderStarts[k].globalLine <= shaderStarts[i].globalLine)
+				{
+					throw EXCEPTION(startTokens[k] + " must be after " +
+						startTokens[i]);
+				}
+				++k;
 			}
 
 			// put global source code

@@ -33,8 +33,8 @@ BOOST_PYTHON_MODULE(Anki)
 	CALL_WRAP(Dbg);
 	CALL_WRAP(MainRenderer);
 
-	CALL_WRAP(EventSceneColor);
-	CALL_WRAP(EventMainRendererPpsHdr);
+	CALL_WRAP(SceneColorEvent);
+	CALL_WRAP(MainRendererPpsHdrEvent);
 	CALL_WRAP(EventManager);
 
 	CALL_WRAP(App);

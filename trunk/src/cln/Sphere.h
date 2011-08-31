@@ -1,12 +1,9 @@
-#ifndef CLN_SPHERE_H
-#define CLN_SPHERE_H
+#ifndef SPHERE_H
+#define SPHERE_H
 
 #include "CollisionShape.h"
 #include "m/Math.h"
 #include "util/Accessors.h"
-
-
-namespace cln {
 
 
 class Plane;
@@ -62,9 +59,6 @@ inline Sphere::Sphere(const Vec3& center_, float radius_)
 	center(center_),
 	radius(radius_)
 {}
-
-
-} // end namespace
 
 
 #include "Sphere.inl.h"

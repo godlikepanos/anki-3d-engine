@@ -1,5 +1,5 @@
-#ifndef R_IS_H
-#define R_IS_H
+#ifndef IS_H
+#define IS_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -15,9 +15,6 @@
 
 class PointLight;
 class SpotLight;
-
-
-namespace r {
 
 
 /// Illumination stage
@@ -36,12 +33,12 @@ class Is: private RenderingPass
 	private:
 		Sm sm; ///< Shadowmapping pass
 		Smo smo; /// Stencil masking optimizations pass
-		gl::Fbo fbo; ///< This FBO writes to the Is::fai
+		Fbo fbo; ///< This FBO writes to the Is::fai
 		Texture fai; ///< The one and only FAI
 		uint stencilRb; ///< Illumination stage stencil buffer
 		Texture copyMsDepthFai;
-		gl::Fbo readFbo;
-		gl::Fbo writeFbo;
+		Fbo readFbo;
+		Fbo writeFbo;
 		/// Illumination stage ambient pass shader program
 		RsrcPtr<ShaderProgram> ambientPassSProg;
 		/// Illumination stage point light shader program
@@ -69,9 +66,6 @@ class Is: private RenderingPass
 		/// Copy the MS depth FAI to one of our own
 		void copyDepth();
 };
-
-
-} // end namespace
 
 
 #endif

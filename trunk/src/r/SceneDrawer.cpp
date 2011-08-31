@@ -11,9 +11,6 @@
 #include "gl/GlStateMachine.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -281,7 +278,4 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& node,
 	glDrawElements(GL_TRIANGLES, node.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
 	node.getVao(pt).unbind();
 }
-
-
-} // end namespace
 

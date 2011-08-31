@@ -1,12 +1,9 @@
-#ifndef CLN_PLANE_H
-#define CLN_PLANE_H
+#ifndef PLANE_H
+#define PLANE_H
 
 #include "CollisionShape.h"
 #include "m/Math.h"
 #include "util/Accessors.h"
-
-
-namespace cln {
 
 
 /// Plane collision shape
@@ -99,9 +96,6 @@ inline Vec3 Plane::getClosestPoint(const Vec3& point) const
 {
 	return point - normal * test(point);
 }
-
-
-} // end namespace
 
 
 #endif

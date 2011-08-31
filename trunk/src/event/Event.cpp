@@ -2,9 +2,6 @@
 #include "util/Assert.h"
 
 
-namespace event {
-
-
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -40,6 +37,3 @@ void Event::update(float prevUpdateTime, float crntTime)
 		updateSp(prevUpdateTime, crntTime);
 	}
 }
-
-
-} // end namespace
