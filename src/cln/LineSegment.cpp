@@ -3,9 +3,6 @@
 #include <algorithm>
 
 
-namespace cln {
-
-
 //==============================================================================
 // getTransformed                                                              =
 //==============================================================================
@@ -52,6 +49,3 @@ float LineSegment::testPlane(const Plane& plane) const
 		}
 	}
 }
-
-
-} // end namespace

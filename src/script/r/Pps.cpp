@@ -6,9 +6,7 @@
 
 WRAP(Pps)
 {
-	using namespace r;
-
-	class_<Pps, noncopyable>("r_Pps", no_init)
+	class_<Pps, noncopyable>("Pps", no_init)
 		.def("getHdr", (Hdr& (Pps::*)())(&Pps::getHdr),
 			return_value_policy<reference_existing_object>())
 

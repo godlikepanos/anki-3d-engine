@@ -1,5 +1,5 @@
-#ifndef R_RENDERER_H
-#define R_RENDERER_H
+#ifndef RENDERER_H
+#define RENDERER_H
 
 #include "m/Math.h"
 #include "gl/Fbo.h"
@@ -26,9 +26,6 @@ class ModelNode;
 
 
 /// Renderer namespace
-namespace r {
-
-
 
 /// Offscreen renderer
 /// It is a class and not a namespace because we may need external renderers
@@ -127,7 +124,7 @@ class Renderer
 		/// @name Profiling stuff
 		/// @{
 		double msTime, isTime, ppsTime, bsTime;
-		boost::scoped_ptr<gl::TimeQuery> msTq, isTq, ppsTq, bsTq;
+		boost::scoped_ptr<TimeQuery> msTq, isTq, ppsTq, bsTq;
 		bool enableStagesProfilingFlag;
 		/// @}
 
@@ -162,14 +159,11 @@ class Renderer
 
 		/// @name For drawing a quad into the active framebuffer
 		/// @{
-		gl::Vbo quadPositionsVbo; ///< The VBO for quad positions
-		gl::Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
-		gl::Vao quadVao; ///< This VAO is used everywhere except material stage
+		Vbo quadPositionsVbo; ///< The VBO for quad positions
+		Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+		Vao quadVao; ///< This VAO is used everywhere except material stage
 		/// @}
 };
-
-
-} // end namespace
 
 
 #endif

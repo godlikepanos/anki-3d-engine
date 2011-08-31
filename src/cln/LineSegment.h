@@ -1,12 +1,9 @@
-#ifndef CLN_LINE_SEGMENT_H
-#define CLN_LINE_SEGMENT_H
+#ifndef LINE_SEGMENT_H
+#define LINE_SEGMENT_H
 
 #include "CollisionShape.h"
 #include "m/Math.h"
 #include "util/Accessors.h"
-
-
-namespace cln {
 
 
 class LineSegment: public CollisionShape
@@ -51,9 +48,6 @@ inline LineSegment::LineSegment(const LineSegment& b)
 	origin(b.origin),
 	dir(b.dir)
 {}
-
-
-} // end namespace
 
 
 #endif

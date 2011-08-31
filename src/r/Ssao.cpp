@@ -6,13 +6,10 @@
 #include "scene/PerspectiveCamera.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // createFbo                                                                   =
 //==============================================================================
-void Ssao::createFbo(gl::Fbo& fbo, Texture& fai)
+void Ssao::createFbo(Fbo& fbo, Texture& fai)
 {
 	try
 	{
@@ -194,6 +191,3 @@ void Ssao::run()
 	// end
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
-
-
-} // end namespace

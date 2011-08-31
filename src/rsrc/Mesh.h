@@ -36,9 +36,9 @@ class Mesh
 
 		/// @name Accessors
 		/// @{
-		const gl::Vbo& getVbo(Vbos id) const {return vbos[id];}
+		const Vbo& getVbo(Vbos id) const {return vbos[id];}
 		GETTER_R_BY_VAL(uint, vertIdsNum, getVertIdsNum)
-		GETTER_R(cln::Obb, visibilityShape, getVisibilityShape)
+		GETTER_R(Obb, visibilityShape, getVisibilityShape)
 		GETTER_R_BY_VAL(uint, vertsNum, getVertsNum)
 		/// @}
 
@@ -53,9 +53,9 @@ class Mesh
 		/// @}
 
 	private:
-		boost::array<gl::Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
+		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
 		uint vertIdsNum; ///< The number of vertex IDs
-		cln::Obb visibilityShape;
+		Obb visibilityShape;
 		uint vertsNum;
 
 		/// Create the VBOs

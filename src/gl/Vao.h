@@ -1,5 +1,5 @@
-#ifndef GL_VAO_H
-#define GL_VAO_H
+#ifndef VAO_H
+#define VAO_H
 
 #include <GL/glew.h>
 #include "util/StdTypes.h"
@@ -8,11 +8,6 @@
 
 
 class ShaderProgramAttributeVariable;
-
-
-namespace gl {
-
-
 class Vbo;
 
 
@@ -117,9 +112,6 @@ inline uint Vao::getGlId() const
 	ASSERT(isCreated());
 	return glId;
 }
-
-
-} // end namespace
 
 
 #endif

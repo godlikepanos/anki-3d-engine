@@ -1,5 +1,5 @@
-#ifndef R_HDR_H
-#define R_HDR_H
+#ifndef HDR_H
+#define HDR_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -9,9 +9,6 @@
 
 
 class ShaderProgram;
-
-
-namespace r {
 
 
 /// High dynamic range lighting pass
@@ -44,9 +41,9 @@ class Hdr: private RenderingPass
 		uint blurringIterationsNum; ///< The blurring iterations of the tone map
 		float blurringDist; ///< Distance in blurring
 		float renderingQuality;
-		gl::Fbo toneFbo;
-		gl::Fbo hblurFbo;
-		gl::Fbo vblurFbo;
+		Fbo toneFbo;
+		Fbo hblurFbo;
+		Fbo vblurFbo;
 		RsrcPtr<ShaderProgram> toneSProg;
 		RsrcPtr<ShaderProgram> hblurSProg;
 		RsrcPtr<ShaderProgram> vblurSProg;
@@ -54,11 +51,8 @@ class Hdr: private RenderingPass
 		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 		Texture fai; ///< The final FAI
 
-		void initFbo(gl::Fbo& fbo, Texture& fai);
+		void initFbo(Fbo& fbo, Texture& fai);
 };
-
-
-} // end namespace
 
 
 #endif

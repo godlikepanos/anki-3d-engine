@@ -8,9 +8,6 @@ class ShaderProgram;
 class SkinPatchNode;
 
 
-namespace r {
-
-
 class MainRenderer;
 
 
@@ -31,9 +28,6 @@ class Deformer
 
 		void init();
 };
-
-
-} // end namespace
 
 
 #endif

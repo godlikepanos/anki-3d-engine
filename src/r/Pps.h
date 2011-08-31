@@ -1,5 +1,5 @@
-#ifndef R_PPS_H
-#define R_PPS_H
+#ifndef PPS_H
+#define PPS_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -11,9 +11,6 @@
 
 
 class ShaderProgram;
-
-
-namespace r {
 
 
 /// Post-processing stage.
@@ -46,8 +43,8 @@ class Pps: private RenderingPass
 		Bl bl;
 		/// @}
 
-		gl::Fbo prePassFbo;
-		gl::Fbo postPassFbo;
+		Fbo prePassFbo;
+		Fbo postPassFbo;
 
 		RsrcPtr<ShaderProgram> prePassSProg;
 		RsrcPtr<ShaderProgram> postPassSProg;
@@ -55,9 +52,6 @@ class Pps: private RenderingPass
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2
 };
-
-
-} // end namespace
 
 
 #endif

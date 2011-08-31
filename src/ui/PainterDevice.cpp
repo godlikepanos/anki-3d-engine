@@ -27,7 +27,7 @@ Vec2 PainterDevice::getSize() const
 //==============================================================================
 void PainterDevice::create()
 {
-	gl::Fbo::create();
+	Fbo::create();
 	bind();
 
 	setNumOfColorAttachements(1);

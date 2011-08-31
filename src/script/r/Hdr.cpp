@@ -4,9 +4,7 @@
 
 WRAP(Hdr)
 {
-	using namespace r;
-
-	class_<Hdr, noncopyable>("r_Hdr", no_init)
+	class_<Hdr, noncopyable>("Hdr", no_init)
 		.def("getBlurringIterationsNum", (uint (Hdr::*)() const)(
 			&Hdr::getBlurringIterationsNum))
 		.def("setBlurringIterationsNum", &Hdr::setBlurringIterationsNum)

@@ -5,9 +5,7 @@
 
 WRAP(MainRenderer)
 {
-	using namespace r;
-
-	class_<MainRenderer, bases<Renderer>, noncopyable>("r_MainRenderer",
+	class_<MainRenderer, bases<Renderer>, noncopyable>("MainRenderer",
 		no_init)
 		.def("getDbg", (Dbg& (MainRenderer::*)())(
 			&MainRenderer::getDbg),

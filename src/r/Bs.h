@@ -1,5 +1,5 @@
-#ifndef R_BS_H
-#define R_BS_H
+#ifndef BS_H
+#define BS_H
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
@@ -8,9 +8,6 @@
 
 
 class ShaderProgram;
-
-
-namespace r {
 
 
 /// Blending stage.
@@ -25,17 +22,14 @@ class Bs: public RenderingPass
 		void run();
 
 	private:
-		gl::Fbo fbo; ///< Writes to Pps::prePassFai
-		gl::Fbo refractFbo; ///< Writes to refractFai
+		Fbo fbo; ///< Writes to Pps::prePassFai
+		Fbo refractFbo; ///< Writes to refractFai
 		RsrcPtr<ShaderProgram> refractSProg;
 		Texture refractFai;
 
 		void createFbo();
 		void createRefractFbo();
 };
-
-
-} // end namespace
 
 
 #endif

@@ -44,9 +44,9 @@ class Painter
 		Vec4 col;
 		uint tabSize;
 
-		gl::Vbo qPositionsVbo;
-		gl::Vbo qIndecesVbo;
-		gl::Vao qVao;
+		Vbo qPositionsVbo;
+		Vbo qIndecesVbo;
+		Vao qVao;
 
 		Vec2 deviceSize; ///< The size of the device in pixels
 		/// @}

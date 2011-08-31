@@ -31,9 +31,9 @@ void Camera::updateWSpaceFrustumPlanes()
 //==============================================================================
 // insideFrustum                                                               =
 //==============================================================================
-bool Camera::insideFrustum(const cln::CollisionShape& bvol) const
+bool Camera::insideFrustum(const CollisionShape& bvol) const
 {
-	BOOST_FOREACH(const cln::Plane& plane, wspaceFrustumPlanes)
+	BOOST_FOREACH(const Plane& plane, wspaceFrustumPlanes)
 	{
 		if(bvol.testPlane(plane) < 0.0)
 		{

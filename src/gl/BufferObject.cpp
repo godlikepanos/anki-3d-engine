@@ -4,9 +4,6 @@
 #include "util/Exception.h"
 
 
-namespace gl {
-
-
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -85,6 +82,3 @@ void BufferObject::write(void* buff, size_t offset, size_t size)
 	glUnmapBuffer(target);
 	unbind();
 }
-
-
-} // end namespace

@@ -1,14 +1,11 @@
-#ifndef R_MS_H
-#define R_MS_H
+#ifndef MS_H
+#define MS_H
 
 #include "RenderingPass.h"
 #include "rsrc/Texture.h"
 #include "gl/Fbo.h"
 #include "util/Accessors.h"
 #include "Ez.h"
-
-
-namespace r {
 
 
 /// Material stage
@@ -31,15 +28,12 @@ class Ms: public RenderingPass
 
 	private:
 		Ez ez; /// EarlyZ pass
-		gl::Fbo fbo;
+		Fbo fbo;
 		Texture normalFai; ///< The FAI for normals
 		Texture diffuseFai; ///< The FAI for diffuse color
 		Texture specularFai; ///< The FAI for specular color and shininess
 		Texture depthFai; ///< The FAI for depth
 };
-
-
-} // end namespace
 
 
 #endif

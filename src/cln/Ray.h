@@ -1,12 +1,9 @@
-#ifndef CLN_RAY_H
-#define CLN_RAY_H
+#ifndef RAY_H
+#define RAY_H
 
 #include "CollisionShape.h"
 #include "m/Math.h"
 #include "util/Accessors.h"
-
-
-namespace cln {
 
 
 class Plane;
@@ -55,9 +52,6 @@ inline Ray::Ray(const Vec3& origin_, const Vec3& direction_)
 	origin(origin_),
 	dir(direction_)
 {}
-
-
-} // end namespace
 
 
 #endif

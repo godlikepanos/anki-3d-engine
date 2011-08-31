@@ -5,11 +5,7 @@
 
 
 typedef Singleton<class Logger> LoggerSingleton;
-
-namespace r {
 typedef Singleton<class MainRenderer> MainRendererSingleton;
-}
-
 typedef Singleton<class Input> InputSingleton;
 typedef Singleton<class ResourceManager> ResourceManagerSingleton;
 typedef Singleton<class Scene> SceneSingleton;
@@ -21,9 +17,7 @@ namespace script {
 typedef Singleton<class Engine> EngineSingleton;
 }
 
-namespace event {
-typedef Singleton<class Manager> ManagerSingleton;
-}
+typedef Singleton<class EventManager> EventManagerSingleton;
 
 namespace parallel {
 typedef Singleton<class Manager> ManagerSingleton;

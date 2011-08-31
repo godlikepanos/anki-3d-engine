@@ -1,25 +1,22 @@
-#ifndef EVENT_MAIN_RENDERER_PPS_HDR_H
-#define EVENT_MAIN_RENDERER_PPS_HDR_H
+#ifndef MAIN_RENDERER_PPS_HDR_EVENT_H
+#define MAIN_RENDERER_PPS_HDR_EVENT_H
 
 #include "Event.h"
 
 
-namespace event {
-
-
 /// Change the HDR properties
-class MainRendererPpsHdr: public Event
+class MainRendererPpsHdrEvent: public Event
 {
 	public:
 		/// Constructor
-		MainRendererPpsHdr(float startTime, float duration,
+		MainRendererPpsHdrEvent(float startTime, float duration,
 			float exposure, uint blurringIterationsNum, float blurringDist);
 
 		/// Copy constructor
-		MainRendererPpsHdr(const MainRendererPpsHdr& b);
+		MainRendererPpsHdrEvent(const MainRendererPpsHdrEvent& b);
 
 		/// Copy
-		MainRendererPpsHdr& operator=(const MainRendererPpsHdr& b);
+		MainRendererPpsHdrEvent& operator=(const MainRendererPpsHdrEvent& b);
 
 	private:
 		struct Data
@@ -35,9 +32,6 @@ class MainRendererPpsHdr: public Event
 		/// Implements Event::updateSp
 		void updateSp(float prevUpdateTime, float crntTime);
 };
-
-
-} // end namespace
 
 
 #endif

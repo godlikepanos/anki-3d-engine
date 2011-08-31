@@ -16,9 +16,6 @@
 #include <boost/array.hpp>
 
 
-namespace r {
-
-
 #define BLEND_ENABLE true
 
 
@@ -215,10 +212,10 @@ void Is::spotLightPass(const SpotLight& light)
 	if(light.castsShadow() && sm.isEnabled())
 	{
 		Vec3 zAxis = light.getWorldTransform().getRotation().getColumn(2);
-		cln::LineSegment seg(light.getWorldTransform().getOrigin(),
+		LineSegment seg(light.getWorldTransform().getOrigin(),
 			-zAxis * light.getCamera().getZFar());
 
-		const cln::Plane& plane = cam.getWSpaceFrustumPlane(Camera::FP_NEAR);
+		const Plane& plane = cam.getWSpaceFrustumPlane(Camera::FP_NEAR);
 
 		float dist = seg.testPlane(plane);
 
@@ -369,6 +366,3 @@ void Is::run()
 
 	ON_GL_FAIL_THROW_EXCEPTION();
 }
-
-
-} // end namespace

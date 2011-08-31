@@ -28,7 +28,7 @@ class SkinNode: public SceneNode
 		GETTER_RW(Vec<Mat3>, boneRotations, getBoneRotations)
 		GETTER_RW(Vec<Vec3>, boneTranslations, getBoneTranslations)
 		GETTER_R(Skin, *skin, getSkin)
-		GETTER_R(cln::Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
 		GETTER_R(Vec<SkinPatchNode*>, patches, getPatchNodes)
 
 		GETTER_SETTER_BY_VAL(float, step, getStep, setStep)
@@ -49,7 +49,7 @@ class SkinNode: public SceneNode
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
 		Vec<SkinPatchNode*> patches;
-		cln::Obb visibilityShapeWSpace;
+		Obb visibilityShapeWSpace;
 
 		/// @name Animation stuff
 		/// @{

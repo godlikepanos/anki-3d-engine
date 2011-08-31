@@ -2,9 +2,6 @@
 #include <boost/range/iterator_range.hpp>
 
 
-namespace cln {
-
-
 //==============================================================================
 // set                                                                         =
 //==============================================================================
@@ -38,6 +35,3 @@ void Obb::set(const Container& container)
 	rotation = Mat3::getIdentity();
 	extends = max - center;
 }
-
-
-} // end namespace

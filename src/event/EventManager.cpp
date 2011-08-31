@@ -1,14 +1,11 @@
-#include "Manager.h"
+#include "EventManager.h"
 #include <boost/foreach.hpp>
-
-
-namespace event {
 
 
 //==============================================================================
 // updateAllEvents                                                             =
 //==============================================================================
-void Manager::updateAllEvents(float prevUpdateTime_, float crntTime_)
+void EventManager::updateAllEvents(float prevUpdateTime_, float crntTime_)
 {
 	prevUpdateTime = prevUpdateTime_;
 	crntTime = crntTime_;
@@ -26,7 +23,8 @@ void Manager::updateAllEvents(float prevUpdateTime_, float crntTime_)
 //==============================================================================
 // findADeadEvent                                                              =
 //==============================================================================
-Manager::EventsContainer::iterator Manager::findADeadEvent(EventType type)
+EventManager::EventsContainer::iterator EventManager::findADeadEvent(
+	EventType type)
 {
 	EventsContainer::iterator it = events.begin();
 
@@ -41,6 +39,3 @@ Manager::EventsContainer::iterator Manager::findADeadEvent(EventType type)
 
 	return it;
 }
-
-
-} // end namespace

@@ -1,5 +1,5 @@
-#ifndef R_SCENE_DBG_DRAWER_H
-#define R_SCENE_DBG_DRAWER_H
+#ifndef SCENE_DBG_DRAWER_H
+#define SCENE_DBG_DRAWER_H
 
 
 class Camera;
@@ -8,9 +8,6 @@ class ParticleEmitterNode;
 class SkinNode;
 class PerspectiveCamera;
 class OrthographicCamera;
-
-
-namespace r {
 
 
 class Dbg;
@@ -43,9 +40,6 @@ class SceneDbgDrawer
 		virtual void drawOrthographicCamera(
 			const OrthographicCamera& cam) const;
 };
-
-
-} // end namespace
 
 
 #endif

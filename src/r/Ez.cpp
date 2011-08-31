@@ -5,9 +5,6 @@
 #include "RendererInitializer.h"
 
 
-namespace r {
-
-
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -74,6 +71,3 @@ void Ez::run()
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
-
-
-} // end namespace

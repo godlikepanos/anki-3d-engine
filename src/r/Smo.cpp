@@ -12,9 +12,6 @@
 #include "rsrc/Mesh.h"
 
 
-namespace r {
-
-
 const float THRESHOLD = 0.2;
 
 
@@ -169,7 +166,7 @@ void Smo::run(const SpotLight& light)
 
 	const Vec3& origin = r.getCamera().getWorldTransform().getOrigin();
 	float radius = r.getCamera().getZNear() + THRESHOLD;
-	bool inside =  lcam.insideFrustum(cln::Sphere(origin, radius));
+	bool inside =  lcam.insideFrustum(Sphere(origin, radius));
 
 	// set GL state
 	setUpGl(inside);
@@ -242,6 +239,3 @@ void Smo::run(const SpotLight& light)
 	// restore GL state
 	restoreGl(inside);
 }
-
-
-} // end namespace

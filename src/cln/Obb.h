@@ -1,13 +1,10 @@
-#ifndef CLN_OBB_H
-#define CLN_OBB_H
+#ifndef OBB_H
+#define OBB_H
 
 #include "CollisionShape.h"
 #include "m/Math.h"
 #include "util/Accessors.h"
 #include <boost/array.hpp>
-
-
-namespace cln {
 
 
 /// Object oriented bounding box
@@ -71,9 +68,6 @@ inline Obb::Obb(const Vec3& center_, const Mat3& rotation_,
 	rotation(rotation_),
 	extends(extends_)
 {}
-
-
-} // end namespace
 
 
 #include "Obb.inl.h"

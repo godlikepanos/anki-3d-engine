@@ -1,15 +1,12 @@
-#ifndef EVENT_MANAGER_H
-#define EVENT_MANAGER_H
+#ifndef MANAGER_H
+#define MANAGER_H
 
 #include "Event.h"
 #include <boost/ptr_container/ptr_deque.hpp>
 
 
-namespace event {
-
-
 /// This manager creates the events ands keeps tracks of them
-class Manager
+class EventManager
 {
 	public:
 		typedef boost::ptr_deque<Event> EventsContainer;
@@ -36,10 +33,7 @@ class Manager
 };
 
 
-} // end namespace
-
-
-#include "Manager.inl.h"
+#include "EventManager.inl.h"
 
 
 #endif

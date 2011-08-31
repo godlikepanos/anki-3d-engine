@@ -2,9 +2,6 @@
 #include "util/Assert.h"
 
 
-namespace cln {
-
-
 //==============================================================================
 // setFrom3Points                                                              =
 //==============================================================================
@@ -65,6 +62,3 @@ Plane Plane::getTransformed(const Transform& trf) const
 
 	return plane;
 }
-
-
-} // end namespace

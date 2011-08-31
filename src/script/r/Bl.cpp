@@ -4,8 +4,6 @@
 
 WRAP(Bl)
 {
-	using namespace r;
-
 	class_<Bl, noncopyable>("Bl", no_init)
 		.def("isEnabled", (bool (Bl::*)() const)(&Bl::isEnabled))
 		.def("setEnabled", &Bl::setEnabled)
