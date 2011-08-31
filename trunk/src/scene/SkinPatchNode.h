@@ -37,14 +37,14 @@ class SkinPatchNode: public PatchNode
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vao, tfVao, getTfVao)
-		const Vbo& getTfVbo(uint i) const {return tfVbos[i];}
+		GETTER_R(gl::Vao, tfVao, getTfVao)
+		const gl::Vbo& getTfVbo(uint i) const {return tfVbos[i];}
 		/// @}
 
 	private:
 		/// VBOs that contain the deformed vertex attributes
-		boost::array<Vbo, TFV_NUM> tfVbos;
-		Vao tfVao; ///< For TF passes
+		boost::array<gl::Vbo, TFV_NUM> tfVbos;
+		gl::Vao tfVao; ///< For TF passes
 };
 
 

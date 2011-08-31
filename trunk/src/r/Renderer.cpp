@@ -70,10 +70,10 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 
 	// Other
-	msTq.reset(new TimeQuery);
-	isTq.reset(new TimeQuery);
-	ppsTq.reset(new TimeQuery);
-	bsTq.reset(new TimeQuery);
+	msTq.reset(new gl::TimeQuery);
+	isTq.reset(new gl::TimeQuery);
+	ppsTq.reset(new gl::TimeQuery);
+	bsTq.reset(new gl::TimeQuery);
 }
 
 

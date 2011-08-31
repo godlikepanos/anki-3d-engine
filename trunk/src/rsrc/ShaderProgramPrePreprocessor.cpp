@@ -67,25 +67,25 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		{
 			token = &scanner.getNextToken();
 			// pragma
-			if(Parser::isIdentifier(*token, "pragma"))
+			if(parser::isIdentifier(*token, "pragma"))
 			{
 				token = &scanner.getNextToken();
 				// anki
-				if(Parser::isIdentifier(*token, "anki"))
+				if(parser::isIdentifier(*token, "anki"))
 				{
 					// start
 					token = &scanner.getNextToken();
-					if(Parser::isIdentifier(*token, "start"))
+					if(parser::isIdentifier(*token, "start"))
 					{
 						parseStartPragma(scanner, filename, depth, lines);
 					}
 					// include
-					else if(Parser::isIdentifier(*token, "include"))
+					else if(parser::isIdentifier(*token, "include"))
 					{
 						parseIncludePragma(scanner, filename, depth, lines);
 					}
 					// transformFeedbackVarying
-					else if(Parser::isIdentifier(*token,
+					else if(parser::isIdentifier(*token,
 						"transformFeedbackVarying"))
 					{
 						parseTrffbVarying(scanner, filename, depth, lines);
@@ -236,7 +236,7 @@ void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
 
 	for(uint i = 0; i < ST_NUM; i++)
 	{
-		if(Parser::isIdentifier(*token, startTokens[i]))
+		if(parser::isIdentifier(*token, startTokens[i]))
 		{
 			cbp = &shaderStarts[i];
 			name = startTokens[i];

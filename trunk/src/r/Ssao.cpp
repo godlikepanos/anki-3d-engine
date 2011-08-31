@@ -12,7 +12,7 @@ namespace r {
 //==============================================================================
 // createFbo                                                                   =
 //==============================================================================
-void Ssao::createFbo(Fbo& fbo, Texture& fai)
+void Ssao::createFbo(gl::Fbo& fbo, Texture& fai)
 {
 	try
 	{

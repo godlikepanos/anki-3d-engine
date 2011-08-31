@@ -2,6 +2,7 @@
 #define CLN_COLLISION_SHAPE
 
 
+/// Contains collision detection classes
 namespace cln {
 
 

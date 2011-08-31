@@ -36,12 +36,12 @@ class Is: private RenderingPass
 	private:
 		Sm sm; ///< Shadowmapping pass
 		Smo smo; /// Stencil masking optimizations pass
-		Fbo fbo; ///< This FBO writes to the Is::fai
+		gl::Fbo fbo; ///< This FBO writes to the Is::fai
 		Texture fai; ///< The one and only FAI
 		uint stencilRb; ///< Illumination stage stencil buffer
 		Texture copyMsDepthFai;
-		Fbo readFbo;
-		Fbo writeFbo;
+		gl::Fbo readFbo;
+		gl::Fbo writeFbo;
 		/// Illumination stage ambient pass shader program
 		RsrcPtr<ShaderProgram> ambientPassSProg;
 		/// Illumination stage point light shader program

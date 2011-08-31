@@ -19,7 +19,7 @@ void SkelAnim::load(const char* filename)
 	}
 	keyframes.resize(token->getValue().getInt());
 
-	Parser::parseArrOfNumbers(scanner, false, false, keyframes.size(),
+	parser::parseArrOfNumbers(scanner, false, false, keyframes.size(),
 		&keyframes[0]);
 
 	// bones num
@@ -49,11 +49,11 @@ void SkelAnim::load(const char* filename)
 			{
 				// parse the quat
 				float tmp[4];
-				Parser::parseArrOfNumbers(scanner, false, true, 4, &tmp[0]);
+				parser::parseArrOfNumbers(scanner, false, true, 4, &tmp[0]);
 
 				// parse the vec3
 				Vec3 trs;
-				Parser::parseArrOfNumbers(scanner, false, true, 3, &trs[0]);
+				parser::parseArrOfNumbers(scanner, false, true, 3, &trs[0]);
 
 				boneAnims[i].bonePoses.push_back(BonePose(Quat(tmp[1], tmp[2],
 					tmp[3], tmp[0]), trs));

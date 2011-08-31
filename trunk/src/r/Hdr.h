@@ -44,9 +44,9 @@ class Hdr: private RenderingPass
 		uint blurringIterationsNum; ///< The blurring iterations of the tone map
 		float blurringDist; ///< Distance in blurring
 		float renderingQuality;
-		Fbo toneFbo;
-		Fbo hblurFbo;
-		Fbo vblurFbo;
+		gl::Fbo toneFbo;
+		gl::Fbo hblurFbo;
+		gl::Fbo vblurFbo;
 		RsrcPtr<ShaderProgram> toneSProg;
 		RsrcPtr<ShaderProgram> hblurSProg;
 		RsrcPtr<ShaderProgram> vblurSProg;
@@ -54,7 +54,7 @@ class Hdr: private RenderingPass
 		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 		Texture fai; ///< The final FAI
 
-		void initFbo(Fbo& fbo, Texture& fai);
+		void initFbo(gl::Fbo& fbo, Texture& fai);
 };
 
 

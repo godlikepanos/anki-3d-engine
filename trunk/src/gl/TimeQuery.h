@@ -1,8 +1,11 @@
-#ifndef TIME_QUERY_H
-#define TIME_QUERY_H
+#ifndef GL_TIME_QUERY_H
+#define GL_TIME_QUERY_H
 
 #include <GL/glew.h>
 #include <boost/array.hpp>
+
+
+namespace gl {
 
 
 /// Used to profile the GPU. It gets the time elapsed from when the begin() is
@@ -34,6 +37,9 @@ class TimeQuery
 		State state; ///< The query state. It saves us from improper use of the
 		             ///< the class
 };
+
+
+} // end namespace
 
 
 #endif

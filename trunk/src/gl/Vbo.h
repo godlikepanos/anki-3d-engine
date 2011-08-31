@@ -1,7 +1,10 @@
-#ifndef VBO_H
-#define VBO_H
+#ifndef GL_VBO_H
+#define GL_VBO_H
 
 #include "BufferObject.h"
+
+
+namespace gl {
 
 
 /// This is a wrapper for Vertex Buffer Objects to prevent us from making
@@ -48,6 +51,9 @@ inline void Vbo::unbindAllTargets()
 	glBindBufferARB(GL_ARRAY_BUFFER, 0);
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
+
+
+} // end namespace
 
 
 #endif

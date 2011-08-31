@@ -40,15 +40,15 @@ class Ssao: private RenderingPass
 		bool enabled;
 		float renderingQuality;
 		float blurringIterationsNum;
-		Fbo ssaoFbo;
-		Fbo hblurFbo;
-		Fbo vblurFbo;
+		gl::Fbo ssaoFbo;
+		gl::Fbo hblurFbo;
+		gl::Fbo vblurFbo;
 		RsrcPtr<Texture> noiseMap;
 		RsrcPtr<ShaderProgram> ssaoSProg;
 		RsrcPtr<ShaderProgram> hblurSProg;
 		RsrcPtr<ShaderProgram> vblurSProg;
 
-		void createFbo(Fbo& fbo, Texture& fai);
+		void createFbo(gl::Fbo& fbo, Texture& fai);
 };
 
 

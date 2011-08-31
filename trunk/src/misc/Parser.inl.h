@@ -3,7 +3,7 @@
 #include "util/Exception.h"
 
 
-namespace Parser {
+namespace parser {
 
 
 //==============================================================================
@@ -256,4 +256,4 @@ inline std::string parseString(scanner::Scanner& scanner)
 }
 
 
-} // End namespace Parser
+} // End namespace

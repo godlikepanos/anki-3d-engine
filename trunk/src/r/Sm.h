@@ -46,7 +46,7 @@ class Sm: private RenderingPass
 		/// used
 		struct Level
 		{
-			Fbo fbo; ///< Illumination stage shadowmapping FBO
+			gl::Fbo fbo; ///< Illumination stage shadowmapping FBO
 			Texture shadowMap; ///< The shadowmap for that level
 			uint resolution; ///< The shadowmap's resolution
 			bool bilinear; ///< Enable bilinar filtering in shadowmap

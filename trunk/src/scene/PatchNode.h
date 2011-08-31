@@ -20,6 +20,8 @@ class Material;
 class PatchNode: public RenderableNode
 {
 	public:
+		typedef boost::array<const gl::Vbo*, Mesh::VBOS_NUM> VboArray;
+
 		PatchNode(const ModelPatch& modelPatch, SceneNode* parent);
 
 		/// Do nothing
@@ -29,7 +31,7 @@ class PatchNode: public RenderableNode
 		/// @{
 
 		/// Implements RenderableNode::getVao
-		const Vao& getVao(PassType p) const {return vaos[p];}
+		const gl::Vao& getVao(PassType p) const {return vaos[p];}
 
 		/// Implements RenderableNode::getVertIdsNum
 		uint getVertIdsNum() const {return rsrc.getMesh().getVertIdsNum();}
@@ -51,7 +53,7 @@ class PatchNode: public RenderableNode
 		const ModelPatch& rsrc;
 
 		/// The VAOs. All VBOs could be attached except for the vertex weights
-		boost::array<Vao, PASS_TYPES_NUM> vaos;
+		boost::array<gl::Vao, PASS_TYPES_NUM> vaos;
 
 		boost::scoped_ptr<MaterialRuntime> mtlRun; ///< Material runtime
 
@@ -59,7 +61,8 @@ class PatchNode: public RenderableNode
 		/// The location of the uniform variables are hard coded. See
 		/// MaterialVertex.glsl
 		static void createVao(const Material& material,
-			const boost::array<const Vbo*, Mesh::VBOS_NUM>& vbos, Vao& vao);
+			const VboArray& vbos,
+			gl::Vao& vao);
 };
 
 

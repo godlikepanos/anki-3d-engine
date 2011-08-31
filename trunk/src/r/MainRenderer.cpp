@@ -43,7 +43,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	sProg.loadRsrc("shaders/Final.glsl");
 
-	dbgTq.reset(new TimeQuery);
+	dbgTq.reset(new gl::TimeQuery);
 
 	//
 	// init the offscreen Renderer

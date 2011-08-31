@@ -35,7 +35,7 @@ class Smo: public RenderingPass
 			~Geom();
 
 			RsrcPtr<Mesh> mesh;
-			Vao vao;
+			gl::Vao vao;
 		};
 
 		Geom sphereGeom;

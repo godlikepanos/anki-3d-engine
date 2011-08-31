@@ -1,9 +1,13 @@
-#ifndef BUFFER_OBJECT_H
-#define BUFFER_OBJECT_H
+#ifndef GL_BUFFER_OBJECT_H
+#define GL_BUFFER_OBJECT_H
 
 #include <GL/glew.h>
 #include "util/Assert.h"
 #include "util/StdTypes.h"
+
+
+/// Contains OpenGL wrappers
+namespace gl {
 
 
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
@@ -139,6 +143,9 @@ inline void BufferObject::deleteBuff()
 	glDeleteBuffers(1, &glId);
 	glId = 0;
 }
+
+
+} // end namespace
 
 
 #endif
