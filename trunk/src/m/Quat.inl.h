@@ -1,7 +1,4 @@
-#include "Common.inl.h"
-
-
-namespace m {
+#include "MathCommonSrc.h"
 
 
 //==============================================================================
@@ -14,14 +11,17 @@ inline Quat::Quat()
 	x() = y() = z() = w() = 0.0;
 }
 
+
 // float
-inline Quat::Quat(float f)
+inline Quat::Quat(const float f)
 {
 	x() = y() = z() = w() = f;
 }
 
+
 // float, float, float, float
-inline Quat::Quat(float x_, float y_, float z_, float w_)
+inline Quat::Quat(const float x_, const float y_, const float z_,
+	const float w_)
 {
 	x() = x_;
 	y() = y_;
@@ -29,8 +29,9 @@ inline Quat::Quat(float x_, float y_, float z_, float w_)
 	w() = w_;
 }
 
+
 // constructor [vec2, float, float]
-inline Quat::Quat(const Vec2& v, float z_, float w_)
+inline Quat::Quat(const Vec2& v, const float z_, const float w_)
 {
 	x() = v.x();
 	y() = v.y();
@@ -38,14 +39,16 @@ inline Quat::Quat(const Vec2& v, float z_, float w_)
 	w() = w_;
 }
 
+
 // constructor [vec3, float]
-inline Quat::Quat(const Vec3& v, float w_)
+inline Quat::Quat(const Vec3& v, const float w_)
 {
 	x() = v.x();
 	y() = v.y();
 	z() = v.z();
 	w() = w_;
 }
+
 
 // constructor [vec4]
 inline Quat::Quat(const Vec4& v)
@@ -56,6 +59,7 @@ inline Quat::Quat(const Vec4& v)
 	w() = v.w();
 }
 
+
 // Copy
 inline Quat::Quat(const Quat& b)
 {
@@ -65,11 +69,12 @@ inline Quat::Quat(const Quat& b)
 	w() = b.w();
 }
 
+
 // mat3
 inline Quat::Quat(const Mat3& m3)
 {
 	float trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
-	if(trace > EPSILON)
+	if(trace > Math::EPSILON)
 	{
 		float s = 0.5 / sqrt(trace);
 		w() = 0.25 / s;
@@ -106,17 +111,18 @@ inline Quat::Quat(const Mat3& m3)
 	}
 }
 
+
 // euler
 inline Quat::Quat(const Euler& eu)
 {
 	float cx, sx;
-	sinCos(eu.y() * 0.5, sx, cx);
+	Math::sinCos(eu.y() * 0.5, sx, cx);
 
 	float cy, sy;
-	sinCos(eu.z() * 0.5, sy, cy);
+	Math::sinCos(eu.z() * 0.5, sy, cy);
 
 	float cz, sz;
-	sinCos(eu.x() * 0.5, sz, cz);
+	Math::sinCos(eu.x() * 0.5, sz, cz);
 
 	float cxcy = cx * cy;
 	float sxsy = sx * sy;
@@ -126,11 +132,12 @@ inline Quat::Quat(const Euler& eu)
 	w() = cxcy * cz - sxsy * sz;
 }
 
+
 // euler
 inline Quat::Quat(const Axisang& axisang)
 {
 	float lengthsq = axisang.getAxis().getLengthSquared();
-	if(isZero(lengthsq))
+	if(Math::isZero(lengthsq))
 	{
 		(*this) = getIdentity();
 		return;
@@ -139,7 +146,7 @@ inline Quat::Quat(const Axisang& axisang)
 	float rad = axisang.getAngle() * 0.5;
 
 	float sintheta, costheta;
-	sinCos(rad, sintheta, costheta);
+	Math::sinCos(rad, sintheta, costheta);
 
 	float scalefactor = sintheta / sqrt(lengthsq);
 
@@ -165,30 +172,36 @@ inline float& Quat::x()
 	return vec.x;
 }
 
+
 inline float Quat::y() const
 {
 	return vec.y;
 }
+
 
 inline float& Quat::y()
 {
 	return vec.y;
 }
 
+
 inline float Quat::z() const
 {
 	return vec.z;
 }
+
 
 inline float& Quat::z()
 {
 	return vec.z;
 }
 
+
 inline float Quat::w() const
 {
 	return vec.w;
 }
+
 
 inline float& Quat::w()
 {
@@ -210,6 +223,7 @@ inline Quat& Quat::operator=(const Quat& b)
 	return *this;
 }
 
+
 // *
 inline Quat Quat::operator *(const Quat& b) const
 {
@@ -220,6 +234,7 @@ inline Quat Quat::operator *(const Quat& b) const
 	);
 }
 
+
 // *=
 inline Quat& Quat::operator *=(const Quat& b)
 {
@@ -227,18 +242,24 @@ inline Quat& Quat::operator *=(const Quat& b)
 	return (*this);
 }
 
+
 // ==
 inline bool Quat::operator ==(const Quat& b) const
 {
-	return isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()) &&
-		isZero(w() - b.w());
+	return Math::isZero(x() - b.x()) &&
+		Math::isZero(y() - b.y()) &&
+		Math::isZero(z() - b.z()) &&
+		Math::isZero(w() - b.w());
 }
+
 
 // !=
 inline bool Quat::operator !=(const Quat& b) const
 {
-	return !(isZero(x() - b.x()) && isZero(y() - b.y()) &&
-		isZero(z() - b.z()) && isZero(w() - b.w()));
+	return !(Math::isZero(x() - b.x()) &&
+		Math::isZero(y() - b.y()) &&
+		Math::isZero(z() - b.z()) &&
+		Math::isZero(w() - b.w()));
 }
 
 
@@ -254,11 +275,13 @@ inline void Quat::conjugate()
 	z() = -z();
 }
 
+
 // getConjugated
 inline Quat Quat::getConjugated() const
 {
 	return Quat(-x(), -y(), -z(), w());
 }
+
 
 // Normalized
 inline Quat Quat::getNormalized() const
@@ -266,16 +289,18 @@ inline Quat Quat::getNormalized() const
 	return Quat(Vec4((*this)).getNormalized());
 }
 
+
 // normalize
 inline void Quat::normalize()
 {
 	(*this) = getNormalized();
 }
 
+
 // getLength
 inline float Quat::getLength() const
 {
-	return m::sqrt(w() * w() + x() * x() + y() * y() + z() * z());
+	return Math::sqrt(w() * w() + x() * x() + y() * y() + z() * z());
 }
 
 
@@ -284,17 +309,19 @@ inline Quat Quat::getInverted() const
 {
 	float norm = w() * w() + x() * x() + y() * y() + z() * z();
 
-	ASSERT(!isZero(norm)); // Norm is zero
+	ASSERT(!Math::isZero(norm)); // Norm is zero
 
 	float normi = 1.0 / norm;
 	return Quat(-normi * x(), -normi * y(), -normi * z(), normi * w());
 }
+
 
 // invert
 inline void Quat::invert()
 {
 	(*this) = getInverted();
 }
+
 
 // CalcFromVecVec
 inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
@@ -304,7 +331,7 @@ inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 	normalize();
 	w() += 1.0;
 
-	if(w() <= EPSILON)
+	if(w() <= Math::EPSILON)
 	{
 		if(from.z() * from.z() > from.x() * from.x())
 		{
@@ -318,11 +345,13 @@ inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 	normalize();
 }
 
+
 // getRotated
 inline Quat Quat::getRotated(const Quat& b) const
 {
 	return (*this) * b;
 }
+
 
 // rotate
 inline void Quat::rotate(const Quat& b)
@@ -330,14 +359,16 @@ inline void Quat::rotate(const Quat& b)
 	(*this) = getRotated(b);
 }
 
+
 // dot
 inline float Quat::dot(const Quat& b) const
 {
 	return w() * b.w() + x() * b.x() + y() * b.y() + z() * b.z();
 }
 
+
 // SLERP
-inline Quat Quat::slerp(const Quat& q1_, float t) const
+inline Quat Quat::slerp(const Quat& q1_, const float t) const
 {
 	const Quat& q0 = (*this);
 	Quat q1(q1_);
@@ -348,13 +379,14 @@ inline Quat Quat::slerp(const Quat& q1_, float t) const
 		q1 = Quat(-Vec4(q1)); // quat changes
 		cosHalfTheta = -cosHalfTheta;
 	}
+
 	if(fabs(cosHalfTheta) >= 1.0f)
 	{
 		return Quat(q0);
 	}
 
 	float halfTheta = acos(cosHalfTheta);
-	float sinHalfTheta = m::sqrt(1.0 - cosHalfTheta*cosHalfTheta);
+	float sinHalfTheta = Math::sqrt(1.0 - cosHalfTheta*cosHalfTheta);
 
 	if(fabs(sinHalfTheta) < 0.001)
 	{
@@ -370,12 +402,14 @@ inline Quat Quat::slerp(const Quat& q1_, float t) const
 	return Quat(sum);
 }
 
+
 // setIdentity
 inline void Quat::setIdentity()
 {
 	x() = y() = z() = 0.0;
 	w() = 1.0;
 }
+
 
 // getIdentity
 inline const Quat& Quat::getIdentity()
@@ -384,12 +418,14 @@ inline const Quat& Quat::getIdentity()
 	return ident;
 }
 
+
+//==============================================================================
+// Friends                                                                     =
+//==============================================================================
+
 // print
 inline std::ostream& operator<<(std::ostream& s, const Quat& q)
 {
 	s << q.w() << ' ' << q.x() << ' ' << q.y() << ' ' << q.z();
 	return s;
 }
-
-
-} // end namespace

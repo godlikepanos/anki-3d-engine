@@ -1,5 +1,5 @@
-#ifndef PHYS_MASTER_CONTAINER_H
-#define PHYS_MASTER_CONTAINER_H
+#ifndef PHYS_WORLD_H
+#define PHYS_WORLD_H
 
 #include "Convertors.h"
 #include "util/Vec.h"
@@ -9,17 +9,12 @@
 
 
 class btIDebugDraw;
-namespace phys {
 class Character;
 class RigidBody;
-}
-
-
-namespace phys {
 
 
 /// The master container for all physics related stuff.
-class MasterContainer
+class PhysWorld
 {
 	friend class Character; ///< For registering and unregistering
 	friend class RigidBody;  ///< For registering and unregistering
@@ -35,8 +30,8 @@ class MasterContainer
 		};
 
 	public:
-		MasterContainer();
-		~MasterContainer();
+		PhysWorld();
+		~PhysWorld();
 
 		/// @name Accessors
 		/// @{
@@ -61,7 +56,5 @@ class MasterContainer
 		Vec<Character*> characters;
 };
 
-
-} // end namespace
 
 #endif

@@ -1,11 +1,11 @@
-#ifndef M_EULER_H
-#define M_EULER_H
+#ifndef EULER_H
+#define EULER_H
 
-#include "Common.h"
+#include "MathCommonIncludes.h"
 
 
-namespace m {
-
+/// @addtogroup Math
+///
 
 /// Used for rotations. It cannot describe a rotation accurately though
 class Euler
@@ -14,7 +14,7 @@ class Euler
 		/// @name Constructors
 		/// @{
 		explicit Euler();
-		explicit Euler(float x, float y, float z);
+		explicit Euler(const float x, const float y, const float z);
 		         Euler(const Euler& b);
 		explicit Euler(const Quat& q);
 		explicit Euler(const Mat3& m3);
@@ -22,8 +22,8 @@ class Euler
 
 		/// @name Accessors
 		/// @{
-		float& operator [](uint i);
-		float operator [](uint i) const;
+		float& operator [](const size_t i);
+		float operator [](const size_t i) const;
 		float& x();
 		float x() const;
 		float& y();
@@ -35,6 +35,11 @@ class Euler
 		/// @name Operators with same
 		/// @{
 		Euler& operator=(const Euler& b);
+		/// @}
+
+		/// @name Friends
+		/// @{
+		friend std::ostream& operator<<(std::ostream& s, const Euler& e);
 		/// @}
 
 	private:
@@ -51,15 +56,7 @@ class Euler
 		};
 		/// @}
 };
-
-
-/// @name Other operators
-/// @{
-extern std::ostream& operator<<(std::ostream& s, const Euler& e);
 /// @}
-
-
-} // end namespace
 
 
 #include "Euler.inl.h"

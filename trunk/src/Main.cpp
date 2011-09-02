@@ -7,7 +7,7 @@
 #include "scene/OrthographicCamera.h"
 #include "m/Math.h"
 #include "r/Renderer.h"
-#include "ui/Painter.h"
+#include "ui/UiPainter.h"
 #include "core/App.h"
 #include "rsrc/Mesh.h"
 #include "scene/Light.h"
@@ -37,8 +37,8 @@
 #include "rsrc/Skin.h"
 #include "scene/MaterialRuntime.h"
 #include "core/Globals.h"
-#include "ui/FtFontLoader.h"
-#include "ui/Font.h"
+#include "ui/UiFtFontLoader.h"
+#include "ui/UiFont.h"
 #include "event/EventManager.h"
 #include "event/SceneColorEvent.h"
 #include "event/MainRendererPpsHdrEvent.h"
@@ -56,9 +56,9 @@ SkinNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
 ParticleEmitterNode* partEmitter;
-phys::Character* character;
+Character* character;
 
-ui::Painter* painter;
+UiPainter* painter;
 
 
 // Physics
@@ -84,12 +84,12 @@ void initPhysics()
 	groundTransform.setIdentity();
 	groundTransform.setOrigin(Vec3(0,-50, 0));
 
-	phys::RigidBody::Initializer init;
+	RigidBody::Initializer init;
 	init.mass = 0.0;
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new phys::RigidBody(SceneSingleton::get().getPhysMasterContainer(), init);
+	new RigidBody(SceneSingleton::get().getPhysPhysWorld(), init);
 
 
 	/*{
@@ -132,14 +132,14 @@ void init()
 
 	srand(unsigned(time(NULL)));
 
-	painter = new ui::Painter(Vec2(AppSingleton::get().getWindowWidth(),
-	                               AppSingleton::get().getWindowHeight()));
+	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
+		AppSingleton::get().getWindowHeight()));
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
-	cam->setAll(MainRendererSingleton::get().getAspectRatio()*toRad(60.0), toRad(60.0), 0.5, 200.0);
+	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(60.0), Math::toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -159,10 +159,10 @@ void init()
 
 	spot_lights[0] = new SpotLight(false, NULL);
 	spot_lights[0]->init("maps/temple/light2.light");
-	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(toRad(-20), toRad(20), 0.0)), 1.0));
+	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
 	spot_lights[1] = new SpotLight(false, NULL);
 	spot_lights[1]->init("maps/temple/light3.light");
-	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(toRad(-70), toRad(-20), 0.0)), 1.0));
+	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(Math::toRad(-70), Math::toRad(-20), 0.0)), 1.0));
 
 
 	// horse
@@ -271,7 +271,7 @@ void mainLoopExtra()
 	InputSingleton::get().handleEvents();
 
 	float dist = 0.2;
-	float ang = toRad(3.0);
+	float ang = Math::toRad(3.0);
 	float scale = 0.01;
 
 	// move the camera
@@ -380,7 +380,7 @@ void mainLoop()
 		mainLoopExtra();
 		void execStdinScpripts();
 		execStdinScpripts();
-		SceneSingleton::get().getPhysMasterContainer().update(prevUpdateTime, crntTime);
+		SceneSingleton::get().getPhysPhysWorld().update(prevUpdateTime, crntTime);
 		SceneSingleton::get().updateAllWorldStuff(prevUpdateTime, crntTime);
 		SceneSingleton::get().doVisibilityTests(*AppSingleton::get().getActiveCam());
 		SceneSingleton::get().updateAllControllers();
@@ -523,7 +523,7 @@ void initSubsystems(int argc, char* argv[])
 	parallel::ManagerSingleton::get().init(4);
 
 	// Add drawer to physics
-	SceneSingleton::get().getPhysMasterContainer().setDebugDrawer(
+	SceneSingleton::get().getPhysPhysWorld().setDebugDrawer(
 		new PhysDbgDrawer(MainRendererSingleton::get().getDbg()));
 }
 

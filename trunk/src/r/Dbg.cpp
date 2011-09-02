@@ -110,14 +110,14 @@ void Dbg::drawSphere(float radius, int complexity)
 		complexityToPreCalculatedSphere[complexity] = Vec<Vec3>();
 		sphereLines = &complexityToPreCalculatedSphere[complexity];
 
-		float fi = m::PI / complexity;
+		float fi = Math::PI / complexity;
 
 		Vec3 prev(1.0, 0.0, 0.0);
-		for(float th = fi; th < m::PI * 2.0 + fi; th += fi)
+		for(float th = fi; th < Math::PI * 2.0 + fi; th += fi)
 		{
 			Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
 
-			for(float th2 = 0.0; th2 < m::PI; th2 += fi)
+			for(float th2 = 0.0; th2 < Math::PI; th2 += fi)
 			{
 				Mat3 rot(Euler(th2, 0.0, 0.0));
 
@@ -127,7 +127,7 @@ void Dbg::drawSphere(float radius, int complexity)
 				sphereLines->push_back(rotPrev);
 				sphereLines->push_back(rotP);
 
-				Mat3 rot2(Euler(0.0, 0.0, m::PI / 2));
+				Mat3 rot2(Euler(0.0, 0.0, Math::PI / 2));
 
 				sphereLines->push_back(rot2 * rotPrev);
 				sphereLines->push_back(rot2 * rotP);
@@ -359,7 +359,7 @@ void Dbg::run()
 	///////////////
 
 
-	SceneSingleton::get().getPhysMasterContainer().getWorld().
+	SceneSingleton::get().getPhysPhysWorld().getWorld().
 		debugDrawWorld();
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

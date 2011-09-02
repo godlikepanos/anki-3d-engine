@@ -1,11 +1,13 @@
-#ifndef M_TRANSFORM_H
-#define M_TRANSFORM_H
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 
-#include "Common.h"
+#include "Vec3.h"
+#include "Mat3.h"
+#include "MathCommonIncludes.h"
 
 
-namespace m {
-
+/// @addtogroup Math
+/// @{
 
 /// For transformations
 class Transform
@@ -17,7 +19,7 @@ class Transform
 		         Transform(const Transform& b);
 		explicit Transform(const Mat4& m4);
 		explicit Transform(const Vec3& origin, const Mat3& rotation_,
-			float scale_);
+			const float scale_);
 		/// @}
 
 		/// @name Accessors
@@ -32,7 +34,7 @@ class Transform
 		
 		float getScale() const;
 		float& getScale();
-		void setScale(float s);
+		void setScale(const float s);
 		/// @}
 
 		/// @name Operators with same
@@ -56,9 +58,6 @@ class Transform
 		float scale; ///< The uniform scaling
 		/// @}
 };
-
-
-} // end namespace
 
 
 #include "Transform.inl.h"

@@ -5,9 +5,7 @@
 #include "ModelNode.h"
 
 
-namespace phys {
 class RigidBody;
-}
 
 
 /// The scene node particle class
@@ -19,13 +17,13 @@ class Particle: public ModelNode
 
 		GETTER_SETTER(float, timeOfDeath, getTimeOfDeath, setTimeOfDeath)
 		bool isDead() const {return timeOfDeath < 0.0;}
-		void setNewRigidBody(phys::RigidBody* body_);
-		phys::RigidBody& getRigidBody() {return *body;}
-		const phys::RigidBody& getRigidBody() const {return *body;}
+		void setNewRigidBody(RigidBody* body_);
+		RigidBody& getRigidBody() {return *body;}
+		const RigidBody& getRigidBody() const {return *body;}
 
 	private:
 		float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
-		boost::scoped_ptr<phys::RigidBody> body; ///< For garbage collection
+		boost::scoped_ptr<RigidBody> body; ///< For garbage collection
 };
 
 

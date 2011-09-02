@@ -1,11 +1,12 @@
-#ifndef M_AXISANG_H
-#define M_AXISANG_H
+#ifndef AXISANG_H
+#define AXISANG_H
 
-#include "Common.h"
+#include "Vec3.h"
+#include "MathCommonIncludes.h"
 
 
-namespace m {
-
+/// @addtogroup Math
+/// @{
 
 /// Used for rotations
 class Axisang
@@ -15,7 +16,7 @@ class Axisang
 		/// @{
 		explicit Axisang();
 		         Axisang(const Axisang& b);
-		explicit Axisang(float rad, const Vec3& axis_);
+		explicit Axisang(const float rad, const Vec3& axis_);
 		explicit Axisang(const Quat& q);
 		explicit Axisang(const Mat3& m3);
 		/// @}
@@ -24,7 +25,7 @@ class Axisang
 		/// @{
 		float getAngle() const;
 		float& getAngle();
-		void setAngle(float a);
+		void setAngle(const float a);
 		
 		const Vec3& getAxis() const;
 		Vec3& getAxis();
@@ -36,6 +37,11 @@ class Axisang
 		Axisang& operator=(const Axisang& b);
 		/// @}
 
+		/// @name Friends
+		/// @{
+		friend std::ostream& operator<<(std::ostream& s, const Axisang& a);
+		/// @}
+
 	private:
 		/// @name Data
 		/// @{
@@ -43,9 +49,7 @@ class Axisang
 		Vec3 axis;
 		/// @}
 };
-
-
-} // end namespace
+/// @}
 
 
 #include "Axisang.inl.h"

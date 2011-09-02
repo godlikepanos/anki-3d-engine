@@ -1,17 +1,14 @@
-#include "FtFontLoader.h"
+#include "UiFtFontLoader.h"
 #include "util/Exception.h"
 #include "core/Logger.h"
 #include "core/Globals.h"
 #include <boost/foreach.hpp>
 
 
-namespace ui {
-
-
 //==============================================================================
 // getAllGlyphs                                                                =
 //==============================================================================
-void FtFontLoader::getAllGlyphs()
+void UiFtFontLoader::getAllGlyphs()
 {
 	glyphs.resize(GLYPHS_NUM);
 
@@ -43,7 +40,7 @@ void FtFontLoader::getAllGlyphs()
 //==============================================================================
 // copyBitmap                                                                  =
 //==============================================================================
-void FtFontLoader::copyBitmap(const uchar* srcImg, const FT_Vector& srcSize,
+void UiFtFontLoader::copyBitmap(const uchar* srcImg, const FT_Vector& srcSize,
 	const FT_Vector& pos)
 {
 	for(int i = 0; i < srcSize.y; i++)
@@ -61,7 +58,7 @@ void FtFontLoader::copyBitmap(const uchar* srcImg, const FT_Vector& srcSize,
 //==============================================================================
 // computeImageSize                                                            =
 //==============================================================================
-void FtFontLoader::computeImageSize()
+void UiFtFontLoader::computeImageSize()
 {
 	imgSize.x = 0;
 	imgSize.y = 0;
@@ -112,7 +109,7 @@ void FtFontLoader::computeImageSize()
 //==============================================================================
 // createImage                                                                 =
 //==============================================================================
-void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
+void UiFtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 {
 	FT_Error error;
 
@@ -200,7 +197,7 @@ void FtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
 //==============================================================================
 // saveImage                                                                   =
 //==============================================================================
-void FtFontLoader::saveImage(const char* filename) const
+void UiFtFontLoader::saveImage(const char* filename) const
 {
 	char tgaHeader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -231,6 +228,3 @@ void FtFontLoader::saveImage(const char* filename) const
 
 	fclose(fp);
 }
-
-
-} // end namespace

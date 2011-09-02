@@ -51,13 +51,13 @@ void PerspectiveCamera::calcLSpaceFrustumPlanes()
 {
 	float c, s; // cos & sine
 
-	sinCos(PI + fovX / 2, s, c);
+	Math::sinCos(Math::PI + fovX / 2, s, c);
 	// right
 	lspaceFrustumPlanes[FP_RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
 	// left
 	lspaceFrustumPlanes[FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
 
-	sinCos((3 * PI - fovY) * 0.5, s, c);
+	Math::sinCos((3 * Math::PI - fovY) * 0.5, s, c);
 	// top
 	lspaceFrustumPlanes[FP_TOP] = Plane(Vec3(0.0, s, c), 0.0);
 	// bottom
@@ -75,7 +75,7 @@ void PerspectiveCamera::calcLSpaceFrustumPlanes()
 //==============================================================================
 void PerspectiveCamera::getExtremePoints(Vec3* points, uint& pointsNum) const
 {
-	float x = getZFar() / tan((PI - getFovX()) / 2.0);
+	float x = getZFar() / tan((Math::PI - getFovX()) / 2.0);
 	float y = tan(getFovY() / 2.0) * getZFar();
 	float z = -getZFar();
 

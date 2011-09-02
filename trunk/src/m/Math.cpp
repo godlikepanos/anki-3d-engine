@@ -1,14 +1,18 @@
-#include "Funcs.h"
+#include "MathCommonSrc.h"
 
 
-namespace m {
+//==============================================================================
+// Statics                                                                     =
+//==============================================================================
 
+const float Math::PI = 3.14159265358979323846;
+const float Math::EPSILON = 1.0e-6;
 
 
 //==============================================================================
 // polynomialSinQuadrant                                                       =
 //==============================================================================
-static float polynomialSinQuadrant(float a)
+float Math::polynomialSinQuadrant(float a)
 {
 	return a * (1.0 + a * a * (-0.16666 + a * a *
 		(0.0083143 - a * a * 0.00018542)));
@@ -18,7 +22,7 @@ static float polynomialSinQuadrant(float a)
 //==============================================================================
 // sinCos                                                                      =
 //==============================================================================
-void sinCos(float a, float& sina, float& cosa)
+void Math::sinCos(float a, float& sina, float& cosa)
 {
 	bool negative = false;
 	if(a < 0.0)
@@ -26,7 +30,7 @@ void sinCos(float a, float& sina, float& cosa)
 		a = -a;
 		negative = true;
 	}
-	const float kTwoOverPi = 1.0 / (PI/2.0);
+	const float kTwoOverPi = 1.0 / (Math::PI / 2.0);
 	float floatA = kTwoOverPi * a;
 	int intA = (int)floatA;
 
@@ -62,6 +66,3 @@ void sinCos(float a, float& sina, float& cosa)
 		sina = -sina;
 	}
 }
-
-
-} // end namespace

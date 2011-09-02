@@ -14,7 +14,7 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	normal = u.cross(v);
 
 	// length of normal had better not be zero
-	ASSERT(!isZero(normal.getLengthSquared()));
+	ASSERT(!Math::isZero(normal.getLengthSquared()));
 
 	normal.normalize();
 	offset = normal.dot(p0); // ToDo: correct??
@@ -29,10 +29,10 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 	// normalize for cheap distance checks
 	float lensq = a * a + b * b + c * c;
 	// length of normal had better not be zero
-	ASSERT(!isZero(lensq));
+	ASSERT(!Math::isZero(lensq));
 
 	// recover gracefully
-	if(isZero(lensq))
+	if(Math::isZero(lensq))
 	{
 		normal = Vec3(1.0, 0.0, 0.0);
 		offset = 0.0;

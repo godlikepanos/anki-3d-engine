@@ -5,6 +5,7 @@
 #include <boost/array.hpp>
 #include "m/Math.h"
 #include "util/StdTypes.h"
+#include "util/Accessors.h"
 #include "util/Vec.h"
 
 

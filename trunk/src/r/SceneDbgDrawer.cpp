@@ -47,7 +47,7 @@ void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
 	dbg.setModelMat(Mat4(cam.getWorldTransform()));
 
 	const float camLen = 1.0;
-	float tmp0 = camLen / tan((m::PI - cam.getFovX()) * 0.5) + 0.001;
+	float tmp0 = camLen / tan((Math::PI - cam.getFovX()) * 0.5) + 0.001;
 	float tmp1 = camLen * tan(cam.getFovY() * 0.5) + 0.001;
 
 	Vec3 points[] = {

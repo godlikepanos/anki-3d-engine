@@ -1,7 +1,4 @@
-#include "Common.inl.h"
-
-
-namespace m {
+#include "MathCommonSrc.h"
 
 
 //==============================================================================
@@ -14,13 +11,15 @@ inline Euler::Euler()
 	x() = y() = z() = 0.0;
 }
 
+
 // float, float, float
-inline Euler::Euler(float x_, float y_, float z_)
+inline Euler::Euler(const float x_, const float y_, const float z_)
 {
 	x() = x_;
 	y() = y_;
 	z() = z_;
 }
+
 
 // Copy
 inline Euler::Euler(const Euler& b)
@@ -30,6 +29,7 @@ inline Euler::Euler(const Euler& b)
 	z() = b.z();
 }
 
+
 // Quat
 inline Euler::Euler(const Quat& q)
 {
@@ -37,14 +37,14 @@ inline Euler::Euler(const Quat& q)
 	if(test > 0.499)
 	{
 		y() = 2.0 * atan2(q.x(), q.w());
-		z() = PI / 2.0;
+		z() = Math::PI / 2.0;
 		x() = 0.0;
 		return;
 	}
 	if(test < -0.499)
 	{
 		y() = -2.0 * atan2(q.x(), q.w());
-		z() = -PI / 2.0;
+		z() = -Math::PI / 2.0;
 		x() = 0.0;
 		return;
 	}
@@ -59,6 +59,7 @@ inline Euler::Euler(const Quat& q)
 	    1.0 - 2.0 * sqx - 2.0 * sqz);
 }
 
+
 // mat3
 inline Euler::Euler(const Mat3& m3)
 {
@@ -67,9 +68,9 @@ inline Euler::Euler(const Mat3& m3)
 	float cz, sz;
 
 	sy = m3(0, 2);
-	cy = m::sqrt(1.0 - sy*sy);
+	cy = Math::sqrt(1.0 - sy * sy);
 	// normal case
-	if (!isZero(cy))
+	if (!Math::isZero(cy))
 	{
 		float factor = 1.0/cy;
 		sx = -m3(1, 2) * factor;
@@ -96,40 +97,47 @@ inline Euler::Euler(const Mat3& m3)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Euler::operator [](uint i)
+inline float& Euler::operator [](const size_t i)
 {
 	return arr[i];
 }
 
-inline float Euler::operator [](uint i) const
+
+inline float Euler::operator [](const size_t i) const
 {
 	return arr[i];
 }
+
 
 inline float& Euler::x()
 {
 	return vec.x;
 }
 
+
 inline float Euler::x() const
 {
 	return vec.x;
 }
+
 
 inline float& Euler::y()
 {
 	return vec.y;
 }
 
+
 inline float Euler::y() const
 {
 	return vec.y;
 }
 
+
 inline float& Euler::z()
 {
 	return vec.z;
 }
+
 
 inline float Euler::z() const
 {
@@ -152,7 +160,7 @@ inline Euler& Euler::operator=(const Euler& b)
 
 
 //==============================================================================
-// Print                                                                       =
+// Friends                                                                     =
 //==============================================================================
 
 inline std::ostream& operator<<(std::ostream& s, const Euler& e)
@@ -160,6 +168,3 @@ inline std::ostream& operator<<(std::ostream& s, const Euler& e)
 	s << e.x() << ' ' << e.y() << ' ' << e.z();
 	return s;
 }
-
-
-} // end namespace

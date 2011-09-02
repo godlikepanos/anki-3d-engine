@@ -1,24 +1,25 @@
-#ifndef M_MAT3_H
-#define M_MAT3_H
+#ifndef MAT3_H
+#define MAT3_H
 
-#include "Common.h"
+#include "MathCommonIncludes.h"
 
 
-namespace m {
-
+/// @addtogroup Math
+/// @{
 
 /// Mainly used for rotations. It includes many helpful member functions.
 /// Its row major
 class Mat3
 {
 	public:
-		/// @name Constructors & distructors
+		/// @name Constructors
 		/// @{
 		explicit Mat3() {};
-		explicit Mat3(float f);
-		explicit Mat3(float m00, float m01, float m02, float m10, float m11,
-			float m12, float m20, float m21, float m22);
-		explicit Mat3(float arr[]);
+		explicit Mat3(const float f);
+		explicit Mat3(const float m00, const float m01, const float m02,
+			const float m10, const float m11, const float m12,
+			const float m20, const float m21, const float m22);
+		explicit Mat3(const float arr[]);
 		         Mat3(const Mat3& b);
 		explicit Mat3(const Quat& q); ///< Quat to Mat3. 12 muls, 12 adds
 		explicit Mat3(const Euler& eu);
@@ -27,10 +28,10 @@ class Mat3
 
 		/// @name Accessors
 		/// @{
-		float& operator()(const uint i, const uint j);
-		const float& operator()(const uint i, const uint j) const;
-		float& operator[](const uint i);
-		const float& operator[](const uint i) const;
+		float& operator()(const size_t i, const size_t j);
+		const float& operator()(const size_t i, const size_t j) const;
+		float& operator[](const size_t i);
+		const float& operator[](const size_t i) const;
 		/// @}
 
 		/// @name Operators with same
@@ -50,14 +51,14 @@ class Mat3
 
 		/// @name Operators with float
 		/// @{
-		Mat3 operator+(float f) const;
-		Mat3& operator+=(float f);
-		Mat3 operator-(float f) const;
-		Mat3& operator-=(float f);
-		Mat3 operator*(float f) const;
-		Mat3& operator*=(float f);
-		Mat3 operator/(float f) const;
-		Mat3& operator/=(float f);
+		Mat3 operator+(const float f) const;
+		Mat3& operator+=(const float f);
+		Mat3 operator-(const float f) const;
+		Mat3& operator-=(const float f);
+		Mat3 operator*(const float f) const;
+		Mat3& operator*=(const float f);
+		Mat3 operator/(const float f) const;
+		Mat3& operator/=(const float f);
 		/// @}
 
 		/// @name Operators with others
@@ -68,27 +69,27 @@ class Mat3
 		/// @name Other
 		/// @{
 		void setRows(const Vec3& a, const Vec3& b, const Vec3& c);
-		void setRow(const uint i, const Vec3& v);
+		void setRow(const size_t i, const Vec3& v);
 		void getRows(Vec3& a, Vec3& b, Vec3& c) const;
-		Vec3 getRow(const uint i) const;
+		Vec3 getRow(const size_t i) const;
 		void setColumns(const Vec3& a, const Vec3& b, const Vec3& c);
-		void setColumn(const uint i, const Vec3& v);
+		void setColumn(const size_t i, const Vec3& v);
 		void getColumns(Vec3& a, Vec3& b, Vec3& c) const;
-		Vec3 getColumn(const uint i) const;
+		Vec3 getColumn(const size_t i) const;
 		Vec3 getXAxis() const;
 		Vec3 getYAxis() const;
 		Vec3 getZAxis() const;
 		void setXAxis(const Vec3& v3);
 		void setYAxis(const Vec3& v3);
 		void setZAxis(const Vec3& v3);
-		void setRotationX(float rad);
-		void setRotationY(float rad);
-		void setRotationZ(float rad);
+		void setRotationX(const float rad);
+		void setRotationY(const float rad);
+		void setRotationZ(const float rad);
 		/// It rotates "this" in the axis defined by the rotation AND not the
 		/// world axis
-		void rotateXAxis(float rad);
-		void rotateYAxis(float rad);
-		void rotateZAxis(float rad);
+		void rotateXAxis(const float rad);
+		void rotateYAxis(const float rad);
+		void rotateZAxis(const float rad);
 		void transpose();
 		Mat3 getTransposed() const;
 		void reorthogonalize();
@@ -101,6 +102,15 @@ class Mat3
 		static const Mat3& getIdentity();
 		/// @}
 
+		/// @name Friends
+		/// @{
+		friend Mat3 operator+(float f, const Mat3& m3);
+		friend Mat3 operator-(float f, const Mat3& m3);
+		friend Mat3 operator*(float f, const Mat3& m3);
+		friend Mat3 operator/(float f, const Mat3& m3);
+		friend std::ostream& operator<<(std::ostream& s, const Mat3& m);
+		/// @}
+
 	private:
 		/// @name Data members
 		/// @{
@@ -111,19 +121,7 @@ class Mat3
 		};
 		/// @}
 };
-
-
-/// @name Other Mat3 operators
-/// @{
-extern Mat3 operator+(float f, const Mat3& m3);
-extern Mat3 operator-(float f, const Mat3& m3);
-extern Mat3 operator*(float f, const Mat3& m3);
-extern Mat3 operator/(float f, const Mat3& m3);
-extern std::ostream& operator<<(std::ostream& s, const Mat3& m);
 /// @}
-
-
-} // end namespace
 
 
 #include "Mat3.inl.h"

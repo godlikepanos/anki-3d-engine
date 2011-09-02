@@ -176,11 +176,13 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 		// bone.final_transform = MA * ANIM * MAi
 		// where MA is bone matrix at armature space and ANIM the interpolated
 		// transformation.
-		combineTransformations(boneTranslations[boneId], boneRotations[boneId],
+		Math::combineTransformations(
+			boneTranslations[boneId], boneRotations[boneId],
 			boned.getTslSkelSpaceInv(), boned.getRotSkelSpaceInv(),
 			boneTranslations[boneId], boneRotations[boneId]);
 
-		combineTransformations(boned.getTslSkelSpace(), boned.getRotSkelSpace(),
+		Math::combineTransformations(
+			boned.getTslSkelSpace(), boned.getRotSkelSpace(),
 			boneTranslations[boneId], boneRotations[boneId],
 			boneTranslations[boneId], boneRotations[boneId]);
 
@@ -188,7 +190,7 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 		if(boned.getParent())
 		{
 			// bone.final_final_transform = parent.transf * bone.final_transform
-			combineTransformations(
+			Math::combineTransformations(
 				boneTranslations[boned.getParent()->getPos()],
 				boneRotations[boned.getParent()->getPos()],
 				boneTranslations[boneId],

@@ -10,18 +10,15 @@
 #include FT_GLYPH_H
 
 
-namespace ui {
-
-
 /// A helper class that uses libfreetype to load glyphs from a font file and
 /// gather the metrics for each glyph
-class FtFontLoader
+class UiFtFontLoader
 {
 	public:
 		/// Contains info about the glyphs
 		class Glyph
 		{
-			friend class FtFontLoader;
+			friend class UiFtFontLoader;
 
 			public:
 				GETTER_R(FT_Glyph_Metrics, metrics, getMetrics)
@@ -39,7 +36,7 @@ class FtFontLoader
 		};
 
 		/// One and only constructor
-		FtFontLoader(const char* filename, const FT_Vector& fontSize);
+		UiFtFontLoader(const char* filename, const FT_Vector& fontSize);
 
 		/// @name Accessors
 		/// @{
@@ -80,14 +77,11 @@ class FtFontLoader
 };
 
 
-inline FtFontLoader::FtFontLoader(const char* filename,
+inline UiFtFontLoader::UiFtFontLoader(const char* filename,
 	const FT_Vector& fontSize)
 {
 	createImage(filename, fontSize);
 }
-
-
-} // end namespace
 
 
 #endif

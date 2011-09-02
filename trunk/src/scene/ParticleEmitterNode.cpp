@@ -80,17 +80,17 @@ void ParticleEmitterNode::init(const char* filename)
 			util::randFloat(particleMassDeviation) * 2.0 -
 			particleMassDeviation;
 
-		phys::RigidBody::Initializer init;
+		RigidBody::Initializer init;
 		init.mass = mass;
 		init.startTrf = toAnki(startingTrf);
 		init.shape = collShape.get();
 		init.sceneNode = particle;
-		init.group = phys::MasterContainer::CG_PARTICLE;
-		init.mask = phys::MasterContainer::CG_ALL ^
-			phys::MasterContainer::CG_PARTICLE;
+		init.group = PhysWorld::CG_PARTICLE;
+		init.mask = PhysWorld::CG_ALL ^
+			PhysWorld::CG_PARTICLE;
 
-		phys::RigidBody* body = new phys::RigidBody(
-			SceneSingleton::get().getPhysMasterContainer(), init);
+		RigidBody* body = new RigidBody(
+			SceneSingleton::get().getPhysPhysWorld(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 
@@ -144,7 +144,7 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 				continue;
 			}
 
-			phys::RigidBody& body = p.getRigidBody();
+			RigidBody& body = p.getRigidBody();
 
 			p.enableFlag(SceneNode::SNF_ACTIVE);
 

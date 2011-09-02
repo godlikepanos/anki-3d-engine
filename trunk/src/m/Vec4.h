@@ -1,11 +1,11 @@
-#ifndef M_VEC4_H
-#define M_VEC4_H
+#ifndef VEC4_H
+#define VEC4_H
 
-#include "Common.h"
+#include "MathCommonIncludes.h"
 
 
-namespace m {
-
+/// @addtogroup Math
+/// @{
 
 /// 4D vector
 class Vec4
@@ -14,11 +14,12 @@ class Vec4
 		/// @name Constructors
 		/// @{
 		explicit Vec4();
-		explicit Vec4(float x, float y, float z, float w);
-		explicit Vec4(float f);
-		explicit Vec4(float arr[]);
-		explicit Vec4(const Vec2& v2, float z, float w);
-		explicit Vec4(const Vec3& v3, float w);
+		explicit Vec4(const float x, const float y, const float z,
+			const float w);
+		explicit Vec4(const float f);
+		explicit Vec4(const float arr[]);
+		explicit Vec4(const Vec2& v2, const float z, const float w);
+		explicit Vec4(const Vec3& v3, const float w);
 		         Vec4(const Vec4& b);
 		explicit Vec4(const Quat& q);
 #if defined(MATH_INTEL_SIMD)
@@ -36,8 +37,8 @@ class Vec4
 		float z() const;
 		float& w();
 		float w() const;
-		float& operator[](uint i);
-		float operator[](uint i) const;
+		float& operator[](const size_t i);
+		float operator[](const size_t i) const;
 #if defined(MATH_INTEL_SIMD)
 		__m128& getMm();
 		const __m128& getMm() const;
@@ -62,14 +63,14 @@ class Vec4
 
 		/// @name Operators with float
 		/// @{
-		Vec4 operator+(float f) const;
-		Vec4& operator+=(float f);
-		Vec4 operator-(float f) const;
-		Vec4& operator-=(float f);
-		Vec4 operator*(float f) const;
-		Vec4& operator*=(float f);
-		Vec4 operator/(float f) const;
-		Vec4& operator/=(float f);
+		Vec4 operator+(const float f) const;
+		Vec4& operator+=(const float f);
+		Vec4 operator-(const float f) const;
+		Vec4& operator-=(const float f);
+		Vec4 operator*(const float f) const;
+		Vec4& operator*=(const float f);
+		Vec4 operator/(const float f) const;
+		Vec4& operator/=(const float f);
 		/// @}
 
 		/// @name Operators with other
@@ -83,6 +84,15 @@ class Vec4
 		Vec4 getNormalized() const;
 		void normalize();
 		float dot(const Vec4& b) const;
+		/// @}
+
+		/// @name Friends
+		/// @{
+		friend Vec4 operator+(const float f, const Vec4& v4);
+		friend Vec4 operator-(const float f, const Vec4& v4);
+		friend Vec4 operator*(const float f, const Vec4& v4);
+		friend Vec4 operator/(const float f, const Vec4& v4);
+		friend std::ostream& operator<<(std::ostream& s, const Vec4& v);
 		/// @}
 
 	private:
@@ -103,21 +113,7 @@ class Vec4
 		};
 		/// @}
 };
-
-
-/// @name Global operators with Vec4 and float
-/// @{
-extern Vec4 operator+(float f, const Vec4& v4);
-extern Vec4 operator-(float f, const Vec4& v4);
-extern Vec4 operator*(float f, const Vec4& v4);
-extern Vec4 operator/(float f, const Vec4& v4);
 /// @}
-
-
-extern std::ostream& operator<<(std::ostream& s, const Vec4& v);
-
-
-} // end namespace
 
 
 #include "Vec4.inl.h"

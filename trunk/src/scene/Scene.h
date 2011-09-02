@@ -2,7 +2,7 @@
 #define SCENE_H
 
 #include <boost/scoped_ptr.hpp>
-#include "phys/MasterContainer.h"
+#include "phys/PhysWorld.h"
 #include "util/Assert.h"
 #include "util/Accessors.h"
 #include "VisibilityTester.h"
@@ -52,8 +52,8 @@ class Scene
 		/// @name Accessors
 		/// @{
 		GETTER_SETTER(Vec3, ambientCol, getAmbientColor, setAmbientColor)
-		phys::MasterContainer& getPhysMasterContainer();
-		const phys::MasterContainer& getPhysMasterContainer() const;
+		PhysWorld& getPhysPhysWorld();
+		const PhysWorld& getPhysPhysWorld() const;
 		const VisibilityTester& getVisibilityTester() const;
 
 		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
@@ -80,7 +80,7 @@ class Scene
 
 		Vec3 ambientCol; ///< The global ambient color
 		/// Connection with Bullet wrapper
-		boost::scoped_ptr<phys::MasterContainer> physMasterContainer;
+		boost::scoped_ptr<PhysWorld> physPhysWorld;
 		boost::scoped_ptr<VisibilityTester> visibilityTester;
 
 		/// Adds a node in a container
@@ -111,15 +111,15 @@ inline void Scene::eraseNode(ContainerType& container, Type* x)
 }
 
 
-inline phys::MasterContainer& Scene::getPhysMasterContainer()
+inline PhysWorld& Scene::getPhysPhysWorld()
 {
-	return *physMasterContainer;
+	return *physPhysWorld;
 }
 
 
-inline const phys::MasterContainer& Scene::getPhysMasterContainer() const
+inline const PhysWorld& Scene::getPhysPhysWorld() const
 {
-	return *physMasterContainer;
+	return *physPhysWorld;
 }
 
 

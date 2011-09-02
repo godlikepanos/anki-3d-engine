@@ -1,5 +1,5 @@
-#ifndef PHYS_CONVERTORS_H
-#define PHYS_CONVERTORS_H
+#ifndef CONVERTORS_H
+#define CONVERTORS_H
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>

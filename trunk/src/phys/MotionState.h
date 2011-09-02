@@ -1,11 +1,8 @@
-#ifndef PHYS_MOTION_STATE_H
-#define PHYS_MOTION_STATE_H
+#ifndef MOTION_STATE_H
+#define MOTION_STATE_H
 
 #include <LinearMath/btMotionState.h>
 #include "scene/SceneNode.h"
-
-
-namespace phys {
 
 
 /// A custom motion state
@@ -59,9 +56,6 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 		nodeTrf.setScale(originalScale);
 	}
 }
-
-
-} // end namespace
 
 
 #endif

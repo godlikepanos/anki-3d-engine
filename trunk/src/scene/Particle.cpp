@@ -21,7 +21,7 @@ Particle::~Particle()
 //==============================================================================
 // setNewRigidBody                                                             =
 //==============================================================================
-void Particle::setNewRigidBody(phys::RigidBody* body_)
+void Particle::setNewRigidBody(RigidBody* body_)
 {
 	body.reset(body_);
 }

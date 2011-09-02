@@ -1,23 +1,20 @@
-#include "Font.h"
+#include "UiFont.h"
 #include "rsrc/Texture.h"
 #include "util/Exception.h"
 #include "util/Assert.h"
-#include "FtFontLoader.h"
+#include "UiFtFontLoader.h"
 #include <GL/glew.h>
 #include <boost/foreach.hpp>
-
-
-namespace ui {
 
 
 //==============================================================================
 // create                                                                      =
 //==============================================================================
-void Font::create(const char* fontFilename, uint nominalWidth,
+void UiFont::create(const char* fontFilename, uint nominalWidth,
 	uint NominalHeight)
 {
 	FT_Vector ftSize = {nominalWidth, NominalHeight};
-	FtFontLoader ft(fontFilename, ftSize);
+	UiFtFontLoader ft(fontFilename, ftSize);
 
 	lineHeight = ft.getLineHeight();
 
@@ -25,20 +22,20 @@ void Font::create(const char* fontFilename, uint nominalWidth,
 
 	// - Create glyphs
 	// - Get metrics
-	BOOST_FOREACH(const FtFontLoader::Glyph& ftGlyph, ft.getGlyphs())
+	BOOST_FOREACH(const UiFtFontLoader::Glyph& ftGlyph, ft.getGlyphs())
 	{
 		// Create
 		glyphs.push_back(new Glyph);
 		Glyph& glyph = glyphs.back();
 
 		// Metrics
-		glyph.width = FtFontLoader::toPixels(ftGlyph.getMetrics().width);
-		glyph.height = FtFontLoader::toPixels(ftGlyph.getMetrics().height);
-		glyph.horizBearingX = FtFontLoader::toPixels(
+		glyph.width = UiFtFontLoader::toPixels(ftGlyph.getMetrics().width);
+		glyph.height = UiFtFontLoader::toPixels(ftGlyph.getMetrics().height);
+		glyph.horizBearingX = UiFtFontLoader::toPixels(
 			ftGlyph.getMetrics().horiBearingX);
-		glyph.horizBearingY = FtFontLoader::toPixels(
+		glyph.horizBearingY = UiFtFontLoader::toPixels(
 			ftGlyph.getMetrics().horiBearingY);
-		glyph.horizAdvance = FtFontLoader::toPixels(
+		glyph.horizAdvance = UiFtFontLoader::toPixels(
 			ftGlyph.getMetrics().horiAdvance);
 	}
 
@@ -49,12 +46,12 @@ void Font::create(const char* fontFilename, uint nominalWidth,
 	int posY = 0;
 
 	// For all rows
-	for(uint i = 0; i < FtFontLoader::GLYPH_ROWS; i++)
+	for(uint i = 0; i < UiFtFontLoader::GLYPH_ROWS; i++)
 	{
 		// For all columns
-		for(uint j = 0; j < FtFontLoader::GLYPH_COLUMNS; j++)
+		for(uint j = 0; j < UiFtFontLoader::GLYPH_COLUMNS; j++)
 		{
-			Glyph& glyph = glyphs[i * FtFontLoader::GLYPH_COLUMNS + j];
+			Glyph& glyph = glyphs[i * UiFtFontLoader::GLYPH_COLUMNS + j];
 
 			// Set texture matrix
 			// glyph width
@@ -99,6 +96,3 @@ void Font::create(const char* fontFilename, uint nominalWidth,
 	map->create(tinit);
 	map->setRepeat(false);
 }
-
-
-} // end namespace

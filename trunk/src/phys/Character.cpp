@@ -4,13 +4,10 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
 #include "Character.h"
-#include "MasterContainer.h"
+#include "PhysWorld.h"
 #include "MotionState.h"
 #include "RigidBody.h"
-#include "MasterContainer.h"
-
-
-namespace phys {
+#include "PhysWorld.h"
 
 
 //==============================================================================
@@ -30,7 +27,7 @@ inline Character::Initializer::Initializer():
 //==============================================================================
 // Contructor                                                                  =
 //==============================================================================
-Character::Character(MasterContainer& masterContainer_,
+Character::Character(PhysWorld& masterContainer_,
 	const Initializer& init)
 :	masterContainer(masterContainer_)
 {
@@ -118,6 +115,3 @@ void Character::jump()
 {
 	character->jump();
 }
-
-
-} // end namespace
