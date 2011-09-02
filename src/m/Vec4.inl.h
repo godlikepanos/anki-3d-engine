@@ -1,7 +1,4 @@
-#include "Common.inl.h"
-
-
-namespace m {
+#include "MathCommonSrc.h"
 
 
 //==============================================================================
@@ -18,6 +15,7 @@ inline Vec4::Vec4()
 #endif
 }
 
+
 // float
 inline Vec4::Vec4(float f)
 {
@@ -28,8 +26,9 @@ inline Vec4::Vec4(float f)
 #endif
 }
 
+
 // float[]
-inline Vec4::Vec4(float arr_[])
+inline Vec4::Vec4(const float arr_[])
 {
 #if defined(MATH_INTEL_SIMD)
 	mm = _mm_load_ps(arr_);
@@ -41,8 +40,10 @@ inline Vec4::Vec4(float arr_[])
 #endif
 }
 
+
 // float, float, float, float
-inline Vec4::Vec4(float x_, float y_, float z_, float w_)
+inline Vec4::Vec4(const float x_, const float y_, const float z_,
+	const float w_)
 {
 #if defined(MATH_INTEL_SIMD)
 	mm = _mm_set_ps(w_, z_, y_, x_);
@@ -54,8 +55,9 @@ inline Vec4::Vec4(float x_, float y_, float z_, float w_)
 #endif
 }
 
+
 // vec2, float, float
-inline Vec4::Vec4(const Vec2& v2, float z_, float w_)
+inline Vec4::Vec4(const Vec2& v2, const float z_, const float w_)
 {
 	x() = v2.x();
 	y() = v2.y();
@@ -63,14 +65,16 @@ inline Vec4::Vec4(const Vec2& v2, float z_, float w_)
 	w() = w_;
 }
 
+
 // vec3, float
-inline Vec4::Vec4(const Vec3& v3, float w_)
+inline Vec4::Vec4(const Vec3& v3, const float w_)
 {
 	x() = v3.x();
 	y() = v3.y();
 	z() = v3.z();
 	w() = w_;
 }
+
 
 // Copy
 inline Vec4::Vec4(const Vec4& b)
@@ -85,6 +89,7 @@ inline Vec4::Vec4(const Vec4& b)
 #endif
 }
 
+
 // quat
 inline Vec4::Vec4(const Quat& q)
 {
@@ -93,6 +98,7 @@ inline Vec4::Vec4(const Quat& q)
 	z() = q.z();
 	w() = q.w();
 }
+
 
 // __m128
 #if defined(MATH_INTEL_SIMD)
@@ -107,61 +113,72 @@ inline Vec4::Vec4(const __m128& mm_)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Vec4::operator[](uint i)
+inline float& Vec4::operator[](const size_t i)
 {
 	return arr[i];
 }
 
-inline float Vec4::operator[](uint i) const
+
+inline float Vec4::operator[](const size_t i) const
 {
 	return arr[i];
 }
+
 
 inline float& Vec4::x()
 {
 	return vec.x;
 }
 
+
 inline float Vec4::x() const
 {
 	return vec.x;
 }
+
 
 inline float& Vec4::y()
 {
 	return vec.y;
 }
 
+
 inline float Vec4::y() const
 {
 	return vec.y;
 }
+
 
 inline float& Vec4::z()
 {
 	return vec.z;
 }
 
+
 inline float Vec4::z() const
 {
 	return vec.z;
 }
+
 
 inline float& Vec4::w()
 {
 	return vec.w;
 }
 
+
 inline float Vec4::w() const
 {
 	return vec.w;
 }
+
 
 #if defined(MATH_INTEL_SIMD)
 inline __m128& Vec4::getMm()
 {
 	return mm;
 }
+
 
 inline const __m128& Vec4::getMm() const
 {
@@ -188,6 +205,7 @@ inline Vec4& Vec4::operator=(const Vec4& b)
 	return (*this);
 }
 
+
 // +
 inline Vec4 Vec4::operator+(const Vec4& b) const
 {
@@ -197,6 +215,7 @@ inline Vec4 Vec4::operator+(const Vec4& b) const
 	return Vec4(x() + b.x(), y() + b.y(), z() + b.z(), w() + b.w());
 #endif
 }
+
 
 // +=
 inline Vec4& Vec4::operator+=(const Vec4& b)
@@ -212,6 +231,7 @@ inline Vec4& Vec4::operator+=(const Vec4& b)
 	return (*this);
 }
 
+
 // -
 inline Vec4 Vec4::operator-(const Vec4& b) const
 {
@@ -221,6 +241,7 @@ inline Vec4 Vec4::operator-(const Vec4& b) const
 	return Vec4(x() - b.x(), y() - b.y(), z() - b.z(), w() - b.w());
 #endif
 }
+
 
 // -=
 inline Vec4& Vec4::operator-=(const Vec4& b)
@@ -236,6 +257,7 @@ inline Vec4& Vec4::operator-=(const Vec4& b)
 	return (*this);
 }
 
+
 // *
 inline Vec4 Vec4::operator*(const Vec4& b) const
 {
@@ -245,6 +267,7 @@ inline Vec4 Vec4::operator*(const Vec4& b) const
 	return Vec4(x() * b.x(), y() * b.y(), z() * b.z(), w() * b.w());
 #endif
 }
+
 
 // *=
 inline Vec4& Vec4::operator*=(const Vec4& b)
@@ -260,6 +283,7 @@ inline Vec4& Vec4::operator*=(const Vec4& b)
 	return (*this);
 }
 
+
 // /
 inline Vec4 Vec4::operator/(const Vec4& b) const
 {
@@ -269,6 +293,7 @@ inline Vec4 Vec4::operator/(const Vec4& b) const
 	return Vec4(x() / b.x(), y() / b.y(), z() / b.z(), w() / b.w());
 #endif
 }
+
 
 // /=
 inline Vec4& Vec4::operator/=(const Vec4& b)
@@ -284,26 +309,33 @@ inline Vec4& Vec4::operator/=(const Vec4& b)
 	return (*this);
 }
 
+
 // negative
 inline Vec4 Vec4::operator-() const
 {
 	return Vec4(-x(), -y(), -z(), -w());
 }
 
+
 // ==
 inline bool Vec4::operator==(const Vec4& b) const
 {
 	Vec4 sub = (*this) - b;
-	return isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) &&
-		isZero(sub.w());
+	return Math::isZero(sub.x()) &&
+		Math::isZero(sub.y()) &&
+		Math::isZero(sub.z()) &&
+		Math::isZero(sub.w());
 }
+
 
 // !=
 inline bool Vec4::operator!=(const Vec4& b) const
 {
 	Vec4 sub = (*this) - b;
-	return !(isZero(sub.x()) && isZero(sub.y()) && isZero(sub.z()) &&
-		isZero(sub.w()));
+	return !(Math::isZero(sub.x()) &&
+		Math::isZero(sub.y()) &&
+		Math::isZero(sub.z()) &&
+		Math::isZero(sub.w()));
 }
 
 
@@ -312,76 +344,59 @@ inline bool Vec4::operator!=(const Vec4& b) const
 //==============================================================================
 
 // Vec4 + float
-inline Vec4 Vec4::operator+(float f) const
+inline Vec4 Vec4::operator+(const float f) const
 {
 	return (*this) + Vec4(f);
 }
 
-// float + Vec4
-inline Vec4 operator+(float f, const Vec4& v4)
-{
-	return v4 + f;
-}
 
 // Vec4 += float
-inline Vec4& Vec4::operator+=(float f)
+inline Vec4& Vec4::operator+=(const float f)
 {
 	(*this) += Vec4(f);
 	return (*this);
 }
 
+
 // Vec4 - float
-inline Vec4 Vec4::operator-(float f) const
+inline Vec4 Vec4::operator-(const float f) const
 {
 	return (*this) - Vec4(f);
 }
 
-// float - Vec4
-inline Vec4 operator-(float f, const Vec4& v4)
-{
-	return Vec4(f) - v4;
-}
 
 // Vec4 -= float
-inline Vec4& Vec4::operator-=(float f)
+inline Vec4& Vec4::operator-=(const float f)
 {
 	(*this) -= Vec4(f);
 	return (*this);
 }
 
+
 // Vec4 * float
-inline Vec4 Vec4::operator*(float f) const
+inline Vec4 Vec4::operator*(const float f) const
 {
 	return (*this) * Vec4(f);
 }
 
-// float * Vec4
-inline Vec4 operator*(float f, const Vec4& v4)
-{
-	return v4 * f;
-}
 
 // Vec4 *= float
-inline Vec4& Vec4::operator*=(float f)
+inline Vec4& Vec4::operator*=(const float f)
 {
 	(*this) *= Vec4(f);
 	return (*this);
 }
 
+
 // Vec4 / float
-inline Vec4 Vec4::operator/(float f) const
+inline Vec4 Vec4::operator/(const float f) const
 {
 	return (*this) / Vec4(f);
 }
 
-// float / Vec4
-inline Vec4 operator/(float f, const Vec4& v4)
-{
-	return Vec4(f) / v4;
-}
 
 // Vec4 /= float
-inline Vec4& Vec4::operator/=(float f)
+inline Vec4& Vec4::operator/=(const float f)
 {
 	(*this) /= Vec4(f);
 	return (*this);
@@ -420,17 +435,20 @@ inline float Vec4::dot(const Vec4& b) const
 #endif
 }
 
+
 // getLength
 inline float Vec4::getLength() const
 {
-	return m::sqrt(dot((*this)));
+	return Math::sqrt(dot((*this)));
 }
+
 
 // getNormalized
 inline Vec4 Vec4::getNormalized() const
 {
 	return (*this) / getLength();
 }
+
 
 // normalize
 inline void Vec4::normalize()
@@ -440,13 +458,40 @@ inline void Vec4::normalize()
 
 
 //==============================================================================
-// Print                                                                       =
+// Friends                                                                     =
 //==============================================================================
+
+// float + Vec4
+inline Vec4 operator+(const float f, const Vec4& v4)
+{
+	return v4 + f;
+}
+
+
+// float - Vec4
+inline Vec4 operator-(const float f, const Vec4& v4)
+{
+	return Vec4(f) - v4;
+}
+
+
+// float * Vec4
+inline Vec4 operator*(const float f, const Vec4& v4)
+{
+	return v4 * f;
+}
+
+
+// float / Vec4
+inline Vec4 operator/(const float f, const Vec4& v4)
+{
+	return Vec4(f) / v4;
+}
+
+
+// Print
 inline std::ostream& operator<<(std::ostream& s, const Vec4& v)
 {
 	s << v.x() << ' ' << v.y() << ' ' << v.z() << ' ' << v.w();
 	return s;
 }
-
-
-} // end namespace

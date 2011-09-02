@@ -9,17 +9,14 @@
 #include <boost/scoped_ptr.hpp>
 
 
-namespace ui {
-
-
-class Font;
+class UiFont;
 
 
 /// @todo
-class Painter
+class UiPainter
 {
 	public:
-		Painter(const Vec2& deviceSize);
+		UiPainter(const Vec2& deviceSize);
 
 		/// @name Accessors
 		/// @{
@@ -27,7 +24,7 @@ class Painter
 		GETTER_SETTER(Vec4, col, getColor, setColor)
 		void setFont(const char* fontFilename, uint nominalWidth,
 			uint nominalHeight);
-		const Font& getFont() const {return *font;}
+		const UiFont& getFont() const {return *font;}
 		/// @}
 
 		void drawText(const char* text);
@@ -37,7 +34,7 @@ class Painter
 	private:
 		/// @name Data
 		/// @{
-		boost::scoped_ptr<Font> font;
+		boost::scoped_ptr<UiFont> font;
 		RsrcPtr<ShaderProgram> sProg;
 
 		Vec2 pos;
@@ -53,9 +50,6 @@ class Painter
 
 		void init();
 };
-
-
-}
 
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef UI_PAINDER_DEVICE_H
-#define UI_PAINDER_DEVICE_H
+#ifndef UI_PAINTER_DEVICE_H
+#define UI_PAINTER_DEVICE_H
 
 #include "gl/Fbo.h"
 #include "m/Math.h"
@@ -9,15 +9,12 @@
 class Texture;
 
 
-namespace ui {
-
-
 /// This actually and FBO but with size info
-class PainterDevice: public Fbo
+class UiPainterDevice: public Fbo
 {
 	public:
 		/// Constructor
-		PainterDevice(Texture& colorFai);
+		UiPainterDevice(Texture& colorFai);
 
 		/// @name Accessors
 		/// @{
@@ -29,9 +26,6 @@ class PainterDevice: public Fbo
 
 		void create();
 };
-
-
-} // end namespace
 
 
 #endif

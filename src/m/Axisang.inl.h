@@ -1,7 +1,4 @@
-#include "Common.inl.h"
-
-
-namespace m {
+#include "MathCommonSrc.h"
 
 
 //==============================================================================
@@ -14,24 +11,27 @@ inline Axisang::Axisang()
 	axis(0.0)
 {}
 
+
 // Copy
 inline Axisang::Axisang(const Axisang& b)
 :	ang(b.ang),
 	axis(b.axis)
 {}
 
+
 // float, axis
-inline Axisang::Axisang(float rad, const Vec3& axis_)
+inline Axisang::Axisang(const float rad, const Vec3& axis_)
 :	ang(rad),
 	axis(axis_)
 {}
+
 
 // Quat
 inline Axisang::Axisang(const Quat& q)
 {
 	ang = 2.0 * acos(q.w());
-	float length = m::sqrt(1.0 - q.w() * q.w());
-	if(isZero(length))
+	float length = Math::sqrt(1.0 - q.w() * q.w());
+	if(Math::isZero(length))
 	{
 		axis = Vec3(0.0);
 	}
@@ -42,12 +42,13 @@ inline Axisang::Axisang(const Quat& q)
 	}
 }
 
+
 // constructor [mat3]
 inline Axisang::Axisang(const Mat3& m3)
 {
-	if((fabs(m3(0, 1) - m3(1, 0)) < EPSILON) &&
-		(fabs(m3(0, 2) - m3(2, 0)) < EPSILON) &&
-		(fabs(m3(1, 2) - m3(2, 1)) < EPSILON))
+	if((fabs(m3(0, 1) - m3(1, 0)) < Math::EPSILON) &&
+		(fabs(m3(0, 2) - m3(2, 0)) < Math::EPSILON) &&
+		(fabs(m3(1, 2) - m3(2, 1)) < Math::EPSILON))
 	{
 
 		if((fabs(m3(0, 1) + m3(1, 0)) < 0.1) &&
@@ -60,11 +61,11 @@ inline Axisang::Axisang(const Mat3& m3)
 			return;
 		}
 
-		ang = PI;
+		ang = Math::PI;
 		axis.x() = (m3(0, 0)+1) / 2.0;
 		if(axis.x() > 0.0)
 		{
-			axis.x() = m::sqrt(axis.x());
+			axis.x() = Math::sqrt(axis.x());
 		}
 		else
 		{
@@ -73,7 +74,7 @@ inline Axisang::Axisang(const Mat3& m3)
 		axis.y() = (m3(1, 1)+1)/2;
 		if(axis.y() > 0)
 		{
-			axis.y() = m::sqrt(axis.y());
+			axis.y() = Math::sqrt(axis.y());
 		}
 		else
 		{
@@ -83,16 +84,16 @@ inline Axisang::Axisang(const Mat3& m3)
 		axis.z() = (m3(2, 2)+1)/2;
 		if(axis.z() > 0)
 		{
-			axis.z() = m::sqrt(axis.z());
+			axis.z() = Math::sqrt(axis.z());
 		}
 		else
 		{
 			axis.z() = 0.0;
 		}
 
-		bool xZero = (fabs(axis.x()) < EPSILON);
-		bool yZero = (fabs(axis.y()) < EPSILON);
-		bool zZero = (fabs(axis.z()) < EPSILON);
+		bool xZero = (fabs(axis.x()) < Math::EPSILON);
+		bool yZero = (fabs(axis.y()) < Math::EPSILON);
+		bool zZero = (fabs(axis.z()) < Math::EPSILON);
 		bool xyPositive = (m3(0, 1) > 0);
 		bool xzPositive = (m3(0, 2) > 0);
 		bool yzPositive = (m3(1, 2) > 0);
@@ -121,7 +122,7 @@ inline Axisang::Axisang(const Mat3& m3)
 		return;
 	}
 
-	float s = m::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) +
+	float s = Math::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) +
 		(m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0)) +
 		(m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
 
@@ -146,25 +147,30 @@ inline float Axisang::getAngle() const
 	return ang;
 }
 
+
 inline float& Axisang::getAngle()
 {
 	return ang;
 }
+
 
 inline void Axisang::setAngle(float a)
 {
 	ang = a;
 }
 
+
 inline const Vec3& Axisang::getAxis() const
 {
 	return axis;
 }
 
+
 inline Vec3& Axisang::getAxis()
 {
 	return axis;
 }
+
 
 inline void Axisang::setAxis(const Vec3& a)
 {
@@ -185,4 +191,13 @@ inline Axisang& Axisang::operator=(const Axisang& b)
 }
 
 
-} // end namaspace
+//==============================================================================
+// Friends                                                                     =
+//==============================================================================
+
+// Print
+inline std::ostream& operator<<(std::ostream& s, const Axisang& a)
+{
+	s << "axis: " << a.getAxis() << ", angle: " << a.getAngle();
+	return s;
+}

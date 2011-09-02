@@ -1,14 +1,11 @@
-#include "PainterDevice.h"
+#include "UiPainterDevice.h"
 #include "rsrc/Texture.h"
-
-
-namespace ui {
 
 
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-PainterDevice::PainterDevice(Texture& colorFai_)
+UiPainterDevice::UiPainterDevice(Texture& colorFai_)
 :	colorFai(colorFai_)
 {}
 
@@ -16,7 +13,7 @@ PainterDevice::PainterDevice(Texture& colorFai_)
 //==============================================================================
 // getSize                                                                     =
 //==============================================================================
-Vec2 PainterDevice::getSize() const
+Vec2 UiPainterDevice::getSize() const
 {
 	return Vec2(colorFai.getWidth(), colorFai.getHeight());
 }
@@ -25,7 +22,7 @@ Vec2 PainterDevice::getSize() const
 //==============================================================================
 // create                                                                      =
 //==============================================================================
-void PainterDevice::create()
+void UiPainterDevice::create()
 {
 	Fbo::create();
 	bind();
@@ -36,6 +33,3 @@ void PainterDevice::create()
 
 	unbind();
 }
-
-
-} // end namespace

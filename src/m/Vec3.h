@@ -1,23 +1,22 @@
-#ifndef M_VEC3_H
-#define M_VEC3_H
+#ifndef VEC3_H
+#define VEC3_H
 
-#include "Common.h"
+#include "MathCommonIncludes.h"
 
-
-namespace m {
-
+/// @addtogroup Math
+/// @{
 
 /// 3D vector. One of the most used classes
 class Vec3
 {
 	public:
-		/// @name Constructors & distructors
+		/// @name Constructors
 		/// @{
 		explicit Vec3();
-		explicit Vec3(float x, float y, float z);
-		explicit Vec3(float f);
-		explicit Vec3(float arr[]);
-		explicit Vec3(const Vec2& v2, float z);
+		explicit Vec3(const float x, const float y, const float z);
+		explicit Vec3(const float f);
+		explicit Vec3(const float arr[]);
+		explicit Vec3(const Vec2& v2, const float z);
 		         Vec3(const Vec3& b);
 		explicit Vec3(const Vec4& v4);
 		explicit Vec3(const Quat& q);
@@ -31,8 +30,8 @@ class Vec3
 		float y() const;
 		float& z();
 		float z() const;
-		float& operator[](uint i);
-		float operator[](uint i) const;
+		float& operator[](const size_t i);
+		float operator[](const size_t i) const;
 		/// @}
 
 		/// @name Operators with same type
@@ -53,14 +52,14 @@ class Vec3
 
 		/// @name Operators with float
 		/// @{
-		Vec3 operator+(float f) const;
-		Vec3& operator+=(float f);
-		Vec3 operator-(float f) const;
-		Vec3& operator-=(float f);
-		Vec3 operator*(float f) const;
-		Vec3& operator*=(float f);
-		Vec3 operator/(float f) const;
-		Vec3& operator/=(float f);
+		Vec3 operator+(const float f) const;
+		Vec3& operator+=(const float f);
+		Vec3 operator-(const float f) const;
+		Vec3& operator-=(const float f);
+		Vec3 operator*(const float f) const;
+		Vec3& operator*=(const float f);
+		Vec3 operator/(const float f) const;
+		Vec3& operator/=(const float f);
 		/// @}
 
 		/// @name Operators with other types
@@ -68,7 +67,7 @@ class Vec3
 		Vec3 operator*(const Mat3& m3) const;
 		/// @}
 
-		/// @name Misc methods
+		/// @name Other
 		/// @{
 		float dot(const Vec3& b) const;
 		Vec3 cross(const Vec3& b) const;
@@ -105,6 +104,15 @@ class Vec3
 		void transform(const Transform& transform);
 		/// @}
 
+		/// @name Friends
+		/// @{
+		friend Vec3 operator+(const float f, const Vec3& v);
+		friend Vec3 operator-(const float f, const Vec3& v);
+		friend Vec3 operator*(const float f, const Vec3& v);
+		friend Vec3 operator/(const float f, const Vec3& v);
+		friend std::ostream& operator<<(std::ostream& s, const Vec3& v);
+		/// @}
+
 	private:
 		/// @name Data
 		/// @{
@@ -119,19 +127,7 @@ class Vec3
 		};
 		/// @}
 };
-
-
-/// @name Other operators
-/// @{
-extern Vec3 operator+(float f, const Vec3& v);
-extern Vec3 operator-(float f, const Vec3& v);
-extern Vec3 operator*(float f, const Vec3& v);
-extern Vec3 operator/(float f, const Vec3& v);
-extern std::ostream& operator<<(std::ostream& s, const Vec3& v);
 /// @}
-
-
-} // end namespace
 
 
 #include "Vec3.inl.h"

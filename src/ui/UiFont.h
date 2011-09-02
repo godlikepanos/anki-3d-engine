@@ -1,24 +1,22 @@
 #ifndef UI_FONT_H
 #define UI_FONT_H
 
-#include "util/StdTypes.h"
-#include "m/Math.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include "util/StdTypes.h"
+#include "util/Accessors.h"
+#include "m/Math.h"
 
 
 class Texture;
 
 
-namespace ui {
-
-
 /// The font is device agnostic, all sizes are in actual pixels
-class Font
+class UiFont
 {
 	public:
 		/// Constructor @see create
-		Font(const char* fontFilename, uint nominalWidth, uint nominalHeight);
+		UiFont(const char* fontFilename, uint nominalWidth, uint nominalHeight);
 
 		/// @name Accessors
 		/// @{
@@ -59,50 +57,47 @@ class Font
 };
 
 
-inline Font::Font(const char* fontFilename, uint nominalWidth,
+inline UiFont::UiFont(const char* fontFilename, uint nominalWidth,
 	uint nominalHeight)
 {
 	create(fontFilename, nominalWidth, nominalHeight);
 }
 
 
-inline const Mat3& Font::getGlyphTextureMatrix(char c) const
+inline const Mat3& UiFont::getGlyphTextureMatrix(char c) const
 {
 	return glyphs[c - ' '].textureMat;
 }
 
 
-inline uint Font::getGlyphWidth(char c) const
+inline uint UiFont::getGlyphWidth(char c) const
 {
 	return glyphs[c - ' '].width;
 }
 
 
-inline uint Font::getGlyphHeight(char c) const
+inline uint UiFont::getGlyphHeight(char c) const
 {
 	return glyphs[c - ' '].height;
 }
 
 
-inline int Font::getGlyphAdvance(char c) const
+inline int UiFont::getGlyphAdvance(char c) const
 {
 	return glyphs[c - ' '].horizAdvance;
 }
 
 
-inline int Font::getGlyphBearingX(char c) const
+inline int UiFont::getGlyphBearingX(char c) const
 {
 	return glyphs[c - ' '].horizBearingX;
 }
 
 
-inline int Font::getGlyphBearingY(char c) const
+inline int UiFont::getGlyphBearingY(char c) const
 {
 	return glyphs[c - ' '].horizBearingY;
 }
-
-
-} // end namespace
 
 
 #endif

@@ -248,7 +248,7 @@ void MeshData::createVertTangents()
 
 		float det = (uvedge01.y() * uvedge02.x()) -
 			(uvedge01.x() * uvedge02.y());
-		if(isZero(det))
+		if(Math::isZero(det))
 		{
 			//WARNING(getRsrcName() << ": det == " << fixed << det);
 			det = 0.0001;

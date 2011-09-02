@@ -19,7 +19,7 @@ LightRsrc::LightRsrc()
 	castsShadowFlag = false;
 	radius = 1.0;
 	distance = 3.0;
-	fovX = fovY = m::PI / 4.0;
+	fovX = fovY = Math::PI / 4.0;
 	width = height = 1.0;
 	spotLightCameraType = SLCT_PERSPECTIVE;
 }

@@ -1,5 +1,5 @@
-#ifndef PHYS_CHARACTER_H
-#define PHYS_CHARACTER_H
+#ifndef CHARACTER_H
+#define CHARACTER_H
 
 #include "m/Math.h"
 #include "core/Object.h"
@@ -10,19 +10,14 @@ class btConvexShape;
 class btKinematicCharacterController;
 class btGhostPairCallback;
 class SceneNode;
-
-
-namespace phys {
-
-
-class MasterContainer;
+class PhysWorld;
 class MotionState;
 
 
 /// Its basically a wrapper around bullet character
 class Character
 {
-	friend class MasterContainer;
+	friend class PhysWorld;
 
 	public:
 		/// Initializer class
@@ -39,23 +34,20 @@ class Character
 			Initializer();
 		};
 
-		Character(MasterContainer& masterContainer, const Initializer& init);
+		Character(PhysWorld& masterContainer, const Initializer& init);
 		~Character();
 		void rotate(float angle);
 		void moveForward(float distance);
 		void jump();
 
 	private:
-		MasterContainer& masterContainer; ///< Know your father
+		PhysWorld& masterContainer; ///< Know your father
 		btPairCachingGhostObject* ghostObject;
 		btConvexShape* convexShape;
 		btKinematicCharacterController* character;
 		btGhostPairCallback* ghostPairCallback;
 		MotionState* motionState;
 };
-
-
-} // end namespace
 
 
 #endif

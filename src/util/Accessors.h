@@ -31,7 +31,7 @@
 
 /// Setter, cause we are to bored to write
 #define SETTER_BY_VAL(type__, var__, setter__) \
-	void setter__(type__ x__) {var__ = x__;}
+	void setter__(const type__ x__) {var__ = x__;}
 
 
 /// The macro implies read write var

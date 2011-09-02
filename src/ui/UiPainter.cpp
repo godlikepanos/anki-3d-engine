@@ -1,19 +1,16 @@
-#include "Painter.h"
+#include "UiPainter.h"
 #include "gl/GlStateMachine.h"
 #include "rsrc/Texture.h"
 #include "rsrc/ShaderProgram.h"
 #include "core/Logger.h"
-#include "Font.h"
+#include "UiFont.h"
 #include <cstdarg>
-
-
-namespace ui {
 
 
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-Painter::Painter(const Vec2& deviceSize_)
+UiPainter::UiPainter(const Vec2& deviceSize_)
 :	deviceSize(deviceSize_)
 {
 	init();
@@ -23,21 +20,21 @@ Painter::Painter(const Vec2& deviceSize_)
 //==============================================================================
 // setFont                                                                     =
 //==============================================================================
-void Painter::setFont(const char* fontFilename, uint nominalWidth,
+void UiPainter::setFont(const char* fontFilename, uint nominalWidth,
 	uint nominalHeight)
 {
-	font.reset(new Font(fontFilename, nominalWidth, nominalHeight));
+	font.reset(new UiFont(fontFilename, nominalWidth, nominalHeight));
 }
 
 
 //==============================================================================
 // init                                                                        =
 //==============================================================================
-void Painter::init()
+void UiPainter::init()
 {
 	// Default font
 	float dfltFontWidth = 0.2 * deviceSize.x();
-	font.reset(new Font("engine-rsrc/ConsolaMono.ttf", dfltFontWidth,
+	font.reset(new UiFont("engine-rsrc/ConsolaMono.ttf", dfltFontWidth,
 	                    deviceSize.x() / deviceSize.y() * dfltFontWidth));
 
 	// Misc
@@ -65,7 +62,7 @@ void Painter::init()
 //==============================================================================
 // drawText                                                                    =
 //==============================================================================
-void Painter::drawText(const char* text)
+void UiPainter::drawText(const char* text)
 {
 	// Set GL
 	GlStateMachineSingleton::get().enable(GL_BLEND);
@@ -136,7 +133,7 @@ void Painter::drawText(const char* text)
 //==============================================================================
 // drawFormatedText                                                            =
 //==============================================================================
-void Painter::drawFormatedText(const char* format, ...)
+void UiPainter::drawFormatedText(const char* format, ...)
 {
 	va_list ap;
 	char text[512];
@@ -149,6 +146,3 @@ void Painter::drawFormatedText(const char* format, ...)
 
 	drawText(text);
 }
-
-
-} // end namespace

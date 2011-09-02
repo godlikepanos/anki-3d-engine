@@ -71,8 +71,8 @@ ParticleEmitterRsrc& ParticleEmitterRsrc::operator=(
 //==============================================================================
 bool ParticleEmitterRsrc::hasForce() const
 {
-	return (!m::isZero(forceDirection.getLengthSquared()) ||
-		!m::isZero(forceDirectionDeviation.getLengthSquared())) &&
+	return (!Math::isZero(forceDirection.getLengthSquared()) ||
+		!Math::isZero(forceDirectionDeviation.getLengthSquared())) &&
 			(forceMagnitude != 0.0 || forceMagnitudeDeviation != 0.0);
 }
 
@@ -82,7 +82,7 @@ bool ParticleEmitterRsrc::hasForce() const
 //==============================================================================
 bool ParticleEmitterRsrc::usingWorldGrav() const
 {
-	return m::isZero(gravity.getLengthSquared());
+	return Math::isZero(gravity.getLengthSquared());
 }
 
 

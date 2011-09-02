@@ -1,10 +1,7 @@
 #include "RigidBody.h"
-#include "MasterContainer.h"
+#include "PhysWorld.h"
 #include "scene/Scene.h"
 #include "MotionState.h"
-
-
-namespace phys {
 
 
 //==============================================================================
@@ -23,7 +20,7 @@ RigidBody::Initializer::Initializer():
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-RigidBody::RigidBody(MasterContainer& masterContainer_,
+RigidBody::RigidBody(PhysWorld& masterContainer_,
 	const Initializer& init)
 :	btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL,
 		btVector3(0.0, 0.0, 0.0))), // dummy init
@@ -76,6 +73,3 @@ RigidBody::~RigidBody()
 {
 	masterContainer.dynamicsWorld->removeRigidBody(this);
 }
-
-
-} // end namespace

@@ -271,7 +271,7 @@ DISTRIBUTE_GROUP_DOC   = NO
 # NO to prevent subgrouping. Alternatively, this can be done per class using 
 # the \nosubgrouping command.
 
-SUBGROUPING            = YES
+SUBGROUPING            = NO
 
 # When TYPEDEF_HIDES_STRUCT is enabled, a typedef of a struct, union, or enum 
 # is documented as struct, union, or enum with the name of the typedef. So 
@@ -313,7 +313,7 @@ EXTRACT_ALL            = NO
 # If the EXTRACT_PRIVATE tag is set to YES all private members of a class 
 # will be included in the documentation.
 
-EXTRACT_PRIVATE        = YES
+EXTRACT_PRIVATE        = NO
 
 # If the EXTRACT_STATIC tag is set to YES all static members of a file 
 # will be included in the documentation.

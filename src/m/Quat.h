@@ -1,23 +1,24 @@
-#ifndef M_QUAT_H
-#define M_QUAT_H
+#ifndef QUAT_H
+#define QUAT_H
 
-#include "Common.h"
+#include "MathCommonIncludes.h"
 
 
-namespace m {
-
+/// @addtogroup Math
+/// @{
 
 /// Used in rotations
 class Quat
 {
 	public:
-		/// @name Constructors & destructors
+		/// @name Constructors
 		/// @{
 		explicit Quat();
-		explicit Quat(float f);
-		explicit Quat(float x, float y, float z, float w);
-		explicit Quat(const Vec2& v2, float z, float w);
-		explicit Quat(const Vec3& v3, float w);
+		explicit Quat(const float f);
+		explicit Quat(const float x, const float y, const float z,
+			const float w);
+		explicit Quat(const Vec2& v2, const float z, const float w);
+		explicit Quat(const Vec3& v3, const float w);
 		explicit Quat(const Vec4& v4);
 		         Quat(const Quat& b);
 		explicit Quat(const Mat3& m3);
@@ -60,11 +61,16 @@ class Quat
 		Quat  getNormalized() const;
 		float dot(const Quat& b) const;
 		/// Returns slerp(this, q1, t)
-		Quat  slerp(const Quat& q1, float t) const;
+		Quat  slerp(const Quat& q1, const float t) const;
 		Quat  getRotated(const Quat& b) const; ///< The same as Quat * Quat
 		void  rotate(const Quat& b); ///< @see getRotated
 		void  setIdentity();
 		static const Quat& getIdentity();
+		/// @}
+
+		/// @name Friends
+		/// @{
+		friend std::ostream& operator<<(std::ostream& s, const Quat& q);
 		/// @}
 
 	private:
@@ -76,15 +82,7 @@ class Quat
 		} vec;
 		/// @}
 };
-
-
-/// @name Other operators
-/// @{
-extern std::ostream& operator<<(std::ostream& s, const Quat& q);
 /// @}
-
-
-} // end namespace
 
 
 #include "Quat.inl.h"

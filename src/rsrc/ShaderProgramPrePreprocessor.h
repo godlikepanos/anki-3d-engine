@@ -44,8 +44,8 @@ class ShaderProgramPrePreprocessor
 		/// @name Accessors
 		/// @{
 		GETTER_R(Vec<std::string>, trffbVaryings, getTranformFeedbackVaryings)
-		const std::string& getShaderSource(ShaderType type) {
-			return output.shaderSources[type];}
+		const std::string& getShaderSource(ShaderType type)
+			{return output.shaderSources[type];}
 		/// @}
 
 	protected:

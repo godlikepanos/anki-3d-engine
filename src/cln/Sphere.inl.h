@@ -46,5 +46,5 @@ void Sphere::set(const Container& container)
 		}
 	}
 
-	radius = m::sqrt(maxDist);
+	radius = Math::sqrt(maxDist);
 }

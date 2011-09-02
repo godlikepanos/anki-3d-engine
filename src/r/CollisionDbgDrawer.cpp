@@ -54,7 +54,7 @@ void CollisionDbgDrawer::draw(const Plane& plane)
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
 	Mat3 rot(q);
-	rot.rotateXAxis(m::PI / 2);
+	rot.rotateXAxis(Math::PI / 2);
 	Mat4 trf(n * o, rot);
 
 	dbg.setModelMat(trf);

@@ -1,5 +1,5 @@
-#ifndef PHYS_RIGID_BODY_H
-#define PHYS_RIGID_BODY_H
+#ifndef RIGID_BODY_H
+#define RIGID_BODY_H
 
 #include <boost/scoped_ptr.hpp>
 #include <btBulletDynamicsCommon.h>
@@ -8,13 +8,8 @@
 
 
 class SceneNode;
-namespace phys {
 class MotionState;
-class MasterContainer;
-}
-
-
-namespace phys {
+class PhysWorld;
 
 
 /// Wrapper for rigid body
@@ -35,19 +30,16 @@ class RigidBody: public btRigidBody
 		};
 
 		/// Init and register
-		RigidBody(MasterContainer& masterContainer, const Initializer& init);
+		RigidBody(PhysWorld& masterContainer, const Initializer& init);
 
 		/// Unregister
 		~RigidBody();
 
 	private:
-		MasterContainer& masterContainer; ///< Know your father
+		PhysWorld& masterContainer; ///< Know your father
 		/// Keep it here for garbage collection
 		boost::scoped_ptr<MotionState> motionState;
 };
-
-
-} // end namespace
 
 
 #endif

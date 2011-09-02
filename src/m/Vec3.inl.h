@@ -1,7 +1,4 @@
-#include "Common.inl.h"
-
-
-namespace m {
+#include "MathCommonSrc.h"
 
 
 //==============================================================================
@@ -14,27 +11,31 @@ inline Vec3::Vec3()
 	arr[0] = arr[1] = arr[2] = 0.0;
 }
 
+
 // float, float, float
-inline Vec3::Vec3(float x_, float y_, float z_)
+inline Vec3::Vec3(const float x_, const float y_, const float z_)
 {
 	x() = x_;
 	y() = y_;
 	z() = z_;
 }
 
+
 // float
-inline Vec3::Vec3(float f)
+inline Vec3::Vec3(const float f)
 {
 	arr[0] = arr[1] = arr[2] = f;
 }
 
+
 // float[]
-inline Vec3::Vec3(float arr_[])
+inline Vec3::Vec3(const float arr_[])
 {
 	arr[0] = arr_[0];
 	arr[1] = arr_[1];
 	arr[2] = arr_[2];
 }
+
 
 // Copy
 inline Vec3::Vec3(const Vec3& b)
@@ -44,13 +45,15 @@ inline Vec3::Vec3(const Vec3& b)
 	arr[2] = b.arr[2];
 }
 
+
 // Vec2, float
-inline Vec3::Vec3(const Vec2& v2, float z_)
+inline Vec3::Vec3(const Vec2& v2, const float z_)
 {
 	x() = v2.x();
 	y() = v2.y();
 	z() = z_;
 }
+
 
 // Vec4
 inline Vec3::Vec3(const Vec4& v4)
@@ -59,6 +62,7 @@ inline Vec3::Vec3(const Vec4& v4)
 	arr[1] = v4[1];
 	arr[2] = v4[2];
 }
+
 
 // Quat
 inline Vec3::Vec3(const Quat& q)
@@ -77,37 +81,44 @@ inline float& Vec3::x()
 	return vec.x;
 }
 
+
 inline float Vec3::x() const
 {
 	return vec.x;
 }
+
 
 inline float& Vec3::y()
 {
 	return vec.y;
 }
 
+
 inline float Vec3::y() const
 {
 	return vec.y;
 }
+
 
 inline float& Vec3::z()
 {
 	return vec.z;
 }
 
+
 inline float Vec3::z() const
 {
 	return vec.z;
 }
 
-inline float& Vec3::operator[](uint i)
+
+inline float& Vec3::operator[](const size_t i)
 {
 	return arr[i];
 }
 
-inline float Vec3::operator[](uint i) const
+
+inline float Vec3::operator[](const size_t i) const
 {
 	return arr[i];
 }
@@ -126,11 +137,13 @@ inline Vec3& Vec3::operator=(const Vec3& b)
 	return (*this);
 }
 
+
 // +
 inline Vec3 Vec3::operator+(const Vec3& b) const
 {
 	return Vec3(x() + b.x(), y() + b.y(), z() + b.z());
 }
+
 
 // +=
 inline Vec3& Vec3::operator+=(const Vec3& b)
@@ -141,11 +154,13 @@ inline Vec3& Vec3::operator+=(const Vec3& b)
 	return (*this);
 }
 
+
 // -
 inline Vec3 Vec3::operator-(const Vec3& b) const
 {
 	return Vec3(x() - b.x(), y() - b.y(), z() - b.z());
 }
+
 
 // -=
 inline Vec3& Vec3::operator-=(const Vec3& b)
@@ -156,11 +171,13 @@ inline Vec3& Vec3::operator-=(const Vec3& b)
 	return (*this);
 }
 
+
 // *
 inline Vec3 Vec3::operator*(const Vec3& b) const
 {
 	return Vec3(x() * b.x(), y() * b.y(), z() * b.z());
 }
+
 
 // *=
 inline Vec3& Vec3::operator*=(const Vec3& b)
@@ -171,11 +188,13 @@ inline Vec3& Vec3::operator*=(const Vec3& b)
 	return (*this);
 }
 
+
 // /
 inline Vec3 Vec3::operator/(const Vec3& b) const
 {
 	return Vec3(x() / b.x(), y() / b.y(), z() / b.z());
 }
+
 
 // /=
 inline Vec3& Vec3::operator/=(const Vec3& b)
@@ -186,22 +205,29 @@ inline Vec3& Vec3::operator/=(const Vec3& b)
 	return (*this);
 }
 
+
 // negative
 inline Vec3 Vec3::operator-() const
 {
 	return Vec3(-x(), -y(), -z());
 }
 
+
 // ==
 inline bool Vec3::operator==(const Vec3& b) const
 {
-	return isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z());
+	return Math::isZero(x() - b.x()) &&
+		Math::isZero(y() - b.y()) &&
+		Math::isZero(z() - b.z());
 }
+
 
 // !=
 inline bool Vec3::operator!=(const Vec3& b) const
 {
-	return !(isZero(x() - b.x()) && isZero(y() - b.y()) && isZero(z() - b.z()));
+	return !(Math::isZero(x() - b.x()) &&
+		Math::isZero(y() - b.y()) &&
+		Math::isZero(z() - b.z()));
 }
 
 
@@ -215,11 +241,6 @@ inline Vec3 Vec3::operator+(float f) const
 	return (*this) + Vec3(f);
 }
 
-// float + Vec3
-inline Vec3 operator+(float f, const Vec3& v)
-{
-	return v + f;
-}
 
 // Vec3 += float
 inline Vec3& Vec3::operator+=(float f)
@@ -228,17 +249,13 @@ inline Vec3& Vec3::operator+=(float f)
 	return (*this);
 }
 
+
 // Vec3 - float
 inline Vec3 Vec3::operator-(float f) const
 {
 	return (*this) - Vec3(f);
 }
 
-// float - Vec3
-inline Vec3 operator-(float f, const Vec3& v)
-{
-	return Vec3(f - v.x(), f - v.y(), f - v.z());
-}
 
 // Vec3 -= float
 inline Vec3& Vec3::operator-=(float f)
@@ -247,17 +264,13 @@ inline Vec3& Vec3::operator-=(float f)
 	return (*this);
 }
 
+
 // Vec3 * float
 inline Vec3 Vec3::operator*(float f) const
 {
 	return (*this) * Vec3(f);
 }
 
-// float * Vec3
-inline Vec3 operator*(float f, const Vec3& v)
-{
-	return v * f;
-}
 
 // Vec3 *= float
 inline Vec3& Vec3::operator*=(float f)
@@ -266,17 +279,13 @@ inline Vec3& Vec3::operator*=(float f)
 	return (*this);
 }
 
+
 // Vec3 / float
 inline Vec3 Vec3::operator/(float f) const
 {
 	return (*this) / Vec3(f);
 }
 
-// float / Vec3
-inline Vec3 operator/(float f, const Vec3& v)
-{
-	return Vec3(f / v.x(), f / v.y(), f / v.z());
-}
 
 // Vec3 /= float
 inline Vec3& Vec3::operator/=(float f)
@@ -287,7 +296,7 @@ inline Vec3& Vec3::operator/=(float f)
 
 
 //==============================================================================
-// Misc methods                                                                =
+// Other                                                                       =
 //==============================================================================
 
 // dot
@@ -307,7 +316,7 @@ inline Vec3 Vec3::cross(const Vec3& b) const
 // getLength
 inline float Vec3::getLength() const
 {
-	return m::sqrt(getLengthSquared());
+	return Math::sqrt(getLengthSquared());
 }
 
 // getLengthSquared
@@ -343,7 +352,7 @@ inline Vec3 Vec3::getProjection(const Vec3& toThis) const
 // getRotated
 inline Vec3 Vec3::getRotated(const Quat& q) const
 {
-	ASSERT(isZero(1.0 - q.getLength())); // Not normalized quat
+	ASSERT(Math::isZero(1.0 - q.getLength())); // Not normalized quat
 
 	/*float vmult = 2.0f*(q.x*x + q.y*y + q.z*z);
 	float crossmult = 2.0*q.w;
@@ -456,13 +465,40 @@ inline void Vec3::transform(const Transform& transform)
 }
 
 //==============================================================================
-// Print                                                                       =
+// Globals                                                                     =
 //==============================================================================
+
+// float + Vec3
+inline Vec3 operator+(const float f, const Vec3& v)
+{
+	return v + f;
+}
+
+
+// float - Vec3
+inline Vec3 operator-(const float f, const Vec3& v)
+{
+	return Vec3(f - v.x(), f - v.y(), f - v.z());
+}
+
+
+// float * Vec3
+inline Vec3 operator*(const float f, const Vec3& v)
+{
+	return v * f;
+}
+
+
+// float / Vec3
+inline Vec3 operator/(const float f, const Vec3& v)
+{
+	return Vec3(f / v.x(), f / v.y(), f / v.z());
+}
+
+
+// Print
 inline std::ostream& operator<<(std::ostream& s, const Vec3& v)
 {
 	s << v.x() << ' ' << v.y() << ' ' << v.z();
 	return s;
 }
-
-
-} // end namespace

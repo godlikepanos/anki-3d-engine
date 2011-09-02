@@ -1,16 +1,13 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
-#include "MasterContainer.h"
+#include "PhysWorld.h"
 #include "Character.h"
 #include "MotionState.h"
-
-
-namespace phys {
 
 
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-MasterContainer::MasterContainer():
+PhysWorld::PhysWorld():
 	defaultContactProcessingThreshold(BT_LARGE_FLOAT)
 {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -27,7 +24,7 @@ MasterContainer::MasterContainer():
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
-MasterContainer::~MasterContainer()
+PhysWorld::~PhysWorld()
 {
 	/// @todo
 }
@@ -36,7 +33,7 @@ MasterContainer::~MasterContainer()
 //==============================================================================
 // setDebugDrawer                                                              =
 //==============================================================================
-void MasterContainer::setDebugDrawer(btIDebugDraw* newDebugDrawer)
+void PhysWorld::setDebugDrawer(btIDebugDraw* newDebugDrawer)
 {
 	debugDrawer.reset(newDebugDrawer);
 	dynamicsWorld->setDebugDrawer(debugDrawer.get());
@@ -47,7 +44,7 @@ void MasterContainer::setDebugDrawer(btIDebugDraw* newDebugDrawer)
 //==============================================================================
 // update                                                                      =
 //==============================================================================
-void MasterContainer::update(float prevUpdateTime, float crntTime)
+void PhysWorld::update(float prevUpdateTime, float crntTime)
 {
 	dynamicsWorld->stepSimulation(crntTime - prevUpdateTime);
 
@@ -58,6 +55,3 @@ void MasterContainer::update(float prevUpdateTime, float crntTime)
 			characters[i]->ghostObject->getWorldTransform());
 	}
 }
-
-
-} // end namespace
