@@ -9,7 +9,7 @@
 /// @addtogroup Math
 /// @{
 
-/// For transformations
+/// Transformation
 class Transform
 {
 	public:
@@ -37,7 +37,7 @@ class Transform
 		void setScale(const float s);
 		/// @}
 
-		/// @name Operators with same
+		/// @name Operators with same type
 		/// @{
 		Transform& operator=(const Transform& b);
 		/// @}
@@ -47,7 +47,7 @@ class Transform
 		void setIdentity();
 		static const Transform& getIdentity();
 		static Transform combineTransformations(const Transform& a,
-			const Transform& b); ///< @see m::combineTransformations
+			const Transform& b); ///< @copybrief Math::combineTransformations
 		/// @}
 		
 	private:
@@ -58,6 +58,7 @@ class Transform
 		float scale; ///< The uniform scaling
 		/// @}
 };
+/// @}
 
 
 #include "Transform.inl.h"

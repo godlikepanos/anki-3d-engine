@@ -7,7 +7,7 @@
 /// @addtogroup Math
 /// @{
 
-/// Used in rotations
+/// Quaternion. Used in rotations
 class Quat
 {
 	public:
@@ -38,7 +38,7 @@ class Quat
 		float& w();
 		/// @}
 
-		/// Operators with same
+		/// Operators with same type
 		/// @{
 		Quat& operator=(const Quat& b);
 		Quat operator*(const Quat& b) const; ///< 16 muls, 12 adds
@@ -50,7 +50,7 @@ class Quat
 		/// @name Other
 		/// @{
 
-		/// Calculates a quat from v0 to v1
+		/// Calculates the rotation from Vec3 v0 to v1
 		void  setFrom2Vec3(const Vec3& v0, const Vec3& v1);
 		float getLength() const;
 		Quat  getInverted() const;

@@ -9,18 +9,25 @@
 class Plane;
 
 
+/// @addtogroup Collision
+/// @{
+
 /// Sphere collision shape
 class Sphere: public CollisionShape
 {
 	public:
+		/// @name Constructors
+		/// @{
+
 		/// Default constructor
-		Sphere(): CollisionShape(CST_SPHERE) {}
+		Sphere(): CollisionShape(CID_SPHERE) {}
 
 		/// Copy constructor
 		Sphere(const Sphere& other);
 
 		/// Constructor
 		Sphere(const Vec3& center_, float radius_);
+		/// @}
 
 		/// @name Accessors
 		/// @{
@@ -45,17 +52,18 @@ class Sphere: public CollisionShape
 		Vec3 center;
 		float radius;
 };
+/// @}
 
 
 inline Sphere::Sphere(const Sphere& b)
-:	CollisionShape(CST_SPHERE),
+:	CollisionShape(CID_SPHERE),
 	center(b.center),
 	radius(b.radius)
 {}
 
 
 inline Sphere::Sphere(const Vec3& center_, float radius_)
-:	CollisionShape(CST_SPHERE),
+:	CollisionShape(CID_SPHERE),
 	center(center_),
 	radius(radius_)
 {}

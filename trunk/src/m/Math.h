@@ -15,30 +15,30 @@ class Math
 		static const float EPSILON;
 
 		/// A fast func that given the angle in rads it returns the sin and cos
-		static void sinCos(float rad, float& sin_, float& cos_);
+		static void sinCos(const float rad, float& sin_, float& cos_);
 
 		/// Optimized square root
-		static float sqrt(float f);
+		static float sqrt(const float f);
 
 		/// Convert
-		static float toRad(float degrees);
+		static float toRad(const float degrees);
 
 		/// Convert
-		static float toDegrees(float rad);
+		static float toDegrees(const float rad);
 
 		/// Optimized sine
-		static float sin(float rad);
+		static float sin(const float rad);
 
 		/// Optimized cosine
-		static float cos(float rad);
+		static float cos(const float rad);
 
 		/// The proper way to test if a float is zero
-		static bool isZero(float f);
+		static bool isZero(const float f);
 
 		/// Mat4(t0,r0,s0) * Mat4(t1, r1, s1) == Mat4(tf, rf, sf)
 		static void combineTransformations(
-			const Vec3& t0, const Mat3& r0, float s0, // in 0
-			const Vec3& t1, const Mat3& r1, float s1, // in 1
+			const Vec3& t0, const Mat3& r0, const float s0, // in 0
+			const Vec3& t1, const Mat3& r1, const float s1, // in 1
 			Vec3& tf, Mat3& rf, float& sf); // out
 
 		/// Mat4(t0, r0, 1.0) * Mat4(t1, r1, 1.0) == Mat4(tf, rf, sf)
@@ -48,7 +48,7 @@ class Math
 			Vec3& tf, Mat3& rf); // out
 
 	private:
-		static float polynomialSinQuadrant(float a);
+		static float polynomialSinQuadrant(const float a);
 };
 /// @}
 

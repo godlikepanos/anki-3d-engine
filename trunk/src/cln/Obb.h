@@ -6,6 +6,8 @@
 #include "util/Accessors.h"
 #include <boost/array.hpp>
 
+/// @addtogroup Collision
+/// @{
 
 /// Object oriented bounding box
 class Obb: public CollisionShape
@@ -13,7 +15,7 @@ class Obb: public CollisionShape
 	public:
 		/// @name Constructors
 		/// @{
-		Obb(): CollisionShape(CST_OBB) {}
+		Obb(): CollisionShape(CID_OBB) {}
 		Obb(const Obb& b);
 		Obb(const Vec3& center, const Mat3& rotation, const Vec3& extends);
 		/// @}
@@ -51,10 +53,11 @@ class Obb: public CollisionShape
 		/// Get extreme points in 3D space
 		void getExtremePoints(boost::array<Vec3, 8>& points) const;
 };
+/// @}
 
 
 inline Obb::Obb(const Obb& b)
-:	CollisionShape(CST_OBB),
+:	CollisionShape(CID_OBB),
 	center(b.center),
 	rotation(b.rotation),
 	extends(b.extends)
@@ -63,7 +66,7 @@ inline Obb::Obb(const Obb& b)
 
 inline Obb::Obb(const Vec3& center_, const Mat3& rotation_,
 	const Vec3& extends_)
-:	CollisionShape(CST_OBB),
+:	CollisionShape(CID_OBB),
 	center(center_),
 	rotation(rotation_),
 	extends(extends_)

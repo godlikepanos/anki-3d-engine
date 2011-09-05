@@ -415,6 +415,7 @@ inline void Mat3::setRows(const Vec3& a, const Vec3& b, const Vec3& c)
 	(*this)(2, 2) = c.z();
 }
 
+
 // setColumns
 inline void Mat3::setColumns(const Vec3& a, const Vec3& b, const Vec3& c)
 {
@@ -428,6 +429,7 @@ inline void Mat3::setColumns(const Vec3& a, const Vec3& b, const Vec3& c)
 	(*this)(1, 2) = c.y();
 	(*this)(2, 2) = c.z();
 }
+
 
 // getRows
 inline void Mat3::getRows(Vec3& a, Vec3& b, Vec3& c) const
@@ -443,6 +445,7 @@ inline void Mat3::getRows(Vec3& a, Vec3& b, Vec3& c) const
 	c.z() = (*this)(2, 2);
 }
 
+
 // getColumns
 inline void Mat3::getColumns(Vec3& a, Vec3& b, Vec3& c) const
 {
@@ -456,6 +459,7 @@ inline void Mat3::getColumns(Vec3& a, Vec3& b, Vec3& c) const
 	c.y() = (*this)(1, 2);
 	c.z() = (*this)(2, 2);
 }
+
 
 // setRow
 inline void Mat3::setRow(const size_t i, const Vec3& v)
@@ -471,6 +475,7 @@ inline Vec3 Mat3::getRow(const size_t i) const
 	return Vec3((*this)(i, 0), (*this)(i, 1), (*this)(i, 2));
 }
 
+
 // setColumn
 inline void Mat3::setColumn(const size_t i, const Vec3& v)
 {
@@ -479,11 +484,13 @@ inline void Mat3::setColumn(const size_t i, const Vec3& v)
 	(*this)(2, i) = v.z();
 }
 
+
 // getColumn
 inline Vec3 Mat3::getColumn(const size_t i) const
 {
 	return Vec3((*this)(0,i), (*this)(1,i), (*this)(2,i));
 }
+
 
 // getXAxis
 inline Vec3 Mat3::getXAxis() const
@@ -491,11 +498,13 @@ inline Vec3 Mat3::getXAxis() const
 	return getColumn(0);
 }
 
+
 // getYAxis
 inline Vec3 Mat3::getYAxis() const
 {
 	return getColumn(1);
 }
+
 
 // getZAxis
 inline Vec3 Mat3::getZAxis() const
@@ -503,11 +512,13 @@ inline Vec3 Mat3::getZAxis() const
 	return getColumn(2);
 }
 
+
 // setXAxis
 inline void Mat3::setXAxis(const Vec3& v3)
 {
 	setColumn(0, v3);
 }
+
 
 // setYAxis
 inline void Mat3::setYAxis(const Vec3& v3)
@@ -515,11 +526,13 @@ inline void Mat3::setYAxis(const Vec3& v3)
 	setColumn(1, v3);
 }
 
+
 // setZAxis
 inline void Mat3::setZAxis(const Vec3& v3)
 {
 	setColumn(2, v3);
 }
+
 
 // setRotationX
 inline void Mat3::setRotationX(const float rad)
@@ -538,6 +551,7 @@ inline void Mat3::setRotationX(const float rad)
 	(*this)(2, 2) = costheta;
 }
 
+
 // setRotationY
 inline void Mat3::setRotationY(const float rad)
 {
@@ -555,6 +569,7 @@ inline void Mat3::setRotationY(const float rad)
 	(*this)(2, 2) = costheta;
 }
 
+
 // loadRotationZ
 inline void Mat3::setRotationZ(const float rad)
 {
@@ -571,6 +586,7 @@ inline void Mat3::setRotationZ(const float rad)
 	(*this)(2, 1) = 0.0;
 	(*this)(2, 2) = 1.0;
 }
+
 
 // rotateXAxis
 /*
@@ -619,6 +635,7 @@ inline void Mat3::rotateXAxis(const float rad)
 	// setColumns(xAxis, yAxis, zAxis);
 
 }
+
 
 // rotateYAxis
 inline void Mat3::rotateYAxis(const float rad)
@@ -699,6 +716,7 @@ inline void Mat3::rotateZAxis(const float rad)
 	//setColumns(xAxis, yAxis, zAxis);
 }
 
+
 // transpose
 inline void Mat3::transpose()
 {
@@ -712,6 +730,7 @@ inline void Mat3::transpose()
 	(*this)(1, 2) = (*this)(2, 1);
 	(*this)(2, 1) = temp;
 }
+
 
 // transposed
 inline Mat3 Mat3::getTransposed() const
@@ -728,6 +747,7 @@ inline Mat3 Mat3::getTransposed() const
 	m3[8] = (*this)[8];
 	return m3;
 }
+
 
 // reorthogonalize
 inline void Mat3::reorthogonalize()
@@ -755,6 +775,7 @@ inline void Mat3::reorthogonalize()
 	setColumns(xAxis, yAxis, zAxis);
 }
 
+
 // Determinant
 inline float Mat3::getDet() const
 {
@@ -769,6 +790,7 @@ inline float Mat3::getDet() const
 		(*this)(2, 2) - (*this)(1, 2) * (*this)(2, 0)) + (*this)(0, 2) *
 		((*this)(0, 1) * (*this)(2, 1) - (*this)(1, 1) * (*this)(2, 0));
 }
+
 
 // getInverse
 // using Gramer's method (Inv(A) = (1/getDet(A)) * Adj(A))
@@ -812,11 +834,13 @@ inline Mat3 Mat3::getInverse() const
 	return r;
 }
 
+
 // setIdentity
 inline void Mat3::setIdentity()
 {
 	(*this) = getIdentity();
 }
+
 
 // invert
 // see above
@@ -825,12 +849,14 @@ inline void Mat3::invert()
 	(*this) = getInverse();
 }
 
+
 // getZero
 inline const Mat3& Mat3::getZero()
 {
 	static Mat3 zero(0.0);
 	return zero;
 }
+
 
 // getIdentity
 inline const Mat3& Mat3::getIdentity()

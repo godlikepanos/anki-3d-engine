@@ -1,11 +1,7 @@
 #include "MathCommonSrc.h"
-#include <cmath>
 
 
-//==============================================================================
-// Small funcs                                                                 =
-//==============================================================================
-inline float Math::sqrt(float f)
+inline float Math::sqrt(const float f)
 {
 #if defined(MATH_INTEL_SIMD)
 	__m128 mm = _mm_set_ss(f);
@@ -19,39 +15,39 @@ inline float Math::sqrt(float f)
 }
 
 
-inline float Math::toRad(float degrees)
+inline float Math::toRad(const float degrees)
 {
 	return degrees * (Math::PI / 180.0);
 }
 
 
-inline float Math::toDegrees(float rad)
+inline float Math::toDegrees(const float rad)
 {
 	return rad * (180.0 / Math::PI);
 }
 
 
-inline float Math::sin(float rad)
+inline float Math::sin(const float rad)
 {
 	return ::sin(rad);
 }
 
 
-inline float Math::cos(float rad)
+inline float Math::cos(const float rad)
 {
 	return ::cos(rad);
 }
 
 
-inline bool Math::isZero(float f)
+inline bool Math::isZero(const float f)
 {
-	return fabs(f) < Math::EPSILON;
+	return fabs(f) < EPSILON;
 }
 
 
 inline void Math::combineTransformations(
-	const Vec3& t0, const Mat3& r0, float s0,
-	const Vec3& t1, const Mat3& r1, float s1,
+	const Vec3& t0, const Mat3& r0, const float s0,
+	const Vec3& t1, const Mat3& r1, const float s1,
 	Vec3& tf, Mat3& rf, float& sf)
 {
 	tf = t1.getTransformed(t0, r0, s0);

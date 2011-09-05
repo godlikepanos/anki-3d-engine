@@ -12,7 +12,7 @@ const float Math::EPSILON = 1.0e-6;
 //==============================================================================
 // polynomialSinQuadrant                                                       =
 //==============================================================================
-float Math::polynomialSinQuadrant(float a)
+float Math::polynomialSinQuadrant(const float a)
 {
 	return a * (1.0 + a * a * (-0.16666 + a * a *
 		(0.0083143 - a * a * 0.00018542)));
@@ -22,24 +22,25 @@ float Math::polynomialSinQuadrant(float a)
 //==============================================================================
 // sinCos                                                                      =
 //==============================================================================
-void Math::sinCos(float a, float& sina, float& cosa)
+void Math::sinCos(const float a_, float& sina, float& cosa)
 {
 	bool negative = false;
+	float a = a_;
 	if(a < 0.0)
 	{
 		a = -a;
 		negative = true;
 	}
-	const float kTwoOverPi = 1.0 / (Math::PI / 2.0);
-	float floatA = kTwoOverPi * a;
+	const float TWO_OVER_PI = 1.0 / (PI / 2.0);
+	float floatA = TWO_OVER_PI * a;
 	int intA = (int)floatA;
 
-	const float k_rational_half_pi = 201 / 128.0;
-	const float kRemainderHalfPi = 4.8382679e-4;
+	const float RATIONAL_HALF_PI = 201 / 128.0;
+	const float REMAINDER_HALF_PI = 4.8382679e-4;
 
-	floatA = (a - k_rational_half_pi * intA) - kRemainderHalfPi * intA;
+	floatA = (a - RATIONAL_HALF_PI * intA) - REMAINDER_HALF_PI * intA;
 
-	float floatAMinusHalfPi = (floatA - k_rational_half_pi) - kRemainderHalfPi;
+	float floatAMinusHalfPi = (floatA - RATIONAL_HALF_PI) - REMAINDER_HALF_PI;
 
 	switch(intA & 3)
 	{
