@@ -7,7 +7,7 @@
 /// @addtogroup Math
 /// @{
 
-/// 4D vector
+/// 4D vector. SSE optimized
 class Vec4
 {
 	public:
@@ -45,7 +45,7 @@ class Vec4
 #endif
 		/// @}
 
-		/// @name Operators with same
+		/// @name Operators with same type
 		/// @{
 		Vec4& operator=(const Vec4& b);
 		Vec4 operator+(const Vec4& b) const;
@@ -78,7 +78,7 @@ class Vec4
 		Vec4 operator*(const Mat4& m4) const;
 		/// @}
 
-		/// @name Misc methods
+		/// @name Other
 		/// @{
 		float getLength() const;
 		Vec4 getNormalized() const;

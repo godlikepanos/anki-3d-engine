@@ -89,7 +89,7 @@ void App::init(int argc, char* argv[])
 
 	// other
 	activeCam = NULL;
-	timerTick = 1.0 / 40.0; // in sec. 1.0 / period
+	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 }
 
 

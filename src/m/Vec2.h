@@ -90,6 +90,7 @@ class Vec2
 		};
 		/// @}
 };
+/// @}
 
 
 #include "Vec2.inl.h"

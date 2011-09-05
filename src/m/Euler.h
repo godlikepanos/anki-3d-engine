@@ -7,7 +7,8 @@
 /// @addtogroup Math
 ///
 
-/// Used for rotations. It cannot describe a rotation accurately though
+/// Euler angles. Used for rotations. It cannot describe a rotation
+/// accurately though
 class Euler
 {
 	public:
@@ -32,7 +33,7 @@ class Euler
 		float z() const;
 		/// @}
 
-		/// @name Operators with same
+		/// @name Operators with same type
 		/// @{
 		Euler& operator=(const Euler& b);
 		/// @}

@@ -6,12 +6,18 @@
 #include "util/Accessors.h"
 
 
+/// @addtogroup Collision
+/// @{
+
 /// Plane collision shape
 class Plane: public CollisionShape
 {
 	public:
+		/// @name Constructors
+		/// @{
+
 		/// Default constructor
-		Plane(): CollisionShape(CST_PLANE) {}
+		Plane(): CollisionShape(CID_PLANE) {}
 
 		/// Copy constructor
 		Plane(const Plane& b);
@@ -24,6 +30,7 @@ class Plane: public CollisionShape
 
 		/// @see setFromPlaneEquation
 		Plane(float a, float b, float c, float d);
+		/// @}
 
 		/// @name Accessors
 		/// @{
@@ -62,31 +69,32 @@ class Plane: public CollisionShape
 		/// Set from plane equation is ax+by+cz+d
 		void setFromPlaneEquation(float a, float b, float c, float d);
 };
+/// @}
 
 
 inline Plane::Plane(const Plane& b)
-:	CollisionShape(CST_PLANE),
+:	CollisionShape(CID_PLANE),
 	normal(b.normal),
 	offset(b.offset)
 {}
 
 
 inline Plane::Plane(const Vec3& normal_, float offset_)
-:	CollisionShape(CST_PLANE),
+:	CollisionShape(CID_PLANE),
 	normal(normal_),
 	offset(offset_)
 {}
 
 
 inline Plane::Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
-:	CollisionShape(CST_PLANE)
+:	CollisionShape(CID_PLANE)
 {
 	setFrom3Points(p0, p1, p2);
 }
 
 
 inline Plane::Plane(float a, float b, float c, float d)
-:	CollisionShape(CST_PLANE)
+:	CollisionShape(CID_PLANE)
 {
 	setFromPlaneEquation(a, b, c, d);
 }

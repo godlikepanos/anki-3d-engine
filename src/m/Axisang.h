@@ -8,7 +8,7 @@
 /// @addtogroup Math
 /// @{
 
-/// Used for rotations
+/// Axis angles. Used for rotations
 class Axisang
 {
 	public:
@@ -32,7 +32,7 @@ class Axisang
 		void setAxis(const Vec3& a);
 		/// @}
 		
-		/// @name Operators with same
+		/// @name Operators with same type
 		/// @{
 		Axisang& operator=(const Axisang& b);
 		/// @}

@@ -86,7 +86,7 @@ class Vec3
 
 		/// @name Transformations
 		/// The faster way is by far the Mat4 * Vec3 or the
-		/// getTransformed(Vec3, Mat3)
+		/// getTransformed(const Vec3&, const Mat3&)
 		/// @{
 		Vec3 getTransformed(const Vec3& translate, const Mat3& rotate,
 			float scale) const;

@@ -7,7 +7,8 @@
 /// @addtogroup Math
 /// @{
 
-/// Used mainly for transformations but not necessarily. Its row major
+/// 4x4 Matrix. Used mainly for transformations but not necessarily. Its
+/// row major. SSE optimized
 class Mat4
 {
 	public:
@@ -93,6 +94,8 @@ class Mat4
 		float getDet() const;
 		Mat4 getInverse() const; ///< Invert using Cramer's rule
 		void invert(); ///< See getInverse
+		/// If we suppose this matrix represents a transformation, return the
+		/// inverted transformation
 		Mat4 getInverseTransformation() const;
 		Mat4 lerp(const Mat4& b, float t) const;
 		void setIdentity();
