@@ -12,11 +12,7 @@ typedef Singleton<class Scene> SceneSingleton;
 typedef Singleton<class App> AppSingleton;
 typedef Singleton<class StdinListener> StdinListenerSingleton;
 typedef Singleton<class GlStateMachine> GlStateMachineSingleton;
-
-namespace script {
-typedef Singleton<class Engine> EngineSingleton;
-}
-
+typedef Singleton<class ScriptManager> ScriptManagerSingleton;
 typedef Singleton<class EventManager> EventManagerSingleton;
 
 namespace parallel {

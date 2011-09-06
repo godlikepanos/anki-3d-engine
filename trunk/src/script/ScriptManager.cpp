@@ -1,8 +1,8 @@
-#include "Engine.h"
+#include "ScriptManager.h"
 #include "util/Exception.h"
 #include "core/Logger.h"
 #include "core/Globals.h"
-#include "Common.h"
+#include "ScriptCommon.h"
 #include <Python.h>
 
 
@@ -45,16 +45,13 @@ BOOST_PYTHON_MODULE(Anki)
 }
 
 
-namespace script {
-
-
 using namespace boost::python;
 
 
 //==============================================================================
 // init                                                                        =
 //==============================================================================
-void Engine::init()
+void ScriptManager::init()
 {
 	INFO("Initializing scripting engine...");
 
@@ -71,7 +68,7 @@ void Engine::init()
 //==============================================================================
 // execScript                                                                  =
 //==============================================================================
-void Engine::execScript(const char* script, const char* scriptName)
+void ScriptManager::execScript(const char* script, const char* scriptName)
 {
 	try
 	{
@@ -85,5 +82,3 @@ void Engine::execScript(const char* script, const char* scriptName)
 	}
 }
 
-
-} // end namespace

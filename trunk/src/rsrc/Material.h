@@ -45,40 +45,41 @@ class ShaderProgram;
 /// 	<wireframe>true | false</wireframe>
 ///
 /// 	<shaderProgram>
-/// 		<includes>
-/// 			<include>file.glsl</include>
-/// 			<include>file2.glsl</include>
-/// 		</includes>
+/// 		<fragmentShader>
+/// 			<includes>
+/// 				<include>file.glsl</include>
+/// 				<include>file2.glsl</include>
+/// 			</includes>
 ///
-/// 		<inputs>
-/// 			<input> *
-/// 				<name>xx</name>
-/// 				<value>
-/// 					<float>0.0</float> |
-/// 					<vec2><x>0.0</x><y>0.0</y></vec2> |
-/// 					<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
-/// 					<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4> |
-/// 					<sampler2D>path/to/image.tga</sampler2D>
-/// 				</value>
-/// 			</input>
-/// 		</inputs>
+/// 			<inputs>
+/// 				<input>
+/// 					<name>xx</name>
+/// 					<value> *
+/// 						<float>0.0</float> |
+/// 						<vec2><x>0.0</x><y>0.0</y></vec2> |
+/// 						<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
+/// 						<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4> |
+/// 						<sampler2D>path/to/image.tga</sampler2D>
+/// 					</value>
+/// 				</input>
+/// 			</inputs>
 ///
-/// 		<operations>
-/// 			<operation>
-/// 				<id>x</id>
-/// 				<function>functionName</function>
-/// 				<arguments>
-/// 					<argument>xx</argument>
-/// 					<argument>yy</argument>
-/// 				</arguments>
-/// 			</operation>
-/// 		</operations>
-///
+/// 			<operations>
+/// 				<operation>
+/// 					<id>x</id>
+/// 					<function>functionName</function>
+/// 					<arguments>
+/// 						<argument>xx</argument>
+/// 						<argument>yy</argument>
+/// 					</arguments>
+/// 				</operation>
+/// 			</operations>
+/// 		</fragmentShader>
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
-/// *: For if the value is not set then the in variable will be build in or
-///    standard varying
+/// *: If the value tag is not present then the in variable is assumed to be
+///    build
 class Material: public MaterialProperties
 {
 	public:

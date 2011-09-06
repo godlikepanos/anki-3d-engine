@@ -1,7 +1,7 @@
 #ifndef SCRIPT_M_COMMON_H
 #define SCRIPT_M_COMMON_H
 
-#include "../Common.h"
+#include "../ScriptCommon.h"
 
 
 template<typename ClassType, typename RetType,

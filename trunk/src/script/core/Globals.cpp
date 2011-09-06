@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "ScriptCommon.h"
 #include "core/Globals.h"
 #include "core/Logger.h"
 #include "r/MainRenderer.h"
