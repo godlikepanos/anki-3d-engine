@@ -1,17 +1,14 @@
-#ifndef SCRIPT_ENGINE_H
-#define SCRIPT_ENGINE_H
+#ifndef SCRIPT_MANAGER_H
+#define SCRIPT_MANAGER_H
 
 #include <boost/python.hpp>
 
 
-namespace script {
-
-
-/// The scripting engine using Python
-class Engine
+/// The scripting manager using Python
+class ScriptManager
 {
 	public:
-		Engine() {init();}
+		ScriptManager() {init();}
 
 		/// Execute python script
 		/// @param script Script source
@@ -34,13 +31,10 @@ class Engine
 
 
 template<typename Type>
-inline void Engine::exposeVar(const char* varName, Type* var)
+inline void ScriptManager::exposeVar(const char* varName, Type* var)
 {
 	boost::python::scope(ankiModule).attr(varName) = boost::python::ptr(var);
 }
-
-
-} // end namespace
 
 
 #endif

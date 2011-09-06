@@ -26,7 +26,7 @@
 #include "r/MainRenderer.h"
 #include "phys/Character.h"
 #include "phys/RigidBody.h"
-#include "script/Engine.h"
+#include "script/ScriptManager.h"
 #include "core/StdinListener.h"
 #include "scene/ModelNode.h"
 #include "rsrc/Model.h"
@@ -336,7 +336,7 @@ void mainLoopExtra()
 	if(InputSingleton::get().getKey(SDL_SCANCODE_Y) == 1)
 	{
 		INFO("Exec script");
-		script::EngineSingleton::get().execScript(util::readFile("test.py").c_str());
+		ScriptManagerSingleton::get().execScript(util::readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();
@@ -514,7 +514,7 @@ void initSubsystems(int argc, char* argv[])
 		"sys.stdout = StdoutCatcher()\n"
 		"sys.stderr = StderrCatcher()\n";
 
-	script::EngineSingleton::get().execScript(commonPythonCode);
+	ScriptManagerSingleton::get().execScript(commonPythonCode);
 
 	// Stdin listener
 	StdinListenerSingleton::get().start();
@@ -546,7 +546,7 @@ void execStdinScpripts()
 
 		try
 		{
-			script::EngineSingleton::get().execScript(cmd.c_str(),
+			ScriptManagerSingleton::get().execScript(cmd.c_str(),
 				"command line input");
 		}
 		catch(Exception& e)

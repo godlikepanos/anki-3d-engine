@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "ScriptCommon.h"
 #include "scene/MaterialRuntimeVariable.h"
 
 
