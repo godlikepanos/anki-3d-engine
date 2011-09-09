@@ -6,6 +6,9 @@
 #include <Python.h>
 
 
+using namespace boost::python;
+
+
 /// Define the classes
 BOOST_PYTHON_MODULE(Anki)
 {
@@ -45,9 +48,6 @@ BOOST_PYTHON_MODULE(Anki)
 }
 
 
-using namespace boost::python;
-
-
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -55,11 +55,11 @@ void ScriptManager::init()
 {
 	INFO("Initializing scripting engine...");
 
-	PyImport_AppendInittab((char*)("Anki"), &initAnki);
+	PyImport_AppendInittab((char*)("anki"), &initAnki);
 	Py_Initialize();
 	mainModule = object(handle<>(borrowed(PyImport_AddModule("__main__"))));
 	mainNamespace = mainModule.attr("__dict__");
-	ankiModule = object(handle<>(PyImport_ImportModule("Anki")));
+	ankiModule = object(handle<>(PyImport_ImportModule("anki")));
 
 	INFO("Scripting engine initialized");
 }

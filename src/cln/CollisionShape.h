@@ -23,9 +23,14 @@ class CollisionShape
 			CID_OBB
 		};
 
-		CollisionShape(ClassId cid_): cid(cid_) {}
+		CollisionShape(ClassId cid_)
+		:	cid(cid_)
+		{}
 
-		ClassId getClassId() const {return cid;}
+		ClassId getClassId() const
+		{
+			return cid;
+		}
 
 		/// If the bounding volume intersects with the plane then the func
 		/// returns 0, else it returns the distance. If the distance is < 0

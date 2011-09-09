@@ -55,7 +55,7 @@ void SkinNode::moveUpdate()
 //==============================================================================
 // frameUpdate                                                                 =
 //==============================================================================
-void SkinNode::frameUpdate(float prevUpdateTime, float crntTime)
+void SkinNode::frameUpdate(float prevUpdateTime, float /*crntTime*/)
 {
 	frame += step;
 
