@@ -1,8 +1,8 @@
-#include <algorithm>
-#include <boost/lexical_cast.hpp>
 #include "SceneNode.h"
 #include "Scene.h"
-#include "core/Globals.h"
+#include "util/Exception.h"
+#include <algorithm>
+#include <boost/lexical_cast.hpp>
 
 
 //==============================================================================
@@ -15,22 +15,29 @@ uint SceneNode::uid = 0;
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SceneNode::SceneNode(SceneNodeType type_, bool inheritParentTrfFlag_,
-	SceneNode* parent)
-:	Object(parent),
-	type(type_),
-	inheritParentTrfFlag(inheritParentTrfFlag_)
+SceneNode::SceneNode(ClassId cid_, Scene& scene_, ulong flags_,
+	SceneNode* parent_)
+:	cid(cid_),
+ 	flags(flags_),
+ 	parent(parent_),
+ 	scene(scene_)
 {
+	++uid;
+
 	getWorldTransform().setIdentity();
 	getLocalTransform().setIdentity();
-	SceneSingleton::get().registerNode(this);
 
 	name = boost::lexical_cast<std::string>(uid);
 
-	++uid;
-
-	flags = SNF_NONE;
 	enableFlag(SNF_ACTIVE);
+
+	if(parent != NULL)
+	{
+		parent->addChild(*this);
+	}
+
+	// This goes last
+	scene.registerNode(this);
 }
 
 
@@ -39,7 +46,27 @@ SceneNode::SceneNode(SceneNodeType type_, bool inheritParentTrfFlag_,
 //==============================================================================
 SceneNode::~SceneNode()
 {
-	SceneSingleton::get().unregisterNode(this);
+	scene.unregisterNode(this);
+
+	if(parent != NULL)
+	{
+		parent->removeChild(*this);
+	}
+
+	if(isFlagEnabled(SNF_ON_DELETE_DELETE_CHILDREN))
+	{
+		BOOST_REVERSE_FOREACH(SceneNode* child, children)
+		{
+			delete child;
+		}
+	}
+	else
+	{
+		BOOST_REVERSE_FOREACH(SceneNode* child, children)
+		{
+			child->parent = NULL;
+		}
+	}
 }
 
 
@@ -48,26 +75,54 @@ SceneNode::~SceneNode()
 //==============================================================================
 void SceneNode::updateWorldTransform()
 {
-	prevWorldTransform = worldTransform;
+	prevWTrf = wTrf;
 
-	if(getObjParent())
+	if(parent)
 	{
-		const SceneNode* parent = static_cast<const SceneNode*>(getObjParent());
-
-		if(inheritParentTrfFlag)
+		if(isFlagEnabled(SNF_INHERIT_PARENT_TRANSFORM))
 		{
-			worldTransform = parent->getWorldTransform();
+			wTrf = parent->getWorldTransform();
 		}
 		else
 		{
-			worldTransform = Transform::combineTransformations(
-				parent->getWorldTransform(), localTransform);
+			wTrf = Transform::combineTransformations(
+				parent->getWorldTransform(), lTrf);
 		}
 	}
 	else // else copy
 	{
-		worldTransform = localTransform;
+		wTrf = lTrf;
 	}
+}
+
+
+//==============================================================================
+// addChild                                                                    =
+//==============================================================================
+void SceneNode::addChild(SceneNode& child)
+{
+	ASSERT(child.parent == NULL); // Child already has parent
+
+	child.parent = this;
+	children.push_back(&child);
+}
+
+
+//==============================================================================
+// removeChild                                                                 =
+//==============================================================================
+void SceneNode::removeChild(SceneNode& child)
+{
+	Vec<SceneNode*>::iterator it = std::find(children.begin(), children.end(),
+		&child);
+
+	if(it == children.end())
+	{
+		throw EXCEPTION("Child not found");
+	}
+
+	children.erase(it);
+	child.parent = NULL;
 }
 
 
@@ -75,26 +130,23 @@ void SceneNode::updateWorldTransform()
 // Move(s)                                                                     =
 //==============================================================================
 
-//==============================================================================
 void SceneNode::moveLocalX(float distance)
 {
-	Vec3 x_axis = localTransform.getRotation().getColumn(0);
+	Vec3 x_axis = lTrf.getRotation().getColumn(0);
 	getLocalTransform().getOrigin() += x_axis * distance;
 }
 
 
-//==============================================================================
 void SceneNode::moveLocalY(float distance)
 {
-	Vec3 y_axis = localTransform.getRotation().getColumn(1);
+	Vec3 y_axis = lTrf.getRotation().getColumn(1);
 	getLocalTransform().getOrigin() += y_axis * distance;
 }
 
 
-//==============================================================================
 void SceneNode::moveLocalZ(float distance)
 {
-	Vec3 z_axis = localTransform.getRotation().getColumn(2);
+	Vec3 z_axis = lTrf.getRotation().getColumn(2);
 	getLocalTransform().getOrigin() += z_axis * distance;
 }
 

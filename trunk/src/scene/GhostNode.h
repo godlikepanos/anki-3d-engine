@@ -9,11 +9,9 @@
 class GhostNode: public SceneNode
 {
 	public:
-		GhostNode(): SceneNode(SNT_GHOST, false, NULL) {}
+		GhostNode(Scene& scene): SceneNode(SNT_GHOST, scene, SNF_NONE, NULL) {}
 		virtual ~GhostNode() {}
 		void init(const char*) {}
-
-		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
 };
 
 

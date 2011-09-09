@@ -2,7 +2,7 @@
 #define LINE_SEGMENT_H
 
 #include "CollisionShape.h"
-#include "m/Math.h"
+#include "m/Vec3.h"
 #include "util/Accessors.h"
 
 

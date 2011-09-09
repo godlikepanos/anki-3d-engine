@@ -14,17 +14,13 @@ class SpotLight;
 class PointLight;
 
 
-/// Camera SceneNode
+/// @addtogroup Scene
+/// @{
+
+/// Camera SceneNode interface class
 class Camera: public SceneNode, public VisibilityInfo
 {
 	public:
-		enum CameraType
-		{
-			CT_PERSPECTIVE,
-			CT_ORTHOGRAPHIC,
-			CT_NUM
-		};
-
 		enum FrustrumPlanes
 		{
 			FP_LEFT = 0,
@@ -36,13 +32,13 @@ class Camera: public SceneNode, public VisibilityInfo
 			FP_NUM
 		};
 
-		Camera(CameraType camType, bool inheritParentTrfFlag,
+		Camera(ClassId cid, Scene& scene, ulong flags,
 			SceneNode* parent);
+
+		static bool classof(const SceneNode* x);
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(CameraType, type, getType)
-
 		float getZNear() const {return zNear;}
 		void setZNear(float znear);
 
@@ -81,8 +77,6 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// @}
 
 	protected:
-		CameraType type;
-
 		float zNear, zFar;
 
 		/// @name The frustum planes in local and world space
@@ -115,15 +109,23 @@ class Camera: public SceneNode, public VisibilityInfo
 		virtual void getExtremePoints(Vec3* pointsArr,
 			uint& pointsNum) const = 0;
 };
+/// @}
 
 
 
-inline Camera::Camera(CameraType camType, bool inheritParentTrfFlag,
-	SceneNode* parent)
-:	SceneNode(SNT_CAMERA, inheritParentTrfFlag, parent),
-	type(camType)
+inline Camera::Camera(ClassId cid, Scene& scene, ulong flags,
+			SceneNode* parent)
+:	SceneNode(cid, scene, flags, parent)
 {
 	name = "Camera:" + name;
+}
+
+
+inline bool Camera::classof(const SceneNode* x)
+{
+	return x->getClassId() == CID_CAMERA ||
+		x->getClassId() == CID_PERSPECTIVE_CAMERA ||
+		x->getClassId() == CID_ORTHOGRAPHIC_CAMERA;
 }
 
 

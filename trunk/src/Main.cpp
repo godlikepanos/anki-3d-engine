@@ -492,7 +492,7 @@ void initSubsystems(int argc, char* argv[])
 	// Scripting engine
 	const char* commonPythonCode =
 		"import sys\n"
-		"from Anki import *\n"
+		"from anki import *\n"
 		"\n"
 		"class StdoutCatcher:\n"
 		"    def write(self, str_):\n"
