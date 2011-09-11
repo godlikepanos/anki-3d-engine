@@ -6,8 +6,10 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-PatchNode::PatchNode(const ModelPatch& modelPatch, SceneNode* parent)
-:	RenderableNode(true, parent),
+PatchNode::PatchNode(ClassId cid, const ModelPatch& modelPatch, ulong flags,
+	SceneNode& parent)
+:	RenderableNode(cid, parent.getScene(), flags | SNF_INHERIT_PARENT_TRANSFORM,
+		&parent),
 	rsrc(modelPatch),
 	mtlRun(new MaterialRuntime(rsrc.getMaterial()))
 {}

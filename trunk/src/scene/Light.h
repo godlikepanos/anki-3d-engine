@@ -41,8 +41,6 @@ class Light: public SceneNode, public VisibilityInfo
 
 		void init(const char* filename);
 
-		void frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/) {}
-
 	protected:
 		RsrcPtr<LightRsrc> lightData;
 		Vec3 diffuseCol; ///< Diffuse color
@@ -59,8 +57,8 @@ inline Light::Light(ClassId cid, Scene& scene, ulong flags, SceneNode* parent)
 inline bool Light::classof(const SceneNode* x)
 {
 	return x->getClassId() == CID_LIGHT ||
-		x->getClassId() == CID_SPOT_LIGHT ||
-		x->getClassId() == CID_POINT_LIGHT;
+		x->getClassId() == CID_POINT_LIGHT ||
+		x->getClassId() == CID_SPOT_LIGHT;
 }
 
 

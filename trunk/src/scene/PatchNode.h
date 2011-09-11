@@ -22,10 +22,10 @@ class PatchNode: public RenderableNode
 	public:
 		typedef boost::array<const Vbo*, Mesh::VBOS_NUM> VboArray;
 
-		PatchNode(const ModelPatch& modelPatch, SceneNode* parent);
+		PatchNode(ClassId cid, const ModelPatch& modelPatch, ulong flags,
+			SceneNode& parent);
 
-		/// Do nothing
-		void init(const char*) {}
+		static bool classof(const SceneNode* x);
 
 		/// @name Accessors
 		/// @{
@@ -64,6 +64,14 @@ class PatchNode: public RenderableNode
 			const VboArray& vbos,
 			Vao& vao);
 };
+
+
+inline bool PatchNode::classof(const SceneNode* x)
+{
+	return x->getClassId() == CID_PATCH_NODE ||
+		x->getClassId() == CID_MODEL_PATCH_NODE ||
+		x->getClassId() == CID_SKIN_PATCH_NODE;
+}
 
 
 #endif

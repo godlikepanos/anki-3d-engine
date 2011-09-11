@@ -2,15 +2,18 @@
 #define SPOT_LIGHT_H
 
 #include "Light.h"
-#include "PerspectiveCamera.h"
+//#include "PerspectiveCamera.h"
 
 
 /// Spot light
 class SpotLight: public Light
 {
 	public:
-		SpotLight(bool inheritParentTrfFlag, SceneNode* parent);
+		SpotLight(Scene& scene, ulong flags, SceneNode* parent);
 		~SpotLight() {}
+
+		static bool classof(const SceneNode* x);
+
 		void init(const char* filename);
 
 		/// @name Accessors
@@ -31,9 +34,16 @@ class SpotLight: public Light
 };
 
 
-inline SpotLight::SpotLight(bool inheritParentTrfFlag, SceneNode* parent)
-:	Light(LT_SPOT, inheritParentTrfFlag, parent)
+inline SpotLight::SpotLight(Scene& scene, ulong flags, SceneNode* parent)
+:	Light(CID_SPOT_LIGHT, scene, flags, parent)
 {}
+
+
+bool SpotLight::classof(const SceneNode* x)
+{
+	return x->getClassId() == CID_LIGHT &&
+		static_cast<const Light*>(x)->getClassId() == CID_SPOT_LIGHT;
+}
 
 
 #endif
