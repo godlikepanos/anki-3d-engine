@@ -71,6 +71,7 @@ class SceneNode
 		/// @name Accessors
 		/// @{
 		GETTER_R_BY_VAL(ClassId, cid, getClassId)
+		GETTER_RW(Scene, scene, getScene)
 		GETTER_SETTER(Transform, lTrf, getLocalTransform, setLocalTransform)
 		GETTER_SETTER(Transform, wTrf, getWorldTransform, setWorldTransform)
 		GETTER_R(Transform, prevWTrf, getPrevWorldTransform)

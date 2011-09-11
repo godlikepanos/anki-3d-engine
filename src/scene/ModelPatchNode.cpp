@@ -10,9 +10,8 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch_,
-	ModelNode* parent)
-:	PatchNode(modelPatch_, parent)
+ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch, ModelNode& parent)
+:	PatchNode(CID_MODEL_PATCH_NODE, modelPatch, SNF_NONE, parent)
 {
 	VboArray vboArr;
 

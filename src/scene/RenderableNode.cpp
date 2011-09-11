@@ -1,12 +1,9 @@
 #include "RenderableNode.h"
 
 
-//==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-RenderableNode::RenderableNode(bool inheritParentTrfFlag,
+RenderableNode::RenderableNode(ClassId cid, Scene& scene, ulong flags,
 	SceneNode* parent)
-:	SceneNode(SNT_RENDERABLE, inheritParentTrfFlag, parent)
+:	SceneNode(cid, scene, flags, parent)
 {}
 
 

@@ -17,8 +17,11 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
-		ModelNode(bool inheritParentTrfFlag, SceneNode* parent);
+		ModelNode(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
+		ModelNode(Scene& scene, ulong flags, SceneNode* parent);
 		virtual ~ModelNode();
+
+		static bool classof(const SceneNode* x);
 
 		/// @name Accessors
 		/// @{
@@ -39,6 +42,13 @@ class ModelNode: public SceneNode
 		Vec<ModelPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 };
+
+
+inline bool ModelNode::classof(const SceneNode* x)
+{
+	return x->getClassId() == CID_MODEL_NODE ||
+		x->getClassId() == CID_PARTICLE;
+}
 
 
 #endif

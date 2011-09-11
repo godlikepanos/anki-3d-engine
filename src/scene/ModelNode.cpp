@@ -5,16 +5,19 @@
 
 
 //==============================================================================
-// Constructor                                                                 =
+// Constructors & destructor                                                   =
 //==============================================================================
-ModelNode::ModelNode(bool inheritParentTrfFlag, SceneNode* parent)
-:	SceneNode(SNT_MODEL, inheritParentTrfFlag, parent)
+
+ModelNode::ModelNode(Scene& scene, ulong flags, SceneNode* parent)
+:	SceneNode(CID_MODEL_NODE, scene, flags, parent)
 {}
 
 
-//==============================================================================
-// Destructor                                                                  =
-//==============================================================================
+ModelNode::ModelNode(ClassId cid, Scene& scene, ulong flags, SceneNode* parent)
+:	SceneNode(cid, scene, flags, parent)
+{}
+
+
 ModelNode::~ModelNode()
 {}
 

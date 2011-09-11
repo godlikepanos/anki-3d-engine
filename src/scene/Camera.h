@@ -61,9 +61,6 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// - Update frustum planes
 		void moveUpdate();
 
-		/// Do nothing
-		void init(const char*) {}
-
 		/// @name Frustum checks
 		/// @{
 
