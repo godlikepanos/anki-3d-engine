@@ -22,9 +22,6 @@ class PatchNode: public RenderableNode
 	public:
 		typedef boost::array<const Vbo*, Mesh::VBOS_NUM> VboArray;
 
-		PatchNode(ClassId cid, const ModelPatch& modelPatch, ulong flags,
-			SceneNode& parent);
-
 		static bool classof(const SceneNode* x);
 
 		/// @name Accessors
@@ -56,6 +53,9 @@ class PatchNode: public RenderableNode
 		boost::array<Vao, PASS_TYPES_NUM> vaos;
 
 		boost::scoped_ptr<MaterialRuntime> mtlRun; ///< Material runtime
+
+		PatchNode(ClassId cid, const ModelPatch& modelPatch, ulong flags,
+			SceneNode& parent);
 
 		/// Create a VAO given a material and an array of VBOs
 		/// The location of the uniform variables are hard coded. See

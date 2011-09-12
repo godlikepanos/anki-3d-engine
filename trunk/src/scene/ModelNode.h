@@ -17,7 +17,6 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
-		ModelNode(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
 		ModelNode(Scene& scene, ulong flags, SceneNode* parent);
 		virtual ~ModelNode();
 
@@ -36,6 +35,10 @@ class ModelNode: public SceneNode
 
 		/// Update the bounding shape
 		void moveUpdate();
+
+	protected:
+		/// Constructor for class derivatives
+		ModelNode(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
 
 	private:
 		RsrcPtr<Model> model;

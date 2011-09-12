@@ -18,7 +18,7 @@ class Particle;
 class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 {
 	public:
-		ParticleEmitterNode(bool inheritParentTrfFlag, SceneNode* parent);
+		ParticleEmitterNode(Scene& scene, ulong flags, SceneNode* parent);
 		virtual ~ParticleEmitterNode();
 
 		void init(const char* filename);
@@ -37,9 +37,9 @@ class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 };
 
 
-inline ParticleEmitterNode::ParticleEmitterNode(bool inheritParentTrfFlag,
+inline ParticleEmitterNode::ParticleEmitterNode(Scene& scene, ulong flags,
 	SceneNode* parent)
-:	SceneNode(SNT_PARTICLE_EMITTER, inheritParentTrfFlag, parent)
+:	SceneNode(CID_PARTICLE_EMITTER_NODE, scene, flags, parent)
 {}
 
 

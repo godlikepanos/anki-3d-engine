@@ -12,12 +12,16 @@ class RigidBody;
 class Particle: public ModelNode
 {
 	public:
-		Particle(float timeOfDeath_, SceneNode* parent);
+		Particle(float timeOfDeath, Scene& scene, ulong flags,
+			SceneNode* parent);
 		virtual ~Particle();
 
-		GETTER_SETTER(float, timeOfDeath, getTimeOfDeath, setTimeOfDeath)
+		float getTimeOfDeath() const {return timeOfDeath;}
+		float& getTimeOfDeath() {return timeOfDeath;}
+		void setTimeOfDeath(float x) {timeOfDeath = x;}
+
 		bool isDead() const {return timeOfDeath < 0.0;}
-		void setNewRigidBody(RigidBody* body_);
+		void setNewRigidBody(RigidBody* body);
 		RigidBody& getRigidBody() {return *body;}
 		const RigidBody& getRigidBody() const {return *body;}
 

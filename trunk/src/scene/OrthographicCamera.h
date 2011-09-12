@@ -8,7 +8,7 @@
 class OrthographicCamera: public Camera
 {
 	public:
-		OrthographicCamera(bool inheritParentTrfFlag, SceneNode* parent);
+		OrthographicCamera(Scene& scene, ulong flags, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -59,9 +59,9 @@ class OrthographicCamera: public Camera
 };
 
 
-inline OrthographicCamera::OrthographicCamera(bool inheritParentTrfFlag,
+inline OrthographicCamera::OrthographicCamera(Scene& scene, ulong flags,
 	SceneNode* parent)
-:	Camera(CT_ORTHOGRAPHIC, inheritParentTrfFlag, parent)
+:	Camera(CID_ORTHOGRAPHIC_CAMERA, scene, flags, parent)
 {
 	name = "OrthographicCamera:" + name;
 }
