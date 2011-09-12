@@ -68,7 +68,7 @@ void ParticleEmitterNode::init(const char* filename)
 
 	for(uint i = 0; i < maxNumOfParticles; i++)
 	{
-		Particle* particle = new Particle(-1.0, NULL);
+		Particle* particle = new Particle(-1.0, getScene(), SNF_NONE, NULL);
 		particle->init(modelName.c_str());
 		particle->disableFlag(SceneNode::SNF_ACTIVE);
 		particle->setWorldTransform(Transform(Vec3(1000000.0),

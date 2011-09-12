@@ -32,17 +32,20 @@ class Camera: public SceneNode, public VisibilityInfo
 			FP_NUM
 		};
 
-		Camera(ClassId cid, Scene& scene, ulong flags,
-			SceneNode* parent);
+		Camera(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
+
+		virtual ~Camera();
 
 		static bool classof(const SceneNode* x);
 
 		/// @name Accessors
 		/// @{
 		float getZNear() const {return zNear;}
+		float& getZNear() {return zNear;}
 		void setZNear(float znear);
 
 		float getZFar() const {return zFar;}
+		float& getZFar() {return zFar;}
 		void setZFar(float zfar);
 
 		const Mat4& getProjectionMatrix() const {return projectionMat;}

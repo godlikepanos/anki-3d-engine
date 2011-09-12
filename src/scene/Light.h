@@ -16,9 +16,9 @@
 /// Ambient intensity:              Ia = Al * Am
 /// Ambient intensity of light:     Al
 /// Ambient intensity of material:  Am
-/// Defuse intensity:               Id = Dl * Dm * LambertTerm
-/// Defuse intensity of light:      Dl
-/// Defuse intensity of material:   Dm
+/// Diffuse intensity:              Id = Dl * Dm * LambertTerm
+/// Diffuse intensity of light:     Dl
+/// Diffuse intensity of material:  Dm
 /// LambertTerm:                    max(Normal dot Light, 0.0)
 /// Specular intensity:             Is = Sm * Sl * pow(max(R dot E, 0.0), f)
 /// Specular intensity of light:    Sl
@@ -27,16 +27,23 @@
 class Light: public SceneNode, public VisibilityInfo
 {
 	public:
-		Light(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
-		~Light();
+		virtual ~Light();
 
 		static bool classof(const SceneNode* x);
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, diffuseCol, getDiffuseCol, setDiffuseCol)
-		GETTER_SETTER(Vec3, specularCol, getSpecularCol, setSpecularCol)
-		GETTER_SETTER_BY_VAL(bool, castsShadowFlag, castsShadow, setCastsShadow)
+		const Vec3& getDiffuseColor() const {return diffuseCol;}
+		Vec3& getDiffuseColor() {return diffuseCol;}
+		void setDiffuseColor(const Vec3& x) {diffuseCol = x;}
+
+		const Vec3& getSpecularColor() const {return specularCol;}
+		Vec3& getSpecularColor() {return specularCol;}
+		void setSpecularColor(const Vec3& x) {specularCol = x;}
+
+		bool getCastShadow() const {return castsShadowFlag;}
+		bool& getCastShadow() {return castsShadowFlag;}
+		void setCastShadow(bool x) {castsShadowFlag = x;}
 		/// @}
 
 		void init(const char* filename);
@@ -46,6 +53,8 @@ class Light: public SceneNode, public VisibilityInfo
 		Vec3 diffuseCol; ///< Diffuse color
 		Vec3 specularCol; ///< Specular color
 		bool castsShadowFlag; ///< Casts shadow
+
+		Light(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
 };
 
 
