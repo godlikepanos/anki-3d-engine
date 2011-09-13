@@ -7,7 +7,7 @@
 //==============================================================================
 Particle::Particle(float timeOfDeath_, Scene& scene, ulong flags,
 	SceneNode* parent):
-	ModelNode(CID_PARTICLE, scene, flags, parent),
+	ModelNode(scene, flags, parent),
 	timeOfDeath(timeOfDeath_)
 {}
 

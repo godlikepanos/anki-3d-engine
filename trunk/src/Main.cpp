@@ -127,6 +127,8 @@ void init()
 {
 	INFO("Other init...");
 
+	Scene& scene = SceneSingleton::get();
+
 	/*Material mtl;
 	mtl.load("lala.mtl");*/
 
@@ -137,7 +139,7 @@ void init()
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
-	PerspectiveCamera* cam = new PerspectiveCamera(false, NULL);
+	PerspectiveCamera* cam = new PerspectiveCamera(scene, SceneNode::SNF_NONE, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
 	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(60.0), Math::toRad(60.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
@@ -146,27 +148,27 @@ void init()
 	AppSingleton::get().setActiveCam(cam);
 	INFO(cam->getSceneNodeName());
 
-	OrthographicCamera* ocam = new OrthographicCamera(false, NULL);
+	OrthographicCamera* ocam = new OrthographicCamera(scene, SceneNode::SNF_NONE, NULL);
 	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
 
 	// lights
-	point_lights[0] = new PointLight(false, NULL);
+	point_lights[0] = new PointLight(scene, SceneNode::SNF_NONE, NULL);
 	point_lights[0]->init("maps/temple/light0.light");
 	point_lights[0]->setLocalTransform(Transform(Vec3(-1.0, 2.4, 1.0), Mat3::getIdentity(), 1.0));
-	point_lights[1] = new PointLight(false, NULL);
+	point_lights[1] = new PointLight(scene, SceneNode::SNF_NONE, NULL);
 	point_lights[1]->init("maps/temple/light1.light");
 	point_lights[1]->setLocalTransform(Transform(Vec3(2.5, 1.4, 1.0), Mat3::getIdentity(), 1.0));
 
-	spot_lights[0] = new SpotLight(false, NULL);
+	spot_lights[0] = new SpotLight(scene, SceneNode::SNF_NONE, NULL);
 	spot_lights[0]->init("maps/temple/light2.light");
 	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
-	spot_lights[1] = new SpotLight(false, NULL);
+	spot_lights[1] = new SpotLight(scene, SceneNode::SNF_NONE, NULL);
 	spot_lights[1]->init("maps/temple/light3.light");
 	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(Math::toRad(-70), Math::toRad(-20), 0.0)), 1.0));
 
 
 	// horse
-	horse = new ModelNode(false, NULL);
+	horse = new ModelNode(scene, SceneNode::SNF_NONE, NULL);
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(), 1.0));
 
@@ -176,7 +178,7 @@ void init()
 	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));*/
 
 	// Sponza
-	ModelNode* sponza = new ModelNode(false, NULL);
+	ModelNode* sponza = new ModelNode(scene, SceneNode::SNF_NONE, NULL);
 	//sponza->init("maps/sponza/sponza.mdl");
 	sponza->init("maps/sponza-crytek/sponza_crytek.mdl");
 	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));

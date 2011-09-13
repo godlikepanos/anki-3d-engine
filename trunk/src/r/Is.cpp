@@ -190,11 +190,11 @@ void Is::pointLightPass(const PointLight& light)
 	const Vec3& origin = light.getWorldTransform().getOrigin();
 	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
 	shader.getUniformVariableByName("lightPos").set(&lightPosEyeSpace);
-	shader.getUniformVariableByName("lightRadius").set(&light.getRadius());
+	shader.getUniformVariableByName("lightRadius").set(light.getRadius());
 	shader.getUniformVariableByName("lightDiffuseCol").set(
-		&light.getDiffuseCol());
+		&light.getDiffuseColor());
 	shader.getUniformVariableByName("lightSpecularCol").set(
-		&light.getSpecularCol());
+		&light.getSpecularColor());
 
 	// render quad
 	r.drawQuad();
@@ -209,7 +209,7 @@ void Is::spotLightPass(const SpotLight& light)
 	const Camera& cam = r.getCamera();
 
 	// shadow mapping
-	if(light.castsShadow() && sm.isEnabled())
+	if(light.getCastShadow() && sm.isEnabled())
 	{
 		Vec3 zAxis = light.getWorldTransform().getRotation().getColumn(2);
 		LineSegment seg(light.getWorldTransform().getOrigin(),
@@ -242,7 +242,7 @@ void Is::spotLightPass(const SpotLight& light)
 	// shader prog
 	const ShaderProgram* shdr;
 
-	if(light.castsShadow() && sm.isEnabled())
+	if(light.getCastShadow() && sm.isEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
 	}
@@ -279,9 +279,9 @@ void Is::spotLightPass(const SpotLight& light)
 	float tmp = light.getDistance();
 	shdr->getUniformVariableByName("lightRadius").set(&tmp);
 	shdr->getUniformVariableByName("lightDiffuseCol").set(
-		&light.getDiffuseCol());
+		&light.getDiffuseColor());
 	shdr->getUniformVariableByName("lightSpecularCol").set(
-		&light.getSpecularCol());
+		&light.getSpecularColor());
 	shdr->getUniformVariableByName("lightTex").set(light.getTexture(), 4);
 
 	// set texture matrix for texture & shadowmap projection
@@ -295,7 +295,7 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->getUniformVariableByName("texProjectionMat").set(&texProjectionMat);
 
 	// the shadowmap
-	if(light.castsShadow() && sm.isEnabled())
+	if(light.getCastShadow() && sm.isEnabled())
 	{
 		shdr->getUniformVariableByName("shadowMap").set(sm.getShadowMap(), 5);
 		float smSize = sm.getShadowMap().getWidth();

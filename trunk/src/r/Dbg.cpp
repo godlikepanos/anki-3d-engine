@@ -287,11 +287,11 @@ void Dbg::run()
 			case SceneNode::SNT_LIGHT:
 				sceneDbgDrawer.drawLight(static_cast<const Light&>(*node));
 				break;
-			case SceneNode::SNT_PARTICLE_EMITTER:
+			case SceneNode::SNT_PARTICLE_EMITTER_NODE:
 				sceneDbgDrawer.drawParticleEmitter(
 					static_cast<const ParticleEmitterNode&>(*node));
 				break;
-			case SceneNode::SNT_RENDERABLE:
+			case SceneNode::SNT_RENDERABLE_NODE:
 				/*if(showVisibilityBoundingShapesFlag)
 				{
 					const RenderableNode& rnode =
@@ -299,7 +299,7 @@ void Dbg::run()
 					collisionDbgDrawer.draw(rnode. getVisibilityShapeWSpace());
 				}*/
 				break;
-			case SceneNode::SNT_SKIN:
+			case SceneNode::SNT_SKIN_NODE:
 			{
 				const SkinNode& node_ = static_cast<const SkinNode&>(*node);
 				sceneDbgDrawer.drawSkinNodeSkeleton(node_);

@@ -8,8 +8,8 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode* parent)
-:	PatchNode(modelPatch_, parent)
+SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
+:	PatchNode(modelPatch_, SNF_NONE, parent)
 {
 	VboArray vboArr;
 

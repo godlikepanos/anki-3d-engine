@@ -10,6 +10,8 @@ class OrthographicCamera: public Camera
 	public:
 		OrthographicCamera(Scene& scene, ulong flags, SceneNode* parent);
 
+		void init(const char*) {}
+
 		/// @name Accessors
 		/// @{
 		float getLeft() const {return left;}
@@ -61,7 +63,7 @@ class OrthographicCamera: public Camera
 
 inline OrthographicCamera::OrthographicCamera(Scene& scene, ulong flags,
 	SceneNode* parent)
-:	Camera(CID_ORTHOGRAPHIC_CAMERA, scene, flags, parent)
+:	Camera(CT_ORTHOGRAPHIC, scene, flags, parent)
 {
 	name = "OrthographicCamera:" + name;
 }

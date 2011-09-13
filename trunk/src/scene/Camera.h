@@ -21,6 +21,13 @@ class PointLight;
 class Camera: public SceneNode, public VisibilityInfo
 {
 	public:
+		enum CameraType
+		{
+			CT_ORTHOGRAPHIC,
+			CT_PERSPECTIVE,
+			CT_NUM
+		};
+
 		enum FrustrumPlanes
 		{
 			FP_LEFT = 0,
@@ -32,14 +39,14 @@ class Camera: public SceneNode, public VisibilityInfo
 			FP_NUM
 		};
 
-		Camera(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
+		Camera(CameraType type, Scene& scene, ulong flags, SceneNode* parent);
 
 		virtual ~Camera();
 
-		static bool classof(const SceneNode* x);
-
 		/// @name Accessors
 		/// @{
+		CameraType getCameraType() const {return type;}
+
 		float getZNear() const {return zNear;}
 		float& getZNear() {return zNear;}
 		void setZNear(float znear);
@@ -49,6 +56,7 @@ class Camera: public SceneNode, public VisibilityInfo
 		void setZFar(float zfar);
 
 		const Mat4& getProjectionMatrix() const {return projectionMat;}
+
 		const Mat4& getViewMatrix() const {return viewMat;}
 
 		/// See the declaration of invProjectionMat for info
@@ -108,24 +116,20 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// Get the edge points of the camera
 		virtual void getExtremePoints(Vec3* pointsArr,
 			uint& pointsNum) const = 0;
+
+	private:
+		CameraType type;
 };
 /// @}
 
 
 
-inline Camera::Camera(ClassId cid, Scene& scene, ulong flags,
-			SceneNode* parent)
-:	SceneNode(cid, scene, flags, parent)
+inline Camera::Camera(CameraType t, Scene& scene, ulong flags,
+	SceneNode* parent)
+:	SceneNode(SNT_CAMERA, scene, flags, parent),
+ 	type(t)
 {
 	name = "Camera:" + name;
-}
-
-
-inline bool Camera::classof(const SceneNode* x)
-{
-	return x->getClassId() == CID_CAMERA ||
-		x->getClassId() == CID_PERSPECTIVE_CAMERA ||
-		x->getClassId() == CID_ORTHOGRAPHIC_CAMERA;
 }
 
 

@@ -15,11 +15,8 @@ class MaterialRuntime;
 class RenderableNode: public SceneNode
 {
 	public:
-		RenderableNode(ClassId cid, Scene& scene, ulong flags,
-			SceneNode* parent);
+		RenderableNode(Scene& scene, ulong flags, SceneNode* parent);
 		virtual ~RenderableNode();
-
-		static bool classof(const SceneNode* x);
 
 		/// Get VAO depending the rendering pass
 		virtual const Vao& getVao(PassType p) const = 0;
@@ -36,15 +33,6 @@ class RenderableNode: public SceneNode
 		/// Const version of getMaterialRuntime
 		virtual const MaterialRuntime& getMaterialRuntime() const = 0;
 };
-
-
-inline bool RenderableNode::classof(const SceneNode* x)
-{
-	return x->getClassId() == CID_RENDERABLE_NODE ||
-		x->getClassId() == CID_PATCH_NODE ||
-		x->getClassId() == CID_MODEL_PATCH_NODE ||
-		x->getClassId() == CID_SKIN_PATCH_NODE;
-}
 
 
 #endif

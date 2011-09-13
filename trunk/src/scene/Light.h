@@ -27,12 +27,20 @@
 class Light: public SceneNode, public VisibilityInfo
 {
 	public:
-		virtual ~Light();
+		enum LightType
+		{
+			LT_POINT,
+			LT_SPOT
+		};
 
-		static bool classof(const SceneNode* x);
+		Light(LightType type, Scene& scene, ulong flags, SceneNode* parent);
+
+		virtual ~Light();
 
 		/// @name Accessors
 		/// @{
+		LightType getLightType() const {return type;}
+
 		const Vec3& getDiffuseColor() const {return diffuseCol;}
 		Vec3& getDiffuseColor() {return diffuseCol;}
 		void setDiffuseColor(const Vec3& x) {diffuseCol = x;}
@@ -54,21 +62,15 @@ class Light: public SceneNode, public VisibilityInfo
 		Vec3 specularCol; ///< Specular color
 		bool castsShadowFlag; ///< Casts shadow
 
-		Light(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
+	private:
+		LightType type;
 };
 
 
-inline Light::Light(ClassId cid, Scene& scene, ulong flags, SceneNode* parent)
-:	SceneNode(cid, scene, flags, parent)
+inline Light::Light(LightType t, Scene& scene, ulong flags, SceneNode* parent)
+:	SceneNode(SNT_LIGHT, scene, flags, parent),
+ 	type(t)
 {}
-
-
-inline bool Light::classof(const SceneNode* x)
-{
-	return x->getClassId() == CID_LIGHT ||
-		x->getClassId() == CID_POINT_LIGHT ||
-		x->getClassId() == CID_SPOT_LIGHT;
-}
 
 
 #endif

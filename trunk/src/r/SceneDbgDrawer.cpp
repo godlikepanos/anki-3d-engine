@@ -13,7 +13,7 @@
 //==============================================================================
 void SceneDbgDrawer::drawCamera(const Camera& cam) const
 {
-	switch(cam.getType())
+	switch(cam.getCameraType())
 	{
 		case Camera::CT_PERSPECTIVE:
 		{
@@ -116,7 +116,7 @@ void SceneDbgDrawer::drawOrthographicCamera(
 //==============================================================================
 void SceneDbgDrawer::drawLight(const Light& light) const
 {
-	dbg.setColor(light.getDiffuseCol());
+	dbg.setColor(light.getDiffuseColor());
 	dbg.setModelMat(Mat4(light.getWorldTransform()));
 	dbg.drawSphere(0.1);
 }
