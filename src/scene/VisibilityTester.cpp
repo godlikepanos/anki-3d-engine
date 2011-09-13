@@ -64,7 +64,7 @@ void VisibilityTester::test(Camera& cam)
 			continue;
 		}
 
-		switch(light->getType())
+		switch(light->getLightType())
 		{
 			// Point
 			case Light::LT_POINT:

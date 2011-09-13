@@ -18,7 +18,7 @@ class SkinNode: public SceneNode
 	public:
 		SkelAnimModelNodeCtrl* skelAnimModelNodeCtrl; ///< @todo fix this crap
 
-		SkinNode(bool inheritParentTrfFlag, SceneNode* parent);
+		SkinNode(Scene& scene, ulong flags, SceneNode* parent);
 		~SkinNode();
 
 		/// @name Accessors

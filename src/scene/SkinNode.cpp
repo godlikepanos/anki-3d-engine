@@ -9,8 +9,8 @@
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SkinNode::SkinNode(bool inheritParentTrfFlag, SceneNode* parent)
-:	SceneNode(SNT_SKIN, inheritParentTrfFlag, parent)
+SkinNode::SkinNode(Scene& scene, ulong flags, SceneNode* parent)
+:	SceneNode(SNT_SKIN_NODE, scene, flags, parent)
 {}
 
 
@@ -30,7 +30,7 @@ void SkinNode::init(const char* filename)
 
 	BOOST_FOREACH(const ModelPatch& patch, skin->getModelPatches())
 	{
-		patches.push_back(new SkinPatchNode(patch, this));
+		patches.push_back(new SkinPatchNode(patch, *this));
 	}
 
 	uint bonesNum = skin->getSkeleton().getBones().size();

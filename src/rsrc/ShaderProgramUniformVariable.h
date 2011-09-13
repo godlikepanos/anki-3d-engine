@@ -20,6 +20,7 @@ class ShaderProgramUniformVariable: public ShaderProgramVariable
 
 		/// @name Set the var
 		/// @{
+		void set(const float f) const;
 		void set(const float f[], uint size = 1) const;
 		void set(const Vec2 v2[], uint size = 1) const;
 		void set(const Vec3 v3[], uint size = 1) const;

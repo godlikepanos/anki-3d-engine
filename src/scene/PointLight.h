@@ -8,8 +8,12 @@
 class PointLight: public Light
 {
 	public:
-		PointLight(bool inheritParentTrfFlag, SceneNode* parent);
-		GETTER_SETTER(float, radius, getRadius, setRadius)
+		PointLight(Scene& scene, ulong flags, SceneNode* parent);
+
+		float getRadius() const {return radius;}
+		float& getRadius() {return radius;}
+		void setRadius(float x) {radius = x;}
+
 		void init(const char* filename);
 
 	private:
@@ -17,8 +21,8 @@ class PointLight: public Light
 };
 
 
-inline PointLight::PointLight(bool inheritParentTrfFlag, SceneNode* parent)
-:	Light(LT_POINT, inheritParentTrfFlag, parent)
+inline PointLight::PointLight(Scene& scene, ulong flags, SceneNode* parent)
+:	Light(LT_POINT, scene, flags, parent)
 {}
 
 

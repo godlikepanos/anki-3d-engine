@@ -21,6 +21,14 @@ void ShaderProgramUniformVariable::doSanityChecks() const
 // set uniforms                                                                =
 //==============================================================================
 
+void ShaderProgramUniformVariable::set(const float f) const
+{
+	doSanityChecks();
+	ASSERT(getGlDataType() == GL_FLOAT);
+
+	glUniform1f(getLoc(), f);
+}
+
 void ShaderProgramUniformVariable::set(const float f[], uint size) const
 {
 	doSanityChecks();

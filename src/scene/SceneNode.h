@@ -2,7 +2,6 @@
 #define SCENE_NODE_H
 
 #include "m/Math.h"
-#include "core/Object.h"
 #include "cln/Obb.h"
 #include "util/Accessors.h"
 #include "util/Vec.h"
@@ -25,23 +24,15 @@ class SceneNode
 		typedef Obb VisibilityCollisionShape;
 		
 		/// Class ID for scene nodes
-		enum ClassId
+		enum SceneNodeType
 		{
-			CID_CAMERA,
-			CID_CHOST_NODE,
-			CID_MODEL_NODE,
-			CID_LIGHT,
-			CID_MODEL_PATCH_NODE,
-			CID_ORTHOGRAPHIC_CAMERA,
-			CID_PARTICLE,
-			CID_PARTICLE_EMITTER_NODE,
-			CID_PATCH_NODE,
-			CID_PERSPECTIVE_CAMERA,
-			CID_POINT_LIGHT,
-			CID_RENDERABLE_NODE,
-			CID_SKIN_NODE,
-			CID_SKIN_PATCH_NODE,
-			CID_SPOT_LIGHT
+			SNT_CAMERA,
+			SNT_GHOST_NODE,
+			SNT_MODEL_NODE,
+			SNT_LIGHT,
+			SNT_PARTICLE_EMITTER_NODE,
+			SNT_RENDERABLE_NODE,
+			SNT_SKIN_NODE
 		};
 
 		enum SceneNodeFlags
@@ -55,30 +46,42 @@ class SceneNode
 		};
 
 		/// The one and only constructor
-		/// @param cid The class ID
+		/// @param type The type of the scene node
 		/// @param scene The scene to register the node
 		/// @param flags The flags with the node properties
 		/// @param parent The nods's parent. Its nulptr only for the root node
-		explicit SceneNode(ClassId cid, Scene& scene, ulong flags,
+		explicit SceneNode(SceneNodeType type, Scene& scene, ulong flags,
 			SceneNode* parent);
 
 		virtual ~SceneNode();
-
-		static bool classof(const SceneNode*) {return true;}
 
 		virtual void init(const char*) = 0; ///< init using a script file
 
 		/// @name Accessors
 		/// @{
-		GETTER_R_BY_VAL(ClassId, cid, getClassId)
-		GETTER_RW(Scene, scene, getScene)
-		GETTER_SETTER(Transform, lTrf, getLocalTransform, setLocalTransform)
-		GETTER_SETTER(Transform, wTrf, getWorldTransform, setWorldTransform)
-		GETTER_R(Transform, prevWTrf, getPrevWorldTransform)
+		SceneNodeType getSceneNodeType() const {return type;}
+
+		const Scene& getScene() const {return scene;}
+		Scene& getScene() {return scene;}
+
+		const Transform& getLocalTransform() const {return lTrf;}
+		Transform& getLocalTransform() {return lTrf;}
+		void setLocalTransform(const Transform& x) {lTrf = x;}
+
+		const Transform& getWorldTransform() const {return wTrf;}
+		Transform& getWorldTransform() {return wTrf;}
+		void setWorldTransform(const Transform& x) {wTrf = x;}
+
+		const Transform& getPrevWorldTransform() const {return prevWTrf;}
+
 		const SceneNode* getParent() const {return parent;}
 		SceneNode* getParent() {return parent;}
-		GETTER_RW(Vec<SceneNode*>, children, getChildren)
-		GETTER_R(std::string, name, getSceneNodeName)
+
+		const std::string& getSceneNodeName() const {return name;}
+
+		ulong getFlags() const {return flags;}
+
+		const Vec<SceneNode*>& getChildren() const {return children;}
 		/// @}
 
 		/// @name Flag manipulation
@@ -86,7 +89,6 @@ class SceneNode
 		void enableFlag(SceneNodeFlags flag, bool enable = true);
 		void disableFlag(SceneNodeFlags flag) {enableFlag(flag, false);}
 		bool isFlagEnabled(SceneNodeFlags flag) const {return flags & flag;}
-		GETTER_R_BY_VAL(ulong, flags, getFlags)
 		/// @}
 
 		/// @name Updates
@@ -127,7 +129,7 @@ class SceneNode
 	private:
 		static uint uid; ///< Unique identifier
 
-		ClassId cid; ///< Class ID
+		SceneNodeType type; ///< Type
 
 		Transform lTrf; ///< The transformation in local space
 

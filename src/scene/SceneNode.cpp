@@ -15,9 +15,9 @@ uint SceneNode::uid = 0;
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-SceneNode::SceneNode(ClassId cid_, Scene& scene_, ulong flags_,
+SceneNode::SceneNode(SceneNodeType type_, Scene& scene_, ulong flags_,
 	SceneNode* parent_)
-:	cid(cid_),
+:	type(type_),
  	flags(flags_),
  	parent(parent_),
  	scene(scene_)

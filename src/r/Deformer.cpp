@@ -40,8 +40,8 @@ void Deformer::init()
 void Deformer::deform(SkinPatchNode& node) const
 {
 	ASSERT(node.getParent() != NULL); // The SkinPatchNodes always have parent
-	ASSERT(static_cast<SceneNode*>(node.getParent())->getSceneNodeType() ==
-		SceneNode::SNT_SKIN); // And their parent must be SkinNode
+	ASSERT(node.getParent()->getSceneNodeType() ==
+		SceneNode::SNT_SKIN_NODE); // And their parent must be SkinNode
 	ASSERT(node.isFlagEnabled(SceneNode::SNF_VISIBLE)); // And it should be
 	                                                    // visible
 

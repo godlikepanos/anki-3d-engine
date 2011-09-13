@@ -14,21 +14,16 @@ class ModelPatchNode: public PatchNode
 	public:
 		ModelPatchNode(const ModelPatch& modelPatch, ModelNode& parent);
 
-		static bool classof(const SceneNode* x);
+		const Obb& getVisibilityShapeWSpace() const
+			{return visibilityShapeWSpace;}
 
-		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+		void init(const char*) {}
 
 		virtual void moveUpdate(); ///< Update the visibility shape
 
 	private:
 		Obb visibilityShapeWSpace;
 };
-
-
-inline bool ModelPatchNode::classof(const SceneNode* x)
-{
-	return x->getClassId() == CID_MODEL_PATCH_NODE;
-}
 
 
 #endif

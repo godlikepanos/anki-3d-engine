@@ -143,7 +143,7 @@ void Sm::run(const Light& light, float distance)
 	BOOST_FOREACH(const RenderableNode* node,
 		light.getVisibleMsRenderableNodes())
 	{
-		switch(light.getType())
+		switch(light.getLightType())
 		{
 			case Light::LT_SPOT:
 			{

@@ -1,9 +1,8 @@
 #include "RenderableNode.h"
 
 
-RenderableNode::RenderableNode(ClassId cid, Scene& scene, ulong flags,
-	SceneNode* parent)
-:	SceneNode(cid, scene, flags, parent)
+RenderableNode::RenderableNode(Scene& scene, ulong flags, SceneNode* parent)
+:	SceneNode(SNT_RENDERABLE_NODE, scene, flags, parent)
 {}
 
 

@@ -173,9 +173,9 @@ void Smo::run(const SpotLight& light)
 
 	// Calc the camera shape scale matrix
 	Mat4 localMat(Mat4::getIdentity());
-	const Geom& cg = camGeom[lcam.getType()];
+	const Geom& cg = camGeom[lcam.getCameraType()];
 
-	switch(lcam.getType())
+	switch(lcam.getCameraType())
 	{
 		case Camera::CT_PERSPECTIVE:
 		{

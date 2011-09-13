@@ -33,7 +33,9 @@ class SkinPatchNode: public PatchNode
 			VERT_WEIGHT_WEIGHTS_LOC
 		};
 
-		SkinPatchNode(const ModelPatch& modelPatch, SkinNode* parent);
+		SkinPatchNode(const ModelPatch& modelPatch, SkinNode& parent);
+
+		void init(const char*) {}
 
 		/// @name Accessors
 		/// @{

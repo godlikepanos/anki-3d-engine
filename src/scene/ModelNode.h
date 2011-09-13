@@ -20,13 +20,15 @@ class ModelNode: public SceneNode
 		ModelNode(Scene& scene, ulong flags, SceneNode* parent);
 		virtual ~ModelNode();
 
-		static bool classof(const SceneNode* x);
-
 		/// @name Accessors
 		/// @{
-		GETTER_RW(Vec<ModelPatchNode*>, patches, getModelPatchNodes)
+		const Vec<ModelPatchNode*>& getModelPatchNodes() const {return patches;}
+		Vec<ModelPatchNode*>& getModelPatchNodes() {return patches;}
+
 		const Model& getModel() const {return *model;}
-		GETTER_R(Obb, visibilityShapeWSpace, getVisibilityShapeWSpace)
+
+		const Obb& getVisibilityShapeWSpace() const
+			{return visibilityShapeWSpace;}
 		/// @}
 
 		/// Initialize the node
@@ -36,22 +38,11 @@ class ModelNode: public SceneNode
 		/// Update the bounding shape
 		void moveUpdate();
 
-	protected:
-		/// Constructor for class derivatives
-		ModelNode(ClassId cid, Scene& scene, ulong flags, SceneNode* parent);
-
 	private:
 		RsrcPtr<Model> model;
 		Vec<ModelPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 };
-
-
-inline bool ModelNode::classof(const SceneNode* x)
-{
-	return x->getClassId() == CID_MODEL_NODE ||
-		x->getClassId() == CID_PARTICLE;
-}
 
 
 #endif

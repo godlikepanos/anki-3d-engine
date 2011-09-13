@@ -46,18 +46,18 @@ void Scene::registerNode(SceneNode* node)
 		case SceneNode::SNT_CAMERA:
 			putBackNode(cameras, static_cast<Camera*>(node));
 			break;
-		case SceneNode::SNT_PARTICLE_EMITTER:
+		case SceneNode::SNT_PARTICLE_EMITTER_NODE:
 			putBackNode(particleEmitterNodes,
 				static_cast<ParticleEmitterNode*>(node));
 			break;
-		case SceneNode::SNT_MODEL:
+		case SceneNode::SNT_MODEL_NODE:
 			putBackNode(modelNodes, static_cast<ModelNode*>(node));
 			break;
-		case SceneNode::SNT_SKIN:
+		case SceneNode::SNT_SKIN_NODE:
 			putBackNode(skinNodes, static_cast<SkinNode*>(node));
 			break;
-		case SceneNode::SNT_RENDERABLE:
-		case SceneNode::SNT_GHOST:
+		case SceneNode::SNT_RENDERABLE_NODE:
+		case SceneNode::SNT_GHOST_NODE:
 			break;
 	};
 }
@@ -78,18 +78,18 @@ void Scene::unregisterNode(SceneNode* node)
 		case SceneNode::SNT_CAMERA:
 			eraseNode(cameras, static_cast<Camera*>(node));
 			break;
-		case SceneNode::SNT_PARTICLE_EMITTER:
+		case SceneNode::SNT_PARTICLE_EMITTER_NODE:
 			eraseNode(particleEmitterNodes,
 				static_cast<ParticleEmitterNode*>(node));
 			break;
-		case SceneNode::SNT_MODEL:
+		case SceneNode::SNT_MODEL_NODE:
 			eraseNode(modelNodes, static_cast<ModelNode*>(node));
 			break;
-		case SceneNode::SNT_SKIN:
+		case SceneNode::SNT_SKIN_NODE:
 			eraseNode(skinNodes, static_cast<SkinNode*>(node));
 			break;
-		case SceneNode::SNT_RENDERABLE:
-		case SceneNode::SNT_GHOST:
+		case SceneNode::SNT_RENDERABLE_NODE:
+		case SceneNode::SNT_GHOST_NODE:
 			break;
 	};
 }
@@ -144,9 +144,8 @@ void Scene::updateAllWorldStuff(float prevUpdateTime, float crntTime)
 		pnode->moveUpdate();
 		++num;
 
-		BOOST_FOREACH(Object* obj, pnode->getChildren())
+		BOOST_FOREACH(SceneNode* node, pnode->getChildren())
 		{
-			SceneNode* node = static_cast<SceneNode*>(obj);
 			queue[tail++] = node;
 		}
 	}

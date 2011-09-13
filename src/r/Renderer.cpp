@@ -86,7 +86,7 @@ void Renderer::render(Camera& cam_)
 	//
 	calcPlanes(Vec2(cam->getZNear(), cam->getZFar()), planes);
 
-	ASSERT(cam->getType() == Camera::CT_PERSPECTIVE);
+	ASSERT(cam->getCameraType() == Camera::CT_PERSPECTIVE);
 	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(*cam);
 	calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
 	limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
