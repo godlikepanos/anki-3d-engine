@@ -4,7 +4,6 @@
 #include <boost/scoped_ptr.hpp>
 #include "phys/PhysWorld.h"
 #include "util/Assert.h"
-#include "util/Accessors.h"
 #include "VisibilityTester.h"
 
 
@@ -33,7 +32,7 @@ class Scene
 
 		enum
 		{
-			MAX_VISIBLE_NODES = 1000
+			MAX_VISIBLE_NODES = 1024
 		};
 
 		Scene();
@@ -51,19 +50,40 @@ class Scene
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, ambientCol, getAmbientColor, setAmbientColor)
+		const Vec3& getAmbientColor() const {return ambientCol;}
+		Vec3& getAmbientColor() {return ambientCol;}
+		void setAmbientColor(const Vec3& x) {ambientCol = x;}
+
 		PhysWorld& getPhysPhysWorld();
 		const PhysWorld& getPhysPhysWorld() const;
+
 		const VisibilityTester& getVisibilityTester() const;
 
-		GETTER_RW(Types<SceneNode>::Container, nodes, getAllNodes)
-		GETTER_RW(Types<Light>::Container, lights, getLights)
-		GETTER_RW(Types<Camera>::Container, cameras, getCameras)
-		GETTER_RW(Types<ParticleEmitterNode>::Container, particleEmitterNodes,
-			getParticleEmitterNodes)
-		GETTER_RW(Types<ModelNode>::Container, modelNodes, getModelNodes)
-		GETTER_RW(Types<SkinNode>::Container, skinNodes, getSkinNodes)
-		GETTER_RW(Types<Controller>::Container, controllers, getControllers)
+		const Types<SceneNode>::Container& getAllNodes() const {return nodes;}
+		Types<SceneNode>::Container& getAllNodes() {return nodes;}
+
+		const Types<Light>::Container& getLights() const {return lights;}
+		Types<Light>::Container& getLights() {return lights;}
+
+		const Types<Camera>::Container& getCameras() const {return cameras;}
+		Types<Camera>::Container& getCameras() {return cameras;}
+
+		const Types<ParticleEmitterNode>::Container& getParticleEmitterNodes()
+			const {return particleEmitterNodes;}
+		Types<ParticleEmitterNode>::Container& getParticleEmitterNodes()
+			{return particleEmitterNodes;}
+
+		const Types<ModelNode>::Container& getModelNodes() const
+			{return modelNodes;}
+		Types<ModelNode>::Container& getModelNodes() {return modelNodes;}
+
+		const Types<SkinNode>::Container& getSkinNodes() const
+			{return skinNodes;}
+		Types<SkinNode>::Container& getSkinNodes() {return skinNodes;}
+
+		const Types<Controller>::Container& getControllers() const
+			{return controllers;}
+		Types<Controller>::Container& getControllers() {return controllers;}
 		/// @}
 
 	private:

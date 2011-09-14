@@ -8,16 +8,6 @@
 struct MaterialProperties
 {
 	public:
-		/// @name Accessors
-		/// @{
-		bool getCastShadow() const {return castsShadowFlag;}
-		bool getRenderInBledingStage() const {return renderInBlendingStageFlag;}
-		int getBlendingSFactor() const {return blendingSfactor;}
-		int getBlendingDFactor() const {return blendingDfactor;}
-		bool getDepthTesting() const {return depthTesting;}
-		bool getWireframe() const {return wireframe;}
-		/// @}
-
 		/// Check if blending is enabled
 		bool isBlendingEnabled() const
 			{return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;}

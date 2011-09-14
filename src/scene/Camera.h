@@ -6,7 +6,6 @@
 #include "util/Vec.h"
 #include "cln/Collision.h"
 #include "SceneNode.h"
-#include "util/Accessors.h"
 #include "VisibilityInfo.h"
 
 

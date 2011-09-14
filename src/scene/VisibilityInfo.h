@@ -3,7 +3,6 @@
 
 #include <deque>
 #include "util/Vec.h"
-#include "util/Accessors.h"
 
 
 class RenderableNode;
@@ -16,24 +15,33 @@ class SpotLight;
 class VisibilityInfo
 {
 	public:
+		typedef std::deque<const RenderableNode*> RContainer;
+		typedef Vec<const PointLight*> PLContainer;
+		typedef Vec<SpotLight*> SLContainer;
+
 		VisibilityInfo() {}
 		~VisibilityInfo();
 
 		/// @name Accessors
 		/// @{
-		GETTER_RW(std::deque<const RenderableNode*>, msRenderableNodes,
-			getVisibleMsRenderableNodes)
-		GETTER_RW(std::deque<const RenderableNode*>, bsRenderableNodes,
-			getVisibleBsRenderableNodes)
-		GETTER_RW(Vec<const PointLight*>, pointLights, getVisiblePointLights)
-		GETTER_RW(Vec<SpotLight*>, spotLights, getVisibleSpotLights)
+		const RContainer& getVisibleMsRenderableNodes() const {return msRNodes;}
+		RContainer& getVisibleMsRenderableNodes() {return msRNodes;}
+
+		const RContainer& getVisibleBsRenderableNodes() const {return bsRNodes;}
+		RContainer& getVisibleBsRenderableNodes() {return bsRNodes;}
+
+		const PLContainer& getVisiblePointLights() const {return pLights;}
+		PLContainer& getVisiblePointLights() {return pLights;}
+
+		const SLContainer& getVisibleSpotLights() const {return sLights;}
+		SLContainer& getVisibleSpotLights() {return sLights;}
 		/// @}
 
 	private:
-		std::deque<const RenderableNode*> msRenderableNodes;
-		std::deque<const RenderableNode*> bsRenderableNodes;
-		Vec<const PointLight*> pointLights; ///< Used only for non-light cameras
-		Vec<SpotLight*> spotLights; ///< Used only for non-light cameras
+		RContainer msRNodes;
+		RContainer bsRNodes;
+		PLContainer pLights; ///< Used only for non-light cameras
+		SLContainer sLights; ///< Used only for non-light cameras
 };
 
 

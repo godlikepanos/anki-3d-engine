@@ -1,8 +1,7 @@
-#ifndef MATERIAL_RUNTIME_MATERIAL_RUNTIME_H
-#define MATERIAL_RUNTIME_MATERIAL_RUNTIME_H
+#ifndef MATERIAL_RUNTIME_H
+#define MATERIAL_RUNTIME_H
 
 #include "rsrc/MaterialProperties.h"
-#include "util/Accessors.h"
 #include "util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -27,20 +26,34 @@ class MaterialRuntime: public MaterialProperties
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER_BY_VAL(bool, castsShadowFlag, castsShadow, setCastShadow)
-		GETTER_SETTER_BY_VAL(bool, renderInBlendingStageFlag,
-			rendersInBlendingStage, setRendersInBlendingStage)
-		GETTER_SETTER_BY_VAL(int, blendingSfactor, getBlendingSfactor,
-			setBlendingSFactor)
-		GETTER_SETTER_BY_VAL(int, blendingDfactor, getBlendingDfactor,
-			setBlendingDFactor)
-		GETTER_SETTER_BY_VAL(bool, depthTesting, isDepthTestingEnabled,
-			setDepthTestingEnabled)
-		GETTER_SETTER_BY_VAL(bool, wireframe, isWireframeEnabled,
-			setWireframeEnabled)
+		bool getCastShadow() const {return castsShadowFlag;}
+		bool& getCastShadow() {return castsShadowFlag;}
+		void setCastShadow(bool x) {castsShadowFlag = x;}
 
-		GETTER_RW(VariablesContainer, vars, getVariables)
-		GETTER_R(Material, mtl, getMaterial);
+		bool getRenderInBledingStage() const {return renderInBlendingStageFlag;}
+		bool& getRenderInBledingStage() {return renderInBlendingStageFlag;}
+		void setRenderInBledingStage(bool x) {renderInBlendingStageFlag = x;}
+
+		int getBlendingSFactor() const {return blendingSfactor;}
+		int& getBlendingSFactor() {return blendingSfactor;}
+		void setBlendingSFactor(int x) {blendingSfactor = x;}
+
+		int getBlendingDFactor() const {return blendingDfactor;}
+		int& getBlendingDFactor() {return blendingDfactor;}
+		void setBlendingDFactor(int x) {blendingDfactor = x;}
+
+		bool getDepthTesting() const {return depthTesting;}
+		bool& getDepthTesting() {return depthTesting;}
+		void setDepthTesting(bool x) {depthTesting = x;}
+
+		bool getWireframe() const {return wireframe;}
+		bool& getWireframe() {return wireframe;}
+		void setWireframe(bool x) {wireframe = x;}
+
+		const VariablesContainer& getVariables() const {return vars;}
+		VariablesContainer& getVariables() {return vars;}
+
+		const Material& getMaterial() const {return mtl;}
 		/// @}
 
 		/// Find a material runtime variable. On failure it throws an exception
