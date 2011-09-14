@@ -1,7 +1,6 @@
 #ifndef MATERIAL_RUNTIME_VARIABLE_H
 #define MATERIAL_RUNTIME_VARIABLE_H
 
-#include "util/Accessors.h"
 #include "m/Math.h"
 #include "rsrc/RsrcPtr.h"
 #include <boost/variant.hpp>
@@ -32,8 +31,12 @@ class MaterialRuntimeVariable
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(MaterialUserVariable, umv, getMaterialUserVariable)
-		GETTER_RW(DataVariant, data, getDataVariant)
+		const MaterialUserVariable& getMaterialUserVariable() const
+			{return umv;}
+
+
+		const DataVariant& getDataVariant() const {return data;}
+		DataVariant& getDataVariant() {return data;}
 
 		/// Get the value of the variant
 		/// @exception boost::exception when you try to get the incorrect data

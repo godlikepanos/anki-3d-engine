@@ -10,8 +10,8 @@ WRAP(MaterialRuntime)
 			(MaterialRuntime::*)())(&MaterialRuntime::getVariables),
 			return_value_policy<reference_existing_object>())
 
-		.def("isWireframeEnabled", (bool (MaterialRuntime::*)() const)(
-			&MaterialRuntime::isWireframeEnabled))
-		.def("setWireframeEnabled", &MaterialRuntime::setWireframeEnabled)
+		.def("getWireframe", (bool (MaterialRuntime::*)() const)(
+			&MaterialRuntime::getWireframe))
+		.def("setWireframe", &MaterialRuntime::setWireframe)
 	;
 }

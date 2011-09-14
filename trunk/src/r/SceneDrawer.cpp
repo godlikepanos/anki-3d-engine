@@ -70,12 +70,12 @@ void SceneDrawer::setupShaderProg(
 	gl.enable(GL_BLEND, mtlr.isBlendingEnabled());
 	if(mtlr.isBlendingEnabled())
 	{
-		glBlendFunc(mtlr.getBlendingSfactor(), mtlr.getBlendingDfactor());
+		glBlendFunc(mtlr.getBlendingSFactor(), mtlr.getBlendingDFactor());
 	}
 
-	gl.enable(GL_DEPTH_TEST, mtlr.isDepthTestingEnabled());
+	gl.enable(GL_DEPTH_TEST, mtlr.getDepthTesting());
 
-	if(mtlr.isWireframeEnabled())
+	if(mtlr.getWireframe())
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}

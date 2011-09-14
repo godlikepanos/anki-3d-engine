@@ -3,7 +3,6 @@
 
 #include "m/Math.h"
 #include "cln/Obb.h"
-#include "util/Accessors.h"
 #include "util/Vec.h"
 #include <memory>
 #include <string>
@@ -170,6 +169,7 @@ inline void SceneNode::enableFlag(SceneNodeFlags flag, bool enable)
 
 inline void SceneNode::frameUpdate(float , float)
 {
+	// do nothing
 }
 
 
