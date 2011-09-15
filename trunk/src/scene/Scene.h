@@ -1,10 +1,11 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <boost/scoped_ptr.hpp>
 #include "phys/PhysWorld.h"
 #include "util/Assert.h"
 #include "VisibilityTester.h"
+#include <boost/scoped_ptr.hpp>
+#include <boost/range/iterator_range.hpp>
 
 
 class SceneNode;
@@ -21,13 +22,15 @@ class Scene
 {
 	public:
 		/// Typetraits
-		template<typename Type>
+		template<typename T>
 		class Types
 		{
 			public:
-				typedef Vec<Type*> Container;
+				typedef Vec<T*> Container;
 				typedef typename Container::iterator Iterator;
 				typedef typename Container::const_iterator ConstIterator;
+				typedef boost::iterator_range<Iterator> MutableRange;
+				typedef boost::iterator_range<ConstIterator> ConstRange;
 		};
 
 		enum
@@ -59,27 +62,23 @@ class Scene
 
 		const VisibilityTester& getVisibilityTester() const;
 
-		const Types<SceneNode>::Container& getAllNodes() const {return nodes;}
-		Types<SceneNode>::Container& getAllNodes() {return nodes;}
+		Types<SceneNode>::ConstRange getAllNodes() const;
+		Types<SceneNode>::MutableRange getAllNodes();
 
-		const Types<Light>::Container& getLights() const {return lights;}
-		Types<Light>::Container& getLights() {return lights;}
+		Types<Light>::ConstRange getLights() const;
+		Types<Light>::MutableRange getLights();
 
-		const Types<Camera>::Container& getCameras() const {return cameras;}
-		Types<Camera>::Container& getCameras() {return cameras;}
+		Types<Camera>::ConstRange getCameras() const;
+		Types<Camera>::MutableRange getCameras();
 
-		const Types<ParticleEmitterNode>::Container& getParticleEmitterNodes()
-			const {return particleEmitterNodes;}
-		Types<ParticleEmitterNode>::Container& getParticleEmitterNodes()
-			{return particleEmitterNodes;}
+		Types<ParticleEmitterNode>::ConstRange getParticleEmitterNodes() const;
+		Types<ParticleEmitterNode>::MutableRange getParticleEmitterNodes();
 
-		const Types<ModelNode>::Container& getModelNodes() const
-			{return modelNodes;}
-		Types<ModelNode>::Container& getModelNodes() {return modelNodes;}
+		Types<ModelNode>::ConstRange getModelNodes() const;
+		Types<ModelNode>::MutableRange getModelNodes();
 
-		const Types<SkinNode>::Container& getSkinNodes() const
-			{return skinNodes;}
-		Types<SkinNode>::Container& getSkinNodes() {return skinNodes;}
+		Types<SkinNode>::ConstRange getSkinNodes() const;
+		Types<SkinNode>::MutableRange getSkinNodes();
 
 		const Types<Controller>::Container& getControllers() const
 			{return controllers;}
@@ -91,7 +90,7 @@ class Scene
 		/// @{
 		Types<SceneNode>::Container nodes;
 		Types<Light>::Container lights;
-		Types<Camera>::Container cameras;
+		Types<Camera>::Container cams;
 		Types<ParticleEmitterNode>::Container particleEmitterNodes;
 		Types<ModelNode>::Container modelNodes;
 		Types<SkinNode>::Container skinNodes;
@@ -113,40 +112,7 @@ class Scene
 };
 
 
-template<typename ContainerType, typename Type>
-inline void Scene::putBackNode(ContainerType& container, Type* x)
-{
-	ASSERT(std::find(container.begin(), container.end(), x) == container.end());
-	container.push_back(x);
-}
-
-
-template<typename ContainerType, typename Type>
-inline void Scene::eraseNode(ContainerType& container, Type* x)
-{
-	typename ContainerType::iterator it =
-		std::find(container.begin(), container.end(), x);
-	ASSERT(it != container.end());
-	container.erase(it);
-}
-
-
-inline PhysWorld& Scene::getPhysPhysWorld()
-{
-	return *physPhysWorld;
-}
-
-
-inline const PhysWorld& Scene::getPhysPhysWorld() const
-{
-	return *physPhysWorld;
-}
-
-
-inline const VisibilityTester& Scene::getVisibilityTester() const
-{
-	return *visibilityTester;
-}
+#include "Scene.inl.h"
 
 
 #endif

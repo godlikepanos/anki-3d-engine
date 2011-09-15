@@ -15,12 +15,12 @@ WRAP(Scene)
 			Scene::getAmbientColor),
 			return_value_policy<reference_existing_object>())
 
-		.def("getCameras", (Scene::Types<Camera>::Container& (Scene::*)())(&
+		/*.def("getCameras", (Scene::Types<Camera>::Container& (Scene::*)())(&
 			Scene::getCameras),
 			return_value_policy<reference_existing_object>())
 
 		.def("getModelNodes", (Scene::Types<ModelNode>::Container&
 			(Scene::*)())(&Scene::getModelNodes),
-			return_value_policy<reference_existing_object>())
+			return_value_policy<reference_existing_object>())*/
 	;
 }
