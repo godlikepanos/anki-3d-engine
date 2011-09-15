@@ -119,7 +119,7 @@ class ResourceManager
 
 inline void ResourceManager::postProcessFinishedLoadingRequests(float maxTime)
 {
-	rsrcAsyncLoadingReqsHandler.postProcessFinishedRequests(maxTime);
+	//rsrcAsyncLoadingReqsHandler.postProcessFinishedRequests(maxTime);
 }
 
 

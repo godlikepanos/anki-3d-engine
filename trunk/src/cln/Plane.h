@@ -17,7 +17,7 @@ class Plane: public CollisionShape
 		/// @{
 
 		/// Default constructor
-		Plane(): CollisionShape(CID_PLANE) {}
+		Plane(): CollisionShape(CST_PLANE) {}
 
 		/// Copy constructor
 		Plane(const Plane& b);
@@ -73,28 +73,28 @@ class Plane: public CollisionShape
 
 
 inline Plane::Plane(const Plane& b)
-:	CollisionShape(CID_PLANE),
+:	CollisionShape(CST_PLANE),
 	normal(b.normal),
 	offset(b.offset)
 {}
 
 
 inline Plane::Plane(const Vec3& normal_, float offset_)
-:	CollisionShape(CID_PLANE),
+:	CollisionShape(CST_PLANE),
 	normal(normal_),
 	offset(offset_)
 {}
 
 
 inline Plane::Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
-:	CollisionShape(CID_PLANE)
+:	CollisionShape(CST_PLANE)
 {
 	setFrom3Points(p0, p1, p2);
 }
 
 
 inline Plane::Plane(float a, float b, float c, float d)
-:	CollisionShape(CID_PLANE)
+:	CollisionShape(CST_PLANE)
 {
 	setFromPlaneEquation(a, b, c, d);
 }

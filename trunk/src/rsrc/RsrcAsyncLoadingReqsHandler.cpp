@@ -5,7 +5,7 @@
 #include "util/Assert.h"
 #include "core/Globals.h"
 
-
+/*
 //==============================================================================
 // sendNewLoadingRequest <Texture>                                             =
 //==============================================================================
@@ -71,3 +71,4 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(float maxTime)
 	}
 }
 
+*/

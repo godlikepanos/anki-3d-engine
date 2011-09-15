@@ -43,7 +43,7 @@ class RsrcAsyncLoadingReqsHandler
 		size_t getRequestsNum() const {return requests.size();}
 	
 	private:
-		AsyncLoader al; ///< Asynchronous loader
+		//AsyncLoader al; ///< Asynchronous loader
 		boost::ptr_list<RsrcLoadingRequestBase> requests; ///< Loading requests
 		/// The number of served requests for this frame
 		uint frameServedRequestsNum;

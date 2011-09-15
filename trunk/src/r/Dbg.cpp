@@ -273,10 +273,10 @@ void Dbg::run()
 	BOOST_FOREACH(const SceneNode* node,
 		SceneSingleton::get().getAllNodes())
 	{
-		/*if(!node->isVisible())
+		if(!node->isFlagEnabled(SceneNode::SNF_VISIBLE))
 		{
 			continue;
-		}*/
+		}
 
 
 		switch(node->getSceneNodeType())

@@ -62,8 +62,6 @@ class AsyncLoader
 			bool ok; ///< True if the loading was successful
 		};
 
-		SDL_GLContext glContext; ///< For OpenGL stuff
-
 		std::list<Request> requests;
 		std::list<Response> responses;
 		boost::mutex mutexReq; ///< Protect the requests container

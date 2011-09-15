@@ -10,7 +10,7 @@ using namespace boost::python;
 
 
 /// Define the classes
-BOOST_PYTHON_MODULE(Anki)
+BOOST_PYTHON_MODULE(anki)
 {
 	CALL_WRAP(HighRezTimer);
 
@@ -55,7 +55,7 @@ void ScriptManager::init()
 {
 	INFO("Initializing scripting engine...");
 
-	PyImport_AppendInittab((char*)("anki"), &initAnki);
+	PyImport_AppendInittab((char*)("anki"), &initanki);
 	Py_Initialize();
 	mainModule = object(handle<>(borrowed(PyImport_AddModule("__main__"))));
 	mainNamespace = mainModule.attr("__dict__");

@@ -15,7 +15,7 @@ class Obb: public CollisionShape
 	public:
 		/// @name Constructors
 		/// @{
-		Obb(): CollisionShape(CID_OBB) {}
+		Obb(): CollisionShape(CST_OBB) {}
 		Obb(const Obb& b);
 		Obb(const Vec3& center, const Mat3& rotation, const Vec3& extends);
 		/// @}
@@ -57,7 +57,7 @@ class Obb: public CollisionShape
 
 
 inline Obb::Obb(const Obb& b)
-:	CollisionShape(CID_OBB),
+:	CollisionShape(CST_OBB),
 	center(b.center),
 	rotation(b.rotation),
 	extends(b.extends)
@@ -66,7 +66,7 @@ inline Obb::Obb(const Obb& b)
 
 inline Obb::Obb(const Vec3& center_, const Mat3& rotation_,
 	const Vec3& extends_)
-:	CollisionShape(CID_OBB),
+:	CollisionShape(CST_OBB),
 	center(center_),
 	rotation(rotation_),
 	extends(extends_)

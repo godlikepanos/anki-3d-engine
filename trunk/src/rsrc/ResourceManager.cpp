@@ -48,7 +48,7 @@ ResourceManager::~ResourceManager()
 
 
 
-//SPECIALIZE_TEMPLATE_STUFF(Texture, textures)
+SPECIALIZE_TEMPLATE_STUFF(Texture, textures)
 SPECIALIZE_TEMPLATE_STUFF(ShaderProgram, shaderProgs)
 SPECIALIZE_TEMPLATE_STUFF(Material, materials)
 SPECIALIZE_TEMPLATE_STUFF(Mesh, meshes)
@@ -65,7 +65,7 @@ SPECIALIZE_TEMPLATE_STUFF(DummyRsrc, dummies)
 // Texture Specializations                                                     =
 //==============================================================================
 
-template<>
+/*template<>
 ResourceManager::Types<Texture>::Container&
 	ResourceManager::choseContainer<Texture>()
 {
@@ -114,5 +114,5 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Texture*& ptr)
 	{
 		ptr = dummyTex.get();
 	}
-}
+}*/
 

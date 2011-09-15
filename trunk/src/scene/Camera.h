@@ -20,10 +20,11 @@ class PointLight;
 class Camera: public SceneNode, public VisibilityInfo
 {
 	public:
+		/// @note Don't EVER change the order
 		enum CameraType
 		{
-			CT_ORTHOGRAPHIC,
 			CT_PERSPECTIVE,
+			CT_ORTHOGRAPHIC,
 			CT_NUM
 		};
 

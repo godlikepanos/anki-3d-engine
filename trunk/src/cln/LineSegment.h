@@ -15,7 +15,7 @@ class LineSegment: public CollisionShape
 	public:
 		/// @name Constructors
 		/// @{
-		LineSegment(): CollisionShape(CID_LINE_SEG) {}
+		LineSegment(): CollisionShape(CST_LINE_SEG) {}
 		LineSegment(const Vec3& origin, const Vec3& direction);
 		LineSegment(const LineSegment& b);
 		/// @}
@@ -42,14 +42,14 @@ class LineSegment: public CollisionShape
 
 
 inline LineSegment::LineSegment(const Vec3& origin_, const Vec3& direction)
-:	CollisionShape(CID_LINE_SEG),
+:	CollisionShape(CST_LINE_SEG),
 	origin(origin_),
 	dir(direction)
 {}
 
 
 inline LineSegment::LineSegment(const LineSegment& b)
-:	CollisionShape(CID_LINE_SEG),
+:	CollisionShape(CST_LINE_SEG),
 	origin(b.origin),
 	dir(b.dir)
 {}

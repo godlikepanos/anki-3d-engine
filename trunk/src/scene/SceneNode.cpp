@@ -19,7 +19,7 @@ SceneNode::SceneNode(SceneNodeType type_, Scene& scene_, ulong flags_,
 	SceneNode* parent_)
 :	type(type_),
  	flags(flags_),
- 	parent(parent_),
+ 	parent(NULL),
  	scene(scene_)
 {
 	++uid;
@@ -31,9 +31,9 @@ SceneNode::SceneNode(SceneNodeType type_, Scene& scene_, ulong flags_,
 
 	enableFlag(SNF_ACTIVE);
 
-	if(parent != NULL)
+	if(parent_ != NULL)
 	{
-		parent->addChild(*this);
+		parent_->addChild(*this);
 	}
 
 	// This goes last
