@@ -44,7 +44,7 @@ void Scene::registerNode(SceneNode* node)
 			putBackNode(lights, static_cast<Light*>(node));
 			break;
 		case SceneNode::SNT_CAMERA:
-			putBackNode(cameras, static_cast<Camera*>(node));
+			putBackNode(cams, static_cast<Camera*>(node));
 			break;
 		case SceneNode::SNT_PARTICLE_EMITTER_NODE:
 			putBackNode(particleEmitterNodes,
@@ -76,7 +76,7 @@ void Scene::unregisterNode(SceneNode* node)
 			eraseNode(lights, static_cast<Light*>(node));
 			break;
 		case SceneNode::SNT_CAMERA:
-			eraseNode(cameras, static_cast<Camera*>(node));
+			eraseNode(cams, static_cast<Camera*>(node));
 			break;
 		case SceneNode::SNT_PARTICLE_EMITTER_NODE:
 			eraseNode(particleEmitterNodes,
