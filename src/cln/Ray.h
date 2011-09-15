@@ -19,7 +19,7 @@ class Ray: public CollisionShape
 		/// @{
 
 		/// Default constructor
-		Ray(): CollisionShape(CID_RAY) {}
+		Ray(): CollisionShape(CST_RAY) {}
 
 		/// Copy constructor
 		Ray(const Ray& other);
@@ -48,14 +48,14 @@ class Ray: public CollisionShape
 
 
 inline Ray::Ray(const Ray& other)
-:	CollisionShape(CID_RAY),
+:	CollisionShape(CST_RAY),
 	origin(other.origin),
 	dir(other.dir)
 {}
 
 
 inline Ray::Ray(const Vec3& origin_, const Vec3& direction_)
-:	CollisionShape(CID_RAY),
+:	CollisionShape(CST_RAY),
 	origin(origin_),
 	dir(direction_)
 {}

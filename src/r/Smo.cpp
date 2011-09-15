@@ -67,6 +67,7 @@ void Smo::initCamGeom()
 {
 	boost::array<const char*, Camera::CT_NUM> files = {{
 		"engine-rsrc/pyramid.mesh", "engine-rsrc/cube.mesh"}};
+	ASSERT(Camera::CT_PERSPECTIVE == 0);
 
 	for(uint i = 0; i < Camera::CT_NUM; i++)
 	{

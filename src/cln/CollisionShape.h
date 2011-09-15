@@ -13,21 +13,21 @@ class CollisionShape
 {
 	public:
 		/// Collision shape type
-		enum ClassId
+		enum CollisionShapeType
 		{
-			CID_LINE_SEG,
-			CID_RAY,
-			CID_PLANE,
-			CID_SPHERE,
-			CID_AABB,
-			CID_OBB
+			CST_LINE_SEG,
+			CST_RAY,
+			CST_PLANE,
+			CST_SPHERE,
+			CST_AABB,
+			CST_OBB
 		};
 
-		CollisionShape(ClassId cid_)
+		CollisionShape(CollisionShapeType cid_)
 		:	cid(cid_)
 		{}
 
-		ClassId getClassId() const
+		CollisionShapeType getCollisionShapeType() const
 		{
 			return cid;
 		}
@@ -38,7 +38,7 @@ class CollisionShape
 		virtual float testPlane(const Plane&) const = 0;
 
 	private:
-		ClassId cid;
+		CollisionShapeType cid;
 };
 /// @}
 

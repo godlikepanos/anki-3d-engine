@@ -20,7 +20,7 @@ class Sphere: public CollisionShape
 		/// @{
 
 		/// Default constructor
-		Sphere(): CollisionShape(CID_SPHERE) {}
+		Sphere(): CollisionShape(CST_SPHERE) {}
 
 		/// Copy constructor
 		Sphere(const Sphere& other);
@@ -56,14 +56,14 @@ class Sphere: public CollisionShape
 
 
 inline Sphere::Sphere(const Sphere& b)
-:	CollisionShape(CID_SPHERE),
+:	CollisionShape(CST_SPHERE),
 	center(b.center),
 	radius(b.radius)
 {}
 
 
 inline Sphere::Sphere(const Vec3& center_, float radius_)
-:	CollisionShape(CID_SPHERE),
+:	CollisionShape(CST_SPHERE),
 	center(center_),
 	radius(radius_)
 {}

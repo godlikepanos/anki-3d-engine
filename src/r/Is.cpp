@@ -254,14 +254,11 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->bind();
 
 	// bind the FAIs
-	shdr->getUniformVariableByName("msNormalFai").set(
-		r.getMs().getNormalFai(), 0);
-	shdr->getUniformVariableByName("msDiffuseFai").set(
-		r.getMs().getDiffuseFai(), 1);
-	shdr->getUniformVariableByName("msSpecularFai").set(
-		r.getMs().getSpecularFai(), 2);
-	shdr->getUniformVariableByName("msDepthFai").set(
-		r.getMs().getDepthFai(), 3);
+	const Ms& ms = r.getMs();
+	shdr->getUniformVariableByName("msNormalFai").set(ms.getNormalFai(), 0);
+	shdr->getUniformVariableByName("msDiffuseFai").set(ms.getDiffuseFai(), 1);
+	shdr->getUniformVariableByName("msSpecularFai").set(ms.getSpecularFai(), 2);
+	shdr->getUniformVariableByName("msDepthFai").set(ms.getDepthFai(), 3);
 
 	// the ???
 	shdr->getUniformVariableByName("planes").set(&r.getPlanes());
@@ -352,7 +349,7 @@ void Is::run()
 	{
 		pointLightPass(*light);
 	}
-	
+
 	BOOST_FOREACH(const SpotLight* light, r.getCamera().getVisibleSpotLights())
 	{
 		spotLightPass(*light);
