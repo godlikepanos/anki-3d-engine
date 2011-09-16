@@ -90,7 +90,7 @@ void ParticleEmitterNode::init(const char* filename)
 			PhysWorld::CG_PARTICLE;
 
 		RigidBody* body = new RigidBody(
-			SceneSingleton::get().getPhysPhysWorld(), init);
+			getScene().getPhysWorld(), init);
 
 		body->forceActivationState(DISABLE_SIMULATION);
 

@@ -359,8 +359,7 @@ void Dbg::run()
 	///////////////
 
 
-	SceneSingleton::get().getPhysPhysWorld().getWorld().
-		debugDrawWorld();
+	SceneSingleton::get().getPhysWorld().getWorld().debugDrawWorld();
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	setModelMat(Mat4::getIdentity());

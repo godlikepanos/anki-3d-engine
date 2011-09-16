@@ -89,7 +89,7 @@ void initPhysics()
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
 
-	new RigidBody(SceneSingleton::get().getPhysPhysWorld(), init);
+	new RigidBody(SceneSingleton::get().getPhysWorld(), init);
 
 
 	/*{
@@ -382,7 +382,7 @@ void mainLoop()
 		mainLoopExtra();
 		void execStdinScpripts();
 		execStdinScpripts();
-		SceneSingleton::get().getPhysPhysWorld().update(prevUpdateTime, crntTime);
+		SceneSingleton::get().getPhysWorld().update(prevUpdateTime, crntTime);
 		SceneSingleton::get().updateAllWorldStuff(prevUpdateTime, crntTime);
 		SceneSingleton::get().doVisibilityTests(*AppSingleton::get().getActiveCam());
 		SceneSingleton::get().updateAllControllers();
@@ -525,7 +525,7 @@ void initSubsystems(int argc, char* argv[])
 	parallel::ManagerSingleton::get().init(4);
 
 	// Add drawer to physics
-	SceneSingleton::get().getPhysPhysWorld().setDebugDrawer(
+	SceneSingleton::get().getPhysWorld().setDebugDrawer(
 		new PhysDbgDrawer(MainRendererSingleton::get().getDbg()));
 }
 
