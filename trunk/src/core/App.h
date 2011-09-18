@@ -4,7 +4,6 @@
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
 #include "util/StdTypes.h"
-#include "util/Accessors.h"
 #include "Logger.h"
 
 
@@ -50,17 +49,47 @@ class App
 
 		/// @name Accessors
 		/// @{
-		Camera* getActiveCam() {return activeCam;}
-		void setActiveCam(Camera* cam) {activeCam = cam;}
+		Camera* getActiveCam()
+		{
+			return activeCam;
+		}
+		void setActiveCam(Camera* cam)
+		{
+			activeCam = cam;
+		}
 
-		GETTER_SETTER(float, timerTick, getTimerTick, setTimerTick)
-		GETTER_R_BY_VAL(bool, terminalColoringEnabled,
-			isTerminalColoringEnabled)
-		GETTER_R_BY_VAL(uint, windowW, getWindowWidth)
-		GETTER_R(uint, windowH, getWindowHeight)
-		GETTER_R(boost::filesystem::path, settingsPath, getSettingsPath)
-		GETTER_R(boost::filesystem::path, cachePath, getCachePath)
-		GETTER_RW(SDL_WindowID, windowId, getWindowId)
+		float getTimerTick() const
+		{
+			return timerTick;
+		}
+		float& getTimerTick()
+		{
+			return timerTick;
+		}
+		void setTimerTick(const float x)
+		{
+			timerTick = x;
+		}
+
+		uint getWindowWidth() const
+		{
+			return windowW;
+		}
+
+		uint getWindowHeight() const
+		{
+			return windowH;
+		}
+
+		const boost::filesystem::path& getSettingsPath() const
+		{
+			return settingsPath;
+		}
+
+		const boost::filesystem::path& getCachePath() const
+		{
+			return cachePath;
+		}
 		/// @}
 
 	private:

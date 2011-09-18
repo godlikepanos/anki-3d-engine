@@ -17,10 +17,25 @@ class Ms: public RenderingPass
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Texture, normalFai, getNormalFai)
-		GETTER_R(Texture, diffuseFai, getDiffuseFai)
-		GETTER_R(Texture, specularFai, getSpecularFai)
-		GETTER_R(Texture, depthFai, getDepthFai)
+		const Texture& getNormalFai() const
+		{
+			return normalFai;
+		}
+
+		const Texture& getDiffuseFai() const
+		{
+			return diffuseFai;
+		}
+
+		const Texture& getSpecularFai() const
+		{
+			return specularFai;
+		}
+
+		const Texture& getDepthFai() const
+		{
+			return depthFai;
+		}
 		/// @}
 
 		void init(const RendererInitializer& initializer);

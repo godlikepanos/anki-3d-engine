@@ -84,14 +84,14 @@ void Ms::init(const RendererInitializer& initializer)
 //==============================================================================
 void Ms::run()
 {
-	if(ez.isEnabled())
+	if(ez.getEnabled())
 	{
 		ez.run();
 	}
 
 	fbo.bind();
 
-	if(!ez.isEnabled())
+	if(!ez.getEnabled())
 	{
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
@@ -104,7 +104,7 @@ void Ms::run()
 	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
-	if(ez.isEnabled())
+	if(ez.getEnabled())
 	{
 		glDepthMask(false);
 		glDepthFunc(GL_EQUAL);
@@ -121,7 +121,7 @@ void Ms::run()
 	}
 
 	// restore depth
-	if(ez.isEnabled())
+	if(ez.getEnabled())
 	{
 		glDepthMask(true);
 		glDepthFunc(GL_LESS);

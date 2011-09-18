@@ -12,11 +12,10 @@
 #include "gl/Vao.h"
 #include "SceneDbgDrawer.h"
 #include "CollisionDbgDrawer.h"
-#include "util/Accessors.h"
 
 
 /// Debugging stage
-class Dbg: public RenderingPass
+class Dbg: public SwitchableRenderingPass
 {
 	public:
 		Dbg(Renderer& r_);
@@ -30,9 +29,18 @@ class Dbg: public RenderingPass
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER_BY_VAL(bool, enabled, isEnabled, setEnabled)
-		GETTER_SETTER_BY_VAL(bool, showSkeletonsEnabled,
-			isShowSkeletonsEnabled, setShowSkeletonsEnabled)
+		bool getShowSkeletonsEnabled() const
+		{
+			return showSkeletonsEnabled;
+		}
+		bool& getShowSkeletonsEnabled()
+		{
+			return showSkeletonsEnabled;
+		}
+		void setShowSkeletonsEnabled(const bool x)
+		{
+			showSkeletonsEnabled = x;
+		}
 		/// @todo add others
 		/// @}
 
@@ -49,7 +57,6 @@ class Dbg: public RenderingPass
 		/// @}
 
 	private:
-		bool enabled;
 		bool showAxisEnabled;
 		bool showLightsEnabled;
 		bool showSkeletonsEnabled;

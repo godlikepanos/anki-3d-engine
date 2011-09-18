@@ -56,7 +56,7 @@ void Pps::init(const RendererInitializer& initializer)
 
 	// SProg
 	std::string pps = "";
-	if(ssao.isEnabled())
+	if(ssao.getEnabled())
 	{
 		pps += "#define SSAO_ENABLED\n";
 	}
@@ -90,7 +90,7 @@ void Pps::init(const RendererInitializer& initializer)
 	// SProg
 	pps = "";
 
-	if(hdr.isEnabled())
+	if(hdr.getEnabled())
 	{
 		pps += "#define HDR_ENABLED\n";
 	}
@@ -110,7 +110,7 @@ void Pps::init(const RendererInitializer& initializer)
 //==============================================================================
 void Pps::runPrePass()
 {
-	if(ssao.isEnabled())
+	if(ssao.getEnabled())
 	{
 		ssao.run();
 	}
@@ -125,7 +125,7 @@ void Pps::runPrePass()
 	prePassSProg->bind();
 	prePassSProg->getUniformVariableByName("isFai").set(r.getIs().getFai(), 0);
 
-	if(ssao.isEnabled())
+	if(ssao.getEnabled())
 	{
 		prePassSProg->getUniformVariableByName("ppsSsaoFai").set(
 			ssao.getFai(), 1);
@@ -143,7 +143,7 @@ void Pps::runPostPass()
 	//
 	// The actual pass
 	//
-	if(hdr.isEnabled())
+	if(hdr.getEnabled())
 	{
 		hdr.run();
 	}
@@ -158,7 +158,7 @@ void Pps::runPostPass()
 	postPassSProg->bind();
 	postPassSProg->getUniformVariableByName("ppsPrePassFai").set(
 		prePassFai, 0);
-	if(hdr.isEnabled())
+	if(hdr.getEnabled())
 	{
 		postPassSProg->getUniformVariableByName("ppsHdrFai").set(
 			hdr.getFai(), 1);

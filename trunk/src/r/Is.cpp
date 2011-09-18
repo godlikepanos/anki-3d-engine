@@ -209,7 +209,7 @@ void Is::spotLightPass(const SpotLight& light)
 	const Camera& cam = r.getCamera();
 
 	// shadow mapping
-	if(light.getCastShadow() && sm.isEnabled())
+	if(light.getCastShadow() && sm.getEnabled())
 	{
 		Vec3 zAxis = light.getWorldTransform().getRotation().getColumn(2);
 		LineSegment seg(light.getWorldTransform().getOrigin(),
@@ -242,7 +242,7 @@ void Is::spotLightPass(const SpotLight& light)
 	// shader prog
 	const ShaderProgram* shdr;
 
-	if(light.getCastShadow() && sm.isEnabled())
+	if(light.getCastShadow() && sm.getEnabled())
 	{
 		shdr = spotLightShadowSProg.get();
 	}
@@ -292,7 +292,7 @@ void Is::spotLightPass(const SpotLight& light)
 	shdr->getUniformVariableByName("texProjectionMat").set(&texProjectionMat);
 
 	// the shadowmap
-	if(light.getCastShadow() && sm.isEnabled())
+	if(light.getCastShadow() && sm.getEnabled())
 	{
 		shdr->getUniformVariableByName("shadowMap").set(sm.getShadowMap(), 5);
 		float smSize = sm.getShadowMap().getWidth();

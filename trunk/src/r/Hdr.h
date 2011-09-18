@@ -5,14 +5,13 @@
 #include "gl/Fbo.h"
 #include "rsrc/Texture.h"
 #include "rsrc/RsrcPtr.h"
-#include "util/Accessors.h"
 
 
 class ShaderProgram;
 
 
 /// High dynamic range lighting pass
-class Hdr: private RenderingPass
+class Hdr: public SwitchableRenderingPass
 {
 	public:
 		Hdr(Renderer& r_);
@@ -22,21 +21,67 @@ class Hdr: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER_BY_VAL(float, exposure, getExposure, setExposure)
-		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum,
-			getBlurringIterationsNum, setBlurringIterationsNum)
-		GETTER_SETTER_BY_VAL(float, blurringDist, getBlurringDist,
-			setBlurringDist)
+		float getExposure() const
+		{
+			return exposure;
+		}
+		float& getExposure()
+		{
+			return exposure;
+		}
+		void setExposure(const float x)
+		{
+			exposure = x;
+		}
 
-		GETTER_R_BY_VAL(bool, enabled, isEnabled);
-		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
-		GETTER_R(Texture, toneFai, getToneFai)
-		GETTER_R(Texture, hblurFai, getHblurFai)
-		GETTER_R(Texture, fai, getFai)
+		uint getBlurringIterationsNum() const
+		{
+			return blurringIterationsNum;
+		}
+		uint& getBlurringIterationsNum()
+		{
+			return blurringIterationsNum;
+		}
+		void setBlurringIterationsNum(const uint x)
+		{
+			blurringIterationsNum = x;
+		}
+
+		float getBlurringDistance() const
+		{
+			return blurringDist;
+		}
+		float& getBlurringDistance()
+		{
+			return blurringDist;
+		}
+		void setBlurringDistance(const float x)
+		{
+			blurringDist = x;
+		}
+
+		float getRenderingQuality() const
+		{
+			return renderingQuality;
+		}
+
+		const Texture& getToneFai() const
+		{
+			return toneFai;
+		}
+
+		const Texture& getHblurFai() const
+		{
+			return hblurFai;
+		}
+
+		const Texture& getFai() const
+		{
+			return fai;
+		}
 		/// @}
 
 	private:
-		bool enabled;
 		float exposure; ///< How bright is the HDR
 		uint blurringIterationsNum; ///< The blurring iterations of the tone map
 		float blurringDist; ///< Distance in blurring

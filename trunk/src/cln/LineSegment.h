@@ -3,7 +3,6 @@
 
 #include "CollisionShape.h"
 #include "m/Vec3.h"
-#include "util/Accessors.h"
 
 
 /// @addtogroup Collision
@@ -15,15 +14,40 @@ class LineSegment: public CollisionShape
 	public:
 		/// @name Constructors
 		/// @{
-		LineSegment(): CollisionShape(CST_LINE_SEG) {}
+		LineSegment()
+		:	CollisionShape(CST_LINE_SEG)
+		{}
 		LineSegment(const Vec3& origin, const Vec3& direction);
 		LineSegment(const LineSegment& b);
 		/// @}
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, origin, getOrigin, setOrigin)
-		GETTER_SETTER(Vec3, dir, getDirection, setDirection)
+		const Vec3& getOrigin() const
+		{
+			return origin;
+		}
+		Vec3& getOrigin()
+		{
+			return origin;
+		}
+		void setOrigin(const Vec3& x)
+		{
+			origin = x;
+		}
+
+		const Vec3& getDirection() const
+		{
+			return dir;
+		}
+		Vec3& getDirection()
+		{
+			return dir;
+		}
+		void setDirection(const Vec3& x)
+		{
+			dir = x;
+		}
 		/// @}
 
 		LineSegment getTransformed(const Transform& transform) const;

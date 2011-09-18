@@ -2,7 +2,6 @@
 #define EVENT_H
 
 #include "util/StdTypes.h"
-#include "util/Accessors.h"
 
 
 /// The event type enum
@@ -26,9 +25,21 @@ class Event
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(float, startTime, getStartTime)
-		GETTER_R(float, duration, getDuration)
-		GETTER_R(EventType, type, getEventType)
+		float getStartTime() const
+		{
+			return startTime;
+		}
+
+		float getDuration() const
+		{
+			return duration;
+		}
+
+		EventType getEventType() const
+		{
+			return type;
+		}
+
 		bool isDead(float crntTime) const;
 		/// @}
 

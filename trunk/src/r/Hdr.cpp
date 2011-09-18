@@ -8,7 +8,7 @@
 // Constructor                                                                 =
 //==============================================================================
 Hdr::Hdr(Renderer& r_)
-	: RenderingPass(r_)
+:	SwitchableRenderingPass(r_)
 {}
 
 

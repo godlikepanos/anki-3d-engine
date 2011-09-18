@@ -16,7 +16,7 @@
 // Constructor                                                                 =
 //==============================================================================
 Dbg::Dbg(Renderer& r_):
-	RenderingPass(r_),
+	SwitchableRenderingPass(r_),
 	showAxisEnabled(false),
 	showLightsEnabled(true),
 	showSkeletonsEnabled(true),

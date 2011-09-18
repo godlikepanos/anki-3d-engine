@@ -28,11 +28,38 @@ class Pps: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		GETTER_RW(Hdr, hdr, getHdr)
-		GETTER_RW(Ssao, ssao, getSsao)
-		GETTER_RW(Bl, bl, getBl)
-		GETTER_R(Texture, prePassFai, getPrePassFai)
-		GETTER_R(Texture, postPassFai, getPostPassFai)
+		const Hdr& getHdr() const
+		{
+			return hdr;
+		}
+		Hdr& getHdr()
+		{
+			return hdr;
+		}
+
+		const Ssao& getSsao() const
+		{
+			return ssao;
+		}
+
+		const Bl& getBl() const
+		{
+			return bl;
+		}
+		Bl& getBl()
+		{
+			return bl;
+		}
+
+		const Texture& getPrePassFai() const
+		{
+			return prePassFai;
+		}
+
+		const Texture& getPostPassFai() const
+		{
+			return postPassFai;
+		}
 		/// @}
 
 	private:

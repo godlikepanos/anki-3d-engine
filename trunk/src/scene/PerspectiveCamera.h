@@ -14,10 +14,16 @@ class PerspectiveCamera: public Camera
 
 		/// @name Accessors
 		/// @{
-		float getFovX() const {return fovX;}
+		float getFovX() const
+		{
+			return fovX;
+		}
 		void setFovX(float fovx);
 
-		float getFovY() const {return fovY;}
+		float getFovY() const
+		{
+			return fovY;
+		}
 		void setFovY(float fovy);
 		/// @}
 

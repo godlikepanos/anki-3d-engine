@@ -22,7 +22,9 @@ class SceneDrawer
 {
 	public:
 		/// The one and only constructor
-		SceneDrawer(const Renderer& r_): r(r_) {}
+		SceneDrawer(const Renderer& r_)
+		:	r(r_)
+		{}
 
 		void renderRenderableNode(const RenderableNode& renderable,
 			const Camera& cam, PassType passType) const;

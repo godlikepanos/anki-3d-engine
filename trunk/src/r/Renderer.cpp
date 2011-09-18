@@ -35,8 +35,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	// set from the initializer
 	width = initializer.width;
 	height = initializer.height;
-
-	aspectRatio = float(width) / height;
 	framesNum = 0;
 
 	// a few sanity checks

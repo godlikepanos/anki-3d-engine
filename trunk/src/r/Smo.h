@@ -18,7 +18,10 @@ class SpotLight;
 class Smo: public RenderingPass
 {
 	public:
-		Smo(Renderer& r_): RenderingPass(r_) {}
+		Smo(Renderer& r_)
+		:	RenderingPass(r_)
+		{}
+
 		~Smo();
 		void init(const RendererInitializer& initializer);
 		void run(const PointLight& light);

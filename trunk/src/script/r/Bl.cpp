@@ -5,7 +5,7 @@
 WRAP(Bl)
 {
 	class_<Bl, noncopyable>("Bl", no_init)
-		.def("isEnabled", (bool (Bl::*)() const)(&Bl::isEnabled))
+		.def("getEnabled", (bool (Bl::*)() const)(&Bl::getEnabled))
 		.def("setEnabled", &Bl::setEnabled)
 
 		.def("getBlurringIterationsNum", (uint (Bl::*)() const)(

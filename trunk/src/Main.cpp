@@ -141,7 +141,8 @@ void init()
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(scene, SceneNode::SNF_NONE, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
-	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(60.0), Math::toRad(60.0), 0.5, 200.0);
+	INFO(MainRendererSingleton::get().getAspectRatio());
+	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(90.0), Math::toRad(90.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -295,7 +296,7 @@ void mainLoopExtra()
 	if(InputSingleton::get().getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
 	if(InputSingleton::get().getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
 	if(InputSingleton::get().getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
-	if(!InputSingleton::get().warpMouse())
+	if(!InputSingleton::get().getWarpMouse())
 	{
 		if(InputSingleton::get().getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
 		if(InputSingleton::get().getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);

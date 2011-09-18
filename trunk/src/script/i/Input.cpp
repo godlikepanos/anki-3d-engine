@@ -5,7 +5,7 @@
 WRAP(Input)
 {
 	class_<Input, noncopyable>("Input", no_init)
-		.def("warpMouse", (bool (Input::*)() const)(&Input::warpMouse))
+		.def("getWarpMouse", (bool (Input::*)() const)(&Input::getWarpMouse))
 		.def("setWarpMouse", &Input::setWarpMouse)
 	;
 }
