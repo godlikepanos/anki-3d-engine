@@ -19,11 +19,37 @@ class MainRenderer: public Renderer
 
 		/// @name Setters & getters
 		/// @{
-		GETTER_SETTER_BY_VAL(int, screenshotJpegQuality,
-			getScreenshotJpegQuality, setScreenshotJpegQuality)
-		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
-		GETTER_RW(Dbg, dbg, getDbg)
-		GETTER_R_BY_VAL(double, dbgTime, getDbgTime)
+		int getSceenshotJpegQuality() const
+		{
+			return screenshotJpegQuality;
+		}
+		int& getSceenshotJpegQuality()
+		{
+			return screenshotJpegQuality;
+		}
+		void setSceenshotJpegQuality(const int x)
+		{
+			screenshotJpegQuality = x;
+		}
+
+		float getRenderingQuality() const
+		{
+			return renderingQuality;
+		}
+
+		const Dbg& getDbg() const
+		{
+			return dbg;
+		}
+		Dbg& getDbg()
+		{
+			return dbg;
+		}
+
+		double getDbgTime() const
+		{
+			return dbgTime;
+		}
 		/// @}
 
 		/// The same as Renderer::init but with additional initialization.

@@ -3,7 +3,6 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 
 
 /// @addtogroup Collision
@@ -17,7 +16,9 @@ class Plane: public CollisionShape
 		/// @{
 
 		/// Default constructor
-		Plane(): CollisionShape(CST_PLANE) {}
+		Plane()
+		:	CollisionShape(CST_PLANE)
+		{}
 
 		/// Copy constructor
 		Plane(const Plane& b);
@@ -34,8 +35,31 @@ class Plane: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, normal, getNormal, setNormal)
-		GETTER_SETTER_BY_VAL(float, offset, getOffset, setOffset)
+		const Vec3& getNormal() const
+		{
+			return normal;
+		}
+		Vec3& getNormal()
+		{
+			return normal;
+		}
+		void setNormal(const Vec3& x)
+		{
+			normal = x;
+		}
+
+		float getOffset() const
+		{
+			return offset;
+		}
+		float& getOffset()
+		{
+			return offset;
+		}
+		void setOffset(const float x)
+		{
+			offset = x;
+		}
 		/// @}
 
 		/// Return the transformed

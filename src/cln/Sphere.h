@@ -3,7 +3,6 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 
 
 class Plane;
@@ -20,7 +19,9 @@ class Sphere: public CollisionShape
 		/// @{
 
 		/// Default constructor
-		Sphere(): CollisionShape(CST_SPHERE) {}
+		Sphere()
+		:	CollisionShape(CST_SPHERE)
+		{}
 
 		/// Copy constructor
 		Sphere(const Sphere& other);
@@ -31,8 +32,31 @@ class Sphere: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, center, getCenter, setCenter)
-		GETTER_SETTER_BY_VAL(float, radius, getRadius, setRadius)
+		const Vec3& getCenter() const
+		{
+			return center;
+		}
+		Vec3& getCenter()
+		{
+			return center;
+		}
+		void setCenter(const Vec3& x)
+		{
+			center = x;
+		}
+
+		float getRadius() const
+		{
+			return radius;
+		}
+		float& getRadius()
+		{
+			return radius;
+		}
+		void setRadius(const float x)
+		{
+			radius = x;
+		}
 		/// @}
 
 		Sphere getTransformed(const Transform& transform) const;

@@ -2,7 +2,6 @@
 #define BL_H
 
 #include "RenderingPass.h"
-#include "util/Accessors.h"
 #include "rsrc/Texture.h"
 #include "rsrc/RsrcPtr.h"
 #include "gl/Fbo.h"
@@ -11,7 +10,8 @@
 class ShaderProgram;
 
 
-class Bl: private RenderingPass
+/// Blurring rendering pass
+class Bl: public SwitchableRenderingPass
 {
 	public:
 		Bl(Renderer& r_);
@@ -20,11 +20,31 @@ class Bl: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER_BY_VAL(bool, enabled, isEnabled, setEnabled)
-		GETTER_SETTER_BY_VAL(uint, blurringIterationsNum,
-			getBlurringIterationsNum, setBlurringIterationsNum)
-		GETTER_SETTER_BY_VAL(float, sideBlurFactor, getSideBlurFactor,
-			setSideBlurFactor)
+		float getSideBlurFactor() const
+		{
+			return sideBlurFactor;
+		}
+		float& getSideBlurFactor()
+		{
+			return sideBlurFactor;
+		}
+		void setSideBlurFactor(const float x)
+		{
+			sideBlurFactor = x;
+		}
+
+		uint getBlurringIterationsNum() const
+		{
+			return blurringIterationsNum;
+		}
+		uint& getBlurringIterationsNum()
+		{
+			return blurringIterationsNum;
+		}
+		void setBlurringIterationsNum(const uint x)
+		{
+			blurringIterationsNum = x;
+		}
 		/// @}
 
 	private:
@@ -39,7 +59,6 @@ class Bl: private RenderingPass
 		Texture blurFai; ///< Temp FAI for blurring
 		RsrcPtr<Texture> sideBlurMap;
 
-		bool enabled;
 		uint blurringIterationsNum;
 		float sideBlurFactor;
 

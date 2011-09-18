@@ -2,7 +2,6 @@
 #define INPUT_H
 
 #include "m/Math.h"
-#include "util/Accessors.h"
 #include <SDL/SDL_scancode.h>
 #include <boost/array.hpp>
 
@@ -15,9 +14,28 @@ class Input
 
 		/// @name Acessors
 		/// @{
-		short getKey(uint i) const {return keys[i];}
-		short getMouseBtn(uint i) const {return mouseBtns[i];}
-		GETTER_SETTER_BY_VAL(bool, warpMouseFlag, warpMouse, setWarpMouse)
+		short getKey(uint i) const
+		{
+			return keys[i];
+		}
+
+		short getMouseBtn(uint i) const
+		{
+			return mouseBtns[i];
+		}
+
+		bool getWarpMouse() const
+		{
+			return warpMouseFlag;
+		}
+		bool& getWarpMouse()
+		{
+			return warpMouseFlag;
+		}
+		void setWarpMouse(const bool x)
+		{
+			warpMouseFlag = x;
+		}
 		/// @}
 
 		void reset();

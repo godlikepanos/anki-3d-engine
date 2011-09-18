@@ -29,6 +29,7 @@ BOOST_PYTHON_MODULE(anki)
 	CALL_WRAP(ModelNode);
 	CALL_WRAP(Scene);
 
+	CALL_WRAP(SwitchableRenderingPass);
 	CALL_WRAP(Hdr);
 	CALL_WRAP(Bl);
 	CALL_WRAP(Pps);

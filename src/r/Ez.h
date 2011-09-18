@@ -3,23 +3,19 @@
 
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
-#include "util/Accessors.h"
 
 
 /// Material stage EarlyZ pass
-class Ez: public RenderingPass
+class Ez: public SwitchableRenderingPass
 {
 	public:
-		Ez(Renderer& r_): RenderingPass(r_) {}
-
-		GETTER_R_BY_VAL(bool, enabled, isEnabled)
+		Ez(Renderer& r_): SwitchableRenderingPass(r_) {}
 
 		void init(const RendererInitializer& initializer);
 		void run();
 
 	private:
 		Fbo fbo; ///< Writes to MS depth FAI
-		bool enabled;
 };
 
 

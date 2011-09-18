@@ -16,25 +16,33 @@
 /// 1) Calc ssao factor
 /// 2) Blur vertically
 /// 3) Blur horizontally repeat 2, 3
-class Ssao: private RenderingPass
+class Ssao: public SwitchableRenderingPass
 {
 	public:
-		Ssao(Renderer& r_): RenderingPass(r_) {}
+		Ssao(Renderer& r_)
+		:	SwitchableRenderingPass(r_)
+		{}
+
 		void init(const RendererInitializer& initializer);
 		void run();
 
 		/// @name Accessors
 		/// @{
-		GETTER_R_BY_VAL(bool, enabled, isEnabled)
-		GETTER_R_BY_VAL(float, renderingQuality, getRenderingQuality)
-		GETTER_R(Texture, fai, getFai)
+		float getRenderingQuality() const
+		{
+			return renderingQuality;
+		}
+
+		const Texture& getFai() const
+		{
+			return fai;
+		}
 		/// @}
 
 	private:
 		Texture ssaoFai; ///< It contains the unblurred SSAO factor
 		Texture hblurFai;
 		Texture fai;  ///< AKA vblurFai The final FAI
-		bool enabled;
 		float renderingQuality;
 		float blurringIterationsNum;
 		Fbo ssaoFbo;

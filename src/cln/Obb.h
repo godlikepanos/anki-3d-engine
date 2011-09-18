@@ -3,7 +3,6 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 #include <boost/array.hpp>
 
 /// @addtogroup Collision
@@ -15,16 +14,53 @@ class Obb: public CollisionShape
 	public:
 		/// @name Constructors
 		/// @{
-		Obb(): CollisionShape(CST_OBB) {}
+		Obb()
+		:	CollisionShape(CST_OBB)
+		{}
 		Obb(const Obb& b);
 		Obb(const Vec3& center, const Mat3& rotation, const Vec3& extends);
 		/// @}
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, center, getCenter, setCenter)
-		GETTER_SETTER(Mat3, rotation, getRotation, setRotation)
-		GETTER_SETTER(Vec3, extends, getExtend, setExtend)
+		const Vec3& getCenter() const
+		{
+			return center;
+		}
+		Vec3& getCenter()
+		{
+			return center;
+		}
+		void setCenter(const Vec3& x)
+		{
+			center = x;
+		}
+
+		const Mat3& getRotation() const
+		{
+			return rotation;
+		}
+		Mat3& getRotation()
+		{
+			return rotation;
+		}
+		void setRotation(const Mat3& x)
+		{
+			rotation = x;
+		}
+
+		const Vec3& getExtend() const
+		{
+			return extends;
+		}
+		Vec3& getExtend()
+		{
+			return extends;
+		}
+		void setExtend(const Vec3& x)
+		{
+			extends = x;
+		}
 		/// @}
 
 		Obb getTransformed(const Transform& transform) const;

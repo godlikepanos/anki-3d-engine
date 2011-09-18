@@ -3,7 +3,6 @@
 
 #include "CollisionShape.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 
 
 class Plane;
@@ -19,7 +18,9 @@ class Ray: public CollisionShape
 		/// @{
 
 		/// Default constructor
-		Ray(): CollisionShape(CST_RAY) {}
+		Ray()
+		:	CollisionShape(CST_RAY)
+		{}
 
 		/// Copy constructor
 		Ray(const Ray& other);
@@ -30,8 +31,31 @@ class Ray: public CollisionShape
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec3, origin, getOrigin, setOrigin)
-		GETTER_SETTER(Vec3, dir, getDirection, setDirection)
+		const Vec3& getOrigin() const
+		{
+			return origin;
+		}
+		Vec3& getOrigin()
+		{
+			return origin;
+		}
+		void setOrigin(const Vec3& x)
+		{
+			origin = x;
+		}
+
+		const Vec3& getDirection() const
+		{
+			return dir;
+		}
+		Vec3& getDirection()
+		{
+			return dir;
+		}
+		void setDirection(const Vec3& x)
+		{
+			dir = x;
+		}
 		/// @}
 
 		Ray getTransformed(const Transform& transform) const;

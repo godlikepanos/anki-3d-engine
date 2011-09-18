@@ -46,25 +46,119 @@ class Renderer
 
 		/// @name Accessors
 		/// @{
-		GETTER_RW(Ms, ms, getMs)
-		GETTER_RW(Is, is, getIs)
-		GETTER_RW(Pps, pps, getPps)
-		GETTER_R_BY_VAL(uint, width, getWidth)
-		GETTER_R_BY_VAL(uint, height, getHeight)
-		GETTER_R_BY_VAL(float, aspectRatio, getAspectRatio)
-		GETTER_R_BY_VAL(uint, framesNum, getFramesNum)
-		GETTER_R(Mat4, viewProjectionMat, getViewProjectionMat)
-		const Camera& getCamera() const {return *cam;}
-		GETTER_RW(SceneDrawer, sceneDrawer, getSceneDrawer)
-		GETTER_R(Vec2, planes, getPlanes)
-		GETTER_R(Vec2, limitsOfNearPlane, getLimitsOfNearPlane)
-		GETTER_R(Vec2, limitsOfNearPlane2, getLimitsOfNearPlane2)
-		GETTER_R_BY_VAL(double, msTime, getMsTime)
-		GETTER_R_BY_VAL(double, isTime, getIsTime)
-		GETTER_R_BY_VAL(double, ppsTime, getPpsTime)
-		GETTER_R_BY_VAL(double, bsTime, getBsTime)
-		GETTER_SETTER_BY_VAL(bool, enableStagesProfilingFlag,
-			isStagesProfilingEnabled, setEnableStagesProfiling)
+		const Ms& getMs() const
+		{
+			return ms;
+		}
+		Ms& getMs()
+		{
+			return ms;
+		}
+
+		const Is& getIs() const
+		{
+			return is;
+		}
+		Is& getIs()
+		{
+			return is;
+		}
+
+		const Pps& getPps() const
+		{
+			return pps;
+		}
+		Pps& getPps()
+		{
+			return pps;
+		}
+
+		uint getWidth() const
+		{
+			return width;
+		}
+
+		uint getHeight() const
+		{
+			return height;
+		}
+
+		float getAspectRatio() const
+		{
+			return float(width) / height;
+		}
+
+		uint getFramesNum() const
+		{
+			return framesNum;
+		}
+
+		const Mat4& getViewProjectionMat() const
+		{
+			return viewProjectionMat;
+		}
+
+		const Camera& getCamera() const
+		{
+			return *cam;
+		}
+
+		const SceneDrawer& getSceneDrawer() const
+		{
+			return sceneDrawer;
+		}
+		SceneDrawer& getSceneDrawer()
+		{
+			return sceneDrawer;
+		}
+
+		const Vec2& getPlanes() const
+		{
+			return planes;
+		}
+
+		const Vec2& getLimitsOfNearPlane() const
+		{
+			return limitsOfNearPlane;
+		}
+
+		const Vec2& getLimitsOfNearPlane2() const
+		{
+			return limitsOfNearPlane2;
+		}
+
+		double getMsTime() const
+		{
+			return msTime;
+		}
+
+		double getIsTime() const
+		{
+			return isTime;
+		}
+
+		double getPpsTime() const
+		{
+			return ppsTime;
+		}
+
+		double getBsTime() const
+		{
+			return bsTime;
+		}
+
+		bool getStagesProfilingEnabled() const
+		{
+			return enableStagesProfilingFlag;
+		}
+		bool& getStagesProfilingEnabled()
+		{
+			return enableStagesProfilingFlag;
+		}
+		void setStagesProfilingEnabled(const bool x)
+		{
+			enableStagesProfilingFlag = x;
+		}
 		/// @}
 
 		/// Init the renderer given an initialization class
@@ -132,7 +226,6 @@ class Renderer
 		uint width;
 		/// Height of the rendering. Don't confuse with the window width
 		uint height;
-		float aspectRatio; ///< Just a precalculated value
 		const Camera* cam; ///< Current camera
 		/// Max color attachments an FBO can accept
 		static int maxColorAtachments;

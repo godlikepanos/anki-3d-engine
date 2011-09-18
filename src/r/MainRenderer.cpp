@@ -118,7 +118,7 @@ void MainRenderer::render(Camera& cam_)
 {
 	Renderer::render(cam_);
 
-	if(isStagesProfilingEnabled())
+	if(getStagesProfilingEnabled())
 	{
 		dbgTq->begin();
 		dbg.run();

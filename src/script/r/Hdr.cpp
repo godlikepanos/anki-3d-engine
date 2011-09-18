@@ -12,8 +12,8 @@ WRAP(Hdr)
 		.def("getExposure", (float (Hdr::*)() const)(&Hdr::getExposure))
 		.def("setExposure", &Hdr::setExposure)
 
-		.def("getBlurringDist", (float (Hdr::*)() const)(
-			&Hdr::getBlurringDist))
-		.def("setBlurringDist", &Hdr::setBlurringDist)
+		.def("getBlurringDistance", (float (Hdr::*)() const)(
+			&Hdr::getBlurringDistance))
+		.def("setBlurringDistance", &Hdr::setBlurringDistance)
 	;
 }

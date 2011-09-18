@@ -4,7 +4,6 @@
 #include "RenderingPass.h"
 #include "gl/Fbo.h"
 #include "rsrc/Texture.h"
-#include "util/Accessors.h"
 #include "scene/VisibilityTester.h"
 
 
@@ -15,15 +14,36 @@ class Light;
 class Sm: private RenderingPass
 {
 	public:
-		Sm(Renderer& r_): RenderingPass(r_) {}
+		Sm(Renderer& r_)
+		:	RenderingPass(r_)
+		{}
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Texture, crntLevel->shadowMap, getShadowMap)
-		GETTER_R_BY_VAL(bool, enabled, isEnabled)
-		GETTER_R_BY_VAL(bool, pcfEnabled, isPcfEnabled)
-		GETTER_R_BY_VAL(bool, bilinearEnabled, isBilinearEnabled)
-		GETTER_R_BY_VAL(int, resolution, getResolution)
+		const Texture& getShadowMap() const
+		{
+			return crntLevel->shadowMap;
+		}
+
+		bool getEnabled() const
+		{
+			return enabled;
+		}
+
+		bool isPcfEnabled() const
+		{
+			return pcfEnabled;
+		}
+
+		bool getBilinearEnabled() const
+		{
+			return bilinearEnabled;
+		}
+
+		int getResolution() const
+		{
+			return resolution;
+		}
 		/// @}
 
 		void init(const RendererInitializer& initializer);

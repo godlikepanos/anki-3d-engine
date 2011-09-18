@@ -18,7 +18,9 @@ class SceneDbgDrawer
 {
 	public:
 		/// Constructor
-		SceneDbgDrawer(Dbg& dbg_): dbg(dbg_) {}
+		SceneDbgDrawer(Dbg& dbg_)
+		:	dbg(dbg_)
+		{}
 
 		/// Draw a Camera
 		virtual void drawCamera(const Camera& cam) const;
@@ -35,8 +37,7 @@ class SceneDbgDrawer
 	private:
 		Dbg& dbg; ///< The debug stage
 
-		virtual void drawPerspectiveCamera(const
-			PerspectiveCamera& cam) const;
+		virtual void drawPerspectiveCamera(const PerspectiveCamera& cam) const;
 		virtual void drawOrthographicCamera(
 			const OrthographicCamera& cam) const;
 };

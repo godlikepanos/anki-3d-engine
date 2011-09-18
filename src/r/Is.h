@@ -27,7 +27,10 @@ class Is: private RenderingPass
 
 		/// @name Accessors
 		/// @{
-		const Texture& getFai() const {return fai;}
+		const Texture& getFai() const
+		{
+			return fai;
+		}
 		/// @}
 
 	private:

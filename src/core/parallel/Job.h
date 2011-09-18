@@ -2,7 +2,6 @@
 #define PARALLEL_JOB_H
 
 #include <boost/thread.hpp>
-#include "util/Accessors.h"
 
 
 namespace parallel {
@@ -30,8 +29,15 @@ class Job
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(uint, id, getId)
-		GETTER_R(Manager, manager, getManager)
+		uint getId() const
+		{
+			return id;
+		}
+
+		const Manager& getManager() const
+		{
+			return manager;
+		}
 		/// @}
 
 		/// Assign new job to the thread

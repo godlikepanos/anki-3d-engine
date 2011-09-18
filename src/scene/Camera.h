@@ -45,22 +45,38 @@ class Camera: public SceneNode, public VisibilityInfo
 
 		/// @name Accessors
 		/// @{
-		CameraType getCameraType() const {return type;}
+		CameraType getCameraType() const
+		{
+			return type;
+		}
 
-		float getZNear() const {return zNear;}
-		float& getZNear() {return zNear;}
+		float getZNear() const
+		{
+			return zNear;
+		}
 		void setZNear(float znear);
 
-		float getZFar() const {return zFar;}
-		float& getZFar() {return zFar;}
+		float getZFar() const
+		{
+			return zFar;
+		}
 		void setZFar(float zfar);
 
-		const Mat4& getProjectionMatrix() const {return projectionMat;}
+		const Mat4& getProjectionMatrix() const
+		{
+			return projectionMat;
+		}
 
-		const Mat4& getViewMatrix() const {return viewMat;}
+		const Mat4& getViewMatrix() const
+		{
+			return viewMat;
+		}
 
 		/// See the declaration of invProjectionMat for info
-		const Mat4& getInvProjectionMatrix() const {return invProjectionMat;}
+		const Mat4& getInvProjectionMatrix() const
+		{
+			return invProjectionMat;
+		}
 
 		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const;
 		/// @}
