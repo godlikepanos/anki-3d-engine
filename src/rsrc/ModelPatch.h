@@ -17,8 +17,15 @@ class ModelPatch
 
 		/// @name Accessors
 		/// @{
-		const Mesh& getMesh() const {return *mesh;}
-		const Material& getMaterial() const {return *mtl;}
+		const Mesh& getMesh() const
+		{
+			return *mesh;
+		}
+
+		const Material& getMaterial() const
+		{
+			return *mtl;
+		}
 		/// @}
 
 		bool supportsHwSkinning() const;
