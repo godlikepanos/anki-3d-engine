@@ -36,8 +36,15 @@ class Model
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(boost::ptr_vector<ModelPatch>, modelPatches, getModelPatches)
-		GETTER_R(Obb, visibilityShape, getVisibilityShape)
+		const boost::ptr_vector<ModelPatch>& getModelPatches() const
+		{
+			return modelPatches;
+		}
+
+		const Obb& getVisibilityShape() const
+		{
+			return visibilityShape;
+		}
 		/// @}
 
 	private:

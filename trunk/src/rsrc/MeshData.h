@@ -1,12 +1,13 @@
 #ifndef MESH_DATA_H
 #define MESH_DATA_H
 
-#include <string>
-#include <boost/array.hpp>
 #include "m/Math.h"
 #include "util/StdTypes.h"
 #include "util/Accessors.h"
 #include "util/Vec.h"
+#include <boost/range/iterator_range.hpp>
+#include <boost/array.hpp>
+#include <string>
 
 
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to
@@ -62,22 +63,53 @@ class MeshData
 		{
 			public:
 				/// An array with the vertex indexes in the mesh class
-				uint vertIds[3];
+				boost::array<uint, 3> vertIds;
 				Vec3 normal;
 		};
 
-		MeshData(const char* filename) {load(filename);}
-		~MeshData() {}
+		MeshData(const char* filename)
+		{
+			load(filename);
+		}
+		~MeshData()
+		{}
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec<Vec3>, vertCoords, getVertCoords)
-		GETTER_R(Vec<Vec3>, vertNormals, getVertNormals)
-		GETTER_R(Vec<Vec4>, vertTangents, getVertTangents)
-		GETTER_R(Vec<Vec2>, texCoords, getTexCoords)
-		GETTER_R(Vec<VertexWeight>, vertWeights, getVertWeights)
-		GETTER_R(Vec<Triangle>, tris, getTris)
-		GETTER_R(Vec<ushort>, vertIndeces, getVertIndeces)
+		const Vec<Vec3>& getVertCoords() const
+		{
+			return vertCoords;
+		}
+
+		const Vec<Vec3>& getVertNormals() const
+		{
+			return vertNormals;
+		}
+
+		const Vec<Vec4>& getVertTangents() const
+		{
+			return vertTangents;
+		}
+
+		const Vec<Vec2>& getTexCoords() const
+		{
+			return texCoords;
+		}
+
+		const Vec<VertexWeight>& getVertWeights() const
+		{
+			return vertWeights;
+		}
+
+		const Vec<Triangle>& getTris() const
+		{
+			return tris;
+		}
+
+		const Vec<ushort>& getVertIndeces() const
+		{
+			return vertIndeces;
+		}
 		/// @}
 
 	private:
