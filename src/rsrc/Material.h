@@ -5,13 +5,13 @@
 #include "MaterialBuildinVariable.h"
 #include "MaterialCommon.h"
 #include "MaterialProperties.h"
-#include "util/Accessors.h"
 #include "util/ConstCharPtrHashMap.h"
 #include <GL/glew.h>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
+#include <boost/range/iterator_range.hpp>
 
 
 class ShaderProgram;
@@ -106,22 +106,59 @@ class Material: public MaterialProperties
 
 		/// @name Accessors
 		/// @{
-		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
-		GETTER_R_BY_VAL(bool, renderInBlendingStageFlag, rendersInBlendingStage)
-		GETTER_R_BY_VAL(int, blendingSfactor, getBlendingSfactor)
-		GETTER_R_BY_VAL(int, blendingDfactor, getBlendingDfactor)
-		GETTER_R_BY_VAL(bool, depthTesting, isDepthTestingEnabled)
-		GETTER_R_BY_VAL(bool, wireframe, isWireframeEnabled)
+		bool getCastShadow() const
+		{
+			return castsShadowFlag;
+		}
+
+		bool getRendersInBlendingStage() const
+		{
+			return renderInBlendingStageFlag;
+		}
+
+		int getBlendingSfactor() const
+		{
+			return blendingSfactor;
+		}
+
+		int getBlendingDfactor() const
+		{
+			return blendingDfactor;
+		}
+
+		bool getGetDepthTesting() const
+		{
+			return depthTesting;
+		}
+
+		bool getWireframe() const
+		{
+			return wireframe;
+		}
 
 		/// Access the base class just for copying in other classes
 		GETTER_R(MaterialProperties, *this, accessPropertiesBaseClass)
 
 		const ShaderProgram& getShaderProgram(PassType p) const
-			{return *sProgs[p];}
+		{
+			return *sProgs[p];
+		}
 
 		// Variable accessors
-		GETTER_R(VarsContainer, mtlVars, getVariables)
-		GETTER_R(Vec<MaterialUserVariable*>, userMtlVars, getUserVariables)
+		boost::iterator_range<VarsContainer::const_iterator> getVariables()
+			const
+		{
+			return boost::iterator_range<VarsContainer::const_iterator>(
+				mtlVars.begin(), mtlVars.end());
+		}
+
+		boost::iterator_range<Vec<MaterialUserVariable*>::const_iterator>
+			getUserVariables() const
+		{
+			return boost::iterator_range<Vec<MaterialUserVariable*>::
+				const_iterator>(userMtlVars.begin(), userMtlVars.end());
+		}
+
 		const MaterialBuildinVariable& getBuildinVariable(
 			MaterialBuildinVariable::MatchingVariable e) const;
 		/// @}

@@ -16,7 +16,7 @@ void Light::init(const char* filename)
 {
 	lightData.loadRsrc(filename);
 
-	diffuseCol = lightData->getDiffuseCol();
-	specularCol = lightData->getSpecularCol();
-	castsShadowFlag = lightData->castsShadow();
+	diffuseCol = lightData->getDiffuseColor();
+	specularCol = lightData->getSpecularColor();
+	castsShadowFlag = lightData->getCastShadow();
 }

@@ -11,7 +11,10 @@ class DummyRsrc
 
 		void load(const char* filename);
 
-		static int getMem() {return mem;}
+		static int getMem()
+		{
+			return mem;
+		}
 	private:
 		static int mem;
 		bool loaded;

@@ -28,23 +28,53 @@ class Image
 		};
 
 		/// Do nothing
-		Image() {}
+		Image()
+		{}
 
 		/// Load an image
 		/// @param[in] filename The image file to load
 		/// @exception Exception
-		Image(const char* filename) {load(filename);}
+		Image(const char* filename)
+		{
+			load(filename);
+		}
 		
 		/// Do nothing
-		~Image() {}
+		~Image()
+		{}
 
 		/// @name Accessors
 		/// @{
-		uint getWidth() const {return width;}
-		uint getHeight() const {return height;}
-		ColorType getColorType() const {return type;}
-		const Vec<uchar>& getData() const {return data;}
-		DataCompression getDataCompression() const {return dataCompression;}
+		uint getWidth() const
+		{
+			return width;
+		}
+
+		uint getHeight() const
+		{
+			return height;
+		}
+
+		ColorType getColorType() const
+		{
+			return type;
+		}
+
+		const uchar* getData() const
+		{
+			return &data[0];
+		}
+
+		/// Get image size in bytes
+		size_t getDataSize() const
+		{
+			return data.getSizeInBytes();
+		}
+
+		DataCompression getDataCompression() const
+		{
+			return dataCompression;
+		}
 		/// @}
 		
 		/// Load an image file

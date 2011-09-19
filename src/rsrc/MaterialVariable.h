@@ -40,7 +40,10 @@ class MaterialVariable
 
 		/// @name Accessors
 		/// @{
-		GETTER_R_BY_VAL(Type, type, getType)
+		Type getType() const
+		{
+			return type;
+		}
 
 		/// XXX
 		const ShaderProgramVariable& getShaderProgramVariable(
@@ -48,17 +51,28 @@ class MaterialVariable
 
 		/// Check if pass p needs this variable. Check if the shader program
 		/// of p contains this variable or not
-		bool inPass(PassType p) const {return sProgVars[p] != NULL;}
+		bool inPass(PassType p) const
+		{
+			return sProgVars[p] != NULL;
+		}
 
 		/// Get the GL data type of all the shader program variables
-		GLenum getGlDataType() const {return oneSProgVar->getGlDataType();}
+		GLenum getGlDataType() const
+		{
+			return oneSProgVar->getGlDataType();
+		}
 
 		/// Get the name of all the shader program variables
-		const char* getName() const {return oneSProgVar->getName().c_str();}
+		const char* getName() const
+		{
+			return oneSProgVar->getName().c_str();
+		}
 
 		/// Get the type of all the shader program variables
 		ShaderProgramVariable::Type getShaderProgramVariableType() const
-			{return oneSProgVar->getType();}
+		{
+			return oneSProgVar->getType();
+		}
 		/// @}
 
 	private:
