@@ -3,7 +3,6 @@
 
 #include "rsrc/RsrcPtr.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 #include "gl/Vbo.h"
 #include "gl/Vao.h"
 #include <boost/scoped_ptr.hpp>
@@ -20,15 +19,46 @@ class UiPainter
 
 		/// @name Accessors
 		/// @{
-		GETTER_SETTER(Vec2, pos, getPosition, setPosition)
-		GETTER_SETTER(Vec4, col, getColor, setColor)
+		const Vec2& getPosition() const
+		{
+			return pos;
+		}
+		Vec2& getPosition()
+		{
+			return pos;
+		}
+		void setPosition(const Vec2& x)
+		{
+			pos = x;
+		}
+
+		const Vec4& getColor() const
+		{
+			return col;
+		}
+		Vec4& getColor()
+		{
+			return col;
+		}
+		void setColor(const Vec4& x)
+		{
+			col = x;
+		}
+
 		void setFont(const char* fontFilename, uint nominalWidth,
 			uint nominalHeight);
-		const UiFont& getFont() const {return *font;}
+
+		const UiFont& getFont() const
+		{
+			return *font;
+		}
 		/// @}
 
 		void drawText(const char* text);
-		void drawText(const std::string& str) {drawText(str.c_str());}
+		void drawText(const std::string& str)
+		{
+			drawText(str.c_str());
+		}
 		void drawFormatedText(const char* format, ...);
 
 	private:

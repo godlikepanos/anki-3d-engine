@@ -51,22 +51,61 @@ class LightRsrc: private LightProps
 		};
 
 		LightRsrc();
-		~LightRsrc() {}
+		~LightRsrc()
+		{}
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec3, diffuseCol, getDiffuseCol)
-		GETTER_R(Vec3, specularCol, getSpecularCol)
-		GETTER_R_BY_VAL(bool, castsShadowFlag, castsShadow)
-		GETTER_R_BY_VAL(LightType, type, getType)
+		const Vec3& getDiffuseColor() const
+		{
+			return diffuseCol;
+		}
 
-		GETTER_R_BY_VAL(float, radius, getRadius)
+		const Vec3& getSpecularColor() const
+		{
+			return specularCol;
+		}
 
-		GETTER_R_BY_VAL(float, distance, getDistance)
-		GETTER_R_BY_VAL(float, fovX, getFovX)
-		GETTER_R_BY_VAL(float, fovY, getFovY)
-		GETTER_R_BY_VAL(float, width, getWidth)
-		GETTER_R_BY_VAL(float, height, getHeight)
+		bool getCastShadow() const
+		{
+			return castsShadowFlag;
+		}
+
+		LightType getType() const
+		{
+			return type;
+		}
+
+		float getRadius() const
+		{
+			return radius;
+		}
+
+		float getDistance() const
+		{
+			return distance;
+		}
+
+		float getFovX() const
+		{
+			return fovX;
+		}
+
+		float getFovY() const
+		{
+			return fovY;
+		}
+
+		float getWidth() const
+		{
+			return width;
+		}
+
+		float getHeight() const
+		{
+			return height;
+		}
+
 		const Texture& getTexture() const;
 		/// @}
 

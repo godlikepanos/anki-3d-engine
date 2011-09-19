@@ -49,7 +49,10 @@ class MaterialBuildinVariable: public MaterialVariable
 			const char* shaderProgVarName,
 			const ShaderPrograms& shaderProgsArr);
 
-		GETTER_R_BY_VAL(MatchingVariable, bEnum, getMatchingVariable)
+		MatchingVariable getMatchingVariable() const
+		{
+			return bEnum;
+		}
 
 		/// Uses static cast to get the uniform. It will fail if the variable
 		/// is attribute

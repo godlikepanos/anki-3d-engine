@@ -55,7 +55,7 @@ void SkinNode::moveUpdate()
 //==============================================================================
 // frameUpdate                                                                 =
 //==============================================================================
-void SkinNode::frameUpdate(float prevUpdateTime, float /*crntTime*/)
+void SkinNode::frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/)
 {
 	frame += step;
 
@@ -70,14 +70,14 @@ void SkinNode::frameUpdate(float prevUpdateTime, float /*crntTime*/)
 		return;
 	}
 
-	interpolate(*anim, frame, getBoneTranslations(),
-	    getBoneRotations());
+	interpolate(*anim, frame, boneTranslations,
+	    boneRotations);
 
 	updateBoneTransforms(getSkin().getSkeleton(),
-	    getBoneTranslations(), getBoneRotations());
+	    boneTranslations, boneRotations);
 
-	deformHeadsTails(getSkin().getSkeleton(), getBoneTranslations(),
-	    getBoneRotations(), getHeads(), getTails());
+	deformHeadsTails(getSkin().getSkeleton(), boneTranslations,
+	    boneRotations, heads, tails);
 }
 
 

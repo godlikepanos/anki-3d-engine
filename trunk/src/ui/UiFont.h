@@ -4,7 +4,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "util/StdTypes.h"
-#include "util/Accessors.h"
 #include "m/Math.h"
 
 
@@ -26,8 +25,16 @@ class UiFont
 		int getGlyphAdvance(char c) const;
 		int getGlyphBearingX(char c) const;
 		int getGlyphBearingY(char c) const;
-		const Texture& getMap() const {return *map;}
-		GETTER_R_BY_VAL(uint, lineHeight, getLineHeight)
+
+		const Texture& getMap() const
+		{
+			return *map;
+		}
+
+		uint getLineHeight() const
+		{
+			return lineHeight;
+		}
 		/// @}
 
 	private:

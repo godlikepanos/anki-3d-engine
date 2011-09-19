@@ -6,7 +6,6 @@
 #include "RsrcPtr.h"
 #include "gl/Vbo.h"
 #include "cln/Obb.h"
-#include "util/Accessors.h"
 
 
 class MeshData;
@@ -29,17 +28,34 @@ class Mesh
 		};
 
 		/// Default constructor
-		Mesh() {}
+		Mesh()
+		{}
 
 		/// Does nothing
-		~Mesh() {}
+		~Mesh()
+		{}
 
 		/// @name Accessors
 		/// @{
-		const Vbo& getVbo(Vbos id) const {return vbos[id];}
-		GETTER_R_BY_VAL(uint, vertIdsNum, getVertIdsNum)
-		GETTER_R(Obb, visibilityShape, getVisibilityShape)
-		GETTER_R_BY_VAL(uint, vertsNum, getVertsNum)
+		const Vbo& getVbo(Vbos id) const
+		{
+			return vbos[id];
+		}
+
+		uint getVertIdsNum() const
+		{
+			return vertIdsNum;
+		}
+
+		const Obb& getVisibilityShape() const
+		{
+			return visibilityShape;
+		}
+
+		uint getVertsNum() const
+		{
+			return vertsNum;
+		}
 		/// @}
 
 		/// Implements @ref Resource::load
@@ -47,8 +63,16 @@ class Mesh
 
 		/// @name Ask for geometry properties
 		/// @{
-		bool hasTexCoords() const {return vbos[VBO_TEX_COORDS].isCreated();}
-		bool hasVertWeights() const {return vbos[VBO_VERT_WEIGHTS].isCreated();}
+		bool hasTexCoords() const
+		{
+			return vbos[VBO_TEX_COORDS].isCreated();
+		}
+
+		bool hasVertWeights() const
+		{
+			return vbos[VBO_VERT_WEIGHTS].isCreated();
+		}
+
 		bool hasNormalsAndTangents() const;
 		/// @}
 

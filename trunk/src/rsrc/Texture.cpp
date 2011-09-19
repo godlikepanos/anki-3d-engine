@@ -64,7 +64,7 @@ void Texture::load(const Image& img)
 	Initializer init;
 	init.width = img.getWidth();
 	init.height = img.getHeight();
-	init.dataSize = img.getData().getSizeInBytes();
+	init.dataSize = img.getDataSize();
 
 	switch(img.getColorType())
 	{
@@ -116,7 +116,7 @@ void Texture::load(const Image& img)
 			break;
 	}
 
-	init.data = &img.getData()[0];
+	init.data = img.getData();
 	init.mipmapping = mipmappingEnabled;
 	init.filteringType = mipmappingEnabled ? TFT_TRILINEAR : TFT_LINEAR;
 	init.repeat = true;

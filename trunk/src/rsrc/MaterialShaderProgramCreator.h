@@ -4,14 +4,10 @@
 #include "util/ConstCharPtrHashMap.h"
 #include "util/Vec.h"
 #include "util/Accessors.h"
+#include "util/scanner/Forward.h"
 #include <GL/glew.h>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
-
-
-namespace scanner {
-class Scanner;
-}
 
 
 /// Creator of shader programs. This class parses between
@@ -23,8 +19,12 @@ class MaterialShaderProgramCreator
 		MaterialShaderProgramCreator(const boost::property_tree::ptree& pt);
 		~MaterialShaderProgramCreator();
 
-		/// XXX
-		const std::string& getShaderProgramSource() const {return source;}
+		/// Get the shader program source code. This is the one and only public
+		/// member
+		const std::string& getShaderProgramSource() const
+		{
+			return source;
+		}
 
 	private:
 		//======================================================================

@@ -4,7 +4,7 @@
 #include "util/Vec.h"
 #include "util/StdTypes.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
+#include <boost/range/iterator_range.hpp>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
@@ -21,7 +21,10 @@ class UiFtFontLoader
 			friend class UiFtFontLoader;
 
 			public:
-				GETTER_R(FT_Glyph_Metrics, metrics, getMetrics)
+				FT_Glyph_Metrics getMetrics() const
+				{
+					return metrics;
+				}
 
 			private:
 				FT_Glyph glyph;
@@ -40,16 +43,35 @@ class UiFtFontLoader
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec<uchar>, img, getImage)
-		GETTER_R(FT_Vector, imgSize, getImageSize)
-		GETTER_R(Vec<Glyph>, glyphs, getGlyphs)
-		GETTER_R_BY_VAL(uint, lineHeight, getLineHeight)
+		const uchar* getImage() const
+		{
+			return &img[0];
+		}
+
+		const FT_Vector& getImageSize() const
+		{
+			return imgSize;
+		}
+
+		boost::iterator_range<Vec<Glyph>::const_iterator> getGlyphs() const
+		{
+			return boost::iterator_range<Vec<Glyph>::const_iterator>(
+				glyphs.begin(), glyphs.end());
+		}
+
+		uint getLineHeight() const
+		{
+			return lineHeight;
+		}
 		/// @}
 
 		/// Save the image (img) to TGA. Its for debugging purposes
 		void saveImage(const char* filename) const;
 
-		static FT_Int toPixels(FT_Int a) {return a >> 6;}
+		static FT_Int toPixels(FT_Int a)
+		{
+			return a >> 6;
+		}
 
 	private:
 		/// @name Data

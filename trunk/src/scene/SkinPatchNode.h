@@ -35,12 +35,20 @@ class SkinPatchNode: public PatchNode
 
 		SkinPatchNode(const ModelPatch& modelPatch, SkinNode& parent);
 
-		void init(const char*) {}
+		void init(const char*)
+		{}
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vao, tfVao, getTfVao)
-		const Vbo& getTfVbo(uint i) const {return tfVbos[i];}
+		const Vao& getTfVao() const
+		{
+			return tfVao;
+		}
+
+		const Vbo& getTfVbo(uint i) const
+		{
+			return tfVbos[i];
+		}
 		/// @}
 
 	private:

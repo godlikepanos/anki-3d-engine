@@ -1,5 +1,5 @@
-#ifndef SCANNER_H
-#define SCANNER_H
+#ifndef SCANNER_SCANNER_H
+#define SCANNER_SCANNER_H
 
 #include "Token.h"
 #include <fstream>
@@ -60,13 +60,22 @@ class Scanner
 
 		/// Accessor for the current token
 		/// @return The current Token
-		const Token& getCrntToken() const {return crntToken;}
+		const Token& getCrntToken() const
+		{
+			return crntToken;
+		}
 
 		/// Get the name of the input stream
-		const char* getScriptName() const {return scriptName;}
+		const char* getScriptName() const
+		{
+			return scriptName;
+		}
 
 		/// Get the current line the Scanner is processing
-		int getLineNumber() const {return lineNmbr;}
+		int getLineNumber() const
+		{
+			return lineNmbr;
+		}
 
 	protected:
 		/// Every char in the Ascii table is binded with one characteristic
@@ -162,7 +171,9 @@ class Scanner
 
 		/// A function to save us from typing
 		static AsciiFlag& lookupAscii(char c)
-			{return asciiLookupTable[static_cast<int>(c)];}
+		{
+			return asciiLookupTable[static_cast<int>(c)];
+		}
 
 		/// Common initialization code
 		void init(bool newlinesAsWhitespace_);
