@@ -72,7 +72,7 @@ uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		// print info log
 		int infoLen = 0;
 		int charsWritten = 0;
-		Vec<char> infoLog;
+		std::vector<char> infoLog;
 
 		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
 		infoLog.resize(infoLen + 1);
@@ -374,7 +374,7 @@ std::string ShaderProgram::getShaderInfoString() const
 	ss << "Variables:\n";
 	BOOST_FOREACH(const ShaderProgramVariable& var, vars)
 	{
-		ss << var.getName() << " " << var.getLoc() << " ";
+		ss << var.getName() << " " << var.getLocation() << " ";
 		if(var.getType() == ShaderProgramVariable::T_ATTRIBUTE)
 		{
 			ss << "attribute";

@@ -113,8 +113,8 @@ void SceneNode::addChild(SceneNode& child)
 //==============================================================================
 void SceneNode::removeChild(SceneNode& child)
 {
-	Vec<SceneNode*>::iterator it = std::find(children.begin(), children.end(),
-		&child);
+	std::vector<SceneNode*>::iterator it = std::find(children.begin(),
+		children.end(), &child);
 
 	if(it == children.end())
 	{

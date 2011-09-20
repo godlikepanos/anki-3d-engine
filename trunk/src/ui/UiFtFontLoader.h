@@ -1,9 +1,9 @@
 #ifndef UI_FT_FONT_LOADER_H
 #define UI_FT_FONT_LOADER_H
 
-#include "util/Vec.h"
 #include "util/StdTypes.h"
 #include "m/Math.h"
+#include <vector>
 #include <boost/range/iterator_range.hpp>
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -53,9 +53,10 @@ class UiFtFontLoader
 			return imgSize;
 		}
 
-		boost::iterator_range<Vec<Glyph>::const_iterator> getGlyphs() const
+		boost::iterator_range<std::vector<Glyph>::const_iterator>
+			getGlyphs() const
 		{
-			return boost::iterator_range<Vec<Glyph>::const_iterator>(
+			return boost::iterator_range<std::vector<Glyph>::const_iterator>(
 				glyphs.begin(), glyphs.end());
 		}
 
@@ -78,8 +79,8 @@ class UiFtFontLoader
 		/// @{
 		FT_Library library;
 		FT_Face face;
-		Vec<Glyph> glyphs;
-		Vec<uchar> img;
+		std::vector<Glyph> glyphs;
+		std::vector<uchar> img;
 		FT_Vector imgSize;
 		uint lineHeight; ///< Calculated as the max height among all glyphs
 		/// @}

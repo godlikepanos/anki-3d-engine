@@ -1,12 +1,12 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <boost/array.hpp>
-#include <deque>
-#include "util/Vec.h"
 #include "cln/Collision.h"
 #include "SceneNode.h"
 #include "VisibilityInfo.h"
+#include <boost/array.hpp>
+#include <deque>
+#include <vector>
 
 
 class SpotLight;

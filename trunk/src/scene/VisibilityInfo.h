@@ -2,7 +2,7 @@
 #define VISIBILITY_INFO_H
 
 #include <deque>
-#include "util/Vec.h"
+#include <vector>
 
 
 class RenderableNode;
@@ -16,25 +16,49 @@ class VisibilityInfo
 {
 	public:
 		typedef std::deque<const RenderableNode*> RContainer;
-		typedef Vec<const PointLight*> PLContainer;
-		typedef Vec<SpotLight*> SLContainer;
+		typedef std::vector<const PointLight*> PLContainer;
+		typedef std::vector<SpotLight*> SLContainer;
 
 		VisibilityInfo() {}
 		~VisibilityInfo();
 
 		/// @name Accessors
 		/// @{
-		const RContainer& getVisibleMsRenderableNodes() const {return msRNodes;}
-		RContainer& getVisibleMsRenderableNodes() {return msRNodes;}
+		const RContainer& getVisibleMsRenderableNodes() const
+		{
+			return msRNodes;
+		}
+		RContainer& getVisibleMsRenderableNodes()
+		{
+			return msRNodes;
+		}
 
-		const RContainer& getVisibleBsRenderableNodes() const {return bsRNodes;}
-		RContainer& getVisibleBsRenderableNodes() {return bsRNodes;}
+		const RContainer& getVisibleBsRenderableNodes() const
+		{
+			return bsRNodes;
+		}
+		RContainer& getVisibleBsRenderableNodes()
+		{
+			return bsRNodes;
+		}
 
-		const PLContainer& getVisiblePointLights() const {return pLights;}
-		PLContainer& getVisiblePointLights() {return pLights;}
+		const PLContainer& getVisiblePointLights() const
+		{
+			return pLights;
+		}
+		PLContainer& getVisiblePointLights()
+		{
+			return pLights;
+		}
 
-		const SLContainer& getVisibleSpotLights() const {return sLights;}
-		SLContainer& getVisibleSpotLights() {return sLights;}
+		const SLContainer& getVisibleSpotLights() const
+		{
+			return sLights;
+		}
+		SLContainer& getVisibleSpotLights()
+		{
+			return sLights;
+		}
 		/// @}
 
 	private:

@@ -4,7 +4,6 @@
 #include "RenderingPass.h"
 #include "rsrc/Texture.h"
 #include "gl/Fbo.h"
-#include "util/Accessors.h"
 #include "Ez.h"
 
 

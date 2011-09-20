@@ -93,12 +93,12 @@ void Dbg::renderGrid()
 //==============================================================================
 void Dbg::drawSphere(float radius, int complexity)
 {
-	Vec<Vec3>* sphereLines;
+	std::vector<Vec3>* sphereLines;
 
 	//
 	// Pre-calculate the sphere points5
 	//
-	std::map<uint, Vec<Vec3> >::iterator it =
+	std::map<uint, std::vector<Vec3> >::iterator it =
 		complexityToPreCalculatedSphere.find(complexity);
 
 	if(it != complexityToPreCalculatedSphere.end()) // Found
@@ -107,7 +107,7 @@ void Dbg::drawSphere(float radius, int complexity)
 	}
 	else // Not found
 	{
-		complexityToPreCalculatedSphere[complexity] = Vec<Vec3>();
+		complexityToPreCalculatedSphere[complexity] = std::vector<Vec3>();
 		sphereLines = &complexityToPreCalculatedSphere[complexity];
 
 		float fi = Math::PI / complexity;

@@ -2,8 +2,7 @@
 #define SKELETON_H
 
 #include "m/Math.h"
-#include "util/Accessors.h"
-#include "util/Vec.h"
+#include <vector>
 
 
 /// Skeleton bone
@@ -22,18 +21,60 @@ struct Bone
 	public:
 		/// @name Accessors
 		/// @{
-		GETTER_R(std::string, name, getName)
-		GETTER_R(Vec3, head, getHead)
-		GETTER_R(Vec3, tail, getTail)
-		GETTER_R(uint, id, getPos)
-		GETTER_R_BY_VAL(Bone*, parent, getParent)
-		const Bone& getChild(uint i) const {return *childs[i];}
-		GETTER_R_BY_VAL(ushort, childsNum, getChildsNum)
+		const std::string& getName() const
+		{
+			return name;
+		}
 
-		GETTER_R(Mat3, rotSkelSpace, getRotSkelSpace)
-		GETTER_R(Vec3, tslSkelSpace, getTslSkelSpace)
-		GETTER_R(Mat3, rotSkelSpaceInv, getRotSkelSpaceInv)
-		GETTER_R(Vec3, tslSkelSpaceInv, getTslSkelSpaceInv)
+		const Vec3& getHead() const
+		{
+			return head;
+		}
+
+		const Vec3& getTail() const
+		{
+			return tail;
+		}
+
+		uint getId() const
+		{
+			return id;
+		}
+
+		const Bone* getParent() const
+		{
+			return parent;
+		}
+
+		const Bone& getChild(uint i) const
+		{
+			return *childs[i];
+		}
+
+		size_t getChildsNum() const
+		{
+			return childsNum;
+		}
+
+		const Mat3& getRotationSkeletonSpace() const
+		{
+			return rotSkelSpace;
+		}
+
+		const Vec3& getTranslationSkeletonSpace() const
+		{
+			return tslSkelSpace;
+		}
+
+		const Mat3& getRotationSkeletonSpaceInverted() const
+		{
+			return rotSkelSpaceInv;
+		}
+
+		const Vec3& getTranslationSkeletonSpaceInverted() const
+		{
+			return tslSkelSpaceInv;
+		}
 		/// @}
 
 	private:
@@ -83,11 +124,14 @@ class Skeleton
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec<Bone>, bones, getBones)
+		const std::vector<Bone>& getBones() const
+		{
+			return bones;
+		}
 		/// @}
 
 	private:
-		Vec<Bone> bones;
+		std::vector<Bone> bones;
 };
 
 

@@ -2,8 +2,7 @@
 #define SKEL_ANIM_H
 
 #include "m/Math.h"
-#include "util/Vec.h"
-#include "util/Accessors.h"
+#include <vector>
 
 
 /// Bone pose
@@ -17,8 +16,15 @@ struct BonePose
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Quat, rotation, getRotation)
-		GETTER_R(Vec3, translation, getTranslation)
+		const Quat& getRotation() const
+		{
+			return rotation;
+		}
+
+		const Vec3& getTranslation() const
+		{
+			return translation;
+		}
 		/// @}
 
 	private:
@@ -47,13 +53,16 @@ class BoneAnim
 	public:
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec<BonePose>, bonePoses, getBonePoses)
+		const std::vector<BonePose>& getBonePoses() const
+		{
+			return bonePoses;
+		}
 		/// @}
 
 	private:
 		/// The poses for every keyframe. Its empty if the bone doesnt have
 		/// any animation
-		Vec<BonePose> bonePoses;
+		std::vector<BonePose> bonePoses;
 };
 
 
@@ -80,18 +89,29 @@ class SkelAnim
 	public:
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec<uint>, keyframes, getKeyframes)
-		GETTER_R_BY_VAL(uint, framesNum, getFramesNum)
-		GETTER_R(Vec<BoneAnim>, boneAnims, getBoneAnims)
+		const std::vector<uint>& getKeyframes() const
+		{
+			return keyframes;
+		}
+
+		uint getFramesNum() const
+		{
+			return framesNum;
+		}
+
+		const std::vector<BoneAnim>& getBoneAnimations() const
+		{
+			return boneAnims;
+		}
 		/// @}
 
 		/// Load
 		void load(const char* filename);
 
 	private:
-		Vec<uint> keyframes;
+		std::vector<uint> keyframes;
 		uint framesNum;
-		Vec<BoneAnim> boneAnims;
+		std::vector<BoneAnim> boneAnims;
 };
 
 

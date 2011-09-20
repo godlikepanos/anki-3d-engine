@@ -3,11 +3,10 @@
 
 #include "m/Math.h"
 #include "util/StdTypes.h"
-#include "util/Accessors.h"
-#include "util/Vec.h"
 #include <boost/range/iterator_range.hpp>
 #include <boost/array.hpp>
 #include <string>
+#include <vector>
 
 
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to
@@ -76,37 +75,37 @@ class MeshData
 
 		/// @name Accessors
 		/// @{
-		const Vec<Vec3>& getVertCoords() const
+		const std::vector<Vec3>& getVertCoords() const
 		{
 			return vertCoords;
 		}
 
-		const Vec<Vec3>& getVertNormals() const
+		const std::vector<Vec3>& getVertNormals() const
 		{
 			return vertNormals;
 		}
 
-		const Vec<Vec4>& getVertTangents() const
+		const std::vector<Vec4>& getVertTangents() const
 		{
 			return vertTangents;
 		}
 
-		const Vec<Vec2>& getTexCoords() const
+		const std::vector<Vec2>& getTexCoords() const
 		{
 			return texCoords;
 		}
 
-		const Vec<VertexWeight>& getVertWeights() const
+		const std::vector<VertexWeight>& getVertWeights() const
 		{
 			return vertWeights;
 		}
 
-		const Vec<Triangle>& getTris() const
+		const std::vector<Triangle>& getTris() const
 		{
 			return tris;
 		}
 
-		const Vec<ushort>& getVertIndeces() const
+		const std::vector<ushort>& getVertIndeces() const
 		{
 			return vertIndeces;
 		}
@@ -115,14 +114,15 @@ class MeshData
 	private:
 		/// @name Data
 		/// @{
-		Vec<Vec3> vertCoords; ///< Loaded from file
-		Vec<Vec3> vertNormals; ///< Generated
-		Vec<Vec4> vertTangents; ///< Generated
+		std::vector<Vec3> vertCoords; ///< Loaded from file
+		std::vector<Vec3> vertNormals; ///< Generated
+		std::vector<Vec4> vertTangents; ///< Generated
 		/// Optional. One for every vert so we can use vertex arrays & VBOs
-		Vec<Vec2> texCoords;
-		Vec<VertexWeight> vertWeights; ///< Optional
-		Vec<Triangle> tris; ///< Required
-		Vec<ushort> vertIndeces; ///< Generated. Used for vertex arrays & VBOs
+		std::vector<Vec2> texCoords;
+		std::vector<VertexWeight> vertWeights; ///< Optional
+		std::vector<Triangle> tris; ///< Required
+		/// Generated. Used for vertex arrays & VBOs
+		std::vector<ushort> vertIndeces;
 		/// @}
 
 		/// Load the mesh data from a binary file

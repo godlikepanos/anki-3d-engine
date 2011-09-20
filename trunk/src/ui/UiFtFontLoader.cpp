@@ -109,7 +109,8 @@ void UiFtFontLoader::computeImageSize()
 //==============================================================================
 // createImage                                                                 =
 //==============================================================================
-void UiFtFontLoader::createImage(const char* filename, const FT_Vector& fontSize)
+void UiFtFontLoader::createImage(const char* filename,
+	const FT_Vector& fontSize)
 {
 	FT_Error error;
 

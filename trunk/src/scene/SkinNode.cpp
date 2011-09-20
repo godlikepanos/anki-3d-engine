@@ -85,14 +85,14 @@ void SkinNode::frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/)
 // interpolate                                                                 =
 //==============================================================================
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
-	Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
+	std::vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
 {
 	ASSERT(frame < animation.getFramesNum());
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the
 	// frame and calc the lPose and rPose witch indicate the pose IDs in witch
 	// the frame lies between
-	const Vec<uint>& keyframes = animation.getKeyframes();
+	const std::vector<uint>& keyframes = animation.getKeyframes();
 	float t = 0.0;
 	uint lPose = 0, rPose = 0;
 	for(uint j = 0; j < keyframes.size(); j++)
@@ -117,7 +117,7 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 	ASSERT(boneRotations.size() >= 1);
 	for(uint i=0; i < boneRotations.size(); i++)
 	{
-		const BoneAnim& banim = animation.getBoneAnims()[i];
+		const BoneAnim& banim = animation.getBoneAnimations()[i];
 
 		Mat3& localRot = boneRotations[i];
 		Vec3& localTransl = boneTranslations[i];
@@ -153,7 +153,7 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 // updateBoneTransforms                                                        =
 //==============================================================================
 void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
-	Vec<Vec3>& boneTranslations, Vec<Mat3>& boneRotations)
+	std::vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
 {
 	boost::array<uint, 128> queue;
 	uint head = 0, tail = 0;
@@ -163,7 +163,7 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 	{
 		if(bone.getParent() == NULL)
 		{
-			queue[tail++] = bone.getPos(); // queue push
+			queue[tail++] = bone.getId(); // queue push
 		}
 	}
 
@@ -178,11 +178,13 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 		// transformation.
 		Math::combineTransformations(
 			boneTranslations[boneId], boneRotations[boneId],
-			boned.getTslSkelSpaceInv(), boned.getRotSkelSpaceInv(),
+			boned.getTranslationSkeletonSpaceInverted(),
+			boned.getRotationSkeletonSpaceInverted(),
 			boneTranslations[boneId], boneRotations[boneId]);
 
 		Math::combineTransformations(
-			boned.getTslSkelSpace(), boned.getRotSkelSpace(),
+			boned.getTranslationSkeletonSpace(),
+			boned.getRotationSkeletonSpace(),
 			boneTranslations[boneId], boneRotations[boneId],
 			boneTranslations[boneId], boneRotations[boneId]);
 
@@ -191,8 +193,8 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 		{
 			// bone.final_final_transform = parent.transf * bone.final_transform
 			Math::combineTransformations(
-				boneTranslations[boned.getParent()->getPos()],
-				boneRotations[boned.getParent()->getPos()],
+				boneTranslations[boned.getParent()->getId()],
+				boneRotations[boned.getParent()->getId()],
 				boneTranslations[boneId],
 				boneRotations[boneId],
 				boneTranslations[boneId],
@@ -202,7 +204,7 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 		// now add the bone's children
 		for(uint i = 0; i < boned.getChildsNum(); i++)
 		{
-			queue[tail++] = boned.getChild(i).getPos();
+			queue[tail++] = boned.getChild(i).getId();
 		}
 	}
 }
@@ -212,8 +214,9 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 // deformHeadsTails                                                            =
 //==============================================================================
 void SkinNode::deformHeadsTails(const Skeleton& skeleton,
-    const Vec<Vec3>& boneTranslations, const Vec<Mat3>& boneRotations,
-    Vec<Vec3>& heads, Vec<Vec3>& tails)
+    const std::vector<Vec3>& boneTranslations,
+    const std::vector<Mat3>& boneRotations,
+    std::vector<Vec3>& heads, std::vector<Vec3>& tails)
 {
 	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{

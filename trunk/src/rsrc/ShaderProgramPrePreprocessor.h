@@ -1,17 +1,12 @@
 #ifndef SHADER_PROGRAM_PRE_PREPROCESSOR_H
 #define SHADER_PROGRAM_PRE_PREPROCESSOR_H
 
-#include "util/Vec.h"
 #include "util/StdTypes.h"
-#include "util/Accessors.h"
+#include "util/scanner/Forward.h"
 #include "ShaderProgramCommon.h"
 #include <limits>
 #include <boost/array.hpp>
-
-
-namespace scanner {
-class Scanner;
-}
+#include <vector>
 
 
 /// Helper class used for shader program loading
@@ -36,16 +31,25 @@ class ShaderProgramPrePreprocessor
 		/// @param[in] filename The file to load
 		/// @exception Exception
 		ShaderProgramPrePreprocessor(const char* filename)
-			{parseFile(filename);}
+		{
+			parseFile(filename);
+		}
 
 		/// Destructor does nothing
-		~ShaderProgramPrePreprocessor() {}
+		~ShaderProgramPrePreprocessor()
+		{}
 
 		/// @name Accessors
 		/// @{
-		GETTER_R(Vec<std::string>, trffbVaryings, getTranformFeedbackVaryings)
+		const std::vector<std::string>& getTranformFeedbackVaryings() const
+		{
+			return trffbVaryings;
+		}
+
 		const std::string& getShaderSource(ShaderType type)
-			{return output.shaderSources[type];}
+		{
+			return output.shaderSources[type];
+		}
 		/// @}
 
 	protected:
@@ -54,9 +58,17 @@ class ShaderProgramPrePreprocessor
 		{
 			std::string definedInFile;
 			int definedInLine;
-			Pragma(): definedInLine(-1) {}
+
+			Pragma()
+			:	definedInLine(-1)
+			{}
+
 			Pragma(const std::string& definedInFile_, int definedInLine_);
-			bool isDefined() const {return definedInLine != -1;}
+
+			bool isDefined() const
+			{
+				return definedInLine != -1;
+			}
 		};
 		
 		struct IncludePragma: Pragma
@@ -78,7 +90,9 @@ class ShaderProgramPrePreprocessor
 			/// file
 			int globalLine;
 
-			CodeBeginningPragma(): globalLine(-1) {}
+			CodeBeginningPragma()
+			:	globalLine(-1)
+			{}
 		};
 
 		/// The output of the class packed in this struct
@@ -87,13 +101,14 @@ class ShaderProgramPrePreprocessor
 			friend class PrePreprocessor;
 
 			/// Names and and ids for transform feedback varyings
-			Vec<TrffbVaryingPragma> trffbVaryings;
+			std::vector<TrffbVaryingPragma> trffbVaryings;
 			boost::array<std::string, ST_NUM> shaderSources;
 		};
 
 		Output output; ///< The most important variable
-		Vec<std::string> trffbVaryings;
-		Vec<std::string> sourceLines;  ///< The parseFileForPragmas fills this
+		std::vector<std::string> trffbVaryings;
+		/// The parseFileForPragmas fills this
+		std::vector<std::string> sourceLines;
 		boost::array<CodeBeginningPragma, ST_NUM> shaderStarts;
 		static boost::array<const char*, ST_NUM> startTokens; ///< XXX
 
@@ -115,17 +130,17 @@ class ShaderProgramPrePreprocessor
 		/// @todo
 		void parseStartPragma(scanner::Scanner& scanner,
 			const std::string& filename, uint depth,
-			const Vec<std::string>& lines);
+			const std::vector<std::string>& lines);
 
 		/// @todo
 		void parseIncludePragma(scanner::Scanner& scanner,
 			const std::string& filename, uint depth,
-			const Vec<std::string>& lines);
+			const std::vector<std::string>& lines);
 
 		/// @todo
 		void parseTrffbVarying(scanner::Scanner& scanner,
 			const std::string& filename, uint depth,
-			const Vec<std::string>& lines);
+			const std::vector<std::string>& lines);
 
 		/// Searches inside the Output::attributes or Output::trffbVaryings
 		/// vectors
@@ -133,7 +148,8 @@ class ShaderProgramPrePreprocessor
 		/// @param what The name of the varying or attrib
 		/// @return Iterator to the vector
 		template<typename Type>
-		typename Vec<Type>::const_iterator findNamed(const Vec<Type>& vec,
+		typename std::vector<Type>::const_iterator findNamed(
+			const std::vector<Type>& vec,
 			const std::string& what) const;
 
 		void printSourceLines() const;  ///< For debugging
@@ -163,10 +179,11 @@ inline ShaderProgramPrePreprocessor::TrffbVaryingPragma::TrffbVaryingPragma(
 
 
 template<typename Type>
-typename Vec<Type>::const_iterator ShaderProgramPrePreprocessor::findNamed(
-	const Vec<Type>& vec, const std::string& what) const
+typename std::vector<Type>::const_iterator
+	ShaderProgramPrePreprocessor::findNamed(
+	const std::vector<Type>& vec, const std::string& what) const
 {
-	typename Vec<Type>::const_iterator it = vec.begin();
+	typename std::vector<Type>::const_iterator it = vec.begin();
 	while(it != vec.end() && it->name != what)
 	{
 		++it;

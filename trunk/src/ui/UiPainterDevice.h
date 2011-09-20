@@ -3,7 +3,6 @@
 
 #include "gl/Fbo.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 
 
 class Texture;

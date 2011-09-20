@@ -49,7 +49,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
-	Vec<std::string> lines = util::getFileLines(filename.c_str());
+	std::vector<std::string> lines = util::getFileLines(filename.c_str());
 	if(lines.size() < 1)
 	{
 		throw EXCEPTION("File \"" + filename + "\": Cannot open or empty");
@@ -251,7 +251,8 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 // parseStartPragma                                                            =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
-	const std::string& filename, uint depth, const Vec<std::string>& lines)
+	const std::string& filename, uint depth,
+	const std::vector<std::string>& lines)
 {
 	const scanner::Token* token = &scanner.getNextToken();
 
@@ -302,7 +303,7 @@ void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseIncludePragma(
 	scanner::Scanner& scanner, const std::string& /*filename*/, uint depth,
-	const Vec<std::string>& lines)
+	const std::vector<std::string>& lines)
 {
 	const scanner::Token* token = &scanner.getNextToken();
 
@@ -330,7 +331,8 @@ void ShaderProgramPrePreprocessor::parseIncludePragma(
 // parseTrffbVarying                                                           =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseTrffbVarying(scanner::Scanner& scanner,
-	const std::string& filename, uint /*depth*/, const Vec<std::string>& lines)
+	const std::string& filename, uint /*depth*/,
+	const std::vector<std::string>& lines)
 {
 	const scanner::Token* token = &scanner.getNextToken();
 
@@ -339,7 +341,7 @@ void ShaderProgramPrePreprocessor::parseTrffbVarying(scanner::Scanner& scanner,
 		std::string varName = token->getValue().getString();
 
 		// check if already defined and for circular includance
-		Vec<TrffbVaryingPragma>::const_iterator var =
+		std::vector<TrffbVaryingPragma>::const_iterator var =
 			findNamed(output.trffbVaryings, varName);
 
 		// Throw the correct exception

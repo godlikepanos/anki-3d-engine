@@ -1,10 +1,11 @@
 #ifndef VAO_H
 #define VAO_H
 
-#include <GL/glew.h>
 #include "util/StdTypes.h"
+#include "util/Assert.h"
 #include "core/Object.h"
 #include "GlException.h"
+#include <GL/glew.h>
 
 
 class ShaderProgramAttributeVariable;
@@ -80,10 +81,16 @@ class Vao
 		void attachElementArrayBufferVbo(const Vbo& vbo);
 
 		/// Bind it
-		void bind() const {glBindVertexArray(glId);}
+		void bind() const
+		{
+			glBindVertexArray(glId);
+		}
 
 		/// Unbind all VAOs
-		static void unbind() {glBindVertexArray(0);}
+		static void unbind()
+		{
+			glBindVertexArray(0);
+		}
 
 	private:
 		uint glId; ///< The OpenGL id

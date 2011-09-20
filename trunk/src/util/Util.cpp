@@ -54,9 +54,9 @@ std::string readFile(const char* filename)
 //==============================================================================
 // getFileLines                                                                =
 //==============================================================================
-Vec<std::string> getFileLines(const char* filename)
+std::vector<std::string> getFileLines(const char* filename)
 {
-	Vec<std::string> lines;
+	std::vector<std::string> lines;
 	std::ifstream ifs(filename);
 	if(!ifs.is_open())
 	{

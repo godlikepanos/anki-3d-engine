@@ -3,10 +3,9 @@
 
 #include "SceneNode.h"
 #include "SkinPatchNode.h"
-#include "util/Vec.h"
 #include "m/Math.h"
-#include "util/Accessors.h"
 #include <boost/range/iterator_range.hpp>
+#include <vector>
 
 
 class Skin;
@@ -21,7 +20,7 @@ class SkinNode: public SceneNode
 		class Types
 		{
 			public:
-				typedef Vec<T> Container;
+				typedef std::vector<T> Container;
 				typedef typename Container::iterator Iterator;
 				typedef typename Container::const_iterator ConstIterator;
 				typedef boost::iterator_range<Iterator> MutableRange;
@@ -141,7 +140,7 @@ class SkinNode: public SceneNode
 
 	private:
 		RsrcPtr<Skin> skin; ///< The resource
-		Vec<SkinPatchNode*> patches;
+		std::vector<SkinPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 
 		/// @name Animation stuff
@@ -153,10 +152,10 @@ class SkinNode: public SceneNode
 
 		/// @name Bone data
 		/// @{
-		Vec<Vec3> heads;
-		Vec<Vec3> tails;
-		Vec<Mat3> boneRotations;
-		Vec<Vec3> boneTranslations;
+		std::vector<Vec3> heads;
+		std::vector<Vec3> tails;
+		std::vector<Mat3> boneRotations;
+		std::vector<Vec3> boneTranslations;
 		/// @}
 
 		/// Interpolate
@@ -165,16 +164,17 @@ class SkinNode: public SceneNode
 		/// @param[out] translations Translations vector
 		/// @param[out] rotations Rotations vector
 		static void interpolate(const SkelAnim& animation, float frame,
-			Vec<Vec3>& translations, Vec<Mat3>& rotations);
+			std::vector<Vec3>& translations, std::vector<Mat3>& rotations);
 
 		/// Calculate the global pose
 		static void updateBoneTransforms(const Skeleton& skel,
-			Vec<Vec3>& translations, Vec<Mat3>& rotations);
+			std::vector<Vec3>& translations, std::vector<Mat3>& rotations);
 
 		/// Deform the heads and tails
 		static void deformHeadsTails(const Skeleton& skeleton,
-		    const Vec<Vec3>& boneTranslations, const Vec<Mat3>& boneRotations,
-		    Vec<Vec3>& heads, Vec<Vec3>& tails);
+		    const std::vector<Vec3>& boneTranslations,
+		    const std::vector<Mat3>& boneRotations,
+		    std::vector<Vec3>& heads, std::vector<Vec3>& tails);
 };
 
 
