@@ -1,12 +1,13 @@
 #ifndef MODEL_NODE_H
 #define MODEL_NODE_H
 
-#include <boost/array.hpp>
 #include "SceneNode.h"
 #include "rsrc/RsrcPtr.h"
 #include "ModelPatchNode.h"
-#include "util/Vec.h"
 #include "cln/Obb.h"
+#include <boost/array.hpp>
+#include <vector>
+#include <boost/range/iterator_range.hpp>
 
 
 class Model;
@@ -16,18 +17,35 @@ class Model;
 class ModelNode: public SceneNode
 {
 	public:
+		typedef boost::iterator_range<std::vector<ModelPatchNode*>::
+			const_iterator> ConstRangeModelPatchNodes;
+
+		typedef boost::iterator_range<std::vector<ModelPatchNode*>::
+			iterator> MutableRangeModelPatchNodes;
+
 		ModelNode(Scene& scene, ulong flags, SceneNode* parent);
 		virtual ~ModelNode();
 
 		/// @name Accessors
 		/// @{
-		const Vec<ModelPatchNode*>& getModelPatchNodes() const {return patches;}
-		Vec<ModelPatchNode*>& getModelPatchNodes() {return patches;}
+		ConstRangeModelPatchNodes getModelPatchNodes() const
+		{
+			return ConstRangeModelPatchNodes(patches.begin(), patches.end());
+		}
+		MutableRangeModelPatchNodes getModelPatchNodes()
+		{
+			return MutableRangeModelPatchNodes(patches.begin(), patches.end());
+		}
 
-		const Model& getModel() const {return *model;}
+		const Model& getModel() const
+		{
+			return *model;
+		}
 
 		const Obb& getVisibilityShapeWSpace() const
-			{return visibilityShapeWSpace;}
+		{
+			return visibilityShapeWSpace;
+		}
 		/// @}
 
 		/// Initialize the node
@@ -39,7 +57,7 @@ class ModelNode: public SceneNode
 
 	private:
 		RsrcPtr<Model> model;
-		Vec<ModelPatchNode*> patches;
+		std::vector<ModelPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 };
 

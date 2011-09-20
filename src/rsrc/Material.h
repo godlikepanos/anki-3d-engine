@@ -137,7 +137,10 @@ class Material: public MaterialProperties
 		}
 
 		/// Access the base class just for copying in other classes
-		GETTER_R(MaterialProperties, *this, accessPropertiesBaseClass)
+		const MaterialProperties& getBaseClass() const
+		{
+			return *this;
+		}
 
 		const ShaderProgram& getShaderProgram(PassType p) const
 		{
@@ -152,10 +155,10 @@ class Material: public MaterialProperties
 				mtlVars.begin(), mtlVars.end());
 		}
 
-		boost::iterator_range<Vec<MaterialUserVariable*>::const_iterator>
+		boost::iterator_range<std::vector<MaterialUserVariable*>::const_iterator>
 			getUserVariables() const
 		{
-			return boost::iterator_range<Vec<MaterialUserVariable*>::
+			return boost::iterator_range<std::vector<MaterialUserVariable*>::
 				const_iterator>(userMtlVars.begin(), userMtlVars.end());
 		}
 
@@ -168,12 +171,17 @@ class Material: public MaterialProperties
 
 		/// Check if a buildin variable exists in a pass type
 		bool buildinVariableExits(MaterialBuildinVariable::MatchingVariable e,
-			PassType p) const;
+			PassType p) const
+		{
+			return buildinsArr[e] != NULL && buildinsArr[e]->inPass(p);
+		}
 
 		/// Check if a buildin variable exists in a any pass type
 		bool buildinVariableExits(
 			MaterialBuildinVariable::MatchingVariable e) const
-			{return buildinsArr[e] != NULL;}
+		{
+			return buildinsArr[e] != NULL;
+		}
 
 	private:
 		//======================================================================
@@ -195,7 +203,7 @@ class Material: public MaterialProperties
 
 		BuildinsArr buildinsArr; ///< To find. Initialize to int
 
-		Vec<MaterialUserVariable*> userMtlVars; ///< To iterate
+		std::vector<MaterialUserVariable*> userMtlVars; ///< To iterate
 
 		/// The most important aspect of materials
 		ShaderPrograms sProgs;
@@ -220,15 +228,6 @@ inline const MaterialBuildinVariable& Material::getBuildinVariable(
 {
 	ASSERT(buildinVariableExits(e));
 	return *buildinsArr[e];
-}
-
-
-inline bool Material::buildinVariableExits(
-	MaterialBuildinVariable::MatchingVariable e,
-	PassType p) const
-
-{
-	return buildinsArr[e] != NULL && buildinsArr[e]->inPass(p);
 }
 
 

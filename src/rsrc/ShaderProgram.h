@@ -5,12 +5,12 @@
 #include "util/Assert.h"
 #include "ShaderProgramUniformVariable.h"
 #include "ShaderProgramAttributeVariable.h"
-#include "util/Vec.h"
 #include "gl/GlStateMachine.h"
 #include "core/Globals.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <limits>
+#include <vector>
 
 
 /// Shader program @ref Resource
@@ -29,7 +29,11 @@ class ShaderProgram
 		/// @name Accessors
 		/// @{
 		GLuint getGlId() const;
-		GETTER_R(boost::ptr_vector<ShaderProgramVariable>, vars, getVariables)
+
+		const boost::ptr_vector<ShaderProgramVariable>& getVariables() const
+		{
+			return vars;
+		}
 		/// @}
 
 		/// Resource load

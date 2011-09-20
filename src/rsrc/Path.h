@@ -8,9 +8,9 @@
 class Path
 {
 	public:
-		Vec<Vec3> positions; ///< AKA translations
-		Vec<Mat3> rotations;
-		Vec<float>  scales;
+		std::vector<Vec3> positions; ///< AKA translations
+		std::vector<Mat3> rotations;
+		std::vector<float>  scales;
 		float         step;
 
 		Path() {}

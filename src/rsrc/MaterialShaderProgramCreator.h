@@ -2,10 +2,9 @@
 #define MATERIAL_SHADER_PROGRAM_CREATOR_H
 
 #include "util/ConstCharPtrHashMap.h"
-#include "util/Vec.h"
-#include "util/Accessors.h"
 #include "util/scanner/Forward.h"
 #include <GL/glew.h>
+#include <vector>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -100,7 +99,8 @@ class MaterialShaderProgramCreator
 		/// Go from function name to function definition
 		ConstCharPtrHashMap<FuncDefinition*>::Type funcNameToDef;
 
-		Vec<std::string> srcLines; ///< The lines of the shader program source
+		/// The lines of the shader program source
+		std::vector<std::string> srcLines;
 
 		std::string source; ///< Shader program final source
 

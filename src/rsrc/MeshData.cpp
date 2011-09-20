@@ -229,7 +229,7 @@ void MeshData::createVertNormals()
 void MeshData::createVertTangents()
 {
 	vertTangents.resize(vertCoords.size(), Vec4(0.0)); // alloc
-	Vec<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
+	std::vector<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
 
 	for(uint i = 0; i < tris.size(); i++)
 	{

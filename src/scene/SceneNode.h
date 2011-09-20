@@ -3,7 +3,7 @@
 
 #include "m/Math.h"
 #include "cln/Obb.h"
-#include "util/Vec.h"
+#include <vector>
 #include <memory>
 #include <string>
 
@@ -80,7 +80,7 @@ class SceneNode
 
 		ulong getFlags() const {return flags;}
 
-		const Vec<SceneNode*>& getChildren() const {return children;}
+		const std::vector<SceneNode*>& getChildren() const {return children;}
 		/// @}
 
 		/// @name Flag manipulation
@@ -147,7 +147,7 @@ class SceneNode
 		ulong flags; ///< The state flags
 
 		SceneNode* parent; ///< Could not be nullptr
-		Vec<SceneNode*> children;
+		std::vector<SceneNode*> children;
 
 		Scene& scene;
 };

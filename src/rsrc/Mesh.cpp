@@ -1,9 +1,10 @@
-#include <fstream>
-#include <boost/lexical_cast.hpp>
 #include "Mesh.h"
 #include "rsrc/Material.h"
 #include "MeshData.h"
 #include "gl/Vbo.h"
+#include "util/Util.h"
+#include <fstream>
+#include <boost/lexical_cast.hpp>
 
 
 //==============================================================================
@@ -46,19 +47,19 @@ void Mesh::createVbos(const MeshData& meshData)
 {
 	vbos[VBO_VERT_INDECES].create(
 		GL_ELEMENT_ARRAY_BUFFER,
-		meshData.getVertIndeces().getSizeInBytes(),
+		util::getVectorSizeInBytes(meshData.getVertIndeces()),
 		&meshData.getVertIndeces()[0],
 		GL_STATIC_DRAW);
 
 	vbos[VBO_VERT_POSITIONS].create(
 		GL_ARRAY_BUFFER,
-		meshData.getVertCoords().getSizeInBytes(),
+		util::getVectorSizeInBytes(meshData.getVertCoords()),
 		&meshData.getVertCoords()[0],
 		GL_STATIC_DRAW);
 
 	vbos[VBO_VERT_NORMALS].create(
 		GL_ARRAY_BUFFER,
-		meshData.getVertNormals().getSizeInBytes(),
+		util::getVectorSizeInBytes(meshData.getVertNormals()),
 		&meshData.getVertNormals()[0],
 		GL_STATIC_DRAW);
 
@@ -66,7 +67,7 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_VERT_TANGENTS].create(
 			GL_ARRAY_BUFFER,
-			meshData.getVertTangents().getSizeInBytes(),
+			util::getVectorSizeInBytes(meshData.getVertTangents()),
 			&meshData.getVertTangents()[0],
 			GL_STATIC_DRAW);
 	}
@@ -75,7 +76,7 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_TEX_COORDS].create(
 			GL_ARRAY_BUFFER,
-			meshData.getTexCoords().getSizeInBytes(),
+			util::getVectorSizeInBytes(meshData.getTexCoords()),
 			&meshData.getTexCoords()[0],
 			GL_STATIC_DRAW);
 	}
@@ -84,7 +85,7 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_VERT_WEIGHTS].create(
 			GL_ARRAY_BUFFER,
-			meshData.getVertWeights().getSizeInBytes(),
+			util::getVectorSizeInBytes(meshData.getVertWeights()),
 			&meshData.getVertWeights()[0],
 			GL_STATIC_DRAW);
 	}

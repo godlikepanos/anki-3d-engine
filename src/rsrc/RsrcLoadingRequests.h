@@ -2,7 +2,6 @@
 #define RSRC_LOADING_REQUESTS_H
 
 #include <string>
-#include "util/Accessors.h"
 #include "rsrc/Image.h"
 
 
@@ -15,8 +14,15 @@ class Texture;
 class RsrcLoadingRequestBase
 {
 	public:
-		RsrcLoadingRequestBase(const char* filename_): filename(filename_) {}
-		GETTER_R(std::string, filename, getFilename)
+		RsrcLoadingRequestBase(const char* filename_)
+		:	filename(filename_)
+		{}
+
+		const std::string& getFilename() const
+		{
+			return filename;
+		}
+
 		virtual void postRequest(AsyncLoader& al) = 0;
 		virtual void doPostLoading() = 0;
 

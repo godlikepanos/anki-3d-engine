@@ -26,7 +26,7 @@ class Scene
 		class Types
 		{
 			public:
-				typedef Vec<T*> Container;
+				typedef std::vector<T*> Container;
 				typedef typename Container::iterator Iterator;
 				typedef typename Container::const_iterator ConstIterator;
 				typedef boost::iterator_range<Iterator> MutableRange;

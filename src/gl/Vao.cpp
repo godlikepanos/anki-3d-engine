@@ -51,7 +51,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
 	const GLvoid* pointer)
 {
-	attachArrayBufferVbo(vbo, attribVar.getLoc(), size, type, normalized,
+	attachArrayBufferVbo(vbo, attribVar.getLocation(), size, type, normalized,
 		stride, pointer);
 }
 

@@ -1,8 +1,9 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "util/Vec.h"
 #include "util/StdTypes.h"
+#include "util/Util.h"
+#include <vector>
 
 
 /// Image class.
@@ -68,7 +69,7 @@ class Image
 		/// Get image size in bytes
 		size_t getDataSize() const
 		{
-			return data.getSizeInBytes();
+			return util::getVectorSizeInBytes(data);
 		}
 
 		DataCompression getDataCompression() const
@@ -86,7 +87,7 @@ class Image
 		uint width; ///< Image width
 		uint height; ///< Image height
 		ColorType type; ///< Image color type
-		Vec<uchar> data; ///< Image data
+		std::vector<uchar> data; ///< Image data
 		DataCompression dataCompression;
 
 		/// @name TGA headers

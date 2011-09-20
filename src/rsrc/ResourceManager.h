@@ -5,7 +5,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <string>
 #include "core/AsyncLoader.h"
-#include "util/Accessors.h"
 #include "RsrcHook.h"
 #include "RsrcAsyncLoadingReqsHandler.h"
 

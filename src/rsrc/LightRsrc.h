@@ -4,7 +4,6 @@
 #include "m/Math.h"
 #include "RsrcPtr.h"
 #include "rsrc/Texture.h"
-#include "util/Accessors.h"
 
 
 /// Properties common for all lights

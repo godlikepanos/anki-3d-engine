@@ -1,7 +1,6 @@
 #ifndef SHADER_PROGRAM_VARIABLE_H
 #define SHADER_PROGRAM_VARIABLE_H
 
-#include "util/Accessors.h"
 #include <GL/glew.h>
 #include <string>
 #include <boost/noncopyable.hpp>
@@ -27,13 +26,30 @@ class ShaderProgramVariable: public boost::noncopyable
 
 		/// @name Accessors
 		/// @{
+		const ShaderProgram& getFatherSProg() const
+		{
+			return fatherSProg;
+		}
 
-		/// XXX: refactor
-		const ShaderProgram& getFatherSProg() const {return fatherSProg;}
-		GETTER_R(GLint, loc, getLoc)
-		GETTER_R(std::string, name, getName)
-		GETTER_R(GLenum, glDataType, getGlDataType)
-		GETTER_R(Type, type, getType)
+		GLint getLocation() const
+		{
+			return loc;
+		}
+
+		const std::string& getName() const
+		{
+			return name;
+		}
+
+		GLenum getGlDataType() const
+		{
+			return glDataType;
+		}
+
+		Type getType() const
+		{
+			return type;
+		}
 		/// @}
 
 	private:

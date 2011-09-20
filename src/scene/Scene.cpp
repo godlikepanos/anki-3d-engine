@@ -107,7 +107,7 @@ void Scene::registerController(Controller* controller)
 
 void Scene::unregisterController(Controller* controller)
 {
-	Vec<Controller*>::iterator it = std::find(controllers.begin(),
+	std::vector<Controller*>::iterator it = std::find(controllers.begin(),
 		controllers.end(), controller);
 	ASSERT(it != controllers.end());
 	controllers.erase(it);

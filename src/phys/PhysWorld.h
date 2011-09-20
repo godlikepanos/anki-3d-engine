@@ -2,7 +2,7 @@
 #define PHYS_WORLD_H
 
 #include "Convertors.h"
-#include "util/Vec.h"
+#include <vector>
 #include <boost/scoped_ptr.hpp>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
@@ -53,7 +53,7 @@ class PhysWorld
 		/// Keep here for garbage collection
 		boost::scoped_ptr<btIDebugDraw> debugDrawer;
 		float defaultContactProcessingThreshold;
-		Vec<Character*> characters;
+		std::vector<Character*> characters;
 };
 
 

@@ -348,7 +348,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	// <includes></includes>
 	//
 	boost::ptr_vector<FuncDefinition> funcDefs;
-	Vec<std::string> includeLines;
+	std::vector<std::string> includeLines;
 
 	const ptree& includesPt = pt.get_child("includes");
 	BOOST_FOREACH(const ptree::value_type& v, includesPt)
@@ -370,7 +370,9 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	//
 	// <ins></ins>
 	//
-	Vec<std::string> uniformsLines; // Store the source of the uniform vars
+
+	// Store the source of the uniform vars
+	std::vector<std::string> uniformsLines;
 
 	boost::optional<const ptree&> insPt = pt.get_child_optional("inputs");
 	if(insPt)

@@ -1,7 +1,6 @@
 #ifndef VISIBILITY_TESTER_H
 #define VISIBILITY_TESTER_H
 
-#include "util/Accessors.h"
 #include "m/Math.h"
 #include "core/parallel/Job.h"
 #include <deque>

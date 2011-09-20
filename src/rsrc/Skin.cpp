@@ -69,7 +69,8 @@ void Skin::load(const char* filename)
 		BOOST_FOREACH(const RsrcPtr<SkelAnim>& skelAnim, skelAnims)
 		{
 			// Bone number problem
-			if(skelAnim->getBoneAnims().size() != skeleton->getBones().size())
+			if(skelAnim->getBoneAnimations().size() !=
+				skeleton->getBones().size())
 			{
 				throw EXCEPTION("Skeleton animation \"" +
 					skelAnim.getRsrcName() + "\" and skeleton \"" +

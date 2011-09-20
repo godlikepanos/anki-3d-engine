@@ -35,7 +35,7 @@ class Skin
 		const Model& getModel() const;
 		const boost::ptr_vector<ModelPatch>& getModelPatches() const;
 		const Skeleton& getSkeleton() const;
-		const Vec<RsrcPtr<SkelAnim> >& getSkelAnims() const;
+		const std::vector<RsrcPtr<SkelAnim> >& getSkelAnims() const;
 		/// @}
 
 	private:
@@ -43,7 +43,8 @@ class Skin
 		/// @{
 		RsrcPtr<Model> model;
 		RsrcPtr<Skeleton> skeleton; ///< The skeleton
-		Vec<RsrcPtr<SkelAnim> > skelAnims; ///< The standard skeleton animations
+		/// The standard skeleton animations
+		std::vector<RsrcPtr<SkelAnim> > skelAnims;
 		/// @}
 };
 
@@ -66,7 +67,7 @@ inline const Skeleton& Skin::getSkeleton() const
 }
 
 
-inline const Vec<RsrcPtr<SkelAnim> >& Skin::getSkelAnims() const
+inline const std::vector<RsrcPtr<SkelAnim> >& Skin::getSkelAnims() const
 {
 	return skelAnims;
 }

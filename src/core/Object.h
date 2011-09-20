@@ -1,7 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "util/Vec.h"
+#include <vector>
 
 
 /// A class for automatic garbage collection. Cause we -the programmers- get
@@ -10,7 +10,7 @@
 class Object
 {
 	public:
-		typedef Vec<Object*> Container;
+		typedef std::vector<Object*> Container;
 
 		/// Calls addChild if parent is not NULL
 		/// @exception Exception

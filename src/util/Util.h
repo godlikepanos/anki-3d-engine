@@ -1,9 +1,9 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <string>
-#include "util/Vec.h"
 #include "util/StdTypes.h"
+#include <string>
+#include <vector>
 
 
 /// The namespace contains a few useful functions
@@ -27,10 +27,17 @@ extern float randFloat(float max);
 extern std::string readFile(const char* filename);
 
 /// Open a text file and return its lines into a string vector
-extern Vec<std::string> getFileLines(const char* filename);
+extern std::vector<std::string> getFileLines(const char* filename);
 
-
+/// Get the size in bytes of a vector
+template<typename Vec>
+size_t getVectorSizeInBytes(const Vec& v)
+{
+	return v.size() * sizeof(typename Vec::value_type);
 }
+
+
+} // end namespace
 
 
 #endif

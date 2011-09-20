@@ -3,7 +3,6 @@
 
 #include "MaterialCommon.h"
 #include "ShaderProgramVariable.h"
-#include "util/Accessors.h"
 #include "util/Assert.h"
 #include <GL/glew.h>
 #include <string>

@@ -12,7 +12,7 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_)
 {
 	// Copy props
 	MaterialProperties& me = *this;
-	const MaterialProperties& he = mtl.accessPropertiesBaseClass();
+	const MaterialProperties& he = mtl.getBaseClass();
 	me = he;
 
 	// Create vars

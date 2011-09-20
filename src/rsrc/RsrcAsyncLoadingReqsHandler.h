@@ -4,7 +4,6 @@
 #include <string>
 #include <boost/ptr_container/ptr_list.hpp>
 #include "core/AsyncLoader.h"
-#include "util/Accessors.h"
 #include "Image.h"
 #include "MeshData.h"
 #include "RsrcLoadingRequests.h"
@@ -20,7 +19,10 @@ class Mesh;
 class RsrcAsyncLoadingReqsHandler
 {
 	public:
-		GETTER_R(uint, frameServedRequestsNum, getFrameServedRequestsNum)
+		uint getFrameServedRequestsNum() const
+		{
+			return frameServedRequestsNum;
+		}
 
 		/// Send a loading request to an AsyncLoader
 		/// @tparam Type It should be Texture or Mesh

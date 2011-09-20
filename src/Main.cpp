@@ -62,7 +62,7 @@ UiPainter* painter;
 
 
 // Physics
-Vec<btRigidBody*> boxes;
+std::vector<btRigidBody*> boxes;
 
 #define ARRAY_SIZE_X 5
 #define ARRAY_SIZE_Y 5
