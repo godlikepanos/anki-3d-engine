@@ -2,6 +2,7 @@
 #define RSRC_PTR_H
 
 #include "ResourceManager.h"
+#include "core/Globals.h"
 
 
 /// This is a special smart pointer that points to Resource derivatives. It
@@ -12,7 +13,9 @@ class RsrcPtr
 {
 	public:
 		/// Default constructor
-		RsrcPtr(): hook(NULL) {}
+		RsrcPtr()
+		:	hook(NULL)
+		{}
 
 		/// Copy constructor
 		RsrcPtr(const RsrcPtr<Type>& a);
@@ -27,7 +30,12 @@ class RsrcPtr
 
 		Type& operator*() const;
 		Type* operator->() const;
-		Type* get() const {return hook->resource;}
+
+		Type* get() const
+		{
+			return hook->resource;
+		}
+
 		const std::string& getRsrcName() const;
 
 	private:
