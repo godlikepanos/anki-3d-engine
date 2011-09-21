@@ -87,6 +87,14 @@ class ResourceManager
 		/// The same as dummyTex but for normals
 		boost::scoped_ptr<Texture> dummyNormTex;
 
+		/// The real load function
+		template<typename Type>
+		typename Types<Type>::Hook& loadR(const char* filename);
+
+		/// The real unload function
+		template<typename Type>
+		void unloadR(const typename Types<Type>::Hook& info);
+
 		/// Find a resource using the filename
 		template<typename Type>
 		typename Types<Type>::Iterator find(const char* filename,
@@ -95,10 +103,6 @@ class ResourceManager
 		/// Specialized func
 		template<typename Type>
 		typename Types<Type>::Container& choseContainer();
-
-		/// Unload a resource if no one uses it. This is the real deal
-		template<typename Type>
-		void unloadR(const typename Types<Type>::Hook& info);
 		
 		/// Allocate and load a resource.
 		/// This method allocates memory for a resource and loads it (calls the
@@ -126,9 +130,6 @@ inline size_t ResourceManager::getAsyncLoadingRequestsNum() const
 {
 	return rsrcAsyncLoadingReqsHandler.getRequestsNum();
 }
-
-
-#include "ResourceManager.inl.h"
 
 
 #endif

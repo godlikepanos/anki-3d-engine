@@ -1,12 +1,14 @@
+#include "LightRsrc.h"
+#include "rsrc/Texture.h"
+#include "misc/PropertyTree.h"
+#include "core/Logger.h"
+#include "core/Globals.h"
 #include <cstring>
 #include <string>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include "LightRsrc.h"
-#include "rsrc/Texture.h"
-#include "misc/PropertyTree.h"
 
 
 //==============================================================================
