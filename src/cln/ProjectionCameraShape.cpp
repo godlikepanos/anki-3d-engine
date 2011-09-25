@@ -1,0 +1,68 @@
+#include "ProjectionCameraShape.h"
+#include "LineSegment.h"
+
+
+//==============================================================================
+void ProjectionCameraShape::setAll(float fovX, float fovY,
+	float zNear, float zFar, const Transform& trf)
+{
+	eye = Vec3(0.0, 0.0, -zNear);
+
+	float x = zFar / tan((Math::PI - fovX) / 2.0);
+	float y = tan(fovY / 2.0) * zFar;
+	float z = -zFar;
+
+	dirs[0] = Vec3(x, y, z - zNear); // top right
+	dirs[1] = Vec3(-x, y, z - zNear); // top left
+	dirs[2] = Vec3(-x, -y, z - zNear); // bottom left
+	dirs[3] = Vec3(x, -y, z - zNear); // bottom right
+
+	eye.transform(trf);
+	for(uint i = 0; i < 4; i++)
+	{
+		dirs[i] = trf.getRotation() * dirs[i];
+	}
+}
+
+
+//==============================================================================
+ProjectionCameraShape ProjectionCameraShape::getTransformed(
+	const Transform& trf) const
+{
+	ProjectionCameraShape o;
+	o.eye = eye.getTransformed(trf);
+
+	for(uint i = 0; i < 4; i++)
+	{
+		o.dirs[i] = trf.getRotation() * dirs[i];
+	}
+
+	return o;
+}
+
+
+//==============================================================================
+float ProjectionCameraShape::testPlane(const Plane& p) const
+{
+	float o = 0.0;
+
+	for(uint i = 0; i < 4; i++)
+	{
+		float t = LineSegment(eye, dirs[i]).testPlane(p);
+
+		if(t == 0)
+		{
+			return 0.0;
+		}
+		else if(t < 0.0)
+		{
+			o = std::max(o, t);
+		}
+		else
+		{
+			o = std::min(o, t);
+		}
+	}
+
+	return o;
+}

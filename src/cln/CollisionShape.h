@@ -20,7 +20,8 @@ class CollisionShape
 			CST_PLANE,
 			CST_SPHERE,
 			CST_AABB,
-			CST_OBB
+			CST_OBB,
+			CST_PROJECTION_CAMERA_FRUSTRUM
 		};
 
 		CollisionShape(CollisionShapeType cid_)
@@ -34,8 +35,9 @@ class CollisionShape
 
 		/// If the bounding volume intersects with the plane then the func
 		/// returns 0, else it returns the distance. If the distance is < 0
-		/// then the b.v. lies behind the plane and if > 0 then in front of it
-		virtual float testPlane(const Plane&) const = 0;
+		/// then the collision shape lies behind the plane and if > 0 then in
+		/// front of it
+		virtual float testPlane(const Plane& p) const = 0;
 
 	private:
 		CollisionShapeType cid;
