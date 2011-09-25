@@ -15,6 +15,7 @@
 
 #include "rsrc/Image.h"
 #include "core/Logger.h"
+#include "core/Globals.h"
 
 
 //==============================================================================

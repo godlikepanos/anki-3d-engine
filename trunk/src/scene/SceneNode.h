@@ -20,8 +20,6 @@ class Scene;
 class SceneNode
 {
 	public:
-		typedef Obb VisibilityCollisionShape;
-		
 		/// Class ID for scene nodes
 		enum SceneNodeType
 		{
@@ -58,36 +56,94 @@ class SceneNode
 
 		/// @name Accessors
 		/// @{
-		SceneNodeType getSceneNodeType() const {return type;}
+		SceneNodeType getSceneNodeType() const
+		{
+			return type;
+		}
 
-		const Scene& getScene() const {return scene;}
-		Scene& getScene() {return scene;}
+		const Scene& getScene() const
+		{
+			return scene;
+		}
+		Scene& getScene()
+		{
+			return scene;
+		}
 
-		const Transform& getLocalTransform() const {return lTrf;}
-		Transform& getLocalTransform() {return lTrf;}
-		void setLocalTransform(const Transform& x) {lTrf = x;}
+		const Transform& getLocalTransform() const
+		{
+			return lTrf;
+		}
+		Transform& getLocalTransform()
+		{
+			return lTrf;
+		}
+		void setLocalTransform(const Transform& x)
+		{
+			lTrf = x;
+		}
 
-		const Transform& getWorldTransform() const {return wTrf;}
-		Transform& getWorldTransform() {return wTrf;}
-		void setWorldTransform(const Transform& x) {wTrf = x;}
+		const Transform& getWorldTransform() const
+		{
+			return wTrf;
+		}
+		Transform& getWorldTransform()
+		{
+			return wTrf;
+		}
+		void setWorldTransform(const Transform& x)
+		{
+			wTrf = x;
+		}
 
-		const Transform& getPrevWorldTransform() const {return prevWTrf;}
+		const Transform& getPrevWorldTransform() const
+		{
+			return prevWTrf;
+		}
 
-		const SceneNode* getParent() const {return parent;}
-		SceneNode* getParent() {return parent;}
+		const SceneNode* getParent() const
+		{
+			return parent;
+		}
+		SceneNode* getParent()
+		{
+			return parent;
+		}
 
-		const std::string& getSceneNodeName() const {return name;}
+		const std::string& getSceneNodeName() const
+		{
+			return name;
+		}
 
-		ulong getFlags() const {return flags;}
+		ulong getFlags() const
+		{
+			return flags;
+		}
 
-		const std::vector<SceneNode*>& getChildren() const {return children;}
+		const std::vector<SceneNode*>& getChildren() const
+		{
+			return children;
+		}
+
+		/// Get the collision shape used for visibility testing
+		virtual const CollisionShape*
+			getVisibilityCollisionShapeWorldSpace() const
+		{
+			return NULL;
+		}
 		/// @}
 
 		/// @name Flag manipulation
 		/// @{
 		void enableFlag(SceneNodeFlags flag, bool enable = true);
-		void disableFlag(SceneNodeFlags flag) {enableFlag(flag, false);}
-		bool isFlagEnabled(SceneNodeFlags flag) const {return flags & flag;}
+		void disableFlag(SceneNodeFlags flag)
+		{
+			enableFlag(flag, false);
+		}
+		bool isFlagEnabled(SceneNodeFlags flag) const
+		{
+			return flags & flag;
+		}
 		/// @}
 
 		/// @name Updates
@@ -99,7 +155,8 @@ class SceneNode
 		virtual void frameUpdate(float prevUpdateTime, float crntTime);
 
 		/// This is called if the node moved
-		virtual void moveUpdate() {}
+		virtual void moveUpdate()
+		{}
 		/// @}
 
 		/// @name Mess with the local transform

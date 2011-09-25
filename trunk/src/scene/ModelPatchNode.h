@@ -15,9 +15,12 @@ class ModelPatchNode: public PatchNode
 		ModelPatchNode(const ModelPatch& modelPatch, ModelNode& parent);
 
 		const Obb& getVisibilityShapeWSpace() const
-			{return visibilityShapeWSpace;}
+		{
+			return visibilityShapeWSpace;
+		}
 
-		void init(const char*) {}
+		void init(const char*)
+		{}
 
 		virtual void moveUpdate(); ///< Update the visibility shape
 
