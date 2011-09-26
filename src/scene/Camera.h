@@ -78,7 +78,10 @@ class Camera: public SceneNode, public VisibilityInfo
 			return invProjectionMat;
 		}
 
-		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const;
+		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const
+		{
+			return wspaceFrustumPlanes[id];
+		}
 		/// @}
 
 		void lookAtPoint(const Vec3& point);
@@ -86,7 +89,7 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// This does:
 		/// - Update view matrix
 		/// - Update frustum planes
-		void moveUpdate();
+		virtual void moveUpdate();
 
 		/// @name Frustum checks
 		/// @{
@@ -94,10 +97,6 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// Check if the given camera is inside the frustum clipping planes.
 		/// This is used mainly to test if the projected lights are visible
 		bool insideFrustum(const CollisionShape& vol) const;
-
-		/// Check if another camera is inside our view (used for projected
-		/// lights)
-		bool insideFrustum(const Camera& cam) const;
 		/// @}
 
 	protected:
@@ -129,10 +128,6 @@ class Camera: public SceneNode, public VisibilityInfo
 		void updateViewMatrix();
 		void updateWSpaceFrustumPlanes();
 
-		/// Get the edge points of the camera
-		virtual void getExtremePoints(Vec3* pointsArr,
-			uint& pointsNum) const = 0;
-
 	private:
 		CameraType type;
 };
@@ -146,12 +141,6 @@ inline Camera::Camera(CameraType t, Scene& scene, ulong flags,
  	type(t)
 {
 	name = "Camera:" + name;
-}
-
-
-inline const Plane& Camera::getWSpaceFrustumPlane(FrustrumPlanes id) const
-{
-	return wspaceFrustumPlanes[id];
 }
 
 

@@ -75,23 +75,3 @@ void OrthographicCamera::calcProjectionMatrix()
 	projectionMat = ortho(left, right, bottom, top, zNear, zFar);
 	invProjectionMat = projectionMat.getInverse();
 }
-
-
-//==============================================================================
-// getExtremePoints                                                            =
-//==============================================================================
-void OrthographicCamera::getExtremePoints(Vec3* pointsArr,
-	uint& pointsNum) const
-{
-	pointsArr[0] = Vec3(right, top, -zNear);
-	pointsArr[1] = Vec3(left, top, -zNear);
-	pointsArr[2] = Vec3(left, bottom, -zNear);
-	pointsArr[3] = Vec3(right, bottom, -zNear);
-	pointsArr[4] = Vec3(right, top, -zFar);
-	pointsArr[5] = Vec3(left, top, -zFar);
-	pointsArr[6] = Vec3(left, bottom, -zFar);
-	pointsArr[7] = Vec3(right, bottom, -zFar);
-
-	pointsNum = 8;
-}
-

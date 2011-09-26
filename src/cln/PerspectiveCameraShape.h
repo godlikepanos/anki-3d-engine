@@ -9,17 +9,17 @@
 /// @{
 
 /// Collision shape for the projection cameras
-class ProjectionCameraShape: public CollisionShape
+class PerspectiveCameraShape: public CollisionShape
 {
 	public:
 		/// Default constructor
-		ProjectionCameraShape()
-		:	CollisionShape(CST_PROJECTION_CAMERA_FRUSTRUM)
+		PerspectiveCameraShape()
+		:	CollisionShape(CST_PERSPECTIVE_CAMERA_FRUSTRUM)
 		{}
 
-		ProjectionCameraShape(float fovX, float fovY, float zNear,
+		PerspectiveCameraShape(float fovX, float fovY, float zNear,
 			float zFar, const Transform& trf)
-		:	CollisionShape(CST_PROJECTION_CAMERA_FRUSTRUM)
+		:	CollisionShape(CST_PERSPECTIVE_CAMERA_FRUSTRUM)
 		{
 			setAll(fovX, fovY, zNear, zFar, trf);
 		}
@@ -27,7 +27,7 @@ class ProjectionCameraShape: public CollisionShape
 		/// @copydoc CollisionShape::testPlane
 		float testPlane(const Plane& p) const;
 
-		ProjectionCameraShape getTransformed(const Transform& trf) const;
+		PerspectiveCameraShape getTransformed(const Transform& trf) const;
 
 		/// Set all
 		void setAll(float fovX, float fovY, float zNear,

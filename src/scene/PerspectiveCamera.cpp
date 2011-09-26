@@ -68,29 +68,3 @@ void PerspectiveCamera::calcLSpaceFrustumPlanes()
 	// far
 	lspaceFrustumPlanes[FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -zFar);
 }
-
-
-//==============================================================================
-// getExtremePoints                                                            =
-//==============================================================================
-void PerspectiveCamera::getExtremePoints(Vec3* points, uint& pointsNum) const
-{
-	float x = getZFar() / tan((Math::PI - getFovX()) / 2.0);
-	float y = tan(getFovY() / 2.0) * getZFar();
-	float z = -getZFar();
-
-	// the actual points in local space
-	points[0] = Vec3(x, y, z); // top right
-	points[1] = Vec3(-x, y, z); // top left
-	points[2] = Vec3(-x, -y, z); // bottom left
-	points[3] = Vec3(x, -y, z); // bottom right
-	points[4] = getWorldTransform().getOrigin(); // eye (already in world space)
-
-	// transform them to the given camera's world space (exept the eye)
-	for(uint i = 0; i < 4; i++)
-	{
-		points[i].transform(getWorldTransform());
-	}
-
-	pointsNum = 5;
-}

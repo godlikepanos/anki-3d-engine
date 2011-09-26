@@ -125,7 +125,7 @@ class SceneNode
 			return children;
 		}
 
-		/// Get the collision shape used for visibility testing
+		/// Get the collision shape to for visibility testing
 		virtual const CollisionShape*
 			getVisibilityCollisionShapeWorldSpace() const
 		{

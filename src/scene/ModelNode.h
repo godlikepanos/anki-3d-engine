@@ -42,9 +42,10 @@ class ModelNode: public SceneNode
 			return *model;
 		}
 
-		const Obb& getVisibilityShapeWSpace() const
+		const CollisionShape*
+			getVisibilityCollisionShapeWorldSpace() const
 		{
-			return visibilityShapeWSpace;
+			return &visibilityShapeWSpace;
 		}
 		/// @}
 
