@@ -83,9 +83,10 @@ class SkinNode: public SceneNode
 				patches.end());
 		}
 
-		const Obb& getVisibilityShapeWSpace() const
+		const CollisionShape*
+			getVisibilityCollisionShapeWorldSpace() const
 		{
-			return visibilityShapeWSpace;
+			return &visibilityShapeWSpace;
 		}
 
 		const Skin& getSkin() const

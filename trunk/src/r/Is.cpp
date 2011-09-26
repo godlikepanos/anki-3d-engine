@@ -207,9 +207,11 @@ void Is::pointLightPass(const PointLight& light)
 void Is::spotLightPass(const SpotLight& light)
 {
 	const Camera& cam = r.getCamera();
+	bool withShadow = light.getCastShadow() && sm.getEnabled() &&
+		(light.getVisibleMsRenderableNodes().size() > 0);
 
 	// shadow mapping
-	if(light.getCastShadow() && sm.getEnabled())
+	if(withShadow)
 	{
 		Vec3 zAxis = light.getWorldTransform().getRotation().getColumn(2);
 		LineSegment seg(light.getWorldTransform().getOrigin(),
@@ -242,7 +244,7 @@ void Is::spotLightPass(const SpotLight& light)
 	// shader prog
 	const ShaderProgram* shdr;
 
-	if(light.getCastShadow() && sm.getEnabled())
+	if(withShadow)
 	{
 		shdr = spotLightShadowSProg.get();
 	}
@@ -347,11 +349,19 @@ void Is::run()
 	BOOST_FOREACH(const PointLight* light,
 		r.getCamera().getVisiblePointLights())
 	{
+		if(light->getVisibleMsRenderableNodes().size() == 0)
+		{
+			continue;
+		}
 		pointLightPass(*light);
 	}
 
 	BOOST_FOREACH(const SpotLight* light, r.getCamera().getVisibleSpotLights())
 	{
+		/*if(light->getVisibleMsRenderableNodes() == 0)
+		{
+			continue;
+		}*/
 		spotLightPass(*light);
 	}
 	

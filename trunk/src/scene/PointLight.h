@@ -2,6 +2,7 @@
 #define POINT_LIGHT_H
 
 #include "Light.h"
+#include "cln/Sphere.h"
 
 
 /// Point light. Defined by its radius
@@ -10,14 +11,37 @@ class PointLight: public Light
 	public:
 		PointLight(Scene& scene, ulong flags, SceneNode* parent);
 
-		float getRadius() const {return radius;}
-		float& getRadius() {return radius;}
-		void setRadius(float x) {radius = x;}
+		/// @name Accessors
+		/// @{
+		float getRadius() const
+		{
+			return radius;
+		}
+		void setRadius(float x)
+		{
+			radius = x;
+			lspaceCShape = Sphere(Vec3(0.0), radius);
+		}
+		/// @}
 
 		void init(const char* filename);
 
+		/// @copydoc SceneNode::getVisibilityCollisionShapeWorldSpace
+		const CollisionShape*
+			getVisibilityCollisionShapeWorldSpace() const
+		{
+			return &wspaceCShape;
+		}
+
+		void moveUpdate()
+		{
+			wspaceCShape = lspaceCShape.getTransformed();
+		}
+
 	private:
 		float radius;
+		Sphere lspaceCShape;
+		Sphere wspaceCShape;
 };
 
 
@@ -34,6 +58,7 @@ inline void PointLight::init(const char* filename)
 		throw EXCEPTION("Light data is wrong type");
 	}
 	radius = lightData->getRadius();
+	lspaceCShape = Sphere(Vec3(0.0), radius);
 }
 
 

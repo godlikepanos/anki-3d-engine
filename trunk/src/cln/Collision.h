@@ -6,6 +6,7 @@
 #include "Obb.h"
 #include "Ray.h"
 #include "LineSegment.h"
+#include "PerspectiveCameraShape.h"
 
 
 #endif

@@ -301,12 +301,12 @@ void Dbg::run()
 				break;
 			case SceneNode::SNT_SKIN_NODE:
 			{
-				const SkinNode& node_ = static_cast<const SkinNode&>(*node);
+				/*const SkinNode& node_ = static_cast<const SkinNode&>(*node);
 				sceneDbgDrawer.drawSkinNodeSkeleton(node_);
 				if(showVisibilityBoundingShapesFlag)
 				{
 					collisionDbgDrawer.draw(node_.getVisibilityShapeWSpace());
-				}
+				}*/
 				break;
 			}
 			default:

@@ -14,10 +14,13 @@ class ModelPatchNode: public PatchNode
 	public:
 		ModelPatchNode(const ModelPatch& modelPatch, ModelNode& parent);
 
-		const Obb& getVisibilityShapeWSpace() const
+		/// @copydoc SceneNode::getVisibilityCollisionShapeWorldSpace
+		const CollisionShape*
+			getVisibilityCollisionShapeWorldSpace() const
 		{
-			return visibilityShapeWSpace;
+			return &visibilityShapeWSpace;
 		}
+
 
 		void init(const char*)
 		{}

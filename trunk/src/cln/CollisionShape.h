@@ -21,7 +21,7 @@ class CollisionShape
 			CST_SPHERE,
 			CST_AABB,
 			CST_OBB,
-			CST_PROJECTION_CAMERA_FRUSTRUM
+			CST_PERSPECTIVE_CAMERA_FRUSTRUM
 		};
 
 		CollisionShape(CollisionShapeType cid_)

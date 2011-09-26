@@ -14,16 +14,28 @@ class OrthographicCamera: public Camera
 
 		/// @name Accessors
 		/// @{
-		float getLeft() const {return left;}
+		float getLeft() const
+		{
+			return left;
+		}
 		void setLeft(float f);
 
-		float getRight() const {return right;}
+		float getRight() const
+		{
+			return right;
+		}
 		void setRight(float f);
 
-		float getTop() const {return top;}
+		float getTop() const
+		{
+			return top;
+		}
 		void setTop(float f);
 
-		float getBottom() const {return bottom;}
+		float getBottom() const
+		{
+			return bottom;
+		}
 		void setBottom(float f);
 		/// @}
 
@@ -55,9 +67,6 @@ class OrthographicCamera: public Camera
 
 		/// Implements Camera::calcProjectionMatrix
 		void calcProjectionMatrix();
-
-		/// Implements Camera::getExtremePoints
-		void getExtremePoints(Vec3* pointsArr, uint& pointsNum) const;
 };
 
 
