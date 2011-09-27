@@ -1,7 +1,6 @@
 #ifndef VISIBILITY_INFO_H
 #define VISIBILITY_INFO_H
 
-#include <deque>
 #include <vector>
 
 
@@ -15,60 +14,59 @@ class SpotLight;
 class VisibilityInfo
 {
 	public:
-		typedef std::deque<const RenderableNode*> RContainer;
-		typedef std::vector<const PointLight*> PLContainer;
-		typedef std::vector<SpotLight*> SLContainer;
-
-		VisibilityInfo() {}
-		~VisibilityInfo();
+		template<typename T>
+		class Types
+		{
+			typedef std::vector<T*> Container;
+		};
 
 		/// @name Accessors
 		/// @{
-		const RContainer& getVisibleMsRenderableNodes() const
+		const Types<RenderableNode>::Container&
+			getVisibleMsRenderableNodes() const
 		{
 			return msRNodes;
 		}
-		RContainer& getVisibleMsRenderableNodes()
+		Types<RenderableNode>::Container& getVisibleMsRenderableNodes()
 		{
 			return msRNodes;
 		}
 
-		const RContainer& getVisibleBsRenderableNodes() const
+		const Types<RenderableNode>::Container&
+			getVisibleBsRenderableNodes() const
 		{
 			return bsRNodes;
 		}
-		RContainer& getVisibleBsRenderableNodes()
+		Types<RenderableNode>::Container& getVisibleBsRenderableNodes()
 		{
 			return bsRNodes;
 		}
 
-		const PLContainer& getVisiblePointLights() const
+		const Types<PointLight>::Container& getVisiblePointLights() const
 		{
 			return pLights;
 		}
-		PLContainer& getVisiblePointLights()
+		Types<PointLight>::Container& getVisiblePointLights()
 		{
 			return pLights;
 		}
 
-		const SLContainer& getVisibleSpotLights() const
+		const Types<SpotLight>::Container& getVisibleSpotLights() const
 		{
 			return sLights;
 		}
-		SLContainer& getVisibleSpotLights()
+		Types<SpotLight>::Container& getVisibleSpotLights()
 		{
 			return sLights;
 		}
 		/// @}
 
-	private:
-		RContainer msRNodes;
-		RContainer bsRNodes;
-		PLContainer pLights; ///< Used only for non-light cameras
-		SLContainer sLights; ///< Used only for non-light cameras
+	protected:
+		Types<RenderableNode>::Container msRNodes;
+		Types<RenderableNode>::Container bsRNodes;
+		Types<PointLight>::Container pLights;
+		Types<SpotLight>::Container sLights;
 };
 
 
 #endif
-
-

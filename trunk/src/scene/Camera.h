@@ -3,7 +3,7 @@
 
 #include "cln/Collision.h"
 #include "SceneNode.h"
-#include "VisibilityInfo.h"
+#include "VisibilityNode.h"
 #include <boost/array.hpp>
 #include <deque>
 #include <vector>
@@ -17,7 +17,7 @@ class PointLight;
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public VisibilityInfo
+class Camera: public SceneNode, public VisibilityNode
 {
 	public:
 		/// @note Don't EVER change the order
@@ -125,6 +125,10 @@ class Camera: public SceneNode, public VisibilityInfo
 		/// Calculate projectionMat and invProjectionMat
 		virtual void calcProjectionMatrix() = 0;
 		virtual void calcLSpaceFrustumPlanes() = 0;
+
+		/// Calculate collision shape in local space
+		virtual void calcColShape() = 0;
+
 		void updateViewMatrix();
 		void updateWSpaceFrustumPlanes();
 
@@ -149,6 +153,7 @@ inline void Camera::setZNear(float znear_)
 	zNear = znear_;
 	calcProjectionMatrix();
 	calcLSpaceFrustumPlanes();
+	calcColShape();
 }
 
 
@@ -157,6 +162,7 @@ inline void Camera::setZFar(float zfar_)
 	zFar = zfar_;
 	calcProjectionMatrix();
 	calcLSpaceFrustumPlanes();
+	calcColShape();
 }
 
 

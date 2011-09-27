@@ -35,7 +35,7 @@ class PointLight: public Light
 
 		void moveUpdate()
 		{
-			wspaceCShape = lspaceCShape.getTransformed();
+			wspaceCShape = lspaceCShape.getTransformed(getWorldTransform());
 		}
 
 	private:

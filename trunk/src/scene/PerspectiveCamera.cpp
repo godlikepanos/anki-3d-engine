@@ -11,8 +11,7 @@ void PerspectiveCamera::setAll(float fovx_, float fovy_, float znear_,
 	fovY = fovy_;
 	zNear = znear_;
 	zFar = zfar_;
-	calcProjectionMatrix();
-	calcLSpaceFrustumPlanes();
+	updateLocals();
 }
 
 
