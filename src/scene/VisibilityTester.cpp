@@ -13,15 +13,6 @@
 
 
 //==============================================================================
-// Destructor                                                                  =
-//==============================================================================
-VisibilityTester::~VisibilityTester()
-{}
-
-
-//==============================================================================
-// CmpDistanceFromOrigin::operator()                                           =
-//==============================================================================
 bool VisibilityTester::CmpDistanceFromOrigin::operator()(const SceneNode* a,
 	const SceneNode* b) const
 {
@@ -31,25 +22,19 @@ bool VisibilityTester::CmpDistanceFromOrigin::operator()(const SceneNode* a,
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-VisibilityTester::VisibilityTester(Scene& scene_):
-	scene(scene_)
-{}
-
-
-//==============================================================================
-// test                                                                        =
-//==============================================================================
-void VisibilityTester::test(Camera& cam)
+void VisibilityTester::test(Camera& cam, Scene& scene_)
 {
+	scene = &scene_;
+
 	//
-	// Set all nodes to not visible
+	// Set all nodes set to not visible
 	//
 	BOOST_FOREACH(SceneNode* node, scene.getAllNodes())
 	{
 		node->disableFlag(SceneNode::SNF_VISIBLE);
 	}
+
+
 
 	//
 	// Collect the lights for the main cam
@@ -125,7 +110,7 @@ bool VisibilityTester::test(const Type& tested, const Camera& cam)
 // getRenderableNodes                                                          =
 //==============================================================================
 void VisibilityTester::getRenderableNodes(bool skipShadowless,
-	const Camera& cam, VisibilityInfo& storage)
+	const Camera& cam, VisibilityNode& storage)
 {
 	storage.getVisibleMsRenderableNodes().clear();
 	storage.getVisibleBsRenderableNodes().clear();
@@ -173,7 +158,7 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 	const Camera& cam = *jobParameters.cam;
 	bool skipShadowless = jobParameters.skipShadowless;
-	VisibilityInfo& visibilityInfo = *jobParameters.visibilityInfo;
+	VisibilityNode& visibilityInfo = *jobParameters.visibilityInfo;
 	Scene& scene = *jobParameters.scene;
 	boost::mutex& msRenderableNodesMtx = *jobParameters.msRenderableNodesMtx;
 	boost::mutex& bsRenderableNodesMtx = *jobParameters.bsRenderableNodesMtx;
@@ -331,4 +316,40 @@ void VisibilityTester::getRenderableNodesJobCallback(
 				msVisibles[i]);
 		}
 	}
+}
+
+
+//==============================================================================
+void getOverlappingNodes(SceneNode& node)
+{
+	/*node.getVisibleMsRenderableNodes().clear();
+	node.getVisibleBsRenderableNodes().clear();
+	node.getVi*/
+
+	// Run in parallel
+	VisJobParameters jobParameters;
+	jobParameters.cam = &cam;
+	jobParameters.skipShadowless = skipShadowless;
+	jobParameters.visibilityInfo = &storage;
+	jobParameters.scene = &scene;
+	jobParameters.msRenderableNodesMtx = &msRenderableNodesMtx;
+	jobParameters.bsRenderableNodesMtx = &bsRenderableNodesMtx;
+
+	for(uint i = 0;
+		i < parallel::ManagerSingleton::get().getThreadsNum(); i++)
+	{
+		parallel::ManagerSingleton::get().assignNewJob(i,
+			getRenderableNodesJobCallback, jobParameters);
+	}
+	parallel::ManagerSingleton::get().waitForAllJobsToFinish();
+
+	//
+	// Sort the renderables from closest to the camera to the farthest
+	//
+	std::sort(storage.getVisibleMsRenderableNodes().begin(),
+		storage.getVisibleMsRenderableNodes().end(),
+		CmpDistanceFromOrigin(cam.getWorldTransform().getOrigin()));
+	std::sort(storage.getVisibleBsRenderableNodes().begin(),
+		storage.getVisibleBsRenderableNodes().end(),
+		CmpDistanceFromOrigin(cam.getWorldTransform().getOrigin()));
 }

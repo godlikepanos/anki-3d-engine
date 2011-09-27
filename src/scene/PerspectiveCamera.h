@@ -30,7 +30,7 @@ class PerspectiveCamera: public Camera
 		{
 			Camera::moveUpdate();
 			wspaceCShape =
-				lspaceCShape.getCollisionShapeType(getWorldTransform());
+				lspaceCShape.getTransformed(getWorldTransform());
 		}
 
 		/// @copydoc SceneNode::getVisibilityCollisionShapeWorldSpace
@@ -63,6 +63,13 @@ class PerspectiveCamera: public Camera
 		/// Implements Camera::calcProjectionMatrix
 		void calcProjectionMatrix();
 
+		/// Implements Camera::calcColShape
+		void calcColShape()
+		{
+			lspaceCShape.setAll(fovX, fovY, zNear, zFar,
+				Transform::getIdentity());
+		}
+
 		/// Update:
 		/// - The projection matrix
 		/// - The planes
@@ -71,8 +78,7 @@ class PerspectiveCamera: public Camera
 		{
 			calcProjectionMatrix();
 			calcLSpaceFrustumPlanes();
-			lspaceCShape.setAll(fovX, fovY, zNear, zFar,
-				Transform::getIdentity());
+			calcColShape();
 		}
 };
 
@@ -88,15 +94,14 @@ inline PerspectiveCamera::PerspectiveCamera(Scene& scene, ulong flags,
 inline void PerspectiveCamera::setFovX(float fovx_)
 {
 	fovX = fovx_;
-	update();
+	updateLocals();
 }
 
 
 inline void PerspectiveCamera::setFovY(float fovy_)
 {
 	fovY = fovy_;
-	calcProjectionMatrix();
-	calcLSpaceFrustumPlanes();
+	updateLocals();
 }
 
 

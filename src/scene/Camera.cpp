@@ -54,43 +54,6 @@ bool Camera::insideFrustum(const CollisionShape& bvol) const
 
 
 //==============================================================================
-// insideFrustum                                                               =
-//==============================================================================
-bool Camera::insideFrustum(const Camera& cam) const
-{
-	const uint MAX_EXTREME_POINTS_NUM = 10;
-	Vec3 points[MAX_EXTREME_POINTS_NUM];
-	uint pointsNum;
-
-	cam.getExtremePoints(points, pointsNum);
-
-	ASSERT(pointsNum < MAX_EXTREME_POINTS_NUM);
-
-	// the collision code
-	for(uint i = 0; i < 6; i++) // for the 6 planes
-	{
-		uint failed = 0;
-
-		for(uint j = 0; j < pointsNum; j++) // for the n points
-		{
-			if(wspaceFrustumPlanes[i].test(points[j]) < 0.0)
-			{
-				++failed;
-			}
-		}
-		if(failed == pointsNum)
-		{
-			// if all points are behind the plane then the cam is not in
-			// frustum
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-//==============================================================================
 // updateViewMatrix                                                            =
 //==============================================================================
 void Camera::updateViewMatrix()
