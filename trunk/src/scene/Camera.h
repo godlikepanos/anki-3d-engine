@@ -17,7 +17,7 @@ class PointLight;
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public VisibilityNode
+class Camera: public VisibilityNode
 {
 	public:
 		/// @note Don't EVER change the order
@@ -141,7 +141,7 @@ class Camera: public SceneNode, public VisibilityNode
 
 inline Camera::Camera(CameraType t, Scene& scene, ulong flags,
 	SceneNode* parent)
-:	SceneNode(SNT_CAMERA, scene, flags, parent),
+:	VisibilityNode(VNT_CAMERA, scene, flags, parent),
  	type(t)
 {
 	name = "Camera:" + name;
