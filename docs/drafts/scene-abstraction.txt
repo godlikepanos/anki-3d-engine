@@ -1,0 +1,43 @@
+Create a new scene organisation that follows some rules:
+- Be extendable from outside AnKi
+- Has a simple interface and correct containers
+- Be able to fast cast and fast check type (llvm isa<>)
+
+Every scene node has a few properties that are actually interfaces. This interfaces are:
+
++======================+==================+=================================+=================+
+| Class name           | Base class       | Interface                       | Used            |
++======================+==================+=================================+=================+
+| BaseRenderable       | -                | - getVao                        | -               |
+|                      |                  | - getVertIdsNum                 |                 |
+|                      |                  | - getWorldTransform             |                 |
++----------------------+------------------+---------------------------------+-----------------+
+| Renderable           | BaseRenderable   | - getMaterial                   | PatchNode       |
+|                      |                  | - getMaterialRuntime (Mutable)  |                 |
+|                      |                  | - getMaterialRuntime (Const)    |                 |
+|                      |                  | - renderInMs (its not virtual)  |                 |
++----------------------+------------------+---------------------------------+-----------------+
+| DebugRenderable      | BaseRenderable   |                                 | Camera, Light   |
++----------------------+------------------+---------------------------------+-----------------+
+| IsRenderable         | BaseRenderable   | getShaderProgram                | Light           |
++----------------------+------------------+---------------------------------+-----------------+
+| VisiblesContainable  | -                | getVisibilityInfo               | Camera, Light   |
++----------------------+------------------+---------------------------------+-----------------+
+	
+	
+**VisiblesContainable**
+ (Camera, Light)
+	Interface for providing info about nodes that are inside this node and 
+	method for checking other nodes is they are visible
+
+	
+VisibleCheckable: (Camera, Light, ModelNode, SkinNode, PatchNode)
+	Interface for providing a CollisionShape for visibility testing
+
+	
+VisiblesInfo: Contains the lists of:
+	- Renderables
+	- Lights
+	
+
+
