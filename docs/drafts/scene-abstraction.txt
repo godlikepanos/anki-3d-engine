@@ -5,39 +5,88 @@ Create a new scene organisation that follows some rules:
 
 Every scene node has a few properties that are actually interfaces. This interfaces are:
 
-+======================+==================+=================================+=================+
-| Class name           | Base class       | Interface                       | Used            |
-+======================+==================+=================================+=================+
-| BaseRenderable       | -                | - getVao                        | -               |
-|                      |                  | - getVertIdsNum                 |                 |
-|                      |                  | - getWorldTransform             |                 |
-+----------------------+------------------+---------------------------------+-----------------+
-| Renderable           | BaseRenderable   | - getMaterial                   | PatchNode       |
-|                      |                  | - getMaterialRuntime (Mutable)  |                 |
-|                      |                  | - getMaterialRuntime (Const)    |                 |
-|                      |                  | - renderInMs (its not virtual)  |                 |
-+----------------------+------------------+---------------------------------+-----------------+
-| DebugRenderable      | BaseRenderable   |                                 | Camera, Light   |
-+----------------------+------------------+---------------------------------+-----------------+
-| IsRenderable         | BaseRenderable   | getShaderProgram                | Light           |
-+----------------------+------------------+---------------------------------+-----------------+
-| VisiblesContainable  | -                | getVisibilityInfo               | Camera, Light   |
-+----------------------+------------------+---------------------------------+-----------------+
++========================+==================+=================================+=====================+
+| Class name             | Base class       | Interface                       | Used                |
++========================+==================+=================================+=====================+
+| BaseRenderable         | -                | - getVao                        | -                   |
+|                        |                  | - getVertIdsNum                 |                     |
+|                        |                  | - getWorldTransform             |                     |
++------------------------+------------------+---------------------------------+---------------------+
+| Renderable             | BaseRenderable   | - getMaterial                   | PatchNode           |
+|                        |                  | - getMaterialRuntime (Mutable)  |                     |
+|                        |                  | - getMaterialRuntime (Const)    |                     |
+|                        |                  | - renderInMs (its not virtual)  |                     |
++------------------------+------------------+---------------------------------+---------------------+
+| DebugRenderable        | BaseRenderable   | TODO                            | Camera, Light       |
++------------------------+------------------+---------------------------------+---------------------+
+| IsRenderable           | BaseRenderable   | getShaderProgram                | Light               |
++------------------------+------------------+---------------------------------+---------------------+
+| VisiblesContainable    | -                | - getVisiblesInfo               | Camera, Light       |
+|                        |                  | - testFrustum(VisibleCheckable) |                     |
++------------------------+------------------+---------------------------------+---------------------+
+| VisibleCheckable       | -                | getCollisionShape               | Camera, Light,      |
+|                        |                  |                                 | ModelNode, SkinNode,|
+|                        |                  |                                 | PatchNode           |
++------------------------+------------------+---------------------------------+---------------------+
+| RenderablesContainable | -                | - getRenderables                | ModelNode, SkinNode |
+|                        |                  | - nodesInheritCollisionShape    |                     |
++------------------------+------------------+---------------------------------+---------------------+
 	
+Other classes:
 	
-**VisiblesContainable**
- (Camera, Light)
-	Interface for providing info about nodes that are inside this node and 
-	method for checking other nodes is they are visible
+**VisiblesInfo**: Contains the lists of:
 
-	
-VisibleCheckable: (Camera, Light, ModelNode, SkinNode, PatchNode)
-	Interface for providing a CollisionShape for visibility testing
-
-	
-VisiblesInfo: Contains the lists of:
 	- Renderables
+		- renderables in MS
+		- renderables in BS
 	- Lights
-	
+		- point lights
+		- spot lights
+		
+==================
+Visibility testing
+==================
+
+::
+
+	function test(VisiblesContainable obj)
+		for node in nodes
+			set node not visible
+		endfor
+		
+		for node in nodes
+			if node is RenderablesContainable
+				if node ouside frustum 
+					break
+				endif
+			
+				if node is nodesInheritCollisionShape
+					for subnode in node's renderables
+						set subnode visible
+					end for
+				else
+					for subnode in node's renderables
+					
+				endif
+			
+				if node inside frustum of obj
+					cam push back
+				endif
+			endif
+		endfor
+	endfunction
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
