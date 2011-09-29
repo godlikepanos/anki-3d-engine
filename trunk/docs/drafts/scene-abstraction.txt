@@ -12,7 +12,7 @@ Every scene node has a few properties that are actually interfaces. This interfa
 |                        |                  | - getVertIdsNum(level, type)      |                     |
 |                        |                  | - getWorldTransform(level, type)  |                     |
 +------------------------+------------------+-----------------------------------+---------------------+
-| Renderable             |                  | - getMaterial                     | PatchNode           |
+| Renderable             | BaseRenderable   | - getMaterial                     | PatchNode           |
 |                        |                  | - getMaterialRuntime (Mutable)    |                     |
 |                        |                  | - getMaterialRuntime (Const)      |                     |
 |                        |                  | - renderInMs (its not virtual)    |                     |
@@ -36,8 +36,7 @@ Rendering passes:
 	- Level n
 		- Color
 		- Depth
-		- DepthParaboloid
-		
+		- DepthParaboloid	
 	- Debug
 
 
@@ -90,10 +89,25 @@ Visibility testing
 		endfor
 	endfunction
 
+=========
+Rendering
+=========
 
+::
+	function render(VisiblesContainable obj, PassType pt)	
+		for renderable obj's renderables
+			level = calc from distance of obj and renderable
+		
+			setupShaderProgram for obj in pt and level
+			render using vao of level
+		endfor
+	endfunction
 
+========
+Problems
+========
 
-
+- All properties should contain the world transform
 
 
 
