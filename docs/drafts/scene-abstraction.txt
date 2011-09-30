@@ -10,10 +10,10 @@ Every scene node has a few properties that are actually interfaces. This interfa
 +========================+==================+===================================+=====================+
 | BaseRenderable         | -                | - getVao(level, type)             | -                   |
 |                        |                  | - getVertIdsNum(level, type)      |                     |
-|                        |                  | - getWorldTransform(level, type)  |                     |
+|                        |                  | - getModelMatrix(level, type)     |                     |
 +------------------------+------------------+-----------------------------------+---------------------+
 | Renderable             | BaseRenderable   | - getMaterial                     | PatchNode           |
-|                        |                  | - getMaterialRuntime (Mutable)    |                     |
+|                        | VisibleCheckable | - getMaterialRuntime (Mutable)    |                     |
 |                        |                  | - getMaterialRuntime (Const)      |                     |
 |                        |                  | - renderInMs (its not virtual)    |                     |
 +------------------------+------------------+-----------------------------------+---------------------+
@@ -31,6 +31,32 @@ Every scene node has a few properties that are actually interfaces. This interfa
 | RenderablesContainable | -                | - getRenderables                  | ModelNode, SkinNode |
 |                        |                  | - nodesInheritCollisionShape      |                     |
 +------------------------+------------------+-----------------------------------+---------------------+
+| Projectable            | -                | - getViewMatrix                   | Light, Camera       |
+|                        |                  | - getProjectionMatrix             |                     |
++------------------------+------------------+-----------------------------------+---------------------+
+
+
+- VisibleCheckable
+	- getCollisionShape (virtual)
+	- getVisible
+	- setVisible
+	
+- Renderable: VisibleCheckable
+	- material (virtual)
+	- getVao(level, passType) (virtual)
+	
+- IsRenderable: VisibleCheckable, VisiblesContainable
+	getType
+	
+- VisiblesContainable
+	- 2 x container of renderables
+	- 2 x container of IS renderables
+	- testFrustum(VisibleCheckable)
+	
+- RenderablesContainable
+	- container of renderables
+
+
 
 Rendering passes:
 	- Level n
@@ -60,6 +86,15 @@ Other classes:
 Visibility testing
 ==================
 
+In visibility testing we gather the visible renderables of MS and BS and the lights for IS. Also for every visible light we gather the renderables.
+
+Real flow:
+
+	- Set all nodes to not visible
+	- Gather all renderables and lights 
+	- For every light that casts shadow get renderables
+
+
 ::
 
 	function test(VisiblesContainable obj)
@@ -67,26 +102,37 @@ Visibility testing
 			set node not visible
 		endfor
 		
-		for node in nodes
-			if node is RenderablesContainable
-				if node ouside frustum 
+		for renderableContainable in all scene's renderableContainables
+
+				if renderableContainable ouside obj frustum 
 					break
 				endif
 			
-				if node is nodesInheritCollisionShape
-					for subnode in node's renderables
-						set subnode visible
-					end for
-				else
-					for subnode in node's renderables
-					
-				endif
+				set renderableContainable to visible
 			
-				if node inside frustum of obj
-					cam push back
+				# eg skin
+				if renderableContainable is nodesInheritCollisionShape
+					for renderable in renderableContainable's renderables
+						set renderable visible
+						put renderable in obj container
+					endfor
+				# eg model node
+				else
+					for renderable in renderableContainable's renderables
+						if renderable inside obj frustum
+							put renderable in obj container
+						endif
+					endfor
 				endif
 			endif
 		endfor
+		
+		for visiblesContainable in all scene visiblesContainables
+			if visiblesContainable inside obj frustum
+				put visiblesContainable in obj container
+			endfor
+		endfor
+		
 	endfunction
 
 =========
@@ -108,6 +154,7 @@ Problems
 ========
 
 - All properties should contain the world transform
+- What happens in a second pass for other camera (for split screen for example). Now the renderings happen sequential so no problem. It may fuck up the visibility vectors
 
 
 
