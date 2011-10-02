@@ -1,0 +1,44 @@
+<material>
+	<passes>
+		<pass>LIGHT</pass>
+	</passes>
+
+	<shaderProgram>
+		<vertexShader>
+			<includes>
+				<include>shaders/SimpleVert.glsl</include>
+			</includes>
+		</vertexShader>
+		
+		<fragmentShader>
+			<includes>
+				<include>shaders/IsPointLight.glsl</include>
+			</includes>
+			
+			<inputs>
+				<input>
+					<name>diffuseColor</name>
+					<type>vec3</type>
+					<value><x>1</x><y>2</y><z>3</z></value>
+				</input>
+				<input>
+					<name>specularColor</name>
+					<type>vec3</type>
+					<value><x>1</x><y>2</y><z>3</z></value>
+				</input>
+				<input>
+					<name>radius</name>
+					<type>float</type>
+					<value><float>1</float></value>
+				</input>
+			</inputs>
+			
+			<operations>
+				<operation>
+					<id>0</id>
+					<function>do</function>
+				</operation>
+			</operations>
+		</fragmentShader>
+	</shaderProgram>
+</material>

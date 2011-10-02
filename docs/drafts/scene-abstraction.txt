@@ -46,7 +46,8 @@ Every scene node has a few properties that are actually interfaces. This interfa
 	- getVao(level, passType) (virtual)
 	
 - IsRenderable: VisibleCheckable, VisiblesContainable
-	getType
+	- getShaderProgram(level) (virtual)
+	- get
 	
 - VisiblesContainable
 	- 2 x container of renderables
