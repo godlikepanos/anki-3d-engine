@@ -40,22 +40,33 @@ Every scene node has a few properties that are actually interfaces. This interfa
 	- getCollisionShape (virtual)
 	- getVisible
 	- setVisible
+	- getVisibilityGroup
 	
-- Renderable: VisibleCheckable
+- Renderable
 	- material (virtual)
 	- getVao(level, passType) (virtual)
 	
-- IsRenderable: VisibleCheckable, VisiblesContainable
-	- getShaderProgram(level) (virtual)
-	- get
+- IsRenderable
+	- getMaterialRuntime (virtual)
+	- getVao() (virtual)
 	
 - VisiblesContainable
-	- 2 x container of renderables
-	- 2 x container of IS renderables
+	- N * VisibilityGroups with VisibleCheckable
 	- testFrustum(VisibleCheckable)
 	
 - RenderablesContainable
-	- container of renderables
+	- N * renderables
+	- nodesInheritCollisionShape
+
+
+
+PatchNode: Renderable, VisibleCheckable
+
+Light: IsRenderable, VisibleCheckable, VisiblesContainable
+
+Camera: VisibleCheckable, VisiblesContainable
+
+ModelNode: VisibleCheckable, RenderablesContainable
 
 
 
