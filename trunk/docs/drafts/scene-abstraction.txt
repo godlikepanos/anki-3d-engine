@@ -108,18 +108,18 @@ Real flow:
 
 ::
 
-	function test(VisiblesContainable obj)
+	function test(Camera cam)
 		for node in nodes
 			set node not visible
 		endfor
 		
-		for renderableContainable in all scene's renderableContainables
+		for renderablesContainableNode in all scene's renderablesContainableNodes
 
-				if renderableContainable ouside obj frustum 
+				if cam test renderablesContainableNode
 					break
 				endif
 			
-				set renderableContainable to visible
+				set renderablesContainable to visible
 			
 				# eg skin
 				if renderableContainable is nodesInheritCollisionShape
@@ -166,6 +166,14 @@ Problems
 
 - All properties should contain the world transform
 - What happens in a second pass for other camera (for split screen for example). Now the renderings happen sequential so no problem. It may fuck up the visibility vectors
+
+====
+ToDo
+====
+
+- Move update redesign
+	- First update the world transforms for all nodes
+	- then for the nodes that have moved (we allready keep the previ world transform) call the SceneNode::moveUpdate
 
 
 
