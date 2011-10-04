@@ -37,25 +37,25 @@ Every scene node has a few properties that are actually interfaces. This interfa
 
 
 - VisibleCheckable
-	- getCollisionShape (virtual)
+	- getCollisionShape [virtual]
 	- getVisible
 	- setVisible
 	- getVisibilityGroup
 	
 - Renderable
-	- material (virtual)
-	- getVao(level, passType) (virtual)
+	- material [virtual]
+	- getVao(level, passType) [virtual]
 	
 - IsRenderable
-	- getMaterialRuntime (virtual)
-	- getVao() (virtual)
+	- getMaterialRuntime [virtual]
+	- getVao() [virtual]
 	
 - VisiblesContainable
-	- N * VisibilityGroups with VisibleCheckable
+	- N * M sceneNodes where N is 4 (renderables and lights) and M is the number of the scene nodes
 	- testFrustum(VisibleCheckable)
 	
 - RenderablesContainable
-	- N * renderables
+	- N * SceneNode
 	- nodesInheritCollisionShape
 
 
@@ -102,10 +102,9 @@ In visibility testing we gather the visible renderables of MS and BS and the lig
 
 Real flow:
 
-	- Set all nodes to not visible
-	- Gather all renderables and lights 
-	- For every light that casts shadow get renderables
-
+	function test(cam)
+		for 
+	endfunction
 
 ::
 
