@@ -46,7 +46,7 @@ Every scene node has a few properties that are actually interfaces. This interfa
 	- material [virtual]
 	- getVao(level, passType) [virtual]
 	
-- IsRenderable
+- Light (aka IsRenderable)
 	- getMaterialRuntime [virtual]
 	- getVao() [virtual]
 	
