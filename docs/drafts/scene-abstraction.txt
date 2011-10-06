@@ -109,38 +109,43 @@ Real flow:
 ::
 
 	function test(Camera cam)
-		for node in nodes
+		for node in scene's nodes
 			set node not visible
 		endfor
 		
-		for renderablesContainableNode in all scene's renderablesContainableNodes
+		for rcn in all scene's renderablesContainableNodes
 
-				if cam test renderablesContainableNode
+				if rcn not inside cam's frustum
 					break
 				endif
 			
-				set renderablesContainable to visible
+				set rcn to visible
 			
 				# eg skin
-				if renderableContainable is nodesInheritCollisionShape
-					for renderable in renderableContainable's renderables
+				if rcn renderablesInheritContainingCollisionShape
+					for renderable in rcn's renderables
 						set renderable visible
-						put renderable in obj container
+						put renderable in cam's container
 					endfor
 				# eg model node
 				else
-					for renderable in renderableContainable's renderables
-						if renderable inside obj frustum
-							put renderable in obj container
+					for renderable in rcn's renderables
+						if renderable inside cam frustum
+							put renderable in cam's container
 						endif
 					endfor
 				endif
 			endif
 		endfor
 		
-		for visiblesContainable in all scene visiblesContainables
-			if visiblesContainable inside obj frustum
-				put visiblesContainable in obj container
+		for l in all scene's lights
+			if l inside cam's frustum
+				put l in cam's container
+				
+				if l is shadow caster
+					test(l)
+				endif
+				
 			endfor
 		endfor
 		
