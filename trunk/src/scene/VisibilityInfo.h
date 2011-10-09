@@ -1,6 +1,7 @@
 #ifndef VISIBILITY_INFO_H
 #define VISIBILITY_INFO_H
 
+#include <deque>
 #include <vector>
 
 
@@ -14,59 +15,60 @@ class SpotLight;
 class VisibilityInfo
 {
 	public:
-		template<typename T>
-		class Types
-		{
-			typedef std::vector<T*> Container;
-		};
+		typedef std::deque<const RenderableNode*> RContainer;
+		typedef std::vector<const PointLight*> PLContainer;
+		typedef std::vector<SpotLight*> SLContainer;
+
+		VisibilityInfo() {}
+		~VisibilityInfo();
 
 		/// @name Accessors
 		/// @{
-		const Types<RenderableNode>::Container&
-			getVisibleMsRenderableNodes() const
+		const RContainer& getVisibleMsRenderableNodes() const
 		{
 			return msRNodes;
 		}
-		Types<RenderableNode>::Container& getVisibleMsRenderableNodes()
+		RContainer& getVisibleMsRenderableNodes()
 		{
 			return msRNodes;
 		}
 
-		const Types<RenderableNode>::Container&
-			getVisibleBsRenderableNodes() const
+		const RContainer& getVisibleBsRenderableNodes() const
 		{
 			return bsRNodes;
 		}
-		Types<RenderableNode>::Container& getVisibleBsRenderableNodes()
+		RContainer& getVisibleBsRenderableNodes()
 		{
 			return bsRNodes;
 		}
 
-		const Types<PointLight>::Container& getVisiblePointLights() const
+		const PLContainer& getVisiblePointLights() const
 		{
 			return pLights;
 		}
-		Types<PointLight>::Container& getVisiblePointLights()
+		PLContainer& getVisiblePointLights()
 		{
 			return pLights;
 		}
 
-		const Types<SpotLight>::Container& getVisibleSpotLights() const
+		const SLContainer& getVisibleSpotLights() const
 		{
 			return sLights;
 		}
-		Types<SpotLight>::Container& getVisibleSpotLights()
+		SLContainer& getVisibleSpotLights()
 		{
 			return sLights;
 		}
 		/// @}
 
-	protected:
-		Types<RenderableNode>::Container msRNodes;
-		Types<RenderableNode>::Container bsRNodes;
-		Types<PointLight>::Container pLights;
-		Types<SpotLight>::Container sLights;
+	private:
+		RContainer msRNodes;
+		RContainer bsRNodes;
+		PLContainer pLights; ///< Used only for non-light cameras
+		SLContainer sLights; ///< Used only for non-light cameras
 };
 
 
 #endif
+
+

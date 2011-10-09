@@ -1,9 +1,9 @@
-#include "ProjectionCameraShape.h"
+#include "PerspectiveCameraShape.h"
 #include "LineSegment.h"
 
 
 //==============================================================================
-void ProjectionCameraShape::setAll(float fovX, float fovY,
+void PerspectiveCameraShape::setAll(float fovX, float fovY,
 	float zNear, float zFar, const Transform& trf)
 {
 	eye = Vec3(0.0, 0.0, -zNear);
@@ -26,10 +26,10 @@ void ProjectionCameraShape::setAll(float fovX, float fovY,
 
 
 //==============================================================================
-ProjectionCameraShape ProjectionCameraShape::getTransformed(
+PerspectiveCameraShape PerspectiveCameraShape::getTransformed(
 	const Transform& trf) const
 {
-	ProjectionCameraShape o;
+	PerspectiveCameraShape o;
 	o.eye = eye.getTransformed(trf);
 
 	for(uint i = 0; i < 4; i++)
@@ -42,7 +42,7 @@ ProjectionCameraShape ProjectionCameraShape::getTransformed(
 
 
 //==============================================================================
-float ProjectionCameraShape::testPlane(const Plane& p) const
+float PerspectiveCameraShape::testPlane(const Plane& p) const
 {
 	float o = 0.0;
 

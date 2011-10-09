@@ -63,13 +63,6 @@ class PerspectiveCamera: public Camera
 		/// Implements Camera::calcProjectionMatrix
 		void calcProjectionMatrix();
 
-		/// Implements Camera::calcColShape
-		void calcColShape()
-		{
-			lspaceCShape.setAll(fovX, fovY, zNear, zFar,
-				Transform::getIdentity());
-		}
-
 		/// Update:
 		/// - The projection matrix
 		/// - The planes
@@ -78,7 +71,8 @@ class PerspectiveCamera: public Camera
 		{
 			calcProjectionMatrix();
 			calcLSpaceFrustumPlanes();
-			calcColShape();
+			lspaceCShape.setAll(fovX, fovY, zNear, zFar,
+				Transform::getIdentity());
 		}
 };
 
@@ -101,7 +95,8 @@ inline void PerspectiveCamera::setFovX(float fovx_)
 inline void PerspectiveCamera::setFovY(float fovy_)
 {
 	fovY = fovy_;
-	updateLocals();
+	calcProjectionMatrix();
+	calcLSpaceFrustumPlanes();
 }
 
 
