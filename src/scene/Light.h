@@ -24,7 +24,7 @@
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public VisibilityNode
+class Light: public SceneNode, public VisibilityInfo
 {
 	public:
 		enum LightType

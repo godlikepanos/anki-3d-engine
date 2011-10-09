@@ -44,12 +44,8 @@ class ShaderProgram;
 ///
 /// 	<wireframe>true | false</wireframe>
 ///
-/// 	<passes><pass>PASS_NAME</pass></passes>
-///
-/// 	[<levels>n</levels>] *
-///
 /// 	<shaderProgram>
-/// 		<vertexShader | geometryShader | fragmentShader>
+/// 		<fragmentShader>
 /// 			<includes>
 /// 				<include>file.glsl</include>
 /// 				<include>file2.glsl</include>
@@ -58,8 +54,7 @@ class ShaderProgram;
 /// 			<inputs>
 /// 				<input>
 /// 					<name>xx</name>
-/// 					<type>float | vec2 | vec3 | vec4 | sampler2D</type>
-/// 					<value> **
+/// 					<value> *
 /// 						<float>0.0</float> |
 /// 						<vec2><x>0.0</x><y>0.0</y></vec2> |
 /// 						<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
@@ -79,13 +74,12 @@ class ShaderProgram;
 /// 					</arguments>
 /// 				</operation>
 /// 			</operations>
-/// 		</vertexShader | geometryShader | fragmentShader>
+/// 		</fragmentShader>
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
-/// *: If not present then level assumed to be 1. It should be > 0
-/// **: If the value tag is not present then the in variable is assumed to be
-/// buildin
+/// *: If the value tag is not present then the in variable is assumed to be
+///    build
 class Material: public MaterialProperties
 {
 	public:
