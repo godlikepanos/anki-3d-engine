@@ -9,7 +9,7 @@
 #include "MainRenderer.h"
 #include "RendererInitializer.h"
 #include "Scene.h"
-#include "gl/GlException.h"
+#include "anki/gl/GlException.h"
 
 
 struct TempMesh
