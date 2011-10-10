@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "resource/Material.h"aterial.h"
-#include "resource/RsrcPtr.h"
+#include "anki/resource/Material.h"aterial.h"
+#include "anki/resource/RsrcPtr.h"
 
 
 TEST(MaterialTests, Test)
