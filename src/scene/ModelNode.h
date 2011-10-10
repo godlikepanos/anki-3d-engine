@@ -2,9 +2,9 @@
 #define MODEL_NODE_H
 
 #include "SceneNode.h"
-#include "rsrc/RsrcPtr.h"
+#include "resource/RsrcPtr.h"
 #include "ModelPatchNode.h"
-#include "cln/Obb.h"
+#include "collision/Obb.h"
 #include <boost/array.hpp>
 #include <vector>
 #include <boost/range/iterator_range.hpp>

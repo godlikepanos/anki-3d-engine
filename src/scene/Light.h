@@ -1,10 +1,10 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
-#include "rsrc/Texture.h"
+#include "resource/Texture.h"
 #include "SceneNode.h"
-#include "rsrc/RsrcPtr.h"
-#include "rsrc/LightRsrc.h"
+#include "resource/RsrcPtr.h"
+#include "resource/LightRsrc.h"
 #include "VisibilityInfo.h"
 
 

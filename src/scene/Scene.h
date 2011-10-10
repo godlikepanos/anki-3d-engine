@@ -1,7 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "phys/PhysWorld.h"
+#include "physics/PhysWorld.h"
 #include "util/Assert.h"
 #include "VisibilityTester.h"
 #include <boost/scoped_ptr.hpp>

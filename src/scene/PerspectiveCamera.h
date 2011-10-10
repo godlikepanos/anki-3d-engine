@@ -2,7 +2,7 @@
 #define PERSPECTIVE_CAMERA_H
 
 #include "Camera.h"
-#include "cln/Collision.h"
+#include "collision/Collision.h"
 
 
 /// @todo

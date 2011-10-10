@@ -3,7 +3,7 @@
 
 #include "SceneNode.h"
 #include "SkinPatchNode.h"
-#include "m/Math.h"
+#include "math/Math.h"
 #include <boost/range/iterator_range.hpp>
 #include <vector>
 

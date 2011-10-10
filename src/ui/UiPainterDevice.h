@@ -2,7 +2,7 @@
 #define UI_PAINTER_DEVICE_H
 
 #include "gl/Fbo.h"
-#include "m/Math.h"
+#include "math/Math.h"
 
 
 class Texture;

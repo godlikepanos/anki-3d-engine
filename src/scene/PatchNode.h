@@ -3,9 +3,9 @@
 
 #include "gl/Vao.h"
 #include "gl/Vbo.h"
-#include "rsrc/Mesh.h" // For the Vbos enum
-#include "rsrc/RsrcPtr.h"
-#include "rsrc/ModelPatch.h"
+#include "resource/Mesh.h" // For the Vbos enum
+#include "resource/RsrcPtr.h"
+#include "resource/ModelPatch.h"
 #include "RenderableNode.h"
 #include "MaterialRuntime.h"
 #include <boost/scoped_ptr.hpp>

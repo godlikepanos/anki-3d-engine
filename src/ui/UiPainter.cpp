@@ -1,7 +1,7 @@
 #include "UiPainter.h"
 #include "gl/GlStateMachine.h"
-#include "rsrc/Texture.h"
-#include "rsrc/ShaderProgram.h"
+#include "resource/Texture.h"
+#include "resource/ShaderProgram.h"
 #include "core/Logger.h"
 #include "UiFont.h"
 #include <cstdarg>

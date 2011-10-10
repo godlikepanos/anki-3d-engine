@@ -1,7 +1,7 @@
 #include "Vao.h"
 #include "Vbo.h"
 #include "util/Exception.h"
-#include "rsrc/ShaderProgramAttributeVariable.h"
+#include "resource/ShaderProgramAttributeVariable.h"
 
 
 //==============================================================================

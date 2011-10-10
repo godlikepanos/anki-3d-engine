@@ -4,7 +4,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "util/StdTypes.h"
-#include "m/Math.h"
+#include "math/Math.h"
 
 
 class Texture;

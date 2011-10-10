@@ -7,7 +7,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "Controller.h"
-#include "rsrc/Material.h"
+#include "resource/Material.h"
 #include "ParticleEmitterNode.h"
 #include "ModelNode.h"
 #include "SkinNode.h"

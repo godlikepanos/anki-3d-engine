@@ -1,5 +1,5 @@
 #include "Light.h"
-#include "rsrc/LightRsrc.h"
+#include "resource/LightRsrc.h"
 
 
 //==============================================================================

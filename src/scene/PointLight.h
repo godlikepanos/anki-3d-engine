@@ -2,7 +2,7 @@
 #define POINT_LIGHT_H
 
 #include "Light.h"
-#include "cln/Sphere.h"
+#include "collision/Sphere.h"
 
 
 /// Point light. Defined by its radius

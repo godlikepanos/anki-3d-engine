@@ -1,8 +1,8 @@
 #include <boost/array.hpp>
 #include "ModelPatchNode.h"
-#include "rsrc/Material.h"
-#include "rsrc/MeshData.h"
-#include "rsrc/ModelPatch.h"
+#include "resource/Material.h"
+#include "resource/MeshData.h"
+#include "resource/ModelPatch.h"
 #include "ModelNode.h"
 #include "ModelNode.h"
 

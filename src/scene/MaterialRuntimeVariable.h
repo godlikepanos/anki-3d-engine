@@ -1,8 +1,8 @@
 #ifndef MATERIAL_RUNTIME_VARIABLE_H
 #define MATERIAL_RUNTIME_VARIABLE_H
 
-#include "m/Math.h"
-#include "rsrc/RsrcPtr.h"
+#include "math/Math.h"
+#include "resource/RsrcPtr.h"
 #include <boost/variant.hpp>
 
 

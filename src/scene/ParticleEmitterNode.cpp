@@ -3,7 +3,7 @@
 #include <btBulletDynamicsCommon.h>
 #include "ParticleEmitterNode.h"
 #include "Particle.h"
-#include "phys/RigidBody.h"
+#include "physics/RigidBody.h"
 #include "core/App.h"
 #include "Scene.h"
 #include "util/Util.h"

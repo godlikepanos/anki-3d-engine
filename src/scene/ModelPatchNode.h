@@ -2,7 +2,7 @@
 #define MODEL_PATCH_NODE_H
 
 #include "PatchNode.h"
-#include "cln/Obb.h"
+#include "collision/Obb.h"
 
 
 class ModelNode;
