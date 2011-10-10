@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "cln/Collision.h"
+#include "collision/Collision.h"
 #include "SceneNode.h"
 #include "VisibilityInfo.h"
 #include <boost/array.hpp>

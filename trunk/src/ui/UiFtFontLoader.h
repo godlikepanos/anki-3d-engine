@@ -2,7 +2,7 @@
 #define UI_FT_FONT_LOADER_H
 
 #include "util/StdTypes.h"
-#include "m/Math.h"
+#include "math/Math.h"
 #include <vector>
 #include <boost/range/iterator_range.hpp>
 #include <ft2build.h>

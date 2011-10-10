@@ -1,5 +1,5 @@
 #include "MaterialRuntime.h"
-#include "rsrc/Material.h"
+#include "resource/Material.h"
 #include "MaterialRuntimeVariable.h"
 #include <boost/foreach.hpp>
 

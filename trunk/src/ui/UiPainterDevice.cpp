@@ -1,5 +1,5 @@
 #include "UiPainterDevice.h"
-#include "rsrc/Texture.h"
+#include "resource/Texture.h"
 
 
 //==============================================================================

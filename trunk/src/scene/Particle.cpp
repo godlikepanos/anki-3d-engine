@@ -1,5 +1,5 @@
 #include "Particle.h"
-#include "phys/RigidBody.h"
+#include "physics/RigidBody.h"
 
 
 //==============================================================================

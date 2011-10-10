@@ -1,8 +1,8 @@
 #include "SkinNode.h"
-#include "rsrc/Skin.h"
+#include "resource/Skin.h"
 #include "SkinPatchNode.h"
-#include "rsrc/Skeleton.h"
-#include "rsrc/SkelAnim.h"
+#include "resource/Skeleton.h"
+#include "resource/SkelAnim.h"
 #include <boost/foreach.hpp>
 
 

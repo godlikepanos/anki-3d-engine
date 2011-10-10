@@ -1,7 +1,7 @@
 #include <boost/foreach.hpp>
 #include "ModelNode.h"
-#include "rsrc/Model.h"
-#include "rsrc/Skeleton.h"
+#include "resource/Model.h"
+#include "resource/Skeleton.h"
 
 
 //==============================================================================

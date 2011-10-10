@@ -2,8 +2,8 @@ PROJECT(ANKI_PROJ)
 
 INCLUDE_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR})
 
-SET(ANKI_LIBS script r scene ui event 
-	i phys rsrc core misc gl cln m util)
+SET(ANKI_LIBS script renderer scene ui event 
+	input physics resource core misc gl collision math util)
 
 SUBDIRS(${ANKI_LIBS})
 

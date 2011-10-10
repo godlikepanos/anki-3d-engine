@@ -1,8 +1,8 @@
 #ifndef UI_PAINTER_H
 #define UI_PAINTER_H
 
-#include "rsrc/RsrcPtr.h"
-#include "m/Math.h"
+#include "resource/RsrcPtr.h"
+#include "math/Math.h"
 #include "gl/Vbo.h"
 #include "gl/Vao.h"
 #include <boost/scoped_ptr.hpp>

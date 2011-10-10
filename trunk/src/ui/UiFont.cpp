@@ -1,5 +1,5 @@
 #include "UiFont.h"
-#include "rsrc/Texture.h"
+#include "resource/Texture.h"
 #include "util/Exception.h"
 #include "util/Assert.h"
 #include "UiFtFontLoader.h"

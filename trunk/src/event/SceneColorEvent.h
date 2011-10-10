@@ -2,7 +2,7 @@
 #define SCENE_COLOR_EVENT_H
 
 #include "Event.h"
-#include "m/Math.h"
+#include "math/Math.h"
 
 
 /// Change the scene color

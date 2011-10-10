@@ -1,7 +1,7 @@
 #ifndef MATERIAL_RUNTIME_H
 #define MATERIAL_RUNTIME_H
 
-#include "rsrc/MaterialProperties.h"
+#include "resource/MaterialProperties.h"
 #include "util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 

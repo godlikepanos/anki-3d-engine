@@ -1,5 +1,5 @@
 #include "MaterialRuntimeVariable.h"
-#include "rsrc/MaterialUserVariable.h"
+#include "resource/MaterialUserVariable.h"
 
 
 //==============================================================================

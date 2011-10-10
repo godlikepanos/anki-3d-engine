@@ -2,7 +2,7 @@
 #define RENDERABLE_NODE_H
 
 #include "SceneNode.h"
-#include "rsrc/MaterialCommon.h"
+#include "resource/MaterialCommon.h"
 
 
 class Vao;

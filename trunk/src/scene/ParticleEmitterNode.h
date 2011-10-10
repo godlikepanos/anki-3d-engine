@@ -5,8 +5,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <btBulletCollisionCommon.h>
 #include "SceneNode.h"
-#include "rsrc/ParticleEmitterRsrc.h"
-#include "rsrc/RsrcPtr.h"
+#include "resource/ParticleEmitterRsrc.h"
+#include "resource/RsrcPtr.h"
 
 
 class btCollisionShape;

@@ -1,8 +1,8 @@
 #ifndef SCENE_NODE_H
 #define SCENE_NODE_H
 
-#include "m/Math.h"
-#include "cln/Obb.h"
+#include "math/Math.h"
+#include "collision/Obb.h"
 #include <vector>
 #include <memory>
 #include <string>
