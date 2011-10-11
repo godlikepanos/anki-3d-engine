@@ -4,6 +4,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// A class for automatic garbage collection. Cause we -the programmers- get
 /// bored when it comes to deallocation. Dont even think to put as a parent an
 /// object that has not created dynamically
@@ -35,6 +38,9 @@ class Object
 		Object* objParent; ///< May be nullptr
 		Container objChilds;
 };
+
+
+} // end namespace
 
 
 #endif

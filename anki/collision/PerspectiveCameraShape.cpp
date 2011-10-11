@@ -2,6 +2,9 @@
 #include "anki/collision/LineSegment.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 void PerspectiveCameraShape::setAll(float fovX, float fovY,
 	float zNear, float zFar, const Transform& trf)
@@ -66,3 +69,6 @@ float PerspectiveCameraShape::testPlane(const Plane& p) const
 
 	return o;
 }
+
+
+} // end namespace

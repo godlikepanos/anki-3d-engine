@@ -1,4 +1,7 @@
 
+namespace anki {
+
+
 inline Logger& Logger::operator<<(const bool& val)
 {
 	return appendUsingLexicalCast(val);
@@ -89,3 +92,6 @@ void Logger::connect(F f, T t)
 {
 	sig.connect(boost::bind(f, t, _1, _2, _3, _4, _5));
 }
+
+
+} // end namespace

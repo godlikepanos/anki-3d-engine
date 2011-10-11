@@ -5,6 +5,9 @@
 #include "anki/math/Vec3.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Collision
 /// @{
 
@@ -17,8 +20,18 @@ class LineSegment: public CollisionShape
 		LineSegment()
 		:	CollisionShape(CST_LINE_SEG)
 		{}
-		LineSegment(const Vec3& origin, const Vec3& direction);
-		LineSegment(const LineSegment& b);
+
+		LineSegment(const Vec3& origin_, const Vec3& direction)
+		:	CollisionShape(CST_LINE_SEG),
+			origin(origin_),
+			dir(direction)
+		{}
+
+		LineSegment(const LineSegment& b)
+		:	CollisionShape(CST_LINE_SEG),
+			origin(b.origin),
+			dir(b.dir)
+		{}
 		/// @}
 
 		/// @name Accessors
@@ -71,18 +84,7 @@ class LineSegment: public CollisionShape
 /// @}
 
 
-inline LineSegment::LineSegment(const Vec3& origin_, const Vec3& direction)
-:	CollisionShape(CST_LINE_SEG),
-	origin(origin_),
-	dir(direction)
-{}
-
-
-inline LineSegment::LineSegment(const LineSegment& b)
-:	CollisionShape(CST_LINE_SEG),
-	origin(b.origin),
-	dir(b.dir)
-{}
+} // end namespace
 
 
 #endif

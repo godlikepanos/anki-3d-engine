@@ -4,6 +4,9 @@
 #include "anki/core/Globals.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // start                                                                       =
 //==============================================================================
@@ -96,3 +99,5 @@ bool AsyncLoader::pollForFinished(std::string& filename, void* buff, bool& ok)
 	return true;
 }
 
+
+} // end namespace

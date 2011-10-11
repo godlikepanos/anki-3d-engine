@@ -3,6 +3,9 @@
 #include <algorithm>
 
 
+namespace anki {
+
+
 //==============================================================================
 // getTransformed                                                              =
 //==============================================================================
@@ -49,3 +52,6 @@ float LineSegment::testPlane(const Plane& plane) const
 		}
 	}
 }
+
+
+} // end namespace

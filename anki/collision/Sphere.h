@@ -5,7 +5,7 @@
 #include "anki/math/Math.h"
 
 
-class Plane;
+namespace anki {
 
 
 /// @addtogroup Collision
@@ -97,6 +97,9 @@ inline Sphere::Sphere(const Vec3& center_, float radius_)
 	center(center_),
 	radius(radius_)
 {}
+
+
+} // end namespace
 
 
 #include "anki/collision/Sphere.inl.h"

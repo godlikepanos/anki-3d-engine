@@ -7,6 +7,9 @@
 #include <queue>
 
 
+namespace anki {
+
+
 /// The listener of the stdin.
 /// It initiates a thread that constantly reads the stdin and puts the results
 /// in a queue
@@ -26,6 +29,9 @@ class StdinListener
 
 		void workingFunc(); ///< The thread function
 };
+
+
+} // end namespace
 
 
 #endif

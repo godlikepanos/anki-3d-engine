@@ -5,6 +5,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Collision
 /// @{
 
@@ -44,6 +47,9 @@ class PerspectiveCameraShape: public CollisionShape
 		boost::array<Vec3, 4> dirs; ///< Directions
 };
 ///@}
+
+
+} // end namespace
 
 
 #endif

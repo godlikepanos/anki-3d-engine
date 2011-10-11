@@ -4,6 +4,9 @@
 #include "anki/collision/Forward.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Collision
 /// @{
 
@@ -57,6 +60,9 @@ class CollisionShape
 		CollisionShapeType cid;
 };
 /// @}
+
+
+} // end namespace
 
 
 #endif

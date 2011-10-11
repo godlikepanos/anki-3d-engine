@@ -2,6 +2,9 @@
 #include "anki/core/Logger.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // operator<< [const void*]                                                    =
 //==============================================================================
@@ -134,3 +137,6 @@ void Logger::realFlush()
 	func = file = "error";
 	line = -1;
 }
+
+
+} // end namespace

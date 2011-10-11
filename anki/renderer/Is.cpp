@@ -349,10 +349,10 @@ void Is::run()
 	BOOST_FOREACH(const PointLight* light,
 		r.getCamera().getVisiblePointLights())
 	{
-		if(light->getVisibleMsRenderableNodes().size() == 0)
+		/*if(light->getVisibleMsRenderableNodes().size() == 0)
 		{
 			continue;
-		}
+		}*/
 		pointLightPass(*light);
 	}
 

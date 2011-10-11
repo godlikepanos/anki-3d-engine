@@ -5,7 +5,8 @@
 #include "anki/math/Math.h"
 
 
-class Plane;
+namespace anki {
+
 
 /// @addtogroup Collision
 /// @{
@@ -89,6 +90,9 @@ inline Ray::Ray(const Vec3& origin_, const Vec3& direction_)
 	origin(origin_),
 	dir(direction_)
 {}
+
+
+} // end namespace
 
 
 #endif
