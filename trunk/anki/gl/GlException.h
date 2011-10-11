@@ -1,5 +1,5 @@
-#ifndef GL_EXCEPTION_H
-#define GL_EXCEPTION_H
+#ifndef ANKI_GL_GL_EXCEPTION_H
+#define ANKI_GL_GL_EXCEPTION_H
 
 
 /// The function throws an exception if there is an OpenGL error. Use it with

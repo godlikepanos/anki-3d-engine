@@ -14,7 +14,7 @@ Type BinaryStream::read32bitNumber()
 	read((char*)c, sizeof(c));
 	if(fail())
 	{
-		throw EXCEPTION("Failed to read stream");
+		throw ANKI_EXCEPTION("Failed to read stream");
 	}
 
 	// Copy it
@@ -66,19 +66,19 @@ std::string BinaryStream::readString()
 	}
 	catch(Exception& e)
 	{
-		throw EXCEPTION("Failed to read size");
+		throw ANKI_EXCEPTION("Failed to read size");
 	}
 
 	const uint buffSize = 1024;
 	if((size + 1) > buffSize)
 	{
-		throw EXCEPTION("String bigger than temp buffer");
+		throw ANKI_EXCEPTION("String bigger than temp buffer");
 	}
 	char buff[buffSize];
 	read(buff, size);
 	if(fail())
 	{
-		throw EXCEPTION("Failed to read " + 
+		throw ANKI_EXCEPTION("Failed to read " + 
 			boost::lexical_cast<std::string>(size) + " bytes");
 	}
 	buff[size] = '\0';

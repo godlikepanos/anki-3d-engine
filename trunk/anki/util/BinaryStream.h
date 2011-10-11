@@ -1,5 +1,5 @@
-#ifndef BINARY_STREAM_H
-#define BINARY_STREAM_H
+#ifndef ANKI_UTIL_BINARY_STREAM_H
+#define ANKI_UTIL_BINARY_STREAM_H
 
 #include <iostream>
 #include "anki/util/Exception.h"

@@ -1,5 +1,5 @@
-/*#ifndef _RAGDOLL_H_
-#define _RAGDOLL_H_
+/*#ifndef ANKI_PHYSICS__RAGDOLL_H_
+#define ANKI_PHYSICS__RAGDOLL_H_
 
 #include "anki/physics/PhyCommon.h"
 

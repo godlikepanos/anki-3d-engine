@@ -1,5 +1,5 @@
-#ifndef COLLISION_H
-#define COLLISION_H
+#ifndef ANKI_COLLISION_COLLISION_H
+#define ANKI_COLLISION_COLLISION_H
 
 #include "anki/collision/Plane.h"
 #include "anki/collision/Sphere.h"

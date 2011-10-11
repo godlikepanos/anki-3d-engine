@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef ANKI_UTIL_UTIL_H
+#define ANKI_UTIL_UTIL_H
 
 #include "anki/util/StdTypes.h"
 #include <string>

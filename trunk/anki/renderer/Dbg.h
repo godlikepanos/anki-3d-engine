@@ -1,5 +1,5 @@
-#ifndef DBG_H
-#define DBG_H
+#ifndef ANKI_RENDERER_DBG_H
+#define ANKI_RENDERER_DBG_H
 
 #include <boost/array.hpp>
 #include <map>

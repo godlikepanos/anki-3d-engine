@@ -1,5 +1,5 @@
-#ifndef MAT3_H
-#define MAT3_H
+#ifndef ANKI_MATH_MAT3_H
+#define ANKI_MATH_MAT3_H
 
 #include "anki/math/MathCommonIncludes.h"
 

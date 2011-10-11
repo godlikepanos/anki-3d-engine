@@ -355,7 +355,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	{
 		if(v.first != "include")
 		{
-			throw EXCEPTION("Expected include and not: " + v.first);
+			throw ANKI_EXCEPTION("Expected include and not: " + v.first);
 		}
 
 		const std::string& fname = v.second.data();
@@ -381,7 +381,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 		{
 			if(v.first != "input")
 			{
-				throw EXCEPTION("Expected in and not: " + v.first);
+				throw ANKI_EXCEPTION("Expected in and not: " + v.first);
 			}
 
 			const ptree& inPt = v.second;
@@ -407,7 +407,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	{
 		if(v.first != "operation")
 		{
-			throw EXCEPTION("Expected operation and not: " + v.first);
+			throw ANKI_EXCEPTION("Expected operation and not: " + v.first);
 		}
 
 		const ptree& opPt = v.second;
@@ -491,14 +491,15 @@ void MaterialShaderProgramCreator::parseInputTag(
 		}
 		else
 		{
-			throw EXCEPTION("The variable is not build-in or varying: " + name);
+			throw ANKI_EXCEPTION("The variable is not build-in or varying: " +
+				name);
 		}
 	}
 	else
 	{
 		if(valuePt.get().size() != 1)
 		{
-			throw EXCEPTION("Bad value for in: " + name);
+			throw ANKI_EXCEPTION("Bad value for in: " + name);
 		}
 
 		const ptree::value_type& v = valuePt.get().front();
@@ -506,7 +507,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 		// Wrong tag
 		if(txtToGlType.find(v.first.c_str()) == txtToGlType.end())
 		{
-			throw EXCEPTION("Wrong type \"" + v.first + "\" for in: " +
+			throw ANKI_EXCEPTION("Wrong type \"" + v.first + "\" for in: " +
 				name);
 		}
 
@@ -541,14 +542,14 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Function is not defined in any include file: " +
+		throw ANKI_EXCEPTION("Function is not defined in any include file: " +
 			funcName);
 	}
 
 	// Check args size
 	if(argsPt.size() != def->argDefinitions.size())
 	{
-		throw EXCEPTION("Incorrect number of arguments for: " + funcName);
+		throw ANKI_EXCEPTION("Incorrect number of arguments for: " + funcName);
 	}
 
 	// Write return value
@@ -566,7 +567,7 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 	{
 		if(v.first != "argument")
 		{
-			throw EXCEPTION("Unexpected tag \"" + v.first +
+			throw ANKI_EXCEPTION("Unexpected tag \"" + v.first +
 				"\" for operation: " + boost::lexical_cast<std::string>(id));
 
 		}

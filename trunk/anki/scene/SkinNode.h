@@ -1,5 +1,5 @@
-#ifndef SKIN_NODE_H
-#define SKIN_NODE_H
+#ifndef ANKI_SCENE_SKIN_NODE_H
+#define ANKI_SCENE_SKIN_NODE_H
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SkinPatchNode.h"

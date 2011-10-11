@@ -1,5 +1,5 @@
-#ifndef SKIN_NODE_SKIN_PATCH_NODE_H
-#define SKIN_NODE_SKIN_PATCH_NODE_H
+#ifndef ANKI_SCENE_SKIN_NODE_SKIN_PATCH_NODE_H
+#define ANKI_SCENE_SKIN_NODE_SKIN_PATCH_NODE_H
 
 #include <boost/array.hpp>
 #include "anki/scene/PatchNode.h"

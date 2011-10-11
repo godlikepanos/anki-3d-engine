@@ -1,5 +1,5 @@
-#ifndef SPOT_LIGHT_H
-#define SPOT_LIGHT_H
+#ifndef ANKI_SCENE_SPOT_LIGHT_H
+#define ANKI_SCENE_SPOT_LIGHT_H
 
 #include "anki/scene/Light.h"
 #include "anki/scene/PerspectiveCamera.h"

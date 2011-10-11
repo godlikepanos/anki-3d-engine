@@ -26,7 +26,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 	ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ARRAY_BUFFER)
 	{
-		throw EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
+		throw ANKI_EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
 	}
 
 	ON_GL_FAIL_THROW_EXCEPTION();
@@ -64,7 +64,7 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ELEMENT_ARRAY_BUFFER)
 	{
-		throw EXCEPTION("Only GL_ELEMENT_ARRAY_BUFFER is accepted");
+		throw ANKI_EXCEPTION("Only GL_ELEMENT_ARRAY_BUFFER is accepted");
 	}
 
 	bind();

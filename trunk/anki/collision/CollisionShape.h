@@ -1,8 +1,7 @@
-#ifndef COLLISION_SHAPE
-#define COLLISION_SHAPE
+#ifndef ANKI_COLLISION_COLLISION_SHAPE
+#define ANKI_COLLISION_COLLISION_SHAPE
 
-
-class Plane;
+#include "anki/collision/Forward.h"
 
 
 /// @addtogroup Collision
@@ -28,7 +27,12 @@ class CollisionShape
 		class Visitor
 		{
 			public:
-				virtual void visit(class LineSegment&) = 0;
+				virtual void visit(LineSegment&) = 0;
+				virtual void visit(Obb&) = 0;
+				virtual void visit(PerspectiveCameraShape&) = 0;
+				virtual void visit(Plane&) = 0;
+				virtual void visit(Ray&) = 0;
+				virtual void visit(Sphere&) = 0;
 		};
 
 		CollisionShape(CollisionShapeType cid_)
@@ -39,6 +43,9 @@ class CollisionShape
 		{
 			return cid;
 		}
+
+		/// Visitor accept
+		virtual void accept(Visitor& v) = 0;
 
 		/// If the bounding volume intersects with the plane then the func
 		/// returns 0, else it returns the distance. If the distance is < 0

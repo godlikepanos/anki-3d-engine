@@ -54,7 +54,7 @@ void LightRsrc::load(const char* filename)
 		}
 		else
 		{
-			throw EXCEPTION("Incorrect type: " + type_);
+			throw ANKI_EXCEPTION("Incorrect type: " + type_);
 		}
 
 		//
@@ -210,13 +210,13 @@ void LightRsrc::load(const char* filename)
 			}
 			else
 			{
-				throw EXCEPTION("Incorrect cameraYype: " + cam.get());
+				throw ANKI_EXCEPTION("Incorrect cameraYype: " + cam.get());
 			}
 		}
 
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Material \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Material \"" + filename + "\": " + e.what());
 	}
 }

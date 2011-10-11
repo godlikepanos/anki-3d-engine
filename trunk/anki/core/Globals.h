@@ -1,5 +1,5 @@
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#ifndef ANKI_CORE_GLOBALS_H
+#define ANKI_CORE_GLOBALS_H
 
 #include "anki/util/Singleton.h"
 

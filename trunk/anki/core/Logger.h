@@ -1,5 +1,5 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef ANKI_CORE_LOGGER_H
+#define ANKI_CORE_LOGGER_H
 
 #include <boost/array.hpp>
 #include <boost/signals2.hpp>

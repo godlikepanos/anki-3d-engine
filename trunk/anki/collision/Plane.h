@@ -1,5 +1,5 @@
-#ifndef PLANE_H
-#define PLANE_H
+#ifndef ANKI_COLLISION_PLANE_H
+#define ANKI_COLLISION_PLANE_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
@@ -61,6 +61,12 @@ class Plane: public CollisionShape
 			offset = x;
 		}
 		/// @}
+
+		/// @copydoc CollisionShape::accept
+		void accept(Visitor& v)
+		{
+			v.visit(*this);
+		}
 
 		/// Return the transformed
 		Plane getTransformed(const Transform& trf) const;

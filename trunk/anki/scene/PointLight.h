@@ -1,5 +1,5 @@
-#ifndef POINT_LIGHT_H
-#define POINT_LIGHT_H
+#ifndef ANKI_SCENE_POINT_LIGHT_H
+#define ANKI_SCENE_POINT_LIGHT_H
 
 #include "anki/scene/Light.h"
 #include "anki/collision/Sphere.h"
@@ -55,7 +55,7 @@ inline void PointLight::init(const char* filename)
 	Light::init(filename);
 	if(lightData->getType() != LightRsrc::LT_POINT)
 	{
-		throw EXCEPTION("Light data is wrong type");
+		throw ANKI_EXCEPTION("Light data is wrong type");
 	}
 	radius = lightData->getRadius();
 	lspaceCShape = Sphere(Vec3(0.0), radius);

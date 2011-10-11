@@ -1,4 +1,4 @@
-#include "anki/script/math/ScriptMCommon.h"
+#include "anki/script/math/Common.h"
 #include "anki/math/Math.h"
 
 

@@ -1,4 +1,4 @@
-#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
 #include "anki/physics/PhysWorld.h"
 #include "anki/physics/Character.h"
 #include "anki/physics/MotionState.h"

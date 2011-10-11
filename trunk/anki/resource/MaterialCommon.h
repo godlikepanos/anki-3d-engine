@@ -1,5 +1,5 @@
-#ifndef MATERIAL_COMMON_H
-#define MATERIAL_COMMON_H
+#ifndef ANKI_RESOURCE_MATERIAL_COMMON_H
+#define ANKI_RESOURCE_MATERIAL_COMMON_H
 
 #include <boost/array.hpp>
 

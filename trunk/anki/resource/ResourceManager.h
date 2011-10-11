@@ -1,5 +1,5 @@
-#ifndef RESOURCE_MANAGER_H
-#define RESOURCE_MANAGER_H
+#ifndef ANKI_RESOURCE_RESOURCE_MANAGER_H
+#define ANKI_RESOURCE_RESOURCE_MANAGER_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>

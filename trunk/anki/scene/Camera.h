@@ -1,5 +1,5 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef ANKI_SCENE_CAMERA_H
+#define ANKI_SCENE_CAMERA_H
 
 #include "anki/collision/Collision.h"
 #include "anki/scene/SceneNode.h"

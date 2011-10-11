@@ -26,7 +26,7 @@ void Mesh::load(const char* filename)
 			meshData.getVertCoords().size() < 1 ||
 			meshData.getVertNormals().size() < 1)
 		{
-			throw EXCEPTION("Empty one of the required vectors");
+			throw ANKI_EXCEPTION("Empty one of the required vectors");
 		}
 
 		createVbos(meshData);
@@ -35,7 +35,7 @@ void Mesh::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Mesh \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Mesh \"" + filename + "\": " + e.what());
 	}
 }
 

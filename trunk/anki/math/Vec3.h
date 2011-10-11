@@ -1,5 +1,5 @@
-#ifndef VEC3_H
-#define VEC3_H
+#ifndef ANKI_MATH_VEC3_H
+#define ANKI_MATH_VEC3_H
 
 #include "anki/math/MathCommonIncludes.h"
 

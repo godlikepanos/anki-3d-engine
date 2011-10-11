@@ -1,10 +1,10 @@
-#ifndef RIGID_BODY_H
-#define RIGID_BODY_H
+#ifndef ANKI_PHYSICS_RIGID_BODY_H
+#define ANKI_PHYSICS_RIGID_BODY_H
 
-#include <boost/scoped_ptr.hpp>
-#include <btBulletDynamicsCommon.h>
-#include <btBulletCollisionCommon.h>
 #include "anki/math/Math.h"
+#include <boost/scoped_ptr.hpp>
+#include <bullet/btBulletDynamicsCommon.h>
+#include <bullet/btBulletCollisionCommon.h>
 
 
 class SceneNode;

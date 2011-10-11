@@ -1,5 +1,5 @@
-#ifndef MODEL_PATCH_H
-#define MODEL_PATCH_H
+#ifndef ANKI_RESOURCE_MODEL_PATCH_H
+#define ANKI_RESOURCE_MODEL_PATCH_H
 
 #include "anki/resource/RsrcPtr.h"
 

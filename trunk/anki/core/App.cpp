@@ -102,7 +102,7 @@ void App::initWindow()
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		throw EXCEPTION("Failed to init SDL_VIDEO");
+		throw ANKI_EXCEPTION("Failed to init SDL_VIDEO");
 	}
 
 	// print driver name
@@ -127,7 +127,7 @@ void App::initWindow()
 
 	if(!windowId)
 	{
-		throw EXCEPTION("Cannot create main window");
+		throw ANKI_EXCEPTION("Cannot create main window");
 	}
 
 	glContext = SDL_GL_CreateContext(windowId);

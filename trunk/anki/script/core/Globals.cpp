@@ -1,4 +1,4 @@
-#include "anki/script/ScriptCommon.h"
+#include "anki/script/Common.h"
 #include "anki/core/Globals.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/MainRenderer.h"

@@ -41,7 +41,7 @@ MaterialRuntimeVariable::ConstPtrRsrcPtrTexture&
 	MaterialRuntimeVariable::getValue<
 	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>()
 {
-	throw EXCEPTION("You shouldn't call this getter");
+	throw ANKI_EXCEPTION("You shouldn't call this getter");
 	return boost::get<ConstPtrRsrcPtrTexture>(data);
 }
 
@@ -51,7 +51,7 @@ void MaterialRuntimeVariable::setValue<
 	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
 	const ConstPtrRsrcPtrTexture& v)
 {
-	throw EXCEPTION("You shouldn't call this setter");
+	throw ANKI_EXCEPTION("You shouldn't call this setter");
 	boost::get<ConstPtrRsrcPtrTexture>(data) = v;
 }
 

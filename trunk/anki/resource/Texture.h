@@ -1,5 +1,5 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#ifndef ANKI_RESOURCE_TEXTURE_H
+#define ANKI_RESOURCE_TEXTURE_H
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"

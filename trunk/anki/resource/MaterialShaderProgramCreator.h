@@ -1,5 +1,5 @@
-#ifndef MATERIAL_SHADER_PROGRAM_CREATOR_H
-#define MATERIAL_SHADER_PROGRAM_CREATOR_H
+#ifndef ANKI_RESOURCE_MATERIAL_SHADER_PROGRAM_CREATOR_H
+#define ANKI_RESOURCE_MATERIAL_SHADER_PROGRAM_CREATOR_H
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/scanner/Forward.h"
@@ -115,7 +115,7 @@ class MaterialShaderProgramCreator
 		/// Used by parseShaderFileForFunctionDefinitions to skip preprocessor
 		/// definitions. Takes into account the backslashes. For example for
 		/// @code
-		/// #define lala \\ _
+		/// #define ANKI_RESOURCE_lala \\ _
 		/// 	10
 		/// @endcode
 		/// it skips from define to 10

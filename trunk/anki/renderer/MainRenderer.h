@@ -1,5 +1,5 @@
-#ifndef MAIN_RENDERER_H
-#define MAIN_RENDERER_H
+#ifndef ANKI_RENDERER_MAIN_RENDERER_H
+#define ANKI_RENDERER_MAIN_RENDERER_H
 
 #include "anki/renderer/Renderer.h"
 #include <boost/scoped_ptr.hpp>

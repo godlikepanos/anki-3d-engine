@@ -1,5 +1,5 @@
-#ifndef MS_H
-#define MS_H
+#ifndef ANKI_RENDERER_MS_H
+#define ANKI_RENDERER_MS_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/Texture.h"

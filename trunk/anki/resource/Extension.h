@@ -1,5 +1,5 @@
-#ifndef EXTENSION_H
-#define EXTENSION_H
+#ifndef ANKI_RESOURCE_EXTENSION_H
+#define ANKI_RESOURCE_EXTENSION_H
 
 #include "anki/util/StdTypes.h"
 

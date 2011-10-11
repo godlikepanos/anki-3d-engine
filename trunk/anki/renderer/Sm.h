@@ -1,5 +1,5 @@
-#ifndef SM_H
-#define SM_H
+#ifndef ANKI_RENDERER_SM_H
+#define ANKI_RENDERER_SM_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"

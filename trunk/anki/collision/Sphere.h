@@ -1,5 +1,5 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef ANKI_COLLISION_SPHERE_H
+#define ANKI_COLLISION_SPHERE_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
@@ -58,6 +58,12 @@ class Sphere: public CollisionShape
 			radius = x;
 		}
 		/// @}
+
+		/// @copydoc CollisionShape::accept
+		void accept(Visitor& v)
+		{
+			v.visit(*this);
+		}
 
 		Sphere getTransformed(const Transform& transform) const;
 

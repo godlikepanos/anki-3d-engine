@@ -1,5 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef ANKI_INPUT_INPUT_H
+#define ANKI_INPUT_INPUT_H
 
 #include "anki/math/Math.h"
 #include <SDL/SDL_scancode.h>

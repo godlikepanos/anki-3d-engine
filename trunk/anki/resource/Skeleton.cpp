@@ -13,7 +13,7 @@ void Skeleton::load(const char* filename)
 	fs.open(filename);
 	if(!fs.is_open())
 	{
-		throw EXCEPTION("Cannot open \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot open \"" + filename + "\"");
 	}
 
 	try
@@ -25,7 +25,7 @@ void Skeleton::load(const char* filename)
 		bs.read(magic, 8);
 		if(bs.fail() || memcmp(magic, "ANKISKEL", 8))
 		{
-			throw EXCEPTION("Incorrect magic word");
+			throw ANKI_EXCEPTION("Incorrect magic word");
 		}
 
 		// Bones num
@@ -72,7 +72,7 @@ void Skeleton::load(const char* filename)
 			}
 			else if(parentId >= bonesNum)
 			{
-				throw EXCEPTION("Incorrect parent id");
+				throw ANKI_EXCEPTION("Incorrect parent id");
 			}
 			else
 			{
@@ -84,7 +84,7 @@ void Skeleton::load(const char* filename)
 
 			if(childsNum > Bone::MAX_CHILDS_PER_BONE)
 			{
-				throw EXCEPTION("Children for bone \"" + bone.getName() +
+				throw ANKI_EXCEPTION("Children for bone \"" + bone.getName() +
 					"\" exceed the max");
 			}
 
@@ -96,7 +96,7 @@ void Skeleton::load(const char* filename)
 
 				if(id >= bonesNum)
 				{
-					throw EXCEPTION("Incorrect child id");
+					throw ANKI_EXCEPTION("Incorrect child id");
 				}
 
 				bone.childs[j] = &bones[id];
@@ -105,6 +105,6 @@ void Skeleton::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Skeleton \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Skeleton \"" + filename + "\": " + e.what());
 	}
 }

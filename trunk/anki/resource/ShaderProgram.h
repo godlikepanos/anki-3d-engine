@@ -1,5 +1,5 @@
-#ifndef SHADER_PROGRAM_SHADER_PROGRAM_H
-#define SHADER_PROGRAM_SHADER_PROGRAM_H
+#ifndef ANKI_RESOURCE_SHADER_PROGRAM_SHADER_PROGRAM_H
+#define ANKI_RESOURCE_SHADER_PROGRAM_SHADER_PROGRAM_H
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/Assert.h"

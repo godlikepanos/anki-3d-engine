@@ -1,5 +1,5 @@
-#ifndef OBB_H
-#define OBB_H
+#ifndef ANKI_COLLISION_OBB_H
+#define ANKI_COLLISION_OBB_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
@@ -63,6 +63,12 @@ class Obb: public CollisionShape
 			extends = x;
 		}
 		/// @}
+
+		/// @copydoc CollisionShape::accept
+		void accept(Visitor& v)
+		{
+			v.visit(*this);
+		}
 
 		Obb getTransformed(const Transform& transform) const;
 

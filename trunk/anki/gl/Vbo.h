@@ -1,5 +1,5 @@
-#ifndef VBO_H
-#define VBO_H
+#ifndef ANKI_GL_VBO_H
+#define ANKI_GL_VBO_H
 
 #include "anki/gl/BufferObject.h"
 

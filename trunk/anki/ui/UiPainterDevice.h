@@ -1,5 +1,5 @@
-#ifndef UI_PAINTER_DEVICE_H
-#define UI_PAINTER_DEVICE_H
+#ifndef ANKI_UI_UI_PAINTER_DEVICE_H
+#define ANKI_UI_UI_PAINTER_DEVICE_H
 
 #include "anki/gl/Fbo.h"
 #include "anki/math/Math.h"

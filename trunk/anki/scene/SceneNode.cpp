@@ -118,7 +118,7 @@ void SceneNode::removeChild(SceneNode& child)
 
 	if(it == children.end())
 	{
-		throw EXCEPTION("Child not found");
+		throw ANKI_EXCEPTION("Child not found");
 	}
 
 	children.erase(it);

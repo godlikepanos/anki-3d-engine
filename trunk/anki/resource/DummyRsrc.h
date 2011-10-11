@@ -1,5 +1,5 @@
-#ifndef DUMMY_RSRC_H
-#define DUMMY_RSRC_H
+#ifndef ANKI_RESOURCE_DUMMY_RSRC_H
+#define ANKI_RESOURCE_DUMMY_RSRC_H
 
 
 /// A dummy resource for the unit tests of the ResourceManager

@@ -1,5 +1,5 @@
-#ifndef IS_H
-#define IS_H
+#ifndef ANKI_RENDERER_IS_H
+#define ANKI_RENDERER_IS_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"

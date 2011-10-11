@@ -36,7 +36,7 @@ void Ez::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create EarlyZ FBO");
+		throw ANKI_EXCEPTION("Cannot create EarlyZ FBO");
 	}
 }
 

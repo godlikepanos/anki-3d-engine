@@ -1,5 +1,5 @@
-#ifndef HDR_H
-#define HDR_H
+#ifndef ANKI_RENDERER_HDR_H
+#define ANKI_RENDERER_HDR_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"

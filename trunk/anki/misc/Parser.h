@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef ANKI_MISC_PARSER_H
+#define ANKI_MISC_PARSER_H
 
 #include <boost/lexical_cast.hpp>
 #include "anki/util/Exception.h"
@@ -12,7 +12,7 @@ namespace parser {
 
 /// Parser macros
 #define PARSER_EXCEPTION(x) \
-	EXCEPTION("Parser exception (" + scanner.getScriptName() + ':' + \
+	ANKI_EXCEPTION("Parser exception (" + scanner.getScriptName() + ':' + \
 	boost::lexical_cast<std::string>(scanner.getLineNumber()) + "): " + x)
 
 #define PARSER_EXCEPTION_EXPECTED(x) \

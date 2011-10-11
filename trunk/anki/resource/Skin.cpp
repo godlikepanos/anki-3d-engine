@@ -52,7 +52,7 @@ void Skin::load(const char* filename)
 			{
 				if(v.first != "skelAnim")
 				{
-					throw EXCEPTION("Expected skelAnim and no " + v.first);
+					throw ANKI_EXCEPTION("Expected skelAnim and no " + v.first);
 				}
 
 				const std::string& name = v.second.data();
@@ -72,7 +72,7 @@ void Skin::load(const char* filename)
 			if(skelAnim->getBoneAnimations().size() !=
 				skeleton->getBones().size())
 			{
-				throw EXCEPTION("Skeleton animation \"" +
+				throw ANKI_EXCEPTION("Skeleton animation \"" +
 					skelAnim.getRsrcName() + "\" and skeleton \"" +
 					skeleton.getRsrcName() + "\" dont have equal bone count");
 			}
@@ -83,12 +83,12 @@ void Skin::load(const char* filename)
 		{
 			if(!patch.supportsHwSkinning())
 			{
-				throw EXCEPTION("Mesh does not support HW skinning");
+				throw ANKI_EXCEPTION("Mesh does not support HW skinning");
 			}
 		}
 	  }
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Skin \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Skin \"" + filename + "\": " + e.what());
 	}
 }

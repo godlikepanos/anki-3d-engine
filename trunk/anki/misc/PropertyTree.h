@@ -1,5 +1,5 @@
-#ifndef PROPERTY_TREE_H
-#define PROPERTY_TREE_H
+#ifndef ANKI_MISC_PROPERTY_TREE_H
+#define ANKI_MISC_PROPERTY_TREE_H
 
 #include <boost/optional.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>

@@ -1,5 +1,5 @@
-#ifndef UI_FT_FONT_LOADER_H
-#define UI_FT_FONT_LOADER_H
+#ifndef ANKI_UI_UI_FT_FONT_LOADER_H
+#define ANKI_UI_UI_FT_FONT_LOADER_H
 
 #include "anki/util/StdTypes.h"
 #include "anki/math/Math.h"

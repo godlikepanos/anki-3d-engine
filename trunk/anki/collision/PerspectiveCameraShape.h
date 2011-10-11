@@ -1,5 +1,5 @@
-#ifndef PROJECTION_CAMERA_SHAPE_H
-#define PROJECTION_CAMERA_SHAPE_H
+#ifndef ANKI_COLLISION_PROJECTION_CAMERA_SHAPE_H
+#define ANKI_COLLISION_PROJECTION_CAMERA_SHAPE_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
@@ -24,6 +24,12 @@ class PerspectiveCameraShape: public CollisionShape
 			setAll(fovX, fovY, zNear, zFar, trf);
 		}
 
+		/// @copydoc CollisionShape::accept
+		void accept(Visitor& v)
+		{
+			v.visit(*this);
+		}
+
 		/// @copydoc CollisionShape::testPlane
 		float testPlane(const Plane& p) const;
 
@@ -32,7 +38,6 @@ class PerspectiveCameraShape: public CollisionShape
 		/// Set all
 		void setAll(float fovX, float fovY, float zNear,
 			float zFar, const Transform& trf);
-
 
 	private:
 		Vec3 eye; ///< The eye point

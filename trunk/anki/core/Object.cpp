@@ -62,7 +62,7 @@ void Object::removeChild(Object* child)
 
 	if(it == objChilds.end())
 	{
-		throw EXCEPTION("Internal error");
+		throw ANKI_EXCEPTION("Internal error");
 	}
 
 	objChilds.erase(it);

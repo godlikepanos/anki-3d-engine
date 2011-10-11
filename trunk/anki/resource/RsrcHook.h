@@ -1,5 +1,5 @@
-#ifndef RSRC_HOOK_H
-#define RSRC_HOOK_H
+#ifndef ANKI_RESOURCE_RSRC_HOOK_H
+#define ANKI_RESOURCE_RSRC_HOOK_H
 
 #include <string>
 

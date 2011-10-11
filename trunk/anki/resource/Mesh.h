@@ -1,5 +1,5 @@
-#ifndef MESH_H
-#define MESH_H
+#ifndef ANKI_RESOURCE_MESH_H
+#define ANKI_RESOURCE_MESH_H
 
 #include <boost/array.hpp>
 #include "anki/math/Math.h"

@@ -1,5 +1,5 @@
-#ifndef PARTICLE_H
-#define PARTICLE_H
+#ifndef ANKI_SCENE_PARTICLE_H
+#define ANKI_SCENE_PARTICLE_H
 
 #include <boost/scoped_ptr.hpp>
 #include "anki/scene/ModelNode.h"

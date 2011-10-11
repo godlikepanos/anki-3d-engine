@@ -81,7 +81,7 @@ void PhysDbgDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
 //==============================================================================
 void PhysDbgDrawer::reportErrorWarning(const char* warningString)
 {
-	throw EXCEPTION(warningString);
+	throw ANKI_EXCEPTION(warningString);
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef MODEL_MODEL_H
-#define MODEL_MODEL_H
+#ifndef ANKI_RESOURCE_MODEL_MODEL_H
+#define ANKI_RESOURCE_MODEL_MODEL_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "anki/resource/RsrcPtr.h"

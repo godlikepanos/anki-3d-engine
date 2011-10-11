@@ -21,7 +21,7 @@ void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		throw EXCEPTION("Cannot read info header");
+		throw ANKI_EXCEPTION("Cannot read info header");
 	}
 
 	width  = header6[1] * 256 + header6[0];
@@ -30,7 +30,7 @@ void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
-		throw EXCEPTION("Invalid image information");
+		throw ANKI_EXCEPTION("Invalid image information");
 	}
 
 	// read the data
@@ -41,7 +41,7 @@ void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 	fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
 	if(fs.gcount() != imageSize)
 	{
-		throw EXCEPTION("Cannot read image data");
+		throw ANKI_EXCEPTION("Cannot read image data");
 	}
 
 	// swap red with blue
@@ -63,7 +63,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
-		throw EXCEPTION("Cannot read info header");
+		throw ANKI_EXCEPTION("Cannot read info header");
 	}
 
 	width  = header6[1] * 256 + header6[0];
@@ -72,7 +72,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
-		throw EXCEPTION("Invalid texture information");
+		throw ANKI_EXCEPTION("Invalid texture information");
 	}
 
 
@@ -92,7 +92,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 		fs.read((char*)&chunkheader, sizeof(unsigned char));
 		if(fs.gcount() != sizeof(unsigned char))
 		{
-			throw EXCEPTION("Cannot read RLE header");
+			throw ANKI_EXCEPTION("Cannot read RLE header");
 		}
 
 		if(chunkheader < 128)
@@ -103,7 +103,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 				fs.read((char*)&colorbuffer[0], bytesPerPxl);
 				if(fs.gcount() != bytesPerPxl)
 				{
-					throw EXCEPTION("Cannot read image data");
+					throw ANKI_EXCEPTION("Cannot read image data");
 				}
 
 				data[currentbyte		] = colorbuffer[2];
@@ -120,7 +120,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 
 				if(currentpixel > pixelcount)
 				{
-					throw EXCEPTION("Too many pixels read");
+					throw ANKI_EXCEPTION("Too many pixels read");
 				}
 			}
 		}
@@ -130,7 +130,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 			fs.read((char*)&colorbuffer[0], bytesPerPxl);
 			if(fs.gcount() != bytesPerPxl)
 			{
-				throw EXCEPTION("Cannot read from file");
+				throw ANKI_EXCEPTION("Cannot read from file");
 			}
 
 			for(int counter = 0; counter < chunkheader; counter++)
@@ -149,7 +149,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 
 				if(currentpixel > pixelcount)
 				{
-					throw EXCEPTION("Too many pixels read");
+					throw ANKI_EXCEPTION("Too many pixels read");
 				}
 			}
 		}
@@ -169,14 +169,14 @@ void Image::loadTga(const char* filename)
 
 	if(!fs.is_open())
 	{
-		throw EXCEPTION("Cannot open file");
+		throw ANKI_EXCEPTION("Cannot open file");
 	}
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
 	if(fs.gcount() != sizeof(myTgaHeader))
 	{
 		fs.close();
-		throw EXCEPTION("Cannot read file header");
+		throw ANKI_EXCEPTION("Cannot read file header");
 	}
 
 	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
@@ -190,7 +190,7 @@ void Image::loadTga(const char* filename)
 	}
 	else
 	{
-		throw EXCEPTION("Invalid image header");
+		throw ANKI_EXCEPTION("Invalid image header");
 	}
 
 	if(bpp == 32)
@@ -203,7 +203,7 @@ void Image::loadTga(const char* filename)
 	}
 	else
 	{
-		throw EXCEPTION("Invalid bps");
+		throw ANKI_EXCEPTION("Invalid bps");
 	}
 
 	fs.close();
@@ -264,7 +264,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!pngPtr)
 	{
-		throw EXCEPTION("png_create_read_struct failed");
+		throw ANKI_EXCEPTION("png_create_read_struct failed");
 		goto cleanup;
 	}
 
@@ -330,7 +330,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 				// do nothing
 				break;
 			default:
-				throw EXCEPTION("Forgot to handle a color type");
+				throw ANKI_EXCEPTION("Forgot to handle a color type");
 				break;
 		}
 
@@ -448,7 +448,7 @@ void Image::load(const char* filename)
 			std::string err;
 			if(!loadPng(filename, err))
 			{
-				throw EXCEPTION(err);
+				throw ANKI_EXCEPTION(err);
 			}
 		}
 		else if(ext == ".dds")
@@ -457,12 +457,12 @@ void Image::load(const char* filename)
 		}
 		else
 		{
-			throw EXCEPTION("Unsupported extension");
+			throw ANKI_EXCEPTION("Unsupported extension");
 		}
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
 }
 
@@ -628,7 +628,7 @@ void Image::loadDds(const char* filename)
 
 	if(!in.is_open())
 	{
-		throw EXCEPTION("Cannot open file");
+		throw ANKI_EXCEPTION("Cannot open file");
 	}
 
 	//
@@ -641,7 +641,7 @@ void Image::loadDds(const char* filename)
 		!(hdr.data.dwFlags & DDSD_PIXELFORMAT) ||
 		!(hdr.data.dwFlags & DDSD_CAPS))
 	{
-		throw EXCEPTION("Incorrect DDS header");
+		throw ANKI_EXCEPTION("Incorrect DDS header");
 	}
 
 	//
@@ -666,7 +666,7 @@ void Image::loadDds(const char* filename)
 	}
 	else
 	{
-		throw EXCEPTION("Unsupported DDS format");
+		throw ANKI_EXCEPTION("Unsupported DDS format");
 	}
 
 	//
@@ -676,7 +676,7 @@ void Image::loadDds(const char* filename)
 		hdr.data.dwMipMapCount : 1;
 	if(mipMapCount != 1)
 	{
-		throw EXCEPTION("Currently mipmaps are not supported in DDS");
+		throw ANKI_EXCEPTION("Currently mipmaps are not supported in DDS");
 	}
 
 	uint x = hdr.data.dwWidth;

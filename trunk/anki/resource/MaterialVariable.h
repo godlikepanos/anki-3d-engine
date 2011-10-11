@@ -1,5 +1,5 @@
-#ifndef MATERIAL_VARIABLE_H
-#define MATERIAL_VARIABLE_H
+#ifndef ANKI_RESOURCE_MATERIAL_VARIABLE_H
+#define ANKI_RESOURCE_MATERIAL_VARIABLE_H
 
 #include "anki/resource/MaterialCommon.h"
 #include "anki/resource/ShaderProgramVariable.h"

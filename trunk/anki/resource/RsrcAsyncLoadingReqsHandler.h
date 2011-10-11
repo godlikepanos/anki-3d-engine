@@ -1,5 +1,5 @@
-#ifndef RSRC_ASYNC_LOADING_REQS_HANDLER_H
-#define RSRC_ASYNC_LOADING_REQS_HANDLER_H
+#ifndef ANKI_RESOURCE_RSRC_ASYNC_LOADING_REQS_HANDLER_H
+#define ANKI_RESOURCE_RSRC_ASYNC_LOADING_REQS_HANDLER_H
 
 #include <string>
 #include <boost/ptr_container/ptr_list.hpp>

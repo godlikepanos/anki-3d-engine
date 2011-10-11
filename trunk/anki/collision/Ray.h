@@ -1,5 +1,5 @@
-#ifndef RAY_H
-#define RAY_H
+#ifndef ANKI_COLLISION_RAY_H
+#define ANKI_COLLISION_RAY_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
@@ -57,6 +57,12 @@ class Ray: public CollisionShape
 			dir = x;
 		}
 		/// @}
+
+		/// @copydoc CollisionShape::accept
+		void accept(Visitor& v)
+		{
+			v.visit(*this);
+		}
 
 		Ray getTransformed(const Transform& transform) const;
 

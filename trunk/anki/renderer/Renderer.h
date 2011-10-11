@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef ANKI_RENDERER_RENDERER_H
+#define ANKI_RENDERER_RENDERER_H
 
 #include "anki/math/Math.h"
 #include "anki/gl/Fbo.h"

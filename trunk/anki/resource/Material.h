@@ -1,5 +1,5 @@
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#ifndef ANKI_RESOURCE_MATERIAL_H
+#define ANKI_RESOURCE_MATERIAL_H
 
 #include "anki/resource/MaterialUserVariable.h"
 #include "anki/resource/MaterialBuildinVariable.h"

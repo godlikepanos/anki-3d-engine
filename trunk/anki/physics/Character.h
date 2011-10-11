@@ -1,5 +1,5 @@
-#ifndef CHARACTER_H
-#define CHARACTER_H
+#ifndef ANKI_PHYSICS_CHARACTER_H
+#define ANKI_PHYSICS_CHARACTER_H
 
 #include "anki/math/Math.h"
 #include "anki/core/Object.h"

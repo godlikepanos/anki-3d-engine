@@ -43,7 +43,7 @@ std::string readFile(const char* filename)
 	std::ifstream file(filename);
 	if (!file.is_open())
 	{
-		throw EXCEPTION(std::string("Cannot open file \"") + filename + "\"");
+		throw ANKI_EXCEPTION(std::string("Cannot open file \"") + filename + "\"");
 	}
 
 	return std::string((std::istreambuf_iterator<char>(file)),
@@ -60,7 +60,7 @@ std::vector<std::string> getFileLines(const char* filename)
 	std::ifstream ifs(filename);
 	if(!ifs.is_open())
 	{
-		throw EXCEPTION("Cannot open file \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot open file \"" + filename + "\"");
 	}
 
   std::string temp;

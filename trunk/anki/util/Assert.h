@@ -1,5 +1,5 @@
-#ifndef ASSERT_H
-#define ASSERT_H
+#ifndef ANKI_UTIL_ASSERT_H
+#define ANKI_UTIL_ASSERT_H
 
 #include <iostream>
 #include <cstdlib>

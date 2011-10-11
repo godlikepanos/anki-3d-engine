@@ -39,7 +39,7 @@ void Bs::createFbo()
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Failed to create blending stage FBO");
+		throw ANKI_EXCEPTION("Failed to create blending stage FBO");
 	}
 }
 
@@ -67,7 +67,7 @@ void Bs::createRefractFbo()
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Failed to create blending stage refract FBO");
+		throw ANKI_EXCEPTION("Failed to create blending stage refract FBO");
 	}
 }
 

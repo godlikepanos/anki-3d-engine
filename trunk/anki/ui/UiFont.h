@@ -1,5 +1,5 @@
-#ifndef UI_FONT_H
-#define UI_FONT_H
+#ifndef ANKI_UI_UI_FONT_H
+#define ANKI_UI_UI_FONT_H
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>

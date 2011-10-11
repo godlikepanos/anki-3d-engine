@@ -1,5 +1,5 @@
-#ifndef PATH_H
-#define PATH_H
+#ifndef ANKI_RESOURCE_PATH_H
+#define ANKI_RESOURCE_PATH_H
 
 #include "anki/math/Math.h"
 

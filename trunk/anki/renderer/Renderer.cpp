@@ -40,7 +40,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	// a few sanity checks
 	if(width < 10 || height < 10)
 	{
-		throw EXCEPTION("Incorrect sizes");
+		throw ANKI_EXCEPTION("Incorrect sizes");
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!

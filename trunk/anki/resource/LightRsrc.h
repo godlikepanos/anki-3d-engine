@@ -1,5 +1,5 @@
-#ifndef LIGHT_PROPS_H
-#define LIGHT_PROPS_H
+#ifndef ANKI_RESOURCE_LIGHT_PROPS_H
+#define ANKI_RESOURCE_LIGHT_PROPS_H
 
 #include "anki/math/Math.h"
 #include "anki/resource/RsrcPtr.h"

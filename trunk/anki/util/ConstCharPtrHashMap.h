@@ -1,5 +1,5 @@
-#ifndef CONST_CHAR_PTR_HASH_MAP_H
-#define CONST_CHAR_PTR_HASH_MAP_H
+#ifndef ANKI_UTIL_CONST_CHAR_PTR_HASH_MAP_H
+#define ANKI_UTIL_CONST_CHAR_PTR_HASH_MAP_H
 
 #include <boost/unordered_map.hpp>
 #include <cstring>

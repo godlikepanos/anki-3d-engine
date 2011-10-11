@@ -1,5 +1,5 @@
-#ifndef VISIBILITY_INFO_H
-#define VISIBILITY_INFO_H
+#ifndef ANKI_SCENE_VISIBILITY_INFO_H
+#define ANKI_SCENE_VISIBILITY_INFO_H
 
 #include <deque>
 #include <vector>
