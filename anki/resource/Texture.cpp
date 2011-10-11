@@ -51,7 +51,7 @@ void Texture::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
 }
 
@@ -90,7 +90,7 @@ void Texture::load(const Image& img)
 			break;
 
 		default:
-			throw EXCEPTION("See file: " +
+			throw ANKI_EXCEPTION("See file: " +
 				boost::lexical_cast<std::string>(img.getColorType()));
 	}
 
@@ -138,12 +138,12 @@ void Texture::create(const Initializer& init_)
 	//
 	if(isLoaded())
 	{
-		throw EXCEPTION("Already loaded");
+		throw ANKI_EXCEPTION("Already loaded");
 	}
 
 	if(init.internalFormat <= 4)
 	{
-		throw EXCEPTION("Deprecated internal format");
+		throw ANKI_EXCEPTION("Deprecated internal format");
 	}
 
 	//
@@ -176,7 +176,7 @@ void Texture::create(const Initializer& init_)
 			break;
 
 		default:
-			throw EXCEPTION("Incorrect data compression value");
+			throw ANKI_EXCEPTION("Incorrect data compression value");
 	}
 
 	setRepeat(init.repeat);
@@ -213,7 +213,7 @@ void Texture::bind(uint unit) const
 {
 	if(unit >= static_cast<uint>(textureUnitsNum))
 	{
-		throw EXCEPTION("Max tex units passed");
+		throw ANKI_EXCEPTION("Max tex units passed");
 	}
 
 	glActiveTexture(GL_TEXTURE0 + unit);

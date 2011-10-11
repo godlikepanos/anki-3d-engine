@@ -1,5 +1,5 @@
-#ifndef PARALLEL_MANAGER_H
-#define PARALLEL_MANAGER_H
+#ifndef ANKI_CORE_PARALLEL_MANAGER_H
+#define ANKI_CORE_PARALLEL_MANAGER_H
 
 #include "anki/core/ParallelJob.h"
 #include <boost/thread.hpp>

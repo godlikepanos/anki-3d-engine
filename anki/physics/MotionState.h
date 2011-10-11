@@ -1,7 +1,7 @@
-#ifndef MOTION_STATE_H
-#define MOTION_STATE_H
+#ifndef ANKI_PHYSICS_MOTION_STATE_H
+#define ANKI_PHYSICS_MOTION_STATE_H
 
-#include <LinearMath/btMotionState.h>
+#include <bullet/LinearMath/btMotionState.h>
 #include "anki/scene/SceneNode.h"
 
 

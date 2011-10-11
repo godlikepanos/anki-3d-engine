@@ -21,7 +21,7 @@ void UiFtFontLoader::getAllGlyphs()
 		FT_Error error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_DEFAULT);
 		if(error)
 		{
-			throw EXCEPTION("FT_Load_Glyph failed");
+			throw ANKI_EXCEPTION("FT_Load_Glyph failed");
 		}
 
 		glyphs[n].metrics = face->glyph->metrics;
@@ -29,7 +29,7 @@ void UiFtFontLoader::getAllGlyphs()
 		error = FT_Get_Glyph(face->glyph, &glyphs[n].glyph);
 		if(error)
 		{
-			throw EXCEPTION("FT_Get_Glyph failed");
+			throw ANKI_EXCEPTION("FT_Get_Glyph failed");
 		}
 	}
 
@@ -118,21 +118,21 @@ void UiFtFontLoader::createImage(const char* filename,
 	error = FT_Init_FreeType(&library);
 	if(error)
 	{
-		throw EXCEPTION("FT_Init_FreeType failed");
+		throw ANKI_EXCEPTION("FT_Init_FreeType failed");
 	}
 
 	// Create face and set glyph size
 	error = FT_New_Face(library, filename, 0, &face);
 	if(error)
 	{
-		throw EXCEPTION("FT_New_Face failed with filename \"" + filename +
+		throw ANKI_EXCEPTION("FT_New_Face failed with filename \"" + filename +
 			"\"");
 	}
 
 	error = FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
 	if(error)
 	{
-		throw EXCEPTION("FT_Set_Pixel_Sizes failed");
+		throw ANKI_EXCEPTION("FT_Set_Pixel_Sizes failed");
 	}
 
 	// Get all glyphs

@@ -6,7 +6,7 @@
 static const char* errMsg = "Incorrect or missing value ";
 
 
-#define PE_EXCEPTION(x) EXCEPTION("Particle emmiter: " + x)
+#define PE_EXCEPTION(x) ANKI_EXCEPTION("Particle emmiter: " + x)
 
 
 //==============================================================================

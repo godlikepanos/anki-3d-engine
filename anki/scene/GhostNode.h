@@ -1,5 +1,5 @@
-#ifndef GHOST_NODE_H
-#define GHOST_NODE_H
+#ifndef ANKI_SCENE_GHOST_NODE_H
+#define ANKI_SCENE_GHOST_NODE_H
 
 #include "anki/scene/SceneNode.h"
 

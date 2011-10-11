@@ -20,7 +20,7 @@ void MeshData::load(const char* filename)
 
 		if(!file.is_open())
 		{
-			throw EXCEPTION("Cannot open file \"" + filename + "\"");
+			throw ANKI_EXCEPTION("Cannot open file \"" + filename + "\"");
 		}
 
 		BinaryStream bs(file.rdbuf());
@@ -30,7 +30,7 @@ void MeshData::load(const char* filename)
 		bs.read(magic, 8);
 		if(bs.fail() || memcmp(magic, "ANKIMESH", 8))
 		{
-			throw EXCEPTION("Incorrect magic word");
+			throw ANKI_EXCEPTION("Incorrect magic word");
 		}
 
 		// Mesh name
@@ -63,7 +63,7 @@ void MeshData::load(const char* filename)
 				// a sanity check
 				if(tri.vertIds[j] >= vertCoords.size())
 				{
-					throw EXCEPTION("Vert index out of bounds");
+					throw ANKI_EXCEPTION("Vert index out of bounds");
 				}
 			}
 		}
@@ -94,14 +94,14 @@ void MeshData::load(const char* filename)
 			// we treat as error if one vert doesnt have a bone
 			if(boneConnections < 1)
 			{
-				throw EXCEPTION("Vert sould have at least one bone");
+				throw ANKI_EXCEPTION("Vert sould have at least one bone");
 			}
 
 			// and here is another possible error
 			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
 				uint tmp = VertexWeight::MAX_BONES_PER_VERT;
-				throw EXCEPTION("Cannot have more than " +
+				throw ANKI_EXCEPTION("Cannot have more than " +
 					boost::lexical_cast<std::string>(tmp) +
 					" bones per vertex");
 			}
@@ -124,7 +124,7 @@ void MeshData::load(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("File \"" + filename + "\": " + e.what());
 	}
 }
 
@@ -137,16 +137,17 @@ void MeshData::doPostLoad()
 	// Sanity checks
 	if(vertCoords.size() < 1 || tris.size() < 1)
 	{
-		throw EXCEPTION("Vert coords and tris must be filled");
+		throw ANKI_EXCEPTION("Vert coords and tris must be filled");
 	}
 	if(texCoords.size() != 0 && texCoords.size() != vertCoords.size())
 	{
-		throw EXCEPTION("Tex coords num must be zero or equal to the vertex "
+		throw ANKI_EXCEPTION("Tex coords num must be "
+			"zero or equal to the vertex "
 			"coords num");
 	}
 	if(vertWeights.size() != 0 && vertWeights.size() != vertCoords.size())
 	{
-		throw EXCEPTION("Vert weights num must be zero or equal to the "
+		throw ANKI_EXCEPTION("Vert weights num must be zero or equal to the "
 			"vertex coords num");
 	}
 

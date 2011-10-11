@@ -1,5 +1,5 @@
-#ifndef SINGLETON_H
-#define SINGLETON_H
+#ifndef ANKI_UTIL_SINGLETON_H
+#define ANKI_UTIL_SINGLETON_H
 
 #ifndef NULL
 #	define NULL 0

@@ -1,5 +1,5 @@
-#ifndef MATERIAL_RUNTIME_H
-#define MATERIAL_RUNTIME_H
+#ifndef ANKI_SCENE_MATERIAL_RUNTIME_H
+#define ANKI_SCENE_MATERIAL_RUNTIME_H
 
 #include "anki/resource/MaterialProperties.h"
 #include "anki/util/ConstCharPtrHashMap.h"

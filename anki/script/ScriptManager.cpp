@@ -2,7 +2,7 @@
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 #include "anki/core/Globals.h"
-#include "anki/script/ScriptCommon.h"
+#include "anki/script/Common.h"
 #include <Python.h>
 
 
@@ -79,7 +79,7 @@ void ScriptManager::execScript(const char* script, const char* scriptName)
 	catch(error_already_set)
 	{
 		PyErr_Print();
-		throw EXCEPTION("Script \"" + scriptName + "\" failed with error");
+		throw ANKI_EXCEPTION("Script \"" + scriptName + "\" failed with error");
 	}
 }
 

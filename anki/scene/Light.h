@@ -1,5 +1,5 @@
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef ANKI_SCENE_LIGHT_H
+#define ANKI_SCENE_LIGHT_H
 
 #include "anki/resource/Texture.h"
 #include "anki/scene/SceneNode.h"

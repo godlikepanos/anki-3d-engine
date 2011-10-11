@@ -1,5 +1,5 @@
-#ifndef SKIN_H
-#define SKIN_H
+#ifndef ANKI_RESOURCE_SKIN_H
+#define ANKI_RESOURCE_SKIN_H
 
 #include "anki/resource/RsrcPtr.h"
 #include "anki/resource/Model.h"

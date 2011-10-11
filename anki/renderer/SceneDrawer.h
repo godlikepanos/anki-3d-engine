@@ -1,5 +1,5 @@
-#ifndef SCENE_DRAWER_H
-#define SCENE_DRAWER_H
+#ifndef ANKI_RENDERER_SCENE_DRAWER_H
+#define ANKI_RENDERER_SCENE_DRAWER_H
 
 #include "anki/math/Math.h"
 #include "anki/resource/MaterialCommon.h"

@@ -1,5 +1,5 @@
-#ifndef RENDERABLE_NODE_H
-#define RENDERABLE_NODE_H
+#ifndef ANKI_SCENE_RENDERABLE_NODE_H
+#define ANKI_SCENE_RENDERABLE_NODE_H
 
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/MaterialCommon.h"

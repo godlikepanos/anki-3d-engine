@@ -1,5 +1,5 @@
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef ANKI_RESOURCE_IMAGE_H
+#define ANKI_RESOURCE_IMAGE_H
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Util.h"

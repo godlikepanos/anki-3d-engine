@@ -1,5 +1,5 @@
-#ifndef GL_STATE_MACHINE_H
-#define GL_STATE_MACHINE_H
+#ifndef ANKI_GL_GL_STATE_MACHINE_H
+#define ANKI_GL_GL_STATE_MACHINE_H
 
 #include <GL/glew.h>
 #include <boost/unordered_map.hpp>

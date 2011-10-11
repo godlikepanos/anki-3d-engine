@@ -1,5 +1,5 @@
-#ifndef EZ_H
-#define EZ_H
+#ifndef ANKI_RENDERER_EZ_H
+#define ANKI_RENDERER_EZ_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"

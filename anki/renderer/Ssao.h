@@ -1,5 +1,5 @@
-#ifndef SSAO_H
-#define SSAO_H
+#ifndef ANKI_RENDERER_SSAO_H
+#define ANKI_RENDERER_SSAO_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"

@@ -67,7 +67,7 @@ void MainRenderer::initGl()
 	GLenum err = glewInit();
 	if(err != GLEW_OK)
 	{
-		throw EXCEPTION("GLEW initialization failed");
+		throw ANKI_EXCEPTION("GLEW initialization failed");
 	}
 
 	// Ignore re first error
@@ -106,7 +106,7 @@ void MainRenderer::initGl()
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("OpenGL initialization failed: " + e.what());
+		throw ANKI_EXCEPTION("OpenGL initialization failed: " + e.what());
 	}
 }
 
@@ -158,7 +158,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	fs.open(filename, std::ios::out | std::ios::binary);
 	if(!fs.is_open())
 	{
-		throw EXCEPTION("Cannot create screenshot. File \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot create screenshot. File \"" + filename + "\"");
 	}
 
 	// write headers
@@ -199,7 +199,7 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 
 	if(!outfile)
 	{
-		throw EXCEPTION("Cannot open file \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot open file \"" + filename + "\"");
 	}
 
 	// set jpg params
@@ -260,7 +260,7 @@ void MainRenderer::takeScreenshot(const char* filename)
 	}
 	else
 	{
-		throw EXCEPTION("File \"" + filename + "\": Unsupported extension");
+		throw ANKI_EXCEPTION("File \"" + filename + "\": Unsupported extension");
 	}
 	//INFO("Screenshot \"" << filename << "\" saved");
 }

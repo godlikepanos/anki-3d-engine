@@ -1,5 +1,5 @@
-#ifndef MATERIAL_RUNTIME_VARIABLE_H
-#define MATERIAL_RUNTIME_VARIABLE_H
+#ifndef ANKI_SCENE_MATERIAL_RUNTIME_VARIABLE_H
+#define ANKI_SCENE_MATERIAL_RUNTIME_VARIABLE_H
 
 #include "anki/math/Math.h"
 #include "anki/resource/RsrcPtr.h"

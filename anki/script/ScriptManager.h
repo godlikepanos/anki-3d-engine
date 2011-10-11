@@ -1,5 +1,5 @@
-#ifndef SCRIPT_MANAGER_H
-#define SCRIPT_MANAGER_H
+#ifndef ANKI_SCRIPT_SCRIPT_MANAGER_H
+#define ANKI_SCRIPT_SCRIPT_MANAGER_H
 
 #include <boost/python.hpp>
 

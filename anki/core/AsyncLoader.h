@@ -1,5 +1,5 @@
-#ifndef ASYNC_LOADER_H
-#define ASYNC_LOADER_H
+#ifndef ANKI_CORE_ASYNC_LOADER_H
+#define ANKI_CORE_ASYNC_LOADER_H
 
 #include <list>
 #include <string>

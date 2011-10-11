@@ -1,5 +1,5 @@
-#ifndef BUFFER_OBJECT_H
-#define BUFFER_OBJECT_H
+#ifndef ANKI_GL_BUFFER_OBJECT_H
+#define ANKI_GL_BUFFER_OBJECT_H
 
 #include <GL/glew.h>
 #include "anki/util/Assert.h"

@@ -1,12 +1,12 @@
-#ifndef EXCEPTION_H
-#define EXCEPTION_H
+#ifndef ANKI_UTIL_EXCEPTION_H
+#define ANKI_UTIL_EXCEPTION_H
 
 #include <exception>
 #include <string>
 
 
 /// Custom exception that takes file, line and function that throw it. Throw 
-/// it using the EXCEPTION macro
+/// it using the ANKI_EXCEPTION macro
 class Exception: public std::exception
 {
 	public:
@@ -43,7 +43,8 @@ class Exception: public std::exception
 // Macros                                                                      =
 //==============================================================================
 
-#define EXCEPTION(x) Exception(std::string() + x, __FILE__, __LINE__, __func__)
+#define ANKI_EXCEPTION(x) Exception(std::string() + x, \
+	__FILE__, __LINE__, __func__)
 
 
 #endif

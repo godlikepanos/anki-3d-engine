@@ -21,7 +21,7 @@ bool getBool(const boost::property_tree::ptree& pt, const char* tag)
 	}
 	else
 	{
-		throw EXCEPTION("Expected true or false for tag " + tag +
+		throw ANKI_EXCEPTION("Expected true or false for tag " + tag +
 			" and not " + str);
 	}
 }
@@ -46,7 +46,7 @@ extern boost::optional<bool> getBoolOptional(
 		}
 		else
 		{
-			throw EXCEPTION("Expected true or false for tag " + tag +
+			throw ANKI_EXCEPTION("Expected true or false for tag " + tag +
 				" and not " + str.get());
 		}
 	}

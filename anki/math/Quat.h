@@ -1,5 +1,5 @@
-#ifndef QUAT_H
-#define QUAT_H
+#ifndef ANKI_MATH_QUAT_H
+#define ANKI_MATH_QUAT_H
 
 #include "anki/math/MathCommonIncludes.h"
 

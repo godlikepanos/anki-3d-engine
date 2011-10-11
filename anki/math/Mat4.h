@@ -1,5 +1,5 @@
-#ifndef MAT4_H
-#define MAT4_H
+#ifndef ANKI_MATH_MAT4_H
+#define ANKI_MATH_MAT4_H
 
 #include "anki/math/MathCommonIncludes.h"
 

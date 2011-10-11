@@ -74,12 +74,13 @@ MaterialBuildinVariable::MaterialBuildinVariable(
 	// Sanity checks
 	if(!isBuildin(shaderProgVarName, &bEnum, &dataType))
 	{
-		throw EXCEPTION("The variable is not buildin: " + shaderProgVarName);
+		throw ANKI_EXCEPTION("The variable is not buildin: " +
+			shaderProgVarName);
 	}
 
 	if(dataType != getGlDataType())
 	{
-		throw EXCEPTION("The buildin variable \"" + shaderProgVarName +
+		throw ANKI_EXCEPTION("The buildin variable \"" + shaderProgVarName +
 			"\" should be of type: " +
 			boost::lexical_cast<std::string>(dataType));
 	}

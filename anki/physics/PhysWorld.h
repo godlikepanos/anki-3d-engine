@@ -1,11 +1,11 @@
-#ifndef PHYS_WORLD_H
-#define PHYS_WORLD_H
+#ifndef ANKI_PHYSICS_PHYS_WORLD_H
+#define ANKI_PHYSICS_PHYS_WORLD_H
 
 #include "anki/physics/Convertors.h"
 #include <vector>
 #include <boost/scoped_ptr.hpp>
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
+#include <bullet/btBulletCollisionCommon.h>
+#include <bullet/btBulletDynamicsCommon.h>
 
 
 class btIDebugDraw;

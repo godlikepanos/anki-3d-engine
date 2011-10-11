@@ -1,5 +1,5 @@
-#ifndef MATH_FORWARD_H
-#define MATH_FORWARD_H
+#ifndef ANKI_MATH_MATH_FORWARD_H
+#define ANKI_MATH_MATH_FORWARD_H
 
 #include <iosfwd>
 

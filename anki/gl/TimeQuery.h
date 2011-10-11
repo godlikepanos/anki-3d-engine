@@ -1,5 +1,5 @@
-#ifndef TIME_QUERY_H
-#define TIME_QUERY_H
+#ifndef ANKI_GL_TIME_QUERY_H
+#define ANKI_GL_TIME_QUERY_H
 
 #include <GL/glew.h>
 #include <boost/array.hpp>

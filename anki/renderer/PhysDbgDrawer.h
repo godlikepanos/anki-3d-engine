@@ -1,5 +1,5 @@
-#ifndef PHY_DBG_DRAWER_H
-#define PHY_DBG_DRAWER_H
+#ifndef ANKI_RENDERER_PHY_DBG_DRAWER_H
+#define ANKI_RENDERER_PHY_DBG_DRAWER_H
 
 #include <LinearMath/btIDebugDraw.h>
 

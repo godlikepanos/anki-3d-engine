@@ -1,5 +1,5 @@
-#ifndef SCRIPT_H
-#define SCRIPT_H
+#ifndef ANKI_RESOURCE_SCRIPT_H
+#define ANKI_RESOURCE_SCRIPT_H
 
 #include <string>
 

@@ -1,5 +1,5 @@
-#ifndef APP_H
-#define APP_H
+#ifndef ANKI_CORE_APP_H
+#define ANKI_CORE_APP_H
 
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>

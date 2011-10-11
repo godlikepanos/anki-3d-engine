@@ -1,5 +1,5 @@
-#ifndef FBO_H
-#define FBO_H
+#ifndef ANKI_GL_FBO_H
+#define ANKI_GL_FBO_H
 
 #include <GL/glew.h>
 #include "anki/util/Assert.h"

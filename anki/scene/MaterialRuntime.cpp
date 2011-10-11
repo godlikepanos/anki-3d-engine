@@ -42,7 +42,7 @@ MaterialRuntimeVariable& MaterialRuntime::findVariableByName(
 		varNameToVar.find(name);
 	if(it == varNameToVar.end())
 	{
-		throw EXCEPTION("Cannot get user defined variable with name \"" +
+		throw ANKI_EXCEPTION("Cannot get user defined variable with name \"" +
 			name + '\"');
 	}
 	return *(it->second);
@@ -59,7 +59,7 @@ const MaterialRuntimeVariable& MaterialRuntime::findVariableByName(
 		it = varNameToVar.find(name);
 	if(it == varNameToVar.end())
 	{
-		throw EXCEPTION("Cannot get user defined variable with name \"" +
+		throw ANKI_EXCEPTION("Cannot get user defined variable with name \"" +
 			name + '\"');
 	}
 	return *(it->second);

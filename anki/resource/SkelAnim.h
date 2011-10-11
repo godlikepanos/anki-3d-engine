@@ -1,5 +1,5 @@
-#ifndef SKEL_ANIM_H
-#define SKEL_ANIM_H
+#ifndef ANKI_RESOURCE_SKEL_ANIM_H
+#define ANKI_RESOURCE_SKEL_ANIM_H
 
 #include "anki/math/Math.h"
 #include <vector>

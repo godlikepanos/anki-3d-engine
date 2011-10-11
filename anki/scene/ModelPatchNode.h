@@ -1,5 +1,5 @@
-#ifndef MODEL_PATCH_NODE_H
-#define MODEL_PATCH_NODE_H
+#ifndef ANKI_SCENE_MODEL_PATCH_NODE_H
+#define ANKI_SCENE_MODEL_PATCH_NODE_H
 
 #include "anki/scene/PatchNode.h"
 #include "anki/collision/Obb.h"

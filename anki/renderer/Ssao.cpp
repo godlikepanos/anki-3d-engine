@@ -38,7 +38,7 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Cannot create deferred shading post-processing "
+		throw ANKI_EXCEPTION("Cannot create deferred shading post-processing "
 			"stage SSAO blur FBO: " + e.what());
 	}
 }

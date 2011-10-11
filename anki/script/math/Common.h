@@ -1,7 +1,7 @@
-#ifndef SCRIPT_M_COMMON_H
-#define SCRIPT_M_COMMON_H
+#ifndef ANKI_SCRIPT_MATH_COMMON_H
+#define ANKI_SCRIPT_MATH_COMMON_H
 
-#include "anki/script/ScriptCommon.h"
+#include "anki/script/Common.h"
 
 
 template<typename ClassType, typename RetType,

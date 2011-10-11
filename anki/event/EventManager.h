@@ -1,5 +1,5 @@
-#ifndef MANAGER_H
-#define MANAGER_H
+#ifndef ANKI_EVENT_MANAGER_H
+#define ANKI_EVENT_MANAGER_H
 
 #include "anki/event/Event.h"
 #include <boost/ptr_container/ptr_deque.hpp>

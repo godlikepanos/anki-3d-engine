@@ -45,7 +45,7 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_,
 	if(sizeInBytes != (uint)bufferSize)
 	{
 		deleteBuff();
-		throw EXCEPTION("Data size mismatch");
+		throw ANKI_EXCEPTION("Data size mismatch");
 	}
 
 	unbind();

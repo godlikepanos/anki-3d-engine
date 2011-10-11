@@ -1,5 +1,5 @@
-#ifndef TRANSFORM_H
-#define TRANSFORM_H
+#ifndef ANKI_MATH_TRANSFORM_H
+#define ANKI_MATH_TRANSFORM_H
 
 #include "anki/math/Vec3.h"
 #include "anki/math/Mat3.h"

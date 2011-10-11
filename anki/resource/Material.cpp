@@ -76,7 +76,7 @@ void Material::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("File \"" + filename + "\" failed: " + e.what());
+		throw ANKI_EXCEPTION("File \"" + filename + "\" failed: " + e.what());
 	}
 }
 
@@ -125,7 +125,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 			if(it == txtToBlengGlEnum.end())
 			{
-				throw EXCEPTION("Incorrect blend enum: " + tmp);
+				throw ANKI_EXCEPTION("Incorrect blend enum: " + tmp);
 			}
 
 			blendingSfactor = it->second;
@@ -141,7 +141,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 			if(it == txtToBlengGlEnum.end())
 			{
-				throw EXCEPTION("Incorrect blend enum: " + tmp);
+				throw ANKI_EXCEPTION("Incorrect blend enum: " + tmp);
 			}
 
 			blendingDfactor = it->second;
@@ -209,7 +209,7 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 		std::ofstream f(newfPathName.string().c_str());
 		if(!f.is_open())
 		{
-			throw EXCEPTION("Cannot open file for writing: " +
+			throw ANKI_EXCEPTION("Cannot open file for writing: " +
 				newfPathName.string());
 		}
 
@@ -274,7 +274,8 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 			{
 				if(v.first != "input")
 				{
-					throw EXCEPTION("Expecting <input> and not: " + v.first);
+					throw ANKI_EXCEPTION("Expecting <input> and not: " +
+						v.first);
 				}
 
 				if(v.second.get<std::string>("name") == svName)
@@ -286,7 +287,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 			if(valuePt == NULL)
 			{
-				throw EXCEPTION("Variable not buildin and not found: " +
+				throw ANKI_EXCEPTION("Variable not buildin and not found: " +
 					svName);
 			}
 

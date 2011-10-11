@@ -1,5 +1,5 @@
-#ifndef OBJECT_H
-#define OBJECT_H
+#ifndef ANKI_CORE_OBJECT_H
+#define ANKI_CORE_OBJECT_H
 
 #include <vector>
 

@@ -1,5 +1,5 @@
-#ifndef SCENE_NODE_H
-#define SCENE_NODE_H
+#ifndef ANKI_SCENE_SCENE_NODE_H
+#define ANKI_SCENE_SCENE_NODE_H
 
 #include "anki/math/Math.h"
 #include "anki/collision/Obb.h"

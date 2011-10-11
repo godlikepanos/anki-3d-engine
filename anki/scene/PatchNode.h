@@ -1,5 +1,5 @@
-#ifndef PATCH_NODE_H
-#define PATCH_NODE_H
+#ifndef ANKI_SCENE_PATCH_NODE_H
+#define ANKI_SCENE_PATCH_NODE_H
 
 #include "anki/gl/Vao.h"
 #include "anki/gl/Vbo.h"

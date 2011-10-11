@@ -1,5 +1,5 @@
-#ifndef RSRC_LOADING_REQUESTS_H
-#define RSRC_LOADING_REQUESTS_H
+#ifndef ANKI_RESOURCE_RSRC_LOADING_REQUESTS_H
+#define ANKI_RESOURCE_RSRC_LOADING_REQUESTS_H
 
 #include <string>
 #include "anki/resource/Image.h"

@@ -11,6 +11,6 @@ void Script::load(const char* filename)
 	source = util::readFile(filename);
 	if(source.length() < 1)
 	{
-		throw EXCEPTION("Cannot load script \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot load script \"" + filename + "\"");
 	}
 }

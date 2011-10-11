@@ -1,5 +1,5 @@
-#ifndef PARTICLE_EMITTER_NODE_H
-#define PARTICLE_EMITTER_NODE_H
+#ifndef ANKI_SCENE_PARTICLE_EMITTER_NODE_H
+#define ANKI_SCENE_PARTICLE_EMITTER_NODE_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>

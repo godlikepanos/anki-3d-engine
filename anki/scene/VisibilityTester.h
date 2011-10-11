@@ -1,5 +1,5 @@
-#ifndef VISIBILITY_TESTER_H
-#define VISIBILITY_TESTER_H
+#ifndef ANKI_SCENE_VISIBILITY_TESTER_H
+#define ANKI_SCENE_VISIBILITY_TESTER_H
 
 #include "anki/math/Math.h"
 #include "anki/core/ParallelJob.h"

@@ -12,14 +12,14 @@ void Extension::load(const char* /*filename*/)
 	libHandle = dlopen(filename, RTLD_LAZY);
 	if(libHandle == NULL)
 	{
-		throw EXCEPTION("File \"" + filename + "\": " + dlerror());
+		throw ANKI_EXCEPTION("File \"" + filename + "\": " + dlerror());
 	}
 	
 	// get FooBar
 	foobarPtr = (int(*)(void*))(dlsym(libHandle, "FooBar"));
 	if(foobarPtr == NULL)
 	{
-		throw EXCEPTION("File \"" + filename +
+		throw ANKI_EXCEPTION("File \"" + filename +
 			"\": \"FooBar\" entry symbol not found: " + dlerror());
 	}*/
 }

@@ -1,5 +1,5 @@
-#ifndef BL_H
-#define BL_H
+#ifndef ANKI_RENDERER_BL_H
+#define ANKI_RENDERER_BL_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/Texture.h"

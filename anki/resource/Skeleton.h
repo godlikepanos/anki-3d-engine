@@ -1,5 +1,5 @@
-#ifndef SKELETON_H
-#define SKELETON_H
+#ifndef ANKI_RESOURCE_SKELETON_H
+#define ANKI_RESOURCE_SKELETON_H
 
 #include "anki/math/Math.h"
 #include <vector>

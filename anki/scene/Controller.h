@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef ANKI_SCENE_CONTROLLER_H
+#define ANKI_SCENE_CONTROLLER_H
 
 
 class SceneNode;

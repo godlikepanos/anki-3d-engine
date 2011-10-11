@@ -1,5 +1,5 @@
-#ifndef SHADER_PROGRAM_UNIFORM_VARIABLE_H
-#define SHADER_PROGRAM_UNIFORM_VARIABLE_H
+#ifndef ANKI_RESOURCE_SHADER_PROGRAM_UNIFORM_VARIABLE_H
+#define ANKI_RESOURCE_SHADER_PROGRAM_UNIFORM_VARIABLE_H
 
 #include "anki/resource/ShaderProgramVariable.h"
 #include "anki/math/Math.h"

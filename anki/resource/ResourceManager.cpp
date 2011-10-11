@@ -48,7 +48,7 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 			delete newInstance;
 		}*/
 
-		throw EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
 	}
 }
 
@@ -111,7 +111,8 @@ typename ResourceManager::Types<Type>::Hook& ResourceManager::loadR(
 				delete hook;
 			}
 
-			throw EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
+			throw ANKI_EXCEPTION("Cannot load \"" +
+				filename + "\": " + e.what());
 		}
 	}
 
@@ -135,7 +136,8 @@ void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
 	// If not found
 	if(it == c.end())
 	{
-		throw EXCEPTION("Resource hook incorrect (\"" + hook.uuid + "\")");
+		throw ANKI_EXCEPTION("Resource hook incorrect (\"" +
+			hook.uuid + "\")");
 	}
 
 	if(it->uuid != hook.uuid)

@@ -1,5 +1,5 @@
-#ifndef STD_TYPES_H
-#define STD_TYPES_H
+#ifndef ANKI_UTIL_STD_TYPES_H
+#define ANKI_UTIL_STD_TYPES_H
 
 
 #ifndef uchar

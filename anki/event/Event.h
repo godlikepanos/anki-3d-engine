@@ -1,5 +1,5 @@
-#ifndef EVENT_H
-#define EVENT_H
+#ifndef ANKI_EVENT_EVENT_H
+#define ANKI_EVENT_EVENT_H
 
 #include "anki/util/StdTypes.h"
 

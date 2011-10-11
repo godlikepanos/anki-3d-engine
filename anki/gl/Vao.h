@@ -1,5 +1,5 @@
-#ifndef VAO_H
-#define VAO_H
+#ifndef ANKI_GL_VAO_H
+#define ANKI_GL_VAO_H
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"

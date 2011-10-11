@@ -1,5 +1,5 @@
-#ifndef SCENE_COLOR_EVENT_H
-#define SCENE_COLOR_EVENT_H
+#ifndef ANKI_EVENT_SCENE_COLOR_EVENT_H
+#define ANKI_EVENT_SCENE_COLOR_EVENT_H
 
 #include "anki/event/Event.h"
 #include "anki/math/Math.h"

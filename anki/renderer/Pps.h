@@ -1,5 +1,5 @@
-#ifndef PPS_H
-#define PPS_H
+#ifndef ANKI_RENDERER_PPS_H
+#define ANKI_RENDERER_PPS_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"

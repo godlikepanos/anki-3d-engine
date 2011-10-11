@@ -1,5 +1,5 @@
-#ifndef UI_PAINTER_H
-#define UI_PAINTER_H
+#ifndef ANKI_UI_UI_PAINTER_H
+#define ANKI_UI_UI_PAINTER_H
 
 #include "anki/resource/RsrcPtr.h"
 #include "anki/math/Math.h"

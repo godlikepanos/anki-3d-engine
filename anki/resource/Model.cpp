@@ -41,7 +41,7 @@ void Model::load(const char* filename)
 
 		if(modelPatches.size() < 1)
 		{
-			throw EXCEPTION("Zero number of model patches");
+			throw ANKI_EXCEPTION("Zero number of model patches");
 		}
 
 		// Bounding volume
@@ -57,6 +57,6 @@ void Model::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw EXCEPTION("Model \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Model \"" + filename + "\": " + e.what());
 	}
 }

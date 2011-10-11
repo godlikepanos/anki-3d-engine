@@ -1,5 +1,5 @@
-#ifndef RSRC_PTR_H
-#define RSRC_PTR_H
+#ifndef ANKI_RESOURCE_RSRC_PTR_H
+#define ANKI_RESOURCE_RSRC_PTR_H
 
 #include "anki/resource/ResourceManager.h"
 #include "anki/core/Globals.h"

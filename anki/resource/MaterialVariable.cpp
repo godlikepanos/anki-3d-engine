@@ -32,7 +32,8 @@ MaterialVariable::MaterialVariable(
 			if(oneSProgVar->getGlDataType() != sProgVars[i]->getGlDataType() ||
 				oneSProgVar->getType() != sProgVars[i]->getType())
 			{
-				throw EXCEPTION("Incompatible shader program variables: " +
+				throw ANKI_EXCEPTION("Incompatible shader "
+					"program variables: " +
 					shaderProgVarName);
 			}
 		}
@@ -45,7 +46,8 @@ MaterialVariable::MaterialVariable(
 	// Extra sanity checks
 	if(!oneSProgVar)
 	{
-		throw EXCEPTION("Variable not found in any of the shader programs: " +
+		throw ANKI_EXCEPTION("Variable not found in "
+			"any of the shader programs: " +
 			shaderProgVarName);
 	}
 }

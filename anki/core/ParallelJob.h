@@ -1,5 +1,5 @@
-#ifndef PARALLEL_JOB_H
-#define PARALLEL_JOB_H
+#ifndef ANKI_CORE_PARALLEL_JOB_H
+#define ANKI_CORE_PARALLEL_JOB_H
 
 #include <boost/thread.hpp>
 

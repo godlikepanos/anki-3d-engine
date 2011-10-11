@@ -14,7 +14,7 @@
 #include <sstream>
 
 
-#define SHADER_PROGRAM_EXCEPTION(x) EXCEPTION( \
+#define SHADER_PROGRAM_EXCEPTION(x) ANKI_EXCEPTION( \
 	"Shader program \"" + rsrcFilename + \
 	"\": " + x)
 
@@ -354,7 +354,7 @@ std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 	std::ofstream f(newfPathName.string().c_str());
 	if(!f.is_open())
 	{
-		throw EXCEPTION("Cannot open file for writing \"" +
+		throw ANKI_EXCEPTION("Cannot open file for writing \"" +
 			newfPathName.string() + "\"");
 	}
 

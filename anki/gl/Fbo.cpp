@@ -26,7 +26,7 @@ void Fbo::checkIfGood() const
 
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		throw EXCEPTION("FBO is incomplete: " +
+		throw ANKI_EXCEPTION("FBO is incomplete: " +
 			boost::lexical_cast<std::string>(status));
 	}
 }

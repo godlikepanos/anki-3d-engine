@@ -1,5 +1,5 @@
-#ifndef ORTHOGRAPHIC_CAMERA_H
-#define ORTHOGRAPHIC_CAMERA_H
+#ifndef ANKI_SCENE_ORTHOGRAPHIC_CAMERA_H
+#define ANKI_SCENE_ORTHOGRAPHIC_CAMERA_H
 
 #include "anki/scene/Camera.h"
 

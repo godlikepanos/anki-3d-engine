@@ -1,5 +1,5 @@
-#ifndef STDIN_LISTENER_H
-#define STDIN_LISTENER_H
+#ifndef ANKI_CORE_STDIN_LISTENER_H
+#define ANKI_CORE_STDIN_LISTENER_H
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>

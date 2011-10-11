@@ -1,5 +1,5 @@
-#ifndef SCENE_H
-#define SCENE_H
+#ifndef ANKI_SCENE_SCENE_H
+#define ANKI_SCENE_SCENE_H
 
 #include "anki/physics/PhysWorld.h"
 #include "anki/util/Assert.h"

@@ -1,5 +1,5 @@
-#ifndef LINE_SEGMENT_H
-#define LINE_SEGMENT_H
+#ifndef ANKI_COLLISION_LINE_SEGMENT_H
+#define ANKI_COLLISION_LINE_SEGMENT_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Vec3.h"
@@ -49,6 +49,12 @@ class LineSegment: public CollisionShape
 			dir = x;
 		}
 		/// @}
+
+		/// @copydoc CollisionShape::accept
+		void accept(Visitor& v)
+		{
+			v.visit(*this);
+		}
 
 		LineSegment getTransformed(const Transform& transform) const;
 

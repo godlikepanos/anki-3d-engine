@@ -1,5 +1,5 @@
-#ifndef HIGH_REZ_TIMER_H
-#define HIGH_REZ_TIMER_H
+#ifndef ANKI_UTIL_HIGH_REZ_TIMER_H
+#define ANKI_UTIL_HIGH_REZ_TIMER_H
 
 #include "anki/util/StdTypes.h"
 

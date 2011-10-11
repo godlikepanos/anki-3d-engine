@@ -44,7 +44,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	// first check the depth
 	if(depth > 99)
 	{
-		throw EXCEPTION("File \"" + filename +
+		throw ANKI_EXCEPTION("File \"" + filename +
 			"\": The include depth is too high. Probably circular includance");
 	}
 
@@ -52,7 +52,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	std::vector<std::string> lines = util::getFileLines(filename.c_str());
 	if(lines.size() < 1)
 	{
-		throw EXCEPTION("File \"" + filename + "\": Cannot open or empty");
+		throw ANKI_EXCEPTION("File \"" + filename + "\": Cannot open or empty");
 	}
 
 	scanner::Scanner scanner(filename.c_str(), false);
@@ -154,13 +154,13 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 		// sanity checks
 		if(!shaderStarts[ST_VERTEX].isDefined())
 		{
-			throw EXCEPTION("Entry point \""+ startTokens[ST_VERTEX] +
+			throw ANKI_EXCEPTION("Entry point \""+ startTokens[ST_VERTEX] +
 				"\" is not defined");
 		}
 
 		if(!shaderStarts[ST_FRAGMENT].isDefined())
 		{
-			throw EXCEPTION("Entry point \""+ startTokens[ST_FRAGMENT] +
+			throw ANKI_EXCEPTION("Entry point \""+ startTokens[ST_FRAGMENT] +
 				"\" is not defined");
 		}
 
@@ -184,7 +184,7 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 				if(shaderStarts[k].isDefined() &&
 					shaderStarts[k].globalLine >= shaderStarts[i].globalLine)
 				{
-					throw EXCEPTION(startTokens[i] + " must be after " +
+					throw ANKI_EXCEPTION(startTokens[i] + " must be after " +
 						startTokens[k]);
 				}
 				--k;
@@ -196,7 +196,7 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 				if(shaderStarts[k].isDefined() &&
 					shaderStarts[k].globalLine <= shaderStarts[i].globalLine)
 				{
-					throw EXCEPTION(startTokens[k] + " must be after " +
+					throw ANKI_EXCEPTION(startTokens[k] + " must be after " +
 						startTokens[i]);
 				}
 				++k;
@@ -242,7 +242,7 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw EXCEPTION("Started from \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION("Started from \"" + filename + "\": " + e.what());
 	}
 }
 

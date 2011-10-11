@@ -1,5 +1,5 @@
-#ifndef DEFORMER_H
-#define DEFORMER_H
+#ifndef ANKI_RENDERER_DEFORMER_H
+#define ANKI_RENDERER_DEFORMER_H
 
 #include "anki/resource/RsrcPtr.h"
 

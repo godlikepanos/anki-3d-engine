@@ -1,5 +1,5 @@
-#ifndef MESH_DATA_H
-#define MESH_DATA_H
+#ifndef ANKI_RESOURCE_MESH_DATA_H
+#define ANKI_RESOURCE_MESH_DATA_H
 
 #include "anki/math/Math.h"
 #include "anki/util/StdTypes.h"

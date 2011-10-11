@@ -1,5 +1,5 @@
-#ifndef MODEL_NODE_H
-#define MODEL_NODE_H
+#ifndef ANKI_SCENE_MODEL_NODE_H
+#define ANKI_SCENE_MODEL_NODE_H
 
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/RsrcPtr.h"
