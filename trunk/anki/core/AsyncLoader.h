@@ -8,6 +8,9 @@
 #include <SDL/SDL.h>
 
 
+namespace anki {
+
+
 /// Asynchronous loader
 ///
 /// It creates a thread that loads files on demand. It accepts requests (in the
@@ -74,6 +77,9 @@ class AsyncLoader
 		void workingFunc();
 		void start(); ///< Start thread
 };
+
+
+} // end namespace
 
 
 #endif

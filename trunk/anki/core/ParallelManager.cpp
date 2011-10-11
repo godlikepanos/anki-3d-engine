@@ -1,6 +1,9 @@
 #include "anki/core/ParallelManager.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -13,3 +16,6 @@ void ParallelManager::init(uint threadsNum)
 		jobs.push_back(new ParallelJob(i, *this, *barrier.get()));
 	}
 }
+
+
+} // end namespace

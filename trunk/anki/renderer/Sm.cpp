@@ -106,7 +106,7 @@ void Sm::run(const Light& light, float distance)
 		return;
 	}
 
-	ASSERT(light.getVisibleMsRenderableNodes().size() == 0);
+	ASSERT(light.getVisibleMsRenderableNodes().size() > 0);
 
 	//
 	// Determine the level

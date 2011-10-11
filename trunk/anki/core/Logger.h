@@ -7,6 +7,9 @@
 #include <boost/thread/mutex.hpp>
 
 
+namespace anki {
+
+
 /// The logger singleton class. The logger cannot print errors or throw
 /// exceptions, it has to recover somehow. Its thread safe
 class Logger
@@ -112,6 +115,9 @@ class Logger
 		template<typename Type>
 		Logger& appendUsingLexicalCast(const Type& val);
 };
+
+
+} // end namespace
 
 
 #include "anki/core/Logger.inl.h"

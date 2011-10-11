@@ -4,6 +4,9 @@
 #include <boost/thread.hpp>
 
 
+namespace anki {
+
+
 class ParallelManager;
 class ParallelJob;
 
@@ -61,6 +64,9 @@ class ParallelJob
 		/// Thread loop
 		void workingFunc();
 };
+
+
+} // end namespace
 
 
 #endif

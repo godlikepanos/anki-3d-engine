@@ -11,6 +11,9 @@
 #include <boost/algorithm/string.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // handleMessageHanlderMsgs                                                    =
 //==============================================================================
@@ -265,3 +268,6 @@ uint App::getDesktopHeight() const
 	//SDL_GetDesktopDisplayMode(&mode);
 	return mode.h;
 }
+
+
+} // end namespace

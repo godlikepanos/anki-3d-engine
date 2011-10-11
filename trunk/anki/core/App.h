@@ -7,6 +7,9 @@
 #include "anki/core/Logger.h"
 
 
+namespace anki {
+
+
 class StdinListener;
 class Scene;
 class Camera;
@@ -118,6 +121,9 @@ class App
 		void initDirs();
 		void initRenderer();
 };
+
+
+} // end namespace
 
 
 #endif

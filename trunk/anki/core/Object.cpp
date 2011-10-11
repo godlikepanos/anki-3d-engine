@@ -6,6 +6,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -68,3 +71,6 @@ void Object::removeChild(Object* child)
 	objChilds.erase(it);
 	child->objParent = NULL;
 }
+
+
+} // end namespace

@@ -3,6 +3,9 @@
 #include "anki/util/Assert.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // set                                                                         =
 //==============================================================================
@@ -48,3 +51,6 @@ void Sphere::set(const Container& container)
 
 	radius = Math::sqrt(maxDist);
 }
+
+
+} // end namespace

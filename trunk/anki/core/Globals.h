@@ -4,6 +4,9 @@
 #include "anki/util/Singleton.h"
 
 
+namespace anki {
+
+
 typedef Singleton<class Logger> LoggerSingleton;
 typedef Singleton<class MainRenderer> MainRendererSingleton;
 typedef Singleton<class Input> InputSingleton;
@@ -15,6 +18,9 @@ typedef Singleton<class GlStateMachine> GlStateMachineSingleton;
 typedef Singleton<class ScriptManager> ScriptManagerSingleton;
 typedef Singleton<class EventManager> EventManagerSingleton;
 typedef Singleton<class ParallelManager> ParallelManagerSingleton;
+
+
+} // end namespace
 
 
 #endif

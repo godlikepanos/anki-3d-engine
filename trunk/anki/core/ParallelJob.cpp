@@ -2,6 +2,9 @@
 #include "anki/core/ParallelManager.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -19,7 +22,8 @@ ParallelJob::ParallelJob(int id_, const ParallelManager& manager_,
 //==============================================================================
 // assignNewJob                                                                =
 //==============================================================================
-void ParallelJob::assignNewJob(ParallelJobCallback callback_, ParallelJobParameters& jobParams_)
+void ParallelJob::assignNewJob(ParallelJobCallback callback_,
+	ParallelJobParameters& jobParams_)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	callback = callback_;
@@ -58,3 +62,6 @@ void ParallelJob::workingFunc()
 		barrier.wait();
 	}
 }
+
+
+} // end namespace

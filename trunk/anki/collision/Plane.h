@@ -5,6 +5,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Collision
 /// @{
 
@@ -27,10 +30,18 @@ class Plane: public CollisionShape
 		Plane(const Vec3& normal_, float offset_);
 
 		/// @see setFrom3Points
-		Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2);
+		Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
+		:	CollisionShape(CST_PLANE)
+		{
+			setFrom3Points(p0, p1, p2);
+		}
 
 		/// @see setFromPlaneEquation
-		Plane(float a, float b, float c, float d);
+		Plane(float a, float b, float c, float d)
+		:	CollisionShape(CST_PLANE)
+		{
+			setFromPlaneEquation(a, b, c, d);
+		}
 		/// @}
 
 		/// @name Accessors
@@ -81,7 +92,10 @@ class Plane: public CollisionShape
 
 		/// Returns the perpedicular point of a given point in this plane.
 		/// Plane's normal and returned-point are perpedicular
-		Vec3 getClosestPoint(const Vec3& point) const;
+		Vec3 getClosestPoint(const Vec3& point) const
+		{
+			return point - normal * test(point);
+		}
 
 		/// Do nothing
 		float testPlane(const Plane&) const {return 0.0;}
@@ -102,38 +116,7 @@ class Plane: public CollisionShape
 /// @}
 
 
-inline Plane::Plane(const Plane& b)
-:	CollisionShape(CST_PLANE),
-	normal(b.normal),
-	offset(b.offset)
-{}
-
-
-inline Plane::Plane(const Vec3& normal_, float offset_)
-:	CollisionShape(CST_PLANE),
-	normal(normal_),
-	offset(offset_)
-{}
-
-
-inline Plane::Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
-:	CollisionShape(CST_PLANE)
-{
-	setFrom3Points(p0, p1, p2);
-}
-
-
-inline Plane::Plane(float a, float b, float c, float d)
-:	CollisionShape(CST_PLANE)
-{
-	setFromPlaneEquation(a, b, c, d);
-}
-
-
-inline Vec3 Plane::getClosestPoint(const Vec3& point) const
-{
-	return point - normal * test(point);
-}
+} // end namespace
 
 
 #endif

@@ -6,6 +6,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 /// @addtogroup Collision
 /// @{
 
@@ -99,21 +102,7 @@ class Obb: public CollisionShape
 /// @}
 
 
-inline Obb::Obb(const Obb& b)
-:	CollisionShape(CST_OBB),
-	center(b.center),
-	rotation(b.rotation),
-	extends(b.extends)
-{}
-
-
-inline Obb::Obb(const Vec3& center_, const Mat3& rotation_,
-	const Vec3& extends_)
-:	CollisionShape(CST_OBB),
-	center(center_),
-	rotation(rotation_),
-	extends(extends_)
-{}
+} // end namespace
 
 
 #include "anki/collision/Obb.inl.h"

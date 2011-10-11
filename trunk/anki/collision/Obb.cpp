@@ -2,6 +2,27 @@
 #include "anki/collision/Plane.h"
 
 
+namespace anki {
+
+//==============================================================================
+Obb::Obb(const Obb& b)
+:	CollisionShape(CST_OBB),
+	center(b.center),
+	rotation(b.rotation),
+	extends(b.extends)
+{}
+
+
+//==============================================================================
+Obb::Obb(const Vec3& center_, const Mat3& rotation_,
+	const Vec3& extends_)
+:	CollisionShape(CST_OBB),
+	center(center_),
+	rotation(rotation_),
+	extends(extends_)
+{}
+
+
 //==============================================================================
 // getTransformed                                                              =
 //==============================================================================
@@ -111,3 +132,6 @@ void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
 		point += center;
 	}
 }
+
+
+} // end namespace

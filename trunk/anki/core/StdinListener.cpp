@@ -1,6 +1,9 @@
 #include "anki/core/StdinListener.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // workingFunc                                                                 =
 //==============================================================================
@@ -46,3 +49,6 @@ void StdinListener::start()
 {
 	thrd = boost::thread(&StdinListener::workingFunc, this);
 }
+
+
+} // end namespace

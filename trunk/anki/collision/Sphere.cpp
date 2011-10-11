@@ -2,6 +2,9 @@
 #include "anki/collision/Plane.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // getTransformed                                                              =
 //==============================================================================
@@ -92,3 +95,5 @@ float Sphere::testPlane(const Plane& plane) const
 	}
 }
 
+
+} // end namespace
