@@ -5,6 +5,9 @@
 #include "anki/collision/Collision.h"
 
 
+namespace anki {
+
+
 /// @todo
 class PerspectiveCamera: public Camera
 {
@@ -98,6 +101,9 @@ inline void PerspectiveCamera::setFovY(float fovy_)
 	calcProjectionMatrix();
 	calcLSpaceFrustumPlanes();
 }
+
+
+} // end namespace
 
 
 #endif

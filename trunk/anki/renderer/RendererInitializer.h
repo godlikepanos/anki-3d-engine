@@ -4,6 +4,9 @@
 #include <cstring>
 
 
+namespace anki {
+
+
 /// A struct to initialize the renderer. It contains a few extra params for
 /// the MainRenderer
 struct RendererInitializer
@@ -80,6 +83,9 @@ struct RendererInitializer
 		memcpy(this, &initializer, sizeof(RendererInitializer));
 	}
 };
+
+
+} // end namespace
 
 
 #endif

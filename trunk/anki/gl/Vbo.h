@@ -4,6 +4,9 @@
 #include "anki/gl/BufferObject.h"
 
 
+namespace anki {
+
+
 /// This is a wrapper for Vertex Buffer Objects to prevent us from making
 /// idiotic errors
 class Vbo: public BufferObject
@@ -48,6 +51,9 @@ inline void Vbo::unbindAllTargets()
 	glBindBufferARB(GL_ARRAY_BUFFER, 0);
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
+
+
+} // end namespace
 
 
 #endif

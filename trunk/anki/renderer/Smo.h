@@ -10,6 +10,9 @@
 #include "anki/scene/Camera.h"
 
 
+namespace anki {
+
+
 class PointLight;
 class SpotLight;
 
@@ -51,6 +54,9 @@ class Smo: public RenderingPass
 		void setUpGl(bool inside);
 		void restoreGl(bool inside);
 };
+
+
+} // end namespace
 
 
 #endif

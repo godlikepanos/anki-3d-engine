@@ -4,6 +4,9 @@
 #include "anki/core/Globals.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -22,3 +25,6 @@ Controller::~Controller()
 {
 	SceneSingleton::get().unregisterController(this);
 }
+
+
+} // end namespace

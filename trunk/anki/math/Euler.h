@@ -4,6 +4,9 @@
 #include "anki/math/MathCommonIncludes.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Math
 ///
 
@@ -58,6 +61,9 @@ class Euler
 		/// @}
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Euler.inl.h"

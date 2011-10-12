@@ -4,6 +4,9 @@
 #include "anki/resource/ShaderProgramVariable.h"
 
 
+namespace anki {
+
+
 /// Attribute shader program variable
 class ShaderProgramAttributeVariable: public ShaderProgramVariable
 {
@@ -19,6 +22,9 @@ inline ShaderProgramAttributeVariable::ShaderProgramAttributeVariable(
 	GLenum glDataType, const ShaderProgram& fatherSProg)
 :	ShaderProgramVariable(loc, name, glDataType, T_ATTRIBUTE, fatherSProg)
 {}
+
+
+} // end namespace
 
 
 #endif

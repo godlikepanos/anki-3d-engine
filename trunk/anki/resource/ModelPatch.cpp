@@ -3,6 +3,9 @@
 #include "anki/resource/Material.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & Destructor                                                   =
 //==============================================================================
@@ -35,3 +38,6 @@ bool ModelPatch::supportsHwSkinning() const
 {
 	return mesh->hasVertWeights();
 }
+
+
+} // end namespace

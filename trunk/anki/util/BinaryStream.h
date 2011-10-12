@@ -6,6 +6,9 @@
 #include "anki/util/StdTypes.h"
 
 
+namespace anki {
+
+
 /// Read from binary streams. You can read/write data as if it is an iostream 
 /// but it also contains methods for reading/writing binary data
 class BinaryStream: public std::iostream
@@ -54,6 +57,9 @@ inline BinaryStream::BinaryStream(std::streambuf* sb, ByteOrder byteOrder_):
 	std::iostream(sb),
 	byteOrder(byteOrder_)
 {}
+
+
+} // end namespace
 
 
 #endif

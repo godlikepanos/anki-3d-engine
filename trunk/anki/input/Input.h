@@ -6,6 +6,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 /// Handle the SDL input
 class Input
 {
@@ -67,6 +70,9 @@ class Input
 
 		void init();
 };
+
+
+} // end namespace
 
 
 #endif

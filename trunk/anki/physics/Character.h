@@ -9,6 +9,11 @@ class btPairCachingGhostObject;
 class btConvexShape;
 class btKinematicCharacterController;
 class btGhostPairCallback;
+
+
+namespace anki {
+
+
 class SceneNode;
 class PhysWorld;
 class MotionState;
@@ -48,6 +53,9 @@ class Character
 		btGhostPairCallback* ghostPairCallback;
 		MotionState* motionState;
 };
+
+
+} // end namespace
 
 
 #endif

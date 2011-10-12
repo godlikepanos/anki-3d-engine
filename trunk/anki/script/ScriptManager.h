@@ -4,6 +4,9 @@
 #include <boost/python.hpp>
 
 
+namespace anki {
+
+
 /// The scripting manager using Python
 class ScriptManager
 {
@@ -35,6 +38,9 @@ inline void ScriptManager::exposeVar(const char* varName, Type* var)
 {
 	boost::python::scope(ankiModule).attr(varName) = boost::python::ptr(var);
 }
+
+
+} // end namespace
 
 
 #endif

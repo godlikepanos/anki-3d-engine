@@ -10,6 +10,9 @@
 #include FT_GLYPH_H
 
 
+namespace anki {
+
+
 /// A helper class that uses libfreetype to load glyphs from a font file and
 /// gather the metrics for each glyph
 class UiFtFontLoader
@@ -105,6 +108,9 @@ inline UiFtFontLoader::UiFtFontLoader(const char* filename,
 {
 	createImage(filename, fontSize);
 }
+
+
+} // end namespace
 
 
 #endif

@@ -8,6 +8,9 @@
 #include "anki/collision/Obb.h"
 
 
+namespace anki {
+
+
 /// Model is an entity that acts as a container for other resources. Models are
 /// all the non static objects in a map.
 ///
@@ -52,6 +55,9 @@ class Model
 		boost::ptr_vector<ModelPatch> modelPatches;
 		Obb visibilityShape;
 };
+
+
+} // end namespace
 
 
 #endif

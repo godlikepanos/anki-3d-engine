@@ -7,6 +7,9 @@
 #include "anki/resource/Texture.h"
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -30,6 +33,9 @@ class Bs: public RenderingPass
 		void createFbo();
 		void createRefractFbo();
 };
+
+
+} // end namespace
 
 
 #endif

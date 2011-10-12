@@ -2,6 +2,9 @@
 #include "anki/misc/Parser.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // load                                                                        =
 //==============================================================================
@@ -64,3 +67,6 @@ void SkelAnim::load(const char* filename)
 
 	framesNum = keyframes[keyframes.size() - 1] + 1;
 }
+
+
+} // end namespace

@@ -5,6 +5,9 @@
 #include "anki/scene/ModelNode.h"
 
 
+namespace anki {
+
+
 class RigidBody;
 
 
@@ -29,6 +32,9 @@ class Particle: public ModelNode
 		float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
 		boost::scoped_ptr<RigidBody> body; ///< For garbage collection
 };
+
+
+} // end namespace
 
 
 #endif

@@ -14,6 +14,9 @@
 #include <boost/range/iterator_range.hpp>
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -229,6 +232,9 @@ inline const MaterialBuildinVariable& Material::getBuildinVariable(
 	ASSERT(buildinVariableExits(e));
 	return *buildinsArr[e];
 }
+
+
+} // end namespace
 
 
 #endif

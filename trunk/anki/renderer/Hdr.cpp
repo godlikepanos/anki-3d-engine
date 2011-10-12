@@ -4,6 +4,9 @@
 #include "anki/renderer/RendererInitializer.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -157,3 +160,6 @@ void Hdr::run()
 	// end
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
+
+
+} // end namespace

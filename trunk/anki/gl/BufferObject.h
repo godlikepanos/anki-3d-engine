@@ -6,6 +6,9 @@
 #include "anki/util/StdTypes.h"
 
 
+namespace anki {
+
+
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
 class BufferObject
@@ -139,6 +142,9 @@ inline void BufferObject::deleteBuff()
 	glDeleteBuffers(1, &glId);
 	glId = 0;
 }
+
+
+} // end namespace
 
 
 #endif

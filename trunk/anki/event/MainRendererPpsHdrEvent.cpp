@@ -3,6 +3,9 @@
 #include "anki/core/Globals.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -68,3 +71,6 @@ void MainRendererPpsHdrEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 	hdr.setBlurringDistance(interpolate(originalData.blurringDist,
 		finalData.blurringDist, dp));
 }
+
+
+} // end namespace

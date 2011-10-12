@@ -7,6 +7,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // create                                                                      =
 //==============================================================================
@@ -96,3 +99,6 @@ void UiFont::create(const char* fontFilename, uint nominalWidth,
 	map->create(tinit);
 	map->setRepeat(false);
 }
+
+
+} // end namespace

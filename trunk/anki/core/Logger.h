@@ -127,7 +127,7 @@ class Logger
 // Macros                                                                      =
 //==============================================================================
 
-#define LOGGER_MESSAGE(t, msg) \
+#define ANKI_LOGGER_MESSAGE(t, msg) \
 	do \
 	{ \
 		LoggerSingleton::get().lock(); \
@@ -136,11 +136,11 @@ class Logger
 		LoggerSingleton::get().unlock(); \
 	} while(false);
 
-#define INFO(x) LOGGER_MESSAGE(Logger::MT_NORMAL, x)
+#define ANKI_INFO(x) ANKI_LOGGER_MESSAGE(Logger::MT_NORMAL, x)
 
-#define WARNING(x) LOGGER_MESSAGE(Logger::MT_WARNING, x)
+#define ANKI_WARNING(x) ANKI_LOGGER_MESSAGE(Logger::MT_WARNING, x)
 
-#define ERROR(x) LOGGER_MESSAGE(Logger::MT_ERROR, x)
+#define ANKI_ERROR(x) ANKI_LOGGER_MESSAGE(Logger::MT_ERROR, x)
 
 
 #endif

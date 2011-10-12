@@ -5,6 +5,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// Bone pose
 struct BonePose
 {
@@ -113,6 +116,9 @@ class SkelAnim
 		uint framesNum;
 		std::vector<BoneAnim> boneAnims;
 };
+
+
+} // end namespace
 
 
 #endif

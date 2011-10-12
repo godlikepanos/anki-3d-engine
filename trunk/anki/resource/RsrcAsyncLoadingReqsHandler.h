@@ -9,6 +9,9 @@
 #include "anki/resource/RsrcLoadingRequests.h"
 
 
+namespace anki {
+
+
 // Dont even think to include these files:
 class Texture;
 class Mesh;
@@ -50,6 +53,9 @@ class RsrcAsyncLoadingReqsHandler
 		/// The number of served requests for this frame
 		uint frameServedRequestsNum;
 };
+
+
+} // end namespace
 
 
 #endif

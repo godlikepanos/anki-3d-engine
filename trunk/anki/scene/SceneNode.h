@@ -8,6 +8,9 @@
 #include <string>
 
 
+namespace anki {
+
+
 class Material;
 class Controller;
 class Scene;
@@ -246,6 +249,9 @@ inline void SceneNode::rotateLocalZ(float angDegrees)
 {
 	lTrf.getRotation().rotateZAxis(angDegrees);
 }
+
+
+} // end namespace
 
 
 #endif

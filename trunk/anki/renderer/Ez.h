@@ -5,6 +5,9 @@
 #include "anki/gl/Fbo.h"
 
 
+namespace anki {
+
+
 /// Material stage EarlyZ pass
 class Ez: public SwitchableRenderingPass
 {
@@ -17,6 +20,9 @@ class Ez: public SwitchableRenderingPass
 	private:
 		Fbo fbo; ///< Writes to MS depth FAI
 };
+
+
+} // end namespace
 
 
 #endif

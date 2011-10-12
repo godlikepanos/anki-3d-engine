@@ -4,6 +4,9 @@
 #include "anki/util/StdTypes.h"
 
 
+namespace anki {
+
+
 /// Extension @ref Resource resource
 class Extension
 {
@@ -25,5 +28,9 @@ inline Extension::Extension():
 	libHandle(NULL),
 	foobarPtr(NULL)
 {}
+
+
+} // end namespace
+
 
 #endif

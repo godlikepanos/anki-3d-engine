@@ -5,6 +5,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 /// Change the scene color
 class SceneColorEvent: public Event
 {
@@ -26,6 +29,9 @@ class SceneColorEvent: public Event
 		/// Implements Event::updateSp
 		void updateSp(float prevUpdateTime, float crntTime);
 };
+
+
+} // end namespace
 
 
 #endif

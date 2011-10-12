@@ -4,6 +4,9 @@
 #include "anki/math/MathCommonIncludes.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Math
 /// @{
 
@@ -91,6 +94,9 @@ class Vec2
 		/// @}
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Vec2.inl.h"

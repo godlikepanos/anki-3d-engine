@@ -7,6 +7,9 @@
 #include <cstdarg>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -103,7 +106,7 @@ void UiPainter::drawText(const char* text)
 		}
 		else if(cc < ' ' || cc > '~') // out of range
 		{
-			ERROR("Char out of range (" << cc << "). Ignoring");
+			ANKI_ERROR("Char out of range (" << cc << "). Ignoring");
 		}
 		else
 		{
@@ -146,3 +149,6 @@ void UiPainter::drawFormatedText(const char* format, ...)
 
 	drawText(text);
 }
+
+
+} // end namespace

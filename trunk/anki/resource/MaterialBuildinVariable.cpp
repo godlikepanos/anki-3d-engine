@@ -6,6 +6,9 @@
 #include <boost/assign/list_of.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
@@ -119,3 +122,6 @@ bool MaterialBuildinVariable::isBuildin(const char* name,
 
 	return true;
 }
+
+
+} // end namespace

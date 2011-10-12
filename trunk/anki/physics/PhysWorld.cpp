@@ -4,6 +4,9 @@
 #include "anki/physics/MotionState.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -55,3 +58,6 @@ void PhysWorld::update(float prevUpdateTime, float crntTime)
 			characters[i]->ghostObject->getWorldTransform());
 	}
 }
+
+
+} // end namespace

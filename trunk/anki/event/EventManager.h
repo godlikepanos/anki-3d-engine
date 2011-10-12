@@ -5,6 +5,9 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 
 
+namespace anki {
+
+
 /// This manager creates the events ands keeps tracks of them
 class EventManager
 {
@@ -31,6 +34,9 @@ class EventManager
 		/// Find a dead event of a certain type
 		EventsContainer::iterator findADeadEvent(EventType type);
 };
+
+
+} // end namespace
 
 
 #include "anki/event/EventManager.inl.h"

@@ -6,9 +6,13 @@
 #include "anki/util/scanner/Scanner.h"
 
 
+namespace anki {
+
+
 /// It contains some functions and macros that are used pretty often while
 /// parsing
 namespace parser {
+
 
 /// Parser macros
 #define PARSER_EXCEPTION(x) \
@@ -67,7 +71,7 @@ extern std::string parseString(scanner::Scanner& scanner);
 
 
 } // end namespace
-
+} // end namespace
 
 #include "anki/misc/Parser.inl.h"
 

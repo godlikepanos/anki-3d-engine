@@ -2,6 +2,9 @@
 #define ANKI_RENDERER_RENDERING_PASS_H
 
 
+namespace anki {
+
+
 class Renderer;
 struct RendererInitializer;
 
@@ -46,6 +49,9 @@ class SwitchableRenderingPass: public RenderingPass
 	protected:
 		bool enabled;
 };
+
+
+} // end namespace
 
 
 #endif

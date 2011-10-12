@@ -4,10 +4,11 @@
 #include "anki/resource/RsrcPtr.h"
 
 
+namespace anki {
+
+
 class ShaderProgram;
 class SkinPatchNode;
-
-
 class MainRenderer;
 
 
@@ -28,6 +29,9 @@ class Deformer
 
 		void init();
 };
+
+
+} // end namespace
 
 
 #endif

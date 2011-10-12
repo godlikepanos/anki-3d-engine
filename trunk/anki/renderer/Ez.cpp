@@ -5,6 +5,9 @@
 #include "anki/renderer/RendererInitializer.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -71,3 +74,6 @@ void Ez::run()
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
+
+
+} // end namespace

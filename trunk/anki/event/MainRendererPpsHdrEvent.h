@@ -4,6 +4,9 @@
 #include "anki/event/Event.h"
 
 
+namespace anki {
+
+
 /// Change the HDR properties
 class MainRendererPpsHdrEvent: public Event
 {
@@ -32,6 +35,9 @@ class MainRendererPpsHdrEvent: public Event
 		/// Implements Event::updateSp
 		void updateSp(float prevUpdateTime, float crntTime);
 };
+
+
+} // end namespace
 
 
 #endif

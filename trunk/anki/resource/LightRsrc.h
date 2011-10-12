@@ -6,6 +6,9 @@
 #include "anki/resource/Texture.h"
 
 
+namespace anki {
+
+
 /// Properties common for all lights
 struct LightProps
 {
@@ -122,6 +125,9 @@ inline const Texture& LightRsrc::getTexture() const
 	ASSERT(texture.get() != NULL);
 	return *texture;
 }
+
+
+} // end namespace
 
 
 #endif

@@ -2,11 +2,12 @@
 #define ANKI_RENDERER_COLLISION_DBG_DRAWER_H
 
 
+namespace anki {
+
+
 class Sphere;
 class Obb;
 class Plane;
-
-
 class Dbg;
 
 
@@ -29,6 +30,9 @@ class CollisionDbgDrawer
 	private:
 		Dbg& dbg; ///< The debug stage
 };
+
+
+} // end namespace
 
 
 #endif

@@ -6,6 +6,9 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 
+namespace anki {
+
+
 class Material;
 class MaterialRuntimeVariable;
 
@@ -72,6 +75,9 @@ class MaterialRuntime: public MaterialProperties
 		VariablesContainer vars;
 		ConstCharPtrHashMap<MaterialRuntimeVariable*>::Type varNameToVar;
 };
+
+
+} // end namespace
 
 
 #endif

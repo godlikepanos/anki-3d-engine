@@ -5,6 +5,9 @@
 #include "anki/core/Globals.h"
 
 
+namespace anki {
+
+
 /// This is a special smart pointer that points to Resource derivatives. It
 /// looks like auto_ptr but the main difference is that when its out of scope
 /// it tries to unload the resource.
@@ -44,6 +47,9 @@ class RsrcPtr
 		/// Unloads the resource @see loadRsrc
 		void unload();
 };
+
+
+} // end namespace
 
 
 #include "anki/resource/RsrcPtr.inl.h"

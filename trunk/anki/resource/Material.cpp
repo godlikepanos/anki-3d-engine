@@ -13,6 +13,9 @@
 #include <algorithm>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
@@ -330,3 +333,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		}
 	} // end for all sprog vars
 }
+
+
+} // end namespace

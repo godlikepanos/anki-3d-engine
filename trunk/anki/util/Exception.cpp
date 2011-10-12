@@ -2,6 +2,9 @@
 #include <sstream>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -47,3 +50,6 @@ const char* Exception::what() const throw()
 	errWhat = ss.str();
 	return errWhat.c_str();
 }
+
+
+} // end namespace

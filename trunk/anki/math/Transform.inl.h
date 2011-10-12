@@ -1,6 +1,9 @@
 #include "anki/math/MathCommonSrc.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors                                                                =
 //==============================================================================
@@ -140,3 +143,6 @@ inline Transform Transform::combineTransformations(const Transform& a,
 
 	return out;
 }
+
+
+} // end namespace

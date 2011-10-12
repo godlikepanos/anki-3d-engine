@@ -2,6 +2,9 @@
 #include "anki/resource/MaterialUserVariable.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // ConstructVisitor::operator() <RsrcPtr<Texture> >                            =
 //==============================================================================
@@ -55,3 +58,5 @@ void MaterialRuntimeVariable::setValue<
 	boost::get<ConstPtrRsrcPtrTexture>(data) = v;
 }
 
+
+} // end namespace

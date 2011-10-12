@@ -5,6 +5,9 @@
 #include "anki/renderer/RendererInitializer.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -171,3 +174,6 @@ void Pps::runPostPass()
 	//
 	bl.run();
 }
+
+
+} // end namespace

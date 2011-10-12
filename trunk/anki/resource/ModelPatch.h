@@ -4,6 +4,9 @@
 #include "anki/resource/RsrcPtr.h"
 
 
+namespace anki {
+
+
 class Mesh;
 class Material;
 
@@ -37,6 +40,9 @@ class ModelPatch
 		/// Load the resources
 		void load(const char* meshFName, const char* mtlFName);
 };
+
+
+} // end namespace
 
 
 #endif

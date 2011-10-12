@@ -49,12 +49,15 @@ BOOST_PYTHON_MODULE(anki)
 }
 
 
+namespace anki {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
 void ScriptManager::init()
 {
-	INFO("Initializing scripting engine...");
+	ANKI_INFO("Initializing scripting engine...");
 
 	PyImport_AppendInittab((char*)("anki"), &initanki);
 	Py_Initialize();
@@ -62,7 +65,7 @@ void ScriptManager::init()
 	mainNamespace = mainModule.attr("__dict__");
 	ankiModule = object(handle<>(PyImport_ImportModule("anki")));
 
-	INFO("Scripting engine initialized");
+	ANKI_INFO("Scripting engine initialized");
 }
 
 
@@ -83,3 +86,5 @@ void ScriptManager::execScript(const char* script, const char* scriptName)
 	}
 }
 
+
+} // end namespace

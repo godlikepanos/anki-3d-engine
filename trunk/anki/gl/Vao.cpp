@@ -4,6 +4,9 @@
 #include "anki/resource/ShaderProgramAttributeVariable.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -29,7 +32,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 		throw ANKI_EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
 	}
 
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 
 	bind();
 	vbo.bind();
@@ -39,7 +42,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 	vbo.unbind();
 	unbind();
 
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
 
 
@@ -70,5 +73,8 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	bind();
 	vbo.bind();
 	unbind();
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
+
+
+} // end namespace

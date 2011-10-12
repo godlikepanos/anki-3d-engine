@@ -20,6 +20,9 @@
 #include <boost/scoped_ptr.hpp>
 
 
+namespace anki {
+
+
 class Camera;
 struct RendererInitializer;
 class ModelNode;
@@ -257,6 +260,9 @@ class Renderer
 		Vao quadVao; ///< This VAO is used everywhere except material stage
 		/// @}
 };
+
+
+} // end namespace
 
 
 #endif

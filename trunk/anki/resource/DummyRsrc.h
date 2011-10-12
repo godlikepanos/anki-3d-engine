@@ -2,6 +2,9 @@
 #define ANKI_RESOURCE_DUMMY_RSRC_H
 
 
+namespace anki {
+
+
 /// A dummy resource for the unit tests of the ResourceManager
 class DummyRsrc
 {
@@ -43,6 +46,9 @@ inline void DummyRsrc::load(const char* /*filename*/)
 	++mem;
 	loaded = true;
 }
+
+
+} // end namespace
 
 
 #endif

@@ -8,6 +8,9 @@
 #include "anki/scene/OrthographicCamera.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // drawCamera                                                                  =
 //==============================================================================
@@ -149,3 +152,6 @@ void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 	}
 	dbg.end();
 }
+
+
+} // end namespace

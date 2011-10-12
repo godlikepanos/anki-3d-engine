@@ -13,6 +13,9 @@
 #include "anki/scene/SkinNode.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
@@ -164,3 +167,6 @@ void Scene::updateAllControllers()
 		ctl->update(0.0);
 	}
 }
+
+
+} // end namespace

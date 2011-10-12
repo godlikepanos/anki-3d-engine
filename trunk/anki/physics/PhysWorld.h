@@ -9,6 +9,11 @@
 
 
 class btIDebugDraw;
+
+
+namespace anki {
+
+
 class Character;
 class RigidBody;
 
@@ -55,6 +60,9 @@ class PhysWorld
 		float defaultContactProcessingThreshold;
 		std::vector<Character*> characters;
 };
+
+
+} // end namespace
 
 
 #endif

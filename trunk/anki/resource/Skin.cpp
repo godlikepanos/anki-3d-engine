@@ -9,6 +9,9 @@
 #include "anki/resource/ModelPatch.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & Destructors                                                  =
 //==============================================================================
@@ -92,3 +95,6 @@ void Skin::load(const char* filename)
 		throw ANKI_EXCEPTION("Skin \"" + filename + "\": " + e.what());
 	}
 }
+
+
+} // end namespace

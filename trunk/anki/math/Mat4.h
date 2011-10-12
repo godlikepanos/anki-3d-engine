@@ -4,6 +4,9 @@
 #include "anki/math/MathCommonIncludes.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Math
 /// @{
 
@@ -129,6 +132,9 @@ class Mat4
 		/// @}
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Mat4.inl.h"

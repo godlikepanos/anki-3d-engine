@@ -12,6 +12,9 @@
 #include "anki/core/Logger.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -333,3 +336,6 @@ void VisibilityTester::getRenderableNodesJobCallback(
 		}
 	}
 }
+
+
+} // end namespace

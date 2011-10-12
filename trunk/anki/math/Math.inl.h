@@ -1,6 +1,9 @@
 #include "anki/math/MathCommonSrc.h"
 
 
+namespace anki {
+
+
 inline float Math::sqrt(const float f)
 {
 #if defined(MATH_INTEL_SIMD)
@@ -64,3 +67,6 @@ inline void Math::combineTransformations(
 	tf = t1.getTransformed(t0, r0);
 	rf = r0 * r1;
 }
+
+
+} // end namespace

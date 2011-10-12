@@ -5,6 +5,9 @@
 #include "anki/resource/Image.h"
 
 
+namespace anki {
+
+
 class AsyncLoader;
 // Dont even think to include these files:
 class Texture;
@@ -54,6 +57,9 @@ inline RsrcTextureLoadingRequest::RsrcTextureLoadingRequest(
 :	RsrcLoadingRequestBase(filename_),
 	pTex(pTex_)
 {}
+
+
+} // end namespace
 
 
 #endif

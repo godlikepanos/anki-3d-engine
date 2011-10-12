@@ -5,6 +5,9 @@
 #include <boost/lexical_cast.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
@@ -150,3 +153,5 @@ void SceneNode::moveLocalZ(float distance)
 	getLocalTransform().getOrigin() += z_axis * distance;
 }
 
+
+} // end namespace

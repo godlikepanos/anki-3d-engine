@@ -4,6 +4,9 @@
 #include "anki/gl/GlStateMachine.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // doSanityChecks                                                              =
 //==============================================================================
@@ -108,3 +111,6 @@ void ShaderProgramUniformVariable::set(const Texture& tex, uint texUnit) const
 	tex.bind(texUnit);
 	glUniform1i(getLocation(), texUnit);
 }
+
+
+} // end namespace

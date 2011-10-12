@@ -8,6 +8,9 @@
 #include <boost/scoped_ptr.hpp>
 
 
+namespace anki {
+
+
 class UiFont;
 
 
@@ -80,6 +83,9 @@ class UiPainter
 
 		void init();
 };
+
+
+} // end namespace
 
 
 #endif

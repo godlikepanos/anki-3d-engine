@@ -4,6 +4,9 @@
 #include "anki/resource/Skeleton.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
@@ -40,3 +43,6 @@ void ModelNode::moveUpdate()
 	visibilityShapeWSpace = model->getVisibilityShape().getTransformed(
 		getWorldTransform());
 }
+
+
+} // end namespace

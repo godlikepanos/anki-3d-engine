@@ -8,6 +8,9 @@
 #include <boost/range/iterator_range.hpp>
 
 
+namespace anki {
+
+
 class SceneNode;
 class Light;
 class Camera;
@@ -182,6 +185,9 @@ class Scene
 		template<typename ContainerType, typename Type>
 		void eraseNode(ContainerType& container, Type* x);
 };
+
+
+} // end namespace
 
 
 #include "anki/scene/Scene.inl.h"

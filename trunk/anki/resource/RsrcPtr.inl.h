@@ -4,6 +4,9 @@
 #include <boost/checked_delete.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -84,3 +87,6 @@ const std::string& RsrcPtr<Type>::getRsrcName() const
 	ASSERT(hook != NULL);
 	return hook->uuid;
 }
+
+
+} // end namespace

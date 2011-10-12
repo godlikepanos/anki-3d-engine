@@ -14,6 +14,9 @@
 #include "anki/renderer/CollisionDbgDrawer.h"
 
 
+namespace anki {
+
+
 /// Debugging stage
 class Dbg: public SwitchableRenderingPass
 {
@@ -82,6 +85,9 @@ class Dbg: public SwitchableRenderingPass
 		/// pairs)
 		std::map<uint, std::vector<Vec3> > complexityToPreCalculatedSphere;
 };
+
+
+} // end namespace
 
 
 #endif

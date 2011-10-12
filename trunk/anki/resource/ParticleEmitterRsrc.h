@@ -4,6 +4,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 /// This is the properties of the particle emitter resource
 class ParticleEmitterRsrc
 {
@@ -56,6 +59,9 @@ class ParticleEmitterRsrc
 		std::string modelName;
 		/// @}
 };
+
+
+} // end namespace
 
 
 #endif

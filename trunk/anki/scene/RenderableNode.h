@@ -5,6 +5,9 @@
 #include "anki/resource/MaterialCommon.h"
 
 
+namespace anki {
+
+
 class Vao;
 class Material;
 class MaterialRuntime;
@@ -33,6 +36,9 @@ class RenderableNode: public SceneNode
 		/// Const version of getMaterialRuntime
 		virtual const MaterialRuntime& getMaterialRuntime() const = 0;
 };
+
+
+} // end namespace
 
 
 #endif

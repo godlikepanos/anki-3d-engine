@@ -1,3 +1,5 @@
+namespace anki {
+
 
 template<typename ContainerType, typename Type>
 inline void Scene::putBackNode(ContainerType& container, Type* x)
@@ -15,3 +17,6 @@ inline void Scene::eraseNode(ContainerType& container, Type* x)
 	ASSERT(it != container.end());
 	container.erase(it);
 }
+
+
+} // end namespace

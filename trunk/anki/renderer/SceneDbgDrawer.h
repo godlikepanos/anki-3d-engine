@@ -2,13 +2,15 @@
 #define ANKI_RENDERER_SCENE_DBG_DRAWER_H
 
 
+namespace anki {
+
+
 class Camera;
 class Light;
 class ParticleEmitterNode;
 class SkinNode;
 class PerspectiveCamera;
 class OrthographicCamera;
-
 
 class Dbg;
 
@@ -41,6 +43,9 @@ class SceneDbgDrawer
 		virtual void drawOrthographicCamera(
 			const OrthographicCamera& cam) const;
 };
+
+
+} // end namespace
 
 
 #endif

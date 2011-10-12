@@ -4,6 +4,9 @@
 #include "anki/util/StdTypes.h"
 
 
+namespace anki {
+
+
 /// The event type enum
 enum EventType
 {
@@ -40,7 +43,10 @@ class Event
 			return type;
 		}
 
-		bool isDead(float crntTime) const;
+		bool isDead(float crntTime) const
+		{
+			return crntTime >= startTime + duration;
+		}
 		/// @}
 
 		/// Copy
@@ -60,7 +66,10 @@ class Event
 		/// @param[in] delta The percentage from the from "from" value. Values
 		/// from [0.0, 1.0]
 		template<typename Type>
-		static Type interpolate(const Type& from, const Type& to, float delta);
+		static Type interpolate(const Type& from, const Type& to, float delta)
+		{
+			return from * (1.0 - delta) + to * delta;
+		}
 
 	private:
 		EventType type; ///< Self explanatory
@@ -69,17 +78,7 @@ class Event
 };
 
 
-inline bool Event::isDead(float crntTime) const
-{
-	return crntTime >= startTime + duration;
-}
-
-
-template<typename Type>
-Type Event::interpolate(const Type& from, const Type& to, float delta)
-{
-	return from * (1.0 - delta) + to * delta;
-}
+} // end namespace
 
 
 #endif

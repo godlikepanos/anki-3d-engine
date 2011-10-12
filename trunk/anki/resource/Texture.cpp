@@ -1,10 +1,13 @@
-#include <GL/glew.h>
 #include "anki/resource/Texture.h"
 #include "anki/resource/Image.h"
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
-#include "anki/core/Logger.h" /// @todo remove it
-#include "anki/math/Math.h"  /// @todo remove it
+
+#include <GL/glew.h>
+#include <boost/lexical_cast.hpp>
+
+
+namespace anki {
 
 
 #define LAST_TEX_UNIT (textureUnitsNum - 1)
@@ -202,7 +205,7 @@ void Texture::create(const Initializer& init_)
 			float(init.anisotropyLevel));
 	}
 
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
 
 
@@ -382,3 +385,6 @@ void Texture::setFiltering(TextureFilteringType filterType)
 			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 }
+
+
+} // end namespace

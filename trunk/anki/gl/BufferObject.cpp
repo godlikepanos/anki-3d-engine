@@ -4,6 +4,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -49,7 +52,7 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_,
 	}
 
 	unbind();
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
 
 
@@ -82,3 +85,6 @@ void BufferObject::write(void* buff, size_t offset, size_t size)
 	glUnmapBuffer(target);
 	unbind();
 }
+
+
+} // end namespace

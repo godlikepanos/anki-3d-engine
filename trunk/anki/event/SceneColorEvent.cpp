@@ -4,6 +4,9 @@
 #include "anki/core/Logger.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -49,3 +52,6 @@ void SceneColorEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 	SceneSingleton::get().setAmbientColor(
 		interpolate(originalColor, finalColor, dp));
 }
+
+
+} // end namespace

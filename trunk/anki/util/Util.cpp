@@ -6,6 +6,7 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
 namespace util {
 
 
@@ -83,3 +84,4 @@ float randFloat(float max)
 
 
 } // end namesapce
+} // end namespace

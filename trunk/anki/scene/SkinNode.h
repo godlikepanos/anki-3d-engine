@@ -8,6 +8,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 class Skin;
 class SkelAnimModelNodeCtrl;
 
@@ -177,6 +180,9 @@ class SkinNode: public SceneNode
 		    const std::vector<Mat3>& boneRotations,
 		    std::vector<Vec3>& heads, std::vector<Vec3>& tails);
 };
+
+
+} // end namespace
 
 
 #endif

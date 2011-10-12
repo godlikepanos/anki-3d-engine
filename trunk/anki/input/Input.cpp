@@ -5,16 +5,19 @@
 #include <SDL/SDL.h>
 
 
+namespace anki {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
 void Input::init()
 {
-	INFO("Initializing input...");
+	ANKI_INFO("Initializing input...");
 	warpMouseFlag = false;
 	hideCursor = true;
 	reset();
-	INFO("Input initialized");
+	ANKI_INFO("Input initialized");
 }
 
 
@@ -115,3 +118,6 @@ void Input::handleEvents()
 		}
 	}
 }
+
+
+} // end namespace

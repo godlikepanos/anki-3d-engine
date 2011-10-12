@@ -17,6 +17,9 @@
 #define glewGetContext() (&glContext)
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
@@ -35,7 +38,7 @@ MainRenderer::~MainRenderer()
 //==============================================================================
 void MainRenderer::init(const RendererInitializer& initializer_)
 {
-	INFO("Initializing main renderer...");
+	ANKI_INFO("Initializing main renderer...");
 	initGl();
 
 	sProg.loadRsrc("shaders/Final.glsl");
@@ -54,7 +57,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	deformer.reset(new Deformer(*this));
-	INFO("Main renderer initialized");
+	ANKI_INFO("Main renderer initialized");
 }
 
 
@@ -74,7 +77,7 @@ void MainRenderer::initGl()
 	glGetError();
 
 	// print GL info
-	INFO("OpenGL info: OGL " <<
+	ANKI_INFO("OpenGL info: OGL " <<
 		reinterpret_cast<const char*>(glGetString(GL_VERSION)) <<
 		", GLSL " << reinterpret_cast<const char*>(
 			glGetString(GL_SHADING_LANGUAGE_VERSION)));
@@ -102,7 +105,7 @@ void MainRenderer::initGl()
 
 	try
 	{
-		ON_GL_FAIL_THROW_EXCEPTION();
+		ANKI_CHECK_GL_ERROR();
 	}
 	catch(std::exception& e)
 	{
@@ -262,6 +265,8 @@ void MainRenderer::takeScreenshot(const char* filename)
 	{
 		throw ANKI_EXCEPTION("File \"" + filename + "\": Unsupported extension");
 	}
-	//INFO("Screenshot \"" << filename << "\" saved");
+	//ANKI_INFO("Screenshot \"" << filename << "\" saved");
 }
 
+
+} // end namespace

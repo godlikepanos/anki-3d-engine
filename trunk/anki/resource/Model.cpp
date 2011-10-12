@@ -12,6 +12,8 @@
 #include "anki/resource/Skeleton.h"
 
 
+namespace anki {
+
 
 //==============================================================================
 // load                                                                        =
@@ -60,3 +62,6 @@ void Model::load(const char* filename)
 		throw ANKI_EXCEPTION("Model \"" + filename + "\": " + e.what());
 	}
 }
+
+
+} // end namespace

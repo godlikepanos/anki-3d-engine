@@ -1,6 +1,9 @@
 #include "anki/math/MathCommonSrc.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors                                                                =
 //==============================================================================
@@ -168,3 +171,6 @@ inline std::ostream& operator<<(std::ostream& s, const Euler& e)
 	s << e.x() << ' ' << e.y() << ' ' << e.z();
 	return s;
 }
+
+
+} // end namespace

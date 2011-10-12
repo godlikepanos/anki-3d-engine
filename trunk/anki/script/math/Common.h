@@ -4,6 +4,9 @@
 #include "anki/script/Common.h"
 
 
+namespace anki {
+
+
 template<typename ClassType, typename RetType,
 	RetType (ClassType::* accessor)() const>
 RetType getM(const ClassType* t)
@@ -22,6 +25,9 @@ void setM(ClassType* t, InType in)
 #define BP_PROPERTY_MATH(ClassType__, name__) \
 	.add_property(#name__, &getM<ClassType__, float, &ClassType__::name__>, \
 		&setM<ClassType__, float, &ClassType__::name__>)
+
+
+} // end namespace
 
 
 #endif

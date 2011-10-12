@@ -2,6 +2,9 @@
 #include "anki/resource/LightRsrc.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Destructor                                                                  =
 //==============================================================================
@@ -20,3 +23,6 @@ void Light::init(const char* filename)
 	specularCol = lightData->getSpecularColor();
 	castsShadowFlag = lightData->getCastShadow();
 }
+
+
+} // end namespace

@@ -7,6 +7,9 @@
 #include <bullet/btBulletCollisionCommon.h>
 
 
+namespace anki {
+
+
 class SceneNode;
 class MotionState;
 class PhysWorld;
@@ -40,6 +43,9 @@ class RigidBody: public btRigidBody
 		/// Keep it here for garbage collection
 		boost::scoped_ptr<MotionState> motionState;
 };
+
+
+} // end namespace
 
 
 #endif

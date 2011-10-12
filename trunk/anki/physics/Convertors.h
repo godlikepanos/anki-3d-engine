@@ -6,6 +6,9 @@
 #include <bullet/btBulletDynamicsCommon.h>
 
 
+namespace anki {
+
+
 inline Vec3 toAnki(const btVector3& v)
 {
 	return Vec3(v.x(), v.y(), v.z());
@@ -85,6 +88,9 @@ inline btTransform toBt(const Transform& trf)
 	r.setRotation(toBt(Quat(trf.getRotation())));
 	return r;
 }
+
+
+} // end namespace
 
 
 #endif

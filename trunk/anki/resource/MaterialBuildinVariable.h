@@ -7,6 +7,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 /// XXX
 class MaterialBuildinVariable: public MaterialVariable
 {
@@ -89,6 +92,9 @@ inline const ShaderProgramUniformVariable&
 	return static_cast<const ShaderProgramUniformVariable&>(
 		getShaderProgramVariable(p));
 }
+
+
+} // end namespace
 
 
 #endif

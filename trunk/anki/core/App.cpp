@@ -101,7 +101,7 @@ void App::init(int argc, char* argv[])
 //==============================================================================
 void App::initWindow()
 {
-	INFO("SDL window initializing...");
+	ANKI_INFO("SDL window initializing...");
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
@@ -112,7 +112,7 @@ void App::initWindow()
 	const char* driverName = SDL_GetCurrentVideoDriver();
 	if(driverName != NULL)
 	{
-		INFO("Video driver name: " << driverName);
+		ANKI_INFO("Video driver name: " << driverName);
 	}
 
 	// set GL attribs
@@ -139,7 +139,7 @@ void App::initWindow()
 	iconImage = SDL_LoadBMP("gfx/icon.bmp");
 	if(iconImage == NULL)
 	{
-		WARNING("Cannot load window icon");
+		ANKI_WARNING("Cannot load window icon");
 	}
 	else
 	{
@@ -149,7 +149,7 @@ void App::initWindow()
 		SDL_SetWindowIcon(windowId, iconImage);
 	}
 
-	INFO("SDL window initialization ends");
+	ANKI_INFO("SDL window initialization ends");
 }
 
 
@@ -161,18 +161,18 @@ void App::initDirs()
 	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
 	if(!boost::filesystem::exists(settingsPath))
 	{
-		INFO("Creating settings dir \"" << settingsPath.string() << "\"");
+		ANKI_INFO("Creating settings dir \"" << settingsPath.string() << "\"");
 		boost::filesystem::create_directory(settingsPath);
 	}
 
 	cachePath = settingsPath / "cache";
 	if(boost::filesystem::exists(cachePath))
 	{
-		INFO("Deleting dir \"" << cachePath.string() << "\"");
+		ANKI_INFO("Deleting dir \"" << cachePath.string() << "\"");
 		boost::filesystem::remove_all(cachePath);
 	}
 
-	INFO("Creating cache dir \"" << cachePath.string() << "\"");
+	ANKI_INFO("Creating cache dir \"" << cachePath.string() << "\"");
 	boost::filesystem::create_directory(cachePath);
 }
 
@@ -242,7 +242,7 @@ void App::printAppInfo()
 		int(v->patch) << ", " << "build date " __DATE__ << ", " <<
 		"rev " << REVISION;
 
-	INFO(msg.str());
+	ANKI_INFO(msg.str());
 }
 
 

@@ -5,6 +5,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// Skeleton bone
 ///
 /// @note The rotation and translation that transform the bone from bone space
@@ -133,6 +136,9 @@ class Skeleton
 	private:
 		std::vector<Bone> bones;
 };
+
+
+} // end namespace
 
 
 #endif

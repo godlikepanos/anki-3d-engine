@@ -4,6 +4,9 @@
 #include "anki/util/BinaryStream.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // load                                                                        =
 //==============================================================================
@@ -108,3 +111,6 @@ void Skeleton::load(const char* filename)
 		throw ANKI_EXCEPTION("Skeleton \"" + filename + "\": " + e.what());
 	}
 }
+
+
+} // end namespace

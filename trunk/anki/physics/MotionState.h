@@ -5,6 +5,9 @@
 #include "anki/scene/SceneNode.h"
 
 
+namespace anki {
+
+
 /// A custom motion state
 class MotionState: public btMotionState
 {
@@ -56,6 +59,9 @@ inline void MotionState::setWorldTransform(const btTransform& worldTrans)
 		nodeTrf.setScale(originalScale);
 	}
 }
+
+
+} // end namespace
 
 
 #endif

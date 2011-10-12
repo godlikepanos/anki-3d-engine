@@ -5,6 +5,9 @@
 #include "anki/math/MathCommonIncludes.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Math
 /// @{
 
@@ -50,6 +53,9 @@ class Axisang
 		/// @}
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Axisang.inl.h"

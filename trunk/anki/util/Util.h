@@ -6,8 +6,12 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// The namespace contains a few useful functions
 namespace util {
+
 
 /// Pick a random number from min to max
 extern int randRange(int min, int max);
@@ -37,6 +41,7 @@ size_t getVectorSizeInBytes(const Vec& v)
 }
 
 
+} // end namespace
 } // end namespace
 
 

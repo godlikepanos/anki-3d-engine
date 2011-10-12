@@ -3,6 +3,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // load                                                                        =
 //==============================================================================
@@ -14,3 +17,6 @@ void Script::load(const char* filename)
 		throw ANKI_EXCEPTION("Cannot load script \"" + filename + "\"");
 	}
 }
+
+
+} // end namespace

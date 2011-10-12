@@ -7,6 +7,9 @@
 #include <boost/lexical_cast.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // load                                                                        =
 //==============================================================================
@@ -90,3 +93,6 @@ void Mesh::createVbos(const MeshData& meshData)
 			GL_STATIC_DRAW);
 	}
 }
+
+
+} // end namespace

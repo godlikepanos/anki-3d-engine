@@ -1,6 +1,9 @@
 #include "anki/scene/PerspectiveCamera.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // setAll                                                                      =
 //==============================================================================
@@ -68,3 +71,6 @@ void PerspectiveCamera::calcLSpaceFrustumPlanes()
 	// far
 	lspaceFrustumPlanes[FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -zFar);
 }
+
+
+} // end namespace

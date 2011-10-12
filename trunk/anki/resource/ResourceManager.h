@@ -9,6 +9,9 @@
 #include "anki/resource/RsrcAsyncLoadingReqsHandler.h"
 
 
+namespace anki {
+
+
 class Texture;
 class ShaderProgram;
 class Mesh;
@@ -130,6 +133,9 @@ inline size_t ResourceManager::getAsyncLoadingRequestsNum() const
 {
 	return rsrcAsyncLoadingReqsHandler.getRequestsNum();
 }
+
+
+} // end namespace
 
 
 #endif

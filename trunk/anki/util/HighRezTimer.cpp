@@ -3,6 +3,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -61,3 +64,6 @@ HighRezTimer::Scalar HighRezTimer::getCrntTime()
 		total_milliseconds();
 	return Scalar(ms) / 1000.0;
 }
+
+
+} // end namespace
