@@ -4,6 +4,9 @@
 #include "anki/scene/Camera.h"
 
 
+namespace anki {
+
+
 /// Orthographic camera defined by pairs of parallel planes
 class OrthographicCamera: public Camera
 {
@@ -108,6 +111,9 @@ inline void OrthographicCamera::setBottom(float f)
 	calcProjectionMatrix();
 	calcLSpaceFrustumPlanes();
 }
+
+
+} // end namespace
 
 
 #endif

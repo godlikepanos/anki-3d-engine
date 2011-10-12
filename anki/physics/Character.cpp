@@ -10,6 +10,9 @@
 #include <bullet/BulletDynamics/Character/btKinematicCharacterController.h>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Contructor                                                                  =
 //==============================================================================
@@ -115,3 +118,6 @@ void Character::jump()
 {
 	character->jump();
 }
+
+
+} // end namespace

@@ -4,6 +4,9 @@
 #include "anki/math/MathCommonIncludes.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Math
 /// @{
 
@@ -51,6 +54,9 @@ class Math
 		static float polynomialSinQuadrant(const float a);
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Math.inl.h"

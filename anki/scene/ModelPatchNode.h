@@ -5,6 +5,9 @@
 #include "anki/collision/Obb.h"
 
 
+namespace anki {
+
+
 class ModelNode;
 
 
@@ -30,6 +33,9 @@ class ModelPatchNode: public PatchNode
 	private:
 		Obb visibilityShapeWSpace;
 };
+
+
+} // end namespace
 
 
 #endif

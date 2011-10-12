@@ -9,6 +9,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// Helper class used for shader program loading
 ///
 /// The class fills some of the GLSL spec deficiencies. It adds the include
@@ -190,6 +193,9 @@ typename std::vector<Type>::const_iterator
 	}
 	return it;
 }
+
+
+} // end namespace
 
 
 #endif

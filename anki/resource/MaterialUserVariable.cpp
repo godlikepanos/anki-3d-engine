@@ -2,6 +2,9 @@
 #include "anki/resource/Texture.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & destructor                                                   =
 //==============================================================================
@@ -74,3 +77,6 @@ MaterialUserVariable::MaterialUserVariable(
 
 MaterialUserVariable::~MaterialUserVariable()
 {}
+
+
+} // end namespace

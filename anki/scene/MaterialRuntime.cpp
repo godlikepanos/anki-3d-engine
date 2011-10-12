@@ -4,6 +4,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -64,3 +67,6 @@ const MaterialRuntimeVariable& MaterialRuntime::findVariableByName(
 	}
 	return *(it->second);
 }
+
+
+} // end namespace

@@ -4,6 +4,9 @@
 #include "anki/resource/ShaderProgram.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -159,3 +162,6 @@ void Bl::run()
 	runSideBlur();
 	runBlur();
 }
+
+
+} // end namespace

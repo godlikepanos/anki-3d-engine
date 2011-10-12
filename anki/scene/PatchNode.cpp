@@ -3,6 +3,9 @@
 #include "anki/scene/MaterialRuntime.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -55,3 +58,6 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 
 	vao.attachElementArrayBufferVbo(*vbos[Mesh::VBO_VERT_INDECES]);
 }
+
+
+} // end namespace

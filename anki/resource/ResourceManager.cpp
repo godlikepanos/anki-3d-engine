@@ -18,6 +18,9 @@
 #include "anki/core/Globals.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 ResourceManager::ResourceManager()
 {}
@@ -41,7 +44,7 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Type*& newInstance)
 	}
 	catch(std::exception& e)
 	{
-		//ERROR("fuckkkkkkkkkk " << e.what());
+		//ANKI_ERROR("fuckkkkkkkkkk " << e.what());
 
 		/*if(newInstance != NULL)
 		{
@@ -142,10 +145,10 @@ void ResourceManager::unloadR(const typename Types<Type>::Hook& hook)
 
 	if(it->uuid != hook.uuid)
 	{
-		INFO(it->uuid << " " << hook.uuid);
+		ANKI_INFO(it->uuid << " " << hook.uuid);
 	}
 
-	ERROR(it->uuid << " " << hook.uuid << " " << it->resource << " " <<
+	ANKI_ERROR(it->uuid << " " << hook.uuid << " " << it->resource << " " <<
 		hook.resource << " " << dummyTex.get());
 	ASSERT(it->uuid == hook.uuid);
 	ASSERT(it->referenceCounter == hook.referenceCounter);
@@ -263,3 +266,5 @@ void ResourceManager::allocAndLoadRsrc(const char* filename, Texture*& ptr)
 	}
 }*/
 
+
+} // end namespace

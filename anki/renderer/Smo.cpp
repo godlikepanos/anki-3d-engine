@@ -12,6 +12,9 @@
 #include "anki/resource/Mesh.h"
 
 
+namespace anki {
+
+
 const float THRESHOLD = 0.2;
 
 
@@ -240,3 +243,6 @@ void Smo::run(const SpotLight& light)
 	// restore GL state
 	restoreGl(inside);
 }
+
+
+} // end namespace

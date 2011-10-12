@@ -7,6 +7,9 @@
 #include <boost/thread.hpp>
 
 
+namespace anki {
+
+
 class Camera;
 class Scene;
 class RenderableNode;
@@ -81,6 +84,9 @@ class VisibilityTester
 			ParallelJobParameters& data,
 			const ParallelJob& job);
 };
+
+
+} // end namespace
 
 
 #endif

@@ -9,6 +9,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 class SpotLight;
 class PointLight;
 
@@ -158,6 +161,9 @@ inline void Camera::setZFar(float zfar_)
 	calcProjectionMatrix();
 	calcLSpaceFrustumPlanes();
 }
+
+
+} // end namespace
 
 
 #endif

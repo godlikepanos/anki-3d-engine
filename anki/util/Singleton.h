@@ -6,6 +6,9 @@
 #endif
 
 
+namespace anki {
+
+
 /// This template makes a class singleton
 template<typename Type>
 class Singleton
@@ -27,6 +30,9 @@ class Singleton
 
 template <typename Type>
 Type* Singleton<Type>::instance = NULL;
+
+
+} // end namespace
 
 
 #endif

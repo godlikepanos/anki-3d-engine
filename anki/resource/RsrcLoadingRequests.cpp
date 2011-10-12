@@ -5,6 +5,9 @@
 #include "anki/core/Globals.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // postRequest                                                                 =
 //==============================================================================
@@ -35,3 +38,6 @@ void RsrcTextureLoadingRequest::doPostLoading()
 	tex->load(img);
 	*pTex = tex;
 }
+
+
+} // end namespace

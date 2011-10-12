@@ -5,6 +5,10 @@
 #include "anki/util/Assert.h"
 #include "anki/core/Globals.h"
 
+
+namespace anki {
+
+
 /*
 //==============================================================================
 // sendNewLoadingRequest <Texture>                                             =
@@ -49,7 +53,7 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(float maxTime)
 		}
 		catch(std::exception& e)
 		{
-			ERROR("Post-loading failed for \"" << filename << "\": " <<
+			ANKI_ERROR("Post-loading failed for \"" << filename << "\": " <<
 				e.what());
 		}
 		
@@ -66,9 +70,12 @@ void RsrcAsyncLoadingReqsHandler::postProcessFinishedRequests(float maxTime)
 
 	if(frameServedRequestsNum > 0)
 	{
-		INFO(frameServedRequestsNum << " requests served. Time: " <<
+		ANKI_INFO(frameServedRequestsNum << " requests served. Time: " <<
 			t.getElapsedTime() << ", max time: " << maxTime);
 	}
 }
 
 */
+
+
+} // end namespace

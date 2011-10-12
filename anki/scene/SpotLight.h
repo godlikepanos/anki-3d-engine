@@ -5,6 +5,9 @@
 #include "anki/scene/PerspectiveCamera.h"
 
 
+namespace anki {
+
+
 /// Spot light
 class SpotLight: public Light
 {
@@ -73,6 +76,9 @@ class SpotLight: public Light
 inline SpotLight::SpotLight(Scene& scene, ulong flags, SceneNode* parent)
 :	Light(LT_SPOT, scene, flags, parent)
 {}
+
+
+} // end namespace
 
 
 #endif

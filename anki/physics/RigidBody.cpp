@@ -4,6 +4,9 @@
 #include "anki/physics/MotionState.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -73,3 +76,6 @@ RigidBody::~RigidBody()
 {
 	masterContainer.dynamicsWorld->removeRigidBody(this);
 }
+
+
+} // end namespace

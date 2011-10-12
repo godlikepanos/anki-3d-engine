@@ -4,6 +4,9 @@
 #include <string>
 
 
+namespace anki {
+
+
 /// Holds information about a resource
 template<typename Type>
 struct RsrcHook
@@ -12,6 +15,9 @@ struct RsrcHook
 	int referenceCounter;
 	Type* resource;
 };
+
+
+} // end namespace
 
 
 #endif

@@ -9,6 +9,9 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 
+namespace anki {
+
+
 /// Creator of shader programs. This class parses between
 /// <shaderProgam></shaderProgram> located inside a <material></material>
 /// and creates the source of a custom program.
@@ -140,6 +143,9 @@ class MaterialShaderProgramCreator
 		/// Parse what is within the @code <operation></operation> @endcode
 		void parseOperatorTag(const boost::property_tree::ptree& pt);
 };
+
+
+} // end namespace
 
 
 #endif

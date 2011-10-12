@@ -7,6 +7,9 @@
 #include "anki/resource/RsrcPtr.h"
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -98,6 +101,9 @@ class Hdr: public SwitchableRenderingPass
 
 		void initFbo(Fbo& fbo, Texture& fai);
 };
+
+
+} // end namespace
 
 
 #endif

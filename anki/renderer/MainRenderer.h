@@ -6,6 +6,9 @@
 #include <GL/glew.h>
 
 
+namespace anki {
+
+
 class Deformer;
 
 
@@ -94,6 +97,9 @@ class MainRenderer: public Renderer
 		void takeScreenshotJpeg(const char* filename);
 		void initGl();
 };
+
+
+} // end namespace
 
 
 #endif

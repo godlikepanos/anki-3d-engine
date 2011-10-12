@@ -9,6 +9,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -90,6 +93,9 @@ inline const ShaderProgramVariable& MaterialVariable::getShaderProgramVariable(
 	ASSERT(inPass(p));
 	return *sProgVars[p];
 }
+
+
+} // end namespace
 
 
 #endif

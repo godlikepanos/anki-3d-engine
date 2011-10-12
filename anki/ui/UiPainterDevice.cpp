@@ -2,6 +2,9 @@
 #include "anki/resource/Texture.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -33,3 +36,6 @@ void UiPainterDevice::create()
 
 	unbind();
 }
+
+
+} // end namespace

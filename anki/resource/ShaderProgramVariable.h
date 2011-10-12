@@ -6,6 +6,9 @@
 #include <boost/noncopyable.hpp>
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -73,6 +76,9 @@ inline ShaderProgramVariable::ShaderProgramVariable(GLint loc_,
 	type(type_),
 	fatherSProg(fatherSHADER_PROGRAM_)
 {}
+
+
+} // end namespace
 
 
 #endif

@@ -7,6 +7,9 @@
 #include "anki/core/Logger.h"
 
 
+namespace anki {
+
+
 uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -699,3 +702,6 @@ void Image::loadDds(const char* filename)
 
 	in.close();*/
 }
+
+
+} // end namespace

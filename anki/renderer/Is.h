@@ -13,6 +13,9 @@
 #include "anki/renderer/Smo.h"
 
 
+namespace anki {
+
+
 class PointLight;
 class SpotLight;
 
@@ -69,6 +72,9 @@ class Is: private RenderingPass
 		/// Copy the MS depth FAI to one of our own
 		void copyDepth();
 };
+
+
+} // end namespace
 
 
 #endif

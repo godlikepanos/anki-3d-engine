@@ -6,6 +6,9 @@
 #include "anki/scene/PerspectiveCamera.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // createFbo                                                                   =
 //==============================================================================
@@ -191,3 +194,6 @@ void Ssao::run()
 	// end
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
+
+
+} // end namespace

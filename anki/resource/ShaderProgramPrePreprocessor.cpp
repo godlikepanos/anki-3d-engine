@@ -9,6 +9,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
 	"Check for circular or multiple includance";
 
@@ -387,3 +390,6 @@ void ShaderProgramPrePreprocessor::addLinePreProcExpression(
 		" // " +
 		cmnt);*/
 }
+
+
+} // end namespace

@@ -7,6 +7,9 @@
 #include "anki/util/BinaryStream.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // load                                                                        =
 //==============================================================================
@@ -251,7 +254,7 @@ void MeshData::createVertTangents()
 			(uvedge01.x() * uvedge02.y());
 		if(Math::isZero(det))
 		{
-			//WARNING(getRsrcName() << ": det == " << fixed << det);
+			//ANKI_WARNING(getRsrcName() << ": det == " << fixed << det);
 			det = 0.0001;
 		}
 		else
@@ -289,3 +292,6 @@ void MeshData::createVertTangents()
 		vertTangents[i] = Vec4(t, w);
 	}
 }
+
+
+} // end namespace

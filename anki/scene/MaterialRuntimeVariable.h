@@ -6,6 +6,9 @@
 #include <boost/variant.hpp>
 
 
+namespace anki {
+
+
 class Texture;
 class MaterialUserVariable;
 
@@ -79,6 +82,9 @@ inline MaterialRuntimeVariable::ConstructVisitor::ConstructVisitor(
 	MaterialRuntimeVariable& udvr_)
 :	udvr(udvr_)
 {}
+
+
+} // end namespace
 
 
 #endif

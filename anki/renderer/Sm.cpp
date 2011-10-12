@@ -10,6 +10,9 @@
 #include "anki/renderer/RendererInitializer.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -167,3 +170,6 @@ void Sm::run(const Light& light, float distance)
 	// FBO
 	crntLevel->fbo.unbind();
 }
+
+
+} // end namespace

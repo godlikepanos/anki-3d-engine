@@ -7,6 +7,9 @@
 #include <GL/glew.h>
 
 
+namespace anki {
+
+
 void glConditionalThrowException(const char* file, int line, const char* func)
 {
 	GLenum errId = glGetError();
@@ -20,8 +23,11 @@ void glConditionalThrowException(const char* file, int line, const char* func)
 	throw Exception(std::string("OpenGL exception: ") + glerr, file, line,
 		func);
 #else
-	ERROR("(" << file << ":" << line <<
+	ANKI_ERROR("(" << file << ":" << line <<
 		" " << func << ") GL Error: " << glerr);
 	ASSERT(0);
 #endif
 }
+
+
+} // end namespace

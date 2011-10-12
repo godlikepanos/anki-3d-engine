@@ -3,6 +3,9 @@
 #include "anki/util/BinaryStream.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // read32bitNumber                                                             =
 //==============================================================================
@@ -102,3 +105,6 @@ BinaryStream::ByteOrder BinaryStream::getMachineByteOrder()
 		return BO_BIG_ENDIAN;
 	}
 }
+
+
+} // end namespace

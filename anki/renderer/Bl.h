@@ -7,6 +7,9 @@
 #include "anki/gl/Fbo.h"
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -65,6 +68,9 @@ class Bl: public SwitchableRenderingPass
 		void runBlur();
 		void runSideBlur();
 };
+
+
+} // end namespace
 
 
 #endif

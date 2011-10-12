@@ -3,6 +3,10 @@
 
 #include "anki/math/MathCommonIncludes.h"
 
+
+namespace anki {
+
+
 /// @addtogroup Math
 /// @{
 
@@ -128,6 +132,9 @@ class Vec3
 		/// @}
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Vec3.inl.h"

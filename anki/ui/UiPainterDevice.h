@@ -5,6 +5,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 class Texture;
 
 
@@ -25,6 +28,9 @@ class UiPainterDevice: public Fbo
 
 		void create();
 };
+
+
+} // end namespace
 
 
 #endif

@@ -11,6 +11,9 @@
 #include <boost/lexical_cast.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -97,7 +100,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_SPOT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No radius for spot lights");
 			}
 		}
@@ -112,7 +115,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No distance for point lights");
 			}
 		}
@@ -127,7 +130,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No fovX for point lights");
 			}
 		}
@@ -142,7 +145,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No fovY for point lights");
 			}
 		}
@@ -157,7 +160,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No width for point lights");
 			}
 		}
@@ -172,7 +175,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No height for point lights");
 			}
 		}
@@ -188,7 +191,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				WARNING("File \"" << filename <<
+				ANKI_WARNING("File \"" << filename <<
 					"\": No texture for point lights");
 			}
 		}
@@ -220,3 +223,6 @@ void LightRsrc::load(const char* filename)
 		throw ANKI_EXCEPTION("Material \"" + filename + "\": " + e.what());
 	}
 }
+
+
+} // end namespace

@@ -49,6 +49,9 @@
 #include <boost/algorithm/string.hpp>
 
 
+using namespace anki;
+
+
 // map (hard coded)
 ModelNode* floor__,* sarge,* horse,* crate,* pentagram;
 SkinNode* imp;
@@ -125,7 +128,7 @@ void initPhysics()
 //==============================================================================
 void init()
 {
-	INFO("Other init...");
+	ANKI_INFO("Other init...");
 
 	Scene& scene = SceneSingleton::get();
 
@@ -141,13 +144,13 @@ void init()
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(scene, SceneNode::SNF_NONE, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
-	INFO(MainRendererSingleton::get().getAspectRatio());
+	ANKI_INFO(MainRendererSingleton::get().getAspectRatio());
 	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(90.0), Math::toRad(90.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
 	AppSingleton::get().setActiveCam(cam);
-	INFO(cam->getSceneNodeName());
+	ANKI_INFO(cam->getSceneNodeName());
 
 	OrthographicCamera* ocam = new OrthographicCamera(scene, SceneNode::SNF_NONE, NULL);
 	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
@@ -262,7 +265,7 @@ void init()
 
 	initPhysics();
 
-	//INFO("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
+	//ANKI_INFO("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
 }
 
 
@@ -338,21 +341,21 @@ void mainLoopExtra()
 
 	if(InputSingleton::get().getKey(SDL_SCANCODE_Y) == 1)
 	{
-		INFO("Exec script");
+		ANKI_INFO("Exec script");
 		ScriptManagerSingleton::get().execScript(util::readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();
 
-	//INFO(mover->getSceneNodeName())
+	//ANKI_INFO(mover->getSceneNodeName())
 
 	/*if(spot_lights[0]->getCamera().insideFrustum(spot_lights[1]->getCamera()))
 	{
-		INFO("in");
+		ANKI_INFO("in");
 	}
 	else
 	{
-		INFO("out");
+		ANKI_INFO("out");
 	}*/
 }
 
@@ -362,7 +365,7 @@ void mainLoopExtra()
 //==============================================================================
 void mainLoop()
 {
-	INFO("Entering main loop");
+	ANKI_INFO("Entering main loop");
 
 	HighRezTimer mainLoopTimer;
 	mainLoopTimer.start();
@@ -456,7 +459,7 @@ void mainLoop()
 		}*/
 	}
 
-	INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");
+	ANKI_INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");
 }
 
 
@@ -554,7 +557,7 @@ void execStdinScpripts()
 		}
 		catch(Exception& e)
 		{
-			ERROR(e.what());
+			ANKI_ERROR(e.what());
 		}
 	}
 }
@@ -580,7 +583,7 @@ int main(int argc, char* argv[])
 
 		mainLoop();
 
-		INFO("Exiting...");
+		ANKI_INFO("Exiting...");
 		AppSingleton::get().quit(EXIT_SUCCESS);
 		exitCode = 0;
 	}

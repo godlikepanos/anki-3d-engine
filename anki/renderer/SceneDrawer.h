@@ -7,12 +7,14 @@
 #include <boost/variant.hpp>
 
 
+namespace anki {
+
+
 class RenderableNode;
 class Camera;
 class Material;
 class MaterialRuntime;
 class MaterialRuntimeVariable;
-
 
 class Renderer;
 
@@ -70,6 +72,9 @@ class SceneDrawer
 			const Renderer& r,
 			float blurring);
 };
+
+
+} // end namespace
 
 
 #endif

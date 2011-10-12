@@ -4,6 +4,9 @@
 #include <GL/glew.h>
 
 
+namespace anki {
+
+
 /// Contains a few properties that other classes may use
 struct MaterialProperties
 {
@@ -24,6 +27,9 @@ struct MaterialProperties
 		bool depthTesting;
 		bool wireframe;
 };
+
+
+} // end namespace
 
 
 #endif

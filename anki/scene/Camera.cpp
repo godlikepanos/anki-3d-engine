@@ -2,6 +2,9 @@
 #include "anki/scene/Camera.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors & desrtuctor                                                   =
 //==============================================================================
@@ -85,3 +88,5 @@ void Camera::moveUpdate()
 	updateWSpaceFrustumPlanes();
 }
 
+
+} // end namespace

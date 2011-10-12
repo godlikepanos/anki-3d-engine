@@ -5,6 +5,9 @@
 #include "anki/resource/Model.h"
 
 
+namespace anki {
+
+
 class Skeleton;
 class SkelAnim;
 
@@ -71,6 +74,9 @@ inline const std::vector<RsrcPtr<SkelAnim> >& Skin::getSkelAnims() const
 {
 	return skelAnims;
 }
+
+
+} // end namespace
 
 
 #endif

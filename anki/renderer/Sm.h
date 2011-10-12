@@ -7,6 +7,9 @@
 #include "anki/scene/VisibilityTester.h"
 
 
+namespace anki {
+
+
 class Light;
 
 
@@ -91,6 +94,9 @@ class Sm: private RenderingPass
 		static void initLevel(uint resolution, float maxDistance,
 			bool bilinear, Level& level);
 };
+
+
+} // end namespace
 
 
 #endif

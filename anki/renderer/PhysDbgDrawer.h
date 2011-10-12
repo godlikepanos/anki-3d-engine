@@ -4,6 +4,9 @@
 #include <LinearMath/btIDebugDraw.h>
 
 
+namespace anki {
+
+
 class Dbg;
 
 
@@ -39,6 +42,9 @@ class PhysDbgDrawer: public btIDebugDraw
 		int debugMode;
 		Dbg& dbg;
 };
+
+
+} // end namespace
 
 
 #endif

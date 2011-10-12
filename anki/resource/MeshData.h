@@ -9,6 +9,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to
 /// the GPU
 ///
@@ -147,6 +150,9 @@ inline void MeshData::createAllNormals()
 	createFaceNormals();
 	createVertNormals();
 }
+
+
+} // end namespace
 
 
 #endif

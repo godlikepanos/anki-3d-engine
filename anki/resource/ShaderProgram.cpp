@@ -14,6 +14,9 @@
 #include <sstream>
 
 
+namespace anki {
+
+
 #define SHADER_PROGRAM_EXCEPTION(x) ANKI_EXCEPTION( \
 	"Shader program \"" + rsrcFilename + \
 	"\": " + x)
@@ -154,7 +157,7 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" << rsrcFilename <<
+			ANKI_WARNING("Shader prog: \"" << rsrcFilename <<
 				"\": You are using FFP vertex attributes (\"" <<
 				&name_[0] << "\")");
 			continue;
@@ -180,7 +183,7 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			WARNING("Shader prog: \"" << rsrcFilename <<
+			ANKI_WARNING("Shader prog: \"" << rsrcFilename <<
 				"\": You are using FFP vertex uniforms (\"" <<
 				&name_[0] << "\")");
 			continue;
@@ -388,3 +391,6 @@ std::string ShaderProgram::getShaderInfoString() const
 
 	return ss.str();
 }
+
+
+} // end namespace

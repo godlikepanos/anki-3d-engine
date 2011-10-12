@@ -5,6 +5,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 /// Used to profile the GPU. It gets the time elapsed from when the begin() is
 /// called until the endAndGetTimeElapsed() method. The query causes
 /// synchronization issues because it waits for the GL commands to finish. For
@@ -34,6 +37,9 @@ class TimeQuery
 		State state; ///< The query state. It saves us from improper use of the
 		             ///< the class
 };
+
+
+} // end namespace
 
 
 #endif

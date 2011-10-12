@@ -6,6 +6,9 @@
 #include "anki/util/Assert.h"
 
 
+namespace anki {
+
+
 /// Access the GL state machine.
 /// This class saves us from calling the GL functions
 class GlStateMachine
@@ -44,6 +47,9 @@ class GlStateMachine
 		GLsizei viewportH;
 		/// @}
 };
+
+
+} // end namespace
 
 
 #endif

@@ -1,6 +1,9 @@
 #include "anki/scene/OrthographicCamera.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // setAll                                                                      =
 //==============================================================================
@@ -75,3 +78,6 @@ void OrthographicCamera::calcProjectionMatrix()
 	projectionMat = ortho(left, right, bottom, top, zNear, zFar);
 	invProjectionMat = projectionMat.getInverse();
 }
+
+
+} // end namespace

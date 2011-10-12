@@ -10,6 +10,9 @@
 #include "anki/renderer/Bl.h"
 
 
+namespace anki {
+
+
 class ShaderProgram;
 
 
@@ -79,6 +82,9 @@ class Pps: private RenderingPass
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2
 };
+
+
+} // end namespace
 
 
 #endif

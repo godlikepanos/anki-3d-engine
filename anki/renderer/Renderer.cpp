@@ -4,6 +4,9 @@
 #include "anki/scene/PerspectiveCamera.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -134,7 +137,7 @@ void Renderer::drawQuad()
 	quadVao.bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
 	quadVao.unbind();
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
 
 
@@ -205,3 +208,6 @@ void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	limitsOfNearPlane.x() = limitsOfNearPlane.y() *
 		(pcam.getFovX() / pcam.getFovY());
 }
+
+
+} // end namespace

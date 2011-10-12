@@ -10,6 +10,9 @@
 #include <boost/range/iterator_range.hpp>
 
 
+namespace anki {
+
+
 class Model;
 
 
@@ -61,6 +64,9 @@ class ModelNode: public SceneNode
 		std::vector<ModelPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 };
+
+
+} // end namespace
 
 
 #endif

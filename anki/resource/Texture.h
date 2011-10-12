@@ -6,6 +6,9 @@
 #include <limits>
 
 
+namespace anki {
+
+
 class Image;
 
 
@@ -149,6 +152,9 @@ inline bool Texture::isLoaded() const
 {
 	return glId != std::numeric_limits<uint>::max();
 }
+
+
+} // end namespace
 
 
 #endif

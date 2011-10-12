@@ -5,6 +5,9 @@
 #include <cstring>
 
 
+namespace anki {
+
+
 /// The hash function
 struct CreateCharPtrHashMapKey
 {
@@ -39,6 +42,9 @@ struct ConstCharPtrHashMap
 	typedef boost::unordered_map<const char*, T,
 		CreateCharPtrHashMapKey, CompareCharPtrHashMapKeys> Type;
 };
+
+
+} // end namespace
 
 
 #endif

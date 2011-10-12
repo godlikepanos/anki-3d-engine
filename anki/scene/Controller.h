@@ -2,6 +2,9 @@
 #define ANKI_SCENE_CONTROLLER_H
 
 
+namespace anki {
+
+
 class SceneNode;
 
 
@@ -31,6 +34,9 @@ class Controller
 	private:
 		ControllerType type; ///< Once the type is set nothing can change it
 };
+
+
+} // end namespace
 
 
 #endif

@@ -2,6 +2,10 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/collision/Collision.h"
 
+
+namespace anki {
+
+
 //==============================================================================
 // draw (Sphere)                                                               =
 //==============================================================================
@@ -60,3 +64,6 @@ void CollisionDbgDrawer::draw(const Plane& plane)
 	dbg.setModelMat(trf);
 	dbg.renderGrid();
 }
+
+
+} // end namespace

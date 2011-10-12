@@ -5,6 +5,9 @@
 #include "anki/collision/Sphere.h"
 
 
+namespace anki {
+
+
 /// Point light. Defined by its radius
 class PointLight: public Light
 {
@@ -60,6 +63,9 @@ inline void PointLight::init(const char* filename)
 	radius = lightData->getRadius();
 	lspaceCShape = Sphere(Vec3(0.0), radius);
 }
+
+
+} // end namespace
 
 
 #endif

@@ -1,6 +1,9 @@
 #include "anki/scene/SpotLight.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // init                                                                        =
 //==============================================================================
@@ -15,3 +18,6 @@ void SpotLight::init(const char* filename)
 	camera->setAll(lightData->getFovX(), lightData->getFovY(), 0.02,
 		lightData->getDistance());
 }
+
+
+} // end namespace

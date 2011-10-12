@@ -2,6 +2,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // updateAllEvents                                                             =
 //==============================================================================
@@ -39,3 +42,6 @@ EventManager::EventsContainer::iterator EventManager::findADeadEvent(
 
 	return it;
 }
+
+
+} // end namespace

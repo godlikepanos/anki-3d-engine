@@ -8,6 +8,9 @@
 #include <GL/glew.h>
 
 
+namespace anki {
+
+
 class ShaderProgramAttributeVariable;
 class Vbo;
 
@@ -103,7 +106,7 @@ inline void Vao::create()
 {
 	ASSERT(!isCreated());
 	glGenVertexArrays(1, &glId);
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
 
 
@@ -119,6 +122,9 @@ inline uint Vao::getGlId() const
 	ASSERT(isCreated());
 	return glId;
 }
+
+
+} // end namespace
 
 
 #endif

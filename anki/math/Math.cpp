@@ -1,6 +1,9 @@
 #include "anki/math/MathCommonSrc.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
@@ -67,3 +70,6 @@ void Math::sinCos(const float a_, float& sina, float& cosa)
 		sina = -sina;
 	}
 }
+
+
+} // end namespace

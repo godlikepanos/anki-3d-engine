@@ -10,6 +10,9 @@
 #include "anki/gl/Vao.h"
 
 
+namespace anki {
+
+
 /// Screen space ambient occlusion pass
 ///
 /// Three passes:
@@ -55,6 +58,9 @@ class Ssao: public SwitchableRenderingPass
 
 		void createFbo(Fbo& fbo, Texture& fai);
 };
+
+
+} // end namespace
 
 
 #endif

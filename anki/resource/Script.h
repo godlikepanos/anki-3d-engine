@@ -4,6 +4,9 @@
 #include <string>
 
 
+namespace anki {
+
+
 /// Python script resource
 class Script
 {
@@ -13,6 +16,9 @@ class Script
 	private:
 		std::string source;
 };
+
+
+} // end namespace
 
 
 #endif

@@ -2,6 +2,9 @@
 #include "anki/scene/SkinNode.h"
 
 
+namespace anki {
+
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
@@ -117,3 +120,6 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
 		createVao(rsrc.getMaterial(), vboArr, vaos[i]);
 	}
 }
+
+
+} // end namespace

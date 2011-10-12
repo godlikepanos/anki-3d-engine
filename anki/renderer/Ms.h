@@ -7,6 +7,9 @@
 #include "anki/renderer/Ez.h"
 
 
+namespace anki {
+
+
 /// Material stage
 class Ms: public RenderingPass
 {
@@ -49,5 +52,7 @@ class Ms: public RenderingPass
 		Texture depthFai; ///< The FAI for depth
 };
 
+
+} // end namespace
 
 #endif

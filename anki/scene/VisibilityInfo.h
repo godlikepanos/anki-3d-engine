@@ -5,6 +5,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 class RenderableNode;
 class PointLight;
 class SpotLight;
@@ -69,6 +72,7 @@ class VisibilityInfo
 };
 
 
+} // end namespace
+
+
 #endif
-
-

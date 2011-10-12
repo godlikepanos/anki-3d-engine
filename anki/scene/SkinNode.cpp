@@ -6,6 +6,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -227,3 +230,6 @@ void SkinNode::deformHeadsTails(const Skeleton& skeleton,
 		tails[i] = skeleton.getBones()[i].getTail().getTransformed(transl, rot);
 	}
 }
+
+
+} // end namespace

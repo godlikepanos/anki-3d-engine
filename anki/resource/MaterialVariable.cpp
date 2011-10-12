@@ -5,6 +5,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -51,3 +54,6 @@ MaterialVariable::MaterialVariable(
 			shaderProgVarName);
 	}
 }
+
+
+} // end namespace

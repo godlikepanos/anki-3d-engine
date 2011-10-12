@@ -7,6 +7,9 @@
 #include "anki/gl/Vao.h"
 
 
+namespace anki {
+
+
 class SkinNode;
 
 
@@ -56,6 +59,9 @@ class SkinPatchNode: public PatchNode
 		boost::array<Vbo, TFV_NUM> tfVbos;
 		Vao tfVao; ///< For TF passes
 };
+
+
+} // end namespace
 
 
 #endif

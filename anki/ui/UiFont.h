@@ -7,6 +7,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 class Texture;
 
 
@@ -105,6 +108,9 @@ inline int UiFont::getGlyphBearingY(char c) const
 {
 	return glyphs[c - ' '].horizBearingY;
 }
+
+
+} // end namespace
 
 
 #endif

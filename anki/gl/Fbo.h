@@ -7,6 +7,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
 /// The class is actually a wrapper to avoid common mistakes
 class Fbo
 {
@@ -90,6 +93,9 @@ inline void Fbo::destroy()
 	ASSERT(isCreated());
 	glDeleteFramebuffers(1, &glId);
 }
+
+
+} // end namespace
 
 
 #endif

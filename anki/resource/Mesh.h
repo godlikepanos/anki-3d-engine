@@ -8,6 +8,9 @@
 #include "anki/collision/Obb.h"
 
 
+namespace anki {
+
+
 class MeshData;
 
 
@@ -92,6 +95,9 @@ inline bool Mesh::hasNormalsAndTangents() const
 	return vbos[VBO_VERT_NORMALS].isCreated() &&
 		vbos[VBO_VERT_TANGENTS].isCreated();
 }
+
+
+} // end namespace
 
 
 #endif

@@ -42,7 +42,8 @@ class ParallelJob
 		/// @}
 
 		/// Assign new job to the thread
-		void assignNewJob(ParallelJobCallback callback, ParallelJobParameters& jobParams);
+		void assignNewJob(ParallelJobCallback callback,
+			ParallelJobParameters& jobParams);
 
 	private:
 		uint id; ///< An ID

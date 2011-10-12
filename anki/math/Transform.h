@@ -6,6 +6,9 @@
 #include "anki/math/MathCommonIncludes.h"
 
 
+namespace anki {
+
+
 /// @addtogroup Math
 /// @{
 
@@ -59,6 +62,9 @@ class Transform
 		/// @}
 };
 /// @}
+
+
+} // end namespace
 
 
 #include "anki/math/Transform.inl.h"

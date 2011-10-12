@@ -3,6 +3,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
 static const char* errMsg = "Incorrect or missing value ";
 
 
@@ -145,3 +148,6 @@ void ParticleEmitterRsrc::load(const char* /*filename*/)
 		throw PE_EXCEPTION(errMsg + "particlesPerEmittion");
 	}
 }
+
+
+} // end namespace

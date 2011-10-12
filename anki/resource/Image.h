@@ -6,6 +6,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// Image class.
 /// Used in Texture::load. Supported types: TGA and PNG
 class Image
@@ -123,6 +126,9 @@ class Image
 		/// @param[in] filename The file to load
 		void loadDds(const char* filename);
 };
+
+
+} // end namespace
 
 
 #endif

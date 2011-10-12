@@ -8,6 +8,9 @@
 #include <boost/variant.hpp>
 
 
+namespace anki {
+
+
 class Texture;
 
 
@@ -75,6 +78,9 @@ inline const ShaderProgramUniformVariable&
 	return static_cast<const ShaderProgramUniformVariable&>(
 		getShaderProgramVariable(p));
 }
+
+
+} // end namespace
 
 
 #endif

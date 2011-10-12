@@ -3,6 +3,7 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
 namespace parser {
 
 
@@ -257,3 +258,4 @@ inline std::string parseString(scanner::Scanner& scanner)
 
 
 } // End namespace
+} // end namespace

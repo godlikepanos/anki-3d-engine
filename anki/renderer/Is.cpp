@@ -19,6 +19,9 @@
 #define BLEND_ENABLE true
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -371,5 +374,8 @@ void Is::run()
 	// FBO
 	//fbo.unbind();
 
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
+
+
+} // end namespace

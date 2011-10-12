@@ -4,6 +4,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 /// Path @ref Resource resource
 class Path
 {
@@ -17,6 +20,9 @@ class Path
 		~Path() {}
 		bool load(const char* filename);
 };
+
+
+} // end namespace
 
 
 #endif

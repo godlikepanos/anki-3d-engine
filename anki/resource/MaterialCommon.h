@@ -4,6 +4,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 /// The types of the rendering passes
 enum PassType
 {
@@ -14,6 +17,9 @@ enum PassType
 
 
 extern boost::array<const char*, PASS_TYPES_NUM> passNames;
+
+
+} // end namespace
 
 
 #endif

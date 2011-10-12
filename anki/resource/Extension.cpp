@@ -3,6 +3,10 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
+
+
+
 //==============================================================================
 // load                                                                        =
 //==============================================================================
@@ -35,3 +39,6 @@ Extension::~Extension()
 	libHandle = NULL;
 	foobarPtr = NULL;*/
 }
+
+
+} // end namespace

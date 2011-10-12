@@ -4,6 +4,9 @@
 #include "anki/util/StdTypes.h"
 
 
+namespace anki {
+
+
 /// High resolution timer. All time in seconds
 class HighRezTimer
 {
@@ -30,6 +33,9 @@ class HighRezTimer
 		Scalar startTime;
 		Scalar stopTime;
 };
+
+
+} // end namespace
 
 
 #endif

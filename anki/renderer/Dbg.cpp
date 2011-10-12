@@ -12,6 +12,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -242,7 +245,7 @@ void Dbg::init(const RendererInitializer& initializer)
 	// Rest
 	//
 	pointIndex = 0;
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 	modelMat.setIdentity();
 	crntCol = Vec3(1.0, 0.0, 0.0);
 }
@@ -419,3 +422,6 @@ void Dbg::pushBackVertex(const Vec3& pos)
 	colors[pointIndex] = crntCol;
 	++pointIndex;
 }
+
+
+} // end namespace

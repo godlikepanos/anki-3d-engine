@@ -5,6 +5,9 @@
 #include <boost/foreach.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // getAllGlyphs                                                                =
 //==============================================================================
@@ -229,3 +232,6 @@ void UiFtFontLoader::saveImage(const char* filename) const
 
 	fclose(fp);
 }
+
+
+} // end namespace

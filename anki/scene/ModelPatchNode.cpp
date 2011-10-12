@@ -7,6 +7,9 @@
 #include "anki/scene/ModelNode.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -37,3 +40,6 @@ void ModelPatchNode::moveUpdate()
 		rsrc.getMesh().getVisibilityShape().getTransformed(
 		getWorldTransform());
 }
+
+
+} // end namespace

@@ -11,6 +11,9 @@
 #include "anki/gl/GlStateMachine.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -226,7 +229,7 @@ void SceneDrawer::setupShaderProg(
 	if(mtl.buildinVariableExits(Mvb::MV_BLURRING, pt))
 	{
 		/*blurring *= 10.0;
-		INFO(blurring);*/
+		ANKI_INFO(blurring);*/
 		float b = blurring;
 		mtl.getBuildinVariable(Mvb::MV_BLURRING).
 			getShaderProgramUniformVariable(pt).set(&b);
@@ -247,7 +250,7 @@ void SceneDrawer::setupShaderProg(
 			udvr.getDataVariant());
 	}
 
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
 
 
@@ -279,3 +282,5 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& node,
 	node.getVao(pt).unbind();
 }
 
+
+} // end namespace

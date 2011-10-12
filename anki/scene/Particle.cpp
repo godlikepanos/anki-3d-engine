@@ -2,6 +2,9 @@
 #include "anki/physics/RigidBody.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -26,3 +29,6 @@ void Particle::setNewRigidBody(RigidBody* body_)
 {
 	body.reset(body_);
 }
+
+
+} // end namespace

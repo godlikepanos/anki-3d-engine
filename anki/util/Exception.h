@@ -5,6 +5,9 @@
 #include <string>
 
 
+namespace anki {
+
+
 /// Custom exception that takes file, line and function that throw it. Throw 
 /// it using the ANKI_EXCEPTION macro
 class Exception: public std::exception
@@ -37,6 +40,9 @@ class Exception: public std::exception
 
 		std::string getInfoStr() const;
 };
+
+
+} // end namespace
 
 
 //==============================================================================

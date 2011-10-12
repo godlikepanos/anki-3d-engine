@@ -27,7 +27,7 @@ class ParallelManager
 		void init(uint threadsNum);
 
 		/// Assign a job to a working thread
-		void assignNewJob(uint threadId, ParallelJobCallback job,
+		void assignNewJob(uint jobId, ParallelJobCallback callback,
 			ParallelJobParameters& jobParams)
 		{
 			jobs[jobId].assignNewJob(callback, jobParams);

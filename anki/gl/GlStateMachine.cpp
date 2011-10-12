@@ -1,6 +1,9 @@
 #include "anki/gl/GlStateMachine.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
@@ -119,3 +122,6 @@ GLuint GlStateMachine::getCurrentProgramGlId()
 	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
 	return i;
 }
+
+
+} // end namespace

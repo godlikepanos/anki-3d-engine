@@ -7,8 +7,12 @@
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 
+namespace anki
+{}
+
 using namespace boost;
 using namespace boost::python;
+using namespace anki;
 
 
 /// Wrap a class

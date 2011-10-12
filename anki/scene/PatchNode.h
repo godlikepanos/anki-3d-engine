@@ -12,6 +12,9 @@
 #include <boost/array.hpp>
 
 
+namespace anki {
+
+
 class Material;
 
 
@@ -62,6 +65,9 @@ class PatchNode: public RenderableNode
 			const VboArray& vbos,
 			Vao& vao);
 };
+
+
+} // end namespace
 
 
 #endif

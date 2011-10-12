@@ -13,6 +13,9 @@
 #include <vector>
 
 
+namespace anki {
+
+
 /// Shader program @ref Resource
 ///
 /// Shader program. Combines a fragment and a vertex shader. Every shader
@@ -142,6 +145,9 @@ inline void ShaderProgram::bind() const
 	ASSERT(glId != std::numeric_limits<uint>::max());
 	GlStateMachineSingleton::get().useShaderProg(glId);
 }
+
+
+} // end namespace
 
 
 #endif

@@ -7,6 +7,9 @@
 #include <boost/property_tree/ptree.hpp>
 
 
+namespace anki {
+
+
 //==============================================================================
 // Statics                                                                     =
 //==============================================================================
@@ -596,3 +599,6 @@ bool MaterialShaderProgramCreator::compareStrings(
 {
 	return a < b;
 }
+
+
+} // end namespace

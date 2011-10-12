@@ -4,6 +4,9 @@
 #include "anki/core/Logger.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // drawLine                                                                    =
 //==============================================================================
@@ -72,7 +75,7 @@ void PhysDbgDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
 	const btVector3& /*normalOnB*/,
 	btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
 {
-	//WARNING("Unimplemented");
+	//ANKI_WARNING("Unimplemented");
 }
 
 
@@ -91,6 +94,8 @@ void PhysDbgDrawer::reportErrorWarning(const char* warningString)
 void PhysDbgDrawer::draw3dText(const btVector3& /*location*/,
 	const char* /*textString*/)
 {
-	//WARNING("Unimplemented");
+	//ANKI_WARNING("Unimplemented");
 }
 
+
+} // end namespace

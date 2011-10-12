@@ -3,6 +3,9 @@
 #include "anki/gl/GlException.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -61,3 +64,6 @@ double TimeQuery::end()
 
 	return (timerEnd - timerStart) / 1000000000.0;
 }
+
+
+} // end namespace

@@ -5,6 +5,9 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
+
+
 class Texture;
 
 
@@ -44,6 +47,9 @@ inline ShaderProgramUniformVariable::ShaderProgramUniformVariable(
 	GLenum glDataType_, const ShaderProgram& father_)
 :	ShaderProgramVariable(loc_, name_, glDataType_, T_UNIFORM, father_)
 {}
+
+
+} // end namespace
 
 
 #endif

@@ -3,16 +3,24 @@
 
 #include "anki/scene/SceneNode.h"
 
-/**
- * This is a node that does nothing
- */
+
+namespace anki {
+
+
+/// This is a node that does nothing
 class GhostNode: public SceneNode
 {
 	public:
-		GhostNode(Scene& scene): SceneNode(SNT_GHOST, scene, SNF_NONE, NULL) {}
-		virtual ~GhostNode() {}
-		void init(const char*) {}
+		GhostNode(Scene& scene): SceneNode(SNT_GHOST, scene, SNF_NONE, NULL)
+		{}
+		virtual ~GhostNode()
+		{}
+		void init(const char*)
+		{}
 };
+
+
+} // end namespace
 
 
 #endif

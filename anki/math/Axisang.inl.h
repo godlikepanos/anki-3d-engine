@@ -1,6 +1,9 @@
 #include "anki/math/MathCommonSrc.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructors                                                                =
 //==============================================================================
@@ -201,3 +204,6 @@ inline std::ostream& operator<<(std::ostream& s, const Axisang& a)
 	s << "axis: " << a.getAxis() << ", angle: " << a.getAngle();
 	return s;
 }
+
+
+} // end namespace

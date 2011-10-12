@@ -2,6 +2,9 @@
 #include "anki/util/Assert.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -37,3 +40,6 @@ void Event::update(float prevUpdateTime, float crntTime)
 		updateSp(prevUpdateTime, crntTime);
 	}
 }
+
+
+} // end namespace

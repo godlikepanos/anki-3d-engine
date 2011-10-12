@@ -3,7 +3,9 @@
 #include "anki/util/Exception.h"
 
 
+namespace anki {
 namespace PropertyTree {
+
 
 //==============================================================================
 // getBool                                                                     =
@@ -101,4 +103,5 @@ Vec4 getVec4(const boost::property_tree::ptree& pt)
 
 
 
+} // end namespace
 } // end namespace

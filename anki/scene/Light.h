@@ -8,6 +8,9 @@
 #include "anki/scene/VisibilityInfo.h"
 
 
+namespace anki {
+
+
 /// Light scene node. It can be spot or point
 ////
 /// Explaining the lighting model:
@@ -71,6 +74,9 @@ inline Light::Light(LightType t, Scene& scene, ulong flags, SceneNode* parent)
 :	SceneNode(SNT_LIGHT, scene, flags, parent),
  	type(t)
 {}
+
+
+} // end namespace
 
 
 #endif

@@ -1,6 +1,9 @@
 #include "anki/event/EventManager.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 //  createEvent                                                                =
 //==============================================================================
@@ -23,3 +26,6 @@ EventType& EventManager::createEvent(const EventType& event)
 
 	return *ev;
 }
+
+
+} // end namespace

@@ -6,6 +6,7 @@
 #include "anki/math/Math.h"
 
 
+namespace anki {
 namespace PropertyTree {
 
 
@@ -35,6 +36,7 @@ extern Vec3 getVec3(const boost::property_tree::ptree& pt);
 extern Vec4 getVec4(const boost::property_tree::ptree& pt);
 
 
+} // end namespace
 } // end namespace
 
 

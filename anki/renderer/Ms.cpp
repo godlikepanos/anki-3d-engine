@@ -6,6 +6,9 @@
 #include "anki/scene/RenderableNode.h"
 
 
+namespace anki {
+
+
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -128,5 +131,8 @@ void Ms::run()
 	}
 
 	fbo.unbind();
-	ON_GL_FAIL_THROW_EXCEPTION();
+	ANKI_CHECK_GL_ERROR();
 }
+
+
+} // end namespace
