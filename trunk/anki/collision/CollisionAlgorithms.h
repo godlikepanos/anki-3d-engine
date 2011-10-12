@@ -49,11 +49,18 @@ class CollisionAlgorithms
 		// 3rd line
 		bool collide(const PerspectiveCameraShape& a,
 			const LineSegment& b)
-		virtual bool collide(const PerspectiveCameraShape& a, const Obb& b) = 0;
+		{
+			return collide(b, a);
+		}
+		bool collide(const PerspectiveCameraShape& a, const Obb& b)
+		{
+			return collide(b, a);
+		}
 		virtual bool collide(const PerspectiveCameraShape& a,
 			const PerspectiveCameraShape& b) = 0;
 		virtual bool collide(const PerspectiveCameraShape& a, const Ray& b) = 0;
-		virtual bool collide(const PerspectiveCameraShape& a, const Sphere& b) = 0;
+		virtual bool collide(const PerspectiveCameraShape& a,
+			const Sphere& b) = 0;
 };
 
 
