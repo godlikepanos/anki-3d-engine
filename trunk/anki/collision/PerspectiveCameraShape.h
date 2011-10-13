@@ -1,5 +1,5 @@
-#ifndef ANKI_COLLISION_PROJECTION_CAMERA_SHAPE_H
-#define ANKI_COLLISION_PROJECTION_CAMERA_SHAPE_H
+#ifndef ANKI_PERSPECTIVE_CAMERA_SHAPE_H
+#define ANKI_PERSPECTIVE_CAMERA_SHAPE_H
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
