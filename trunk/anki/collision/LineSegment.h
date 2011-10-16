@@ -11,7 +11,8 @@ namespace anki {
 /// @addtogroup Collision
 /// @{
 
-/// Line segment. Line from a point to a point
+/// Line segment. Line from a point to a point. P0 = origin and
+/// P1 = direction + origin
 class LineSegment: public CollisionShape
 {
 	public:

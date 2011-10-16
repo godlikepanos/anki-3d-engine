@@ -10,21 +10,23 @@ namespace anki {
 /// Provides the collision algorithms that detect collision between collision
 /// shapes
 ///
-/// +------+------+------+------+------+------+------+
-/// |      | LS   | OBB  | PCC  | P    | R    | S    |
-/// +------+------+------+------+------+------+------+
-/// | LS   |      |      |      |      |      |      |
-/// +------+------+------+------+------+------+------+
-/// | OBB  |      |      |      |      |      |      |
-/// +------+------+------+------+------+------+------+
-/// | PCS  |      |      |      |      |      |      |
-/// +------+------+------+------+------+------+------+
-/// | P    |      |      |      |      |      |      |
-/// +------+------+------+------+------+------+------+
-/// | R    |      |      |      |      |      |      |
-/// +------+------+------+------+------+------+------+
-/// | S    |      |      |      |      |      |      |
-/// +------+------+------+------+------+------+------+
+/// +------+------+------+------+------+------+------+------+
+/// |      | LS   | OBB  | PCC  | P    | R    | S    | AABB |
+/// +------+------+------+------+------+------+------+------+
+/// | LS   |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
+/// | OBB  |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
+/// | PCS  |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
+/// | P    |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
+/// | R    |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
+/// | S    |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
+/// | AABB |      |      |      |      |      |      |      |
+/// +------+------+------+------+------+------+------+------+
 class CollisionAlgorithmsMatrix
 {
 	public:
@@ -38,6 +40,7 @@ class CollisionAlgorithmsMatrix
 		virtual bool collide(const Ls& a, const Plane& b) const = 0;
 		virtual bool collide(const Ls& a, const Ray& b) const = 0;
 		virtual bool collide(const Ls& a, const Sphere& b) const = 0;
+		virtual bool collide(const Ls& a, const Aabb& b) const = 0;
 
 		// 2nd line (OBB)
 		bool collide(const Obb& a, const Ls& b) const
@@ -49,6 +52,7 @@ class CollisionAlgorithmsMatrix
 		virtual bool collide(const Obb& a, const Plane& b) const = 0;
 		virtual bool collide(const Obb& a, const Ray& b) const = 0;
 		virtual bool collide(const Obb& a, const Sphere& b) const = 0;
+		virtual bool collide(const Obb& a, const Aabb& b) const = 0;
 
 		// 3rd line (PCS)
 		bool collide(const Pcs& a, const Ls& b) const
@@ -63,6 +67,7 @@ class CollisionAlgorithmsMatrix
 		virtual bool collide(const Pcs& a, const Plane& b) const = 0;
 		virtual bool collide(const Pcs& a, const Ray& b) const = 0;
 		virtual bool collide(const Pcs& a, const Sphere& b) const = 0;
+		virtual bool collide(const Pcs& a, const Aabb& b) const = 0;
 
 		// 4th line (P)
 		bool collide(const Plane& a, const Ls& b) const
@@ -80,6 +85,7 @@ class CollisionAlgorithmsMatrix
 		virtual bool collide(const Plane& a, const Plane& b) const = 0;
 		virtual bool collide(const Plane& a, const Ray& b) const = 0;
 		virtual bool collide(const Plane& a, const Sphere& b) const = 0;
+		virtual bool collide(const Plane& a, const Aabb& b) const = 0;
 
 		// 5th line (R)
 		bool collide(const Ray& a, const Ls& b) const
@@ -100,6 +106,7 @@ class CollisionAlgorithmsMatrix
 		}
 		virtual bool collide(const Ray& a, const Ray& b) const = 0;
 		virtual bool collide(const Ray& a, const Sphere& b) const = 0;
+		virtual bool collide(const Ray& a, const Aabb& b) const = 0;
 
 		// 6th line (S)
 		bool collide(const Sphere& a, const Ls& b) const
@@ -123,6 +130,34 @@ class CollisionAlgorithmsMatrix
 			return collide(b, a);
 		}
 		virtual bool collide(const Sphere& a, const Sphere& b) const = 0;
+		virtual bool collide(const Sphere& a, const Aabb& b) const = 0;
+
+		// 7th line (AABB)
+		bool collide(const Aabb& a, const Ls& b) const
+		{
+			return collide(b, a);
+		}
+		bool collide(const Aabb& a, const Obb& b) const
+		{
+			return collide(b, a);
+		}
+		bool collide(const Aabb& a, const Pcs& b) const
+		{
+			return collide(b, a);
+		}
+		bool collide(const Aabb& a, const Plane& b) const
+		{
+			return collide(b, a);
+		}
+		bool collide(const Aabb& a, const Ray& b) const
+		{
+			return collide(b, a);
+		}
+		bool collide(const Aabb& a, const Sphere& b) const
+		{
+			return collide(b, a);
+		}
+		virtual bool collide(const Aabb& a, const Aabb& b) const = 0;
 };
 
 
@@ -137,6 +172,7 @@ class DefaultCollisionAlgorithmsMatrix: public CollisionAlgorithmsMatrix
 		virtual bool collide(const Ls& a, const Plane& b) const;
 		virtual bool collide(const Ls& a, const Ray& b) const;
 		virtual bool collide(const Ls& a, const Sphere& b) const;
+		virtual bool collide(const Ls& a, const Aabb& b) const;
 
 		// 2nd line (OBB)
 		virtual bool collide(const Obb& a, const Obb& b) const;
@@ -144,24 +180,32 @@ class DefaultCollisionAlgorithmsMatrix: public CollisionAlgorithmsMatrix
 		virtual bool collide(const Obb& a, const Plane& b) const;
 		virtual bool collide(const Obb& a, const Ray& b) const;
 		virtual bool collide(const Obb& a, const Sphere& b) const;
+		virtual bool collide(const Obb& a, const Aabb& b) const;
 
 		// 3rd line (PCS)
 		virtual bool collide(const Pcs& a, const Pcs& b) const;
 		virtual bool collide(const Pcs& a, const Plane& b) const;
 		virtual bool collide(const Pcs& a, const Ray& b) const;
 		virtual bool collide(const Pcs& a, const Sphere& b) const;
+		virtual bool collide(const Pcs& a, const Aabb& b) const;
 
 		// 4th line (P)
 		virtual bool collide(const Plane& a, const Plane& b) const;
 		virtual bool collide(const Plane& a, const Ray& b) const;
 		virtual bool collide(const Plane& a, const Sphere& b) const;
+		virtual bool collide(const Plane& a, const Aabb& b) const;
 
 		// 5th line (R)
 		virtual bool collide(const Ray& a, const Ray& b) const;
 		virtual bool collide(const Ray& a, const Sphere& b) const;
+		virtual bool collide(const Ray& a, const Aabb& b) const;
 
 		// 6th line (S)
 		virtual bool collide(const Sphere& a, const Sphere& b) const;
+		virtual bool collide(const Sphere& a, const Aabb& b) const;
+
+		// 7th line (AABB)
+		virtual bool collide(const Aabb& a, const Aabb& b) const;
 };
 
 

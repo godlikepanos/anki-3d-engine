@@ -36,6 +36,7 @@ class CollisionShape
 				virtual void visit(Plane&) = 0;
 				virtual void visit(Ray&) = 0;
 				virtual void visit(Sphere&) = 0;
+				virtual void visit(Aabb&) = 0;
 		};
 
 		CollisionShape(CollisionShapeType cid_)
