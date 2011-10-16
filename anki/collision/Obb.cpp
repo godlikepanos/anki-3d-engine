@@ -4,6 +4,7 @@
 
 namespace anki {
 
+
 //==============================================================================
 Obb::Obb(const Obb& b)
 :	CollisionShape(CST_OBB),
@@ -24,8 +25,6 @@ Obb::Obb(const Vec3& center_, const Mat3& rotation_,
 
 
 //==============================================================================
-// getTransformed                                                              =
-//==============================================================================
 Obb Obb::getTransformed(const Transform& transform) const
 {
 	Obb out;
@@ -36,8 +35,6 @@ Obb Obb::getTransformed(const Transform& transform) const
 }
 
 
-//==============================================================================
-// getCompoundShape                                                            =
 //==============================================================================
 Obb Obb::getCompoundShape(const Obb& b) const
 {
@@ -61,8 +58,6 @@ Obb Obb::getCompoundShape(const Obb& b) const
 }
 
 
-//==============================================================================
-// testPlane                                                                   =
 //==============================================================================
 float Obb::testPlane(const Plane& plane) const
 {
@@ -90,8 +85,6 @@ float Obb::testPlane(const Plane& plane) const
 }
 
 
-//==============================================================================
-// getExtremePoints                                                            =
 //==============================================================================
 void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
 {

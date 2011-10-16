@@ -7,6 +7,7 @@
 #include "anki/collision/Ray.h"
 #include "anki/collision/LineSegment.h"
 #include "anki/collision/PerspectiveCameraShape.h"
+#include "anki/collision/Aabb.h"
 
 
 #endif

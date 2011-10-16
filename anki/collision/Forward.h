@@ -11,6 +11,7 @@ class PerspectiveCameraShape;
 class Plane;
 class Ray;
 class Sphere;
+class Aabb;
 
 
 } // end namespace
