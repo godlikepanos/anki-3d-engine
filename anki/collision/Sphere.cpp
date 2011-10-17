@@ -74,26 +74,4 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 }
 
 
-//==============================================================================
-// testPlane                                                                   =
-//==============================================================================
-float Sphere::testPlane(const Plane& plane) const
-{
-	float dist = plane.test(center);
-
-	if(dist > radius)
-	{
-		return dist - radius;
-	}
-	else if(-dist > radius)
-	{
-		return dist + radius;
-	}
-	else
-	{
-		return 0.0;
-	}
-}
-
-
 } // end namespace

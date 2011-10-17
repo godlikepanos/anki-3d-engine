@@ -27,14 +27,35 @@ class PerspectiveCameraShape: public CollisionShape
 			setAll(fovX, fovY, zNear, zFar, trf);
 		}
 
-		/// @copydoc CollisionShape::accept
-		void accept(Visitor& v)
+		/// @name Accessors
+		/// @{
+		const Vec3& getEye() const
+		{
+			return eye;
+		}
+
+		const boost::array<Vec3, 4>& getDirections() const
+		{
+			return dirs;
+		}
+		/// @{
+
+		/// Implements CollisionShape::accept
+		void accept(MutableVisitor& v)
+		{
+			v.visit(*this);
+		}
+		/// Implements CollisionShape::accept
+		void accept(ConstVisitor& v)
 		{
 			v.visit(*this);
 		}
 
-		/// @copydoc CollisionShape::testPlane
-		float testPlane(const Plane& p) const;
+		/// Overrides CollisionShape::testPlane
+		float testPlane(const Plane& p) const
+		{
+			return PlaneTests::test(p, *this);
+		}
 
 		PerspectiveCameraShape getTransformed(const Transform& trf) const;
 

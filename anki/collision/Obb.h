@@ -67,8 +67,13 @@ class Obb: public CollisionShape
 		}
 		/// @}
 
-		/// @copydoc CollisionShape::accept
-		void accept(Visitor& v)
+		/// Implements CollisionShape::accept
+		void accept(MutableVisitor& v)
+		{
+			v.visit(*this);
+		}
+		/// Implements CollisionShape::accept
+		void accept(ConstVisitor& v)
 		{
 			v.visit(*this);
 		}
@@ -79,8 +84,11 @@ class Obb: public CollisionShape
 		/// very accurate
 		Obb getCompoundShape(const Obb& b) const;
 
-		/// @see CollisionShape::testPlane
-		float testPlane(const Plane& plane) const;
+		/// Overrides CollisionShape::testPlane
+		float testPlane(const Plane& p) const
+		{
+			return PlaneTests::test(p, *this);
+		}
 
 		/// Calculate from a set of points
 		template<typename Container>
