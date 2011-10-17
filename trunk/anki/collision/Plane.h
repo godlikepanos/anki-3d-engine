@@ -73,8 +73,13 @@ class Plane: public CollisionShape
 		}
 		/// @}
 
-		/// @copydoc CollisionShape::accept
-		void accept(Visitor& v)
+		/// Implements CollisionShape::accept
+		void accept(MutableVisitor& v)
+		{
+			v.visit(*this);
+		}
+		/// Implements CollisionShape::accept
+		void accept(ConstVisitor& v)
 		{
 			v.visit(*this);
 		}
@@ -97,8 +102,18 @@ class Plane: public CollisionShape
 			return point - normal * test(point);
 		}
 
-		/// Do nothing
-		float testPlane(const Plane&) const {return 0.0;}
+		/// Overrides CollisionShape::testPlane
+		float testPlane(const Plane& p) const
+		{
+			return PlaneTests::test(p, *this);
+		}
+
+		/// Test a CollisionShape
+		template<typename T>
+		float testShape(const T& x) const
+		{
+			return PlaneTests::test(*this, x);
+		}
 
 	private:
 		/// @name Data

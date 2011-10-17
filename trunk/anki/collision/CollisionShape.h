@@ -2,6 +2,7 @@
 #define ANKI_COLLISION_COLLISION_SHAPE
 
 #include "anki/collision/Forward.h"
+#include "anki/collision/PlaneTests.h"
 
 
 namespace anki {
@@ -26,8 +27,8 @@ class CollisionShape
 			CST_PERSPECTIVE_CAMERA_FRUSTRUM
 		};
 
-		/// Generic visitor
-		class Visitor
+		/// Generic mutable visitor
+		class MutableVisitor
 		{
 			public:
 				virtual void visit(LineSegment&) = 0;
@@ -37,6 +38,19 @@ class CollisionShape
 				virtual void visit(Ray&) = 0;
 				virtual void visit(Sphere&) = 0;
 				virtual void visit(Aabb&) = 0;
+		};
+
+		/// Generic const visitor
+		class ConstVisitor
+		{
+			public:
+				virtual void visit(const LineSegment&) = 0;
+				virtual void visit(const Obb&) = 0;
+				virtual void visit(const PerspectiveCameraShape&) = 0;
+				virtual void visit(const Plane&) = 0;
+				virtual void visit(const Ray&) = 0;
+				virtual void visit(const Sphere&) = 0;
+				virtual void visit(const Aabb&) = 0;
 		};
 
 		CollisionShape(CollisionShapeType cid_)
@@ -49,13 +63,15 @@ class CollisionShape
 		}
 
 		/// Visitor accept
-		virtual void accept(Visitor& v) = 0;
+		virtual void accept(MutableVisitor& v) = 0;
+		/// Visitor accept
+		virtual void accept(ConstVisitor& v) = 0;
 
-		/// If the bounding volume intersects with the plane then the func
-		/// returns 0, else it returns the distance. If the distance is < 0
-		/// then the collision shape lies behind the plane and if > 0 then in
-		/// front of it
-		virtual float testPlane(const Plane& p) const = 0;
+		/// See declaration of PlaneTests class
+		float testPlane(const Plane& p) const
+		{
+			return PlaneTests::test(p, *this);
+		}
 
 	private:
 		CollisionShapeType cid;

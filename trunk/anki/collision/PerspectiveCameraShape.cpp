@@ -44,31 +44,4 @@ PerspectiveCameraShape PerspectiveCameraShape::getTransformed(
 }
 
 
-//==============================================================================
-float PerspectiveCameraShape::testPlane(const Plane& p) const
-{
-	float o = 0.0;
-
-	for(uint i = 0; i < 4; i++)
-	{
-		float t = LineSegment(eye, dirs[i]).testPlane(p);
-
-		if(t == 0)
-		{
-			return 0.0;
-		}
-		else if(t < 0.0)
-		{
-			o = std::max(o, t);
-		}
-		else
-		{
-			o = std::min(o, t);
-		}
-	}
-
-	return o;
-}
-
-
 } // end namespace

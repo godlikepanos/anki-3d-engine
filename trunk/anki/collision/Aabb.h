@@ -63,14 +63,22 @@ class Aabb: public CollisionShape
 		}
 		/// @}
 
-		/// @copydoc CollisionShape::accept
-		void accept(Visitor& v)
+		/// Implements CollisionShape::accept
+		void accept(MutableVisitor& v)
+		{
+			v.visit(*this);
+		}
+		/// Implements CollisionShape::accept
+		void accept(ConstVisitor& v)
 		{
 			v.visit(*this);
 		}
 
-		/// Implements CollisionShape::testPlane
-		float testPlane(const Plane& plane) const;
+		/// Overrides CollisionShape::testPlane
+		float testPlane(const Plane& p) const
+		{
+			return PlaneTests::test(p, *this);
+		}
 
 		Aabb getTransformed(const Transform& transform) const;
 

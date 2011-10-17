@@ -9,12 +9,67 @@ namespace anki {
 
 
 //==============================================================================
+template<typename T>
+bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
+	const CollisionShape& b)
+{
+	const T& t = static_cast<const T&>(a);
+
+	switch(b.getCollisionShapeType())
+	{
+		case CollisionShape::CST_LINE_SEG:
+			return collide(t, static_cast<const LineSegment&>(b));
+		case CollisionShape::CST_RAY:
+			return collide(t, static_cast<const Ray&>(b));
+		case CollisionShape::CST_PLANE:
+			return collide(t, static_cast<const Plane&>(b));
+		case CollisionShape::CST_SPHERE:
+			return collide(t, static_cast<const Sphere&>(b));
+		case CollisionShape::CST_AABB:
+			return collide(t, static_cast<const Aabb&>(b));
+		case CollisionShape::CST_OBB:
+			return collide(t, static_cast<const Obb&>(b));
+		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
+			return collide(t, static_cast<const PerspectiveCameraShape&>(b));
+		default:
+			ASSERT(0 && "Forgot something");
+	}
+}
+
+
+//==============================================================================
+bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
+	const CollisionShape& b)
+{
+	switch(a.getCollisionShapeType())
+	{
+		case CollisionShape::CST_LINE_SEG:
+			return tcollide<LineSegment>(a, b);
+		case CollisionShape::CST_RAY:
+			return tcollide<Ray>(a, b);
+		case CollisionShape::CST_PLANE:
+			return tcollide<Plane>(a, b);
+		case CollisionShape::CST_SPHERE:
+			return tcollide<Sphere>(a, b);
+		case CollisionShape::CST_AABB:
+			return tcollide<Aabb>(a, b);
+		case CollisionShape::CST_OBB:
+			return tcollide<Obb>(a, b);
+		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
+			return tcollide<PerspectiveCameraShape>(a, b);
+		default:
+			ASSERT(0 && "Forgot something");
+	}
+}
+
+
+//==============================================================================
 // 1st row                                                                     =
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
-	const Ls& /*b*/) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
+	const Ls& /*b*/)
 {
 	ASSERT(0 && "Not worth implementing");
 	return false;
@@ -22,8 +77,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls,
-	const Obb& obb) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& ls,
+	const Obb& obb)
 {
 	float maxS = std::numeric_limits<float>::min();
 	float minT = std::numeric_limits<float>::max();
@@ -86,8 +141,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
-	const Pcs& /*b*/) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
+	const Pcs& /*b*/)
 {
 	ASSERT(0 && "Not implemented yet");
 	return false;
@@ -95,15 +150,15 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p)
 {
 	return ls.testPlane(p) == 0.0;
 }
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
-	const Ray& /*b*/) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
+	const Ray& /*b*/)
 {
 	ASSERT(0 && "Not worth implementing");
 	return false;
@@ -111,8 +166,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls,
-	const Sphere& s) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& ls,
+	const Sphere& s)
 {
 	const Vec3& v = ls.getDirection();
 	Vec3 w0 = s.getCenter() - ls.getOrigin();
@@ -139,8 +194,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls,
-	const Aabb& aabb) const
+bool CollisionAlgorithmsMatrix::collide(const Ls& ls,
+	const Aabb& aabb)
 {
 	float maxS = std::numeric_limits<float>::min();
 	float minT = std::numeric_limits<float>::max();
@@ -200,8 +255,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ls& ls,
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& o0,
-	const Obb& o1) const
+bool CollisionAlgorithmsMatrix::collide(const Obb& o0,
+	const Obb& o1)
 {
 	// extent vectors
 	const Vec3& a = o0.getExtend();
@@ -381,7 +436,7 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& o0,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& a, const Pcs& b) const
+bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Pcs& b)
 {
 	ASSERT(0 && "Not impelented yet");
 	return false;
@@ -389,16 +444,16 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& a, const Pcs& b) const
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& a,
-	const Plane& b) const
+bool CollisionAlgorithmsMatrix::collide(const Obb& a,
+	const Plane& b)
 {
 	return a.testPlane(b) == 0.0;
 }
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& obb,
-	const Ray& r) const
+bool CollisionAlgorithmsMatrix::collide(const Obb& obb,
+	const Ray& r)
 {
 	Aabb aabb_(-obb.getExtend(), obb.getExtend());
 	Ray newray;
@@ -412,8 +467,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& obb,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& obb,
-	const Sphere& s) const
+bool CollisionAlgorithmsMatrix::collide(const Obb& obb,
+	const Sphere& s)
 {
 	Aabb aabb_(-obb.getExtend(), obb.getExtend()); // aabb_ is in "this" frame
 	Vec3 newCenter = obb.getRotation().getTransposed() *
@@ -425,8 +480,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& obb,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& obb,
-	const Aabb& aabb) const
+bool CollisionAlgorithmsMatrix::collide(const Obb& obb,
+	const Aabb& aabb)
 {
 	Vec3 center_ = (aabb.getMax() + aabb.getMin()) * 0.5;
 	Vec3 extends_ = (aabb.getMax() - aabb.getMin()) * 0.5;
@@ -441,8 +496,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Obb& obb,
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
-	const Pcs& b) const
+bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
+	const Pcs& b)
 {
 	ASSERT(0 && "Not implemented yet");
 	return false;
@@ -450,8 +505,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
-	const Plane& b) const
+bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
+	const Plane& b)
 {
 	ASSERT(0 && "Not implemented yet");
 	return false;
@@ -459,8 +514,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
-	const Ray& b) const
+bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
+	const Ray& b)
 {
 	ASSERT(0 && "Not implemented yet");
 	return false;
@@ -468,8 +523,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
-	const Sphere& b) const
+bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
+	const Sphere& b)
 {
 	ASSERT(0 && "Not implemented yet");
 	return false;
@@ -477,8 +532,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
-	const Aabb& b) const
+bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
+	const Aabb& b)
 {
 	ASSERT(0 && "Not implemented yet");
 	return false;
@@ -490,32 +545,32 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Pcs& a,
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Plane& p0,
-	const Plane& p1) const
+bool CollisionAlgorithmsMatrix::collide(const Plane& p0,
+	const Plane& p1)
 {
 	return p0.getNormal() != p1.getNormal();
 }
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Plane& p,
-	const Ray& r) const
+bool CollisionAlgorithmsMatrix::collide(const Plane& p,
+	const Ray& r)
 {
 	return r.testPlane(p) == 0.0;
 }
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Plane& p,
-	const Sphere& s) const
+bool CollisionAlgorithmsMatrix::collide(const Plane& p,
+	const Sphere& s)
 {
 	return s.testPlane(p) == 0.0;
 }
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Plane& p,
-	const Aabb& aabb) const
+bool CollisionAlgorithmsMatrix::collide(const Plane& p,
+	const Aabb& aabb)
 {
 	return aabb.testPlane(p) == 0.0;
 }
@@ -526,8 +581,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Plane& p,
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ray& a,
-	const Ray& b) const
+bool CollisionAlgorithmsMatrix::collide(const Ray& a,
+	const Ray& b)
 {
 	ASSERT(0 && "Not worth implementing");
 	return false;
@@ -535,8 +590,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ray& a,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ray& r,
-	const Sphere& s) const
+bool CollisionAlgorithmsMatrix::collide(const Ray& r,
+	const Sphere& s)
 {
 	Vec3 w(s.getCenter() - r.getOrigin());
 	const Vec3& v = r.getDirection();
@@ -556,8 +611,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ray& r,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Ray& r,
-	const Aabb& aabb) const
+bool CollisionAlgorithmsMatrix::collide(const Ray& r,
+	const Aabb& aabb)
 {
 	float maxS = std::numeric_limits<float>::min();
 	float minT = std::numeric_limits<float>::max();
@@ -618,8 +673,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Ray& r,
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Sphere& a,
-	const Sphere& b) const
+bool CollisionAlgorithmsMatrix::collide(const Sphere& a,
+	const Sphere& b)
 {
 	float tmp = a.getRadius() + b.getRadius();
 	return (a.getCenter() - b.getCenter()).getLengthSquared() <= tmp * tmp;
@@ -627,8 +682,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Sphere& a,
 
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Sphere& s,
-	const Aabb& aabb) const
+bool CollisionAlgorithmsMatrix::collide(const Sphere& s,
+	const Aabb& aabb)
 {
 	const Vec3& c = s.getCenter();
 
@@ -673,8 +728,8 @@ bool DefaultCollisionAlgorithmsMatrix::collide(const Sphere& s,
 //==============================================================================
 
 //==============================================================================
-bool DefaultCollisionAlgorithmsMatrix::collide(const Aabb& a,
-	const Aabb& b) const
+bool CollisionAlgorithmsMatrix::collide(const Aabb& a,
+	const Aabb& b)
 {
 	// if separated in x direction
 	if(a.getMin().x() > b.getMax().x() || b.getMin().x() > a.getMax().x())

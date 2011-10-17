@@ -7,46 +7,6 @@ namespace anki {
 
 
 //==============================================================================
-float Aabb::testPlane(const Plane& plane) const
-{
-	Vec3 diagMin, diagMax;
-	// set min/max values for x,y,z direction
-	for(int i = 0; i < 3; i++)
-	{
-		if(plane.getNormal()[i] >= 0.0)
-		{
-			diagMin[i] = min[i];
-			diagMax[i] = max[i];
-		}
-		else
-		{
-			diagMin[i] = max[i];
-			diagMax[i] = min[i];
-		}
-	}
-
-	// minimum on positive side of plane, box on positive side
-	float test = plane.test(diagMin);
-	if(test > 0.0)
-	{
-		return test;
-	}
-
-	test = plane.test(diagMax);
-	// min on non-positive side, max on non-negative side, intersection
-	if(test >= 0.0)
-	{
-		return 0.0;
-	}
-	// max on negative side, box on negative side
-	else
-	{
-		return test;
-	}
-}
-
-
-//==============================================================================
 Aabb Aabb::getTransformed(const Transform& transform) const
 {
 	Aabb out;

@@ -73,7 +73,7 @@ Plane Plane::getTransformed(const Transform& trf) const
 	Plane plane;
 
 	// the normal
-	plane.normal = trf.getRotation()* normal;
+	plane.normal = trf.getRotation() * normal;
 
 	// the offset
 	Vec3 newTrans = trf.getRotation().getTransposed() * trf.getOrigin();

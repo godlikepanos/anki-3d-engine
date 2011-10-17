@@ -5,6 +5,8 @@
 namespace anki {
 
 
+class CollisionShape;
+
 class LineSegment;
 class Obb;
 class PerspectiveCameraShape;
