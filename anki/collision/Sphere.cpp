@@ -6,8 +6,6 @@ namespace anki {
 
 
 //==============================================================================
-// getTransformed                                                              =
-//==============================================================================
 Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;
@@ -18,8 +16,6 @@ Sphere Sphere::getTransformed(const Transform& transform) const
 }
 
 
-//==============================================================================
-// getCompoundShape                                                            =
 //==============================================================================
 Sphere Sphere::getCompoundShape(const Sphere& b) const
 {

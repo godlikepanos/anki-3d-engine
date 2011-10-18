@@ -22,8 +22,6 @@ Plane::Plane(const Vec3& normal_, float offset_)
 
 
 //==============================================================================
-// setFrom3Points                                                              =
-//==============================================================================
 void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 {
 	// get plane vectors
@@ -40,8 +38,6 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 }
 
 
-//==============================================================================
-// setFromPlaneEquation                                                        =
 //==============================================================================
 void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 {
@@ -65,8 +61,6 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 }
 
 
-//==============================================================================
-// getTransformed                                                              =
 //==============================================================================
 Plane Plane::getTransformed(const Transform& trf) const
 {

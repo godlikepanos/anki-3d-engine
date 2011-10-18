@@ -90,10 +90,16 @@ class Plane: public CollisionShape
 		/// It gives the distance between a point and a plane. if returns >0
 		/// then the point lies in front of the plane, if <0 then it is behind
 		/// and if =0 then it is co-planar
-		float test(const Vec3& point) const {return normal.dot(point) - offset;}
+		float test(const Vec3& point) const
+		{
+			return normal.dot(point) - offset;
+		}
 
 		/// Get the distance from a point to this plane
-		float getDistance(const Vec3& point) const {return fabs(test(point));}
+		float getDistance(const Vec3& point) const
+		{
+			return fabs(test(point));
+		}
 
 		/// Returns the perpedicular point of a given point in this plane.
 		/// Plane's normal and returned-point are perpedicular

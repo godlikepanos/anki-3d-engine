@@ -308,6 +308,7 @@ inline float Vec3::dot(const Vec3& b) const
 	return x() * b.x() + y() * b.y() + z() * b.z();
 }
 
+
 // cross prod
 inline Vec3 Vec3::cross(const Vec3& b) const
 {
@@ -316,11 +317,13 @@ inline Vec3 Vec3::cross(const Vec3& b) const
 		x() * b.y() - y() * b.x());
 }
 
+
 // getLength
 inline float Vec3::getLength() const
 {
 	return Math::sqrt(getLengthSquared());
 }
+
 
 // getLengthSquared
 inline float Vec3::getLengthSquared() const
@@ -328,11 +331,13 @@ inline float Vec3::getLengthSquared() const
 	return x() * x() + y() * y() + z() * z();
 }
 
+
 // getDistanceSquared
 inline float Vec3::getDistanceSquared(const Vec3& b) const
 {
 	return ((*this) - b).getLengthSquared();
 }
+
 
 // normalize
 inline void Vec3::normalize()
@@ -340,17 +345,20 @@ inline void Vec3::normalize()
 	(*this) /= getLength();
 }
 
+
 // getNormalized
 inline Vec3 Vec3::getNormalized() const
 {
 	return (*this) / getLength();
 }
 
+
 // getProjection
 inline Vec3 Vec3::getProjection(const Vec3& toThis) const
 {
 	return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
 }
+
 
 // getRotated
 inline Vec3 Vec3::getRotated(const Quat& q) const
@@ -368,11 +376,13 @@ inline Vec3 Vec3::getRotated(const Quat& q) const
 	return (*this) + qXyz.cross(qXyz.cross((*this)) + (*this) * q.w()) * 2.0;
 }
 
+
 // rotate
 inline void Vec3::rotate(const Quat& q)
 {
 	(*this) = getRotated(q);
 }
+
 
 // lerp
 inline Vec3 Vec3::lerp(const Vec3& v1, float t) const
@@ -392,12 +402,14 @@ inline Vec3 Vec3::getTransformed(const Vec3& translate, const Mat3& rotate,
 	return (rotate * ((*this) * scale)) + translate;
 }
 
+
 // Mat3
 inline void Vec3::transform(const Vec3& translate, const Mat3& rotate,
 	float scale)
 {
 	(*this) = getTransformed(translate, rotate, scale);
 }
+
 
 // Mat3 no scale
 inline Vec3 Vec3::getTransformed(const Vec3& translate,
@@ -406,11 +418,13 @@ inline Vec3 Vec3::getTransformed(const Vec3& translate,
 	return (rotate * (*this)) + translate;
 }
 
+
 // Mat3 no scale
 inline void Vec3::transform(const Vec3& translate, const Mat3& rotate)
 {
 	(*this) = getTransformed(translate, rotate);
 }
+
 
 // Quat
 inline Vec3 Vec3::getTransformed(const Vec3& translate, const Quat& rotate,
@@ -419,12 +433,14 @@ inline Vec3 Vec3::getTransformed(const Vec3& translate, const Quat& rotate,
 	return ((*this) * scale).getRotated(rotate) + translate;
 }
 
+
 // Quat
 inline void Vec3::transform(const Vec3& translate, const Quat& rotate,
 	float scale)
 {
 	(*this) = getTransformed(translate, rotate, scale);
 }
+
 
 // Mat4
 inline Vec3 Vec3::getTransformed(const Mat4& transform) const
@@ -448,11 +464,13 @@ inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 #endif
 }
 
+
 // Mat4
 inline void Vec3::transform(const Mat4& transform)
 {
 	(*this) = getTransformed(transform);
 }
+
 
 // Transform
 inline Vec3 Vec3::getTransformed(const Transform& transform) const
@@ -460,6 +478,7 @@ inline Vec3 Vec3::getTransformed(const Transform& transform) const
 	return (transform.getRotation() * ((*this) * transform.getScale())) +
 		transform.getOrigin();
 }
+
 
 // Transform
 inline void Vec3::transform(const Transform& transform)

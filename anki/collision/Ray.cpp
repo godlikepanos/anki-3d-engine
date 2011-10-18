@@ -6,8 +6,6 @@ namespace anki {
 
 
 //==============================================================================
-// getTransformed                                                              =
-//==============================================================================
 Ray Ray::getTransformed(const Transform& transform) const
 {
 	Ray out;

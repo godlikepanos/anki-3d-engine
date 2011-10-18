@@ -7,8 +7,6 @@ namespace anki {
 
 
 //==============================================================================
-// getTransformed                                                              =
-//==============================================================================
 LineSegment LineSegment::getTransformed(const Transform& transform) const
 {
 	LineSegment out;
