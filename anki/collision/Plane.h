@@ -84,6 +84,18 @@ class Plane: public CollisionShape
 			v.visit(*this);
 		}
 
+		/// Overrides CollisionShape::testPlane
+		float testPlane(const Plane& p) const
+		{
+			return PlaneTests::test(p, *this);
+		}
+
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
 		/// Return the transformed
 		Plane getTransformed(const Transform& trf) const;
 
@@ -106,12 +118,6 @@ class Plane: public CollisionShape
 		Vec3 getClosestPoint(const Vec3& point) const
 		{
 			return point - normal * test(point);
-		}
-
-		/// Overrides CollisionShape::testPlane
-		float testPlane(const Plane& p) const
-		{
-			return PlaneTests::test(p, *this);
 		}
 
 		/// Test a CollisionShape

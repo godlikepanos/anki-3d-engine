@@ -70,17 +70,23 @@ class Sphere: public CollisionShape
 			v.visit(*this);
 		}
 
-		Sphere getTransformed(const Transform& transform) const;
-
-		/// Get the sphere that includes this sphere and the given. See a
-		/// drawing in the docs dir for more info about the algorithm
-		Sphere getCompoundShape(const Sphere& b) const;
-
 		/// Overrides CollisionShape::testPlane
 		float testPlane(const Plane& p) const
 		{
 			return PlaneTests::test(p, *this);
 		}
+
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
+		Sphere getTransformed(const Transform& transform) const;
+
+		/// Get the sphere that includes this sphere and the given. See a
+		/// drawing in the docs dir for more info about the algorithm
+		Sphere getCompoundShape(const Sphere& b) const;
 
 		/// Calculate from a set of points
 		template<typename Container>

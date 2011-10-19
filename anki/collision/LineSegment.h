@@ -75,13 +75,19 @@ class LineSegment: public CollisionShape
 			v.visit(*this);
 		}
 
-		LineSegment getTransformed(const Transform& transform) const;
-
 		/// Overrides CollisionShape::testPlane
 		float testPlane(const Plane& p) const
 		{
 			return PlaneTests::test(p, *this);
 		}
+
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
+		LineSegment getTransformed(const Transform& transform) const;
 
 	private:
 		/// @name Data
