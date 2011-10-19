@@ -3,6 +3,7 @@
 
 #include "anki/collision/Forward.h"
 #include "anki/collision/PlaneTests.h"
+#include "anki/collision/CollisionShapeTransform.h"
 
 
 namespace anki {
@@ -71,6 +72,12 @@ class CollisionShape
 		float testPlane(const Plane& p) const
 		{
 			return PlaneTests::test(p, *this);
+		}
+
+		/// Transform
+		void transform(const Transform& trf)
+		{
+			CollisionShapeTransform::transform(trf, *this);
 		}
 
 	private:

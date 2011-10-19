@@ -80,6 +80,12 @@ class Aabb: public CollisionShape
 			return PlaneTests::test(p, *this);
 		}
 
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
 		Aabb getTransformed(const Transform& transform) const;
 
 		/// Get a collision shape that includes this and the given. Its not

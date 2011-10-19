@@ -57,6 +57,12 @@ class PerspectiveCameraShape: public CollisionShape
 			return PlaneTests::test(p, *this);
 		}
 
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
 		PerspectiveCameraShape getTransformed(const Transform& trf) const;
 
 		/// Set all

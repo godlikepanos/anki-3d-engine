@@ -70,13 +70,19 @@ class Ray: public CollisionShape
 			v.visit(*this);
 		}
 
-		Ray getTransformed(const Transform& transform) const;
-
 		/// Overrides CollisionShape::testPlane
 		float testPlane(const Plane& p) const
 		{
 			return PlaneTests::test(p, *this);
 		}
+
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
+		Ray getTransformed(const Transform& transform) const;
 
 	private:
 		Vec3 origin;

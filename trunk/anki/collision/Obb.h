@@ -21,7 +21,9 @@ class Obb: public CollisionShape
 		Obb()
 		:	CollisionShape(CST_OBB)
 		{}
+
 		Obb(const Obb& b);
+
 		Obb(const Vec3& center, const Mat3& rotation, const Vec3& extends);
 		/// @}
 
@@ -78,17 +80,23 @@ class Obb: public CollisionShape
 			v.visit(*this);
 		}
 
-		Obb getTransformed(const Transform& transform) const;
-
-		/// Get a collision shape that includes this and the given. Its not
-		/// very accurate
-		Obb getCompoundShape(const Obb& b) const;
-
 		/// Overrides CollisionShape::testPlane
 		float testPlane(const Plane& p) const
 		{
 			return PlaneTests::test(p, *this);
 		}
+
+		/// Overrides CollisionShape::transform
+		void transform(const Transform& trf)
+		{
+			*this = getTransformed(trf);
+		}
+
+		Obb getTransformed(const Transform& transform) const;
+
+		/// Get a collision shape that includes this and the given. Its not
+		/// very accurate
+		Obb getCompoundShape(const Obb& b) const;
 
 		/// Calculate from a set of points
 		template<typename Container>
