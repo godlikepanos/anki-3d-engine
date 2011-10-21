@@ -2,8 +2,7 @@
 #define ANKI_COLLISION_COLLISION_SHAPE
 
 #include "anki/collision/Forward.h"
-#include "anki/collision/PlaneTests.h"
-#include "anki/collision/CollisionShapeTransform.h"
+#include "anki/math/Forward.h"
 
 
 namespace anki {
@@ -68,17 +67,14 @@ class CollisionShape
 		/// Visitor accept
 		virtual void accept(ConstVisitor& v) = 0;
 
-		/// See declaration of PlaneTests class
-		float testPlane(const Plane& p) const
-		{
-			return PlaneTests::test(p, *this);
-		}
+		/// If the collision shape intersects with the plane then the method
+		/// returns 0.0, else it returns the distance. If the distance is < 0.0
+		/// then the collision shape lies behind the plane and if > 0.0 then
+		/// in front of it
+		virtual float testPlane(const Plane& p) const = 0;
 
 		/// Transform
-		void transform(const Transform& trf)
-		{
-			CollisionShapeTransform::transform(trf, *this);
-		}
+		virtual void transform(const Transform& trf) = 0;
 
 	private:
 		CollisionShapeType cid;

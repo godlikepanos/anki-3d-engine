@@ -84,13 +84,10 @@ class Plane: public CollisionShape
 			v.visit(*this);
 		}
 
-		/// Overrides CollisionShape::testPlane
-		float testPlane(const Plane& p) const
-		{
-			return PlaneTests::test(p, *this);
-		}
+		/// Implements CollisionShape::testPlane
+		float testPlane(const Plane& p) const;
 
-		/// Overrides CollisionShape::transform
+		/// Implements CollisionShape::transform
 		void transform(const Transform& trf)
 		{
 			*this = getTransformed(trf);
@@ -124,7 +121,7 @@ class Plane: public CollisionShape
 		template<typename T>
 		float testShape(const T& x) const
 		{
-			return PlaneTests::test(*this, x);
+			return x.testPlane(*this, x);
 		}
 
 	private:

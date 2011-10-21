@@ -15,4 +15,36 @@ Ray Ray::getTransformed(const Transform& transform) const
 }
 
 
+//==============================================================================
+float Ray::testPlane(const Plane& p) const
+{
+	const Ray& r = *this;
+	float dist = p.test(r.getOrigin());
+	float cos_ = p.getNormal().dot(r.getDirection());
+
+	if(cos_ > 0.0) // the ray points to the same half-space as the plane
+	{
+		if(dist < 0.0) // the ray's origin is behind the plane
+		{
+			return 0.0;
+		}
+		else
+		{
+			return dist;
+		}
+	}
+	else
+	{
+		if(dist > 0.0)
+		{
+			return 0.0;
+		}
+		else
+		{
+			return dist;
+		}
+	}
+}
+
+
 } // end namespace

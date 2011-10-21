@@ -51,13 +51,10 @@ class PerspectiveCameraShape: public CollisionShape
 			v.visit(*this);
 		}
 
-		/// Overrides CollisionShape::testPlane
-		float testPlane(const Plane& p) const
-		{
-			return PlaneTests::test(p, *this);
-		}
+		/// Implements CollisionShape::testPlane
+		float testPlane(const Plane& p) const;
 
-		/// Overrides CollisionShape::transform
+		/// Implements CollisionShape::transform
 		void transform(const Transform& trf)
 		{
 			*this = getTransformed(trf);

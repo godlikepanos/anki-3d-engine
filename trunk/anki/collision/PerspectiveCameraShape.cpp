@@ -6,6 +6,35 @@ namespace anki {
 
 
 //==============================================================================
+float PerspectiveCameraShape::testPlane(const Plane& p) const
+{
+	const PerspectiveCameraShape& pcs = *this;
+	float o = 0.0;
+
+	for(uint i = 0; i < 4; i++)
+	{
+		LineSegment ls(pcs.getEye(), pcs.getDirections()[i]);
+		float t = ls.testPlane(p);
+
+		if(t == 0)
+		{
+			return 0.0;
+		}
+		else if(t < 0.0)
+		{
+			o = std::max(o, t);
+		}
+		else
+		{
+			o = std::min(o, t);
+		}
+	}
+
+	return o;
+}
+
+
+//==============================================================================
 void PerspectiveCameraShape::setAll(float fovX, float fovY,
 	float zNear, float zFar, const Transform& trf)
 {

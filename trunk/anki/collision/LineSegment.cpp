@@ -7,6 +7,41 @@ namespace anki {
 
 
 //==============================================================================
+float LineSegment::testPlane(const Plane& p) const
+{
+	const LineSegment& ls = *this;
+	const Vec3& p0 = ls.getOrigin();
+	Vec3 p1 = ls.getOrigin() + ls.getDirection();
+
+	float dist0 = p.test(p0);
+	float dist1 = p.test(p1);
+
+	if(dist0 > 0.0)
+	{
+		if(dist1 > 0.0)
+		{
+			return std::min(dist0, dist1);
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+	else
+	{
+		if(dist1 < 0.0)
+		{
+			return std::max(dist0, dist1);
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+}
+
+
+//==============================================================================
 LineSegment LineSegment::getTransformed(const Transform& transform) const
 {
 	LineSegment out;

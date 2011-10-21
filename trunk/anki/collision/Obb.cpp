@@ -25,6 +25,35 @@ Obb::Obb(const Vec3& center_, const Mat3& rotation_,
 
 
 //==============================================================================
+float Obb::testPlane(const Plane& p) const
+{
+	const Obb& obb = *this;
+	Vec3 xNormal = obb.getRotation().getTransposed() * p.getNormal();
+
+	// maximum extent in direction of plane normal
+	float r = fabs(obb.getExtend().x() * xNormal.x()) +
+		fabs(obb.getExtend().y() * xNormal.y()) +
+		fabs(obb.getExtend().z() * xNormal.z());
+	// signed distance between box center and plane
+	float d = p.test(obb.getCenter());
+
+	// return signed distance
+	if(fabs(d) < r)
+	{
+		return 0.0;
+	}
+	else if(d < 0.0)
+	{
+		return d + r;
+	}
+	else
+	{
+		return d - r;
+	}
+}
+
+
+//==============================================================================
 Obb Obb::getTransformed(const Transform& transform) const
 {
 	Obb out;
