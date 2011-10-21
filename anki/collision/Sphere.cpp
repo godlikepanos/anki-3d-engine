@@ -6,6 +6,27 @@ namespace anki {
 
 
 //==============================================================================
+float Sphere::testPlane(const Plane& p) const
+{
+	const Sphere& s = *this;
+	float dist = p.test(s.getCenter());
+
+	if(dist > s.getRadius())
+	{
+		return dist - s.getRadius();
+	}
+	else if(-dist > s.getRadius())
+	{
+		return dist + s.getRadius();
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+
+
+//==============================================================================
 Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;

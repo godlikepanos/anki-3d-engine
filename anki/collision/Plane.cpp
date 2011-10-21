@@ -22,6 +22,14 @@ Plane::Plane(const Vec3& normal_, float offset_)
 
 
 //==============================================================================
+float Plane::testPlane(const Plane& /*p*/) const
+{
+	ASSERT(0 && "Ambiguous call");
+	return 0.0;
+}
+
+
+//==============================================================================
 void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 {
 	// get plane vectors
