@@ -435,7 +435,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 void Image::load(const char* filename)
 {
 	// get the extension
-	std::string ext = boost::filesystem::path(filename).extension();
+	std::string ext = boost::filesystem::path(filename).extension().string();
 	boost::to_lower(ext);
 
 

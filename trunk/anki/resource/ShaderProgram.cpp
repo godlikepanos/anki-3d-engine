@@ -344,7 +344,8 @@ std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 	//
 	boost::filesystem::path newfPathName =
 		AppSingleton::get().getCachePath() /
-		(boost::filesystem::path(sProgFPathName).filename() + "." + suffix);
+		(boost::filesystem::path(sProgFPathName).filename().string()
+			+ "." + suffix);
 
 	if(boost::filesystem::exists(newfPathName))
 	{

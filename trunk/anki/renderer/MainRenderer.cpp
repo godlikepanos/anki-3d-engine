@@ -249,7 +249,7 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 //==============================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	std::string ext = boost::filesystem::path(filename).extension();
+	std::string ext = boost::filesystem::path(filename).extension().string();
 	boost::to_lower(ext);
 
 	// exec from this extension
@@ -263,7 +263,8 @@ void MainRenderer::takeScreenshot(const char* filename)
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\": Unsupported extension");
+		throw ANKI_EXCEPTION("File \"" + filename +
+			"\": Unsupported extension");
 	}
 	//ANKI_INFO("Screenshot \"" << filename << "\" saved");
 }
