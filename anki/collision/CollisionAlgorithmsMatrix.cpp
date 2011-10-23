@@ -691,7 +691,8 @@ bool CollisionAlgorithmsMatrix::collide(const Sphere& s,
 	Vec3 cp; // Closest Point
 	for(uint i = 0; i < 3; i++)
 	{
-		// if the center is greater than the max then the closest point is the max
+		// if the center is greater than the max then the closest
+		// point is the max
 		if(c[i] > aabb.getMax()[i])
 		{
 			cp[i] = aabb.getMax()[i];
