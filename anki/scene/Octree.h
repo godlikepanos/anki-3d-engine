@@ -68,9 +68,9 @@ class Octree
 
 	private:
 		OctreeNode* root;
-		boost::ptr_vector<OctreeNode> nodes;
+		boost::ptr_vector<OctreeNode> nodes; ///< For garbage collection
 
-		void createTree(const Aabb& aabb, uint depth);
+		void createSubTree(uint rdepth, OctreeNode& parent);
 };
 
 
