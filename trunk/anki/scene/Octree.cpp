@@ -8,28 +8,54 @@ namespace anki {
 //==============================================================================
 Octree::Octree(const Aabb& aabb, uint depth)
 {
-	// Create the nodes
+	// Create root
+	root = new OctreeNode();
+	root->aabb = aabb;
+
+	// Create children
+	createSubTree(depth, *root);
 }
 
 
 //==============================================================================
-void Octree::createSubTree(const Aabb& paabb, uint rdepth, OctreeNode* parent)
+void Octree::createSubTree(uint rdepth, OctreeNode& parent)
 {
 	if(rdepth == 0)
 	{
 		return;
 	}
 
-	// Create children AABBs
-	boost::array<Aabb, 8> aabbs;
-	Aabb common = Aabb(paabb.get);
+	const Aabb& paabb = parent.getAabb();
+	const Vec3& min = paabb.getMin();
+	const Vec3& max = paabb.getMax();
 
+	Vec3 d = (max - min) / 2.0;
 
-
-	for(uint i = 0; i < 8; ++i)
+	// Create children
+	for(uint i = 0; i < 2; ++i)
 	{
+		for(uint j = 0; j < 2; ++j)
+		{
+			for(uint k = 0; k < 2; ++k)
+			{
+				Vec3 omin;
+				omin.x() = min.x() + d.x() * i;
+				omin.y() = min.y() + d.y() * j;
+				omin.z() = min.z() + d.z() * k;
 
-	}
+				Vec3 omax = omin + d;
+
+				OctreeNode* node = new OctreeNode();
+				node->parent = &parent;
+				node->aabb = Aabb(omin, omax);
+
+				parent.children[i * 4 + j * 2 + k] = node;
+				nodes.push_back(node);
+
+				createSubTree(rdepth - 1, *node);
+			} // k
+		} // j
+	} // i
 }
 
 

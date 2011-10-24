@@ -31,6 +31,7 @@ ELSE()
 	ADD_DEFINITIONS("-DBOOST_DISABLE_ASSERTS -mtune=core2 -ffast-math")
 ENDIF()
 
+
 INCLUDE_DIRECTORIES("${ANKI_PROJ_SOURCE_DIR}/extern/include")
 INCLUDE_DIRECTORIES("${ANKI_PROJ_SOURCE_DIR}/extern/include/bullet") # Because bullet wants it
 INCLUDE_DIRECTORIES("/usr/include/python2.6")
@@ -38,6 +39,10 @@ INCLUDE_DIRECTORIES("/usr/include/freetype2")
 INCLUDE_DIRECTORIES(.)
 
 LINK_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR}/extern/lib64)
+
+# Lib dependencied
+FIND_PACKAGE(Boost 1.46 REQUIRED)
+#FIND_PACKAGE(PythonLibs 3.0 REQUIRED)
 
 ADD_SUBDIRECTORY(anki)
 ADD_SUBDIRECTORY(testapp)
