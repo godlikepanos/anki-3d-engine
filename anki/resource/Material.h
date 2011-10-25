@@ -186,6 +186,12 @@ class Material: public MaterialProperties
 			return buildinsArr[e] != NULL;
 		}
 
+		/// For sorting
+		bool operator<(const Material& b) const
+		{
+			return fname < b.fname;
+		}
+
 	private:
 		//======================================================================
 		// Nested                                                              =
@@ -200,6 +206,8 @@ class Material: public MaterialProperties
 
 		/// From "GL_ZERO" return GL_ZERO
 		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
+
+		std::string fname; ///< filename
 
 		/// All the material variables. Both buildins and user
 		VarsContainer mtlVars;

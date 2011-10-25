@@ -79,6 +79,12 @@ class ShaderProgram
 		/// For debuging
 		std::string getShaderInfoString() const;
 
+		/// For sorting
+		bool operator<(const ShaderProgram& b) const
+		{
+			return rsrcFilename < b.rsrcFilename;
+		}
+
 	private:
 		/// XXX
 		typedef ConstCharPtrHashMap<ShaderProgramVariable*>::Type VarsHashMap;
