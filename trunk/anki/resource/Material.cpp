@@ -70,6 +70,7 @@ Material::~Material()
 //==============================================================================
 void Material::load(const char* filename)
 {
+	fname = filename;
 	try
 	{
 		using namespace boost::property_tree;

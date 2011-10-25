@@ -179,6 +179,30 @@ ToDo
 - Move update redesign
 	- First update the world transforms for all nodes
 	- then for the nodes that have moved (we allready keep the previ world transform) call the SceneNode::moveUpdate
+	
+	
+===
+xxx
+===
+
+SceneObject
+	- Static
+	- Moving
+	
+	- Frustum
+	- Renderable
+	
+Renderable
+	- stage? MS | BS | LS
+	- material
+	- world transform [for moving]
+	- collision shape [for moving]
+	
+Frustum:
+	- N x renderables
+
+
+
 
 
 
