@@ -29,7 +29,7 @@ ParticleEmitterNode::~ParticleEmitterNode()
 float ParticleEmitterNode::getRandom(float initial, float deviation)
 {
 	return (deviation == 0.0) ?  initial :
-		initial + util::randFloat(deviation) * 2.0 - deviation;
+		initial + Util::randFloat(deviation) * 2.0 - deviation;
 }
 
 
@@ -80,7 +80,7 @@ void ParticleEmitterNode::init(const char* filename)
 		particles.push_back(particle);
 
 		float mass = particleMass +
-			util::randFloat(particleMassDeviation) * 2.0 -
+			Util::randFloat(particleMassDeviation) * 2.0 -
 			particleMassDeviation;
 
 		RigidBody::Initializer init;

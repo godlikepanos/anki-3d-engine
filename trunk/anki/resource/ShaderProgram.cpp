@@ -352,7 +352,7 @@ std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 		return newfPathName.string();
 	}
 
-	std::string src_ = util::readFile(sProgFPathName);
+	std::string src_ = Util::readFile(sProgFPathName);
 	std::string src = preAppendedSrcCode + src_;
 
 	std::ofstream f(newfPathName.string().c_str());

@@ -13,7 +13,7 @@ inline float randFloat()
 	float f;
 	while(true)
 	{
-		f = util::randRange(RANGE_MIN, RANGE_MAX);
+		f = Util::randRange(RANGE_MIN, RANGE_MAX);
 		if(!isZero(f))
 		{
 			break;

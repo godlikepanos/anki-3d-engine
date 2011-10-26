@@ -52,7 +52,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
-	std::vector<std::string> lines = util::getFileLines(filename.c_str());
+	std::vector<std::string> lines = Util::getFileLines(filename.c_str());
 	if(lines.size() < 1)
 	{
 		throw ANKI_EXCEPTION("File \"" + filename + "\": Cannot open or empty");

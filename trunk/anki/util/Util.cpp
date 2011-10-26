@@ -7,29 +7,32 @@
 
 
 namespace anki {
-namespace util {
 
 
 //==============================================================================
-// randRange                                                                   =
-//==============================================================================
-int randRange(int min, int max)
+int Util::randRange(int min, int max)
 {
 	return (rand() % (max-min+1)) + min ;
 }
 
-uint randRange(uint min, uint max)
+
+//==============================================================================
+uint Util::randRange(uint min, uint max)
 {
 	return (rand() % (max-min+1)) + min ;
 }
 
-float randRange(float min, float max)
+
+//==============================================================================
+float Util::randRange(float min, float max)
 {
 	float r = (float)rand() / (float)RAND_MAX;
 	return min + r * (max - min);
 }
 
-double randRange(double min, double max)
+
+//==============================================================================
+double Util::randRange(double min, double max)
 {
 	double r = (double)rand() / (double)RAND_MAX;
 	return min + r * (max - min);
@@ -37,14 +40,12 @@ double randRange(double min, double max)
 
 
 //==============================================================================
-// readFile                                                                    =
-//==============================================================================
-std::string readFile(const char* filename)
+std::string Util::readFile(const char* filename)
 {
 	std::ifstream file(filename);
 	if (!file.is_open())
 	{
-		throw ANKI_EXCEPTION(std::string("Cannot open file \"") + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot open file \"" + filename + "\"");
 	}
 
 	return std::string((std::istreambuf_iterator<char>(file)),
@@ -53,9 +54,7 @@ std::string readFile(const char* filename)
 
 
 //==============================================================================
-// getFileLines                                                                =
-//==============================================================================
-std::vector<std::string> getFileLines(const char* filename)
+std::vector<std::string> Util::getFileLines(const char* filename)
 {
 	std::vector<std::string> lines;
 	std::ifstream ifs(filename);
@@ -74,14 +73,11 @@ std::vector<std::string> getFileLines(const char* filename)
 
 
 //==============================================================================
-// randFloat                                                                   =
-//==============================================================================
-float randFloat(float max)
+float Util::randFloat(float max)
 {
 	float r = float(rand()) / float(RAND_MAX);
 	return r * max;
 }
 
 
-} // end namesapce
 } // end namespace
