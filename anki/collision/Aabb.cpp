@@ -20,7 +20,7 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 	// if not then we are fucked
 	else
 	{
-		boost::array<Vec3, 8> points = {{
+		/*boost::array<Vec3, 8> points = {{
 			max,
 			Vec3(min.x(), max.y(), max.z()),
 			Vec3(min.x(), min.y(), max.z()),
@@ -36,6 +36,16 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 			points[i].transform(transform);
 		}
 
+		out.set(points);*/
+
+		// Experimental way:
+
+		// obb is the rotated "this"
+		Obb obb = Obb(transform.getOrigin(), transform.getRotation(),
+			((max - min) / 2.0) * transform.getScale());
+
+		boost::array<Vec3, 8> points;
+		obb.getExtremePoints(points);
 		out.set(points);
 	}
 

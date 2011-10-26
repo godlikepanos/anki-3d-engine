@@ -50,19 +50,19 @@ void Mesh::createVbos(const MeshData& meshData)
 {
 	vbos[VBO_VERT_INDECES].create(
 		GL_ELEMENT_ARRAY_BUFFER,
-		util::getVectorSizeInBytes(meshData.getVertIndeces()),
+		Util::getVectorSizeInBytes(meshData.getVertIndeces()),
 		&meshData.getVertIndeces()[0],
 		GL_STATIC_DRAW);
 
 	vbos[VBO_VERT_POSITIONS].create(
 		GL_ARRAY_BUFFER,
-		util::getVectorSizeInBytes(meshData.getVertCoords()),
+		Util::getVectorSizeInBytes(meshData.getVertCoords()),
 		&meshData.getVertCoords()[0],
 		GL_STATIC_DRAW);
 
 	vbos[VBO_VERT_NORMALS].create(
 		GL_ARRAY_BUFFER,
-		util::getVectorSizeInBytes(meshData.getVertNormals()),
+		Util::getVectorSizeInBytes(meshData.getVertNormals()),
 		&meshData.getVertNormals()[0],
 		GL_STATIC_DRAW);
 
@@ -70,7 +70,7 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_VERT_TANGENTS].create(
 			GL_ARRAY_BUFFER,
-			util::getVectorSizeInBytes(meshData.getVertTangents()),
+			Util::getVectorSizeInBytes(meshData.getVertTangents()),
 			&meshData.getVertTangents()[0],
 			GL_STATIC_DRAW);
 	}
@@ -79,7 +79,7 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_TEX_COORDS].create(
 			GL_ARRAY_BUFFER,
-			util::getVectorSizeInBytes(meshData.getTexCoords()),
+			Util::getVectorSizeInBytes(meshData.getTexCoords()),
 			&meshData.getTexCoords()[0],
 			GL_STATIC_DRAW);
 	}
@@ -88,7 +88,7 @@ void Mesh::createVbos(const MeshData& meshData)
 	{
 		vbos[VBO_VERT_WEIGHTS].create(
 			GL_ARRAY_BUFFER,
-			util::getVectorSizeInBytes(meshData.getVertWeights()),
+			Util::getVectorSizeInBytes(meshData.getVertWeights()),
 			&meshData.getVertWeights()[0],
 			GL_STATIC_DRAW);
 	}

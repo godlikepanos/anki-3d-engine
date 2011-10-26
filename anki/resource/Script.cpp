@@ -11,7 +11,7 @@ namespace anki {
 //==============================================================================
 void Script::load(const char* filename)
 {
-	source = util::readFile(filename);
+	source = Util::readFile(filename);
 	if(source.length() < 1)
 	{
 		throw ANKI_EXCEPTION("Cannot load script \"" + filename + "\"");

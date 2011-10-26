@@ -342,7 +342,7 @@ void mainLoopExtra()
 	if(InputSingleton::get().getKey(SDL_SCANCODE_Y) == 1)
 	{
 		ANKI_INFO("Exec script");
-		ScriptManagerSingleton::get().execScript(util::readFile("test.py").c_str());
+		ScriptManagerSingleton::get().execScript(Util::readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();

@@ -99,6 +99,9 @@ class Obb: public CollisionShape
 		template<typename Container>
 		void set(const Container& container);
 
+		/// Get extreme points in 3D space
+		void getExtremePoints(boost::array<Vec3, 8>& points) const;
+
 	public:
 		/// @name Data
 		/// @{
@@ -108,9 +111,6 @@ class Obb: public CollisionShape
 		/// our case)
 		Vec3 extends;
 		/// @}
-
-		/// Get extreme points in 3D space
-		void getExtremePoints(boost::array<Vec3, 8>& points) const;
 };
 /// @}
 

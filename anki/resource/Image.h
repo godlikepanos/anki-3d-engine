@@ -72,7 +72,7 @@ class Image
 		/// Get image size in bytes
 		size_t getDataSize() const
 		{
-			return util::getVectorSizeInBytes(data);
+			return Util::getVectorSizeInBytes(data);
 		}
 
 		DataCompression getDataCompression() const
