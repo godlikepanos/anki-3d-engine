@@ -1,24 +1,67 @@
 #include "anki/scene/Octree.h"
 #include "anki/util/Exception.h"
+#include "anki/collision/CollisionAlgorithmsMatrix.h"
 
 
 namespace anki {
 
 
 //==============================================================================
-Octree::Octree(const Aabb& aabb, uint depth)
+Octree::Octree(const Aabb& aabb, uchar maxDepth_)
+:	maxDepth(maxDepth_)
 {
+	if(maxDepth < 1)
+	{
+		maxDepth = 1;
+	}
+
 	// Create root
 	root = new OctreeNode();
 	root->aabb = aabb;
 
 	// Create children
-	createSubTree(depth, *root);
+	//createSubTree(maxDepth, *root);
 }
 
 
 //==============================================================================
-void Octree::createSubTree(uint rdepth, OctreeNode& parent)
+OctreeNode& Octree::place(const Aabb& aabb)
+{
+	// Run the recursive
+	return place(aabb, 0, *root);
+}
+
+
+//==============================================================================
+OctreeNode& Octree::place(const Aabb& aabb, uint depth, OctreeNode& node)
+{
+	if(depth >= maxDepth)
+	{
+		return node;
+	}
+
+	uint count = 0;
+	uint last = 0;
+	for(uint i = 0; i < 8; ++i)
+	{
+		if(CollisionAlgorithmsMatrix::collide(aabb, node.children[i].aabb))
+		{
+			last = i;
+			++count;
+		}
+	}
+
+	ASSERT(count != 0);
+
+	if(count == 1)
+	{
+		return place(aabb, depth + 1, node.children[last]);
+	}
+}
+
+
+//==============================================================================
+/*void Octree::createSubTree(uint rdepth, OctreeNode& parent)
 {
 	if(rdepth == 0)
 	{
@@ -56,7 +99,7 @@ void Octree::createSubTree(uint rdepth, OctreeNode& parent)
 			} // k
 		} // j
 	} // i
-}
+}*/
 
 
 } // end namespace
