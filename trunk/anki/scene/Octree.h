@@ -2,6 +2,7 @@
 #define ANKI_SCENE_OCTREE_H
 
 #include "anki/collision/Aabb.h"
+#include "anki/util/StdTypes.h"
 #include <boost/array.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -64,13 +65,18 @@ class OctreeNode
 class Octree
 {
 	public:
-		Octree(const Aabb& aabb, uint depth);
+		Octree(const Aabb& aabb, uchar maxDepth);
+
+		OctreeNode& place(const Aabb& aabb);
 
 	private:
 		OctreeNode* root;
 		boost::ptr_vector<OctreeNode> nodes; ///< For garbage collection
+		uint maxDepth;
 
-		void createSubTree(uint rdepth, OctreeNode& parent);
+		//void createSubTree(uint rdepth, OctreeNode& parent);
+
+		OctreeNode& place(const Aabb& aabb, uint depth, OctreeNode& node);
 };
 
 
