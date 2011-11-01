@@ -13,16 +13,12 @@ namespace anki {
 /// XXX
 class OctreeNode
 {
-	friend class Octree;
-
 	public:
-		OctreeNode()
-		:	parent(NULL)
+		OctreeNode(const Aabb& aabb_, OctreeNode* parent_)
+		:	parent(parent_),
+		 	aabb(aabb_)
 		{
-			for(size_t i = 0; children.size(); ++i)
-			{
-				children[i] = NULL;
-			}
+			initArr();
 		}
 
 		/// @name Accessors
@@ -48,16 +44,24 @@ class OctreeNode
 			return parent == NULL;
 		}
 
-		/// Means no more children
-		bool isFinal() const
+		void addChild(uint pos, OctreeNode& child)
 		{
-			return children[0] == NULL;
+			child.parent = this;
+			children[pos] = &child;
 		}
 
 	private:
 		boost::array<OctreeNode*, 8> children;
 		OctreeNode* parent;
 		Aabb aabb; ///< Including AABB
+
+		void initArr()
+		{
+			for(size_t i = 0; i < children.size(); ++i)
+			{
+				children[i] = NULL;
+			}
+		}
 };
 
 
@@ -65,18 +69,48 @@ class OctreeNode
 class Octree
 {
 	public:
-		Octree(const Aabb& aabb, uchar maxDepth);
+		Octree(const Aabb& aabb, uchar maxDepth, float looseness = 1.5);
 
-		OctreeNode& place(const Aabb& aabb);
+		/// @name Accessors
+		/// @{
+		const OctreeNode& getRoot() const
+		{
+			return *root;
+		}
+		OctreeNode& getRoot()
+		{
+			return *root;
+		}
+
+		uint getMaxDepth() const
+		{
+			return maxDepth;
+		}
+		/// @}
+
+		OctreeNode* place(const Aabb& aabb);
 
 	private:
 		OctreeNode* root;
 		boost::ptr_vector<OctreeNode> nodes; ///< For garbage collection
 		uint maxDepth;
+		float looseness;
 
 		//void createSubTree(uint rdepth, OctreeNode& parent);
 
-		OctreeNode& place(const Aabb& aabb, uint depth, OctreeNode& node);
+		OctreeNode* place(const Aabb& aabb, uint depth, OctreeNode& node);
+
+		void createChildren(OctreeNode& parent);
+
+		/// Calculate the AABB of a child given the parent's AABB and its
+		/// position
+		/// @param[in] i 0: left, 1: right
+		/// @param[in] j 0: down, 1: up
+		/// @param[in] k 0: back, 1: front
+		/// @param[in] parentAabb The parent's AABB
+		/// @param[out] out The out AABB
+		void calcAabb(uint i, uint j, uint k, const Aabb& parentAabb,
+			Aabb& out) const;
 };
 
 

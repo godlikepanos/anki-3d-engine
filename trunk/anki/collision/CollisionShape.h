@@ -65,7 +65,7 @@ class CollisionShape
 		/// Visitor accept
 		virtual void accept(MutableVisitor& v) = 0;
 		/// Visitor accept
-		virtual void accept(ConstVisitor& v) = 0;
+		virtual void accept(ConstVisitor& v) const = 0;
 
 		/// If the collision shape intersects with the plane then the method
 		/// returns 0.0, else it returns the distance. If the distance is < 0.0

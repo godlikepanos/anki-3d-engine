@@ -6,13 +6,12 @@
 #include "anki/scene/SkinNode.h"
 #include "anki/scene/PerspectiveCamera.h"
 #include "anki/scene/OrthographicCamera.h"
+#include "anki/scene/Octree.h"
 
 
 namespace anki {
 
 
-//==============================================================================
-// drawCamera                                                                  =
 //==============================================================================
 void SceneDbgDrawer::drawCamera(const Camera& cam) const
 {
@@ -42,8 +41,6 @@ void SceneDbgDrawer::drawCamera(const Camera& cam) const
 
 
 //==============================================================================
-// drawPerspectiveCamera                                                       =
-//==============================================================================
 void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
 {
 	dbg.setColor(Vec4(1.0, 0.0, 1.0, 1.0));
@@ -72,8 +69,6 @@ void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
 }
 
 
-//==============================================================================
-// drawOrthographicCamera                                                      =
 //==============================================================================
 void SceneDbgDrawer::drawOrthographicCamera(
 	const OrthographicCamera& ocam) const
@@ -115,8 +110,6 @@ void SceneDbgDrawer::drawOrthographicCamera(
 
 
 //==============================================================================
-// drawLight                                                                   =
-//==============================================================================
 void SceneDbgDrawer::drawLight(const Light& light) const
 {
 	dbg.setColor(light.getDiffuseColor());
@@ -126,8 +119,6 @@ void SceneDbgDrawer::drawLight(const Light& light) const
 
 
 //==============================================================================
-// drawParticleEmitter                                                         =
-//==============================================================================
 void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitterNode& pe) const
 {
 	dbg.setColor(Vec4(1.0));
@@ -136,8 +127,6 @@ void SceneDbgDrawer::drawParticleEmitter(const ParticleEmitterNode& pe) const
 }
 
 
-//==============================================================================
-// drawSkinNodeSkeleton                                                        =
 //==============================================================================
 void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 {
@@ -151,6 +140,35 @@ void SceneDbgDrawer::drawSkinNodeSkeleton(const SkinNode& sn) const
 		dbg.pushBackVertex(sn.getTails()[i]);
 	}
 	dbg.end();
+}
+
+
+//==============================================================================
+void SceneDbgDrawer::drawOctree(const Octree& octree) const
+{
+	dbg.setColor(Vec3(1.0));
+	drawOctreeNode(octree.getRoot(), 0, octree);
+}
+
+
+//==============================================================================
+void SceneDbgDrawer::drawOctreeNode(const OctreeNode& octnode, uint depth,
+	const Octree& octree) const
+{
+	Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
+	dbg.setColor(color);
+
+	CollisionDbgDrawer v(dbg);
+	octnode.getAabb().accept(v);
+
+	// Children
+	for(uint i = 0; i < 8; ++i)
+	{
+		if(octnode.getChildren()[i] != NULL)
+		{
+			drawOctreeNode(*octnode.getChildren()[i], depth + 1, octree);
+		}
+	}
 }
 
 

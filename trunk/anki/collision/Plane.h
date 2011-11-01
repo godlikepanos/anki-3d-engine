@@ -79,7 +79,7 @@ class Plane: public CollisionShape
 			v.visit(*this);
 		}
 		/// Implements CollisionShape::accept
-		void accept(ConstVisitor& v)
+		void accept(ConstVisitor& v) const
 		{
 			v.visit(*this);
 		}

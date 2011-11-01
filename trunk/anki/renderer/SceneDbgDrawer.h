@@ -1,6 +1,8 @@
 #ifndef ANKI_RENDERER_SCENE_DBG_DRAWER_H
 #define ANKI_RENDERER_SCENE_DBG_DRAWER_H
 
+#include "anki/util/StdTypes.h"
+
 
 namespace anki {
 
@@ -11,6 +13,8 @@ class ParticleEmitterNode;
 class SkinNode;
 class PerspectiveCamera;
 class OrthographicCamera;
+class Octree;
+class OctreeNode;
 
 class Dbg;
 
@@ -35,6 +39,11 @@ class SceneDbgDrawer
 
 		/// Draw a skeleton
 		virtual void drawSkinNodeSkeleton(const SkinNode& pe) const;
+
+		virtual void drawOctree(const Octree& octree) const;
+
+		virtual void drawOctreeNode(const OctreeNode& octnode,
+			uint depth, const Octree& octree) const;
 
 	private:
 		Dbg& dbg; ///< The debug stage

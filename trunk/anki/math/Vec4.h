@@ -62,6 +62,10 @@ class Vec4
 		Vec4 operator-() const;
 		bool operator==(const Vec4& b) const;
 		bool operator!=(const Vec4& b) const;
+		bool operator<(const Vec4& b) const;
+		bool operator<=(const Vec4& b) const;
+		bool operator>(const Vec4& b) const;
+		bool operator>=(const Vec4& b) const;
 		/// @}
 
 		/// @name Operators with float
