@@ -145,7 +145,7 @@ void init()
 	PerspectiveCamera* cam = new PerspectiveCamera(scene, SceneNode::SNF_NONE, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
 	ANKI_INFO(MainRendererSingleton::get().getAspectRatio());
-	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(90.0), Math::toRad(90.0), 0.5, 200.0);
+	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(70.0), Math::toRad(70.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
@@ -291,7 +291,7 @@ void mainLoopExtra()
 	if(InputSingleton::get().getKey(SDL_SCANCODE_6)) mover = imp;
 	if(InputSingleton::get().getKey(SDL_SCANCODE_7)) mover =
 		SceneSingleton::get().getParticleEmitterNodes()[0];
-	//if(InputSingleton::get().getKey(SDL_SCANCODE_M) == 1) InputSingleton::get().warpMouse = !InputSingleton::get().warpMouse;
+	if(InputSingleton::get().getKey(SDL_SCANCODE_8)) mover = horse;
 
 	if(InputSingleton::get().getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
 	if(InputSingleton::get().getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);

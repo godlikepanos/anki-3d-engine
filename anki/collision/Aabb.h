@@ -25,7 +25,9 @@ class Aabb: public CollisionShape
 		:	CollisionShape(CST_AABB),
 			min(min_),
 			max(max_)
-		{}
+		{
+			ASSERT(min < max);
+		}
 
 		Aabb(const Aabb& b)
 		:	CollisionShape(CST_AABB),
@@ -69,7 +71,7 @@ class Aabb: public CollisionShape
 			v.visit(*this);
 		}
 		/// Implements CollisionShape::accept
-		void accept(ConstVisitor& v)
+		void accept(ConstVisitor& v) const
 		{
 			v.visit(*this);
 		}

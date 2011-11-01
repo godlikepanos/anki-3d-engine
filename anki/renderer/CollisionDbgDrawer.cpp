@@ -7,9 +7,7 @@ namespace anki {
 
 
 //==============================================================================
-// draw (Sphere)                                                               =
-//==============================================================================
-void CollisionDbgDrawer::draw(const Sphere& sphere)
+void CollisionDbgDrawer::visit(const Sphere& sphere)
 {
 	dbg.setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
 	dbg.drawSphere(sphere.getRadius());
@@ -17,9 +15,7 @@ void CollisionDbgDrawer::draw(const Sphere& sphere)
 
 
 //==============================================================================
-// draw (Obb)                                                                  =
-//==============================================================================
-void CollisionDbgDrawer::draw(const Obb& obb)
+void CollisionDbgDrawer::visit(const Obb& obb)
 {
 	Mat4 scale(Mat4::getIdentity());
 	scale(0, 0) = obb.getExtend().x();
@@ -49,9 +45,7 @@ void CollisionDbgDrawer::draw(const Obb& obb)
 
 
 //==============================================================================
-// draw (Plane)                                                                =
-//==============================================================================
-void CollisionDbgDrawer::draw(const Plane& plane)
+void CollisionDbgDrawer::visit(const Plane& plane)
 {
 	const Vec3& n = plane.getNormal();
 	const float& o = plane.getOffset();
@@ -63,6 +57,30 @@ void CollisionDbgDrawer::draw(const Plane& plane)
 
 	dbg.setModelMat(trf);
 	dbg.renderGrid();
+}
+
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Aabb& aabb)
+{
+	const Vec3& min = aabb.getMin();
+	const Vec3& max = aabb.getMax();
+
+	Mat4 trf = Mat4::getIdentity();
+	// Scale
+	for(uint i = 0; i < 3; ++i)
+	{
+		trf(i, i) = max[i] - min[i];
+	}
+
+	// Translation
+	trf.setTranslationPart((max + min) / 2.0);
+
+	dbg.setModelMat(trf);
+	dbg.drawCube();
+
+	/*dbg.setModelMat(Mat4::getIdentity());
+	dbg.drawLine(min, max, Vec4(1.0, 0.0, 0.0, 1.0));*/
 }
 
 

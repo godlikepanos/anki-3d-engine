@@ -1,5 +1,6 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/CollisionDbgDrawer.h"
 #include "anki/scene/RenderableNode.h"
 #include "anki/scene/Scene.h"
 #include "anki/scene/Camera.h"
@@ -9,7 +10,13 @@
 #include "anki/renderer/SceneDbgDrawer.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/scene/SpotLight.h"
+#include "anki/scene/Octree.h"
+#include "anki/scene/ModelNode.h"
+#include "anki/resource/Model.h"
 #include <boost/foreach.hpp>
+
+
+extern anki::ModelNode* horse;
 
 
 namespace anki {
@@ -362,7 +369,31 @@ void Dbg::run()
 	///////////////
 
 
-	SceneSingleton::get().getPhysWorld().getWorld().debugDrawWorld();
+	/*Octree* octree = new Octree(Aabb(Vec3(-10.0), Vec3(10.0)), 10);
+
+
+	Aabb aabb(horse->getModel().getVisibilityCollisionShape());
+	aabb.transform(horse->getWorldTransform());
+
+	OctreeNode* where = octree->place(aabb);
+
+	sceneDbgDrawer.drawOctree(*octree);
+	CollisionDbgDrawer vis(*this);
+	aabb.accept(vis);
+
+	if(where)
+	{
+		setColor(Vec3(1.0, 0.0, 0.0));
+		Aabb whereaabb = where->getAabb();
+		whereaabb.transform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.99));
+		whereaabb.accept(vis);
+	}
+
+	delete octree;
+
+
+	SceneSingleton::get().getPhysWorld().getWorld().debugDrawWorld();*/
+
 	// Physics
 	/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	setModelMat(Mat4::getIdentity());

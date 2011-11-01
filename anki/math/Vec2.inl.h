@@ -197,8 +197,7 @@ inline bool Vec2::operator==(const Vec2& b) const
 // !=
 inline bool Vec2::operator!=(const Vec2& b) const
 {
-	return !(Math::isZero(x() - b.x()) &&
-		Math::isZero(y() - b.y()));
+	return !(*this == b);
 }
 
 

@@ -49,6 +49,10 @@ class Vec2
 		Vec2 operator-() const;
 		bool operator==(const Vec2& b) const;
 		bool operator!=(const Vec2& b) const;
+		bool operator<(const Vec2& b) const;
+		bool operator<=(const Vec2& b) const;
+		bool operator>(const Vec2& b) const;
+		bool operator>=(const Vec2& b) const;
 		/// @}
 
 		/// @name Operators with float

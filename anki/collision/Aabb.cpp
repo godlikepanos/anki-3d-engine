@@ -1,5 +1,6 @@
 #include "anki/collision/Aabb.h"
 #include "anki/collision/Plane.h"
+#include "anki/collision/Obb.h"
 #include <boost/array.hpp>
 
 
@@ -38,11 +39,12 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 
 		out.set(points);*/
 
-		// Experimental way:
+		// Fast way:
 
-		// obb is the rotated "this"
-		Obb obb = Obb(transform.getOrigin(), transform.getRotation(),
-			((max - min) / 2.0) * transform.getScale());
+		// obb is the transformed this
+		Vec3 c = (min + max) / 2.0;
+		Obb obb = Obb(c.getTransformed(transform), transform.getRotation(),
+			(max - c) * transform.getScale());
 
 		boost::array<Vec3, 8> points;
 		obb.getExtremePoints(points);

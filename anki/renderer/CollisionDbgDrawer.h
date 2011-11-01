@@ -1,6 +1,9 @@
 #ifndef ANKI_RENDERER_COLLISION_DBG_DRAWER_H
 #define ANKI_RENDERER_COLLISION_DBG_DRAWER_H
 
+#include "anki/collision/CollisionShape.h"
+#include "anki/util/Assert.h"
+
 
 namespace anki {
 
@@ -12,20 +15,36 @@ class Dbg;
 
 
 /// Contains methods to render the collision shapes
-class CollisionDbgDrawer
+class CollisionDbgDrawer: public CollisionShape::ConstVisitor
 {
 	public:
 		/// Constructor
-		CollisionDbgDrawer(Dbg& dbg_): dbg(dbg_) {}
+		CollisionDbgDrawer(Dbg& dbg_)
+		:	dbg(dbg_)
+		{}
 
-		/// Draw Sphere
-		virtual void draw(const Sphere& sphere);
+		void visit(const LineSegment&)
+		{
+			ASSERT(0 && "ToDo");
+		}
 
-		/// Draw Obb
-		virtual void draw(const Obb& obb);
+		void visit(const Obb&);
 
-		/// Draw Plane
-		virtual void draw(const Plane& plane);
+		void visit(const PerspectiveCameraShape&)
+		{
+			ASSERT(0 && "ToDo");
+		}
+
+		void visit(const Plane&);
+
+		void visit(const Ray&)
+		{
+			ASSERT(0 && "ToDo");
+		}
+
+		void visit(const Sphere&);
+
+		void visit(const Aabb&);
 
 	private:
 		Dbg& dbg; ///< The debug stage

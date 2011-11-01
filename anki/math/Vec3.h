@@ -52,6 +52,10 @@ class Vec3
 		Vec3 operator-() const;
 		bool operator==(const Vec3& b) const;
 		bool operator!=(const Vec3& b) const;
+		bool operator<(const Vec3& b) const;
+		bool operator<=(const Vec3& b) const;
+		bool operator>(const Vec3& b) const;
+		bool operator>=(const Vec3& b) const;
 		/// @}
 
 		/// @name Operators with float

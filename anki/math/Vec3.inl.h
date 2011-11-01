@@ -234,6 +234,34 @@ inline bool Vec3::operator!=(const Vec3& b) const
 }
 
 
+// <
+inline bool Vec3::operator<(const Vec3& b) const
+{
+	return x() < b.x() && y() < b.y() && z() < b.z();
+}
+
+
+// <=
+inline bool Vec3::operator<=(const Vec3& b) const
+{
+	return x() <= b.x() && y() <= b.y() && z() <= b.z();
+}
+
+
+// >
+inline bool Vec3::operator>(const Vec3& b) const
+{
+	return x() > b.x() && y() > b.y() && z() > b.z();
+}
+
+
+// >=
+inline bool Vec3::operator>=(const Vec3& b) const
+{
+	return x() >= b.x() && y() >= b.y() && z() >= b.z();
+}
+
+
 //==============================================================================
 // Operators with float                                                        =
 //==============================================================================
