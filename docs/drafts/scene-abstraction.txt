@@ -185,21 +185,32 @@ ToDo
 xxx
 ===
 
-SceneObject
-	- Static
-	- Moving
+Scene
+	- N x SceneNode
+	- 1 x Octree
 	
-	- Frustum
-	- Renderable
+	- Update transforms
+	- Call move updates if moved
+
+SceneObject
+
+StaticObject: SceneObject
+
+SceneNode: SceneObject
+	- static | moving
+	- TRF
+	- parent & children
 	
 Renderable
-	- stage? MS | BS | LS
+	- stage? MS | BS | LS | DBG
 	- material
 	- world transform [for moving]
 	- collision shape [for moving]
 	
-Frustum:
+Frustum
 	- N x renderables
+
+
 
 
 

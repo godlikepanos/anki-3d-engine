@@ -6,7 +6,7 @@ namespace anki {
 
 inline float Math::sqrt(const float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm = _mm_set_ss(f);
 	mm = _mm_sqrt_ss(mm);
 	float o;

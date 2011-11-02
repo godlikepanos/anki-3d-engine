@@ -11,7 +11,7 @@ namespace anki {
 // Copy
 inline Mat4::Mat4(const Mat4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		arrMm[i] = b.arrMm[i];
@@ -28,7 +28,7 @@ inline Mat4::Mat4(const Mat4& b)
 // float
 inline Mat4::Mat4(const float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_set1_ps(f);
@@ -205,7 +205,7 @@ inline const float& Mat4::operator[](const size_t i) const
 }
 
 
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 inline const __m128& Mat4::getMm(const size_t i) const
 {
 	return arrMm[i];
@@ -224,7 +224,7 @@ inline __m128& Mat4::getMm(const size_t i)
 // =
 inline Mat4& Mat4::operator=(const Mat4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		arrMm[i] = b.arrMm[i];
@@ -243,7 +243,7 @@ inline Mat4& Mat4::operator=(const Mat4& b)
 inline Mat4 Mat4::operator+(const Mat4& b) const
 {
 	Mat4 c;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
@@ -261,7 +261,7 @@ inline Mat4 Mat4::operator+(const Mat4& b) const
 // +=
 inline Mat4& Mat4::operator+=(const Mat4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
@@ -280,7 +280,7 @@ inline Mat4& Mat4::operator+=(const Mat4& b)
 inline Mat4 Mat4::operator-(const Mat4& b) const
 {
 	Mat4 c;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
@@ -298,7 +298,7 @@ inline Mat4 Mat4::operator-(const Mat4& b) const
 // -=
 inline Mat4& Mat4::operator-=(const Mat4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	for(int i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
@@ -317,7 +317,7 @@ inline Mat4& Mat4::operator-=(const Mat4& b)
 inline Mat4 Mat4::operator*(const Mat4& b) const
 {
 	Mat4 c;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	Mat4 t(b);
 	t.transpose();
 	for(int i = 0; i < 4; i++)
@@ -385,7 +385,7 @@ inline bool Mat4::operator!=(const Mat4& b) const
 inline Mat4 Mat4::operator+(const float f) const
 {
 	Mat4 c;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -405,7 +405,7 @@ inline Mat4 Mat4::operator+(const float f) const
 // 4x4 += float
 inline Mat4& Mat4::operator+=(const float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -426,7 +426,7 @@ inline Mat4& Mat4::operator+=(const float f)
 inline Mat4 Mat4::operator-(const float f) const
 {
 	Mat4 r;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -446,7 +446,7 @@ inline Mat4 Mat4::operator-(const float f) const
 // 4x4 -= float
 inline Mat4& Mat4::operator-=(const float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -467,7 +467,7 @@ inline Mat4& Mat4::operator-=(const float f)
 inline Mat4 Mat4::operator*(const float f) const
 {
 	Mat4 r;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -487,7 +487,7 @@ inline Mat4 Mat4::operator*(const float f) const
 // 4x4 *= float
 inline Mat4& Mat4::operator*=(const float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -508,7 +508,7 @@ inline Mat4& Mat4::operator*=(const float f)
 inline Mat4 Mat4::operator/(const float f) const
 {
 	Mat4 r;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -528,7 +528,7 @@ inline Mat4 Mat4::operator/(const float f) const
 // 4x4 /= float
 inline Mat4& Mat4::operator/=(const float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -552,7 +552,7 @@ inline Mat4& Mat4::operator/=(const float f)
 // Mat4 * Vec4
 inline Vec4 Mat4::operator*(const Vec4& b) const
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	Vec4 v;
 	for(int i = 0; i < 4; i++)
 	{
@@ -580,7 +580,7 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 	const Vec4& d)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	arrMm[0] = a.getMm();
 	arrMm[1] = b.getMm();
 	arrMm[2] = c.getMm();
@@ -609,7 +609,7 @@ inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 // setRow
 inline void Mat4::setRow(const size_t i, const Vec4& v)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	arrMm[i] = v.getMm();
 #else
 	(*this)(i, 0) = v.x();
@@ -656,7 +656,7 @@ inline void Mat4::setColumn(const size_t i, const Vec4& v)
 // transpose
 inline void Mat4::transpose()
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	_MM_TRANSPOSE4_PS(arrMm[0], arrMm[1], arrMm[2], arrMm[3]);
 #else
 	float tmp = (*this)(0, 1);
@@ -980,7 +980,7 @@ inline Mat4 operator+(const float f, const Mat4& m4)
 inline Mat4 operator-(const float f, const Mat4& m4)
 {
 	Mat4 r;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)
@@ -1008,7 +1008,7 @@ inline Mat4 operator*(const float f, const Mat4& m4)
 inline Mat4 operator/(const float f, const Mat4& m4)
 {
 	Mat4 r;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(int i = 0; i < 4; i++)

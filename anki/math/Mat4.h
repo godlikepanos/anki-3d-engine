@@ -41,7 +41,7 @@ class Mat4
 		const float& operator()(const size_t i, const size_t j) const;
 		float& operator[](const size_t i);
 		const float& operator[](const size_t i) const;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 		__m128& getMm(const size_t i);
 		const __m128& getMm(const size_t i) const;
 #endif
@@ -125,7 +125,7 @@ class Mat4
 		{
 			boost::array<float, 16> arr1;
 			boost::array<boost::array<float, 4>, 4> arr2;
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 			boost::array<__m128, 4> arrMm;
 #endif
 		};
