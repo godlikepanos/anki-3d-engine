@@ -11,7 +11,7 @@ namespace anki {
 // default
 inline Vec4::Vec4()
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_setzero_ps();
 #else
 	arr[0] = arr[1] = arr[2] = arr[3] = 0.0;
@@ -22,7 +22,7 @@ inline Vec4::Vec4()
 // float
 inline Vec4::Vec4(float f)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_set1_ps(f);
 #else
 	arr[0] = arr[1] = arr[2] = arr[3] = f;
@@ -33,7 +33,7 @@ inline Vec4::Vec4(float f)
 // float[]
 inline Vec4::Vec4(const float arr_[])
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_load_ps(arr_);
 #else
 	arr[0] = arr_[0];
@@ -48,7 +48,7 @@ inline Vec4::Vec4(const float arr_[])
 inline Vec4::Vec4(const float x_, const float y_, const float z_,
 	const float w_)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_set_ps(w_, z_, y_, x_);
 #else
 	x() = x_;
@@ -82,7 +82,7 @@ inline Vec4::Vec4(const Vec3& v3, const float w_)
 // Copy
 inline Vec4::Vec4(const Vec4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = b.mm;
 #else
 	x() = b.x();
@@ -104,7 +104,7 @@ inline Vec4::Vec4(const Quat& q)
 
 
 // __m128
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 inline Vec4::Vec4(const __m128& mm_)
 {
 	mm = mm_;
@@ -176,7 +176,7 @@ inline float Vec4::w() const
 }
 
 
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 inline __m128& Vec4::getMm()
 {
 	return mm;
@@ -197,7 +197,7 @@ inline const __m128& Vec4::getMm() const
 // =
 inline Vec4& Vec4::operator=(const Vec4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = b.mm;
 #else
 	x() = b.x();
@@ -212,7 +212,7 @@ inline Vec4& Vec4::operator=(const Vec4& b)
 // +
 inline Vec4 Vec4::operator+(const Vec4& b) const
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	return Vec4(_mm_add_ps(mm, b.mm));
 #else
 	return Vec4(x() + b.x(), y() + b.y(), z() + b.z(), w() + b.w());
@@ -223,7 +223,7 @@ inline Vec4 Vec4::operator+(const Vec4& b) const
 // +=
 inline Vec4& Vec4::operator+=(const Vec4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_add_ps(mm, b.mm);
 #else
 	x() += b.x();
@@ -238,7 +238,7 @@ inline Vec4& Vec4::operator+=(const Vec4& b)
 // -
 inline Vec4 Vec4::operator-(const Vec4& b) const
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	return Vec4(_mm_sub_ps(mm, b.mm));
 #else
 	return Vec4(x() - b.x(), y() - b.y(), z() - b.z(), w() - b.w());
@@ -249,7 +249,7 @@ inline Vec4 Vec4::operator-(const Vec4& b) const
 // -=
 inline Vec4& Vec4::operator-=(const Vec4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_sub_ps(mm, b.mm);
 #else
 	x() -= b.x();
@@ -264,7 +264,7 @@ inline Vec4& Vec4::operator-=(const Vec4& b)
 // *
 inline Vec4 Vec4::operator*(const Vec4& b) const
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	return Vec4(_mm_mul_ps(mm, b.mm));
 #else
 	return Vec4(x() * b.x(), y() * b.y(), z() * b.z(), w() * b.w());
@@ -275,7 +275,7 @@ inline Vec4 Vec4::operator*(const Vec4& b) const
 // *=
 inline Vec4& Vec4::operator*=(const Vec4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_mul_ps(mm, b.mm);
 #else
 	x() *= b.x();
@@ -290,7 +290,7 @@ inline Vec4& Vec4::operator*=(const Vec4& b)
 // /
 inline Vec4 Vec4::operator/(const Vec4& b) const
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	return Vec4(_mm_div_ps(mm, b.mm));
 #else
 	return Vec4(x() / b.x(), y() / b.y(), z() / b.z(), w() / b.w());
@@ -301,7 +301,7 @@ inline Vec4 Vec4::operator/(const Vec4& b) const
 // /=
 inline Vec4& Vec4::operator/=(const Vec4& b)
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_div_ps(mm, b.mm);
 #else
 	x() /= b.x();
@@ -429,7 +429,7 @@ inline Vec4 Vec4::operator*(const Mat4& m4) const
 // dot
 inline float Vec4::dot(const Vec4& b) const
 {
-#if defined(MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_INTEL_SIMD)
 	float o;
 	_mm_store_ss(&o, _mm_dp_ps(mm, b.mm, 0xF1));
 	return o;

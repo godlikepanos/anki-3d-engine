@@ -11,12 +11,12 @@ ENDIF()
 FIND_PACKAGE(Subversion)
 IF(Subversion_FOUND)
 	Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} ER)
-	ADD_DEFINITIONS("-DREVISION=${ER_WC_REVISION}")
+	ADD_DEFINITIONS("-DANKI_REVISION=${ER_WC_REVISION}")
 ELSE()
-	ADD_DEFINITIONS("-DREVISION=???")
+	ADD_DEFINITIONS("-DANKI_REVISION=???")
 ENDIF()
 
-ADD_DEFINITIONS("-DMATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -msse4")
+ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -msse4")
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	

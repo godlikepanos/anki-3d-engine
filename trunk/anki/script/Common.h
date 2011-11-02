@@ -1,5 +1,5 @@
-#ifndef SCRIPT_COMMON_H
-#define SCRIPT_COMMON_H
+#ifndef ANKI_SCRIPT_COMMON_H
+#define ANKI_SCRIPT_COMMON_H
 
 /// @file
 /// This file is included by all the *.bpi.cpp files

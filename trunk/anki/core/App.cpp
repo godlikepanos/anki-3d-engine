@@ -2,6 +2,7 @@
 #include "anki/core/Logger.h"
 #include "anki/core/Globals.h"
 #include "anki/util/Exception.h"
+#include "anki/util/Platform.h"
 #include <GL/glew.h>
 #include <sstream>
 #include <SDL/SDL.h>
@@ -214,8 +215,8 @@ void App::quit(int code)
 //==============================================================================
 // printAppInfo                                                                =
 //==============================================================================
-#if !defined(REVISION)
-#	define REVISION "unknown"
+#if !defined(ANKI_REVISION)
+#	define ANKI_REVISION "unknown"
 #endif
 
 void App::printAppInfo()
@@ -228,19 +229,13 @@ void App::printAppInfo()
 	msg << "Debug";
 #endif
 	msg << " build, ";
-	msg << "platform ";
-#if defined(PLATFORM_LINUX)
-	msg << "Linux, ";
-#elif defined(PLATFORM_WIN)
-	msg << "Windows, ";
-#else
-#	error "See file"
-#endif
+	msg << "platform ID " << ANKI_PLATFORM << ", ";
+	msg << "compiler ID " << ANKI_COMPILER << ", ";
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
 	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' <<
 		int(v->patch) << ", " << "build date " __DATE__ << ", " <<
-		"rev " << REVISION;
+		"rev " << ANKI_REVISION;
 
 	ANKI_INFO(msg.str());
 }
