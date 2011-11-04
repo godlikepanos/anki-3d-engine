@@ -10,7 +10,7 @@ namespace anki {
 
 /// @addtogroup Collision
 /// @{
-///
+
 /// Axis align bounding box collision shape
 class Aabb: public CollisionShape
 {
