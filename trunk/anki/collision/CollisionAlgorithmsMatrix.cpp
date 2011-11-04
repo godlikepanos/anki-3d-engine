@@ -71,7 +71,7 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 	const Ls& /*b*/)
 {
-	ASSERT(0 && "Not worth implementing");
+	ASSERT(0 && "N/A");
 	return false;
 }
 
@@ -160,7 +160,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p)
 bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 	const Ray& /*b*/)
 {
-	ASSERT(0 && "Not worth implementing");
+	ASSERT(0 && "N/A");
 	return false;
 }
 
@@ -584,7 +584,7 @@ bool CollisionAlgorithmsMatrix::collide(const Plane& p,
 bool CollisionAlgorithmsMatrix::collide(const Ray& a,
 	const Ray& b)
 {
-	ASSERT(0 && "Not worth implementing");
+	ASSERT(0 && "N/A");
 	return false;
 }
 
