@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/Texture.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 
 
 namespace anki {
@@ -92,9 +92,9 @@ class Hdr: public SwitchableRenderingPass
 		Fbo toneFbo;
 		Fbo hblurFbo;
 		Fbo vblurFbo;
-		RsrcPtr<ShaderProgram> toneSProg;
-		RsrcPtr<ShaderProgram> hblurSProg;
-		RsrcPtr<ShaderProgram> vblurSProg;
+		ShaderProgramResourcePointer toneSProg;
+		ShaderProgramResourcePointer hblurSProg;
+		ShaderProgramResourcePointer vblurSProg;
 		Texture toneFai; ///< Vertical blur pass FAI
 		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 		Texture fai; ///< The final FAI

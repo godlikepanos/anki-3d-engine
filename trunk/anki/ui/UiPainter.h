@@ -1,7 +1,7 @@
 #ifndef ANKI_UI_UI_PAINTER_H
 #define ANKI_UI_UI_PAINTER_H
 
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
@@ -68,7 +68,7 @@ class UiPainter
 		/// @name Data
 		/// @{
 		boost::scoped_ptr<UiFont> font;
-		RsrcPtr<ShaderProgram> sProg;
+		ShaderProgramResourcePointer sProg;
 
 		Vec2 pos;
 		Vec4 col;

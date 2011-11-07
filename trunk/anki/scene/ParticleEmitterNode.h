@@ -6,7 +6,7 @@
 #include <btBulletCollisionCommon.h>
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/ParticleEmitterRsrc.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 
 
 class btCollisionShape;
@@ -33,7 +33,8 @@ class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 		boost::scoped_ptr<btCollisionShape> collShape;
 		std::vector<Particle*> particles;
 		float timeLeftForNextEmission;
-		RsrcPtr<ParticleEmitterRsrc> particleEmitterProps; ///< The resource
+		/// The resource
+		ParticleEmitterRsrcResourcePointer particleEmitterProps;
 		static btTransform startingTrf;
 
 		static float getRandom(float initial, float deviation);

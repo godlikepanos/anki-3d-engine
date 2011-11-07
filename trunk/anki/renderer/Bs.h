@@ -3,7 +3,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/Texture.h"
 
 
@@ -27,7 +27,7 @@ class Bs: public RenderingPass
 	private:
 		Fbo fbo; ///< Writes to Pps::prePassFai
 		Fbo refractFbo; ///< Writes to refractFai
-		RsrcPtr<ShaderProgram> refractSProg;
+		ShaderProgramResourcePointer refractSProg;
 		Texture refractFai;
 
 		void createFbo();

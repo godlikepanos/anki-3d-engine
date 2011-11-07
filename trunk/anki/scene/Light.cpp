@@ -17,7 +17,7 @@ Light::~Light()
 //==============================================================================
 void Light::init(const char* filename)
 {
-	lightData.loadRsrc(filename);
+	lightData.load(filename);
 
 	diffuseCol = lightData->getDiffuseColor();
 	specularCol = lightData->getSpecularColor();

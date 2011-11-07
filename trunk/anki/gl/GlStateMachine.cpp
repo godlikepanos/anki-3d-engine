@@ -25,9 +25,9 @@ GLenum GlStateMachine::flagEnums[] =
 //==============================================================================
 void GlStateMachine::enable(GLenum glFlag, bool enable)
 {
-	ASSERT(flags.find(glFlag) != flags.end());
+	ANKI_ASSERT(flags.find(glFlag) != flags.end());
 	bool state = flags[glFlag];
-	ASSERT(glIsEnabled(glFlag) == state);
+	ANKI_ASSERT(glIsEnabled(glFlag) == state);
 
 	if(enable != state)
 	{
@@ -49,9 +49,9 @@ void GlStateMachine::enable(GLenum glFlag, bool enable)
 //==============================================================================
 bool GlStateMachine::isEnabled(GLenum glFlag)
 {
-	ASSERT(flags.find(glFlag) != flags.end());
+	ANKI_ASSERT(flags.find(glFlag) != flags.end());
 	bool state = flags[glFlag];
-	ASSERT(glIsEnabled(glFlag) == state);
+	ANKI_ASSERT(glIsEnabled(glFlag) == state);
 	return state;
 }
 
@@ -103,7 +103,7 @@ void GlStateMachine::setViewport(uint x, uint y, uint w, uint h)
 //==============================================================================
 void GlStateMachine::useShaderProg(GLuint id)
 {
-	ASSERT(getCurrentProgramGlId() == sProgGlId);
+	ANKI_ASSERT(getCurrentProgramGlId() == sProgGlId);
 
 	if(sProgGlId != id)
 	{

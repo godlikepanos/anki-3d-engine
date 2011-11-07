@@ -184,7 +184,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 		std::string filename = createShaderProgSourceToCache(src);
 
-		sProgs[i].loadRsrc(filename.c_str());
+		sProgs[i].load(filename.c_str());
 	}
 
 	populateVariables(pt.get_child("shaderProgram.inputs"));
@@ -237,7 +237,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	//
 	std::map<std::string, GLenum> allVarNames;
 
-	BOOST_FOREACH(const RsrcPtr<ShaderProgram>& sProg, sProgs)
+	BOOST_FOREACH(const ShaderProgramResourcePointer& sProg, sProgs)
 	{
 		BOOST_FOREACH(const ShaderProgramVariable& v, sProg->getVariables())
 		{
@@ -326,7 +326,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 					break;
 				// default is error
 				default:
-					ASSERT(0);
+					ANKI_ASSERT(0);
 			}
 
 			mtlVars.push_back(v);

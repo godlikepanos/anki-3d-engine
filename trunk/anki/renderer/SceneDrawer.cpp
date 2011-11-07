@@ -38,9 +38,9 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const Type& x) const
 }
 
 
-void SceneDrawer::UsrDefVarVisitor::operator()(const RsrcPtr<Texture>* x) const
+void SceneDrawer::UsrDefVarVisitor::operator()(const TextureResourcePointer* x) const
 {
-	const RsrcPtr<Texture>& texPtr = *x;
+	const TextureResourcePointer& texPtr = *x;
 	texPtr->setRepeat(true);
 	udvr.getMaterialUserVariable().getShaderProgramUniformVariable(pt).
 		set(*texPtr, texUnit);

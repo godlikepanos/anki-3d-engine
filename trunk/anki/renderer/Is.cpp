@@ -114,14 +114,14 @@ void Is::init(const RendererInitializer& initializer)
 	sm.init(initializer);
 
 	// load the shaders
-	ambientPassSProg.loadRsrc("shaders/IsAp.glsl");
+	ambientPassSProg.load("shaders/IsAp.glsl");
 
 	// point light
-	pointLightSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	pointLightSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", "#define POINT_LIGHT_ENABLED\n").c_str());
 
 	// spot light no shadow
-	spotLightNoShadowSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	spotLightNoShadowSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", "#define SPOT_LIGHT_ENABLED\n").c_str());
 
 	// spot light w/t shadow
@@ -131,7 +131,7 @@ void Is::init(const RendererInitializer& initializer)
 	{
 		pps += "#define PCF_ENABLED\n";
 	}
-	spotLightShadowSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	spotLightShadowSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
 
 	// init the rest

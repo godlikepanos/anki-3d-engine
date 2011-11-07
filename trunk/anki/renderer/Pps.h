@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/Texture.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Bl.h"
@@ -76,8 +76,8 @@ class Pps: private RenderingPass
 		Fbo prePassFbo;
 		Fbo postPassFbo;
 
-		RsrcPtr<ShaderProgram> prePassSProg;
-		RsrcPtr<ShaderProgram> postPassSProg;
+		ShaderProgramResourcePointer prePassSProg;
+		ShaderProgramResourcePointer postPassSProg;
 
 		Texture prePassFai; ///< FAI #1
 		Texture postPassFai; ///< FAI #2

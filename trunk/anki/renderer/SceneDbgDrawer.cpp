@@ -34,7 +34,7 @@ void SceneDbgDrawer::drawCamera(const Camera& cam) const
 		}
 
 		default:
-			ASSERT(false && "WTF?");
+			ANKI_ASSERT(false && "WTF?");
 			break;
 	}
 }

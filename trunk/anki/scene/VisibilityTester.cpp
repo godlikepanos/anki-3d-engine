@@ -10,6 +10,7 @@
 #include "anki/scene/SpotLight.h"
 #include "anki/core/ParallelManager.h"
 #include "anki/core/Logger.h"
+#include "anki/core/Globals.h"
 
 
 namespace anki {

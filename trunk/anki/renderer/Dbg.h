@@ -6,7 +6,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/ShaderProgram.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
@@ -66,7 +66,7 @@ class Dbg: public SwitchableRenderingPass
 		bool showCamerasEnabled;
 		bool showVisibilityBoundingShapesFlag;
 		Fbo fbo;
-		RsrcPtr<ShaderProgram> sProg;
+		ShaderProgramResourcePointer sProg;
 		static const uint MAX_POINTS_PER_DRAW = 256;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
 		boost::array<Vec3, MAX_POINTS_PER_DRAW> colors;

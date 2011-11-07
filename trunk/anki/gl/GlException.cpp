@@ -25,7 +25,7 @@ void glConditionalThrowException(const char* file, int line, const char* func)
 #else
 	ANKI_ERROR("(" << file << ":" << line <<
 		" " << func << ") GL Error: " << glerr);
-	ASSERT(0);
+	ANKI_ASSERT(0);
 #endif
 }
 

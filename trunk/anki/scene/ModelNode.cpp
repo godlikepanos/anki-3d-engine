@@ -25,7 +25,7 @@ ModelNode::~ModelNode()
 //==============================================================================
 void ModelNode::init(const char* filename)
 {
-	model.loadRsrc(filename);
+	model.load(filename);
 
 	BOOST_FOREACH(const ModelPatch& patch, model->getModelPatches())
 	{

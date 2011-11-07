@@ -41,10 +41,10 @@ void Skin::load(const char* filename)
 		const ptree& pt = pt_.get_child("skin");
 
 		// model
-		model.loadRsrc(pt.get<std::string>("model").c_str());
+		model.load(pt.get<std::string>("model").c_str());
 
 		// skeleton
-		skeleton.loadRsrc(pt.get<std::string>("skeleton").c_str());
+		skeleton.load(pt.get<std::string>("skeleton").c_str());
 
 		// Anims
 		boost::optional<const ptree&> skelAnimsTree =
@@ -59,8 +59,8 @@ void Skin::load(const char* filename)
 				}
 
 				const std::string& name = v.second.data();
-				skelAnims.push_back(RsrcPtr<SkelAnim>());
-				skelAnims.back().loadRsrc(name.c_str());
+				skelAnims.push_back(SkelAnimResourcePointer());
+				skelAnims.back().load(name.c_str());
 			}
 		}
 
@@ -69,7 +69,7 @@ void Skin::load(const char* filename)
 		//
 
 		// Anims and skel bones num check
-		BOOST_FOREACH(const RsrcPtr<SkelAnim>& skelAnim, skelAnims)
+		BOOST_FOREACH(const SkelAnimResourcePointer& skelAnim, skelAnims)
 		{
 			// Bone number problem
 			if(skelAnim->getBoneAnimations().size() !=

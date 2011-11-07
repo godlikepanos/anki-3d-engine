@@ -122,28 +122,28 @@ class Texture
 
 inline uint Texture::getGlId() const
 {
-	ASSERT(isLoaded());
+	ANKI_ASSERT(isLoaded());
 	return glId;
 }
 
 
 inline uint Texture::getInternalFormat() const
 {
-	ASSERT(isLoaded());
+	ANKI_ASSERT(isLoaded());
 	return internalFormat;
 }
 
 
 inline uint Texture::getFormat() const
 {
-	ASSERT(isLoaded());
+	ANKI_ASSERT(isLoaded());
 	return format;
 }
 
 
 inline uint Texture::getType() const
 {
-	ASSERT(isLoaded());
+	ANKI_ASSERT(isLoaded());
 	return type;
 }
 

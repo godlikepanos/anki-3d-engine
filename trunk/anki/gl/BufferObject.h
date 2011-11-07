@@ -96,49 +96,49 @@ inline BufferObject::BufferObject(GLenum target, uint sizeInBytes,
 
 inline uint BufferObject::getGlId() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	return glId;
 }
 
 
 inline GLenum BufferObject::getBufferTarget() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	return target;
 }
 
 
 inline GLenum BufferObject::getBufferUsage() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	return usage;
 }
 
 
 inline size_t BufferObject::getSizeInBytes() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	return sizeInBytes;
 }
 
 
 inline void BufferObject::bind() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	glBindBuffer(target, glId);
 }
 
 
 inline void BufferObject::unbind() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	glBindBuffer(target, 0);
 }
 
 
 inline void BufferObject::deleteBuff()
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	glDeleteBuffers(1, &glId);
 	glId = 0;
 }

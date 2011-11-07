@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/ShaderProgram.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
 #include "anki/scene/Camera.h"
@@ -37,7 +37,7 @@ class Smo: public RenderingPass
 			Geom();
 			~Geom();
 
-			RsrcPtr<Mesh> mesh;
+			MeshResourcePointer mesh;
 			Vao vao;
 		};
 
@@ -47,7 +47,7 @@ class Smo: public RenderingPass
 		/// pyramid, see the blend file with the vertex positions
 		boost::array<Geom, Camera::CT_NUM> camGeom;
 
-		RsrcPtr<ShaderProgram> sProg;
+		ShaderProgramResourcePointer sProg;
 
 		void initCamGeom();
 

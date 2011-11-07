@@ -25,21 +25,21 @@ class CollisionDbgDrawer: public CollisionShape::ConstVisitor
 
 		void visit(const LineSegment&)
 		{
-			ASSERT(0 && "ToDo");
+			ANKI_ASSERT(0 && "ToDo");
 		}
 
 		void visit(const Obb&);
 
 		void visit(const PerspectiveCameraShape&)
 		{
-			ASSERT(0 && "ToDo");
+			ANKI_ASSERT(0 && "ToDo");
 		}
 
 		void visit(const Plane&);
 
 		void visit(const Ray&)
 		{
-			ASSERT(0 && "ToDo");
+			ANKI_ASSERT(0 && "ToDo");
 		}
 
 		void visit(const Sphere&);

@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_LIGHT_PROPS_H
 
 #include "anki/math/Math.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/Texture.h"
 
 
@@ -116,13 +116,13 @@ class LightRsrc: private LightProps
 	private:
 		LightType type;
 		SpotLightCameraType spotLightCameraType;
-		RsrcPtr<Texture> texture;
+		TextureResourcePointer texture;
 };
 
 
 inline const Texture& LightRsrc::getTexture() const
 {
-	ASSERT(texture.get() != NULL);
+	ANKI_ASSERT(texture.get() != NULL);
 	return *texture;
 }
 

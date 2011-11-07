@@ -143,7 +143,7 @@ class SkinNode: public SceneNode
 		void frameUpdate(float prevUpdateTime, float crntTime);
 
 	private:
-		RsrcPtr<Skin> skin; ///< The resource
+		SkinResourcePointer skin; ///< The resource
 		std::vector<SkinPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 

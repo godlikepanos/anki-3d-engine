@@ -28,7 +28,7 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 
 	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_POSITION))
 	{
-		ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
+		ANKI_ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
 
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_POSITIONS],
 			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -36,7 +36,7 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 
 	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_NORMAL))
 	{
-		ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
+		ANKI_ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
 
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_NORMALS],
 			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -44,7 +44,7 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 
 	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_TANGENT))
 	{
-		ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
+		ANKI_ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
 
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_TANGENTS],
 			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);

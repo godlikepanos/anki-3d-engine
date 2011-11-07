@@ -64,7 +64,7 @@ void Pps::init(const RendererInitializer& initializer)
 		pps += "#define SSAO_ENABLED\n";
 	}
 
-	prePassSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	prePassSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/PpsPrePass.glsl", pps.c_str()).c_str());
 
 	//
@@ -98,7 +98,7 @@ void Pps::init(const RendererInitializer& initializer)
 		pps += "#define HDR_ENABLED\n";
 	}
 
-	postPassSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	postPassSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/PpsPostPass.glsl", pps.c_str()).c_str());
 
 	//

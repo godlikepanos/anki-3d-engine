@@ -26,7 +26,7 @@ class Aabb: public CollisionShape
 			min(min_),
 			max(max_)
 		{
-			ASSERT(min < max);
+			ANKI_ASSERT(min < max);
 		}
 
 		Aabb(const Aabb& b)
@@ -109,7 +109,7 @@ class Aabb: public CollisionShape
 template<typename Container>
 void Aabb::set(const Container& container)
 {
-	ASSERT(container.size() >= 1);
+	ANKI_ASSERT(container.size() >= 1);
 
 	min = container.front();
 	max = container.front();

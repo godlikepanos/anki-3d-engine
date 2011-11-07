@@ -59,7 +59,7 @@ Vec3 ParticleEmitterNode::getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 void ParticleEmitterNode::init(const char* filename)
 {
-	particleEmitterProps.loadRsrc(filename);
+	particleEmitterProps.load(filename);
 
 	// copy the resource to me
 	ParticleEmitterRsrc& me = *this;

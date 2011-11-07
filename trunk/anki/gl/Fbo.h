@@ -59,23 +59,23 @@ class Fbo
 
 inline void Fbo::create()
 {
-	ASSERT(!isCreated());
+	ANKI_ASSERT(!isCreated());
 	glGenFramebuffers(1, &glId);
 }
 
 
 inline uint Fbo::getGlId() const
 {
-	ASSERT(!isCreated());
+	ANKI_ASSERT(!isCreated());
 	return glId;
 }
 
 
 inline void Fbo::bind(GLenum target_)
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	target = target_;
-	ASSERT(target == GL_DRAW_FRAMEBUFFER ||
+	ANKI_ASSERT(target == GL_DRAW_FRAMEBUFFER ||
 		target == GL_READ_FRAMEBUFFER ||
 		target == GL_FRAMEBUFFER);
 	glBindFramebuffer(target, glId);
@@ -90,7 +90,7 @@ inline void Fbo::unbind()
 
 inline void Fbo::destroy()
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	glDeleteFramebuffers(1, &glId);
 }
 

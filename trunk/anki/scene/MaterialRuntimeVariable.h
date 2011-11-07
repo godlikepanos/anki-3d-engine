@@ -2,7 +2,7 @@
 #define ANKI_SCENE_MATERIAL_RUNTIME_VARIABLE_H
 
 #include "anki/math/Math.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include <boost/variant.hpp>
 
 
@@ -19,7 +19,7 @@ class MaterialUserVariable;
 class MaterialRuntimeVariable
 {
 	public:
-		typedef const RsrcPtr<Texture>* ConstPtrRsrcPtrTexture;
+		typedef const TextureResourcePointer* ConstPtrRsrcPtrTexture;
 
 		/// The data union. The Texture resource is read-only at runtime
 		/// Don't EVER replace the texture with const Texture*. The asynchronous

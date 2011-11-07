@@ -104,7 +104,7 @@ void SceneNode::updateWorldTransform()
 //==============================================================================
 void SceneNode::addChild(SceneNode& child)
 {
-	ASSERT(child.parent == NULL); // Child already has parent
+	ANKI_ASSERT(child.parent == NULL); // Child already has parent
 
 	child.parent = this;
 	children.push_back(&child);

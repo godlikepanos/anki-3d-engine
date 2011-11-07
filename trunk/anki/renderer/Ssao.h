@@ -5,7 +5,7 @@
 #include "anki/gl/Fbo.h"
 #include "anki/resource/Texture.h"
 #include "anki/resource/ShaderProgram.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
 
@@ -51,10 +51,10 @@ class Ssao: public SwitchableRenderingPass
 		Fbo ssaoFbo;
 		Fbo hblurFbo;
 		Fbo vblurFbo;
-		RsrcPtr<Texture> noiseMap;
-		RsrcPtr<ShaderProgram> ssaoSProg;
-		RsrcPtr<ShaderProgram> hblurSProg;
-		RsrcPtr<ShaderProgram> vblurSProg;
+		TextureResourcePointer noiseMap;
+		ShaderProgramResourcePointer ssaoSProg;
+		ShaderProgramResourcePointer hblurSProg;
+		ShaderProgramResourcePointer vblurSProg;
 
 		void createFbo(Fbo& fbo, Texture& fai);
 };

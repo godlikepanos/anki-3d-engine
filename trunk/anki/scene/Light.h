@@ -3,7 +3,7 @@
 
 #include "anki/resource/Texture.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/LightRsrc.h"
 #include "anki/scene/VisibilityInfo.h"
 
@@ -60,7 +60,7 @@ class Light: public SceneNode, public VisibilityInfo
 		void init(const char* filename);
 
 	protected:
-		RsrcPtr<LightRsrc> lightData;
+		LightRsrcResourcePointer lightData;
 		Vec3 diffuseCol; ///< Diffuse color
 		Vec3 specularCol; ///< Specular color
 		bool castsShadowFlag; ///< Casts shadow

@@ -14,8 +14,12 @@ template<typename Type>
 class Singleton
 {
 	public:
+		typedef Type ValueType;
+
 		static Type& get()
-			{return *(instance ? instance : (instance = new Type));}
+		{
+			return *(instance ? instance : (instance = new Type));
+		}
 
 	protected:
 		Singleton();

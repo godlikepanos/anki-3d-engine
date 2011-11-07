@@ -109,7 +109,7 @@ void Sm::run(const Light& light, float distance)
 		return;
 	}
 
-	ASSERT(light.getVisibleMsRenderableNodes().size() > 0);
+	ANKI_ASSERT(light.getVisibleMsRenderableNodes().size() > 0);
 
 	//
 	// Determine the level
@@ -159,7 +159,7 @@ void Sm::run(const Light& light, float distance)
 			}
 
 			default:
-				ASSERT(0);
+				ANKI_ASSERT(0);
 		}
 	}
 

@@ -41,7 +41,7 @@ inline void Vbo::create(GLenum target_, uint sizeInBytes_,
 	const void* dataPtr_, GLenum usage_)
 {
 	// unacceptable target_
-	ASSERT(target_ == GL_ARRAY_BUFFER || target_ == GL_ELEMENT_ARRAY_BUFFER);
+	ANKI_ASSERT(target_ == GL_ARRAY_BUFFER || target_ == GL_ELEMENT_ARRAY_BUFFER);
 	BufferObject::create(target_, sizeInBytes_, dataPtr_, usage_);
 }
 

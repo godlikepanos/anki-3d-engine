@@ -2,7 +2,7 @@
 #define ANKI_SCENE_MODEL_NODE_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/scene/ModelPatchNode.h"
 #include "anki/collision/Obb.h"
 #include <boost/array.hpp>
@@ -60,7 +60,7 @@ class ModelNode: public SceneNode
 		void moveUpdate();
 
 	private:
-		RsrcPtr<Model> model;
+		ModelResourcePointer model;
 		std::vector<ModelPatchNode*> patches;
 		Obb visibilityShapeWSpace;
 };

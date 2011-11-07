@@ -90,7 +90,7 @@ class MaterialVariable
 inline const ShaderProgramVariable& MaterialVariable::getShaderProgramVariable(
 	PassType p) const
 {
-	ASSERT(inPass(p));
+	ANKI_ASSERT(inPass(p));
 	return *sProgVars[p];
 }
 

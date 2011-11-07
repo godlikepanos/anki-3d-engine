@@ -103,7 +103,7 @@ void Scene::unregisterNode(SceneNode* node)
 //==============================================================================
 void Scene::registerController(Controller* controller)
 {
-	ASSERT(std::find(controllers.begin(), controllers.end(), controller) ==
+	ANKI_ASSERT(std::find(controllers.begin(), controllers.end(), controller) ==
 		controllers.end());
 	controllers.push_back(controller);
 }
@@ -112,7 +112,7 @@ void Scene::unregisterController(Controller* controller)
 {
 	std::vector<Controller*>::iterator it = std::find(controllers.begin(),
 		controllers.end(), controller);
-	ASSERT(it != controllers.end());
+	ANKI_ASSERT(it != controllers.end());
 	controllers.erase(it);
 }
 
@@ -122,7 +122,7 @@ void Scene::unregisterController(Controller* controller)
 //==============================================================================
 void Scene::updateAllWorldStuff(float prevUpdateTime, float crntTime)
 {
-	ASSERT(nodes.size() <= 1024);
+	ANKI_ASSERT(nodes.size() <= 1024);
 	boost::array<SceneNode*, 1024> queue;
 	uint head = 0, tail = 0;
 	uint num = 0;
@@ -153,7 +153,7 @@ void Scene::updateAllWorldStuff(float prevUpdateTime, float crntTime)
 		}
 	}
 
-	ASSERT(num == nodes.size());
+	ANKI_ASSERT(num == nodes.size());
 }
 
 

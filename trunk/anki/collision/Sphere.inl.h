@@ -12,7 +12,7 @@ namespace anki {
 template<typename Container>
 void Sphere::set(const Container& container)
 {
-	ASSERT(container.size() >= 1);
+	ANKI_ASSERT(container.size() >= 1);
 
 	Vec3 min(container.front());
 	Vec3 max(container.front());

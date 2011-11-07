@@ -882,7 +882,7 @@ inline Mat4 Mat4::getInverse() const
 	det = (*this)(0, 0) * m4(0, 0) + (*this)(1, 0) * m4(0, 1) +
 		(*this)(2, 0) * m4(0, 2) + (*this)(3, 0) * m4(0, 3);
 
-	ASSERT(!Math::isZero(det)); // Cannot invert, det == 0
+	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert, det == 0
 	det = 1.0 / det;
 	m4 *= det;
 	return m4;
@@ -934,7 +934,7 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	*/
 
 	// one of the 2 mat4 doesnt represent transformation
-	ASSERT(Math::isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3)-1.0) &&
+	ANKI_ASSERT(Math::isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3)-1.0) &&
 		Math::isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3)-1.0));
 
 	Mat4 m4;

@@ -41,7 +41,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	ANKI_INFO("Initializing main renderer...");
 	initGl();
 
-	sProg.loadRsrc("shaders/Final.glsl");
+	sProg.load("shaders/Final.glsl");
 
 	dbgTq.reset(new TimeQuery);
 
