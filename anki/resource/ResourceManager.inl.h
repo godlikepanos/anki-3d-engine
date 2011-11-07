@@ -1,5 +1,6 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/Exception.h"
+#include "anki/util/Assert.h"
 #include <iostream>
 
 
@@ -132,7 +133,6 @@ typename ResourceManager<Type>::Iterator ResourceManager<Type>::find(
 
 	return it;
 }
-
 
 
 } // end namespace

@@ -19,7 +19,7 @@ class MaterialUserVariable: public MaterialVariable
 {
 	public:
 		/// The data union
-		typedef boost::variant<float, Vec2, Vec3, Vec4, TextureResourcePointer >
+		typedef boost::variant<float, Vec2, Vec3, Vec4, TextureResourcePointer>
 			DataVariant;
 
 		/// @name Constructors & destructor

@@ -76,8 +76,9 @@ void Skin::load(const char* filename)
 				skeleton->getBones().size())
 			{
 				throw ANKI_EXCEPTION("Skeleton animation \"" +
-					skelAnim.getRsrcName() + "\" and skeleton \"" +
-					skeleton.getRsrcName() + "\" dont have equal bone count");
+					skelAnim.getResourceName() + "\" and skeleton \"" +
+					skeleton.getResourceName() +
+					"\" dont have equal bone count");
 			}
 		}
 
