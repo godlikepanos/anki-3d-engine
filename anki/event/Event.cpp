@@ -32,7 +32,7 @@ Event& Event::operator=(const Event& b)
 //==============================================================================
 void Event::update(float prevUpdateTime, float crntTime)
 {
-	ASSERT(!isDead(crntTime));
+	ANKI_ASSERT(!isDead(crntTime));
 
 	// Dont update if its not the right time yet
 	if(startTime <= crntTime)

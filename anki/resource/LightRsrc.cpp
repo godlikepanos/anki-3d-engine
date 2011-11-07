@@ -187,7 +187,7 @@ void LightRsrc::load(const char* filename)
 			pt.get_optional<std::string>("texture");
 		if(tex)
 		{
-			texture.loadRsrc(tex.get().c_str());
+			texture.load(tex.get().c_str());
 
 			if(type == LT_POINT)
 			{

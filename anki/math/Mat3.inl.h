@@ -59,7 +59,7 @@ inline Mat3::Mat3(const Mat3& b)
 inline Mat3::Mat3(const Quat& q)
 {
 	// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
-	ASSERT(fabs(1.0 - q.getLength()) <= 0.002);
+	ANKI_ASSERT(fabs(1.0 - q.getLength()) <= 0.002);
 
 	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
@@ -114,7 +114,7 @@ inline Mat3::Mat3(const Euler& e)
 inline Mat3::Mat3(const Axisang& axisang)
 {
 	// Not normalized axis
-	ASSERT(Math::isZero(1.0 - axisang.getAxis().getLength()));
+	ANKI_ASSERT(Math::isZero(1.0 - axisang.getAxis().getLength()));
 
 	float c, s;
 	Math::sinCos(axisang.getAngle(), s, c);
@@ -812,7 +812,7 @@ inline Mat3 Mat3::getInverse() const
 		(*this)(2, 0) *
 		cofactor6;
 
-	ASSERT(!Math::isZero(det)); // Cannot invert det == 0
+	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert det == 0
 
 	// create adjoint matrix and multiply by 1/det to get inverse
 	float invDet = 1.0 / det;

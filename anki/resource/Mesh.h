@@ -3,7 +3,7 @@
 
 #include <boost/array.hpp>
 #include "anki/math/Math.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/gl/Vbo.h"
 #include "anki/collision/Obb.h"
 

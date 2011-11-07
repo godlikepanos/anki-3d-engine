@@ -4,7 +4,7 @@
 #include "anki/gl/Vao.h"
 #include "anki/gl/Vbo.h"
 #include "anki/resource/Mesh.h" // For the Vbos enum
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/ModelPatch.h"
 #include "anki/scene/RenderableNode.h"
 #include "anki/scene/MaterialRuntime.h"

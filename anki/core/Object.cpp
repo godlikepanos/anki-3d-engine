@@ -45,8 +45,8 @@ Object::~Object()
 //==============================================================================
 void Object::addChild(Object* child)
 {
-	ASSERT(child != NULL);
-	ASSERT(child->objParent == NULL); // Child already has parent
+	ANKI_ASSERT(child != NULL);
+	ANKI_ASSERT(child->objParent == NULL); // Child already has parent
 
 	child->objParent = this;
 	objChilds.push_back(child);
@@ -58,7 +58,7 @@ void Object::addChild(Object* child)
 //==============================================================================
 void Object::removeChild(Object* child)
 {
-	ASSERT(child != NULL);
+	ANKI_ASSERT(child != NULL);
 
 	Container::iterator it = std::find(objChilds.begin(), objChilds.end(),
 		child);

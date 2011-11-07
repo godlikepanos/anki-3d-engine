@@ -8,9 +8,9 @@
 /// Assertion. Print an error and stop the debugger (if it runs through a
 /// debugger) and then abort
 #if defined(NDEBUG)
-#	define ASSERT(x) ((void)0)
+#	define ANKI_ASSERT(x) ((void)0)
 #else
-#	define ASSERT(x) \
+#	define ANKI_ASSERT(x) \
 		if(!(x)) { \
 			std::cerr << "(" << __FILE__ << ":" << __LINE__ << " " << \
 				__func__ << ") " << \

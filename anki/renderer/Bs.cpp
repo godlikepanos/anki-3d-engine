@@ -84,7 +84,7 @@ void Bs::init(const RendererInitializer& /*initializer*/)
 	Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGBA8, GL_RGBA,
 		GL_FLOAT, refractFai);
 	createRefractFbo();
-	refractSProg.loadRsrc("shaders/BsRefract.glsl");
+	refractSProg.load("shaders/BsRefract.glsl");
 }
 
 

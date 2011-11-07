@@ -232,7 +232,7 @@ void Dbg::init(const RendererInitializer& initializer)
 	//
 	// Shader prog
 	//
-	sProg.loadRsrc("shaders/Dbg.glsl");
+	sProg.load("shaders/Dbg.glsl");
 
 	//
 	// VAO & VBOs
@@ -407,7 +407,7 @@ void Dbg::run()
 //==============================================================================
 void Dbg::setModelMat(const Mat4& modelMat_)
 {
-	ASSERT(pointIndex == 0); // This means that the func called after begin
+	ANKI_ASSERT(pointIndex == 0); // This means that the func called after begin
 	                         // and before end
 	modelMat = modelMat_;
 }
@@ -418,7 +418,7 @@ void Dbg::setModelMat(const Mat4& modelMat_)
 //==============================================================================
 void Dbg::begin()
 {
-	ASSERT(pointIndex == 0);
+	ANKI_ASSERT(pointIndex == 0);
 }
 
 
@@ -427,7 +427,7 @@ void Dbg::begin()
 //==============================================================================
 void Dbg::end()
 {
-	ASSERT(pointIndex != 0);
+	ANKI_ASSERT(pointIndex != 0);
 
 	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);

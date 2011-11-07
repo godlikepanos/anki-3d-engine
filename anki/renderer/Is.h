@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/Texture.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/ShaderProgram.h"
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
@@ -46,13 +46,13 @@ class Is: private RenderingPass
 		Fbo readFbo;
 		Fbo writeFbo;
 		/// Illumination stage ambient pass shader program
-		RsrcPtr<ShaderProgram> ambientPassSProg;
+		ShaderProgramResourcePointer ambientPassSProg;
 		/// Illumination stage point light shader program
-		RsrcPtr<ShaderProgram> pointLightSProg;
+		ShaderProgramResourcePointer pointLightSProg;
 		/// Illumination stage spot light w/o shadow shader program
-		RsrcPtr<ShaderProgram> spotLightNoShadowSProg;
+		ShaderProgramResourcePointer spotLightNoShadowSProg;
 		/// Illumination stage spot light w/ shadow shader program
-		RsrcPtr<ShaderProgram> spotLightShadowSProg;
+		ShaderProgramResourcePointer spotLightShadowSProg;
 
 		/// The ambient pass
 		void ambientPass(const Vec3& color);

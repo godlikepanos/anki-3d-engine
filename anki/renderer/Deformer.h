@@ -1,7 +1,7 @@
 #ifndef ANKI_RENDERER_DEFORMER_H
 #define ANKI_RENDERER_DEFORMER_H
 
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 
 
 namespace anki {
@@ -24,8 +24,8 @@ class Deformer
 
 	private:
 		const MainRenderer& mainR; ///< Know your father
-		RsrcPtr<ShaderProgram> tfHwSkinningAllSProg;
-		RsrcPtr<ShaderProgram> tfHwSkinningPosSProg;
+		ShaderProgramResourcePointer tfHwSkinningAllSProg;
+		ShaderProgramResourcePointer tfHwSkinningPosSProg;
 
 		void init();
 };

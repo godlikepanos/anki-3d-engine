@@ -104,7 +104,7 @@ class Vao
 
 inline void Vao::create()
 {
-	ASSERT(!isCreated());
+	ANKI_ASSERT(!isCreated());
 	glGenVertexArrays(1, &glId);
 	ANKI_CHECK_GL_ERROR();
 }
@@ -112,14 +112,14 @@ inline void Vao::create()
 
 inline void Vao::destroy()
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	glDeleteVertexArrays(1, &glId);
 }
 
 
 inline uint Vao::getGlId() const
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	return glId;
 }
 

@@ -26,8 +26,8 @@ ModelPatch::~ModelPatch()
 void ModelPatch::load(const char* meshFName, const char* mtlFName)
 {
 	// Load
-	mesh.loadRsrc(meshFName);
-	mtl.loadRsrc(mtlFName);
+	mesh.load(meshFName);
+	mtl.load(mtlFName);
 }
 
 

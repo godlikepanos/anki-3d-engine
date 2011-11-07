@@ -141,14 +141,14 @@ inline ShaderProgram::ShaderProgram()
 
 inline GLuint ShaderProgram::getGlId() const
 {
-	ASSERT(glId != std::numeric_limits<uint>::max());
+	ANKI_ASSERT(glId != std::numeric_limits<uint>::max());
 	return glId;
 }
 
 
 inline void ShaderProgram::bind() const
 {
-	ASSERT(glId != std::numeric_limits<uint>::max());
+	ANKI_ASSERT(glId != std::numeric_limits<uint>::max());
 	GlStateMachineSingleton::get().useShaderProg(glId);
 }
 

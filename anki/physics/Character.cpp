@@ -40,7 +40,7 @@ Character::Character(PhysWorld& masterContainer_,
 
 	btAxisSweep3* sweepBp =
 		dynamic_cast<btAxisSweep3*>(masterContainer.broadphase);
-	ASSERT(sweepBp != NULL);
+	ANKI_ASSERT(sweepBp != NULL);
 
 	ghostPairCallback = new btGhostPairCallback();
 	sweepBp->getOverlappingPairCache()->setInternalGhostPairCallback(

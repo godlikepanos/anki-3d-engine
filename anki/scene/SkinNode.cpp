@@ -29,7 +29,7 @@ SkinNode::~SkinNode()
 //==============================================================================
 void SkinNode::init(const char* filename)
 {
-	skin.loadRsrc(filename);
+	skin.load(filename);
 
 	BOOST_FOREACH(const ModelPatch& patch, skin->getModelPatches())
 	{
@@ -90,7 +90,7 @@ void SkinNode::frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/)
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
 	std::vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
 {
-	ASSERT(frame < animation.getFramesNum());
+	ANKI_ASSERT(frame < animation.getFramesNum());
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the
 	// frame and calc the lPose and rPose witch indicate the pose IDs in witch
@@ -117,7 +117,7 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 	}
 
 	// now for all bones update bone's poses
-	ASSERT(boneRotations.size() >= 1);
+	ANKI_ASSERT(boneRotations.size() >= 1);
 	for(uint i=0; i < boneRotations.size(); i++)
 	{
 		const BoneAnim& banim = animation.getBoneAnimations()[i];

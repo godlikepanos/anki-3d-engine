@@ -7,7 +7,7 @@
 #include "anki/resource/ShaderProgram.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/renderer/Ms.h"
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Pps.h"

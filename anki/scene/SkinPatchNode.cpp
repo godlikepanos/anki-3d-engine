@@ -1,5 +1,6 @@
 #include "anki/scene/SkinPatchNode.h"
 #include "anki/scene/SkinNode.h"
+#include "anki/resource/MeshData.h"
 
 
 namespace anki {
@@ -87,7 +88,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
 	}
 
 	// Attach some extra stuff to the tfVao
-	ASSERT(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
+	ANKI_ASSERT(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
 		VERT_WEIGHT_BONES_NUM_LOC,

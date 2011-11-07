@@ -30,7 +30,7 @@ TimeQuery::~TimeQuery()
 //==============================================================================
 void TimeQuery::begin()
 {
-	ASSERT(state == S_CREATED || state == S_ENDED);
+	ANKI_ASSERT(state == S_CREATED || state == S_ENDED);
 
 	glQueryCounter(glIds[0], GL_TIMESTAMP);
 
@@ -43,7 +43,7 @@ void TimeQuery::begin()
 //==============================================================================
 double TimeQuery::end()
 {
-	ASSERT(state == S_STARTED);
+	ANKI_ASSERT(state == S_STARTED);
 
 	glQueryCounter(glIds[1], GL_TIMESTAMP);
 

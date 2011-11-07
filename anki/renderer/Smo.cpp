@@ -42,14 +42,14 @@ Smo::~Smo()
 //==============================================================================
 void Smo::init(const RendererInitializer& /*initializer*/)
 {
-	sProg.loadRsrc("shaders/IsSmo.glsl");
+	sProg.load("shaders/IsSmo.glsl");
 
 	//
 	// Geometry stuff
 	//
 
 	// Sphere
-	sphereGeom.mesh.loadRsrc("engine-rsrc/sphere.mesh");
+	sphereGeom.mesh.load("engine-rsrc/sphere.mesh");
 	sphereGeom.vao.create();
 	sphereGeom.vao.attachArrayBufferVbo(
 		sphereGeom.mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
@@ -70,11 +70,11 @@ void Smo::initCamGeom()
 {
 	boost::array<const char*, Camera::CT_NUM> files = {{
 		"engine-rsrc/pyramid.mesh", "engine-rsrc/cube.mesh"}};
-	ASSERT(Camera::CT_PERSPECTIVE == 0);
+	ANKI_ASSERT(Camera::CT_PERSPECTIVE == 0);
 
 	for(uint i = 0; i < Camera::CT_NUM; i++)
 	{
-		camGeom[i].mesh.loadRsrc(files[i]);
+		camGeom[i].mesh.load(files[i]);
 		camGeom[i].vao.create();
 		camGeom[i].vao.attachArrayBufferVbo(
 			camGeom[i].mesh->getVbo(Mesh::VBO_VERT_POSITIONS),
@@ -219,7 +219,7 @@ void Smo::run(const SpotLight& light)
 		}
 
 		case Camera::CT_NUM:
-			ASSERT(false && "WTF?");
+			ANKI_ASSERT(false && "WTF?");
 			break;
 	}
 

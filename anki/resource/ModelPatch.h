@@ -1,7 +1,7 @@
 #ifndef ANKI_RESOURCE_MODEL_PATCH_H
 #define ANKI_RESOURCE_MODEL_PATCH_H
 
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 
 
 namespace anki {
@@ -34,8 +34,8 @@ class ModelPatch
 		bool supportsHwSkinning() const;
 
 	private:
-		RsrcPtr<Mesh> mesh; ///< The geometry
-		RsrcPtr<Material> mtl; ///< Material for MS and BS
+		MeshResourcePointer mesh; ///< The geometry
+		MaterialResourcePointer mtl; ///< Material for MS and BS
 
 		/// Load the resources
 		void load(const char* meshFName, const char* mtlFName);

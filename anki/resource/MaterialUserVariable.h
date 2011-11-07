@@ -3,7 +3,7 @@
 
 #include "anki/resource/MaterialVariable.h"
 #include "anki/math/Math.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/ShaderProgramUniformVariable.h"
 #include <boost/variant.hpp>
 
@@ -19,7 +19,7 @@ class MaterialUserVariable: public MaterialVariable
 {
 	public:
 		/// The data union
-		typedef boost::variant<float, Vec2, Vec3, Vec4, RsrcPtr<Texture> >
+		typedef boost::variant<float, Vec2, Vec3, Vec4, TextureResourcePointer >
 			DataVariant;
 
 		/// @name Constructors & destructor

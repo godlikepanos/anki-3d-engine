@@ -72,18 +72,18 @@ void Ssao::init(const RendererInitializer& initializer)
 	//
 
 	// first pass prog
-	ssaoSProg.loadRsrc("shaders/PpsSsao.glsl");
+	ssaoSProg.load("shaders/PpsSsao.glsl");
 
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
 	std::string pps = "#define HPASS\n#define COL_R\n";
-	hblurSProg.loadRsrc(
+	hblurSProg.load(
 		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, 
 		pps.c_str()).c_str());
 
 	pps = "#define VPASS\n#define COL_R\n";
-	vblurSProg.loadRsrc(
+	vblurSProg.load(
 		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, 
 		pps.c_str()).c_str());
 
@@ -91,7 +91,7 @@ void Ssao::init(const RendererInitializer& initializer)
 	// noise map
 	//
 
-	noiseMap.loadRsrc("engine-rsrc/noise.png");
+	noiseMap.load("engine-rsrc/noise.png");
 	noiseMap->setRepeat(true);
 }
 

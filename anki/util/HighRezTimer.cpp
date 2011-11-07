@@ -20,8 +20,8 @@ HighRezTimer::HighRezTimer():
 //==============================================================================
 void HighRezTimer::start()
 {
-	ASSERT(startTime == 0);
-	ASSERT(stopTime == 0);
+	ANKI_ASSERT(startTime == 0);
+	ANKI_ASSERT(stopTime == 0);
 	startTime = getCrntTime();
 	stopTime = 0.0;
 }
@@ -32,8 +32,8 @@ void HighRezTimer::start()
 //==============================================================================
 void HighRezTimer::stop()
 {
-	ASSERT(startTime != 0.0);
-	ASSERT(stopTime == 0.0);
+	ANKI_ASSERT(startTime != 0.0);
+	ANKI_ASSERT(stopTime == 0.0);
 	stopTime = getCrntTime();
 }
 

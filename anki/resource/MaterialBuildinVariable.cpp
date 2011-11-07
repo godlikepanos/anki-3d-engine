@@ -115,7 +115,7 @@ bool MaterialBuildinVariable::isBuildin(const char* name,
 		MatchingVariableToGlType::const_iterator it2 =
 			matchingVariableToGlType.find(mv);
 
-		ASSERT(it2 != matchingVariableToGlType.end());
+		ANKI_ASSERT(it2 != matchingVariableToGlType.end());
 
 		*dataType = it2->second;
 	}

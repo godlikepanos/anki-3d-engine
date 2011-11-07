@@ -87,7 +87,7 @@ class MaterialBuildinVariable: public MaterialVariable
 inline const ShaderProgramUniformVariable&
 	MaterialBuildinVariable::getShaderProgramUniformVariable(PassType p) const
 {
-	ASSERT(getShaderProgramVariable(p).getType() ==
+	ANKI_ASSERT(getShaderProgramVariable(p).getType() ==
 		ShaderProgramVariable::T_UNIFORM);
 	return static_cast<const ShaderProgramUniformVariable&>(
 		getShaderProgramVariable(p));

@@ -47,7 +47,7 @@ void Bl::init(const RendererInitializer& initializer)
 			"post-processing stage FBO: " + e.what());
 	}
 
-	hBlurSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	hBlurSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
@@ -65,7 +65,7 @@ void Bl::init(const RendererInitializer& initializer)
 			"post-processing stage FBO: " + e.what());
 	}
 
-	vBlurSProg.loadRsrc(ShaderProgram::createSrcCodeToCache(
+	vBlurSProg.load(ShaderProgram::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur
@@ -84,8 +84,8 @@ void Bl::init(const RendererInitializer& initializer)
 			e.what());
 	}
 
-	sideBlurMap.loadRsrc("engine-rsrc/side-blur.png");
-	sideBlurSProg.loadRsrc("shaders/PpsSideBlur.glsl");
+	sideBlurMap.load("engine-rsrc/side-blur.png");
+	sideBlurSProg.load("shaders/PpsSideBlur.glsl");
 }
 
 

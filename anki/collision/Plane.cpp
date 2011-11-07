@@ -24,7 +24,7 @@ Plane::Plane(const Vec3& normal_, float offset_)
 //==============================================================================
 float Plane::testPlane(const Plane& /*p*/) const
 {
-	ASSERT(0 && "Ambiguous call");
+	ANKI_ASSERT(0 && "Ambiguous call");
 	return 0.0;
 }
 
@@ -39,7 +39,7 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	normal = u.cross(v);
 
 	// length of normal had better not be zero
-	ASSERT(!Math::isZero(normal.getLengthSquared()));
+	ANKI_ASSERT(!Math::isZero(normal.getLengthSquared()));
 
 	normal.normalize();
 	offset = normal.dot(p0); // ToDo: correct??
@@ -52,7 +52,7 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 	// normalize for cheap distance checks
 	float lensq = a * a + b * b + c * c;
 	// length of normal had better not be zero
-	ASSERT(!Math::isZero(lensq));
+	ANKI_ASSERT(!Math::isZero(lensq));
 
 	// recover gracefully
 	if(Math::isZero(lensq))

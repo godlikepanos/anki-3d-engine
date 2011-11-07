@@ -1,7 +1,7 @@
 #ifndef ANKI_RESOURCE_SKIN_H
 #define ANKI_RESOURCE_SKIN_H
 
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 
 
@@ -38,16 +38,16 @@ class Skin
 		const Model& getModel() const;
 		const boost::ptr_vector<ModelPatch>& getModelPatches() const;
 		const Skeleton& getSkeleton() const;
-		const std::vector<RsrcPtr<SkelAnim> >& getSkelAnims() const;
+		const std::vector<SkelAnimResourcePointer >& getSkelAnims() const;
 		/// @}
 
 	private:
 		/// @name The resources
 		/// @{
-		RsrcPtr<Model> model;
-		RsrcPtr<Skeleton> skeleton; ///< The skeleton
+		ModelResourcePointer model;
+		SkeletonResourcePointer skeleton; ///< The skeleton
 		/// The standard skeleton animations
-		std::vector<RsrcPtr<SkelAnim> > skelAnims;
+		std::vector<SkelAnimResourcePointer > skelAnims;
 		/// @}
 };
 
@@ -70,7 +70,7 @@ inline const Skeleton& Skin::getSkeleton() const
 }
 
 
-inline const std::vector<RsrcPtr<SkelAnim> >& Skin::getSkelAnims() const
+inline const std::vector<SkelAnimResourcePointer >& Skin::getSkelAnims() const
 {
 	return skelAnims;
 }

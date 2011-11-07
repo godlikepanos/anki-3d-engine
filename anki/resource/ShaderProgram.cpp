@@ -92,7 +92,7 @@ uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 				shaderType = "Fragment shader";
 				break;
 			default:
-				ASSERT(0); // Not supported
+				ANKI_ASSERT(0); // Not supported
 		}
 		throw SHADER_PROGRAM_EXCEPTION(shaderType + 
 			" compiler error log follows:\n"
@@ -204,7 +204,7 @@ void ShaderProgram::getUniAndAttribVars()
 void ShaderProgram::load(const char* filename)
 {
 	rsrcFilename = filename;
-	ASSERT(glId == std::numeric_limits<uint>::max());
+	ANKI_ASSERT(glId == std::numeric_limits<uint>::max());
 
 	ShaderProgramPrePreprocessor pars(filename);
 

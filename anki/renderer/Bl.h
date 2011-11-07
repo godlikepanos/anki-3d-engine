@@ -3,7 +3,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/Texture.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/gl/Fbo.h"
 
 
@@ -55,12 +55,12 @@ class Bl: public SwitchableRenderingPass
 		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
 		Fbo sideBlurFbo;
 
-		RsrcPtr<ShaderProgram> hBlurSProg;
-		RsrcPtr<ShaderProgram> vBlurSProg;
-		RsrcPtr<ShaderProgram> sideBlurSProg;
+		ShaderProgramResourcePointer hBlurSProg;
+		ShaderProgramResourcePointer vBlurSProg;
+		ShaderProgramResourcePointer sideBlurSProg;
 
 		Texture blurFai; ///< Temp FAI for blurring
-		RsrcPtr<Texture> sideBlurMap;
+		TextureResourcePointer sideBlurMap;
 
 		uint blurringIterationsNum;
 		float sideBlurFactor;

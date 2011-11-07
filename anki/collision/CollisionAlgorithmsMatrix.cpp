@@ -32,7 +32,7 @@ bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
 		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
 			return collide(t, static_cast<const PerspectiveCameraShape&>(b));
 		default:
-			ASSERT(0 && "Forgot something");
+			ANKI_ASSERT(0 && "Forgot something");
 	}
 }
 
@@ -58,7 +58,7 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
 			return tcollide<PerspectiveCameraShape>(a, b);
 		default:
-			ASSERT(0 && "Forgot something");
+			ANKI_ASSERT(0 && "Forgot something");
 	}
 }
 
@@ -71,7 +71,7 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 	const Ls& /*b*/)
 {
-	ASSERT(0 && "N/A");
+	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
 
@@ -144,7 +144,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls,
 bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 	const Pcs& /*b*/)
 {
-	ASSERT(0 && "Not implemented yet");
+	ANKI_ASSERT(0 && "Not implemented yet");
 	return false;
 }
 
@@ -160,7 +160,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p)
 bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/,
 	const Ray& /*b*/)
 {
-	ASSERT(0 && "N/A");
+	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
 
@@ -438,7 +438,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0,
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Pcs& b)
 {
-	ASSERT(0 && "Not impelented yet");
+	ANKI_ASSERT(0 && "Not impelented yet");
 	return false;
 }
 
@@ -499,7 +499,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb,
 bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 	const Pcs& b)
 {
-	ASSERT(0 && "Not implemented yet");
+	ANKI_ASSERT(0 && "Not implemented yet");
 	return false;
 }
 
@@ -508,7 +508,7 @@ bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 	const Plane& b)
 {
-	ASSERT(0 && "Not implemented yet");
+	ANKI_ASSERT(0 && "Not implemented yet");
 	return false;
 }
 
@@ -517,7 +517,7 @@ bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 	const Ray& b)
 {
-	ASSERT(0 && "Not implemented yet");
+	ANKI_ASSERT(0 && "Not implemented yet");
 	return false;
 }
 
@@ -526,7 +526,7 @@ bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 	const Sphere& b)
 {
-	ASSERT(0 && "Not implemented yet");
+	ANKI_ASSERT(0 && "Not implemented yet");
 	return false;
 }
 
@@ -535,7 +535,7 @@ bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 bool CollisionAlgorithmsMatrix::collide(const Pcs& a,
 	const Aabb& b)
 {
-	ASSERT(0 && "Not implemented yet");
+	ANKI_ASSERT(0 && "Not implemented yet");
 	return false;
 }
 
@@ -584,7 +584,7 @@ bool CollisionAlgorithmsMatrix::collide(const Plane& p,
 bool CollisionAlgorithmsMatrix::collide(const Ray& a,
 	const Ray& b)
 {
-	ASSERT(0 && "N/A");
+	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
 

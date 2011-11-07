@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_MODEL_MODEL_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include "anki/gl/Vao.h"
 #include "anki/resource/ModelPatch.h"
 #include "anki/collision/Obb.h"

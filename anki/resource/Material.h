@@ -197,7 +197,7 @@ class Material: public MaterialProperties
 		// Nested                                                              =
 		//======================================================================
 
-		typedef boost::array<RsrcPtr<ShaderProgram>, PASS_TYPES_NUM>
+		typedef boost::array<ShaderProgramResourcePointer, PASS_TYPES_NUM>
 			ShaderPrograms;
 
 		//======================================================================
@@ -237,7 +237,7 @@ class Material: public MaterialProperties
 inline const MaterialBuildinVariable& Material::getBuildinVariable(
 	MaterialBuildinVariable::MatchingVariable e) const
 {
-	ASSERT(buildinVariableExits(e));
+	ANKI_ASSERT(buildinVariableExits(e));
 	return *buildinsArr[e];
 }
 

@@ -26,7 +26,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
 	const GLvoid* pointer)
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ARRAY_BUFFER)
 	{
 		throw ANKI_EXCEPTION("Only GL_ARRAY_BUFFER is accepted");
@@ -64,7 +64,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo,
 //==============================================================================
 void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 {
-	ASSERT(isCreated());
+	ANKI_ASSERT(isCreated());
 	if(vbo.getBufferTarget() != GL_ELEMENT_ARRAY_BUFFER)
 	{
 		throw ANKI_EXCEPTION("Only GL_ELEMENT_ARRAY_BUFFER is accepted");

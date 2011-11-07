@@ -3,7 +3,7 @@
 
 #include "anki/math/Math.h"
 #include "anki/resource/MaterialCommon.h"
-#include "anki/resource/RsrcPtr.h"
+#include "anki/resource/Resource.h"
 #include <boost/variant.hpp>
 
 
@@ -49,7 +49,7 @@ class SceneDrawer
 				void operator()(const Type& x) const;
 
 				/// Functor
-				void operator()(const RsrcPtr<Texture>* x) const;
+				void operator()(const TextureResourcePointer* x) const;
 		};
 
 		const Renderer& r; ///< Keep it here cause the class wants a few stuff

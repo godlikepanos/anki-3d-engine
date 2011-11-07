@@ -5,6 +5,7 @@
 #include "anki/core/Logger.h"
 #include "anki/ui/UiFont.h"
 #include <cstdarg>
+#include <cstdio>
 
 
 namespace anki {
@@ -44,7 +45,7 @@ void UiPainter::init()
 	tabSize = 4;
 
 	// SProg
-	sProg.loadRsrc("shaders/UiText.glsl");
+	sProg.load("shaders/UiText.glsl");
 
 	// Geom
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
@@ -145,7 +146,7 @@ void UiPainter::drawFormatedText(const char* format, ...)
 	vsprintf(text, format, ap);
 	va_end(ap);
 
-	ASSERT(strlen(text) < 512);
+	ANKI_ASSERT(strlen(text) < 512);
 
 	drawText(text);
 }

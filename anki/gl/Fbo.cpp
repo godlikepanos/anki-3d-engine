@@ -22,8 +22,8 @@ Fbo::~Fbo()
 //==============================================================================
 void Fbo::checkIfGood() const
 {
-	ASSERT(isCreated());
-	ASSERT(getCurrentFbo() == glId); // another FBO is binded
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(getCurrentFbo() == glId); // another FBO is binded
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -40,8 +40,8 @@ void Fbo::checkIfGood() const
 //==============================================================================
 void Fbo::setNumOfColorAttachements(uint num) const
 {
-	ASSERT(isCreated());
-	ASSERT(getCurrentFbo() == glId); // another FBO is binded
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(getCurrentFbo() == glId); // another FBO is binded
 
 	if(num == 0)
 	{
@@ -55,7 +55,7 @@ void Fbo::setNumOfColorAttachements(uint num) const
 			GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
 			GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
 
-		ASSERT(num <= sizeof(colorAttachments) / sizeof(GLenum));
+		ANKI_ASSERT(num <= sizeof(colorAttachments) / sizeof(GLenum));
 		glDrawBuffers(num, colorAttachments);
 	}
 }

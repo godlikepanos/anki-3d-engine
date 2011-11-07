@@ -6,11 +6,11 @@ namespace anki {
 
 
 //==============================================================================
-// ConstructVisitor::operator() <RsrcPtr<Texture> >                            =
+// ConstructVisitor::operator() <TextureResourcePointer >                            =
 //==============================================================================
 template <>
 void MaterialRuntimeVariable::ConstructVisitor::
-	operator()<RsrcPtr<Texture> >(const RsrcPtr<Texture>& x) const
+	operator()<TextureResourcePointer >(const TextureResourcePointer& x) const
 {
 	udvr.data = &x;
 }

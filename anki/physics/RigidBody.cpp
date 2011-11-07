@@ -29,7 +29,7 @@ RigidBody::RigidBody(PhysWorld& masterContainer_,
 		btVector3(0.0, 0.0, 0.0))), // dummy init
 	masterContainer(masterContainer_)
 {
-	ASSERT(init.shape != NULL &&
+	ANKI_ASSERT(init.shape != NULL &&
 		init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
 	bool isDynamic = (init.mass != 0.0);

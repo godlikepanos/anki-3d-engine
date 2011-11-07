@@ -215,7 +215,7 @@ void init()
 	imp->init("models/imp/imp.smdl");
 	//imp->setLocalTransform(Transform(Vec3(0.0, 2.11, 0.0), Mat3(Euler(-m::PI/2, 0.0, 0.0)), 0.7));
 	SkelAnimCtrl* ctrl = new SkelAnimCtrl(*imp->meshNodes[0]->meshSkelCtrl->skelNode);
-	ctrl->skelAnim.loadRsrc("models/imp/walk.imp.anim");
+	ctrl->skelAnim.load("models/imp/walk.imp.anim");
 	ctrl->step = 0.8;*/
 
 	// cave map

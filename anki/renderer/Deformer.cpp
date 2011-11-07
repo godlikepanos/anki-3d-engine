@@ -32,8 +32,8 @@ void Deformer::init()
 	//
 	// Load the shaders
 	//
-	tfHwSkinningAllSProg.loadRsrc("shaders/TfHwSkinningPosNormTan.glsl");
-	tfHwSkinningPosSProg.loadRsrc("shaders/TfHwSkinningPos.glsl");
+	tfHwSkinningAllSProg.load("shaders/TfHwSkinningPosNormTan.glsl");
+	tfHwSkinningPosSProg.load("shaders/TfHwSkinningPos.glsl");
 }
 
 
@@ -42,10 +42,10 @@ void Deformer::init()
 //==============================================================================
 void Deformer::deform(SkinPatchNode& node) const
 {
-	ASSERT(node.getParent() != NULL); // The SkinPatchNodes always have parent
-	ASSERT(node.getParent()->getSceneNodeType() ==
+	ANKI_ASSERT(node.getParent() != NULL); // The SkinPatchNodes always have parent
+	ANKI_ASSERT(node.getParent()->getSceneNodeType() ==
 		SceneNode::SNT_SKIN_NODE); // And their parent must be SkinNode
-	ASSERT(node.isFlagEnabled(SceneNode::SNF_VISIBLE)); // And it should be
+	ANKI_ASSERT(node.isFlagEnabled(SceneNode::SNF_VISIBLE)); // And it should be
 	                                                    // visible
 
 	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
