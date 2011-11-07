@@ -428,7 +428,7 @@ void mainLoop()
 		//
 		// Async resource loading
 		//
-		if(ResourceManagerSingleton::get().getAsyncLoadingRequestsNum() > 0)
+		/*if(ResourceManagerSingleton::get().getAsyncLoadingRequestsNum() > 0)
 		{
 			HighRezTimer::Scalar a = timer.getElapsedTime();
 			HighRezTimer::Scalar b = AppSingleton::get().getTimerTick();
@@ -442,7 +442,7 @@ void mainLoop()
 				timeToSpendForRsrcPostProcess = 0.001;
 			}
 			ResourceManagerSingleton::get().postProcessFinishedLoadingRequests(timeToSpendForRsrcPostProcess);
-		}
+		}*/
 
 		//
 		// Sleep

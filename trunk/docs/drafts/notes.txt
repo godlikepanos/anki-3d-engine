@@ -1,0 +1,11 @@
+- Have to depth buffers in the MS. The MS writes in the k frame to the first and in the k+1 in the other. With this way we can read from the one and write to the other. Test in 33Hz
+
+- The light material should contain the bool: castsShadow
+
+- All scene objects are debugable because the render at least in DBGS
+
+- Rename DBG stage to DS
+
+- Octree has SceneNodes
+
+- All scene nodes have AABB

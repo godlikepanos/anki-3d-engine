@@ -15,6 +15,7 @@ class ResourcePointer
 {
 	public:
 		typedef ResourcePointer<Type, ResourceManagerSingleton> Self;
+		typedef typename ResourceManagerSingleton::ValueType::Hook Hook;
 
 		/// Default constructor
 		ResourcePointer()
@@ -22,12 +23,10 @@ class ResourcePointer
 		{}
 
 		/// Copy constructor
-		ResourcePointer(const Self& a)
+		ResourcePointer(const Self& b)
+		:	hook(NULL)
 		{
-			if(hook)
-			{
-				++hook->referenceCounter;
-			}
+			copy(b);
 		}
 
 		~ResourcePointer()
@@ -54,8 +53,18 @@ class ResourcePointer
 			return hook->resource;
 		}
 
-		const std::string& getResourceName() const;
+		const std::string& getResourceName() const
+		{
+			return hook->uuid;
+		}
 		/// @}
+
+		/// Copy
+		Self& operator=(const Self& b)
+		{
+			copy(b);
+			return *this;
+		}
 
 		/// Load the resource using the resource manager
 		void load(const char* filename)
@@ -66,7 +75,7 @@ class ResourcePointer
 
 	private:
 		/// Points to a container in the resource manager
-		typename ResourceManagerSingleton::ValueType::Hook* hook;
+		Hook* hook;
 
 		/// Unloads the resource @see loadRsrc
 		void unload()
@@ -75,6 +84,23 @@ class ResourcePointer
 			{
 				ResourceManagerSingleton::get().unload(*hook);
 				hook = NULL;
+			}
+		}
+
+		/// XXX
+		void copy(const Self& b)
+		{
+			if(b.hook == NULL)
+			{
+				if(hook != NULL)
+				{
+					unload();
+				}
+			}
+			else
+			{
+				unload();
+				load(b.hook->uuid.c_str());
 			}
 		}
 };
