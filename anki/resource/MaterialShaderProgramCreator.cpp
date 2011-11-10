@@ -83,7 +83,9 @@ MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
 // parseShaderFileForFunctionDefinitions                                       =
 //==============================================================================
 void MaterialShaderProgramCreator::parseShaderFileForFunctionDefinitions(
-	const char* filename)
+	const char* filename,
+	boost::ptr_vector<FuncDefinition>& funcDefs,
+	ConstCharPtrHashMap<FuncDefinition*>::Type& funcNameToDef)
 {
 	scanner::Scanner scanner(filename, false);
 	const scanner::Token* token = &scanner.getCrntToken();
@@ -332,6 +334,86 @@ void MaterialShaderProgramCreator::getNextTokenAndSkipNewlines(
 
 
 //==============================================================================
+void MaterialShaderProgramCreator::parseShaderTag(
+	const boost::property_tree::ptree& pt)
+{
+	//
+	// <includes></includes>
+	//
+	boost::ptr_vector<FuncDefinition> funcDefs;
+	ConstCharPtrHashMap<FuncDefinition*>::Type funcNameToDef;
+	std::vector<std::string> includeLines;
+
+	const ptree& includesPt = pt.get_child("includes");
+	BOOST_FOREACH(const ptree::value_type& v, includesPt)
+	{
+		if(v.first != "include")
+		{
+			throw ANKI_EXCEPTION("Expected include and not: " + v.first);
+		}
+
+		const std::string& fname = v.second.data();
+		parseShaderFileForFunctionDefinitions(fname.c_str(),
+			funcDefs, funcNameToDef);
+
+		includeLines.push_back("#pragma anki include \"" + fname + "\"");
+	}
+
+	std::sort(includeLines.begin(), includeLines.end(), compareStrings);
+	srcLines.insert(srcLines.end(), includeLines.begin(), includeLines.end());
+
+	//
+	// <inputs></inputs>
+	//
+
+	// Store the source of the uniform vars
+	std::vector<std::string> uniformsLines;
+
+	boost::optional<const ptree&> insPt = pt.get_child_optional("inputs");
+	if(insPt)
+	{
+		BOOST_FOREACH(const ptree::value_type& v, insPt.get())
+		{
+			if(v.first != "input")
+			{
+				throw ANKI_EXCEPTION("Expected <input> and not: " + v.first);
+			}
+
+			const ptree& inPt = v.second;
+			std::string line;
+			parseInputTag(inPt, line);
+			uniformsLines.push_back(line);
+		} // end for all ins
+
+		srcLines.push_back("");
+		std::sort(uniformsLines.begin(), uniformsLines.end(), compareStrings);
+		srcLines.insert(srcLines.end(), uniformsLines.begin(),
+			uniformsLines.end());
+	}
+
+	//
+	// <operations></operations>
+	//
+	srcLines.push_back("\nvoid main()\n{");
+
+	const ptree& opsPt = pt.get_child("operations");
+
+	BOOST_FOREACH(const ptree::value_type& v, opsPt)
+	{
+		if(v.first != "operation")
+		{
+			throw ANKI_EXCEPTION("Expected operation and not: " + v.first);
+		}
+
+		const ptree& opPt = v.second;
+		parseOperatorTag(opPt);
+	} // end for all operations
+
+	srcLines.push_back("}\n");
+}
+
+
+//==============================================================================
 // parseShaderProgramTag                                                       =
 //==============================================================================
 void MaterialShaderProgramCreator::parseShaderProgramTag(
@@ -455,6 +537,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 	using namespace boost::property_tree;
 
 	const std::string& name = pt.get<std::string>("name");
+	const std::string& type = pt.get<std::string>("type");
 	boost::optional<const ptree&> valuePt = pt.get_child_optional("value");
 	GLenum glType;
 
@@ -502,7 +585,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 	{
 		if(valuePt.get().size() != 1)
 		{
-			throw ANKI_EXCEPTION("Bad value for in: " + name);
+			throw ANKI_EXCEPTION("Bad <value> for <input>: " + name);
 		}
 
 		const ptree::value_type& v = valuePt.get().front();

@@ -96,12 +96,6 @@ class MaterialShaderProgramCreator
 		bool usingTangentAttrib;
 		/// @}
 
-		/// Container that holds the function definitions
-		boost::ptr_vector<FuncDefinition> funcDefs;
-
-		/// Go from function name to function definition
-		ConstCharPtrHashMap<FuncDefinition*>::Type funcNameToDef;
-
 		/// The lines of the shader program source
 		std::vector<std::string> srcLines;
 
@@ -113,7 +107,12 @@ class MaterialShaderProgramCreator
 
 		/// Parses a glsl file for function definitions. It appends the
 		/// funcDefs container with new function definitions
-		void parseShaderFileForFunctionDefinitions(const char* filename);
+		/// @param[out] funcDefs Container that holds the function definitions
+		/// @param[out] funcNameToDef Go from function name to function
+		/// definition
+		void parseShaderFileForFunctionDefinitions(const char* filename,
+			boost::ptr_vector<FuncDefinition>& funcDefs,
+			ConstCharPtrHashMap<FuncDefinition*>::Type& funcNameToDef);
 
 		/// Used by parseShaderFileForFunctionDefinitions to skip preprocessor
 		/// definitions. Takes into account the backslashes. For example for
@@ -135,6 +134,11 @@ class MaterialShaderProgramCreator
 		/// Parse what is within the
 		/// @code <shaderProgram></shaderProgram> @endcode
 		void parseShaderProgramTag(const boost::property_tree::ptree& pt);
+
+		/// Parse what is within the
+		/// @code <*Shader></*Shader> @endcode where * may be fragment, vertex
+		/// etc
+		void parseShaderTag(const boost::property_tree::ptree& pt);
 
 		/// Parse what is within the @code <input></input> @endcode
 		void parseInputTag(const boost::property_tree::ptree& pt,
