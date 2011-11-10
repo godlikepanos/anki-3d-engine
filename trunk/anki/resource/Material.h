@@ -40,7 +40,7 @@ class ShaderProgram;
 ///
 /// 	[<levelsOfDetail>0 to N</levelsOfDetail>]
 ///
-/// 	[<castsShadow>true | false</castsShadow>]
+/// 	[<shadow>true | false</shadow>]
 ///
 /// 	[<blendFunctions> (2)
 /// 		<sFactor>GL_SOMETHING</sFactor>
@@ -53,21 +53,21 @@ class ShaderProgram;
 ///
 /// 	<shaderProgram>
 /// 		<vertexShader>
-/// 			<includes>
-/// 				<include>file.glsl</include>
-/// 				<include>file2.glsl</include>
+/// 			<includes> (5)
+/// 				<functionsFile>file.glsl</functionsFile>
+/// 				<codeFile>file2.glsl</codeFile>
 /// 			</includes>
 ///
-/// 			<inputs>
+/// 			[<inputs> (3)
 /// 				<input>
 /// 					<name>xx</name>
 /// 					<type>any_glsl_accepted_type</type>
-/// 					[<value> (3)
+/// 					[<value> (4)
 /// 						a_series_of_numbers |
 /// 						path/to/image.tga
 /// 					</value>]
 /// 				</input>
-/// 			</inputs>
+/// 			</inputs>]
 ///
 /// 			<operations>
 /// 				<operation>
@@ -86,8 +86,16 @@ class ShaderProgram;
 /// </material>
 /// @endcode
 /// (1): For the moment 0 means MS, 1 BS, 2 IS (aka light)
+///
 /// (2): Not relevant for light materials at the moment
-/// (3): The <value> tag is not present for build-in variables
+///
+/// (3): AKA uniforms
+///
+/// (4): The <value> tag is not present for build-in variables
+///
+/// (5): functionsFile means that the file contains only function declarations
+/// and the parser will expect only those. The codeFile means that the file
+/// may contain anything and will not get parsed
 class Material: public MaterialProperties
 {
 	public:
