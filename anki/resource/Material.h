@@ -34,21 +34,25 @@ class ShaderProgram;
 /// Material XML file format:
 /// @code
 /// <material>
-/// 	<castsShadow>true | false</castsShadow>
+/// 	<renderingStage>0 to N</renderingStage> (1)
 ///
-/// 	<renderInBlendingStage>true | false</renderInBlendingStage>
+/// 	[<passes>COLOR DEPTH</passes>] (2)
 ///
-/// 	<blendFunctions>
+/// 	[<levelsOfDetail>0 to N</levelsOfDetail>]
+///
+/// 	[<castsShadow>true | false</castsShadow>]
+///
+/// 	[<blendFunctions> (2)
 /// 		<sFactor>GL_SOMETHING</sFactor>
 /// 		<dFactor>GL_SOMETHING</dFactor>
-/// 	</blendFunctions>
+/// 	</blendFunctions>]
 ///
-/// 	<depthTesting>true | false</depthTesting>
+/// 	[<depthTesting>true | false</depthTesting>] (2)
 ///
-/// 	<wireframe>true | false</wireframe>
+/// 	[<wireframe>true | false</wireframe>] (2)
 ///
 /// 	<shaderProgram>
-/// 		<fragmentShader>
+/// 		<vertexShader>
 /// 			<includes>
 /// 				<include>file.glsl</include>
 /// 				<include>file2.glsl</include>
@@ -57,13 +61,11 @@ class ShaderProgram;
 /// 			<inputs>
 /// 				<input>
 /// 					<name>xx</name>
-/// 					<value> *
-/// 						<float>0.0</float> |
-/// 						<vec2><x>0.0</x><y>0.0</y></vec2> |
-/// 						<vec3><x>0.0</x><y>0.0</y><z>0.0</z></vec3> |
-/// 						<vec4><x>0.0</x><y>0.0</y><z>0.0</z><w>0.0</w></vec4> |
-/// 						<sampler2D>path/to/image.tga</sampler2D>
-/// 					</value>
+/// 					<type>any_glsl_accepted_type</type>
+/// 					[<value> (3)
+/// 						a_series_of_numbers |
+/// 						path/to/image.tga
+/// 					</value>]
 /// 				</input>
 /// 			</inputs>
 ///
@@ -77,12 +79,15 @@ class ShaderProgram;
 /// 					</arguments>
 /// 				</operation>
 /// 			</operations>
-/// 		</fragmentShader>
+/// 		</vertexShader>
+///
+/// 		<fragmentShader>...</fragmentShader>
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
-/// *: If the value tag is not present then the in variable is assumed to be
-///    build
+/// (1): For the moment 0 means MS, 1 BS, 2 IS (aka light)
+/// (2): Not relevant for light materials at the moment
+/// (3): The <value> tag is not present for build-in variables
 class Material: public MaterialProperties
 {
 	public:
