@@ -25,21 +25,31 @@ class MaterialVariable
 			T_USER,
 			T_BUILDIN
 		};
+		
+		/// The data union
+		typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3, 
+			Mat4, TextureResourcePointer> Variant;
 
-		/// XXX Used for initialization in the constructor
-		typedef boost::array<const ShaderProgram*, PASS_TYPES_NUM>
+		/// Used for initialization in the constructor
+		typedef std::vector<std::vector<ShaderProgram*> >
 			ShaderPrograms;
 
-		/// XXX
-		typedef boost::array<const ShaderProgramVariable*,
-			PASS_TYPES_NUM> ShaderProgramVariables;
-
-		/// Constructor
+		/// @name Constructors & destructor
+		/// @{
+		
+		/// Build-in
 		MaterialVariable(
-			Type type,
 			const char* shaderProgVarName,
-			const ShaderPrograms& shaderProgsArr);
-
+			const ShaderPrograms& sProgs);
+			
+		/// User defined
+		<template Type>
+		MaterialVariable(
+			const char* shaderProgVarName,
+			const ShaderPrograms& sProgs,
+			const Type& val);
+		/// @}
+			
 		/// @name Accessors
 		/// @{
 		Type getType() const
@@ -53,7 +63,7 @@ class MaterialVariable
 
 		/// Check if pass p needs this variable. Check if the shader program
 		/// of p contains this variable or not
-		bool inPass(PassType p) const
+		bool inPass(uint p) const
 		{
 			return sProgVars[p] != NULL;
 		}
