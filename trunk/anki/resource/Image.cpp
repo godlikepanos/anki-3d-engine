@@ -1,10 +1,10 @@
+#include "anki/resource/Image.h"
+#include "anki/util/Exception.h"
+#include "anki/core/Logger.h"
 #include <png.h>
 #include <boost/filesystem.hpp> // For file extensions
 #include <boost/algorithm/string.hpp> // For to_lower
 #include <fstream>
-#include "anki/resource/Image.h"
-#include "anki/util/Exception.h"
-#include "anki/core/Logger.h"
 
 
 namespace anki {
@@ -86,7 +86,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 	uint pixelcount = height * width;
 	uint currentpixel = 0;
 	uint currentbyte = 0;
-	unsigned char colorbuffer[4];
+	uchar colorbuffer[4];
 
 	do
 	{

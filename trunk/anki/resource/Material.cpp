@@ -41,32 +41,15 @@ ConstCharPtrHashMap<GLenum>::Type Material::txtToBlengGlEnum =
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
 Material::Material()
-{
-	renderInBlendingStageFlag = false;
-	blendingSfactor = GL_ONE;
-	blendingDfactor = GL_ZERO;
-	depthTesting = true;
-	wireframe = false;
-	castsShadowFlag = true;
-
-	// Reset tha array
-	std::fill(buildinsArr.begin(), buildinsArr.end(),
-		static_cast<MaterialBuildinVariable*>(NULL));
-}
+{}
 
 
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 Material::~Material()
 {}
 
 
-//==============================================================================
-// load                                                                        =
 //==============================================================================
 void Material::load(const char* filename)
 {
@@ -85,8 +68,6 @@ void Material::load(const char* filename)
 }
 
 
-//==============================================================================
-// parseMaterialTag                                                            =
 //==============================================================================
 void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 {
@@ -192,8 +173,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 
 //==============================================================================
-// createShaderProgSourceToCache                                               =
-//==============================================================================
 std::string Material::createShaderProgSourceToCache(const std::string& source)
 {
 	// Create the hash
@@ -225,8 +204,6 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 }
 
 
-//==============================================================================
-// populateVariables                                                           =
 //==============================================================================
 void Material::populateVariables(const boost::property_tree::ptree& pt)
 {

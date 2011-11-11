@@ -52,17 +52,19 @@ class ShaderProgram;
 /// 	[<wireframe>true | false</wireframe>] (2)
 ///
 /// 	<shaderProgram>
-/// 		<vertexShader>
-/// 			<includes> (5)
-/// 				<functionsFile>file.glsl</functionsFile>
-/// 				<codeFile>file2.glsl</codeFile>
+/// 		<shader> (5)
+/// 			<type>vertex | tc | te | geometry | fragment</type>
+///
+/// 			<includes>
+/// 				<include>path/to/file.glsl</include>
+/// 				<include>path/to/file2.glsl</include>
 /// 			</includes>
 ///
-/// 			[<inputs> (3)
+/// 			[<inputs> (4)
 /// 				<input>
 /// 					<name>xx</name>
-/// 					<type>any_glsl_accepted_type</type>
-/// 					[<value> (4)
+/// 					<type>any glsl type</type>
+/// 					[<value> (3)
 /// 						a_series_of_numbers |
 /// 						path/to/image.tga
 /// 					</value>]
@@ -72,16 +74,17 @@ class ShaderProgram;
 /// 			<operations>
 /// 				<operation>
 /// 					<id>x</id>
+/// 					[<returnType>any glsl type</returnType>]
 /// 					<function>functionName</function>
-/// 					<arguments>
+/// 					[<arguments>
 /// 						<argument>xx</argument>
 /// 						<argument>yy</argument>
-/// 					</arguments>
+/// 					</arguments>]
 /// 				</operation>
 /// 			</operations>
 /// 		</vertexShader>
 ///
-/// 		<fragmentShader>...</fragmentShader>
+/// 		<shader>...</shader>
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
@@ -89,13 +92,11 @@ class ShaderProgram;
 ///
 /// (2): Not relevant for light materials at the moment
 ///
-/// (3): AKA uniforms
+/// (3): The \<value\> tag is not present for build-in variables
 ///
-/// (4): The <value> tag is not present for build-in variables
+/// (4): AKA uniforms
 ///
-/// (5): functionsFile means that the file contains only function declarations
-/// and the parser will expect only those. The codeFile means that the file
-/// may contain anything and will not get parsed
+/// (5): The order of the shaders is crucial
 class Material: public MaterialProperties
 {
 	public:
@@ -105,52 +106,15 @@ class Material: public MaterialProperties
 
 		typedef boost::ptr_vector<MaterialVariable> VarsContainer;
 
-		typedef boost::unordered_map<MaterialBuildinVariable::MatchingVariable,
-			MaterialBuildinVariable*> MatchingVariableToBuildinHashMap;
-
-		typedef boost::array<MaterialBuildinVariable*,
-			MaterialBuildinVariable::MV_NUM> BuildinsArr;
-
 		//======================================================================
 		// Methods                                                             =
 		//======================================================================
 
-		/// Initialize with default values
 		Material();
-
 		~Material();
 
 		/// @name Accessors
 		/// @{
-		bool getCastShadow() const
-		{
-			return castsShadowFlag;
-		}
-
-		bool getRendersInBlendingStage() const
-		{
-			return renderInBlendingStageFlag;
-		}
-
-		int getBlendingSfactor() const
-		{
-			return blendingSfactor;
-		}
-
-		int getBlendingDfactor() const
-		{
-			return blendingDfactor;
-		}
-
-		bool getGetDepthTesting() const
-		{
-			return depthTesting;
-		}
-
-		bool getWireframe() const
-		{
-			return wireframe;
-		}
 
 		/// Access the base class just for copying in other classes
 		const MaterialProperties& getBaseClass() const
@@ -158,9 +122,9 @@ class Material: public MaterialProperties
 			return *this;
 		}
 
-		const ShaderProgram& getShaderProgram(PassType p) const
+		const ShaderProgram& getShaderProgram(uint pass, uint level) const
 		{
-			return *sProgs[p];
+			return *eSProgs[pass][level];
 		}
 
 		// Variable accessors
@@ -209,9 +173,14 @@ class Material: public MaterialProperties
 		//======================================================================
 		// Nested                                                              =
 		//======================================================================
-
-		typedef boost::array<ShaderProgramResourcePointer, PASS_TYPES_NUM>
-			ShaderPrograms;
+		
+		/// Type for garbage collection
+		typedef boost::ptr_vector<ShaderProgramResourcePointer> ShaderPrograms;
+		
+		/// Type for easy accessing the shader programs. Its a 2D array with 
+		/// the first dimention the pass ID and the second the level of detail
+		typedef std::vector<std::vector<ShaderProgram*> > EasyShaderPrograms;
+		
 
 		//======================================================================
 		// Members                                                             =
@@ -225,12 +194,13 @@ class Material: public MaterialProperties
 		/// All the material variables. Both buildins and user
 		VarsContainer mtlVars;
 
-		BuildinsArr buildinsArr; ///< To find. Initialize to int
-
-		std::vector<MaterialUserVariable*> userMtlVars; ///< To iterate
-
-		/// The most important aspect of materials
+		/// The most important aspect of materials. These are all the shader 
+		/// programs per level and per pass. Their number are NP * NL where
+		/// NP is the number of passes and NL the number of levels of detail
 		ShaderPrograms sProgs;
+		
+		/// Easy access the shader programs
+		EasyShaderPrograms eSProgs;
 
 		//======================================================================
 		// Methods                                                             =
@@ -245,14 +215,6 @@ class Material: public MaterialProperties
 		/// XXX
 		void populateVariables(const boost::property_tree::ptree& pt);
 };
-
-
-inline const MaterialBuildinVariable& Material::getBuildinVariable(
-	MaterialBuildinVariable::MatchingVariable e) const
-{
-	ANKI_ASSERT(buildinVariableExits(e));
-	return *buildinsArr[e];
-}
 
 
 } // end namespace
