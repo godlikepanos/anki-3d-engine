@@ -150,6 +150,17 @@ Real flow:
 		endfor
 		
 	endfunction
+	
+	
+- Find all the octree nodes that are inside the frustum
+- Norrow down them using the Renderer and other tests
+- For all those octree nodes get the scene nodes
+- Resolve buckets
+- Finaly call SceneNode::visibleUpdate() for all visibles
+
+Method declaration: void performVisibilityTests(const Octree&, const Frustum&, const Renderer&);
+
+The Renderer is for hardware occlusion queries
 
 =========
 Rendering
