@@ -288,8 +288,8 @@ ul.auto-toc {
 
 
 <p><strong>AnKi 3D Engine</strong></p>
-<p>Copyright (C) 2009, 2010 Panagiotis Christopoulos-Charitos</p>
-<p><a class="reference external" href="http://www.ancient-ritual.com">http://www.ancient-ritual.com</a></p>
+<p>Copyright (C) 2009-2011 Panagiotis Christopoulos-Charitos</p>
+<p><a class="reference external" href="http://www.anki3d.org">http://www.anki3d.org</a></p>
 <p><a class="reference external" href="mailto:godlike&#64;ancient-ritual.com">godlike&#64;ancient-ritual.com</a></p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
@@ -311,10 +311,11 @@ ul.auto-toc {
 <li><a class="reference internal" href="#order-in-class-definitions" id="id13">Order in class definitions</a></li>
 <li><a class="reference internal" href="#naming-shortcuts" id="id14">Naming shortcuts</a></li>
 <li><a class="reference internal" href="#controllers" id="id15">Controllers</a></li>
-<li><a class="reference internal" href="#submitting-patches" id="id16">Submitting patches</a></li>
+<li><a class="reference internal" href="#glsl-shaders" id="id16">GLSL shaders</a></li>
+<li><a class="reference internal" href="#submitting-patches" id="id17">Submitting patches</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#todo-list" id="id17">ToDo list</a></li>
+<li><a class="reference internal" href="#todo-list" id="id18">ToDo list</a></li>
 </ul>
 </div>
 <div class="section" id="license">
@@ -327,24 +328,27 @@ non-GPLv3 licensed software then you have to apply for a commercial license.</p>
 </div>
 <div class="section" id="building">
 <h1><a class="toc-backref" href="#id2">Building</a></h1>
-<p>AnKi build system is very Linux specific (GNU make only) at the moment. It
-also requires a few extra development libraries.</p>
+<p>AnKi build system is build over the popular CMake.</p>
 <p>To download the latest version of AnKi from the SVN repository type:</p>
-<p>$ svn checkout <a class="reference external" href="http://anki-3d-engine.googlecode.com/svn/trunk/">http://anki-3d-engine.googlecode.com/svn/trunk/</a> anki</p>
+<pre class="literal-block">
+svn checkout http://anki-3d-engine.googlecode.com/svn/trunk/ anki
+</pre>
+<p>to build:</p>
 <div class="section" id="required-external-libraries">
 <h2><a class="toc-backref" href="#id3">Required external libraries</a></h2>
 <p>AnKi requires a few up to date versions of some libraries. The libraries are:</p>
 <ul class="simple">
-<li>Bullet Physics 2.77</li>
-<li>SDL 1.3</li>
-<li>GLEW 1.5.5</li>
-<li>boost 1.4</li>
+<li>Bullet Physics 2.77 (in extern)</li>
+<li>SDL 1.3 (in extern)</li>
+<li>GLEW 1.5.5 (in extern)</li>
+<li>boost 1.46</li>
 <li>libpng 1.2</li>
 <li>libjpeg 6b</li>
 <li>libpython 2.6</li>
 </ul>
 <p>Normally, in order to build AnKi you need to have all of the above libraries.
-Some of them are not provided from the most Linux distros or they are older
+Some of them are not that common and</p>
+<p>Some of them are not provided from the most Linux distros or they are older
 versions. The libraries you have to download and build for yourself are Bullet,
 SDL and GLEW. The other are pretty common and you can find them almost anywhere.</p>
 <p>To ease the building process and to save you some time <strong>some</strong> of the above
@@ -371,10 +375,10 @@ is called gBuildSystem and you can find it in
 using SVN:</p>
 <p>$ svn checkout <a class="reference external" href="http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem">http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem</a></p>
 <p>gBuildSystem only purpose is to re-generate these makefiles in case you have
-made changes in code structure (renaming/moving/deleting/adding files) or in the
-includes (#include) or your have the external libs in different paths.
-gBuildSystem requires the gen.cfg.py files (something like CMakeLists.txt).
-gen.cfg.py format is pretty straightforward and minimal.</p>
+made changes in the code structure (renaming/moving/deleting/adding files) or in
+the included header files (#include) or your have the external libs in different
+paths. gBuildSystem requires the gen.cfg.py files (something like
+CMakeLists.txt). gen.cfg.py format is pretty straightforward and minimal.</p>
 <p>If you want to generate the makefile for the debug target (for example) do the
 following:</p>
 <ol class="arabic simple">
@@ -399,7 +403,7 @@ build it, the application will fail to run.</p>
 <li>Linux OS</li>
 <li>Proprietary GPU drivers</li>
 </ul>
-<p>Development rig: Ubuntu 10.04, AMD Radeon 4870 w/ Catalyst 10.04. So it should
+<p>Development rig: Ubuntu 10.10, AMD Radeon 4870 w/ Catalyst 10.10. So it should
 be working on similar systems.</p>
 </div>
 <div class="section" id="generating-source-code-documentation-doxygen">
@@ -514,8 +518,24 @@ naming convention of the controllers is:</p>
 <p>For Example:</p>
 <p>MeshSkelNodeCtrl A Mesh is controlled by a SkelNode</p>
 </div>
+<div class="section" id="glsl-shaders">
+<h2><a class="toc-backref" href="#id16">GLSL shaders</a></h2>
+<p>The same rules apply to GLSL shaders but with a few changes:</p>
+<p>All the vars you can find in a GLSL shader program are either attributes,
+uniforms or in/out vars (varyings) and everything else. The attributes and
+uniforms are mixed case. The in/out vars are mixed case as well but they have a
+prefix string that indicates their output. For example if a var is output from
+the vertex shader it will have a 'v' before its name. The In detail:</p>
+<p>v: Vertex shader
+tc: Tessellation control shader
+te: Tessellation evaluation shader
+g: Geometry shader
+f: Fragment shader</p>
+<p>All the other variables (locals and globals) inside the code are mixed case but
+with a leading and a following underscore.</p>
+</div>
 <div class="section" id="submitting-patches">
-<h2><a class="toc-backref" href="#id16">Submitting patches</a></h2>
+<h2><a class="toc-backref" href="#id17">Submitting patches</a></h2>
 <p>If you want to update/patch a file (for example Main.cpp) do:</p>
 <ul class="simple">
 <li>Make the changes on that file</li>
@@ -525,7 +545,7 @@ naming convention of the controllers is:</p>
 </div>
 </div>
 <div class="section" id="todo-list">
-<h1><a class="toc-backref" href="#id17">ToDo list</a></h1>
+<h1><a class="toc-backref" href="#id18">ToDo list</a></h1>
 <ul>
 <li><p class="first">Continue working on the new coding style in shaders</p>
 </li>

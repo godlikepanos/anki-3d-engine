@@ -782,7 +782,10 @@ void Scanner::checkNumber()
 			double dbl = (double)num + (double)(pow(10, -dad)*fnum);
 			if(exp != 0) // if we have exponent
 			{
-				if(expSign == 1) exp = -exp; // change the sign if necessary
+				if(expSign == true)
+				{
+					exp = -exp; // change the sign if necessary
+				}
 				dbl = dbl * pow(10, exp);
 			}
 
