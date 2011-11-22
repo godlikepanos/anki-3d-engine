@@ -1,6 +1,6 @@
 **AnKi 3D Engine**
 
-Copyright (C) 2009-2011 Panayiotis Christopoulos-Charitos
+Copyright (C) 2009-2011 Panagiotis Christopoulos-Charitos
 
 http://www.anki3d.org
 
@@ -25,12 +25,22 @@ non-GPLv3 licensed software then you have to apply for a commercial license.
 Building
 ========
 
-AnKi build system is very Linux specific (GNU make only) at the moment. It
-also requires a few extra development libraries.
+AnKi build system is build over the popular CMake.
 
-To download the latest version of AnKi from the SVN repository type:
+To download the latest version of AnKi from the SVN repository type: ::
 
-$ svn checkout http://anki-3d-engine.googlecode.com/svn/trunk/ anki
+	svn checkout http://anki-3d-engine.googlecode.com/svn/trunk/ anki
+
+to build (from the root directory): ::
+
+	mkdir build
+	cd build
+	cmake ..
+	make
+
+to build the doxygen documentation: ::
+
+	make doc
 
 
 Required external libraries
@@ -38,68 +48,17 @@ Required external libraries
 
 AnKi requires a few up to date versions of some libraries. The libraries are:
   
-- Bullet Physics 2.77
-- SDL 1.3
-- GLEW 1.5.5
-- boost 1.4
+- Bullet Physics 2.77 (provided)
+- SDL 1.3 (provided)
+- GLEW 1.5.5 (provided)
+- boost 1.46
 - libpng 1.2
 - libjpeg 6b
 - libpython 2.6
 
-Normally, in order to build AnKi you need to have all of the above libraries. 
-Some of them are not provided from the most Linux distros or they are older
-versions. The libraries you have to download and build for yourself are Bullet,
-SDL and GLEW. The other are pretty common and you can find them almost anywhere.
-
-
-To ease the building process and to save you some time **some** of the above
-libraries are already backed and placed inside the extern directory. The backed
-libraries are for Linux and for x86-64 architecture. If you dont trust my
-binaries and/or you want to build the libs yourselves you have to download,
-build and install the libs in the extern directory manually. The script
-*download-externs.sh* downloads the libraries (it requires SVN, mercurial,
-CMake, autoconf) and the *do-externs.sh* builds the libraries and installs them
-in the extern directory. Open the files and see how it is done.
-
-You wont find any development files for boost, libpng, libjpeg and libpython
-inside the extern dir. Get them using your Linux distribution's packet manager.
-
-
-Building AnKi and optionally generating makefiles
--------------------------------------------------
-
-Inside the build directory you can find 4 build targets containing GNU
-makefiles. If you want to build AnKi just type "make" from inside a target.
-
-**WARNING**: Sometimes I forget to update all the targets. The debug is always 
-updated though.
-
-AnKi uses a build system that generates the above makefiles. This build system
-is no longer part of AnKi and its located in a different repository. This tool
-is called gBuildSystem and you can find it in
-http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem. Downloaded it
-using SVN:
-
-$ svn checkout http://godlike-projects.googlecode.com/svn/trunk/gBuildSystem
-
-
-gBuildSystem only purpose is to re-generate these makefiles in case you have
-made changes in the code structure (renaming/moving/deleting/adding files) or in
-the included header files (#include) or your have the external libs in different
-paths. gBuildSystem requires the gen.cfg.py files (something like
-CMakeLists.txt). gen.cfg.py format is pretty straightforward and minimal.
-
-If you want to generate the makefile for the debug target (for example) do the
-following:
-
-#) $ cd <path to anki>/build/debug
-#) $ <path to gBuildSystem>/gbs.py
-
-To build:
-
-$ make
-
-And the build process will begin. 
+Some of the above libraries are pretty standard and they are included in all 
+major Linux/Unix distributions. Some of them are not that standard though. The 
+non-standard are already build and located in the extern directory.
   
 
 ======
@@ -120,22 +79,8 @@ The engine requires:
 - Linux OS
 - Proprietary GPU drivers
 
-Development rig: Ubuntu 10.10, AMD Radeon 4870 w/ Catalyst 10.10. So it should
-be working on similar systems.
-
-
-==============================================
-Generating source code documentation (doxygen)
-==============================================
-
-The AnKi source code uses doxygen style comments in almost every file. To
-generate the documentation you need doxygen (http://www.doxygen.org/). From a
-terminal type:
-
-#) $ cd docs
-#) $ doxygen doxyfile
-
-Then open doxygen.html to see it.
+Development rig: Ubuntu 11.10, nVidia 560 Ti. So it should be working on 
+similar systems.
   
 
 ============
