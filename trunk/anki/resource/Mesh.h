@@ -30,6 +30,8 @@ class Mesh
 			VBOS_NUM
 		};
 
+		typedef boost::array<Vbo, VBOS_NUM> VbosArray;
+
 		/// Default constructor
 		Mesh()
 		{}
@@ -61,7 +63,7 @@ class Mesh
 		}
 		/// @}
 
-		/// Implements @ref Resource::load
+		/// Load from a file
 		void load(const char* filename);
 
 		/// @name Ask for geometry properties
@@ -76,11 +78,15 @@ class Mesh
 			return vbos[VBO_VERT_WEIGHTS].isCreated();
 		}
 
-		bool hasNormalsAndTangents() const;
+		bool hasNormalsAndTangents() const
+		{
+			return vbos[VBO_VERT_NORMALS].isCreated() &&
+				vbos[VBO_VERT_TANGENTS].isCreated();
+		}
 		/// @}
 
 	private:
-		boost::array<Vbo, VBOS_NUM> vbos; ///< The vertex buffer objects
+		VbosArray vbos; ///< The vertex buffer objects
 		uint vertIdsNum; ///< The number of vertex IDs
 		Obb visibilityShape;
 		uint vertsNum;
@@ -88,13 +94,6 @@ class Mesh
 		/// Create the VBOs
 		void createVbos(const MeshData& meshData);
 };
-
-
-inline bool Mesh::hasNormalsAndTangents() const
-{
-	return vbos[VBO_VERT_NORMALS].isCreated() &&
-		vbos[VBO_VERT_TANGENTS].isCreated();
-}
 
 
 } // end namespace

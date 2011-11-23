@@ -1,35 +1,29 @@
 #include "anki/scene/MaterialRuntimeVariable.h"
-#include "anki/resource/MaterialUserVariable.h"
+#include "anki/resource/MaterialVariable.h"
 
 
 namespace anki {
 
 
 //==============================================================================
-// ConstructVisitor::operator() <TextureResourcePointer >                            =
-//==============================================================================
 template <>
 void MaterialRuntimeVariable::ConstructVisitor::
 	operator()<TextureResourcePointer >(const TextureResourcePointer& x) const
 {
-	udvr.data = &x;
+	var.data = &x;
 }
 
 
-//==============================================================================
-// Constructor                                                                 =
 //==============================================================================
 MaterialRuntimeVariable::MaterialRuntimeVariable(
-	const MaterialUserVariable& umv_)
-:	umv(umv_)
+	const MaterialVariable& mvar_)
+:	mvar(mvar_)
 {
 	// Initialize the data using a visitor
-	boost::apply_visitor(ConstructVisitor(*this), umv.getDataVariant());
+	boost::apply_visitor(ConstructVisitor(*this), mvar.getVariant());
 }
 
 
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 MaterialRuntimeVariable::~MaterialRuntimeVariable()
 {}

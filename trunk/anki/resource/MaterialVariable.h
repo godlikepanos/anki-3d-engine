@@ -1,21 +1,22 @@
 #ifndef ANKI_RESOURCE_MATERIAL_VARIABLE_H
 #define ANKI_RESOURCE_MATERIAL_VARIABLE_H
 
-#include "anki/resource/MaterialCommon.h"
 #include "anki/resource/ShaderProgramVariable.h"
+#include "anki/resource/MaterialCommon.h"
+#include "anki/math/Math.h"
+#include "anki/resource/Resource.h"
+#include "anki/resource/Texture.h" // For one of the constructors
 #include "anki/util/Assert.h"
 #include <GL/glew.h>
 #include <string>
-#include <boost/array.hpp>
+#include <boost/variant.hpp>
 
 
 namespace anki {
 
 
-class ShaderProgram;
-
-
-/// XXX
+/// Holds the shader variables. Its a container for shader program variables
+/// that share the same name
 class MaterialVariable
 {
 	public:
@@ -26,28 +27,35 @@ class MaterialVariable
 			T_BUILDIN
 		};
 		
-		/// The data union
+		/// The data union (limited to a few types at the moment)
 		typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3, 
 			Mat4, TextureResourcePointer> Variant;
 
-		/// Used for initialization in the constructor
-		typedef std::vector<std::vector<ShaderProgram*> >
-			ShaderPrograms;
+		/// Given a pair of pass and level it returns a pointer to a
+		/// shader program variable. The pointer may be null
+		typedef PassLevelHashMap<const ShaderProgramVariable*>::Type
+			PassLevelToShaderProgramVariableHashMap;
 
 		/// @name Constructors & destructor
 		/// @{
 		
-		/// Build-in
+		/// For build-ins
 		MaterialVariable(
 			const char* shaderProgVarName,
-			const ShaderPrograms& sProgs);
+			const PassLevelToShaderProgramHashMap& sProgs);
 			
-		/// User defined
-		<template Type>
+		/// For user defined
+		template<typename Type>
 		MaterialVariable(
 			const char* shaderProgVarName,
-			const ShaderPrograms& sProgs,
-			const Type& val);
+			const PassLevelToShaderProgramHashMap& sProgs,
+			const Type& val)
+		{
+			init(shaderProgVarName, sProgs);
+			ANKI_ASSERT(getShaderProgramVariableType() ==
+				ShaderProgramVariable::T_UNIFORM);
+			data = val;
+		}
 		/// @}
 			
 		/// @name Accessors
@@ -57,15 +65,26 @@ class MaterialVariable
 			return type;
 		}
 
+		const Variant& getVariant() const
+		{
+			return data;
+		}
+
 		/// XXX
 		const ShaderProgramVariable& getShaderProgramVariable(
-			PassType p) const;
-
-		/// Check if pass p needs this variable. Check if the shader program
-		/// of p contains this variable or not
-		bool inPass(uint p) const
+			const PassLevelKey& key) const
 		{
-			return sProgVars[p] != NULL;
+			ANKI_ASSERT(inPass(key));
+			const ShaderProgramVariable* var =
+				sProgVars.at(key);
+			return *var;
+		}
+
+		/// Check if the shader program of the given pass and level needs
+		/// contains this variable or not
+		bool inPass(const PassLevelKey& key) const
+		{
+			return sProgVars.find(key) != sProgVars.end();
 		}
 
 		/// Get the GL data type of all the shader program variables
@@ -75,9 +94,9 @@ class MaterialVariable
 		}
 
 		/// Get the name of all the shader program variables
-		const char* getName() const
+		const std::string& getName() const
 		{
-			return oneSProgVar->getName().c_str();
+			return oneSProgVar->getName();
 		}
 
 		/// Get the type of all the shader program variables
@@ -89,20 +108,25 @@ class MaterialVariable
 
 	private:
 		Type type;
-		ShaderProgramVariables sProgVars;
+		PassLevelToShaderProgramVariableHashMap sProgVars;
+		Variant data;
 
 		/// Keep one ShaderProgramVariable here for easy access of the common
 		/// variable stuff like name or GL data type etc
 		const ShaderProgramVariable* oneSProgVar;
+
+		/// Common constructor code
+		void init(const char* shaderProgVarName,
+			const PassLevelToShaderProgramHashMap& shaderProgsArr);
 };
 
 
-inline const ShaderProgramVariable& MaterialVariable::getShaderProgramVariable(
-	PassType p) const
-{
-	ANKI_ASSERT(inPass(p));
-	return *sProgVars[p];
-}
+/// Declaration for specialized (string)
+template<>
+MaterialVariable::MaterialVariable<std::string>(
+	const char* shaderProgVarName,
+	const PassLevelToShaderProgramHashMap& sProgs,
+	const std::string& val);
 
 
 } // end namespace

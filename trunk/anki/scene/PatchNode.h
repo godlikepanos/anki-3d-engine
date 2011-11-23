@@ -61,7 +61,7 @@ class PatchNode: public RenderableNode
 		/// Create a VAO given a material and an array of VBOs
 		/// The location of the uniform variables are hard coded. See
 		/// MaterialVertex.glsl
-		static void createVao(const Material& material,
+		static void createVao(const MaterialRuntime& material,
 			const VboArray& vbos,
 			Vao& vao);
 };
