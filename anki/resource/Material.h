@@ -1,10 +1,10 @@
 #ifndef ANKI_RESOURCE_MATERIAL_H
 #define ANKI_RESOURCE_MATERIAL_H
 
-#include "anki/resource/MaterialUserVariable.h"
-#include "anki/resource/MaterialBuildinVariable.h"
 #include "anki/resource/MaterialCommon.h"
 #include "anki/resource/MaterialProperties.h"
+#include "anki/resource/MaterialVariable.h"
+#include "anki/resource/Resource.h"
 #include "anki/util/ConstCharPtrHashMap.h"
 #include <GL/glew.h>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -40,16 +40,16 @@ class ShaderProgram;
 ///
 /// 	[<levelsOfDetail>0 to N</levelsOfDetail>]
 ///
-/// 	[<shadow>true | false</shadow>]
+/// 	[<shadow>0 | 1</shadow>]
 ///
 /// 	[<blendFunctions> (2)
 /// 		<sFactor>GL_SOMETHING</sFactor>
 /// 		<dFactor>GL_SOMETHING</dFactor>
 /// 	</blendFunctions>]
 ///
-/// 	[<depthTesting>true | false</depthTesting>] (2)
+/// 	[<depthTesting>0 | 1</depthTesting>] (2)
 ///
-/// 	[<wireframe>true | false</wireframe>] (2)
+/// 	[<wireframe>0 | 1</wireframe>] (2)
 ///
 /// 	<shaderProgram>
 /// 		<shader> (5)
@@ -122,46 +122,36 @@ class Material: public MaterialProperties
 			return *this;
 		}
 
-		const ShaderProgram& getShaderProgram(uint pass, uint level) const
+		const ShaderProgram& getShaderProgram(const PassLevelKey& key) const
 		{
-			return *eSProgs[pass][level];
+			return *eSProgs.at(key);
 		}
 
 		// Variable accessors
-		boost::iterator_range<VarsContainer::const_iterator> getVariables()
-			const
+		const VarsContainer& getVariables() const
 		{
-			return boost::iterator_range<VarsContainer::const_iterator>(
-				mtlVars.begin(), mtlVars.end());
+			return vars;
 		}
-
-		boost::iterator_range<std::vector<MaterialUserVariable*>::const_iterator>
-			getUserVariables() const
-		{
-			return boost::iterator_range<std::vector<MaterialUserVariable*>::
-				const_iterator>(userMtlVars.begin(), userMtlVars.end());
-		}
-
-		const MaterialBuildinVariable& getBuildinVariable(
-			MaterialBuildinVariable::MatchingVariable e) const;
 		/// @}
+
+		/// Get by name
+		const MaterialVariable& findVariableByName(const char* name) const;
+
+		bool variableExists(const char* name) const
+		{
+			return nameToVar.find(name) != nameToVar.end();
+		}
+
+		/// Check if a variable exists in the shader program of the @a key
+		bool variableExistsAndInKey(const char* name,
+			const PassLevelKey& key) const
+		{
+			NameToVariableHashMap::const_iterator it = nameToVar.find(name);
+			return it != nameToVar.end() && it->second->inPass(key);
+		}
 
 		/// Load a material file
 		void load(const char* filename);
-
-		/// Check if a buildin variable exists in a pass type
-		bool buildinVariableExits(MaterialBuildinVariable::MatchingVariable e,
-			PassType p) const
-		{
-			return buildinsArr[e] != NULL && buildinsArr[e]->inPass(p);
-		}
-
-		/// Check if a buildin variable exists in a any pass type
-		bool buildinVariableExits(
-			MaterialBuildinVariable::MatchingVariable e) const
-		{
-			return buildinsArr[e] != NULL;
-		}
 
 		/// For sorting
 		bool operator<(const Material& b) const
@@ -176,11 +166,9 @@ class Material: public MaterialProperties
 		
 		/// Type for garbage collection
 		typedef boost::ptr_vector<ShaderProgramResourcePointer> ShaderPrograms;
-		
-		/// Type for easy accessing the shader programs. Its a 2D array with 
-		/// the first dimention the pass ID and the second the level of detail
-		typedef std::vector<std::vector<ShaderProgram*> > EasyShaderPrograms;
-		
+
+		typedef ConstCharPtrHashMap<MaterialVariable*>::Type
+			NameToVariableHashMap;
 
 		//======================================================================
 		// Members                                                             =
@@ -191,16 +179,18 @@ class Material: public MaterialProperties
 
 		std::string fname; ///< filename
 
-		/// All the material variables. Both buildins and user
-		VarsContainer mtlVars;
+		/// All the material variables
+		VarsContainer vars;
+
+		NameToVariableHashMap nameToVar;
 
 		/// The most important aspect of materials. These are all the shader 
 		/// programs per level and per pass. Their number are NP * NL where
 		/// NP is the number of passes and NL the number of levels of detail
 		ShaderPrograms sProgs;
 		
-		/// Easy access the shader programs
-		EasyShaderPrograms eSProgs;
+		/// For searching
+		PassLevelToShaderProgramHashMap eSProgs;
 
 		//======================================================================
 		// Methods                                                             =
@@ -214,6 +204,14 @@ class Material: public MaterialProperties
 
 		/// XXX
 		void populateVariables(const boost::property_tree::ptree& pt);
+
+		/// Get a string and split it into words
+		static StringList splitString(const char* str);
+
+		/// Parses something like this: "0.0 0.01 -1.2" and returns a valid
+		/// math type
+		template<typename Type, size_t n>
+		static Type setMathType(const char* str);
 };
 
 

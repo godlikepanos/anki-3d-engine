@@ -10,7 +10,7 @@ namespace anki {
 
 
 class Texture;
-class MaterialUserVariable;
+class MaterialVariable;
 
 
 /// Variable of runtime materials
@@ -24,37 +24,54 @@ class MaterialRuntimeVariable
 		/// The data union. The Texture resource is read-only at runtime
 		/// Don't EVER replace the texture with const Texture*. The asynchronous
 		/// operations will fail
-		typedef boost::variant<float, Vec2, Vec3, Vec4,
-			ConstPtrRsrcPtrTexture> DataVariant;
+		typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3,
+			Mat4, ConstPtrRsrcPtrTexture> Variant;
 
 		/// Constructor
-		MaterialRuntimeVariable(const MaterialUserVariable& umv);
+		MaterialRuntimeVariable(const MaterialVariable& mv);
+
 		/// Destructor
 		~MaterialRuntimeVariable();
 
 		/// @name Accessors
 		/// @{
-		const MaterialUserVariable& getMaterialUserVariable() const
-			{return umv;}
+		const MaterialVariable& getMaterialVariable() const
+		{
+			return mvar;
+		}
 
-
-		const DataVariant& getDataVariant() const {return data;}
-		DataVariant& getDataVariant() {return data;}
+		const Variant& getDataVariant() const
+		{
+			return data;
+		}
+		Variant& getDataVariant()
+		{
+			return data;
+		}
 
 		/// Get the value of the variant
 		/// @exception boost::exception when you try to get the incorrect data
 		/// type
 		template<typename Type>
-		const Type& getValue() const {return boost::get<Type>(data);}
+		const Type& getValue() const
+		{
+			return boost::get<Type>(data);
+		}
 
 		/// Get the value of the variant
 		/// @exception boost::exception when you try to get the incorrect data
 		/// type
 		template<typename Type>
-		Type& getValue() {return boost::get<Type>(data);}
+		Type& getValue()
+		{
+			return boost::get<Type>(data);
+		}
 
 		template<typename Type>
-		void setValue(const Type& v) {boost::get<Type>(data) = v;}
+		void setValue(const Type& v)
+		{
+			boost::get<Type>(data) = v;
+		}
 		/// @}
 
 	private:
@@ -62,26 +79,42 @@ class MaterialRuntimeVariable
 		class ConstructVisitor: public boost::static_visitor<void>
 		{
 			public:
-				MaterialRuntimeVariable& udvr;
+				MaterialRuntimeVariable& var;
 
-				ConstructVisitor(MaterialRuntimeVariable& udmvr);
+				ConstructVisitor(MaterialRuntimeVariable& var_)
+				:	var(var_)
+				{}
 
 				/// Template method that applies to all DataVariant values
 				/// except texture resource
 				template<typename Type>
 				void operator()(const Type& x) const
-					{udvr.getDataVariant() = x;}
+				{
+					var.getDataVariant() = x;
+				}
 		};
 
-		const MaterialUserVariable& umv; ///< Know the resource
-		DataVariant data; /// The data
+		const MaterialVariable& mvar; ///< Know the resource
+		Variant data; /// The data
 };
 
 
-inline MaterialRuntimeVariable::ConstructVisitor::ConstructVisitor(
-	MaterialRuntimeVariable& udvr_)
-:	udvr(udvr_)
-{}
+// Declare specialized
+template <>
+void MaterialRuntimeVariable::ConstructVisitor::
+	operator()<TextureResourcePointer >(const TextureResourcePointer& x) const;
+
+// Declare specialized
+template<>
+MaterialRuntimeVariable::ConstPtrRsrcPtrTexture&
+	MaterialRuntimeVariable::getValue<
+	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>();
+
+// Declare specialized
+template<>
+void MaterialRuntimeVariable::setValue<
+	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
+	const ConstPtrRsrcPtrTexture& v);
 
 
 } // end namespace

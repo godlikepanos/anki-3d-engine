@@ -98,7 +98,6 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
 		sizeof(MeshData::VertexWeight),
 		BUFFER_OFFSET(0));
 
-
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
 		VERT_WEIGHT_BONE_IDS_LOC,
 		4,
@@ -118,7 +117,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
 	// Create the rendering VAOs
 	for(uint i = 0; i < PASS_TYPES_NUM; i++)
 	{
-		createVao(rsrc.getMaterial(), vboArr, vaos[i]);
+		createVao(mtlRun, vboArr, vaos[i]);
 	}
 }
 

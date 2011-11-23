@@ -9,31 +9,58 @@ namespace anki {
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
 MaterialVariable::MaterialVariable(
-	Type type_,
 	const char* shaderProgVarName,
-	const ShaderPrograms& shaderProgsArr)
-:	type(type_),
- 	oneSProgVar(NULL)
+	const PassLevelToShaderProgramHashMap& sProgs)
+:	type(T_BUILDIN)
 {
-	// For all shader progs point to the variables
-	for(uint i = 0; i < shaderProgsArr.size(); i++)
+	init(shaderProgVarName, sProgs);
+}
+
+
+//==============================================================================
+template <>
+MaterialVariable::MaterialVariable(
+	const char* shaderProgVarName,
+	const PassLevelToShaderProgramHashMap& sProgs,
+	const std::string& val)
+:	type(T_USER)
+{
+	init(shaderProgVarName, sProgs);
+	ANKI_ASSERT(getShaderProgramVariableType() ==
+		ShaderProgramVariable::T_UNIFORM);
+	data = TextureResourcePointer();
+	boost::get<TextureResourcePointer>(data).load(val.c_str());
+}
+
+
+//==============================================================================
+void MaterialVariable::init(const char* shaderProgVarName,
+	const PassLevelToShaderProgramHashMap& sProgs)
+{
+	oneSProgVar = NULL;
+
+	PassLevelToShaderProgramHashMap::const_iterator it = sProgs.begin();
+	for(; it != sProgs.end(); ++it)
 	{
-		if(shaderProgsArr[i]->variableExists(shaderProgVarName))
+		const ShaderProgram& sProg = *(it->second);
+		const PassLevelKey& key = it->first;
+
+		if(sProg.variableExists(shaderProgVarName))
 		{
-			sProgVars[i] = &shaderProgsArr[i]->getVariableByName(
-				shaderProgVarName);
+			const ShaderProgramVariable& sProgVar =
+				sProg.getVariableByName(shaderProgVarName);
+
+			sProgVars[key] = &sProgVar;
 
 			if(!oneSProgVar)
 			{
-				oneSProgVar = sProgVars[i];
+				oneSProgVar = &sProgVar;
 			}
 
 			// Sanity check: All the sprog vars need to have same GL data type
-			if(oneSProgVar->getGlDataType() != sProgVars[i]->getGlDataType() ||
-				oneSProgVar->getType() != sProgVars[i]->getType())
+			if(oneSProgVar->getGlDataType() != sProgVar.getGlDataType() ||
+				oneSProgVar->getType() != sProgVar.getType())
 			{
 				throw ANKI_EXCEPTION("Incompatible shader "
 					"program variables: " +
@@ -42,7 +69,7 @@ MaterialVariable::MaterialVariable(
 		}
 		else
 		{
-			sProgVars[i] = NULL;
+			sProgVars[key] = NULL;
 		}
 	}
 

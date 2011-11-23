@@ -21,12 +21,12 @@ PatchNode::PatchNode(const ModelPatch& modelPatch, ulong flags,
 //==============================================================================
 // createVao                                                                   =
 //==============================================================================
-void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
+void PatchNode::createVao(const MaterialRuntime& mtl, const VboArray& vbos,
 	Vao& vao)
 {
 	vao.create();
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_POSITION))
+	if(mtl.variableExits("position"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
 
@@ -34,7 +34,7 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_NORMAL))
+	if(mtl.variableExits("normal"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
 
@@ -42,7 +42,7 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_TANGENT))
+	if(mtl.variableExits("tangent"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
 
@@ -50,7 +50,7 @@ void PatchNode::createVao(const Material& mtl, const VboArray& vbos,
 			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_TEX_COORDS))
+	if(mtl.variableExits("texCoords"))
 	{
 		vao.attachArrayBufferVbo(*vbos[Mesh::VBO_TEX_COORDS],
 			3, 2, GL_FLOAT, GL_FALSE, 0, NULL);

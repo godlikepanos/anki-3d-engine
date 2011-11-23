@@ -45,7 +45,7 @@ ENDIF()
 #
 # Defines & flags
 #
-ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wno-long-long -msse4")
+ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long -msse4")
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	

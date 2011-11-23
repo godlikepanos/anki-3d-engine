@@ -10,6 +10,8 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 #include <algorithm>
 
 
@@ -74,23 +76,47 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	using namespace boost::property_tree;
 
 	//
-	// castsShadow
+	// renderingStage
 	//
-	boost::optional<bool> shadow =
-		PropertyTree::getBoolOptional(pt, "castsShadow");
-	if(shadow)
+	renderingStage = pt.get<int>("renderingStage");
+
+	//
+	// passes
+	//
+	boost::optional<std::string> pass =
+		pt.get_optional<std::string>("passes");
+
+	if(pass)
 	{
-		castsShadowFlag = shadow.get();
+		passes = splitString(pass.get().c_str());
+	}
+	else
+	{
+		passes.push_back("DUMMY");
 	}
 
 	//
-	// renderInBlendingStage
+	// levelsOfDetail
 	//
-	boost::optional<bool> bs =
-		PropertyTree::getBoolOptional(pt, "renderInBlendingStage");
-	if(bs)
+	boost::optional<int> lod = pt.get_optional<int>("levelsOfDetail");
+
+	if(lod)
 	{
-		renderInBlendingStageFlag = bs.get();
+		levelsOfDetail = lod.get();
+	}
+	else
+	{
+		levelsOfDetail = 1;
+	}
+
+	//
+	// shadow
+	//
+	boost::optional<int> sw = pt.get_optional<int>("shadow");
+
+	if(sw)
+	{
+		shadow = sw.get();
 	}
 
 	//
@@ -136,8 +162,8 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	//
 	// depthTesting
 	//
-	boost::optional<bool> dp =
-		PropertyTree::getBoolOptional(pt, "depthTesting");
+	boost::optional<int> dp = pt.get_optional<int>("depthTesting");
+
 	if(dp)
 	{
 		depthTesting = dp.get();
@@ -146,8 +172,8 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	//
 	// wireframe
 	//
-	boost::optional<bool> wf =
-		PropertyTree::getBoolOptional(pt, "wireframe");
+	boost::optional<int> wf = pt.get_optional<int>("wireframe");
+
 	if(wf)
 	{
 		wireframe = wf.get();
@@ -158,14 +184,30 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	//
 	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
 
-	for(uint i = 0; i < PASS_TYPES_NUM; i++)
+	for(uint level = 0; level < levelsOfDetail; ++level)
 	{
-		std::string src = std::string("#define ") + passNames[i] + "\n" +
-			mspc.getShaderProgramSource();
+		for(uint pid = 0; pid < passes.size(); ++pid)
+		{
+			std::stringstream src;
 
-		std::string filename = createShaderProgSourceToCache(src);
+			src << "#define LEVEL_" << level << std::endl;
+			src << "#define PASS_" << passes[pid] << std::endl;
+			src << mspc.getShaderProgramSource() << std::endl;
 
-		sProgs[i].load(filename.c_str());
+			std::string filename =
+				createShaderProgSourceToCache(src.str().c_str());
+
+			ShaderProgramResourcePointer* pptr =
+				new ShaderProgramResourcePointer;
+
+			pptr->load(filename.c_str());
+
+			ShaderProgram* sprog = pptr->get();
+
+			sProgs.push_back(pptr);
+
+			eSProgs[PassLevelKey(pid, level)] = sprog;
+		}
 	}
 
 	populateVariables(pt.get_child("shaderProgram.inputs"));
@@ -225,91 +267,124 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	//
 	// Iterate shader program variables
 	//
-	MaterialVariable::ShaderPrograms sProgs_;
-	for(uint i = 0; i < PASS_TYPES_NUM; i++)
-	{
-		sProgs_[i] = sProgs[i].get();
-	}
-
 	std::map<std::string, GLenum>::const_iterator it = allVarNames.begin();
 	for(; it != allVarNames.end(); it++)
 	{
 		const char* svName = it->first.c_str();
 		GLenum dataType = it->second;
 
-		// Buildin?
-		if(MaterialBuildinVariable::isBuildin(svName))
+		// Find the ptree that contains the value
+		const ptree* valuePt = NULL;
+		BOOST_FOREACH(const ptree::value_type& v, pt)
 		{
-			MaterialBuildinVariable* v =
-				new MaterialBuildinVariable(svName, sProgs_);
+			if(v.first != "input")
+			{
+				throw ANKI_EXCEPTION("Expecting <input> and not: " +
+					v.first);
+			}
 
-			mtlVars.push_back(v);
-			buildinsArr[v->getMatchingVariable()] = v;
+			if(v.second.get<std::string>("name") == svName)
+			{
+				valuePt = &v.second.get_child("value");
+				break;
+			}
+		}
+
+		MaterialVariable* v = NULL;
+
+		// Buildin?
+		if(!valuePt)
+		{
+			v = new MaterialVariable(svName, eSProgs);
 		}
 		// User defined
 		else
 		{
-			// Find the ptree that contains the value
-			const ptree* valuePt = NULL;
-			BOOST_FOREACH(const ptree::value_type& v, pt)
-			{
-				if(v.first != "input")
-				{
-					throw ANKI_EXCEPTION("Expecting <input> and not: " +
-						v.first);
-				}
+			const std::string& value = valuePt->get<std::string>("value");
 
-				if(v.second.get<std::string>("name") == svName)
-				{
-					valuePt = &v.second.get_child("value");
-					break;
-				}
-			}
-
-			if(valuePt == NULL)
-			{
-				throw ANKI_EXCEPTION("Variable not buildin and not found: " +
-					svName);
-			}
-
-			MaterialUserVariable* v = NULL;
 			// Get the value
 			switch(dataType)
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					v = new MaterialUserVariable(svName, sProgs_,
-						valuePt->get<std::string>("sampler2D").c_str());
+					v = new MaterialVariable(svName, eSProgs,
+						value);
 					break;
 				// float
 				case GL_FLOAT:
-					v = new MaterialUserVariable(svName, sProgs_,
-						PropertyTree::getFloat(*valuePt));
+					v = new MaterialVariable(svName, eSProgs,
+						boost::lexical_cast<float>(value));
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					v = new MaterialUserVariable(svName, sProgs_,
-						PropertyTree::getVec2(*valuePt));
+					v = new MaterialVariable(svName, eSProgs,
+						setMathType<Vec2, 2>(value.c_str()));
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					v = new MaterialUserVariable(svName, sProgs_,
-						PropertyTree::getVec3(*valuePt));
+					v = new MaterialVariable(svName, eSProgs,
+						setMathType<Vec3, 3>(value.c_str()));
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					v = new MaterialUserVariable(svName, sProgs_,
-						PropertyTree::getVec4(*valuePt));
+					v = new MaterialVariable(svName, eSProgs,
+						setMathType<Vec4, 4>(value.c_str()));
 					break;
 				// default is error
 				default:
 					ANKI_ASSERT(0);
 			}
-
-			mtlVars.push_back(v);
-			userMtlVars.push_back(v);
 		}
+
+		vars.push_back(v);
+		nameToVar[v->getName().c_str()] = v;
 	} // end for all sprog vars
+}
+
+
+//==============================================================================
+StringList Material::splitString(const char* str)
+{
+	StringList out;
+	std::string s = str;
+	boost::tokenizer<> tok(s);
+
+	for(boost::tokenizer<>::iterator it = tok.begin(); it != tok.end(); ++it)
+	{
+		out.push_back(*it);
+	}
+
+	return out;
+}
+
+
+//==============================================================================
+template<typename Type, size_t n>
+Type Material::setMathType(const char* str)
+{
+	Type out;
+	StringList sl = splitString(str);
+	ANKI_ASSERT(sl.size() == n);
+
+	for(uint i = 0; i < n; ++i)
+	{
+		out[i] = boost::lexical_cast<float>(sl[i]);
+	}
+
+	return out;
+}
+
+
+//==============================================================================
+const MaterialVariable& Material::findVariableByName(const char* name) const
+{
+	NameToVariableHashMap::const_iterator it = nameToVar.find(name);
+	if(it == nameToVar.end())
+	{
+		throw ANKI_EXCEPTION("Cannot get material variable "
+			"with name \"" + name + '\"');
+	}
+	return *(it->second);
 }
 
 

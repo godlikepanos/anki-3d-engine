@@ -8,8 +8,6 @@ namespace anki {
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
 MaterialRuntime::MaterialRuntime(const Material& mtl_)
 :	mtl(mtl_)
 {
@@ -19,51 +17,43 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_)
 	me = he;
 
 	// Create vars
-	BOOST_FOREACH(const MaterialUserVariable* var, mtl.getUserVariables())
+	BOOST_FOREACH(const MaterialVariable& var, mtl.getVariables())
 	{
-		MaterialRuntimeVariable* varr = new MaterialRuntimeVariable(*var);
+		MaterialRuntimeVariable* varr = new MaterialRuntimeVariable(var);
 		vars.push_back(varr);
-		varNameToVar[varr->getMaterialUserVariable().getName()] = varr;
+		varNameToVar[varr->getMaterialVariable().getName().c_str()] = varr;
 	}
 }
 
 
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 MaterialRuntime::~MaterialRuntime()
 {}
 
 
 //==============================================================================
-// findVariableByName                                                          =
-//==============================================================================
 MaterialRuntimeVariable& MaterialRuntime::findVariableByName(
 	const char* name)
 {
-	ConstCharPtrHashMap<MaterialRuntimeVariable*>::Type::iterator it =
-		varNameToVar.find(name);
+	VariablesHashMap::iterator it = varNameToVar.find(name);
 	if(it == varNameToVar.end())
 	{
-		throw ANKI_EXCEPTION("Cannot get user defined variable with name \"" +
-			name + '\"');
+		throw ANKI_EXCEPTION("Cannot get material runtime variable "
+			"with name \"" + name + '\"');
 	}
 	return *(it->second);
 }
 
 
 //==============================================================================
-// findVariableByName                                                          =
-//==============================================================================
 const MaterialRuntimeVariable& MaterialRuntime::findVariableByName(
 	const char* name) const
 {
-	ConstCharPtrHashMap<MaterialRuntimeVariable*>::Type::const_iterator
-		it = varNameToVar.find(name);
+	VariablesHashMap::const_iterator it = varNameToVar.find(name);
 	if(it == varNameToVar.end())
 	{
-		throw ANKI_EXCEPTION("Cannot get user defined variable with name \"" +
-			name + '\"');
+		throw ANKI_EXCEPTION("Cannot get material runtime variable "
+			"with name \"" + name + '\"');
 	}
 	return *(it->second);
 }

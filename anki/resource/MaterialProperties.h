@@ -2,6 +2,7 @@
 #define ANKI_RESOURCE_MATERIAL_PROPERTIES_H
 
 #include "anki/util/StringList.h"
+#include "anki/util/StdTypes.h"
 #include <GL/glew.h>
 
 
@@ -57,7 +58,7 @@ struct MaterialProperties
 			return blendingDfactor;
 		}
 
-		bool getGetDepthTesting() const
+		bool getDepthTesting() const
 		{
 			return depthTesting;
 		}

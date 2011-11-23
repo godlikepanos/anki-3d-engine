@@ -15,12 +15,14 @@ class StringList: public std::vector<std::string>
 		typedef std::vector<std::string> Base; ///< Its the vector of strings
 		typedef Base::value_type ValueType; ///< Its string
 
-		void join(const ValueType& sep, ValueType& out) const;
+		std::string join(const ValueType& sep) const;
 };
 
 
-inline void StringList::join(const ValueType& sep, ValueType& out) const
+inline std::string StringList::join(const ValueType& sep) const
 {
+	std::string out;
+
 	Base::const_iterator it = begin();
 	for(; it != end(); it++)
 	{
@@ -30,6 +32,8 @@ inline void StringList::join(const ValueType& sep, ValueType& out) const
 			out += sep;
 		}
 	}
+
+	return out;
 }
 
 

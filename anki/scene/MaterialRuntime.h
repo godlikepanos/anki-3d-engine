@@ -3,14 +3,15 @@
 
 #include "anki/resource/MaterialProperties.h"
 #include "anki/util/ConstCharPtrHashMap.h"
+#include "anki/scene/MaterialRuntimeVariable.h"
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/range/iterator_range.hpp>
 
 
 namespace anki {
 
 
 class Material;
-class MaterialRuntimeVariable;
 
 
 /// One layer above material resource
@@ -21,7 +22,15 @@ class MaterialRuntime: public MaterialProperties
 		typedef boost::ptr_vector<MaterialRuntimeVariable>
 			VariablesContainer;
 
-		/// @name Constructors & destructors
+		typedef boost::iterator_range<VariablesContainer::const_iterator>
+			ConstIteratorRange;
+		typedef boost::iterator_range<VariablesContainer::iterator>
+			MutableIteratorRange;
+
+		typedef ConstCharPtrHashMap<MaterialRuntimeVariable*>::Type
+			VariablesHashMap;
+
+		/// @name Constructors & destructor
 		/// @{
 		MaterialRuntime(const Material& mtl);
 		~MaterialRuntime();
@@ -29,34 +38,83 @@ class MaterialRuntime: public MaterialProperties
 
 		/// @name Accessors
 		/// @{
-		bool getCastShadow() const {return castsShadowFlag;}
-		bool& getCastShadow() {return castsShadowFlag;}
-		void setCastShadow(bool x) {castsShadowFlag = x;}
+		using MaterialProperties::getRenderingStage;
+		uint& getRenderingStage()
+		{
+			return renderingStage;
+		}
+		void setRenderingStage(uint x)
+		{
+			renderingStage = x;
+		}
 
-		bool getRenderInBledingStage() const {return renderInBlendingStageFlag;}
-		bool& getRenderInBledingStage() {return renderInBlendingStageFlag;}
-		void setRenderInBledingStage(bool x) {renderInBlendingStageFlag = x;}
+		using MaterialProperties::getPasses;
 
-		int getBlendingSFactor() const {return blendingSfactor;}
-		int& getBlendingSFactor() {return blendingSfactor;}
-		void setBlendingSFactor(int x) {blendingSfactor = x;}
+		using MaterialProperties::getLevelsOfDetail;
 
-		int getBlendingDFactor() const {return blendingDfactor;}
-		int& getBlendingDFactor() {return blendingDfactor;}
-		void setBlendingDFactor(int x) {blendingDfactor = x;}
+		using MaterialProperties::getShadow;
+		bool& getShadow()
+		{
+			return shadow;
+		}
+		void setShadow(bool x)
+		{
+			shadow = x;
+		}
 
-		bool getDepthTesting() const {return depthTesting;}
-		bool& getDepthTesting() {return depthTesting;}
-		void setDepthTesting(bool x) {depthTesting = x;}
+		using MaterialProperties::getBlendingSfactor;
+		int& getBlendingSFactor()
+		{
+			return blendingSfactor;
+		}
+		void setBlendingSFactor(int x)
+		{
+			blendingSfactor = x;
+		}
 
-		bool getWireframe() const {return wireframe;}
-		bool& getWireframe() {return wireframe;}
-		void setWireframe(bool x) {wireframe = x;}
+		using MaterialProperties::getBlendingDfactor;
+		int& getBlendingDFactor()
+		{
+			return blendingDfactor;
+		}
+		void setBlendingDFactor(int x)
+		{
+			blendingDfactor = x;
+		}
 
-		const VariablesContainer& getVariables() const {return vars;}
-		VariablesContainer& getVariables() {return vars;}
+		using MaterialProperties::getDepthTesting;
+		bool& getDepthTesting()
+		{
+			return depthTesting;
+		}
+		void setDepthTesting(bool x)
+		{
+			depthTesting = x;
+		}
 
-		const Material& getMaterial() const {return mtl;}
+		using MaterialProperties::getWireframe;
+		bool& getWireframe()
+		{
+			return wireframe;
+		}
+		void setWireframe(bool x)
+		{
+			wireframe = x;
+		}
+
+		ConstIteratorRange getVariables() const
+		{
+			return ConstIteratorRange(vars.begin(), vars.end());
+		}
+		MutableIteratorRange getVariables()
+		{
+			return MutableIteratorRange(vars.begin(), vars.end());
+		}
+
+		const Material& getMaterial() const
+		{
+			return mtl;
+		}
 		/// @}
 
 		/// Find a material runtime variable. On failure it throws an exception
@@ -70,10 +128,15 @@ class MaterialRuntime: public MaterialProperties
 		const MaterialRuntimeVariable& findVariableByName(
 			const char* name) const;
 
+		bool variableExists(const char* name) const
+		{
+			return varNameToVar.find(name) != vars.end();
+		}
+
 	private:
 		const Material& mtl; ///< The resource
 		VariablesContainer vars;
-		ConstCharPtrHashMap<MaterialRuntimeVariable*>::Type varNameToVar;
+		VariablesHashMap varNameToVar;
 };
 
 

@@ -1,6 +1,9 @@
 #include "anki/resource/MaterialShaderProgramCreator.h"
+#include "anki/util/Assert.h"
+#include "anki/util/Exception.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 namespace anki {
@@ -36,7 +39,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 		parseShaderTag(v.second);
 	}
 
-	srcLines.join("\n", source);
+	source = srcLines.join("\n");
 	//std::cout << source << std::endl;
 }
 
@@ -45,6 +48,8 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 void MaterialShaderProgramCreator::parseShaderTag(
 	const boost::property_tree::ptree& pt)
 {
+	using namespace boost::property_tree;
+
 	//
 	// <type></type>
 	//
@@ -65,7 +70,9 @@ void MaterialShaderProgramCreator::parseShaderTag(
 				v.first);
 		}
 
-		includeLines.push_back("#pragma anki include \"" + fname + "\"");
+		const std::string& fname = v.second.data();
+		includeLines.push_back(std::string("#pragma anki include \"") +
+			fname + "\"");
 	}
 
 	//std::sort(includeLines.begin(), includeLines.end(), compareStrings);
@@ -132,12 +139,12 @@ void MaterialShaderProgramCreator::parseInputTag(
 	const std::string& name = pt.get<std::string>("name");
 	const std::string& type = pt.get<std::string>("type");
 
-	line = "uniform " + type " " + name + ";";
+	line = "uniform " + type + " " + name + ";";
 }
 
 
 //==============================================================================
-void MaterialShaderProgramCreator::parseOperatorTag(
+void MaterialShaderProgramCreator::parseOperationTag(
 	const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
@@ -148,8 +155,8 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 	int id = pt.get<int>("id");
 	
 	// <returnType></returnType>
-	boost::optional<const string&> retTypeOpt = 
-		pt.get_optional<const string&>("returnType");
+	boost::optional<std::string> retTypeOpt =
+		pt.get_optional<std::string>("returnType");
 		
 	if(retTypeOpt)
 	{
@@ -163,11 +170,12 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 	
 	// <arguments></arguments>
 	boost::optional<const ptree&> argsPt = pt.get_child_optional("arguments");
+	StringList argsList;
 	
 	if(argsPt)
 	{
 		// Write all arguments
-		ptree::const_iterator it = argsPt.get();
+		ptree::const_iterator it = argsPt.get().begin();
 		for(; it != argsPt.get().end(); ++it)
 		{
 			const ptree::value_type& v = *it;
@@ -180,14 +188,10 @@ void MaterialShaderProgramCreator::parseOperatorTag(
 			}
 
 			const std::string& argName = v.second.data();
-			line << argName;
-
-			// Add a comma
-			if(it != argsPt.get().end() - 1)
-			{
-				line << ", ";
-			}
+			argsList.push_back(argName);
 		}
+
+		line << argsList.join(", ");
 	}
 	
 	line << ");";
