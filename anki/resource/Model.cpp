@@ -1,6 +1,5 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/assign.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -46,15 +45,15 @@ void Model::load(const char* filename)
 			throw ANKI_EXCEPTION("Zero number of model patches");
 		}
 
-		// Bounding volume
+		// Calculate compound bounding volume
 		visibilityShape = modelPatches[0].getMesh().getVisibilityShape();
-		BOOST_FOREACH(
-			const ModelPatch& patch,
-			boost::make_iterator_range(modelPatches.begin() + 1,
-			modelPatches.end()))
+
+		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
+			it != modelPatches.end();
+			++it)
 		{
 			visibilityShape = visibilityShape.getCompoundShape(
-				patch.getMesh().getVisibilityShape());
+				(*it).getMesh().getVisibilityShape());
 		}
 	}
 	catch(std::exception& e)

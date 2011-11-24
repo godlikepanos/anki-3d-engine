@@ -35,11 +35,13 @@ namespace anki {
 class Model
 {
 	public:
+		typedef boost::ptr_vector<ModelPatch> ModelPatchesContainer;
+
 		void load(const char* filename);
 
 		/// @name Accessors
 		/// @{
-		const boost::ptr_vector<ModelPatch>& getModelPatches() const
+		const ModelPatchesContainer& getModelPatches() const
 		{
 			return modelPatches;
 		}
@@ -52,7 +54,7 @@ class Model
 
 	private:
 		/// The vector of ModelPatch
-		boost::ptr_vector<ModelPatch> modelPatches;
+		ModelPatchesContainer modelPatches;
 		Obb visibilityShape;
 };
 

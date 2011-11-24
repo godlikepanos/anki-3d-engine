@@ -22,10 +22,10 @@ class RenderableNode: public SceneNode
 		virtual ~RenderableNode();
 
 		/// Get VAO depending the rendering pass
-		virtual const Vao& getVao(PassType p) const = 0;
+		virtual const Vao& getVao(const PassLevelKey& k) const = 0;
 
 		/// Get vert ids number for rendering
-		virtual uint getVertIdsNum() const = 0;
+		virtual uint getVertIdsNum(const PassLevelKey& k) const = 0;
 
 		/// Get the material resource
 		virtual const Material& getMaterial() const = 0;
