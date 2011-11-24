@@ -130,7 +130,7 @@ class MaterialRuntime: public MaterialProperties
 
 		bool variableExists(const char* name) const
 		{
-			return varNameToVar.find(name) != vars.end();
+			return varNameToVar.find(name) != varNameToVar.end();
 		}
 
 	private:

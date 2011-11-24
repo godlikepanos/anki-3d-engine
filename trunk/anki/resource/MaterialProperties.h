@@ -11,7 +11,7 @@ namespace anki {
 
 /// Contains a few properties that other classes may use. For an explanation of
 /// the variables refer to Material class documentation
-struct MaterialProperties
+class MaterialProperties
 {
 	public:
 		/// Initialize with default values
