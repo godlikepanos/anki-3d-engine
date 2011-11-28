@@ -232,7 +232,7 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 			// Skip shadowless
 			if(skipShadowless &&
-				!modelPatchNode->getMaterialRuntime().getCastShadow())
+				!modelPatchNode->getMaterialRuntime().getShadow())
 			{
 				continue;
 			}
@@ -241,7 +241,7 @@ void VisibilityTester::getRenderableNodesJobCallback(
 			if(test(*modelPatchNode, cam))
 			{
 				if(modelPatchNode->getMaterialRuntime().
-					getRenderInBledingStage())
+					getRenderingStage() == 1)
 				{
 					bsVisibles[bsI++] = modelPatchNode;
 				}
@@ -296,12 +296,12 @@ void VisibilityTester::getRenderableNodesJobCallback(
 
 			// Skip shadowless
 			if(skipShadowless &&
-				!patchNode->getMaterialRuntime().getCastShadow())
+				!patchNode->getMaterialRuntime().getShadow())
 			{
 				continue;
 			}
 
-			if(patchNode->getMaterialRuntime().getRenderInBledingStage())
+			if(patchNode->getMaterialRuntime().getRenderingStage() == 1)
 			{
 				bsVisibles[bsI++] = patchNode;
 			}

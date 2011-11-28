@@ -99,119 +99,99 @@ class ShaderProgram;
 /// (5): The order of the shaders is crucial
 class Material: public MaterialProperties
 {
-	public:
-		//======================================================================
-		// Nested                                                              =
-		//======================================================================
+public:
+	typedef boost::ptr_vector<MaterialVariable> VarsContainer;
 
-		typedef boost::ptr_vector<MaterialVariable> VarsContainer;
+	Material();
+	~Material();
 
-		//======================================================================
-		// Methods                                                             =
-		//======================================================================
+	/// @name Accessors
+	/// @{
 
-		Material();
-		~Material();
+	/// Access the base class just for copying in other classes
+	const MaterialProperties& getBaseClass() const
+	{
+		return *this;
+	}
 
-		/// @name Accessors
-		/// @{
+	const ShaderProgram& getShaderProgram(const PassLevelKey& key) const
+	{
+		return *eSProgs.at(key);
+	}
 
-		/// Access the base class just for copying in other classes
-		const MaterialProperties& getBaseClass() const
-		{
-			return *this;
-		}
+	// Variable accessors
+	const VarsContainer& getVariables() const
+	{
+		return vars;
+	}
+	/// @}
 
-		const ShaderProgram& getShaderProgram(const PassLevelKey& key) const
-		{
-			return *eSProgs.at(key);
-		}
+	/// Get by name
+	const MaterialVariable& findVariableByName(const char* name) const;
 
-		// Variable accessors
-		const VarsContainer& getVariables() const
-		{
-			return vars;
-		}
-		/// @}
+	bool variableExists(const char* name) const
+	{
+		return nameToVar.find(name) != nameToVar.end();
+	}
 
-		/// Get by name
-		const MaterialVariable& findVariableByName(const char* name) const;
+	/// Check if a variable exists in the shader program of the @a key
+	bool variableExistsAndInKey(const char* name,
+		const PassLevelKey& key) const
+	{
+		NameToVariableHashMap::const_iterator it = nameToVar.find(name);
+		return it != nameToVar.end() && it->second->inPass(key);
+	}
 
-		bool variableExists(const char* name) const
-		{
-			return nameToVar.find(name) != nameToVar.end();
-		}
+	/// Load a material file
+	void load(const char* filename);
 
-		/// Check if a variable exists in the shader program of the @a key
-		bool variableExistsAndInKey(const char* name,
-			const PassLevelKey& key) const
-		{
-			NameToVariableHashMap::const_iterator it = nameToVar.find(name);
-			return it != nameToVar.end() && it->second->inPass(key);
-		}
+	/// For sorting
+	bool operator<(const Material& b) const
+	{
+		return fname < b.fname;
+	}
 
-		/// Load a material file
-		void load(const char* filename);
+private:
+	/// Type for garbage collection
+	typedef boost::ptr_vector<ShaderProgramResourcePointer> ShaderPrograms;
 
-		/// For sorting
-		bool operator<(const Material& b) const
-		{
-			return fname < b.fname;
-		}
+	typedef ConstCharPtrHashMap<MaterialVariable*>::Type
+		NameToVariableHashMap;
 
-	private:
-		//======================================================================
-		// Nested                                                              =
-		//======================================================================
-		
-		/// Type for garbage collection
-		typedef boost::ptr_vector<ShaderProgramResourcePointer> ShaderPrograms;
+	/// From "GL_ZERO" return GL_ZERO
+	static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
 
-		typedef ConstCharPtrHashMap<MaterialVariable*>::Type
-			NameToVariableHashMap;
+	std::string fname; ///< filename
 
-		//======================================================================
-		// Members                                                             =
-		//======================================================================
+	/// All the material variables
+	VarsContainer vars;
 
-		/// From "GL_ZERO" return GL_ZERO
-		static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
+	NameToVariableHashMap nameToVar;
 
-		std::string fname; ///< filename
+	/// The most important aspect of materials. These are all the shader
+	/// programs per level and per pass. Their number are NP * NL where
+	/// NP is the number of passes and NL the number of levels of detail
+	ShaderPrograms sProgs;
 
-		/// All the material variables
-		VarsContainer vars;
+	/// For searching
+	PassLevelToShaderProgramHashMap eSProgs;
 
-		NameToVariableHashMap nameToVar;
+	/// Parse what is within the @code <material></material> @endcode
+	void parseMaterialTag(const boost::property_tree::ptree& pt);
 
-		/// The most important aspect of materials. These are all the shader 
-		/// programs per level and per pass. Their number are NP * NL where
-		/// NP is the number of passes and NL the number of levels of detail
-		ShaderPrograms sProgs;
-		
-		/// For searching
-		PassLevelToShaderProgramHashMap eSProgs;
+	/// XXX
+	std::string createShaderProgSourceToCache(const std::string& source);
 
-		//======================================================================
-		// Methods                                                             =
-		//======================================================================
+	/// XXX
+	void populateVariables(const boost::property_tree::ptree& pt);
 
-		/// Parse what is within the @code <material></material> @endcode
-		void parseMaterialTag(const boost::property_tree::ptree& pt);
+	/// Get a string and split it into words
+	static StringList splitString(const char* str);
 
-		/// XXX
-		std::string createShaderProgSourceToCache(const std::string& source);
-
-		/// XXX
-		void populateVariables(const boost::property_tree::ptree& pt);
-
-		/// Get a string and split it into words
-		static StringList splitString(const char* str);
-
-		/// Parses something like this: "0.0 0.01 -1.2" and returns a valid
-		/// math type
-		template<typename Type, size_t n>
-		static Type setMathType(const char* str);
+	/// Parses something like this: "0.0 0.01 -1.2" and returns a valid
+	/// math type
+	template<typename Type, size_t n>
+	static Type setMathType(const char* str);
 };
 
 

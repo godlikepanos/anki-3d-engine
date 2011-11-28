@@ -17,8 +17,12 @@ void MaterialRuntimeVariable::ConstructVisitor::
 //==============================================================================
 MaterialRuntimeVariable::MaterialRuntimeVariable(
 	const MaterialVariable& mvar_)
-:	mvar(mvar_)
+:	mvar(mvar_),
+ 	buildinId(-1)
 {
+	ANKI_ASSERT(mvar.getShaderProgramVariableType() ==
+		ShaderProgramVariable::T_UNIFORM);
+
 	// Initialize the data using a visitor
 	boost::apply_visitor(ConstructVisitor(*this), mvar.getVariant());
 }

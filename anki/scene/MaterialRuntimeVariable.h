@@ -72,6 +72,19 @@ class MaterialRuntimeVariable
 		{
 			boost::get<Type>(data) = v;
 		}
+
+		int getBuildinId() const
+		{
+			return buildinId;
+		}
+		int& getBuildinId()
+		{
+			return buildinId;
+		}
+		void setBuildinId(const int x)
+		{
+			buildinId = x;
+		}
 		/// @}
 
 	private:
@@ -96,6 +109,7 @@ class MaterialRuntimeVariable
 
 		const MaterialVariable& mvar; ///< Know the resource
 		Variant data; /// The data
+		int buildinId;
 };
 
 

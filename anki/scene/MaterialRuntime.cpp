@@ -19,6 +19,12 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_)
 	// Create vars
 	BOOST_FOREACH(const MaterialVariable& var, mtl.getVariables())
 	{
+		if(var.getShaderProgramVariableType() !=
+			ShaderProgramVariable::T_UNIFORM)
+		{
+			continue;
+		}
+
 		MaterialRuntimeVariable* varr = new MaterialRuntimeVariable(var);
 		vars.push_back(varr);
 		varNameToVar[varr->getMaterialVariable().getName().c_str()] = varr;

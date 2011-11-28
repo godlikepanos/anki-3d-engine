@@ -62,7 +62,10 @@ class MaterialRuntime: public MaterialProperties
 			shadow = x;
 		}
 
-		using MaterialProperties::getBlendingSfactor;
+		int getBlendingSFactor() const
+		{
+			return blendingSfactor;
+		}
 		int& getBlendingSFactor()
 		{
 			return blendingSfactor;
@@ -72,7 +75,10 @@ class MaterialRuntime: public MaterialProperties
 			blendingSfactor = x;
 		}
 
-		using MaterialProperties::getBlendingDfactor;
+		int getBlendingDFactor() const
+		{
+			return blendingDfactor;
+		}
 		int& getBlendingDFactor()
 		{
 			return blendingDfactor;

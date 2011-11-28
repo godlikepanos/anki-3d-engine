@@ -15,7 +15,7 @@ namespace anki {
 SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
 :	PatchNode(modelPatch_, SNF_NONE, parent)
 {
-	VboArray vboArr;
+	ModelPatch::VboArray vboArr;
 
 	for(uint i = 0; i < Mesh::VBOS_NUM; i++)
 	{
@@ -114,11 +114,9 @@ SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
 		sizeof(MeshData::VertexWeight),
 		BUFFER_OFFSET(20));
 
-	// Create the rendering VAOs
-	for(uint i = 0; i < PASS_TYPES_NUM; i++)
-	{
-		createVao(mtlRun, vboArr, vaos[i]);
-	}
+
+	ModelPatch::createVaos(getMaterialRuntime().getMaterial(),
+		vboArr, vaos, vaosHashMap);
 }
 
 

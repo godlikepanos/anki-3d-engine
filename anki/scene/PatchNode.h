@@ -23,16 +23,18 @@ class Material;
 class PatchNode: public RenderableNode
 {
 	public:
+		typedef boost::array<const Vbo*, Mesh::VBOS_NUM> VboArray;
+
 		PatchNode(const ModelPatch& modelPatch, ulong flags,
 			SceneNode& parent);
 
 		/// @name Accessors
 		/// @{
 
-		/// Implements RenderableNode::getMaterial
-		const Material& getMaterial() const
+		/// Implements RenderableNode::getVertIdsNum
+		uint getVertIdsNum(const PassLevelKey& k) const
 		{
-			return rsrc.getMaterial();
+			return rsrc.getMesh().getVertIdsNum();
 		}
 
 		/// Implements RenderableNode::getMaterialRuntime
@@ -47,7 +49,10 @@ class PatchNode: public RenderableNode
 			return *mtlRun;
 		}
 
-		const ModelPatch& getModelPatchRsrc() const {return rsrc;}
+		const ModelPatch& getModelPatchRsrc() const
+		{
+			return rsrc;
+		}
 		/// @}
 
 	protected:

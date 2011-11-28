@@ -24,6 +24,11 @@ class ModelPatchNode: public PatchNode
 			return &visibilityShapeWSpace;
 		}
 
+		/// Implements RenderableNode::getVao
+		const Vao& getVao(const PassLevelKey& k) const
+		{
+			return getModelPatchRsrc().getVao(k);
+		}
 
 		void init(const char*)
 		{}

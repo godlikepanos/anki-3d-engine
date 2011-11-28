@@ -182,10 +182,10 @@ void init()
 	pentagram->setLocalTransform(Transform(Vec3(2, 0, 0), Mat3::getIdentity(), 1.0));*/
 
 	// Sponza
-	ModelNode* sponza = new ModelNode(scene, SceneNode::SNF_NONE, NULL);
+	/*ModelNode* sponza = new ModelNode(scene, SceneNode::SNF_NONE, NULL);
 	//sponza->init("maps/sponza/sponza.mdl");
 	sponza->init("maps/sponza-crytek/sponza_crytek.mdl");
-	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));
+	sponza->setLocalTransform(Transform(Vec3(0.0), Mat3::getIdentity(), 0.05));*/
 
 
 	// Imp

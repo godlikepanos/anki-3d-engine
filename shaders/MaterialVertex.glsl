@@ -30,11 +30,8 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 /// @}
 
 
-
-//==============================================================================
-// main                                                                        =
-//==============================================================================
-void main()
+/// Calculate the position and the varyings
+void doVertex()
 {
 #if defined(COLOR_PASS)
 	vNormal = normalMat * normal;
@@ -47,3 +44,4 @@ void main()
 
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
+

@@ -190,7 +190,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		{
 			std::stringstream src;
 
-			src << "#define LEVEL_" << level << std::endl;
+			src << "#define LOD_" << level << std::endl;
 			src << "#define PASS_" << passes[pid] << std::endl;
 			src << mspc.getShaderProgramSource() << std::endl;
 
@@ -210,7 +210,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		}
 	}
 
-	populateVariables(pt.get_child("shaderProgram.inputs"));
+	populateVariables(pt.get_child("shaderProgram"));
 }
 
 
@@ -260,6 +260,11 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	{
 		BOOST_FOREACH(const ShaderProgramVariable& v, sProg->getVariables())
 		{
+			if(v.getType() != ShaderProgramVariable::T_UNIFORM)
+			{
+				continue;
+			}
+
 			allVarNames[v.getName()] = v.getGlDataType();
 		}
 	}
