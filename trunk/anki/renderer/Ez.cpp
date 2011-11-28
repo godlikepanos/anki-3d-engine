@@ -69,7 +69,7 @@ void Ez::run()
 
 	BOOST_FOREACH(const RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
-		r.getSceneDrawer().renderRenderableNode(*node, cam, DEPTH_PASS);
+		r.getSceneDrawer().renderRenderableNode(*node, cam, PassLevelKey(1, 0));
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

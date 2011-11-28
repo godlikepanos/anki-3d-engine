@@ -15,55 +15,58 @@ class ShaderProgram;
 /// Shader program variable. The type is attribute or uniform
 class ShaderProgramVariable: public boost::noncopyable
 {
-	public:
-		/// Shader var types
-		enum Type
-		{
-			T_ATTRIBUTE,
-			T_UNIFORM
-		};
+public:
+	/// Shader var types
+	enum Type
+	{
+		T_ATTRIBUTE,
+		T_UNIFORM
+	};
 
-		ShaderProgramVariable(GLint loc, const char* name,
-			GLenum glDataType, Type type,
-			const ShaderProgram& fatherSProg);
+	ShaderProgramVariable(GLint loc, const char* name,
+		GLenum glDataType, Type type,
+		const ShaderProgram& fatherSProg);
 
-		/// @name Accessors
-		/// @{
-		const ShaderProgram& getFatherSProg() const
-		{
-			return fatherSProg;
-		}
+	virtual ~ShaderProgramVariable()
+	{}
 
-		GLint getLocation() const
-		{
-			return loc;
-		}
+	/// @name Accessors
+	/// @{
+	const ShaderProgram& getFatherSProg() const
+	{
+		return fatherSProg;
+	}
 
-		const std::string& getName() const
-		{
-			return name;
-		}
+	GLint getLocation() const
+	{
+		return loc;
+	}
 
-		GLenum getGlDataType() const
-		{
-			return glDataType;
-		}
+	const std::string& getName() const
+	{
+		return name;
+	}
 
-		Type getType() const
-		{
-			return type;
-		}
-		/// @}
+	GLenum getGlDataType() const
+	{
+		return glDataType;
+	}
 
-	private:
-		GLint loc; ///< GL location
-		std::string name; ///< The name inside the shader program
-		/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
-		/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
-		GLenum glDataType;
-		Type type; ///< @ref ATTRIBUTE or @ref UNIFORM
-		/// We need the ShaderProg of this variable mainly for sanity checks
-		const ShaderProgram& fatherSProg;
+	Type getType() const
+	{
+		return type;
+	}
+	/// @}
+
+private:
+	GLint loc; ///< GL location
+	std::string name; ///< The name inside the shader program
+	/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
+	/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
+	GLenum glDataType;
+	Type type; ///< @ref ATTRIBUTE or @ref UNIFORM
+	/// We need the ShaderProg of this variable mainly for sanity checks
+	const ShaderProgram& fatherSProg;
 };
 
 

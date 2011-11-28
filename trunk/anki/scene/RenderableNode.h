@@ -27,9 +27,6 @@ class RenderableNode: public SceneNode
 		/// Get vert ids number for rendering
 		virtual uint getVertIdsNum(const PassLevelKey& k) const = 0;
 
-		/// Get the material resource
-		virtual const Material& getMaterial() const = 0;
-
 		/// Get the material runtime
 		virtual MaterialRuntime& getMaterialRuntime() = 0;
 

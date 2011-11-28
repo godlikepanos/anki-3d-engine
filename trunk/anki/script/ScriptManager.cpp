@@ -6,6 +6,7 @@
 #include <Python.h>
 
 
+using namespace boost;
 using namespace boost::python;
 
 

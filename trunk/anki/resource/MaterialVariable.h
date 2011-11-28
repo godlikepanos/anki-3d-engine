@@ -19,105 +19,105 @@ namespace anki {
 /// that share the same name
 class MaterialVariable
 {
-	public:
-		/// The type
-		enum Type
-		{
-			T_USER,
-			T_BUILDIN
-		};
+public:
+	/// The type
+	enum Type
+	{
+		T_USER,
+		T_BUILDIN
+	};
+
+	/// The data union (limited to a few types at the moment)
+	typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3,
+		Mat4, TextureResourcePointer> Variant;
+
+	/// Given a pair of pass and level it returns a pointer to a
+	/// shader program variable. The pointer may be null
+	typedef PassLevelHashMap<const ShaderProgramVariable*>::Type
+		PassLevelToShaderProgramVariableHashMap;
+
+	/// @name Constructors & destructor
+	/// @{
+
+	/// For build-ins
+	MaterialVariable(
+		const char* shaderProgVarName,
+		const PassLevelToShaderProgramHashMap& sProgs);
+
+	/// For user defined
+	template<typename Type>
+	MaterialVariable(
+		const char* shaderProgVarName,
+		const PassLevelToShaderProgramHashMap& sProgs,
+		const Type& val)
+	{
+		init(shaderProgVarName, sProgs);
+		ANKI_ASSERT(getShaderProgramVariableType() ==
+			ShaderProgramVariable::T_UNIFORM);
+		data = val;
+	}
+	/// @}
 		
-		/// The data union (limited to a few types at the moment)
-		typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3, 
-			Mat4, TextureResourcePointer> Variant;
+	/// @name Accessors
+	/// @{
+	Type getType() const
+	{
+		return type;
+	}
 
-		/// Given a pair of pass and level it returns a pointer to a
-		/// shader program variable. The pointer may be null
-		typedef PassLevelHashMap<const ShaderProgramVariable*>::Type
-			PassLevelToShaderProgramVariableHashMap;
+	const Variant& getVariant() const
+	{
+		return data;
+	}
 
-		/// @name Constructors & destructor
-		/// @{
-		
-		/// For build-ins
-		MaterialVariable(
-			const char* shaderProgVarName,
-			const PassLevelToShaderProgramHashMap& sProgs);
-			
-		/// For user defined
-		template<typename Type>
-		MaterialVariable(
-			const char* shaderProgVarName,
-			const PassLevelToShaderProgramHashMap& sProgs,
-			const Type& val)
-		{
-			init(shaderProgVarName, sProgs);
-			ANKI_ASSERT(getShaderProgramVariableType() ==
-				ShaderProgramVariable::T_UNIFORM);
-			data = val;
-		}
-		/// @}
-			
-		/// @name Accessors
-		/// @{
-		Type getType() const
-		{
-			return type;
-		}
+	/// XXX
+	const ShaderProgramVariable& getShaderProgramVariable(
+		const PassLevelKey& key) const
+	{
+		ANKI_ASSERT(inPass(key));
+		const ShaderProgramVariable* var =
+			sProgVars.at(key);
+		return *var;
+	}
 
-		const Variant& getVariant() const
-		{
-			return data;
-		}
+	/// Check if the shader program of the given pass and level needs
+	/// contains this variable or not
+	bool inPass(const PassLevelKey& key) const
+	{
+		return sProgVars.find(key) != sProgVars.end();
+	}
 
-		/// XXX
-		const ShaderProgramVariable& getShaderProgramVariable(
-			const PassLevelKey& key) const
-		{
-			ANKI_ASSERT(inPass(key));
-			const ShaderProgramVariable* var =
-				sProgVars.at(key);
-			return *var;
-		}
+	/// Get the GL data type of all the shader program variables
+	GLenum getGlDataType() const
+	{
+		return oneSProgVar->getGlDataType();
+	}
 
-		/// Check if the shader program of the given pass and level needs
-		/// contains this variable or not
-		bool inPass(const PassLevelKey& key) const
-		{
-			return sProgVars.find(key) != sProgVars.end();
-		}
+	/// Get the name of all the shader program variables
+	const std::string& getName() const
+	{
+		return oneSProgVar->getName();
+	}
 
-		/// Get the GL data type of all the shader program variables
-		GLenum getGlDataType() const
-		{
-			return oneSProgVar->getGlDataType();
-		}
+	/// Get the type of all the shader program variables
+	ShaderProgramVariable::Type getShaderProgramVariableType() const
+	{
+		return oneSProgVar->getType();
+	}
+	/// @}
 
-		/// Get the name of all the shader program variables
-		const std::string& getName() const
-		{
-			return oneSProgVar->getName();
-		}
+private:
+	Type type;
+	PassLevelToShaderProgramVariableHashMap sProgVars;
+	Variant data;
 
-		/// Get the type of all the shader program variables
-		ShaderProgramVariable::Type getShaderProgramVariableType() const
-		{
-			return oneSProgVar->getType();
-		}
-		/// @}
+	/// Keep one ShaderProgramVariable here for easy access of the common
+	/// variable stuff like name or GL data type etc
+	const ShaderProgramVariable* oneSProgVar;
 
-	private:
-		Type type;
-		PassLevelToShaderProgramVariableHashMap sProgVars;
-		Variant data;
-
-		/// Keep one ShaderProgramVariable here for easy access of the common
-		/// variable stuff like name or GL data type etc
-		const ShaderProgramVariable* oneSProgVar;
-
-		/// Common constructor code
-		void init(const char* shaderProgVarName,
-			const PassLevelToShaderProgramHashMap& shaderProgsArr);
+	/// Common constructor code
+	void init(const char* shaderProgVarName,
+		const PassLevelToShaderProgramHashMap& shaderProgsArr);
 };
 
 

@@ -52,10 +52,17 @@ class SkinPatchNode: public PatchNode
 		{
 			return tfVbos[i];
 		}
+
+		const Vao& getVao(const PassLevelKey& k) const
+		{
+			return *vaosHashMap.at(k);
+		}
 		/// @}
 
 	private:
-		/// VBOs that contain the deformed vertex attributes
+		ModelPatch::VaosContainer vaos;
+		ModelPatch::PassLevelToVaoHashMap vaosHashMap;
+
 		boost::array<Vbo, TFV_NUM> tfVbos;
 		Vao tfVao; ///< For TF passes
 };

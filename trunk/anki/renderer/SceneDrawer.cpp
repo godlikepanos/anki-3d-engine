@@ -19,10 +19,10 @@ namespace anki {
 //==============================================================================
 SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(
 	const MaterialRuntimeVariable& udvr_,
-	const Renderer& r_, PassType pt_, uint& texUnit_)
+	const Renderer& r_, const PassLevelKey& pt_, uint& texUnit_)
 :	udvr(udvr_),
 	r(r_),
-	pt(pt_),
+	key(pt_),
 	texUnit(texUnit_)
 {}
 
@@ -34,16 +34,20 @@ SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(
 template<typename Type>
 void SceneDrawer::UsrDefVarVisitor::operator()(const Type& x) const
 {
-	udvr.getMaterialUserVariable().getShaderProgramUniformVariable(pt).set(&x);
+	static_cast<const ShaderProgramUniformVariable&>(udvr.getMaterialVariable().
+		getShaderProgramVariable(key)).set(&x);
 }
 
 
-void SceneDrawer::UsrDefVarVisitor::operator()(const TextureResourcePointer* x) const
+void SceneDrawer::UsrDefVarVisitor::operator()(
+	const TextureResourcePointer* x) const
 {
 	const TextureResourcePointer& texPtr = *x;
 	texPtr->setRepeat(true);
-	udvr.getMaterialUserVariable().getShaderProgramUniformVariable(pt).
-		set(*texPtr, texUnit);
+
+	static_cast<const ShaderProgramUniformVariable&>(udvr.getMaterialVariable().
+		getShaderProgramVariable(key)).set(*texPtr, texUnit);
+
 	++texUnit;
 }
 
@@ -53,13 +57,13 @@ void SceneDrawer::UsrDefVarVisitor::operator()(const TextureResourcePointer* x) 
 //==============================================================================
 void SceneDrawer::setupShaderProg(
 	const MaterialRuntime& mtlr,
-	PassType pt,
+	const PassLevelKey& pt,
 	const Transform& nodeWorldTransform,
 	const Camera& cam,
 	const Renderer& r,
 	float blurring)
 {
-	typedef MaterialBuildinVariable Mvb; // Short name
+	typedef MaterialVariable Mvb; // Short name
 	uint textureUnit = 0;
 	GlStateMachine& gl = GlStateMachineSingleton::get();
 	const Material& mtl = mtlr.getMaterial();
@@ -99,9 +103,9 @@ void SceneDrawer::setupShaderProg(
 	Mat4 modelViewProjectionMat;
 
 	// should I calculate the modelViewMat ?
-	if(mtl.buildinVariableExits(Mvb::MV_MODELVIEW_MAT, pt) ||
-		mtl.buildinVariableExits(Mvb::MV_MODELVIEWPROJECTION_MAT, pt) ||
-		mtl.buildinVariableExits(Mvb::MV_NORMAL_MAT, pt))
+	if(mtl.variableExistsAndInKey("modelViewMat", pt) ||
+		mtl.variableExistsAndInKey("modeViewProjectionMat", pt) ||
+		mtl.variableExistsAndInKey("normalMat", pt))
 	{
 		// Optimization
 		modelViewMat = (modelMat == Mat4::getIdentity()) ? viewMat :
@@ -109,99 +113,99 @@ void SceneDrawer::setupShaderProg(
 	}
 
 	// set matrices
-	if(mtl.buildinVariableExits(Mvb::MV_MODEL_MAT, pt))
+	if(mtl.variableExistsAndInKey("modelMat", pt))
 	{
-		mtl.getBuildinVariable(Mvb::MV_MODEL_MAT).
-			getShaderProgramUniformVariable(pt).set(&modelMat);
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelMat").
+			getShaderProgramVariable(pt)).set(&modelMat);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_VIEW_MAT, pt))
+	if(mtl.variableExistsAndInKey("viewMat", pt))
 	{
-		mtl.getBuildinVariable(Mvb::MV_VIEW_MAT).
-			getShaderProgramUniformVariable(pt).set(&viewMat);
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("viewMat").
+			getShaderProgramVariable(pt)).set(&viewMat);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_PROJECTION_MAT, pt))
+	if(mtl.variableExistsAndInKey("projectionMat", pt))
 	{
-		mtl.getBuildinVariable(Mvb::MV_PROJECTION_MAT).
-			getShaderProgramUniformVariable(pt).set(&projectionMat);
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("projectionMat").
+			getShaderProgramVariable(pt)).set(&projectionMat);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_MODELVIEW_MAT, pt))
+	if(mtl.variableExistsAndInKey("modelViewMat", pt))
 	{
-		mtl.getBuildinVariable(Mvb::MV_MODELVIEW_MAT).
-			getShaderProgramUniformVariable(pt).set(&modelViewMat);
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelMat").
+			getShaderProgramVariable(pt)).set(&modelViewMat);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_VIEWPROJECTION_MAT, pt))
+	if(mtl.variableExistsAndInKey("viewProjectionMat", pt))
 	{
-		mtl.getBuildinVariable(Mvb::MV_VIEWPROJECTION_MAT).
-			getShaderProgramUniformVariable(pt).set(&r.getViewProjectionMat());
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("viewProjectionMat").
+			getShaderProgramVariable(pt)).set(&r.getViewProjectionMat());
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_NORMAL_MAT, pt))
+	if(mtl.variableExistsAndInKey("normalMat", pt))
 	{
 		normalMat = modelViewMat.getRotationPart();
 
-		mtl.getBuildinVariable(Mvb::MV_NORMAL_MAT).
-			getShaderProgramUniformVariable(pt).set(&normalMat);
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("normalMat").
+			getShaderProgramVariable(pt)).set(&normalMat);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_MODELVIEWPROJECTION_MAT, pt))
+	if(mtl.variableExistsAndInKey("modelViewProjectionMat", pt))
 	{
 		modelViewProjectionMat = projectionMat * modelViewMat;
 
-		mtl.getBuildinVariable(Mvb::MV_MODELVIEWPROJECTION_MAT).
-			getShaderProgramUniformVariable(pt).set(&modelViewProjectionMat);
+		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelViewProjectionMat").
+			getShaderProgramVariable(pt)).set(&modelViewProjectionMat);
 	}
 
 
 	//
 	// FAis
 	//
-	if(mtl.buildinVariableExits(Mvb::MV_MS_NORMAL_FAI, pt))
+	/*if(mtl.variableExistsAndInKey(Mvb::MV_MS_NORMAL_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_MS_NORMAL_FAI).
 			getShaderProgramUniformVariable(pt).set(
 			r.getMs().getNormalFai(), textureUnit++);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_MS_DIFFUSE_FAI, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_MS_DIFFUSE_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_MS_DIFFUSE_FAI).
 			getShaderProgramUniformVariable(pt).set(
 			r.getMs().getDiffuseFai(), textureUnit++);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_MS_SPECULAR_FAI, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_MS_SPECULAR_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_MS_SPECULAR_FAI).
 			getShaderProgramUniformVariable(pt).set(
 			r.getMs().getSpecularFai(), textureUnit++);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_MS_DEPTH_FAI, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_MS_DEPTH_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_MS_DEPTH_FAI).
 			getShaderProgramUniformVariable(pt).set(
 			r.getMs().getDepthFai(), textureUnit++);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_IS_FAI, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_IS_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_IS_FAI).
 			getShaderProgramUniformVariable(pt).set(
 			r.getIs().getFai(), textureUnit++);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_PPS_PRE_PASS_FAI, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_PPS_PRE_PASS_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_PPS_PRE_PASS_FAI).
 			getShaderProgramUniformVariable(pt).set(
 			r.getPps().getPrePassFai(), textureUnit++);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_PPS_POST_PASS_FAI, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_PPS_POST_PASS_FAI, pt))
 	{
 		mtl.getBuildinVariable(Mvb::MV_PPS_POST_PASS_FAI).
 			getShaderProgramUniformVariable(pt).set(
@@ -212,28 +216,28 @@ void SceneDrawer::setupShaderProg(
 	//
 	// Other
 	//
-	if(mtl.buildinVariableExits(Mvb::MV_RENDERER_SIZE, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_RENDERER_SIZE, pt))
 	{
 		Vec2 v(r.getWidth(), r.getHeight());
 		mtl.getBuildinVariable(Mvb::MV_RENDERER_SIZE).
 			getShaderProgramUniformVariable(pt).set(&v);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_SCENE_AMBIENT_COLOR, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_SCENE_AMBIENT_COLOR, pt))
 	{
 		Vec3 col(SceneSingleton::get().getAmbientColor());
 		mtl.getBuildinVariable(Mvb::MV_SCENE_AMBIENT_COLOR).
 			getShaderProgramUniformVariable(pt).set(&col);
 	}
 
-	if(mtl.buildinVariableExits(Mvb::MV_BLURRING, pt))
+	if(mtl.variableExistsAndInKey(Mvb::MV_BLURRING, pt))
 	{
-		/*blurring *= 10.0;
-		ANKI_INFO(blurring);*/
+		blurring *= 10.0;
+		ANKI_INFO(blurring);
 		float b = blurring;
 		mtl.getBuildinVariable(Mvb::MV_BLURRING).
 			getShaderProgramUniformVariable(pt).set(&b);
-	}
+	}*/
 
 
 	//
@@ -241,7 +245,9 @@ void SceneDrawer::setupShaderProg(
 	//
 	BOOST_FOREACH(const MaterialRuntimeVariable& udvr, mtlr.getVariables())
 	{
-		if(!udvr.getMaterialUserVariable().inPass(pt))
+		if(!udvr.getMaterialVariable().inPass(pt) ||
+			udvr.getMaterialVariable().getShaderProgramVariableType() ==
+				ShaderProgramVariable::T_ATTRIBUTE)
 		{
 			continue;
 		}
@@ -258,14 +264,14 @@ void SceneDrawer::setupShaderProg(
 // renderRenderableNode                                                        =
 //==============================================================================
 void SceneDrawer::renderRenderableNode(const RenderableNode& node,
-	const Camera& cam, PassType pt) const
+	const Camera& cam, const PassLevelKey& key) const
 {
 	float blurring = 0.0;
 	const MaterialRuntime& mtlr = node.getMaterialRuntime();
 	const Material& mtl = mtlr.getMaterial();
 
 	// Calc the blur if needed
-	if(mtl.buildinVariableExits(MaterialBuildinVariable::MV_BLURRING, pt))
+	if(mtl.variableExistsAndInKey("blurring", key))
 	{
 		float prev = (node.getPrevWorldTransform().getOrigin() -
 			cam.getPrevWorldTransform().getOrigin()).getLength();
@@ -276,10 +282,10 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& node,
 		blurring = abs(crnt - prev);
 	}
 
-	setupShaderProg(mtlr, pt, node.getWorldTransform(), cam, r, blurring);
-	node.getVao(pt).bind();
-	glDrawElements(GL_TRIANGLES, node.getVertIdsNum(), GL_UNSIGNED_SHORT, 0);
-	node.getVao(pt).unbind();
+	setupShaderProg(mtlr, key, node.getWorldTransform(), cam, r, blurring);
+	node.getVao(key).bind();
+	glDrawElements(GL_TRIANGLES, node.getVertIdsNum(key), GL_UNSIGNED_SHORT, 0);
+	node.getVao(key).unbind();
 }
 
 
