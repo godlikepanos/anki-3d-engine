@@ -11,23 +11,23 @@ namespace anki {
 /// Change the scene color
 class SceneColorEvent: public Event
 {
-	public:
-		/// Constructor
-		SceneColorEvent(float startTime, float duration,
-			const Vec3& finalColor);
+public:
+	/// Constructor
+	SceneColorEvent(float startTime, float duration,
+		const Vec3& finalColor);
 
-		/// Copy constructor
-		SceneColorEvent(const SceneColorEvent& b);
+	/// Copy constructor
+	SceneColorEvent(const SceneColorEvent& b);
 
-		/// Copy
-		SceneColorEvent& operator=(const SceneColorEvent& b);
+	/// Copy
+	SceneColorEvent& operator=(const SceneColorEvent& b);
 
-	private:
-		Vec3 originalColor; ///< Original scene color. The constructor sets it
-		Vec3 finalColor;
+private:
+	Vec3 originalColor; ///< Original scene color. The constructor sets it
+	Vec3 finalColor;
 
-		/// Implements Event::updateSp
-		void updateSp(float prevUpdateTime, float crntTime);
+	/// Implements Event::updateSp
+	void updateSp(float prevUpdateTime, float crntTime);
 };
 
 

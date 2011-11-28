@@ -3,6 +3,7 @@
 #include "anki/util/Exception.h"
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 
 
 namespace anki {

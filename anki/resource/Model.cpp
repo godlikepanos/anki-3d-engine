@@ -9,6 +9,7 @@
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/MeshData.h"
 #include "anki/resource/Skeleton.h"
+#include <boost/foreach.hpp>
 
 
 namespace anki {

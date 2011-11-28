@@ -14,28 +14,28 @@ namespace anki {
 /// that it is slow and its not recommended for use in production code.
 class TimeQuery
 {
-	public:
-		TimeQuery();
-		~TimeQuery();
+public:
+	TimeQuery();
+	~TimeQuery();
 
-		/// Begin
-		void begin();
+	/// Begin
+	void begin();
 
-		/// End and get elapsed time. In seconds
-		double end();
+	/// End and get elapsed time. In seconds
+	double end();
 
-	private:
-		/// The query state
-		enum State
-		{
-			S_CREATED,
-			S_STARTED,
-			S_ENDED
-		};
+private:
+	/// The query state
+	enum State
+	{
+		S_CREATED,
+		S_STARTED,
+		S_ENDED
+	};
 
-		boost::array<GLuint, 2> glIds; ///< GL IDs
-		State state; ///< The query state. It saves us from improper use of the
-		             ///< the class
+	boost::array<GLuint, 2> glIds; ///< GL IDs
+	/// The query state. It saves us from improper use of the the class
+	State state;
 };
 
 

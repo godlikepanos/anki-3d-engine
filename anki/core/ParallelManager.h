@@ -12,41 +12,41 @@ namespace anki {
 /// The job manager
 class ParallelManager
 {
-	public:
-		/// Default constructor
-		ParallelManager()
-		{}
+public:
+	/// Default constructor
+	ParallelManager()
+	{}
 
-		/// Constructor #2
-		ParallelManager(uint threadsNum)
-		{
-			init(threadsNum);
-		}
+	/// Constructor #2
+	ParallelManager(uint threadsNum)
+	{
+		init(threadsNum);
+	}
 
-		/// Init the manager
-		void init(uint threadsNum);
+	/// Init the manager
+	void init(uint threadsNum);
 
-		/// Assign a job to a working thread
-		void assignNewJob(uint jobId, ParallelJobCallback callback,
-			ParallelJobParameters& jobParams)
-		{
-			jobs[jobId].assignNewJob(callback, jobParams);
-		}
+	/// Assign a job to a working thread
+	void assignNewJob(uint jobId, ParallelJobCallback callback,
+		ParallelJobParameters& jobParams)
+	{
+		jobs[jobId].assignNewJob(callback, jobParams);
+	}
 
-		/// Wait for all jobs to finish
-		void waitForAllJobsToFinish()
-		{
-			barrier->wait();
-		}
+	/// Wait for all jobs to finish
+	void waitForAllJobsToFinish()
+	{
+		barrier->wait();
+	}
 
-		uint getThreadsNum() const
-		{
-			return jobs.size();
-		}
+	uint getThreadsNum() const
+	{
+		return jobs.size();
+	}
 
-	private:
-		boost::ptr_vector<ParallelJob> jobs; ///< Worker threads
-		boost::scoped_ptr<boost::barrier> barrier; ///< Synchronization barrier
+private:
+	boost::ptr_vector<ParallelJob> jobs; ///< Worker threads
+	boost::scoped_ptr<boost::barrier> barrier; ///< Synchronization barrier
 };
 
 

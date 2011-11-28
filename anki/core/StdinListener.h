@@ -15,19 +15,19 @@ namespace anki {
 /// in a queue
 class StdinListener
 {
-	public:
-		/// Get line from the queue or return an empty string
-		std::string getLine();
+public:
+	/// Get line from the queue or return an empty string
+	std::string getLine();
 
-		/// Start reading
-		void start();
+	/// Start reading
+	void start();
 
-	private:
-		std::queue<std::string> q;
-		boost::mutex mtx; ///< Protect the queue
-		boost::thread thrd; ///< The thread
+private:
+	std::queue<std::string> q;
+	boost::mutex mtx; ///< Protect the queue
+	boost::thread thrd; ///< The thread
 
-		void workingFunc(); ///< The thread function
+	void workingFunc(); ///< The thread function
 };
 
 

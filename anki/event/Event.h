@@ -19,62 +19,65 @@ enum EventType
 /// Abstract class for all events. All Event derived classes should be copy-able
 class Event
 {
-	public:
-		/// Constructor
-		Event(EventType type, float startTime, float duration);
+public:
+	/// Constructor
+	Event(EventType type, float startTime, float duration);
 
-		/// Copy constructor
-		Event(const Event& b) {*this = b;}
+	/// Copy constructor
+	Event(const Event& b)
+	{
+		*this = b;
+	}
 
-		/// @name Accessors
-		/// @{
-		float getStartTime() const
-		{
-			return startTime;
-		}
+	/// @name Accessors
+	/// @{
+	float getStartTime() const
+	{
+		return startTime;
+	}
 
-		float getDuration() const
-		{
-			return duration;
-		}
+	float getDuration() const
+	{
+		return duration;
+	}
 
-		EventType getEventType() const
-		{
-			return type;
-		}
+	EventType getEventType() const
+	{
+		return type;
+	}
 
-		bool isDead(float crntTime) const
-		{
-			return crntTime >= startTime + duration;
-		}
-		/// @}
+	bool isDead(float crntTime) const
+	{
+		return crntTime >= startTime + duration;
+	}
+	/// @}
 
-		/// Copy
-		Event& operator=(const Event& b);
+	/// Copy
+	Event& operator=(const Event& b);
 
-		/// @param[in] prevUpdateTime The time of the previous update (sec)
-		/// @param[in] crntTime The current time (sec)
-		void update(float prevUpdateTime, float crntTime);
+	/// @param[in] prevUpdateTime The time of the previous update (sec)
+	/// @param[in] crntTime The current time (sec)
+	void update(float prevUpdateTime, float crntTime);
 
-	protected:
-		/// This method should be implemented by the derived classes
-		virtual void updateSp(float prevUpdateTime, float crntTime) = 0;
+protected:
+	/// This method should be implemented by the derived classes
+	virtual void updateSp(float prevUpdateTime, float crntTime) = 0;
 
-		/// Linear interpolation between values
-		/// @param[in] from Starting value
-		/// @param[in] to Ending value
-		/// @param[in] delta The percentage from the from "from" value. Values
-		/// from [0.0, 1.0]
-		template<typename Type>
-		static Type interpolate(const Type& from, const Type& to, float delta)
-		{
-			return from * (1.0 - delta) + to * delta;
-		}
+	/// Linear interpolation between values
+	/// @param[in] from Starting value
+	/// @param[in] to Ending value
+	/// @param[in] delta The percentage from the from "from" value. Values
+	/// from [0.0, 1.0]
+	template<typename Type>
+	static Type interpolate(const Type& from, const Type& to, float delta)
+	{
+		return from * (1.0 - delta) + to * delta;
+	}
 
-	private:
-		EventType type; ///< Self explanatory
-		float startTime; ///< The time the event will start. Eg 23:00
-		float duration; ///< The duration of the event
+private:
+	EventType type; ///< Self explanatory
+	float startTime; ///< The time the event will start. Eg 23:00
+	float duration; ///< The duration of the event
 };
 
 

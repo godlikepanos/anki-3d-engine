@@ -12,31 +12,43 @@ namespace anki {
 /// object that has not created dynamically
 class Object
 {
-	public:
-		typedef std::vector<Object*> Container;
+public:
+	typedef std::vector<Object*> Container;
 
-		/// Calls addChild if parent is not NULL
-		/// @exception Exception
-		Object(Object* parent);
+	/// Calls addChild if parent is not NULL
+	/// @exception Exception
+	Object(Object* parent);
 
-		/// Delete childs from the last entered to the first and update parent
-		virtual ~Object();
+	/// Delete childs from the last entered to the first and update parent
+	virtual ~Object();
 
-	protected:
-		/// @name Accessors
-		/// @{
-		const Object* getObjParent() const {return objParent;}
-		Object* getObjParent() {return objParent;}
-		const Container& getObjChildren() const {return objChilds;}
-		Container& getObjChildren() {return objChilds;}
-		/// @}
+protected:
+	/// @name Accessors
+	/// @{
+	const Object* getObjParent() const
+	{
+		return objParent;
+	}
+	Object* getObjParent()
+	{
+		return objParent;
+	}
+	const Container& getObjChildren() const
+	{
+		return objChilds;
+	}
+	Container& getObjChildren()
+	{
+		return objChilds;
+	}
+	/// @}
 
-		void addChild(Object* child);
-		void removeChild(Object* child);
+	void addChild(Object* child);
+	void removeChild(Object* child);
 
-	private:
-		Object* objParent; ///< May be nullptr
-		Container objChilds;
+private:
+	Object* objParent; ///< May be nullptr
+	Container objChilds;
 };
 
 
