@@ -20,7 +20,7 @@ class MeshBase
 	public:
 		MeshBase()
 		{
-			pVbo = nVbo = tVbo = vwVbo = NULL;
+			pVbo = nVbo = tVbo = wVbo = NULL;
 		}
 
 		virtual ~MeshBase()
@@ -92,12 +92,12 @@ class MeshBase
 		/// @{
 		bool hasTexCoords() const
 		{
-			return texVbo != NULL;
+			return texVbo.size() > 0;
 		}
 
 		bool hasWeights() const
 		{
-			return vwVbo != NULL;
+			return wVbo != NULL;
 		}
 		/// @}
 
@@ -107,7 +107,7 @@ class MeshBase
 		Vbo* tVbo; ///< Mandatory
 		std::vector<Vbo*> texVbo; ///< Optional. Tex coords per channel
 		std::vector<Vbo*> iVbo; ///< Mandatory. Indices VBO per LOD
-		Vbo* vwVbo; ///< Optional
+		Vbo* wVbo; ///< Optional
 
 		std::vector<uint> idsNum; ///< Indices count per LOD
 		std::vector<uint> vertsNum; ///< Vertex count per LOD

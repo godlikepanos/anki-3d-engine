@@ -3,6 +3,7 @@
 #include "anki/core/App.h"
 #include "anki/scene/Scene.h"
 #include "anki/renderer/RendererInitializer.h"
+#include <boost/foreach.hpp>
 
 
 namespace anki {

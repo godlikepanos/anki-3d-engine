@@ -122,9 +122,10 @@ void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
 	points[RTB] = 2.0 * points[LTF].dot(yAxis) * yAxis - points[LTF];
 	points[RBF] = 2.0 * points[LTF].dot(zAxis) * zAxis - points[LTF];
 
-	BOOST_FOREACH(Vec3& point, points)
+	boost::array<Vec3, 8>::iterator it = points.begin();
+	for(; it != points.end(); ++it)
 	{
-		point += center;
+		(*it) += center;
 	}
 }
 

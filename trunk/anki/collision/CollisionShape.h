@@ -14,70 +14,70 @@ namespace anki {
 /// Abstract class for collision shapes
 class CollisionShape
 {
+public:
+	/// Collision shape type
+	enum CollisionShapeType
+	{
+		CST_LINE_SEG,
+		CST_RAY,
+		CST_PLANE,
+		CST_SPHERE,
+		CST_AABB,
+		CST_OBB,
+		CST_PERSPECTIVE_CAMERA_FRUSTRUM
+	};
+
+	/// Generic mutable visitor
+	class MutableVisitor
+	{
 	public:
-		/// Collision shape type
-		enum CollisionShapeType
-		{
-			CST_LINE_SEG,
-			CST_RAY,
-			CST_PLANE,
-			CST_SPHERE,
-			CST_AABB,
-			CST_OBB,
-			CST_PERSPECTIVE_CAMERA_FRUSTRUM
-		};
+		virtual void visit(LineSegment&) = 0;
+		virtual void visit(Obb&) = 0;
+		virtual void visit(PerspectiveCameraShape&) = 0;
+		virtual void visit(Plane&) = 0;
+		virtual void visit(Ray&) = 0;
+		virtual void visit(Sphere&) = 0;
+		virtual void visit(Aabb&) = 0;
+	};
 
-		/// Generic mutable visitor
-		class MutableVisitor
-		{
-			public:
-				virtual void visit(LineSegment&) = 0;
-				virtual void visit(Obb&) = 0;
-				virtual void visit(PerspectiveCameraShape&) = 0;
-				virtual void visit(Plane&) = 0;
-				virtual void visit(Ray&) = 0;
-				virtual void visit(Sphere&) = 0;
-				virtual void visit(Aabb&) = 0;
-		};
+	/// Generic const visitor
+	class ConstVisitor
+	{
+	public:
+		virtual void visit(const LineSegment&) = 0;
+		virtual void visit(const Obb&) = 0;
+		virtual void visit(const PerspectiveCameraShape&) = 0;
+		virtual void visit(const Plane&) = 0;
+		virtual void visit(const Ray&) = 0;
+		virtual void visit(const Sphere&) = 0;
+		virtual void visit(const Aabb&) = 0;
+	};
 
-		/// Generic const visitor
-		class ConstVisitor
-		{
-			public:
-				virtual void visit(const LineSegment&) = 0;
-				virtual void visit(const Obb&) = 0;
-				virtual void visit(const PerspectiveCameraShape&) = 0;
-				virtual void visit(const Plane&) = 0;
-				virtual void visit(const Ray&) = 0;
-				virtual void visit(const Sphere&) = 0;
-				virtual void visit(const Aabb&) = 0;
-		};
+	CollisionShape(CollisionShapeType cid_)
+		: cid(cid_)
+	{}
 
-		CollisionShape(CollisionShapeType cid_)
-		:	cid(cid_)
-		{}
+	CollisionShapeType getCollisionShapeType() const
+	{
+		return cid;
+	}
 
-		CollisionShapeType getCollisionShapeType() const
-		{
-			return cid;
-		}
+	/// Visitor accept
+	virtual void accept(MutableVisitor& v) = 0;
+	/// Visitor accept
+	virtual void accept(ConstVisitor& v) const = 0;
 
-		/// Visitor accept
-		virtual void accept(MutableVisitor& v) = 0;
-		/// Visitor accept
-		virtual void accept(ConstVisitor& v) const = 0;
+	/// If the collision shape intersects with the plane then the method
+	/// returns 0.0, else it returns the distance. If the distance is < 0.0
+	/// then the collision shape lies behind the plane and if > 0.0 then
+	/// in front of it
+	virtual float testPlane(const Plane& p) const = 0;
 
-		/// If the collision shape intersects with the plane then the method
-		/// returns 0.0, else it returns the distance. If the distance is < 0.0
-		/// then the collision shape lies behind the plane and if > 0.0 then
-		/// in front of it
-		virtual float testPlane(const Plane& p) const = 0;
+	/// Transform
+	virtual void transform(const Transform& trf) = 0;
 
-		/// Transform
-		virtual void transform(const Transform& trf) = 0;
-
-	private:
-		CollisionShapeType cid;
+private:
+	CollisionShapeType cid;
 };
 /// @}
 

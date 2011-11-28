@@ -9,6 +9,7 @@
 #include "anki/scene/MaterialRuntime.h"
 #include "anki/scene/MaterialRuntimeVariable.h"
 #include "anki/gl/GlStateMachine.h"
+#include <boost/foreach.hpp>
 
 
 namespace anki {

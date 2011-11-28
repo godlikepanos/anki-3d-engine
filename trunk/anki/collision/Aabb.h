@@ -14,93 +14,89 @@ namespace anki {
 /// Axis align bounding box collision shape
 class Aabb: public CollisionShape
 {
-	public:
-		/// @name Constructors
-		/// @{
-		Aabb()
-		:	CollisionShape(CST_AABB)
-		{}
+public:
+	/// @name Constructors
+	/// @{
+	Aabb()
+		: CollisionShape(CST_AABB)
+	{}
 
-		Aabb(const Vec3& min_, const Vec3& max_)
-		:	CollisionShape(CST_AABB),
-			min(min_),
-			max(max_)
-		{
-			ANKI_ASSERT(min < max);
-		}
+	Aabb(const Vec3& min_, const Vec3& max_)
+		: CollisionShape(CST_AABB), min(min_), max(max_)
+	{
+		ANKI_ASSERT(min < max);
+	}
 
-		Aabb(const Aabb& b)
-		:	CollisionShape(CST_AABB),
-		 	min(b.min),
-		 	max(b.max)
-		{}
-		/// @}
+	Aabb(const Aabb& b)
+		: CollisionShape(CST_AABB), min(b.min), max(b.max)
+	{}
+	/// @}
 
-		/// @name Accessors
-		/// @{
-		const Vec3& getMin() const
-		{
-			return min;
-		}
-		Vec3& getMin()
-		{
-			return min;
-		}
-		void setMin(const Vec3& x)
-		{
-			min = x;
-		}
+	/// @name Accessors
+	/// @{
+	const Vec3& getMin() const
+	{
+		return min;
+	}
+	Vec3& getMin()
+	{
+		return min;
+	}
+	void setMin(const Vec3& x)
+	{
+		min = x;
+	}
 
-		const Vec3& getMax() const
-		{
-			return max;
-		}
-		Vec3& getMax()
-		{
-			return max;
-		}
-		void setMax(const Vec3& x)
-		{
-			max = x;
-		}
-		/// @}
+	const Vec3& getMax() const
+	{
+		return max;
+	}
+	Vec3& getMax()
+	{
+		return max;
+	}
+	void setMax(const Vec3& x)
+	{
+		max = x;
+	}
+	/// @}
 
-		/// Implements CollisionShape::accept
-		void accept(MutableVisitor& v)
-		{
-			v.visit(*this);
-		}
-		/// Implements CollisionShape::accept
-		void accept(ConstVisitor& v) const
-		{
-			v.visit(*this);
-		}
+	/// Implements CollisionShape::accept
+	void accept(MutableVisitor& v)
+	{
+		v.visit(*this);
+	}
+	/// Implements CollisionShape::accept
+	void accept(ConstVisitor& v) const
+	{
+		v.visit(*this);
+	}
 
-		/// Implements CollisionShape::testPlane
-		float testPlane(const Plane& p) const;
+	/// Implements CollisionShape::testPlane
+	float testPlane(const Plane& p) const;
 
-		/// Implements CollisionShape::transform
-		void transform(const Transform& trf)
-		{
-			*this = getTransformed(trf);
-		}
+	/// Implements CollisionShape::transform
+	void transform(const Transform& trf)
+	{
+		*this = getTransformed(trf);
+	}
 
-		Aabb getTransformed(const Transform& transform) const;
+	Aabb getTransformed(const Transform& transform) const;
 
-		/// Get a collision shape that includes this and the given. Its not
-		/// very accurate
-		Aabb getCompoundShape(const Aabb& b) const;
+	/// Get a collision shape that includes this and the given. Its not
+	/// very accurate
+	Aabb getCompoundShape(const Aabb& b) const;
 
-		/// Calculate from a set of points
-		template<typename Container>
-		void set(const Container& container);
+	/// Calculate from a set of points
+	template<typename Container>
+	void set(const Container& container);
 
-	private:
-		/// @name Data
-		/// @{
-		Vec3 min;
-		Vec3 max;
-		/// @}
+private:
+	/// @name Data
+	/// @{
+	Vec3 min;
+	Vec3 max;
+	/// @}
 };
 /// @}
 
