@@ -21,137 +21,129 @@ class Image;
 /// @note The last texture unit is reserved and you cannot use it
 class Texture
 {
-	public:
-		enum TextureFilteringType
-		{
-			TFT_NEAREST,
-			TFT_LINEAR,
-			TFT_TRILINEAR
-		};
+public:
+	enum TextureFilteringType
+	{
+		TFT_NEAREST,
+		TFT_LINEAR,
+		TFT_TRILINEAR
+	};
 
-		enum DataCompression
-		{
-			DC_NONE,
-			DC_DXT1,
-			DC_DXT3,
-			DC_DXT5
-		};
+	enum DataCompression
+	{
+		DC_NONE,
+		DC_DXT1,
+		DC_DXT3,
+		DC_DXT5
+	};
 
-		/// Texture initializer struct
-		struct Initializer
-		{
-			float width;
-			float height;
-			int internalFormat;
-			int format;
-			uint type;
-			const void* data;
-			bool mipmapping;
-			TextureFilteringType filteringType;
-			bool repeat;
-			int anisotropyLevel;
-			DataCompression dataCompression;
-			size_t dataSize; ///< For compressed textures
-		};
+	/// Texture initializer struct
+	struct Initializer
+	{
+		float width;
+		float height;
+		int internalFormat;
+		int format;
+		uint type;
+		const void* data;
+		bool mipmapping;
+		TextureFilteringType filteringType;
+		bool repeat;
+		int anisotropyLevel;
+		DataCompression dataCompression;
+		size_t dataSize; ///< For compressed textures
+	};
 
-		/// Default constructor
-		Texture();
+	/// Default constructor
+	Texture();
 
-		/// Desrcuctor
-		~Texture();
+	/// Desrcuctor
+	~Texture();
 
 
-		/// @name Accessors
-		/// @{
-		uint getGlId() const;
-		uint getInternalFormat() const;
-		uint getFormat() const;
-		uint getType() const;
-		static int& getTextureUnitsNum() {return textureUnitsNum;}
-		/// @}
+	/// @name Accessors
+	/// @{
+	uint getGlId() const
+	{
+		ANKI_ASSERT(isLoaded());
+		return glId;
+	}
 
-		/// @name Create tex funcs
-		/// @{
+	uint getInternalFormat() const
+	{
+		ANKI_ASSERT(isLoaded());
+		return internalFormat;
+	}
 
-		/// Implements Resource::load
-		/// @exception Exception
-		void load(const char* filename);
-		
-		/// @exception Exception
-		void load(const Image& img);
+	uint getFormat() const
+	{
+		ANKI_ASSERT(isLoaded());
+		return format;
+	}
 
-		/// Create a texture
-		void create(const Initializer& init);
-		/// @}
+	uint getType() const
+	{
+		ANKI_ASSERT(isLoaded());
+		return type;
+	}
 
-		void bind(uint texUnit = 0) const;
-		void setRepeat(bool repeat) const;
-		void setFiltering(TextureFilteringType filterType);
-		void setAnisotropy(uint level);
-		void setMipmapLevel(uint level);
-		void genMipmap();
-		int getWidth(uint level = 0) const;
-		int getHeight(uint level = 0) const;
-		int getBaseLevel() const;
-		int getMaxLevel() const;
-		static uint getActiveTexUnit();
-		static uint getBindedTexId(uint unit);
+	static int& getTextureUnitsNum()
+	{
+		return textureUnitsNum;
+	}
+	/// @}
 
-	private:
-		uint glId; ///< Identification for OGL
-		uint target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-		uint internalFormat; ///< GL_COMPRESSED_RED, GL_RGB16 etc
-		uint format; ///< GL_RED, GL_RG, GL_RGB etc
-		uint type; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
+	/// @name Create tex funcs
+	/// @{
 
-		/// @name Variables set by the renderer
-		/// Set upon OpenGL initialization
-		/// @{
-		static int  textureUnitsNum;
-		static bool mipmappingEnabled;
-		static bool compressionEnabled;
-		static int  anisotropyLevel;
-		/// @}
+	/// Implements Resource::load
+	/// @exception Exception
+	void load(const char* filename);
 
-		void setTexParameter(uint paramName, int value) const;
-		void setTexParameter(uint paramName, float value) const;
+	/// @exception Exception
+	void load(const Image& img);
 
-		bool isLoaded() const;
+	/// Create a texture
+	void create(const Initializer& init);
+	/// @}
+
+	void bind(uint texUnit = 0) const;
+	void setRepeat(bool repeat) const;
+	void setFiltering(TextureFilteringType filterType);
+	void setAnisotropy(uint level);
+	void setMipmapLevel(uint level);
+	void genMipmap();
+	int getWidth(uint level = 0) const;
+	int getHeight(uint level = 0) const;
+	int getBaseLevel() const;
+	int getMaxLevel() const;
+	static uint getActiveTexUnit();
+	static uint getBindedTexId(uint unit);
+
+private:
+	uint glId; ///< Identification for OGL
+	uint target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+	uint internalFormat; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+	uint format; ///< GL_RED, GL_RG, GL_RGB etc
+	uint type; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
+
+	/// @name Variables set by the renderer
+	/// Set upon OpenGL initialization
+	/// @{
+	static int  textureUnitsNum;
+	static bool mipmappingEnabled;
+	static bool compressionEnabled;
+	static int  anisotropyLevel;
+	/// @}
+
+	void setTexParameter(uint paramName, int value) const;
+	void setTexParameter(uint paramName, float value) const;
+
+	bool isLoaded() const
+	{
+		return glId != std::numeric_limits<uint>::max();
+	}
 };
-
-
-inline uint Texture::getGlId() const
-{
-	ANKI_ASSERT(isLoaded());
-	return glId;
-}
-
-
-inline uint Texture::getInternalFormat() const
-{
-	ANKI_ASSERT(isLoaded());
-	return internalFormat;
-}
-
-
-inline uint Texture::getFormat() const
-{
-	ANKI_ASSERT(isLoaded());
-	return format;
-}
-
-
-inline uint Texture::getType() const
-{
-	ANKI_ASSERT(isLoaded());
-	return type;
-}
-
-
-inline bool Texture::isLoaded() const
-{
-	return glId != std::numeric_limits<uint>::max();
-}
 
 
 } // end namespace

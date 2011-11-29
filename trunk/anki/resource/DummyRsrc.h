@@ -8,44 +8,37 @@ namespace anki {
 /// A dummy resource for the unit tests of the ResourceManager
 class DummyRsrc
 {
-	public:
-		DummyRsrc();
-		~DummyRsrc();
+public:
+	DummyRsrc()
+	{
+		++mem;
+		loaded = false;
+	}
 
-		void load(const char* filename);
-
-		static int getMem()
-		{
-			return mem;
-		}
-	private:
-		static int mem;
-		bool loaded;
-};
-
-
-inline DummyRsrc::DummyRsrc()
-{
-	++mem;
-	loaded = false;
-}
-
-
-inline DummyRsrc::~DummyRsrc()
-{
-	--mem;
-	if(loaded)
+	~DummyRsrc()
 	{
 		--mem;
+		if(loaded)
+		{
+			--mem;
+		}
 	}
-}
 
+	void load(const char* filename)
+	{
+		++mem;
+		loaded = true;
+	}
 
-inline void DummyRsrc::load(const char* /*filename*/)
-{
-	++mem;
-	loaded = true;
-}
+	static int getMem()
+	{
+		return mem;
+	}
+
+private:
+	static int mem;
+	bool loaded;
+};
 
 
 } // end namespace

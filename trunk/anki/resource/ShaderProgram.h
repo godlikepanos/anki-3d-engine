@@ -135,7 +135,7 @@ private:
 //==============================================================================
 
 inline ShaderProgram::ShaderProgram()
-:	glId(std::numeric_limits<uint>::max())
+	: glId(std::numeric_limits<uint>::max())
 {}
 
 

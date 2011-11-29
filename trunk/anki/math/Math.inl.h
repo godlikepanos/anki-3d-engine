@@ -4,6 +4,7 @@
 namespace anki {
 
 
+//==============================================================================
 inline float Math::sqrt(const float f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
@@ -18,36 +19,42 @@ inline float Math::sqrt(const float f)
 }
 
 
+//==============================================================================
 inline float Math::toRad(const float degrees)
 {
 	return degrees * (Math::PI / 180.0);
 }
 
 
+//==============================================================================
 inline float Math::toDegrees(const float rad)
 {
 	return rad * (180.0 / Math::PI);
 }
 
 
+//==============================================================================
 inline float Math::sin(const float rad)
 {
 	return ::sin(rad);
 }
 
 
+//==============================================================================
 inline float Math::cos(const float rad)
 {
 	return ::cos(rad);
 }
 
 
+//==============================================================================
 inline bool Math::isZero(const float f)
 {
 	return fabs(f) < EPSILON;
 }
 
 
+//==============================================================================
 inline void Math::combineTransformations(
 	const Vec3& t0, const Mat3& r0, const float s0,
 	const Vec3& t1, const Mat3& r1, const float s1,
@@ -59,6 +66,7 @@ inline void Math::combineTransformations(
 }
 
 
+//==============================================================================
 inline void Math::combineTransformations(
 	const Vec3& t0, const Mat3& r0,
 	const Vec3& t1, const Mat3& r1,

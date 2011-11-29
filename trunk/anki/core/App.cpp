@@ -65,8 +65,8 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 		}
 		else
 		{
-			std::cerr << "Incorrect command line argument \"" << arg << "\"" <<
-				std::endl;
+			std::cerr << "Incorrect command line argument \"" << arg <<
+				"\"" << std::endl;
 			abort();
 		}
 	}

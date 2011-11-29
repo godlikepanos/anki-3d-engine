@@ -15,9 +15,7 @@ inline Transform::Transform()
 
 // Copy
 inline Transform::Transform(const Transform& b)
-:	origin(b.origin),
-	rotation(b.rotation),
-	scale(b.scale)
+	: origin(b.origin), rotation(b.rotation), scale(b.scale)
 {}
 
 
@@ -33,9 +31,7 @@ inline Transform::Transform(const Mat4& m4)
 // Vec3, Quat, float
 inline Transform::Transform(const Vec3& origin, const Mat3& rotation_,
 	const float scale_)
-:	origin(origin),
-	rotation(rotation_),
-	scale(scale_)
+	: origin(origin), rotation(rotation_), scale(scale_)
 {}
 
 
