@@ -7,17 +7,13 @@ namespace anki {
 
 //==============================================================================
 Plane::Plane(const Plane& b)
-:	CollisionShape(CST_PLANE),
-	normal(b.normal),
-	offset(b.offset)
+	: CollisionShape(CST_PLANE), normal(b.normal), offset(b.offset)
 {}
 
 
 //==============================================================================
 Plane::Plane(const Vec3& normal_, float offset_)
-:	CollisionShape(CST_PLANE),
-	normal(normal_),
-	offset(offset_)
+	: CollisionShape(CST_PLANE), normal(normal_), offset(offset_)
 {}
 
 

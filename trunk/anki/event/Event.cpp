@@ -9,9 +9,7 @@ namespace anki {
 // Constructor                                                                 =
 //==============================================================================
 Event::Event(EventType type_, float startTime_, float duration_)
-:	type(type_),
-	startTime(startTime_),
-	duration(duration_)
+	: type(type_), startTime(startTime_), duration(duration_)
 {}
 
 

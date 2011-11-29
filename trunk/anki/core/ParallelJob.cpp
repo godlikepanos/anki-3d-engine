@@ -10,10 +10,7 @@ namespace anki {
 //==============================================================================
 ParallelJob::ParallelJob(int id_, const ParallelManager& manager_,
 	boost::barrier& barrier_)
-:	id(id_),
- 	barrier(barrier_),
-	callback(NULL),
-	manager(manager_)
+	: id(id_), barrier(barrier_), callback(NULL), manager(manager_)
 {
 	start();
 }

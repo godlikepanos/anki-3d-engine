@@ -12,8 +12,8 @@ namespace anki {
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-Object::Object(Object* parent):
-	objParent(NULL)
+Object::Object(Object* parent)
+	: objParent(NULL)
 {
 	if(parent != NULL)
 	{

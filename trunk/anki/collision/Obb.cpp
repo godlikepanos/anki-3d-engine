@@ -7,21 +7,16 @@ namespace anki {
 
 //==============================================================================
 Obb::Obb(const Obb& b)
-:	CollisionShape(CST_OBB),
-	center(b.center),
-	rotation(b.rotation),
-	extends(b.extends)
+	: CollisionShape(CST_OBB), center(b.center), rotation(b.rotation),
+		extends(b.extends)
 {}
-
 
 //==============================================================================
-Obb::Obb(const Vec3& center_, const Mat3& rotation_,
-	const Vec3& extends_)
-:	CollisionShape(CST_OBB),
-	center(center_),
-	rotation(rotation_),
-	extends(extends_)
-{}
+Obb::Obb(const Vec3& center_, const Mat3& rotation_, const Vec3& extends_)
+	: CollisionShape(CST_OBB), center(center_), rotation(rotation_),
+		extends(extends_)
+{
+}
 
 
 //==============================================================================
@@ -31,7 +26,8 @@ float Obb::testPlane(const Plane& p) const
 	Vec3 xNormal = obb.getRotation().getTransposed() * p.getNormal();
 
 	// maximum extent in direction of plane normal
-	float r = fabs(obb.getExtend().x() * xNormal.x()) +
+	float r =
+		fabs(obb.getExtend().x() * xNormal.x()) +
 		fabs(obb.getExtend().y() * xNormal.y()) +
 		fabs(obb.getExtend().z() * xNormal.z());
 	// signed distance between box center and plane

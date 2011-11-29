@@ -14,7 +14,7 @@ MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	float exposure_,
 	uint blurringIterationsNum_,
 	float blurringDist_)
-:	Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
+	: Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
 {
 	finalData.exposure = exposure_;
 	finalData.blurringIterationsNum = blurringIterationsNum_;
@@ -33,7 +33,7 @@ MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 //==============================================================================
 MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(
 	const MainRendererPpsHdrEvent& b)
-:	Event(MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
+	: Event(MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
 {
 	*this = b;
 }

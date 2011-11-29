@@ -30,8 +30,12 @@ float Sphere::testPlane(const Plane& p) const
 Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;
-	newSphere.center = center.getTransformed(transform.getOrigin(),
-		transform.getRotation(), transform.getScale());
+
+	newSphere.center = center.getTransformed(
+		transform.getOrigin(),
+		transform.getRotation(),
+		transform.getScale());
+
 	newSphere.radius = radius * transform.getScale();
 	return newSphere;
 }
