@@ -24,7 +24,7 @@ MaterialVariable::MaterialVariable(
 	const char* shaderProgVarName,
 	const PassLevelToShaderProgramHashMap& sProgs,
 	const std::string& val)
-:	type(T_USER)
+	: type(T_USER)
 {
 	init(shaderProgVarName, sProgs);
 	ANKI_ASSERT(getShaderProgramVariableType() ==

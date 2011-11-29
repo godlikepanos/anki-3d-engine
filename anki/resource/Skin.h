@@ -26,29 +26,29 @@ class SkelAnim;
 /// @endcode
 class Skin
 {
-	public:
-		Skin();
-		~Skin();
+public:
+	Skin();
+	~Skin();
 
-		/// Implements Resource::load
-		void load(const char*);
+	/// Implements Resource::load
+	void load(const char*);
 
-		/// @name Accessors
-		/// @{
-		const Model& getModel() const;
-		const boost::ptr_vector<ModelPatch>& getModelPatches() const;
-		const Skeleton& getSkeleton() const;
-		const std::vector<SkelAnimResourcePointer >& getSkelAnims() const;
-		/// @}
+	/// @name Accessors
+	/// @{
+	const Model& getModel() const;
+	const boost::ptr_vector<ModelPatch>& getModelPatches() const;
+	const Skeleton& getSkeleton() const;
+	const std::vector<SkelAnimResourcePointer >& getSkelAnims() const;
+	/// @}
 
-	private:
-		/// @name The resources
-		/// @{
-		ModelResourcePointer model;
-		SkeletonResourcePointer skeleton; ///< The skeleton
-		/// The standard skeleton animations
-		std::vector<SkelAnimResourcePointer > skelAnims;
-		/// @}
+private:
+	/// @name The resources
+	/// @{
+	ModelResourcePointer model;
+	SkeletonResourcePointer skeleton; ///< The skeleton
+	/// The standard skeleton animations
+	std::vector<SkelAnimResourcePointer > skelAnims;
+	/// @}
 };
 
 

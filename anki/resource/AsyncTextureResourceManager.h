@@ -18,33 +18,33 @@ class Texture;
 /// XXX
 class AsyncTextureResourceManager: public ResourceManager<Texture>
 {
-	public:
+public:
 
-	private:
-		/// XXX
-		class Request: public AsyncOperator::Request
-		{
-			public:
-				std::string filename;
-				Image img;
-				Texture** ppTex;
+private:
+	/// XXX
+	class Request: public AsyncOperator::Request
+	{
+		public:
+			std::string filename;
+			Image img;
+			Texture** ppTex;
 
-				Request(const char* fname, Texture**& ppTex_)
-				:	filename(fname),
-				 	ppTex(ppTex_)
-				{}
+			Request(const char* fname, Texture**& ppTex_)
+			:	filename(fname),
+				ppTex(ppTex_)
+			{}
 
-				/// Implements AsyncOperator::Request::exec
-				void exec();
+			/// Implements AsyncOperator::Request::exec
+			void exec();
 
-				/// Implements AsyncOperator::Request::postExec
-				void postExec(AsyncOperator& al);
+			/// Implements AsyncOperator::Request::postExec
+			void postExec(AsyncOperator& al);
 
-				/// Re-implements AsyncOperator::Request::getInfo
-				std::string getInfo() const;
-		};
+			/// Re-implements AsyncOperator::Request::getInfo
+			std::string getInfo() const;
+	};
 
-		boost::scoped_ptr<AsyncOperator> ao;
+	boost::scoped_ptr<AsyncOperator> ao;
 
 };
 /// @}

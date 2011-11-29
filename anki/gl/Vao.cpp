@@ -8,8 +8,6 @@ namespace anki {
 
 
 //==============================================================================
-// Destructor                                                                  =
-//==============================================================================
 Vao::~Vao()
 {
 	if(isCreated())
@@ -19,8 +17,6 @@ Vao::~Vao()
 }
 
 
-//==============================================================================
-// attachArrayBufferVbo                                                        =
 //==============================================================================
 void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
@@ -47,8 +43,6 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 
 
 //==============================================================================
-// attachArrayBufferVbo                                                        =
-//==============================================================================
 void Vao::attachArrayBufferVbo(const Vbo& vbo,
 	const ShaderProgramAttributeVariable& attribVar,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
@@ -59,8 +53,6 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo,
 }
 
 
-//==============================================================================
-// attachElementArrayBufferVbo                                                 =
 //==============================================================================
 void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 {

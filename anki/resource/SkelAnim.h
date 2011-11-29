@@ -11,40 +11,38 @@ namespace anki {
 /// Bone pose
 struct BonePose
 {
-	public:
-		BonePose(const Quat& r, const Vec3& trs);
+public:
+	BonePose(const Quat& r, const Vec3& trs);
 
-		/// Copy constructor
-		BonePose(const BonePose& b);
+	/// Copy constructor
+	BonePose(const BonePose& b);
 
-		/// @name Accessors
-		/// @{
-		const Quat& getRotation() const
-		{
-			return rotation;
-		}
+	/// @name Accessors
+	/// @{
+	const Quat& getRotation() const
+	{
+		return rotation;
+	}
 
-		const Vec3& getTranslation() const
-		{
-			return translation;
-		}
-		/// @}
+	const Vec3& getTranslation() const
+	{
+		return translation;
+	}
+	/// @}
 
-	private:
-		Quat rotation;
-		Vec3 translation;
+private:
+	Quat rotation;
+	Vec3 translation;
 };
 
 
 inline BonePose::BonePose(const Quat& r, const Vec3& trs)
-:	rotation(r),
- 	translation(trs)
+	: rotation(r), translation(trs)
 {}
 
 
 inline BonePose::BonePose(const BonePose& b)
-:	rotation(b.rotation),
- 	translation(b.translation)
+	: rotation(b.rotation), translation(b.translation)
 {}
 
 
@@ -53,19 +51,19 @@ class BoneAnim
 {
 	friend class SkelAnim;
 
-	public:
-		/// @name Accessors
-		/// @{
-		const std::vector<BonePose>& getBonePoses() const
-		{
-			return bonePoses;
-		}
-		/// @}
+public:
+	/// @name Accessors
+	/// @{
+	const std::vector<BonePose>& getBonePoses() const
+	{
+		return bonePoses;
+	}
+	/// @}
 
-	private:
-		/// The poses for every keyframe. Its empty if the bone doesnt have
-		/// any animation
-		std::vector<BonePose> bonePoses;
+private:
+	/// The poses for every keyframe. Its empty if the bone doesnt have
+	/// any animation
+	std::vector<BonePose> bonePoses;
 };
 
 
@@ -89,32 +87,32 @@ class BoneAnim
 /// @endcode
 class SkelAnim
 {
-	public:
-		/// @name Accessors
-		/// @{
-		const std::vector<uint>& getKeyframes() const
-		{
-			return keyframes;
-		}
+public:
+	/// @name Accessors
+	/// @{
+	const std::vector<uint>& getKeyframes() const
+	{
+		return keyframes;
+	}
 
-		uint getFramesNum() const
-		{
-			return framesNum;
-		}
+	uint getFramesNum() const
+	{
+		return framesNum;
+	}
 
-		const std::vector<BoneAnim>& getBoneAnimations() const
-		{
-			return boneAnims;
-		}
-		/// @}
+	const std::vector<BoneAnim>& getBoneAnimations() const
+	{
+		return boneAnims;
+	}
+	/// @}
 
-		/// Load
-		void load(const char* filename);
+	/// Load
+	void load(const char* filename);
 
-	private:
-		std::vector<uint> keyframes;
-		uint framesNum;
-		std::vector<BoneAnim> boneAnims;
+private:
+	std::vector<uint> keyframes;
+	uint framesNum;
+	std::vector<BoneAnim> boneAnims;
 };
 
 

@@ -15,20 +15,12 @@ static const char* errMsg = "Incorrect or missing value ";
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-ParticleEmitterRsrc::ParticleEmitterRsrc():
-	particleLife(0.0),
-	particleLifeDeviation(0.0),
-	forceDirection(0.0),
-	forceDirectionDeviation(0.0),
-	forceMagnitude(0.0),
-	forceMagnitudeDeviation(0.0),
-	particleMass(0.0),
-	particleMassDeviation(0.0),
-	gravity(0.0),
-	gravityDeviation(0.0),
-	startingPos(0.0),
-	startingPosDeviation(0.0),
-	size(0.0)
+ParticleEmitterRsrc::ParticleEmitterRsrc()
+	: particleLife(0.0), particleLifeDeviation(0.0), forceDirection(0.0),
+		forceDirectionDeviation(0.0), forceMagnitude(0.0),
+		forceMagnitudeDeviation(0.0), particleMass(0.0),
+		particleMassDeviation(0.0), gravity(0.0), gravityDeviation(0.0),
+		startingPos(0.0), startingPosDeviation(0.0), size(0.0)
 {}
 
 

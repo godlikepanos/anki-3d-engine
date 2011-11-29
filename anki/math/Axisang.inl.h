@@ -10,22 +10,19 @@ namespace anki {
 
 // Default
 inline Axisang::Axisang()
-:	ang(0.0),
-	axis(0.0)
+	: ang(0.0), axis(0.0)
 {}
 
 
 // Copy
 inline Axisang::Axisang(const Axisang& b)
-:	ang(b.ang),
-	axis(b.axis)
+	: ang(b.ang), axis(b.axis)
 {}
 
 
 // float, axis
 inline Axisang::Axisang(const float rad, const Vec3& axis_)
-:	ang(rad),
-	axis(axis_)
+	: ang(rad), axis(axis_)
 {}
 
 

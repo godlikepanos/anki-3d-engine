@@ -10,11 +10,11 @@ namespace anki {
 /// Python script resource
 class Script
 {
-	public:
-		void load(const char* filename);
+public:
+	void load(const char* filename);
 
-	private:
-		std::string source;
+private:
+	std::string source;
 };
 
 

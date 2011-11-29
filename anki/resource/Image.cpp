@@ -11,11 +11,9 @@ namespace anki {
 
 
 uchar Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-uchar Image::tgaHeaderCompressed[12]   = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uchar Image::tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
-//==============================================================================
-// loadUncompressedTga                                                         =
 //==============================================================================
 void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 {
@@ -57,8 +55,6 @@ void Image::loadUncompressedTga(std::fstream& fs, uint& bpp)
 }
 
 
-//==============================================================================
-// loadCompressedTga                                                           =
 //==============================================================================
 void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 {
@@ -161,8 +157,6 @@ void Image::loadCompressedTga(std::fstream& fs, uint& bpp)
 
 
 //==============================================================================
-// loadTga                                                                     =
-//==============================================================================
 void Image::loadTga(const char* filename)
 {
 	std::fstream fs;
@@ -214,8 +208,6 @@ void Image::loadTga(const char* filename)
 }
 
 
-//==============================================================================
-// loadPng                                                                     =
 //==============================================================================
 bool Image::loadPng(const char* filename, std::string& err) throw()
 {
@@ -430,8 +422,6 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 
 
 //==============================================================================
-// load                                                                        =
-//==============================================================================
 void Image::load(const char* filename)
 {
 	// get the extension
@@ -474,7 +464,6 @@ void Image::load(const char* filename)
 // DDS                                                                         =
 //==============================================================================
 
-/*
 //  little-endian, of course
 #define DDS_MAGIC 0x20534444
 
@@ -509,11 +498,16 @@ void Image::load(const char* filename)
 #define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
 #define DDSCAPS2_VOLUME             0x00200000
 
-#define D3DFMT_DXT1     '1TXD'    //  DXT1 compression texture format
-#define D3DFMT_DXT2     '2TXD'    //  DXT2 compression texture format
-#define D3DFMT_DXT3     '3TXD'    //  DXT3 compression texture format
-#define D3DFMT_DXT4     '4TXD'    //  DXT4 compression texture format
-#define D3DFMT_DXT5     '5TXD'    //  DXT5 compression texture format
+static int toInt(const char* x)
+{
+	return x[3] | (x[2] << 8) | (x[1] << 16) | (x[0] << 24);
+}
+
+#define D3DFMT_DXT1 toInt("1TXD") //  DXT1 compression texture format
+#define D3DFMT_DXT2 toInt("2TXD") //  DXT2 compression texture format
+#define D3DFMT_DXT3 toInt("3TXD") //  DXT3 compression texture format
+#define D3DFMT_DXT4 toInt("4TXD") //  DXT4 compression texture format
+#define D3DFMT_DXT5 toInt("5TXD") //  DXT5 compression texture format
 
 #define PF_IS_DXT1(pf) \
   ((pf.dwFlags & DDPF_FOURCC) && \
@@ -622,11 +616,11 @@ DdsLoadInfo loadInfoBGRA8 = {false, false, false, 1, 4};
 DdsLoadInfo loadInfoBGR8 = {false, false, false, 1, 3};
 DdsLoadInfo loadInfoBGR5A1 = {false, true, false, 1, 2};
 DdsLoadInfo loadInfoBGR565 = {false, true, false, 1, 2};
-DdsLoadInfo loadInfoIndex8 = {false, false, true, 1, 1};*/
+DdsLoadInfo loadInfoIndex8 = {false, false, true, 1, 1};
 
 void Image::loadDds(const char* filename)
 {
-	/*std::fstream in;
+	std::fstream in;
 	in.open(filename, std::ios::in | std::ios::binary);
 
 	if(!in.is_open())
@@ -700,7 +694,7 @@ void Image::loadDds(const char* filename)
 	width = hdr.data.dwWidth;
 	height = hdr.data.dwHeight;
 
-	in.close();*/
+	in.close();
 }
 
 

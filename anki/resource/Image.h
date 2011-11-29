@@ -13,118 +13,118 @@ namespace anki {
 /// Used in Texture::load. Supported types: TGA and PNG
 class Image
 {
-	public:
-		/// The acceptable color types of AnKi
-		enum ColorType
-		{
-			CT_R, ///< Red only
-			CT_RGB, ///< RGB
-			CT_RGBA ///< RGB plus alpha
-		};
+public:
+	/// The acceptable color types of AnKi
+	enum ColorType
+	{
+		CT_R, ///< Red only
+		CT_RGB, ///< RGB
+		CT_RGBA ///< RGB plus alpha
+	};
 
-		/// The data compression
-		enum DataCompression
-		{
-			DC_NONE,
-			DC_DXT1,
-			DC_DXT3,
-			DC_DXT5
-		};
+	/// The data compression
+	enum DataCompression
+	{
+		DC_NONE,
+		DC_DXT1,
+		DC_DXT3,
+		DC_DXT5
+	};
 
-		/// Do nothing
-		Image()
-		{}
+	/// Do nothing
+	Image()
+	{}
 
-		/// Load an image
-		/// @param[in] filename The image file to load
-		/// @exception Exception
-		Image(const char* filename)
-		{
-			load(filename);
-		}
-		
-		/// Do nothing
-		~Image()
-		{}
+	/// Load an image
+	/// @param[in] filename The image file to load
+	/// @exception Exception
+	Image(const char* filename)
+	{
+		load(filename);
+	}
 
-		/// @name Accessors
-		/// @{
-		uint getWidth() const
-		{
-			return width;
-		}
+	/// Do nothing
+	~Image()
+	{}
 
-		uint getHeight() const
-		{
-			return height;
-		}
+	/// @name Accessors
+	/// @{
+	uint getWidth() const
+	{
+		return width;
+	}
 
-		ColorType getColorType() const
-		{
-			return type;
-		}
+	uint getHeight() const
+	{
+		return height;
+	}
 
-		const uchar* getData() const
-		{
-			return &data[0];
-		}
+	ColorType getColorType() const
+	{
+		return type;
+	}
 
-		/// Get image size in bytes
-		size_t getDataSize() const
-		{
-			return Util::getVectorSizeInBytes(data);
-		}
+	const uchar* getData() const
+	{
+		return &data[0];
+	}
 
-		DataCompression getDataCompression() const
-		{
-			return dataCompression;
-		}
-		/// @}
-		
-		/// Load an image file
-		/// @param[in] filename The file to load
-		/// @exception Exception
-		void load(const char* filename);
+	/// Get image size in bytes
+	size_t getDataSize() const
+	{
+		return Util::getVectorSizeInBytes(data);
+	}
 
-	private:
-		uint width; ///< Image width
-		uint height; ///< Image height
-		ColorType type; ///< Image color type
-		std::vector<uchar> data; ///< Image data
-		DataCompression dataCompression;
+	DataCompression getDataCompression() const
+	{
+		return dataCompression;
+	}
+	/// @}
 
-		/// @name TGA headers
-		/// @{
-		static uchar tgaHeaderUncompressed[12];
-		static uchar tgaHeaderCompressed[12];
-		/// @}
+	/// Load an image file
+	/// @param[in] filename The file to load
+	/// @exception Exception
+	void load(const char* filename);
 
-		/// Load a TGA
-		/// @param[in] filename The file to load
-		/// @exception Exception
-		void loadTga(const char* filename);
+private:
+	uint width; ///< Image width
+	uint height; ///< Image height
+	ColorType type; ///< Image color type
+	std::vector<uchar> data; ///< Image data
+	DataCompression dataCompression;
 
-		/// Used by loadTga
-		/// @param[in] fs The input
-		/// @param[out] bpp Bits per pixel
-		/// @exception Exception
-		void loadUncompressedTga(std::fstream& fs, uint& bpp);
+	/// @name TGA headers
+	/// @{
+	static uchar tgaHeaderUncompressed[12];
+	static uchar tgaHeaderCompressed[12];
+	/// @}
 
-		/// Used by loadTga
-		/// @param[in] fs The input
-		/// @param[out] bpp Bits per pixel
-		/// @exception Exception
-		void loadCompressedTga(std::fstream& fs, uint& bpp);
+	/// Load a TGA
+	/// @param[in] filename The file to load
+	/// @exception Exception
+	void loadTga(const char* filename);
 
-		/// Load PNG. Dont throw exception because libpng is in C
-		/// @param[in] filename The file to load
-		/// @param[out] err The error message
-		/// @return true on success
-		bool loadPng(const char* filename, std::string& err) throw();
+	/// Used by loadTga
+	/// @param[in] fs The input
+	/// @param[out] bpp Bits per pixel
+	/// @exception Exception
+	void loadUncompressedTga(std::fstream& fs, uint& bpp);
 
-		/// Load a DDS file
-		/// @param[in] filename The file to load
-		void loadDds(const char* filename);
+	/// Used by loadTga
+	/// @param[in] fs The input
+	/// @param[out] bpp Bits per pixel
+	/// @exception Exception
+	void loadCompressedTga(std::fstream& fs, uint& bpp);
+
+	/// Load PNG. Dont throw exception because libpng is in C
+	/// @param[in] filename The file to load
+	/// @param[out] err The error message
+	/// @return true on success
+	bool loadPng(const char* filename, std::string& err) throw();
+
+	/// Load a DDS file
+	/// @param[in] filename The file to load
+	void loadDds(const char* filename);
 };
 
 

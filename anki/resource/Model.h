@@ -34,28 +34,28 @@ namespace anki {
 /// - Its an error to have skelAnims without skeleton
 class Model
 {
-	public:
-		typedef boost::ptr_vector<ModelPatch> ModelPatchesContainer;
+public:
+	typedef boost::ptr_vector<ModelPatch> ModelPatchesContainer;
 
-		void load(const char* filename);
+	void load(const char* filename);
 
-		/// @name Accessors
-		/// @{
-		const ModelPatchesContainer& getModelPatches() const
-		{
-			return modelPatches;
-		}
+	/// @name Accessors
+	/// @{
+	const ModelPatchesContainer& getModelPatches() const
+	{
+		return modelPatches;
+	}
 
-		const Obb& getVisibilityShape() const
-		{
-			return visibilityShape;
-		}
-		/// @}
+	const Obb& getVisibilityShape() const
+	{
+		return visibilityShape;
+	}
+	/// @}
 
-	private:
-		/// The vector of ModelPatch
-		ModelPatchesContainer modelPatches;
-		Obb visibilityShape;
+private:
+	/// The vector of ModelPatch
+	ModelPatchesContainer modelPatches;
+	Obb visibilityShape;
 };
 
 

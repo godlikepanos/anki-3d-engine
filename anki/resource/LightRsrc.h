@@ -38,85 +38,85 @@ struct LightProps
 /// Light properties Resource
 class LightRsrc: private LightProps
 {
-	public:
-		enum LightType
-		{
-			LT_POINT,
-			LT_SPOT,
-			LT_NUM
-		};
+public:
+	enum LightType
+	{
+		LT_POINT,
+		LT_SPOT,
+		LT_NUM
+	};
 
-		enum SpotLightCameraType
-		{
-			SLCT_PERSPECTIVE,
-			SLCT_ORTHOGRAPHIC
-		};
+	enum SpotLightCameraType
+	{
+		SLCT_PERSPECTIVE,
+		SLCT_ORTHOGRAPHIC
+	};
 
-		LightRsrc();
-		~LightRsrc()
-		{}
+	LightRsrc();
+	~LightRsrc()
+	{}
 
-		/// @name Accessors
-		/// @{
-		const Vec3& getDiffuseColor() const
-		{
-			return diffuseCol;
-		}
+	/// @name Accessors
+	/// @{
+	const Vec3& getDiffuseColor() const
+	{
+		return diffuseCol;
+	}
 
-		const Vec3& getSpecularColor() const
-		{
-			return specularCol;
-		}
+	const Vec3& getSpecularColor() const
+	{
+		return specularCol;
+	}
 
-		bool getCastShadow() const
-		{
-			return castsShadowFlag;
-		}
+	bool getCastShadow() const
+	{
+		return castsShadowFlag;
+	}
 
-		LightType getType() const
-		{
-			return type;
-		}
+	LightType getType() const
+	{
+		return type;
+	}
 
-		float getRadius() const
-		{
-			return radius;
-		}
+	float getRadius() const
+	{
+		return radius;
+	}
 
-		float getDistance() const
-		{
-			return distance;
-		}
+	float getDistance() const
+	{
+		return distance;
+	}
 
-		float getFovX() const
-		{
-			return fovX;
-		}
+	float getFovX() const
+	{
+		return fovX;
+	}
 
-		float getFovY() const
-		{
-			return fovY;
-		}
+	float getFovY() const
+	{
+		return fovY;
+	}
 
-		float getWidth() const
-		{
-			return width;
-		}
+	float getWidth() const
+	{
+		return width;
+	}
 
-		float getHeight() const
-		{
-			return height;
-		}
+	float getHeight() const
+	{
+		return height;
+	}
 
-		const Texture& getTexture() const;
-		/// @}
+	const Texture& getTexture() const;
+	/// @}
 
-		void load(const char* filename);
+	void load(const char* filename);
 
-	private:
-		LightType type;
-		SpotLightCameraType spotLightCameraType;
-		TextureResourcePointer texture;
+private:
+	LightType type;
+	SpotLightCameraType spotLightCameraType;
+	TextureResourcePointer texture;
 };
 
 

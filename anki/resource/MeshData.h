@@ -45,103 +45,103 @@ namespace anki {
 /// @endcode
 class MeshData
 {
+public:
+	/// Vertex weight for skeletal animation
+	class VertexWeight
+	{
 	public:
-		/// Vertex weight for skeletal animation
-		class VertexWeight
-		{
-			public:
-				/// Dont change this or prepare to change the skinning code in
-				/// shader
-				static const uint MAX_BONES_PER_VERT = 4;
+		/// Dont change this or prepare to change the skinning code in
+		/// shader
+		static const uint MAX_BONES_PER_VERT = 4;
 
-				/// @todo change the vals to uint when change drivers
-				float bonesNum;
-				boost::array<float, MAX_BONES_PER_VERT> boneIds;
-				boost::array<float, MAX_BONES_PER_VERT> weights;
-		};
+		/// @todo change the vals to uint when change drivers
+		float bonesNum;
+		boost::array<float, MAX_BONES_PER_VERT> boneIds;
+		boost::array<float, MAX_BONES_PER_VERT> weights;
+	};
 
-		/// Triangle
-		class Triangle
-		{
-			public:
-				/// An array with the vertex indexes in the mesh class
-				boost::array<uint, 3> vertIds;
-				Vec3 normal;
-		};
+	/// Triangle
+	class Triangle
+	{
+		public:
+			/// An array with the vertex indexes in the mesh class
+			boost::array<uint, 3> vertIds;
+			Vec3 normal;
+	};
 
-		MeshData(const char* filename)
-		{
-			load(filename);
-		}
-		~MeshData()
-		{}
+	MeshData(const char* filename)
+	{
+		load(filename);
+	}
+	~MeshData()
+	{}
 
-		/// @name Accessors
-		/// @{
-		const std::vector<Vec3>& getVertCoords() const
-		{
-			return vertCoords;
-		}
+	/// @name Accessors
+	/// @{
+	const std::vector<Vec3>& getVertCoords() const
+	{
+		return vertCoords;
+	}
 
-		const std::vector<Vec3>& getVertNormals() const
-		{
-			return vertNormals;
-		}
+	const std::vector<Vec3>& getVertNormals() const
+	{
+		return vertNormals;
+	}
 
-		const std::vector<Vec4>& getVertTangents() const
-		{
-			return vertTangents;
-		}
+	const std::vector<Vec4>& getVertTangents() const
+	{
+		return vertTangents;
+	}
 
-		const std::vector<Vec2>& getTexCoords() const
-		{
-			return texCoords;
-		}
+	const std::vector<Vec2>& getTexCoords() const
+	{
+		return texCoords;
+	}
 
-		const std::vector<VertexWeight>& getVertWeights() const
-		{
-			return vertWeights;
-		}
+	const std::vector<VertexWeight>& getVertWeights() const
+	{
+		return vertWeights;
+	}
 
-		const std::vector<Triangle>& getTris() const
-		{
-			return tris;
-		}
+	const std::vector<Triangle>& getTris() const
+	{
+		return tris;
+	}
 
-		const std::vector<ushort>& getVertIndeces() const
-		{
-			return vertIndeces;
-		}
-		/// @}
+	const std::vector<ushort>& getVertIndeces() const
+	{
+		return vertIndeces;
+	}
+	/// @}
 
-	private:
-		/// @name Data
-		/// @{
-		std::vector<Vec3> vertCoords; ///< Loaded from file
-		std::vector<Vec3> vertNormals; ///< Generated
-		std::vector<Vec4> vertTangents; ///< Generated
-		/// Optional. One for every vert so we can use vertex arrays & VBOs
-		std::vector<Vec2> texCoords;
-		std::vector<VertexWeight> vertWeights; ///< Optional
-		std::vector<Triangle> tris; ///< Required
-		/// Generated. Used for vertex arrays & VBOs
-		std::vector<ushort> vertIndeces;
-		/// @}
+private:
+	/// @name Data
+	/// @{
+	std::vector<Vec3> vertCoords; ///< Loaded from file
+	std::vector<Vec3> vertNormals; ///< Generated
+	std::vector<Vec4> vertTangents; ///< Generated
+	/// Optional. One for every vert so we can use vertex arrays & VBOs
+	std::vector<Vec2> texCoords;
+	std::vector<VertexWeight> vertWeights; ///< Optional
+	std::vector<Triangle> tris; ///< Required
+	/// Generated. Used for vertex arrays & VBOs
+	std::vector<ushort> vertIndeces;
+	/// @}
 
-		/// Load the mesh data from a binary file
-		/// @exception Exception
-		void load(const char* filename);
+	/// Load the mesh data from a binary file
+	/// @exception Exception
+	void load(const char* filename);
 
-		void createFaceNormals();
-		void createVertNormals();
-		void createAllNormals();
-		void createVertTangents();
-		void createVertIndeces();
+	void createFaceNormals();
+	void createVertNormals();
+	void createAllNormals();
+	void createVertTangents();
+	void createVertIndeces();
 
-		/// This method does some sanity checks and creates normals,
-		/// tangents, VBOs etc
-		/// @exception Exception
-		void doPostLoad();
+	/// This method does some sanity checks and creates normals,
+	/// tangents, VBOs etc
+	/// @exception Exception
+	void doPostLoad();
 };
 
 

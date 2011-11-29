@@ -20,63 +20,63 @@ namespace anki {
 /// deadlock.
 class AsyncOperator
 {
+public:
+	/// XXX
+	class Request
+	{
 	public:
+		bool ok;
+
+		/// Called in the worker thread
+		virtual void exec() = 0;
+
+		/// Called in the main thread after the request is served
+		virtual void postExec(AsyncOperator& al) = 0;
+
 		/// XXX
-		class Request
+		virtual std::string getInfo() const
 		{
-			public:
-				bool ok;
-
-				/// Called in the worker thread
-				virtual void exec() = 0;
-
-				/// Called in the main thread after the request is served
-				virtual void postExec(AsyncOperator& al) = 0;
-
-				/// XXX
-				virtual std::string getInfo() const
-				{
-					return "no info";
-				}
-		};
-
-		/// Default constructor starts the thread
-		AsyncOperator()
-		{
-			start();
+			return "no info";
 		}
-		
-		/// Do nothing
-		~AsyncOperator()
-		{}
+	};
 
-		/// Add a new request in the queue
-		void putBack(Request* newReq);
+	/// Default constructor starts the thread
+	AsyncOperator()
+	{
+		start();
+	}
 
-		/// Handle the served requests
-		///
-		/// Steps:
-		/// - Gets the served requests
-		/// - Executes the Request::postExec for those requests
-		/// - Deletes them
-		///
-		/// @param[in] availableTime Max time to spend in the Request::postExec
-		/// @return The number of requests served
-		uint execPostLoad(float availableTime);
+	/// Do nothing
+	~AsyncOperator()
+	{}
 
-	private:
-		std::list<Request*> requests;
-		std::list<Request*> responses;
-		boost::mutex mutexReq; ///< Protect the requests container
-		boost::mutex mutexRes; ///< Protect the responses container
-		boost::thread thread;
-		boost::condition_variable condVar;
+	/// Add a new request in the queue
+	void putBack(Request* newReq);
 
-		/// The thread function. It waits for something in the requests
-		/// container
-		void workingFunc();
+	/// Handle the served requests
+	///
+	/// Steps:
+	/// - Gets the served requests
+	/// - Executes the Request::postExec for those requests
+	/// - Deletes them
+	///
+	/// @param[in] availableTime Max time to spend in the Request::postExec
+	/// @return The number of requests served
+	uint execPostLoad(float availableTime);
 
-		void start(); ///< Start thread
+private:
+	std::list<Request*> requests;
+	std::list<Request*> responses;
+	boost::mutex mutexReq; ///< Protect the requests container
+	boost::mutex mutexRes; ///< Protect the responses container
+	boost::thread thread;
+	boost::condition_variable condVar;
+
+	/// The thread function. It waits for something in the requests
+	/// container
+	void workingFunc();
+
+	void start(); ///< Start thread
 };
 
 
