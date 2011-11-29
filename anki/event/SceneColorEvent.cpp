@@ -12,8 +12,7 @@ namespace anki {
 //==============================================================================
 SceneColorEvent::SceneColorEvent(float startTime, float duration,
 	const Vec3& finalColor_)
-:	Event(SCENE_COLOR, startTime, duration),
-	finalColor(finalColor_)
+	: Event(SCENE_COLOR, startTime, duration), finalColor(finalColor_)
 {
 	originalColor = SceneSingleton::get().getAmbientColor();
 }
@@ -23,7 +22,7 @@ SceneColorEvent::SceneColorEvent(float startTime, float duration,
 // Constructor copy                                                            =
 //==============================================================================
 SceneColorEvent::SceneColorEvent(const SceneColorEvent& b)
-:	Event(SCENE_COLOR, 0.0, 0.0)
+	: Event(SCENE_COLOR, 0.0, 0.0)
 {
 	*this = b;
 }
