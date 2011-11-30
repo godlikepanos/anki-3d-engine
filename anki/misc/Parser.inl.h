@@ -132,7 +132,7 @@ void parseNumber(scanner::Scanner& scanner, bool sign, Type& out)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION(e.what());
+		throw ANKI_EXCEPTION_R("Error", e);
 	}
 }
 
@@ -171,7 +171,7 @@ void parseMathVector(scanner::Scanner& scanner, Type& out)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION(e.what());
+		throw ANKI_EXCEPTION_R("Error", e);
 	}
 }
 

@@ -245,7 +245,7 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION("Started from \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION_R("Started from \"" + filename + "\"", e);
 	}
 }
 

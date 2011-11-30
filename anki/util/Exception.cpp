@@ -6,49 +6,22 @@ namespace anki {
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-Exception::Exception(const std::string& err_, const char* file_, int line_, 
-	const char* func_)
-:	err(err_),
-	file(file_),
-	line(line_),
-	func(func_)
-{}
-
-
-//==============================================================================
-// Copy constructor                                                            =
-//==============================================================================
-Exception::Exception(const Exception& e):
-	err(e.err),
-	file(e.file),
-	line(e.line),
-	func(e.func)
-{}
-
-
-//==============================================================================
-// getInfoStr                                                                  =
-//==============================================================================
-std::string Exception::getInfoStr() const
+std::string Exception::synthErr(const char* error, const char* file,
+	int line, const char* func)
 {
 	std::stringstream ss;
-	
-	ss << '(' << file << ':' << line << ' ' << func << ')';
+	ss << "(" << file << ':' << line << ' ' << func << ") " << error;
 	return ss.str();
 }
 
 
 //==============================================================================
-// what                                                                        =
-//==============================================================================
-const char* Exception::what() const throw()
+Exception::Exception(const char* err, const std::exception& e,
+	const char* file, int line, const char* func)
 {
 	std::stringstream ss;
-	ss << "\n" << getInfoStr() << " AnKi exception: " << err;
-	errWhat = ss.str();
-	return errWhat.c_str();
+	ss << synthErr(error, file, line, func) << ". From here:\n" << e.what();
+	err = ss.str();
 }
 
 

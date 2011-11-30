@@ -12,33 +12,40 @@ namespace anki {
 /// it using the ANKI_EXCEPTION macro
 class Exception: public std::exception
 {
-	public:
-		/// Constructor
-		Exception(const std::string& err, const char* file = "unknown", 
-			int line = -1, const char* func = "unknown");
+public:
+	/// Constructor
+	Exception(const char* err, const char* file = "unknown",
+		int line = -1, const char* func = "unknown")
+	{
+		synthErr(err, file, line, func);
+	}
 
-		/// Copy constructor
-		Exception(const Exception& e);
+	/// Copy constructor
+	Exception(const Exception& e)
+		: err(e.err)
+	{}
 
-		/// Destructor. Do nothing
-		~Exception() throw() {}
+	/// For re-throws
+	Exception(const char* err, const std::exception& e,
+		const char* file = "unknown",
+		int line = -1, const char* func = "unknown");
 
-		/// @name Accessors
-		/// @{
-		const std::string& getTheError() const {return err;}
-		/// @}
+	/// Destructor. Do nothing
+	~Exception() throw()
+	{}
 
-		/// Return the error code formated with the other info
-		virtual const char* what() const throw();
+	/// Implements std::exception::what()
+	const char* what() const throw()
+	{
+		return err.c_str();
+	}
 
-	protected:
-		std::string err;
-		mutable std::string errWhat;
-		const char* file;
-		int line;
-		const char* func;
+private:
+	std::string err;
 
-		std::string getInfoStr() const;
+	/// XXX
+	std::string synthErr(const char* error, const char* file,
+		int line, const char* func);
 };
 
 
@@ -49,7 +56,10 @@ class Exception: public std::exception
 // Macros                                                                      =
 //==============================================================================
 
-#define ANKI_EXCEPTION(x) Exception(std::string() + x, \
+#define ANKI_EXCEPTION(x) Exception((std::string() + x).c_str(), \
+	__FILE__, __LINE__, __func__)
+
+#define ANKI_EXCEPTION_R(x, e) Exception((std::string() + x).c_str(), e, \
 	__FILE__, __LINE__, __func__)
 
 

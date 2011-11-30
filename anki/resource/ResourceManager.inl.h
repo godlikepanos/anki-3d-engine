@@ -21,8 +21,8 @@ void ResourceManager<Type>::allocAndLoadRsrc(
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Constructor failed for \"" + filename +
-			"\": " + e.what());
+		throw ANKI_EXCEPTION_R("Constructor failed for \"" + filename +
+			"\"", e);
 	}
 
 	// Load
@@ -32,7 +32,7 @@ void ResourceManager<Type>::allocAndLoadRsrc(
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot load \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot load \"" + filename + "\"", e);
 	}
 }
 
@@ -69,8 +69,8 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::load(
 				delete hook;
 			}
 
-			throw ANKI_EXCEPTION("Cannot load \"" +
-				filename + "\": " + e.what());
+			throw ANKI_EXCEPTION_R("Cannot load \"" +
+				filename + "\"", e);
 		}
 
 		hooks.push_back(hook);

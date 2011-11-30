@@ -1,24 +1,136 @@
-#include "anki/util/scanner/Scanner.h"
-#include "anki/util/scanner/Exception.h"
-#include <fstream>
-#include <iostream>
-#include <cstring>
-#include <cmath>
-#include <cassert>
-#include <sstream>
-#include <iomanip>
+#include "anki/util/Scanner.h"
 #include <boost/lexical_cast.hpp>
+#include <cstring>
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <sstream>
 
 
-namespace scanner {
+namespace anki { namespace scanner {
+
+
+//==============================================================================
+Exception::Exception(const std::string& err, int errNo_,
+	const std::string& scriptFilename_, int scriptLineNmbr_)
+	: error(err), errNo(errNo_), scriptFilename(scriptFilename_),
+		scriptLineNmbr(scriptLineNmbr_)
+{}
+
+
+//==============================================================================
+Exception::Exception(const Exception& e)
+	: std::exception(e), error(e.error), errNo(e.errNo),
+		scriptFilename(e.scriptFilename), scriptLineNmbr(e.scriptLineNmbr)
+{}
+
+
+//==============================================================================
+const char* Exception::what() const throw()
+{
+	errWhat = "Scanner exception (#" +
+		boost::lexical_cast<std::string>(errNo) +
+		":" + scriptFilename + ':' +
+		boost::lexical_cast<std::string>(scriptLineNmbr) + "): " + error;
+	return errWhat.c_str();
+}
+
+
+//==============================================================================
+Token::Token(const Token& b)
+	: code(b.code), dataType(b.dataType)
+{
+	switch(b.dataType)
+	{
+		case DT_FLOAT:
+			value.float_ = b.value.float_;
+			break;
+		case DT_INT:
+			value.int_ = b.value.int_;
+			break;
+		case DT_CHAR:
+			value.char_ = b.value.char_;
+			break;
+		case DT_STR:
+			value.string = b.value.string;
+			break;
+	}
+	memcpy(&asString[0], &b.asString[0], sizeof(asString));
+}
+
+
+//==============================================================================
+std::ostream& operator<<(std::ostream& s, const Token& x)
+{
+	const TokenDataVal& val = x.getValue();
+	TokenCode code = x.getCode();
+
+	switch(code)
+	{
+		case TC_COMMENT:
+			s << "comment";
+			break;
+		case TC_NEWLINE:
+			s << "newline";
+			break;
+		case TC_END:
+			s << "end of file";
+			break;
+		case TC_STRING:
+			s << "string \"" << val.getString() << "\"";
+			break;
+		case TC_CHARACTER:
+			s << "char '" << val.getChar() << "' (\"" <<
+				x.getString() << "\")";
+			break;
+		case TC_NUMBER:
+			if(x.getDataType() == DT_FLOAT)
+			{
+				s << "float " << val.getFloat() << " (\"" << x.getString() <<
+					"\")";
+			}
+			else
+			{
+				s << "int " << val.getInt() << " (\"" <<
+					x.getString() << "\")";
+			}
+			break;
+		case TC_IDENTIFIER:
+			s << "identifier \"" << val.getString() << "\"";
+			break;
+		case TC_ERROR:
+			s << "scanner error";
+			break;
+		default:
+			if(code >= TC_KE && code <= TC_KEYWORD)
+			{
+				s << "reserved word \"" << val.getString() << "\"";
+			}
+			else if(code >= TC_SCOPE_RESOLUTION && code <= TC_ASSIGN_OR)
+			{
+				s << "operator no " << (code - TC_SCOPE_RESOLUTION);
+			}
+	}
+
+	return s;
+}
+
+
+//==============================================================================
+std::string Token::getInfoString() const
+{
+	std::stringstream ss;
+	ss << *this;
+	return ss.str();
+}
+
+
+//==============================================================================
 
 #define SCANNER_EXCEPTION(x) \
 	Exception(std::string() + x, __LINE__, scriptName, lineNmbr)
 
 
-//==============================================================================
-// statics                                                                     =
-//==============================================================================
 char Scanner::eofChar = 0x7F;
 
 
@@ -63,9 +175,6 @@ Scanner::AsciiFlag Scanner::asciiLookupTable [128] = {AC_ERROR};
 
 
 //==============================================================================
-// Constructors                                                                =
-//==============================================================================
-
 Scanner::Scanner(bool newlinesAsWhitespace)
 {
 	strcpy(scriptName, "unnamed-script");
@@ -73,6 +182,7 @@ Scanner::Scanner(bool newlinesAsWhitespace)
 }
 
 
+//==============================================================================
 Scanner::Scanner(const char* filename, bool newlinesAsWhitespace)
 {
 	strcpy(scriptName, "unnamed-script");
@@ -81,6 +191,7 @@ Scanner::Scanner(const char* filename, bool newlinesAsWhitespace)
 }
 
 
+//==============================================================================
 Scanner::Scanner(std::istream& istream_, const char* scriptName_,
 	bool newlinesAsWhitespace)
 {
@@ -90,8 +201,6 @@ Scanner::Scanner(std::istream& istream_, const char* scriptName_,
 }
 
 
-//==============================================================================
-// initAsciiMap                                                                =
 //==============================================================================
 void Scanner::initAsciiMap()
 {
@@ -136,8 +245,6 @@ void Scanner::initAsciiMap()
 
 
 //==============================================================================
-// init                                                                        =
-//==============================================================================
 void Scanner::init(bool newlinesAsWhitespace_)
 {
 	newlinesAsWhitespace = newlinesAsWhitespace_;
@@ -155,8 +262,6 @@ void Scanner::init(bool newlinesAsWhitespace_)
 
 
 //==============================================================================
-// getLine                                                                     =
-//==============================================================================
 void Scanner::getLine()
 {
 	if(!inStream->getline(line, MAX_SCRIPT_LINE_LEN - 1, '\n'))
@@ -173,8 +278,6 @@ void Scanner::getLine()
 }
 
 
-//==============================================================================
-// getNextChar                                                                 =
 //==============================================================================
 char Scanner::getNextChar()
 {
@@ -202,8 +305,6 @@ char Scanner::getNextChar()
 
 
 //==============================================================================
-// putBackChar                                                                 =
-//==============================================================================
 char Scanner::putBackChar()
 {
 	if(pchar != line && *pchar != eofChar)
@@ -216,21 +317,17 @@ char Scanner::putBackChar()
 
 
 //==============================================================================
-// getAllPrintAll                                                              =
-//==============================================================================
 void Scanner::getAllPrintAll()
 {
 	do
 	{
 		getNextToken();
 		std::cout << std::setw(3) << std::setfill('0') << getLineNumber() <<
-			": " << crntToken.getInfoStr() << std::endl;
+			": " << crntToken << std::endl;
 	} while(crntToken.code != TC_END);
 }
 
 
-//==============================================================================
-// loadFile                                                                    =
 //==============================================================================
 void Scanner::loadFile(const char* filename_)
 {
@@ -244,8 +341,6 @@ void Scanner::loadFile(const char* filename_)
 }
 
 
-//==============================================================================
-// loadIstream                                                                 =
 //==============================================================================
 void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 {
@@ -269,16 +364,12 @@ void Scanner::loadIstream(std::istream& istream_, const char* scriptName_)
 
 
 //==============================================================================
-// unload                                                                      =
-//==============================================================================
 void Scanner::unload()
 {
 	inFstream.close();
 }
 
 
-//==============================================================================
-// getNextToken                                                                =
 //==============================================================================
 const Token& Scanner::getNextToken()
 {
@@ -385,8 +476,7 @@ const Token& Scanner::getNextToken()
 	return crntToken;
 }
 
-//==============================================================================
-// checkWord                                                                   =
+
 //==============================================================================
 void Scanner::checkWord()
 {
@@ -429,8 +519,6 @@ void Scanner::checkWord()
 }
 
 
-//==============================================================================
-// checkComment                                                                =
 //==============================================================================
 void Scanner::checkComment()
 {
@@ -499,8 +587,6 @@ void Scanner::checkComment()
 }
 
 
-//==============================================================================
-// checkNumber                                                                 =
 //==============================================================================
 void Scanner::checkNumber()
 {
@@ -813,8 +899,6 @@ void Scanner::checkNumber()
 
 
 //==============================================================================
-// checkString                                                                 =
-//==============================================================================
 void Scanner::checkString()
 {
 	char* tmpStr = &crntToken.asString[0];
@@ -905,8 +989,6 @@ void Scanner::checkString()
 
 
 //==============================================================================
-// checkChar                                                                   =
-//==============================================================================
 void Scanner::checkChar()
 {
 	char ch = getNextChar();
@@ -933,10 +1015,9 @@ void Scanner::checkChar()
 	{
 		ch = getNextChar();
 		*tmpStr++ = ch;
-		if(ch=='\0' || ch==eofChar) //check again after the \.
+		if(ch == '\0' || ch == eofChar) //check again after the \.
 		{
 			throw SCANNER_EXCEPTION("Newline in constant");
-			return;
 		}
 
 		switch (ch)
@@ -971,6 +1052,9 @@ void Scanner::checkChar()
 			case '\?':
 				ch0 = '\?';
 				break;
+			case 'r':
+				ch0 = '\r';
+				break;
 			default:
 				ch0 = ch;
 				throw SCANNER_EXCEPTION("Unrecognized escape character \'\\" +
@@ -996,8 +1080,6 @@ void Scanner::checkChar()
 }
 
 
-//==============================================================================
-// checkSpecial                                                                =
 //==============================================================================
 void Scanner::checkSpecial()
 {
@@ -1270,4 +1352,4 @@ void Scanner::checkSpecial()
 }
 
 
-} // end namesapce
+}} // end namespaces

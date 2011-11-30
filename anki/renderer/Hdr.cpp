@@ -54,8 +54,8 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create deferred shading post-processing "
-			"stage HDR passes FBO: " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot create deferred shading post-processing "
+			"stage HDR passes FBO", e);
 	}
 }
 

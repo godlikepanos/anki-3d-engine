@@ -3,7 +3,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include "anki/util/Exception.h"
-#include "anki/util/scanner/Scanner.h"
+#include "anki/util/Scanner.h"
 
 
 namespace anki {

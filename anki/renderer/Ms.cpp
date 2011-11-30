@@ -74,8 +74,8 @@ void Ms::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create deferred shading material stage FBO: " +
-			e.what());
+		throw ANKI_EXCEPTION_R("Cannot create deferred "
+			"shading material stage FBO", e);
 	}
 
 	ez.init(initializer);

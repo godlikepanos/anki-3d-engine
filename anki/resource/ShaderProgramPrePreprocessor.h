@@ -2,7 +2,6 @@
 #define ANKI_RESOURCE_SHADER_PROGRAM_PRE_PREPROCESSOR_H
 
 #include "anki/util/StdTypes.h"
-#include "anki/util/scanner/Forward.h"
 #include "anki/resource/ShaderProgramCommon.h"
 #include <limits>
 #include <boost/array.hpp>
@@ -10,6 +9,11 @@
 
 
 namespace anki {
+
+
+namespace scanner {
+class Scanner;
+}
 
 
 /// Helper class used for shader program loading

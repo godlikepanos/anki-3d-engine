@@ -36,7 +36,7 @@ void Mesh::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Mesh \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION_R("Mesh \"" + filename + "\"", e);
 	}
 }
 
