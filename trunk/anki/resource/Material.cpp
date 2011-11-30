@@ -65,7 +65,7 @@ void Material::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\" failed: " + e.what());
+		throw ANKI_EXCEPTION_R("File \"" + filename + "\" failed", e);
 	}
 }
 

@@ -93,7 +93,7 @@ void Skin::load(const char* filename)
 	  }
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Skin \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION_R("Skin \"" + filename + "\"", e);
 	}
 }
 

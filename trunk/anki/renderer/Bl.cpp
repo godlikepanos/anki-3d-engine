@@ -43,8 +43,8 @@ void Bl::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create horizontal blur "
-			"post-processing stage FBO: " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot create horizontal blur "
+			"post-processing stage FBO: ", e);
 	}
 
 	hBlurSProg.load(ShaderProgram::createSrcCodeToCache(
@@ -61,8 +61,8 @@ void Bl::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create vertical blur "
-			"post-processing stage FBO: " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot create vertical blur "
+			"post-processing stage FBO", e);
 	}
 
 	vBlurSProg.load(ShaderProgram::createSrcCodeToCache(
@@ -79,9 +79,8 @@ void Bl::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create side blur "
-			"post-processing stage FBO: " +
-			e.what());
+		throw ANKI_EXCEPTION_R("Cannot create side blur "
+			"post-processing stage FBO", e);
 	}
 
 	sideBlurMap.load("engine-rsrc/side-blur.png");

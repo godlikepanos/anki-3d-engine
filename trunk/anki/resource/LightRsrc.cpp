@@ -216,7 +216,7 @@ void LightRsrc::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Material \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION_R("Material \"" + filename + "\": ", e);
 	}
 }
 

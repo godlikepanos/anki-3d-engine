@@ -53,8 +53,8 @@ void Pps::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create pre-pass post-processing stage FBO: " +
-			e.what());
+		throw ANKI_EXCEPTION_R("Cannot create pre-pass "
+			"post-processing stage FBO", e);
 	}
 
 	// SProg
@@ -86,8 +86,8 @@ void Pps::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create post-pass post-processing stage FBO: " +
-			e.what());
+		throw ANKI_EXCEPTION_R("Cannot create post-pass "
+			"post-processing stage FBO", e);
 	}
 
 	// SProg

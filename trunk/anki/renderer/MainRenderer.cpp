@@ -109,7 +109,7 @@ void MainRenderer::initGl()
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("OpenGL initialization failed: " + e.what());
+		throw ANKI_EXCEPTION_R("OpenGL initialization failed", e);
 	}
 }
 

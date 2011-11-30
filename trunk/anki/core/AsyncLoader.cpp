@@ -64,7 +64,8 @@ void AsyncLoader::workingFunc()
 		}
 		catch(std::exception& e)
 		{
-			ANKI_ERROR("Loading \"" << req.filename << "\" failed: " << e.what());
+			ANKI_ERROR("Loading \"" << req.filename <<
+				"\" failed: " << e.what());
 			ok = false;
 		}
 

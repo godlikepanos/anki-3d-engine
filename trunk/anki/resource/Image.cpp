@@ -455,7 +455,7 @@ void Image::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\": " + e.what());
+		throw ANKI_EXCEPTION_R("File \"" + filename + "\": ", e);
 	}
 }
 

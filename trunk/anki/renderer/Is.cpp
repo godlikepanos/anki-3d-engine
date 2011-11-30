@@ -64,8 +64,8 @@ void Is::initFbo()
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create deferred shading illumination "
-			"stage FBO: " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot create deferred shading illumination "
+			"stage FBO", e);
 	}
 }
 
@@ -98,8 +98,8 @@ void Is::initCopy()
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create deferred shading "
-			"illumination stage additional FBO: " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot create deferred shading "
+			"illumination stage additional FBO", e);
 	}
 }
 

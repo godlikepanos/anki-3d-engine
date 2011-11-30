@@ -226,7 +226,7 @@ void Dbg::init(const RendererInitializer& initializer)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create debug FBO: " + e.what());
+		throw ANKI_EXCEPTION_R("Cannot create debug FBO", e);
 	}
 
 	//
