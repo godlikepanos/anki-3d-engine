@@ -125,7 +125,7 @@ void MeshData::load(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION_R("File \"" + filename + "\"", e);
+		throw ANKI_EXCEPTION("File \"" + filename + "\"") << e;
 	}
 }
 

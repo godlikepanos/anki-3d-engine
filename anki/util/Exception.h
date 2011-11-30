@@ -14,10 +14,10 @@ class Exception: public std::exception
 {
 public:
 	/// Constructor
-	Exception(const char* err, const char* file = "unknown",
+	Exception(const char* error, const char* file = "unknown",
 		int line = -1, const char* func = "unknown")
 	{
-		synthErr(err, file, line, func);
+		err = synthErr(error, file, line, func);
 	}
 
 	/// Copy constructor
@@ -25,14 +25,12 @@ public:
 		: err(e.err)
 	{}
 
-	/// For re-throws
-	Exception(const char* err, const std::exception& e,
-		const char* file = "unknown",
-		int line = -1, const char* func = "unknown");
-
 	/// Destructor. Do nothing
 	~Exception() throw()
 	{}
+
+	/// For re-throws
+	Exception operator<<(const std::exception& e) const;
 
 	/// Implements std::exception::what()
 	const char* what() const throw()
@@ -43,7 +41,7 @@ public:
 private:
 	std::string err;
 
-	/// XXX
+	/// Synthesize the error string
 	std::string synthErr(const char* error, const char* file,
 		int line, const char* func);
 };
@@ -57,9 +55,6 @@ private:
 //==============================================================================
 
 #define ANKI_EXCEPTION(x) Exception((std::string() + x).c_str(), \
-	__FILE__, __LINE__, __func__)
-
-#define ANKI_EXCEPTION_R(x, e) Exception((std::string() + x).c_str(), e, \
 	__FILE__, __LINE__, __func__)
 
 

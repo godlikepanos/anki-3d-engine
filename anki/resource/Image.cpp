@@ -455,7 +455,7 @@ void Image::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION_R("File \"" + filename + "\": ", e);
+		throw ANKI_EXCEPTION("File \"" + filename + "\"") << e;
 	}
 }
 
@@ -498,7 +498,7 @@ void Image::load(const char* filename)
 #define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
 #define DDSCAPS2_VOLUME             0x00200000
 
-static int toInt(const char* x)
+static uint toInt(const char* x)
 {
 	return x[3] | (x[2] << 8) | (x[1] << 16) | (x[0] << 24);
 }
