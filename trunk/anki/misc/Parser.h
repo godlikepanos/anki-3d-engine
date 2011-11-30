@@ -21,10 +21,11 @@ namespace parser {
 
 #define PARSER_EXCEPTION_EXPECTED(x) \
 	PARSER_EXCEPTION("Expected " + x + " and not " + \
-		scanner.getCrntToken().getInfoStr())
+		scanner.getCrntToken().getInfoString())
 
 #define PARSER_EXCEPTION_UNEXPECTED() \
-	PARSER_EXCEPTION("Unexpected token " + scanner.getCrntToken().getInfoStr())
+	PARSER_EXCEPTION("Unexpected token " + \
+	scanner.getCrntToken().getInfoString())
 
 
 /// This template func is used for a common operation of parsing arrays of

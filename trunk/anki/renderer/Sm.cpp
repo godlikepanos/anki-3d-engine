@@ -94,8 +94,8 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION_R("Cannot create shadowmapping "
-			"FBO", e);
+		throw ANKI_EXCEPTION("Cannot create shadowmapping "
+			"FBO") << e;
 	}
 }
 

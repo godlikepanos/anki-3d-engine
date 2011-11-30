@@ -16,12 +16,12 @@ std::string Exception::synthErr(const char* error, const char* file,
 
 
 //==============================================================================
-Exception::Exception(const char* err, const std::exception& e,
-	const char* file, int line, const char* func)
+Exception Exception::operator<<(const std::exception& e) const
 {
-	std::stringstream ss;
-	ss << synthErr(error, file, line, func) << ". From here:\n" << e.what();
-	err = ss.str();
+	Exception out(*this);
+	out.err += "\nFrom: ";
+	out.err += e.what();
+	return out;
 }
 
 

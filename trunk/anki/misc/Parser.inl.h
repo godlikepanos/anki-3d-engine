@@ -130,9 +130,9 @@ void parseNumber(scanner::Scanner& scanner, bool sign, Type& out)
 			out = static_cast<Type>(l);
 		}
 	}
-	catch(std::exception& e)
+	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION_R("Error", e);
+		throw ANKI_EXCEPTION("Error") << e;
 	}
 }
 
@@ -169,9 +169,9 @@ void parseMathVector(scanner::Scanner& scanner, Type& out)
 			throw PARSER_EXCEPTION_EXPECTED("}");
 		}
 	}
-	catch(std::exception& e)
+	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION_R("Error", e);
+		throw ANKI_EXCEPTION("Error") << e;
 	}
 }
 

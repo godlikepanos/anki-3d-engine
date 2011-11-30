@@ -108,7 +108,7 @@ void Skeleton::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION_R("Skeleton \"" + filename + "\"", e);
+		throw ANKI_EXCEPTION("Skeleton \"" + filename + "\"") << e;
 	}
 }
 

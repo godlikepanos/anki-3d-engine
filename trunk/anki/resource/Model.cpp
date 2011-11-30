@@ -57,7 +57,7 @@ void Model::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION_R("Model \"" + filename + "\"", e);
+		throw ANKI_EXCEPTION("Model \"" + filename + "\"") << e;
 	}
 }
 
