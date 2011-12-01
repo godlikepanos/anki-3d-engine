@@ -185,9 +185,6 @@ private:
 	/// XXX
 	void populateVariables(const boost::property_tree::ptree& pt);
 
-	/// Get a string and split it into words
-	static StringList splitString(const char* str);
-
 	/// Parses something like this: "0.0 0.01 -1.2" and returns a valid
 	/// math type
 	template<typename Type, size_t n>
