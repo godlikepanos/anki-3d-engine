@@ -88,7 +88,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 	if(pass)
 	{
-		passes = splitString(pass.get().c_str());
+		passes = StringList::splitString(pass.get(), " ");
 	}
 	else
 	{
@@ -266,73 +266,113 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 			}
 
 			allVarNames[v.getName()] = v.getGlDataType();
+
+			ANKI_INFO("--" << v.getName());
+		}
+	}
+
+
+	//
+	// Iterate all the <input> and get the value
+	//
+	std::map<std::string, std::string> nameToValue;
+
+	BOOST_FOREACH(const ptree::value_type& v, pt)
+	{
+		if(v.first != "shader")
+		{
+			throw ANKI_EXCEPTION("Expected \"shader\" tag and not: " +
+				v.first);
+		}
+
+		boost::optional<const ptree&> insPt =
+			v.second.get_child_optional("inputs");
+
+		if(!insPt)
+		{
+			continue;
+		}
+
+		BOOST_FOREACH(const ptree::value_type& vv, insPt.get())
+		{
+			if(vv.first != "input")
+			{
+				throw ANKI_EXCEPTION("Expected \"input\" tag and not: " +
+					vv.first);
+			}
+
+			std::string name = vv.second.get<std::string>("name");
+			std::string value = vv.second.get<std::string>("value");
+
+			nameToValue[name] = value;
+
+			ANKI_INFO("++ " << name);
+
+			// A simple warning
+			std::map<std::string, GLenum>::const_iterator iit =
+				allVarNames.find(name);
+
+			if(iit == allVarNames.end())
+			{
+				ANKI_WARNING("Input variable \"" <<
+					name << "\" not used in material \"" << fname << "\"");
+			}
 		}
 	}
 
 	//
-	// Iterate shader program variables
+	// Now combine
 	//
 	std::map<std::string, GLenum>::const_iterator it = allVarNames.begin();
 	for(; it != allVarNames.end(); it++)
 	{
-		const char* svName = it->first.c_str();
+		std::string name = it->first;
 		GLenum dataType = it->second;
 
-		// Find the ptree that contains the value
-		const ptree* valuePt = NULL;
-		BOOST_FOREACH(const ptree::value_type& v, pt)
-		{
-			if(v.first != "input")
-			{
-				throw ANKI_EXCEPTION("Expecting <input> and not: " +
-					v.first);
-			}
-
-			if(v.second.get<std::string>("name") == svName)
-			{
-				valuePt = &v.second.get_child("value");
-				break;
-			}
-		}
+		std::map<std::string, std::string>::const_iterator it1 =
+			nameToValue.find(name);
 
 		MaterialVariable* v = NULL;
 
-		// Buildin?
-		if(!valuePt)
+		// Not found
+		if(it1 == nameToValue.end())
 		{
-			v = new MaterialVariable(svName, eSProgs);
+			ANKI_INFO("No value for " << name);
+
+			v = new MaterialVariable(name.c_str(), eSProgs);
 		}
-		// User defined
 		else
 		{
-			const std::string& value = valuePt->get<std::string>("value");
+			std::string value = it1->second;
+
+			ANKI_INFO("With value " << name << " " << value);
 
 			// Get the value
 			switch(dataType)
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					v = new MaterialVariable(svName, eSProgs,
+					v = new MaterialVariable(name.c_str(), eSProgs,
 						value);
 					break;
 				// float
 				case GL_FLOAT:
-					v = new MaterialVariable(svName, eSProgs,
+					v = new MaterialVariable(name.c_str(), eSProgs,
 						boost::lexical_cast<float>(value));
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					v = new MaterialVariable(svName, eSProgs,
+					v = new MaterialVariable(name.c_str(), eSProgs,
 						setMathType<Vec2, 2>(value.c_str()));
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					v = new MaterialVariable(svName, eSProgs,
+					v = new MaterialVariable(name.c_str(), eSProgs,
 						setMathType<Vec3, 3>(value.c_str()));
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					v = new MaterialVariable(svName, eSProgs,
+					v = new MaterialVariable(name.c_str(), eSProgs,
 						setMathType<Vec4, 4>(value.c_str()));
 					break;
 				// default is error
@@ -340,26 +380,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 					ANKI_ASSERT(0);
 			}
 		}
-
-		vars.push_back(v);
-		nameToVar[v->getName().c_str()] = v;
-	} // end for all sprog vars
-}
-
-
-//==============================================================================
-StringList Material::splitString(const char* str)
-{
-	StringList out;
-	std::string s = str;
-	boost::tokenizer<> tok(s);
-
-	for(boost::tokenizer<>::iterator it = tok.begin(); it != tok.end(); ++it)
-	{
-		out.push_back(*it);
 	}
-
-	return out;
 }
 
 
@@ -368,7 +389,7 @@ template<typename Type, size_t n>
 Type Material::setMathType(const char* str)
 {
 	Type out;
-	StringList sl = splitString(str);
+	StringList sl = StringList::splitString(str, " ");
 	ANKI_ASSERT(sl.size() == n);
 
 	for(uint i = 0; i < n; ++i)

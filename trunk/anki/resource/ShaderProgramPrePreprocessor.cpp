@@ -98,7 +98,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 					{
 						throw PARSER_EXCEPTION(
 							"#pragma anki followed by incorrect " +
-							token->getInfoStr());
+							token->getInfoString());
 					}
 				} // end if anki
 

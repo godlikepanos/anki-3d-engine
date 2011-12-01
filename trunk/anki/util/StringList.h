@@ -13,28 +13,15 @@ class StringList: public std::vector<std::string>
 {
 	public:
 		typedef std::vector<std::string> Base; ///< Its the vector of strings
-		typedef Base::value_type ValueType; ///< Its string
+		typedef Base::value_type StringType; ///< Its string
 
-		std::string join(const ValueType& sep) const;
+		/// Return the list as a single string
+		StringType join(const StringType& sep) const;
+
+		/// XXX
+		static StringList splitString(const StringType& s,
+			const char* sep = " ");
 };
-
-
-inline std::string StringList::join(const ValueType& sep) const
-{
-	std::string out;
-
-	Base::const_iterator it = begin();
-	for(; it != end(); it++)
-	{
-		out += *it;
-		if(it != end() - 1)
-		{
-			out += sep;
-		}
-	}
-
-	return out;
-}
 
 
 } // end namespace

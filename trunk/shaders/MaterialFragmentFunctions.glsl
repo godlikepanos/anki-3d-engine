@@ -16,7 +16,7 @@
 vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 	in sampler2D map, in vec2 texCoords)
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	vec3 n = normalize(normal);
 	vec3 t = normalize(tangent);
 	vec3 b = cross(n, t) * tangentW;
@@ -38,7 +38,7 @@ vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 /// Just normalize
 vec3 getNormalSimple(in vec3 normal)
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	return normalize(normal);
 #else
 	return vec3(0.0);
@@ -57,7 +57,7 @@ vec3 getNormalSimple(in vec3 normal)
 vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	in sampler2D map)
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	// In case of normal mapping I could play with vertex's normal but this 
 	// gives better results and its allready computed
 	
@@ -89,7 +89,7 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 	in vec2 texCoords,
 	in float tolerance)
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	vec4 col = texture(map, texCoords);
 	if(col.a < tolerance)
 	{
@@ -113,7 +113,7 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 /// Just read the RGB color from texture
 vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	return texture(tex, texCoords).rgb;
 #else
 	return vec3(0.0);
@@ -141,7 +141,7 @@ void writeFais(
 	in float shininess, 
 	in float blurring)
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	fMsNormalFai = vec3(packNormal(normal), blurring);
 	fMsDiffuseFai = diffCol;
 	fMsSpecularFai = vec4(specularCol, shininess / MAX_SHININESS);
