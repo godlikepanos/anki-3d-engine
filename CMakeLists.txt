@@ -5,6 +5,8 @@ PROJECT(ANKI_PROJ)
 #
 # Macros
 #
+
+# Check if INCDIR and LIBDIR dirs exist and the file ONEINCFILE as well
 MACRO(ANKI_ADD_LIB INCDIR LIBDIR ONEINCFILE)
 	IF(NOT EXISTS ${INCDIR})
 		MESSAGE(FATAL_ERROR "Directory does not exist: " ${INCDIR})
@@ -16,13 +18,20 @@ MACRO(ANKI_ADD_LIB INCDIR LIBDIR ONEINCFILE)
 	
 	IF(NOT EXISTS ${ONEINCFILE})
 		MESSAGE(FATAL_ERROR "File not found: " ${ONEINCFILE})
-	ELSE()
-		MESSAGE("Found: " ${ONEINCFILE})
 	ENDIF()
 	
 	INCLUDE_DIRECTORIES(${INCDIR})
 	LINK_DIRECTORIES(${LIBDIR})
+	
+	MESSAGE("++ Found: ${ONEINCFILE}")
+	MESSAGE("++ Adding include dir: ${INCDIR}")
+	MESSAGE("++ Adding lib dir: ${LIBDIR}")
 ENDMACRO()
+
+#
+# Arch
+#
+SET(ARCH 64 CACHE STRING "The architecture")
 
 #
 # Install
@@ -46,11 +55,9 @@ ENDIF()
 #
 SET(ANKI_VERSION 0.1)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/anki/Version.h 
-	${CMAKE_CURRENT_BINARY_DIR}/anki/Version.h)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/anki/Version.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/anki/Version.h)
 
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/anki/Version.h 
-	DESTINATION ${INCLUDE_INSTALL_DIR}/anki)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/anki/Version.h DESTINATION ${INCLUDE_INSTALL_DIR}/anki)
 	
 #
 # Doxygen
@@ -59,9 +66,7 @@ FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
 	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
 	
-	ADD_CUSTOM_TARGET(doc
-${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
-WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generating API documentation with Doxygen" VERBATIM)
+	ADD_CUSTOM_TARGET(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generating API documentation with Doxygen" VERBATIM)
 ENDIF()
 
 #
@@ -69,8 +74,6 @@ ENDIF()
 #
 FIND_PACKAGE(PNG 1.2 REQUIRED)
 FIND_PACKAGE(JPEG 62 REQUIRED)
-FIND_PACKAGE(Freetype 2.4.4 REQUIRED)
-
 
 #
 # Freetype
@@ -83,8 +86,8 @@ ANKI_ADD_LIB(${FREETYPE_INCLUDE_DIR} ${FREETYPE_LIBRARY_DIR} ${FREETYPE_INCLUDE_
 #
 # Python
 #
-SET(PYTHON_VER 2.7)
-SET(PYTHON_INCLUDE_DIR "/usr/include/python${PYTHON_VER}" CACHE PATH "The directory that contains the Python.h and the other headers")
+SET(PYTHON_VER 2.7 CACHE STRING "The python version")
+SET(PYTHON_INCLUDE_DIR "/usr/include/python${PYTHON_VER}" CACHE PATH "The directory that contains the Python.h")
 SET(PYTHON_LIBRARY_DIR "/usr/lib" CACHE PATH "The directory that contains the libpython${PYTHON_VER}.so")
 
 ANKI_ADD_LIB(${PYTHON_INCLUDE_DIR} ${PYTHON_LIBRARY_DIR} ${PYTHON_INCLUDE_DIR}/Python.h)
@@ -93,17 +96,26 @@ ANKI_ADD_LIB(${PYTHON_INCLUDE_DIR} ${PYTHON_LIBRARY_DIR} ${PYTHON_INCLUDE_DIR}/P
 # Bullet (Because FIND_PACKAGE(Bullet) sucks)
 #
 SET(BULLET_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include/" CACHE PATH "The directory that contains the bullet directory with the header files")
-SET(BULLET_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib64/" CACHE PATH "The directory that contains the Bullet (static) libraries")
+SET(BULLET_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH "The directory that contains the Bullet (static) libraries")
 
 ANKI_ADD_LIB(${BULLET_INCLUDE_DIR}/bullet ${BULLET_LIBRARY_DIR} ${BULLET_INCLUDE_DIR}/bullet/btBulletCollisionCommon.h)
 
 #
 # GLEW
 #
-SET(GLEW_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include/" CACHE PATH "The directory that contains the GL directory with the header files")
-SET(GLEW_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib64/" CACHE PATH "The directory that contains the GLEW (static) libraries")
+SET(GLEW_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include" CACHE PATH "The directory that contains the GL directory with the header files")
+SET(GLEW_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH "The directory that contains the GLEW (static) libraries")
 
 ANKI_ADD_LIB(${GLEW_INCLUDE_DIR} ${GLEW_LIBRARY_DIR} ${GLEW_INCLUDE_DIR}/GL/glew.h)
+
+#
+# Boost
+#
+SET(BOOST_INCLUDE_DIR "/usr/include/" CACHE PATH "The directory that contains the boost directory")
+SET(BOOST_LIBRARY_DIR "/usr/lib/" CACHE PATH "The directory that contains the libboost_*.so")
+
+ANKI_ADD_LIB(${BOOST_INCLUDE_DIR} ${BOOST_LIBRARY_DIR} ${BOOST_INCLUDE_DIR}/boost/version.h)
+
 
 #
 # Defines & flags
@@ -134,8 +146,6 @@ ENDIF()
 #INCLUDE_DIRECTORIES("/usr/include/python2.6")
 #INCLUDE_DIRECTORIES("/usr/include/freetype2")
 INCLUDE_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR})
-
-LINK_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR}/extern/lib64)
 
 #
 # libanki

@@ -15,7 +15,6 @@
 #include "anki/scene/SpotLight.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/Scene.h"
-#include "anki/util/scanner/Scanner.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/LightRsrc.h"
 #include "anki/misc/Parser.h"
