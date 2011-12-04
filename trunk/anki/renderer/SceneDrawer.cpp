@@ -36,7 +36,7 @@ template<typename Type>
 void SceneDrawer::UsrDefVarVisitor::operator()(const Type& x) const
 {
 	static_cast<const ShaderProgramUniformVariable&>(udvr.getMaterialVariable().
-		getShaderProgramVariable(key)).set(&x);
+		getShaderProgramVariable(key)).set(x);
 }
 
 
@@ -117,31 +117,31 @@ void SceneDrawer::setupShaderProg(
 	if(mtl.variableExistsAndInKey("modelMat", pt))
 	{
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelMat").
-			getShaderProgramVariable(pt)).set(&modelMat);
+			getShaderProgramVariable(pt)).set(modelMat);
 	}
 
 	if(mtl.variableExistsAndInKey("viewMat", pt))
 	{
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("viewMat").
-			getShaderProgramVariable(pt)).set(&viewMat);
+			getShaderProgramVariable(pt)).set(viewMat);
 	}
 
 	if(mtl.variableExistsAndInKey("projectionMat", pt))
 	{
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("projectionMat").
-			getShaderProgramVariable(pt)).set(&projectionMat);
+			getShaderProgramVariable(pt)).set(projectionMat);
 	}
 
 	if(mtl.variableExistsAndInKey("modelViewMat", pt))
 	{
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelMat").
-			getShaderProgramVariable(pt)).set(&modelViewMat);
+			getShaderProgramVariable(pt)).set(modelViewMat);
 	}
 
 	if(mtl.variableExistsAndInKey("viewProjectionMat", pt))
 	{
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("viewProjectionMat").
-			getShaderProgramVariable(pt)).set(&r.getViewProjectionMat());
+			getShaderProgramVariable(pt)).set(r.getViewProjectionMat());
 	}
 
 	if(mtl.variableExistsAndInKey("normalMat", pt))
@@ -149,7 +149,7 @@ void SceneDrawer::setupShaderProg(
 		normalMat = modelViewMat.getRotationPart();
 
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("normalMat").
-			getShaderProgramVariable(pt)).set(&normalMat);
+			getShaderProgramVariable(pt)).set(normalMat);
 	}
 
 	if(mtl.variableExistsAndInKey("modelViewProjectionMat", pt))
@@ -157,7 +157,7 @@ void SceneDrawer::setupShaderProg(
 		modelViewProjectionMat = projectionMat * modelViewMat;
 
 		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelViewProjectionMat").
-			getShaderProgramVariable(pt)).set(&modelViewProjectionMat);
+			getShaderProgramVariable(pt)).set(modelViewProjectionMat);
 	}
 
 

@@ -271,7 +271,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		}
 	}
 
-
 	//
 	// Iterate all the <input> and get the value
 	//

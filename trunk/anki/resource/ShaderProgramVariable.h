@@ -64,7 +64,7 @@ private:
 	/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
 	/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
 	GLenum glDataType;
-	Type type; ///< @ref ATTRIBUTE or @ref UNIFORM
+	Type type; ///< @ref T_ATTRIBUTE or @ref T_UNIFORM
 	/// We need the ShaderProg of this variable mainly for sanity checks
 	const ShaderProgram& fatherSProg;
 };

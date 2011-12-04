@@ -3,6 +3,7 @@
 
 #include "anki/resource/ShaderProgramVariable.h"
 #include "anki/math/Math.h"
+#include <vector>
 
 
 namespace anki {
@@ -19,18 +20,45 @@ public:
 		int loc,
 		const char* name,
 		GLenum glDataType,
-		const ShaderProgram& fatherSProg);
+		const ShaderProgram& fatherSProg)
+		: ShaderProgramVariable(loc, name, glDataType, T_UNIFORM, fatherSProg)
+	{}
 
 	/// @name Set the var
 	/// @{
-	void set(const float f) const;
-	void set(const float f[], uint size = 1) const;
-	void set(const Vec2 v2[], uint size = 1) const;
-	void set(const Vec3 v3[], uint size = 1) const;
-	void set(const Vec4 v4[], uint size = 1) const;
-	void set(const Mat3 m3[], uint size = 1) const;
-	void set(const Mat4 m4[], uint size = 1) const;
+	void set(const float x) const;
+	void set(const Vec2& x) const;
+	void set(const Vec3& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Vec4& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Mat3& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Mat4& x) const
+	{
+		set(&x, 1);
+	}
 	void set(const Texture& tex, uint texUnit) const;
+
+	void set(const float x[], uint size) const;
+	void set(const Vec2 x[], uint size) const;
+	void set(const Vec3 x[], uint size) const;
+	void set(const Vec4 x[], uint size) const;
+	void set(const Mat3 x[], uint size) const;
+	void set(const Mat4 x[], uint size) const;
+
+	/// @tparam Type float, Vec2, etc
+	template<typename Type>
+	void set(const std::vector<Type>& c)
+	{
+		set(&c[0], c.size());
+	}
 	/// @}
 
 private:
@@ -40,13 +68,6 @@ private:
 	/// - if the GL driver gives the same location as the one the var has
 	void doSanityChecks() const;
 };
-
-
-inline ShaderProgramUniformVariable::ShaderProgramUniformVariable(
-	int loc_, const char* name_,
-	GLenum glDataType_, const ShaderProgram& father_)
-	: ShaderProgramVariable(loc_, name_, glDataType_, T_UNIFORM, father_)
-{}
 
 
 } // end namespace
