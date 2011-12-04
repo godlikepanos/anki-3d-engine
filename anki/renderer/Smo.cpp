@@ -148,7 +148,7 @@ void Smo::run(const PointLight& light)
 	Mat4 modelMat = Mat4(light.getWorldTransform().getOrigin(),
 		Mat3::getIdentity(), light.getRadius() * SCALE);
 	Mat4 trf = r.getViewProjectionMat() * modelMat;
-	sProg->getUniformVariableByName("modelViewProjectionMat").set(&trf);
+	sProg->getUniformVariableByName("modelViewProjectionMat").set(trf);
 
 	// render sphere to the stencil buffer
 	sphereGeom.vao.bind();
@@ -228,7 +228,7 @@ void Smo::run(const SpotLight& light)
 	Mat4 modelMat = Mat4(lcam.getWorldTransform());
 
 	Mat4 trf = r.getViewProjectionMat() * modelMat * localMat;
-	sProg->getUniformVariableByName("modelViewProjectionMat").set(&trf);
+	sProg->getUniformVariableByName("modelViewProjectionMat").set(trf);
 
 	//
 	// Render

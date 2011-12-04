@@ -12,7 +12,7 @@ namespace anki {
 MaterialVariable::MaterialVariable(
 	const char* shaderProgVarName,
 	const PassLevelToShaderProgramHashMap& sProgs)
-:	type(T_BUILDIN)
+	: type(T_BUILDIN)
 {
 	init(shaderProgVarName, sProgs);
 }
@@ -50,6 +50,8 @@ void MaterialVariable::init(const char* shaderProgVarName,
 		{
 			const ShaderProgramVariable& sProgVar =
 				sProg.getVariableByName(shaderProgVarName);
+
+			ANKI_ASSERT(sProgVar.getType() == ShaderProgramVariable::T_UNIFORM);
 
 			sProgVars[key] = &sProgVar;
 

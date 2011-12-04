@@ -119,7 +119,7 @@ void Hdr::run()
 	// pass 0
 	toneFbo.bind();
 	toneSProg->bind();
-	toneSProg->getUniformVariableByName("exposure").set(&exposure);
+	toneSProg->getUniformVariableByName("exposure").set(exposure);
 	toneSProg->getUniformVariableByName("fai").set(
 		r.getPps().getPrePassFai(), 0);
 	r.drawQuad();
@@ -140,20 +140,19 @@ void Hdr::run()
 		{
 			hblurSProg->getUniformVariableByName("img").set(fai, 0);
 		}
-		float tmp = float(w);
-		hblurSProg->getUniformVariableByName("imgDimension").set(&tmp);
-		tmp = blurringDist / w;
-		hblurSProg->getUniformVariableByName("blurringDist").set(&tmp);
+		//float tmp = float(w);
+		hblurSProg->getUniformVariableByName("imgDimension").set(float(w));
+		hblurSProg->getUniformVariableByName("blurringDist").set(
+			float(blurringDist / w));
 		r.drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
 		vblurSProg->getUniformVariableByName("img").set(hblurFai, 0);
-		tmp = float(h);
-		vblurSProg->getUniformVariableByName("imgDimension").set(&tmp);
-		tmp = blurringDist / h;
-		vblurSProg->getUniformVariableByName("blurringDist").set(&tmp);
+		vblurSProg->getUniformVariableByName("imgDimension").set(float(h));
+		vblurSProg->getUniformVariableByName("blurringDist").set(
+			float(blurringDist / h));
 		r.drawQuad();
 	}
 

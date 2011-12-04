@@ -105,7 +105,7 @@ void Bl::runSideBlur()
 
 	sideBlurSProg->bind();
 	sideBlurSProg->getUniformVariableByName("tex").set(*sideBlurMap, 0);
-	sideBlurSProg->getUniformVariableByName("factor").set(&sideBlurFactor);
+	sideBlurSProg->getUniformVariableByName("factor").set(sideBlurFactor);
 
 	r.drawQuad();
 }
@@ -129,7 +129,7 @@ void Bl::runBlur()
 		hBlurSProg->getUniformVariableByName("msNormalFai").set(
 			r.getMs().getNormalFai(), 1);
 		float tmp = r.getWidth();
-		hBlurSProg->getUniformVariableByName("imgDimension").set(&tmp);
+		hBlurSProg->getUniformVariableByName("imgDimension").set(tmp);
 
 		r.drawQuad();
 
@@ -141,7 +141,7 @@ void Bl::runBlur()
 		vBlurSProg->getUniformVariableByName("msNormalFai").set(
 			r.getMs().getNormalFai(), 1);
 		tmp = r.getHeight();
-		vBlurSProg->getUniformVariableByName("imgDimension").set(&tmp);
+		vBlurSProg->getUniformVariableByName("imgDimension").set(tmp);
 
 		r.drawQuad();
 	}

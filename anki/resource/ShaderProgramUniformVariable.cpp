@@ -8,8 +8,6 @@ namespace anki {
 
 
 //==============================================================================
-// doSanityChecks                                                              =
-//==============================================================================
 void ShaderProgramUniformVariable::doSanityChecks() const
 {
 	ANKI_ASSERT(getLocation() != -1);
@@ -24,82 +22,72 @@ void ShaderProgramUniformVariable::doSanityChecks() const
 // set uniforms                                                                =
 //==============================================================================
 
-void ShaderProgramUniformVariable::set(const float f) const
+void ShaderProgramUniformVariable::set(const float x) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
 
-	glUniform1f(getLocation(), f);
+	glUniform1f(getLocation(), x);
 }
 
-void ShaderProgramUniformVariable::set(const float f[], uint size) const
+
+void ShaderProgramUniformVariable::set(const Vec2& x) const
+{
+	glUniform2f(getLocation(), x.x(), x.y());
+}
+
+
+void ShaderProgramUniformVariable::set(const float x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
-
-	if(size == 1)
-	{
-		glUniform1f(getLocation(), f[0]);
-	}
-	else
-	{
-		glUniform1fv(getLocation(), size, f);
-	}
+	ANKI_ASSERT(size > 1);
+	glUniform1fv(getLocation(), size, x);
 }
 
 
-void ShaderProgramUniformVariable::set(const Vec2 v2[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	if(size == 1)
-	{
-		glUniform2f(getLocation(), v2[0].x(), v2[0].y());
-	}
-	else
-	{
-		glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(v2[0]))[0]);
-	}
+	ANKI_ASSERT(size > 1);
+	glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(x[0]))[0]);
 }
 
 
-void ShaderProgramUniformVariable::set(const Vec3 v3[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-
-	if(size == 1)
-	{
-		glUniform3f(getLocation(), v3[0].x(), v3[0].y(), v3[0].z());
-	}
-	else
-	{
-		glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(v3[0]))[0]);
-	}
+	ANKI_ASSERT(size > 0);
+	glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(x[0]))[0]);
 }
 
 
-void ShaderProgramUniformVariable::set(const Vec4 v4[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(v4[0]))[0]);
+	ANKI_ASSERT(size > 0);
+	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(x[0]))[0]);
 }
 
 
-void ShaderProgramUniformVariable::set(const Mat3 m3[], uint size) const
+void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT3);
-	glUniformMatrix3fv(getLocation(), size, true, &(m3[0])[0]);
+	ANKI_ASSERT(size > 0);
+	glUniformMatrix3fv(getLocation(), size, true, &(x[0])[0]);
 }
 
 
-void ShaderProgramUniformVariable::set(const Mat4 m4[], uint size) const
+void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT4);
-	glUniformMatrix4fv(getLocation(), size, true, &(m4[0])[0]);
+	ANKI_ASSERT(size > 0);
+	glUniformMatrix4fv(getLocation(), size, true, &(x[0])[0]);
 }
 
 

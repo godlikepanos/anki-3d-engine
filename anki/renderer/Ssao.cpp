@@ -124,19 +124,19 @@ void Ssao::run()
 	ssaoSProg->bind();
 	
 	// planes
-	ssaoSProg->getUniformVariableByName("planes").set(&r.getPlanes());
+	ssaoSProg->getUniformVariableByName("planes").set(r.getPlanes());
 
 	// limitsOfNearPlane
 	ssaoSProg->getUniformVariableByName("limitsOfNearPlane").set(
-		&r.getLimitsOfNearPlane());
+		r.getLimitsOfNearPlane());
 
 	// limitsOfNearPlane2
 	ssaoSProg->getUniformVariableByName("limitsOfNearPlane2").set(
-		&r.getLimitsOfNearPlane2());
+		r.getLimitsOfNearPlane2());
 
 	// zNear
 	float zNear = cam.getZNear();
-	ssaoSProg->getUniformVariableByName("zNear").set(&zNear);
+	ssaoSProg->getUniformVariableByName("zNear").set(zNear);
 
 	// msDepthFai
 	ssaoSProg->getUniformVariableByName("msDepthFai").set(
@@ -147,11 +147,11 @@ void Ssao::run()
 
 	// noiseMapSize
 	float noiseMapSize = noiseMap->getWidth();
-	ssaoSProg->getUniformVariableByName("noiseMapSize").set(&noiseMapSize);
+	ssaoSProg->getUniformVariableByName("noiseMapSize").set(noiseMapSize);
 
 	// screenSize
 	Vec2 screenSize(width * 2, height * 2);
-	ssaoSProg->getUniformVariableByName("screenSize").set(&screenSize);
+	ssaoSProg->getUniformVariableByName("screenSize").set(screenSize);
 
 	// msNormalFai
 	ssaoSProg->getUniformVariableByName("msNormalFai").set(
@@ -179,7 +179,7 @@ void Ssao::run()
 			hblurSProg->getUniformVariableByName("img").set(fai, 0);
 		}
 		float tmp = width;
-		hblurSProg->getUniformVariableByName("imgDimension").set(&tmp);
+		hblurSProg->getUniformVariableByName("imgDimension").set(tmp);
 		r.drawQuad();
 
 		// vpass
@@ -187,7 +187,7 @@ void Ssao::run()
 		vblurSProg->bind();
 		vblurSProg->getUniformVariableByName("img").set(hblurFai, 0);
 		tmp = height;
-		vblurSProg->getUniformVariableByName("imgDimension").set(&tmp);
+		vblurSProg->getUniformVariableByName("imgDimension").set(tmp);
 		r.drawQuad();
 	}
 
