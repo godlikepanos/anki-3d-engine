@@ -17,14 +17,11 @@
 namespace anki {
 
 
+//==============================================================================
+
 #define SHADER_PROGRAM_EXCEPTION(x) ANKI_EXCEPTION( \
 	"Shader program \"" + rsrcFilename + \
 	"\": " + x)
-
-
-//==============================================================================
-// Statics                                                                     =
-//==============================================================================
 
 const char* ShaderProgram::stdSourceCode =
 	"#version 330 core\n"
@@ -39,16 +36,12 @@ const char* ShaderProgram::stdSourceCode =
 
 
 //==============================================================================
-// Destructor                                                                  =
-//==============================================================================
 ShaderProgram::~ShaderProgram()
 {
 	/// @todo add code
 }
 
 
-//==============================================================================
-// createAndCompileShader                                                      =
 //==============================================================================
 uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	const char* preproc, int type) const
@@ -106,8 +99,6 @@ uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 
 
 //==============================================================================
-// link                                                                        =
-//==============================================================================
 void ShaderProgram::link() const
 {
 	// link
@@ -134,8 +125,6 @@ void ShaderProgram::link() const
 
 
 //==============================================================================
-// getUniAndAttribVars                                                         =
-//==============================================================================
 void ShaderProgram::getUniAndAttribVars()
 {
 	int num;
@@ -143,7 +132,6 @@ void ShaderProgram::getUniAndAttribVars()
 	GLsizei length;
 	GLint size;
 	GLenum type;
-
 
 	// attrib locations
 	glGetProgramiv(glId, GL_ACTIVE_ATTRIBUTES, &num);
@@ -165,11 +153,12 @@ void ShaderProgram::getUniAndAttribVars()
 
 		ShaderProgramAttributeVariable* var =
 			new ShaderProgramAttributeVariable(loc, &name_[0], type, *this);
+
 		vars.push_back(var);
+		attribs.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToAttribVar[var->getName().c_str()] = var;
 	}
-
 
 	// uni locations
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
@@ -191,7 +180,9 @@ void ShaderProgram::getUniAndAttribVars()
 
 		ShaderProgramUniformVariable* var =
 			new ShaderProgramUniformVariable(loc, &name_[0], type, *this);
+
 		vars.push_back(var);
+		unis.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToUniVar[var->getName().c_str()] = var;
 	}
@@ -199,12 +190,10 @@ void ShaderProgram::getUniAndAttribVars()
 
 
 //==============================================================================
-// load                                                                        =
-//==============================================================================
 void ShaderProgram::load(const char* filename)
 {
 	rsrcFilename = filename;
-	ANKI_ASSERT(glId == std::numeric_limits<uint>::max());
+	ANKI_ASSERT(!isInitialized());
 
 	ShaderProgramPrePreprocessor pars(filename);
 
@@ -251,86 +240,74 @@ void ShaderProgram::load(const char* filename)
 
 
 //==============================================================================
-// getVariableByName                                                           =
-//==============================================================================
-const ShaderProgramVariable& ShaderProgram::getVariableByName(
+const ShaderProgramVariable& ShaderProgram::findVariableByName(
 	const char* name) const
 {
-	VarsHashMap::const_iterator it = nameToVar.find(name);
+	NameToVarHashMap::const_iterator it = nameToVar.find(name);
 	if(it == nameToVar.end())
 	{
-		throw SHADER_PROGRAM_EXCEPTION("Cannot get variable: " + name);
+		throw SHADER_PROGRAM_EXCEPTION("Cannot find variable: " + name);
 	}
 	return *(it->second);
 }
 
 
 //==============================================================================
-// getAttributeVariableByName                                                  =
-//==============================================================================
-const ShaderProgramAttributeVariable& ShaderProgram::getAttributeVariableByName(
-	const char* name) const
+const ShaderProgramAttributeVariable&
+	ShaderProgram::findAttributeVariableByName(const char* name) const
 {
-	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
+	NameToAttribVarHashMap::const_iterator it = nameToAttribVar.find(name);
 	if(it == nameToAttribVar.end())
 	{
-		throw SHADER_PROGRAM_EXCEPTION("Cannot get attribute loc: " + name);
+		throw SHADER_PROGRAM_EXCEPTION("Cannot find attribute loc: " + name);
 	}
 	return *(it->second);
 }
 
 
 //==============================================================================
-// getUniformVariableByName                                                    =
-//==============================================================================
-const ShaderProgramUniformVariable& ShaderProgram::getUniformVariableByName(
+const ShaderProgramUniformVariable& ShaderProgram::findUniformVariableByName(
 	const char* name) const
 {
-	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
+	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
 	if(it == nameToUniVar.end())
 	{
-		throw SHADER_PROGRAM_EXCEPTION("Cannot get uniform loc: " + name);
+		throw SHADER_PROGRAM_EXCEPTION("Cannot find uniform loc: " + name);
 	}
 	return *(it->second);
 }
 
 
-//==============================================================================
-// variableExists                                                              =
 //==============================================================================
 bool ShaderProgram::variableExists(const char* name) const
 {
-	VarsHashMap::const_iterator it = nameToVar.find(name);
+	NameToVarHashMap::const_iterator it = nameToVar.find(name);
 	return it != nameToVar.end();
 }
 
 
 //==============================================================================
-// uniformVariableExists                                                       =
-//==============================================================================
 bool ShaderProgram::uniformVariableExists(const char* name) const
 {
-	UniVarsHashMap::const_iterator it = nameToUniVar.find(name);
+	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
 	return it != nameToUniVar.end();
 }
 
 
 //==============================================================================
-// attributeVariableExists                                                     =
-//==============================================================================
 bool ShaderProgram::attributeVariableExists(const char* name) const
 {
-	AttribVarsHashMap::const_iterator it = nameToAttribVar.find(name);
+	NameToAttribVarHashMap::const_iterator it = nameToAttribVar.find(name);
 	return it != nameToAttribVar.end();
 }
 
 
 //==============================================================================
-// createSrcCodeToCache                                                        =
-//==============================================================================
 std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 	const char* preAppendedSrcCode)
 {
+	using namespace boost::filesystem;
+
 	if(strlen(preAppendedSrcCode) < 1)
 	{
 		return sProgFPathName;
@@ -342,12 +319,10 @@ std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 	std::string suffix = boost::lexical_cast<std::string>(h);
 
 	//
-	boost::filesystem::path newfPathName =
-		AppSingleton::get().getCachePath() /
-		(boost::filesystem::path(sProgFPathName).filename().string()
-			+ "." + suffix);
+	path newfPathName = AppSingleton::get().getCachePath() /
+		(path(sProgFPathName).filename().string() + "." + suffix);
 
-	if(boost::filesystem::exists(newfPathName))
+	if(exists(newfPathName))
 	{
 		return newfPathName.string();
 	}
@@ -369,28 +344,22 @@ std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 
 
 //==============================================================================
-// getShaderInfoString                                                         =
-//==============================================================================
-std::string ShaderProgram::getShaderInfoString() const
+std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
-	std::stringstream ss;
-
-	ss << "Variables:\n";
-	BOOST_FOREACH(const ShaderProgramVariable& var, vars)
+	s << "Variables:\n";
+	BOOST_FOREACH(const ShaderProgramVariable& var, x.getVariables())
 	{
-		ss << var.getName() << " " << var.getLocation() << " ";
+		s << var.getName() << " " << var.getLocation() << " ";
 		if(var.getType() == ShaderProgramVariable::T_ATTRIBUTE)
 		{
-			ss << "attribute";
+			s << "attribute";
 		}
 		else
 		{
-			ss << "uniform";
+			s << "uniform";
 		}
-		ss << std::endl;
 	}
-
-	return ss.str();
+	return s;
 }
 
 

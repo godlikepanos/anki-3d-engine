@@ -1,5 +1,5 @@
-#ifndef ANKI_RESOURCE_SHADER_PROGRAM_SHADER_PROGRAM_H
-#define ANKI_RESOURCE_SHADER_PROGRAM_SHADER_PROGRAM_H
+#ifndef ANKI_RESOURCE_SHADER_PROGRAM_H
+#define ANKI_RESOURCE_SHADER_PROGRAM_H
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/Assert.h"
@@ -9,33 +9,57 @@
 #include "anki/core/Globals.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
-#include <limits>
 #include <vector>
+#include <boost/noncopyable.hpp>
 
 
 namespace anki {
 
 
-/// Shader program @ref Resource
+/// Shader program resource
 ///
 /// Shader program. Combines a fragment and a vertex shader. Every shader
 /// program consist of one OpenGL ID, a vector of uniform variables and a
 /// vector of attribute variables. Every variable is a struct that contains
 /// the variable's name, location, OpenGL data type and if it is a uniform or
 /// an attribute var.
-class ShaderProgram
+class ShaderProgram: public boost::noncopyable
 {
 public:
-	ShaderProgram();
+	typedef boost::ptr_vector<ShaderProgramVariable> VariablesContainer;
+	typedef std::vector<ShaderProgramUniformVariable*>
+		UniformVariablesContainer;
+	typedef std::vector<ShaderProgramAttributeVariable*>
+		AttributeVariablesContainer;
+
+	ShaderProgram()
+		: glId(UNINITIALIZED_ID)
+	{}
+
 	~ShaderProgram();
 
 	/// @name Accessors
 	/// @{
-	GLuint getGlId() const;
+	GLuint getGlId() const
+	{
+		ANKI_ASSERT(isInitialized());
+		return glId;
+	}
 
-	const boost::ptr_vector<ShaderProgramVariable>& getVariables() const
+	/// Get all variables container
+	const VariablesContainer& getVariables() const
 	{
 		return vars;
+	}
+
+	const UniformVariablesContainer& getUniformVariables() const
+	{
+		return unis;
+	}
+
+	const AttributeVariablesContainer& getAttributeVariables() const
+	{
+		return attribs;
 	}
 	/// @}
 
@@ -43,18 +67,21 @@ public:
 	void load(const char* filename);
 
 	/// Bind the shader program
-	void bind() const;
+	void bind() const
+	{
+		ANKI_ASSERT(isInitialized());
+		GlStateMachineSingleton::get().useShaderProg(glId);
+	}
 
-	/// @name Variable getters
+	/// @name Variable finders
 	/// Used to find and return the variable. They throw exception if
 	/// variable not found so ask if the variable with that name exists
 	/// prior using any of these
 	/// @{
-	const ShaderProgramVariable& getVariableByName(
+	const ShaderProgramVariable& findVariableByName(const char* varName) const;
+	const ShaderProgramUniformVariable& findUniformVariableByName(
 		const char* varName) const;
-	const ShaderProgramUniformVariable& getUniformVariableByName(
-		const char* varName) const;
-	const ShaderProgramAttributeVariable& getAttributeVariableByName(
+	const ShaderProgramAttributeVariable& findAttributeVariableByName(
 		const char* varName) const;
 	/// @}
 
@@ -76,30 +103,33 @@ public:
 	static std::string createSrcCodeToCache(const char* sProgFPathName,
 		const char* preAppendedSrcCode);
 
-	/// For debuging
-	std::string getShaderInfoString() const;
-
 	/// For sorting
 	bool operator<(const ShaderProgram& b) const
 	{
 		return glId < b.glId;
 	}
 
+	/// For debugging
+	friend std::ostream& operator<<(std::ostream& s,
+		const ShaderProgram& x);
+
 private:
-	/// XXX
-	typedef ConstCharPtrHashMap<ShaderProgramVariable*>::Type VarsHashMap;
+	typedef ConstCharPtrHashMap<ShaderProgramVariable*>::Type
+		NameToVarHashMap;
 
-	/// XXX
 	typedef ConstCharPtrHashMap<ShaderProgramUniformVariable*>::Type
-		UniVarsHashMap;
+		NameToUniVarHashMap;
 
-	/// XXX
 	typedef ConstCharPtrHashMap<ShaderProgramAttributeVariable*>::Type
-		AttribVarsHashMap;
+		NameToAttribVarHashMap;
+
+	static const GLuint UNINITIALIZED_ID = -1;
 
 	std::string rsrcFilename;
 	GLuint glId; ///< The OpenGL ID of the shader program
 	GLuint vertShaderGlId; ///< Vertex shader OpenGL id
+	GLuint tcShaderGlId; ///< Tessellation control shader OpenGL id
+	GLuint teShaderGlId; ///< Tessellation eval shader OpenGL id
 	GLuint geomShaderGlId; ///< Geometry shader OpenGL id
 	GLuint fragShaderGlId; ///< Fragment shader OpenGL id
 
@@ -108,10 +138,13 @@ private:
 
 	/// @name Containers
 	/// @{
-	boost::ptr_vector<ShaderProgramVariable> vars; ///< All the vars
-	VarsHashMap nameToVar; ///< Variable searching
-	UniVarsHashMap nameToUniVar; ///< Uniform searching
-	AttribVarsHashMap nameToAttribVar; ///< Attribute searching
+	VariablesContainer vars; ///< All the vars. Does garbage collection
+	UniformVariablesContainer unis;
+	AttributeVariablesContainer attribs;
+
+	NameToVarHashMap nameToVar; ///< Variable searching
+	NameToUniVarHashMap nameToUniVar; ///< Uniform searching
+	NameToAttribVarHashMap nameToAttribVar; ///< Attribute searching
 	/// @}
 
 	/// Query the driver to get the vars. After the linking of the shader
@@ -127,30 +160,13 @@ private:
 	/// Link the shader program
 	/// @exception Exception
 	void link() const;
+
+	/// Returns true if the class points to a valid GL ID
+	bool isInitialized() const
+	{
+		return glId != UNINITIALIZED_ID;
+	}
 }; 
-
-
-//==============================================================================
-// Inlines                                                                     =
-//==============================================================================
-
-inline ShaderProgram::ShaderProgram()
-	: glId(std::numeric_limits<uint>::max())
-{}
-
-
-inline GLuint ShaderProgram::getGlId() const
-{
-	ANKI_ASSERT(glId != std::numeric_limits<uint>::max());
-	return glId;
-}
-
-
-inline void ShaderProgram::bind() const
-{
-	ANKI_ASSERT(glId != std::numeric_limits<uint>::max());
-	GlStateMachineSingleton::get().useShaderProg(glId);
-}
 
 
 } // end namespace
