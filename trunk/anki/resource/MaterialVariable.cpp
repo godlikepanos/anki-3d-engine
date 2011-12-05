@@ -24,11 +24,9 @@ MaterialVariable::MaterialVariable(
 	const char* shaderProgVarName,
 	const PassLevelToShaderProgramHashMap& sProgs,
 	const std::string& val)
-	: type(T_USER)
+	: initialized(true)
 {
 	init(shaderProgVarName, sProgs);
-	ANKI_ASSERT(getShaderProgramVariableType() ==
-		ShaderProgramVariable::T_UNIFORM);
 	data = TextureResourcePointer();
 	boost::get<TextureResourcePointer>(data).load(val.c_str());
 }
@@ -40,18 +38,17 @@ void MaterialVariable::init(const char* shaderProgVarName,
 {
 	oneSProgVar = NULL;
 
+	// For all sprogs
 	PassLevelToShaderProgramHashMap::const_iterator it = sProgs.begin();
 	for(; it != sProgs.end(); ++it)
 	{
 		const ShaderProgram& sProg = *(it->second);
 		const PassLevelKey& key = it->first;
 
-		if(sProg.variableExists(shaderProgVarName))
+		if(sProg.uniformVariableExists(shaderProgVarName))
 		{
-			const ShaderProgramVariable& sProgVar =
-				sProg.getVariableByName(shaderProgVarName);
-
-			ANKI_ASSERT(sProgVar.getType() == ShaderProgramVariable::T_UNIFORM);
+			const ShaderProgramUniformVariable& sProgVar =
+				sProg.findUniformVariableByName(shaderProgVarName);
 
 			sProgVars[key] = &sProgVar;
 

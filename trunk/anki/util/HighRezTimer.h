@@ -10,28 +10,28 @@ namespace anki {
 /// High resolution timer. All time in seconds
 class HighRezTimer
 {
-	public:
-		/// The type that the timer manipulates the results
-		typedef double Scalar;
+public:
+	/// The type that the timer manipulates the results
+	typedef double Scalar;
 
-		HighRezTimer();
+	HighRezTimer();
 
-		/// Start the timer
-		void start();
+	/// Start the timer
+	void start();
 
-		/// Stop the timer
-		void stop();
+	/// Stop the timer
+	void stop();
 
-		/// Get the time elapsed between start and stop (if its stopped) or 
-		/// between start and the current time
-		Scalar getElapsedTime() const;
+	/// Get the time elapsed between start and stop (if its stopped) or
+	/// between start and the current time
+	Scalar getElapsedTime() const;
 
-		/// Get the current date's seconds
-		static Scalar getCrntTime();
+	/// Get the current date's seconds
+	static Scalar getCrntTime();
 
-	private:
-		Scalar startTime;
-		Scalar stopTime;
+private:
+	Scalar startTime;
+	Scalar stopTime;
 };
 
 
