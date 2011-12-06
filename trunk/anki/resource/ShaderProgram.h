@@ -3,8 +3,7 @@
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/Assert.h"
-#include "anki/resource/ShaderProgramUniformVariable.h"
-#include "anki/resource/ShaderProgramAttributeVariable.h"
+#include "anki/math/Forward.h"
 #include "anki/gl/GlStateMachine.h"
 #include "anki/core/Globals.h"
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -14,6 +13,141 @@
 
 
 namespace anki {
+
+
+class ShaderProgram;
+class Texture;
+
+
+/// Shader program variable. The type is attribute or uniform
+class ShaderProgramVariable: public boost::noncopyable
+{
+public:
+	/// Shader var types
+	enum Type
+	{
+		T_ATTRIBUTE,
+		T_UNIFORM
+	};
+
+	ShaderProgramVariable(GLint loc_, const char* name_,
+		GLenum glDataType_, Type type_, const ShaderProgram& fatherSProg_)
+		: loc(loc_), name(name_), glDataType(glDataType_), type(type_),
+			fatherSProg(fatherSProg)
+	{}
+
+	virtual ~ShaderProgramVariable()
+	{}
+
+	/// @name Accessors
+	/// @{
+	const ShaderProgram& getFatherSProg() const
+	{
+		return fatherSProg;
+	}
+
+	GLint getLocation() const
+	{
+		return loc;
+	}
+
+	const std::string& getName() const
+	{
+		return name;
+	}
+
+	GLenum getGlDataType() const
+	{
+		return glDataType;
+	}
+
+	Type getType() const
+	{
+		return type;
+	}
+	/// @}
+
+private:
+	GLint loc; ///< GL location
+	std::string name; ///< The name inside the shader program
+	/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
+	/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
+	GLenum glDataType;
+	Type type; ///< @ref T_ATTRIBUTE or @ref T_UNIFORM
+	/// We need the ShaderProg of this variable mainly for sanity checks
+	const ShaderProgram& fatherSProg;
+};
+
+
+/// Uniform shader variable
+class ShaderProgramUniformVariable: public ShaderProgramVariable
+{
+public:
+	ShaderProgramUniformVariable(
+		int loc,
+		const char* name,
+		GLenum glDataType,
+		const ShaderProgram& fatherSProg)
+		: ShaderProgramVariable(loc, name, glDataType, T_UNIFORM, fatherSProg)
+	{}
+
+	/// @name Set the var
+	/// @{
+	void set(const float x) const;
+	void set(const Vec2& x) const;
+	void set(const Vec3& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Vec4& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Mat3& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Mat4& x) const
+	{
+		set(&x, 1);
+	}
+	void set(const Texture& tex, uint texUnit) const;
+
+	void set(const float x[], uint size) const;
+	void set(const Vec2 x[], uint size) const;
+	void set(const Vec3 x[], uint size) const;
+	void set(const Vec4 x[], uint size) const;
+	void set(const Mat3 x[], uint size) const;
+	void set(const Mat4 x[], uint size) const;
+
+	/// @tparam Type float, Vec2, etc
+	template<typename Type>
+	void set(const std::vector<Type>& c)
+	{
+		set(&c[0], c.size());
+	}
+	/// @}
+
+private:
+	/// Standard set uniform checks
+	/// - Check if initialized
+	/// - if the current shader program is the var's shader program
+	/// - if the GL driver gives the same location as the one the var has
+	void doSanityChecks() const;
+};
+
+
+/// Attribute shader program variable
+class ShaderProgramAttributeVariable: public ShaderProgramVariable
+{
+public:
+	ShaderProgramAttributeVariable(
+		int loc_, const char* name_, GLenum glDataType_,
+		const ShaderProgram& fatherSProg_)
+		: ShaderProgramVariable(loc_, name_, glDataType_, T_ATTRIBUTE,
+			fatherSProg_)
+	{}
+};
 
 
 /// Shader program resource
@@ -33,8 +167,10 @@ public:
 		AttributeVariablesContainer;
 
 	ShaderProgram()
-		: glId(UNINITIALIZED_ID)
-	{}
+	{
+		glId = vertShaderGlId = tcShaderGlId = teShaderGlId =
+			geomShaderGlId = fragShaderGlId = UNINITIALIZED_ID;
+	}
 
 	~ShaderProgram();
 
@@ -97,7 +233,6 @@ public:
 	/// @param sProgFPathName The file pathname of the shader prog
 	/// @param preAppendedSrcCode The source code we want to write on top
 	/// of the shader prog
-	/// @param newFNamePrefix The prefix of the new shader prog
 	/// @return The file pathname of the new shader prog. Its
 	/// $HOME/.anki/cache/newFNamePrefix_fName
 	static std::string createSrcCodeToCache(const char* sProgFPathName,

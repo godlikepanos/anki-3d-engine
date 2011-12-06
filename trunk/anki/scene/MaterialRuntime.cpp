@@ -1,6 +1,7 @@
 #include "anki/scene/MaterialRuntime.h"
 #include "anki/resource/Material.h"
-#include "anki/scene/MaterialRuntimeVariable.h"
+#include "anki/resource/Texture.h"
+#include "anki/resource/Resource.h"
 #include <boost/foreach.hpp>
 
 
@@ -8,8 +9,63 @@ namespace anki {
 
 
 //==============================================================================
+// MaterialRuntimeVariable                                                     =
+//==============================================================================
+
+//==============================================================================
+template <>
+void MaterialRuntimeVariable::ConstructVisitor::
+	operator()<TextureResourcePointer >(const TextureResourcePointer& x) const
+{
+	var.data = &x;
+}
+
+
+//==============================================================================
+MaterialRuntimeVariable::MaterialRuntimeVariable(
+	const MaterialVariable& mvar_)
+	: mvar(mvar_), buildinId(-1)
+{
+	// Initialize the data using a visitor
+	boost::apply_visitor(ConstructVisitor(*this), mvar.getVariant());
+}
+
+
+//==============================================================================
+MaterialRuntimeVariable::~MaterialRuntimeVariable()
+{}
+
+
+
+//==============================================================================
+template<>
+MaterialRuntimeVariable::ConstPtrRsrcPtrTexture&
+	MaterialRuntimeVariable::getValue<
+	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>()
+{
+	throw ANKI_EXCEPTION("You shouldn't call this getter");
+	return boost::get<ConstPtrRsrcPtrTexture>(data);
+}
+
+
+//==============================================================================
+template<>
+void MaterialRuntimeVariable::setValue<
+	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
+	const ConstPtrRsrcPtrTexture& v)
+{
+	throw ANKI_EXCEPTION("You shouldn't call this setter");
+	boost::get<ConstPtrRsrcPtrTexture>(data) = v;
+}
+
+
+//==============================================================================
+// MaterialRuntime                                                             =
+//==============================================================================
+
+//==============================================================================
 MaterialRuntime::MaterialRuntime(const Material& mtl_)
-:	mtl(mtl_)
+	: mtl(mtl_)
 {
 	// Copy props
 	MaterialProperties& me = *this;
@@ -19,12 +75,6 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_)
 	// Create vars
 	BOOST_FOREACH(const MaterialVariable& var, mtl.getVariables())
 	{
-		if(var.getShaderProgramVariableType() !=
-			ShaderProgramVariable::T_UNIFORM)
-		{
-			continue;
-		}
-
 		MaterialRuntimeVariable* varr = new MaterialRuntimeVariable(var);
 		vars.push_back(varr);
 		varNameToVar[varr->getMaterialVariable().getName().c_str()] = varr;

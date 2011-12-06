@@ -1,10 +1,10 @@
 #include "anki/resource/Material.h"
-#include "anki/resource/MaterialVariable.h"
 #include "anki/misc/PropertyTree.h"
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
 #include "anki/core/Globals.h"
 #include "anki/resource/ShaderProgram.h"
+#include "anki/resource/Texture.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -19,13 +19,85 @@ namespace anki {
 
 
 //==============================================================================
-// Statics                                                                     =
+// MaterialVariable                                                            =
+//==============================================================================
+
+//==============================================================================
+MaterialVariable::~MaterialVariable()
+{}
+
+
+//==============================================================================
+GLenum MaterialVariable::getGlDataType() const
+{
+	return oneSProgVar->getGlDataType();
+}
+
+
+//==============================================================================
+const std::string& MaterialVariable::getName() const
+{
+	return oneSProgVar->getName();
+}
+
+
+//==============================================================================
+void MaterialVariable::init(const char* shaderProgVarName,
+	const PassLevelToShaderProgramHashMap& sProgs)
+{
+	oneSProgVar = NULL;
+
+	// For all programs
+	PassLevelToShaderProgramHashMap::const_iterator it = sProgs.begin();
+	for(; it != sProgs.end(); ++it)
+	{
+		const ShaderProgram& sProg = *(it->second);
+		const PassLevelKey& key = it->first;
+
+		// Variable exists
+		if(sProg.uniformVariableExists(shaderProgVarName))
+		{
+			const ShaderProgramUniformVariable& sProgVar =
+				sProg.findUniformVariableByName(shaderProgVarName);
+
+			sProgVars[key] = &sProgVar;
+
+			// Set oneSProgVar
+			if(!oneSProgVar)
+			{
+				oneSProgVar = &sProgVar;
+			}
+
+			// Sanity check: All the sprog vars need to have same GL data type
+			if(oneSProgVar->getGlDataType() != sProgVar.getGlDataType() ||
+				oneSProgVar->getType() != sProgVar.getType())
+			{
+				throw ANKI_EXCEPTION("Incompatible shader "
+					"program variables: " +
+					shaderProgVarName);
+			}
+		}
+	}
+
+	// Extra sanity checks
+	if(!oneSProgVar)
+	{
+		throw ANKI_EXCEPTION("Variable not found in "
+			"any of the shader programs: " +
+			shaderProgVarName);
+	}
+}
+
+
+//==============================================================================
+// Material                                                                    =
+//==============================================================================
+
 //==============================================================================
 
 // Dont make idiotic mistakes
 #define TXT_AND_ENUM(x) \
 	(#x, x)
-
 
 ConstCharPtrHashMap<GLenum>::Type Material::txtToBlengGlEnum =
 	boost::assign::map_list_of
@@ -252,22 +324,18 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	using namespace boost::property_tree;
 
 	//
-	// Get all names of all shader prog vars. Dont duplicate
+	// Get all names of all the uniforms. Dont duplicate
 	//
 	std::map<std::string, GLenum> allVarNames;
 
 	BOOST_FOREACH(const ShaderProgramResourcePointer& sProg, sProgs)
 	{
-		BOOST_FOREACH(const ShaderProgramVariable& v, sProg->getVariables())
+		BOOST_FOREACH(const ShaderProgramUniformVariable* v,
+			sProg->getUniformVariables())
 		{
-			if(v.getType() != ShaderProgramVariable::T_UNIFORM)
-			{
-				continue;
-			}
+			allVarNames[v->getName()] = v->getGlDataType();
 
-			allVarNames[v.getName()] = v.getGlDataType();
-
-			ANKI_INFO("--" << v.getName());
+			ANKI_INFO("--" << v->getName());
 		}
 	}
 
@@ -338,7 +406,38 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		{
 			ANKI_INFO("No value for " << name);
 
-			v = new MaterialVariable(name.c_str(), eSProgs);
+			// Get the value
+			switch(dataType)
+			{
+				// sampler2D
+				case GL_SAMPLER_2D:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						TextureResourcePointer(), false);
+					break;
+				// float
+				case GL_FLOAT:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						float(), false);
+					break;
+				// vec2
+				case GL_FLOAT_VEC2:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						Vec2(), false);
+					break;
+				// vec3
+				case GL_FLOAT_VEC3:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						Vec3(), false);
+					break;
+				// vec4
+				case GL_FLOAT_VEC4:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						Vec4(), false);
+					break;
+				// default is error
+				default:
+					ANKI_ASSERT(0);
+			}
 		}
 		else
 		{
@@ -352,27 +451,27 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 				// sampler2D
 				case GL_SAMPLER_2D:
 					v = new MaterialVariable(name.c_str(), eSProgs,
-						value);
+						TextureResourcePointer(value.c_str()), true);
 					break;
 				// float
 				case GL_FLOAT:
 					v = new MaterialVariable(name.c_str(), eSProgs,
-						boost::lexical_cast<float>(value));
+						boost::lexical_cast<float>(value), true);
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
 					v = new MaterialVariable(name.c_str(), eSProgs,
-						setMathType<Vec2, 2>(value.c_str()));
+						setMathType<Vec2, 2>(value.c_str()), true);
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
 					v = new MaterialVariable(name.c_str(), eSProgs,
-						setMathType<Vec3, 3>(value.c_str()));
+						setMathType<Vec3, 3>(value.c_str()), true);
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
 					v = new MaterialVariable(name.c_str(), eSProgs,
-						setMathType<Vec4, 4>(value.c_str()));
+						setMathType<Vec4, 4>(value.c_str()), true);
 					break;
 				// default is error
 				default:

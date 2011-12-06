@@ -14,16 +14,14 @@ struct PassLevelKey
 	uint level;
 
 	PassLevelKey()
-	:	pass(0),
-	 	level(0)
+		: pass(0), level(0)
 	{}
 
 	PassLevelKey(uint pass_, uint level_)
-	:	pass(pass_),
-	 	level(level_)
+		: pass(pass_), level(level_)
 	{}
 
-	/// Hash creation method
+	/// Create hash
 	size_t operator()(const PassLevelKey& b) const
 	{
 		return pass * 1000 + level;
