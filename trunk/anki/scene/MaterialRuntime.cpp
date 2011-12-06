@@ -2,6 +2,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Texture.h"
 #include "anki/resource/Resource.h"
+#include "anki/resource/ShaderProgram.h"
 #include <boost/foreach.hpp>
 
 
@@ -56,6 +57,36 @@ void MaterialRuntimeVariable::setValue<
 {
 	throw ANKI_EXCEPTION("You shouldn't call this setter");
 	boost::get<ConstPtrRsrcPtrTexture>(data) = v;
+}
+
+//==============================================================================
+template<typename Type>
+void MaterialRuntimeVariable::SetUniformVisitor::operator()(
+	const Type& x) const
+{
+	uni.set(x);
+}
+
+
+//==============================================================================
+template<>
+void MaterialRuntimeVariable::SetUniformVisitor::
+	operator()<MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
+	const ConstPtrRsrcPtrTexture& x) const
+{
+	uni.set(*(x->get()), texUnit);
+	++texUnit;
+}
+
+
+//==============================================================================
+void MaterialRuntimeVariable::setUniformVariable(const PassLevelKey& k,
+	uint& texUnit)
+{
+	const ShaderProgramUniformVariable& uni =
+		mvar.getShaderProgramUniformVariable(k);
+
+	boost::apply_visitor(SetUniformVisitor(uni, texUnit), data);
 }
 
 

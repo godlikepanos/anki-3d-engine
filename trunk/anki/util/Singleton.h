@@ -13,22 +13,22 @@ namespace anki {
 template<typename Type>
 class Singleton
 {
-	public:
-		typedef Type ValueType;
+public:
+	typedef Type ValueType;
 
-		static Type& get()
-		{
-			return *(instance ? instance : (instance = new Type));
-		}
+	static Type& get()
+	{
+		return *(instance ? instance : (instance = new Type));
+	}
 
-	protected:
-		Singleton();
-		~Singleton();
+protected:
+	Singleton();
+	~Singleton();
 
-	private:
-		static Type* instance;
-		Singleton(Singleton const&);
-		Singleton& operator=(const Singleton&);
+private:
+	static Type* instance;
+	Singleton(Singleton const&);
+	Singleton& operator=(const Singleton&);
 };
 
 

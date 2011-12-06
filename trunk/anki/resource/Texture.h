@@ -3,6 +3,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"
+#include <cstdlib>
 #include <limits>
 
 

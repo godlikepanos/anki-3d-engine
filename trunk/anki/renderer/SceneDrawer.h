@@ -25,7 +25,7 @@ class SceneDrawer
 public:
 	/// The one and only constructor
 	SceneDrawer(const Renderer& r_)
-	:	r(r_)
+		: r(r_)
 	{}
 
 	void renderRenderableNode(const RenderableNode& renderable,
@@ -105,6 +105,8 @@ private:
 		const Camera& cam,
 		const Renderer& r,
 		float blurring);
+
+	void setTheBuildins();
 };
 
 
