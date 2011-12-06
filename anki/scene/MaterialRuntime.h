@@ -91,24 +91,43 @@ public:
 	}
 	/// @}
 
+	/// Call one of the setters of the uniform variable
+	void setUniformVariable(const PassLevelKey& k, uint& texUnif);
+
 private:
 	/// Initialize the data using a visitor
 	class ConstructVisitor: public boost::static_visitor<void>
 	{
-		public:
-			MaterialRuntimeVariable& var;
+	public:
+		MaterialRuntimeVariable& var;
 
-			ConstructVisitor(MaterialRuntimeVariable& var_)
-				: var(var_)
-			{}
+		ConstructVisitor(MaterialRuntimeVariable& var_)
+			: var(var_)
+		{}
 
-			/// Template method that applies to all DataVariant values
-			/// except texture resource
-			template<typename Type>
-			void operator()(const Type& x) const
-			{
-				var.getDataVariant() = x;
-			}
+		/// Template method that applies to all Variant values except texture
+		/// resource
+		template<typename Type>
+		void operator()(const Type& x) const
+		{
+			var.getDataVariant() = x;
+		}
+	};
+
+	/// Set visitor
+	class SetUniformVisitor: public boost::static_visitor<void>
+	{
+	public:
+		const ShaderProgramUniformVariable& uni;
+		uint& texUnit;
+
+		SetUniformVisitor(const ShaderProgramUniformVariable& uni_,
+			uint& texUnit_)
+			: uni(uni_), texUnit(texUnit_)
+		{}
+
+		template<typename Type>
+		void operator()(const Type& x) const;
 	};
 
 	const MaterialVariable& mvar; ///< Know the resource

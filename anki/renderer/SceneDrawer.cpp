@@ -7,7 +7,6 @@
 #include "anki/core/App.h"
 #include "anki/scene/Scene.h"
 #include "anki/scene/MaterialRuntime.h"
-#include "anki/scene/MaterialRuntimeVariable.h"
 #include "anki/gl/GlStateMachine.h"
 #include <boost/foreach.hpp>
 
@@ -16,15 +15,10 @@ namespace anki {
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
 SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(
 	const MaterialRuntimeVariable& udvr_,
 	const Renderer& r_, const PassLevelKey& pt_, uint& texUnit_)
-:	udvr(udvr_),
-	r(r_),
-	key(pt_),
-	texUnit(texUnit_)
+	: udvr(udvr_), r(r_), key(pt_), texUnit(texUnit_)
 {}
 
 
@@ -287,6 +281,13 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& node,
 	node.getVao(key).bind();
 	glDrawElements(GL_TRIANGLES, node.getVertIdsNum(key), GL_UNSIGNED_SHORT, 0);
 	node.getVao(key).unbind();
+}
+
+
+//==============================================================================
+void SceneDrawer::setTheBuildins(MaterialRuntime& m)
+{
+
 }
 
 

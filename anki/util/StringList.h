@@ -11,16 +11,16 @@ namespace anki {
 /// A simple convenience class
 class StringList: public std::vector<std::string>
 {
-	public:
-		typedef std::vector<std::string> Base; ///< Its the vector of strings
-		typedef Base::value_type StringType; ///< Its string
+public:
+	typedef std::vector<std::string> Base; ///< Its the vector of strings
+	typedef Base::value_type StringType; ///< Its string
 
-		/// Return the list as a single string
-		StringType join(const StringType& sep) const;
+	/// Return the list as a single string
+	StringType join(const StringType& sep) const;
 
-		/// XXX
-		static StringList splitString(const StringType& s,
-			const char* sep = " ");
+	/// XXX
+	static StringList splitString(const StringType& s,
+		const char* sep = " ");
 };
 
 
