@@ -1,6 +1,7 @@
 #include "anki/resource/ModelPatch.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
+#include "anki/resource/ShaderProgram.h"
 
 
 namespace anki {
@@ -43,7 +44,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 {
 	Vao* vao = new Vao;
 
-	if(mtl.variableExistsAndInKey("position", key))
+	if(mtl.getShaderProgram(key).uniformVariableExists("position"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
 
@@ -51,7 +52,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.variableExistsAndInKey("normal", key))
+	if(mtl.getShaderProgram(key).uniformVariableExists("normal"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
 
@@ -59,7 +60,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.variableExistsAndInKey("tangent", key))
+	if(mtl.getShaderProgram(key).uniformVariableExists("tangent"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
 
@@ -67,7 +68,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.variableExistsAndInKey("texCoords", key))
+	if(mtl.getShaderProgram(key).uniformVariableExists("texCoords"))
 	{
 		vao->attachArrayBufferVbo(*vbos[Mesh::VBO_TEX_COORDS],
 			3, 2, GL_FLOAT, GL_FALSE, 0, NULL);

@@ -2,22 +2,192 @@
 #define ANKI_RESOURCE_MATERIAL_H
 
 #include "anki/resource/MaterialCommon.h"
-#include "anki/resource/MaterialProperties.h"
-#include "anki/resource/MaterialVariable.h"
 #include "anki/resource/Resource.h"
 #include "anki/util/ConstCharPtrHashMap.h"
+#include "anki/util/StringList.h"
+#include "anki/math/Math.h"
 #include <GL/glew.h>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/variant.hpp>
 
 
 namespace anki {
 
 
 class ShaderProgram;
+class ShaderProgramUniformVariable;
+
+
+/// Holds the shader variables. Its a container for shader program variables
+/// that share the same name
+class MaterialVariable: public boost::noncopyable
+{
+public:
+	/// The data union (limited to a few types at the moment)
+	typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3,
+		Mat4, TextureResourcePointer> Variant;
+
+	/// Given a pair of pass and level it returns a pointer to a
+	/// shader program uniform variable. The pointer may be null
+	typedef PassLevelHashMap<const ShaderProgramUniformVariable*>::Type
+		PassLevelToShaderProgramUniformVariableHashMap;
+
+	/// @name Constructors & destructor
+	/// @{
+	template<typename Type>
+	MaterialVariable(
+		const char* shaderProgVarName,
+		const PassLevelToShaderProgramHashMap& sProgs,
+		const Type& val,
+		bool init_)
+		: initialized(init_)
+	{
+		init(shaderProgVarName, sProgs);
+		data = val;
+	}
+
+	~MaterialVariable();
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	const Variant& getVariant() const
+	{
+		return data;
+	}
+
+	/// Given a key return the uniform
+	const ShaderProgramUniformVariable& getShaderProgramUniformVariable(
+		const PassLevelKey& key) const
+	{
+		ANKI_ASSERT(inPass(key));
+		const ShaderProgramUniformVariable* var = sProgVars.at(key);
+		ANKI_ASSERT(var != NULL);
+		return *var;
+	}
+
+	/// Check if the shader program of the given pass and level needs
+	/// contains this variable or not
+	bool inPass(const PassLevelKey& key) const
+	{
+		return sProgVars.find(key) != sProgVars.end();
+	}
+
+	/// Get the GL data type of all the shader program variables
+	GLenum getGlDataType() const;
+
+	/// Get the name of all the shader program variables
+	const std::string& getName() const;
+
+	bool getInitialized() const
+	{
+		return initialized;
+	}
+	/// @}
+
+private:
+	/// If not initialized then the renderer should set the value
+	bool initialized;
+	PassLevelToShaderProgramUniformVariableHashMap sProgVars;
+	Variant data;
+
+	/// Keep one ShaderProgramVariable here for easy access of the common
+	/// variable stuff like name or GL data type etc
+	const ShaderProgramUniformVariable* oneSProgVar;
+
+	/// Common constructor code
+	void init(const char* shaderProgVarName,
+		const PassLevelToShaderProgramHashMap& shaderProgsArr);
+};
+
+
+/// Contains a few properties that other classes may use. For an explanation of
+/// the variables refer to Material class documentation
+class MaterialProperties
+{
+public:
+	/// Initialize with default values
+	MaterialProperties()
+	{
+		renderingStage = 0;
+		levelsOfDetail = 1;
+		shadow = false;
+		blendingSfactor = GL_ONE;
+		blendingDfactor = GL_ZERO;
+		depthTesting = true;
+		wireframe = false;
+	}
+
+	/// @name Accessors
+	/// @{
+	uint getRenderingStage() const
+	{
+		return renderingStage;
+	}
+
+	const StringList& getPasses() const
+	{
+		return passes;
+	}
+
+	uint getLevelsOfDetail() const
+	{
+		return levelsOfDetail;
+	}
+
+	bool getShadow() const
+	{
+		return shadow;
+	}
+
+	int getBlendingSfactor() const
+	{
+		return blendingSfactor;
+	}
+
+	int getBlendingDfactor() const
+	{
+		return blendingDfactor;
+	}
+
+	bool getDepthTesting() const
+	{
+		return depthTesting;
+	}
+
+	bool getWireframe() const
+	{
+		return wireframe;
+	}
+	/// @}
+
+	/// Check if blending is enabled
+	bool isBlendingEnabled() const
+	{
+		return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
+	}
+
+protected:
+	uint renderingStage;
+
+	StringList passes;
+
+	uint levelsOfDetail;
+
+	bool shadow;
+
+	int blendingSfactor; ///< Default GL_ONE
+	int blendingDfactor; ///< Default GL_ZERO
+
+	bool depthTesting;
+
+	bool wireframe;
+};
 
 
 /// Material resource
@@ -97,7 +267,7 @@ class ShaderProgram;
 /// (4): AKA uniforms
 ///
 /// (5): The order of the shaders is crucial
-class Material: public MaterialProperties
+class Material: public MaterialProperties, public boost::noncopyable
 {
 public:
 	typedef boost::ptr_vector<MaterialVariable> VarsContainer;

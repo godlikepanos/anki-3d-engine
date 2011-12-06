@@ -14,8 +14,8 @@ namespace anki {
 class Material;
 
 
-/// Its one part of the many used in the Model class. Its basically a container
-/// for a Mesh and it's Material
+/// Its a chunk of a model. Its very important class and it binds the material
+/// with the mesh
 class ModelPatch
 {
 public:

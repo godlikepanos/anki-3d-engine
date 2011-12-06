@@ -19,14 +19,21 @@ public:
 
 	/// Default constructor
 	ResourcePointer()
-	:	hook(NULL)
+		: hook(NULL)
 	{}
 
 	/// Copy constructor
 	ResourcePointer(const Self& b)
-	:	hook(NULL)
+		: hook(NULL)
 	{
 		copy(b);
+	}
+
+	/// Construct and load
+	ResourcePointer(const char* filename)
+		: hook(NULL)
+	{
+		load(filename);
 	}
 
 	~ResourcePointer()
@@ -74,7 +81,7 @@ public:
 	}
 
 private:
-	/// Points to a container in the resource manager
+	/// Points to an element located in a container in the resource manager
 	Hook* hook;
 
 	/// Unloads the resource @see loadRsrc
@@ -87,7 +94,8 @@ private:
 		}
 	}
 
-	/// XXX
+	/// If this empty and @a b empty then unload. If @a b has something then
+	/// unload this and load exactly what @b has. In everything else do nothing
 	void copy(const Self& b)
 	{
 		if(b.hook == NULL)

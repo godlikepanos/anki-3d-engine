@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -rf CMakeCache.txt CMakeFiles Makefile cmake_install.cmake src
+rm -rf CMakeCache.txt CMakeFiles Makefile cmake_install.cmake src doxyfile testapp anki
