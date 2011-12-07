@@ -111,7 +111,6 @@ void SceneDrawer::setupShaderProg(
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-
 	//
 	// Calc needed matrices
 	//
@@ -145,7 +144,7 @@ void SceneDrawer::setupShaderProg(
 	}
 
 	//
-	// Set the buildinId
+	// For all the vars
 	//
 	BOOST_FOREACH(const MaterialRuntimeVariable& mrvar, mtlr.getVariables())
 	{
@@ -189,159 +188,69 @@ void SceneDrawer::setupShaderProg(
 		}
 
 		// Big switch
+		const ShaderProgramUniformVariable& uni =
+			mvar.getShaderProgramUniformVariable(key);
+
 		switch(mrvar.getBuildinId())
 		{
 			case B_MODEL_MAT:
-				mvar.getShaderProgramUniformVariable(key).set(modelMat);
+				uni.set(modelMat);
 				break;
 			case B_VIEW_MAT:
+				uni.set(viewMat);
+				break;
+			case B_PROJECTION_MAT:
+				uni.set(projectionMat);
+				break;
+			case B_MODEL_VIEW_MAT:
+				uni.set(modelViewMat);
+				break;
+			case B_VIEW_PROJECTION_MAT:
+				uni.set(viewProjectionMat);
+				break;
+			case B_NORMAL_MAT:
+				uni.set(normalMat);
+				break;
+			case B_MODEL_VIEW_PROJECTION_MAT:
+				uni.set(modelViewProjectionMat);
+				break;
+			case B_MS_NORMAL_FAI:
+				uni.set(r.getMs().getNormalFai(), textureUnit++);
+				break;
+			case B_MS_DIFFUSE_FAI:
+				uni.set(r.getMs().getDiffuseFai(), textureUnit++);
+				break;
+			case B_MS_SPECULAR_FAI:
+				uni.set(r.getMs().getSpecularFai(), textureUnit++);
+				break;
+			case B_MS_DEPTH_FAI:
+				uni.set(r.getMs().getDepthFai(), textureUnit++);
+				break;
+			case B_IS_FAI:
+				uni.set(r.getIs().getFai(), textureUnit++);
+				break;
+			case B_PPS_PRE_PASS_FAI:
+				uni.set(r.getPps().getPreFai(), textureUnit++);
+				break;
+			case B_PPS_POST_PASS_FAI:
+				uni.set(r.getPps().getPostFai(), textureUnit++);
+				break;
+			case B_RENDERER_SIZE:
+			{
+				Vec2 v(r.getWidth(), r.getHeight());
+				uni.set(v);
+				break;
+			}
+			case B_SCENE_AMBIENT_COLOR:
+				uni.set(SceneSingleton::get().getAmbientColor());
+				break;
+			case B_BLURRING:
+				uni.set(blurring);
+				break;
+			case B_NUM:
+				/// XXX
 				break;
 		}
-	}
-
-
-	// set matrices
-	if(mtl.variableExistsAndInKey("modelMat", pt))
-	{
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelMat").
-			getShaderProgramVariable(pt)).set(modelMat);
-	}
-
-	if(mtl.variableExistsAndInKey("viewMat", pt))
-	{
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("viewMat").
-			getShaderProgramVariable(pt)).set(viewMat);
-	}
-
-	if(mtl.variableExistsAndInKey("projectionMat", pt))
-	{
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("projectionMat").
-			getShaderProgramVariable(pt)).set(projectionMat);
-	}
-
-	if(mtl.variableExistsAndInKey("modelViewMat", pt))
-	{
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelMat").
-			getShaderProgramVariable(pt)).set(modelViewMat);
-	}
-
-	if(mtl.variableExistsAndInKey("viewProjectionMat", pt))
-	{
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("viewProjectionMat").
-			getShaderProgramVariable(pt)).set(r.getViewProjectionMat());
-	}
-
-	if(mtl.variableExistsAndInKey("normalMat", pt))
-	{
-		normalMat = modelViewMat.getRotationPart();
-
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("normalMat").
-			getShaderProgramVariable(pt)).set(normalMat);
-	}
-
-	if(mtl.variableExistsAndInKey("modelViewProjectionMat", pt))
-	{
-		modelViewProjectionMat = projectionMat * modelViewMat;
-
-		static_cast<const ShaderProgramUniformVariable&>(mtl.findVariableByName("modelViewProjectionMat").
-			getShaderProgramVariable(pt)).set(modelViewProjectionMat);
-	}
-
-
-	//
-	// FAis
-	//
-	/*if(mtl.variableExistsAndInKey(Mvb::MV_MS_NORMAL_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_MS_NORMAL_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getMs().getNormalFai(), textureUnit++);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_MS_DIFFUSE_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_MS_DIFFUSE_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getMs().getDiffuseFai(), textureUnit++);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_MS_SPECULAR_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_MS_SPECULAR_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getMs().getSpecularFai(), textureUnit++);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_MS_DEPTH_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_MS_DEPTH_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getMs().getDepthFai(), textureUnit++);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_IS_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_IS_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getIs().getFai(), textureUnit++);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_PPS_PRE_PASS_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_PPS_PRE_PASS_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getPps().getPrePassFai(), textureUnit++);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_PPS_POST_PASS_FAI, pt))
-	{
-		mtl.getBuildinVariable(Mvb::MV_PPS_POST_PASS_FAI).
-			getShaderProgramUniformVariable(pt).set(
-			r.getPps().getPostPassFai(), textureUnit++);
-	}
-
-
-	//
-	// Other
-	//
-	if(mtl.variableExistsAndInKey(Mvb::MV_RENDERER_SIZE, pt))
-	{
-		Vec2 v(r.getWidth(), r.getHeight());
-		mtl.getBuildinVariable(Mvb::MV_RENDERER_SIZE).
-			getShaderProgramUniformVariable(pt).set(&v);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_SCENE_AMBIENT_COLOR, pt))
-	{
-		Vec3 col(SceneSingleton::get().getAmbientColor());
-		mtl.getBuildinVariable(Mvb::MV_SCENE_AMBIENT_COLOR).
-			getShaderProgramUniformVariable(pt).set(&col);
-	}
-
-	if(mtl.variableExistsAndInKey(Mvb::MV_BLURRING, pt))
-	{
-		blurring *= 10.0;
-		ANKI_INFO(blurring);
-		float b = blurring;
-		mtl.getBuildinVariable(Mvb::MV_BLURRING).
-			getShaderProgramUniformVariable(pt).set(&b);
-	}*/
-
-
-	//
-	// set user defined vars
-	//
-	BOOST_FOREACH(const MaterialRuntimeVariable& udvr, mtlr.getVariables())
-	{
-		if(!udvr.getMaterialVariable().inPass(pt) ||
-			udvr.getMaterialVariable().getShaderProgramVariableType() ==
-				ShaderProgramVariable::T_ATTRIBUTE)
-		{
-			continue;
-		}
-
-		boost::apply_visitor(UsrDefVarVisitor(udvr, r, pt, textureUnit),
-			udvr.getDataVariant());
 	}
 
 	ANKI_CHECK_GL_ERROR();
