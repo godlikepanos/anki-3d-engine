@@ -1,7 +1,6 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
-#include <iostream>
 
 
 namespace anki {
