@@ -18,18 +18,15 @@ class MaterialVariable;
 
 
 /// Variable of runtime materials
-/// This holds a copy of the MtlUserDefinedVar's data in order to be changed
+/// This holds a copy of the MaterialVariable's data in order to be read write
 /// inside the main loop
 class MaterialRuntimeVariable
 {
 public:
-	typedef const TextureResourcePointer* ConstPtrRsrcPtrTexture;
-
 	/// The data union. The Texture resource is read-only at runtime
 	/// Don't EVER replace the texture with const Texture*. The asynchronous
 	/// operations will fail
-	typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3,
-		Mat4, ConstPtrRsrcPtrTexture> Variant;
+	typedef MaterialVariable::Variant Variant;
 
 	/// Constructor. Initialize using a material variable
 	MaterialRuntimeVariable(const MaterialVariable& mv);
@@ -44,13 +41,13 @@ public:
 		return mvar;
 	}
 
-	const Variant& getDataVariant() const
+	const Variant& getVariant() const
 	{
-		return data;
+		return getVariantConst();
 	}
-	Variant& getDataVariant()
+	Variant& getVariant()
 	{
-		return data;
+		return getVariantMutable();
 	}
 
 	/// Get the value of the variant
@@ -59,22 +56,20 @@ public:
 	template<typename Type>
 	const Type& getValue() const
 	{
-		return boost::get<Type>(data);
+		return boost::get<Type>(getVariantConst());
 	}
 
-	/// Get the value of the variant
-	/// @exception boost::exception when you try to get the incorrect data
-	/// type
+	/// @copydoc getValue
 	template<typename Type>
 	Type& getValue()
 	{
-		return boost::get<Type>(data);
+		return boost::get<Type>(getVariantMutable());
 	}
 
 	template<typename Type>
 	void setValue(const Type& v)
 	{
-		boost::get<Type>(data) = v;
+		boost::get<Type>(getVariantMutable()) = v;
 	}
 
 	int getBuildinId() const
@@ -91,67 +86,18 @@ public:
 	}
 	/// @}
 
-	/// Call one of the setters of the uniform variable
-	void setUniformVariable(const PassLevelKey& k, uint& texUnif);
-
 private:
-	/// Initialize the data using a visitor
-	class ConstructVisitor: public boost::static_visitor<void>
-	{
-	public:
-		MaterialRuntimeVariable& var;
-
-		ConstructVisitor(MaterialRuntimeVariable& var_)
-			: var(var_)
-		{}
-
-		/// Template method that applies to all Variant values except texture
-		/// resource
-		template<typename Type>
-		void operator()(const Type& x) const
-		{
-			var.getDataVariant() = x;
-		}
-	};
-
-	/// Set visitor
-	class SetUniformVisitor: public boost::static_visitor<void>
-	{
-	public:
-		const ShaderProgramUniformVariable& uni;
-		uint& texUnit;
-
-		SetUniformVisitor(const ShaderProgramUniformVariable& uni_,
-			uint& texUnit_)
-			: uni(uni_), texUnit(texUnit_)
-		{}
-
-		template<typename Type>
-		void operator()(const Type& x) const;
-	};
-
 	const MaterialVariable& mvar; ///< Know the resource
-	Variant data; /// The data
-	int buildinId;
+	boost::scoped_ptr<Variant> copyVariant; /// The copy of the data
+	int buildinId; ///< -1 is "dont know yet"
+
+	/// Return either the mvar's variant or your own if exists
+	const Variant& getVariantConst() const;
+
+	/// Implement the COW technique. If someone asks the variant for writing
+	/// then create a copy
+	Variant& getVariantMutable();
 };
-
-
-// Declare specialized
-template <>
-void MaterialRuntimeVariable::ConstructVisitor::
-	operator()<TextureResourcePointer >(const TextureResourcePointer& x) const;
-
-// Declare specialized
-template<>
-MaterialRuntimeVariable::ConstPtrRsrcPtrTexture&
-	MaterialRuntimeVariable::getValue<
-	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>();
-
-// Declare specialized
-template<>
-void MaterialRuntimeVariable::setValue<
-	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
-	const ConstPtrRsrcPtrTexture& v);
 
 
 /// One layer above the material resource

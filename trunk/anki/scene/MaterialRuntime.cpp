@@ -14,22 +14,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-template <>
-void MaterialRuntimeVariable::ConstructVisitor::
-	operator()<TextureResourcePointer >(const TextureResourcePointer& x) const
-{
-	var.data = &x;
-}
-
-
-//==============================================================================
-MaterialRuntimeVariable::MaterialRuntimeVariable(
-	const MaterialVariable& mvar_)
-	: mvar(mvar_), buildinId(-1)
-{
-	// Initialize the data using a visitor
-	boost::apply_visitor(ConstructVisitor(*this), mvar.getVariant());
-}
+MaterialRuntimeVariable::MaterialRuntimeVariable(const MaterialVariable& mv)
+	: mvar(mv), buildinId(-1)
+{}
 
 
 //==============================================================================
@@ -37,56 +24,23 @@ MaterialRuntimeVariable::~MaterialRuntimeVariable()
 {}
 
 
-
 //==============================================================================
-template<>
-MaterialRuntimeVariable::ConstPtrRsrcPtrTexture&
-	MaterialRuntimeVariable::getValue<
-	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>()
+const MaterialRuntimeVariable::Variant&
+	MaterialRuntimeVariable::getVariantConst() const
 {
-	throw ANKI_EXCEPTION("You shouldn't call this getter");
-	return boost::get<ConstPtrRsrcPtrTexture>(data);
+	return copyVariant ? *copyVariant : mvar.getVariant();
 }
 
 
 //==============================================================================
-template<>
-void MaterialRuntimeVariable::setValue<
-	MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
-	const ConstPtrRsrcPtrTexture& v)
+MaterialRuntimeVariable::Variant& MaterialRuntimeVariable::getVariantMutable()
 {
-	throw ANKI_EXCEPTION("You shouldn't call this setter");
-	boost::get<ConstPtrRsrcPtrTexture>(data) = v;
-}
+	if(copyVariant.get() == NULL)
+	{
+		copyVariant.reset(new Variant(mvar.getVariant()));
+	}
 
-//==============================================================================
-template<typename Type>
-void MaterialRuntimeVariable::SetUniformVisitor::operator()(
-	const Type& x) const
-{
-	uni.set(x);
-}
-
-
-//==============================================================================
-template<>
-void MaterialRuntimeVariable::SetUniformVisitor::
-	operator()<MaterialRuntimeVariable::ConstPtrRsrcPtrTexture>(
-	const ConstPtrRsrcPtrTexture& x) const
-{
-	uni.set(*(x->get()), texUnit);
-	++texUnit;
-}
-
-
-//==============================================================================
-void MaterialRuntimeVariable::setUniformVariable(const PassLevelKey& k,
-	uint& texUnit)
-{
-	const ShaderProgramUniformVariable& uni =
-		mvar.getShaderProgramUniformVariable(k);
-
-	boost::apply_visitor(SetUniformVisitor(uni, texUnit), data);
+	return *copyVariant;
 }
 
 

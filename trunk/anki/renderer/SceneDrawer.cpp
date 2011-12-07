@@ -15,6 +15,31 @@ namespace anki {
 
 
 //==============================================================================
+boost::array<const char*, SceneDrawer::B_NUM> SceneDrawer::buildinsTxt = {{
+	// Matrices
+	"modelMat",
+	"viewMat",
+	"projectionMat",
+	"modelViewMat",
+	"viewProjectionMat",
+	"normalMat",
+	"modelViewProjectionMat",
+	// FAIs (for materials in blending stage)
+	"msNormalFai",
+	"msDiffuseFai",
+	"msSpecularFai",
+	"msDepthFai",
+	"isFai",
+	"ppsPrePassFai",
+	"ppsPostPassFai",
+	// Other
+	"rendererSize",
+	"sceneAmbientColor",
+	"blurring"
+}};
+
+
+//==============================================================================
 SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(
 	const MaterialRuntimeVariable& udvr_,
 	const Renderer& r_, const PassLevelKey& pt_, uint& texUnit_)
@@ -106,6 +131,74 @@ void SceneDrawer::setupShaderProg(
 		modelViewMat = (modelMat == Mat4::getIdentity()) ? viewMat :
 			Mat4::combineTransformations(viewMat, modelMat);
 	}
+
+	// normalMat?
+	if(mtl.variableExistsAndInKey("normalMat", pt))
+	{
+		normalMat = modelViewMat.getRotationPart();
+	}
+
+	// modelViewProjectionMat?
+	if(mtl.variableExistsAndInKey("modelViewProjectionMat", pt))
+	{
+		modelViewProjectionMat = projectionMat * modelViewMat;
+	}
+
+	//
+	// Set the buildinId
+	//
+	BOOST_FOREACH(const MaterialRuntimeVariable& mrvar, mtlr.getVariables())
+	{
+		const MaterialVariable& mvar = mrvar.getMaterialVariable();
+
+		// Skip some
+		if(!mvar.inPass(key))
+		{
+			continue;
+		}
+
+		// Set the buildinId for all
+		if(mrvar.getBuildinId() == -1)
+		{
+			for(uint i = 0; i < B_NUM; i++)
+			{
+				if(mvar.getName() == buildinsTxt[i])
+				{
+					mrvar.setBuildinId(i);
+					break;
+				}
+			}
+
+			// If still -1 thn set it as B_NUM
+			if(mrvar.getBuildinId() == -1)
+			{
+				mrvar.setBuildinId(B_NUM);
+			}
+		}
+
+		// Sanity checks
+		if(mrvar.getBuildinId() == B_NUM && !mvar.getInitialized())
+		{
+			ANKI_WARNING("Uninitialized variable: " << mvar.getName());
+		}
+
+		if(mrvar.getBuildinId() != B_NUM && mvar.getInitialized())
+		{
+			ANKI_WARNING("The renderer will override the given value for: " <<
+				mvar.getName());
+		}
+
+		// Big switch
+		switch(mrvar.getBuildinId())
+		{
+			case B_MODEL_MAT:
+				mvar.getShaderProgramUniformVariable(key).set(modelMat);
+				break;
+			case B_VIEW_MAT:
+				break;
+		}
+	}
+
 
 	// set matrices
 	if(mtl.variableExistsAndInKey("modelMat", pt))
@@ -281,13 +374,6 @@ void SceneDrawer::renderRenderableNode(const RenderableNode& node,
 	node.getVao(key).bind();
 	glDrawElements(GL_TRIANGLES, node.getVertIdsNum(key), GL_UNSIGNED_SHORT, 0);
 	node.getVao(key).unbind();
-}
-
-
-//==============================================================================
-void SceneDrawer::setTheBuildins(MaterialRuntime& m)
-{
-
 }
 
 
