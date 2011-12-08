@@ -103,7 +103,7 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 //==============================================================================
 // run                                                                         =
 //==============================================================================
-void Sm::run(const Light& light, float distance)
+void Sm::run(Light& light, float distance)
 {
 	if(!enabled)
 	{
@@ -146,16 +146,15 @@ void Sm::run(const Light& light, float distance)
 	GlStateMachineSingleton::get().enable(GL_POLYGON_OFFSET_FILL);
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node,
-		light.getVisibleMsRenderableNodes())
+	BOOST_FOREACH(RenderableNode* node, light.getVisibleMsRenderableNodes())
 	{
 		switch(light.getLightType())
 		{
 			case Light::LT_SPOT:
 			{
 				const SpotLight& sl = static_cast<const SpotLight&>(light);
-				r.getSceneDrawer().renderRenderableNode(*node, sl.getCamera(),
-					PassLevelKey(1, 0));
+				r.getSceneDrawer().renderRenderableNode(sl.getCamera(),
+					PassLevelKey(1, 0), *node);
 				break;
 			}
 

@@ -58,10 +58,10 @@ class Is: private RenderingPass
 		void ambientPass(const Vec3& color);
 
 		/// The point light pass
-		void pointLightPass(const PointLight& plight);
+		void pointLightPass(PointLight& plight);
 
 		/// The spot light pass
-		void spotLightPass(const SpotLight& slight);
+		void spotLightPass(SpotLight& slight);
 
 		/// Used in @ref init
 		void initFbo();

@@ -143,10 +143,10 @@ void MainRenderer::render(Camera& cam_)
 	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
 	GlStateMachineSingleton::get().enable(GL_BLEND, false);
 	sProg->bind();
-	//sProg->getUniformVariableByName("rasterImage").set(ms.getDiffuseFai(), 0);
-	//sProg->getUniformVariableByName("rasterImage").
+	//sProg->findUniformVariableByName("rasterImage").set(ms.getDiffuseFai(), 0);
+	//sProg->findUniformVariableByName("rasterImage").
 	//	set(is.getFai(), 0);
-	sProg->getUniformVariableByName("rasterImage").set(pps.getPostPassFai(), 0);
+	sProg->findUniformVariableByName("rasterImage").set(pps.getPostPassFai(), 0);
 	drawQuad();
 }
 

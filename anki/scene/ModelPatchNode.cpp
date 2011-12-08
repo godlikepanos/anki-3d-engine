@@ -2,7 +2,6 @@
 #include "anki/scene/ModelPatchNode.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/MeshData.h"
-#include "anki/resource/ModelPatch.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/ModelNode.h"
 
@@ -12,7 +11,7 @@ namespace anki {
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(const ModelPatch& modelPatch, ModelNode& parent)
-:	PatchNode(modelPatch, SNF_NONE, parent)
+	: PatchNode(modelPatch, SNF_NONE, parent)
 {}
 
 

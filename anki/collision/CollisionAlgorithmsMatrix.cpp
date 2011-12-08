@@ -14,26 +14,29 @@ bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
 	const CollisionShape& b)
 {
 	const T& t = static_cast<const T&>(a);
+	bool out;
 
 	switch(b.getCollisionShapeType())
 	{
 		case CollisionShape::CST_LINE_SEG:
-			return collide(t, static_cast<const LineSegment&>(b));
+			out = collide(t, static_cast<const LineSegment&>(b));
 		case CollisionShape::CST_RAY:
-			return collide(t, static_cast<const Ray&>(b));
+			out = collide(t, static_cast<const Ray&>(b));
 		case CollisionShape::CST_PLANE:
-			return collide(t, static_cast<const Plane&>(b));
+			out = collide(t, static_cast<const Plane&>(b));
 		case CollisionShape::CST_SPHERE:
-			return collide(t, static_cast<const Sphere&>(b));
+			out = collide(t, static_cast<const Sphere&>(b));
 		case CollisionShape::CST_AABB:
-			return collide(t, static_cast<const Aabb&>(b));
+			out = collide(t, static_cast<const Aabb&>(b));
 		case CollisionShape::CST_OBB:
-			return collide(t, static_cast<const Obb&>(b));
+			out = collide(t, static_cast<const Obb&>(b));
 		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
-			return collide(t, static_cast<const PerspectiveCameraShape&>(b));
+			out = collide(t, static_cast<const PerspectiveCameraShape&>(b));
 		default:
 			ANKI_ASSERT(0 && "Forgot something");
 	}
+
+	return out;
 }
 
 
@@ -41,25 +44,28 @@ bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
 bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 	const CollisionShape& b)
 {
+	bool out;
 	switch(a.getCollisionShapeType())
 	{
 		case CollisionShape::CST_LINE_SEG:
-			return tcollide<LineSegment>(a, b);
+			out = tcollide<LineSegment>(a, b);
 		case CollisionShape::CST_RAY:
-			return tcollide<Ray>(a, b);
+			out = tcollide<Ray>(a, b);
 		case CollisionShape::CST_PLANE:
-			return tcollide<Plane>(a, b);
+			out = tcollide<Plane>(a, b);
 		case CollisionShape::CST_SPHERE:
-			return tcollide<Sphere>(a, b);
+			out = tcollide<Sphere>(a, b);
 		case CollisionShape::CST_AABB:
-			return tcollide<Aabb>(a, b);
+			out = tcollide<Aabb>(a, b);
 		case CollisionShape::CST_OBB:
-			return tcollide<Obb>(a, b);
+			out = tcollide<Obb>(a, b);
 		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
-			return tcollide<PerspectiveCameraShape>(a, b);
+			out = tcollide<PerspectiveCameraShape>(a, b);
 		default:
 			ANKI_ASSERT(0 && "Forgot something");
 	}
+
+	return out;
 }
 
 

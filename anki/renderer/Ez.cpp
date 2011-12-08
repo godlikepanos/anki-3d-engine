@@ -55,7 +55,7 @@ void Ez::run()
 		return;
 	}
 
-	const Camera& cam = r.getCamera();
+	Camera& cam = r.getCamera();
 
 	fbo.bind();
 
@@ -68,9 +68,9 @@ void Ez::run()
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	BOOST_FOREACH(const RenderableNode* node, cam.getVisibleMsRenderableNodes())
+	BOOST_FOREACH(RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
-		r.getSceneDrawer().renderRenderableNode(*node, cam, PassLevelKey(1, 0));
+		r.getSceneDrawer().renderRenderableNode(cam, PassLevelKey(1, 0), *node);
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

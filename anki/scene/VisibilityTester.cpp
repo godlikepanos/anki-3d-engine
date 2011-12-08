@@ -186,7 +186,7 @@ void VisibilityTester::getRenderableNodesJobCallback(
 	uint count, from, to;
 	size_t nodesSize;
 
-	boost::array<const RenderableNode*, Scene::MAX_VISIBLE_NODES> msVisibles,
+	boost::array<RenderableNode*, Scene::MAX_VISIBLE_NODES> msVisibles,
 		bsVisibles;
 	uint msI = 0, bsI = 0;
 
