@@ -434,6 +434,16 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 					v = new MaterialVariable(name.c_str(), eSProgs,
 						Vec4(), false);
 					break;
+				// mat3
+				case GL_FLOAT_MAT3:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						Mat3(), false);
+					break;
+				// mat4
+				case GL_FLOAT_MAT4:
+					v = new MaterialVariable(name.c_str(), eSProgs,
+						Mat4(), false);
+					break;
 				// default is error
 				default:
 					ANKI_ASSERT(0);
@@ -478,6 +488,9 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 					ANKI_ASSERT(0);
 			}
 		}
+
+		vars.push_back(v);
+		nameToVar[v->getName().c_str()] = v;
 	}
 }
 

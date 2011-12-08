@@ -5,7 +5,7 @@
 /// @{
 layout(location = 0) in vec3 position;
 layout(location = 3) in vec2 texCoords;
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec4 tangent;
 #endif
@@ -21,7 +21,7 @@ uniform mat4 modelViewMat;
 /// @name Varyings
 /// @{
 out vec2 vTexCoords;
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 out vec3 vNormal;
 out vec3 vTangent;
 out float vTangentW;
@@ -33,7 +33,7 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 /// Calculate the position and the varyings
 void doVertex()
 {
-#if defined(COLOR_PASS)
+#if defined(PASS_COLOR)
 	vNormal = normalMat * normal;
 	vTangent = normalMat * vec3(tangent);
 	vTangentW = tangent.w;

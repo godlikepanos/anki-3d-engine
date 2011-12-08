@@ -8,14 +8,16 @@
 #	define ANKI_ASSERT(x) ((void)0)
 #else
 
+namespace anki {
+
 /// Its separate so we will not include iostream
 extern void akassert(bool expr, const char* exprTxt, const char* file,
 	int line, const char* func);
 
-#	define ANKI_ASSERT(x) \
-	akassert((x), #x, __FILE__, __LINE__, __func__)
+} // end namespace
+
+#	define ANKI_ASSERT(x) akassert((x), #x, __FILE__, __LINE__, __func__)
 
 #endif
-
 
 #endif

@@ -455,18 +455,20 @@ std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
 //==============================================================================
 std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
+	s << "ShaderProgram (" << x.rsrcFilename << ")\n";
 	s << "Variables:\n";
 	BOOST_FOREACH(const ShaderProgramVariable& var, x.getVariables())
 	{
 		s << var.getName() << " " << var.getLocation() << " ";
 		if(var.getType() == ShaderProgramVariable::T_ATTRIBUTE)
 		{
-			s << "attribute";
+			s << "[A]";
 		}
 		else
 		{
-			s << "uniform";
+			s << "[U]";
 		}
+		s << '\n';
 	}
 	return s;
 }
