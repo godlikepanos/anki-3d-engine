@@ -55,8 +55,11 @@ Vao* ModelPatch::createVao(const Material& mtl,
 	const PassLevelKey& key)
 {
 	Vao* vao = new Vao;
+	vao->create();
 
-	if(mtl.getShaderProgram(key).uniformVariableExists("position"))
+	std::cout << mtl.getShaderProgram(key) << std::endl;
+
+	if(mtl.getShaderProgram(key).attributeVariableExists("position"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
 
@@ -64,7 +67,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).uniformVariableExists("normal"))
+	if(mtl.getShaderProgram(key).attributeVariableExists("normal"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
 
@@ -72,7 +75,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).uniformVariableExists("tangent"))
+	if(mtl.getShaderProgram(key).attributeVariableExists("tangent"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
 
@@ -80,7 +83,7 @@ Vao* ModelPatch::createVao(const Material& mtl,
 			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).uniformVariableExists("texCoords"))
+	if(mtl.getShaderProgram(key).attributeVariableExists("texCoords"))
 	{
 		vao->attachArrayBufferVbo(*vbos[Mesh::VBO_TEX_COORDS],
 			3, 2, GL_FLOAT, GL_FALSE, 0, NULL);

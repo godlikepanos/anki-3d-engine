@@ -33,7 +33,7 @@ public:
 	ShaderProgramVariable(GLint loc_, const char* name_,
 		GLenum glDataType_, Type type_, const ShaderProgram& fatherSProg_)
 		: loc(loc_), name(name_), glDataType(glDataType_), type(type_),
-			fatherSProg(fatherSProg)
+			fatherSProg(fatherSProg_)
 	{}
 
 	virtual ~ShaderProgramVariable()
