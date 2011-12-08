@@ -15,6 +15,7 @@ class Camera;
 class Material;
 class MaterialRuntime;
 class MaterialRuntimeVariable;
+class ShaderProgramUniformVariable;
 
 class Renderer;
 
@@ -28,8 +29,8 @@ public:
 		: r(r_)
 	{}
 
-	void renderRenderableNode(const RenderableNode& renderable,
-		const Camera& cam, const PassLevelKey& key) const;
+	void renderRenderableNode(const Camera& cam,
+		const PassLevelKey& key, RenderableNode& renderable) const;
 
 private:
 	/// Standard attribute variables that are acceptable inside the
@@ -61,23 +62,17 @@ private:
 	};
 
 	/// Set the uniform using this visitor
-	class UsrDefVarVisitor: public boost::static_visitor<>
+	class SetUniformVisitor: public boost::static_visitor<>
 	{
 	public:
-		const MaterialRuntimeVariable& udvr;
-		const Renderer& r;
-		const PassLevelKey& key;
+		const ShaderProgramUniformVariable& uni;
 		uint& texUnit;
 
-		UsrDefVarVisitor(const MaterialRuntimeVariable& udvr,
-			const Renderer& r, const PassLevelKey& key, uint& texUnit);
+		SetUniformVisitor(const ShaderProgramUniformVariable& uni,
+			uint& texUnit);
 
-		/// Functor
 		template<typename Type>
 		void operator()(const Type& x) const;
-
-		/// Functor
-		void operator()(const TextureResourcePointer* x) const;
 	};
 
 	static boost::array<const char*, B_NUM> buildinsTxt;
@@ -94,12 +89,16 @@ private:
 	/// @param cam Needed for some matrices (view & projection)
 	/// @param r The renderer, needed for some FAIs and some matrices
 	static void setupShaderProg(
-		const MaterialRuntime& mtlr,
 		const PassLevelKey& key,
 		const Transform& nodeWorldTransform,
+		const Transform& prevNodeWorldTransform,
 		const Camera& cam,
 		const Renderer& r,
-		float blurring);
+		MaterialRuntime& mtlr);
+
+	/// For code duplication
+	static void tryCalcModelViewMat(const Mat4& modelMat, const Mat4& viewMat,
+		bool& calculated, Mat4& modelViewMat);
 };
 
 

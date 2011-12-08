@@ -116,11 +116,11 @@ void Ms::run()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// render all
-	BOOST_FOREACH(const RenderableNode* node,
+	BOOST_FOREACH(RenderableNode* node,
 		r.getCamera().getVisibleMsRenderableNodes())
 	{
-		r.getSceneDrawer().renderRenderableNode(*node, r.getCamera(),
-			PassLevelKey(0, 0));
+		r.getSceneDrawer().renderRenderableNode(r.getCamera(),
+			PassLevelKey(0, 0), *node);
 	}
 
 	// restore depth

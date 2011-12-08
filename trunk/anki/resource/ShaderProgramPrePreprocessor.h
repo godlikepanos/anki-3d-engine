@@ -67,7 +67,7 @@ protected:
 		int definedInLine;
 
 		Pragma()
-		:	definedInLine(-1)
+			: definedInLine(-1)
 		{}
 
 		Pragma(const std::string& definedInFile_, int definedInLine_)
@@ -102,7 +102,7 @@ protected:
 		int globalLine;
 
 		CodeBeginningPragma()
-		:	globalLine(-1)
+			: globalLine(-1)
 		{}
 	};
 

@@ -6,7 +6,7 @@
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/Mesh.h"
-#include "anki/resource/ModelPatch.h"
+#include "anki/resource/PassLevelKey.h"
 
 
 namespace anki {

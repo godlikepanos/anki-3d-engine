@@ -19,98 +19,35 @@ class MeshBase
 {
 public:
 	MeshBase()
-	{
-		pVbo = nVbo = tVbo = wVbo = NULL;
-	}
+	{}
 
 	virtual ~MeshBase()
 	{}
 
 	/// @name Accessors
 	/// @{
-	const Vbo& getPositionsVbo() const
-	{
-		ANKI_ASSERT(pVbo != NULL);
-		return *pVbo;
-	}
+	virtual const Vbo& getPositionsVbo() const = 0;
+	virtual const Vbo& getNormalsVbo() const = 0;
+	virtual const Vbo& getTangentsVbo() const = 0;
+	virtual const Vbo& getTextureCoordsVbo(uint channel) const = 0;
+	virtual const Vbo& getIndecesVbo(uint lod) const = 0;
+	virtual const Vbo& getWeightsVbo() const = 0;
 
-	const Vbo& getNormalsVbo() const
-	{
-		ANKI_ASSERT(nVbo != NULL);
-		return *nVbo;
-	}
-
-	const Vbo& getTangentsVbo() const
-	{
-		ANKI_ASSERT(tVbo != NULL);
-		return *tVbo;
-	}
-
-	const Vbo& getTextureCoordsVbo(uint channel) const
-	{
-		ANKI_ASSERT(texVbo[channel] != NULL);
-		return *texVbo[channel];
-	}
-
-	const Vbo& getIndecesVbo(uint lod) const
-	{
-		ANKI_ASSERT(iVbo[lod] != NULL);
-		return *iVbo[lod];
-	}
-
-	const Vbo& getWeightsVbo() const
-	{
-		ANKI_ASSERT(wVbo != NULL);
-		return *wVbo;
-	}
-
-	uint getTextureChannelsNumber() const
-	{
-		return texVbo.size();
-	}
-
-	uint getLodsNumber() const
-	{
-		ANKI_ASSERT(iVbo.size() > 0);
-		return iVbo.size();
-	}
-
-	uint getIndicesNumber(uint lod) const
-	{
-		ANKI_ASSERT(idsNum[lod] != 0);
-		return idsNum[lod];
-	}
-
-	uint getVertexNumber(uint lod) const
-	{
-		ANKI_ASSERT(vertsNum[lod] != 0);
-		return vertsNum[lod];
-	}
+	virtual uint getTextureChannelsNumber() const = 0;
+	virtual uint getLodsNumber() const = 0;
+	virtual uint getIndicesNumber(uint lod) const = 0;
+	virtual uint getVertexNumber(uint lod) const = 0;
 	/// @}
 
 	/// @name Ask for geometry properties
 	/// @{
 	bool hasTexCoords() const
 	{
-		return texVbo.size() > 0;
+		return getTextureChannelsNumber() > 0;
 	}
 
-	bool hasWeights() const
-	{
-		return wVbo != NULL;
-	}
+	virtual bool hasWeights() const;
 	/// @}
-
-protected:
-	Vbo* pVbo; ///< Mandatory
-	Vbo* nVbo; ///< Mandatory
-	Vbo* tVbo; ///< Mandatory
-	std::vector<Vbo*> texVbo; ///< Optional. Tex coords per channel
-	std::vector<Vbo*> iVbo; ///< Mandatory. Indices VBO per LOD
-	Vbo* wVbo; ///< Optional
-
-	std::vector<uint> idsNum; ///< Indices count per LOD
-	std::vector<uint> vertsNum; ///< Vertex count per LOD
 };
 
 

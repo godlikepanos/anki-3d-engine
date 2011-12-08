@@ -18,8 +18,8 @@ class SpotLight;
 class VisibilityInfo
 {
 	public:
-		typedef std::deque<const RenderableNode*> RContainer;
-		typedef std::vector<const PointLight*> PLContainer;
+		typedef std::deque<RenderableNode*> RContainer;
+		typedef std::vector<PointLight*> PLContainer;
 		typedef std::vector<SpotLight*> SLContainer;
 
 		VisibilityInfo() {}

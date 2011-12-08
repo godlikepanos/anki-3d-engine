@@ -5,7 +5,7 @@
 #include "anki/gl/Vbo.h"
 #include "anki/resource/Mesh.h" // For the Vbos enum
 #include "anki/resource/Resource.h"
-#include "anki/resource/ModelPatch.h"
+#include "anki/resource/Model.h"
 #include "anki/scene/RenderableNode.h"
 #include "anki/scene/MaterialRuntime.h"
 #include <boost/scoped_ptr.hpp>

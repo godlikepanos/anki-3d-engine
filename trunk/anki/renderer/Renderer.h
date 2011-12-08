@@ -105,6 +105,10 @@ class Renderer
 		{
 			return *cam;
 		}
+		Camera& getCamera()
+		{
+			return *cam;
+		}
 
 		const SceneDrawer& getSceneDrawer() const
 		{
@@ -229,7 +233,7 @@ class Renderer
 		uint width;
 		/// Height of the rendering. Don't confuse with the window width
 		uint height;
-		const Camera* cam; ///< Current camera
+		Camera* cam; ///< Current camera
 		/// Max color attachments an FBO can accept
 		static int maxColorAtachments;
 		SceneDrawer sceneDrawer;

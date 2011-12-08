@@ -25,15 +25,11 @@ namespace anki {
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
-Dbg::Dbg(Renderer& r_):
-	SwitchableRenderingPass(r_),
-	showAxisEnabled(false),
-	showLightsEnabled(true),
-	showSkeletonsEnabled(true),
-	showCamerasEnabled(true),
-	showVisibilityBoundingShapesFlag(true),
-	sceneDbgDrawer(*this),
-	collisionDbgDrawer(*this)
+Dbg::Dbg(Renderer& r_)
+	: SwitchableRenderingPass(r_), showAxisEnabled(false),
+		showLightsEnabled(true), showSkeletonsEnabled(true),
+		showCamerasEnabled(true), showVisibilityBoundingShapesFlag(true),
+		sceneDbgDrawer(*this),collisionDbgDrawer(*this)
 {}
 
 
@@ -433,7 +429,7 @@ void Dbg::end()
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = r.getViewProjectionMat() * modelMat;
-	sProg->getUniformVariableByName("modelViewProjectionMat").set(pmv);
+	sProg->findUniformVariableByName("modelViewProjectionMat").set(pmv);
 
 	vao.bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);

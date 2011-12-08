@@ -40,54 +40,56 @@ boost::array<const char*, SceneDrawer::B_NUM> SceneDrawer::buildinsTxt = {{
 
 
 //==============================================================================
-SceneDrawer::UsrDefVarVisitor::UsrDefVarVisitor(
-	const MaterialRuntimeVariable& udvr_,
-	const Renderer& r_, const PassLevelKey& pt_, uint& texUnit_)
-	: udvr(udvr_), r(r_), key(pt_), texUnit(texUnit_)
+SceneDrawer::SetUniformVisitor::SetUniformVisitor(
+	const ShaderProgramUniformVariable& uni_, uint& texUnit_)
+	: uni(uni_), texUnit(texUnit_)
 {}
 
 
 //==============================================================================
-// Visitor functors                                                            =
-//==============================================================================
-
 template<typename Type>
-void SceneDrawer::UsrDefVarVisitor::operator()(const Type& x) const
+void SceneDrawer::SetUniformVisitor::operator()(const Type& x) const
 {
-	static_cast<const ShaderProgramUniformVariable&>(udvr.getMaterialVariable().
-		getShaderProgramVariable(key)).set(x);
-}
-
-
-void SceneDrawer::UsrDefVarVisitor::operator()(
-	const TextureResourcePointer* x) const
-{
-	const TextureResourcePointer& texPtr = *x;
-	texPtr->setRepeat(true);
-
-	static_cast<const ShaderProgramUniformVariable&>(udvr.getMaterialVariable().
-		getShaderProgramVariable(key)).set(*texPtr, texUnit);
-
-	++texUnit;
+	uni.set(x);
 }
 
 
 //==============================================================================
-// setupShaderProg                                                             =
+template<>
+void SceneDrawer::SetUniformVisitor::operator()<TextureResourcePointer>(
+	const TextureResourcePointer& x) const
+{
+	uni.set(*x, texUnit++);
+}
+
+
+//==============================================================================
+void SceneDrawer::tryCalcModelViewMat(const Mat4& modelMat,
+	const Mat4& viewMat, bool& calculated, Mat4& modelViewMat)
+{
+	if(!calculated)
+	{
+		modelViewMat = (modelMat == Mat4::getIdentity()) ? viewMat :
+			Mat4::combineTransformations(viewMat, modelMat);
+
+		calculated = true;
+	}
+}
+
+
 //==============================================================================
 void SceneDrawer::setupShaderProg(
-	const MaterialRuntime& mtlr,
-	const PassLevelKey& pt,
+	const PassLevelKey& key,
 	const Transform& nodeWorldTransform,
+	const Transform& prevNodeWorldTransform,
 	const Camera& cam,
 	const Renderer& r,
-	float blurring)
+	MaterialRuntime& mtlr)
 {
-	typedef MaterialVariable Mvb; // Short name
 	uint textureUnit = 0;
 	GlStateMachine& gl = GlStateMachineSingleton::get();
 	const Material& mtl = mtlr.getMaterial();
-	const ShaderProgram& sprog = mtl.getShaderProgram(pt);
+	const ShaderProgram& sprog = mtl.getShaderProgram(key);
 
 	sprog.bind();
 
@@ -112,41 +114,18 @@ void SceneDrawer::setupShaderProg(
 	}
 
 	//
-	// Calc needed matrices
+	// Get needed matrices
 	//
 	Mat4 modelMat(nodeWorldTransform);
 	const Mat4& projectionMat = cam.getProjectionMatrix();
 	const Mat4& viewMat = cam.getViewMatrix();
 	Mat4 modelViewMat;
-	Mat3 normalMat;
-	Mat4 modelViewProjectionMat;
-
-	// should I calculate the modelViewMat ?
-	if(mtl.variableExistsAndInKey("modelViewMat", pt) ||
-		mtl.variableExistsAndInKey("modeViewProjectionMat", pt) ||
-		mtl.variableExistsAndInKey("normalMat", pt))
-	{
-		// Optimization
-		modelViewMat = (modelMat == Mat4::getIdentity()) ? viewMat :
-			Mat4::combineTransformations(viewMat, modelMat);
-	}
-
-	// normalMat?
-	if(mtl.variableExistsAndInKey("normalMat", pt))
-	{
-		normalMat = modelViewMat.getRotationPart();
-	}
-
-	// modelViewProjectionMat?
-	if(mtl.variableExistsAndInKey("modelViewProjectionMat", pt))
-	{
-		modelViewProjectionMat = projectionMat * modelViewMat;
-	}
+	bool modelViewMatCalculated = false;
 
 	//
 	// For all the vars
 	//
-	BOOST_FOREACH(const MaterialRuntimeVariable& mrvar, mtlr.getVariables())
+	BOOST_FOREACH(MaterialRuntimeVariable& mrvar, mtlr.getVariables())
 	{
 		const MaterialVariable& mvar = mrvar.getMaterialVariable();
 
@@ -203,17 +182,34 @@ void SceneDrawer::setupShaderProg(
 				uni.set(projectionMat);
 				break;
 			case B_MODEL_VIEW_MAT:
+			{
+				tryCalcModelViewMat(modelMat, viewMat, modelViewMatCalculated,
+					modelViewMat);
+
 				uni.set(modelViewMat);
 				break;
+			}
 			case B_VIEW_PROJECTION_MAT:
-				uni.set(viewProjectionMat);
+				uni.set(r.getViewProjectionMat());
 				break;
 			case B_NORMAL_MAT:
+			{
+				tryCalcModelViewMat(modelMat, viewMat, modelViewMatCalculated,
+					modelViewMat);
+
+				Mat3 normalMat = modelViewMat.getRotationPart();
 				uni.set(normalMat);
 				break;
+			}
 			case B_MODEL_VIEW_PROJECTION_MAT:
+			{
+				tryCalcModelViewMat(modelMat, viewMat, modelViewMatCalculated,
+					modelViewMat);
+
+				Mat4 modelViewProjectionMat = projectionMat * modelViewMat;
 				uni.set(modelViewProjectionMat);
 				break;
+			}
 			case B_MS_NORMAL_FAI:
 				uni.set(r.getMs().getNormalFai(), textureUnit++);
 				break;
@@ -230,26 +226,39 @@ void SceneDrawer::setupShaderProg(
 				uni.set(r.getIs().getFai(), textureUnit++);
 				break;
 			case B_PPS_PRE_PASS_FAI:
-				uni.set(r.getPps().getPreFai(), textureUnit++);
+				uni.set(r.getPps().getPrePassFai(), textureUnit++);
 				break;
 			case B_PPS_POST_PASS_FAI:
-				uni.set(r.getPps().getPostFai(), textureUnit++);
+				uni.set(r.getPps().getPostPassFai(), textureUnit++);
 				break;
 			case B_RENDERER_SIZE:
 			{
-				Vec2 v(r.getWidth(), r.getHeight());
-				uni.set(v);
+				uni.set(Vec2(r.getWidth(), r.getHeight()));
 				break;
 			}
 			case B_SCENE_AMBIENT_COLOR:
 				uni.set(SceneSingleton::get().getAmbientColor());
 				break;
 			case B_BLURRING:
+			{
+				float prev = (prevNodeWorldTransform.getOrigin() -
+					cam.getPrevWorldTransform().getOrigin()).getLength();
+
+				float crnt = (nodeWorldTransform.getOrigin() -
+					cam.getWorldTransform().getOrigin()).getLength();
+
+				float blurring = abs(crnt - prev);
 				uni.set(blurring);
 				break;
+			}
 			case B_NUM:
-				/// XXX
+			{
+				// ATTENTION: Don't EVER use the mutable version of
+				// MaterialRuntimeVariable::getVariant() here as it copies data
+				const MaterialRuntimeVariable::Variant& v = mrvar.getVariant();
+				boost::apply_visitor(SetUniformVisitor(uni, textureUnit), v);
 				break;
+			}
 		}
 	}
 
@@ -258,28 +267,15 @@ void SceneDrawer::setupShaderProg(
 
 
 //==============================================================================
-// renderRenderableNode                                                        =
-//==============================================================================
-void SceneDrawer::renderRenderableNode(const RenderableNode& node,
-	const Camera& cam, const PassLevelKey& key) const
+void SceneDrawer::renderRenderableNode(const Camera& cam,
+	const PassLevelKey& key, RenderableNode& node) const
 {
-	float blurring = 0.0;
-	const MaterialRuntime& mtlr = node.getMaterialRuntime();
+	MaterialRuntime& mtlr = node.getMaterialRuntime();
 	const Material& mtl = mtlr.getMaterial();
 
-	// Calc the blur if needed
-	if(mtl.variableExistsAndInKey("blurring", key))
-	{
-		float prev = (node.getPrevWorldTransform().getOrigin() -
-			cam.getPrevWorldTransform().getOrigin()).getLength();
+	setupShaderProg(key, node.getWorldTransform(),
+		node.getPrevWorldTransform(), cam, r, mtlr);
 
-		float crnt = (node.getWorldTransform().getOrigin() -
-			cam.getWorldTransform().getOrigin()).getLength();
-
-		blurring = abs(crnt - prev);
-	}
-
-	setupShaderProg(mtlr, key, node.getWorldTransform(), cam, r, blurring);
 	node.getVao(key).bind();
 	glDrawElements(GL_TRIANGLES, node.getVertIdsNum(key), GL_UNSIGNED_SHORT, 0);
 	node.getVao(key).unbind();

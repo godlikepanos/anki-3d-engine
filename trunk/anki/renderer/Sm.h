@@ -56,7 +56,7 @@ class Sm: private RenderingPass
 		/// @param[in] light The light
 		/// @param[in] distance The distance between the viewers camera and the
 		/// light
-		void run(const Light& light, float distance);
+		void run(Light& light, float distance); /// XXX order
 
 	private:
 		/// The shadowmap levels of detail

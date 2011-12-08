@@ -77,8 +77,8 @@ void UiPainter::drawText(const char* text)
 	// SProg (some)
 	sProg->bind();
 
-	sProg->getUniformVariableByName("texture").set(font->getMap(), 0);
-	sProg->getUniformVariableByName("color").set(col);
+	sProg->findUniformVariableByName("texture").set(font->getMap(), 0);
+	sProg->findUniformVariableByName("color").set(col);
 
 	// Vao
 	qVao.bind();
@@ -118,8 +118,8 @@ void UiPainter::drawText(const char* text)
 			trfM(1, 2) = p.y() + 2.0 * (font->getGlyphBearingY(cc) -
 				int(font->getGlyphHeight(cc))) / deviceSize.y();
 
-			sProg->getUniformVariableByName("transformation").set(trfM);
-			sProg->getUniformVariableByName("textureTranformation").set(
+			sProg->findUniformVariableByName("transformation").set(trfM);
+			sProg->findUniformVariableByName("textureTranformation").set(
 				font->getGlyphTextureMatrix(cc));
 
 			// Render
