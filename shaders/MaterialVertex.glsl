@@ -14,8 +14,10 @@ layout(location = 2) in vec4 tangent;
 /// @name Uniforms
 /// @{
 uniform mat4 modelViewProjectionMat;
+#if defined(PASS_COLOR)
 uniform mat3 normalMat;
 uniform mat4 modelViewMat;
+#endif
 /// @}
 
 /// @name Varyings
@@ -30,7 +32,9 @@ out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 /// @}
 
 
+//==============================================================================
 /// Calculate the position and the varyings
+#define doVertex_DEFINED
 void doVertex()
 {
 #if defined(PASS_COLOR)
@@ -40,7 +44,11 @@ void doVertex()
 	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
 #endif
 
+#if defined(PASS_DEPTH) && LOD > 0
+	// No tex coords for you
+#else
 	vTexCoords = texCoords;
+#endif
 
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }

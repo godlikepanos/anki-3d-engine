@@ -195,7 +195,10 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	}
 	
 	line << ");";
+
+	srcLines.push_back("#if defined(" + funcName + "_DEFINED)");
 	srcLines.push_back("\t" + line.str());
+	srcLines.push_back("#endif");
 }
 
 

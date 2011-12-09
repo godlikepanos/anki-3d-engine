@@ -154,7 +154,7 @@ void Sm::run(Light& light, float distance)
 			{
 				const SpotLight& sl = static_cast<const SpotLight&>(light);
 				r.getSceneDrawer().renderRenderableNode(sl.getCamera(),
-					PassLevelKey(1, 0), *node);
+					1, *node);
 				break;
 			}
 
