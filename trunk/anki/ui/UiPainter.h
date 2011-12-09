@@ -17,71 +17,71 @@ class UiFont;
 /// @todo
 class UiPainter
 {
-	public:
-		UiPainter(const Vec2& deviceSize);
+public:
+	UiPainter(const Vec2& deviceSize);
 
-		/// @name Accessors
-		/// @{
-		const Vec2& getPosition() const
-		{
-			return pos;
-		}
-		Vec2& getPosition()
-		{
-			return pos;
-		}
-		void setPosition(const Vec2& x)
-		{
-			pos = x;
-		}
+	/// @name Accessors
+	/// @{
+	const Vec2& getPosition() const
+	{
+		return pos;
+	}
+	Vec2& getPosition()
+	{
+		return pos;
+	}
+	void setPosition(const Vec2& x)
+	{
+		pos = x;
+	}
 
-		const Vec4& getColor() const
-		{
-			return col;
-		}
-		Vec4& getColor()
-		{
-			return col;
-		}
-		void setColor(const Vec4& x)
-		{
-			col = x;
-		}
+	const Vec4& getColor() const
+	{
+		return col;
+	}
+	Vec4& getColor()
+	{
+		return col;
+	}
+	void setColor(const Vec4& x)
+	{
+		col = x;
+	}
 
-		void setFont(const char* fontFilename, uint nominalWidth,
-			uint nominalHeight);
+	void setFont(const char* fontFilename, uint nominalWidth,
+		uint nominalHeight);
 
-		const UiFont& getFont() const
-		{
-			return *font;
-		}
-		/// @}
+	const UiFont& getFont() const
+	{
+		return *font;
+	}
+	/// @}
 
-		void drawText(const char* text);
-		void drawText(const std::string& str)
-		{
-			drawText(str.c_str());
-		}
-		void drawFormatedText(const char* format, ...);
+	void drawText(const char* text);
+	void drawText(const std::string& str)
+	{
+		drawText(str.c_str());
+	}
+	void drawFormatedText(const char* format, ...);
 
-	private:
-		/// @name Data
-		/// @{
-		boost::scoped_ptr<UiFont> font;
-		ShaderProgramResourcePointer sProg;
+private:
+	/// @name Data
+	/// @{
+	boost::scoped_ptr<UiFont> font;
+	ShaderProgramResourcePointer sProg;
 
-		Vec2 pos;
-		Vec4 col;
-		uint tabSize;
+	Vec2 pos;
+	Vec4 col;
+	uint tabSize;
 
-		Vbo qPositionsVbo;
-		Vbo qIndecesVbo;
-		Vao qVao;
+	Vbo qPositionsVbo;
+	Vbo qIndecesVbo;
+	Vao qVao;
 
-		Vec2 deviceSize; ///< The size of the device in pixels
-		/// @}
+	Vec2 deviceSize; ///< The size of the device in pixels
+	/// @}
 
-		void init();
+	void init();
 };
 
 

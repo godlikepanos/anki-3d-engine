@@ -7,9 +7,8 @@ namespace anki {
 
 
 //==============================================================================
-HighRezTimer::HighRezTimer():
-	startTime(0.0),
-	stopTime(0.0)
+HighRezTimer::HighRezTimer()
+	: startTime(0.0), stopTime(0.0)
 {}
 
 

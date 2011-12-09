@@ -30,7 +30,7 @@ public:
 	{}
 
 	void renderRenderableNode(const Camera& cam,
-		const PassLevelKey& key, RenderableNode& renderable) const;
+		uint pass, RenderableNode& renderable) const;
 
 private:
 	/// Standard attribute variables that are acceptable inside the

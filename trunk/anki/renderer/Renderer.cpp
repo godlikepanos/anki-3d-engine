@@ -8,30 +8,20 @@ namespace anki {
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-Renderer::Renderer():
-	ms(*this),
-	is(*this),
-	pps(*this),
-	bs(*this),
-	width(640),
-	height(480),
-	sceneDrawer(*this)
+Renderer::Renderer()
+	: ms(*this), is(*this), pps(*this), bs(*this), width(640), height(480),
+		sceneDrawer(*this)
 {
 	enableStagesProfilingFlag = false;
+	lodDistance = 3.0;
 }
 
 
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 Renderer::~Renderer()
 {}
 
 
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void Renderer::init(const RendererInitializer& initializer)
 {
@@ -75,8 +65,6 @@ void Renderer::init(const RendererInitializer& initializer)
 }
 
 
-//==============================================================================
-// render                                                                      =
 //==============================================================================
 void Renderer::render(Camera& cam_)
 {
@@ -130,8 +118,6 @@ void Renderer::render(Camera& cam_)
 
 
 //==============================================================================
-// drawQuad                                                                    =
-//==============================================================================
 void Renderer::drawQuad()
 {
 	quadVao.bind();
@@ -141,8 +127,6 @@ void Renderer::drawQuad()
 }
 
 
-//==============================================================================
-// unproject                                                                   =
 //==============================================================================
 Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	const Mat4& projectionMat, const int view[4])
@@ -164,8 +148,6 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 
 
 //==============================================================================
-// createFai                                                                   =
-//==============================================================================
 void Renderer::createFai(uint width, uint height, int internalFormat,
 	int format, int type, Texture& fai)
 {
@@ -186,8 +168,6 @@ void Renderer::createFai(uint width, uint height, int internalFormat,
 
 
 //==============================================================================
-// calcPlanes                                                                  =
-//==============================================================================
 void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 {
 	float zNear = cameraRange.x();
@@ -198,8 +178,6 @@ void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 }
 
 
-//==============================================================================
-// calcLimitsOfNearPlane                                                       =
 //==============================================================================
 void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	Vec2& limitsOfNearPlane)

@@ -1,4 +1,5 @@
-///
+/// @file 
+/// The file contains common functions for fragment operations
 #pragma anki include "shaders/Pack.glsl"
 
 
@@ -6,17 +7,19 @@
 
 
 //==============================================================================
-// getNormalFromTexture                                                        =
-//==============================================================================
 /// @param[in] normal The fragment's normal in view space
 /// @param[in] tangent The tangent
 /// @param[in] tangent Extra stuff for the tangent
 /// @param[in] map The map
 /// @param[in] texCoords Texture coordinates
+#if defined(PASS_COLOR)
+#	define getNormalFromTexture_DEFINED
 vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 	in sampler2D map, in vec2 texCoords)
 {
-#if defined(PASS_COLOR)
+#	if LOD > 0
+	return normalize(normal);
+#	else
 	vec3 n = normalize(normal);
 	vec3 t = normalize(tangent);
 	vec3 b = cross(n, t) * tangentW;
@@ -26,38 +29,36 @@ vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 	vec3 nAtTangentspace = (texture(map, texCoords).rgb - 0.5) * 2.0;
 
 	return normalize(tbnMat * nAtTangentspace);
-#else
-	return vec3(0.0);
-#endif
+#	endif
 }
+#endif
 
 
-//==============================================================================
-// getNormalSimple                                                             =
 //==============================================================================
 /// Just normalize
+#if defined(PASS_COLOR)
+#	define getNormalSimple_DEFINED
 vec3 getNormalSimple(in vec3 normal)
 {
-#if defined(PASS_COLOR)
 	return normalize(normal);
-#else
-	return vec3(0.0);
-#endif
 }
+#endif
 
 
-//==============================================================================
-// getEnvironmentColor                                                         =
 //==============================================================================
 /// Environment mapping calculations
 /// @param[in] vertPosViewSpace Fragment position in view space
 /// @param[in] normal Fragment's normal in view space as well
 /// @param[in] map The env map
 /// @return The color
+#if defined(PASS_COLOR)
+#	define getEnvironmentColor_DEFINED
 vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	in sampler2D map)
 {
-#if defined(PASS_COLOR)
+#	if LOD > 0
+	return vec3(0.0);
+#	else
 	// In case of normal mapping I could play with vertex's normal but this 
 	// gives better results and its allready computed
 	
@@ -69,14 +70,11 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 
 	vec3 semCol = texture(map, semTexCoords).rgb;
 	return semCol;
-#else
-	return vec3(0.0);
-#endif
+#	endif
 }
+#endif
 
 
-//==============================================================================
-// getDiffuseColorAndDoAlphaTesting                                            =
 //==============================================================================
 /// Using a 4-channel texture and a tolerance discard the fragment if the 
 /// texture's alpha is less than the tolerance
@@ -84,6 +82,7 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 /// @param[in] tolerance Tolerance value
 /// @param[in] texCoords Texture coordinates
 /// @return The RGB channels of the map
+#define getDiffuseColorAndDoAlphaTesting_DEFINED
 vec3 getDiffuseColorAndDoAlphaTesting(
 	in sampler2D map,
 	in vec2 texCoords,
@@ -96,34 +95,34 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 		discard;
 	}
 	return col.rgb;
-#else
+#else // Depth
+#	if LOD > 0
+	return vec3(0.0);
+#	else
 	float a = texture(map, texCoords).a;
 	if(a < tolerance)
 	{
 		discard;
 	}
 	return vec3(0.0);
+#	endif
 #endif
 }
 
 
-//==============================================================================
-// readRgbFromTexture                                                          =
 //==============================================================================
 /// Just read the RGB color from texture
+#if defined(PASS_COLOR)
+#	define readRgbFromTexture_DEFINED
 vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 {
-#if defined(PASS_COLOR)
 	return texture(tex, texCoords).rgb;
-#else
-	return vec3(0.0);
-#endif
 }
+#endif
 
 
 //==============================================================================
-// add2Vec3                                                                    =
-//==============================================================================
+#define add2Vec3_DEFINED
 vec3 add2Vec3(in vec3 a, in vec3 b)
 {
 	return a + b;
@@ -131,9 +130,9 @@ vec3 add2Vec3(in vec3 a, in vec3 b)
 
 
 //==============================================================================
-// writeFais                                                                   =
-//==============================================================================
-/// XXX
+/// Write the data to FAIs
+#if defined(PASS_COLOR)
+#	define writeFais_DEFINED
 void writeFais(
 	in vec3 diffCol, 
 	in vec3 normal, 
@@ -141,9 +140,8 @@ void writeFais(
 	in float shininess, 
 	in float blurring)
 {
-#if defined(PASS_COLOR)
 	fMsNormalFai = vec3(packNormal(normal), blurring);
 	fMsDiffuseFai = diffCol;
 	fMsSpecularFai = vec4(specularCol, shininess / MAX_SHININESS);
-#endif
 }
+#endif

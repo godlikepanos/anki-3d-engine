@@ -262,7 +262,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		{
 			std::stringstream src;
 
-			src << "#define LOD_" << level << std::endl;
+			src << "#define LOD " << level << std::endl;
 			src << "#define PASS_" << passes[pid] << std::endl;
 			src << mspc.getShaderProgramSource() << std::endl;
 

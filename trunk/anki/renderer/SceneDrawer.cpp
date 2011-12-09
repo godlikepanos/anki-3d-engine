@@ -9,6 +9,7 @@
 #include "anki/scene/MaterialRuntime.h"
 #include "anki/gl/GlStateMachine.h"
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 
 namespace anki {
@@ -268,11 +269,18 @@ void SceneDrawer::setupShaderProg(
 
 //==============================================================================
 void SceneDrawer::renderRenderableNode(const Camera& cam,
-	const PassLevelKey& key, RenderableNode& node) const
+	uint pass, RenderableNode& node) const
 {
 	MaterialRuntime& mtlr = node.getMaterialRuntime();
 	const Material& mtl = mtlr.getMaterial();
 
+	// Calc the LOD and the key
+	float dist = (node.getWorldTransform().getOrigin() -
+		cam.getWorldTransform().getOrigin()).getLength();
+	uint lod = std::min(r.calculateLod(dist), mtl.getLevelsOfDetail() - 1);
+	PassLevelKey key(pass, lod);
+
+	// Setup shader
 	setupShaderProg(key, node.getWorldTransform(),
 		node.getPrevWorldTransform(), cam, r, mtlr);
 
