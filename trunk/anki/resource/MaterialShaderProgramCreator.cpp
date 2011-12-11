@@ -4,6 +4,7 @@
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 
 namespace anki {
@@ -148,8 +149,6 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
-	
-	std::stringstream line;
 
 	// <id></id>
 	int id = pt.get<int>("id");
@@ -157,16 +156,15 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	// <returnType></returnType>
 	boost::optional<std::string> retTypeOpt =
 		pt.get_optional<std::string>("returnType");
-		
+
+	std::string operationOut;
 	if(retTypeOpt)
 	{
-		line << retTypeOpt.get() << " operationOut" << id << " = ";
+		operationOut = "operationOut" + boost::lexical_cast<std::string>(id);
 	}
 	
 	// <function>functionName</function>
 	const std::string& funcName = pt.get<std::string>("function");
-	
-	line << funcName << "(";
 	
 	// <arguments></arguments>
 	boost::optional<const ptree&> argsPt = pt.get_child_optional("arguments");
@@ -174,7 +172,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	
 	if(argsPt)
 	{
-		// Write all arguments
+		// Get all arguments
 		ptree::const_iterator it = argsPt.get().begin();
 		for(; it != argsPt.get().end(); ++it)
 		{
@@ -190,15 +188,39 @@ void MaterialShaderProgramCreator::parseOperationTag(
 			const std::string& argName = v.second.data();
 			argsList.push_back(argName);
 		}
+	}
 
-		line << argsList.join(", ");
+	// Now write everything
+	std::stringstream line;
+	line << "#if defined(" << funcName << "_DEFINED)";
+
+	boost::regex expr("^operationOut[0-9]*$");
+	BOOST_FOREACH(const std::string& arg, argsList)
+	{
+		if(boost::regex_match(arg, expr))
+		{
+			line << " && defined(" << arg << "_DEFINED)";
+		}
+	}
+	line << "\n";
+
+	if(retTypeOpt)
+	{
+		line << "#\tdefine " << operationOut << "_DEFINED\n";
+		line << '\t' << retTypeOpt.get() << " " << operationOut << " = ";
+	}
+	else
+	{
+		line << '\t';
 	}
 	
-	line << ");";
+	line << funcName << "(";
+	line << argsList.join(", ");
+	line << ");\n";
+	line << "#endif";
 
-	srcLines.push_back("#if defined(" + funcName + "_DEFINED)");
-	srcLines.push_back("\t" + line.str());
-	srcLines.push_back("#endif");
+	// Done
+	srcLines.push_back(line.str());
 }
 
 

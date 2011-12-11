@@ -278,6 +278,7 @@ void SceneDrawer::renderRenderableNode(const Camera& cam,
 	float dist = (node.getWorldTransform().getOrigin() -
 		cam.getWorldTransform().getOrigin()).getLength();
 	uint lod = std::min(r.calculateLod(dist), mtl.getLevelsOfDetail() - 1);
+
 	PassLevelKey key(pass, lod);
 
 	// Setup shader
