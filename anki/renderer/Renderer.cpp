@@ -13,7 +13,7 @@ Renderer::Renderer()
 		sceneDrawer(*this)
 {
 	enableStagesProfilingFlag = false;
-	lodDistance = 3.0;
+	lodDistance = 10.0;
 }
 
 

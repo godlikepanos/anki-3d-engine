@@ -208,7 +208,7 @@ protected:
 ///
 /// 	[<passes>COLOR DEPTH</passes>] (2)
 ///
-/// 	[<levelsOfDetail>0 to N</levelsOfDetail>]
+/// 	[<levelsOfDetail>N</levelsOfDetail>]
 ///
 /// 	[<shadow>0 | 1</shadow>]
 ///
@@ -349,10 +349,11 @@ private:
 	/// Parse what is within the @code <material></material> @endcode
 	void parseMaterialTag(const boost::property_tree::ptree& pt);
 
-	/// XXX
+	/// Create a unique shader source in chache. If already exists do nothing
 	std::string createShaderProgSourceToCache(const std::string& source);
 
-	/// XXX
+	/// Read all shader programs and pupulate the @a vars and @a nameToVar
+	/// containers
 	void populateVariables(const boost::property_tree::ptree& pt);
 
 	/// Parses something like this: "0.0 0.01 -1.2" and returns a valid

@@ -56,9 +56,6 @@ vec3 getNormalSimple(in vec3 normal)
 vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	in sampler2D map)
 {
-#	if LOD > 0
-	return vec3(0.0);
-#	else
 	// In case of normal mapping I could play with vertex's normal but this 
 	// gives better results and its allready computed
 	
@@ -70,7 +67,6 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 
 	vec3 semCol = texture(map, semTexCoords).rgb;
 	return semCol;
-#	endif
 }
 #endif
 
