@@ -204,7 +204,7 @@ protected:
 /// Material XML file format:
 /// @code
 /// <material>
-/// 	<renderingStage>0 to N</renderingStage> (1)
+/// 	<renderingStage>N</renderingStage> (1)
 ///
 /// 	[<passes>COLOR DEPTH</passes>] (2)
 ///
