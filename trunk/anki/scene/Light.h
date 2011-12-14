@@ -6,6 +6,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/resource/LightRsrc.h"
 #include "anki/scene/VisibilityInfo.h"
+#include "anki/scene/Renderable.h"
 
 
 namespace anki {
@@ -27,7 +28,7 @@ namespace anki {
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public VisibilityInfo
+class Light: public SceneNode, public VisibilityInfo/*, public Renderable*/
 {
 	public:
 		enum LightType
@@ -36,7 +37,9 @@ class Light: public SceneNode, public VisibilityInfo
 			LT_SPOT
 		};
 
-		Light(LightType type, Scene& scene, ulong flags, SceneNode* parent);
+		Light(LightType t, Scene& scene, ulong flags, SceneNode* parent)
+			: SceneNode(SNT_LIGHT, scene, flags, parent), type(t)
+		{}
 
 		virtual ~Light();
 
@@ -57,9 +60,16 @@ class Light: public SceneNode, public VisibilityInfo
 		void setCastShadow(bool x) {castsShadowFlag = x;}
 		/// @}
 
+		/// Implements Renderable::getMaterialRuntime
+		/*MaterialRuntime& getMaterialRuntime()
+		{
+			return *mtlr;
+		}*/
+
 		void init(const char* filename);
 
 	protected:
+		//boost::scoped_ptr<MaterialRuntime> mtlr;
 		LightRsrcResourcePointer lightData;
 		Vec3 diffuseCol; ///< Diffuse color
 		Vec3 specularCol; ///< Specular color
@@ -68,12 +78,6 @@ class Light: public SceneNode, public VisibilityInfo
 	private:
 		LightType type;
 };
-
-
-inline Light::Light(LightType t, Scene& scene, ulong flags, SceneNode* parent)
-:	SceneNode(SNT_LIGHT, scene, flags, parent),
- 	type(t)
-{}
 
 
 } // end namespace
