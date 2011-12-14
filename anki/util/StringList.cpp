@@ -34,9 +34,9 @@ StringList StringList::splitString(const StringType& s, const char* seperators)
 	StringList out;
 	Tok tok(s, sep);
 
-	for(Tok::const_iterator it = tok.begin(); it != tok.end(); ++it)
+	for(auto s: tok)
 	{
-		out.push_back(*it);
+		out.push_back(s);
 	}
 
 	return out;
