@@ -6,6 +6,7 @@
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/StringList.h"
 #include "anki/math/Math.h"
+#include "anki/util/Variant.h"
 #include <GL/glew.h>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/array.hpp>
