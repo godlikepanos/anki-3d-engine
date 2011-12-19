@@ -24,14 +24,17 @@ class ShaderProgram;
 class ShaderProgramUniformVariable;
 
 
+typedef Variant<float, Vec2, Vec3, Vec4, Mat3,
+	Mat4, TextureResourcePointer> MaterialVariableVariant;
+
+
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
 class MaterialVariable: public boost::noncopyable
 {
 public:
 	/// The data union (limited to a few types at the moment)
-	typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3,
-		Mat4, TextureResourcePointer> Variant;
+	typedef MaterialVariableVariant Variant;
 
 	/// Given a pair of pass and level it returns a pointer to a
 	/// shader program uniform variable. The pointer may be null

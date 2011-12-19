@@ -1,3 +1,6 @@
+/// @file
+/// The file contains visitor concepts
+
 #ifndef ANKI_UTIL_VISITOR_H
 #define ANKI_UTIL_VISITOR_H
 
@@ -93,7 +96,7 @@ struct GetTypeIdVisitor
 
 //==============================================================================
 
-/// XXX
+/// Implements the visit() function. The new visit() does nothing
 template<typename... Types>
 struct DummyVisitor
 {
@@ -123,6 +126,34 @@ struct DummyVisitor
 
 //==============================================================================
 
+// Forward
+template<typename Type, typename... Types>
+struct GetVisitableId;
+
+
+/// A smart struct that given a @a Type and a list of types defines a const
+/// integer indicating the @a Type's position from the back of the list. The
+/// integer is named ID
+/// @code
+/// GetVisitableId<float, int, float, std::string>::ID == 1
+/// GetVisitableId<int, int, float, std::string>::ID == 2
+/// GetVisitableId<std::string, int, float, std::string>::ID == 0
+/// @endcode
+template<typename Type, typename First, typename... Types>
+struct GetVisitableId<Type, First, Types...>: GetVisitableId<Type, Types...>
+{};
+
+
+// Specialized
+template<typename Type, typename... Types>
+struct GetVisitableId<Type, Type, Types...>
+{
+	static const int ID = sizeof...(Types);
+};
+
+
+//==============================================================================
+
 /// Visitable class
 template<typename... Types>
 struct Visitable
@@ -136,6 +167,13 @@ struct Visitable
 	virtual void accept(MutableVisitorType& v) = 0;
 	/// Visitor accept
 	virtual void accept(ConstVisitorType& v) const = 0;
+
+	/// Using the GetVisitableId get the id of the @a T
+	template<typename T>
+	static constexpr int getTypeId()
+	{
+		return sizeof...(Types) - GetVisitableId<T, Types...>::ID - 1;
+	}
 };
 
 
