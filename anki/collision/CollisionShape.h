@@ -17,6 +17,11 @@ class CollisionShape: public Visitable<LineSegment, Obb,
 	PerspectiveCameraShape, Plane, Ray, Sphere, Aabb>
 {
 public:
+	typedef Visitable<LineSegment, Obb,
+		PerspectiveCameraShape, Plane, Ray, Sphere, Aabb> BaseType;
+	typedef BaseType::MutableVisitorType MutableVisitor;
+	typedef BaseType::ConstVisitorType ConstVisitor;
+
 	/// Collision shape type
 	enum CollisionShapeType
 	{
