@@ -160,7 +160,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 	if(pass)
 	{
-		passes = StringList::splitString(pass.get(), " ");
+		passes = StringList::splitString(pass.get().c_str(), " ");
 	}
 	else
 	{

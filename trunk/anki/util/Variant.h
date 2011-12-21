@@ -187,7 +187,7 @@ public:
 	/// Implements the VariantBase::equal
 	bool equal(const BaseType& b) const
 	{
-		if(!areSameType(b))
+		if(!BaseType::areSameType(b))
 		{
 			throw ANKI_EXCEPTION(BaseType::INCOMPATIBLES_ERR);
 		}
@@ -198,7 +198,7 @@ public:
 	/// Implements the VariantBase::copy
 	void copy(const BaseType& b)
 	{
-		if(!areSameType(b))
+		if(!BaseType::areSameType(b))
 		{
 			throw ANKI_EXCEPTION(BaseType::INCOMPATIBLES_ERR);
 		}
