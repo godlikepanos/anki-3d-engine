@@ -4,6 +4,8 @@
 #ifndef ANKI_UTIL_VISITOR_H
 #define ANKI_UTIL_VISITOR_H
 
+#error "The file is experimental. Dont include"
+
 
 namespace anki {
 

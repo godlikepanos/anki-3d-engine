@@ -120,7 +120,7 @@ ANKI_ADD_LIB(${BOOST_INCLUDE_DIR} ${BOOST_LIBRARY_DIR} ${BOOST_INCLUDE_DIR}/boos
 #
 # Defines & flags
 #
-ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long -msse4 -std=c++0x")
+ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long -msse4")
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	

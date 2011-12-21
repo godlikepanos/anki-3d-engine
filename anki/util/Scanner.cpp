@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cmath>
 #include <sstream>
+#include <cassert>
 
 
 namespace anki { namespace scanner {

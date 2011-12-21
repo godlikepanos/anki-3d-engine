@@ -1,5 +1,6 @@
 #include "anki/util/StringList.h"
 #include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
 
 
 namespace anki {
@@ -34,7 +35,7 @@ StringList StringList::splitString(const StringType& s, const char* seperators)
 	StringList out;
 	Tok tok(s, sep);
 
-	for(auto s: tok)
+	BOOST_FOREACH(const std::string& s, tok)
 	{
 		out.push_back(s);
 	}

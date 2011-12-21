@@ -3,7 +3,6 @@
 
 #include "anki/collision/Forward.h"
 #include "anki/math/Forward.h"
-#include "anki/util/Visitor.h"
 
 
 namespace anki {
@@ -13,15 +12,9 @@ namespace anki {
 /// @{
 
 /// Abstract class for collision shapes
-class CollisionShape: public Visitable<LineSegment, Obb,
-	PerspectiveCameraShape, Plane, Ray, Sphere, Aabb>
+class CollisionShape
 {
 public:
-	typedef Visitable<LineSegment, Obb,
-		PerspectiveCameraShape, Plane, Ray, Sphere, Aabb> BaseType;
-	typedef BaseType::MutableVisitorType MutableVisitor;
-	typedef BaseType::ConstVisitorType ConstVisitor;
-
 	/// Collision shape type
 	enum CollisionShapeType
 	{
@@ -33,6 +26,33 @@ public:
 		CST_OBB,
 		CST_PERSPECTIVE_CAMERA_FRUSTRUM
 	};
+
+	/// Generic mutable visitor
+	class MutableVisitor
+	{
+	public:
+		virtual void visit(LineSegment&) = 0;
+		virtual void visit(Obb&) = 0;
+		virtual void visit(PerspectiveCameraShape&) = 0;
+		virtual void visit(Plane&) = 0;
+		virtual void visit(Ray&) = 0;
+		virtual void visit(Sphere&) = 0;
+		virtual void visit(Aabb&) = 0;
+	};
+
+	/// Generic const visitor
+	class ConstVisitor
+	{
+	public:
+		virtual void visit(const LineSegment&) = 0;
+		virtual void visit(const Obb&) = 0;
+		virtual void visit(const PerspectiveCameraShape&) = 0;
+		virtual void visit(const Plane&) = 0;
+		virtual void visit(const Ray&) = 0;
+		virtual void visit(const Sphere&) = 0;
+		virtual void visit(const Aabb&) = 0;
+	};
+
 
 	CollisionShape(CollisionShapeType cid_)
 		: cid(cid_)

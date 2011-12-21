@@ -6,6 +6,8 @@
 #include <iosfwd>
 #include <memory>
 
+#error "The file is experimental. Dont include"
+
 
 namespace anki {
 
