@@ -10,15 +10,15 @@ namespace anki {
 
 
 /// This template makes a class singleton
-template<typename Type>
+template<typename T>
 class Singleton
 {
 public:
-	typedef Type ValueType;
+	typedef T Value;
 
-	static Type& get()
+	static Value& get()
 	{
-		return *(instance ? instance : (instance = new Type));
+		return *(instance ? instance : (instance = new Value));
 	}
 
 protected:
@@ -26,14 +26,15 @@ protected:
 	~Singleton();
 
 private:
-	static Type* instance;
-	Singleton(Singleton const&);
+	static Value* instance;
+
+	Singleton(const Singleton&);
 	Singleton& operator=(const Singleton&);
 };
 
 
-template <typename Type>
-Type* Singleton<Type>::instance = NULL;
+template <typename T>
+typename Singleton<T>::Value* Singleton<T>::instance = NULL;
 
 
 } // end namespace

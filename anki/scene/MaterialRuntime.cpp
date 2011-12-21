@@ -58,8 +58,11 @@ MaterialRuntime::MaterialRuntime(const Material& mtl_)
 	me = he;
 
 	// Create vars
-	BOOST_FOREACH(const MaterialVariable& var, mtl.getVariables())
+	Material::VarsContainer::const_iterator it = mtl.getVariables().begin();
+	for(; it != mtl.getVariables().end(); ++it)
 	{
+		const MaterialVariable& var = *it;
+
 		MaterialRuntimeVariable* varr = new MaterialRuntimeVariable(var);
 		vars.push_back(varr);
 		varNameToVar[varr->getMaterialVariable().getName().c_str()] = varr;

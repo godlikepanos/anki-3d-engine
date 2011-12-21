@@ -103,7 +103,7 @@ void ResourceManager<Type>::unload(const Hook& hook)
 			hook.uuid + "\")");
 	}
 
-	assert(*it == hook);
+	ANKI_ASSERT(*it == hook);
 
 	--it->referenceCounter;
 
