@@ -154,9 +154,9 @@ ADD_SUBDIRECTORY(anki)
 #
 # Unit tests
 #
-OPTION(BUILD_UNIT_TESTS "Build Unit Tests" OFF)
+OPTION(BUILD_TESTS "Build Unit Tests" OFF)
 
-IF(BUILD_UNIT_TESTS)
+IF(BUILD_TESTS)
 	ENABLE_TESTING()
 	
 	SET(GTEST_INCLUDE_DIR "/usr/include" CACHE PATH "The directory that contains the gtest directory")
@@ -164,7 +164,7 @@ IF(BUILD_UNIT_TESTS)
 
 	ANKI_ADD_LIB(${GTEST_INCLUDE_DIR} ${GTEST_LIBRARY_DIR} ${GTEST_INCLUDE_DIR}/gtest/gtest.h)
 	
-	ADD_SUBDIRECTORY(unit-tests)
+	ADD_SUBDIRECTORY(tests)
 ENDIF()
 
 #

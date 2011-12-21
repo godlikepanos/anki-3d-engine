@@ -20,14 +20,22 @@ struct PassLevelKey
 	PassLevelKey(uint pass_, uint level_)
 		: pass(pass_), level(level_)
 	{}
+};
 
-	/// Create hash
+
+/// Create hash functor
+struct PassLevelKeyCreateHash
+{
 	size_t operator()(const PassLevelKey& b) const
 	{
-		return pass * 1000 + level;
+		return b.pass * 1000 + b.level;
 	}
+};
 
-	/// Values comparisons
+
+/// Values comparisons functor
+struct PassLevelKeyComparision
+{
 	bool operator()(const PassLevelKey& a,
 		const PassLevelKey& b) const
 	{
@@ -41,9 +49,8 @@ template<typename T>
 struct PassLevelHashMap
 {
 	typedef boost::unordered_map<PassLevelKey, T,
-		PassLevelKey, PassLevelKey> Type;
+		PassLevelKeyCreateHash, PassLevelKeyComparision> Type;
 };
-
 
 
 } // end namespace

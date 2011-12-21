@@ -7,9 +7,9 @@ namespace anki {
 
 
 //==============================================================================
-StringList::StringType StringList::join(const StringType& sep) const
+StringList::String StringList::join(const Char* sep) const
 {
-	StringType out;
+	String out;
 
 	Base::const_iterator it = begin();
 	for(; it != end(); it++)
@@ -26,21 +26,47 @@ StringList::StringType StringList::join(const StringType& sep) const
 
 
 //==============================================================================
-StringList StringList::splitString(const StringType& s, const char* seperators)
+int StringList::getIndexOf(const Char* value) const
 {
-	typedef boost::char_separator<char> Sep;
+	size_t pos = 0;
+
+	for(const_iterator it = begin(); it != end(); ++it)
+	{
+		if(*it == value)
+		{
+			break;
+		}
+		++ pos;
+	}
+
+	return (pos == size()) ? -1 : pos;
+}
+
+
+//==============================================================================
+StringList StringList::splitString(const Char* s, const Char* seperators)
+{
+	typedef boost::char_separator<Char> Sep;
 	typedef boost::tokenizer<Sep> Tok;
 
 	Sep sep(seperators);
 	StringList out;
-	Tok tok(s, sep);
+	Tok tok(String(s), sep);
 
-	BOOST_FOREACH(const std::string& s, tok)
+	BOOST_FOREACH(const String& s_, tok)
 	{
-		out.push_back(s);
+		out.push_back(s_);
 	}
 
 	return out;
+}
+
+
+//==============================================================================
+std::ostream& operator<<(std::ostream& s, const StringList& a)
+{
+	s << a.join(", ");
+	return s;
 }
 
 

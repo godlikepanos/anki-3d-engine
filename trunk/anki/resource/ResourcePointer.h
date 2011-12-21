@@ -15,7 +15,7 @@ class ResourcePointer
 {
 public:
 	typedef ResourcePointer<Type, ResourceManagerSingleton> Self;
-	typedef typename ResourceManagerSingleton::ValueType::Hook Hook;
+	typedef typename ResourceManagerSingleton::Value::Hook Hook;
 
 	/// Default constructor
 	ResourcePointer()
