@@ -334,8 +334,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 			sProg->getUniformVariables())
 		{
 			allVarNames[v->getName()] = v->getGlDataType();
-
-			ANKI_INFO("--" << v->getName());
 		}
 	}
 
@@ -373,8 +371,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 			nameToValue[name] = value;
 
-			ANKI_INFO("++ " << name);
-
 			// A simple warning
 			std::map<std::string, GLenum>::const_iterator iit =
 				allVarNames.find(name);
@@ -404,8 +400,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		// Not found
 		if(it1 == nameToValue.end())
 		{
-			ANKI_INFO("No value for " << name);
-
 			// Get the value
 			switch(dataType)
 			{

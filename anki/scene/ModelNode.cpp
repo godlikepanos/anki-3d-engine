@@ -8,20 +8,16 @@ namespace anki {
 
 
 //==============================================================================
-// Constructors & destructor                                                   =
-//==============================================================================
-
 ModelNode::ModelNode(Scene& scene, ulong flags, SceneNode* parent)
-:	SceneNode(SNT_MODEL_NODE, scene, flags, parent)
+	: SceneNode(SNT_MODEL_NODE, scene, flags, parent)
 {}
 
 
+//==============================================================================
 ModelNode::~ModelNode()
 {}
 
 
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void ModelNode::init(const char* filename)
 {
@@ -29,13 +25,11 @@ void ModelNode::init(const char* filename)
 
 	BOOST_FOREACH(const ModelPatch& patch, model->getModelPatches())
 	{
-		patches.push_back(new ModelPatchNode(patch, *this));
+		patches.push_back(new ModelPatchNode(&patch, this));
 	}
 }
 
 
-//==============================================================================
-// moveUpdate                                                                  =
 //==============================================================================
 void ModelNode::moveUpdate()
 {
