@@ -2,7 +2,7 @@
 #define ANKI_SCENE_SKIN_NODE_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/SkinPatchNode.h"
+#include "anki/scene/Renderable.h"
 #include "anki/math/Math.h"
 #include <boost/range/iterator_range.hpp>
 #include <vector>
@@ -12,7 +12,99 @@ namespace anki {
 
 
 class Skin;
-class SkelAnimModelNodeCtrl;
+
+
+/// A fragment of the SkinNode
+class SkinPatchNode: public Renderable, public SceneNode
+{
+	public:
+		enum TransformFeedbackVbo
+		{
+			TFV_POSITIONS,
+			TFV_NORMALS,
+			TFV_TANGENTS,
+			TFV_NUM
+		};
+
+		/// See TfHwSkinningGeneric.glsl for the locations
+		enum TfShaderProgAttribLoc
+		{
+			POSITION_LOC,
+			NORMAL_LOC,
+			TANGENT_LOC,
+			VERT_WEIGHT_BONES_NUM_LOC,
+			VERT_WEIGHT_BONE_IDS_LOC,
+			VERT_WEIGHT_WEIGHTS_LOC
+		};
+
+		SkinPatchNode(const ModelPatch* modelPatch, SkinNode* parent)
+			: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
+				SNF_INHERIT_PARENT_TRANSFORM, parent), modelPatch(modelPatch_)
+		{
+			mtlr.reset(new MaterialRuntime(modelPatch->getMaterial()));
+		}
+
+		/// @name Accessors
+		/// @{
+		const Vao& getTfVao() const
+		{
+			return tfVao;
+		}
+
+		const Vbo& getTfVbo(uint i) const
+		{
+			return tfVbos[i];
+		}
+
+		const Vao& getVao(const PassLevelKey& k) const
+		{
+			return *vaosHashMap.at(k);
+		}
+		/// @}
+
+		void init(const char*)
+		{}
+
+		/// Implements Renderable::getVao
+		const Vao& getVao(const PassLevelKey& k)
+		{
+			return vaosHashMap[k];
+		}
+
+		/// Implements Renderable::getVertexIdsNum
+		uint getVertexIdsNum(const PassLevelKey& k)
+		{
+			return modelPatch->getMesh().getVertsNum();
+		}
+
+		/// Implements Renderable::getMaterialRuntime
+		MaterialRuntime& getMaterialRuntime()
+		{
+			return *mtlr;
+		}
+
+		/// Implements Renderable::getWorldTransform
+		const Transform& getWorldTransform(const PassLevelKey&)
+		{
+			return SceneNode::getWorldTransform();
+		}
+
+		/// Implements Renderable::getPreviousWorldTransform
+		const Transform& getPreviousWorldTransform(
+			const PassLevelKey& k)
+		{
+			return SceneNode::getPrevWorldTransform();
+		}
+
+	private:
+		ModelPatch::VaosContainer vaos;
+		ModelPatch::PassLevelToVaoHashMap vaosHashMap;
+		const ModelPatch* modelPatch;
+		boost::scoped_ptr<MaterialRuntime> mtlr; ///< Material runtime
+
+		boost::array<Vbo, TFV_NUM> tfVbos;
+		Vao tfVao; ///< For TF passes
+};
 
 
 /// A skin scene node

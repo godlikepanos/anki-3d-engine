@@ -2,7 +2,6 @@
 #define ANKI_PHYSICS_CHARACTER_H
 
 #include "anki/math/Math.h"
-#include "anki/core/Object.h"
 
 
 class btPairCachingGhostObject;

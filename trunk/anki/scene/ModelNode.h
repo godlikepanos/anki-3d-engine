@@ -3,17 +3,84 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/Resource.h"
-#include "anki/scene/ModelPatchNode.h"
+#include "anki/scene/Renderable.h"
+#include "anki/resource/Model.h"
 #include "anki/collision/Obb.h"
+#include "anki/scene/MaterialRuntime.h"
 #include <boost/array.hpp>
 #include <vector>
 #include <boost/range/iterator_range.hpp>
+#include <boost/scoped_ptr.hpp>
 
 
 namespace anki {
 
 
-class Model;
+/// A fragment of the ModelNode
+class ModelPatchNode: public Renderable, public SceneNode
+{
+	public:
+		ModelPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
+			: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
+				SNF_INHERIT_PARENT_TRANSFORM, parent), modelPatch(modelPatch_)
+		{
+			mtlr.reset(new MaterialRuntime(modelPatch->getMaterial()));
+		}
+
+		/// Implements SceneNode::getVisibilityCollisionShapeWorldSpace
+		const CollisionShape*
+			getVisibilityCollisionShapeWorldSpace() const
+		{
+			return &visibilityShapeWSpace;
+		}
+
+		void init(const char*)
+		{}
+
+		/// Re-implements SceneNode::moveUpdate
+		void moveUpdate()
+		{
+			visibilityShapeWSpace =
+				modelPatch->getMesh().getVisibilityShape().getTransformed(
+				getParent()->getWorldTransform());
+		}
+
+		/// Implements Renderable::getVao
+		const Vao& getVao(const PassLevelKey& k)
+		{
+			return modelPatch->getVao(k);
+		}
+
+		/// Implements Renderable::getVertexIdsNum
+		uint getVertexIdsNum(const PassLevelKey& k)
+		{
+			return modelPatch->getMesh().getVertsNum();
+		}
+
+		/// Implements Renderable::getMaterialRuntime
+		MaterialRuntime& getMaterialRuntime()
+		{
+			return *mtlr;
+		}
+
+		/// Implements Renderable::getWorldTransform
+		const Transform& getWorldTransform(const PassLevelKey&)
+		{
+			return SceneNode::getWorldTransform();
+		}
+
+		/// Implements Renderable::getPreviousWorldTransform
+		const Transform& getPreviousWorldTransform(
+			const PassLevelKey& k)
+		{
+			return SceneNode::getPrevWorldTransform();
+		}
+
+	private:
+		Obb visibilityShapeWSpace;
+		const ModelPatch* modelPatch;
+		boost::scoped_ptr<MaterialRuntime> mtlr; ///< Material runtime
+};
 
 
 /// The model scene node

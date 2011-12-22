@@ -57,8 +57,6 @@ Vao* ModelPatch::createVao(const Material& mtl,
 	Vao* vao = new Vao;
 	vao->create();
 
-	std::cout << mtl.getShaderProgram(key) << std::endl;
-
 	if(mtl.getShaderProgram(key).attributeVariableExists("position"))
 	{
 		ANKI_ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
