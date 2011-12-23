@@ -1,5 +1,5 @@
+#include "anki/util/HighRezTimer.h"
 #include <gtest/gtest.h>
-#include "HighRezTimer.h"
 
 
 TEST(HighRezTimer, Test)

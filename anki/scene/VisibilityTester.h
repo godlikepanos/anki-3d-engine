@@ -12,7 +12,7 @@ namespace anki {
 
 class Camera;
 class Scene;
-class RenderableNode;
+class Renderable;
 class SpotLight;
 class PointLight;
 class SceneNode;

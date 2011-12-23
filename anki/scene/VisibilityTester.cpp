@@ -1,9 +1,7 @@
-#include <boost/foreach.hpp>
 #include "anki/scene/VisibilityTester.h"
 #include "anki/scene/Scene.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/SkinNode.h"
-#include "anki/scene/ModelPatchNode.h"
 #include "anki/resource/Material.h"
 #include "anki/collision/Sphere.h"
 #include "anki/scene/PointLight.h"
@@ -11,6 +9,7 @@
 #include "anki/core/ParallelManager.h"
 #include "anki/core/Logger.h"
 #include "anki/core/Globals.h"
+#include <boost/foreach.hpp>
 
 
 namespace anki {

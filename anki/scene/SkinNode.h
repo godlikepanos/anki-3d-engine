@@ -3,6 +3,8 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Renderable.h"
+#include "anki/scene/MaterialRuntime.h"
+#include "anki/resource/Model.h"
 #include "anki/math/Math.h"
 #include <boost/range/iterator_range.hpp>
 #include <vector>
@@ -37,12 +39,7 @@ class SkinPatchNode: public Renderable, public SceneNode
 			VERT_WEIGHT_WEIGHTS_LOC
 		};
 
-		SkinPatchNode(const ModelPatch* modelPatch, SkinNode* parent)
-			: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
-				SNF_INHERIT_PARENT_TRANSFORM, parent), modelPatch(modelPatch_)
-		{
-			mtlr.reset(new MaterialRuntime(modelPatch->getMaterial()));
-		}
+		SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent);
 
 		/// @name Accessors
 		/// @{
@@ -55,11 +52,6 @@ class SkinPatchNode: public Renderable, public SceneNode
 		{
 			return tfVbos[i];
 		}
-
-		const Vao& getVao(const PassLevelKey& k) const
-		{
-			return *vaosHashMap.at(k);
-		}
 		/// @}
 
 		void init(const char*)
@@ -68,7 +60,7 @@ class SkinPatchNode: public Renderable, public SceneNode
 		/// Implements Renderable::getVao
 		const Vao& getVao(const PassLevelKey& k)
 		{
-			return vaosHashMap[k];
+			return *vaosHashMap.at(k);
 		}
 
 		/// Implements Renderable::getVertexIdsNum

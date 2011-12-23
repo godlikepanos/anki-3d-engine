@@ -1,8 +1,8 @@
 #include "anki/scene/SkinNode.h"
 #include "anki/resource/Skin.h"
-#include "anki/scene/SkinPatchNode.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/SkelAnim.h"
+#include "anki/resource/MeshData.h"
 #include <boost/foreach.hpp>
 
 
@@ -16,17 +16,19 @@ namespace anki {
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 //==============================================================================
-SkinPatchNode::SkinPatchNode(const ModelPatch& modelPatch_, SkinNode& parent)
-:	PatchNode(modelPatch_, SNF_NONE, parent)
+SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
+	: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
+		SNF_INHERIT_PARENT_TRANSFORM, parent),
+		modelPatch(modelPatch_),
+		mtlr(new MaterialRuntime(modelPatch_->getMaterial()))
 {
 	ModelPatch::VboArray vboArr;
+	const Mesh& mesh = modelPatch->getMesh();
 
 	for(uint i = 0; i < Mesh::VBOS_NUM; i++)
 	{
-		vboArr[i] = &rsrc.getMesh().getVbo((Mesh::Vbos)i);
+		vboArr[i] = &mesh.getVbo((Mesh::Vbos)i);
 	}
-
-	const Mesh& mesh = rsrc.getMesh();
 
 	//
 	// Create the VAOs
@@ -146,7 +148,7 @@ void SkinNode::init(const char* filename)
 
 	BOOST_FOREACH(const ModelPatch& patch, skin->getModelPatches())
 	{
-		patches.push_back(new SkinPatchNode(patch, *this));
+		patches.push_back(new SkinPatchNode(&patch, this));
 	}
 
 	uint bonesNum = skin->getSkeleton().getBones().size();
