@@ -8,7 +8,7 @@
 namespace anki {
 
 
-class RenderableNode;
+class Renderable;
 class PointLight;
 class SpotLight;
 
@@ -18,7 +18,7 @@ class SpotLight;
 class VisibilityInfo
 {
 	public:
-		typedef std::deque<RenderableNode*> RContainer;
+		typedef std::deque<Renderable*> RContainer;
 		typedef std::vector<PointLight*> PLContainer;
 		typedef std::vector<SpotLight*> SLContainer;
 

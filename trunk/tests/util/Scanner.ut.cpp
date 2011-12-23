@@ -1,11 +1,11 @@
+#include "anki/util/Scanner.h"
 #include <gtest/gtest.h>
 #include <sstream>
 #include <iostream>
 #include <memory>
-#include "Scanner.h"
 
 
-TEST(ScannerTests, Numbers)
+TEST(Scanner, Numbers)
 {
 	std::stringstream ss;	
 	ss << "12345678901234 1.12 0.00000000000001 0.01e1 1e- 10.123e-7 1ab";
@@ -58,7 +58,7 @@ TEST(ScannerTests, Numbers)
 }
 
 
-TEST(ScannerTests, Identifiers)
+TEST(Scanner, Identifiers)
 {
 	std::stringstream ss;	
 	ss << "1 la0_la ha\n_ha";

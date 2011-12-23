@@ -26,14 +26,13 @@ class Scene
 	public:
 		/// Typetraits
 		template<typename T>
-		class Types
+		struct Types
 		{
-			public:
-				typedef std::vector<T*> Container;
-				typedef typename Container::iterator Iterator;
-				typedef typename Container::const_iterator ConstIterator;
-				typedef boost::iterator_range<Iterator> MutableRange;
-				typedef boost::iterator_range<ConstIterator> ConstRange;
+			typedef std::vector<T*> Container;
+			typedef typename Container::iterator Iterator;
+			typedef typename Container::const_iterator ConstIterator;
+			typedef boost::iterator_range<Iterator> MutableRange;
+			typedef boost::iterator_range<ConstIterator> ConstRange;
 		};
 
 		enum
