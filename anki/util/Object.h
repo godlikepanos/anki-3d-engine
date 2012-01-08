@@ -16,7 +16,7 @@ class Object
 {
 public:
 	typedef T Value;
-	typedef std::vector<Object*> Container;
+	typedef std::vector<Value*> Container;
 	typedef boost::iterator_range<typename Container::const_iterator>
 		ConstIteratorRange;
 	typedef boost::iterator_range<typename Container::iterator>
@@ -24,12 +24,13 @@ public:
 
 	/// Calls addChild if parent is not NULL
 	/// @exception Exception
-	Object(Object* parent_)
-		: parent(NULL)
+	Object(Value* self_, Value* parent_)
+		: self(self_), parent(NULL)
 	{
+		ANKI_ASSERT(self != NULL && "Self can't be nullptr");
 		if(parent_ != NULL)
 		{
-			parent_->addChild(this);
+			parent_->addChild(self);
 		}
 	}
 
@@ -38,11 +39,11 @@ public:
 	{
 		if(parent != NULL)
 		{
-			parent->removeChild(this);
+			parent->removeChild(self);
 		}
 
 		// Remove all children
-		BOOST_FOREACH(Object* child, childs)
+		BOOST_FOREACH(Value* child, childs)
 		{
 			child->parent = NULL;
 		}
@@ -50,11 +51,11 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Object* getParent() const
+	const Value* getParent() const
 	{
 		return parent;
 	}
-	Object* getParent()
+	Value* getParent()
 	{
 		return parent;
 	}
@@ -75,17 +76,17 @@ public:
 	/// @}
 
 	/// Add a new child
-	void addChild(Object* child)
+	void addChild(Value* child)
 	{
 		ANKI_ASSERT(child != NULL && "Null arg");
 		ANKI_ASSERT(child->parent ==  NULL && "Child already has parent");
 
-		child->parent = this;
+		child->parent = self;
 		childs.push_back(child);
 	}
 
 	/// Remove a child
-	void removeChild(Object* child)
+	void removeChild(Value* child)
 	{
 		ANKI_ASSERT(child != NULL && "Null arg");
 
@@ -99,7 +100,8 @@ public:
 	}
 
 private:
-	Object* parent; ///< May be nullptr
+	Value* self;
+	Value* parent; ///< May be nullptr
 	Container childs;
 };
 

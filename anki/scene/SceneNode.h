@@ -10,6 +10,11 @@
 namespace anki {
 
 
+class Scene;
+class Renderable;
+class Frustum;
+
+
 /// @addtogroup scene
 /// @{
 
@@ -22,16 +27,20 @@ public:
 	enum SceneNodeFlags
 	{
 		SNF_NONE = 0,
-		SNF_INHERIT_PARENT_TRANSFORM = 1 ///< Ignore local transform
+		SNF_IGNORE_LOCAL_TRANSFORM = 1, ///< Get the parent's world transform
+		SNF_MOVED = 2 ///< Moved in the previous frame. The scene update sets it
 	};
 
 	/// The one and only constructor
 	/// @param flags The flags with the node properties
-	/// @param parent The nods's parent. Its nulptr only for the root node
-	explicit SceneNode(ulong flags, SceneNode* parent)
-		: Base(parent), flags(flags_)
-	{}
+	/// @param parent The nods's parent. It can be nullptr
+	explicit SceneNode(
+		const char* name,
+		long flags,
+		SceneNode* parent,
+		Scene* scene);
 
+	/// Unregister node
 	virtual ~SceneNode();
 
 	/// @name Accessors
@@ -103,12 +112,25 @@ public:
 
 	/// This is called every frame
 	virtual void frameUpdate(float prevUpdateTime, float crntTime)
-	{}
+	{
+		(void)prevUpdateTime;
+		(void)crntTime;
+	}
 
 	/// This is called if the node moved
 	virtual void moveUpdate()
 	{}
 	/// @}
+
+	virtual Renderable* getRenderable()
+	{
+		return NULL;
+	}
+
+	virtual Frustum* getFrustum()
+	{
+		return NULL;
+	}
 
 	/// @name Mess with the local transform
 	/// @{
@@ -146,6 +168,8 @@ public:
 	void updateWorldTransform();
 
 private:
+	std::string name; ///< A unique name
+
 	Transform lTrf; ///< The transformation in local space
 
 	/// The transformation in world space (local combined with parent's
@@ -156,6 +180,8 @@ private:
 	Transform prevWTrf;
 
 	ulong flags; ///< The state flags
+
+	Scene* scene; ///< For registering and unregistering
 };
 /// @}
 

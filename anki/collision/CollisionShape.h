@@ -72,6 +72,9 @@ public:
 	/// Transform
 	virtual void transform(const Transform& trf) = 0;
 
+	virtual void accept(MutableVisitor&) = 0;
+	virtual void accept(ConstVisitor&) const = 0;
+
 private:
 	CollisionShapeType cid;
 };
