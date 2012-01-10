@@ -110,17 +110,19 @@ public:
 private:
 	FrustumType type;
 
-	boost::array<Plane, 6> planes;
+	boost::array<Plane, FP_COUNT> planes;
 
 	/// @name Including shape for perspective cameras
 	/// @{
 	Vec3 eye; ///< The eye point
 	boost::array<Vec3, 4> dirs; ///< Directions
+	float fovX, fovY, zNear, zFar;
 	/// @}
 
 	/// @name Including shape for orthographic cameras
 	/// @{
 	Obb obb;
+	float left, right, near, far, top, bottom;
 	/// @}
 };
 /// @}

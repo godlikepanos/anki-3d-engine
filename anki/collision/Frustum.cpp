@@ -9,7 +9,13 @@ namespace anki {
 //==============================================================================
 Frustum& Frustum::operator=(const Frustum& b)
 {
-	memcpy(this, &b, sizeof(Frustum));
+	type = b.type;
+	planes = b.planes;
+
+	eye = b.eye;
+	dirs = b.dirs;
+
+	obb = b.obb;
 	return *this;
 }
 
@@ -25,9 +31,9 @@ float Frustum::testPlane(const Plane& p) const
 	{
 		float o = 0.0;
 
-		for(uint i = 0; i < dirs.size(); i++)
+		BOOST_FOREACH(const Vec3& dir, dirs)
 		{
-			LineSegment ls(eye, dirs[i]);
+			LineSegment ls(eye, dir);
 			float t = ls.testPlane(p);
 
 			if(t == 0)
@@ -97,9 +103,9 @@ void Frustum::setPerspective(float fovX, float fovY,
 	dirs[3] = Vec3(x, -y, z - zNear); // bottom right
 
 	eye.transform(trf);
-	for(uint i = 0; i < 4; i++)
+	BOOST_FOREACH(Vec3& dir, dirs)
 	{
-		dirs[i] = trf.getRotation() * dirs[i];
+		dir = trf.getRotation() * dir;
 	}
 }
 
