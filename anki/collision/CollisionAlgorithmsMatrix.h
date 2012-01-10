@@ -15,13 +15,13 @@ namespace anki {
 ///
 /// @code
 /// +------+------+------+------+------+------+------+------+
-/// |      | LS   | OBB  | PCC  | P    | R    | S    | AABB |
+/// |      | LS   | OBB  | FRU  | P    | R    | S    | AABB |
 /// +------+------+------+------+------+------+------+------+
 /// | LS   | N/A  | OK   | N/I  | OK   | N/A  | OK   | OK   |
 /// +------+------+------+------+------+------+------+------+
 /// | OBB  |      | OK   | N/I  | OK   | OK   | OK   | OK   |
 /// +------+------+------+------+------+------+------+------+
-/// | PCS  |      |      | N/I  | N/I  | N/I  | N/I  | N/I  |
+/// | FRU  |      |      | N/I  | N/I  | N/I  | N/I  | N/I  |
 /// +------+------+------+------+------+------+------+------+
 /// | P    |      |      |      | OK   | OK   | OK   | OK   |
 /// +------+------+------+------+------+------+------+------+
@@ -35,7 +35,6 @@ namespace anki {
 class CollisionAlgorithmsMatrix
 {
 public:
-	typedef PerspectiveCameraShape Pcs;
 	typedef LineSegment Ls;
 
 	/// Generic collide function. It doesn't uses visitor pattern for
@@ -45,7 +44,7 @@ public:
 	// 1st line (LS)
 	static bool collide(const Ls& a, const Ls& b);
 	static bool collide(const Ls& a, const Obb& b);
-	static bool collide(const Ls& a, const Pcs& b);
+	static bool collide(const Ls& a, const Frustum& b);
 	static bool collide(const Ls& a, const Plane& b);
 	static bool collide(const Ls& a, const Ray& b);
 	static bool collide(const Ls& a, const Sphere& b);
@@ -57,26 +56,26 @@ public:
 		return collide(b, a);
 	}
 	static bool collide(const Obb& a, const Obb& b);
-	static bool collide(const Obb& a, const Pcs& b);
+	static bool collide(const Obb& a, const Frustum& b);
 	static bool collide(const Obb& a, const Plane& b);
 	static bool collide(const Obb& a, const Ray& b);
 	static bool collide(const Obb& a, const Sphere& b);
 	static bool collide(const Obb& a, const Aabb& b);
 
-	// 3rd line (PCS)
-	static bool collide(const Pcs& a, const Ls& b)
+	// 3rd line (FRU)
+	static bool collide(const Frustum& a, const Ls& b)
 	{
 		return collide(b, a);
 	}
-	static bool collide(const Pcs& a, const Obb& b)
+	static bool collide(const Frustum& a, const Obb& b)
 	{
 		return collide(b, a);
 	}
-	static bool collide(const Pcs& a, const Pcs& b);
-	static bool collide(const Pcs& a, const Plane& b);
-	static bool collide(const Pcs& a, const Ray& b);
-	static bool collide(const Pcs& a, const Sphere& b);
-	static bool collide(const Pcs& a, const Aabb& b);
+	static bool collide(const Frustum& a, const Frustum& b);
+	static bool collide(const Frustum& a, const Plane& b);
+	static bool collide(const Frustum& a, const Ray& b);
+	static bool collide(const Frustum& a, const Sphere& b);
+	static bool collide(const Frustum& a, const Aabb& b);
 
 	// 4th line (P)
 	static bool collide(const Plane& a, const Ls& b)
@@ -87,7 +86,7 @@ public:
 	{
 		return collide(b, a);
 	}
-	static bool collide(const Plane& a,const Pcs& b)
+	static bool collide(const Plane& a,const Frustum& b)
 	{
 		return collide(b, a);
 	}
@@ -105,7 +104,7 @@ public:
 	{
 		return collide(b, a);
 	}
-	static bool collide(const Ray& a, const Pcs& b)
+	static bool collide(const Ray& a, const Frustum& b)
 	{
 		return collide(b, a);
 	}
@@ -126,7 +125,7 @@ public:
 	{
 		return collide(b, a);
 	}
-	static bool collide(const Sphere& a, const Pcs& b)
+	static bool collide(const Sphere& a, const Frustum& b)
 	{
 		return collide(b, a);
 	}
@@ -150,7 +149,7 @@ public:
 	{
 		return collide(b, a);
 	}
-	static bool collide(const Aabb& a, const Pcs& b)
+	static bool collide(const Aabb& a, const Frustum& b)
 	{
 		return collide(b, a);
 	}

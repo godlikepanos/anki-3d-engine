@@ -9,7 +9,7 @@ class CollisionShape;
 
 class LineSegment;
 class Obb;
-class PerspectiveCameraShape;
+class Frustum;
 class Plane;
 class Ray;
 class Sphere;

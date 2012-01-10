@@ -77,8 +77,8 @@ public:
 
 	/// @name Other
 	/// @{
-	float dot(const Vec3& b) const;
-	Vec3 cross(const Vec3& b) const;
+	float dot(const Vec3& b) const; ///< 3 muls, 2 adds
+	Vec3 cross(const Vec3& b) const; ///< 6 muls, 3 adds
 	float getLength() const;
 	float getLengthSquared() const;
 	float getDistanceSquared(const Vec3& b) const;

@@ -2,6 +2,8 @@
 #define ANKI_COLLISION_FRUSTUM_H
 
 #include "anki/collision/CollisionShape.h"
+#include "anki/collision/Plane.h"
+#include "anki/collision/Obb.h"
 #include "anki/math/Math.h"
 #include <boost/array.hpp>
 
@@ -19,8 +21,29 @@ namespace anki {
 class Frustum: public CollisionShape
 {
 public:
+	/// Frustum type
+	enum FrustumType
+	{
+		FT_PERSPECTIVE,
+		FT_ORTHOGRAPHIC
+	};
+
+	/// The 6 planes
+	enum FrustrumPlane
+	{
+		FP_NEAR,
+		FP_FAR,
+		FP_LEFT,
+		FP_RIGHT,
+		FP_TOP,
+		FP_BOTTOM,
+		FP_COUNT
+	};
+
+	/// @name Constructors
+	/// @{
 	Frustum()
-		: CollisionShape(CST_FRUSTUM)
+		: CollisionShape(CST_FRUSTUM), type(FT_ORTHOGRAPHIC)
 	{}
 
 	Frustum(const Frustum& b)
@@ -33,8 +56,16 @@ public:
 		float zFar, const Transform& trf)
 		: CollisionShape(CST_FRUSTUM)
 	{
-		// XXX
+		setPerspective(fovX, fovY, zNear, zFar, trf);
 	}
+
+	Frustum(float left, float right, float near,
+		float far, float top, float buttom, const Transform& trf)
+		: CollisionShape(CST_FRUSTUM)
+	{
+		setOrthographic(left, right, near, far, top, buttom, trf);
+	}
+	/// @}
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
@@ -61,16 +92,41 @@ public:
 		v.visit(*this);
 	}
 
-	/// Set all
-	void setAll(float fovX, float fovY, float zNear,
+	/// Set all for perspective camera
+	void setPerspective(float fovX, float fovY, float zNear,
 		float zFar, const Transform& trf);
 
+	/// Set all for orthographic camera
+	void setOrthographic(float left, float right, float near,
+		float far, float top, float buttom, const Transform& trf)
+	{
+		type = FT_ORTHOGRAPHIC;
+		/// XXX
+	}
+
+	/// Check if a collision shape is inside the frustum
+	bool insideFrustum(const CollisionShape& b) const;
+
 private:
+	FrustumType type;
+
 	boost::array<Plane, 6> planes;
+
+	/// @name Including shape for perspective cameras
+	/// @{
 	Vec3 eye; ///< The eye point
 	boost::array<Vec3, 4> dirs; ///< Directions
+	/// @}
+
+	/// @name Including shape for orthographic cameras
+	/// @{
+	Obb obb;
+	/// @}
 };
 /// @}
 
 
 } // end namespace
+
+
+#endif
