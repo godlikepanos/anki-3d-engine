@@ -30,8 +30,8 @@ bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
 			out = collide(t, static_cast<const Aabb&>(b));
 		case CollisionShape::CST_OBB:
 			out = collide(t, static_cast<const Obb&>(b));
-		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
-			out = collide(t, static_cast<const PerspectiveCameraShape&>(b));
+		case CollisionShape::CST_FRUSTUM:
+			out = collide(t, static_cast<const Frustum&>(b));
 		default:
 			ANKI_ASSERT(0 && "Forgot something");
 	}
@@ -59,8 +59,8 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 			out = tcollide<Aabb>(a, b);
 		case CollisionShape::CST_OBB:
 			out = tcollide<Obb>(a, b);
-		case CollisionShape::CST_PERSPECTIVE_CAMERA_FRUSTRUM:
-			out = tcollide<PerspectiveCameraShape>(a, b);
+		case CollisionShape::CST_FRUSTUM:
+			out = tcollide<Frustum>(a, b);
 		default:
 			ANKI_ASSERT(0 && "Forgot something");
 	}
@@ -145,10 +145,9 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
 
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/, const Pcs& /*b*/)
+bool CollisionAlgorithmsMatrix::collide(const Ls& a, const Frustum& b)
 {
-	ANKI_ASSERT(0 && "Not implemented yet");
-	return false;
+	return b.insideFrustum(a);
 }
 
 
@@ -435,10 +434,9 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Pcs& b)
+bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Frustum& b)
 {
-	ANKI_ASSERT(0 && "Not impelented yet");
-	return false;
+	return b.insideFrustum(a);
 }
 
 
@@ -491,42 +489,37 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Aabb& aabb)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Pcs& a, const Pcs& b)
+bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Frustum& b)
 {
-	ANKI_ASSERT(0 && "Not implemented yet");
-	return false;
+	return b.insideFrustum(a);
 }
 
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Pcs& a, const Plane& b)
+bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Plane& b)
 {
-	ANKI_ASSERT(0 && "Not implemented yet");
-	return false;
+	return a.insideFrustum(b);
 }
 
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Pcs& a, const Ray& b)
+bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Ray& b)
 {
-	ANKI_ASSERT(0 && "Not implemented yet");
-	return false;
+	return a.insideFrustum(b);
 }
 
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Pcs& a, const Sphere& b)
+bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Sphere& b)
 {
-	ANKI_ASSERT(0 && "Not implemented yet");
-	return false;
+	return a.insideFrustum(b);
 }
 
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Pcs& a, const Aabb& b)
+bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Aabb& b)
 {
-	ANKI_ASSERT(0 && "Not implemented yet");
-	return false;
+	return a.insideFrustum(b);
 }
 
 

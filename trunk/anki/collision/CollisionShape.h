@@ -24,7 +24,7 @@ public:
 		CST_SPHERE,
 		CST_AABB,
 		CST_OBB,
-		CST_PERSPECTIVE_CAMERA_FRUSTRUM
+		CST_FRUSTUM
 	};
 
 	/// Generic mutable visitor
@@ -33,7 +33,7 @@ public:
 	public:
 		virtual void visit(LineSegment&) = 0;
 		virtual void visit(Obb&) = 0;
-		virtual void visit(PerspectiveCameraShape&) = 0;
+		virtual void visit(Frustum&) = 0;
 		virtual void visit(Plane&) = 0;
 		virtual void visit(Ray&) = 0;
 		virtual void visit(Sphere&) = 0;
@@ -46,7 +46,7 @@ public:
 	public:
 		virtual void visit(const LineSegment&) = 0;
 		virtual void visit(const Obb&) = 0;
-		virtual void visit(const PerspectiveCameraShape&) = 0;
+		virtual void visit(const Frustum&) = 0;
 		virtual void visit(const Plane&) = 0;
 		virtual void visit(const Ray&) = 0;
 		virtual void visit(const Sphere&) = 0;

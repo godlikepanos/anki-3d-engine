@@ -1,5 +1,6 @@
 #include "anki/collision/Frustum.h"
 #include "anki/collision/LineSegment.h"
+#include <boost/foreach.hpp>
 
 
 namespace anki {
@@ -8,46 +9,113 @@ namespace anki {
 //==============================================================================
 Frustum& Frustum::operator=(const Frustum& b)
 {
-	for(int i = 0; i < planes.size(); ++i)
-	{
-		planes[i] = b.planes[i];
-	}
-
-	eye = b.eye;
-
-	for(int i = 0; i < dirs.size(); ++i)
-	{
-		dirs[i] = b.dirs[i];
-	}
+	memcpy(this, &b, sizeof(Frustum));
+	return *this;
 }
 
 
 //==============================================================================
 float Frustum::testPlane(const Plane& p) const
 {
-	const Frustum& f = *this;
-	float o = 0.0;
-
-	for(uint i = 0; i < 4; i++)
+	if(type == FT_ORTHOGRAPHIC)
 	{
-		LineSegment ls(f.getEye(), f.getDirections()[i]);
-		float t = ls.testPlane(p);
+		return obb.testPlane(p);
+	}
+	else
+	{
+		float o = 0.0;
 
-		if(t == 0)
+		for(uint i = 0; i < dirs.size(); i++)
 		{
-			return 0.0;
+			LineSegment ls(eye, dirs[i]);
+			float t = ls.testPlane(p);
+
+			if(t == 0)
+			{
+				return 0.0;
+			}
+			else if(t < 0.0)
+			{
+				o = std::max(o, t);
+			}
+			else
+			{
+				o = std::min(o, t);
+			}
 		}
-		else if(t < 0.0)
+
+		return o;
+	}
+}
+
+
+//==============================================================================
+Frustum Frustum::getTransformed(const Transform& trf) const
+{
+	Frustum o;
+
+	// Planes
+	for(uint i = 0; i < planes.size(); ++i)
+	{
+		o.planes[i] = planes[i].getTransformed(trf);
+	}
+
+	// Other
+	if(type == FT_ORTHOGRAPHIC)
+	{
+		o.obb = obb.getTransformed(trf);
+	}
+	else
+	{
+		o.eye = eye.getTransformed(trf);
+
+		for(uint i = 0; i < dirs.size(); i++)
 		{
-			o = std::max(o, t);
-		}
-		else
-		{
-			o = std::min(o, t);
+			o.dirs[i] = trf.getRotation() * dirs[i];
 		}
 	}
 
 	return o;
+}
+
+
+//==============================================================================
+void Frustum::setPerspective(float fovX, float fovY,
+	float zNear, float zFar, const Transform& trf)
+{
+	type = FT_PERSPECTIVE;
+
+	eye = Vec3(0.0, 0.0, -zNear);
+
+	float x = zFar / tan((Math::PI - fovX) / 2.0);
+	float y = tan(fovY / 2.0) * zFar;
+	float z = -zFar;
+
+	dirs[0] = Vec3(x, y, z - zNear); // top right
+	dirs[1] = Vec3(-x, y, z - zNear); // top left
+	dirs[2] = Vec3(-x, -y, z - zNear); // bottom left
+	dirs[3] = Vec3(x, -y, z - zNear); // bottom right
+
+	eye.transform(trf);
+	for(uint i = 0; i < 4; i++)
+	{
+		dirs[i] = trf.getRotation() * dirs[i];
+	}
+}
+
+
+//==============================================================================
+bool Frustum::insideFrustum(const CollisionShape& b) const
+{
+	BOOST_FOREACH(const Plane& plane, planes)
+	{
+		if(b.testPlane(plane) < 0.0)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 
