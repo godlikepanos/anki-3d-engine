@@ -40,46 +40,15 @@ public:
 		FP_COUNT
 	};
 
-	/// @name Constructors
-	/// @{
-	Frustum()
-		: CollisionShape(CST_FRUSTUM), type(FT_ORTHOGRAPHIC)
+	Frustum(FrustumType type_)
+		: CollisionShape(CST_FRUSTUM), type(type_)
 	{}
-
-	Frustum(const Frustum& b)
-		: CollisionShape(CST_FRUSTUM)
-	{
-		*this = b;
-	}
-
-	Frustum(float fovX, float fovY, float zNear,
-		float zFar, const Transform& trf)
-		: CollisionShape(CST_FRUSTUM)
-	{
-		setPerspective(fovX, fovY, zNear, zFar, trf);
-	}
-
-	Frustum(float left, float right, float near,
-		float far, float top, float buttom, const Transform& trf)
-		: CollisionShape(CST_FRUSTUM)
-	{
-		setOrthographic(left, right, near, far, top, buttom, trf);
-	}
-	/// @}
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
 
-	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
-
 	/// Implements CollisionShape::transform
-	void transform(const Transform& trf)
-	{
-		*this = getTransformed(trf);
-	}
-
-	Frustum getTransformed(const Transform& trf) const;
+	void transform(const Transform& trf);
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -92,38 +61,145 @@ public:
 		v.visit(*this);
 	}
 
-	/// Set all for perspective camera
-	void setPerspective(float fovX, float fovY, float zNear,
-		float zFar, const Transform& trf);
-
-	/// Set all for orthographic camera
-	void setOrthographic(float left, float right, float near,
-		float far, float top, float buttom, const Transform& trf)
-	{
-		type = FT_ORTHOGRAPHIC;
-		/// XXX
-	}
-
 	/// Check if a collision shape is inside the frustum
 	bool insideFrustum(const CollisionShape& b) const;
 
+protected:
+	boost::array<Plane, FP_COUNT> planes;
+	float zNear, zFar;
+
+	/// Called when a viewing variable changes. It recalculates the planes and
+	/// the other variables
+	virtual void recalculate() = 0;
+
 private:
 	FrustumType type;
+};
 
-	boost::array<Plane, FP_COUNT> planes;
 
-	/// @name Including shape for perspective cameras
+/// XXX
+class PerspectiveFrustum: public Frustum
+{
+public:
+	PerspectiveFrustum()
+		: Frustum(FT_PERSPECTIVE)
+	{}
+
+	/// @name Accessors
 	/// @{
+	float getFovX() const
+	{
+		return fovX;
+	}
+	void setFovX(float ang)
+	{
+		fovX = ang;
+		recalculate();
+	}
+
+	float getFovY() const
+	{
+		return fovY;
+	}
+	void setFovY(float ang)
+	{
+		fovY = ang;
+		recalculate();
+	}
+
+	void setAll(float fovX_, float fovY_, float zNear_, float zFar_)
+	{
+		fovX = fovX_;
+		fovY = fovY_,
+		zNear = zNear_;
+		zFar = zFar_;
+		recalculate();
+	}
+	/// @}
+
+	/// Copy
+	PerspectiveFrustum& operator=(const PerspectiveFrustum& b);
+
+	/// Implements CollisionShape::testPlane
+	float testPlane(const Plane& p) const;
+
+	/// Re-implements Frustum::transform
+	void transform(const Transform& trf);
+
+private:
 	Vec3 eye; ///< The eye point
 	boost::array<Vec3, 4> dirs; ///< Directions
-	float fovX, fovY, zNear, zFar;
+	float fovX;
+	float fovY;
+
+	/// Implements CollisionShape::recalculate
+	void recalculate();
+};
+
+
+/// XXX
+class OrthographicFrustum: public Frustum
+{
+public:
+
+	/// @name Accessors
+	/// @{
+	float getLeft() const
+	{
+		return left;
+	}
+	void setLeft(float f)
+	{
+		left = f;
+		recalculate();
+	}
+
+	float getRight() const
+	{
+		return right;
+	}
+	void setRight(float f)
+	{
+		right = f;
+		recalculate();
+	}
+
+	float getTop() const
+	{
+		return top;
+	}
+	void setTop(float f)
+	{
+		top = f;
+		recalculate();
+	}
+
+	float getBottom() const
+	{
+		return bottom;
+	}
+	void setBottom(float f)
+	{
+		bottom = f;
+		recalculate();
+	}
+
+	void setAll(float left_, float right_, float zNear_,
+		float zFar_, float top_, float bottom_)
+	{
+		left = left_;
+		right = right_;
+		zNear = zNear_;
+		zFar = zFar_;
+		top = top_;
+		bottom = bottom_;
+		recalculate();
+	}
 	/// @}
 
-	/// @name Including shape for orthographic cameras
-	/// @{
+private:
 	Obb obb;
-	float left, right, near, far, top, bottom;
-	/// @}
+	float left, right, top, bottom;
 };
 /// @}
 
