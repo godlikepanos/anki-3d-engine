@@ -37,7 +37,7 @@ public:
 		FP_RIGHT,
 		FP_TOP,
 		FP_BOTTOM,
-		FP_COUNT
+		FP_COUNT ///< Number of planes
 	};
 
 	Frustum(FrustumType type_)
@@ -47,7 +47,7 @@ public:
 	/// Copy
 	Frustum& operator=(const Frustum& b);
 
-	/// Implements CollisionShape::transform
+	/// Implements CollisionShape::transform. Ignores scale
 	void transform(const Transform& trf);
 
 	/// Implements CollisionShape::accept
@@ -64,9 +64,16 @@ public:
 	/// Check if a collision shape is inside the frustum
 	bool insideFrustum(const CollisionShape& b) const;
 
+	/// Calculate the projection matrix
+	virtual Mat4 calculateProjectionMatrix() const = 0;
+
 protected:
-	boost::array<Plane, FP_COUNT> planes;
-	float zNear, zFar;
+	boost::array<Plane, FP_COUNT> planes; ///< Used to check frustum
+	/// @name Viewing variables
+	/// @{
+	float zNear;
+	float zFar;
+	/// @}
 
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables
@@ -77,13 +84,32 @@ private:
 };
 
 
-/// XXX
+/// Frustum shape for perspective cameras
 class PerspectiveFrustum: public Frustum
 {
 public:
+	/// @name Constructors
+	/// @{
+
+	/// Default
 	PerspectiveFrustum()
 		: Frustum(FT_PERSPECTIVE)
 	{}
+
+	/// Copy
+	PerspectiveFrustum(const PerspectiveFrustum& b)
+		: Frustum(FT_PERSPECTIVE)
+	{
+		*this = b;
+	}
+
+	/// Set all
+	PerspectiveFrustum(float fovX_, float fovY_, float zNear_, float zFar_)
+		: Frustum(FT_PERSPECTIVE)
+	{
+		setAll(fovX_, fovY_, zNear_, zFar_);
+	}
+	/// @}
 
 	/// @name Accessors
 	/// @{
@@ -107,6 +133,7 @@ public:
 		recalculate();
 	}
 
+	/// Set all the parameters and recalculate the planes and shape
 	void setAll(float fovX_, float fovY_, float zNear_, float zFar_)
 	{
 		fovX = fovX_;
@@ -126,21 +153,48 @@ public:
 	/// Re-implements Frustum::transform
 	void transform(const Transform& trf);
 
+	/// Implements Frustum::calculateProjectionMatrix
+	Mat4 calculateProjectionMatrix() const;
+
 private:
 	Vec3 eye; ///< The eye point
 	boost::array<Vec3, 4> dirs; ///< Directions
 	float fovX;
 	float fovY;
 
-	/// Implements CollisionShape::recalculate
+	/// Implements CollisionShape::recalculate. Recalculate @a planes, @a eye
+	/// and @a dirs
 	void recalculate();
 };
 
 
-/// XXX
+/// Frustum shape for orthographic cameras
 class OrthographicFrustum: public Frustum
 {
 public:
+	/// @name Constructors
+	/// @{
+
+	/// Default
+	OrthographicFrustum()
+		: Frustum(FT_ORTHOGRAPHIC)
+	{}
+
+	/// Copy
+	OrthographicFrustum(const OrthographicFrustum& b)
+		: Frustum(FT_ORTHOGRAPHIC)
+	{
+		*this = b;
+	}
+
+	/// Set all
+	OrthographicFrustum(float left_, float right_, float zNear_,
+		float zFar_, float top_, float bottom_)
+		: Frustum(FT_ORTHOGRAPHIC)
+	{
+		setAll(left_, right_, zNear_, zFar_, top_, bottom_);
+	}
+	/// @}
 
 	/// @name Accessors
 	/// @{
@@ -184,6 +238,7 @@ public:
 		recalculate();
 	}
 
+	/// Set all
 	void setAll(float left_, float right_, float zNear_,
 		float zFar_, float top_, float bottom_)
 	{
@@ -197,9 +252,25 @@ public:
 	}
 	/// @}
 
+	/// Copy
+	OrthographicFrustum& operator=(const OrthographicFrustum& b);
+
+	/// Implements CollisionShape::testPlane
+	float testPlane(const Plane& p) const;
+
+	/// Re-implements Frustum::transform
+	void transform(const Transform& trf);
+
+	/// Implements Frustum::calculateProjectionMatrix
+	Mat4 calculateProjectionMatrix() const;
+
 private:
-	Obb obb;
+	Obb obb; ///< Incluring shape
 	float left, right, top, bottom;
+
+	/// Implements CollisionShape::recalculate. Recalculate @a planes and
+	/// @a obb
+	void recalculate();
 };
 /// @}
 

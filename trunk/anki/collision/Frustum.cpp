@@ -143,4 +143,117 @@ void PerspectiveFrustum::recalculate()
 }
 
 
+//==============================================================================
+Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
+{
+	Mat4 projectionMat;
+
+	float f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
+
+	projectionMat(0, 0) = f * fovY / fovX; // = f/aspectRatio;
+	projectionMat(0, 1) = 0.0;
+	projectionMat(0, 2) = 0.0;
+	projectionMat(0, 3) = 0.0;
+	projectionMat(1, 0) = 0.0;
+	projectionMat(1, 1) = f;
+	projectionMat(1, 2) = 0.0;
+	projectionMat(1, 3) = 0.0;
+	projectionMat(2, 0) = 0.0;
+	projectionMat(2, 1) = 0.0;
+	projectionMat(2, 2) = (zFar + zNear) / ( zNear - zFar);
+	projectionMat(2, 3) = (2.0 * zFar * zNear) / (zNear - zFar);
+	projectionMat(3, 0) = 0.0;
+	projectionMat(3, 1) = 0.0;
+	projectionMat(3, 2) = -1.0;
+	projectionMat(3, 3) = 0.0;
+
+	return projectionMat;
+}
+
+
+//==============================================================================
+// OrthographicFrustum                                                         =
+//==============================================================================
+
+//==============================================================================
+OrthographicFrustum& OrthographicFrustum::operator=(
+	const OrthographicFrustum& b)
+{
+	Frustum::operator=(b);
+	obb = b.obb;
+	left = b.left;
+	right = b.right;
+	top = b.top;
+	bottom = b.bottom;
+	return *this;
+}
+
+
+//==============================================================================
+float OrthographicFrustum::testPlane(const Plane& p) const
+{
+	return obb.testPlane(p);
+}
+
+
+//==============================================================================
+void OrthographicFrustum::transform(const Transform& trf)
+{
+	Frustum::transform(trf);
+	obb.transform(trf);
+}
+
+
+//==============================================================================
+Mat4 OrthographicFrustum::calculateProjectionMatrix() const
+{
+	float difx = right - left;
+	float dify = top - bottom;
+	float difz = zFar - zNear;
+	float tx = -(right + left) / difx;
+	float ty = -(top + bottom) / dify;
+	float tz = -(zFar + zNear) / difz;
+	Mat4 m;
+
+	m(0, 0) = 2.0 / difx;
+	m(0, 1) = 0.0;
+	m(0, 2) = 0.0;
+	m(0, 3) = tx;
+	m(1, 0) = 0.0;
+	m(1, 1) = 2.0 / dify;
+	m(1, 2) = 0.0;
+	m(1, 3) = ty;
+	m(2, 0) = 0.0;
+	m(2, 1) = 0.0;
+	m(2, 2) = -2.0 / difz;
+	m(2, 3) = tz;
+	m(3, 0) = 0.0;
+	m(3, 1) = 0.0;
+	m(3, 2) = 0.0;
+	m(3, 3) = 1.0;
+
+	return m;
+}
+
+
+//==============================================================================
+void OrthographicFrustum::recalculate()
+{
+	// Planes
+	//
+	planes[FP_LEFT] = Plane(Vec3(1.0, 0.0, 0.0), left);
+	planes[FP_RIGHT] = Plane(Vec3(-1.0, 0.0, 0.0), -right);
+	planes[FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), zNear);
+	planes[FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -zFar);
+	planes[FP_TOP] = Plane(Vec3(0.0, -1.0, 0.0), -top);
+	planes[FP_BOTTOM] = Plane(Vec3(0.0, 1.0, 0.0), bottom);
+
+	// OBB
+	//
+	Vec3 c((right + left) * 0.5, (top + bottom) * 0.5, - (zFar + zNear) * 0.5);
+	Vec3 e = Vec3(right, top, -zFar) - c;
+	obb = Obb(c, Mat3::getIdentity(), e);
+}
+
+
 } // end namespace
