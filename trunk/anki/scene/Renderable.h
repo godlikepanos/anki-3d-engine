@@ -11,7 +11,12 @@ class Vao;
 class Transform;
 
 
-/// XXX
+/// @addtogroup Scene
+/// @{
+
+/// Renderable interface
+///
+/// Implemented by renderable scene nodes
 class Renderable
 {
 public:
@@ -31,6 +36,7 @@ public:
 	virtual const Transform& getPreviousWorldTransform(
 		const PassLevelKey& k) = 0;
 };
+/// @}
 
 
 } // end namespace

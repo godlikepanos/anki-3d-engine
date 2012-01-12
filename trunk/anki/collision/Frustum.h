@@ -40,9 +40,20 @@ public:
 		FP_COUNT ///< Number of planes
 	};
 
+	/// @name Constructors
+	/// @{
 	Frustum(FrustumType type_)
 		: CollisionShape(CST_FRUSTUM), type(type_)
 	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	FrustumType getFrustumType() const
+	{
+		return type;
+	}
+	/// @}
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
@@ -61,14 +72,16 @@ public:
 		v.visit(*this);
 	}
 
-	/// Check if a collision shape is inside the frustum
+	/// Check if a collision shape @a b is inside the frustum
 	bool insideFrustum(const CollisionShape& b) const;
 
 	/// Calculate the projection matrix
 	virtual Mat4 calculateProjectionMatrix() const = 0;
 
 protected:
-	boost::array<Plane, FP_COUNT> planes; ///< Used to check frustum
+	/// Used to check against the frustum
+	boost::array<Plane, FP_COUNT> planes;
+
 	/// @name Viewing variables
 	/// @{
 	float zNear;
@@ -157,10 +170,17 @@ public:
 	Mat4 calculateProjectionMatrix() const;
 
 private:
+	/// @name Shape
+	/// @{
 	Vec3 eye; ///< The eye point
 	boost::array<Vec3, 4> dirs; ///< Directions
+	/// @}
+
+	/// @name Viewing variables
+	/// @{
 	float fovX;
 	float fovY;
+	/// @}
 
 	/// Implements CollisionShape::recalculate. Recalculate @a planes, @a eye
 	/// and @a dirs
@@ -265,8 +285,15 @@ public:
 	Mat4 calculateProjectionMatrix() const;
 
 private:
-	Obb obb; ///< Incluring shape
+	/// @name Shape
+	/// @{
+	Obb obb; ///< Including shape
+	/// @}
+
+	/// @name Viewing variables
+	/// @{
 	float left, right, top, bottom;
+	/// @}
 
 	/// Implements CollisionShape::recalculate. Recalculate @a planes and
 	/// @a obb

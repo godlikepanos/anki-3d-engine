@@ -43,6 +43,8 @@ public:
 	/// @name Operators with same type
 	/// @{
 	Transform& operator=(const Transform& b);
+	bool operator==(const Transform& b) const;
+	bool operator!=(const Transform& b) const;
 	/// @}
 
 	/// @name Other
