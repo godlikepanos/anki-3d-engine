@@ -107,6 +107,20 @@ inline Transform& Transform::operator=(const Transform& b)
 }
 
 
+// ==
+inline bool Transform::operator==(const Transform& b) const
+{
+	return origin == b.origin && rotation == b.rotation && scale == b.scale;
+}
+
+
+// !=
+inline bool Transform::operator!=(const Transform& b) const
+{
+	return !operator==(b);
+}
+
+
 //==============================================================================
 // Other                                                                       =
 //==============================================================================
