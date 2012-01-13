@@ -1,9 +1,10 @@
 #ifndef ANKI_SCENE_CAMERA_H
 #define ANKI_SCENE_CAMERA_H
 
-#include "anki/collision/Collision.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/VisibilityInfo.h"
+#include "anki/scene/Spartial.h"
+#include "anki/scene/Movable.h"
+#include "anki/scene/Frustumable.h"
 #include <boost/array.hpp>
 #include <deque>
 #include <vector>
@@ -12,155 +13,72 @@
 namespace anki {
 
 
-class SpotLight;
-class PointLight;
-
-
 /// @addtogroup Scene
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public VisibilityInfo
+class Camera: public SceneNode, public Movable, public Spartial,
+	public Frustumable
 {
-	public:
-		/// @note Don't EVER change the order
-		enum CameraType
-		{
-			CT_PERSPECTIVE,
-			CT_ORTHOGRAPHIC,
-			CT_NUM
-		};
+public:
+	/// @note Don't EVER change the order
+	enum CameraType
+	{
+		CT_PERSPECTIVE,
+		CT_ORTHOGRAPHIC,
+		CT_COUNT
+	};
 
-		enum FrustrumPlanes
-		{
-			FP_LEFT = 0,
-			FP_RIGHT,
-			FP_NEAR,
-			FP_TOP,
-			FP_BOTTOM,
-			FP_FAR,
-			FP_NUM
-		};
+	Camera(CameraType type,
+		const char* name, Scene* scene,
+		uint movableFlags, Movable* movParent,
+		CollisionShape* spartCs,
+		Frustum* frustum)
+		: type(type_), SceneNode(name, scene),
+			Movable(movableFlags, movParent), Spartial(spartCs),
+			Frustumable(frustum)
+	{}
 
-		Camera(CameraType type, Scene& scene, ulong flags, SceneNode* parent);
+	virtual ~Camera();
 
-		virtual ~Camera();
+	/// @name Accessors
+	/// @{
+	CameraType getCameraType() const
+	{
+		return type;
+	}
+	/// @}
 
-		/// @name Accessors
-		/// @{
-		CameraType getCameraType() const
-		{
-			return type;
-		}
+	/// @name
 
-		float getZNear() const
-		{
-			return zNear;
-		}
-		void setZNear(float znear);
+	void lookAtPoint(const Vec3& point);
 
-		float getZFar() const
-		{
-			return zFar;
-		}
-		void setZFar(float zfar);
+	/// This does:
+	/// - Update view matrix
+	/// - Update frustum planes
+	virtual void moveUpdate();
 
-		const Mat4& getProjectionMatrix() const
-		{
-			return projectionMat;
-		}
+protected:
 
-		const Mat4& getViewMatrix() const
-		{
-			return viewMat;
-		}
+	/// @name Matrices
+	/// @{
+	Mat4 projectionMat;
+	Mat4 viewMat;
 
-		/// See the declaration of invProjectionMat for info
-		const Mat4& getInvProjectionMatrix() const
-		{
-			return invProjectionMat;
-		}
+	/// Used in deferred shading for the calculation of view vector (see
+	/// CalcViewVector). The reason we store this matrix here is that we
+	/// don't want it to be re-calculated all the time but only when the
+	/// projection params (fovX, fovY, zNear, zFar) change. Fortunately
+	/// the projection params change rarely. Note that the Camera as we all
+	/// know re-calculates the matrices only when the parameters change!!
+	Mat4 invProjectionMat;
+	/// @}
+private:
+	CameraType type;
 
-		const Plane& getWSpaceFrustumPlane(FrustrumPlanes id) const
-		{
-			return wspaceFrustumPlanes[id];
-		}
-		/// @}
-
-		void lookAtPoint(const Vec3& point);
-
-		/// This does:
-		/// - Update view matrix
-		/// - Update frustum planes
-		virtual void moveUpdate();
-
-		/// @name Frustum checks
-		/// @{
-
-		/// Check if the given camera is inside the frustum clipping planes.
-		/// This is used mainly to test if the projected lights are visible
-		bool insideFrustum(const CollisionShape& vol) const;
-		/// @}
-
-	protected:
-		float zNear, zFar;
-
-		/// @name The frustum planes in local and world space
-		/// @{
-		boost::array<Plane, FP_NUM> lspaceFrustumPlanes;
-		boost::array<Plane, FP_NUM> wspaceFrustumPlanes;
-		/// @}
-
-		/// @name Matrices
-		/// @{
-		Mat4 projectionMat;
-		Mat4 viewMat;
-
-		/// Used in deferred shading for the calculation of view vector (see
-		/// CalcViewVector). The reason we store this matrix here is that we
-		/// don't want it to be re-calculated all the time but only when the
-		/// projection params (fovX, fovY, zNear, zFar) change. Fortunately
-		/// the projection params change rarely. Note that the Camera as we all
-		/// know re-calculates the matrices only when the parameters change!!
-		Mat4 invProjectionMat;
-		/// @}
-
-		/// Calculate projectionMat and invProjectionMat
-		virtual void calcProjectionMatrix() = 0;
-		virtual void calcLSpaceFrustumPlanes() = 0;
-		void updateViewMatrix();
-		void updateWSpaceFrustumPlanes();
-
-	private:
-		CameraType type;
+	void updateViewMatrix();
 };
 /// @}
-
-
-
-inline Camera::Camera(CameraType t, Scene& scene, ulong flags,
-	SceneNode* parent)
-:	SceneNode(SNT_CAMERA, scene, flags, parent),
- 	type(t)
-{
-	name = "Camera:" + name;
-}
-
-
-inline void Camera::setZNear(float znear_)
-{
-	zNear = znear_;
-	calcProjectionMatrix();
-	calcLSpaceFrustumPlanes();
-}
-
-
-inline void Camera::setZFar(float zfar_)
-{
-	zFar = zfar_;
-	calcProjectionMatrix();
-	calcLSpaceFrustumPlanes();
-}
 
 
 } // end namespace
