@@ -19,15 +19,6 @@ public:
 		: frustum(fr)
 	{}
 
-	const Frustum& getFrustum() const
-	{
-		return *frustum;
-	}
-	Frustum& getFrustum()
-	{
-		return *frustum;
-	}
-
 	bool insideFrustum(const CollisionShape& cs) const
 	{
 		return frustum->insideFrustum(cs);
