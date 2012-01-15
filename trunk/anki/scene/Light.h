@@ -1,19 +1,18 @@
 #ifndef ANKI_SCENE_LIGHT_H
 #define ANKI_SCENE_LIGHT_H
 
-#include "anki/resource/Texture.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/resource/Resource.h"
-#include "anki/resource/LightRsrc.h"
-#include "anki/scene/VisibilityInfo.h"
+#include "anki/scene/Movable.h"
 #include "anki/scene/Renderable.h"
+#include "anki/scene/Frustumable.h"
+#include "anki/scene/Spartial.h"
 
 
 namespace anki {
 
 
 /// Light scene node. It can be spot or point
-////
+///
 /// Explaining the lighting model:
 /// @code
 /// Final intensity:                If = Ia + Id + Is
@@ -28,55 +27,100 @@ namespace anki {
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public VisibilityInfo/*, public Renderable*/
+class Light: public SceneNode, public Movable, public Renderable,
+	public Spartial
 {
-	public:
-		enum LightType
-		{
-			LT_POINT,
-			LT_SPOT
-		};
+public:
+	enum LightType
+	{
+		LT_POINT,
+		LT_SPOT
+	};
 
-		Light(LightType t, Scene& scene, ulong flags, SceneNode* parent)
-			: SceneNode(SNT_LIGHT, scene, flags, parent), type(t)
-		{}
+	/// @name Constructors
+	/// @{
+	Light(LightType t,
+		const char* name, Scene* scene,
+		uint movableFlags, Movable* movParent,
+		CollisionShape* cs,
+		const char* modelFname)
+		: SceneNode(name, scene), Movable(movableFlags, movParent),
+			Spartial(cs), type(t)
+	{
+		//smoModel
+	}
+	/// @}
 
-		virtual ~Light();
+	virtual ~Light();
 
-		/// @name Accessors
-		/// @{
-		LightType getLightType() const {return type;}
+	/// @name Accessors
+	/// @{
+	LightType getLightType() const
+	{
+		return type;
+	}
+	/// @}
 
-		const Vec3& getDiffuseColor() const {return diffuseCol;}
-		Vec3& getDiffuseColor() {return diffuseCol;}
-		void setDiffuseColor(const Vec3& x) {diffuseCol = x;}
+	/// @name Virtuals
+	/// @{
+	Movable* getMovable()
+	{
+		return this;
+	}
 
-		const Vec3& getSpecularColor() const {return specularCol;}
-		Vec3& getSpecularColor() {return specularCol;}
-		void setSpecularColor(const Vec3& x) {specularCol = x;}
+	Renderable* getRenderable()
+	{
+		return this;
+	}
 
-		bool getCastShadow() const {return castsShadowFlag;}
-		bool& getCastShadow() {return castsShadowFlag;}
-		void setCastShadow(bool x) {castsShadowFlag = x;}
-		/// @}
+	Spartial* getSpartial()
+	{
+		return this;
+	}
 
-		/// Implements Renderable::getMaterialRuntime
-		/*MaterialRuntime& getMaterialRuntime()
-		{
-			return *mtlr;
-		}*/
+	const Vao& getVao(const PassLevelKey&)
+	{
+		//mesh.
+	}
 
-		void init(const char* filename);
+	MaterialRuntime& getMaterialRuntime()
+	{
+		return *mtlr;
+	}
 
-	protected:
-		//boost::scoped_ptr<MaterialRuntime> mtlr;
-		LightRsrcResourcePointer lightData;
-		Vec3 diffuseCol; ///< Diffuse color
-		Vec3 specularCol; ///< Specular color
-		bool castsShadowFlag; ///< Casts shadow
+	const Transform& getWorldTransform(const PassLevelKey&)
+	{
+		return getWorldTransform();
+	}
 
-	private:
-		LightType type;
+	const Transform& getPreviousWorldTransform(const PassLevelKey&)
+	{
+		return getPreviousWorldTransform();
+	}
+	/// @}
+
+private:
+	LightType type;
+	boost::scoped_ptr<MaterialRuntime> mtlr;
+	ModelResourcePointer smoModel; ///< Model for SMO pases
+};
+
+
+/// Point light
+class PointLight: public Light
+{
+public:
+
+private:
+};
+
+
+/// Spot light
+class SpotLight: public Light, public Frustumable
+{
+public:
+
+private:
 };
 
 

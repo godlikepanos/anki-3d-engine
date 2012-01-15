@@ -155,4 +155,35 @@ inline Transform Transform::combineTransformations(const Transform& a,
 }
 
 
+// getInverse
+inline Transform Transform::getInverse() const
+{
+	Transform o;
+	o.rotation = rotation.getTransposed(); // Rotation
+	o.scale = 1.0 / scale; // Apply scale
+	o.origin = -((o.rotation * o.scale) * origin); // Translation
+	return o;
+}
+
+
+// invert
+void Transform::invert()
+{
+	*this = getInverse();
+}
+
+
+//==============================================================================
+// Friends                                                                     =
+//==============================================================================
+
+// Print
+std::ostream& operator<<(std::ostream& s, const Transform& a)
+{
+	s << "o: " << a.origin << "\n" <<
+		"s: " << a.scale << "\n" <<
+		"r:\n" << a.rotation;
+	return s;
+}
+
 } // end namespace

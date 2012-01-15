@@ -5,9 +5,6 @@
 #include "anki/scene/Spartial.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
-#include <boost/array.hpp>
-#include <deque>
-#include <vector>
 
 
 namespace anki {
@@ -29,15 +26,17 @@ public:
 		CT_COUNT
 	};
 
-	Camera(CameraType type,
+	/// @name Constructors
+	/// @{
+	Camera(CameraType type_,
 		const char* name, Scene* scene,
 		uint movableFlags, Movable* movParent,
 		CollisionShape* spartCs,
 		Frustum* frustum)
-		: type(type_), SceneNode(name, scene),
-			Movable(movableFlags, movParent), Spartial(spartCs),
-			Frustumable(frustum)
+		: SceneNode(name, scene), Movable(movableFlags, movParent),
+			Spartial(spartCs), Frustumable(frustum), type(type_)
 	{}
+	/// @}
 
 	virtual ~Camera();
 
@@ -47,19 +46,66 @@ public:
 	{
 		return type;
 	}
+
+	const Mat4& getProjectionMatrix() const
+	{
+		return projectionMat;
+	}
+
+	const Mat4& getInverseProjectionMatrix() const
+	{
+		return invProjectionMat;
+	}
+
+	const Mat4& getViewMatrix() const
+	{
+		return viewMat;
+	}
 	/// @}
 
-	/// @name
+	/// @name Implementation of virtuals
+	/// @{
+
+	/// Re-implements SceneNode::getMovable()
+	Movable* getMovable()
+	{
+		return this;
+	}
+
+	/// Re-implements SceneNode::getFrustumable()
+	virtual Frustumable* getFrustumable()
+	{
+		return this;
+	}
+
+	/// Re-implements SceneNode::getSpartial()
+	virtual Spartial* getSpartial()
+	{
+		return this;
+	}
+
+	/// Re-impements Movable::moveUpdate(). This does:
+	/// - Update view matrix
+	/// - Update frustum
+	void moveUpdate()
+	{
+		Movable::moveUpdate();
+		updateViewMatrix();
+		getFrustum().transform(getWorldTransform());
+	}
+
+	/// Implements Frustumable::frustumUpdate(). Calculate the projection
+	/// matrix
+	void frustumUpdate()
+	{
+		projectionMat = getFrustum().calculateProjectionMatrix();
+		invProjectionMat = projectionMat.getInverse();
+	}
+	/// @}
 
 	void lookAtPoint(const Vec3& point);
 
-	/// This does:
-	/// - Update view matrix
-	/// - Update frustum planes
-	virtual void moveUpdate();
-
-protected:
-
+private:
 	/// @name Matrices
 	/// @{
 	Mat4 projectionMat;
@@ -73,10 +119,132 @@ protected:
 	/// know re-calculates the matrices only when the parameters change!!
 	Mat4 invProjectionMat;
 	/// @}
-private:
+
 	CameraType type;
 
-	void updateViewMatrix();
+	/// Calculate the @a viewMat
+	///
+	/// The view matrix is the inverse world transformation
+	void updateViewMatrix()
+	{
+		viewMat = Mat4(getWorldTransform().getInverse());
+	}
+};
+
+
+/// Perspective camera
+class PerspectiveCamera: public Camera
+{
+public:
+	/// @name Constructors
+	/// @{
+	PerspectiveCamera(const char* name, Scene* scene,
+		uint movableFlags, Movable* movParent)
+		: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent,
+			&frustum, &frustum)
+	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	float getFovX() const
+	{
+		return frustum.getFovX();
+	}
+	void setFovX(float ang)
+	{
+		frustum.setFovX(ang);
+		frustumUpdate();
+	}
+
+	float getFovY() const
+	{
+		return frustum.getFovY();
+	}
+	void setFovY(float ang)
+	{
+		frustum.setFovX(ang);
+		frustumUpdate();
+	}
+
+	void setAll(float fovX_, float fovY_, float zNear_, float zFar_)
+	{
+		frustum.setAll(fovX_, fovY_, zNear_, zFar_);
+		frustumUpdate();
+	}
+	/// @}
+
+private:
+	PerspectiveFrustum frustum;
+};
+
+
+/// Orthographic camera
+class OrthographicCamera: public Camera
+{
+public:
+	/// @name Constructors
+	/// @{
+	OrthographicCamera(const char* name, Scene* scene,
+		uint movableFlags, Movable* movParent)
+		: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent,
+			&frustum, &frustum)
+	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	float getLeft() const
+	{
+		return frustum.getLeft();
+	}
+	void setLeft(float f)
+	{
+		frustum.setLeft(f);
+		frustumUpdate();
+	}
+
+	float getRight() const
+	{
+		return frustum.getRight();
+	}
+	void setRight(float f)
+	{
+		frustum.setRight(f);
+		frustumUpdate();
+	}
+
+	float getTop() const
+	{
+		return frustum.getTop();
+	}
+	void setTop(float f)
+	{
+		frustum.setTop(f);
+		frustumUpdate();
+	}
+
+	float getBottom() const
+	{
+		return frustum.getBottom();
+	}
+	void setBottom(float f)
+	{
+		frustum.setBottom(f);
+		frustumUpdate();
+	}
+
+	/// Set all
+	void setAll(float left_, float right_, float zNear_,
+		float zFar_, float top_, float bottom_)
+	{
+		frustum.setAll(left_, right_, zNear_, zFar_, top_, bottom_);
+		frustumUpdate();
+	}
+	/// @}
+
+private:
+	OrthographicFrustum frustum;
 };
 /// @}
 

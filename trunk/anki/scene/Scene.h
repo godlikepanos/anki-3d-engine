@@ -3,6 +3,7 @@
 
 #include "anki/scene/SceneNode.h"
 #include <boost/range/iterator_range.hpp>
+#include <vector>
 
 
 namespace anki {
