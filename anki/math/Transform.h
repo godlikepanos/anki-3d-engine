@@ -53,6 +53,15 @@ public:
 	static const Transform& getIdentity();
 	static Transform combineTransformations(const Transform& a,
 		const Transform& b); ///< @copybrief Math::combineTransformations
+
+	/// Get the inverse transformation. Its faster that inverting a Mat4
+	Transform getInverse() const;
+	void invert();
+	/// @}
+
+	/// @name Friends
+	/// @{
+	friend std::ostream& operator<<(std::ostream& s, const Transform& a);
 	/// @}
 
 private:

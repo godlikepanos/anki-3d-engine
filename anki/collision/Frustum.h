@@ -53,6 +53,26 @@ public:
 	{
 		return type;
 	}
+
+	float getNear() const
+	{
+		return zNear;
+	}
+	void setNear(const float x)
+	{
+		zNear = x;
+		recalculate();
+	}
+
+	float getFar() const
+	{
+		return zFar;
+	}
+	void setFar(const float x)
+	{
+		zFar = x;
+		recalculate();
+	}
 	/// @}
 
 	/// Copy

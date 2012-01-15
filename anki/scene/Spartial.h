@@ -18,8 +18,8 @@ class Spartial
 {
 public:
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spartial(CollisionShape* x)
-		: cs(fr)
+	Spartial(CollisionShape* cs_)
+		: cs(cs_)
 	{}
 
 	const CollisionShape& getCollisionShape() const
