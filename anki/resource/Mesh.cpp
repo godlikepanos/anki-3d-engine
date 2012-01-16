@@ -44,19 +44,19 @@ void Mesh::load(const char* filename)
 //==============================================================================
 void Mesh::createVbos(const MeshData& meshData)
 {
-	vbos[VBO_VERT_INDECES].create(
+	vbos[VBO_INDICES].create(
 		GL_ELEMENT_ARRAY_BUFFER,
 		Util::getVectorSizeInBytes(meshData.getVertIndeces()),
 		&meshData.getVertIndeces()[0],
 		GL_STATIC_DRAW);
 
-	vbos[VBO_VERT_POSITIONS].create(
+	vbos[VBO_POSITIONS].create(
 		GL_ARRAY_BUFFER,
 		Util::getVectorSizeInBytes(meshData.getVertCoords()),
 		&meshData.getVertCoords()[0],
 		GL_STATIC_DRAW);
 
-	vbos[VBO_VERT_NORMALS].create(
+	vbos[VBO_NORMALS].create(
 		GL_ARRAY_BUFFER,
 		Util::getVectorSizeInBytes(meshData.getVertNormals()),
 		&meshData.getVertNormals()[0],
@@ -64,7 +64,7 @@ void Mesh::createVbos(const MeshData& meshData)
 
 	if(meshData.getVertTangents().size() > 1)
 	{
-		vbos[VBO_VERT_TANGENTS].create(
+		vbos[VBO_TANGENTS].create(
 			GL_ARRAY_BUFFER,
 			Util::getVectorSizeInBytes(meshData.getVertTangents()),
 			&meshData.getVertTangents()[0],
@@ -82,7 +82,7 @@ void Mesh::createVbos(const MeshData& meshData)
 
 	if(meshData.getVertWeights().size() > 1)
 	{
-		vbos[VBO_VERT_WEIGHTS].create(
+		vbos[VBO_WEIGHTS].create(
 			GL_ARRAY_BUFFER,
 			Util::getVectorSizeInBytes(meshData.getVertWeights()),
 			&meshData.getVertWeights()[0],
