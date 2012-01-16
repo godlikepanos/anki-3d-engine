@@ -12,22 +12,26 @@ class Scene; // Don't include
 class Movable;
 class Renderable;
 class Frustumable;
-class Spartial;
+class Spatial;
 
 
-/// @addtogroup scene
+/// @addtogroup Scene
 /// @{
 
 /// Interface class backbone of scene
 class SceneNode
 {
 public:
+	/// @name Constructors
+	/// @{
+
 	/// The one and only constructor
 	/// @param name The unique name of the node
 	/// @param scene The scene that will register it
 	explicit SceneNode(
 		const char* name,
 		Scene* scene);
+	/// @}
 
 	/// Unregister node
 	virtual ~SceneNode();
@@ -49,7 +53,7 @@ public:
 		return NULL;
 	}
 
-	virtual Spartial* getSpartial()
+	virtual Spatial* getSpatial()
 	{
 		return NULL;
 	}
