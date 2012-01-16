@@ -2,7 +2,7 @@
 #define ANKI_SCENE_CAMERA_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Spartial.h"
+#include "anki/scene/Spatial.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
 
@@ -14,7 +14,7 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public Movable, public Spartial,
+class Camera: public SceneNode, public Movable, public Spatial,
 	public Frustumable
 {
 public:
@@ -34,7 +34,7 @@ public:
 		CollisionShape* spartCs,
 		Frustum* frustum)
 		: SceneNode(name, scene), Movable(movableFlags, movParent),
-			Spartial(spartCs), Frustumable(frustum), type(type_)
+			Spatial(spartCs), Frustumable(frustum), type(type_)
 	{}
 	/// @}
 
@@ -78,8 +78,8 @@ public:
 		return this;
 	}
 
-	/// Re-implements SceneNode::getSpartial()
-	virtual Spartial* getSpartial()
+	/// Re-implements SceneNode::getSpatial()
+	virtual Spatial* getSpatial()
 	{
 		return this;
 	}

@@ -1,5 +1,5 @@
-#ifndef ANKI_SCENE_SPARTIAL_H
-#define ANKI_SCENE_SPARTIAL_H
+#ifndef ANKI_SCENE_SPATIAL_H
+#define ANKI_SCENE_SPATIAL_H
 
 #include "anki/collision/Collision.h"
 
@@ -10,15 +10,15 @@ namespace anki {
 /// @addtogroup Scene
 /// @{
 
-/// Spartial "interface" for scene nodes
+/// Spatial "interface" for scene nodes
 ///
 /// It indicates scene nodes that need to be placed in the scene's octree and
 /// they participate in the visibility tests
-class Spartial
+class Spatial
 {
 public:
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spartial(CollisionShape* cs_)
+	Spatial(CollisionShape* cs_)
 		: cs(cs_)
 	{}
 

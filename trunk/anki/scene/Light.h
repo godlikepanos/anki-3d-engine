@@ -5,7 +5,8 @@
 #include "anki/scene/Movable.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Frustumable.h"
-#include "anki/scene/Spartial.h"
+#include "anki/scene/Spatial.h"
+#include "anki/gl/Vao.h"
 
 
 namespace anki {
@@ -28,7 +29,7 @@ namespace anki {
 /// Specular intensity of material: Sm
 /// @endcode
 class Light: public SceneNode, public Movable, public Renderable,
-	public Spartial
+	public Spatial
 {
 public:
 	enum LightType
@@ -40,14 +41,19 @@ public:
 	/// @name Constructors
 	/// @{
 	Light(LightType t,
-		const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent,
-		CollisionShape* cs,
-		const char* modelFname)
+		const char* name, Scene* scene, // Scene
+		uint movableFlags, Movable* movParent, // Movable
+		CollisionShape* cs, // Spatial
+		const char* smoMeshFname) // SMO mesh
 		: SceneNode(name, scene), Movable(movableFlags, movParent),
-			Spartial(cs), type(t)
+			Spatial(cs), type(t)
 	{
-		//smoModel
+		smoMesh.load(smoMeshFname);
+		vao.create();
+		vao.attachArrayBufferVbo(smoMesh->getVbo(Mesh::VBO_VERT_POSITIONS),
+			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		vao.attachElementArrayBufferVbo(
+			smoMesh->getVbo(Mesh::VBO_VERT_INDECES));
 	}
 	/// @}
 
@@ -73,36 +79,36 @@ public:
 		return this;
 	}
 
-	Spartial* getSpartial()
+	Spatial* getSpatial()
 	{
 		return this;
 	}
 
-	const Vao& getVao(const PassLevelKey&)
+	const Vao& getVao(const PassLevelKey& k)
 	{
-		//mesh.
+		ANKI_ASSERT(k.pass == 1 && "Call only in SMO");
+		(void)k; // No warnings please
+		return vao;
+	}
+
+	uint getVertexIdsNum(const PassLevelKey& k)
+	{
+		ANKI_ASSERT(k.pass == 1 && "Call only in SMO");
+		(void)k; // No warnings please
+		return smoMesh->getVertIdsNum();
 	}
 
 	MaterialRuntime& getMaterialRuntime()
 	{
 		return *mtlr;
 	}
-
-	const Transform& getWorldTransform(const PassLevelKey&)
-	{
-		return getWorldTransform();
-	}
-
-	const Transform& getPreviousWorldTransform(const PassLevelKey&)
-	{
-		return getPreviousWorldTransform();
-	}
 	/// @}
 
 private:
 	LightType type;
 	boost::scoped_ptr<MaterialRuntime> mtlr;
-	ModelResourcePointer smoModel; ///< Model for SMO pases
+	MeshResourcePointer smoMesh; ///< Model for SMO pases
+	Vao smoVao;
 };
 
 
@@ -110,8 +116,14 @@ private:
 class PointLight: public Light
 {
 public:
+	PointLight(const char* name, Scene* scene, uint movableFlags,
+		Movable* movParent)
+		: Light(LT_POINT, name, scene, movableFlags, movParent, &frustum,
+			"sadf")
+	{}
 
 private:
+	PerspectiveFrustum frustum;
 };
 
 
