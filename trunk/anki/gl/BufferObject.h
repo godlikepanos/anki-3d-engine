@@ -105,7 +105,10 @@ public:
 	void write(void* buff, size_t offset, size_t size);
 
 	/// If created is run successfully it returns true
-	bool isCreated() const {return glId != 0;}
+	bool isCreated() const
+	{
+		return glId != 0;
+	}
 
 private:
 	uint glId; ///< The OpenGL id of the BO
