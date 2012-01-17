@@ -12,53 +12,80 @@
 namespace anki {
 
 
-/// Its a chunk of a model. Its very important class and it binds the material
-/// with the mesh
-class ModelPatch
+/// XXX
+class ModelPatchBase
 {
 public:
+	/// For garbage collection
 	typedef boost::ptr_vector<Vao> VaosContainer;
-	typedef PassLevelHashMap<Vao*>::Type PassLevelToVaoHashMap;
-	typedef boost::array<const Vbo*, Mesh::VBOS_NUM> VboArray;
+	/// Map to get the VAO given a PassLod key
+	typedef PassLevelHashMap<Vao*>::Type PassLevelToVaoMap;
+
+	virtual ~ModelPatchBase()
+	{}
+
+	virtual const MeshBase& getMeshBase() const = 0;
+	virtual const Material& getMaterial() const = 0;
+
+	const Vao& getVao(const PassLevelKey& key) const
+	{
+		return *vaosMap.at(key);
+	}
+
+protected:
+	VaosContainer vaos;
+	PassLevelToVaoMap vaosMap;
+
+	void create()
+	{
+		createVaos(getMaterial(), getMeshBase(), vaos, vaosMap);
+	}
+
+	/// Create VAOs using a material and a mesh. It writes a VaosContainer and
+	/// a hash map
+	static void createVaos(const Material& mtl,
+		const MeshBase& mesh,
+		VaosContainer& vaos,
+		PassLevelToVaoMap& vaosMap);
+
+	/// Called by @a createVaos multiple times to create and populate a single
+	/// VAO
+	static Vao* createNewVao(const Material& mtl,
+		const MeshBase& mesh,
+		const PassLevelKey& key);
+};
+
+
+/// Its a chunk of a model. Its very important class and it binds the material
+/// with the mesh
+class ModelPatch: public ModelPatchBase
+{
+public:
+	/// Map to get the VAO given a PassLod key
+	typedef PassLevelHashMap<Vao>::Type PassLevelToVaoMap;
 
 	ModelPatch(const char* meshFName, const char* mtlFName);
 	~ModelPatch();
 
 	/// @name Accessors
 	/// @{
-	const Mesh& getMesh() const
+
+	/// Implements ModelPatchBase::getMeshBase
+	const MeshBase& getMeshBase() const
 	{
 		return *mesh;
 	}
 
+	/// Implements ModelPatchBase::getMaterial
 	const Material& getMaterial() const
 	{
 		return *mtl;
 	}
 	/// @}
 
-	bool supportsHwSkinning() const;
-
-	const Vao& getVao(const PassLevelKey& key) const
-	{
-		return *vaosHashMap.at(key);
-	}
-
-	static void createVaos(const Material& mtl,
-		const VboArray& vbos,
-		VaosContainer& vaos,
-		PassLevelToVaoHashMap& vaosHashMap);
-
 private:
 	MeshResourcePointer mesh; ///< The geometry
 	MaterialResourcePointer mtl; ///< Material
-
-	VaosContainer vaos;
-	PassLevelToVaoHashMap vaosHashMap;
-
-	static Vao* createVao(const Material& mtl,
-		const VboArray& vbos,
-		const PassLevelKey& key);
 };
 
 
@@ -88,8 +115,6 @@ class Model
 public:
 	typedef boost::ptr_vector<ModelPatch> ModelPatchesContainer;
 
-	void load(const char* filename);
-
 	/// @name Accessors
 	/// @{
 	const ModelPatchesContainer& getModelPatches() const
@@ -102,6 +127,8 @@ public:
 		return visibilityShape;
 	}
 	/// @}
+
+	void load(const char* filename);
 
 private:
 	/// The vector of ModelPatch

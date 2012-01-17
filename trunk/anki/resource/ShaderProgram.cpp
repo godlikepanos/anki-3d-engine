@@ -457,18 +457,14 @@ std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
 	s << "ShaderProgram (" << x.rsrcFilename << ")\n";
 	s << "Variables:\n";
-	BOOST_FOREACH(const ShaderProgramVariable& var, x.getVariables())
+	for(ShaderProgram::VariablesContainer::const_iterator it = x.vars.begin();
+		it != x.vars.end(); ++it)
 	{
-		s << var.getName() << " " << var.getLocation() << " ";
-		if(var.getType() == ShaderProgramVariable::T_ATTRIBUTE)
-		{
-			s << "[A]";
-		}
-		else
-		{
-			s << "[U]";
-		}
-		s << '\n';
+		const ShaderProgramVariable& var = *it;
+
+		s << var.getName() << " " << var.getLocation() << " " <<
+			(var.getType() == ShaderProgramVariable::T_ATTRIBUTE ? "[A]" :
+			"[U]") <<  '\n';
 	}
 	return s;
 }

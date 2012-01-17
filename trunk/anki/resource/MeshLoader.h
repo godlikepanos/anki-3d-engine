@@ -1,5 +1,5 @@
-#ifndef ANKI_RESOURCE_MESH_DATA_H
-#define ANKI_RESOURCE_MESH_DATA_H
+#ifndef ANKI_RESOURCE_MESH_LOADER_H
+#define ANKI_RESOURCE_MESH_LOADER_H
 
 #include "anki/math/Math.h"
 #include "anki/util/StdTypes.h"
@@ -43,7 +43,7 @@ namespace anki {
 ///       float: weight for vert 0 and weight 0, ...
 /// ...
 /// @endcode
-class MeshData
+class MeshLoader
 {
 public:
 	/// Vertex weight for skeletal animation
@@ -69,11 +69,11 @@ public:
 			Vec3 normal;
 	};
 
-	MeshData(const char* filename)
+	MeshLoader(const char* filename)
 	{
 		load(filename);
 	}
-	~MeshData()
+	~MeshLoader()
 	{}
 
 	/// @name Accessors
@@ -134,7 +134,11 @@ private:
 
 	void createFaceNormals();
 	void createVertNormals();
-	void createAllNormals();
+	void createAllNormals()
+	{
+		createFaceNormals();
+		createVertNormals();
+	}
 	void createVertTangents();
 	void createVertIndeces();
 
@@ -143,13 +147,6 @@ private:
 	/// @exception Exception
 	void doPostLoad();
 };
-
-
-inline void MeshData::createAllNormals()
-{
-	createFaceNormals();
-	createVertNormals();
-}
 
 
 } // end namespace

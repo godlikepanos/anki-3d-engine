@@ -43,17 +43,11 @@ public:
 	Light(LightType t,
 		const char* name, Scene* scene, // Scene
 		uint movableFlags, Movable* movParent, // Movable
-		CollisionShape* cs, // Spatial
-		const char* smoMeshFname) // SMO mesh
+		CollisionShape* cs) // Spatial
 		: SceneNode(name, scene), Movable(movableFlags, movParent),
 			Spatial(cs), type(t)
 	{
-		smoMesh.load(smoMeshFname);
-		vao.create();
-		vao.attachArrayBufferVbo(smoMesh->getVbo(Mesh::VBO_VERT_POSITIONS),
-			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		vao.attachElementArrayBufferVbo(
-			smoMesh->getVbo(Mesh::VBO_VERT_INDECES));
+		/// XXX mtlr
 	}
 	/// @}
 
@@ -67,7 +61,7 @@ public:
 	}
 	/// @}
 
-	/// @name Virtuals
+	/// @name SceneNode virtuals
 	/// @{
 	Movable* getMovable()
 	{
@@ -83,32 +77,36 @@ public:
 	{
 		return this;
 	}
+	/// @}
 
-	const Vao& getVao(const PassLevelKey& k)
+	/// @name Renderable virtuals
+	/// @{
+	const ModelPatchBase* getModelPatchBase() const
 	{
-		ANKI_ASSERT(k.pass == 1 && "Call only in SMO");
-		(void)k; // No warnings please
-		return vao;
-	}
-
-	uint getVertexIdsNum(const PassLevelKey& k)
-	{
-		ANKI_ASSERT(k.pass == 1 && "Call only in SMO");
-		(void)k; // No warnings please
-		return smoMesh->getVertIdsNum();
+		ANKI_ASSERT(0 && "Lights don't support it");
+		return NULL;
 	}
 
 	MaterialRuntime& getMaterialRuntime()
 	{
 		return *mtlr;
 	}
+
+	const Transform* getWorldTransform(const PassLevelKey&)
+	{
+		return &getWorldTranform();
+	}
+
+	const Transform* getPreviousWorldTransform(
+		const PassLevelKey&)
+	{
+		return &getPreviousWorldTranform();
+	}
 	/// @}
 
 private:
 	LightType type;
 	boost::scoped_ptr<MaterialRuntime> mtlr;
-	MeshResourcePointer smoMesh; ///< Model for SMO pases
-	Vao smoVao;
 };
 
 
@@ -118,12 +116,11 @@ class PointLight: public Light
 public:
 	PointLight(const char* name, Scene* scene, uint movableFlags,
 		Movable* movParent)
-		: Light(LT_POINT, name, scene, movableFlags, movParent, &frustum,
-			"sadf")
+		: Light(LT_POINT, name, scene, movableFlags, movParent, &sphere)
 	{}
 
-private:
-	PerspectiveFrustum frustum;
+public:
+	Sphere sphere;
 };
 
 

@@ -1,6 +1,3 @@
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
 #include "anki/resource/Skin.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
@@ -9,13 +6,14 @@
 #include "anki/resource/PassLevelKey.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Material.h"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
 
 
 namespace anki {
 
 
-//==============================================================================
-// Constructors & Destructors                                                  =
 //==============================================================================
 
 Skin::Skin()
@@ -26,8 +24,6 @@ Skin::~Skin()
 {}
 
 
-//==============================================================================
-// load                                                                        =
 //==============================================================================
 void Skin::load(const char* filename)
 {
@@ -85,17 +81,21 @@ void Skin::load(const char* filename)
 		}
 
 		// All meshes should have vert weights
-		BOOST_FOREACH(const ModelPatch& patch, model->getModelPatches())
+		for(Model::ModelPatchesContainer::const_iterator it =
+			model->getModelPatches().begin();
+			it != model->getModelPatches().end(); ++it)
 		{
-			if(!patch.supportsHwSkinning())
+			const ModelPatch& patch = *it;
+
+			if(!patch.getMeshBase().hasWeights())
 			{
 				throw ANKI_EXCEPTION("Mesh does not support HW skinning");
 			}
 		}
 	  }
-	catch(std::exception& e)
+	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Skin \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Skin loading failed: " + filename) << e;
 	}
 }
 

@@ -27,6 +27,8 @@ class SkelAnim;
 class Skin
 {
 public:
+	typedef std::vector<SkelAnimResourcePointer> SkeletonAnimationsContainer;
+
 	Skin();
 	~Skin();
 
@@ -35,10 +37,20 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Model& getModel() const;
-	const boost::ptr_vector<ModelPatch>& getModelPatches() const;
-	const Skeleton& getSkeleton() const;
-	const std::vector<SkelAnimResourcePointer >& getSkelAnims() const;
+	const Model& getModel() const
+	{
+		return *model;
+	}
+
+	const Skeleton& getSkeleton() const
+	{
+		return *skeleton;
+	}
+
+	const SkeletonAnimationsContainer& getSkeletonAnimations() const
+	{
+		return skelAnims;
+	}
 	/// @}
 
 private:
@@ -47,33 +59,9 @@ private:
 	ModelResourcePointer model;
 	SkeletonResourcePointer skeleton; ///< The skeleton
 	/// The standard skeleton animations
-	std::vector<SkelAnimResourcePointer > skelAnims;
+	SkeletonAnimationsContainer skelAnims;
 	/// @}
 };
-
-
-inline const Model& Skin::getModel() const
-{
-	return *model;
-}
-
-
-inline const boost::ptr_vector<ModelPatch>& Skin::getModelPatches() const
-{
-	return model->getModelPatches();
-}
-
-
-inline const Skeleton& Skin::getSkeleton() const
-{
-	return *skeleton;
-}
-
-
-inline const std::vector<SkelAnimResourcePointer >& Skin::getSkelAnims() const
-{
-	return skelAnims;
-}
 
 
 } // end namespace
