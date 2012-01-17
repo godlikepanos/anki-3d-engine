@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
-#include "anki/resource/MeshData.h"
+#include "anki/resource/MeshLoader.h"
 #include "anki/util/BinaryStream.h"
 
 
@@ -11,7 +11,7 @@ namespace anki {
 
 
 //==============================================================================
-void MeshData::load(const char* filename)
+void MeshLoader::load(const char* filename)
 {
 	// Try
 	try
@@ -131,7 +131,7 @@ void MeshData::load(const char* filename)
 
 
 //==============================================================================
-void MeshData::doPostLoad()
+void MeshLoader::doPostLoad()
 {
 	// Sanity checks
 	if(vertCoords.size() < 1 || tris.size() < 1)
@@ -160,7 +160,7 @@ void MeshData::doPostLoad()
 
 
 //==============================================================================
-void MeshData::createVertIndeces()
+void MeshLoader::createVertIndeces()
 {
 	vertIndeces.resize(tris.size() * 3);
 	for(uint i = 0; i < tris.size(); i++)
@@ -173,7 +173,7 @@ void MeshData::createVertIndeces()
 
 
 //==============================================================================
-void MeshData::createFaceNormals()
+void MeshLoader::createFaceNormals()
 {
 	BOOST_FOREACH(Triangle& tri, tris)
 	{
@@ -194,7 +194,7 @@ void MeshData::createFaceNormals()
 
 
 //==============================================================================
-void MeshData::createVertNormals()
+void MeshLoader::createVertNormals()
 {
 	vertNormals.resize(vertCoords.size());
 
@@ -218,7 +218,7 @@ void MeshData::createVertNormals()
 
 
 //==============================================================================
-void MeshData::createVertTangents()
+void MeshLoader::createVertTangents()
 {
 	vertTangents.resize(vertCoords.size(), Vec4(0.0)); // alloc
 	std::vector<Vec3> bitagents(vertCoords.size(), Vec3(0.0));

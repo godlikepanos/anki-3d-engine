@@ -2,7 +2,7 @@
 #include "anki/resource/Skin.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/resource/MeshData.h"
+#include "anki/resource/MeshLoader.h"
 #include <boost/foreach.hpp>
 
 
@@ -101,7 +101,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 		1,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(MeshData::VertexWeight),
+		sizeof(MeshLoader::VertexWeight),
 		BUFFER_OFFSET(0));
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
@@ -109,7 +109,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 		4,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(MeshData::VertexWeight),
+		sizeof(MeshLoader::VertexWeight),
 		BUFFER_OFFSET(4));
 
 	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
@@ -117,7 +117,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 		4,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(MeshData::VertexWeight),
+		sizeof(MeshLoader::VertexWeight),
 		BUFFER_OFFSET(20));
 
 

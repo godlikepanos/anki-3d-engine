@@ -10,7 +10,7 @@
 namespace anki {
 
 
-class MeshData;
+class MeshLoader;
 
 
 /// This is the interface class for meshes. Its interface because the skin
@@ -42,6 +42,8 @@ public:
 	virtual uint getLodsNumber() const = 0;
 	virtual uint getIndicesNumber(uint lod) const = 0;
 	virtual uint getVerticesNumber(uint lod) const = 0;
+
+	virtual const Obb& getBoundingShape() const = 0;
 	/// @}
 
 	/// @name Ask for geometry properties
@@ -121,7 +123,8 @@ public:
 		return vertsNum;
 	}
 
-	const Obb& getVisibilityShape() const
+	/// Implements MeshBase::getBoundingShape
+	const Obb& getBoundingShape() const
 	{
 		return visibilityShape;
 	}
@@ -137,7 +140,7 @@ private:
 	uint vertsNum;
 
 	/// Create the VBOs using the mesh data
-	void createVbos(const MeshData& meshData);
+	void createVbos(const MeshLoader& meshData);
 };
 
 

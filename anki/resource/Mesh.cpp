@@ -1,6 +1,6 @@
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
-#include "anki/resource/MeshData.h"
+#include "anki/resource/MeshLoader.h"
 #include "anki/gl/Vbo.h"
 #include "anki/util/Util.h"
 #include <fstream>
@@ -13,7 +13,7 @@ namespace anki {
 //==============================================================================
 void Mesh::load(const char* filename)
 {
-	MeshData meshData(filename);
+	MeshLoader meshData(filename);
 
 	vertIdsNum = meshData.getVertIndeces().size();
 	vertsNum = meshData.getVertCoords().size();
@@ -42,7 +42,7 @@ void Mesh::load(const char* filename)
 
 
 //==============================================================================
-void Mesh::createVbos(const MeshData& meshData)
+void Mesh::createVbos(const MeshLoader& meshData)
 {
 	vbos[VBO_INDICES].create(
 		GL_ELEMENT_ARRAY_BUFFER,

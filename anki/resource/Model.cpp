@@ -2,7 +2,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/resource/MeshData.h"
+#include "anki/resource/MeshLoader.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/ShaderProgram.h"
 #include <boost/foreach.hpp>
@@ -16,6 +16,77 @@ namespace anki {
 
 
 //==============================================================================
+// ModelPatchBase                                                              =
+//==============================================================================
+
+//==============================================================================
+Vao* ModelPatchBase::createNewVao(const Material& mtl,
+	const MeshBase& meshb,
+	const PassLevelKey& key)
+{
+	Vao* vao = new Vao;
+	vao->create();
+
+	if(mtl.getShaderProgram(key).attributeVariableExists("position"))
+	{
+		const Vbo* vbo = meshb.getVbo(Mesh::VBO_POSITIONS);
+		ANKI_ASSERT(vbo != NULL);
+
+		vao->attachArrayBufferVbo(*vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	if(mtl.getShaderProgram(key).attributeVariableExists("normal"))
+	{
+		const Vbo* vbo = meshb.getVbo(Mesh::VBO_NORMALS);
+		ANKI_ASSERT(vbo != NULL);
+
+		vao->attachArrayBufferVbo(*vbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	if(mtl.getShaderProgram(key).attributeVariableExists("tangent"))
+	{
+		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TANGENTS);
+		ANKI_ASSERT(vbo != NULL);
+
+		vao->attachArrayBufferVbo(*vbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	if(mtl.getShaderProgram(key).attributeVariableExists("texCoords"))
+	{
+		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TEX_COORDS);
+		ANKI_ASSERT(vbo != NULL);
+
+		vao->attachArrayBufferVbo(*vbo, 3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	}
+
+	vao->attachElementArrayBufferVbo(*meshb.getVbo(Mesh::VBO_INDICES));
+
+	return vao;
+}
+
+
+//==============================================================================
+void ModelPatchBase::createVaos(const Material& mtl,
+	const MeshBase& meshb,
+	VaosContainer& vaos,
+	PassLevelToVaoMap& vaosMap)
+{
+	for(uint level = 0; level < mtl.getLevelsOfDetail(); ++level)
+	{
+		for(uint pass = 0; pass < mtl.getPasses().size(); ++pass)
+		{
+			PassLevelKey key(pass, level);
+
+			Vao* vao = createNewVao(mtl, meshb, key);
+
+			vaos.push_back(vao);
+			vaosMap[key] = vao;
+		}
+	}
+}
+
+
+//==============================================================================
 // ModelPatch                                                                  =
 //==============================================================================
 
@@ -26,92 +97,14 @@ ModelPatch::ModelPatch(const char* meshFName, const char* mtlFName)
 	mesh.load(meshFName);
 	mtl.load(mtlFName);
 
-	// Create VAOs
-	VboArray vboArr;
-	for(uint i = 0; i < Mesh::VBOS_NUM; i++)
-	{
-		vboArr[i] = &mesh->getVbo((Mesh::Vbos)i);
-	}
-
-	createVaos(*mtl, vboArr, vaos, vaosHashMap);
+	/// Create VAOs
+	create();
 }
 
 
 //==============================================================================
 ModelPatch::~ModelPatch()
 {}
-
-
-//==============================================================================
-bool ModelPatch::supportsHwSkinning() const
-{
-	return mesh->hasVertWeights();
-}
-
-
-//==============================================================================
-Vao* ModelPatch::createVao(const Material& mtl,
-	const VboArray& vbos,
-	const PassLevelKey& key)
-{
-	Vao* vao = new Vao;
-	vao->create();
-
-	if(mtl.getShaderProgram(key).attributeVariableExists("position"))
-	{
-		ANKI_ASSERT(vbos[Mesh::VBO_VERT_POSITIONS] != NULL);
-
-		vao->attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_POSITIONS],
-			0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getShaderProgram(key).attributeVariableExists("normal"))
-	{
-		ANKI_ASSERT(vbos[Mesh::VBO_VERT_NORMALS] != NULL);
-
-		vao->attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_NORMALS],
-			1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getShaderProgram(key).attributeVariableExists("tangent"))
-	{
-		ANKI_ASSERT(vbos[Mesh::VBO_VERT_TANGENTS] != NULL);
-
-		vao->attachArrayBufferVbo(*vbos[Mesh::VBO_VERT_TANGENTS],
-			2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	if(mtl.getShaderProgram(key).attributeVariableExists("texCoords"))
-	{
-		vao->attachArrayBufferVbo(*vbos[Mesh::VBO_TEX_COORDS],
-			3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	}
-
-	vao->attachElementArrayBufferVbo(*vbos[Mesh::VBO_VERT_INDECES]);
-
-	return vao;
-}
-
-
-//==============================================================================
-void ModelPatch::createVaos(const Material& mtl,
-	const VboArray& vbos,
-	VaosContainer& vaos,
-	PassLevelToVaoHashMap& vaosHashMap)
-{
-	for(uint level = 0; level < mtl.getLevelsOfDetail(); ++level)
-	{
-		for(uint pass = 0; pass < mtl.getPasses().size(); ++pass)
-		{
-			PassLevelKey key(pass, level);
-
-			Vao* vao = createVao(mtl, vbos, key);
-
-			vaos.push_back(vao);
-			vaosHashMap[key] = vao;
-		}
-	}
-}
 
 
 //==============================================================================
@@ -148,19 +141,19 @@ void Model::load(const char* filename)
 		}
 
 		// Calculate compound bounding volume
-		visibilityShape = modelPatches[0].getMesh().getVisibilityShape();
+		visibilityShape = modelPatches[0].getMeshBase().getBoundingShape();
 
 		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
 			it != modelPatches.end();
 			++it)
 		{
 			visibilityShape = visibilityShape.getCompoundShape(
-				(*it).getMesh().getVisibilityShape());
+				(*it).getMeshBase().getBoundingShape());
 		}
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Model \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Model loading failed: " + filename) << e;
 	}
 }
 
