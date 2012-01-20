@@ -9,6 +9,9 @@ namespace anki {
 SceneNode::SceneNode(const char* name, Scene* scene)
 {
 	scene->registerNode(this);
+
+	/// Add the first property
+	pmap.addProperty("name", &name, PropertyBase::PF_READ);
 }
 
 
