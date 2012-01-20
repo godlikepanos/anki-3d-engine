@@ -1,6 +1,7 @@
 #ifndef ANKI_SCENE_SCENE_NODE_H
 #define ANKI_SCENE_SCENE_NODE_H
 
+#include "anki/scene/Property.h"
 #include <string>
 
 
@@ -22,7 +23,7 @@ class Spatial;
 class SceneNode
 {
 public:
-	/// @name Constructors
+	/// @name Constructors/Destructor
 	/// @{
 
 	/// The one and only constructor
@@ -31,12 +32,29 @@ public:
 	explicit SceneNode(
 		const char* name,
 		Scene* scene);
-	/// @}
 
 	/// Unregister node
 	virtual ~SceneNode();
+	/// @}
 
-	/// @name Accessors of properties
+	/// @name Accessors
+	/// @{
+	const std::string& getName() const
+	{
+		return name;
+	}
+
+	const PropertyMap& getPropertyMap() const
+	{
+		return pmap;
+	}
+	PropertyMap& getPropertyMap()
+	{
+		return pmap;
+	}
+	/// @}
+
+	/// @name Accessors of components
 	/// @{
 	virtual Movable* getMovable()
 	{
@@ -59,7 +77,7 @@ public:
 	}
 	/// @}
 
-	/// This is called by the scene every frame
+	/// This is called by the scene every frame. But default it does nothing
 	virtual void frameUpdate(float prevUpdateTime, float crntTime)
 	{
 		(void)prevUpdateTime;
@@ -68,7 +86,8 @@ public:
 
 private:
 	std::string name; ///< A unique name
-	Scene* scene; ///< For registering and unregistering
+	Scene* scene; ///< Keep it here for unregistering
+	PropertyMap pmap;
 };
 /// @}
 

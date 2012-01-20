@@ -8,6 +8,9 @@
 namespace anki {
 
 
+class PropertyMap;
+
+
 /// @addtogroup Scene
 /// @{
 
@@ -30,9 +33,8 @@ public:
 	/// The one and only constructor
 	/// @param flags_ The flags
 	/// @param parent The parent. It can be nullptr
-	Movable(uint flags_, Movable* parent)
-		: Base(this, parent), flags(flags_)
-	{}
+	/// @param pmap Property map to add a few variables
+	Movable(uint flags_, Movable* parent, PropertyMap& pmap);
 	/// @}
 
 	/// @name Accessors
