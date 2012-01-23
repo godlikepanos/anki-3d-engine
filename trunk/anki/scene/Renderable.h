@@ -5,10 +5,9 @@
 namespace anki {
 
 
-class PassLevelKey;
-class MaterialRuntime;
-class MeshBase;
-class Transform;
+class ModelPatchBase;
+class Material;
+class PropertyMap;
 
 
 /// @addtogroup Scene
@@ -26,33 +25,15 @@ public:
 		return NULL;
 	}
 
-	/// Get the material runtime
-	virtual MaterialRuntime& getMaterialRuntime() = 0;
+	/// Get the material runtime. Dont access it from the ModelPatchBase
+	/// because the lights dont have one
+	virtual Material& getMaterial() = 0;
 
-	/// Get current transform
-	virtual const Transform* getWorldTransform(const PassLevelKey& k)
-	{
-		return NULL;
-	}
+	/// Access to property map to get the values of the shader variables
+	virtual PropertyMap& getPropertyMap() = 0;
 
-	/// Get previous transform
-	virtual const Transform* getPreviousWorldTransform(
-		const PassLevelKey& k)
-	{
-		return NULL;
-	}
+private:
 
-	/// Get projection matrix (for lights)
-	virtual const Mat4* getProjectionMatrix() const
-	{
-		return NULL;
-	}
-
-	/// Get view matrix (for lights)
-	virtual const Mat4* getViewMatrix() const
-	{
-		return NULL;
-	}
 };
 /// @}
 

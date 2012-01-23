@@ -2,6 +2,7 @@
 #define ANKI_SCENE_FRUSTUMABLE_H
 
 #include "anki/collision/Frustum.h"
+#include "anki/scene/Spatial.h"
 
 
 namespace anki {
@@ -10,7 +11,7 @@ namespace anki {
 /// @addtogroup Scene
 /// @{
 
-/// Frustumable "interface" for scene nodes
+/// Frustumable interface for scene nodes
 class Frustumable
 {
 public:
@@ -58,12 +59,13 @@ public:
 	/// Called when a frustum parameter changes
 	virtual void frustumUpdate() = 0;
 
-	bool insideFrustum(const CollisionShape& cs) const
+	/// Is a spatial inside the frustum
+	bool insideFrustum(const Spatial& sp) const
 	{
-		return frustum->insideFrustum(cs);
+		return frustum->insideFrustum(sp.getSpatialCollisionShape());
 	}
 
-private:
+protected:
 	Frustum* frustum;
 };
 

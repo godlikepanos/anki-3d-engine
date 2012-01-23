@@ -20,7 +20,7 @@ class Spatial;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode
+class SceneNode: public PropertyMap
 {
 public:
 	/// @name Constructors/Destructor
@@ -42,15 +42,6 @@ public:
 	const std::string& getName() const
 	{
 		return name;
-	}
-
-	const PropertyMap& getPropertyMap() const
-	{
-		return pmap;
-	}
-	PropertyMap& getPropertyMap()
-	{
-		return pmap;
 	}
 	/// @}
 
@@ -87,7 +78,6 @@ public:
 private:
 	std::string name; ///< A unique name
 	Scene* scene; ///< Keep it here for unregistering
-	PropertyMap pmap;
 };
 /// @}
 
