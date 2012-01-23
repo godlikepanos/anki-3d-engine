@@ -29,12 +29,11 @@ public:
 	/// @name Constructors
 	/// @{
 	Camera(CameraType type_,
-		const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent,
-		CollisionShape* spartCs,
-		Frustum* frustum)
-		: SceneNode(name, scene), Movable(movableFlags, movParent),
-			Spatial(spartCs), Frustumable(frustum), type(type_)
+		const char* name, Scene* scene, // SceneNode
+		uint movableFlags, Movable* movParent, // Movable
+		Frustum* frustum) // Spatial &  Frustumable
+		: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+			Spatial(frustum), Frustumable(frustum), type(type_)
 	{}
 	/// @}
 
@@ -63,7 +62,7 @@ public:
 	}
 	/// @}
 
-	/// @name Implementation of virtuals
+	/// @name SceneNode virtuals
 	/// @{
 
 	/// Re-implements SceneNode::getMovable()
@@ -73,16 +72,20 @@ public:
 	}
 
 	/// Re-implements SceneNode::getFrustumable()
-	virtual Frustumable* getFrustumable()
+	Frustumable* getFrustumable()
 	{
 		return this;
 	}
 
 	/// Re-implements SceneNode::getSpatial()
-	virtual Spatial* getSpatial()
+	Spatial* getSpatial()
 	{
 		return this;
 	}
+	/// @}
+
+	/// @name Movable virtuals
+	/// @{
 
 	/// Re-impements Movable::moveUpdate(). This does:
 	/// - Update view matrix
@@ -93,6 +96,10 @@ public:
 		updateViewMatrix();
 		getFrustum().transform(getWorldTransform());
 	}
+	/// @}
+
+	/// @name Frustumable virtuals
+	/// @{
 
 	/// Implements Frustumable::frustumUpdate(). Calculate the projection
 	/// matrix
@@ -136,13 +143,12 @@ private:
 class PerspectiveCamera: public Camera
 {
 public:
+	ANKI_OBSERVING(PerspectiveCamera)
+
 	/// @name Constructors
 	/// @{
 	PerspectiveCamera(const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent)
-		: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent,
-			&frustum, &frustum)
-	{}
+		uint movableFlags, Movable* movParent);
 	/// @}
 
 	/// @name Accessors
@@ -176,6 +182,12 @@ public:
 
 private:
 	PerspectiveFrustum frustum;
+
+	void updateFrustumSlot(const PerspectiveFrustum&)
+	{
+		frustumUpdate();
+	}
+	ANKI_SLOT(updateFrustumSlot, const PerspectiveFrustum&)
 };
 
 
@@ -183,13 +195,12 @@ private:
 class OrthographicCamera: public Camera
 {
 public:
+	ANKI_OBSERVING(OrthographicCamera)
+
 	/// @name Constructors
 	/// @{
 	OrthographicCamera(const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent)
-		: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent,
-			&frustum, &frustum)
-	{}
+		uint movableFlags, Movable* movParent);
 	/// @}
 
 	/// @name Accessors
@@ -245,6 +256,12 @@ public:
 
 private:
 	OrthographicFrustum frustum;
+
+	void updateFrustumSlot(const OrthographicFrustum&)
+	{
+		frustumUpdate();
+	}
+	ANKI_SLOT(updateFrustumSlot, const OrthographicFrustum&)
 };
 /// @}
 

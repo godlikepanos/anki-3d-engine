@@ -18,21 +18,21 @@ class Spatial
 {
 public:
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spatial(CollisionShape* cs_)
-		: cs(cs_)
+	Spatial(CollisionShape* cs)
+		: spatialCs(cs)
 	{}
 
-	const CollisionShape& getCollisionShape() const
+	const CollisionShape& getSpatialCollisionShape() const
 	{
-		return *cs;
+		return *spatialCs;
 	}
-	CollisionShape& getCollisionShape()
+	CollisionShape& getSpatialCollisionShape()
 	{
-		return *cs;
+		return *spatialCs;
 	}
 
-private:
-	CollisionShape* cs;
+protected:
+	CollisionShape* spatialCs;
 };
 /// @}
 

@@ -89,7 +89,7 @@ private:
 	uint tid;
 	uint flags;
 
-	/// Runtime checking of type
+	/// Runtime type checking
 	template<typename T>
 	void checkType() const
 	{

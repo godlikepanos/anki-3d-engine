@@ -24,4 +24,34 @@ void Camera::lookAtPoint(const Vec3& point)
 }
 
 
+//==============================================================================
+// PerspectiveCamera                                                           =
+//==============================================================================
+
+//==============================================================================
+PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
+	uint movableFlags, Movable* movParent)
+	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, &frustum)
+{
+	Property<PerspectiveFrustum>& prop =
+		addProperty("frustum", &frustum, PropertyBase::PF_READ_WRITE);
+	ANKI_CONNECT(&prop, valueChanged, this, updateFrustumSlot);
+}
+
+
+//==============================================================================
+// OrthographicCamera                                                          =
+//==============================================================================
+
+//==============================================================================
+OrthographicCamera::OrthographicCamera(const char* name, Scene* scene,
+	uint movableFlags, Movable* movParent)
+	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, &frustum)
+{
+	Property<OrthographicFrustum>& prop =
+		addProperty("frustum", &frustum, PropertyBase::PF_READ_WRITE);
+	ANKI_CONNECT(&prop, valueChanged, this, updateFrustumSlot);
+}
+
+
 } // end namespace
