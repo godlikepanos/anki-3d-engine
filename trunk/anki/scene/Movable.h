@@ -43,10 +43,6 @@ public:
 	{
 		return lTrf;
 	}
-	Transform& getLocalTransform()
-	{
-		return lTrf;
-	}
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
@@ -115,9 +111,6 @@ public:
 	}
 	/// @}
 
-	/// This update happens always. It updates the MF_MOVED flag
-	void updateWorldTransform();
-
 	/// This is called after the updateWorldTransform() and if the MF_MOVED is
 	/// true
 	virtual void moveUpdate()
@@ -136,6 +129,10 @@ protected:
 	Transform prevWTrf;
 
 	ulong flags; ///< The state flags
+
+	/// Called when the local transform changes. Then its called fpr all the
+	/// children. It updates the MF_MOVED flag
+	void updateWorldTransform();
 };
 /// @}
 

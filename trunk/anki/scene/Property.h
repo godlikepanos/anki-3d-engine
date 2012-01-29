@@ -4,9 +4,9 @@
 #include "anki/util/Observer.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
+#include "anki/util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/unordered_map.hpp>
 
 
 namespace anki {
@@ -21,21 +21,12 @@ class Property;
 class PropertyBase
 {
 public:
-	/// Flags for property
-	enum PropertyFlag
-	{
-		PF_NONE = 0,
-		PF_READ = 1,
-		PF_WRITE = 2,
-		PF_READ_WRITE = PF_READ | PF_WRITE
-	};
-
 	/// @name Constructors/Destructor
 	/// @{
-	PropertyBase(const char* name_, uint tid_, uint flags_ = PF_NONE)
-		: name(name_), tid(tid_), flags(flags_)
+	PropertyBase(const char* name_, uint tid_)
+		: name(name_), tid(tid_)
 	{
-		ANKI_ASSERT(tid != 0);
+		ANKI_ASSERT(tid != 0 && "Property::TYPE_ID not set");
 	}
 
 	virtual ~PropertyBase()
@@ -68,26 +59,9 @@ public:
 		return static_cast<Property<T>*>(this)->setValue(x);
 	}
 
-	bool isFlagEnabled(PropertyFlag flag) const
-	{
-		return flags & flag;
-	}
-	/// @}
-
-protected:
-	void enableFlag(PropertyFlag flag, bool enable = true)
-	{
-		flags = enable ? flags | flag : flags & ~flag;
-	}
-	void disableFlag(PropertyFlag flag)
-	{
-		enableFlag(flag, false);
-	}
-
 private:
 	std::string name;
 	uint tid;
-	uint flags;
 
 	/// Runtime type checking
 	template<typename T>
@@ -115,47 +89,26 @@ public:
 	/// @{
 
 	/// Read only property
-	Property(const char* name, const Value* x, uint flags = PF_NONE)
-		: PropertyBase(name, TYPE_ID, flags), ptr(x)
-	{
-		disableFlag(PF_WRITE);
-	}
-
-	/// Read/write property
-	Property(const char* name, Value* x, uint flags = PF_NONE)
-		: PropertyBase(name, TYPE_ID, flags), ptr(x)
+	Property(const char* name)
+		: PropertyBase(name, TYPE_ID)
 	{}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	const Value& getValue() const
+	virtual const Value& getValue() const
 	{
-		if(!isFlagEnabled(PF_READ))
-		{
-			throw ANKI_EXCEPTION("Property is not readable: " + name);
-		}
-
-		return *ptr;
+		throw ANKI_EXCEPTION("Property is not readable: " + getName());
 	}
 
 	/// Set the value and emit the signal valueChanged
-	void setValue(const Value& x)
+	virtual void setValue(const Value& x)
 	{
-		if(!isFlagEnabled(PF_WRITE))
-		{
-			throw ANKI_EXCEPTION("Property is not writable: " + name);
-		}
-
-		*(const_cast<Value*>(ptr)) = x;
-		ANKI_EMIT valueChanged(x);
+		throw ANKI_EXCEPTION("Property is not writable: " + getName());
 	}
 	/// @}
 
 	ANKI_SIGNAL(const Value&, valueChanged)
-
-private:
-	const Value* ptr; ///< Have only one const pointer for size saving
 };
 
 
@@ -163,32 +116,88 @@ template<typename T>
 const uint Property<T>::TYPE_ID = 0;
 
 
+/// XXX
+template<typename T>
+class ReadPointerProperty: public Property<T>
+{
+public:
+	typedef T Value;
+	typedef Property<T> Base;
+
+	ReadPointerProperty(const char* name, const Value* x)
+		: Base(name), ptr(x)
+	{}
+
+	/// @name Accessors
+	/// @{
+
+	/// Overrides Property::getValue()
+	const Value& getValue() const
+	{
+		return *ptr;
+	}
+	/// @}
+
+private:
+	const Value* ptr; ///< Have only one const pointer for size saving
+};
+
+
+/// XXX
+template<typename T>
+class ReadWritePointerProperty: public Property<T>
+{
+public:
+	typedef T Value;
+	typedef Property<T> Base;
+
+	ReadWritePointerProperty(const char* name, Value* x)
+		: Base(name), ptr(x)
+	{}
+
+	/// @name Accessors
+	/// @{
+
+	/// Overrides Property::getValue()
+	const Value& getValue() const
+	{
+		return *ptr;
+	}
+
+	/// Overrides Property::setValue()
+	virtual void setValue(const Value& x)
+	{
+		*ptr = x;
+		ANKI_EMIT valueChanged(x);
+	}
+	/// @}
+
+private:
+	Value* ptr; ///< Have only one const pointer for size saving
+};
+
+
 /// A set of properties
 class PropertyMap
 {
 public:
 	typedef boost::ptr_vector<PropertyBase> Container;
-	typedef boost::unordered_map<std::string, PropertyBase*> NameToPropertyMap;
-
+	typedef ConstCharPtrHashMap<PropertyBase*>::Type NameToPropertyMap;
 
 	/// Create a new property
 	template<typename T>
-	Property<T>& addProperty(const char* name, T* x,
-		uint flags = PropertyBase::PF_NONE)
+	Property<T>& addNewProperty(Property<T>* newp)
 	{
-		if(propertyExists(name))
+		if(propertyExists(newp->getName().c_str()))
 		{
-			throw ANKI_EXCEPTION("Property already exists: " + name);
+			throw ANKI_EXCEPTION("Property already exists: " + newp->getName());
 		}
 
-		Property<T>* newp = new Property<T>(name, x, flags);
-
 		props.push_back(newp);
-		map[name] = newp;
+		map[newp->getName().c_str()] = newp;
 
 		return *newp;
 	}
-
 
 	/// XXX
 	const PropertyBase& findPropertyBaseByName(const char* name) const
@@ -201,7 +210,6 @@ public:
 		return *(it->second);
 	}
 
-
 	/// XXX
 	PropertyBase& findPropertyBaseByName(const char* name)
 	{
@@ -213,13 +221,11 @@ public:
 		return *(it->second);
 	}
 
-
 	/// Alias for findPropertyBaseByName
 	const PropertyBase& operator[](const char* name) const
 	{
 		return findPropertyBaseByName(name);
 	}
-
 
 	/// Alias for findPropertyBaseByName
 	PropertyBase& operator[](const char* name)
@@ -227,13 +233,11 @@ public:
 		return findPropertyBaseByName(name);
 	}
 
-
 	/// Return true if the property named @a name exists
 	bool propertyExists(const char* name) const
 	{
 		return map.find(name) != map.end();
 	}
-
 
 	/// XXX
 	template<typename T>
