@@ -1,5 +1,6 @@
 #include "anki/scene/Movable.h"
 #include "anki/scene/Property.h"
+#include <boost/foreach.hpp>
 
 
 namespace anki {
@@ -9,8 +10,8 @@ namespace anki {
 Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
 	: Base(this, parent), flags(flags_)
 {
-	pmap.addProperty("localTransform", &lTrf, PropertyBase::PF_READ_WRITE);
-	pmap.addProperty("worldTransform", &wTrf, PropertyBase::PF_READ);
+	pmap.addNewProperty(new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
+	pmap.addNewProperty(new ReadPointerProperty<Transform>("worldTransform", &wTrf));
 }
 
 
@@ -37,6 +38,11 @@ void Movable::updateWorldTransform()
 	}
 
 	enableFlag(MF_MOVED, prevWTrf != wTrf);
+
+	BOOST_FOREACH(Movable* child, getChildren())
+	{
+		child->updateWorldTransform();
+	}
 }
 
 

@@ -160,7 +160,7 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	projectionMat(1, 3) = 0.0;
 	projectionMat(2, 0) = 0.0;
 	projectionMat(2, 1) = 0.0;
-	projectionMat(2, 2) = (zFar + zNear) / ( zNear - zFar);
+	projectionMat(2, 2) = (zFar + zNear) / (zNear - zFar);
 	projectionMat(2, 3) = (2.0 * zFar * zNear) / (zNear - zFar);
 	projectionMat(3, 0) = 0.0;
 	projectionMat(3, 1) = 0.0;
