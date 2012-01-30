@@ -15,6 +15,12 @@ class PropertyMap;
 /// @{
 
 /// Interface for movable scene nodes
+///
+/// When the local tranform changes we calculate the @a dummyWTrf for this
+/// movable and it's children. The @a dummyWTrf contains the final world
+/// transformation. Why dont we set the @a wTrf at once? Because we the local
+/// transformation may change in the logic part of the main loop and we dont
+/// want
 class Movable: public Object<Movable>
 {
 public:
@@ -46,6 +52,22 @@ public:
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
+		shouldUpdateWTrf = true;
+	}
+	void setLocalTranslation(const Vec3& x)
+	{
+		lTrf.setOrigin(x);
+		shouldUpdateWTrf = true;
+	}
+	void setLocalRotation(const Mat3& x)
+	{
+		lTrf.setRotation(x);
+		shouldUpdateWTrf = true;
+	}
+	void setLocalScale(float x)
+	{
+		lTrf.setScale(x);
+		shouldUpdateWTrf = true;
 	}
 
 	const Transform& getWorldTransform() const
@@ -85,53 +107,68 @@ public:
 	void rotateLocalX(float angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
+		shouldUpdateWTrf = true;
 	}
 	void rotateLocalY(float angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
+		shouldUpdateWTrf = true;
 	}
 	void rotateLocalZ(float angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
+		shouldUpdateWTrf = true;
 	}
 	void moveLocalX(float distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
+		shouldUpdateWTrf = true;
 	}
 	void moveLocalY(float distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
+		shouldUpdateWTrf = true;
 	}
 	void moveLocalZ(float distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
+		shouldUpdateWTrf = true;
 	}
 	/// @}
 
-	/// This is called after the updateWorldTransform() and if the MF_MOVED is
-	/// true
+	/// This is called by the scene's main update method only when the object
+	/// had actually moved
 	virtual void moveUpdate()
+	{}
+
+	/// Update self and children world transform, if root node
+	void update()
 	{
-		ANKI_ASSERT(isFlagEnabled(MF_MOVED));
+		if(getParent() == NULL)
+		{
+			updateWorldTransform();
+		}
 	}
 
 protected:
+	bool shouldUpdateWTrf; ///< Its true when we change the local transform
+
 	Transform lTrf; ///< The transformation in local space
 
 	/// The transformation in world space (local combined with parent's
 	/// transformation)
 	Transform wTrf;
 
-	/// Keep the previous transformation for blurring calculations
+	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf;
 
 	ulong flags; ///< The state flags
 
-	/// Called when the local transform changes. Then its called fpr all the
-	/// children. It updates the MF_MOVED flag
+	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
+	/// is true. Then it moves to the children.
 	void updateWorldTransform();
 };
 /// @}

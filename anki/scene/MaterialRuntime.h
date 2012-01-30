@@ -18,6 +18,7 @@ class MaterialVariable;
 
 
 /// Variable of runtime materials
+///
 /// This holds a copy of the MaterialVariable's data in order to be read write
 /// inside the main loop
 class MaterialRuntimeVariable

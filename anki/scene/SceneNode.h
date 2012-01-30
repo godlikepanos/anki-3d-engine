@@ -68,12 +68,9 @@ public:
 	}
 	/// @}
 
-	/// This is called by the scene every frame. But default it does nothing
-	virtual void frameUpdate(float prevUpdateTime, float crntTime)
-	{
-		(void)prevUpdateTime;
-		(void)crntTime;
-	}
+	/// This is called by the scene every frame after logic and before
+	/// rendering. By default it does nothing
+	virtual void frameUpdate(float prevUpdateTime, float crntTime, int frame);
 
 private:
 	std::string name; ///< A unique name

@@ -87,7 +87,7 @@ public:
 	/// @name Movable virtuals
 	/// @{
 
-	/// Re-impements Movable::moveUpdate(). This does:
+	/// Overrides Movable::moveUpdate(). This does:
 	/// - Update view matrix
 	/// - Update frustum
 	void moveUpdate()
