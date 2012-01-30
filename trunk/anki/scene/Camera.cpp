@@ -20,7 +20,10 @@ void Camera::lookAtPoint(const Vec3& point)
 	Vec3 vdir = (point - getLocalTransform().getOrigin()).getNormalized();
 	Vec3 vup = j - vdir * j.dot(vdir);
 	Vec3 vside = vdir.cross(vup);
-	getLocalTransform().getRotation().setColumns(vside, vup, -vdir);
+
+	Mat3 rot = getLocalTransform().getRotation();
+	rot.setColumns(vside, vup, -vdir);
+	setLocalRotation(rot);
 }
 
 
@@ -34,7 +37,8 @@ PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
 	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, &frustum)
 {
 	Property<PerspectiveFrustum>& prop =
-		addProperty("frustum", &frustum, PropertyBase::PF_READ_WRITE);
+		addNewProperty(new ReadWritePointerProperty<PerspectiveFrustum>(
+		"frustum", &frustum));
 	ANKI_CONNECT(&prop, valueChanged, this, updateFrustumSlot);
 }
 
@@ -49,7 +53,8 @@ OrthographicCamera::OrthographicCamera(const char* name, Scene* scene,
 	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, &frustum)
 {
 	Property<OrthographicFrustum>& prop =
-		addProperty("frustum", &frustum, PropertyBase::PF_READ_WRITE);
+		addNewProperty(new ReadWritePointerProperty<OrthographicFrustum>(
+		"frustum", &frustum));
 	ANKI_CONNECT(&prop, valueChanged, this, updateFrustumSlot);
 }
 

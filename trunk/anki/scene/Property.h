@@ -7,6 +7,7 @@
 #include "anki/util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 
 namespace anki {
@@ -18,7 +19,7 @@ class Property;
 
 
 /// Base class for property
-class PropertyBase
+class PropertyBase: public boost::noncopyable
 {
 public:
 	/// @name Constructors/Destructor
@@ -75,7 +76,7 @@ private:
 };
 
 
-/// Property. It holds a pointer to a value
+/// Property interface
 template<typename T>
 class Property: public PropertyBase
 {
@@ -116,7 +117,74 @@ template<typename T>
 const uint Property<T>::TYPE_ID = 0;
 
 
-/// XXX
+/// Read only property
+template<typename T>
+class ReadProperty: public Property<T>
+{
+public:
+	typedef T Value;
+	typedef Property<T> Base;
+
+	/// @name Constructors/Destructor
+	/// @{
+	ReadProperty(const char* name, const Value& x_)
+		: Base(name), x(x_)
+	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+
+	/// Overrides Property::getValue()
+	const Value& getValue() const
+	{
+		return x;
+	}
+	/// @}
+
+private:
+	Value x;
+};
+
+
+/// Read write property
+template<typename T>
+class ReadWriteProperty: public Property<T>
+{
+public:
+	typedef T Value;
+	typedef Property<T> Base;
+
+	/// @name Constructors/Destructor
+	/// @{
+	ReadWriteProperty(const char* name, const Value& x_)
+		: Base(name), x(x_)
+	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+
+	/// Overrides Property::getValue()
+	const Value& getValue() const
+	{
+		return x;
+	}
+
+	/// Overrides Property::setValue()
+	virtual void setValue(const Value& x_)
+	{
+		x = x_;
+		ANKI_EMIT valueChanged(x);
+	}
+	/// @}
+
+private:
+	Value x;
+};
+
+
+/// Read only property that holds a reference to a value
 template<typename T>
 class ReadPointerProperty: public Property<T>
 {
@@ -124,9 +192,12 @@ public:
 	typedef T Value;
 	typedef Property<T> Base;
 
+	/// @name Constructors/Destructor
+	/// @{
 	ReadPointerProperty(const char* name, const Value* x)
 		: Base(name), ptr(x)
 	{}
+	/// @}
 
 	/// @name Accessors
 	/// @{
@@ -143,7 +214,7 @@ private:
 };
 
 
-/// XXX
+/// Read write property that alters a reference to the value
 template<typename T>
 class ReadWritePointerProperty: public Property<T>
 {
@@ -151,9 +222,12 @@ public:
 	typedef T Value;
 	typedef Property<T> Base;
 
+	/// @name Constructors/Destructor
+	/// @{
 	ReadWritePointerProperty(const char* name, Value* x)
 		: Base(name), ptr(x)
 	{}
+	/// @}
 
 	/// @name Accessors
 	/// @{
@@ -174,6 +248,50 @@ public:
 
 private:
 	Value* ptr; ///< Have only one const pointer for size saving
+};
+
+
+/// Read and Copy on Write property
+template<typename T>
+class ReadCowPointerProperty: public Property<T>
+{
+public:
+	typedef T Value;
+	typedef Property<T> Base;
+
+	/// @name Constructors/Destructor
+	/// @{
+	ReadCowPointerProperty(const char* name, const Value* x)
+		: Base(name), ptr(x)
+	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	/// Overrides Property::getValue()
+	const Value& getValue() const
+	{
+		return (sptr.get()) ? *sptr : *ptr;
+	}
+
+	/// Overrides Property::setValue()
+	virtual void setValue(const Value& x)
+	{
+		if(sptr.get())
+		{
+			*sptr = x;
+		}
+		else
+		{
+			sptr.reset(new Value(x));
+		}
+		ANKI_EMIT valueChanged(x);
+	}
+	/// @}
+
+private:
+	const Value* ptr;
+	boost::scoped_ptr sptr;
 };
 
 
