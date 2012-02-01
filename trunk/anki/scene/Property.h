@@ -84,7 +84,10 @@ public:
 	typedef T Value;
 	typedef Property<Value> Self;
 
-	static const uint TYPE_ID; ///< Unique id for every type of property
+	/// Unique id for every type of property
+	/// @note Don't even think of defining a default value in this or any other
+	///       header
+	static const uint TYPE_ID;
 
 	/// @name Constructors/Destructor
 	/// @{
@@ -111,10 +114,6 @@ public:
 
 	ANKI_SIGNAL(const Value&, valueChanged)
 };
-
-
-template<typename T>
-const uint Property<T>::TYPE_ID = 0;
 
 
 /// Read only property
