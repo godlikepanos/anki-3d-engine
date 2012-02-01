@@ -6,7 +6,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 
@@ -271,7 +271,14 @@ public:
 	/// Overrides Property::getValue()
 	const Value& getValue() const
 	{
-		return (sptr.get()) ? *sptr : *ptr;
+		if(sptr.get())
+		{
+			return *sptr;
+		}
+		else
+		{
+			return *ptr;
+		}
 	}
 
 	/// Overrides Property::setValue()
@@ -291,7 +298,7 @@ public:
 
 private:
 	const Value* ptr;
-	boost::scoped_ptr sptr;
+	boost::scoped_ptr<Value> sptr;
 };
 
 

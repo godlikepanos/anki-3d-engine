@@ -1,17 +1,38 @@
 #ifndef ANKI_SCENE_RENDERABLE_H
 #define ANKI_SCENE_RENDERABLE_H
 
+#include "anki/scene/Property.h"
+
 
 namespace anki {
 
 
 class ModelPatchBase;
 class Material;
-class PropertyMap;
+class MaterialVariable;
 
 
 /// @addtogroup Scene
 /// @{
+
+
+/// XXX
+template<typename T>
+class MaterialVariableReadCowPointerProperty: public ReadCowPointerProperty<T>
+{
+public:
+	typedef T Value;
+	typedef ReadCowPointerProperty<T> Base;
+
+	/// @name Constructors/Destructor
+	/// @{
+	MaterialVariableReadCowPointerProperty(const char* name, const Value* x)
+		: Base(name, x)
+	{}
+	/// @}
+private:
+};
+
 
 /// Renderable interface
 ///
@@ -20,20 +41,13 @@ class Renderable
 {
 public:
 	/// Access to VAOs
-	virtual const ModelPatchBase* getModelPatchBase() const
-	{
-		return NULL;
-	}
+	virtual const ModelPatchBase& getModelPatchBase() const = 0;
 
-	/// Get the material runtime. Dont access it from the ModelPatchBase
-	/// because the lights dont have one
-	virtual Material& getMaterial() = 0;
+	/// Access the material
+	virtual const Material& getMaterial() const = 0;
 
-	/// Access to property map to get the values of the shader variables
-	virtual PropertyMap& getPropertyMap() = 0;
-
-private:
-
+protected:
+	void init(PropertyMap& pmap) const;
 };
 /// @}
 
