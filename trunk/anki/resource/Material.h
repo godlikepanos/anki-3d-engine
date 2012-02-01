@@ -61,6 +61,12 @@ public:
 		return data;
 	}
 
+	template<typename T>
+	const T& getValue() const
+	{
+		return boost::get<T>(data);
+	}
+
 	/// Given a key return the uniform
 	const ShaderProgramUniformVariable& getShaderProgramUniformVariable(
 		const PassLevelKey& key) const

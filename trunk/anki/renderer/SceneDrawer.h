@@ -62,9 +62,8 @@ private:
 	};
 
 	/// Set the uniform using this visitor
-	class SetUniformVisitor: public boost::static_visitor<>
+	struct SetUniformVisitor: public boost::static_visitor<>
 	{
-	public:
 		const ShaderProgramUniformVariable& uni;
 		uint& texUnit;
 
