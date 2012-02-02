@@ -11,7 +11,7 @@ namespace anki {
 // QueryImpl                                                                   =
 //==============================================================================
 
-/// XXX
+/// Query implementation
 struct QueryImpl
 {
 	GLuint glId;
@@ -33,6 +33,12 @@ Query::Query(QueryQuestion q)
 	{
 		case QQ_SAMPLES_PASSED:
 			impl->question = GL_SAMPLES_PASSED;
+			break;
+		case QQ_ANY_SAMPLES_PASSED:
+			impl->question = GL_ANY_SAMPLES_PASSED;
+			break;
+		case QQ_TIME_ELAPSED:
+			impl->question = GL_TIME_ELAPSED;
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -65,6 +71,37 @@ void Query::beginQuery()
 void Query::endQuery()
 {
 	glEndQuery(impl->question);
+}
+
+
+//==============================================================================
+uint64_t Query::getResult()
+{
+	GLuint64 result;
+	glGetQueryObjectui64v(impl->glId, GL_QUERY_RESULT, &result);
+	return result;
+}
+
+
+//==============================================================================
+uint64_t Query::getResultNoWait(bool& finished)
+{
+	GLuint resi;
+	glGetQueryObjectuiv(impl->glId, GL_QUERY_RESULT_AVAILABLE, &resi);
+
+	GLuint64 result;
+	if(resi)
+	{
+		glGetQueryObjectui64v(impl->glId, GL_QUERY_RESULT, &result);
+		finished = true;
+	}
+	else
+	{
+		finished = false;
+		result = 0;
+	}
+
+	return result;
 }
 
 
