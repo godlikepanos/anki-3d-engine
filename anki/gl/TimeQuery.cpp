@@ -43,6 +43,7 @@ double TimeQuery::end()
 	GLint done = 0;
 	while(!done)
 	{
+		/// XXX BAD BAD BAD BAD!!!!!
 		glGetQueryObjectiv(glIds[1], GL_QUERY_RESULT_AVAILABLE, &done);
 	}
 
