@@ -36,10 +36,12 @@ PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
 	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, &frustum)
 {
-	Property<PerspectiveFrustum>& prop =
-		addNewProperty(new ReadWritePointerProperty<PerspectiveFrustum>(
-		"frustum", &frustum));
-	ANKI_CONNECT(&prop, valueChanged, this, updateFrustumSlot);
+	Property<PerspectiveFrustum>* prop =
+		new ReadWritePointerProperty<PerspectiveFrustum>("frustum", &frustum);
+
+	addNewProperty(prop);
+
+	ANKI_CONNECT(prop, valueChanged, this, updateFrustumSlot);
 }
 
 
@@ -52,10 +54,12 @@ OrthographicCamera::OrthographicCamera(const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
 	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, &frustum)
 {
-	Property<OrthographicFrustum>& prop =
-		addNewProperty(new ReadWritePointerProperty<OrthographicFrustum>(
-		"frustum", &frustum));
-	ANKI_CONNECT(&prop, valueChanged, this, updateFrustumSlot);
+	Property<OrthographicFrustum>* prop =
+		new ReadWritePointerProperty<OrthographicFrustum>("frustum", &frustum);
+
+	addNewProperty(prop);
+
+	ANKI_CONNECT(prop, valueChanged, this, updateFrustumSlot);
 }
 
 

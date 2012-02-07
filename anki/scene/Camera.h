@@ -65,22 +65,29 @@ public:
 	/// @name SceneNode virtuals
 	/// @{
 
-	/// Re-implements SceneNode::getMovable()
+	/// Override SceneNode::getMovable()
 	Movable* getMovable()
 	{
 		return this;
 	}
 
-	/// Re-implements SceneNode::getFrustumable()
+	/// Override SceneNode::getFrustumable()
 	Frustumable* getFrustumable()
 	{
 		return this;
 	}
 
-	/// Re-implements SceneNode::getSpatial()
+	/// Override SceneNode::getSpatial()
 	Spatial* getSpatial()
 	{
 		return this;
+	}
+
+	/// Override SceneNode::frameUpdate
+	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	{
+		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
+		Movable::update();
 	}
 	/// @}
 
@@ -183,6 +190,7 @@ public:
 private:
 	PerspectiveFrustum frustum;
 
+	/// Called when the property changes
 	void updateFrustumSlot(const PerspectiveFrustum&)
 	{
 		frustumUpdate();

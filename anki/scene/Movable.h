@@ -144,14 +144,12 @@ public:
 	virtual void moveUpdate()
 	{}
 
-	/// Update self and children world transform, if root node
-	void update()
-	{
-		if(getParent() == NULL)
-		{
-			updateWorldTransform();
-		}
-	}
+	/// Update self and children world transform, if root node. Called every
+	/// frame.
+	/// @note Don't update if child because we start from roots and go to
+	///       children and we don't want a child to be updated before the
+	///       parent
+	void update();
 
 protected:
 	bool shouldUpdateWTrf; ///< Its true when we change the local transform

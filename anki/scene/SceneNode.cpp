@@ -1,6 +1,5 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Scene.h"
-#include "anki/scene/Movable.h"
 
 
 namespace anki {
@@ -20,19 +19,6 @@ SceneNode::SceneNode(const char* name, Scene* scene)
 SceneNode::~SceneNode()
 {
 	scene->unregisterNode(this);
-}
-
-
-//==============================================================================
-void SceneNode::frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/,
-	int /*frame*/)
-{
-	// Movable update
-	Movable* m = getMovable();
-	if(m)
-	{
-		m->update();
-	}
 }
 
 
