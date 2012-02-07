@@ -70,7 +70,15 @@ public:
 
 	/// This is called by the scene every frame after logic and before
 	/// rendering. By default it does nothing
-	virtual void frameUpdate(float prevUpdateTime, float crntTime, int frame);
+	/// @param[in] prevUpdateTime Timestamp of the previous update
+	/// @param[in] crntTime Timestamp of this update
+	/// @param[in] frame Frame number
+	virtual void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	{
+		(void)prevUpdateTime;
+		(void)crntTime;
+		(void)frame;
+	}
 
 private:
 	std::string name; ///< A unique name

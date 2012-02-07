@@ -49,15 +49,24 @@ public:
 	template<typename T>
 	const T& getValue() const
 	{
-		checkType<T>();
+		checkType<Property<T> >();
 		return static_cast<const Property<T>*>(this)->getValue();
 	}
 
 	template<typename T>
 	void setValue(const T& x)
 	{
-		checkType<T>();
+		checkType<Property<T> >();
 		return static_cast<Property<T>*>(this)->setValue(x);
+	}
+	/// @}
+
+	/// Upcast to property
+	template<typename Prop>
+	Prop& upCast()
+	{
+		checkType<Prop>();
+		return static_cast<Prop&>(*this);
 	}
 
 private:
@@ -65,10 +74,10 @@ private:
 	uint tid;
 
 	/// Runtime type checking
-	template<typename T>
+	template<typename Prop>
 	void checkType() const
 	{
-		if(Property<T>::TYPE_ID != getTypeId())
+		if(Prop::TYPE_ID != getTypeId())
 		{
 			throw ANKI_EXCEPTION("Types do not match: " + name);
 		}

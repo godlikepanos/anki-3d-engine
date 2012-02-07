@@ -40,15 +40,10 @@ public:
 
 	/// @name Constructors
 	/// @{
-	Light(LightType t,
+	Light(LightType t, const char* mtl, // Light
 		const char* name, Scene* scene, // Scene
 		uint movableFlags, Movable* movParent, // Movable
-		CollisionShape* cs) // Spatial
-		: SceneNode(name, scene), Movable(movableFlags, movParent),
-			Spatial(cs), type(t)
-	{
-		/// XXX mtlr
-	}
+		CollisionShape* cs); // Spatial
 	/// @}
 
 	virtual ~Light();
@@ -77,36 +72,32 @@ public:
 	{
 		return this;
 	}
+
+	/// Override SceneNode::frameUpdate
+	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	{
+		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
+		Movable::update();
+	}
 	/// @}
 
 	/// @name Renderable virtuals
 	/// @{
-	const ModelPatchBase* getModelPatchBase() const
+	const ModelPatchBase& getModelPatchBase() const
 	{
 		ANKI_ASSERT(0 && "Lights don't support it");
 		return NULL;
 	}
 
-	MaterialRuntime& getMaterialRuntime()
+	MaterialRuntime& getMaterial()
 	{
-		return *mtlr;
-	}
-
-	const Transform* getWorldTransform(const PassLevelKey&)
-	{
-		return &getWorldTranform();
-	}
-
-	const Transform* getPreviousWorldTransform(
-		const PassLevelKey&)
-	{
-		return &getPreviousWorldTranform();
+		return *mtl;
 	}
 	/// @}
 
 private:
 	LightType type;
-	boost::scoped_ptr<MaterialRuntime> mtlr;
+	MaterialResourcePointer mtl;
 };
 
 
@@ -114,13 +105,28 @@ private:
 class PointLight: public Light
 {
 public:
-	PointLight(const char* name, Scene* scene, uint movableFlags,
-		Movable* movParent)
-		: Light(LT_POINT, name, scene, movableFlags, movParent, &sphere)
-	{}
+	/// @name Constructors/Destructor
+	/// @{
+	PointLight(const char* fmtl,
+		const char* name, Scene* scene,
+		uint movableFlags, Movable* movParent);
+	/// @}
+
+	/// @name Movable virtuals
+	/// @{
+
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update the collision shape
+	void moveUpdate()
+	{
+		Movable::moveUpdate();
+		sphereW = sphereL.getTransformed();
+	}
+	/// @}
 
 public:
-	Sphere sphere;
+	Sphere sphereW;
+	Sphere sphereL;
 };
 
 

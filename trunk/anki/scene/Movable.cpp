@@ -18,41 +18,46 @@ Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
 
 
 //==============================================================================
+void Movable::update()
+{
+	if(getParent() == NULL)
+	{
+		updateWorldTransform();
+	}
+}
+
+
+//==============================================================================
 void Movable::updateWorldTransform()
 {
-	if(shouldUpdateWTrf)
+	prevWTrf = wTrf;
+
+	if(getParent())
 	{
-		prevWTrf = wTrf;
-
-		if(getParent())
+		if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 		{
-			if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
-			{
-				wTrf = getParent()->getWorldTransform();
-			}
-			else
-			{
-				wTrf = Transform::combineTransformations(
-					getParent()->getWorldTransform(), lTrf);
-			}
-		}
-		else // else copy
-		{
-			wTrf = lTrf;
-		}
-
-		// Moved?
-		if(prevWTrf != wTrf)
-		{
-			enableFlag(MF_MOVED);
-			moveUpdate();
+			wTrf = getParent()->getWorldTransform();
 		}
 		else
 		{
-			disableFlag(MF_MOVED);
+			wTrf = Transform::combineTransformations(
+				getParent()->getWorldTransform(), lTrf);
 		}
+	}
+	else // else copy
+	{
+		wTrf = lTrf;
+	}
 
-		shouldUpdateWTrf = false;
+	// Moved?
+	if(prevWTrf != wTrf)
+	{
+		enableFlag(MF_MOVED);
+		moveUpdate();
+	}
+	else
+	{
+		disableFlag(MF_MOVED);
 	}
 
 	BOOST_FOREACH(Movable* child, getChildren())

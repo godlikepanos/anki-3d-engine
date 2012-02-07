@@ -6,20 +6,43 @@ namespace anki {
 
 
 //==============================================================================
+// Light                                                                       =
+//==============================================================================
+
+//==============================================================================
+Light::Light(LightType t, const char* fmtl, // Light
+	const char* name, Scene* scene, // Scene
+	uint movableFlags, Movable* movParent, // Movable
+	CollisionShape* cs) // Spatial
+	: SceneNode(name, scene), Movable(movableFlags, movParent),
+		Spatial(cs), type(t)
+{
+	mtl.load(fmtl);
+	Renderable::init(*this);
+}
+
+
+//==============================================================================
 Light::~Light()
 {}
 
 
 //==============================================================================
-// init                                                                        =
+// PointLight                                                                  =
 //==============================================================================
-void Light::init(const char* filename)
-{
-	lightData.load(filename);
 
-	diffuseCol = lightData->getDiffuseColor();
-	specularCol = lightData->getSpecularColor();
-	castsShadowFlag = lightData->getCastShadow();
+//==============================================================================
+PointLight::PointLight(const char* fmtl,
+	const char* name, Scene* scene,
+	uint movableFlags, Movable* movParent)
+	: Light(LT_POINT, fmtl, name, scene, movableFlags, movParent, &sphereW)
+{
+	Property<PerspectiveFrustum>* prop =
+		new ReadWritePointerProperty<PerspectiveFrustum>("frustum", &frustum);
+
+	addNewProperty(prop);
+
+	ANKI_CONNECT(prop, valueChanged, this, updateFrustumSlot);
 }
 
 
