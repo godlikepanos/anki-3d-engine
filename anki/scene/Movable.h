@@ -15,12 +15,6 @@ class PropertyMap;
 /// @{
 
 /// Interface for movable scene nodes
-///
-/// When the local tranform changes we calculate the @a dummyWTrf for this
-/// movable and it's children. The @a dummyWTrf contains the final world
-/// transformation. Why dont we set the @a wTrf at once? Because we the local
-/// transformation may change in the logic part of the main loop and we dont
-/// want
 class Movable: public Object<Movable>
 {
 public:
@@ -139,13 +133,13 @@ public:
 	}
 	/// @}
 
-	/// This is called by the scene's main update method only when the object
-	/// had actually moved
-	virtual void moveUpdate()
+	/// This is called by the @a update() method only when the object had
+	/// actually moved
+	virtual void movableUpdate()
 	{}
 
-	/// Update self and children world transform, if root node. Called every
-	/// frame.
+	/// Update self and children world transform recursively, if root node.
+	/// Need to call this at every frame.
 	/// @note Don't update if child because we start from roots and go to
 	///       children and we don't want a child to be updated before the
 	///       parent

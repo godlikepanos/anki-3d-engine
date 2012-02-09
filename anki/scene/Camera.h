@@ -97,9 +97,9 @@ public:
 	/// Overrides Movable::moveUpdate(). This does:
 	/// - Update view matrix
 	/// - Update frustum
-	void moveUpdate()
+	void movableUpdate()
 	{
-		Movable::moveUpdate();
+		Movable::movableUpdate();
 		updateViewMatrix();
 		getFrustum().transform(getWorldTransform());
 	}

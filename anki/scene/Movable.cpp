@@ -20,7 +20,7 @@ Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
 //==============================================================================
 void Movable::update()
 {
-	if(getParent() == NULL)
+	if(getParent() == NULL) // If root
 	{
 		updateWorldTransform();
 	}
@@ -53,7 +53,7 @@ void Movable::updateWorldTransform()
 	if(prevWTrf != wTrf)
 	{
 		enableFlag(MF_MOVED);
-		moveUpdate();
+		movableUpdate();
 	}
 	else
 	{
