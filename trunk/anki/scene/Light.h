@@ -6,7 +6,8 @@
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Spatial.h"
-#include "anki/gl/Vao.h"
+#include "anki/resource/Material.h"
+#include "anki/resource/Resource.h"
 
 
 namespace anki {
@@ -86,10 +87,10 @@ public:
 	const ModelPatchBase& getModelPatchBase() const
 	{
 		ANKI_ASSERT(0 && "Lights don't support it");
-		return NULL;
+		throw "";
 	}
 
-	MaterialRuntime& getMaterial()
+	Material& getMaterial()
 	{
 		return *mtl;
 	}
@@ -105,6 +106,8 @@ private:
 class PointLight: public Light
 {
 public:
+	ANKI_OBSERVING(PointLight)
+
 	/// @name Constructors/Destructor
 	/// @{
 	PointLight(const char* fmtl,
@@ -117,16 +120,22 @@ public:
 
 	/// Overrides Movable::moveUpdate(). This does:
 	/// - Update the collision shape
-	void moveUpdate()
+	void movableUpdate()
 	{
-		Movable::moveUpdate();
-		sphereW = sphereL.getTransformed();
+		Movable::movableUpdate();
+		sphereW = sphereL.getTransformed(getWorldTransform());
 	}
 	/// @}
 
 public:
 	Sphere sphereW;
 	Sphere sphereL;
+
+	void updateRadius(const float& r)
+	{
+		sphereL.setRadius(r);
+	}
+	ANKI_SLOT(updateRadius, const float&)
 };
 
 
@@ -134,8 +143,16 @@ public:
 class SpotLight: public Light, public Frustumable
 {
 public:
+	/// @name Constructors/Destructor
+	/// @{
+	SpotLight(const char* fmtl,
+		const char* name, Scene* scene,
+		uint movableFlags, Movable* movParent)
+	{}
+	/// @}
 
 private:
+	PerspectiveFrustum frustum;
 };
 
 
