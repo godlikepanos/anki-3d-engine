@@ -56,7 +56,7 @@ SpotLight::SpotLight(const char* fmtl,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
 	: Light(LT_SPOT, fmtl, name, scene, movableFlags, movParent, &frustum),
-		Frustumable(frustum)
+		Frustumable(&frustum)
 {}
 
 

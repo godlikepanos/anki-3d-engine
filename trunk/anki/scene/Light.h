@@ -147,12 +147,18 @@ public:
 	/// @{
 	SpotLight(const char* fmtl,
 		const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent)
-	{}
+		uint movableFlags, Movable* movParent);
 	/// @}
 
 private:
-	PerspectiveFrustum frustum;
+	PerspectiveFrustum frustumW;
+	PerspectiveFrustum frustumL;
+
+	void updateFrustum(const PerspectiveFrustum&)
+	{
+		//frustumL.setRadius(r);
+	}
+	ANKI_SLOT(updateFrustum, const PerspectiveFrustum&)
 };
 
 
