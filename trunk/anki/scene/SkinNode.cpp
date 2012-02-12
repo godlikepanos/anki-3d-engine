@@ -10,6 +10,46 @@ namespace anki {
 
 
 //==============================================================================
+// SkinMesh                                                                    =
+//==============================================================================
+
+//==============================================================================
+SkinMesh::SkinMesh(const Mesh* mesh_)
+	: mesh(mesh_)
+{
+	// Positions
+	if(mesh->getVbo(VBO_POSITIONS))
+	{
+		tfVbos[VBO_TF_POSITIONS].create(
+			GL_ARRAY_BUFFER,
+			mesh->getVbo(VBO_POSITIONS).getSizeInBytes(),
+			NULL,
+			GL_STATIC_DRAW);
+	}
+
+	// Normals
+	if(mesh->getVbo(VBO_NORMALS))
+	{
+		tfVbos[VBO_TF_NORMALS].create(
+			GL_ARRAY_BUFFER,
+			mesh->getVbo(VBO_NORMALS).getSizeInBytes(),
+			NULL,
+			GL_STATIC_DRAW);
+	}
+
+	// Tangents
+	if(mesh->getVbo(VBO_TANGENTS))
+	{
+		tfVbos[VBO_TF_TANGENTS].create(
+			GL_ARRAY_BUFFER,
+			mesh->getVbo(VBO_TANGENTS).getSizeInBytes(),
+			NULL,
+			GL_STATIC_DRAW);
+	}
+}
+
+
+//==============================================================================
 // SkinPatchNode                                                               =
 //==============================================================================
 

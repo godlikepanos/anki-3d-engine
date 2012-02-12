@@ -16,8 +16,74 @@ namespace anki {
 class Skin;
 
 
+/// XXX
+class SkinMesh: public MeshBase
+{
+public:
+	/// Transform feedback VBOs
+	enum TfVboId
+	{
+		VBO_TF_POSITIONS, ///< VBO never empty
+		VBO_TF_NORMALS, ///< VBO never empty
+		VBO_TF_TANGENTS, ///< VBO never empty
+		VBOS_TF_NUMBER
+	};
+
+	/// Create the @a tfVbos with empty data
+	SkinMesh(const Mesh* mesh_);
+
+	/// @name Implementations of MeshBase virtuals
+	/// @{
+	const Vbo* getVbo(VboId id) const
+	{
+		switch(id)
+		{
+			case VBO_POSITIONS:
+				return &tfVbos[VBO_TF_POSITIONS];
+			case VBO_NORMALS:
+				return &tfVbos[VBO_TF_NORMALS];
+			case VBO_TANGENTS:
+				return &tfVbos[VBO_TF_TANGENTS];
+			default:
+				return mesh->getVbo(id);
+		}
+	}
+
+	uint getTextureChannelsNumber() const
+	{
+		return mesh->getTextureChannelsNumber();
+	}
+
+	uint getLodsNumber() const
+	{
+		return mesh->getLodsNumber();
+	}
+
+	uint getIndicesNumber(uint lod) const
+	{
+		return mesh->getIndicesNumber(lod);
+	}
+
+	uint getVerticesNumber(uint lod) const
+	{
+		return mesh->getVerticesNumber(lod);
+	}
+
+	const Obb& getBoundingShape() const
+	{
+		return mesh->getBoundingShape();
+	}
+	/// @}
+
+private:
+	boost::array<Vbo, TFV_NUM> tfVbos;
+	const Mesh* mesh; ///< The resource
+};
+
+
 /// A fragment of the SkinNode
-class SkinPatchNode: public Renderable, public SceneNode
+class SkinPatchNode: public SceneNode, public Movable, public Renderable,
+	public Spatial
 {
 	public:
 		enum TransformFeedbackVbo
