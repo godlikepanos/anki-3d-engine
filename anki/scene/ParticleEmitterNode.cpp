@@ -12,7 +12,7 @@
 namespace anki {
 
 
-btTransform ParticleEmitterNode::startingTrf(toBt(Mat3::getIdentity()),
+/*btTransform ParticleEmitterNode::startingTrf(toBt(Mat3::getIdentity()),
 	btVector3(10000000.0, 10000000.0, 10000000.0));
 
 
@@ -222,7 +222,7 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 	{
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
-}
+}*/
 
 
 } // end namespace

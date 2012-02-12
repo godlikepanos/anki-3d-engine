@@ -14,7 +14,7 @@ class btCollisionShape;
 
 namespace anki {
 
-class Particle;
+/*class Particle;
 
 
 /// The particle emitter scene node. This scene node emitts
@@ -45,7 +45,7 @@ class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 inline ParticleEmitterNode::ParticleEmitterNode(Scene& scene, ulong flags,
 	SceneNode* parent)
 :	SceneNode(SNT_PARTICLE_EMITTER_NODE, scene, flags, parent)
-{}
+{}*/
 
 
 } // end namespace

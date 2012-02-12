@@ -57,7 +57,18 @@ SpotLight::SpotLight(const char* fmtl,
 	uint movableFlags, Movable* movParent)
 	: Light(LT_SPOT, fmtl, name, scene, movableFlags, movParent, &frustum),
 		Frustumable(&frustum)
-{}
+{
+	PropertyBase& pbase = findPropertyBaseByName("radius");
+	Property<float>& prop = pbase.upCast<Property<float> >();
+	ANKI_CONNECT(&prop, valueChanged, this, updateZFar);
+
+	Property<float>* angProp = new  ReadWriteProperty("angle", 45.0);
+	addNewProperty(angProp);
+	ANKI_CONNECT(angProp, valueChanged, this, updateFov);
+
+	frustum.setAll(angProg->getValue(), angProg->getValue(), 0.1,
+		prop.getValue());
+}
 
 
 } // end namespace

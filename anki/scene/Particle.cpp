@@ -4,7 +4,7 @@
 
 namespace anki {
 
-
+/*
 //==============================================================================
 // Constructor                                                                 =
 //==============================================================================
@@ -28,7 +28,7 @@ Particle::~Particle()
 void Particle::setNewRigidBody(RigidBody* body_)
 {
 	body.reset(body_);
-}
+}*/
 
 
 } // end namespace

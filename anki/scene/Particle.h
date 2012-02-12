@@ -12,7 +12,7 @@ class RigidBody;
 
 
 /// The scene node particle class
-class Particle: public ModelNode
+/*class Particle: public ModelNode
 {
 	public:
 		Particle(float timeOfDeath, Scene& scene, ulong flags,
@@ -31,7 +31,7 @@ class Particle: public ModelNode
 	private:
 		float timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
 		boost::scoped_ptr<RigidBody> body; ///< For garbage collection
-};
+};*/
 
 
 } // end namespace

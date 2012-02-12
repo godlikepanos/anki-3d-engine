@@ -45,6 +45,9 @@ public:
 	Frustum(FrustumType type_)
 		: CollisionShape(CST_FRUSTUM), type(type_)
 	{}
+
+	virtual ~Frustum()
+	{}
 	/// @}
 
 	/// @name Accessors
@@ -182,6 +185,14 @@ public:
 
 	/// Implements CollisionShape::testPlane
 	float testPlane(const Plane& p) const;
+
+	/// Calculate and get transformed
+	PerspectiveFrustum getTransformed(const Transform& trf) const
+	{
+		PerspectiveFrustum o = *this;
+		o.transform(trf);
+		return o;
+	}
 
 	/// Re-implements Frustum::transform
 	void transform(const Transform& trf);

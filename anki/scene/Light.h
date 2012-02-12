@@ -143,6 +143,8 @@ public:
 class SpotLight: public Light, public Frustumable
 {
 public:
+	ANKI_OBSERVING(SpotLight)
+
 	/// @name Constructors/Destructor
 	/// @{
 	SpotLight(const char* fmtl,
@@ -150,15 +152,47 @@ public:
 		uint movableFlags, Movable* movParent);
 	/// @}
 
-private:
-	PerspectiveFrustum frustumW;
-	PerspectiveFrustum frustumL;
+	/// @name Movable virtuals
+	/// @{
 
-	void updateFrustum(const PerspectiveFrustum&)
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update the collision shape
+	void movableUpdate()
 	{
-		//frustumL.setRadius(r);
+		Movable::movableUpdate();
+		frustum.transform(getWorldTransform());
+		viewMat = Mat4(getWorldTransform().getInverse());
 	}
-	ANKI_SLOT(updateFrustum, const PerspectiveFrustum&)
+	/// @}
+
+	/// @name Frustumable virtuals
+	/// @{
+
+	/// Implements Frustumable::frustumUpdate(). Calculate the projection
+	/// matrix
+	void frustumUpdate()
+	{
+		projectionMat = getFrustum().calculateProjectionMatrix();
+	}
+	/// @}
+
+private:
+	PerspectiveFrustum frustum;
+	Mat4 projectionMat;
+	Mat4 viewMat;
+
+	void updateZFar(const float& f)
+	{
+		frustum.setZFar(r);
+	}
+	ANKI_SLOT(updateZFar, const float&)
+
+	void updateFov(const float& f)
+	{
+		frustum.setFovX(f);
+		frustum.setFovY(f);
+	}
+	ANKI_SLOT(updateFov, const float&)
 };
 
 

@@ -2,13 +2,15 @@
 #define ANKI_SCENE_MODEL_NODE_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/resource/Resource.h"
 #include "anki/scene/Renderable.h"
+#include "anki/scene/Movable.h"
+#include "anki/scene/Spatial.h"
+#include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 #include "anki/collision/Obb.h"
-#include "anki/scene/MaterialRuntime.h"
+
 #include <boost/array.hpp>
-#include <vector>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -17,119 +19,127 @@ namespace anki {
 
 
 /// A fragment of the ModelNode
-class ModelPatchNode: public Renderable, public SceneNode
+class ModelPatchNode: public SceneNode, public Movable, public Renderable,
+	public Spatial
 {
 public:
-	ModelPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
-		: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
-			SNF_INHERIT_PARENT_TRANSFORM, parent), modelPatch(modelPatch_)
+	/// @name Constructors/Destructor
+	/// @{
+	ModelPatchNode(const ModelPatch* modelPatch_,
+		const char* name, Scene* scene, // Scene
+		uint movableFlags, Movable* movParent); // Movable
+	/// @}
+
+	/// @name SceneNode virtuals
+	/// @{
+
+	/// Override SceneNode::getMovable()
+	Movable* getMovable()
 	{
-		mtlr.reset(new MaterialRuntime(modelPatch->getMaterial()));
+		return this;
 	}
 
-	/// Implements SceneNode::getVisibilityCollisionShapeWorldSpace
-	const CollisionShape*
-		getVisibilityCollisionShapeWorldSpace() const
+	/// Override SceneNode::getSpatial()
+	Spatial* getSpatial()
 	{
-		return &visibilityShapeWSpace;
+		return this;
 	}
 
-	void init(const char*)
-	{}
-
-	/// Re-implements SceneNode::moveUpdate
-	void moveUpdate()
+	/// Override SceneNode::getRenderable
+	Renderable* getRenderable()
 	{
-		visibilityShapeWSpace =
-			modelPatch->getMesh().getVisibilityShape().getTransformed(
-			getParent()->getWorldTransform());
+		return this;
+	}
+	/// @}
+
+	// @name Movable virtuals
+	/// @{
+
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update the collision shape
+	void movableUpdate()
+	{
+		Movable::movableUpdate();
+		obb = modelPatch->getMeshBase().getBoundingShape().getTransformed(
+			getWorldTransform());
+	}
+	/// @}
+
+	/// @name Renderable virtuals
+	/// @{
+
+	/// Implements Renderable::getModelPatchBase
+	const ModelPatchBase& getModelPatchBase() const
+	{
+		return *modelPatch;
 	}
 
-	/// Implements Renderable::getVao
-	const Vao& getVao(const PassLevelKey& k)
+	/// Implements  Renderable::getMaterial
+	const Material& getMaterial() const
 	{
-		return modelPatch->getVao(k);
+		return modelPatch->getMaterial();
 	}
-
-	/// Implements Renderable::getVertexIdsNum
-	uint getVertexIdsNum(const PassLevelKey& k)
-	{
-		return modelPatch->getMesh().getVertsNum();
-	}
-
-	/// Implements Renderable::getMaterialRuntime
-	MaterialRuntime& getMaterialRuntime()
-	{
-		return *mtlr;
-	}
-
-	/// Implements Renderable::getWorldTransform
-	const Transform& getWorldTransform(const PassLevelKey&)
-	{
-		return SceneNode::getWorldTransform();
-	}
-
-	/// Implements Renderable::getPreviousWorldTransform
-	const Transform& getPreviousWorldTransform(
-		const PassLevelKey& k)
-	{
-		return SceneNode::getPrevWorldTransform();
-	}
+	/// @}
 
 private:
-	Obb visibilityShapeWSpace;
-	const ModelPatch* modelPatch;
-	boost::scoped_ptr<MaterialRuntime> mtlr; ///< Material runtime
+	Obb obb; ///< In world space
+	const ModelPatch* modelPatch; ///< The resource
 };
 
 
 /// The model scene node
-class ModelNode: public SceneNode
+class ModelNode: public SceneNode, public Movable, public Spatial
 {
 public:
-	typedef boost::iterator_range<std::vector<ModelPatchNode*>::
-		const_iterator> ConstRangeModelPatchNodes;
+	typedef boost::ptr_vector<ModelPatchNode> ModelPatchNodes;
 
-	typedef boost::iterator_range<std::vector<ModelPatchNode*>::
-		iterator> MutableRangeModelPatchNodes;
+	typedef boost::iterator_range<ModelPatchNodes::const_iterator>
+		ConstRangeModelPatchNodes;
 
-	ModelNode(Scene& scene, ulong flags, SceneNode* parent);
-	virtual ~ModelNode();
+	typedef boost::iterator_range<ModelPatchNodes::iterator>
+		MutableRangeModelPatchNodes;
 
-	/// @name Accessors
+	/// @name Constructors/Destructor
 	/// @{
-	ConstRangeModelPatchNodes getModelPatchNodes() const
+	ModelNode(const char* modelFname,
+		const char* name, Scene* scene, // SceneNode
+		uint movableFlags, Movable* movParent); // Movable
+
+	virtual ~ModelNode();
+	/// @}
+
+	/// @name SceneNode virtuals
+	/// @{
+
+	/// Override SceneNode::getMovable()
+	Movable* getMovable()
 	{
-		return ConstRangeModelPatchNodes(patches.begin(), patches.end());
-	}
-	MutableRangeModelPatchNodes getModelPatchNodes()
-	{
-		return MutableRangeModelPatchNodes(patches.begin(), patches.end());
+		return this;
 	}
 
-	const Model& getModel() const
+	/// Override SceneNode::getSpatial()
+	Spatial* getSpatial()
 	{
-		return *model;
-	}
-
-	const CollisionShape*
-		getVisibilityCollisionShapeWorldSpace() const
-	{
-		return &visibilityShapeWSpace;
+		return this;
 	}
 	/// @}
 
-	/// Initialize the node
-	/// - Load the resource
-	void init(const char* filename);
+	/// @name Movable virtuals
+	/// @{
 
-	/// Update the bounding shape
-	void moveUpdate();
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update collision shape
+	void movableUpdate()
+	{
+		obb = model->getVisibilityShape().getTransformed(
+			getWorldTransform());
+	}
+	/// @}
 
 private:
-	ModelResourcePointer model;
-	std::vector<ModelPatchNode*> patches;
-	Obb visibilityShapeWSpace;
+	ModelResourcePointer model; ///< The resource
+	ModelPatchNodes patches;
+	Obb obb;
 };
 
 

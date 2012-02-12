@@ -26,7 +26,7 @@ public:
 		CT_COUNT
 	};
 
-	/// @name Constructors
+	/// @name Constructors/Destructor
 	/// @{
 	Camera(CameraType type_,
 		const char* name, Scene* scene, // SceneNode
@@ -35,9 +35,9 @@ public:
 		: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
 			Spatial(frustum), Frustumable(frustum), type(type_)
 	{}
-	/// @}
 
 	virtual ~Camera();
+	/// @}
 
 	/// @name Accessors
 	/// @{
