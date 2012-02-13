@@ -26,7 +26,7 @@ public:
 		VBO_TF_POSITIONS, ///< VBO never empty
 		VBO_TF_NORMALS, ///< VBO never empty
 		VBO_TF_TANGENTS, ///< VBO never empty
-		VBOS_TF_NUMBER
+		VBOS_TF_COUNT
 	};
 
 	/// Create the @a tfVbos with empty data
@@ -76,7 +76,7 @@ public:
 	/// @}
 
 private:
-	boost::array<Vbo, TFV_NUM> tfVbos;
+	boost::array<Vbo, VBOS_TF_COUNT> tfVbos;
 	const Mesh* mesh; ///< The resource
 };
 
@@ -86,14 +86,6 @@ class SkinPatchNode: public SceneNode, public Movable, public Renderable,
 	public Spatial
 {
 	public:
-		enum TransformFeedbackVbo
-		{
-			TFV_POSITIONS,
-			TFV_NORMALS,
-			TFV_TANGENTS,
-			TFV_NUM
-		};
-
 		/// See TfHwSkinningGeneric.glsl for the locations
 		enum TfShaderProgAttribLoc
 		{

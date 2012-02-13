@@ -17,6 +17,24 @@ struct Observer
 };
 
 
+/// An over-qualified observer
+template<typename ObservingType, typename Value,
+	void (ObservingType::*method)(Value)>
+struct SuperObserver: Observer<Value>
+{
+	ObservingType* reveiver;
+
+	SuperObserver(ObservingType* reveiver_)
+		: reveiver(reveiver_)
+	{}
+
+	void notify(Value x)
+	{
+		(reveiver->*method)(x);
+	}
+};
+
+
 /// Basically a container of observers
 template<typename T>
 class Observable
@@ -54,24 +72,6 @@ private:
 };
 
 
-/// An over-qualified observer
-template<typename ObservingType, typename Value,
-	void (ObservingType::*method)(Value)>
-struct Observing: Observer<Value>
-{
-	ObservingType* reveiver;
-
-	Observing(ObservingType* reveiver_)
-		: reveiver(reveiver_)
-	{}
-
-	void notify(Value x)
-	{
-		(reveiver->*method)(x);
-	}
-};
-
-
 /// If a class has slots it should include this
 #define ANKI_OBSERVING(_class) \
 	typedef _class ObservingType;
@@ -88,7 +88,7 @@ struct Observing: Observer<Value>
 
 /// Define a slot. This should follow the method declaration
 #define ANKI_SLOT(_name, _type) \
-	typedef Observing<ObservingType, _type, &ObservingType::_name> \
+	typedef SuperObserver<ObservingType, _type, &ObservingType::_name> \
 		Observing_##_name;
 
 
