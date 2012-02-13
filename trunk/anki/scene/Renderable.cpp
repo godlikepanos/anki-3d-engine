@@ -16,19 +16,18 @@ struct CreateNewPropertyVisitor: boost::static_visitor<void>
 {
 	const MaterialVariable* mvar;
 	PropertyMap* pmap;
-
-	CreateNewPropertyVisitor(const MaterialVariable* mvar_, PropertyMap* pmap_)
-		: mvar(mvar_), pmap(pmap_)
-	{}
+	Renderable::Properties* rprops;
 
 	template<typename T>
-	void operator()(const T& x) const
+	void operator()(const T&) const
 	{
-		typedef MaterialVariableReadCowPointerProperty<T> Prop;
-
-		Prop* prop = new Prop(mvar->getName().c_str(), &(mvar->getValue<T>()));
+		MaterialVariableProperty<T>* prop = new MaterialVariableProperty<T>(
+			mvar->getName().c_str(),
+			&(mvar->getValue<T>()),
+			!mvar->getInitialized());
 
 		pmap->addNewProperty(prop);
+		rprops->push_back(prop);
 	}
 };
 
@@ -38,14 +37,18 @@ struct CreateNewPropertyVisitor: boost::static_visitor<void>
 //==============================================================================
 
 //==============================================================================
-void Renderable::init(PropertyMap& pmap) const
+void Renderable::init(PropertyMap& pmap)
 {
 	const Material& mtl = getMaterial();
 
-	BOOST_FOREACH(const MaterialVariable& mv, mtl.getVariables())
+	CreateNewPropertyVisitor vis;
+	vis.pmap = &pmap;
+	vis.rprops = &props;
+
+	for(const MaterialVariable& mv : mtl.getVariables())
 	{
-		boost::apply_visitor(CreateNewPropertyVisitor(&mv, &pmap),
-			mv.getVariant());
+		vis.mvar = &mv;
+		boost::apply_visitor(vis, mv.getVariant());
 	}
 }
 

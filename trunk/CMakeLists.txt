@@ -136,6 +136,8 @@ ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 	ADD_DEFINITIONS("-DPLATFORM_WINDOWS")
 ENDIF()
 
+ADD_DEFINITIONS("-std=c++0x")
+
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 	# Removed because they do not work with boost::regexpr and who knows what
 	# else

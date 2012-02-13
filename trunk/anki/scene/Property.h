@@ -46,6 +46,7 @@ public:
 		return tid;
 	}
 
+	/// Get the property value. Throws if the @a T is incorrect
 	template<typename T>
 	const T& getValue() const
 	{
@@ -53,6 +54,7 @@ public:
 		return static_cast<const Property<T>*>(this)->getValue();
 	}
 
+	/// Set the property value. Throws if the @a T is incorrect
 	template<typename T>
 	void setValue(const T& x)
 	{
@@ -61,7 +63,7 @@ public:
 	}
 	/// @}
 
-	/// Upcast to property
+	/// Upcast to property. It makes a runtime check
 	template<typename Prop>
 	Prop& upCast()
 	{
@@ -71,7 +73,7 @@ public:
 
 private:
 	std::string name;
-	uint tid;
+	uint tid; ///< Type ID
 
 	/// Runtime type checking
 	template<typename Prop>
@@ -95,7 +97,7 @@ public:
 
 	/// Unique id for every type of property
 	/// @note Don't even think of defining a default value in this or any other
-	///       header
+	///       .h file
 	static const uint TYPE_ID;
 
 	/// @name Constructors/Destructor
@@ -121,6 +123,7 @@ public:
 	}
 	/// @}
 
+	/// Signal that it is emitted when the value gets changed
 	ANKI_SIGNAL(const Value&, valueChanged)
 };
 
@@ -218,7 +221,7 @@ public:
 	/// @}
 
 private:
-	const Value* ptr; ///< Have only one const pointer for size saving
+	const Value* ptr;
 };
 
 
@@ -255,7 +258,7 @@ public:
 	/// @}
 
 private:
-	Value* ptr; ///< Have only one const pointer for size saving
+	Value* ptr;
 };
 
 
@@ -317,7 +320,8 @@ public:
 	typedef boost::ptr_vector<PropertyBase> Container;
 	typedef ConstCharPtrHashMap<PropertyBase*>::Type NameToPropertyMap;
 
-	/// Create a new property
+	/// Add new property to the map. The map gets the ownership of this
+	/// property
 	template<typename T>
 	Property<T>& addNewProperty(Property<T>* newp)
 	{
@@ -332,7 +336,7 @@ public:
 		return *newp;
 	}
 
-	/// XXX
+	/// Self explanatory
 	const PropertyBase& findPropertyBaseByName(const char* name) const
 	{
 		NameToPropertyMap::const_iterator it = map.find(name);
@@ -343,7 +347,7 @@ public:
 		return *(it->second);
 	}
 
-	/// XXX
+	/// Self explanatory
 	PropertyBase& findPropertyBaseByName(const char* name)
 	{
 		NameToPropertyMap::iterator it = map.find(name);
@@ -372,7 +376,7 @@ public:
 		return map.find(name) != map.end();
 	}
 
-	/// XXX
+	/// Set the value of a property. It may throw
 	template<typename T>
 	void setValue(const char* name, const T& v)
 	{
