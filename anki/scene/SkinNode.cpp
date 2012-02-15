@@ -14,6 +14,23 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+const Vbo* SkinMesh::getVbo(VboId id) const
+{
+	switch(id)
+	{
+		case VBO_POSITIONS:
+			return &tfVbos[VBO_TF_POSITIONS];
+		case VBO_NORMALS:
+			return &tfVbos[VBO_TF_NORMALS];
+		case VBO_TANGENTS:
+			return &tfVbos[VBO_TF_TANGENTS];
+		default:
+			return mesh->getVbo(id);
+	}
+}
+
+
+//==============================================================================
 SkinMesh::SkinMesh(const Mesh* mesh_)
 	: mesh(mesh_)
 {
@@ -56,6 +73,30 @@ SkinMesh::SkinMesh(const Mesh* mesh_)
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 //==============================================================================
+//==============================================================================
+SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
+	const char* name, Scene* scene,
+	uint movableFlags, Movable* movParent)
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+	  Spatial(spatialCs)
+{
+	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
+
+	tfVao.create();
+	if(skinModelPatch->getMeshBase().getVbo(MeshBase::VBO_NORMALS))
+	{
+		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_POSITIONS),
+			POSITION_LOC,
+			3,
+			GL_FLOAT,
+			false,
+			0,
+			NULL);
+	}
+
+	Renderable::init(*this);
+}
+
 SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 	: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
 		SNF_INHERIT_PARENT_TRANSFORM, parent),
