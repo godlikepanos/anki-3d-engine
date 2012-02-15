@@ -23,9 +23,9 @@ void Mesh::load(const char* filename)
 		//
 		// Sanity checks
 		//
-		if(meshData.getVertIndeces().size() < 1 ||
-			meshData.getVertCoords().size() < 1 ||
-			meshData.getVertNormals().size() < 1)
+		if(meshData.getVertIndeces().size() < 1
+			|| meshData.getVertCoords().size() < 1
+			|| meshData.getVertNormals().size() < 1)
 		{
 			throw ANKI_EXCEPTION("Empty one of the required vectors");
 		}
