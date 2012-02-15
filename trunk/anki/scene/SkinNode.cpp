@@ -3,10 +3,13 @@
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/MeshLoader.h"
-#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 namespace anki {
+
+
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
 //==============================================================================
@@ -31,7 +34,7 @@ const Vbo* SkinMesh::getVbo(VboId id) const
 
 
 //==============================================================================
-SkinMesh::SkinMesh(const Mesh* mesh_)
+SkinMesh::SkinMesh(const MeshBase* mesh_)
 	: mesh(mesh_)
 {
 	// Positions
@@ -39,7 +42,7 @@ SkinMesh::SkinMesh(const Mesh* mesh_)
 	{
 		tfVbos[VBO_TF_POSITIONS].create(
 			GL_ARRAY_BUFFER,
-			mesh->getVbo(VBO_POSITIONS).getSizeInBytes(),
+			mesh->getVbo(VBO_POSITIONS)->getSizeInBytes(),
 			NULL,
 			GL_STATIC_DRAW);
 	}
@@ -49,7 +52,7 @@ SkinMesh::SkinMesh(const Mesh* mesh_)
 	{
 		tfVbos[VBO_TF_NORMALS].create(
 			GL_ARRAY_BUFFER,
-			mesh->getVbo(VBO_NORMALS).getSizeInBytes(),
+			mesh->getVbo(VBO_NORMALS)->getSizeInBytes(),
 			NULL,
 			GL_STATIC_DRAW);
 	}
@@ -59,7 +62,7 @@ SkinMesh::SkinMesh(const Mesh* mesh_)
 	{
 		tfVbos[VBO_TF_TANGENTS].create(
 			GL_ARRAY_BUFFER,
-			mesh->getVbo(VBO_TANGENTS).getSizeInBytes(),
+			mesh->getVbo(VBO_TANGENTS)->getSizeInBytes(),
 			NULL,
 			GL_STATIC_DRAW);
 	}
@@ -67,67 +70,27 @@ SkinMesh::SkinMesh(const Mesh* mesh_)
 
 
 //==============================================================================
-// SkinPatchNode                                                               =
+// SkinModelPatch                                                              =
 //==============================================================================
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
-
 //==============================================================================
-//==============================================================================
-SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
-	const char* name, Scene* scene,
-	uint movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-	  Spatial(spatialCs)
+SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
+	: mpatch(mpatch_)
 {
-	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
+	skinMesh.reset(new SkinMesh(&mpatch->getMeshBase()));
+	create();
 
-	tfVao.create();
-	if(skinModelPatch->getMeshBase().getVbo(MeshBase::VBO_NORMALS))
-	{
-		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_POSITIONS),
-			POSITION_LOC,
-			3,
-			GL_FLOAT,
-			false,
-			0,
-			NULL);
-	}
-
-	Renderable::init(*this);
-}
-
-SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
-	: SceneNode(SNT_RENDERABLE_NODE, parent->getScene(),
-		SNF_INHERIT_PARENT_TRANSFORM, parent),
-		modelPatch(modelPatch_),
-		mtlr(new MaterialRuntime(modelPatch_->getMaterial()))
-{
-	ModelPatch::VboArray vboArr;
-	const Mesh& mesh = modelPatch->getMesh();
-
-	for(uint i = 0; i < Mesh::VBOS_NUM; i++)
-	{
-		vboArr[i] = &mesh.getVbo((Mesh::Vbos)i);
-	}
-
+	// Create the VAO
 	//
-	// Create the VAOs
-	//
-
+	const MeshBase& mesh = mpatch->getMeshBase();
 	tfVao.create();
+	const Vbo* vbo;
 
 	// Positions
-	if(mesh.getVbo(Mesh::VBO_VERT_POSITIONS).isCreated())
+	vbo = mesh.getVbo(MeshBase::VBO_POSITIONS);
+	if(vbo)
 	{
-		tfVbos[TFV_POSITIONS].create(GL_ARRAY_BUFFER,
-			mesh.getVbo(Mesh::VBO_VERT_POSITIONS).getSizeInBytes(),
-			NULL,
-			GL_STATIC_DRAW);
-
-		vboArr[Mesh::VBO_VERT_POSITIONS] = &tfVbos[TFV_POSITIONS];
-
-		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_POSITIONS),
+		tfVao.attachArrayBufferVbo(*vbo,
 			POSITION_LOC,
 			3,
 			GL_FLOAT,
@@ -137,16 +100,10 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 	}
 
 	// Normals
-	if(mesh.getVbo(Mesh::VBO_VERT_NORMALS).isCreated())
+	vbo = mesh.getVbo(MeshBase::VBO_NORMALS);
+	if(vbo)
 	{
-		tfVbos[TFV_NORMALS].create(GL_ARRAY_BUFFER,
-			mesh.getVbo(Mesh::VBO_VERT_NORMALS).getSizeInBytes(),
-			NULL,
-			GL_STATIC_DRAW);
-
-		vboArr[Mesh::VBO_VERT_NORMALS] = &tfVbos[TFV_NORMALS];
-
-		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_NORMALS),
+		tfVao.attachArrayBufferVbo(*vbo,
 			NORMAL_LOC,
 			3,
 			GL_FLOAT,
@@ -156,16 +113,10 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 	}
 
 	// Tangents
-	if(mesh.getVbo(Mesh::VBO_VERT_TANGENTS).isCreated())
+	vbo = mesh.getVbo(MeshBase::VBO_TANGENTS);
+	if(vbo)
 	{
-		tfVbos[TFV_TANGENTS].create(GL_ARRAY_BUFFER,
-			mesh.getVbo(Mesh::VBO_VERT_TANGENTS).getSizeInBytes(),
-			NULL,
-			GL_STATIC_DRAW);
-
-		vboArr[Mesh::VBO_VERT_TANGENTS] = &tfVbos[TFV_TANGENTS];
-
-		tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_TANGENTS),
+		tfVao.attachArrayBufferVbo(*vbo,
 			TANGENT_LOC,
 			4,
 			GL_FLOAT,
@@ -174,10 +125,10 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 			NULL);
 	}
 
-	// Attach some extra stuff to the tfVao
-	ANKI_ASSERT(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS).isCreated());
+	vbo = mesh.getVbo(Mesh::VBO_WEIGHTS);
+	ANKI_ASSERT(vbo);
 
-	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
+	tfVao.attachArrayBufferVbo(*vbo,
 		VERT_WEIGHT_BONES_NUM_LOC,
 		1,
 		GL_FLOAT,
@@ -185,7 +136,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 		sizeof(MeshLoader::VertexWeight),
 		BUFFER_OFFSET(0));
 
-	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
+	tfVao.attachArrayBufferVbo(*vbo,
 		VERT_WEIGHT_BONE_IDS_LOC,
 		4,
 		GL_FLOAT,
@@ -193,17 +144,30 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 		sizeof(MeshLoader::VertexWeight),
 		BUFFER_OFFSET(4));
 
-	tfVao.attachArrayBufferVbo(mesh.getVbo(Mesh::VBO_VERT_WEIGHTS),
+	tfVao.attachArrayBufferVbo(*vbo,
 		VERT_WEIGHT_WEIGHTS_LOC,
 		4,
 		GL_FLOAT,
 		GL_FALSE,
 		sizeof(MeshLoader::VertexWeight),
 		BUFFER_OFFSET(20));
+}
 
 
-	ModelPatch::createVaos(getMaterialRuntime().getMaterial(),
-		vboArr, vaos, vaosHashMap);
+//==============================================================================
+// SkinPatchNode                                                               =
+//==============================================================================
+
+//==============================================================================
+SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
+	const char* name, Scene* scene,
+	uint movableFlags, Movable* movParent,
+	CollisionShape* spatialCs)
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+		Spatial(spatialCs)
+{
+	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
+	Renderable::init(*this);
 }
 
 
@@ -212,24 +176,23 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent)
 //==============================================================================
 
 //==============================================================================
-SkinNode::SkinNode(Scene& scene, ulong flags, SceneNode* parent)
-:	SceneNode(SNT_SKIN_NODE, scene, flags, parent)
-{}
-
-
-//==============================================================================
-SkinNode::~SkinNode()
-{}
-
-
-//==============================================================================
-void SkinNode::init(const char* filename)
+SkinNode::SkinNode(const char* skinFname,
+	const char* name, Scene* scene, // SceneNode
+	uint movableFlags, Movable* movParent) // Movable
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this)
 {
-	skin.load(filename);
+	skin.load(skinFname);
 
-	BOOST_FOREACH(const ModelPatch& patch, skin->getModelPatches())
+	uint i = 0;
+	for(const ModelPatch& patch : skin->getModel().getModelPatches())
 	{
-		patches.push_back(new SkinPatchNode(&patch, this));
+		std::string name = skin.getResourceName()
+			+ boost::lexical_cast<std::string>(i);
+
+		patches.push_back(new SkinPatchNode(&patch,
+			name.c_str(), scene,
+			Movable::MF_IGNORE_LOCAL_TRANSFORM, this,
+			&visibilityShapeWSpace));
 	}
 
 	uint bonesNum = skin->getSkeleton().getBones().size();
@@ -241,17 +204,22 @@ void SkinNode::init(const char* filename)
 
 
 //==============================================================================
-void SkinNode::moveUpdate()
+SkinNode::~SkinNode()
+{}
+
+//==============================================================================
+void SkinNode::movableUpdate()
 {
 	visibilityShapeWSpace.set(tails);
-	visibilityShapeWSpace = visibilityShapeWSpace.getTransformed(
-		getWorldTransform());
+	visibilityShapeWSpace.transform(getWorldTransform());
 }
 
 
 //==============================================================================
-void SkinNode::frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/)
+void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
 {
+	SceneNode::frameUpdate(prevUpdateTime, crntTime, f);
+
 	frame += step;
 
 	if(frame > anim->getFramesNum())
@@ -259,11 +227,11 @@ void SkinNode::frameUpdate(float /*prevUpdateTime*/, float /*crntTime*/)
 		frame = 0.0;
 	}
 
-	// A nasty optimization that may produse ugly results
+	/*	// A nasty optimization that may produse ugly results
 	if(!isFlagEnabled(SNF_VISIBLE))
 	{
 		return;
-	}
+	}*/
 
 	interpolate(*anim, frame, boneTranslations,
 	    boneRotations);
@@ -298,17 +266,17 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 		}
 		else if((float)keyframes[j] > frame)
 		{
-			lPose = j-1;
+			lPose = j - 1;
 			rPose = j;
-			t = (frame - (float)keyframes[lPose]) / float(keyframes[rPose] -
-				keyframes[lPose]);
+			t = (frame - (float)keyframes[lPose])
+				/ float(keyframes[rPose] - keyframes[lPose]);
 			break;
 		}
 	}
 
 	// now for all bones update bone's poses
 	ANKI_ASSERT(boneRotations.size() >= 1);
-	for(uint i=0; i < boneRotations.size(); i++)
+	for(uint i = 0; i < boneRotations.size(); i++)
 	{
 		const BoneAnim& banim = animation.getBoneAnimations()[i];
 
