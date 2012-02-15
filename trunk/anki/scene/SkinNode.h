@@ -32,22 +32,17 @@ public:
 	/// Create the @a tfVbos with empty data
 	SkinMesh(const Mesh* mesh_);
 
+	/// @name Accessors
+	/// @{
+	const Vbo* getTfVbo(TfVboId id) const
+	{
+		return &tfVbos[id];
+	}
+	/// @}
+
 	/// @name Implementations of MeshBase virtuals
 	/// @{
-	const Vbo* getVbo(VboId id) const
-	{
-		switch(id)
-		{
-			case VBO_POSITIONS:
-				return &tfVbos[VBO_TF_POSITIONS];
-			case VBO_NORMALS:
-				return &tfVbos[VBO_TF_NORMALS];
-			case VBO_TANGENTS:
-				return &tfVbos[VBO_TF_TANGENTS];
-			default:
-				return mesh->getVbo(id);
-		}
-	}
+	const Vbo* getVbo(VboId id) const;
 
 	uint getTextureChannelsNumber() const
 	{
@@ -81,79 +76,98 @@ private:
 };
 
 
+/// XXX
+class SkinModelPatch: public ModelPatchBase
+{
+public:
+	SkinModelPatch(const ModelPatch* mpatch_)
+		: mpatch(mpatch_)
+	{
+		skinMesh.reset(new SkinMesh(&mpatch->getMeshBase()));
+		create();
+	}
+
+	const MeshBase& getMeshBase() const
+	{
+		return *skinMesh;
+	}
+
+	const Material& getMaterial() const
+	{
+		return mpatch->getMaterial();
+	}
+
+private:
+	boost::scoped_ptr<SkinMesh> skinMesh;
+	const ModelPatch* mpatch;
+};
+
+
 /// A fragment of the SkinNode
 class SkinPatchNode: public SceneNode, public Movable, public Renderable,
 	public Spatial
 {
-	public:
-		/// See TfHwSkinningGeneric.glsl for the locations
-		enum TfShaderProgAttribLoc
-		{
-			POSITION_LOC,
-			NORMAL_LOC,
-			TANGENT_LOC,
-			VERT_WEIGHT_BONES_NUM_LOC,
-			VERT_WEIGHT_BONE_IDS_LOC,
-			VERT_WEIGHT_WEIGHTS_LOC
-		};
+public:
+	/// See TfHwSkinningGeneric.glsl for the locations
+	enum TfShaderProgAttribLoc
+	{
+		POSITION_LOC,
+		NORMAL_LOC,
+		TANGENT_LOC,
+		VERT_WEIGHT_BONES_NUM_LOC,
+		VERT_WEIGHT_BONE_IDS_LOC,
+		VERT_WEIGHT_WEIGHTS_LOC
+	};
 
-		SkinPatchNode(const ModelPatch* modelPatch_, SceneNode* parent);
+	/// @name Constructors/Destructor
+	/// @{
+	SkinPatchNode(const ModelPatch* modelPatch_,
+		const char* name, Scene* scene, // Scene
+		uint movableFlags, Movable* movParent, // Movable
+		CollisionShape* spatialCs); // Spatial
+	/// @}
 
-		/// @name Accessors
-		/// @{
-		const Vao& getTfVao() const
-		{
-			return tfVao;
-		}
+	/// @name SceneNode virtuals
+	/// @{
 
-		const Vbo& getTfVbo(uint i) const
-		{
-			return tfVbos[i];
-		}
-		/// @}
+	/// Override SceneNode::getMovable()
+	Movable* getMovable()
+	{
+		return this;
+	}
 
-		void init(const char*)
-		{}
+	/// Override SceneNode::getSpatial()
+	Spatial* getSpatial()
+	{
+		return this;
+	}
 
-		/// Implements Renderable::getVao
-		const Vao& getVao(const PassLevelKey& k)
-		{
-			return *vaosHashMap.at(k);
-		}
+	/// Override SceneNode::getRenderable
+	Renderable* getRenderable()
+	{
+		return this;
+	}
+	/// @}
 
-		/// Implements Renderable::getVertexIdsNum
-		uint getVertexIdsNum(const PassLevelKey& k)
-		{
-			return modelPatch->getMesh().getVertsNum();
-		}
+	/// @name Renderable virtuals
+	/// @{
 
-		/// Implements Renderable::getMaterialRuntime
-		MaterialRuntime& getMaterialRuntime()
-		{
-			return *mtlr;
-		}
+	/// Implements Renderable::getModelPatchBase
+	const ModelPatchBase& getModelPatchBase() const
+	{
+		return *skinModelPatch;
+	}
 
-		/// Implements Renderable::getWorldTransform
-		const Transform& getWorldTransform(const PassLevelKey&)
-		{
-			return SceneNode::getWorldTransform();
-		}
+	/// Implements Renderable::getMaterial
+	const Material& getMaterial() const
+	{
+		return skinModelPatch->getMaterial();
+	}
+	/// @}
 
-		/// Implements Renderable::getPreviousWorldTransform
-		const Transform& getPreviousWorldTransform(
-			const PassLevelKey& k)
-		{
-			return SceneNode::getPrevWorldTransform();
-		}
-
-	private:
-		ModelPatch::VaosContainer vaos;
-		ModelPatch::PassLevelToVaoHashMap vaosHashMap;
-		const ModelPatch* modelPatch;
-		boost::scoped_ptr<MaterialRuntime> mtlr; ///< Material runtime
-
-		boost::array<Vbo, TFV_NUM> tfVbos;
-		Vao tfVao; ///< For TF passes
+private:
+	boost::scoped_ptr<SkinModelPatch> skinModelPatch;
+	Vao tfVao;
 };
 
 

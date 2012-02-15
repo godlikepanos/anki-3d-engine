@@ -12,7 +12,7 @@
 namespace anki {
 
 
-/// XXX
+/// Model patch interface class
 class ModelPatchBase
 {
 public:
