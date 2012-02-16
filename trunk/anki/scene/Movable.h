@@ -94,6 +94,10 @@ public:
 	{
 		return flags & flag;
 	}
+	uint getFlagsBitmask() const
+	{
+		return flags;
+	}
 	/// @}
 
 	/// @name Mess with the local transform
