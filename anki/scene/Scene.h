@@ -10,6 +10,8 @@ namespace anki {
 
 
 /// The Scene contains all the dynamic entities
+///
+/// XXX Add physics
 class Scene
 {
 public:
@@ -23,8 +25,11 @@ public:
 		typedef boost::iterator_range<ConstIterator> ConstRange;
 	};
 
+	/// @name Constructors/Destructor
+	/// @{
 	Scene();
 	~Scene();
+	/// @}
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);
@@ -52,20 +57,6 @@ public:
 		ambientCol = x;
 	}
 
-	/*PhysWorld& getPhysWorld()
-	{
-		return *physPhysWorld;
-	}
-	const PhysWorld& getPhysWorld() const
-	{
-		return *physPhysWorld;
-	}
-
-	const VisibilityTester& getVisibilityTester() const
-	{
-		return *visibilityTester;
-	}*/
-
 	Types<SceneNode>::ConstRange getAllNodes() const
 	{
 		return Types<SceneNode>::ConstRange(nodes.begin(), nodes.end());
@@ -80,12 +71,13 @@ private:
 	/// @name Containers of scene's data
 	/// @{
 	Types<SceneNode>::Container nodes;
+	Types<Movable>::Container movables;
+	Types<Renderable>::Container renderables;
+	Types<Spatial>::Container spatials;
+	Types<Frustumable>::Container frustumables;
 	/// @}
 
 	Vec3 ambientCol; ///< The global ambient color
-	/// Connection with Bullet wrapper
-	/*boost::scoped_ptr<PhysWorld> physPhysWorld;
-	boost::scoped_ptr<VisibilityTester> visibilityTester;*/
 };
 
 

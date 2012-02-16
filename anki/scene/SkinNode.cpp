@@ -37,32 +37,37 @@ const Vbo* SkinMesh::getVbo(VboId id) const
 SkinMesh::SkinMesh(const MeshBase* mesh_)
 	: mesh(mesh_)
 {
+	const Vbo* vbo;
+
 	// Positions
-	if(mesh->getVbo(VBO_POSITIONS))
+	vbo = mesh->getVbo(VBO_POSITIONS);
+	if(vbo)
 	{
 		tfVbos[VBO_TF_POSITIONS].create(
 			GL_ARRAY_BUFFER,
-			mesh->getVbo(VBO_POSITIONS)->getSizeInBytes(),
+			vbo->getSizeInBytes(),
 			NULL,
 			GL_STATIC_DRAW);
 	}
 
 	// Normals
-	if(mesh->getVbo(VBO_NORMALS))
+	vbo = mesh->getVbo(VBO_NORMALS);
+	if(vbo)
 	{
 		tfVbos[VBO_TF_NORMALS].create(
 			GL_ARRAY_BUFFER,
-			mesh->getVbo(VBO_NORMALS)->getSizeInBytes(),
+			vbo->getSizeInBytes(),
 			NULL,
 			GL_STATIC_DRAW);
 	}
 
 	// Tangents
-	if(mesh->getVbo(VBO_TANGENTS))
+	vbo = mesh->getVbo(VBO_TANGENTS);
+	if(vbo)
 	{
 		tfVbos[VBO_TF_TANGENTS].create(
 			GL_ARRAY_BUFFER,
-			mesh->getVbo(VBO_TANGENTS)->getSizeInBytes(),
+			vbo->getSizeInBytes(),
 			NULL,
 			GL_STATIC_DRAW);
 	}
@@ -206,6 +211,7 @@ SkinNode::SkinNode(const char* skinFname,
 //==============================================================================
 SkinNode::~SkinNode()
 {}
+
 
 //==============================================================================
 void SkinNode::movableUpdate()

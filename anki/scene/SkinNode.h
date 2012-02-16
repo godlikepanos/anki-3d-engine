@@ -18,7 +18,9 @@ namespace anki {
 class Skin;
 
 
-/// XXX
+/// Skin specific mesh
+///
+/// It contains a number of VBOs for transform feedback
 class SkinMesh: public MeshBase
 {
 public:
@@ -78,7 +80,10 @@ private:
 };
 
 
-/// XXX
+/// Skin specific ModelPatch
+///
+/// It uses a SkinMesh to create the VAOs. It also creates a VAO for the
+/// transform feedback pass
 class SkinModelPatch: public ModelPatchBase
 {
 public:
@@ -109,6 +114,11 @@ public:
 	{
 		return *skinMesh;
 	}
+
+	const Vao& getTransformFeedbackVao() const
+	{
+		return tfVao;
+	}
 	/// @}
 
 	/// @name Implementations of ModelPatchBase virtuals
@@ -127,7 +137,7 @@ public:
 private:
 	boost::scoped_ptr<SkinMesh> skinMesh;
 	const ModelPatch* mpatch;
-	Vao tfVao;
+	Vao tfVao; ///< Used as a source VAO in TFB
 };
 
 
@@ -184,7 +194,6 @@ public:
 
 private:
 	boost::scoped_ptr<SkinModelPatch> skinModelPatch;
-	Vao tfVao;
 };
 
 
@@ -287,12 +296,6 @@ public:
 	PatchesMutableRange getPatchNodes()
 	{
 		return PatchesMutableRange(patches.begin(), patches.end());
-	}
-
-	const CollisionShape*
-		getVisibilityCollisionShapeWorldSpace() const
-	{
-		return &visibilityShapeWSpace;
 	}
 
 	const Skin& getSkin() const
