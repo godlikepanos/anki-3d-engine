@@ -25,6 +25,8 @@ public:
 		typedef boost::iterator_range<ConstIterator> ConstRange;
 	};
 
+	typedef ConstCharPtrHashMap<SceneNode*>::Type NameToSceneNodeMap;
+
 	/// @name Constructors/Destructor
 	/// @{
 	Scene();
@@ -67,6 +69,11 @@ public:
 	}
 	/// @}
 
+	bool nodeExists(const char* name) const
+	{
+		return nameToNode.find(name) != nameToNode.end();
+	}
+
 private:
 	/// @name Containers of scene's data
 	/// @{
@@ -76,6 +83,8 @@ private:
 	Types<Spatial>::Container spatials;
 	Types<Frustumable>::Container frustumables;
 	/// @}
+
+	NameToSceneNodeMap nameToNode;
 
 	Vec3 ambientCol; ///< The global ambient color
 };
