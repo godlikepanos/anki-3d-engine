@@ -10,9 +10,6 @@ namespace anki {
 Scene::Scene()
 {
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 4;
-
-	//physPhysWorld.reset(new PhysWorld);
-	//visibilityTester.reset(new VisibilityTester(*this));
 }
 
 
@@ -24,26 +21,25 @@ Scene::~Scene()
 //==============================================================================
 void Scene::registerNode(SceneNode* node)
 {
-	if(nodeExists(node->getName().c_str()))
-	{
-		throw ANKI_EXCEPTION("Scene node already exists: " + node.getName());
-	}
-
-	nodes.push_back(node);
-	nameToNode[node->getName().c_str()] = node;
+	addC(nodes, node);
+	addDict(nameToNode, node);
 }
 
 
 //==============================================================================
 void Scene::unregisterNode(SceneNode* node)
 {
-	Types<SceneNode>::Iterator it;
-	for(it : nodes)
+	removeC(nodes, node);
+	removeDict(nameToNode, node);
+}
+
+
+//==============================================================================
+void Scene::update(float prevUpdateTime, float crntTime, int frame)
+{
+	for(SceneNode* n : nodes)
 	{
-		if(*it == node)
-		{
-			break;
-		}
+		n->frameUpdate(prevUpdateTime, crntTime, frame);
 	}
 }
 
