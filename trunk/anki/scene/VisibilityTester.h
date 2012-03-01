@@ -20,24 +20,22 @@ class VisibilityInfo
 	friend class VisibilityTester;
 
 public:
-	typedef std::vector<Renderable*> Renderables;
-	typedef std::vector<Frustumable*> Frustumables;
-
-	boost::iterator_range<Renderables::iterator> getRenderables()
+	struct Pair
 	{
-		return boost::iterator_range<Renderables::iterator>(
-			renderables.begin(), renderables.end());
-	}
+		Renderable* renderable;
+		Frustumable* frustumable;
+	};
 
-	boost::iterator_range<Frustumables::iterator> getFrustumable()
+	typedef std::vector<Pair> Pairs;
+
+	boost::iterator_range<Pairs::iterator> getPairs()
 	{
-		return boost::iterator_range<Frustumables::iterator>(
-			frustumables.begin(), frustumables.end());
+		return boost::iterator_range<Pairs::iterator>(
+			pairs.begin(), pairs.end());
 	}
 
 private:
-	Renderables renderables;
-	std::vector<Frustumable*> frustumables;
+	Pairs pairs;
 };
 
 
