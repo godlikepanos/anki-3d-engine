@@ -33,16 +33,20 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 		}
 
 
+		VisibilityInfo::Pair p = {nullptr, nullptr};
+
 		if(fr)
 		{
-			vinfo.frustumables.push_back(fr);
+			p.frustumable = fr;
 		}
 
 		if(r)
 		{
 			r->enableFlag(Renderable::RF_VISIBLE);
-			vinfo.renderables.push_back(r);
+			p.renderable = r;
 		}
+
+		vinfo.pairs.push_back(p);
 	}
 }
 
