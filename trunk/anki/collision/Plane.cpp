@@ -81,4 +81,11 @@ Plane Plane::getTransformed(const Transform& trf) const
 }
 
 
+//==============================================================================
+void Plane::getAabb(Aabb&) const
+{
+	ANKI_ASSERT(0 && "Can't do that");
+}
+
+
 } // end namespace

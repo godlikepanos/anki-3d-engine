@@ -200,6 +200,12 @@ public:
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
 
+	/// Implements CollisionShape::getAabb
+	void getAabb(Aabb& b) const
+	{
+		/// XXX
+	}
+
 private:
 	/// @name Shape
 	/// @{
@@ -309,8 +315,14 @@ public:
 	/// Implements CollisionShape::testPlane
 	float testPlane(const Plane& p) const;
 
-	/// Re-implements Frustum::transform
+	/// Override Frustum::transform
 	void transform(const Transform& trf);
+
+	/// Implements CollisionShape::getAabb
+	void getAabb(Aabb& b) const
+	{
+		/// XXX
+	}
 
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;

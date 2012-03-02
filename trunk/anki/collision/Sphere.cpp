@@ -95,4 +95,12 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 }
 
 
+//==============================================================================
+void Sphere::getAabb(Aabb& aabb) const
+{
+	aabb.setMin(s.getCenter() - radius);
+	aabb.setMax(s.getCenter() + radius);
+}
+
+
 } // end namespace

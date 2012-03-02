@@ -51,4 +51,25 @@ LineSegment LineSegment::getTransformed(const Transform& transform) const
 }
 
 
+//==============================================================================
+void LineSegment::getAabb(Aabb& out) const
+{
+	Vec3 min = pls.getOrigin();
+	Vec3 max = pls.getOrigin() + ls.getDirection();
+
+	for(uint i = 0; i < 3; ++i)
+	{
+		if(max[i] < min[i])
+		{
+			float tmp = max[i];
+			max[i] = min[i];
+			min[i] = tmp;
+		}
+	}
+
+	out.setMin(min);
+	out.setMax(max);
+}
+
+
 } // end namespace

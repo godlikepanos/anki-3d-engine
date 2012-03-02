@@ -47,4 +47,11 @@ float Ray::testPlane(const Plane& p) const
 }
 
 
+//==============================================================================
+void Ray::getAabb(Aabb&) const
+{
+	ANKI_ASSERT(0 && "Can't do that");
+}
+
+
 } // end namespace

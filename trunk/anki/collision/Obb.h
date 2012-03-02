@@ -89,6 +89,12 @@ public:
 		*this = getTransformed(trf);
 	}
 
+	/// Implements CollisionShape::getAabb
+	void getAabb(Aabb& b) const
+	{
+		/// XXX
+	}
+
 	Obb getTransformed(const Transform& transform) const;
 
 	/// Get a collision shape that includes this and the given. Its not
