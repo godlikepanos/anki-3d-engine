@@ -93,6 +93,9 @@ public:
 		*this = getTransformed(trf);
 	}
 
+	/// Implements CollisionShape::getAabb
+	void getAabb(Aabb& b) const;
+
 	/// Return the transformed
 	Plane getTransformed(const Transform& trf) const;
 

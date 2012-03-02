@@ -80,6 +80,9 @@ public:
 		*this = getTransformed(trf);
 	}
 
+	/// Implements CollisionShape::getAabb
+	void getAabb(Aabb& b) const;
+
 	LineSegment getTransformed(const Transform& transform) const;
 
 private:

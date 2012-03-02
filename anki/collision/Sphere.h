@@ -83,6 +83,9 @@ public:
 		*this = getTransformed(trf);
 	}
 
+	/// Implements CollisionShape::getAabb
+	void getAabb(Aabb& b) const;
+
 	Sphere getTransformed(const Transform& transform) const;
 
 	/// Get the sphere that includes this sphere and the given. See a

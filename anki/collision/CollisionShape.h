@@ -70,6 +70,9 @@ public:
 	/// Transform
 	virtual void transform(const Transform& trf) = 0;
 
+	/// Get the AABB
+	virtual void getAabb(Aabb&) const = 0;
+
 	virtual void accept(MutableVisitor&) = 0;
 	virtual void accept(ConstVisitor&) const = 0;
 
