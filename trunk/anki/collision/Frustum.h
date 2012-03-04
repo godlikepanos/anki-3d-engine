@@ -5,7 +5,7 @@
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
 #include "anki/math/Math.h"
-#include <boost/array.hpp>
+#include <array>
 
 
 namespace anki {
@@ -103,7 +103,7 @@ public:
 
 protected:
 	/// Used to check against the frustum
-	boost::array<Plane, FP_COUNT> planes;
+	std::array<Plane, FP_COUNT> planes;
 
 	/// @name Viewing variables
 	/// @{
@@ -201,16 +201,13 @@ public:
 	Mat4 calculateProjectionMatrix() const;
 
 	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const
-	{
-		/// XXX
-	}
+	void getAabb(Aabb& aabb) const;
 
 private:
 	/// @name Shape
 	/// @{
 	Vec3 eye; ///< The eye point
-	boost::array<Vec3, 4> dirs; ///< Directions
+	std::array<Vec3, 4> dirs; ///< Directions
 	/// @}
 
 	/// @name Viewing variables
@@ -319,10 +316,7 @@ public:
 	void transform(const Transform& trf);
 
 	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const
-	{
-		/// XXX
-	}
+	void getAabb(Aabb& aabb) const;
 
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;

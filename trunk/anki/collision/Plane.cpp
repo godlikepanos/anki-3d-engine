@@ -38,7 +38,7 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	ANKI_ASSERT(!Math::isZero(normal.getLengthSquared()));
 
 	normal.normalize();
-	offset = normal.dot(p0); // ToDo: correct??
+	offset = normal.dot(p0); // XXX: correct??
 }
 
 

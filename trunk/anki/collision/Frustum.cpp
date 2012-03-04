@@ -1,6 +1,6 @@
 #include "anki/collision/Frustum.h"
 #include "anki/collision/LineSegment.h"
-#include <boost/foreach.hpp>
+#include "anki/collision/Aabb.h"
 
 
 namespace anki {
@@ -23,7 +23,7 @@ Frustum& Frustum::operator=(const Frustum& b)
 //==============================================================================
 bool Frustum::insideFrustum(const CollisionShape& b) const
 {
-	BOOST_FOREACH(const Plane& plane, planes)
+	for(const Plane& plane : planes)
 	{
 		if(b.testPlane(plane) < 0.0)
 		{
@@ -39,9 +39,9 @@ bool Frustum::insideFrustum(const CollisionShape& b) const
 void Frustum::transform(const Transform& trf)
 {
 	// Planes
-	for(uint i = 0; i < planes.size(); ++i)
+	for(Plane& p : planes)
 	{
-		planes[i].transform(trf);
+		p.transform(trf);
 	}
 }
 
@@ -53,7 +53,7 @@ void Frustum::transform(const Transform& trf)
 //==============================================================================
 PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 {
-	Frustum::operator=(*this);
+	Frustum::operator=(b);
 	eye = b.eye;
 	dirs = b.dirs;
 	fovX = b.fovX;
@@ -67,7 +67,7 @@ float PerspectiveFrustum::testPlane(const Plane& p) const
 {
 	float o = 0.0;
 
-	BOOST_FOREACH(const Vec3& dir, dirs)
+	for(const Vec3& dir : dirs)
 	{
 		LineSegment ls(eye, dir);
 		float t = ls.testPlane(p);
@@ -97,10 +97,19 @@ void PerspectiveFrustum::transform(const Transform& trf)
 
 	eye.transform(trf);
 
-	for(uint i = 0; i < dirs.size(); i++)
+	for(Vec3& dir : dirs)
 	{
-		dirs[i] = trf.getRotation() * dirs[i];
+		dir = trf.getRotation() * dir;
 	}
+}
+
+
+//==============================================================================
+void PerspectiveFrustum::getAabb(Aabb& aabb) const
+{
+	aabb.set(dirs);
+	aabb.getMin() += eye;
+	aabb.getMax() += eye;
 }
 
 
@@ -201,6 +210,13 @@ void OrthographicFrustum::transform(const Transform& trf)
 {
 	Frustum::transform(trf);
 	obb.transform(trf);
+}
+
+
+//==============================================================================
+void OrthographicFrustum::getAabb(Aabb& aabb) const
+{
+	obb.getAabb(aabb);
 }
 
 

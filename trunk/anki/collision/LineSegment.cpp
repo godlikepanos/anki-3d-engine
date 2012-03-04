@@ -1,5 +1,6 @@
 #include "anki/collision/LineSegment.h"
 #include "anki/collision/Plane.h"
+#include "anki/collision/Aabb.h"
 #include <algorithm>
 
 
@@ -52,10 +53,10 @@ LineSegment LineSegment::getTransformed(const Transform& transform) const
 
 
 //==============================================================================
-void LineSegment::getAabb(Aabb& out) const
+void LineSegment::getAabb(Aabb& aabb) const
 {
-	Vec3 min = pls.getOrigin();
-	Vec3 max = pls.getOrigin() + ls.getDirection();
+	Vec3 min = origin;
+	Vec3 max = origin + dir;
 
 	for(uint i = 0; i < 3; ++i)
 	{
@@ -67,8 +68,8 @@ void LineSegment::getAabb(Aabb& out) const
 		}
 	}
 
-	out.setMin(min);
-	out.setMax(max);
+	aabb.setMin(min);
+	aabb.setMax(max);
 }
 
 

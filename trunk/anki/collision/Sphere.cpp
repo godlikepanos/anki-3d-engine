@@ -1,5 +1,6 @@
 #include "anki/collision/Sphere.h"
 #include "anki/collision/Plane.h"
+#include "anki/collision/Aabb.h"
 
 
 namespace anki {
@@ -98,8 +99,8 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 //==============================================================================
 void Sphere::getAabb(Aabb& aabb) const
 {
-	aabb.setMin(s.getCenter() - radius);
-	aabb.setMax(s.getCenter() + radius);
+	aabb.setMin(center - radius);
+	aabb.setMax(center + radius);
 }
 
 
