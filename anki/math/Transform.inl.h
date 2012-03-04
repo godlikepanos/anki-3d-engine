@@ -167,7 +167,7 @@ inline Transform Transform::getInverse() const
 
 
 // invert
-void Transform::invert()
+inline void Transform::invert()
 {
 	*this = getInverse();
 }
@@ -178,7 +178,7 @@ void Transform::invert()
 //==============================================================================
 
 // Print
-std::ostream& operator<<(std::ostream& s, const Transform& a)
+inline std::ostream& operator<<(std::ostream& s, const Transform& a)
 {
 	s << "o: " << a.origin << "\n" <<
 		"s: " << a.scale << "\n" <<

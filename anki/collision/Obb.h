@@ -3,7 +3,7 @@
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
-#include <boost/array.hpp>
+#include <array>
 
 
 namespace anki {
@@ -90,10 +90,7 @@ public:
 	}
 
 	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const
-	{
-		/// XXX
-	}
+	void getAabb(Aabb& aabb) const;
 
 	Obb getTransformed(const Transform& transform) const;
 
@@ -106,7 +103,7 @@ public:
 	void set(const Container& container);
 
 	/// Get extreme points in 3D space
-	void getExtremePoints(boost::array<Vec3, 8>& points) const;
+	void getExtremePoints(std::array<Vec3, 8>& points) const;
 
 public:
 	/// @name Data

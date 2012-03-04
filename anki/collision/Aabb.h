@@ -87,6 +87,7 @@ public:
 		b = *this;
 	}
 
+	/// XXX Optimize it
 	Aabb getTransformed(const Transform& transform) const;
 
 	/// Get a collision shape that includes this and the given. Its not
@@ -114,7 +115,7 @@ void Aabb::set(const Container& container)
 	ANKI_ASSERT(container.size() >= 1);
 
 	min = container.front();
-	max = container.front();
+	max = min;
 
 	// for all the Vec3s calc the max and min
 	typename Container::const_iterator it = container.begin() + 1;

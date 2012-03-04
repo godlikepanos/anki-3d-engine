@@ -85,7 +85,7 @@ public:
 	}
 
 	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const;
+	void getAabb(Aabb& aabb) const;
 
 	Ray getTransformed(const Transform& transform) const;
 

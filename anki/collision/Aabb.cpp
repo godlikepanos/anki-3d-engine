@@ -10,48 +10,19 @@ namespace anki {
 //==============================================================================
 Aabb Aabb::getTransformed(const Transform& transform) const
 {
-	Aabb out;
-
-	// if there is no rotation our job is easy
-	if(transform.getRotation() == Mat3::getIdentity())
+	Mat3 absM;
+	for(int i = 0; i < 9; ++i)
 	{
-		out.min = (min * transform.getScale()) + transform.getOrigin();
-		out.max = (max * transform.getScale()) + transform.getOrigin();
-	}
-	// if not then we are fucked
-	else
-	{
-		/*boost::array<Vec3, 8> points = {{
-			max,
-			Vec3(min.x(), max.y(), max.z()),
-			Vec3(min.x(), min.y(), max.z()),
-			Vec3(max.x(), min.y(), max.z()),
-			Vec3(max.x(), max.y(), min.z()),
-			Vec3(min.x(), max.y(), min.z()),
-			min,
-			Vec3(max.x(), min.y(), min.z())
-		}};
-
-		for(size_t i = 0; i < points.size(); i++)
-		{
-			points[i].transform(transform);
-		}
-
-		out.set(points);*/
-
-		// Fast way:
-
-		// obb is the transformed this
-		Vec3 c = (min + max) / 2.0;
-		Obb obb = Obb(c.getTransformed(transform), transform.getRotation(),
-			(max - c) * transform.getScale());
-
-		boost::array<Vec3, 8> points;
-		obb.getExtremePoints(points);
-		out.set(points);
+		absM[i] = fabs(transform.getRotation()[i]);
 	}
 
-	return out;
+	Vec3 center = (min + max) / 2.0;
+	Vec3 extend = (max - min) / 2.0;
+
+	Vec3 newC = center.getTransformed(transform);
+	Vec3 newE = absM * (extend * transform.getScale());
+
+	return Aabb(newC - newE, newC + newE);
 }
 
 

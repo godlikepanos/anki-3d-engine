@@ -1,5 +1,6 @@
 #include "anki/collision/Obb.h"
 #include "anki/collision/Plane.h"
+#include "anki/collision/Aabb.h"
 
 
 namespace anki {
@@ -65,13 +66,13 @@ Obb Obb::getCompoundShape(const Obb& b) const
 {
 	Obb out;
 
-	boost::array<Vec3, 8> points0;
-	boost::array<Vec3, 8> points1;
+	std::array<Vec3, 8> points0;
+	std::array<Vec3, 8> points1;
 
 	getExtremePoints(points0);
 	b.getExtremePoints(points1);
 
-	boost::array<Vec3, 16> points;
+	std::array<Vec3, 16> points;
 	for(uint i = 0; i < 8; i++)
 	{
 		points[i] = points0[i];
@@ -84,7 +85,7 @@ Obb Obb::getCompoundShape(const Obb& b) const
 
 
 //==============================================================================
-void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
+void Obb::getExtremePoints(std::array<Vec3, 8>& points) const
 {
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
 	enum
@@ -118,11 +119,26 @@ void Obb::getExtremePoints(boost::array<Vec3, 8>& points) const
 	points[RTB] = 2.0 * points[LTF].dot(yAxis) * yAxis - points[LTF];
 	points[RBF] = 2.0 * points[LTF].dot(zAxis) * zAxis - points[LTF];
 
-	boost::array<Vec3, 8>::iterator it = points.begin();
+	std::array<Vec3, 8>::iterator it = points.begin();
 	for(; it != points.end(); ++it)
 	{
 		(*it) += center;
 	}
+}
+
+
+//==============================================================================
+void Obb::getAabb(Aabb& aabb) const
+{
+	Mat3 absM;
+	for(int i = 0; i < 9; ++i)
+	{
+		absM[i] = fabs(rotation[i]);
+	}
+
+	Vec3 newE = absM * extends;
+
+	aabb = Aabb(center - newE, center + newE);
 }
 
 
