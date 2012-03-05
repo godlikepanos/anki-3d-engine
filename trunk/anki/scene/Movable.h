@@ -31,10 +31,10 @@ public:
 	/// @{
 
 	/// The one and only constructor
-	/// @param flags_ The flags
+	/// @param flags The flags
 	/// @param parent The parent. It can be nullptr
 	/// @param pmap Property map to add a few variables
-	Movable(uint flags_, Movable* parent, PropertyMap& pmap);
+	Movable(uint flags, Movable* parent, PropertyMap& pmap);
 	/// @}
 
 	/// @name Accessors
@@ -46,22 +46,18 @@ public:
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
-		shouldUpdateWTrf = true;
 	}
 	void setLocalTranslation(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
-		shouldUpdateWTrf = true;
 	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
-		shouldUpdateWTrf = true;
 	}
 	void setLocalScale(float x)
 	{
 		lTrf.setScale(x);
-		shouldUpdateWTrf = true;
 	}
 
 	const Transform& getWorldTransform() const
@@ -105,40 +101,34 @@ public:
 	void rotateLocalX(float angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
-		shouldUpdateWTrf = true;
 	}
 	void rotateLocalY(float angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
-		shouldUpdateWTrf = true;
 	}
 	void rotateLocalZ(float angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
-		shouldUpdateWTrf = true;
 	}
 	void moveLocalX(float distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
-		shouldUpdateWTrf = true;
 	}
 	void moveLocalY(float distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
-		shouldUpdateWTrf = true;
 	}
 	void moveLocalZ(float distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
-		shouldUpdateWTrf = true;
 	}
 	/// @}
 
 	/// This is called by the @a update() method only when the object had
-	/// actually moved
+	/// actually moved. It's overridable
 	virtual void movableUpdate()
 	{}
 
@@ -150,8 +140,6 @@ public:
 	void update();
 
 protected:
-	bool shouldUpdateWTrf; ///< Its true when we change the local transform
-
 	Transform lTrf; ///< The transformation in local space
 
 	/// The transformation in world space (local combined with parent's

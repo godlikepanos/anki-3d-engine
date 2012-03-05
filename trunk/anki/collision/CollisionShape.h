@@ -11,7 +11,8 @@ namespace anki {
 /// @addtogroup Collision
 /// @{
 
-/// Abstract class for collision shapes
+/// Abstract class for collision shapes. It also features a visitor for
+/// implementing specific code outside the collision codebase (eg rendering)
 class CollisionShape
 {
 public:
@@ -52,14 +53,20 @@ public:
 	};
 
 
+	/// @name Constructors & destructor
+	/// @{
 	CollisionShape(CollisionShapeType cid_)
 		: cid(cid_)
 	{}
+	/// @}
 
+	/// @name Accessors
+	/// @{
 	CollisionShapeType getCollisionShapeType() const
 	{
 		return cid;
 	}
+	/// @}
 
 	/// If the collision shape intersects with the plane then the method
 	/// returns 0.0, else it returns the distance. If the distance is < 0.0
@@ -73,10 +80,14 @@ public:
 	/// Get the AABB
 	virtual void getAabb(Aabb&) const = 0;
 
+	/// Visitor accept
 	virtual void accept(MutableVisitor&) = 0;
+	/// Visitor accept
 	virtual void accept(ConstVisitor&) const = 0;
 
 private:
+	/// Keep an ID to avoid (in some cases) the visitor and thus the cost of
+	/// virtuals
 	CollisionShapeType cid;
 };
 /// @}
