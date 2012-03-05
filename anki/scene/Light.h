@@ -87,12 +87,17 @@ public:
 	const ModelPatchBase& getModelPatchBase() const
 	{
 		ANKI_ASSERT(0 && "Lights don't support it");
-		throw "";
+		throw ""; // Make the compiler not to complain about return val
 	}
 
 	Material& getMaterial()
 	{
 		return *mtl;
+	}
+
+	Light* getLight()
+	{
+		return this;
 	}
 	/// @}
 

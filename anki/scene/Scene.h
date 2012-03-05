@@ -2,6 +2,7 @@
 #define ANKI_SCENE_SCENE_H
 
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/VisibilityTester.h"
 #include "anki/math/Math.h"
 #include <boost/range/iterator_range.hpp>
 #include <vector>
@@ -33,17 +34,6 @@ public:
 	~Scene();
 	/// @}
 
-	/// Put a node in the appropriate containers
-	void registerNode(SceneNode* node);
-	void unregisterNode(SceneNode* node);
-
-	void update(float prevUpdateTime, float crntTime, int frame);
-
-	/*void doVisibilityTests(Camera& cam)
-	{
-		//XXX visibilityTester->test(cam);
-	}*/
-
 	/// @name Accessors
 	/// @{
 	const Vec3& getAmbientColor() const
@@ -69,21 +59,24 @@ public:
 	}
 	/// @}
 
+	/// Put a node in the appropriate containers
+	void registerNode(SceneNode* node);
+	void unregisterNode(SceneNode* node);
+
+	void update(float prevUpdateTime, float crntTime, int frame);
+
+	/*void doVisibilityTests(Camera& cam)
+	{
+		//XXX visibilityTester->test(cam);
+	}*/
+
 private:
-	/// @name Containers of scene's data
-	/// @{
 	Types<SceneNode>::Container nodes;
-	/*Types<Movable>::Container movables;
-	Types<Renderable>::Container renderables;
-	Types<Spatial>::Container spatials;
-	Types<Frustumable>::Container frustumables;*/
-	/// @}
-
 	Types<SceneNode>::NameToItemMap nameToNode;
-
 	Vec3 ambientCol; ///< The global ambient color
+	Camera* mainCam;
 
-	/// XXX
+	/// Add to a container
 	template<typename T>
 	void addC(typename Types<T>::Container& c, T* ptr)
 	{
@@ -91,7 +84,7 @@ private:
 		c.push_back(ptr);
 	}
 
-	/// XXX
+	/// Add to a dictionary
 	template<typename T>
 	void addDict(typename Types<T>::NameToItemMap& d, T* ptr)
 	{
@@ -103,7 +96,7 @@ private:
 		d[ptr->getName().c_str()] = ptr;
 	}
 
-	/// XXX
+	/// Remove from a container
 	template<typename T>
 	void removeC(typename Types<T>::Container& c, T* ptr)
 	{
@@ -120,7 +113,7 @@ private:
 		c.erase(it);
 	}
 
-	/// XXX
+	/// Remove from a dictionary
 	template<typename T>
 	void removeDict(typename Types<T>::NameToItemMap& d, T* ptr)
 	{

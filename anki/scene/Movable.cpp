@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
-	: Base(this, parent), shouldUpdateWTrf(true), flags(flags_)
+	: Base(this, parent), flags(flags_)
 {
 	pmap.addNewProperty(
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));

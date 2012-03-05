@@ -70,53 +70,6 @@ protected:
 };
 
 
-/// XXX
-/*class PerspectiveFrustumable: public Frustumable
-{
-public:
-	/// @name Constructors
-	/// @{
-	PerspectiveFrustumable(PerspectiveFrustum* fr)
-		: Frustumable(fr)
-	{}
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	float getFovX() const
-	{
-		return toPerpectiveFrustum()->getFovX();
-	}
-	void setFovX(float ang)
-	{
-		toPerpectiveFrustum()->setFovX(ang);
-		frustumUpdate();
-	}
-
-	float getFovY() const
-	{
-		return toPerpectiveFrustum()->getFovY();
-	}
-	void setFovY(float ang)
-	{
-		toPerpectiveFrustum()->setFovY(ang);
-		frustumUpdate();
-	}
-	/// @}
-
-private:
-	PerspectiveFrustum* toPerpectiveFrustum()
-	{
-		return static_cast<PerspectiveFrustum*>(frustum);
-	}
-	const PerspectiveFrustum* toPerpectiveFrustum() const
-	{
-		return static_cast<const PerspectiveFrustum*>(frustum);
-	}
-};*/
-/// @}
-
-
 } // namespace anki
 
 
