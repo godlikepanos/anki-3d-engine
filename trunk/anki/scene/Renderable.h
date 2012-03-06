@@ -12,6 +12,7 @@ namespace anki {
 class ModelPatchBase;
 class Material;
 class MaterialVariable;
+class Light;
 
 
 /// @addtogroup Scene
@@ -65,6 +66,9 @@ public:
 
 	Renderable()
 		: flags(RF_NONE)
+	{}
+
+	virtual ~Renderable()
 	{}
 
 	/// Access to VAOs

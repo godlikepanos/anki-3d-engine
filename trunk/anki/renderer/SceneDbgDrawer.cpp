@@ -1,52 +1,41 @@
 #include "anki/renderer/SceneDbgDrawer.h"
 #include "anki/renderer/Dbg.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/Light.h"
-#include "anki/scene/ParticleEmitterNode.h"
-#include "anki/scene/SkinNode.h"
-#include "anki/scene/PerspectiveCamera.h"
-#include "anki/scene/OrthographicCamera.h"
 #include "anki/scene/Octree.h"
+#include "anki/scene/Frustumable.h"
+#include "anki/scene/Spatial.h"
 
 
 namespace anki {
 
 
 //==============================================================================
-void SceneDbgDrawer::drawCamera(const Camera& cam) const
+void SceneDbgDrawer::draw(const Frustumable& fr, Dbg& dbg) const
 {
-	switch(cam.getCameraType())
-	{
-		case Camera::CT_PERSPECTIVE:
-		{
-			const PerspectiveCamera& pcam =
-				static_cast<const PerspectiveCamera&>(cam);
-			drawPerspectiveCamera(pcam);
-			break;
-		}
+	const Frustum& fs = fr.getFrustum();
 
-		case Camera::CT_ORTHOGRAPHIC:
-		{
-			const OrthographicCamera& ocam =
-				static_cast<const OrthographicCamera&>(cam);
-			drawOrthographicCamera(ocam);
+	switch(fs.getFrustumType())
+	{
+		case Frustum::FT_PERSPECTIVE:
+			draw(static_cast<const PerspectiveFrustum&>(fs), dbg);
 			break;
-		}
+
+		case Frustum::FT_ORTHOGRAPHIC:
+			draw(static_cast<const OrthographicFrustum&>(fs), dbg);
+			break;
 
 		default:
-			ANKI_ASSERT(false && "WTF?");
+			ANKI_ASSERT(0 && "WTF?");
 			break;
 	}
 }
 
 
 //==============================================================================
-void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
+void SceneDbgDrawer::draw(const PerspectiveFrustum& pf, Dbg& dbg) const
 {
 	dbg.setColor(Vec4(1.0, 0.0, 1.0, 1.0));
-	dbg.setModelMat(Mat4(cam.getWorldTransform()));
 
-	const float camLen = 1.0;
+	float camLen = pf.getFar();
 	float tmp0 = camLen / tan((Math::PI - cam.getFovX()) * 0.5) + 0.001;
 	float tmp1 = camLen * tan(cam.getFovY() * 0.5) + 0.001;
 
@@ -70,11 +59,9 @@ void SceneDbgDrawer::drawPerspectiveCamera(const PerspectiveCamera& cam) const
 
 
 //==============================================================================
-void SceneDbgDrawer::drawOrthographicCamera(
-	const OrthographicCamera& ocam) const
+void SceneDbgDrawer::draw(const OrthographicFrustum& of) const
 {
 	dbg.setColor(Vec4(0.0, 1.0, 0.0, 1.0));
-	dbg.setModelMat(Mat4(ocam.getWorldTransform()));
 
 	float left = ocam.getLeft();
 	float right = ocam.getRight();

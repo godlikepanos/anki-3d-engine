@@ -7,12 +7,8 @@
 namespace anki {
 
 
-class Camera;
-class Light;
-class ParticleEmitterNode;
-class SkinNode;
-class PerspectiveCamera;
-class OrthographicCamera;
+class Frustumable;
+class Spatial;
 class Octree;
 class OctreeNode;
 
@@ -22,35 +18,19 @@ class Dbg;
 /// This is a drawer for some scene nodes that need debug
 class SceneDbgDrawer
 {
-	public:
-		/// Constructor
-		SceneDbgDrawer(Dbg& dbg_)
-		:	dbg(dbg_)
-		{}
+public:
+	virtual void draw(const Frustumable& fr, Dbg& dbg) const;
 
-		/// Draw a Camera
-		virtual void drawCamera(const Camera& cam) const;
+	virtual void draw(const Spatial& sp, Dbg& dbg) const;
 
-		/// Draw a Light
-		virtual void drawLight(const Light& light) const;
+	virtual void draw(const Octree& octree, Dbg& dbg) const;
 
-		/// Draw a ParticleEmitterNode
-		virtual void drawParticleEmitter(const ParticleEmitterNode& pe) const;
+	virtual void draw(const OctreeNode& octnode,
+		uint depth, const Octree& octree, Dbg& dbg) const;
 
-		/// Draw a skeleton
-		virtual void drawSkinNodeSkeleton(const SkinNode& pe) const;
-
-		virtual void drawOctree(const Octree& octree) const;
-
-		virtual void drawOctreeNode(const OctreeNode& octnode,
-			uint depth, const Octree& octree) const;
-
-	private:
-		Dbg& dbg; ///< The debug stage
-
-		virtual void drawPerspectiveCamera(const PerspectiveCamera& cam) const;
-		virtual void drawOrthographicCamera(
-			const OrthographicCamera& cam) const;
+private:
+	virtual void draw(const PerspectiveFrustum& cam, Dbg& dbg) const;
+	virtual void draw(const OrthographicFrustum& cam, Dbg& dbg) const;
 };
 
 

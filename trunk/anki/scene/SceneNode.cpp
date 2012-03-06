@@ -6,12 +6,13 @@ namespace anki {
 
 
 //==============================================================================
-SceneNode::SceneNode(const char* name, Scene* scene)
+SceneNode::SceneNode(const char* name_, Scene* scene_)
+	: name(name_), scene(scene_)
 {
 	scene->registerNode(this);
 
 	/// Add the first property
-	pmap.addProperty("name", &name, PropertyBase::PF_READ);
+	addNewProperty(new ReadPointerProperty<std::string>("name", &name));
 }
 
 
