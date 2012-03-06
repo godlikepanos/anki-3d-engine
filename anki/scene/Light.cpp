@@ -62,12 +62,13 @@ SpotLight::SpotLight(const char* fmtl,
 	Property<float>& prop = pbase.upCast<Property<float> >();
 	ANKI_CONNECT(&prop, valueChanged, this, updateZFar);
 
-	Property<float>* angProp = new  ReadWriteProperty("angle", 45.0);
+	float dfltAng = 45.0;
+	ReadWriteProperty<float>* angProp =
+		new ReadWriteProperty<float>("angle", dfltAng);
 	addNewProperty(angProp);
 	ANKI_CONNECT(angProp, valueChanged, this, updateFov);
 
-	frustum.setAll(angProg->getValue(), angProg->getValue(), 0.1,
-		prop.getValue());
+	frustum.setAll(dfltAng, dfltAng, 0.1, prop.getValue());
 }
 
 

@@ -188,7 +188,7 @@ private:
 
 	void updateZFar(const float& f)
 	{
-		frustum.setZFar(r);
+		frustum.setFar(f);
 	}
 	ANKI_SLOT(updateZFar, const float&)
 

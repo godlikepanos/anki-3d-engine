@@ -65,16 +65,15 @@ public:
 
 	void update(float prevUpdateTime, float crntTime, int frame);
 
-	/*void doVisibilityTests(Camera& cam)
-	{
-		//XXX visibilityTester->test(cam);
-	}*/
+	void doVisibilityTests(Camera& cam);
 
 private:
 	Types<SceneNode>::Container nodes;
 	Types<SceneNode>::NameToItemMap nameToNode;
 	Vec3 ambientCol; ///< The global ambient color
 	Camera* mainCam;
+	VisibilityTester vtester;
+	VisibilityInfo vinfo;
 
 	/// Add to a container
 	template<typename T>

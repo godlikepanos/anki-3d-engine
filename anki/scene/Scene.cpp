@@ -1,4 +1,5 @@
 #include "anki/scene/Scene.h"
+#include "anki/scene/Camera.h"
 #include "anki/util/Exception.h"
 #include "anki/scene/VisibilityTester.h"
 
@@ -41,6 +42,14 @@ void Scene::update(float prevUpdateTime, float crntTime, int frame)
 	{
 		n->frameUpdate(prevUpdateTime, crntTime, frame);
 	}
+}
+
+
+//==============================================================================
+void Scene::doVisibilityTests(Camera& cam)
+{
+	Frustumable& f = cam;
+	vtester.test(f, *this, vinfo);
 }
 
 
