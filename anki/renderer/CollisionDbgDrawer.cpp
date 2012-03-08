@@ -9,8 +9,8 @@ namespace anki {
 //==============================================================================
 void CollisionDbgDrawer::visit(const Sphere& sphere)
 {
-	dbg.setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
-	dbg.drawSphere(sphere.getRadius());
+	dbg->setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
+	dbg->drawSphere(sphere.getRadius());
 }
 
 
@@ -30,17 +30,9 @@ void CollisionDbgDrawer::visit(const Obb& obb)
 	tsl = Mat4::combineTransformations(rot, scale);
 	tsl = Mat4::combineTransformations(trs, tsl);
 
-	dbg.setModelMat(tsl);
-	dbg.setColor(Vec3(1.0, 1.0, 0.0));
-	dbg.drawCube(2.0);
-
-	/*dbg.setModelMat(Mat4::getIdentity());
-	dbg.begin();
-	dbg.setColor(Vec3(1.0, 1.0, 1.0));
-	dbg.pushBackVertex(obb.getCenter());
-	dbg.setColor(Vec3(1.0, 1.0, 0.0));
-	dbg.pushBackVertex(obb.getCenter() + obb.getRotation() * obb.getExtend());
-	dbg.end();*/
+	dbg->setModelMat(tsl);
+	dbg->setColor(Vec3(1.0, 1.0, 0.0));
+	dbg->drawCube(2.0);
 }
 
 
@@ -55,8 +47,8 @@ void CollisionDbgDrawer::visit(const Plane& plane)
 	rot.rotateXAxis(Math::PI / 2);
 	Mat4 trf(n * o, rot);
 
-	dbg.setModelMat(trf);
-	dbg.renderGrid();
+	dbg->setModelMat(trf);
+	dbg->renderGrid();
 }
 
 
@@ -76,11 +68,47 @@ void CollisionDbgDrawer::visit(const Aabb& aabb)
 	// Translation
 	trf.setTranslationPart((max + min) / 2.0);
 
-	dbg.setModelMat(trf);
-	dbg.drawCube();
+	dbg->setModelMat(trf);
+	dbg->drawCube();
+}
 
-	/*dbg.setModelMat(Mat4::getIdentity());
-	dbg.drawLine(min, max, Vec4(1.0, 0.0, 0.0, 1.0));*/
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Frustum& f)
+{
+	switch(f.getFrustumType())
+	{
+		case Frustum::FT_ORTHOGRAPHIC:
+			visit(static_cast<const OrthographicFrustum&>(f).getObb());
+			break;
+		case Frustum::FT_PERSPECTIVE:
+		{
+			dbg->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+
+			float camLen = pf.getFar();
+			float tmp0 = camLen / tan((Math::PI - cam.getFovX()) * 0.5) + 0.001;
+			float tmp1 = camLen * tan(cam.getFovY() * 0.5) + 0.001;
+
+			Vec3 points[] = {
+				Vec3(0.0, 0.0, 0.0), // 0: eye point
+				Vec3(-tmp0, tmp1, -camLen), // 1: top left
+				Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
+				Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
+				Vec3(tmp0, tmp1, -camLen) // 4: top right
+			};
+
+			const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
+				3, 3, 4, 4, 1};
+
+			dbg->begin();
+			for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
+			{
+				dbg->pushBackVertex(points[indeces[i]]);
+			}
+			dbg->end();
+			break;
+		}
+	}
 }
 
 

@@ -10,7 +10,7 @@ namespace anki {
 
 class Camera;
 class Scene;
-class Renderable;
+class SceneNode;
 class Frustumable;
 
 
@@ -20,16 +20,16 @@ class VisibilityInfo
 	friend class VisibilityTester;
 
 public:
-	typedef std::vector<Renderable*> Renderables;
+	typedef std::vector<SceneNode*> SceneNodes;
 
-	boost::iterator_range<Renderables::iterator> getRenderables()
+	boost::iterator_range<SceneNodes::iterator> getNodes()
 	{
-		return boost::iterator_range<Renderables::iterator>(
-			renderables.begin(), renderables.end());
+		return boost::iterator_range<SceneNodes::iterator>(
+			nodes.begin(), nodes.end());
 	}
 
 private:
-	Renderables renderables;
+	SceneNodes nodes;
 };
 
 

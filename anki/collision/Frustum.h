@@ -304,6 +304,11 @@ public:
 		bottom = bottom_;
 		recalculate();
 	}
+
+	const Obb& getObb() const
+	{
+		return obb;
+	}
 	/// @}
 
 	/// Copy

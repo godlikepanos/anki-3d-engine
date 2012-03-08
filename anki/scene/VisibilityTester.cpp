@@ -18,10 +18,9 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 {
 	for(SceneNode* node : scene.getAllNodes())
 	{
-		Renderable* r = node->getRenderable();
 		Spatial* sp = node->getSpatial();
 
-		if(!sp || !r)
+		if(!sp)
 		{
 			continue;
 		}
@@ -31,12 +30,13 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 			continue;
 		}
 
+		Renderable* r = node->getRenderable();
 		if(r)
 		{
 			r->enableFlag(Renderable::RF_VISIBLE);
 		}
 
-		vinfo.renderables.push_back(r);
+		vinfo.nodes.push_back(node);
 	}
 }
 
