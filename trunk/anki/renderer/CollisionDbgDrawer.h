@@ -8,46 +8,40 @@
 namespace anki {
 
 
-class Sphere;
-class Obb;
-class Plane;
 class Dbg;
 
 
 /// Contains methods to render the collision shapes
 class CollisionDbgDrawer: public CollisionShape::ConstVisitor
 {
-	public:
-		/// Constructor
-		CollisionDbgDrawer(Dbg& dbg_)
-		:	dbg(dbg_)
-		{}
+public:
+	/// Constructor
+	CollisionDbgDrawer(Dbg* dbg_)
+		: dbg(dbg_)
+	{}
 
-		void visit(const LineSegment&)
-		{
-			ANKI_ASSERT(0 && "ToDo");
-		}
+	void visit(const LineSegment&)
+	{
+		ANKI_ASSERT(0 && "ToDo");
+	}
 
-		void visit(const Obb&);
+	void visit(const Obb&);
 
-		void visit(const PerspectiveCameraShape&)
-		{
-			ANKI_ASSERT(0 && "ToDo");
-		}
+	void visit(const Frustum&);
 
-		void visit(const Plane&);
+	void visit(const Plane&);
 
-		void visit(const Ray&)
-		{
-			ANKI_ASSERT(0 && "ToDo");
-		}
+	void visit(const Ray&)
+	{
+		ANKI_ASSERT(0 && "ToDo");
+	}
 
-		void visit(const Sphere&);
+	void visit(const Sphere&);
 
-		void visit(const Aabb&);
+	void visit(const Aabb&);
 
-	private:
-		Dbg& dbg; ///< The debug stage
+private:
+	Dbg* dbg; ///< The debug stage
 };
 
 
