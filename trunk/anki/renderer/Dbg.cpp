@@ -23,13 +23,9 @@ namespace anki {
 
 
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
 Dbg::Dbg(Renderer& r_)
-	: SwitchableRenderingPass(r_), showAxisEnabled(false),
-		showLightsEnabled(true), showSkeletonsEnabled(true),
-		showCamerasEnabled(true), showVisibilityBoundingShapesFlag(true),
-		sceneDbgDrawer(*this),collisionDbgDrawer(*this)
+	: SwitchableRenderingPass(r_), flags(),
+		sceneDbgDrawer(*this), collisionDbgDrawer(*this)
 {}
 
 

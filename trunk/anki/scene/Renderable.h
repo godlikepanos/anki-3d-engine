@@ -18,7 +18,6 @@ class Light;
 /// @addtogroup Scene
 /// @{
 
-
 /// XXX
 template<typename T>
 class MaterialVariableProperty: public ReadCowPointerProperty<T>
@@ -119,6 +118,8 @@ private:
 	Properties props;
 	uint flags; ///< Bitmask
 };
+
+
 /// @}
 
 

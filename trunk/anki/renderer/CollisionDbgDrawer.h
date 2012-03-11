@@ -22,6 +22,7 @@ public:
 
 	void visit(const LineSegment&)
 	{
+		/// XXX
 		ANKI_ASSERT(0 && "ToDo");
 	}
 
