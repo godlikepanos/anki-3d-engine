@@ -2,15 +2,11 @@
 #define ANKI_RENDERER_SCENE_DBG_DRAWER_H
 
 #include "anki/util/StdTypes.h"
+#include "anki/scene/SceneNode.h"
 
 
 namespace anki {
 
-
-class Frustumable;
-class Spatial;
-class Octree;
-class OctreeNode;
 
 class Dbg;
 
@@ -19,18 +15,55 @@ class Dbg;
 class SceneDbgDrawer
 {
 public:
-	virtual void draw(const Frustumable& fr, Dbg& dbg) const;
+	enum DebugFlag
+	{
+		DF_NONE = 0,
+		DF_SPATIAL = 1,
+		DF_MOVABLE = 2,
+		DF_FRUSTUMABLE = 4
+	};
 
-	virtual void draw(const Spatial& sp, Dbg& dbg) const;
+	SceneDbgDrawer(Dgb* d)
+		: dbg(d), flags(DF_NONE)
+	{}
 
-	virtual void draw(const Octree& octree, Dbg& dbg) const;
+	/// @name Flag manipulation
+	/// @{
+	void enableFlag(DebugFlag flag, bool enable = true)
+	{
+		flags = enable ? flags | flag : flags & ~flag;
+	}
+	void disableFlag(DebugFlag flag)
+	{
+		enableFlag(flag, false);
+	}
+	bool isFlagEnabled(DebugFlag flag) const
+	{
+		return flags & flag;
+	}
+	uint getFlagsBitmask() const
+	{
+		return flags;
+	}
+	/// @}
 
-	virtual void draw(const OctreeNode& octnode,
-		uint depth, const Octree& octree, Dbg& dbg) const;
+	void draw(const SceneNode& node);
 
 private:
-	virtual void draw(const PerspectiveFrustum& cam, Dbg& dbg) const;
-	virtual void draw(const OrthographicFrustum& cam, Dbg& dbg) const;
+	Dbg* dbg;
+	uint flags;
+
+	virtual void draw(const Frustumable& fr) const;
+
+	virtual void draw(const Spatial& sp) const;
+
+	virtual void draw(const Octree& octree) const;
+
+	virtual void draw(const OctreeNode& octnode,
+		uint depth, const Octree& octree) const;
+
+	virtual void draw(const PerspectiveFrustum& cam) const;
+	virtual void draw(const OrthographicFrustum& cam) const;
 };
 
 

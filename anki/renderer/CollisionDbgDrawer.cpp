@@ -84,10 +84,12 @@ void CollisionDbgDrawer::visit(const Frustum& f)
 		case Frustum::FT_PERSPECTIVE:
 		{
 			dbg->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+			const PerspectiveFrustum& pf = 
+				static_cast<const PerspectiveFrustum&>(f);
 
 			float camLen = pf.getFar();
-			float tmp0 = camLen / tan((Math::PI - cam.getFovX()) * 0.5) + 0.001;
-			float tmp1 = camLen * tan(cam.getFovY() * 0.5) + 0.001;
+			float tmp0 = camLen / tan((Math::PI - pf.getFovX()) * 0.5) + 0.001;
+			float tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
 
 			Vec3 points[] = {
 				Vec3(0.0, 0.0, 0.0), // 0: eye point

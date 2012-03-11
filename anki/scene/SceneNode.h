@@ -49,22 +49,22 @@ public:
 	/// @{
 	virtual Movable* getMovable()
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	virtual Renderable* getRenderable()
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	virtual Frustumable* getFrustumable()
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	virtual Spatial* getSpatial()
 	{
-		return NULL;
+		return nullptr;
 	}
 	/// @}
 

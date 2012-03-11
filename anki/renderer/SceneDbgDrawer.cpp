@@ -9,7 +9,22 @@ namespace anki {
 
 
 //==============================================================================
-void SceneDbgDrawer::draw(const Frustumable& fr, Dbg& dbg) const
+void SceneDbgDrawer::draw(const SceneNode& node)
+{
+	if(isFlagEnabled(DF_FRUSTUMABLE) && node.getFrustumable())
+	{
+		draw(*node.getFrustumable());
+	}
+
+	if(isFlagEnabled(DF_SPATIAL) && node.getSpatial())
+	{
+		draw(*node.getSpatial());
+	}
+}
+
+
+//==============================================================================
+void SceneDbgDrawer::draw(const Frustumable& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
