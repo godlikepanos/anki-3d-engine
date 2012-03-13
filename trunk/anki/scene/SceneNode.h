@@ -68,6 +68,29 @@ public:
 	}
 	/// @}
 
+	/// @name Accessors of components (const version)
+	/// @{
+	const Movable* getMovable() const
+	{
+		return const_cast<const Movable*>(getMovable());
+	}
+
+	const Renderable* getRenderable() const
+	{
+		return const_cast<const Renderable*>(getRenderable());
+	}
+
+	const Frustumable* getFrustumable() const
+	{
+		return const_cast<const Frustumable*>(getFrustumable());
+	}
+
+	const Spatial* getSpatial() const
+	{
+		return const_cast<const Spatial*>(getSpatial());
+	}
+	/// @}
+
 	/// This is called by the scene every frame after logic and before
 	/// rendering. By default it does nothing
 	/// @param[in] prevUpdateTime Timestamp of the previous update
