@@ -31,6 +31,9 @@ public:
 	/// Generic mutable visitor
 	struct MutableVisitor
 	{
+		virtual ~MutableVisitor()
+		{}
+
 		virtual void visit(LineSegment&) = 0;
 		virtual void visit(Obb&) = 0;
 		virtual void visit(Frustum&) = 0;
@@ -43,6 +46,9 @@ public:
 	/// Generic const visitor
 	struct ConstVisitor
 	{
+		virtual ~ConstVisitor()
+		{}
+
 		virtual void visit(const LineSegment&) = 0;
 		virtual void visit(const Obb&) = 0;
 		virtual void visit(const Frustum&) = 0;

@@ -9,6 +9,8 @@ namespace anki {
 
 
 class Dbg;
+class Octree;
+class OctreeNode;
 
 
 /// This is a drawer for some scene nodes that need debug
@@ -23,8 +25,11 @@ public:
 		DF_FRUSTUMABLE = 4
 	};
 
-	SceneDbgDrawer(Dgb* d)
+	SceneDbgDrawer(Dbg* d)
 		: dbg(d), flags(DF_NONE)
+	{}
+
+	virtual ~SceneDbgDrawer()
 	{}
 
 	/// @name Flag manipulation
@@ -49,6 +54,8 @@ public:
 
 	void draw(const SceneNode& node);
 
+	virtual void draw(const Octree& octree) const;
+
 private:
 	Dbg* dbg;
 	uint flags;
@@ -57,13 +64,8 @@ private:
 
 	virtual void draw(const Spatial& sp) const;
 
-	virtual void draw(const Octree& octree) const;
-
 	virtual void draw(const OctreeNode& octnode,
 		uint depth, const Octree& octree) const;
-
-	virtual void draw(const PerspectiveFrustum& cam) const;
-	virtual void draw(const OrthographicFrustum& cam) const;
 };
 
 
