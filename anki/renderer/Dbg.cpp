@@ -1,22 +1,8 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/CollisionDbgDrawer.h"
-#include "anki/scene/RenderableNode.h"
-#include "anki/scene/Scene.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/Light.h"
-#include "anki/scene/ParticleEmitterNode.h"
 #include "anki/renderer/RendererInitializer.h"
 #include "anki/renderer/SceneDbgDrawer.h"
-#include "anki/scene/SkinNode.h"
-#include "anki/scene/SpotLight.h"
-#include "anki/scene/Octree.h"
-#include "anki/scene/ModelNode.h"
-#include "anki/resource/Model.h"
-#include <boost/foreach.hpp>
-
-
-extern anki::ModelNode* horse;
 
 
 namespace anki {
