@@ -1,32 +1,24 @@
-#ifndef ANKI_RENDERER_DBG_H
-#define ANKI_RENDERER_DBG_H
+#ifndef ANKI_RENDERER_DRAWER_H
+#define ANKI_RENDERER_DRAWER_H
 
-#include <boost/array.hpp>
-#include <map>
-#include "anki/renderer/RenderingPass.h"
-#include "anki/gl/Fbo.h"
-#include "anki/resource/ShaderProgram.h"
-#include "anki/resource/Resource.h"
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
-#include "anki/renderer/SceneDbgDrawer.h"
-#include "anki/renderer/CollisionDbgDrawer.h"
+#include "anki/resource/Resource.h"
+#include <array>
+#include <map>
 
 
 namespace anki {
 
 
-/// Debugging stage
-class Dbg: public SwitchableRenderingPass
+/// Draws simple primitives
+class DebugDrawer
 {
 public:
-	Dbg(Renderer& r_);
-	
-	void init(const RendererInitializer& initializer);
-	void run();
-	
-	void renderGrid();
+	DebugDrawer();
+
+	void drawGrid();
 	void drawSphere(float radius, int complexity = 4);
 	void drawCube(float size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
@@ -37,15 +29,19 @@ public:
 	void end(); ///< Draws
 	void pushBackVertex(const Vec3& pos); ///< Something like glVertex
 	/// Something like glColor
-	void setColor(const Vec3& col) {crntCol = col;}
+	void setColor(const Vec3& col)
+	{
+		crntCol = col;
+	}
 	/// Something like glColor
-	void setColor(const Vec4& col) {crntCol = Vec3(col);}
+	void setColor(const Vec4& col)
+	{
+		crntCol = Vec3(col);
+	}
 	void setModelMat(const Mat4& modelMat);
 	/// @}
 
 private:
-	uint flags;
-	Fbo fbo;
 	ShaderProgramResourcePointer sProg;
 	static const uint MAX_POINTS_PER_DRAW = 256;
 	boost::array<Vec3, MAX_POINTS_PER_DRAW> positions;
@@ -56,8 +52,6 @@ private:
 	Vbo positionsVbo;
 	Vbo colorsVbo;
 	Vao vao;
-	SceneDbgDrawer sceneDbgDrawer;
-	CollisionDbgDrawer collisionDbgDrawer;
 
 	/// This is a container of some precalculated spheres. Its a map that
 	/// from sphere complexity it returns a vector of lines (Vec3s in
@@ -66,7 +60,7 @@ private:
 };
 
 
-} // end namespace
+}  // namespace anki
 
 
 #endif
