@@ -1,9 +1,14 @@
 #include "anki/renderer/Drawer.h"
 #include "anki/resource/ShaderProgram.h"
+#include "anki/physics/Convertors.h"
 
 
 namespace anki {
 
+
+//==============================================================================
+// DebugDrawer                                                                 =
+//==============================================================================
 
 //==============================================================================
 DebugDrawer::DebugDrawer()
@@ -175,6 +180,313 @@ void DebugDrawer::drawCube(float size)
 			pushBackVertex(points[id]);
 		}
 	end();
+}
+
+
+//==============================================================================
+void DebugDrawer::setModelMat(const Mat4& modelMat_)
+{
+	ANKI_ASSERT(pointIndex == 0
+		&& "The func called after begin and before end");
+	modelMat = modelMat_;
+}
+
+
+//==============================================================================
+void DebugDrawer::begin()
+{
+	ANKI_ASSERT(pointIndex == 0);
+}
+
+
+//==============================================================================
+void DebugDrawer::end()
+{
+	ANKI_ASSERT(pointIndex != 0);
+
+	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
+	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
+
+	Mat4 pmv = r.getViewProjectionMat() * modelMat;
+	sProg->findUniformVariableByName("modelViewProjectionMat").set(pmv);
+
+	vao.bind();
+	glDrawArrays(GL_LINES, 0, pointIndex);
+	vao.unbind();
+
+	// Cleanup
+	pointIndex = 0;
+}
+
+
+//==============================================================================
+void DebugDrawer::pushBackVertex(const Vec3& pos)
+{
+	positions[pointIndex] = pos;
+	colors[pointIndex] = crntCol;
+	++pointIndex;
+}
+
+
+//==============================================================================
+// CollisionDbgDrawer                                                          =
+//==============================================================================
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Sphere& sphere)
+{
+	dbg->setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
+	dbg->drawSphere(sphere.getRadius());
+}
+
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Obb& obb)
+{
+	Mat4 scale(Mat4::getIdentity());
+	scale(0, 0) = obb.getExtend().x();
+	scale(1, 1) = obb.getExtend().y();
+	scale(2, 2) = obb.getExtend().z();
+
+	Mat4 rot(obb.getRotation());
+
+	Mat4 trs(obb.getCenter());
+
+	Mat4 tsl;
+	tsl = Mat4::combineTransformations(rot, scale);
+	tsl = Mat4::combineTransformations(trs, tsl);
+
+	dbg->setModelMat(tsl);
+	dbg->setColor(Vec3(1.0, 1.0, 0.0));
+	dbg->drawCube(2.0);
+}
+
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Plane& plane)
+{
+	const Vec3& n = plane.getNormal();
+	const float& o = plane.getOffset();
+	Quat q;
+	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
+	Mat3 rot(q);
+	rot.rotateXAxis(Math::PI / 2);
+	Mat4 trf(n * o, rot);
+
+	dbg->setModelMat(trf);
+	dbg->renderGrid();
+}
+
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Aabb& aabb)
+{
+	const Vec3& min = aabb.getMin();
+	const Vec3& max = aabb.getMax();
+
+	Mat4 trf = Mat4::getIdentity();
+	// Scale
+	for(uint i = 0; i < 3; ++i)
+	{
+		trf(i, i) = max[i] - min[i];
+	}
+
+	// Translation
+	trf.setTranslationPart((max + min) / 2.0);
+
+	dbg->setModelMat(trf);
+	dbg->drawCube();
+}
+
+
+//==============================================================================
+void CollisionDbgDrawer::visit(const Frustum& f)
+{
+	switch(f.getFrustumType())
+	{
+		case Frustum::FT_ORTHOGRAPHIC:
+			visit(static_cast<const OrthographicFrustum&>(f).getObb());
+			break;
+		case Frustum::FT_PERSPECTIVE:
+		{
+			dbg->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+			const PerspectiveFrustum& pf =
+				static_cast<const PerspectiveFrustum&>(f);
+
+			float camLen = pf.getFar();
+			float tmp0 = camLen / tan((Math::PI - pf.getFovX()) * 0.5) + 0.001;
+			float tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
+
+			Vec3 points[] = {
+				Vec3(0.0, 0.0, 0.0), // 0: eye point
+				Vec3(-tmp0, tmp1, -camLen), // 1: top left
+				Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
+				Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
+				Vec3(tmp0, tmp1, -camLen) // 4: top right
+			};
+
+			const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
+				3, 3, 4, 4, 1};
+
+			dbg->begin();
+			for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
+			{
+				dbg->pushBackVertex(points[indeces[i]]);
+			}
+			dbg->end();
+			break;
+		}
+	}
+}
+
+
+//==============================================================================
+// PhysicsDebugDrawer                                                          =
+//==============================================================================
+
+//==============================================================================
+void PhysicsDebugDrawer::drawLine(const btVector3& from, const btVector3& to,
+	const btVector3& color)
+{
+	dbg->drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
+}
+
+
+//==============================================================================
+void PhysicsDebugDrawer::drawSphere(btScalar radius,
+	const btTransform& transform,
+	const btVector3& color)
+{
+	dbg->setColor(toAnki(color));
+	dbg->setModelMat(Mat4(toAnki(transform)));
+	dbg->drawSphere(radius);
+}
+
+
+//==============================================================================
+void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
+	const btVector3& color)
+{
+	Mat4 trf(Mat4::getIdentity());
+	trf(0, 0) = max.getX() - min.getX();
+	trf(1, 1) = max.getY() - min.getY();
+	trf(2, 2) = max.getZ() - min.getZ();
+	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
+	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
+	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
+	dbg->setModelMat(trf);
+	dbg->setColor(toAnki(color));
+	dbg->drawCube(1.0);
+}
+
+
+//==============================================================================
+void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
+	const btTransform& trans, const btVector3& color)
+{
+	Mat4 trf(Mat4::getIdentity());
+	trf(0, 0) = max.getX() - min.getX();
+	trf(1, 1) = max.getY() - min.getY();
+	trf(2, 2) = max.getZ() - min.getZ();
+	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
+	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
+	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
+	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
+	dbg->setModelMat(trf);
+	dbg->setColor(toAnki(color));
+	dbg->drawCube(1.0);
+}
+
+
+//==============================================================================
+void PhysicsDebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
+	const btVector3& /*normalOnB*/,
+	btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
+{
+	//ANKI_WARNING("Unimplemented");
+}
+
+
+//==============================================================================
+void PhysicsDebugDrawer::reportErrorWarning(const char* warningString)
+{
+	throw ANKI_EXCEPTION(warningString);
+}
+
+
+//==============================================================================
+void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
+	const char* /*textString*/)
+{
+	//ANKI_WARNING("Unimplemented");
+}
+
+
+//==============================================================================
+// SceneDebugDrawer                                                            =
+//==============================================================================
+
+//==============================================================================
+void SceneDebugDrawer::draw(const SceneNode& node)
+{
+	if(isFlagEnabled(DF_FRUSTUMABLE) && node.getFrustumable())
+	{
+		draw(*node.getFrustumable());
+	}
+
+	if(isFlagEnabled(DF_SPATIAL) && node.getSpatial())
+	{
+		draw(*node.getSpatial());
+	}
+}
+
+
+//==============================================================================
+void SceneDebugDrawer::draw(const Frustumable& fr) const
+{
+	const Frustum& fs = fr.getFrustum();
+
+	CollisionDbgDrawer coldraw(dbg);
+	fs.accept(coldraw);
+}
+
+
+//==============================================================================
+void SceneDebugDrawer::draw(const Spatial& x) const
+{
+	const CollisionShape& cs = x.getSpatialCollisionShape();
+
+	CollisionDbgDrawer coldraw(dbg);
+	cs.accept(coldraw);
+}
+
+
+//==============================================================================
+void SceneDebugDrawer::draw(const Octree& octree) const
+{
+	dbg->setColor(Vec3(1.0));
+	draw(octree.getRoot(), 0, octree);
+}
+
+
+//==============================================================================
+void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
+	const Octree& octree) const
+{
+	Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
+	dbg->setColor(color);
+
+	CollisionDbgDrawer v(dbg);
+	octnode.getAabb().accept(v);
+
+	// Children
+	for(uint i = 0; i < 8; ++i)
+	{
+		if(octnode.getChildren()[i] != NULL)
+		{
+			draw(*octnode.getChildren()[i], depth + 1, octree);
+		}
+	}
 }
 
 
