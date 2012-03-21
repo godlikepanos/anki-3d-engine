@@ -497,6 +497,26 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 // SceneDrawer                                                                 =
 //==============================================================================
 
+/// Set the uniform using this visitor
+struct SetUniformVisitor: public boost::static_visitor<void>
+{
+	const ShaderProgramUniformVariable* uni;
+	uint* texUnit;
+
+	template<typename Type>
+	void operator()(const Type& x) const
+	{
+		uni->set(x);
+	}
+
+	void operator()(const TextureResourcePointer& x) const
+	{
+		uni->set(*x, *texUnit++);
+	}
+
+};
+
+
 //==============================================================================
 void SceneDrawer::setupShaderProg(
 	const PassLevelKey& key,
@@ -505,7 +525,19 @@ void SceneDrawer::setupShaderProg(
 {
 	const Material& mtl = renderable.getMaterial();
 	const ShaderProgram& sprog = mtl.getShaderProgram(key);
-	uint textunit;
+	uint textunit = 0;
+
+	sprog.bind();
+	
+	SetUniformVisitor vis;
+	vis.texUnit = &texunit;
+
+	for(const MaterialVariable& mv : mtl.getVariables())
+	{
+		vis.uni = &mv.getShaderProgramUniformVariable(key);
+
+		boost::visit(vis, mv.getVariant());
+	}
 }
 
 
