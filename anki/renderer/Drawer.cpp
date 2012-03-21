@@ -1,6 +1,9 @@
 #include "anki/renderer/Drawer.h"
 #include "anki/resource/ShaderProgram.h"
 #include "anki/physics/Convertors.h"
+#include "anki/collision/Collision.h"
+#include "anki/scene/Frustumable.h"
+#include "anki/scene/Octree.h"
 
 
 namespace anki {
@@ -207,7 +210,7 @@ void DebugDrawer::end()
 	positionsVbo.write(&positions[0], 0, sizeof(Vec3) * pointIndex);
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
-	Mat4 pmv = r.getViewProjectionMat() * modelMat;
+	Mat4 pmv = vpMat * modelMat;
 	sProg->findUniformVariableByName("modelViewProjectionMat").set(pmv);
 
 	vao.bind();
@@ -274,7 +277,7 @@ void CollisionDbgDrawer::visit(const Plane& plane)
 	Mat4 trf(n * o, rot);
 
 	dbg->setModelMat(trf);
-	dbg->renderGrid();
+	dbg->drawGrid();
 }
 
 
@@ -487,6 +490,22 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 			draw(*octnode.getChildren()[i], depth + 1, octree);
 		}
 	}
+}
+
+
+//==============================================================================
+// SceneDrawer                                                                 =
+//==============================================================================
+
+//==============================================================================
+void SceneDrawer::setupShaderProg(
+	const PassLevelKey& key,
+	const Camera& cam,
+	Renderable& renderable)
+{
+	const Material& mtl = renderable.getMaterial();
+	const ShaderProgram& sprog = mtl.getShaderProgram(key);
+	uint textunit;
 }
 
 

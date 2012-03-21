@@ -15,6 +15,12 @@
 namespace anki {
 
 
+class Octree;
+class OctreeNode;
+class Renderer;
+class Camera;
+
+
 /// Draws simple primitives
 class DebugDrawer
 {
@@ -42,6 +48,10 @@ public:
 		crntCol = Vec3(col);
 	}
 	void setModelMat(const Mat4& modelMat);
+	void setViewProjectionMat(const Mat4& m)
+	{
+		vpMat = m;
+	}
 	/// @}
 
 private:
@@ -50,6 +60,7 @@ private:
 	std::array<Vec3, MAX_POINTS_PER_DRAW> positions;
 	std::array<Vec3, MAX_POINTS_PER_DRAW> colors;
 	Mat4 modelMat;
+	Mat4 vpMat;
 	uint pointIndex;
 	Vec3 crntCol;
 	Vbo positionsVbo;
@@ -201,7 +212,7 @@ class SceneDrawer
 {
 public:
 	/// The one and only constructor
-	SceneDrawer(const Renderer* r_)
+	SceneDrawer(Renderer* r_)
 		: r(r_)
 	{}
 
@@ -210,6 +221,11 @@ public:
 
 private:
 	Renderer* r;
+
+	void setupShaderProg(
+		const PassLevelKey& key,
+		const Camera& cam,
+		Renderable& renderable);
 };
 
 
