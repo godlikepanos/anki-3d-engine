@@ -13,6 +13,8 @@ namespace anki {
 
 
 /// Model patch interface class
+///
+/// Its very important class and it binds the material with the mesh
 class ModelPatchBase
 {
 public:
@@ -30,6 +32,11 @@ public:
 	const Vao& getVao(const PassLevelKey& key) const
 	{
 		return *vaosMap.at(key);
+	}
+
+	uint getIndecesNumber(uint lod) const
+	{
+		return getMeshBase().getIndicesNumber(lod);
 	}
 
 protected:

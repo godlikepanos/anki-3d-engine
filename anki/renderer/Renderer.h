@@ -14,7 +14,6 @@
 #include "anki/renderer/Bs.h"
 #include "anki/renderer/Dbg.h"
 #include "anki/gl/GlException.h"
-#include "anki/renderer/SceneDrawer.h"
 #include "anki/gl/GlStateMachine.h"
 #include "anki/gl/TimeQuery.h"
 #include <boost/scoped_ptr.hpp>
@@ -210,7 +209,7 @@ public:
 
 	/// Calculates two values needed for the calculation of the fragment
 	/// position in view space.
-	static void calcLimitsOfNearPlane(const PerspectiveCamera& cam,
+	static void calcLimitsOfNearPlane(const class PerspectiveCamera& cam,
 		Vec2& limitsOfNearPlane);
 
 	/// Get the LOD given the distance of an object from the camera

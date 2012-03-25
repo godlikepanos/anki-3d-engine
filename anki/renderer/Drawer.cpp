@@ -4,6 +4,10 @@
 #include "anki/collision/Collision.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Octree.h"
+#include "anki/resource/Material.h"
+#include "anki/scene/Renderable.h"
+#include "anki/scene/Camera.h"
+#include "anki/scene/ModelNode.h"
 
 
 namespace anki {
@@ -232,11 +236,11 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 
 
 //==============================================================================
-// CollisionDbgDrawer                                                          =
+// CollisionDebugDrawer                                                        =
 //==============================================================================
 
 //==============================================================================
-void CollisionDbgDrawer::visit(const Sphere& sphere)
+void CollisionDebugDrawer::visit(const Sphere& sphere)
 {
 	dbg->setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
 	dbg->drawSphere(sphere.getRadius());
@@ -244,7 +248,7 @@ void CollisionDbgDrawer::visit(const Sphere& sphere)
 
 
 //==============================================================================
-void CollisionDbgDrawer::visit(const Obb& obb)
+void CollisionDebugDrawer::visit(const Obb& obb)
 {
 	Mat4 scale(Mat4::getIdentity());
 	scale(0, 0) = obb.getExtend().x();
@@ -266,7 +270,7 @@ void CollisionDbgDrawer::visit(const Obb& obb)
 
 
 //==============================================================================
-void CollisionDbgDrawer::visit(const Plane& plane)
+void CollisionDebugDrawer::visit(const Plane& plane)
 {
 	const Vec3& n = plane.getNormal();
 	const float& o = plane.getOffset();
@@ -282,7 +286,7 @@ void CollisionDbgDrawer::visit(const Plane& plane)
 
 
 //==============================================================================
-void CollisionDbgDrawer::visit(const Aabb& aabb)
+void CollisionDebugDrawer::visit(const Aabb& aabb)
 {
 	const Vec3& min = aabb.getMin();
 	const Vec3& max = aabb.getMax();
@@ -303,7 +307,7 @@ void CollisionDbgDrawer::visit(const Aabb& aabb)
 
 
 //==============================================================================
-void CollisionDbgDrawer::visit(const Frustum& f)
+void CollisionDebugDrawer::visit(const Frustum& f)
 {
 	switch(f.getFrustumType())
 	{
@@ -449,7 +453,7 @@ void SceneDebugDrawer::draw(const Frustumable& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
-	CollisionDbgDrawer coldraw(dbg);
+	CollisionDebugDrawer coldraw(dbg);
 	fs.accept(coldraw);
 }
 
@@ -459,7 +463,7 @@ void SceneDebugDrawer::draw(const Spatial& x) const
 {
 	const CollisionShape& cs = x.getSpatialCollisionShape();
 
-	CollisionDbgDrawer coldraw(dbg);
+	CollisionDebugDrawer coldraw(dbg);
 	cs.accept(coldraw);
 }
 
@@ -479,7 +483,7 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 	Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
 	dbg->setColor(color);
 
-	CollisionDbgDrawer v(dbg);
+	CollisionDebugDrawer v(dbg);
 	octnode.getAabb().accept(v);
 
 	// Children
@@ -511,7 +515,7 @@ struct SetUniformVisitor: public boost::static_visitor<void>
 
 	void operator()(const TextureResourcePointer& x) const
 	{
-		uni->set(*x, *texUnit++);
+		uni->set(*x, (*texUnit)++);
 	}
 
 };
@@ -521,11 +525,11 @@ struct SetUniformVisitor: public boost::static_visitor<void>
 void SceneDrawer::setupShaderProg(
 	const PassLevelKey& key,
 	const Camera& cam,
-	Renderable& renderable)
+	SceneNode& renderable)
 {
-	const Material& mtl = renderable.getMaterial();
+	const Material& mtl = renderable.getRenderable()->getMaterial();
 	const ShaderProgram& sprog = mtl.getShaderProgram(key);
-	uint textunit = 0;
+	uint texunit = 0;
 
 	sprog.bind();
 	
@@ -534,10 +538,54 @@ void SceneDrawer::setupShaderProg(
 
 	for(const MaterialVariable& mv : mtl.getVariables())
 	{
-		vis.uni = &mv.getShaderProgramUniformVariable(key);
+		if(!mv.inPass(key))
+		{
+			continue;
+		}
 
-		boost::visit(vis, mv.getVariant());
+		const ShaderProgramUniformVariable& uni = 
+			mv.getShaderProgramUniformVariable(key);
+
+		vis.uni = &uni;
+		const std::string& name = uni.getName();
+
+		if(name == "modelViewProjectionMat")
+		{
+			Mat4 mvp = 
+				Mat4(renderable.findPropertyBaseByName("worldTransform").
+				getValue<Transform>()) 
+				* cam.getViewMatrix() * cam.getProjectionMatrix();
+
+			uni.set(mvp);
+		}
+		else
+		{
+			boost::apply_visitor(vis, mv.getVariant());
+		}
 	}
+}
+
+
+//==============================================================================
+void SceneDrawer::render(const Camera& cam, uint pass, 
+	SceneNode& node) 
+{
+	/*float dist = (node.getWorldTransform().getOrigin() -
+		cam.getWorldTransform().getOrigin()).getLength();
+	uint lod = std::min(r.calculateLod(dist), mtl.getLevelsOfDetail() - 1);*/
+
+	PassLevelKey key(pass, 0);
+
+	// Setup shader
+	setupShaderProg(key, cam, node);
+
+	// Render
+	uint indecesNum = 
+		node.getRenderable()->getModelPatchBase().getIndecesNumber(0);
+
+	node.getRenderable()->getModelPatchBase().getVao(key).bind();
+	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
+	node.getRenderable()->getModelPatchBase().getVao(key).unbind();
 }
 
 

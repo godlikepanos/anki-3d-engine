@@ -9,7 +9,6 @@ namespace anki {
 
 class ShaderProgram;
 class SkinPatchNode;
-class MainRenderer;
 
 
 /// SkinPatchNode deformer. It gets a SkinPatchNode and using transform
@@ -17,13 +16,15 @@ class MainRenderer;
 class Deformer
 {
 	public:
-		Deformer(const MainRenderer& mainR);
+		Deformer()
+		{
+			init();
+		}
 		~Deformer();
 
-		void deform(SkinPatchNode& node) const;
+		void deform(SkinPatchNode& node, SkinPatchNode& subNode) const;
 
 	private:
-		const MainRenderer& mainR; ///< Know your father
 		ShaderProgramResourcePointer tfHwSkinningAllSProg;
 		ShaderProgramResourcePointer tfHwSkinningPosSProg;
 

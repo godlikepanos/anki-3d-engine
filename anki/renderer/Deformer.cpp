@@ -1,7 +1,6 @@
 #include "anki/renderer/Deformer.h"
 #include "anki/resource/ShaderProgram.h"
 #include "anki/resource/Material.h"
-#include "anki/scene/SkinPatchNode.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/renderer/MainRenderer.h"
 
@@ -10,26 +9,13 @@ namespace anki {
 
 
 //==============================================================================
-// Constructors & destructor                                                   =
-//==============================================================================
-
-Deformer::Deformer(const MainRenderer& mainR_)
-:	mainR(mainR_)
-{
-	init();
-}
-
-
 Deformer::~Deformer()
 {}
 
 
 //==============================================================================
-// init                                                                        =
-//==============================================================================
 void Deformer::init()
 {
-	//
 	// Load the shaders
 	//
 	tfHwSkinningAllSProg.load("shaders/TfHwSkinningPosNormTan.glsl");
@@ -38,26 +24,20 @@ void Deformer::init()
 
 
 //==============================================================================
-// deform                                                                      =
-//==============================================================================
-void Deformer::deform(SkinPatchNode& node) const
+void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 {
-	ANKI_ASSERT(node.getParent() != NULL); // The SkinPatchNodes always have parent
-	ANKI_ASSERT(node.getParent()->getSceneNodeType() ==
-		SceneNode::SNT_SKIN_NODE); // And their parent must be SkinNode
-	ANKI_ASSERT(node.isFlagEnabled(SceneNode::SNF_VISIBLE)); // And it should be
-	                                                    // visible
-
-	SkinNode* skinNode = static_cast<SkinNode*>(node.getParent());
+	ANKI_ASSERT(node.getMovable()->getParent() != NULL
+		&& "The SkinPatchNode should always have parent");
 
 	GlStateMachineSingleton::get().enable(GL_RASTERIZER_DISCARD);
 
 	// Chose sProg
+	//
 	const ShaderProgram* sProg;
-	const Material& mtl = node.getModelPatchRsrc().getMaterial();
+	const Material& mtl = node.getMaterial();
 
-	if(mtl.variableExistsAndInKey("normal", PassLevelKey(0, 0)) &&
-	   mtl.variableExistsAndInKey("tangent", PassLevelKey(0, 0)))
+	if(mtl.variableExistsAndInKey("normal", PassLevelKey(0, 0))
+		&& mtl.variableExistsAndInKey("tangent", PassLevelKey(0, 0)))
 	{
 		sProg = tfHwSkinningAllSProg.get();
 	}
@@ -69,31 +49,32 @@ void Deformer::deform(SkinPatchNode& node) const
 	sProg->bind();
 
 	// Uniforms
+	//
 	sProg->findUniformVariableByName("skinningRotations").set(
-		&skinNode->getBoneRotations()[0], skinNode->getBoneRotations().size());
+		&skinNode.getBoneRotations()[0], skinNode.getBoneRotations().size());
 
 	sProg->findUniformVariableByName("skinningTranslations").set(
-		&skinNode->getBoneTranslations()[0],
-		skinNode->getBoneTranslations().size());
+		&skinNode.getBoneTranslations()[0],
+		skinNode.getBoneTranslations().size());
 
 	node.getTfVao().bind();
 
 	// TF
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0,
-		node.getTfVbo(SkinPatchNode::TFV_POSITIONS).getGlId());
+		node.getSkinMesh().getTfVbo(SkinMesh::VBO_TF_POSITIONS)->getGlId());
 
 	if(sProg == tfHwSkinningAllSProg.get())
 	{
 		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1,
-			node.getTfVbo(SkinPatchNode::TFV_NORMALS).getGlId());
+			node.getSkinMesh().getTfVbo(SkinMesh::VBO_TF_NORMALS)->getGlId());
 		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2,
-			node.getTfVbo(SkinPatchNode::TFV_TANGENTS).getGlId());
+			node.getSkinMesh().getTfVbo(SkinMesh::VBO_TF_TANGENTS)->getGlId());
 	}
 
 	//glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, this->Query);
 	glBeginTransformFeedback(GL_POINTS);
 		glDrawArrays(GL_POINTS, 0,
-			node.getModelPatchRsrc().getMesh().getVertsNum());
+			node.getSkinMesh().getVerticesNumber(0));
 	glEndTransformFeedback();
 	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 

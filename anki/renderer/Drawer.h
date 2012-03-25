@@ -75,11 +75,11 @@ private:
 
 
 /// Contains methods to render the collision shapes
-class CollisionDbgDrawer: public CollisionShape::ConstVisitor
+class CollisionDebugDrawer: public CollisionShape::ConstVisitor
 {
 public:
 	/// Constructor
-	CollisionDbgDrawer(DebugDrawer* dbg_)
+	CollisionDebugDrawer(DebugDrawer* dbg_)
 		: dbg(dbg_)
 	{}
 
@@ -207,6 +207,9 @@ private:
 };
 
 
+class PassLevelKey;
+
+
 /// It includes all the functions to render a Renderable
 class SceneDrawer
 {
@@ -217,7 +220,7 @@ public:
 	{}
 
 	void render(const Camera& cam,
-		uint pass, Renderable& renderable);
+		uint pass, SceneNode& renderable);
 
 private:
 	Renderer* r;
@@ -225,7 +228,7 @@ private:
 	void setupShaderProg(
 		const PassLevelKey& key,
 		const Camera& cam,
-		Renderable& renderable);
+		SceneNode& renderable);
 };
 
 
