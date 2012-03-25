@@ -60,6 +60,26 @@ public:
 	{
 		return viewMat;
 	}
+
+	float getNear() const
+	{
+		return frustum->getNear();
+	}
+	void setNear(float x)
+	{
+		frustum->setNear(x);
+		frustumUpdate();
+	}
+
+	float getFar() const
+	{
+		return frustum->getFar();
+	}
+	void setFar(float x)
+	{
+		frustum->setFar(x);
+		frustumUpdate();
+	}
 	/// @}
 
 	/// @name SceneNode virtuals

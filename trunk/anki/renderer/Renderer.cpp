@@ -1,7 +1,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/RendererInitializer.h"
 #include "anki/util/Exception.h"
-#include "anki/scene/PerspectiveCamera.h"
+#include "anki/scene/Camera.h"
 
 
 namespace anki {
@@ -10,7 +10,7 @@ namespace anki {
 //==============================================================================
 Renderer::Renderer()
 	: ms(*this), is(*this), pps(*this), bs(*this), width(640), height(480),
-		sceneDrawer(*this)
+		sceneDrawer(this)
 {
 	enableStagesProfilingFlag = false;
 	lodDistance = 10.0;
@@ -73,7 +73,7 @@ void Renderer::render(Camera& cam_)
 	//
 	// Calc a few vars
 	//
-	calcPlanes(Vec2(cam->getZNear(), cam->getZFar()), planes);
+	calcPlanes(Vec2(cam->getNear(), cam->getFar()), planes);
 
 	ANKI_ASSERT(cam->getCameraType() == Camera::CT_PERSPECTIVE);
 	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(*cam);
@@ -182,9 +182,9 @@ void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	Vec2& limitsOfNearPlane)
 {
-	limitsOfNearPlane.y() = pcam.getZNear() * tan(0.5 * pcam.getFovY());
-	limitsOfNearPlane.x() = limitsOfNearPlane.y() *
-		(pcam.getFovX() / pcam.getFovY());
+	limitsOfNearPlane.y() = pcam.getNear() * tan(0.5 * pcam.getFovY());
+	limitsOfNearPlane.x() = limitsOfNearPlane.y()
+		* (pcam.getFovX() / pcam.getFovY());
 }
 
 

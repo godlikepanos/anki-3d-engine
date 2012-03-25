@@ -34,11 +34,11 @@ public:
 	};
 
 	/// Create the @a tfVbos with empty data
-	SkinMesh(const MeshBase* mesh_);
+	SkinMesh(const MeshBase* mesh);
 
 	/// @name Accessors
 	/// @{
-	const Vbo* getTfVbo(TfVboId id) const
+	const Vbo* getTfVbo(TfVboId id) const /// XXX Why pointer?
 	{
 		return &tfVbos[id];
 	}

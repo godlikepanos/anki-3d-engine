@@ -36,7 +36,8 @@ public:
 	enum LightType
 	{
 		LT_POINT,
-		LT_SPOT
+		LT_SPOT,
+		LT_NUM
 	};
 
 	/// @name Constructors
