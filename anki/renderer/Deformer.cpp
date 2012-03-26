@@ -57,24 +57,29 @@ void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 		&skinNode.getBoneTranslations()[0],
 		skinNode.getBoneTranslations().size());
 
-	node.getTfVao().bind();
+	SkinModelPatch& smp = node.getSkinModelPatch();
+
+	smp.getTransformFeedbackVao().bind();
 
 	// TF
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0,
-		node.getSkinMesh().getTfVbo(SkinMesh::VBO_TF_POSITIONS)->getGlId());
+		smp.getSkinMesh().getTransformFeedbackVbo(
+		SkinMesh::VBO_TF_POSITIONS)->getGlId());
 
 	if(sProg == tfHwSkinningAllSProg.get())
 	{
 		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1,
-			node.getSkinMesh().getTfVbo(SkinMesh::VBO_TF_NORMALS)->getGlId());
+			smp.getSkinMesh().getTransformFeedbackVbo(
+			SkinMesh::VBO_TF_NORMALS)->getGlId());
 		glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2,
-			node.getSkinMesh().getTfVbo(SkinMesh::VBO_TF_TANGENTS)->getGlId());
+			smp.getSkinMesh().getTransformFeedbackVbo(
+			SkinMesh::VBO_TF_TANGENTS)->getGlId());
 	}
 
 	//glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, this->Query);
 	glBeginTransformFeedback(GL_POINTS);
 		glDrawArrays(GL_POINTS, 0,
-			node.getSkinMesh().getVerticesNumber(0));
+			smp.getSkinMesh().getVerticesNumber(0));
 	glEndTransformFeedback();
 	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 

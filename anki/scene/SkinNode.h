@@ -38,7 +38,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Vbo* getTfVbo(TfVboId id) const /// XXX Why pointer?
+	const Vbo* getTransformFeedbackVbo(TfVboId id) const /// XXX Why pointer?
 	{
 		return &tfVbos[id];
 	}
@@ -152,6 +152,18 @@ public:
 		const char* name, Scene* scene, // Scene
 		uint movableFlags, Movable* movParent, // Movable
 		CollisionShape* spatialCs); // Spatial
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	SkinModelPatch& getSkinModelPatch()
+	{
+		return *skinModelPatch;
+	}
+	const SkinModelPatch& getSkinModelPatch() const
+	{
+		return *skinModelPatch;
+	}
 	/// @}
 
 	/// @name SceneNode virtuals
