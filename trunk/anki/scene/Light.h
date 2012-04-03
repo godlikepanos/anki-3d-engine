@@ -3,7 +3,6 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Movable.h"
-#include "anki/scene/Renderable.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Spatial.h"
 #include "anki/resource/Material.h"
@@ -29,8 +28,7 @@ namespace anki {
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public Movable, public Renderable,
-	public Spatial
+class Light: public SceneNode, public Movable, public Spatial
 {
 public:
 	enum LightType
@@ -56,6 +54,45 @@ public:
 	{
 		return type;
 	}
+
+	const Vec4& getColor() const
+	{
+		return color;
+	}
+	Vec4& getColor()
+	{
+		return color;
+	}
+	void setColor(const Vec4& x)
+	{
+		color = x;
+	}
+
+	const Vec4& getSpecularColor() const
+	{
+		return specColor;
+	}
+	Vec4& getSpecularColor()
+	{
+		return specColor;
+	}
+	void setSpecularColor(const Vec4& x)
+	{
+		specColor = x;
+	}
+
+	bool getShadow() const
+	{
+		return shadow;
+	}
+	bool& getShadow()
+	{
+		return shadow;
+	}
+	void setShadow(const bool x)
+	{
+		shadow = x;
+	}
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -65,12 +102,12 @@ public:
 		return this;
 	}
 
-	Renderable* getRenderable()
+	Spatial* getSpatial()
 	{
 		return this;
 	}
 
-	Spatial* getSpatial()
+	Light* getLight()
 	{
 		return this;
 	}
@@ -83,28 +120,11 @@ public:
 	}
 	/// @}
 
-	/// @name Renderable virtuals
-	/// @{
-	const ModelPatchBase& getModelPatchBase() const
-	{
-		ANKI_ASSERT(0 && "Lights don't support it");
-		throw ""; // Make the compiler not to complain about return val
-	}
-
-	Material& getMaterial()
-	{
-		return *mtl;
-	}
-
-	Light* getLight()
-	{
-		return this;
-	}
-	/// @}
-
 private:
 	LightType type;
-	MaterialResourcePointer mtl;
+	Vec4 color;
+	Vec4 specColor;
+	bool shadow;
 };
 
 
@@ -112,13 +132,27 @@ private:
 class PointLight: public Light
 {
 public:
-	ANKI_OBSERVING(PointLight)
-
 	/// @name Constructors/Destructor
 	/// @{
 	PointLight(const char* fmtl,
 		const char* name, Scene* scene,
 		uint movableFlags, Movable* movParent);
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	float getRadius() const
+	{
+		return sphereL.getRadius();
+	}
+	float& getRadius()
+	{
+		return sphereL.getRadius();
+	}
+	void setRadius(const float x)
+	{
+		sphereL.setRadius(x);
+	}
 	/// @}
 
 	/// @name Movable virtuals
@@ -136,12 +170,6 @@ public:
 public:
 	Sphere sphereW;
 	Sphere sphereL;
-
-	void updateRadius(const float& r)
-	{
-		sphereL.setRadius(r);
-	}
-	ANKI_SLOT(updateRadius, const float&)
 };
 
 
@@ -156,6 +184,27 @@ public:
 	SpotLight(const char* fmtl,
 		const char* name, Scene* scene,
 		uint movableFlags, Movable* movParent);
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	float getFov() const
+	{
+		return frustum.getFovX();
+	}
+	void setFov(float x)
+	{
+		fovProp->setValue(x);
+	}
+
+	float getDistance() const
+	{
+		return frustum.getFar();
+	}
+	void setDistance(float x)
+	{
+		distProp->setValue(x);
+	}
 	/// @}
 
 	/// @name Movable virtuals
@@ -186,6 +235,8 @@ private:
 	PerspectiveFrustum frustum;
 	Mat4 projectionMat;
 	Mat4 viewMat;
+	ReadWriteProperty<float>* fovProp; ///< Have it here for updates
+	ReadWriteProperty<float>* distProp; ///< Have it here for updates
 
 	void updateZFar(const float& f)
 	{

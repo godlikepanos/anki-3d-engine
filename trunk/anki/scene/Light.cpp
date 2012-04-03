@@ -18,8 +18,12 @@ Light::Light(LightType t, const char* fmtl, // Light
 		Movable(movableFlags, movParent, *this),
 		Spatial(cs), type(t)
 {
-	mtl.load(fmtl);
-	Renderable::init(*this);
+	addNewProperty(new ReadWritePointerProperty<Vec4>("color", &color));
+
+	addNewProperty(
+		new ReadWritePointerProperty<Vec4>("specularColor", &specColor));
+
+	addNewProperty(new ReadWritePointerProperty<bool>("shadow", &shadow));
 }
 
 
@@ -38,12 +42,11 @@ PointLight::PointLight(const char* fmtl,
 	uint movableFlags, Movable* movParent)
 	: Light(LT_POINT, fmtl, name, scene, movableFlags, movParent, &sphereW)
 {
-	PropertyBase& pbase = findPropertyBaseByName("radius");
-	Property<float>& prop = pbase.upCast<Property<float> >();
-	ANKI_CONNECT(&prop, valueChanged, this, updateRadius);
-
 	sphereL.setCenter(Vec3(0.0));
-	sphereL.setRadius(prop.getValue());
+	sphereL.setRadius(1.0);
+
+	float& r = sphereL.getRadius();
+	addNewProperty(new ReadWritePointerProperty<float>("radius", &r));
 }
 
 
@@ -58,17 +61,23 @@ SpotLight::SpotLight(const char* fmtl,
 	: Light(LT_SPOT, fmtl, name, scene, movableFlags, movParent, &frustum),
 		Frustumable(&frustum)
 {
-	PropertyBase& pbase = findPropertyBaseByName("radius");
-	Property<float>& prop = pbase.upCast<Property<float> >();
-	ANKI_CONNECT(&prop, valueChanged, this, updateZFar);
+	// Fov
+	//
+	float ang = Math::toRad(45.0);
+	fovProp = new ReadWriteProperty<float>("fov", ang);
+	addNewProperty(fovProp);
+	ANKI_CONNECT(fovProp, valueChanged, this, updateFov);
 
-	float dfltAng = 45.0;
-	ReadWriteProperty<float>* angProp =
-		new ReadWriteProperty<float>("angle", dfltAng);
-	addNewProperty(angProp);
-	ANKI_CONNECT(angProp, valueChanged, this, updateFov);
+	// Distance
+	//
+	float dist = 10.0;
+	distProp = new ReadWriteProperty<float>("distance", dist);
+	addNewProperty(distProp);
+	ANKI_CONNECT(distProp, valueChanged, this, updateZFar);
 
-	frustum.setAll(dfltAng, dfltAng, 0.1, prop.getValue());
+	// Fix frustum
+	//
+	frustum.setAll(ang, ang, 0.1, dist);
 }
 
 

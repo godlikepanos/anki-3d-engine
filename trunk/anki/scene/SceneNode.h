@@ -14,6 +14,7 @@ class Movable;
 class Renderable;
 class Frustumable;
 class Spatial;
+class Light;
 
 
 /// @addtogroup Scene
@@ -66,6 +67,11 @@ public:
 	{
 		return nullptr;
 	}
+
+	virtual Light* getLight()
+	{
+		return nullptr;
+	}
 	/// @}
 
 	/// @name Accessors of components (const version)
@@ -88,6 +94,11 @@ public:
 	const Spatial* getSpatial() const
 	{
 		return const_cast<const Spatial*>(getSpatial());
+	}
+
+	const Light* getLight() const
+	{
+		return const_cast<const Light*>(getLight());
 	}
 	/// @}
 
