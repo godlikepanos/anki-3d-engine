@@ -11,6 +11,7 @@ namespace anki {
 
 
 template<> const uint Property<float>::TYPE_ID = __LINE__;
+template<> const uint Property<bool>::TYPE_ID = __LINE__;
 ANKI_DEFINE_PROPERTY_TYPE(Vec2)
 ANKI_DEFINE_PROPERTY_TYPE(Vec3)
 ANKI_DEFINE_PROPERTY_TYPE(OrthographicFrustum)
