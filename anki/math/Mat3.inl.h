@@ -232,24 +232,24 @@ inline Mat3& Mat3::operator-=(const Mat3& b)
 inline Mat3 Mat3::operator*(const Mat3& b) const
 {
 	Mat3 c;
-	c(0, 0) = (*this)(0, 0) * b(0, 0) + (*this)(0, 1) * b(1, 0) +
-		(*this)(0, 2) * b(2, 0);
-	c(0, 1) = (*this)(0, 0) * b(0, 1) + (*this)(0, 1) * b(1, 1) +
-		(*this)(0, 2) * b(2, 1);
-	c(0, 2) = (*this)(0, 0) * b(0, 2) + (*this)(0, 1) * b(1, 2) +
-		(*this)(0, 2) * b(2, 2);
-	c(1, 0) = (*this)(1, 0) * b(0, 0) + (*this)(1, 1) * b(1, 0) +
-		(*this)(1, 2) * b(2, 0);
-	c(1, 1) = (*this)(1, 0) * b(0, 1) + (*this)(1, 1) * b(1, 1) +
-		(*this)(1, 2) * b(2, 1);
-	c(1, 2) = (*this)(1, 0) * b(0, 2) + (*this)(1, 1) * b(1, 2) +
-		(*this)(1, 2) * b(2, 2);
-	c(2, 0) = (*this)(2, 0) * b(0, 0) + (*this)(2, 1) * b(1, 0) +
-		(*this)(2, 2) * b(2, 0);
-	c(2, 1) = (*this)(2, 0) * b(0, 1) + (*this)(2, 1) * b(1, 1) +
-		(*this)(2, 2) * b(2, 1);
-	c(2, 2) = (*this)(2, 0) * b(0, 2) + (*this)(2, 1) * b(1, 2) +
-		(*this)(2, 2) * b(2, 2);
+	c(0, 0) = (*this)(0, 0) * b(0, 0) + (*this)(0, 1) * b(1, 0)
+		+ (*this)(0, 2) * b(2, 0);
+	c(0, 1) = (*this)(0, 0) * b(0, 1) + (*this)(0, 1) * b(1, 1)
+		+ (*this)(0, 2) * b(2, 1);
+	c(0, 2) = (*this)(0, 0) * b(0, 2) + (*this)(0, 1) * b(1, 2)
+		+ (*this)(0, 2) * b(2, 2);
+	c(1, 0) = (*this)(1, 0) * b(0, 0) + (*this)(1, 1) * b(1, 0)
+		+ (*this)(1, 2) * b(2, 0);
+	c(1, 1) = (*this)(1, 0) * b(0, 1) + (*this)(1, 1) * b(1, 1)
+		+ (*this)(1, 2) * b(2, 1);
+	c(1, 2) = (*this)(1, 0) * b(0, 2) + (*this)(1, 1) * b(1, 2)
+		+ (*this)(1, 2) * b(2, 2);
+	c(2, 0) = (*this)(2, 0) * b(0, 0) + (*this)(2, 1) * b(1, 0)
+		+ (*this)(2, 2) * b(2, 0);
+	c(2, 1) = (*this)(2, 0) * b(0, 1) + (*this)(2, 1) * b(1, 1)
+		+ (*this)(2, 2) * b(2, 1);
+	c(2, 2) = (*this)(2, 0) * b(0, 2) + (*this)(2, 1) * b(1, 2)
+		+ (*this)(2, 2) * b(2, 2);
 	return c;
 }
 
@@ -267,7 +267,7 @@ inline bool Mat3::operator==(const Mat3& b) const
 {
 	for(int i = 0; i < 9; i++)
 	{
-		if(!Math::isZero((*this)[i]-b[i]))
+		if(!Math::isZero((*this)[i] - b[i]))
 		{
 			return false;
 		}
@@ -281,7 +281,7 @@ inline bool Mat3::operator!=(const Mat3& b) const
 {
 	for(int i = 0; i < 9; i++)
 	{
-		if(!Math::isZero((*this)[i]-b[i]))
+		if(!Math::isZero((*this)[i] - b[i]))
 		{
 			return true;
 		}
@@ -613,19 +613,19 @@ inline void Mat3::rotateXAxis(const float rad)
 	(*this)(2, 2) = (*this)(2, 2) * cosa - (*this)(2, 1) * sina;
 
 	// zAxis.normalize();
-	float len = sqrt((*this)(0, 2) * (*this)(0, 2) +
-		(*this)(1, 2) * (*this)(1, 2) + (*this)(2, 2) * (*this)(2, 2));
+	float len = sqrt((*this)(0, 2) * (*this)(0, 2)
+		+ (*this)(1, 2) * (*this)(1, 2) + (*this)(2, 2) * (*this)(2, 2));
 	(*this)(0, 2) /= len;
 	(*this)(1, 2) /= len;
 	(*this)(2, 2) /= len;
 
 	// yAxis = zAxis * xAxis;
-	(*this)(0, 1) = (*this)(1, 2) * (*this)(2, 0) -
-		(*this)(2, 2) * (*this)(1, 0);
-	(*this)(1, 1) = (*this)(2, 2) * (*this)(0, 0) -
-		(*this)(0, 2) * (*this)(2, 0);
-	(*this)(2, 1) = (*this)(0, 2) * (*this)(1, 0) -
-		(*this)(1, 2) * (*this)(0, 0);
+	(*this)(0, 1) = (*this)(1, 2) * (*this)(2, 0)
+		- (*this)(2, 2) * (*this)(1, 0);
+	(*this)(1, 1) = (*this)(2, 2) * (*this)(0, 0)
+		- (*this)(0, 2) * (*this)(2, 0);
+	(*this)(2, 1) = (*this)(0, 2) * (*this)(1, 0)
+		- (*this)(1, 2) * (*this)(0, 0);
 
 	// yAxis.normalize();
 	/*len = invSqrt((*this)(0, 1) * (*this)(0, 1) +
@@ -650,24 +650,24 @@ inline void Mat3::rotateYAxis(const float rad)
 	getColumns(xAxis, yAxis, zAxis);*/
 
 	// zAxis = zAxis*cosa + xAxis*sina;
-	(*this)(0, 2) = (*this)(0, 2)*cosa + (*this)(0, 0)*sina;
-	(*this)(1, 2) = (*this)(1, 2)*cosa + (*this)(1, 0)*sina;
-	(*this)(2, 2) = (*this)(2, 2)*cosa + (*this)(2, 0)*sina;
+	(*this)(0, 2) = (*this)(0, 2) * cosa + (*this)(0, 0) * sina;
+	(*this)(1, 2) = (*this)(1, 2) * cosa + (*this)(1, 0) * sina;
+	(*this)(2, 2) = (*this)(2, 2) * cosa + (*this)(2, 0) * sina;
 
 	// zAxis.normalize();
-	float len = sqrt((*this)(0, 2) * (*this)(0, 2) +
-		(*this)(1, 2) * (*this)(1, 2) + (*this)(2, 2) * (*this)(2, 2));
+	float len = sqrt((*this)(0, 2) * (*this)(0, 2)
+		+ (*this)(1, 2) * (*this)(1, 2) + (*this)(2, 2) * (*this)(2, 2));
 	(*this)(0, 2) /= len;
 	(*this)(1, 2) /= len;
 	(*this)(2, 2) /= len;
 
 	// xAxis = (zAxis*yAxis) * -1.0f;
-	(*this)(0, 0) = (*this)(2, 2) * (*this)(1, 1) -
-		(*this)(1, 2) * (*this)(2, 1);
-	(*this)(1, 0) = (*this)(0, 2) * (*this)(2, 1) -
-		(*this)(2, 2) * (*this)(0, 1);
-	(*this)(2, 0) = (*this)(1, 2) * (*this)(0, 1) -
-		(*this)(0, 2) * (*this)(1, 1);
+	(*this)(0, 0) = (*this)(2, 2) * (*this)(1, 1)
+		- (*this)(1, 2) * (*this)(2, 1);
+	(*this)(1, 0) = (*this)(0, 2) * (*this)(2, 1)
+		- (*this)(2, 2) * (*this)(0, 1);
+	(*this)(2, 0) = (*this)(1, 2) * (*this)(0, 1)
+		- (*this)(0, 2) * (*this)(1, 1);
 
 	// xAxis.normalize();
 	/*len = invSqrt((*this)(0, 0) * (*this)(0, 0) + (*this)(1, 0) *
@@ -690,24 +690,24 @@ inline void Mat3::rotateZAxis(const float rad)
 	getColumns(xAxis, yAxis, zAxis);*/
 
 	// xAxis = xAxis*cosa + yAxis*sina;
-	(*this)(0, 0) = (*this)(0, 0)*cosa + (*this)(0, 1)*sina;
-	(*this)(1, 0) = (*this)(1, 0)*cosa + (*this)(1, 1)*sina;
-	(*this)(2, 0) = (*this)(2, 0)*cosa + (*this)(2, 1)*sina;
+	(*this)(0, 0) = (*this)(0, 0) * cosa + (*this)(0, 1) * sina;
+	(*this)(1, 0) = (*this)(1, 0) * cosa + (*this)(1, 1) * sina;
+	(*this)(2, 0) = (*this)(2, 0) * cosa + (*this)(2, 1) * sina;
 
 	// xAxis.normalize();
-	float len = sqrt((*this)(0, 0) * (*this)(0, 0) +
-		(*this)(1, 0) * (*this)(1, 0) + (*this)(2, 0) * (*this)(2, 0));
+	float len = sqrt((*this)(0, 0) * (*this)(0, 0)
+		+ (*this)(1, 0) * (*this)(1, 0) + (*this)(2, 0) * (*this)(2, 0));
 	(*this)(0, 0) /= len;
 	(*this)(1, 0) /= len;
 	(*this)(2, 0) /= len;
 
 	// yAxis = zAxis*xAxis;
-	(*this)(0, 1) = (*this)(1, 2) * (*this)(2, 0) -
-		(*this)(2, 2) * (*this)(1, 0);
-	(*this)(1, 1) = (*this)(2, 2) * (*this)(0, 0) -
-		(*this)(0, 2) * (*this)(2, 0);
-	(*this)(2, 1) = (*this)(0, 2) * (*this)(1, 0) -
-		(*this)(1, 2) * (*this)(0, 0);
+	(*this)(0, 1) = (*this)(1, 2) * (*this)(2, 0)
+		- (*this)(2, 2) * (*this)(1, 0);
+	(*this)(1, 1) = (*this)(2, 2) * (*this)(0, 0)
+		- (*this)(0, 2) * (*this)(2, 0);
+	(*this)(2, 1) = (*this)(0, 2) * (*this)(1, 0)
+		- (*this)(1, 2) * (*this)(0, 0);
 
 	// yAxis.normalize();
 	/*len = invSqrt((*this)(0, 1) * (*this)(0, 1) +
@@ -788,10 +788,10 @@ inline float Mat3::getDet() const
 		(*this)(1, 0) * (*this)(2, 1) - (*this)(0, 0) * (*this)(1, 2) *
 		(*this)(2, 1) - (*this)(0, 1) * (*this)(1, 0) *
 		(*this)(2, 2) - (*this)(0, 2) * (*this)(1, 1) * (*this)(2, 0); */
-	return (*this)(0, 0) * ((*this)(1, 1) * (*this)(2, 2) -
-		(*this)(1, 2) * (*this)(2, 1)) - (*this)(0, 1) * ((*this)(1, 0) *
-		(*this)(2, 2) - (*this)(1, 2) * (*this)(2, 0)) + (*this)(0, 2) *
-		((*this)(0, 1) * (*this)(2, 1) - (*this)(1, 1) * (*this)(2, 0));
+	return (*this)(0, 0) * ((*this)(1, 1) * (*this)(2, 2)
+		- (*this)(1, 2) * (*this)(2, 1)) - (*this)(0, 1) * ((*this)(1, 0)
+		* (*this)(2, 2) - (*this)(1, 2) * (*this)(2, 0)) + (*this)(0, 2)
+		* ((*this)(0, 1) * (*this)(2, 1) - (*this)(1, 1) * (*this)(2, 0));
 }
 
 
@@ -802,15 +802,14 @@ inline Mat3 Mat3::getInverse() const
 	Mat3 r;
 
 	// compute determinant
-	float cofactor0 = (*this)(1, 1) * (*this)(2, 2) -
-		(*this)(1, 2) * (*this)(2, 1);
-	float cofactor3 = (*this)(0, 2) * (*this)(2, 1) -
-		(*this)(0, 1) * (*this)(2, 2);
-	float cofactor6 = (*this)(0, 1) * (*this)(1, 2) -
-		(*this)(0, 2) * (*this)(1, 1);
-	float det = (*this)(0, 0) * cofactor0 + (*this)(1, 0) * cofactor3 +
-		(*this)(2, 0) *
-		cofactor6;
+	float cofactor0 = (*this)(1, 1) * (*this)(2, 2)
+		- (*this)(1, 2) * (*this)(2, 1);
+	float cofactor3 = (*this)(0, 2) * (*this)(2, 1)
+		- (*this)(0, 1) * (*this)(2, 2);
+	float cofactor6 = (*this)(0, 1) * (*this)(1, 2)
+		- (*this)(0, 2) * (*this)(1, 1);
+	float det = (*this)(0, 0) * cofactor0 + (*this)(1, 0) * cofactor3
+		+ (*this)(2, 0) * cofactor6;
 
 	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert det == 0
 
@@ -820,19 +819,19 @@ inline Mat3 Mat3::getInverse() const
 	r(0, 1) = invDet * cofactor3;
 	r(0, 2) = invDet * cofactor6;
 
-	r(1, 0) = invDet * ((*this)(1, 2) * (*this)(2, 0) -
-		(*this)(1, 0) * (*this)(2, 2));
-	r(1, 1) = invDet * ((*this)(0, 0) * (*this)(2, 2) -
-		(*this)(0, 2) * (*this)(2, 0));
-	r(1, 2) = invDet * ((*this)(0, 2) * (*this)(1, 0) -
-		(*this)(0, 0) * (*this)(1, 2));
+	r(1, 0) = invDet * ((*this)(1, 2) * (*this)(2, 0)
+		- (*this)(1, 0) * (*this)(2, 2));
+	r(1, 1) = invDet * ((*this)(0, 0) * (*this)(2, 2)
+		- (*this)(0, 2) * (*this)(2, 0));
+	r(1, 2) = invDet * ((*this)(0, 2) * (*this)(1, 0)
+		- (*this)(0, 0) * (*this)(1, 2));
 
-	r(2, 0) = invDet * ((*this)(1, 0) * (*this)(2, 1) -
-		(*this)(1, 1) * (*this)(2, 0));
-	r(2, 1) = invDet * ((*this)(0, 1) * (*this)(2, 0) -
-		(*this)(0, 0) * (*this)(2, 1));
-	r(2, 2) = invDet * ((*this)(0, 0) * (*this)(1, 1) -
-		(*this)(0, 1) * (*this)(1, 0));
+	r(2, 0) = invDet * ((*this)(1, 0) * (*this)(2, 1)
+		- (*this)(1, 1) * (*this)(2, 0));
+	r(2, 1) = invDet * ((*this)(0, 1) * (*this)(2, 0)
+		- (*this)(0, 0) * (*this)(2, 1));
+	r(2, 2) = invDet * ((*this)(0, 0) * (*this)(1, 1)
+		- (*this)(0, 1) * (*this)(1, 0));
 
 	return r;
 }
@@ -919,9 +918,9 @@ inline Mat3 operator/(const float f, const Mat3& m3)
 // Print
 inline std::ostream& operator<<(std::ostream& s, const Mat3& m)
 {
-	for(int i=0; i<3; i++)
+	for(int i = 0; i < 3; i++)
 	{
-		for(int j=0; j<3; j++)
+		for(int j = 0; j < 3; j++)
 		{
 			s << m(i, j) << ' ';
 		}

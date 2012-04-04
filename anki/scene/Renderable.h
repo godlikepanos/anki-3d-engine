@@ -76,11 +76,6 @@ public:
 	/// Access the material
 	virtual const Material& getMaterial() const = 0;
 
-	virtual Light* getLight()
-	{
-		return nullptr;
-	}
-
 	MutableRange getProperties()
 	{
 		return MutableRange(props.begin(), props.end());

@@ -205,6 +205,32 @@ public:
 	{
 		distProp->setValue(x);
 	}
+
+	const Mat4& getViewMatrix() const
+	{
+		return viewMat;
+	}
+	Mat4& getViewMatrix()
+	{
+		return viewMat;
+	}
+	void setViewMatrix(const Mat4& x)
+	{
+		viewMat = x;
+	}
+
+	const Mat4& getProjectionMatrix() const
+	{
+		return projectionMat;
+	}
+	Mat4& getProjectionMatrix()
+	{
+		return projectionMat;
+	}
+	void setProjectionMatrix(const Mat4& x)
+	{
+		projectionMat = x;
+	}
 	/// @}
 
 	/// @name Movable virtuals
@@ -227,7 +253,7 @@ public:
 	/// matrix
 	void frustumUpdate()
 	{
-		projectionMat = getFrustum().calculateProjectionMatrix();
+		projectionMat = frustum.calculateProjectionMatrix();
 	}
 	/// @}
 

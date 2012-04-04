@@ -18,7 +18,7 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit Axisang();
-			 Axisang(const Axisang& b);
+	         Axisang(const Axisang& b);
 	explicit Axisang(const float rad, const Vec3& axis_);
 	explicit Axisang(const Quat& q);
 	explicit Axisang(const Mat3& m3);
