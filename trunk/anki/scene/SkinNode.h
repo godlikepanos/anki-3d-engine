@@ -202,6 +202,12 @@ public:
 	{
 		return skinModelPatch->getMaterial();
 	}
+
+	/// Overrides Renderable::getRenderableWorldTransform
+	const Transform* getRenderableWorldTransform() const
+	{
+		return &getWorldTransform();
+	}
 	/// @}
 
 private:
