@@ -13,6 +13,7 @@ class ModelPatchBase;
 class Material;
 class MaterialVariable;
 class Light;
+class Transform;
 
 
 /// @addtogroup Scene
@@ -75,6 +76,11 @@ public:
 
 	/// Access the material
 	virtual const Material& getMaterial() const = 0;
+
+	virtual const Transform* getRenderableWorldTransform() const
+	{
+		return nullptr;
+	}
 
 	MutableRange getProperties()
 	{

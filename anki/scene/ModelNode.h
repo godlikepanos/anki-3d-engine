@@ -79,6 +79,12 @@ public:
 	{
 		return modelPatch->getMaterial();
 	}
+
+	/// Overrides Renderable::getRenderableWorldTransform
+	const Transform* getRenderableWorldTransform() const
+	{
+		return &getWorldTransform();
+	}
 	/// @}
 
 private:
