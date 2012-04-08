@@ -12,7 +12,9 @@ namespace anki {
 class Ez: public SwitchableRenderingPass
 {
 	public:
-		Ez(Renderer& r_): SwitchableRenderingPass(r_) {}
+		Ez(Renderer& r_)
+			: SwitchableRenderingPass(r_)
+		{}
 
 		void init(const RendererInitializer& initializer);
 		void run();

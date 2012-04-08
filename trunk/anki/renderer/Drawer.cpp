@@ -498,7 +498,7 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 
 
 //==============================================================================
-// SceneDrawer                                                                 =
+// RenderableDrawer                                                            =
 //==============================================================================
 
 /// Set the uniform using this visitor
@@ -522,12 +522,12 @@ struct SetUniformVisitor: public boost::static_visitor<void>
 
 
 //==============================================================================
-void SceneDrawer::setupShaderProg(
+void RenderableDrawer::setupShaderProg(
 	const PassLevelKey& key,
 	const Camera& cam,
-	SceneNode& renderable)
+	Renderable& renderable)
 {
-	const Material& mtl = renderable.getRenderable()->getMaterial();
+	const Material& mtl = renderable.getMaterial();
 	const ShaderProgram& sprog = mtl.getShaderProgram(key);
 	uint texunit = 0;
 
@@ -552,8 +552,7 @@ void SceneDrawer::setupShaderProg(
 		if(name == "modelViewProjectionMat")
 		{
 			Mat4 mvp = 
-				Mat4(renderable.findPropertyBaseByName("worldTransform").
-				getValue<Transform>()) 
+				Mat4(*renderable.getRenderableWorldTransform())
 				* cam.getViewMatrix() * cam.getProjectionMatrix();
 
 			uni.set(mvp);
@@ -567,8 +566,8 @@ void SceneDrawer::setupShaderProg(
 
 
 //==============================================================================
-void SceneDrawer::render(const Camera& cam, uint pass, 
-	SceneNode& node) 
+void RenderableDrawer::render(const Camera& cam, uint pass,
+	Renderable& renderable)
 {
 	/*float dist = (node.getWorldTransform().getOrigin() -
 		cam.getWorldTransform().getOrigin()).getLength();
@@ -577,15 +576,15 @@ void SceneDrawer::render(const Camera& cam, uint pass,
 	PassLevelKey key(pass, 0);
 
 	// Setup shader
-	setupShaderProg(key, cam, node);
+	setupShaderProg(key, cam, renderable);
 
 	// Render
 	uint indecesNum = 
-		node.getRenderable()->getModelPatchBase().getIndecesNumber(0);
+		renderable.getModelPatchBase().getIndecesNumber(0);
 
-	node.getRenderable()->getModelPatchBase().getVao(key).bind();
+	renderable.getModelPatchBase().getVao(key).bind();
 	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
-	node.getRenderable()->getModelPatchBase().getVao(key).unbind();
+	renderable.getModelPatchBase().getVao(key).unbind();
 }
 
 
