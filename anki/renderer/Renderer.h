@@ -109,11 +109,11 @@ public:
 		return *cam;
 	}
 
-	const SceneDrawer& getSceneDrawer() const
+	const RenderableDrawer& getSceneDrawer() const
 	{
 		return sceneDrawer;
 	}
-	SceneDrawer& getSceneDrawer()
+	RenderableDrawer& getSceneDrawer()
 	{
 		return sceneDrawer;
 	}
@@ -241,7 +241,7 @@ protected:
 	Camera* cam; ///< Current camera
 	/// Max color attachments an FBO can accept
 	static int maxColorAtachments;
-	SceneDrawer sceneDrawer;
+	RenderableDrawer sceneDrawer;
 	float lodDistance; ///< Distance that used to calculate the LOD
 
 	/// @name Optimization vars

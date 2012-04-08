@@ -10,8 +10,6 @@ namespace anki {
 
 
 //==============================================================================
-// init                                                                        =
-//==============================================================================
 void Ez::init(const RendererInitializer& initializer)
 {
 	enabled = initializer.ms.ez.enabled;
@@ -46,8 +44,6 @@ void Ez::init(const RendererInitializer& initializer)
 
 
 //==============================================================================
-// run                                                                         =
-//==============================================================================
 void Ez::run()
 {
 	if(!enabled)
@@ -68,10 +64,10 @@ void Ez::run()
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	BOOST_FOREACH(RenderableNode* node, cam.getVisibleMsRenderableNodes())
+	/*for(RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
 		r.getSceneDrawer().renderRenderableNode(cam, 1, *node);
-	}
+	}*/
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }

@@ -57,6 +57,15 @@ public:
 	{
 		return Types<SceneNode>::MutableRange(nodes.begin(), nodes.end());
 	}
+
+	const VisibilityInfo& getVisibilityInfo() const
+	{
+		return Vinfo;
+	}
+	VisibilityInfo& getVisibilityInfo()
+	{
+		return Vinfo;
+	}
 	/// @}
 
 	/// Put a node in the appropriate containers

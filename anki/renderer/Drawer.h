@@ -211,16 +211,16 @@ class PassLevelKey;
 
 
 /// It includes all the functions to render a Renderable
-class SceneDrawer
+class RenderableDrawer
 {
 public:
 	/// The one and only constructor
-	SceneDrawer(Renderer* r_)
+	RenderableDrawer(Renderer* r_)
 		: r(r_)
 	{}
 
 	void render(const Camera& cam,
-		uint pass, SceneNode& renderable);
+		uint pass, Renderable& renderable);
 
 private:
 	Renderer* r;
@@ -228,7 +228,7 @@ private:
 	void setupShaderProg(
 		const PassLevelKey& key,
 		const Camera& cam,
-		SceneNode& renderable);
+		Renderable& renderable);
 };
 
 
