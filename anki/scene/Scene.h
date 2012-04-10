@@ -60,11 +60,11 @@ public:
 
 	const VisibilityInfo& getVisibilityInfo() const
 	{
-		return Vinfo;
+		return vinfo;
 	}
 	VisibilityInfo& getVisibilityInfo()
 	{
-		return Vinfo;
+		return vinfo;
 	}
 	/// @}
 

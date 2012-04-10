@@ -16,57 +16,57 @@ class ShaderProgram;
 /// Blurring rendering pass
 class Bl: public SwitchableRenderingPass
 {
-	public:
-		Bl(Renderer& r_);
-		void init(const RendererInitializer& initializer);
-		void run();
+public:
+	Bl(Renderer& r_);
+	void init(const RendererInitializer& initializer);
+	void run();
 
-		/// @name Accessors
-		/// @{
-		float getSideBlurFactor() const
-		{
-			return sideBlurFactor;
-		}
-		float& getSideBlurFactor()
-		{
-			return sideBlurFactor;
-		}
-		void setSideBlurFactor(const float x)
-		{
-			sideBlurFactor = x;
-		}
+	/// @name Accessors
+	/// @{
+	float getSideBlurFactor() const
+	{
+		return sideBlurFactor;
+	}
+	float& getSideBlurFactor()
+	{
+		return sideBlurFactor;
+	}
+	void setSideBlurFactor(const float x)
+	{
+		sideBlurFactor = x;
+	}
 
-		uint getBlurringIterationsNum() const
-		{
-			return blurringIterationsNum;
-		}
-		uint& getBlurringIterationsNum()
-		{
-			return blurringIterationsNum;
-		}
-		void setBlurringIterationsNum(const uint x)
-		{
-			blurringIterationsNum = x;
-		}
-		/// @}
+	uint getBlurringIterationsNum() const
+	{
+		return blurringIterationsNum;
+	}
+	uint& getBlurringIterationsNum()
+	{
+		return blurringIterationsNum;
+	}
+	void setBlurringIterationsNum(const uint x)
+	{
+		blurringIterationsNum = x;
+	}
+	/// @}
 
-	private:
-		Fbo hBlurFbo; ///< Fbo that writes to blurFai
-		Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
-		Fbo sideBlurFbo;
+private:
+	Fbo hBlurFbo; ///< Fbo that writes to blurFai
+	Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
+	Fbo sideBlurFbo;
 
-		ShaderProgramResourcePointer hBlurSProg;
-		ShaderProgramResourcePointer vBlurSProg;
-		ShaderProgramResourcePointer sideBlurSProg;
+	ShaderProgramResourcePointer hBlurSProg;
+	ShaderProgramResourcePointer vBlurSProg;
+	ShaderProgramResourcePointer sideBlurSProg;
 
-		Texture blurFai; ///< Temp FAI for blurring
-		TextureResourcePointer sideBlurMap;
+	Texture blurFai; ///< Temp FAI for blurring
+	TextureResourcePointer sideBlurMap;
 
-		uint blurringIterationsNum;
-		float sideBlurFactor;
+	uint blurringIterationsNum;
+	float sideBlurFactor;
 
-		void runBlur();
-		void runSideBlur();
+	void runBlur();
+	void runSideBlur();
 };
 
 
