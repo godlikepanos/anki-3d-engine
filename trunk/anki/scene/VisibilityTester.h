@@ -12,24 +12,34 @@ class Camera;
 class Scene;
 class SceneNode;
 class Frustumable;
+class Renderable;
+class Light;
 
 
-/// XXX
+/// Its actually a container for visible entities
 class VisibilityInfo
 {
 	friend class VisibilityTester;
 
 public:
-	typedef std::vector<SceneNode*> SceneNodes;
+	typedef std::vector<Renderable*> Renderables;
+	typedef std::vector<Light*> Lights;
 
-	boost::iterator_range<SceneNodes::iterator> getNodes()
+	boost::iterator_range<Renderables::iterator> getRenderables()
 	{
-		return boost::iterator_range<SceneNodes::iterator>(
-			nodes.begin(), nodes.end());
+		return boost::iterator_range<Renderables::iterator>(
+			renderables.begin(), renderables.end());
+	}
+
+	boost::iterator_range<Lights::iterator> getLights()
+	{
+		return boost::iterator_range<Lights::iterator>(
+			lights.begin(), lights.end());
 	}
 
 private:
-	SceneNodes nodes;
+	Renderables renderables;
+	Lights lights;
 };
 
 
@@ -47,7 +57,7 @@ public:
 	/// This method:
 	/// - Gets the visible renderables and frustumables
 	/// - For every frustumable perform tests
-	void test(Frustumable& cam, Scene& scene, VisibilityInfo& vinfo);
+	static void test(Frustumable& cam, Scene& scene, VisibilityInfo& vinfo);
 };
 
 
