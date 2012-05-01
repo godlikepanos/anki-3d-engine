@@ -20,7 +20,7 @@ public:
 	explicit Vec2(const float x, const float y);
 	explicit Vec2(const float f);
 	explicit Vec2(const float arr[]);
-			 Vec2(const Vec2& b);
+	Vec2(const Vec2& b);
 	explicit Vec2(const Vec3& v3);
 	explicit Vec2(const Vec4& v4);
 	/// @}
@@ -93,7 +93,7 @@ private:
 			float x, y;
 		} vec;
 
-		boost::array<float, 2> arr;
+		std::array<float, 2> arr;
 	};
 	/// @}
 };

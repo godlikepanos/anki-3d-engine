@@ -9,26 +9,26 @@
 namespace anki {
 
 
-#define ANKI_RESOURCE_TYPEDEFS(x) \
-	class x; \
-	typedef ResourceManager<x> x ## ResourceManager; \
-	typedef Singleton<x ## ResourceManager> x ## ResourceManagerSingleton; \
-	typedef ResourcePointer<x, x ## ResourceManagerSingleton> \
-		x ## ResourcePointer;
+#define ANKI_RESOURCE_TYPEDEFS(rsrc, name) \
+	class rsrc; \
+	typedef ResourceManager<rsrc> rsrc ## ResourceManager; \
+	typedef Singleton<rsrc ## ResourceManager> \
+		rsrc ## ResourceManagerSingleton; \
+	typedef ResourcePointer<rsrc, rsrc ## ResourceManagerSingleton> name;
 
 
-ANKI_RESOURCE_TYPEDEFS(Texture)
-ANKI_RESOURCE_TYPEDEFS(ShaderProgram)
-ANKI_RESOURCE_TYPEDEFS(Material)
-ANKI_RESOURCE_TYPEDEFS(Mesh)
-ANKI_RESOURCE_TYPEDEFS(Skeleton)
-ANKI_RESOURCE_TYPEDEFS(SkelAnim)
-ANKI_RESOURCE_TYPEDEFS(LightRsrc)
-ANKI_RESOURCE_TYPEDEFS(ParticleEmitterRsrc)
-ANKI_RESOURCE_TYPEDEFS(Script)
-ANKI_RESOURCE_TYPEDEFS(Model)
-ANKI_RESOURCE_TYPEDEFS(Skin)
-ANKI_RESOURCE_TYPEDEFS(DummyRsrc)
+ANKI_RESOURCE_TYPEDEFS(TextureResource, TextureResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(ShaderProgramResource, ShaderProgramResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Material, MaterialResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Mesh, MeshResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Skeleton, SkeletonResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(SkelAnim, SkelAnimResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(LightRsrc, LightRsrcResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(ParticleEmitterRsrc, ParticleEmitterRsrcResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Script, ScriptResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Model, ModelResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Skin, SkinResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(DummyRsrc, DummyRsrcResourcePointer)
 
 
 } // end namespace

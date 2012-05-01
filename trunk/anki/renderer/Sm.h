@@ -3,7 +3,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/scene/VisibilityTester.h"
 
 
@@ -17,8 +17,8 @@ class Light;
 class Sm: private RenderingPass
 {
 	public:
-		Sm(Renderer& r_)
-		:	RenderingPass(r_)
+		Sm(Renderer* r_)
+			: RenderingPass(r_)
 		{}
 
 		/// @name Accessors
@@ -75,7 +75,7 @@ class Sm: private RenderingPass
 			float distance;
 		};
 
-		boost::array<Level, 4> levels; ///< The levels of detail. The 0 is the
+		std::array<Level, 4> levels; ///< The levels of detail. The 0 is the
 		                               ///< detailed one
 		Level* crntLevel; ///< Current level of detail. Assigned by run
 

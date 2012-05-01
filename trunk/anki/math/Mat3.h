@@ -23,7 +23,7 @@ public:
 		const float m10, const float m11, const float m12,
 		const float m20, const float m21, const float m22);
 	explicit Mat3(const float arr[]);
-			 Mat3(const Mat3& b);
+	Mat3(const Mat3& b);
 	explicit Mat3(const Quat& q); ///< Quat to Mat3. 12 muls, 12 adds
 	explicit Mat3(const Euler& eu);
 	explicit Mat3(const Axisang& axisang);
@@ -118,8 +118,8 @@ private:
 	/// @{
 	union
 	{
-		boost::array<float, 9> arr1;
-		boost::array<boost::array<float, 3>, 3> arr2;
+		std::array<float, 9> arr1;
+		std::array<std::array<float, 3>, 3> arr2;
 	};
 	/// @}
 };

@@ -1,8 +1,8 @@
 #ifndef ANKI_GL_QUERY_H
 #define ANKI_GL_QUERY_H
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/integer.hpp>
+#include <cstdint>
+#include <GL/glew.h>
 
 
 namespace anki {
@@ -15,17 +15,13 @@ class QueryImpl;
 class Query
 {
 public:
-	enum QueryQuestion
-	{
-		QQ_SAMPLES_PASSED,
-		QQ_ANY_SAMPLES_PASSED, ///< Faster than the QQ_SAMPLES_PASSED
-		QQ_TIME_ELAPSED, ///< Time elapsed in ms
-		QQ_COUNT
-	};
-
 	/// @name Constructors/Destructor
 	/// @{
-	Query(QueryQuestion q);
+
+	/// @param q One of GL_SAMPLES_PASSED, GL_ANY_SAMPLES_PASSED, 
+	///        GL_TIME_ELAPSED
+	Query(GLenum q);
+
 	~Query();
 	/// @}
 
@@ -39,12 +35,13 @@ public:
 	/// @note Waits for operations to finish
 	uint64_t getResult();
 
-	/// Get results
-	/// @note Doesn't Wait for operations to finish
+	/// Get results. Doesn't Wait for operations to finish. If @a finished is 
+	/// false then the return value is irrelevant
 	uint64_t getResultNoWait(bool& finished);
 
 private:
-	boost::scoped_ptr<QueryImpl> impl;
+	GLuint glId;
+	GLenum question;
 };
 
 

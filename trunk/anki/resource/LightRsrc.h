@@ -3,7 +3,7 @@
 
 #include "anki/math/Math.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 
 
 namespace anki {

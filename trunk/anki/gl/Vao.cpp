@@ -1,7 +1,7 @@
 #include "anki/gl/Vao.h"
 #include "anki/gl/Vbo.h"
 #include "anki/util/Exception.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/gl/ShaderProgram.h"
 
 
 namespace anki {

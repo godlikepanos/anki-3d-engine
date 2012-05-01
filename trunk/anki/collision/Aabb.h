@@ -87,7 +87,7 @@ public:
 		b = *this;
 	}
 
-	/// XXX Optimize it
+	/// It uses a nice trick to avoid unwanted calculations 
 	Aabb getTransformed(const Transform& transform) const;
 
 	/// Get a collision shape that includes this and the given. Its not

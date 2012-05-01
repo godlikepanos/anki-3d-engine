@@ -5,7 +5,6 @@
 #include "anki/util/Assert.h"
 #include "anki/gl/GlException.h"
 #include <GL/glew.h>
-#include <boost/noncopyable.hpp>
 
 
 namespace anki {
@@ -16,9 +15,13 @@ class Vbo;
 
 
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
-class Vao: public boost::noncopyable
+class Vao
 {
 public:
+	// Non-copyable
+	Vao(const Vao&) = delete;
+	Vao& operator=(const Vao&) = delete;
+
 	/// @name Constructors
 	/// @{
 
@@ -70,13 +73,13 @@ public:
 	/// @param pointer Specifies a offset of the first component of the
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
-		const Vbo& vbo,
-		const ShaderProgramAttributeVariable& attribVar,
-		GLint size,
-		GLenum type,
-		GLboolean normalized,
-		GLsizei stride,
-		const GLvoid* pointer);
+	    const Vbo& vbo,
+	    const ShaderProgramAttributeVariable& attribVar,
+	    GLint size,
+	    GLenum type,
+	    GLboolean normalized,
+	    GLsizei stride,
+	    const GLvoid* pointer);
 
 	/// Attach an array buffer VBO. See @link
 	/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
@@ -93,13 +96,13 @@ public:
 	/// @param pointer Specifies a offset of the first component of the
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
-		const Vbo& vbo,
-		uint attribVarLocation,
-		GLint size,
-		GLenum type,
-		GLboolean normalized,
-		GLsizei stride,
-		const GLvoid* pointer);
+	    const Vbo& vbo,
+	    uint attribVarLocation,
+	    GLint size,
+	    GLenum type,
+	    GLboolean normalized,
+	    GLsizei stride,
+	    const GLvoid* pointer);
 
 	/// Attach an element array buffer VBO
 	void attachElementArrayBufferVbo(const Vbo& vbo);

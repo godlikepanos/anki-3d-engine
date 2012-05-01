@@ -180,9 +180,9 @@ inline void Transform::invert()
 // Print
 inline std::ostream& operator<<(std::ostream& s, const Transform& a)
 {
-	s << "o: " << a.origin << "\n" <<
-		"s: " << a.scale << "\n" <<
-		"r:\n" << a.rotation;
+	s << "o: " << a.origin << "\n" 
+		<< "s: " << a.scale << "\n" 
+		<< "r:\n" << a.rotation;
 	return s;
 }
 

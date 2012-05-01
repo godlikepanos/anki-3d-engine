@@ -3,8 +3,8 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
-#include "anki/resource/Texture.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/resource/TextureResource.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
@@ -22,8 +22,8 @@ namespace anki {
 class Ssao: public SwitchableRenderingPass
 {
 	public:
-		Ssao(Renderer& r_)
-		:	SwitchableRenderingPass(r_)
+		Ssao(Renderer* r_)
+			: SwitchableRenderingPass(r_)
 		{}
 
 		void init(const RendererInitializer& initializer);

@@ -21,7 +21,7 @@ public:
 	explicit Vec3(const float f);
 	explicit Vec3(const float arr[]);
 	explicit Vec3(const Vec2& v2, const float z);
-			 Vec3(const Vec3& b);
+	Vec3(const Vec3& b);
 	explicit Vec3(const Vec4& v4);
 	explicit Vec3(const Quat& q);
 	/// @}
@@ -131,7 +131,7 @@ private:
 			float x, y, z;
 		} vec;
 
-		boost::array<float, 3> arr;
+		std::array<float, 3> arr;
 	};
 	/// @}
 };

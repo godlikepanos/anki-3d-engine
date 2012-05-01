@@ -13,7 +13,7 @@ struct RendererInitializer;
 class RenderingPass
 {
 public:
-	RenderingPass(Renderer& r_)
+	RenderingPass(Renderer* r_)
 		: r(r_)
 	{}
 
@@ -24,7 +24,7 @@ public:
 	virtual void init(const RendererInitializer& initializer) = 0;
 
 protected:
-	Renderer& r; ///< Know your father
+	Renderer* r; ///< Know your father
 };
 
 
@@ -32,7 +32,7 @@ protected:
 class SwitchableRenderingPass: public RenderingPass
 {
 public:
-	SwitchableRenderingPass(Renderer& r_)
+	SwitchableRenderingPass(Renderer* r_)
 		: RenderingPass(r_)
 	{}
 

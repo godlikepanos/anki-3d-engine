@@ -1,12 +1,20 @@
 #include "anki/gl/Fbo.h"
+#include "anki/gl/Texture.h"
 #include <boost/lexical_cast.hpp>
+#include <array>
 
 
 namespace anki {
 
 
 //==============================================================================
-// Destructor                                                                  =
+
+static std::array<GLenum, 8> colorAttachments = {{
+	GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
+	GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
+	GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7}};
+
+
 //==============================================================================
 Fbo::~Fbo()
 {
@@ -18,8 +26,6 @@ Fbo::~Fbo()
 
 
 //==============================================================================
-// checkIfGood                                                                 =
-//==============================================================================
 void Fbo::checkIfGood() const
 {
 	ANKI_ASSERT(isCreated());
@@ -29,14 +35,12 @@ void Fbo::checkIfGood() const
 
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		throw ANKI_EXCEPTION("FBO is incomplete: " +
-			boost::lexical_cast<std::string>(status));
+		throw ANKI_EXCEPTION("FBO is incomplete: " 
+			+ boost::lexical_cast<std::string>(status));
 	}
 }
 
 
-//==============================================================================
-// setNumOfColorAttachements                                                   =
 //==============================================================================
 void Fbo::setNumOfColorAttachements(uint num) const
 {
@@ -50,25 +54,26 @@ void Fbo::setNumOfColorAttachements(uint num) const
 	}
 	else
 	{
-		static GLenum colorAttachments[] = {
-			GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
-			GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
-			GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
-
-		ANKI_ASSERT(num <= sizeof(colorAttachments) / sizeof(GLenum));
-		glDrawBuffers(num, colorAttachments);
+		ANKI_ASSERT(num <= colorAttachments.size());
+		glDrawBuffers(num, &colorAttachments[0]);
 	}
 }
 
 
-//==============================================================================
-// getCurrentFbo                                                               =
 //==============================================================================
 uint Fbo::getCurrentFbo()
 {
 	int fboGlId;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fboGlId);
 	return (uint)fboGlId;
+}
+
+
+//==============================================================================
+void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex)
+{
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
+		GL_TEXTURE_2D, tex.getGlId(), 0);
 }
 
 

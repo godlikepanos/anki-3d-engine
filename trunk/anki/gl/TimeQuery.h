@@ -5,7 +5,8 @@
 #include <boost/array.hpp>
 
 
-namespace anki {
+namespace anki
+{
 
 
 /// Used to profile the GPU. It gets the time elapsed from when the begin() is

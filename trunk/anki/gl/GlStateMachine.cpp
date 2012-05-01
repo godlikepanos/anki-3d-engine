@@ -8,8 +8,7 @@ namespace anki {
 // Statics                                                                     =
 //==============================================================================
 
-GLenum GlStateMachine::flagEnums[] =
-{
+GLenum GlStateMachine::flagEnums[] = {
 	GL_DEPTH_TEST,
 	GL_BLEND,
 	GL_STENCIL_TEST,
@@ -20,8 +19,6 @@ GLenum GlStateMachine::flagEnums[] =
 };
 
 
-//==============================================================================
-// enable                                                                      =
 //==============================================================================
 void GlStateMachine::enable(GLenum glFlag, bool enable)
 {
@@ -45,8 +42,6 @@ void GlStateMachine::enable(GLenum glFlag, bool enable)
 
 
 //==============================================================================
-// isEnabled                                                                   =
-//==============================================================================
 bool GlStateMachine::isEnabled(GLenum glFlag)
 {
 	ANKI_ASSERT(flags.find(glFlag) != flags.end());
@@ -56,8 +51,6 @@ bool GlStateMachine::isEnabled(GLenum glFlag)
 }
 
 
-//==============================================================================
-// sync                                                                        =
 //==============================================================================
 void GlStateMachine::sync()
 {
@@ -82,12 +75,10 @@ void GlStateMachine::sync()
 
 
 //==============================================================================
-// setViewport                                                                 =
-//==============================================================================
 void GlStateMachine::setViewport(uint x, uint y, uint w, uint h)
 {
-	if(x != (uint)viewportX || y != (uint)viewportY ||
-		w != (uint)viewportW || h != (uint)viewportH)
+	if(x != (uint)viewportX || y != (uint)viewportY 
+		|| w != (uint)viewportW || h != (uint)viewportH)
 	{
 		glViewport(x, y, w, h);
 		viewportX = x;
@@ -98,8 +89,6 @@ void GlStateMachine::setViewport(uint x, uint y, uint w, uint h)
 }
 
 
-//==============================================================================
-// useShaderProg                                                               =
 //==============================================================================
 void GlStateMachine::useShaderProg(GLuint id)
 {
@@ -113,8 +102,6 @@ void GlStateMachine::useShaderProg(GLuint id)
 }
 
 
-//==============================================================================
-// getCurrentProgramGlId                                                       =
 //==============================================================================
 GLuint GlStateMachine::getCurrentProgramGlId()
 {

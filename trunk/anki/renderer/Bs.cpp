@@ -13,14 +13,10 @@ namespace anki {
 
 
 //==============================================================================
-// Destructor                                                                  =
-//==============================================================================
 Bs::~Bs()
 {}
 
 
-//==============================================================================
-// createFbo                                                                   =
 //==============================================================================
 void Bs::createFbo()
 {
@@ -28,6 +24,8 @@ void Bs::createFbo()
 	{
 		fbo.create();
 		fbo.bind();
+	
+		std::array<>
 
 		fbo.setNumOfColorAttachements(1);
 
@@ -42,7 +40,7 @@ void Bs::createFbo()
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Failed to create blending stage FBO");
+		throw ANKI_EXCEPTION("Failed to create blending stage FBO") << e;
 	}
 }
 

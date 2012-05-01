@@ -2,7 +2,7 @@
 #define ANKI_RENDERER_BL_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/gl/Fbo.h"
 
@@ -10,14 +10,17 @@
 namespace anki {
 
 
-class ShaderProgram;
+class ShaderProgramResource;
 
 
 /// Blurring rendering pass
 class Bl: public SwitchableRenderingPass
 {
 public:
-	Bl(Renderer& r_);
+	Bl(Renderer* r)
+		: SwitchableRenderingPass(r)
+	{}
+
 	void init(const RendererInitializer& initializer);
 	void run();
 
@@ -62,7 +65,7 @@ private:
 	Texture blurFai; ///< Temp FAI for blurring
 	TextureResourcePointer sideBlurMap;
 
-	uint blurringIterationsNum;
+	uint blurringIterationsNum; ///< How many times the pass will run
 	float sideBlurFactor;
 
 	void runBlur();

@@ -219,18 +219,16 @@ inline Vec3 Vec3::operator-() const
 // ==
 inline bool Vec3::operator==(const Vec3& b) const
 {
-	return Math::isZero(x() - b.x()) &&
-		Math::isZero(y() - b.y()) &&
-		Math::isZero(z() - b.z());
+	return Math::isZero(x() - b.x()) 
+		&& Math::isZero(y() - b.y()) 
+		&& Math::isZero(z() - b.z());
 }
 
 
 // !=
 inline bool Vec3::operator!=(const Vec3& b) const
 {
-	return !(Math::isZero(x() - b.x()) &&
-		Math::isZero(y() - b.y()) &&
-		Math::isZero(z() - b.z()));
+	return !operator==(b);
 }
 
 
@@ -482,12 +480,12 @@ inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 	}
 	return out;
 #else
-	return Vec3(transform(0, 0) * x() + transform(0, 1) * y() +
-		transform(0, 2) * z() + transform(0, 3),
-		transform(1, 0) * x() + transform(1, 1) * y() +
-		transform(1, 2) * z() + transform(1, 3),
-		transform(2, 0) * x() + transform(2, 1) * y() +
-		transform(2, 2) * z() + transform(2, 3)
+	return Vec3(transform(0, 0) * x() + transform(0, 1) * y() 
+		+ transform(0, 2) * z() + transform(0, 3),
+		transform(1, 0) * x() + transform(1, 1) * y() 
+		+ transform(1, 2) * z() + transform(1, 3),
+		transform(2, 0) * x() + transform(2, 1) * y() 
+		+ transform(2, 2) * z() + transform(2, 3)
 	);
 #endif
 }
@@ -503,8 +501,8 @@ inline void Vec3::transform(const Mat4& transform)
 // Transform
 inline Vec3 Vec3::getTransformed(const Transform& transform) const
 {
-	return (transform.getRotation() * ((*this) * transform.getScale())) +
-		transform.getOrigin();
+	return (transform.getRotation() * ((*this) * transform.getScale())) 
+		+ transform.getOrigin();
 }
 
 

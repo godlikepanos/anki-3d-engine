@@ -1,16 +1,10 @@
 #include "anki/renderer/Bl.h"
 #include "anki/renderer/RendererInitializer.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/resource/ShaderProgramResource.h"
 
 
 namespace anki {
-
-
-//==============================================================================
-Bl::Bl(Renderer& r_)
-	: SwitchableRenderingPass(r_)
-{}
 
 
 //==============================================================================
@@ -26,16 +20,16 @@ void Bl::init(const RendererInitializer& initializer)
 	}
 
 	// Horizontal
+	//
 	try
 	{
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
 			GL_FLOAT, blurFai);
 
 		hBlurFbo.create();
 		hBlurFbo.bind();
-		hBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, blurFai.getGlId(), 0);
+		std::array<Texture*, 1> fais = {{&blurFai}};
+		hBlurFbo.setColorAttachments(fais);
 	}
 	catch(const std::exception& e)
 	{
@@ -43,17 +37,17 @@ void Bl::init(const RendererInitializer& initializer)
 			"post-processing stage FBO") << e;
 	}
 
-	hBlurSProg.load(ShaderProgram::createSrcCodeToCache(
+	hBlurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
+	//
 	try
 	{
 		vBlurFbo.create();
 		vBlurFbo.bind();
-		vBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, r.getPps().getPostPassFai().getGlId(), 0);
+		std::array<const Texture*, 1> fais = {{&r->getPps().getPostPassFai()}};
+		vBlurFbo.setColorAttachments(fais);
 	}
 	catch(std::exception& e)
 	{
@@ -61,17 +55,17 @@ void Bl::init(const RendererInitializer& initializer)
 			"post-processing stage FBO") << e;
 	}
 
-	vBlurSProg.load(ShaderProgram::createSrcCodeToCache(
+	vBlurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur
+	//
 	try
 	{
 		sideBlurFbo.create();
 		sideBlurFbo.bind();
-		sideBlurFbo.setNumOfColorAttachements(1);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, r.getMs().getNormalFai().getGlId(), 0);
+		std::array<const Texture*, 1> fais = {{&r->getMs().getNormalFai()}};
+		sideBlurFbo.setColorAttachments(fais);
 	}
 	catch(std::exception& e)
 	{
@@ -98,10 +92,11 @@ void Bl::runSideBlur()
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	sideBlurSProg->bind();
-	sideBlurSProg->findUniformVariableByName("tex").set(*sideBlurMap, 0);
-	sideBlurSProg->findUniformVariableByName("factor").set(sideBlurFactor);
+	sideBlurSProg->findUniformVariableByName("tex")->set(
+		static_cast<const Texture&>(*sideBlurMap));
+	sideBlurSProg->findUniformVariableByName("factor")->set(sideBlurFactor);
 
-	r.drawQuad();
+	r->drawQuad();
 }
 
 
@@ -116,26 +111,26 @@ void Bl::runBlur()
 		hBlurFbo.bind();
 
 		hBlurSProg->bind();
-		hBlurSProg->findUniformVariableByName("img").set(
-			r.getPps().getPostPassFai(), 0);
-		hBlurSProg->findUniformVariableByName("msNormalFai").set(
-			r.getMs().getNormalFai(), 1);
-		float tmp = r.getWidth();
-		hBlurSProg->findUniformVariableByName("imgDimension").set(tmp);
+		hBlurSProg->findUniformVariableByName("img")->set(
+			r->getPps().getPostPassFai());
+		hBlurSProg->findUniformVariableByName("msNormalFai")->set(
+			r->getMs().getNormalFai());
+		hBlurSProg->findUniformVariableByName("imgDimension")->set(
+			float(r->getWidth()));
 
-		r.drawQuad();
+		r->drawQuad();
 
 		// vpass
 		vBlurFbo.bind();
 
 		vBlurSProg->bind();
-		vBlurSProg->findUniformVariableByName("img").set(blurFai, 0);
-		vBlurSProg->findUniformVariableByName("msNormalFai").set(
-			r.getMs().getNormalFai(), 1);
-		tmp = r.getHeight();
-		vBlurSProg->findUniformVariableByName("imgDimension").set(tmp);
+		vBlurSProg->findUniformVariableByName("img")->set(blurFai);
+		vBlurSProg->findUniformVariableByName("msNormalFai")->set(
+			r->getMs().getNormalFai());
+		vBlurSProg->findUniformVariableByName("imgDimension")->set(
+			float(r->getHeight()));
 
-		r.drawQuad();
+		r->drawQuad();
 	}
 }
 

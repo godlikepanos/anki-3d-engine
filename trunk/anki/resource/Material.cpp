@@ -3,8 +3,8 @@
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
 #include "anki/core/Globals.h"
-#include "anki/resource/ShaderProgram.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/TextureResource.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -55,26 +55,25 @@ void MaterialVariable::init(const char* shaderProgVarName,
 		const PassLevelKey& key = it->first;
 
 		// Variable exists
-		if(sProg.uniformVariableExists(shaderProgVarName))
+		const ShaderProgramUniformVariable* uni = 
+			sProg.findUniformVariableByName(shaderProgVarName);
+		if(uni)
 		{
-			const ShaderProgramUniformVariable& sProgVar =
-				sProg.findUniformVariableByName(shaderProgVarName);
-
-			sProgVars[key] = &sProgVar;
+			sProgVars[key] = uni;
 
 			// Set oneSProgVar
 			if(!oneSProgVar)
 			{
-				oneSProgVar = &sProgVar;
+				oneSProgVar = uni;
 			}
 
 			// Sanity check: All the sprog vars need to have same GL data type
-			if(oneSProgVar->getGlDataType() != sProgVar.getGlDataType() ||
-				oneSProgVar->getType() != sProgVar.getType())
+			if(oneSProgVar->getGlDataType() != uni->getGlDataType() 
+				|| oneSProgVar->getType() != uni->getType())
 			{
 				throw ANKI_EXCEPTION("Incompatible shader "
-					"program variables: " +
-					shaderProgVarName);
+					"program variables: " 
+					+ shaderProgVarName);
 			}
 		}
 	}
@@ -83,8 +82,8 @@ void MaterialVariable::init(const char* shaderProgVarName,
 	if(!oneSProgVar)
 	{
 		throw ANKI_EXCEPTION("Variable not found in "
-			"any of the shader programs: " +
-			shaderProgVarName);
+			"any of the shader programs: " 
+			+ shaderProgVarName);
 	}
 }
 
