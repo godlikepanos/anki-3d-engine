@@ -1,26 +1,31 @@
 #ifndef ANKI_GL_FBO_H
 #define ANKI_GL_FBO_H
 
-#include <GL/glew.h>
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Exception.h"
+#include <GL/glew.h>
+#include <array>
 
 
 namespace anki {
+
+
+class Texture;
 
 
 /// The class is actually a wrapper to avoid common mistakes
 class Fbo
 {
 public:
-	/// Constructor
+	/// @name Constructors/Destructor
+	/// @{
 	Fbo()
 		: glId(0)
 	{}
 
-	/// Destructor
 	~Fbo();
+	/// @}
 
 	uint getGlId() const
 	{
@@ -33,9 +38,9 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		target = target_;
-		ANKI_ASSERT(target == GL_DRAW_FRAMEBUFFER ||
-			target == GL_READ_FRAMEBUFFER ||
-			target == GL_FRAMEBUFFER);
+		ANKI_ASSERT(target == GL_DRAW_FRAMEBUFFER
+			|| target == GL_READ_FRAMEBUFFER
+			|| target == GL_FRAMEBUFFER);
 		glBindFramebuffer(target, glId);
 	}
 
@@ -51,6 +56,13 @@ public:
 
 	/// Set the number of color attachments of the FBO
 	void setNumOfColorAttachements(uint num) const;
+
+	/// Set the color attachments of this FBO
+	template<typename Container>
+	void setColorAttachments(const Container& textures);
+
+	/// Set other attachment
+	void setOtherAttachment(GLenum attachment, const Texture& tex);
 
 	/// Returns the GL id of the current attached FBO
 	/// @return Returns the GL id of the current attached FBO
@@ -74,8 +86,24 @@ private:
 	uint glId; ///< OpenGL identification
 	GLenum target; ///< How the buffer is bind
 
-	bool isCreated() const {return glId != 0;}
+	bool isCreated() const
+	{
+		return glId != 0;
+	}
 };
+
+
+//==============================================================================
+template<typename Container>
+void Fbo::setColorAttachments(const Container& textures)
+{
+	setNumOfColorAttachements(textures.size());
+	for(size_t i = 0; i < textures.size(); ++i)
+	{
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
+			GL_TEXTURE_2D, textures[i]->getGlId(), 0);
+	}
+}
 
 
 } // end namespace

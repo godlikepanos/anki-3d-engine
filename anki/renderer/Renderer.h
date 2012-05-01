@@ -3,8 +3,8 @@
 
 #include "anki/math/Math.h"
 #include "anki/gl/Fbo.h"
-#include "anki/resource/Texture.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/resource/TextureResource.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
 #include "anki/resource/Resource.h"

@@ -53,19 +53,11 @@ private:
 class Renderable
 {
 public:
-	/// Renderable flags
-	enum RenderableFlag
-	{
-		RF_NONE = 0,
-		RF_VISIBLE = 1 ///< Visible or not. The visibility tester sets it
-	};
-
 	typedef std::vector<PropertyBase*> Properties;
 	typedef boost::iterator_range<Properties::iterator> MutableRange;
 	typedef boost::iterator_range<Properties::const_iterator> ConstRange;
 
 	Renderable()
-		: flags(RF_NONE)
 	{}
 
 	virtual ~Renderable()
@@ -77,6 +69,7 @@ public:
 	/// Access the material
 	virtual const Material& getMaterial() const = 0;
 
+	/// Information for movables
 	virtual const Transform* getRenderableWorldTransform() const
 	{
 		return nullptr;
@@ -92,32 +85,11 @@ public:
 		return ConstRange(props.begin(), props.end());
 	}
 
-	/// @name Flag manipulation
-	/// @{
-	void enableFlag(RenderableFlag flag, bool enable = true)
-	{
-		flags = enable ? flags | flag : flags & ~flag;
-	}
-	void disableFlag(RenderableFlag flag)
-	{
-		enableFlag(flag, false);
-	}
-	bool isFlagEnabled(RenderableFlag flag) const
-	{
-		return flags & flag;
-	}
-	uint getFlagsBitmask() const
-	{
-		return flags;
-	}
-	/// @}
-
 protected:
 	void init(PropertyMap& pmap);
 
 private:
 	Properties props;
-	uint flags; ///< Bitmask
 };
 
 

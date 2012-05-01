@@ -3,7 +3,8 @@
 #include "anki/gl/GlException.h"
 
 
-namespace anki {
+namespace anki
+{
 
 
 //==============================================================================

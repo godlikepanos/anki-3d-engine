@@ -23,7 +23,7 @@ public:
 	explicit Vec4(const float arr[]);
 	explicit Vec4(const Vec2& v2, const float z, const float w);
 	explicit Vec4(const Vec3& v3, const float w);
-			 Vec4(const Vec4& b);
+	Vec4(const Vec4& b);
 	explicit Vec4(const Quat& q);
 #if defined(ANKI_MATH_INTEL_SIMD)
 	explicit Vec4(const __m128& mm);
@@ -112,7 +112,7 @@ private:
 			float x, y, z, w;
 		} vec;
 
-		boost::array<float, 4> arr;
+		std::array<float, 4> arr;
 
 #if defined(ANKI_MATH_INTEL_SIMD)
 		__m128 mm;

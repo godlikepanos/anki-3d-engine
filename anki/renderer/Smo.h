@@ -14,7 +14,7 @@ class Light;
 class Smo: public RenderingPass
 {
 public:
-	Smo(Renderer& r_)
+	Smo(Renderer* r_)
 		: RenderingPass(r_)
 	{}
 

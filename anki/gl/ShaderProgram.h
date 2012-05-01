@@ -1,15 +1,13 @@
-#ifndef ANKI_RESOURCE_SHADER_PROGRAM_H
-#define ANKI_RESOURCE_SHADER_PROGRAM_H
+#ifndef ANKI_GL_SHADER_PROGRAM_H
+#define ANKI_GL_SHADER_PROGRAM_H
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/Assert.h"
 #include "anki/math/Forward.h"
-#include "anki/gl/GlStateMachine.h"
 #include "anki/core/Globals.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <vector>
-#include <boost/noncopyable.hpp>
 
 
 namespace anki {
@@ -20,20 +18,29 @@ class Texture;
 
 
 /// Shader program variable. The type is attribute or uniform
-class ShaderProgramVariable: public boost::noncopyable
+class ShaderProgramVariable
 {
 public:
 	/// Shader var types
-	enum Type
+	enum ShaderProgramVariableType
 	{
-		T_ATTRIBUTE,
-		T_UNIFORM
+		SPVT_ATTRIBUTE,
+		SPVT_UNIFORM
 	};
 
-	ShaderProgramVariable(GLint loc_, const char* name_,
-		GLenum glDataType_, Type type_, const ShaderProgram& fatherSProg_)
-		: loc(loc_), name(name_), glDataType(glDataType_), type(type_),
-			fatherSProg(fatherSProg_)
+	// Non-copyable
+	ShaderProgramVariable(const ShaderProgramVariable&) = delete;
+	ShaderProgramVariable& operator=(const ShaderProgramVariable&) = delete;
+
+	ShaderProgramVariable(
+		GLint loc_, 
+		const char* name_,
+		GLenum glDataType_, 
+		size_t size_,
+		ShaderProgramVariableType type_, 
+		const ShaderProgram* fatherSProg_)
+		: loc(loc_), name(name_), glDataType(glDataType_), size(size_), 
+			type(type_), fatherSProg(fatherSProg_)
 	{}
 
 	virtual ~ShaderProgramVariable()
@@ -41,9 +48,9 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const ShaderProgram& getFatherSProg() const
+	const ShaderProgram& getFatherShaderProgram() const
 	{
-		return fatherSProg;
+		return *fatherSProg;
 	}
 
 	GLint getLocation() const
@@ -61,9 +68,14 @@ public:
 		return glDataType;
 	}
 
-	Type getType() const
+	ShaderProgramVariableType getType() const
 	{
 		return type;
+	}
+
+	size_t getSize() const
+	{
+		return size;
 	}
 	/// @}
 
@@ -73,9 +85,10 @@ private:
 	/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
 	/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
 	GLenum glDataType;
-	Type type; ///< @ref T_ATTRIBUTE or @ref T_UNIFORM
+	size_t size; ///< Its 1 if it is a single or >1 if it is an array
+	ShaderProgramVariableType type;
 	/// We need the ShaderProg of this variable mainly for sanity checks
-	const ShaderProgram& fatherSProg;
+	const ShaderProgram* fatherSProg;
 };
 
 
@@ -87,8 +100,10 @@ public:
 		int loc,
 		const char* name,
 		GLenum glDataType,
-		const ShaderProgram& fatherSProg)
-		: ShaderProgramVariable(loc, name, glDataType, T_UNIFORM, fatherSProg)
+		size_t size,
+		const ShaderProgram* fatherSProg)
+		: ShaderProgramVariable(loc, name, glDataType, size, SPVT_UNIFORM, 
+			fatherSProg)
 	{}
 
 	/// @name Set the var
@@ -111,7 +126,7 @@ public:
 	{
 		set(&x, 1);
 	}
-	void set(const Texture& tex, uint texUnit) const;
+	void set(const Texture& tex) const;
 
 	void set(const float x[], uint size) const;
 	void set(const Vec2 x[], uint size) const;
@@ -120,9 +135,10 @@ public:
 	void set(const Mat3 x[], uint size) const;
 	void set(const Mat4 x[], uint size) const;
 
-	/// @tparam Type float, Vec2, etc
-	template<typename Type>
-	void set(const std::vector<Type>& c)
+	/// @tparam Container It could be something like array<float, X> or 
+	///         vector<Vec2> etc
+	template<typename Container>
+	void set(const Container& c) const
 	{
 		set(&c[0], c.size());
 	}
@@ -142,9 +158,9 @@ class ShaderProgramAttributeVariable: public ShaderProgramVariable
 {
 public:
 	ShaderProgramAttributeVariable(
-		int loc_, const char* name_, GLenum glDataType_,
-		const ShaderProgram& fatherSProg_)
-		: ShaderProgramVariable(loc_, name_, glDataType_, T_ATTRIBUTE,
+		int loc_, const char* name_, GLenum glDataType_, size_t size,
+		const ShaderProgram* fatherSProg_)
+		: ShaderProgramVariable(loc_, name_, glDataType_, size, SPVT_ATTRIBUTE,
 			fatherSProg_)
 	{}
 };
@@ -152,12 +168,11 @@ public:
 
 /// Shader program resource
 ///
-/// Shader program. Combines a fragment and a vertex shader. Every shader
-/// program consist of one OpenGL ID, a vector of uniform variables and a
-/// vector of attribute variables. Every variable is a struct that contains
-/// the variable's name, location, OpenGL data type and if it is a uniform or
-/// an attribute var.
-class ShaderProgram: public boost::noncopyable
+/// Shader program. Combines. Every shader program consist of one OpenGL ID, a 
+/// vector of uniform variables and a vector of attribute variables. Every 
+/// variable is a struct that contains the variable's name, location, OpenGL 
+/// data type and if it is a uniform or an attribute var.
+class ShaderProgram
 {
 public:
 	typedef boost::ptr_vector<ShaderProgramVariable> VariablesContainer;
@@ -166,13 +181,28 @@ public:
 	typedef std::vector<ShaderProgramAttributeVariable*>
 		AttributeVariablesContainer;
 
+	// Non-copyable
+	ShaderProgram(const ShaderProgram&) = delete;
+	ShaderProgram& operator=(const ShaderProgram&) = delete;
+
 	ShaderProgram()
 	{
-		glId = vertShaderGlId = tcShaderGlId = teShaderGlId =
-			geomShaderGlId = fragShaderGlId = UNINITIALIZED_ID;
+		init();
 	}
 
-	~ShaderProgram();
+	ShaderProgram(const char* vertSource, const char* tcSource, 
+		const char* teSource, const char* geomSource, const char* fragSource,
+		const char* transformFeedbackVaryings[])
+	{
+		init();
+		create(vertSource, tcSource, teSource, geomSource, fragSource,
+			transformFeedbackVaryings);
+	}
+
+	~ShaderProgram()
+	{
+		destroy();
+	}
 
 	/// @name Accessors
 	/// @{
@@ -199,49 +229,43 @@ public:
 	}
 	/// @}
 
-	/// Resource load
-	void load(const char* filename);
+	/// Create the program
+	/// @param vertSource Vertex shader source
+	/// @param tcSource Tessellation control shader source. Can be nullptr
+	/// @param teSource Tessellation evaluation shader source. Can be nullptr
+	/// @param geomSource Geometry shader source. Can be nullptr
+	/// @param fragSource Fragment shader source. Can be nullptr
+	/// @param transformFeedbackVaryings A list of varyings names. Eg 
+	///                                  {"var0", "var1", nullptr} or {nullptr}
+	void create(const char* vertSource, const char* tcSource, 
+		const char* teSource, const char* geomSource, const char* fragSource,
+		const char* transformFeedbackVaryings[]);
 
 	/// Bind the shader program
-	void bind() const
+	void bind()
 	{
 		ANKI_ASSERT(isInitialized());
-		GlStateMachineSingleton::get().useShaderProg(glId);
+		if(currentProgram == nullptr || currentProgram != this)
+		{
+			glUseProgram(glId);
+			currentProgram = this;
+		}
 	}
 
 	/// @name Variable finders
-	/// Used to find and return the variable. They throw exception if
-	/// variable not found so ask if the variable with that name exists
-	/// prior using any of these
+	/// Used to find and return the variable. They return nullptr if the 
+	/// variable is not found
 	/// @{
-	const ShaderProgramVariable& findVariableByName(const char* varName) const;
-	const ShaderProgramUniformVariable& findUniformVariableByName(
+	const ShaderProgramVariable* findVariableByName(const char* varName) const;
+	const ShaderProgramUniformVariable* findUniformVariableByName(
 		const char* varName) const;
-	const ShaderProgramAttributeVariable& findAttributeVariableByName(
+	const ShaderProgramAttributeVariable* findAttributeVariableByName(
 		const char* varName) const;
 	/// @}
 
-	/// @name Check for variable existance
-	/// @{
-	bool variableExists(const char* varName) const;
-	bool uniformVariableExists(const char* varName) const;
-	bool attributeVariableExists(const char* varName) const;
-	/// @}
-
-	/// Used by @ref Material and @ref Renderer to create custom shaders in
-	/// the cache
-	/// @param sProgFPathName The file pathname of the shader prog
-	/// @param preAppendedSrcCode The source code we want to write on top
-	/// of the shader prog
-	/// @return The file pathname of the new shader prog. Its
-	/// $HOME/.anki/cache/newFNamePrefix_fName
-	static std::string createSrcCodeToCache(const char* sProgFPathName,
-		const char* preAppendedSrcCode);
-
-	/// For sorting
-	bool operator<(const ShaderProgram& b) const
+	static ShaderProgram* getCurrentProgram()
 	{
-		return glId < b.glId;
+		return currentProgram;
 	}
 
 	/// For debugging
@@ -258,9 +282,9 @@ private:
 	typedef ConstCharPtrHashMap<ShaderProgramAttributeVariable*>::Type
 		NameToAttribVarHashMap;
 
-	static const GLuint UNINITIALIZED_ID = -1;
+	/// Is an optimization. it keeps the program that is now binded 
+	static ShaderProgram* currentProgram;
 
-	std::string rsrcFilename;
 	GLuint glId; ///< The OpenGL ID of the shader program
 	GLuint vertShaderGlId; ///< Vertex shader OpenGL id
 	GLuint tcShaderGlId; ///< Tessellation control shader OpenGL id
@@ -289,8 +313,8 @@ private:
 	/// Create and compile shader
 	/// @return The shader's OpenGL id
 	/// @exception Exception
-	uint createAndCompileShader(const char* sourceCode,
-		const char* preproc, int type) const;
+	static GLuint createAndCompileShader(const char* sourceCode,
+		const char* preproc, GLenum type);
 
 	/// Link the shader program
 	/// @exception Exception
@@ -299,8 +323,16 @@ private:
 	/// Returns true if the class points to a valid GL ID
 	bool isInitialized() const
 	{
-		return glId != UNINITIALIZED_ID;
+		return glId != 0;
 	}
+
+	void init()
+	{
+		glId = vertShaderGlId = tcShaderGlId = teShaderGlId =
+			geomShaderGlId = fragShaderGlId = 0;
+	}
+
+	void destroy();
 }; 
 
 

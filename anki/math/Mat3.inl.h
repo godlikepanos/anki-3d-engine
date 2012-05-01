@@ -132,7 +132,8 @@ inline Mat3::Mat3(const Axisang& axisang)
 	tmp1 = axis.x() * axis.z() * t;
 	tmp2 = axis.y() * s;
 	(*this)(2, 0) = tmp1 - tmp2;
-	(*this)(0, 2) = tmp1 + tmp2;    tmp1 = axis.y() * axis.z() * t;
+	(*this)(0, 2) = tmp1 + tmp2;
+	tmp1 = axis.y() * axis.z() * t;
 	tmp2 = axis.x() * s;
 	(*this)(2, 1) = tmp1 + tmp2;
 	(*this)(1, 2) = tmp1 - tmp2;
@@ -395,8 +396,7 @@ inline Vec3 Mat3::operator*(const Vec3& b) const
 	return Vec3(
 		(*this)(0, 0) * b.x() + (*this)(0, 1) * b.y() + (*this)(0, 2) * b.z(),
 		(*this)(1, 0) * b.x() + (*this)(1, 1) * b.y() + (*this)(1, 2) * b.z(),
-		(*this)(2, 0) * b.x() + (*this)(2, 1) * b.y() + (*this)(2, 2) * b.z()
-	);
+		(*this)(2, 0) * b.x() + (*this)(2, 1) * b.y() + (*this)(2, 2) * b.z());
 }
 
 

@@ -1,19 +1,9 @@
-#include "anki/resource/ShaderProgram.h"
-#include "anki/resource/ShaderProgramPrePreprocessor.h"
-#include "anki/core/App.h" // To get cache dir
+#include "anki/gl/ShaderProgram.h"
 #include "anki/gl/GlException.h"
 #include "anki/core/Logger.h"
 #include "anki/math/Math.h"
-#include "anki/util/Util.h"
-#include "anki/core/Globals.h"
 #include "anki/util/Exception.h"
-#include "anki/resource/Texture.h"
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
-#include <boost/functional/hash.hpp>
-#include <fstream>
-#include <sstream>
+#include "anki/gl/Texture.h"
 
 
 namespace anki {
@@ -27,9 +17,9 @@ namespace anki {
 void ShaderProgramUniformVariable::doSanityChecks() const
 {
 	ANKI_ASSERT(getLocation() != -1);
-	ANKI_ASSERT(GlStateMachineSingleton::get().getCurrentProgramGlId() ==
-		getFatherSProg().getGlId());
-	ANKI_ASSERT(glGetUniformLocation(getFatherSProg().getGlId(),
+	ANKI_ASSERT(ShaderProgram::getCurrentProgram() == 
+		&getFatherShaderProgram());
+	ANKI_ASSERT(glGetUniformLocation(getFatherShaderProgram().getGlId(),
 		getName().c_str()) == getLocation());
 }
 
@@ -39,6 +29,7 @@ void ShaderProgramUniformVariable::set(const float x) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
+	ANKI_ASSERT(getSize() == 1);
 
 	glUniform1f(getLocation(), x);
 }
@@ -47,6 +38,10 @@ void ShaderProgramUniformVariable::set(const float x) const
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Vec2& x) const
 {
+	doSanityChecks();
+	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
+	ANKI_ASSERT(getSize() == 2);
+
 	glUniform2f(getLocation(), x.x(), x.y());
 }
 
@@ -56,7 +51,8 @@ void ShaderProgramUniformVariable::set(const float x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
-	ANKI_ASSERT(size > 1);
+	ANKI_ASSERT(getSize() == size);
+	
 	glUniform1fv(getLocation(), size, x);
 }
 
@@ -66,7 +62,8 @@ void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	ANKI_ASSERT(size > 1);
+	ANKI_ASSERT(getSize() == size * 2);
+
 	glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(x[0]))[0]);
 }
 
@@ -76,7 +73,8 @@ void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(getSize() == size * 3);
+
 	glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(x[0]))[0]);
 }
 
@@ -86,7 +84,8 @@ void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(getSize() == size * 4);
+	
 	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(x[0]))[0]);
 }
 
@@ -96,7 +95,8 @@ void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT3);
-	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(getSize() == size);
+
 	glUniformMatrix3fv(getLocation(), size, true, &(x[0])[0]);
 }
 
@@ -106,19 +106,24 @@ void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
 {
 	doSanityChecks();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT4);
-	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(getSize() == size);
+
 	glUniformMatrix4fv(getLocation(), size, true, &(x[0])[0]);
 }
 
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Texture& tex, uint texUnit) const
+void ShaderProgramUniformVariable::set(const Texture& tex) const
 {
 	doSanityChecks();
-	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D ||
-		getGlDataType() == GL_SAMPLER_2D_SHADOW);
-	tex.bind(texUnit);
-	glUniform1i(getLocation(), texUnit);
+	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
+		|| getGlDataType() == GL_SAMPLER_2D_SHADOW);
+	
+	if(tex.getUnit() == -1)
+	{
+		tex.bind();
+	}
+	glUniform1i(getLocation(), tex.getUnit());
 }
 
 
@@ -127,10 +132,6 @@ void ShaderProgramUniformVariable::set(const Texture& tex, uint texUnit) const
 //==============================================================================
 
 //==============================================================================
-
-#define SHADER_PROGRAM_EXCEPTION(x) ANKI_EXCEPTION( \
-	"Shader program \"" + rsrcFilename + \
-	"\": " + x)
 
 const char* ShaderProgram::stdSourceCode =
 	"#version 330 core\n"
@@ -143,17 +144,129 @@ const char* ShaderProgram::stdSourceCode =
 	"#pragma debug(on)\n";
 #endif
 
+ShaderProgram* ShaderProgram::currentProgram = nullptr;
+
 
 //==============================================================================
-ShaderProgram::~ShaderProgram()
+void ShaderProgram::create(const char* vertSource, const char* tcSource, 
+	const char* teSource, const char* geomSource, const char* fragSource,
+	const char* transformFeedbackVaryings[])
 {
-	/// @todo add code
+	ANKI_ASSERT(!isInitialized());
+
+	// 1) create and compile the shaders
+	//
+	std::string preprocSource = stdSourceCode;
+
+	ANKI_ASSERT(vertSource != nullptr);
+	vertShaderGlId = createAndCompileShader(vertSource, preprocSource.c_str(),
+		GL_VERTEX_SHADER);
+
+	if(tcSource != nullptr)
+	{
+		tcShaderGlId = createAndCompileShader(tcSource, preprocSource.c_str(), 
+			GL_TESS_CONTROL_SHADER);
+	}
+
+	if(teSource != nullptr)
+	{
+		teShaderGlId = createAndCompileShader(teSource, preprocSource.c_str(), 
+			GL_TESS_EVALUATION_SHADER);
+	}
+
+	if(geomSource != nullptr)
+	{
+		geomShaderGlId = createAndCompileShader(geomSource, preprocSource.c_str(), 
+			GL_GEOMETRY_SHADER);
+	}
+
+	ANKI_ASSERT(fragSource != nullptr);
+	fragShaderGlId = createAndCompileShader(fragSource, preprocSource.c_str(),
+		GL_FRAGMENT_SHADER);
+
+	// 2) create program and attach shaders
+	glId = glCreateProgram();
+	if(glId == 0)
+	{
+		throw ANKI_EXCEPTION("glCreateProgram failed");
+	}
+	glAttachShader(glId, vertShaderGlId);
+	glAttachShader(glId, fragShaderGlId);
+
+	if(tcSource != nullptr)
+	{
+		glAttachShader(glId, tcShaderGlId);
+	}
+
+	if(teSource != nullptr)
+	{
+		glAttachShader(glId, teShaderGlId);
+	}
+
+	if(geomSource != nullptr)
+	{
+		glAttachShader(glId, geomShaderGlId);
+	}
+
+	// 3) set the TRFFB varyings
+	ANKI_ASSERT(transformFeedbackVaryings != nullptr);
+	int count = 0;
+	while(*transformFeedbackVaryings != nullptr)
+	{
+		++count;
+		++transformFeedbackVaryings;
+	}
+
+	if(count)
+	{
+		glTransformFeedbackVaryings(glId,
+			count, 
+			transformFeedbackVaryings,
+			GL_SEPARATE_ATTRIBS);
+	}
+
+	// 4) link
+	link();
+
+	// init the rest
+	getUniAndAttribVars();
+}
+
+//==============================================================================
+void ShaderProgram::destroy()
+{
+	if(vertShaderGlId != 0)
+	{
+		glDeleteShader(vertShaderGlId);
+	}
+
+	if(tcShaderGlId != 0)
+	{
+		glDeleteShader(tcShaderGlId);
+	}
+
+	if(teShaderGlId != 0)
+	{
+		glDeleteShader(teShaderGlId);
+	}
+
+	if(geomShaderGlId != 0)
+	{
+		glDeleteShader(geomShaderGlId);
+	}
+
+	if(fragShaderGlId != 0)
+	{
+		glDeleteShader(fragShaderGlId);
+	}
+
+	glDeleteProgram(glId);
 }
 
 
 //==============================================================================
-uint ShaderProgram::createAndCompileShader(const char* sourceCode,
-	const char* preproc, int type) const
+GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
+	const char* preproc, GLenum type)
 {
 	uint glId = 0;
 	const char* sourceStrs[2] = {NULL, NULL};
@@ -184,23 +297,8 @@ uint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		glGetShaderInfoLog(glId, infoLen, &charsWritten, &infoLog[0]);
 		infoLog[charsWritten] = '\0';
 		
-		const char* shaderType = "*dummy*";
-		switch(type)
-		{
-			case GL_VERTEX_SHADER:
-				shaderType = "Vertex shader";
-				break;
-			case GL_FRAGMENT_SHADER:
-				shaderType = "Fragment shader";
-				break;
-			default:
-				ANKI_ASSERT(0); // Not supported
-		}
-		throw SHADER_PROGRAM_EXCEPTION(shaderType + 
-			" compiler error log follows:\n"
-			"===================================\n" +
-			&infoLog[0] +
-			"\n===================================\n" + sourceCode);
+		throw ANKI_EXCEPTION("Shader failed. Log:\n" + &infoLog[0]
+			+ "\nSource:\n" + sourceCode);
 	}
 
 	return glId;
@@ -227,8 +325,8 @@ void ShaderProgram::link() const
 
 		infoLogTxt.resize(info_len + 1);
 		glGetProgramInfoLog(glId, info_len, &charsWritten, &infoLogTxt[0]);
-		throw SHADER_PROGRAM_EXCEPTION("Link error log follows:\n" +
-			infoLogTxt);
+		throw ANKI_EXCEPTION("Link error log follows:\n" 
+			+ infoLogTxt);
 	}
 }
 
@@ -237,7 +335,7 @@ void ShaderProgram::link() const
 void ShaderProgram::getUniAndAttribVars()
 {
 	int num;
-	boost::array<char, 256> name_;
+	std::array<char, 256> name_;
 	GLsizei length;
 	GLint size;
 	GLenum type;
@@ -254,14 +352,14 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			ANKI_WARNING("Shader prog: \"" << rsrcFilename <<
-				"\": You are using FFP vertex attributes (\"" <<
-				&name_[0] << "\")");
+			ANKI_WARNING("You are using FFP vertex attributes (\"" 
+				<< &name_[0] << "\")");
 			continue;
 		}
 
 		ShaderProgramAttributeVariable* var =
-			new ShaderProgramAttributeVariable(loc, &name_[0], type, *this);
+			new ShaderProgramAttributeVariable(loc, &name_[0], type, 
+			size, this);
 
 		vars.push_back(var);
 		attribs.push_back(var);
@@ -281,14 +379,14 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			ANKI_WARNING("Shader prog: \"" << rsrcFilename <<
-				"\": You are using FFP vertex uniforms (\"" <<
-				&name_[0] << "\")");
+			ANKI_WARNING("You are using FFP vertex uniforms (\"" 
+				<< &name_[0] << "\")");
 			continue;
 		}
 
 		ShaderProgramUniformVariable* var =
-			new ShaderProgramUniformVariable(loc, &name_[0], type, *this);
+			new ShaderProgramUniformVariable(loc, &name_[0], type, 
+			size, this);
 
 		vars.push_back(var);
 		unis.push_back(var);
@@ -299,172 +397,54 @@ void ShaderProgram::getUniAndAttribVars()
 
 
 //==============================================================================
-void ShaderProgram::load(const char* filename)
-{
-	rsrcFilename = filename;
-	ANKI_ASSERT(!isInitialized());
-
-	ShaderProgramPrePreprocessor pars(filename);
-
-	// 1) create and compile the shaders
-	std::string preprocSource = stdSourceCode;
-	vertShaderGlId = createAndCompileShader(
-		pars.getShaderSource(ST_VERTEX).c_str(),
-		preprocSource.c_str(),
-		GL_VERTEX_SHADER);
-
-	fragShaderGlId = createAndCompileShader(
-		pars.getShaderSource(ST_FRAGMENT).c_str(),
-		preprocSource.c_str(),
-		GL_FRAGMENT_SHADER);
-
-	// 2) create program and attach shaders
-	glId = glCreateProgram();
-	if(glId == 0)
-	{
-		throw SHADER_PROGRAM_EXCEPTION("glCreateProgram failed");
-	}
-	glAttachShader(glId, vertShaderGlId);
-	glAttachShader(glId, fragShaderGlId);
-
-	// 3) set the TRFFB varyings
-	if(pars.getTranformFeedbackVaryings().size() > 0)
-	{
-		boost::array<const char*, 128> varsArr;
-		for(uint i = 0; i < pars.getTranformFeedbackVaryings().size(); i++)
-		{
-			varsArr[i] = pars.getTranformFeedbackVaryings()[i].c_str();
-		}
-		glTransformFeedbackVaryings(glId,
-			pars.getTranformFeedbackVaryings().size(), &varsArr[0],
-			GL_SEPARATE_ATTRIBS);
-	}
-
-	// 4) link
-	link();
-
-	// init the rest
-	getUniAndAttribVars();
-}
-
-
-//==============================================================================
-const ShaderProgramVariable& ShaderProgram::findVariableByName(
+const ShaderProgramVariable* ShaderProgram::findVariableByName(
 	const char* name) const
 {
 	NameToVarHashMap::const_iterator it = nameToVar.find(name);
 	if(it == nameToVar.end())
 	{
-		throw SHADER_PROGRAM_EXCEPTION("Cannot find variable: " + name);
+		return nullptr;
 	}
-	return *(it->second);
+	return it->second;
 }
 
 
 //==============================================================================
-const ShaderProgramAttributeVariable&
+const ShaderProgramAttributeVariable*
 	ShaderProgram::findAttributeVariableByName(const char* name) const
 {
 	NameToAttribVarHashMap::const_iterator it = nameToAttribVar.find(name);
 	if(it == nameToAttribVar.end())
 	{
-		throw SHADER_PROGRAM_EXCEPTION("Cannot find attribute loc: " + name);
+		return nullptr;
 	}
-	return *(it->second);
+	return it->second;
 }
 
 
 //==============================================================================
-const ShaderProgramUniformVariable& ShaderProgram::findUniformVariableByName(
+const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 	const char* name) const
 {
 	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
 	if(it == nameToUniVar.end())
 	{
-		throw SHADER_PROGRAM_EXCEPTION("Cannot find uniform loc: " + name);
+		return nullptr;
 	}
-	return *(it->second);
-}
-
-
-//==============================================================================
-bool ShaderProgram::variableExists(const char* name) const
-{
-	NameToVarHashMap::const_iterator it = nameToVar.find(name);
-	return it != nameToVar.end();
-}
-
-
-//==============================================================================
-bool ShaderProgram::uniformVariableExists(const char* name) const
-{
-	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
-	return it != nameToUniVar.end();
-}
-
-
-//==============================================================================
-bool ShaderProgram::attributeVariableExists(const char* name) const
-{
-	NameToAttribVarHashMap::const_iterator it = nameToAttribVar.find(name);
-	return it != nameToAttribVar.end();
-}
-
-
-//==============================================================================
-std::string ShaderProgram::createSrcCodeToCache(const char* sProgFPathName,
-	const char* preAppendedSrcCode)
-{
-	using namespace boost::filesystem;
-
-	if(strlen(preAppendedSrcCode) < 1)
-	{
-		return sProgFPathName;
-	}
-
-	// Create suffix
-	boost::hash<std::string> stringHash;
-	std::size_t h = stringHash(preAppendedSrcCode);
-	std::string suffix = boost::lexical_cast<std::string>(h);
-
-	//
-	path newfPathName = AppSingleton::get().getCachePath() /
-		(path(sProgFPathName).filename().string() + "." + suffix);
-
-	if(exists(newfPathName))
-	{
-		return newfPathName.string();
-	}
-
-	std::string src_ = Util::readFile(sProgFPathName);
-	std::string src = preAppendedSrcCode + src_;
-
-	std::ofstream f(newfPathName.string().c_str());
-	if(!f.is_open())
-	{
-		throw ANKI_EXCEPTION("Cannot open file for writing \"" +
-			newfPathName.string() + "\"");
-	}
-
-	f.write(src.c_str(), src.length());
-
-	return newfPathName.string();
+	return it->second;
 }
 
 
 //==============================================================================
 std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
-	s << "ShaderProgram (" << x.rsrcFilename << ")\n";
+	s << "ShaderProgram\n";
 	s << "Variables:\n";
-	for(ShaderProgram::VariablesContainer::const_iterator it = x.vars.begin();
-		it != x.vars.end(); ++it)
+	for(const ShaderProgramVariable& var : x.vars)
 	{
-		const ShaderProgramVariable& var = *it;
-
-		s << var.getName() << " " << var.getLocation() << " " <<
-			(var.getType() == ShaderProgramVariable::T_ATTRIBUTE ? "[A]" :
-			"[U]") <<  '\n';
+		s << var.getName() << " " << var.getLocation() << " " 
+			<< (var.getType() == ShaderProgramVariable::SPVT_ATTRIBUTE 
+			? "[A]" : "[U]") <<  '\n';
 	}
 	return s;
 }

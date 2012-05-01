@@ -8,31 +8,26 @@ namespace anki {
 
 
 //==============================================================================
-// Destructor                                                                  =
-//==============================================================================
 BufferObject::~BufferObject()
 {
 	if(isCreated())
 	{
-		deleteBuff();
+		destroy();
 	}
 }
 
 
 //==============================================================================
-// create                                                                      =
-//==============================================================================
 void BufferObject::create(GLenum target_, uint sizeInBytes_,
 	const void* dataPtr, GLenum usage_)
 {
 	ANKI_ASSERT(!isCreated());
-	// unacceptable usage_
 
-	ANKI_ASSERT(usage_ == GL_STREAM_DRAW ||
-		usage_ == GL_STATIC_DRAW ||
-		usage_ == GL_DYNAMIC_DRAW);
+	ANKI_ASSERT(usage_ == GL_STREAM_DRAW
+		|| usage_ == GL_STATIC_DRAW
+		|| usage_ == GL_DYNAMIC_DRAW);
 
-	ANKI_ASSERT(sizeInBytes_ > 0); // unacceptable sizeInBytes
+	ANKI_ASSERT(sizeInBytes_ > 0 && "Unacceptable sizeInBytes");
 
 	usage = usage_;
 	target = target_;
@@ -47,7 +42,7 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_,
 	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
 	if(sizeInBytes != (uint)bufferSize)
 	{
-		deleteBuff();
+		destroy();
 		throw ANKI_EXCEPTION("Data size mismatch");
 	}
 
@@ -56,8 +51,6 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_,
 }
 
 
-//==============================================================================
-// write                                                                       =
 //==============================================================================
 void BufferObject::write(void* buff)
 {
@@ -71,8 +64,6 @@ void BufferObject::write(void* buff)
 }
 
 
-//==============================================================================
-// write                                                                       =
 //==============================================================================
 void BufferObject::write(void* buff, size_t offset, size_t size)
 {

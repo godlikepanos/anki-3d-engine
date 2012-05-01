@@ -3,6 +3,7 @@
 
 #include "anki/math/Math.h"
 #include <vector>
+#include <array>
 
 
 namespace anki {
@@ -87,7 +88,7 @@ private:
 	uint id; ///< Pos inside the @ref Skeleton::bones vector
 	static const uint MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 	Bone* parent;
-	boost::array<Bone*, MAX_CHILDS_PER_BONE> childs;
+	std::array<Bone*, MAX_CHILDS_PER_BONE> childs;
 	ushort childsNum;
 
 	// see the class notes

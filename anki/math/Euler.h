@@ -56,7 +56,7 @@ private:
 			float x, y, z;
 		} vec;
 
-		boost::array<float, 3> arr;
+		std::array<float, 3> arr;
 	};
 	/// @}
 };

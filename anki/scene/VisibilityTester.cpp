@@ -31,13 +31,15 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 
 		if(!cam.insideFrustum(*sp))
 		{
+			sp->disableFlag(Spatial::SF_VISIBLE);
 			continue;
 		}
+
+		sp->enableFlag(Spatial::SF_VISIBLE);
 
 		Renderable* r = node->getRenderable();
 		if(r)
 		{
-			r->enableFlag(Renderable::RF_VISIBLE);
 			vinfo.renderables.push_back(r);
 		}
 

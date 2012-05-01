@@ -3,7 +3,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
 
 

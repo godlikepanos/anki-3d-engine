@@ -26,7 +26,7 @@ public:
 		const float m30, const float m31, const float m32,
 		const float m33);
 	explicit Mat4(const float arr[]);
-			 Mat4(const Mat4& b);
+	Mat4(const Mat4& b);
 	explicit Mat4(const Mat3& m3);
 	explicit Mat4(const Vec3& v);
 	explicit Mat4(const Vec4& v);
@@ -123,10 +123,10 @@ private:
 	/// @{
 	union
 	{
-		boost::array<float, 16> arr1;
-		boost::array<boost::array<float, 4>, 4> arr2;
+		std::array<float, 16> arr1;
+		std::array<std::array<float, 4>, 4> arr2;
 #if defined(ANKI_MATH_INTEL_SIMD)
-		boost::array<__m128, 4> arrMm;
+		std::array<__m128, 4> arrMm;
 #endif
 	};
 	/// @}

@@ -324,21 +324,17 @@ inline Vec4 Vec4::operator-() const
 inline bool Vec4::operator==(const Vec4& b) const
 {
 	Vec4 sub = (*this) - b;
-	return Math::isZero(sub.x()) &&
-		Math::isZero(sub.y()) &&
-		Math::isZero(sub.z()) &&
-		Math::isZero(sub.w());
+	return Math::isZero(sub.x()) 
+		&& Math::isZero(sub.y()) 
+		&& Math::isZero(sub.z()) 
+		&& Math::isZero(sub.w());
 }
 
 
 // !=
 inline bool Vec4::operator!=(const Vec4& b) const
 {
-	Vec4 sub = (*this) - b;
-	return !(Math::isZero(sub.x()) &&
-		Math::isZero(sub.y()) &&
-		Math::isZero(sub.z()) &&
-		Math::isZero(sub.w()));
+	return !operator==(b);
 }
 
 
@@ -417,8 +413,7 @@ inline Vec4 Vec4::operator*(const Mat4& m4) const
 		x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0),
 		x() * m4(0, 1) + y() * m4(1, 1) + z() * m4(2, 1) + w() * m4(3, 1),
 		x() * m4(0, 2) + y() * m4(1, 2) + z() * m4(2, 2) + w() * m4(3, 2),
-		x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3)
-	);
+		x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3));
 }
 
 

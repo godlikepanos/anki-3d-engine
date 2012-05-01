@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 
 
 namespace anki {
@@ -17,21 +17,24 @@ class ShaderProgram;
 /// The objects that blend must be handled differently
 class Bs: public RenderingPass
 {
-	public:
-		Bs(Renderer& r_): RenderingPass(r_) {}
-		~Bs();
+public:
+	Bs(Renderer* r)
+		: RenderingPass(r) 
+	{}
 
-		void init(const RendererInitializer& initializer);
-		void run();
+	~Bs();
 
-	private:
-		Fbo fbo; ///< Writes to Pps::prePassFai
-		Fbo refractFbo; ///< Writes to refractFai
-		ShaderProgramResourcePointer refractSProg;
-		Texture refractFai;
+	void init(const RendererInitializer& initializer);
+	void run();
 
-		void createFbo();
-		void createRefractFbo();
+private:
+	Fbo fbo; ///< Writes to Pps::prePassFai
+	Fbo refractFbo; ///< Writes to refractFai
+	ShaderProgramResourcePointer refractSProg;
+	Texture refractFai;
+
+	void createFbo();
+	void createRefractFbo();
 };
 
 

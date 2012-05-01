@@ -4,7 +4,7 @@
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/MeshLoader.h"
 #include "anki/resource/Skeleton.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -27,7 +27,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 	Vao* vao = new Vao;
 	vao->create();
 
-	if(mtl.getShaderProgram(key).attributeVariableExists("position"))
+	if(mtl.getShaderProgram(key).findAttributeVariableByName("position"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_POSITIONS);
 		ANKI_ASSERT(vbo != NULL);
@@ -35,7 +35,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 		vao->attachArrayBufferVbo(*vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).attributeVariableExists("normal"))
+	if(mtl.getShaderProgram(key).findAttributeVariableByName("normal"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_NORMALS);
 		ANKI_ASSERT(vbo != NULL);
@@ -43,7 +43,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 		vao->attachArrayBufferVbo(*vbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).attributeVariableExists("tangent"))
+	if(mtl.getShaderProgram(key).findAttributeVariableByName("tangent"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TANGENTS);
 		ANKI_ASSERT(vbo != NULL);
@@ -51,7 +51,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 		vao->attachArrayBufferVbo(*vbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).attributeVariableExists("texCoords"))
+	if(mtl.getShaderProgram(key).findAttributeVariableByName("texCoords"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TEX_COORDS);
 		ANKI_ASSERT(vbo != NULL);

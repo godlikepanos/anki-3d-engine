@@ -1,6 +1,6 @@
 #include "anki/scene/Renderable.h"
 #include "anki/resource/Material.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 #include <boost/foreach.hpp>
 
 

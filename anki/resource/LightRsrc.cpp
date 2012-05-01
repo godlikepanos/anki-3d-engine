@@ -1,5 +1,5 @@
 #include "anki/resource/LightRsrc.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/misc/PropertyTree.h"
 #include "anki/core/Logger.h"
 #include "anki/core/Globals.h"

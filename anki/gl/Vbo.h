@@ -37,8 +37,8 @@ public:
 		GLenum usage)
 	{
 		// unacceptable target_
-		ANKI_ASSERT(target == GL_ARRAY_BUFFER ||
-			target == GL_ELEMENT_ARRAY_BUFFER);
+		ANKI_ASSERT(target == GL_ARRAY_BUFFER
+			|| target == GL_ELEMENT_ARRAY_BUFFER);
 		BufferObject::create(target, sizeInBytes, dataPtr, usage);
 	}
 };

@@ -26,7 +26,10 @@ public:
 	/// only when needed
 	/// @{
 	void enable(GLenum flag, bool enable = true);
-	void disable(GLenum flag) {enable(flag, false);}
+	void disable(GLenum flag)
+	{
+		enable(flag, false);
+	}
 	bool isEnabled(GLenum flag);
 
 	void useShaderProg(GLuint id);
