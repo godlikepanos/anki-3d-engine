@@ -25,17 +25,12 @@ void Bs::createFbo()
 		fbo.create();
 		fbo.bind();
 	
-		std::array<>
-
-		fbo.setNumOfColorAttachements(1);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, r.getPps().getPrePassFai().getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
+		std::array<const Texture*, 1> fais = {{&r.getPps().getPrePassFai()}};
+		fbo.setColorAttachments(fais);
+		fbo.setOtherAttachments(GL_DEPTH_STENCIL_ATTACHMENT, 
+			r.getMs().getDepthFai());
 
 		fbo.checkIfGood();
-
 		fbo.unbind();
 	}
 	catch(std::exception& e)

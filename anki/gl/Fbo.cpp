@@ -70,6 +70,21 @@ uint Fbo::getCurrentFbo()
 
 
 //==============================================================================
+void Fbo::setColorAttachments(const std::initializer_list<const Texture*>& 
+	textures)
+{
+	setNumOfColorAttachements(textures.size());
+	int i = 0;
+	for(const Texture* tex : textures)
+	{
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
+			GL_TEXTURE_2D, tex->getGlId(), 0);
+		++i;
+	}
+}
+
+
+//==============================================================================
 void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex)
 {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,

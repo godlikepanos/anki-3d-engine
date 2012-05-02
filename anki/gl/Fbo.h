@@ -6,6 +6,7 @@
 #include "anki/util/Exception.h"
 #include <GL/glew.h>
 #include <array>
+#include <initializer_list>
 
 
 namespace anki {
@@ -58,8 +59,8 @@ public:
 	void setNumOfColorAttachements(uint num) const;
 
 	/// Set the color attachments of this FBO
-	template<typename Container>
-	void setColorAttachments(const Container& textures);
+	void setColorAttachments(const std::initializer_list<const Texture*>& 
+		textures);
 
 	/// Set other attachment
 	void setOtherAttachment(GLenum attachment, const Texture& tex);
@@ -91,19 +92,6 @@ private:
 		return glId != 0;
 	}
 };
-
-
-//==============================================================================
-template<typename Container>
-void Fbo::setColorAttachments(const Container& textures)
-{
-	setNumOfColorAttachements(textures.size());
-	for(size_t i = 0; i < textures.size(); ++i)
-	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
-			GL_TEXTURE_2D, textures[i]->getGlId(), 0);
-	}
-}
 
 
 } // end namespace
