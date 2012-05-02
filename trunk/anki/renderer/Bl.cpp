@@ -28,8 +28,8 @@ void Bl::init(const RendererInitializer& initializer)
 
 		hBlurFbo.create();
 		hBlurFbo.bind();
-		std::array<Texture*, 1> fais = {{&blurFai}};
-		hBlurFbo.setColorAttachments(fais);
+		hBlurFbo.setColorAttachments({&blurFai});
+		hBlurFbo.checkIfGood();
 	}
 	catch(const std::exception& e)
 	{
@@ -46,8 +46,8 @@ void Bl::init(const RendererInitializer& initializer)
 	{
 		vBlurFbo.create();
 		vBlurFbo.bind();
-		std::array<const Texture*, 1> fais = {{&r->getPps().getPostPassFai()}};
-		vBlurFbo.setColorAttachments(fais);
+		vBlurFbo.setColorAttachments({&r->getPps().getPostPassFai()});
+		vBlurFbo.checkIfGood();
 	}
 	catch(std::exception& e)
 	{
@@ -64,8 +64,8 @@ void Bl::init(const RendererInitializer& initializer)
 	{
 		sideBlurFbo.create();
 		sideBlurFbo.bind();
-		std::array<const Texture*, 1> fais = {{&r->getMs().getNormalFai()}};
-		sideBlurFbo.setColorAttachments(fais);
+		sideBlurFbo.setColorAttachments({&r->getMs().getNormalFai()});
+		sideBlurFbo.checkIfGood();
 	}
 	catch(std::exception& e)
 	{
