@@ -16,7 +16,7 @@ TextureManager::TextureManager()
 {
 	GLint tmp;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tmp);
-	units.resize(tmp - 1, nullptr);
+	units.resize(tmp, nullptr);
 	
 	activeUnit = -1;
 	mipmapping = true;
@@ -110,8 +110,6 @@ Texture::~Texture()
 //==============================================================================
 void Texture::create(const Initializer& init)
 {
-	TextureManagerSingleton::get().lock();
-
 	// Sanity checks
 	//
 	ANKI_ASSERT(!isLoaded());
@@ -128,8 +126,7 @@ void Texture::create(const Initializer& init)
 	height = init.height;
 
 	// Bind
-	glActiveTexture(GL_TEXTURE0 
-		+ TextureManagerSingleton::get().getMaxUnitsCount() - 1);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(target, glId);
 
 	switch(internalFormat)
@@ -177,8 +174,6 @@ void Texture::create(const Initializer& init)
 		glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
 			GLint(init.anisotropyLevel));
 	}
-
-	TextureManagerSingleton::get().unlock();
 
 	ANKI_CHECK_GL_ERROR();
 }

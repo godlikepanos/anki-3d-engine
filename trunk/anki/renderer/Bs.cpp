@@ -1,12 +1,6 @@
-#include <boost/ptr_container/ptr_vector.hpp>
 #include "anki/renderer/Bs.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/scene/Scene.h"
-#include "anki/resource/ShaderProgram.h"
-#include "anki/resource/Model.h"
-#include "anki/scene/ModelNode.h"
-#include "anki/resource/Material.h"
-#include "anki/resource/Mesh.h"
+#include "anki/resource/ShaderProgramResource.h"
 
 
 namespace anki {
@@ -24,11 +18,10 @@ void Bs::createFbo()
 	{
 		fbo.create();
 		fbo.bind();
-	
-		std::array<const Texture*, 1> fais = {{&r.getPps().getPrePassFai()}};
-		fbo.setColorAttachments(fais);
-		fbo.setOtherAttachments(GL_DEPTH_STENCIL_ATTACHMENT, 
-			r.getMs().getDepthFai());
+
+		fbo.setColorAttachments({&r->getPps().getPrePassFai()});
+		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, 
+			r->getMs().getDepthFai());
 
 		fbo.checkIfGood();
 		fbo.unbind();
@@ -41,8 +34,6 @@ void Bs::createFbo()
 
 
 //==============================================================================
-// createRefractFbo                                                            =
-//==============================================================================
 void Bs::createRefractFbo()
 {
 	try
@@ -50,39 +41,32 @@ void Bs::createRefractFbo()
 		refractFbo.create();
 		refractFbo.bind();
 
-		refractFbo.setNumOfColorAttachements(1);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, refractFai.getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
+		refractFbo.setColorAttachments({&refractFai});
+		refractFbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, 
+			r->getMs().getDepthFai());
 
 		refractFbo.checkIfGood();
-
 		refractFbo.unbind();
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Failed to create blending stage refract FBO");
+		throw ANKI_EXCEPTION("Failed to create blending stage refract FBO") 
+			<< e;
 	}
 }
 
 
 //==============================================================================
-// init                                                                        =
-//==============================================================================
 void Bs::init(const RendererInitializer& /*initializer*/)
 {
 	createFbo();
-	Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGBA8, GL_RGBA,
+	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGBA8, GL_RGBA,
 		GL_FLOAT, refractFai);
 	createRefractFbo();
 	refractSProg.load("shaders/BsRefract.glsl");
 }
 
 
-//==============================================================================
-// run                                                                         =
 //==============================================================================
 void Bs::run()
 {

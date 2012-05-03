@@ -68,19 +68,9 @@ public:
 	/// texture
 	void textureDeleted(Texture* tex);
 
-	void lock()
-	{
-		mtx.lock();
-	}
-	void unlock()
-	{
-		mtx.unlock();
-	}
-
 private:
 	/// Texture units. The last is reserved and only used in Texture::create
 	std::vector<Texture*> units;
-	std::mutex mtx; ///< A mutex that locks the texture manager
 	uint activeUnit;
 
 	/// @name Hints
@@ -99,14 +89,15 @@ private:
 typedef Singleton<TextureManager> TextureManagerSingleton;
 
 
-/// Texture class
-///
-/// @note ITS NOT THREAD SAFE
+/// @brief Texture class
+/// Generally its not thread safe and a few methods can be called by other 
+/// threads. See the docs for each method
 class Texture
 {
 	friend class TextureManager;
 
 public:
+	/// @brief Texture filtering type
 	enum TextureFilteringType
 	{
 		TFT_NEAREST,
@@ -114,7 +105,7 @@ public:
 		TFT_TRILINEAR
 	};
 
-	/// Texture initializer struct
+	/// @brief Texture initializer struct
 	struct Initializer
 	{
 		uint width;
@@ -130,13 +121,16 @@ public:
 		size_t dataSize; ///< For compressed textures
 	};
 
-	/// Default constructor
+	/// @brief Default constructor
+	/// Thread safe
 	Texture();
 
-	/// Desrcuctor
+	/// @brief Desrcuctor
+	/// Thread unsafe
 	~Texture();
 
 	/// @name Accessors
+	/// Thread safe
 	/// @{
 	GLuint getGlId() const
 	{
@@ -178,15 +172,24 @@ public:
 	}
 	/// @}
 
-	/// Create a texture
+	/// @brief Create a texture
+	/// Thread safe
 	void create(const Initializer& init);
 
+	/// @brief Bind the texture to a unit that the texture manager will decide
+	/// Thread unsafe
 	void bind() const;
+
+	/// @brief Change the filtering type
+	/// Thread unsafe
 	void setFiltering(TextureFilteringType filterType)
 	{
 		bind();
 		setFilteringNoBind(filterType);
 	}
+
+	/// @brief Generate new mipmaps
+	/// Thread unsafe
 	void genMipmap();
 
 private:

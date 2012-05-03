@@ -7,12 +7,6 @@ namespace anki {
 
 
 //==============================================================================
-Dbg::Dbg(Renderer& r_)
-	: SwitchableRenderingPass(r_)
-{}
-
-
-//==============================================================================
 void Dbg::init(const RendererInitializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
@@ -25,12 +19,8 @@ void Dbg::init(const RendererInitializer& initializer)
 		fbo.create();
 		fbo.bind();
 
-		fbo.setNumOfColorAttachements(1);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, r.getPps().getPostPassFai().getGlId(), 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
+		fbo.setColorAttachments({&r->getPps().getPostPassFai()});
+		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
 
 		fbo.checkIfGood();
 		fbo.unbind();
