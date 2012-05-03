@@ -7,29 +7,34 @@
 namespace anki {
 
 
-class ShaderProgram;
+class ShaderProgramResource;
 class SkinPatchNode;
 class SkinNode;
 
 
-/// SkinPatchNode deformer. It gets a SkinPatchNode and using transform
-/// feedback it deforms its vertex attributes
+/// SkinPatchNode deformer
+///
+/// It gets a SkinPatchNode and using transform feedback it deforms its vertex 
+/// attributes
 class Deformer
 {
-	public:
-		Deformer()
-		{
-			init();
-		}
-		~Deformer();
+public:
+	Deformer()
+	{
+		init();
+	}
+	~Deformer();
 
-		void deform(SkinNode& node, SkinPatchNode& subNode) const;
+	void deform(SkinNode& node, SkinPatchNode& subNode) const;
 
-	private:
-		ShaderProgramResourcePointer tfHwSkinningAllSProg;
-		ShaderProgramResourcePointer tfHwSkinningPosSProg;
+private:
+	/// Shader program that deforms all attribs
+	ShaderProgramResourcePointer tfHwSkinningAllSProg;
 
-		void init();
+	/// Shader program that deforms only the position attribute
+	ShaderProgramResourcePointer tfHwSkinningPosSProg;
+
+	void init();
 };
 
 

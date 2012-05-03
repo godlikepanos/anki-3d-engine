@@ -16,6 +16,7 @@
 #include "anki/gl/GlException.h"
 #include "anki/gl/GlStateMachine.h"
 #include "anki/gl/TimeQuery.h"
+#include "anki/renderer/Drawer.h"
 #include <boost/scoped_ptr.hpp>
 
 
