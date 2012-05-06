@@ -16,7 +16,7 @@ TextureManager::TextureManager()
 {
 	GLint tmp;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tmp);
-	units.resize(tmp, nullptr);
+	units.resize(tmp, Unit{nullptr, 0});
 	
 	activeUnit = -1;
 	mipmapping = true;
@@ -42,11 +42,19 @@ void TextureManager::activateUnit(uint unit)
 //==============================================================================
 uint TextureManager::choseUnit(Texture* tex)
 {
+	// Increase life for all
+	//
+	for(Unit& unit : units)
+	{
+		++unit.life;
+	}
+
 	// Already binded
 	//
 	if(tex->unit != -1)
 	{
-		ANKI_ASSERT(units[tex->unit] == tex);
+		ANKI_ASSERT(units[tex->unit].tex == tex);
+		units[tex->unit].life = 0;
 		return tex->unit;
 	}
 
@@ -54,19 +62,31 @@ uint TextureManager::choseUnit(Texture* tex)
 	//
 	for(uint i = 0; i < units.size(); i++)
 	{
-		if(units[i] == nullptr)
+		if(units[i].tex == nullptr)
 		{
-			units[i] = tex;
+			units[i].tex = tex;
+			units[i].life = 0;
 			return i;
 		}
 	}
 
-	// If all units occupied chose a random for now
+	// If all units occupied chose the older
 	//
-	int tmp = rand() % units.size();
-	units[tmp]->unit = -1;
-	units[tmp] = tex;
-	return tmp;
+
+	// Find the unit with the max life
+	uint umaxlife = 0;
+	for(uint i = 1; i < units.size(); ++i)
+	{
+		if(units[umaxlife].life < units[i].life)
+		{
+			umaxlife = i;
+		}
+	}
+
+	units[umaxlife].tex->unit = -1;
+	units[umaxlife].tex = tex;
+	units[umaxlife].life = 0;
+	return umaxlife;
 }
 
 
@@ -75,9 +95,9 @@ void TextureManager::textureDeleted(Texture* tex)
 {
 	for(auto it = units.begin(); it != units.end(); ++it)
 	{
-		if(*it == tex)
+		if(it->tex == tex)
 		{
-			*it = nullptr;
+			it->tex = nullptr;
 			return;
 		}
 	}

@@ -119,10 +119,7 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW);
 	
-	if(tex.getUnit() == -1)
-	{
-		tex.bind();
-	}
+	tex.bind();
 	glUniform1i(getLocation(), tex.getUnit());
 }
 
@@ -144,7 +141,7 @@ const char* ShaderProgram::stdSourceCode =
 	"#pragma debug(on)\n";
 #endif
 
-ShaderProgram* ShaderProgram::currentProgram = nullptr;
+const ShaderProgram* ShaderProgram::currentProgram = nullptr;
 
 
 //==============================================================================
@@ -176,8 +173,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	if(geomSource != nullptr)
 	{
-		geomShaderGlId = createAndCompileShader(geomSource, preprocSource.c_str(), 
-			GL_GEOMETRY_SHADER);
+		geomShaderGlId = createAndCompileShader(geomSource, 
+			preprocSource.c_str(), GL_GEOMETRY_SHADER);
 	}
 
 	ANKI_ASSERT(fragSource != nullptr);

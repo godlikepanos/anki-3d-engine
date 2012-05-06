@@ -69,8 +69,17 @@ public:
 	void textureDeleted(Texture* tex);
 
 private:
+	/// Texture unit representation
+	struct Unit
+	{
+		Texture* tex;
+		/// The bigger the life is the longer the @a tex has stayed witout bing 
+		/// binded
+		uint life; 
+	};
+
 	/// Texture units. The last is reserved and only used in Texture::create
-	std::vector<Texture*> units;
+	std::vector<Unit> units;
 	uint activeUnit;
 
 	/// @name Hints
