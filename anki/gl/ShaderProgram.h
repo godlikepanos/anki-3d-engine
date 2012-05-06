@@ -166,7 +166,7 @@ public:
 };
 
 
-/// Shader program resource
+/// Shader program object
 ///
 /// Shader program. Combines. Every shader program consist of one OpenGL ID, a 
 /// vector of uniform variables and a vector of attribute variables. Every 
@@ -242,7 +242,7 @@ public:
 		const char* transformFeedbackVaryings[]);
 
 	/// Bind the shader program
-	void bind()
+	void bind() const
 	{
 		ANKI_ASSERT(isInitialized());
 		if(currentProgram == nullptr || currentProgram != this)
@@ -263,7 +263,7 @@ public:
 		const char* varName) const;
 	/// @}
 
-	static ShaderProgram* getCurrentProgram()
+	static const ShaderProgram* getCurrentProgram()
 	{
 		return currentProgram;
 	}
@@ -283,7 +283,10 @@ private:
 		NameToAttribVarHashMap;
 
 	/// Is an optimization. it keeps the program that is now binded 
-	static ShaderProgram* currentProgram;
+	static const ShaderProgram* currentProgram;
+
+	/// Shader source that is used in ALL shader programs
+	static const char* stdSourceCode;
 
 	GLuint glId; ///< The OpenGL ID of the shader program
 	GLuint vertShaderGlId; ///< Vertex shader OpenGL id
@@ -291,9 +294,6 @@ private:
 	GLuint teShaderGlId; ///< Tessellation eval shader OpenGL id
 	GLuint geomShaderGlId; ///< Geometry shader OpenGL id
 	GLuint fragShaderGlId; ///< Fragment shader OpenGL id
-
-	/// Shader source that is used in ALL shader programs
-	static const char* stdSourceCode;
 
 	/// @name Containers
 	/// @{

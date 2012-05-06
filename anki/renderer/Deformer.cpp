@@ -1,8 +1,8 @@
 #include "anki/renderer/Deformer.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/SkinNode.h"
-#include "anki/renderer/MainRenderer.h"
+#include "anki/gl/GlStateMachine.h"
 
 
 namespace anki {
@@ -76,12 +76,10 @@ void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 			SkinMesh::VBO_TF_TANGENTS)->getGlId());
 	}
 
-	//glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, this->Query);
 	glBeginTransformFeedback(GL_POINTS);
 		glDrawArrays(GL_POINTS, 0,
 			smp.getSkinMesh().getVerticesNumber(0));
 	glEndTransformFeedback();
-	//glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 
 	GlStateMachineSingleton::get().disable(GL_RASTERIZER_DISCARD);
 }
