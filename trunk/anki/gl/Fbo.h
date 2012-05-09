@@ -55,9 +55,6 @@ public:
 	/// @exception Exception
 	void checkIfGood() const;
 
-	/// Set the number of color attachments of the FBO
-	void setNumOfColorAttachements(uint num) const;
-
 	/// Set the color attachments of this FBO
 	void setColorAttachments(const std::initializer_list<const Texture*>& 
 		textures);
@@ -91,6 +88,9 @@ private:
 	{
 		return glId != 0;
 	}
+
+	/// Set the number of color attachments of the FBO
+	void setNumOfColorAttachements(uint num) const;
 };
 
 
