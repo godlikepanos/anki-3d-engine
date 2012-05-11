@@ -9,14 +9,15 @@
 #include <GL/glew.h>
 #include <vector>
 
-
 namespace anki {
-
 
 class ShaderProgram;
 class Texture;
 
+/// @addtogroup gl
+/// @{
 
+//==============================================================================
 /// Shader program variable. The type is attribute or uniform
 class ShaderProgramVariable
 {
@@ -91,7 +92,7 @@ private:
 	const ShaderProgram* fatherSProg;
 };
 
-
+//==============================================================================
 /// Uniform shader variable
 class ShaderProgramUniformVariable: public ShaderProgramVariable
 {
@@ -152,7 +153,7 @@ private:
 	void doSanityChecks() const;
 };
 
-
+//==============================================================================
 /// Attribute shader program variable
 class ShaderProgramAttributeVariable: public ShaderProgramVariable
 {
@@ -165,7 +166,7 @@ public:
 	{}
 };
 
-
+//==============================================================================
 /// Shader program object
 ///
 /// Shader program. Combines. Every shader program consist of one OpenGL ID, a 
@@ -333,10 +334,9 @@ private:
 	}
 
 	void destroy();
-}; 
-
+};
+/// @}
 
 } // end namespace
-
 
 #endif
