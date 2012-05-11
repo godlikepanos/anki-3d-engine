@@ -1,13 +1,10 @@
 #include "anki/gl/ShaderProgram.h"
 #include "anki/gl/GlException.h"
-#include "anki/core/Logger.h"
 #include "anki/math/Math.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/Texture.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // ShaderProgramVariable                                                       =
@@ -23,7 +20,6 @@ void ShaderProgramUniformVariable::doSanityChecks() const
 		getName().c_str()) == getLocation());
 }
 
-
 //==============================================================================
 void ShaderProgramUniformVariable::set(const float x) const
 {
@@ -33,7 +29,6 @@ void ShaderProgramUniformVariable::set(const float x) const
 
 	glUniform1f(getLocation(), x);
 }
-
 
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Vec2& x) const
@@ -45,7 +40,6 @@ void ShaderProgramUniformVariable::set(const Vec2& x) const
 	glUniform2f(getLocation(), x.x(), x.y());
 }
 
-
 //==============================================================================
 void ShaderProgramUniformVariable::set(const float x[], uint size) const
 {
@@ -55,7 +49,6 @@ void ShaderProgramUniformVariable::set(const float x[], uint size) const
 	
 	glUniform1fv(getLocation(), size, x);
 }
-
 
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
@@ -67,7 +60,6 @@ void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
 	glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(x[0]))[0]);
 }
 
-
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
 {
@@ -77,7 +69,6 @@ void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
 
 	glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(x[0]))[0]);
 }
-
 
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
@@ -89,7 +80,6 @@ void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
 	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(x[0]))[0]);
 }
 
-
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
 {
@@ -99,7 +89,6 @@ void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
 
 	glUniformMatrix3fv(getLocation(), size, true, &(x[0])[0]);
 }
-
 
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
@@ -111,7 +100,6 @@ void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
 	glUniformMatrix4fv(getLocation(), size, true, &(x[0])[0]);
 }
 
-
 //==============================================================================
 void ShaderProgramUniformVariable::set(const Texture& tex) const
 {
@@ -122,7 +110,6 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 	tex.bind();
 	glUniform1i(getLocation(), tex.getUnit());
 }
-
 
 //==============================================================================
 // ShaderProgram                                                               =
@@ -142,7 +129,6 @@ const char* ShaderProgram::stdSourceCode =
 #endif
 
 const ShaderProgram* ShaderProgram::currentProgram = nullptr;
-
 
 //==============================================================================
 void ShaderProgram::create(const char* vertSource, const char* tcSource, 
@@ -260,7 +246,6 @@ void ShaderProgram::destroy()
 	glDeleteProgram(glId);
 }
 
-
 //==============================================================================
 GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	const char* preproc, GLenum type)
@@ -301,7 +286,6 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	return glId;
 }
 
-
 //==============================================================================
 void ShaderProgram::link() const
 {
@@ -327,7 +311,6 @@ void ShaderProgram::link() const
 	}
 }
 
-
 //==============================================================================
 void ShaderProgram::getUniAndAttribVars()
 {
@@ -349,9 +332,8 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			ANKI_WARNING("You are using FFP vertex attributes (\"" 
-				<< &name_[0] << "\")");
-			continue;
+			throw ANKI_EXCEPTION("You are using FFP vertex attributes (\"" 
+				+ std::string(&name_[0]) + "\")");
 		}
 
 		ShaderProgramAttributeVariable* var =
@@ -376,9 +358,8 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			ANKI_WARNING("You are using FFP vertex uniforms (\"" 
-				<< &name_[0] << "\")");
-			continue;
+			throw ANKI_EXCEPTION("You are using FFP vertex uniforms (\"" 
+				+ std::string(&name_[0]) + "\")");
 		}
 
 		ShaderProgramUniformVariable* var =
@@ -392,7 +373,6 @@ void ShaderProgram::getUniAndAttribVars()
 	}
 }
 
-
 //==============================================================================
 const ShaderProgramVariable* ShaderProgram::findVariableByName(
 	const char* name) const
@@ -404,7 +384,6 @@ const ShaderProgramVariable* ShaderProgram::findVariableByName(
 	}
 	return it->second;
 }
-
 
 //==============================================================================
 const ShaderProgramAttributeVariable*
@@ -418,7 +397,6 @@ const ShaderProgramAttributeVariable*
 	return it->second;
 }
 
-
 //==============================================================================
 const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 	const char* name) const
@@ -430,7 +408,6 @@ const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 	}
 	return it->second;
 }
-
 
 //==============================================================================
 std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
@@ -445,6 +422,5 @@ std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 	}
 	return s;
 }
-
 
 } // end namespace

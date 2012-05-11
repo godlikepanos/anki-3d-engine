@@ -5,9 +5,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
 
-
 namespace anki {
-
 
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
@@ -63,7 +61,11 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		glBindBuffer(target, glId);
+		if(lastBindedBo != this)
+		{
+			glBindBuffer(target, glId);
+			lastBindedBo = this;
+		}
 	}
 
 	/// Unbind BO
@@ -71,6 +73,7 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		glBindBuffer(target, 0);
+		lastBindedBo = nullptr;
 	}
 
 	/// Creates a new BO with the given parameters and checks if everything
@@ -113,6 +116,9 @@ public:
 	}
 
 private:
+	/// Opt to save a few glBindBuffer calls
+	static const thread_local BufferObject* lastBindedBo; 
+
 	GLuint glId; ///< The OpenGL id of the BO
 
 	/// Used in glBindBuffer(target, glId) and its for easy access so we
@@ -124,8 +130,6 @@ private:
 	size_t sizeInBytes; ///< The size of the buffer
 };
 
-
 } // end namespace anki
-
 
 #endif

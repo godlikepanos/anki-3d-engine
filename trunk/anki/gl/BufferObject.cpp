@@ -3,9 +3,11 @@
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
 
-
 namespace anki {
 
+//==============================================================================
+
+const thread_local BufferObject* BufferObject::lastBindedBo = nullptr;
 
 //==============================================================================
 BufferObject::~BufferObject()
@@ -15,7 +17,6 @@ BufferObject::~BufferObject()
 		destroy();
 	}
 }
-
 
 //==============================================================================
 void BufferObject::create(GLenum target_, uint sizeInBytes_,
@@ -50,7 +51,6 @@ void BufferObject::create(GLenum target_, uint sizeInBytes_,
 	ANKI_CHECK_GL_ERROR();
 }
 
-
 //==============================================================================
 void BufferObject::write(void* buff)
 {
@@ -62,7 +62,6 @@ void BufferObject::write(void* buff)
 	glUnmapBuffer(target);
 	unbind();
 }
-
 
 //==============================================================================
 void BufferObject::write(void* buff, size_t offset, size_t size)
@@ -76,6 +75,5 @@ void BufferObject::write(void* buff, size_t offset, size_t size)
 	glUnmapBuffer(target);
 	unbind();
 }
-
 
 } // end namespace

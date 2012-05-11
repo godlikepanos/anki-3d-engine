@@ -124,7 +124,7 @@ ANKI_ADD_LIB(${GLEW_INCLUDE_DIR} ${GLEW_LIBRARY_DIR} ${GLEW_INCLUDE_DIR}/GL/glew
 #
 # Defines & flags
 #
-ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long -msse4")
+ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long -msse4 -std=c++0x")
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	
@@ -139,8 +139,6 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 	ADD_DEFINITIONS("-DANKI_PLATFORM_WINDOWS")
 ENDIF()
-
-ADD_DEFINITIONS("-std=c++0x")
 
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 	# Removed because they do not work with boost::regexpr and who knows what
