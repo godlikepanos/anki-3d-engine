@@ -1,11 +1,8 @@
 #include "anki/gl/Texture.h"
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
-#include <boost/lexical_cast.hpp>
-
 
 namespace anki {
-
 
 //==============================================================================
 // TextureManager                                                              =
@@ -16,94 +13,138 @@ TextureManager::TextureManager()
 {
 	GLint tmp;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tmp);
-	units.resize(tmp, Unit{nullptr, 0});
+	unitsCount = tmp;
 	
-	activeUnit = -1;
 	mipmapping = true;
 	anisotropyLevel = 8;
 	compression = true;
 }
 
+//==============================================================================
+// TextureUnits                                                                =
+//==============================================================================
 
 //==============================================================================
-void TextureManager::activateUnit(uint unit)
+TextureUnits::TextureUnits()
 {
-	ANKI_ASSERT(unit < units.size());
-	if(activeUnit == unit)
-	{
-		return;
-	}
+	units.resize(TextureManagerSingleton::get().getMaxUnitsCount(), 
+		Unit{0, 0});
+	ANKI_ASSERT(units.size() > 7);
 
-	activeUnit = unit;
-	glActiveTexture(GL_TEXTURE0 + activeUnit);
+	activeUnit = -1;
+	choseUnitTimes = 0;
 }
 
+//==============================================================================
+int TextureUnits::whichUnit(const Texture& tex)
+{
+	GLuint glid = tex.getGlId();
+	int i = units.size();
+
+	do
+	{
+		--i;
+	} while(i >= 0 && glid != units[i].tex);
+
+	return i;
+}
 
 //==============================================================================
-uint TextureManager::choseUnit(Texture* tex)
+void TextureUnits::activateUnit(uint32_t unit)
 {
-	// Increase life for all
-	//
-	for(Unit& unit : units)
+	ANKI_ASSERT(unit < units.size());
+	if(activeUnit != (int)unit)
 	{
-		++unit.life;
+		activeUnit = (int)unit;
+		glActiveTexture(GL_TEXTURE0 + activeUnit);
 	}
+}
 
-	// Already binded
+//==============================================================================
+uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
+{
+	++choseUnitTimes;
+	int myTexUnit = whichUnit(tex);
+	allreadyBinded = false;
+
+	// Already binded => renew it
 	//
-	if(tex->unit != -1)
+	if(myTexUnit != -1)
 	{
-		ANKI_ASSERT(units[tex->unit].tex == tex);
-		units[tex->unit].life = 0;
-		return tex->unit;
+		ANKI_ASSERT(units[myTexUnit].tex == tex.getGlId());
+		units[myTexUnit].born = choseUnitTimes;
+		allreadyBinded = true;
+		return myTexUnit;
 	}
 
 	// Find an empty slot for it
 	//
-	for(uint i = 0; i < units.size(); i++)
+	for(uint32_t i = 0; i < units.size(); i++)
 	{
-		if(units[i].tex == nullptr)
+		if(units[i].tex == 0)
 		{
-			units[i].tex = tex;
-			units[i].life = 0;
+			units[i].tex = tex.getGlId();
+			units[i].born = choseUnitTimes;
 			return i;
 		}
 	}
 
-	// If all units occupied chose the older
+	// Find the older unit and replace the texture
 	//
-
-	// Find the unit with the max life
-	uint umaxlife = 0;
-	for(uint i = 1; i < units.size(); ++i)
+	uint64_t older = 0;
+	for(uint32_t i = 1; i < units.size(); ++i)
 	{
-		if(units[umaxlife].life < units[i].life)
+		if(units[i].born < units[older].born)
 		{
-			umaxlife = i;
+			older = i;
 		}
 	}
 
-	units[umaxlife].tex->unit = -1;
-	units[umaxlife].tex = tex;
-	units[umaxlife].life = 0;
-	return umaxlife;
+	units[older].tex = tex.getGlId();
+	units[older].born = choseUnitTimes;
+	return older;
 }
-
 
 //==============================================================================
-void TextureManager::textureDeleted(Texture* tex)
+void TextureUnits::bindTexture(const Texture& tex)
 {
-	for(auto it = units.begin(); it != units.end(); ++it)
+	bool allreadyBinded;
+	uint32_t unit = choseUnit(tex, allreadyBinded);
+
+	if(!allreadyBinded)
 	{
-		if(it->tex == tex)
-		{
-			it->tex = nullptr;
-			return;
-		}
+		activateUnit(unit);
+		glBindTexture(tex.getTarget(), tex.getGlId());
 	}
-	ANKI_ASSERT(0 && "Pointer not found");
 }
 
+//==============================================================================
+void TextureUnits::bindTextureAndActivateUnit(const Texture& tex)
+{
+	bool allreadyBinded;
+	uint32_t unit = choseUnit(tex, allreadyBinded);
+
+	activateUnit(unit);
+
+	if(!allreadyBinded)
+	{
+		glBindTexture(tex.getTarget(), tex.getGlId());
+	}
+}
+
+//==============================================================================
+void TextureUnits::unbindTexture(const Texture& tex)
+{
+	int unit = whichUnit(tex);
+	if(unit == -1)
+	{
+		return;
+	}
+
+	units[unit].tex = 0;
+	units[unit].born = 0;
+	// There is no need to use GL to unbind
+}
 
 //==============================================================================
 // Texture                                                                     =
@@ -111,33 +152,33 @@ void TextureManager::textureDeleted(Texture* tex)
 
 //==============================================================================
 Texture::Texture()
-	: glId(std::numeric_limits<uint>::max()), target(GL_TEXTURE_2D), unit(-1)
+	: glId(0), target(GL_TEXTURE_2D)
 {}
-
 
 //==============================================================================
 Texture::~Texture()
 {
-	if(isLoaded())
+	TextureUnitsSingleton::get().unbindTexture(*this);
+	if(isCreated())
 	{
 		glDeleteTextures(1, &glId);
 	}
 
-	TextureManagerSingleton::get().textureDeleted(this);
+	TextureUnitsSingleton::get().unbindTexture(*this);
 }
-
 
 //==============================================================================
 void Texture::create(const Initializer& init)
 {
 	// Sanity checks
 	//
-	ANKI_ASSERT(!isLoaded());
+	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(init.internalFormat <= 4 && "Deprecated internal format");
 
 	// Create
 	//
 	glGenTextures(1, &glId);
+	ANKI_ASSERT(glId != 0);
 	target = GL_TEXTURE_2D;
 	internalFormat = init.internalFormat;
 	format = init.format;
@@ -146,8 +187,7 @@ void Texture::create(const Initializer& init)
 	height = init.height;
 
 	// Bind
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(target, glId);
+	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
 
 	switch(internalFormat)
 	{
@@ -198,25 +238,18 @@ void Texture::create(const Initializer& init)
 	ANKI_CHECK_GL_ERROR();
 }
 
-
 //==============================================================================
 void Texture::bind() const
 {
-	unit = TextureManagerSingleton::get().choseUnit(
-		const_cast<Texture*>(this));
-
-	TextureManagerSingleton::get().activateUnit(unit);
-	glBindTexture(target, glId);
+	TextureUnitsSingleton::get().bindTexture(*this);
 }
-
 
 //==============================================================================
 void Texture::genMipmap()
 {
-	bind();
+	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
 	glGenerateMipmap(target);
 }
-
 
 //==============================================================================
 void Texture::setFilteringNoBind(TextureFilteringType filterType) const
@@ -236,6 +269,5 @@ void Texture::setFilteringNoBind(TextureFilteringType filterType) const
 		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 }
-
 
 } // end namespace

@@ -4,14 +4,12 @@
 #include <cstdint>
 #include <GL/glew.h>
 
-
 namespace anki {
 
+/// @addtogroup gl
+///
 
-class QueryImpl;
-
-
-/// XXX
+/// Query object
 class Query
 {
 public:
@@ -32,20 +30,22 @@ public:
 	void endQuery();
 
 	/// Get results
-	/// @note Waits for operations to finish
+	///
+	/// Waits for operations to finish
 	uint64_t getResult();
 
-	/// Get results. Doesn't Wait for operations to finish. If @a finished is 
-	/// false then the return value is irrelevant
+	/// Get results
+	///
+	/// Doesn't Wait for operations to finish. If @a finished is false then 
+	/// the return value is irrelevant
 	uint64_t getResultNoWait(bool& finished);
 
 private:
 	GLuint glId;
 	GLenum question;
 };
-
+/// @}
 
 } // end namespace anki
-
 
 #endif

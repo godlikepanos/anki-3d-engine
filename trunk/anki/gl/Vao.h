@@ -6,13 +6,10 @@
 #include "anki/gl/GlException.h"
 #include <GL/glew.h>
 
-
 namespace anki {
-
 
 class ShaderProgramAttributeVariable;
 class Vbo;
-
 
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
 class Vao
@@ -22,21 +19,21 @@ public:
 	Vao(const Vao&) = delete;
 	Vao& operator=(const Vao&) = delete;
 
-	/// @name Constructors
+	/// @name Constructors/Destructor
 	/// @{
 
 	/// Default
 	Vao()
 		: glId(0)
 	{}
-	/// @}
 
 	/// Destroy VAO from the OpenGL context
 	~Vao();
+	/// @}
 
 	/// @name Accessors
 	/// @{
-	uint getGlId() const
+	GLuint getGlId() const
 	{
 		ANKI_ASSERT(isCreated());
 		return glId;
@@ -97,7 +94,7 @@ public:
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
 	    const Vbo& vbo,
-	    uint attribVarLocation,
+	    GLuint attribVarLocation,
 	    GLint size,
 	    GLenum type,
 	    GLboolean normalized,
@@ -120,7 +117,7 @@ public:
 	}
 
 private:
-	uint glId; ///< The OpenGL id
+	GLuint glId; ///< The OpenGL id
 
 	bool isCreated() const
 	{
@@ -128,8 +125,6 @@ private:
 	}
 };
 
-
 } // end namespace
-
 
 #endif

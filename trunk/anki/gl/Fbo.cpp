@@ -1,19 +1,17 @@
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Texture.h"
-#include <boost/lexical_cast.hpp>
 #include <array>
-
 
 namespace anki {
 
-
 //==============================================================================
 
-static std::array<GLenum, 8> colorAttachments = {{
+static const std::array<GLenum, 8> colorAttachments = {{
 	GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
 	GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
 	GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7}};
 
+thread_local const Fbo* Fbo::currentFbo = nullptr;
 
 //==============================================================================
 Fbo::~Fbo()
@@ -24,56 +22,67 @@ Fbo::~Fbo()
 	}
 }
 
+//==============================================================================
+void Fbo::bind() const
+{
+	ANKI_ASSERT(isCreated());
+
+	if(currentFbo != this)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, glId);
+		currentFbo = this;
+	}
+}
+
+//==============================================================================
+void Fbo::unbind() const
+{
+	ANKI_ASSERT(isCreated());
+
+	if(currentFbo == this)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		currentFbo = nullptr;
+	}
+}
+
+//==============================================================================
+void Fbo::unbindAll()
+{
+	if(currentFbo != nullptr)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		currentFbo = nullptr;
+	}
+}
 
 //==============================================================================
 void Fbo::checkIfGood() const
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(getCurrentFbo() == glId); // another FBO is binded
+	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		throw ANKI_EXCEPTION("FBO is incomplete: " 
-			+ boost::lexical_cast<std::string>(status));
+		throw ANKI_EXCEPTION("FBO is incomplete");
 	}
 }
-
-
-//==============================================================================
-void Fbo::setNumOfColorAttachements(uint num) const
-{
-	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(getCurrentFbo() == glId); // another FBO is binded
-
-	if(num == 0)
-	{
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
-	}
-	else
-	{
-		ANKI_ASSERT(num <= colorAttachments.size());
-		glDrawBuffers(num, &colorAttachments[0]);
-	}
-}
-
-
-//==============================================================================
-uint Fbo::getCurrentFbo()
-{
-	int fboGlId;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fboGlId);
-	return (uint)fboGlId;
-}
-
 
 //==============================================================================
 void Fbo::setColorAttachments(const std::initializer_list<const Texture*>& 
 	textures)
 {
-	setNumOfColorAttachements(textures.size());
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
+	ANKI_ASSERT(textures.size() > 0);
+
+	// Set number of color attachments
+	//
+	glDrawBuffers(textures.size(), &colorAttachments[0]);
+
+	// Set attachments
+	//
 	int i = 0;
 	for(const Texture* tex : textures)
 	{
@@ -83,13 +92,14 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 	}
 }
 
-
 //==============================================================================
 void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex)
 {
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
+
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
 		GL_TEXTURE_2D, tex.getGlId(), 0);
 }
-
 
 } // end namespace

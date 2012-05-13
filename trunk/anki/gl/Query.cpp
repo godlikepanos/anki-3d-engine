@@ -2,9 +2,7 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Query::Query(GLenum q)
@@ -19,13 +17,11 @@ Query::Query(GLenum q)
 	}
 }
 
-
 //==============================================================================
 Query::~Query()
 {
 	glDeleteQueries(1, &glId);
 }
-
 
 //==============================================================================
 void Query::beginQuery()
@@ -33,13 +29,11 @@ void Query::beginQuery()
 	glBeginQuery(question, glId);
 }
 
-
 //==============================================================================
 void Query::endQuery()
 {
 	glEndQuery(question);
 }
-
 
 //==============================================================================
 uint64_t Query::getResult()
@@ -48,7 +42,6 @@ uint64_t Query::getResult()
 	glGetQueryObjectui64v(glId, GL_QUERY_RESULT, &result);
 	return result;
 }
-
 
 //==============================================================================
 uint64_t Query::getResultNoWait(bool& finished)
@@ -70,6 +63,5 @@ uint64_t Query::getResultNoWait(bool& finished)
 
 	return result;
 }
-
 
 } // end namespace anki

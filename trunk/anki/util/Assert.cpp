@@ -1,9 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 
-
 namespace anki {
-
 
 //==============================================================================
 void akassert(bool expr, const char* exprTxt, const char* file, int line,
@@ -18,6 +16,5 @@ void akassert(bool expr, const char* exprTxt, const char* file, int line,
 		abort();
 	}
 }
-
 
 } // end namespace

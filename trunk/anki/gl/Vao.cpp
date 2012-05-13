@@ -3,9 +3,7 @@
 #include "anki/util/Exception.h"
 #include "anki/gl/ShaderProgram.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Vao::~Vao()
@@ -16,9 +14,8 @@ Vao::~Vao()
 	}
 }
 
-
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
+void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
 	const GLvoid* pointer)
 {
@@ -41,7 +38,6 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, uint attribVarLocation,
 	ANKI_CHECK_GL_ERROR();
 }
 
-
 //==============================================================================
 void Vao::attachArrayBufferVbo(const Vbo& vbo,
 	const ShaderProgramAttributeVariable& attribVar,
@@ -51,7 +47,6 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo,
 	attachArrayBufferVbo(vbo, attribVar.getLocation(), size, type, normalized,
 		stride, pointer);
 }
-
 
 //==============================================================================
 void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
@@ -67,6 +62,5 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	unbind();
 	ANKI_CHECK_GL_ERROR();
 }
-
 
 } // end namespace

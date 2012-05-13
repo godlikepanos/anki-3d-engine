@@ -10,14 +10,14 @@
 #include <limits>
 #include <thread>
 
-
 namespace anki {
-
 
 class Texture;
 
+/// @addtogroup gl
+/// @{
 
-/// XXX
+/// Contains a few hints on how to crate textures
 class TextureManager
 {
 public:
@@ -25,11 +25,11 @@ public:
 
 	/// @name Accessors
 	/// @{
-	uint getAnisotropyLevel() const
+	uint32_t getAnisotropyLevel() const
 	{
 		return anisotropyLevel;
 	}
-	void setAnisotropyLevel(uint x) 
+	void setAnisotropyLevel(uint32_t x) 
 	{
 		anisotropyLevel = x;
 	}
@@ -52,61 +52,92 @@ public:
 		compression = x;
 	}
 
-	size_t getMaxUnitsCount() const
+	uint32_t getMaxUnitsCount() const
 	{
-		return units.size() + 1;
+		return unitsCount;
 	}
 	/// @}
 
-	/// The manager returns the texture unit where the @a tex can be binded
-	uint choseUnit(Texture* tex);
+private:
+	/// @name Hints
+	/// Hints when creating new textures. The implementation may try to ignore 
+	/// them
+	/// @{
+	uint32_t anisotropyLevel;
+	bool mipmapping;
+	/// If true the new textures will be compressed if not already
+	bool compression;
+	/// @}
+
+	uint32_t unitsCount;
+};
+
+/// The global texture manager
+typedef Singleton<TextureManager> TextureManagerSingleton;
+
+/// Class for effective binding
+class TextureUnits
+{
+public:
+	TextureUnits();
 
 	/// Alias for glActiveTexture
-	void activateUnit(uint unit);
+	void activateUnit(uint32_t unit);
 
-	/// This is called by the texture destructor in order to invalidate the 
-	/// texture
-	void textureDeleted(Texture* tex);
+	/// Bind the texture to a unit. It's not sure that it will activate the unit
+	void bindTexture(const Texture& tex);
+
+	/// XXX
+	void bindTextureAndActivateUnit(const Texture& tex);
+
+	/// Unbind a texture from it's unit
+	void unbindTexture(const Texture& tex);
+
+	/// Get the number of the texture unit the @a tex is binded. Returns -1 if
+	/// not binded to any unit
+	int whichUnit(const Texture& tex);
 
 private:
 	/// Texture unit representation
 	struct Unit
 	{
-		Texture* tex;
-		/// The bigger the life is the longer the @a tex has stayed witout bing 
-		/// binded
-		uint life; 
+		/// Have the GL ID to save memory. -1 if no tex is binded to that unit
+		GLuint tex;
+		
+		/// Born time
+		///
+		/// The bigger the value the latter the unit has been accessed. This 
+		/// practicaly means that if the @a born is low the unit is a canditate
+		/// for replacement 
+		uint64_t born; 
 	};
 
-	/// Texture units. The last is reserved and only used in Texture::create
+	/// Texture units
 	std::vector<Unit> units;
-	uint activeUnit;
+	/// The active texture unit
+	int activeUnit;
+	/// How many times the @a choseUnit has been called. Used to set the 
+	/// Unit::born
+	uint64_t choseUnitTimes; 
 
-	/// @name Hints
-	/// Hints when creating new textures. The implementation may try to ignore 
-	/// them
-	/// @{
-	uint anisotropyLevel;
-	bool mipmapping;
-	/// If true the new textures will be compressed if not already
-	bool compression;
-	/// @}
+	/// Helper method 
+	///
+	/// It returns the texture unit where the @a tex can be binded
+	uint32_t choseUnit(const Texture& tex, bool& allreadyBinded);
 };
 
+/// The global texture units manager. Its per thread
+typedef SingletonThreadSafe<TextureUnits> TextureUnitsSingleton;
 
-/// The global texture manager
-typedef Singleton<TextureManager> TextureManagerSingleton;
-
-
-/// @brief Texture class
-/// Generally its not thread safe and a few methods can be called by other 
-/// threads. See the docs for each method
+/// Texture class.
+/// Generally its thread safe as long as you have a shared context and the 
+/// driver supports it
 class Texture
 {
 	friend class TextureManager;
 
 public:
-	/// @brief Texture filtering type
+	/// Texture filtering type
 	enum TextureFilteringType
 	{
 		TFT_NEAREST,
@@ -114,11 +145,11 @@ public:
 		TFT_TRILINEAR
 	};
 
-	/// @brief Texture initializer struct
+	/// Texture initializer struct
 	struct Initializer
 	{
-		uint width;
-		uint height;
+		uint32_t width;
+		uint32_t height;
 		GLint internalFormat;
 		GLenum format;
 		GLenum type;
@@ -130,44 +161,56 @@ public:
 		size_t dataSize; ///< For compressed textures
 	};
 
-	/// @brief Default constructor
-	/// Thread safe
+	/// @name Constructors/Destructor
+	/// @{
+
+	/// Default constructor
 	Texture();
 
-	/// @brief Desrcuctor
-	/// Thread unsafe
+	Texture(const Initializer& init)
+	{
+		create(init);
+	}
+
+	/// Desrcuctor
 	~Texture();
+	/// @}
 
 	/// @name Accessors
 	/// Thread safe
 	/// @{
 	GLuint getGlId() const
 	{
-		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(isCreated());
 		return glId;
 	}
 
 	GLenum getInternalFormat() const
 	{
-		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(isCreated());
 		return internalFormat;
 	}
 
 	GLenum getFormat() const
 	{
-		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(isCreated());
 		return format;
+	}
+
+	GLenum getTarget() const
+	{
+		return target;
 	}
 
 	GLenum getType() const
 	{
-		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(isCreated());
 		return type;
 	}
 
 	int getUnit() const
 	{
-		return unit;
+		return TextureUnitsSingleton::get().whichUnit(*this);
 	}
 
 	GLuint getWidth() const
@@ -181,24 +224,20 @@ public:
 	}
 	/// @}
 
-	/// @brief Create a texture
-	/// Thread safe
+	/// Create a texture
 	void create(const Initializer& init);
 
-	/// @brief Bind the texture to a unit that the texture manager will decide
-	/// Thread unsafe
+	/// Bind the texture to a unit that the texture unit system will decide
 	void bind() const;
 
-	/// @brief Change the filtering type
-	/// Thread unsafe
+	/// Change the filtering type
 	void setFiltering(TextureFilteringType filterType)
 	{
-		bind();
+		TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
 		setFilteringNoBind(filterType);
 	}
 
-	/// @brief Generate new mipmaps
-	/// Thread unsafe
+	/// Generate new mipmaps
 	void genMipmap();
 
 private:
@@ -209,20 +248,15 @@ private:
 	GLuint type; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
 	GLuint width, height;
 
-	/// The texure unit that its binded to. It's -1 if it's not binded to any
-	/// texture unit
-	mutable int unit; 
-
-	bool isLoaded() const
+	bool isCreated() const
 	{
-		return glId != std::numeric_limits<uint>::max();
+		return glId != 0;
 	}
 
 	void setFilteringNoBind(TextureFilteringType filterType) const;
 };
-
+/// @}
 
 } // end namespace
-
 
 #endif
