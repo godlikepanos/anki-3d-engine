@@ -186,6 +186,8 @@ public:
 	ShaderProgram(const ShaderProgram&) = delete;
 	ShaderProgram& operator=(const ShaderProgram&) = delete;
 
+	/// @name Constructors/Destructor
+	/// @{
 	ShaderProgram()
 	{
 		init();
@@ -202,14 +204,18 @@ public:
 
 	~ShaderProgram()
 	{
-		destroy();
+		if(isCreated())
+		{
+			destroy();
+		}
 	}
+	/// @}
 
 	/// @name Accessors
 	/// @{
 	GLuint getGlId() const
 	{
-		ANKI_ASSERT(isInitialized());
+		ANKI_ASSERT(isCreated());
 		return glId;
 	}
 
@@ -236,7 +242,7 @@ public:
 	/// @param teSource Tessellation evaluation shader source. Can be nullptr
 	/// @param geomSource Geometry shader source. Can be nullptr
 	/// @param fragSource Fragment shader source. Can be nullptr
-	/// @param transformFeedbackVaryings A list of varyings names. Eg 
+	/// @param transformFeedbackVaryings An array of varyings names. Eg 
 	///                                  {"var0", "var1", nullptr} or {nullptr}
 	void create(const char* vertSource, const char* tcSource, 
 		const char* teSource, const char* geomSource, const char* fragSource,
@@ -245,11 +251,21 @@ public:
 	/// Bind the shader program
 	void bind() const
 	{
-		ANKI_ASSERT(isInitialized());
-		if(currentProgram == nullptr || currentProgram != this)
+		ANKI_ASSERT(isCreated());
+		if(currentProgram != this)
 		{
 			glUseProgram(glId);
 			currentProgram = this;
+		}
+	}
+
+	// Unbinds only @a this if its binded
+	void unbind() const
+	{
+		if(currentProgram == this)
+		{
+			glUseProgram(0);
+			currentProgram = nullptr;
 		}
 	}
 
@@ -264,9 +280,11 @@ public:
 		const char* varName) const;
 	/// @}
 
-	static const ShaderProgram* getCurrentProgram()
+	static GLuint getCurrentProgramGlId()
 	{
-		return currentProgram;
+		int i;
+		glGetIntegerv(GL_CURRENT_PROGRAM, &i);
+		return i;
 	}
 
 	/// For debugging
@@ -284,7 +302,7 @@ private:
 		NameToAttribVarHashMap;
 
 	/// Is an optimization. it keeps the program that is now binded 
-	static const ShaderProgram* currentProgram;
+	static const thread_local ShaderProgram* currentProgram;
 
 	/// Shader source that is used in ALL shader programs
 	static const char* stdSourceCode;
@@ -322,11 +340,12 @@ private:
 	void link() const;
 
 	/// Returns true if the class points to a valid GL ID
-	bool isInitialized() const
+	bool isCreated() const
 	{
 		return glId != 0;
 	}
 
+	/// Common construction code
 	void init()
 	{
 		glId = vertShaderGlId = tcShaderGlId = teShaderGlId =

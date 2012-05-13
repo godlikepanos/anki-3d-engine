@@ -1,7 +1,6 @@
 #ifndef ANKI_UTIL_ASSERT_H
 #define ANKI_UTIL_ASSERT_H
 
-
 /// Assertion. Print an error and stop the debugger (if it runs through a
 /// debugger) and then abort
 #if defined(NDEBUG)

@@ -8,14 +8,17 @@
 #include <array>
 #include <initializer_list>
 
-
 namespace anki {
-
 
 class Texture;
 
+/// @addtogroup gl
+/// @{
 
-/// The class is actually a wrapper to avoid common mistakes
+/// Frame buffer object
+///
+/// The class is actually a wrapper to avoid common mistakes. It only supports
+/// binding at both draw and read targets
 class Fbo
 {
 public:
@@ -28,30 +31,27 @@ public:
 	~Fbo();
 	/// @}
 
-	uint getGlId() const
-	{
-		ANKI_ASSERT(!isCreated());
-		return glId;
-	}
-
-	/// Binds FBO
-	void bind(GLenum target_ = GL_FRAMEBUFFER)
+	/// @name Accessors
+	/// @{
+	GLuint getGlId() const
 	{
 		ANKI_ASSERT(isCreated());
-		target = target_;
-		ANKI_ASSERT(target == GL_DRAW_FRAMEBUFFER
-			|| target == GL_READ_FRAMEBUFFER
-			|| target == GL_FRAMEBUFFER);
-		glBindFramebuffer(target, glId);
+		return glId;
 	}
+	/// @}
+
+	/// Binds FBO
+	void bind() const;
 
 	/// Unbinds the FBO
-	void unbind()
-	{
-		glBindFramebuffer(target, 0);
-	}
+	void unbind() const;
 
-	/// Checks the status of an initialized FBO and if fails throw exception
+	/// Unbind all
+	///
+	/// Unbinds both draw and read FBOs so the active is the default FBO
+	static void unbindAll();
+
+	/// Checks the status of an initialized FBO and if fails throws exception
 	/// @exception Exception
 	void checkIfGood() const;
 
@@ -62,39 +62,50 @@ public:
 	/// Set other attachment
 	void setOtherAttachment(GLenum attachment, const Texture& tex);
 
-	/// Returns the GL id of the current attached FBO
-	/// @return Returns the GL id of the current attached FBO
-	static uint getCurrentFbo();
-
 	/// Creates a new FBO
 	void create()
 	{
 		ANKI_ASSERT(!isCreated());
 		glGenFramebuffers(1, &glId);
+		ANKI_ASSERT(glId != 0);
 	}
 
 	/// Destroy it
 	void destroy()
 	{
 		ANKI_ASSERT(isCreated());
+		unbind();
 		glDeleteFramebuffers(1, &glId);
+		glId = 0;
 	}
 
 private:
-	uint glId; ///< OpenGL identification
-	GLenum target; ///< How the buffer is bind
+	/// Current binded FBOs for draw/read
+	static thread_local const Fbo* currentFbo;
+
+	GLuint glId; ///< OpenGL identification
 
 	bool isCreated() const
 	{
 		return glId != 0;
 	}
 
-	/// Set the number of color attachments of the FBO
-	void setNumOfColorAttachements(uint num) const;
-};
+	static GLuint getCurrentDrawFboGlId()
+	{
+		GLint i;
+		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &i);
+		return i;
+	}
 
+	static GLuint getCurrentReadFboGlId()
+	{
+		GLint i;
+		glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &i);
+		return i;
+	}
+};
+/// @}
 
 } // end namespace
-
 
 #endif

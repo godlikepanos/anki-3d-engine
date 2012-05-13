@@ -3,9 +3,7 @@
 #include <string>
 #include <GL/glew.h>
 
-
 namespace anki {
-
 
 void glConditionalThrowException(const char* file, int line, const char* func)
 {
@@ -19,6 +17,5 @@ void glConditionalThrowException(const char* file, int line, const char* func)
 	std::string err = std::string("OpenGL exception: ") + glerr;
 	throw Exception(err.c_str(), file, line, func);
 }
-
 
 } // end namespace

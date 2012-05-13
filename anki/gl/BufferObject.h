@@ -7,6 +7,9 @@
 
 namespace anki {
 
+/// @addtogroup gl
+/// @{
+	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
 class BufferObject
@@ -92,6 +95,7 @@ public:
 	void destroy()
 	{
 		ANKI_ASSERT(isCreated());
+		unbind();
 		glDeleteBuffers(1, &glId);
 		glId = 0;
 	}
@@ -129,6 +133,7 @@ private:
 	GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 	size_t sizeInBytes; ///< The size of the buffer
 };
+/// @}
 
 } // end namespace anki
 

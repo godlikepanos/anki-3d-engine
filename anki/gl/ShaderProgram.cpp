@@ -14,8 +14,8 @@ namespace anki {
 void ShaderProgramUniformVariable::doSanityChecks() const
 {
 	ANKI_ASSERT(getLocation() != -1);
-	ANKI_ASSERT(ShaderProgram::getCurrentProgram() == 
-		&getFatherShaderProgram());
+	ANKI_ASSERT(ShaderProgram::getCurrentProgramGlId() == 
+		getFatherShaderProgram().getGlId());
 	ANKI_ASSERT(glGetUniformLocation(getFatherShaderProgram().getGlId(),
 		getName().c_str()) == getLocation());
 }
@@ -128,14 +128,14 @@ const char* ShaderProgram::stdSourceCode =
 	"#pragma debug(on)\n";
 #endif
 
-const ShaderProgram* ShaderProgram::currentProgram = nullptr;
+const thread_local ShaderProgram* ShaderProgram::currentProgram = nullptr;
 
 //==============================================================================
 void ShaderProgram::create(const char* vertSource, const char* tcSource, 
 	const char* teSource, const char* geomSource, const char* fragSource,
 	const char* transformFeedbackVaryings[])
 {
-	ANKI_ASSERT(!isInitialized());
+	ANKI_ASSERT(!isCreated());
 
 	// 1) create and compile the shaders
 	//
@@ -202,7 +202,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	if(count)
 	{
-		glTransformFeedbackVaryings(glId,
+		glTransformFeedbackVaryings(
+			glId,
 			count, 
 			transformFeedbackVaryings,
 			GL_SEPARATE_ATTRIBS);
@@ -218,6 +219,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 //==============================================================================
 void ShaderProgram::destroy()
 {
+	unbind();
+
 	if(vertShaderGlId != 0)
 	{
 		glDeleteShader(vertShaderGlId);
@@ -243,7 +246,12 @@ void ShaderProgram::destroy()
 		glDeleteShader(fragShaderGlId);
 	}
 
-	glDeleteProgram(glId);
+	if(glId != 0)
+	{
+		glDeleteProgram(glId);
+	}
+
+	init();
 }
 
 //==============================================================================
@@ -332,8 +340,7 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			throw ANKI_EXCEPTION("You are using FFP vertex attributes (\"" 
-				+ std::string(&name_[0]) + "\")");
+			throw ANKI_EXCEPTION("You are using FFP vertex attributes");
 		}
 
 		ShaderProgramAttributeVariable* var =
@@ -358,8 +365,7 @@ void ShaderProgram::getUniAndAttribVars()
 		int loc = glGetUniformLocation(glId, &name_[0]);
 		if(loc == -1) // if -1 it means that its an FFP var
 		{
-			throw ANKI_EXCEPTION("You are using FFP vertex uniforms (\"" 
-				+ std::string(&name_[0]) + "\")");
+			throw ANKI_EXCEPTION("You are using FFP vertex uniforms");
 		}
 
 		ShaderProgramUniformVariable* var =
