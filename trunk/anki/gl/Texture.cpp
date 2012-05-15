@@ -65,7 +65,6 @@ uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
 {
 	++choseUnitTimes;
 	int myTexUnit = whichUnit(tex);
-	allreadyBinded = false;
 
 	// Already binded => renew it
 	//
@@ -76,6 +75,8 @@ uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
 		allreadyBinded = true;
 		return myTexUnit;
 	}
+
+	allreadyBinded = false;
 
 	// Find an empty slot for it
 	//
@@ -163,8 +164,6 @@ Texture::~Texture()
 	{
 		glDeleteTextures(1, &glId);
 	}
-
-	TextureUnitsSingleton::get().unbindTexture(*this);
 }
 
 //==============================================================================
