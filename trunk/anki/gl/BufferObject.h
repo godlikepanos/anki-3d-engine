@@ -3,7 +3,6 @@
 
 #include <GL/glew.h>
 #include "anki/util/Assert.h"
-#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -22,7 +21,7 @@ public:
 	{}
 
 	/// Default constructor @see create
-	BufferObject(GLenum target, uint sizeInBytes,
+	BufferObject(GLenum target, uint32_t sizeInBytes,
 		const void* dataPtr, GLenum usage)
 		: glId(0)
 	{
@@ -35,7 +34,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	uint getGlId() const
+	GLuint getGlId() const
 	{
 		ANKI_ASSERT(isCreated());
 		return glId;
@@ -88,7 +87,7 @@ public:
 	/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or
 	///		   GL_DYNAMIC_DRAW only!!!!!!!!!
 	/// @exception Exception
-	void create(GLenum target, uint sizeInBytes, const void* dataPtr,
+	void create(GLenum target, uint32_t sizeInBytes, const void* dataPtr,
 		GLenum usage);
 
 	/// Delete the BO

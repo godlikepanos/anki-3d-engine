@@ -11,19 +11,21 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-void ShaderProgramUniformVariable::doSanityChecks() const
+void ShaderProgramUniformVariable::doCommonSetCode()
 {
 	ANKI_ASSERT(getLocation() != -1);
 	ANKI_ASSERT(ShaderProgram::getCurrentProgramGlId() == 
 		getFatherShaderProgram().getGlId());
 	ANKI_ASSERT(glGetUniformLocation(getFatherShaderProgram().getGlId(),
 		getName().c_str()) == getLocation());
+
+	enableFlag(SPUVF_DIRTY);
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const float x) const
+void ShaderProgramUniformVariable::set(const float x) 
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
 	ANKI_ASSERT(getSize() == 1);
 
@@ -31,9 +33,9 @@ void ShaderProgramUniformVariable::set(const float x) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec2& x) const
+void ShaderProgramUniformVariable::set(const Vec2& x)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
 	ANKI_ASSERT(getSize() == 2);
 
@@ -41,9 +43,9 @@ void ShaderProgramUniformVariable::set(const Vec2& x) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const float x[], uint size) const
+void ShaderProgramUniformVariable::set(const float x[], uint size)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
 	ANKI_ASSERT(getSize() == size);
 	
@@ -51,9 +53,9 @@ void ShaderProgramUniformVariable::set(const float x[], uint size) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec2 x[], uint size)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
 	ANKI_ASSERT(getSize() == size * 2);
 
@@ -61,9 +63,9 @@ void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec3 x[], uint size)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC3);
 	ANKI_ASSERT(getSize() == size * 3);
 
@@ -71,9 +73,9 @@ void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec4 x[], uint size)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC4);
 	ANKI_ASSERT(getSize() == size * 4);
 	
@@ -81,9 +83,9 @@ void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Mat3 x[], uint size)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT3);
 	ANKI_ASSERT(getSize() == size);
 
@@ -91,9 +93,9 @@ void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Mat4 x[], uint size)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT4);
 	ANKI_ASSERT(getSize() == size);
 
@@ -101,9 +103,9 @@ void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Texture& tex) const
+void ShaderProgramUniformVariable::set(const Texture& tex)
 {
-	doSanityChecks();
+	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW);
 	
@@ -413,6 +415,15 @@ const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 		return nullptr;
 	}
 	return it->second;
+}
+
+//==============================================================================
+void ShaderProgram::cleanAllUniformsDirtyFlags()
+{
+	for(ShaderProgramUniformVariable* uni : unis)
+	{
+		uni->disableFlag(ShaderProgramUniformVariable::SPUVF_DIRTY);
+	}
 }
 
 //==============================================================================

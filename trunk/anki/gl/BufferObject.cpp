@@ -19,7 +19,7 @@ BufferObject::~BufferObject()
 }
 
 //==============================================================================
-void BufferObject::create(GLenum target_, uint sizeInBytes_,
+void BufferObject::create(GLenum target_, uint32_t sizeInBytes_,
 	const void* dataPtr, GLenum usage_)
 {
 	ANKI_ASSERT(!isCreated());

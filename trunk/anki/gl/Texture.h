@@ -1,7 +1,6 @@
 #ifndef ANKI_GL_TEXTURE_H
 #define ANKI_GL_TEXTURE_H
 
-#include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Singleton.h"
 #include <cstdlib>
