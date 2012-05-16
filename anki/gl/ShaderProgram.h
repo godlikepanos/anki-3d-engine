@@ -5,6 +5,7 @@
 #include "anki/util/Assert.h"
 #include "anki/math/Forward.h"
 #include "anki/core/Globals.h"
+#include "anki/util/Flags.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <vector>
@@ -92,9 +93,16 @@ private:
 };
 
 /// Uniform shader variable
-class ShaderProgramUniformVariable: public ShaderProgramVariable
+class ShaderProgramUniformVariable: public ShaderProgramVariable, 
+	public Flags<uint32_t>
 {
 public:
+	enum ShaderProgramUniformVariableFlag
+	{
+		SPUVF_NONE = 0,
+		SPUVF_DIRTY = (1 << 0) ///< This means that a setter was called
+	};
+
 	ShaderProgramUniformVariable(
 		int loc,
 		const char* name,
@@ -103,41 +111,43 @@ public:
 		const ShaderProgram* fatherSProg)
 		: ShaderProgramVariable(loc, name, glDataType, size, SPVT_UNIFORM, 
 			fatherSProg)
-	{}
+	{
+		enableFlag(SPUVF_DIRTY);
+	}
 
 	/// @name Set the var
 	/// @{
-	void set(const float x) const;
-	void set(const Vec2& x) const;
-	void set(const Vec3& x) const
+	void set(const float x);
+	void set(const Vec2& x);
+	void set(const Vec3& x)
 	{
 		set(&x, 1);
 	}
-	void set(const Vec4& x) const
+	void set(const Vec4& x)
 	{
 		set(&x, 1);
 	}
-	void set(const Mat3& x) const
+	void set(const Mat3& x)
 	{
 		set(&x, 1);
 	}
-	void set(const Mat4& x) const
+	void set(const Mat4& x)
 	{
 		set(&x, 1);
 	}
-	void set(const Texture& tex) const;
+	void set(const Texture& tex);
 
-	void set(const float x[], uint size) const;
-	void set(const Vec2 x[], uint size) const;
-	void set(const Vec3 x[], uint size) const;
-	void set(const Vec4 x[], uint size) const;
-	void set(const Mat3 x[], uint size) const;
-	void set(const Mat4 x[], uint size) const;
+	void set(const float x[], uint size);
+	void set(const Vec2 x[], uint size);
+	void set(const Vec3 x[], uint size);
+	void set(const Vec4 x[], uint size);
+	void set(const Mat3 x[], uint size);
+	void set(const Mat4 x[], uint size);
 
 	/// @tparam Container It could be something like array<float, X> or 
 	///         vector<Vec2> etc
 	template<typename Container>
-	void set(const Container& c) const
+	void set(const Container& c)
 	{
 		set(&c[0], c.size());
 	}
@@ -148,7 +158,7 @@ private:
 	/// - Check if initialized
 	/// - if the current shader program is the var's shader program
 	/// - if the GL driver gives the same location as the one the var has
-	void doSanityChecks() const;
+	void doCommonSetCode();
 };
 
 /// Attribute shader program variable
@@ -275,6 +285,9 @@ public:
 	const ShaderProgramAttributeVariable* findAttributeVariableByName(
 		const char* varName) const;
 	/// @}
+
+	/// For all uniforms set the SPUVF_DIRTY bit to 0
+	void cleanAllUniformsDirtyFlags();
 
 	static GLuint getCurrentProgramGlId()
 	{
