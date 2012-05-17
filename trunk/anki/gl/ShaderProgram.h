@@ -282,6 +282,9 @@ public:
 	const ShaderProgramVariable* findVariableByName(const char* varName) const;
 	const ShaderProgramUniformVariable* findUniformVariableByName(
 		const char* varName) const;
+	/// Non-const version because of the class setters
+	ShaderProgramUniformVariable* findUniformVariableByName(
+		const char* varName);
 	const ShaderProgramAttributeVariable* findAttributeVariableByName(
 		const char* varName) const;
 	/// @}

@@ -3,35 +3,32 @@
 
 #include "anki/util/Assert.h"
 
-
 namespace anki {
 
-
-/// This is a special smart pointer that points to Resource derivatives. It
-/// looks like auto_ptr but the main difference is that when its out of scope
+/// Special smart pointer that points to resource classes.
+///
+/// It looks like auto_ptr but the main difference is that when its out of scope
 /// it tries to unload the resource.
 template<typename Type, typename ResourceManagerSingleton>
 class ResourcePointer
 {
 public:
-	typedef ResourcePointer<Type, ResourceManagerSingleton> Self;
+	typedef Type Value; ///< Resource type
+	typedef ResourcePointer<Value, ResourceManagerSingleton> Self;
 	typedef typename ResourceManagerSingleton::Value::Hook Hook;
 
 	/// Default constructor
 	ResourcePointer()
-		: hook(NULL)
 	{}
 
 	/// Copy constructor
 	ResourcePointer(const Self& b)
-		: hook(NULL)
 	{
 		copy(b);
 	}
 
 	/// Construct and load
 	ResourcePointer(const char* filename)
-		: hook(NULL)
 	{
 		load(filename);
 	}
@@ -43,19 +40,33 @@ public:
 
 	/// @name Accessors
 	/// @{
-	Type& operator*() const
+	const Value& operator*() const
 	{
-		ANKI_ASSERT(hook != NULL);
+		ANKI_ASSERT(hook != nullptr);
+		return *hook->resource;
+	}
+	Value& operator*()
+	{
+		ANKI_ASSERT(hook != nullptr);
 		return *hook->resource;
 	}
 
-	Type* operator->() const
+	const Value* operator->() const
 	{
-		ANKI_ASSERT(hook != NULL);
+		ANKI_ASSERT(hook != nullptr);
+		return hook->resource;
+	}
+	Value* operator->()
+	{
+		ANKI_ASSERT(hook != nullptr);
 		return hook->resource;
 	}
 
-	Type* get() const
+	const Value* get() const
+	{
+		return hook->resource;
+	}
+	Value* get()
 	{
 		return hook->resource;
 	}
@@ -76,21 +87,21 @@ public:
 	/// Load the resource using the resource manager
 	void load(const char* filename)
 	{
-		ANKI_ASSERT(hook == NULL);
+		ANKI_ASSERT(hook == nullptr);
 		hook = &ResourceManagerSingleton::get().load(filename);
 	}
 
 private:
 	/// Points to an element located in a container in the resource manager
-	Hook* hook;
+	Hook* hook = nullptr;
 
 	/// Unloads the resource @see loadRsrc
 	void unload()
 	{
-		if(hook != NULL)
+		if(hook != nullptr)
 		{
 			ResourceManagerSingleton::get().unload(*hook);
-			hook = NULL;
+			hook = nullptr;
 		}
 	}
 
@@ -98,9 +109,9 @@ private:
 	/// unload this and load exactly what @b has. In everything else do nothing
 	void copy(const Self& b)
 	{
-		if(b.hook == NULL)
+		if(b.hook == nullptr)
 		{
-			if(hook != NULL)
+			if(hook != nullptr)
 			{
 				unload();
 			}
@@ -113,8 +124,6 @@ private:
 	}
 };
 
-
 } // end namespace
-
 
 #endif

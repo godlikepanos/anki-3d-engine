@@ -2,9 +2,7 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 template<typename Type>
@@ -34,7 +32,6 @@ void ResourceManager<Type>::allocAndLoadRsrc(
 		throw ANKI_EXCEPTION("Cannot load \"" + filename + "\"") << e;
 	}
 }
-
 
 //==============================================================================
 template<typename Type>
@@ -68,15 +65,14 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::load(
 				delete hook;
 			}
 
-			throw ANKI_EXCEPTION("Cannot load \"" +
-				filename + "\"") << e;
+			throw ANKI_EXCEPTION("Cannot load \"" 
+				+ filename + "\"") << e;
 		}
 
 		hooks.push_back(hook);
 		return *hook;
 	}
 }
-
 
 //==============================================================================
 template<typename Type>
@@ -88,7 +84,6 @@ void ResourceManager<Type>::deallocRsrc(Type* rsrc)
 	delete rsrc;
 }
 
-
 //==============================================================================
 template<typename Type>
 void ResourceManager<Type>::unload(const Hook& hook)
@@ -99,8 +94,8 @@ void ResourceManager<Type>::unload(const Hook& hook)
 	// If not found
 	if(it == hooks.end())
 	{
-		throw ANKI_EXCEPTION("Resource hook incorrect (\"" +
-			hook.uuid + "\")");
+		throw ANKI_EXCEPTION("Resource hook incorrect (\"" 
+			+ hook.uuid + "\")");
 	}
 
 	ANKI_ASSERT(*it == hook);
@@ -114,7 +109,6 @@ void ResourceManager<Type>::unload(const Hook& hook)
 		hooks.erase(it);
 	}
 }
-
 
 //==============================================================================
 template<typename Type>
@@ -132,6 +126,5 @@ typename ResourceManager<Type>::Iterator ResourceManager<Type>::find(
 
 	return it;
 }
-
 
 } // end namespace

@@ -11,15 +11,7 @@
 #include <map>
 #include <LinearMath/btIDebugDraw.h>
 
-
 namespace anki {
-
-
-class Octree;
-class OctreeNode;
-class Renderer;
-class Camera;
-
 
 /// Draws simple primitives
 class DebugDrawer
@@ -108,7 +100,6 @@ private:
 	DebugDrawer* dbg; ///< The debug drawer
 };
 
-
 /// An implementation of btIDebugDraw used for debugging Bullet. See Bullet
 /// docs for details
 class PhysicsDebugDrawer: public btIDebugDraw
@@ -150,6 +141,10 @@ private:
 	DebugDrawer* dbg;
 };
 
+class Octree;
+class OctreeNode;
+class Renderer;
+class Camera;
 
 /// This is a drawer for some scene nodes that need debug
 class SceneDebugDrawer
@@ -206,9 +201,7 @@ private:
 		uint depth, const Octree& octree) const;
 };
 
-
 class PassLevelKey;
-
 
 /// It includes all the functions to render a Renderable
 class RenderableDrawer
@@ -231,8 +224,6 @@ private:
 		Renderable& renderable);
 };
 
-
 } // namespace anki
-
 
 #endif

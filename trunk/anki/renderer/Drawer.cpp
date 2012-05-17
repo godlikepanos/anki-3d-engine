@@ -1,5 +1,5 @@
 #include "anki/renderer/Drawer.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include "anki/physics/Convertors.h"
 #include "anki/collision/Collision.h"
 #include "anki/scene/Frustumable.h"
@@ -9,9 +9,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // DebugDrawer                                                                 =
@@ -38,7 +36,6 @@ DebugDrawer::DebugDrawer()
 	crntCol = Vec3(1.0, 0.0, 0.0);
 }
 
-
 //==============================================================================
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
@@ -48,7 +45,6 @@ void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 		pushBackVertex(to);
 	end();
 }
-
 
 //==============================================================================
 void DebugDrawer::drawGrid()
@@ -94,7 +90,6 @@ void DebugDrawer::drawGrid()
 	// render
 	end();
 }
-
 
 //==============================================================================
 void DebugDrawer::drawSphere(float radius, int complexity)
@@ -160,7 +155,6 @@ void DebugDrawer::drawSphere(float radius, int complexity)
 	end();
 }
 
-
 //==============================================================================
 void DebugDrawer::drawCube(float size)
 {
@@ -189,7 +183,6 @@ void DebugDrawer::drawCube(float size)
 	end();
 }
 
-
 //==============================================================================
 void DebugDrawer::setModelMat(const Mat4& modelMat_)
 {
@@ -198,13 +191,11 @@ void DebugDrawer::setModelMat(const Mat4& modelMat_)
 	modelMat = modelMat_;
 }
 
-
 //==============================================================================
 void DebugDrawer::begin()
 {
 	ANKI_ASSERT(pointIndex == 0);
 }
-
 
 //==============================================================================
 void DebugDrawer::end()
@@ -215,7 +206,7 @@ void DebugDrawer::end()
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = vpMat * modelMat;
-	sProg->findUniformVariableByName("modelViewProjectionMat").set(pmv);
+	sProg->findUniformVariableByName("modelViewProjectionMat")->set(pmv);
 
 	vao.bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);
@@ -225,7 +216,6 @@ void DebugDrawer::end()
 	pointIndex = 0;
 }
 
-
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
@@ -233,7 +223,6 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 	colors[pointIndex] = crntCol;
 	++pointIndex;
 }
-
 
 //==============================================================================
 // CollisionDebugDrawer                                                        =
@@ -245,7 +234,6 @@ void CollisionDebugDrawer::visit(const Sphere& sphere)
 	dbg->setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
 	dbg->drawSphere(sphere.getRadius());
 }
-
 
 //==============================================================================
 void CollisionDebugDrawer::visit(const Obb& obb)
@@ -268,7 +256,6 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 	dbg->drawCube(2.0);
 }
 
-
 //==============================================================================
 void CollisionDebugDrawer::visit(const Plane& plane)
 {
@@ -283,7 +270,6 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	dbg->setModelMat(trf);
 	dbg->drawGrid();
 }
-
 
 //==============================================================================
 void CollisionDebugDrawer::visit(const Aabb& aabb)
@@ -304,7 +290,6 @@ void CollisionDebugDrawer::visit(const Aabb& aabb)
 	dbg->setModelMat(trf);
 	dbg->drawCube();
 }
-
 
 //==============================================================================
 void CollisionDebugDrawer::visit(const Frustum& f)
@@ -346,7 +331,6 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 	}
 }
 
-
 //==============================================================================
 // PhysicsDebugDrawer                                                          =
 //==============================================================================
@@ -358,7 +342,6 @@ void PhysicsDebugDrawer::drawLine(const btVector3& from, const btVector3& to,
 	dbg->drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
 }
 
-
 //==============================================================================
 void PhysicsDebugDrawer::drawSphere(btScalar radius,
 	const btTransform& transform,
@@ -368,7 +351,6 @@ void PhysicsDebugDrawer::drawSphere(btScalar radius,
 	dbg->setModelMat(Mat4(toAnki(transform)));
 	dbg->drawSphere(radius);
 }
-
 
 //==============================================================================
 void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
@@ -385,7 +367,6 @@ void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
 	dbg->setColor(toAnki(color));
 	dbg->drawCube(1.0);
 }
-
 
 //==============================================================================
 void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
@@ -404,7 +385,6 @@ void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
 	dbg->drawCube(1.0);
 }
 
-
 //==============================================================================
 void PhysicsDebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
 	const btVector3& /*normalOnB*/,
@@ -413,13 +393,11 @@ void PhysicsDebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
 	//ANKI_WARNING("Unimplemented");
 }
 
-
 //==============================================================================
 void PhysicsDebugDrawer::reportErrorWarning(const char* warningString)
 {
 	throw ANKI_EXCEPTION(warningString);
 }
-
 
 //==============================================================================
 void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
@@ -427,7 +405,6 @@ void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 {
 	//ANKI_WARNING("Unimplemented");
 }
-
 
 //==============================================================================
 // SceneDebugDrawer                                                            =
@@ -496,7 +473,6 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 	}
 }
 
-
 //==============================================================================
 // RenderableDrawer                                                            =
 //==============================================================================
@@ -504,8 +480,7 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 /// Set the uniform using this visitor
 struct SetUniformVisitor: public boost::static_visitor<void>
 {
-	const ShaderProgramUniformVariable* uni;
-	uint* texUnit;
+	ShaderProgramUniformVariable* uni;
 
 	template<typename Type>
 	void operator()(const Type& x) const
@@ -513,13 +488,7 @@ struct SetUniformVisitor: public boost::static_visitor<void>
 		uni->set(x);
 	}
 
-	void operator()(const TextureResourcePointer& x) const
-	{
-		uni->set(*x, (*texUnit)++);
-	}
-
 };
-
 
 //==============================================================================
 void RenderableDrawer::setupShaderProg(
@@ -529,21 +498,24 @@ void RenderableDrawer::setupShaderProg(
 {
 	const Material& mtl = renderable.getMaterial();
 	const ShaderProgram& sprog = mtl.getShaderProgram(key);
-	uint texunit = 0;
+#if !defined(NDEBUG)
+	int texturesCount = 0; // count the textures
+#endif
 
 	sprog.bind();
 	
 	SetUniformVisitor vis;
-	vis.texUnit = &texunit;
 
-	for(const MaterialVariable& mv : mtl.getVariables())
+	for(auto it = mtl.getVariablesBegin(); it != mtl.getVariablesEnd(); ++it)
 	{
+		MaterialVariable& mv = *it;
+
 		if(!mv.inPass(key))
 		{
 			continue;
 		}
 
-		const ShaderProgramUniformVariable& uni = 
+		ShaderProgramUniformVariable& uni = 
 			mv.getShaderProgramUniformVariable(key);
 
 		vis.uni = &uni;

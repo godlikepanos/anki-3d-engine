@@ -4,9 +4,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <string>
 
-
 namespace anki {
-
 
 /// Holds information about a resource
 template<typename Type>
@@ -18,12 +16,11 @@ struct ResourceHook
 
 	bool operator==(const ResourceHook& b) const
 	{
-		return uuid == b.uuid &&
-			referenceCounter == b.referenceCounter &&
-			resource == b.resource;
+		return uuid == b.uuid 
+			&& referenceCounter == b.referenceCounter 
+			&& resource == b.resource;
 	}
 };
-
 
 /// XXX
 template<typename Type>
@@ -61,11 +58,8 @@ protected:
 	virtual void deallocRsrc(Type* rsrc);
 };
 
-
 } // end namespace
 
-
 #include "anki/resource/ResourceManager.inl.h"
-
 
 #endif

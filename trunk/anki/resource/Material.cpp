@@ -14,9 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
 
-
 namespace anki {
-
 
 //==============================================================================
 // MaterialVariable                                                            =
@@ -33,29 +31,27 @@ GLenum MaterialVariable::getGlDataType() const
 	return oneSProgVar->getGlDataType();
 }
 
-
 //==============================================================================
 const std::string& MaterialVariable::getName() const
 {
 	return oneSProgVar->getName();
 }
 
-
 //==============================================================================
 void MaterialVariable::init(const char* shaderProgVarName,
 	const PassLevelToShaderProgramHashMap& sProgs)
 {
-	oneSProgVar = NULL;
+	oneSProgVar = nullptr;
 
 	// For all programs
 	PassLevelToShaderProgramHashMap::const_iterator it = sProgs.begin();
 	for(; it != sProgs.end(); ++it)
 	{
-		const ShaderProgram& sProg = *(it->second);
+		ShaderProgram& sProg = *(it->second);
 		const PassLevelKey& key = it->first;
 
 		// Variable exists
-		const ShaderProgramUniformVariable* uni = 
+		ShaderProgramUniformVariable* uni = 
 			sProg.findUniformVariableByName(shaderProgVarName);
 		if(uni)
 		{
@@ -87,7 +83,6 @@ void MaterialVariable::init(const char* shaderProgVarName,
 	}
 }
 
-
 //==============================================================================
 // Material                                                                    =
 //==============================================================================
@@ -112,16 +107,13 @@ ConstCharPtrHashMap<GLenum>::Type Material::txtToBlengGlEnum =
 	TXT_AND_ENUM(GL_SRC_COLOR)
 	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
 
-
 //==============================================================================
 Material::Material()
 {}
 
-
 //==============================================================================
 Material::~Material()
 {}
-
 
 //==============================================================================
 void Material::load(const char* filename)
@@ -140,18 +132,15 @@ void Material::load(const char* filename)
 	}
 }
 
-
 //==============================================================================
 void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
-	//
 	// renderingStage
 	//
 	renderingStage = pt.get<int>("renderingStage");
 
-	//
 	// passes
 	//
 	boost::optional<std::string> pass =
@@ -166,7 +155,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		passes.push_back("DUMMY");
 	}
 
-	//
 	// levelsOfDetail
 	//
 	boost::optional<int> lod = pt.get_optional<int>("levelsOfDetail");
@@ -180,7 +168,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		levelsOfDetail = 1;
 	}
 
-	//
 	// shadow
 	//
 	boost::optional<int> sw = pt.get_optional<int>("shadow");
@@ -190,7 +177,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		shadow = sw.get();
 	}
 
-	//
 	// blendFunctions
 	//
 	boost::optional<const ptree&> blendFuncsTree =
@@ -230,7 +216,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		}
 	}
 
-	//
 	// depthTesting
 	//
 	boost::optional<int> dp = pt.get_optional<int>("depthTesting");
@@ -240,7 +225,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		depthTesting = dp.get();
 	}
 
-	//
 	// wireframe
 	//
 	boost::optional<int> wf = pt.get_optional<int>("wireframe");
@@ -250,7 +234,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		wireframe = wf.get();
 	}
 
-	//
 	// shaderProgram
 	//
 	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
@@ -284,7 +267,6 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 	populateVariables(pt.get_child("shaderProgram"));
 }
 
-
 //==============================================================================
 std::string Material::createShaderProgSourceToCache(const std::string& source)
 {
@@ -316,13 +298,11 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	return newfPathName.string();
 }
 
-
 //==============================================================================
 void Material::populateVariables(const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
-	//
 	// Get all names of all the uniforms. Dont duplicate
 	//
 	std::map<std::string, GLenum> allVarNames;
@@ -336,7 +316,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		}
 	}
 
-	//
 	// Iterate all the <input> and get the value
 	//
 	std::map<std::string, std::string> nameToValue;
@@ -382,7 +361,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		}
 	}
 
-	//
 	// Now combine
 	//
 	std::map<std::string, GLenum>::const_iterator it = allVarNames.begin();
@@ -394,7 +372,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		std::map<std::string, std::string>::const_iterator it1 =
 			nameToValue.find(name);
 
-		MaterialVariable* v = NULL;
+		MaterialVariable* v = nullptr;
 
 		// Not found
 		if(it1 == nameToValue.end())
@@ -487,7 +465,6 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	}
 }
 
-
 //==============================================================================
 template<typename Type, size_t n>
 Type Material::setMathType(const char* str)
@@ -504,7 +481,6 @@ Type Material::setMathType(const char* str)
 	return out;
 }
 
-
 //==============================================================================
 const MaterialVariable& Material::findVariableByName(const char* name) const
 {
@@ -516,6 +492,5 @@ const MaterialVariable& Material::findVariableByName(const char* name) const
 	}
 	return *(it->second);
 }
-
 
 } // end namespace

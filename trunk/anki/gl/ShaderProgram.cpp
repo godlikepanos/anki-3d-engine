@@ -109,8 +109,8 @@ void ShaderProgramUniformVariable::set(const Texture& tex)
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW);
 	
-	tex.bind();
-	glUniform1i(getLocation(), tex.getUnit());
+	uint32_t unit = tex.bind();
+	glUniform1i(getLocation(), unit);
 }
 
 //==============================================================================
@@ -124,7 +124,8 @@ const char* ShaderProgram::stdSourceCode =
 	//"precision lowp float;\n"
 #if defined(NDEBUG)
 	"#pragma optimize(on)\n"
-	"#pragma debug(off)\n";
+	"#pragma debug(off)\n"
+	"#define NDEBUG\n";
 #else
 	"#pragma optimize(of)\n"
 	"#pragma debug(on)\n";
@@ -410,6 +411,18 @@ const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 	const char* name) const
 {
 	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
+	if(it == nameToUniVar.end())
+	{
+		return nullptr;
+	}
+	return it->second;
+}
+
+//==============================================================================
+ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
+	const char* name)
+{
+	NameToUniVarHashMap::iterator it = nameToUniVar.find(name);
 	if(it == nameToUniVar.end())
 	{
 		return nullptr;
