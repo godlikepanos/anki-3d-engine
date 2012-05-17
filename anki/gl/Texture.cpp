@@ -107,7 +107,7 @@ uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
 }
 
 //==============================================================================
-void TextureUnits::bindTexture(const Texture& tex)
+uint32_t TextureUnits::bindTexture(const Texture& tex)
 {
 	bool allreadyBinded;
 	uint32_t unit = choseUnit(tex, allreadyBinded);
@@ -117,6 +117,8 @@ void TextureUnits::bindTexture(const Texture& tex)
 		activateUnit(unit);
 		glBindTexture(tex.getTarget(), tex.getGlId());
 	}
+
+	return unit;
 }
 
 //==============================================================================
@@ -238,9 +240,9 @@ void Texture::create(const Initializer& init)
 }
 
 //==============================================================================
-void Texture::bind() const
+uint32_t Texture::bind() const
 {
-	TextureUnitsSingleton::get().bindTexture(*this);
+	return TextureUnitsSingleton::get().bindTexture(*this);
 }
 
 //==============================================================================

@@ -2,7 +2,6 @@
 #define ANKI_GL_FBO_H
 
 #include "anki/util/Assert.h"
-#include "anki/util/StdTypes.h"
 #include "anki/util/Exception.h"
 #include <GL/glew.h>
 #include <array>

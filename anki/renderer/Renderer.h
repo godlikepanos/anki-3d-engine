@@ -15,7 +15,7 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/GlStateMachine.h"
-#include "anki/gl/TimeQuery.h"
+#include "anki/gl/Query.h"
 #include "anki/renderer/Drawer.h"
 #include <boost/scoped_ptr.hpp>
 
@@ -231,7 +231,7 @@ protected:
 	/// @name Profiling stuff
 	/// @{
 	double msTime, isTime, ppsTime, bsTime;
-	boost::scoped_ptr<TimeQuery> msTq, isTq, ppsTq, bsTq;
+	boost::scoped_ptr<Query> msTq, isTq, ppsTq, bsTq;
 	bool enableStagesProfilingFlag;
 	/// @}
 

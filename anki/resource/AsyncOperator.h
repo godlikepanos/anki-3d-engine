@@ -27,6 +27,9 @@ public:
 	public:
 		bool ok;
 
+		virtual ~Request()
+		{}
+
 		/// Called in the worker thread
 		virtual void exec() = 0;
 

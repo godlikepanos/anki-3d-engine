@@ -84,9 +84,10 @@ public:
 	void activateUnit(uint32_t unit);
 
 	/// Bind the texture to a unit. It's not sure that it will activate the unit
-	void bindTexture(const Texture& tex);
+	/// @return The texture unit index
+	uint32_t bindTexture(const Texture& tex);
 
-	/// XXX
+	/// Like bindTexture but ensure that the unit is active
 	void bindTextureAndActivateUnit(const Texture& tex);
 
 	/// Unbind a texture from it's unit
@@ -227,7 +228,8 @@ public:
 	void create(const Initializer& init);
 
 	/// Bind the texture to a unit that the texture unit system will decide
-	void bind() const;
+	/// @return The texture init
+	uint32_t bind() const;
 
 	/// Change the filtering type
 	void setFiltering(TextureFilteringType filterType)

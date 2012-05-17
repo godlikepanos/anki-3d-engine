@@ -12,20 +12,16 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/variant.hpp>
 
-
 namespace anki {
-
 
 class ShaderProgram;
 class ShaderProgramUniformVariable;
 
-
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
-class MaterialVariable: public boost::noncopyable
+class MaterialVariable
 {
 public:
 	/// The data union (limited to a few types at the moment)
@@ -34,8 +30,12 @@ public:
 
 	/// Given a pair of pass and level it returns a pointer to a
 	/// shader program uniform variable. The pointer may be null
-	typedef PassLevelHashMap<const ShaderProgramUniformVariable*>::Type
+	typedef PassLevelHashMap<ShaderProgramUniformVariable*>::Type
 		PassLevelToShaderProgramUniformVariableHashMap;
+
+	// Non-copyable
+	MaterialVariable(const MaterialVariable&) = delete;
+	MaterialVariable& operator=(const MaterialVariable&) = delete;
 
 	/// @name Constructors & destructor
 	/// @{
@@ -68,12 +68,12 @@ public:
 	}
 
 	/// Given a key return the uniform
-	const ShaderProgramUniformVariable& getShaderProgramUniformVariable(
-		const PassLevelKey& key) const
+	ShaderProgramUniformVariable& getShaderProgramUniformVariable(
+		const PassLevelKey& key)
 	{
 		ANKI_ASSERT(inPass(key));
-		const ShaderProgramUniformVariable* var = sProgVars.at(key);
-		ANKI_ASSERT(var != NULL);
+		ShaderProgramUniformVariable* var = sProgVars.at(key);
+		ANKI_ASSERT(var != nullptr);
 		return *var;
 	}
 
@@ -110,7 +110,6 @@ private:
 	void init(const char* shaderProgVarName,
 		const PassLevelToShaderProgramHashMap& shaderProgsArr);
 };
-
 
 /// Contains a few properties that other classes may use. For an explanation of
 /// the variables refer to Material class documentation
@@ -177,7 +176,6 @@ public:
 	{
 		return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
 	}
-
 protected:
 	uint renderingStage;
 
@@ -194,7 +192,6 @@ protected:
 
 	bool wireframe;
 };
-
 
 /// Material resource
 ///
@@ -300,6 +297,15 @@ public:
 	{
 		return vars;
 	}
+
+	VarsContainer::iterator getVariablesBegin()
+	{
+		return vars.begin();
+	}
+	VarsContainer::iterator getVariablesEnd()
+	{
+		return vars.end();
+	}
 	/// @}
 
 	/// Get by name
@@ -368,8 +374,6 @@ private:
 	static Type setMathType(const char* str);
 };
 
-
 } // end namespace
-
 
 #endif
