@@ -34,15 +34,12 @@ public:
 	ShaderProgramVariable& operator=(const ShaderProgramVariable&) = delete;
 
 	ShaderProgramVariable(
-		GLint loc_, 
-		const char* name_,
-		GLenum glDataType_, 
-		size_t size_,
-		ShaderProgramVariableType type_, 
-		const ShaderProgram* fatherSProg_)
-		: loc(loc_), name(name_), glDataType(glDataType_), size(size_), 
-			type(type_), fatherSProg(fatherSProg_)
-	{}
+		GLint loc,
+		const char* name,
+		GLenum glDataType, 
+		size_t size,
+		ShaderProgramVariableType type, 
+		const ShaderProgram* fatherSProg);
 
 	virtual ~ShaderProgramVariable()
 	{}

@@ -11,13 +11,27 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+ShaderProgramVariable(
+	GLint loc_, 
+	const char* name_,
+	GLenum glDataType_, 
+	size_t size_,
+	ShaderProgramVariableType type_, 
+	const ShaderProgram* fatherSProg_)
+	: loc(loc_), name(name_), glDataType(glDataType_), size(size_), 
+		type(type_), fatherSProg(fatherSProg_)
+{
+	name.shrink_to_fit();
+	ANKI_ASSERT(loc == 
+		getUniformLocation(fatherSProg->getGlId(), name.c_str()));
+}
+
+//==============================================================================
 void ShaderProgramUniformVariable::doCommonSetCode()
 {
 	ANKI_ASSERT(getLocation() != -1);
 	ANKI_ASSERT(ShaderProgram::getCurrentProgramGlId() == 
 		getFatherShaderProgram().getGlId());
-	ANKI_ASSERT(glGetUniformLocation(getFatherShaderProgram().getGlId(),
-		getName().c_str()) == getLocation());
 
 	enableFlag(SPUVF_DIRTY);
 }
@@ -109,8 +123,7 @@ void ShaderProgramUniformVariable::set(const Texture& tex)
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW);
 	
-	tex.bind();
-	glUniform1i(getLocation(), tex.getUnit());
+	glUniform1i(getLocation(), tex.bind());
 }
 
 //==============================================================================
