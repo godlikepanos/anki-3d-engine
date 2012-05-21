@@ -4,9 +4,7 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -27,7 +25,6 @@ public:
 	Ray(const Ray& b)
 		: CollisionShape(CST_RAY), origin(b.origin), dir(b.dir)
 	{}
-
 
 	/// Constructor
 	Ray(const Vec3& origin_, const Vec3& direction_)
@@ -64,6 +61,16 @@ public:
 	}
 	/// @}
 
+	/// @name Operators
+	/// @{
+	Ray& operator=(const Ray& b)
+	{
+		origin = b.origin;
+		dir = b.dir;
+		return *this;
+	}
+	/// @}
+
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
 	{
@@ -95,8 +102,6 @@ private:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif

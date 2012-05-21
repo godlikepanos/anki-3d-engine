@@ -6,7 +6,6 @@ namespace anki {
 /// @addtogroup util
 /// @{
 
-//==============================================================================
 /// This template makes a class singleton
 template<typename T>
 class Singleton
@@ -35,7 +34,6 @@ private:
 template <typename T>
 typename Singleton<T>::Value* Singleton<T>::instance = nullptr;
 
-//==============================================================================
 /// This template makes a class singleton with thread local instance
 template<typename T>
 class SingletonThreadSafe

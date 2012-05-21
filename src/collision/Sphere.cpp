@@ -2,9 +2,7 @@
 #include "anki/collision/Plane.h"
 #include "anki/collision/Aabb.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 float Sphere::testPlane(const Plane& p) const
@@ -26,7 +24,6 @@ float Sphere::testPlane(const Plane& p) const
 	}
 }
 
-
 //==============================================================================
 Sphere Sphere::getTransformed(const Transform& transform) const
 {
@@ -40,7 +37,6 @@ Sphere Sphere::getTransformed(const Transform& transform) const
 	newSphere.radius = radius * transform.getScale();
 	return newSphere;
 }
-
 
 //==============================================================================
 Sphere Sphere::getCompoundShape(const Sphere& b) const
@@ -95,13 +91,11 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
 }
 
-
 //==============================================================================
 void Sphere::getAabb(Aabb& aabb) const
 {
 	aabb.setMin(center - radius);
 	aabb.setMax(center + radius);
 }
-
 
 } // end namespace

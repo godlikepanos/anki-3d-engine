@@ -4,9 +4,7 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Vec3.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -61,6 +59,16 @@ public:
 	}
 	/// @}
 
+	/// @name Operators
+	/// @{
+	Aabb& operator=(const Aabb& b)
+	{
+		min = b.min;
+		max = b.max;
+		return *this;
+	}
+	/// @}
+
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
 	{
@@ -107,7 +115,6 @@ private:
 };
 /// @}
 
-
 //==============================================================================
 template<typename Container>
 void Aabb::set(const Container& container)
@@ -135,8 +142,6 @@ void Aabb::set(const Container& container)
 	}
 }
 
-
 } // end namespace
-
 
 #endif

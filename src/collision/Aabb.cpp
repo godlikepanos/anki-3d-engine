@@ -1,11 +1,9 @@
 #include "anki/collision/Aabb.h"
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
-#include <boost/array.hpp>
-
+#include <array>
 
 namespace anki {
-
 
 //==============================================================================
 Aabb Aabb::getTransformed(const Transform& transform) const
@@ -24,7 +22,6 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 
 	return Aabb(newC - newE, newC + newE);
 }
-
 
 //==============================================================================
 float Aabb::testPlane(const Plane& p) const
@@ -66,7 +63,6 @@ float Aabb::testPlane(const Plane& p) const
 	}
 }
 
-
 //==============================================================================
 Aabb Aabb::getCompoundShape(const Aabb& b) const
 {
@@ -80,6 +76,5 @@ Aabb Aabb::getCompoundShape(const Aabb& b) const
 
 	return out;
 }
-
 
 } // namespace anki

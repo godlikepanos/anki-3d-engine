@@ -4,9 +4,7 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -70,6 +68,16 @@ public:
 	void setOffset(const float x)
 	{
 		offset = x;
+	}
+	/// @}
+
+	/// @name Operators
+	/// @{
+	Plane& operator=(const Plane& b)
+	{
+		normal = b.normal;
+		offset = b.offset;
+		return *this;
 	}
 	/// @}
 
@@ -142,8 +150,6 @@ private:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif

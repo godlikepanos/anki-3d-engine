@@ -1,9 +1,7 @@
 #include "anki/collision/Ray.h"
 #include "anki/collision/Plane.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Ray Ray::getTransformed(const Transform& transform) const
@@ -13,7 +11,6 @@ Ray Ray::getTransformed(const Transform& transform) const
 	out.dir = transform.getRotation() * dir;
 	return out;
 }
-
 
 //==============================================================================
 float Ray::testPlane(const Plane& p) const
@@ -46,12 +43,10 @@ float Ray::testPlane(const Plane& p) const
 	}
 }
 
-
 //==============================================================================
 void Ray::getAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }
-
 
 } // end namespace

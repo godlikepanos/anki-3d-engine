@@ -7,9 +7,7 @@
 #include "anki/math/Math.h"
 #include <array>
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -119,7 +117,6 @@ private:
 	FrustumType type;
 };
 
-
 /// Frustum shape for perspective cameras
 class PerspectiveFrustum: public Frustum
 {
@@ -220,7 +217,6 @@ private:
 	/// and @a dirs
 	void recalculate();
 };
-
 
 /// Frustum shape for orthographic cameras
 class OrthographicFrustum: public Frustum
@@ -343,8 +339,6 @@ private:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif
