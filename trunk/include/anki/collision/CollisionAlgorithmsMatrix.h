@@ -3,9 +3,7 @@
 
 #include "anki/collision/Forward.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -172,7 +170,6 @@ private:
 	static bool tcollide(const CollisionShape& a, const CollisionShape& b);
 };
 /// @}
-
 
 } // end namespace
 

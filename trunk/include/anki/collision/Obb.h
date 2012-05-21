@@ -5,9 +5,7 @@
 #include "anki/math/Math.h"
 #include <array>
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -69,6 +67,17 @@ public:
 	}
 	/// @}
 
+	/// @name Operators
+	/// @{
+	Obb& operator=(const Obb& b)
+	{
+		center = b.center;
+		rotation = b.rotation;
+		extends = b.extends;
+		return *this;
+	}
+	/// @}
+
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
 	{
@@ -117,7 +126,6 @@ public:
 };
 /// @}
 
-
 //==============================================================================
 template<typename Container>
 void Obb::set(const Container& container)
@@ -152,8 +160,6 @@ void Obb::set(const Container& container)
 	extends = max - center;
 }
 
-
 } // end namespace
-
 
 #endif

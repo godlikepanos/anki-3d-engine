@@ -4,9 +4,7 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Vec3.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -60,6 +58,16 @@ public:
 	}
 	/// @}
 
+	/// @name Operators
+	/// @{
+	LineSegment& operator=(const LineSegment& b)
+	{
+		origin = b.origin;
+		dir = b.dir;
+		return *this;
+	}
+	/// @}
+
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
 	{
@@ -94,8 +102,6 @@ private:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif

@@ -4,9 +4,7 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/math/Math.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -60,6 +58,16 @@ public:
 	void setRadius(const float x)
 	{
 		radius = x;
+	}
+	/// @}
+
+	/// @name Operators
+	/// @{
+	Sphere& operator=(const Sphere& b)
+	{
+		center = b.center;
+		radius = b.radius;
+		return *this;
 	}
 	/// @}
 

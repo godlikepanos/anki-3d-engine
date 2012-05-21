@@ -2,9 +2,7 @@
 #include "anki/collision/LineSegment.h"
 #include "anki/collision/Aabb.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // Frustum                                                                     =
@@ -18,7 +16,6 @@ Frustum& Frustum::operator=(const Frustum& b)
 	zFar = b.zFar;
 	return *this;
 }
-
 
 //==============================================================================
 bool Frustum::insideFrustum(const CollisionShape& b) const
@@ -34,7 +31,6 @@ bool Frustum::insideFrustum(const CollisionShape& b) const
 	return true;
 }
 
-
 //==============================================================================
 void Frustum::transform(const Transform& trf)
 {
@@ -44,7 +40,6 @@ void Frustum::transform(const Transform& trf)
 		p.transform(trf);
 	}
 }
-
 
 //==============================================================================
 // PerspectiveFrustum                                                          =
@@ -60,7 +55,6 @@ PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 	fovY = b.fovY;
 	return *this;
 }
-
 
 //==============================================================================
 float PerspectiveFrustum::testPlane(const Plane& p) const
@@ -89,7 +83,6 @@ float PerspectiveFrustum::testPlane(const Plane& p) const
 	return o;
 }
 
-
 //==============================================================================
 void PerspectiveFrustum::transform(const Transform& trf)
 {
@@ -103,7 +96,6 @@ void PerspectiveFrustum::transform(const Transform& trf)
 	}
 }
 
-
 //==============================================================================
 void PerspectiveFrustum::getAabb(Aabb& aabb) const
 {
@@ -111,7 +103,6 @@ void PerspectiveFrustum::getAabb(Aabb& aabb) const
 	aabb.getMin() += eye;
 	aabb.getMax() += eye;
 }
-
 
 //==============================================================================
 void PerspectiveFrustum::recalculate()
@@ -151,7 +142,6 @@ void PerspectiveFrustum::recalculate()
 	dirs[3] = Vec3(x, -y, z - zNear); // bottom right
 }
 
-
 //==============================================================================
 Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
@@ -179,7 +169,6 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	return projectionMat;
 }
 
-
 //==============================================================================
 // OrthographicFrustum                                                         =
 //==============================================================================
@@ -204,7 +193,6 @@ float OrthographicFrustum::testPlane(const Plane& p) const
 	return obb.testPlane(p);
 }
 
-
 //==============================================================================
 void OrthographicFrustum::transform(const Transform& trf)
 {
@@ -212,13 +200,11 @@ void OrthographicFrustum::transform(const Transform& trf)
 	obb.transform(trf);
 }
 
-
 //==============================================================================
 void OrthographicFrustum::getAabb(Aabb& aabb) const
 {
 	obb.getAabb(aabb);
 }
-
 
 //==============================================================================
 Mat4 OrthographicFrustum::calculateProjectionMatrix() const
@@ -251,7 +237,6 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 	return m;
 }
 
-
 //==============================================================================
 void OrthographicFrustum::recalculate()
 {
@@ -270,6 +255,5 @@ void OrthographicFrustum::recalculate()
 	Vec3 e = Vec3(right, top, -zFar) - c;
 	obb = Obb(c, Mat3::getIdentity(), e);
 }
-
 
 } // end namespace

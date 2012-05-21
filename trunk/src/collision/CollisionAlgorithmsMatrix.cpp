@@ -4,9 +4,7 @@
 #include "anki/math/Math.h"
 #include <limits>
 
-
 namespace anki {
-
 
 //==============================================================================
 template<typename T>
@@ -18,27 +16,26 @@ bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
 
 	switch(b.getCollisionShapeType())
 	{
-		case CollisionShape::CST_LINE_SEG:
-			out = collide(t, static_cast<const LineSegment&>(b));
-		case CollisionShape::CST_RAY:
-			out = collide(t, static_cast<const Ray&>(b));
-		case CollisionShape::CST_PLANE:
-			out = collide(t, static_cast<const Plane&>(b));
-		case CollisionShape::CST_SPHERE:
-			out = collide(t, static_cast<const Sphere&>(b));
-		case CollisionShape::CST_AABB:
-			out = collide(t, static_cast<const Aabb&>(b));
-		case CollisionShape::CST_OBB:
-			out = collide(t, static_cast<const Obb&>(b));
-		case CollisionShape::CST_FRUSTUM:
-			out = collide(t, static_cast<const Frustum&>(b));
-		default:
-			ANKI_ASSERT(0 && "Forgot something");
+	case CollisionShape::CST_LINE_SEG:
+		out = collide(t, static_cast<const LineSegment&>(b));
+	case CollisionShape::CST_RAY:
+		out = collide(t, static_cast<const Ray&>(b));
+	case CollisionShape::CST_PLANE:
+		out = collide(t, static_cast<const Plane&>(b));
+	case CollisionShape::CST_SPHERE:
+		out = collide(t, static_cast<const Sphere&>(b));
+	case CollisionShape::CST_AABB:
+		out = collide(t, static_cast<const Aabb&>(b));
+	case CollisionShape::CST_OBB:
+		out = collide(t, static_cast<const Obb&>(b));
+	case CollisionShape::CST_FRUSTUM:
+		out = collide(t, static_cast<const Frustum&>(b));
+	default:
+		ANKI_ASSERT(0 && "Forgot something");
 	}
 
 	return out;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
@@ -47,27 +44,26 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 	bool out;
 	switch(a.getCollisionShapeType())
 	{
-		case CollisionShape::CST_LINE_SEG:
-			out = tcollide<LineSegment>(a, b);
-		case CollisionShape::CST_RAY:
-			out = tcollide<Ray>(a, b);
-		case CollisionShape::CST_PLANE:
-			out = tcollide<Plane>(a, b);
-		case CollisionShape::CST_SPHERE:
-			out = tcollide<Sphere>(a, b);
-		case CollisionShape::CST_AABB:
-			out = tcollide<Aabb>(a, b);
-		case CollisionShape::CST_OBB:
-			out = tcollide<Obb>(a, b);
-		case CollisionShape::CST_FRUSTUM:
-			out = tcollide<Frustum>(a, b);
-		default:
-			ANKI_ASSERT(0 && "Forgot something");
+	case CollisionShape::CST_LINE_SEG:
+		out = tcollide<LineSegment>(a, b);
+	case CollisionShape::CST_RAY:
+		out = tcollide<Ray>(a, b);
+	case CollisionShape::CST_PLANE:
+		out = tcollide<Plane>(a, b);
+	case CollisionShape::CST_SPHERE:
+		out = tcollide<Sphere>(a, b);
+	case CollisionShape::CST_AABB:
+		out = tcollide<Aabb>(a, b);
+	case CollisionShape::CST_OBB:
+		out = tcollide<Obb>(a, b);
+	case CollisionShape::CST_FRUSTUM:
+		out = tcollide<Frustum>(a, b);
+	default:
+		ANKI_ASSERT(0 && "Forgot something");
 	}
 
 	return out;
 }
-
 
 //==============================================================================
 // 1st row                                                                     =
@@ -79,7 +75,6 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/, const Ls& /*b*/)
 	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
@@ -143,13 +138,11 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
 	return true;
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& a, const Frustum& b)
 {
 	return b.insideFrustum(a);
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p)
@@ -157,14 +150,12 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p)
 	return ls.testPlane(p) == 0.0;
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/, const Ray& /*b*/)
 {
 	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
@@ -192,7 +183,6 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
 	return tmp.getLengthSquared() <= rsq;
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 {
@@ -206,8 +196,8 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 		if(Math::isZero(ls.getDirection()[i]))
 		{
 			// segment passes by box
-			if(ls.getOrigin()[i] < aabb.getMin()[i] ||
-			   ls.getOrigin()[i] > aabb.getMax()[i])
+			if(ls.getOrigin()[i] < aabb.getMin()[i] 
+				|| ls.getOrigin()[i] > aabb.getMax()[i])
 			{
 				return false;
 			}
@@ -215,10 +205,10 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 		else
 		{
 			// compute intersection parameters and sort
-			float s = (aabb.getMin()[i] - ls.getOrigin()[i]) /
-				ls.getDirection()[i];
-			float t = (aabb.getMax()[i] - ls.getOrigin()[i]) /
-				ls.getDirection()[i];
+			float s = (aabb.getMin()[i] - ls.getOrigin()[i]) 
+				/ ls.getDirection()[i];
+			float t = (aabb.getMax()[i] - ls.getOrigin()[i]) 
+				/ ls.getDirection()[i];
 			if(s > t)
 			{
 				float temp = s;
@@ -247,7 +237,6 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 	// done, have intersection
 	return true;
 }
-
 
 //==============================================================================
 // 2nd row                                                                     =
@@ -284,8 +273,8 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 	}
 
 	// relative translation (in A's frame)
-	Vec3 c = o0.getRotation().getTransposed() *
-		(o1.getCenter() - o0.getCenter());
+	Vec3 c = o0.getRotation().getTransposed() 
+		* (o1.getCenter() - o0.getCenter());
 
 	// separating axis A0
 	cTest = fabs(c.x());
@@ -432,20 +421,17 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 	return true;
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Frustum& b)
 {
 	return b.insideFrustum(a);
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Plane& b)
 {
 	return a.testPlane(b) == 0.0;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Ray& r)
@@ -460,18 +446,16 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Ray& r)
 	return collide(newray, aabb_);
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Sphere& s)
 {
 	Aabb aabb_(-obb.getExtend(), obb.getExtend()); // aabb_ is in "this" frame
-	Vec3 newCenter = obb.getRotation().getTransposed() *
-		(s.getCenter() - obb.getCenter());
+	Vec3 newCenter = obb.getRotation().getTransposed() 
+		* (s.getCenter() - obb.getCenter());
 	Sphere sphere_(newCenter, s.getRadius()); // sphere1 to "this" fame
 
 	return collide(sphere_, aabb_);
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Aabb& aabb)
@@ -483,7 +467,6 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Aabb& aabb)
 	return collide(obb, obb_);
 }
 
-
 //==============================================================================
 // 3rd line (PCS)                                                              =
 //==============================================================================
@@ -494,13 +477,11 @@ bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Frustum& b)
 	return b.insideFrustum(a);
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Plane& b)
 {
 	return a.insideFrustum(b);
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Ray& b)
@@ -508,20 +489,17 @@ bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Ray& b)
 	return a.insideFrustum(b);
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Sphere& b)
 {
 	return a.insideFrustum(b);
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Aabb& b)
 {
 	return a.insideFrustum(b);
 }
-
 
 //==============================================================================
 // 4th line (P)                                                                =
@@ -533,13 +511,11 @@ bool CollisionAlgorithmsMatrix::collide(const Plane& p0, const Plane& p1)
 	return p0.getNormal() != p1.getNormal();
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Ray& r)
 {
 	return r.testPlane(p) == 0.0;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Sphere& s)
@@ -547,13 +523,11 @@ bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Sphere& s)
 	return s.testPlane(p) == 0.0;
 }
 
-
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Aabb& aabb)
 {
 	return aabb.testPlane(p) == 0.0;
 }
-
 
 //==============================================================================
 // 5th line (R)                                                                =
@@ -565,7 +539,6 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& a, const Ray& b)
 	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Sphere& s)
@@ -585,7 +558,6 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Sphere& s)
 
 	return (vsq * wsq - proj * proj <= vsq * rsq);
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
@@ -643,7 +615,6 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
 	return true;
 }
 
-
 //==============================================================================
 // 6th line (S)                                                                =
 //==============================================================================
@@ -654,7 +625,6 @@ bool CollisionAlgorithmsMatrix::collide(const Sphere& a, const Sphere& b)
 	float tmp = a.getRadius() + b.getRadius();
 	return (a.getCenter() - b.getCenter()).getLengthSquared() <= tmp * tmp;
 }
-
 
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Sphere& s, const Aabb& aabb)
@@ -697,7 +667,6 @@ bool CollisionAlgorithmsMatrix::collide(const Sphere& s, const Aabb& aabb)
 	return false;
 }
 
-
 //==============================================================================
 // 7th line (AABB)                                                             =
 //==============================================================================
@@ -726,6 +695,5 @@ bool CollisionAlgorithmsMatrix::collide(const Aabb& a, const Aabb& b)
 	// no separation, must be intersecting
 	return true;
 }
-
 
 } // end namespace

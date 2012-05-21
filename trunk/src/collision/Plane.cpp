@@ -1,21 +1,17 @@
 #include "anki/collision/Plane.h"
 #include "anki/util/Assert.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Plane::Plane(const Plane& b)
 	: CollisionShape(CST_PLANE), normal(b.normal), offset(b.offset)
 {}
 
-
 //==============================================================================
 Plane::Plane(const Vec3& normal_, float offset_)
 	: CollisionShape(CST_PLANE), normal(normal_), offset(offset_)
 {}
-
 
 //==============================================================================
 float Plane::testPlane(const Plane& /*p*/) const
@@ -23,7 +19,6 @@ float Plane::testPlane(const Plane& /*p*/) const
 	ANKI_ASSERT(0 && "Ambiguous call");
 	return 0.0;
 }
-
 
 //==============================================================================
 void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
@@ -40,7 +35,6 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	normal.normalize();
 	offset = normal.dot(p0); // XXX: correct??
 }
-
 
 //==============================================================================
 void Plane::setFromPlaneEquation(float a, float b, float c, float d)
@@ -64,7 +58,6 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 	}
 }
 
-
 //==============================================================================
 Plane Plane::getTransformed(const Transform& trf) const
 {
@@ -80,12 +73,10 @@ Plane Plane::getTransformed(const Transform& trf) const
 	return plane;
 }
 
-
 //==============================================================================
 void Plane::getAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }
-
 
 } // end namespace

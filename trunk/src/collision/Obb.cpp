@@ -2,9 +2,7 @@
 #include "anki/collision/Plane.h"
 #include "anki/collision/Aabb.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Obb::Obb(const Obb& b)
@@ -16,9 +14,7 @@ Obb::Obb(const Obb& b)
 Obb::Obb(const Vec3& center_, const Mat3& rotation_, const Vec3& extends_)
 	: CollisionShape(CST_OBB), center(center_), rotation(rotation_),
 		extends(extends_)
-{
-}
-
+{}
 
 //==============================================================================
 float Obb::testPlane(const Plane& p) const
@@ -49,7 +45,6 @@ float Obb::testPlane(const Plane& p) const
 	}
 }
 
-
 //==============================================================================
 Obb Obb::getTransformed(const Transform& transform) const
 {
@@ -59,7 +54,6 @@ Obb Obb::getTransformed(const Transform& transform) const
 	out.rotation = transform.getRotation() * rotation;
 	return out;
 }
-
 
 //==============================================================================
 Obb Obb::getCompoundShape(const Obb& b) const
@@ -82,7 +76,6 @@ Obb Obb::getCompoundShape(const Obb& b) const
 	out.set(points);
 	return out;
 }
-
 
 //==============================================================================
 void Obb::getExtremePoints(std::array<Vec3, 8>& points) const
@@ -126,7 +119,6 @@ void Obb::getExtremePoints(std::array<Vec3, 8>& points) const
 	}
 }
 
-
 //==============================================================================
 void Obb::getAabb(Aabb& aabb) const
 {
@@ -140,6 +132,5 @@ void Obb::getAabb(Aabb& aabb) const
 
 	aabb = Aabb(center - newE, center + newE);
 }
-
 
 } // end namespace

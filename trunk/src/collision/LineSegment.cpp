@@ -3,9 +3,7 @@
 #include "anki/collision/Aabb.h"
 #include <algorithm>
 
-
 namespace anki {
-
 
 //==============================================================================
 float LineSegment::testPlane(const Plane& p) const
@@ -41,7 +39,6 @@ float LineSegment::testPlane(const Plane& p) const
 	}
 }
 
-
 //==============================================================================
 LineSegment LineSegment::getTransformed(const Transform& transform) const
 {
@@ -50,7 +47,6 @@ LineSegment LineSegment::getTransformed(const Transform& transform) const
 	out.dir = transform.getRotation() * (dir * transform.getScale());
 	return out;
 }
-
 
 //==============================================================================
 void LineSegment::getAabb(Aabb& aabb) const
@@ -71,6 +67,5 @@ void LineSegment::getAabb(Aabb& aabb) const
 	aabb.setMin(min);
 	aabb.setMax(max);
 }
-
 
 } // end namespace
