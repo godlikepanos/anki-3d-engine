@@ -5,5 +5,4 @@
 #	include <smmintrin.h>
 #endif
 
-
 #endif

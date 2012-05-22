@@ -1,8 +1,6 @@
 #include "anki/math/MathCommonSrc.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // Constructors                                                                =
@@ -24,7 +22,6 @@ inline Mat4::Mat4(const Mat4& b)
 #endif
 }
 
-
 // float
 inline Mat4::Mat4(const float f)
 {
@@ -41,7 +38,6 @@ inline Mat4::Mat4(const float f)
 #endif
 }
 
-
 // float[]
 inline Mat4::Mat4(const float arr_[])
 {
@@ -50,7 +46,6 @@ inline Mat4::Mat4(const float arr_[])
 		(*this)[i] = arr_[i];
 	}
 }
-
 
 // many floats
 inline Mat4::Mat4(const float m00, const float m01, const float m02,
@@ -78,7 +73,6 @@ inline Mat4::Mat4(const float m00, const float m01, const float m02,
 	(*this)(3, 3) = m33;
 }
 
-
 // Mat3
 inline Mat4::Mat4(const Mat3& m3)
 {
@@ -95,7 +89,6 @@ inline Mat4::Mat4(const Mat3& m3)
 		(*this)(1, 3) = (*this)(2, 3) = 0.0;
 	(*this)(3, 3) = 1.0;
 }
-
 
 // Vec3
 inline Mat4::Mat4(const Vec3& v)
@@ -118,7 +111,6 @@ inline Mat4::Mat4(const Vec3& v)
 	(*this)(3, 3) = 1.0;
 }
 
-
 // vec4
 inline Mat4::Mat4(const Vec4& v)
 {
@@ -140,7 +132,6 @@ inline Mat4::Mat4(const Vec4& v)
 	(*this)(3, 3) = v.w();
 }
 
-
 // Vec3, Mat3
 inline Mat4::Mat4(const Vec3& transl, const Mat3& rot)
 {
@@ -149,7 +140,6 @@ inline Mat4::Mat4(const Vec3& transl, const Mat3& rot)
 	(*this)(3, 0) = (*this)(3, 1) = (*this)(3, 2) = 0.0;
 	(*this)(3, 3) = 1.0;
 }
-
 
 // Vec3, Mat3, float
 inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, const float scale)
@@ -169,13 +159,11 @@ inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, const float scale)
 	(*this)(3, 3) = 1.0;
 }
 
-
 // Transform
 inline Mat4::Mat4(const Transform& t)
 {
 	(*this) = Mat4(t.getOrigin(), t.getRotation(), t.getScale());
 }
-
 
 //==============================================================================
 // Accessors                                                                   =
@@ -186,24 +174,20 @@ inline float& Mat4::operator()(const size_t i, const size_t j)
 	return arr2[i][j];
 }
 
-
 inline const float& Mat4::operator()(const size_t i, const size_t j) const
 {
 	return arr2[i][j];
 }
-
 
 inline float& Mat4::operator[](const size_t i)
 {
 	return arr1[i];
 }
 
-
 inline const float& Mat4::operator[](const size_t i) const
 {
 	return arr1[i];
 }
-
 
 #if defined(ANKI_MATH_INTEL_SIMD)
 inline const __m128& Mat4::getMm(const size_t i) const
@@ -238,7 +222,6 @@ inline Mat4& Mat4::operator=(const Mat4& b)
 	return (*this);
 }
 
-
 // +
 inline Mat4 Mat4::operator+(const Mat4& b) const
 {
@@ -257,7 +240,6 @@ inline Mat4 Mat4::operator+(const Mat4& b) const
 	return c;
 }
 
-
 // +=
 inline Mat4& Mat4::operator+=(const Mat4& b)
 {
@@ -274,7 +256,6 @@ inline Mat4& Mat4::operator+=(const Mat4& b)
 #endif
 	return (*this);
 }
-
 
 // -
 inline Mat4 Mat4::operator-(const Mat4& b) const
@@ -294,7 +275,6 @@ inline Mat4 Mat4::operator-(const Mat4& b) const
 	return c;
 }
 
-
 // -=
 inline Mat4& Mat4::operator-=(const Mat4& b)
 {
@@ -311,7 +291,6 @@ inline Mat4& Mat4::operator-=(const Mat4& b)
 #endif
 	return (*this);
 }
-
 
 // *
 inline Mat4 Mat4::operator*(const Mat4& b) const
@@ -340,14 +319,12 @@ inline Mat4 Mat4::operator*(const Mat4& b) const
 	return c;
 }
 
-
 // *=
 inline Mat4& Mat4::operator*=(const Mat4& b)
 {
 	(*this) = (*this) * b;
 	return (*this);
 }
-
 
 // ==
 inline bool Mat4::operator==(const Mat4& b) const
@@ -362,7 +339,6 @@ inline bool Mat4::operator==(const Mat4& b) const
 	return true;
 }
 
-
 // !=
 inline bool Mat4::operator!=(const Mat4& b) const
 {
@@ -375,7 +351,6 @@ inline bool Mat4::operator!=(const Mat4& b) const
 	}
 	return false;
 }
-
 
 //==============================================================================
 // Operators with float                                                        =
@@ -401,7 +376,6 @@ inline Mat4 Mat4::operator+(const float f) const
 	return c;
 }
 
-
 // 4x4 += float
 inline Mat4& Mat4::operator+=(const float f)
 {
@@ -420,7 +394,6 @@ inline Mat4& Mat4::operator+=(const float f)
 #endif
 	return (*this);
 }
-
 
 // 4x4 - float
 inline Mat4 Mat4::operator-(const float f) const
@@ -442,7 +415,6 @@ inline Mat4 Mat4::operator-(const float f) const
 	return r;
 }
 
-
 // 4x4 -= float
 inline Mat4& Mat4::operator-=(const float f)
 {
@@ -461,7 +433,6 @@ inline Mat4& Mat4::operator-=(const float f)
 #endif
 	return (*this);
 }
-
 
 // 4x4 * float
 inline Mat4 Mat4::operator*(const float f) const
@@ -483,7 +454,6 @@ inline Mat4 Mat4::operator*(const float f) const
 	return r;
 }
 
-
 // 4x4 *= float
 inline Mat4& Mat4::operator*=(const float f)
 {
@@ -502,7 +472,6 @@ inline Mat4& Mat4::operator*=(const float f)
 #endif
 	return (*this);
 }
-
 
 // 4x4 / float
 inline Mat4 Mat4::operator/(const float f) const
@@ -524,7 +493,6 @@ inline Mat4 Mat4::operator/(const float f) const
 	return r;
 }
 
-
 // 4x4 /= float
 inline Mat4& Mat4::operator/=(const float f)
 {
@@ -543,7 +511,6 @@ inline Mat4& Mat4::operator/=(const float f)
 #endif
 	return (*this);
 }
-
 
 //==============================================================================
 // Operators with other                                                        =
@@ -578,7 +545,6 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 #endif
 }
 
-
 //==============================================================================
 // Other                                                                       =
 //==============================================================================
@@ -612,7 +578,6 @@ inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 #endif
 }
 
-
 // setRow
 inline void Mat4::setRow(const size_t i, const Vec4& v)
 {
@@ -625,7 +590,6 @@ inline void Mat4::setRow(const size_t i, const Vec4& v)
 	(*this)(i, 3) = v.w();
 #endif
 }
-
 
 // setColumns
 inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
@@ -649,7 +613,6 @@ inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
 	(*this)(3, 3) = d.w();
 }
 
-
 // setColumn
 inline void Mat4::setColumn(const size_t i, const Vec4& v)
 {
@@ -658,7 +621,6 @@ inline void Mat4::setColumn(const size_t i, const Vec4& v)
 	(*this)(2, i) = v.z();
 	(*this)(3, i) = v.w();
 }
-
 
 // transpose
 inline void Mat4::transpose()
@@ -687,7 +649,6 @@ inline void Mat4::transpose()
 #endif
 }
 
-
 // getTransposed
 inline Mat4 Mat4::getTransposed() const
 {
@@ -711,7 +672,6 @@ inline Mat4 Mat4::getTransposed() const
 	return m4;
 }
 
-
 // setRotationPart
 inline void Mat4::setRotationPart(const Mat3& m3)
 {
@@ -725,7 +685,6 @@ inline void Mat4::setRotationPart(const Mat3& m3)
 	(*this)(2, 1) = m3(2, 1);
 	(*this)(2, 2) = m3(2, 2);
 }
-
 
 // getRotationPart
 inline Mat3 Mat4::getRotationPart() const
@@ -743,7 +702,6 @@ inline Mat3 Mat4::getRotationPart() const
 	return m3;
 }
 
-
 // setTranslationPart
 inline void Mat4::setTranslationPart(const Vec4& v)
 {
@@ -753,7 +711,6 @@ inline void Mat4::setTranslationPart(const Vec4& v)
 	(*this)(3, 3) = v.w();
 }
 
-
 // setTranslationPart
 inline void Mat4::setTranslationPart(const Vec3& v)
 {
@@ -762,13 +719,11 @@ inline void Mat4::setTranslationPart(const Vec3& v)
 	(*this)(2, 3) = v.z();
 }
 
-
 // getTranslationPart
 inline Vec3 Mat4::getTranslationPart() const
 {
 	return Vec3((*this)(0, 3), (*this)(1, 3), (*this)(2, 3));
 }
-
 
 // getIdentity
 inline const Mat4& Mat4::getIdentity()
@@ -778,14 +733,12 @@ inline const Mat4& Mat4::getIdentity()
 	return ident;
 }
 
-
 // getZero
 inline const Mat4& Mat4::getZero()
 {
 	static Mat4 zero(0.0);
 	return zero;
 }
-
 
 // Determinant
 inline float Mat4::getDet() const
@@ -816,7 +769,6 @@ inline float Mat4::getDet() const
 		- t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) 
 		+ t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 }
-
 
 // getInverse
 inline Mat4 Mat4::getInverse() const
@@ -894,13 +846,11 @@ inline Mat4 Mat4::getInverse() const
 	return m4;
 }
 
-
 // invert
 inline void Mat4::invert()
 {
 	(*this) = getInverse();
 }
-
 
 // getInverseTransformation
 inline Mat4 Mat4::getInverseTransformation() const
@@ -911,13 +861,11 @@ inline Mat4 Mat4::getInverseTransformation() const
 	return Mat4(invertedTsl, invertedRot);
 }
 
-
 // lerp
 inline Mat4 Mat4::lerp(const Mat4& b, const float t) const
 {
 	return ((*this) * (1.0 - t)) + (b * t);
 }
-
 
 // setIdentity
 inline void Mat4::setIdentity()
@@ -925,19 +873,10 @@ inline void Mat4::setIdentity()
 	(*this) = getIdentity();
 }
 
-
 // combineTransformations
 inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 {
-	/*
-	The clean code is:
-	Mat3 rot = m0.getRotationPart() * m1.getRotationPart(); // combine the
-	                                                        // rotations
-	Vec3 tra = (m1.getTranslationPart()).Transformed(m0.getTranslationPart(),
-		m0.getRotationPart(), 1.0);
-	return Mat4(tra, rot);
-	and the optimized:
-	*/
+	// See the clean code in < r664
 
 	// one of the 2 mat4 doesnt represent transformation
 	ANKI_ASSERT(Math::isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3)-1.0) 
@@ -970,7 +909,6 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	return m4;
 }
 
-
 //==============================================================================
 // Friends                                                                     =
 //==============================================================================
@@ -980,7 +918,6 @@ inline Mat4 operator+(const float f, const Mat4& m4)
 {
 	return m4 + f;
 }
-
 
 // float - 4x4
 inline Mat4 operator-(const float f, const Mat4& m4)
@@ -1002,13 +939,11 @@ inline Mat4 operator-(const float f, const Mat4& m4)
 	return r;
 }
 
-
 // float * 4x4
 inline Mat4 operator*(const float f, const Mat4& m4)
 {
 	return m4 * f;
 }
-
 
 // float / 4x4
 inline Mat4 operator/(const float f, const Mat4& m4)
@@ -1030,7 +965,6 @@ inline Mat4 operator/(const float f, const Mat4& m4)
 	return r;
 }
 
-
 // Print
 inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 {
@@ -1048,6 +982,5 @@ inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 	}
 	return s;
 }
-
 
 } // end namespace

@@ -1,8 +1,6 @@
 #include "anki/math/MathCommonSrc.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // Constructors                                                                =
@@ -14,7 +12,6 @@ inline Euler::Euler()
 	x() = y() = z() = 0.0;
 }
 
-
 // float, float, float
 inline Euler::Euler(const float x_, const float y_, const float z_)
 {
@@ -23,7 +20,6 @@ inline Euler::Euler(const float x_, const float y_, const float z_)
 	z() = z_;
 }
 
-
 // Copy
 inline Euler::Euler(const Euler& b)
 {
@@ -31,7 +27,6 @@ inline Euler::Euler(const Euler& b)
 	y() = b.y();
 	z() = b.z();
 }
-
 
 // Quat
 inline Euler::Euler(const Quat& q)
@@ -61,7 +56,6 @@ inline Euler::Euler(const Quat& q)
 	x() = atan2(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(),
 	    1.0 - 2.0 * sqx - 2.0 * sqz);
 }
-
 
 // mat3
 inline Euler::Euler(const Mat3& m3)
@@ -95,7 +89,6 @@ inline Euler::Euler(const Mat3& m3)
 	x() = atan2f(sx, cx);
 }
 
-
 //==============================================================================
 // Accessors                                                                   =
 //==============================================================================
@@ -105,48 +98,40 @@ inline float& Euler::operator [](const size_t i)
 	return arr[i];
 }
 
-
 inline float Euler::operator [](const size_t i) const
 {
 	return arr[i];
 }
-
 
 inline float& Euler::x()
 {
 	return vec.x;
 }
 
-
 inline float Euler::x() const
 {
 	return vec.x;
 }
-
 
 inline float& Euler::y()
 {
 	return vec.y;
 }
 
-
 inline float Euler::y() const
 {
 	return vec.y;
 }
-
 
 inline float& Euler::z()
 {
 	return vec.z;
 }
 
-
 inline float Euler::z() const
 {
 	return vec.z;
 }
-
 
 //==============================================================================
 // Operators with same                                                         =
@@ -161,7 +146,6 @@ inline Euler& Euler::operator=(const Euler& b)
 	return *this;
 }
 
-
 //==============================================================================
 // Friends                                                                     =
 //==============================================================================
@@ -171,6 +155,5 @@ inline std::ostream& operator<<(std::ostream& s, const Euler& e)
 	s << e.x() << ' ' << e.y() << ' ' << e.z();
 	return s;
 }
-
 
 } // end namespace
