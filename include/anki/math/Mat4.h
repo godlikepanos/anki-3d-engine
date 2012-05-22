@@ -3,7 +3,6 @@
 
 #include "anki/math/MathCommonIncludes.h"
 
-
 namespace anki {
 
 
@@ -133,11 +132,8 @@ private:
 };
 /// @}
 
-
 } // end namespace
 
-
 #include "anki/math/Mat4.inl.h"
-
 
 #endif

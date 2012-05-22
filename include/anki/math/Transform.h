@@ -5,9 +5,7 @@
 #include "anki/math/Mat3.h"
 #include "anki/math/MathCommonIncludes.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Math
 /// @{
@@ -74,11 +72,8 @@ private:
 };
 /// @}
 
-
 } // end namespace
 
-
 #include "anki/math/Transform.inl.h"
-
 
 #endif

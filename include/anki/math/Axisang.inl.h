@@ -1,8 +1,6 @@
 #include "anki/math/MathCommonSrc.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // Constructors                                                                =
@@ -13,18 +11,15 @@ inline Axisang::Axisang()
 	: ang(0.0), axis(0.0)
 {}
 
-
 // Copy
 inline Axisang::Axisang(const Axisang& b)
 	: ang(b.ang), axis(b.axis)
 {}
 
-
 // float, axis
 inline Axisang::Axisang(const float rad, const Vec3& axis_)
 	: ang(rad), axis(axis_)
 {}
-
 
 // Quat
 inline Axisang::Axisang(const Quat& q)
@@ -41,7 +36,6 @@ inline Axisang::Axisang(const Quat& q)
 		axis = Vec3(q.x() * length, q.y() * length, q.z() * length);
 	}
 }
-
 
 // constructor [mat3]
 inline Axisang::Axisang(const Mat3& m3)
@@ -137,7 +131,6 @@ inline Axisang::Axisang(const Mat3& m3)
 	axis.z() = (m3(1, 0) - m3(0, 1)) / s;
 }
 
-
 //==============================================================================
 // Accessors                                                                   =
 //==============================================================================
@@ -147,36 +140,30 @@ inline float Axisang::getAngle() const
 	return ang;
 }
 
-
 inline float& Axisang::getAngle()
 {
 	return ang;
 }
-
 
 inline void Axisang::setAngle(float a)
 {
 	ang = a;
 }
 
-
 inline const Vec3& Axisang::getAxis() const
 {
 	return axis;
 }
-
 
 inline Vec3& Axisang::getAxis()
 {
 	return axis;
 }
 
-
 inline void Axisang::setAxis(const Vec3& a)
 {
 	axis = a;
 }
-
 
 //==============================================================================
 // Operators with same                                                         =
@@ -190,7 +177,6 @@ inline Axisang& Axisang::operator=(const Axisang& b)
 	return *this;
 }
 
-
 //==============================================================================
 // Friends                                                                     =
 //==============================================================================
@@ -201,6 +187,5 @@ inline std::ostream& operator<<(std::ostream& s, const Axisang& a)
 	s << "axis: " << a.getAxis() << ", angle: " << a.getAngle();
 	return s;
 }
-
 
 } // end namespace
