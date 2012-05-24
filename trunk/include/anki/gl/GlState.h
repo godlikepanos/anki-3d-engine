@@ -1,20 +1,18 @@
-#ifndef ANKI_GL_GL_STATE_MACHINE_H
-#define ANKI_GL_GL_STATE_MACHINE_H
+#ifndef ANKI_GL_GL_STATE_H
+#define ANKI_GL_GL_STATE_H
 
+#include "anki/util/Singleton.h"
 #include <GL/glew.h>
-#include <boost/unordered_map.hpp>
-#include "anki/util/Assert.h"
-
+#include <unordered_map>
 
 namespace anki {
 
-
 /// Access the GL state machine.
 /// This class saves us from calling the GL functions
-class GlStateMachine
+class GlState
 {
 public:
-	GlStateMachine()
+	GlState()
 	{
 		sync();
 	}
@@ -32,19 +30,13 @@ public:
 	}
 	bool isEnabled(GLenum flag);
 
-	void useShaderProg(GLuint id);
-
 	void setViewport(uint x, uint y, uint w, uint h);
-
-	static GLuint getCurrentProgramGlId();
 	/// @}
 
 private:
 	/// @name The GL state
 	/// @{
-	GLuint sProgGlId; ///< Last used SProg ID
-
-	boost::unordered_map<GLenum, bool> flags;
+	std::unordered_map<GLenum, bool> flags;
 	static GLenum flagEnums[];
 
 	GLint viewportX;
@@ -54,8 +46,8 @@ private:
 	/// @}
 };
 
+typedef SingletonThreadSafe<GlState> GlStateSingleton;
 
 } // end namespace
-
 
 #endif

@@ -58,13 +58,13 @@ typedef Singleton<Logger> LoggerSingleton;
 		std::stringstream ss; \
 		ss << msg; \
 		LoggerSingleton::get().write(__FILE__, __LINE__, __func__, \
-			t, msg.str().c_str()); \
+			t, ss.str().c_str()); \
 	} while(false);
 
-#define ANKI_INFO(x) ANKI_LOGGER_MESSAGE(Logger::FMT_NORMAL, x)
+#define ANKI_LOGI(x) ANKI_LOGGER_MESSAGE(Logger::LMT_NORMAL, x)
 
-#define ANKI_WARNING(x) ANKI_LOGGER_MESSAGE(Logger::FMT_WARNING, x)
+#define ANKI_LOGW(x) ANKI_LOGGER_MESSAGE(Logger::LMT_WARNING, x)
 
-#define ANKI_ERROR(x) ANKI_LOGGER_MESSAGE(Logger::FMT_ERROR, x)
+#define ANKI_LOGE(x) ANKI_LOGGER_MESSAGE(Logger::LMT_ERROR, x)
 
 #endif

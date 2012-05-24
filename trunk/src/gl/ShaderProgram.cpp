@@ -11,7 +11,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-ShaderProgramVariable(
+ShaderProgramVariable::ShaderProgramVariable(
 	GLint loc_, 
 	const char* name_,
 	GLenum glDataType_, 

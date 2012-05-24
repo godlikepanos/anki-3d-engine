@@ -11,44 +11,36 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
-
 namespace anki {
 
-
 //==============================================================================
-// handleMessageHanlderMsgs                                                    =
-//==============================================================================
-void App::handleMessageHanlderMsgs(const char* file, int line,
-	const char* func, Logger::MessageType type, const char* msg)
+void App::handleLoggerMessages(const Logger::Info& info)
 {
 	std::ostream* out = NULL;
 	const char* x = NULL;
 
-	switch(type)
+	switch(info.type)
 	{
-		case Logger::MT_NORMAL:
+		case Logger::LMT_NORMAL:
 			out = &std::cout;
 			x = "Info";
 			break;
 
-		case Logger::MT_ERROR:
+		case Logger::LMT_ERROR:
 			out = &std::cerr;
 			x = "Error";
 			break;
 
-		case Logger::MT_WARNING:
+		case Logger::LMT_WARNING:
 			out = &std::cerr;
 			x = "Warn";
 			break;
 	}
 
-	(*out) << "(" << file << ":" << line << " "<< func <<
-		") " << x << ": " << msg << std::flush;
+	(*out) << "(" << info.file << ":" << info.line << " "<< info.func 
+		<< ") " << x << ": " << info.msg << std::flush;
 }
 
-
-//==============================================================================
-// parseCommandLineArgs                                                        =
 //==============================================================================
 void App::parseCommandLineArgs(int argc, char* argv[])
 {
@@ -65,16 +57,13 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 		}
 		else
 		{
-			std::cerr << "Incorrect command line argument \"" << arg <<
-				"\"" << std::endl;
+			std::cerr << "Incorrect command line argument \"" << arg 
+				<< "\"" << std::endl;
 			abort();
 		}
 	}
 }
 
-
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void App::init(int argc, char* argv[])
 {
@@ -84,7 +73,8 @@ void App::init(int argc, char* argv[])
 	fullScreenFlag = false;
 
 	// send output to handleMessageHanlderMsgs
-	LoggerSingleton::get().connect(&App::handleMessageHanlderMsgs, this);
+	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 
+		this, handleLoggerMessages);
 
 	parseCommandLineArgs(argc, argv);
 	printAppInfo();
@@ -96,13 +86,10 @@ void App::init(int argc, char* argv[])
 	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 }
 
-
-//==============================================================================
-// initWindow                                                                  =
 //==============================================================================
 void App::initWindow()
 {
-	ANKI_INFO("SDL window initializing...");
+	ANKI_LOGI("SDL window initializing...");
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
@@ -113,7 +100,7 @@ void App::initWindow()
 	const char* driverName = SDL_GetCurrentVideoDriver();
 	if(driverName != NULL)
 	{
-		ANKI_INFO("Video driver name: " << driverName);
+		ANKI_LOGI("Video driver name: " << driverName);
 	}
 
 	// set GL attribs
@@ -140,7 +127,7 @@ void App::initWindow()
 	iconImage = SDL_LoadBMP("gfx/icon.bmp");
 	if(iconImage == NULL)
 	{
-		ANKI_WARNING("Cannot load window icon");
+		ANKI_LOGW("Cannot load window icon");
 	}
 	else
 	{
@@ -150,36 +137,30 @@ void App::initWindow()
 		SDL_SetWindowIcon(windowId, iconImage);
 	}
 
-	ANKI_INFO("SDL window initialization ends");
+	ANKI_LOGI("SDL window initialization ends");
 }
 
-
-//==============================================================================
-// initDirs                                                                    =
 //==============================================================================
 void App::initDirs()
 {
 	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
 	if(!boost::filesystem::exists(settingsPath))
 	{
-		ANKI_INFO("Creating settings dir \"" << settingsPath.string() << "\"");
+		ANKI_LOGI("Creating settings dir \"" << settingsPath.string() << "\"");
 		boost::filesystem::create_directory(settingsPath);
 	}
 
 	cachePath = settingsPath / "cache";
 	if(boost::filesystem::exists(cachePath))
 	{
-		ANKI_INFO("Deleting dir \"" << cachePath.string() << "\"");
+		ANKI_LOGI("Deleting dir \"" << cachePath.string() << "\"");
 		boost::filesystem::remove_all(cachePath);
 	}
 
-	ANKI_INFO("Creating cache dir \"" << cachePath.string() << "\"");
+	ANKI_LOGI("Creating cache dir \"" << cachePath.string() << "\"");
 	boost::filesystem::create_directory(cachePath);
 }
 
-
-//==============================================================================
-// togleFullScreen                                                             =
 //==============================================================================
 void App::togleFullScreen()
 {
@@ -188,9 +169,6 @@ void App::togleFullScreen()
 	fullScreenFlag = !fullScreenFlag;
 }
 
-
-//==============================================================================
-// swapBuffers                                                                 =
 //==============================================================================
 void App::swapBuffers()
 {
@@ -198,9 +176,6 @@ void App::swapBuffers()
 	SDL_GL_SwapWindow(windowId);
 }
 
-
-//==============================================================================
-// quit                                                                        =
 //==============================================================================
 void App::quit(int code)
 {
@@ -211,9 +186,6 @@ void App::quit(int code)
 	exit(code);
 }
 
-
-//==============================================================================
-// printAppInfo                                                                =
 //==============================================================================
 #if !defined(ANKI_REVISION)
 #	define ANKI_REVISION "unknown"
@@ -233,16 +205,13 @@ void App::printAppInfo()
 	msg << "compiler ID " << ANKI_COMPILER << ", ";
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	const SDL_version* v = SDL_Linked_Version();
-	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' <<
-		int(v->patch) << ", " << "build date " __DATE__ << ", " <<
-		"rev " << ANKI_REVISION;
+	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' 
+		<< int(v->patch) << ", " << "build date " __DATE__ << ", " 
+		<< "rev " << ANKI_REVISION;
 
-	ANKI_INFO(msg.str());
+	ANKI_LOGI(msg.str());
 }
 
-
-//==============================================================================
-// getDesktopWidth                                                             =
 //==============================================================================
 uint App::getDesktopWidth() const
 {
@@ -252,9 +221,6 @@ uint App::getDesktopWidth() const
 	return mode.w;
 }
 
-
-//==============================================================================
-// getDesktopHeight                                                            =
 //==============================================================================
 uint App::getDesktopHeight() const
 {
@@ -263,6 +229,5 @@ uint App::getDesktopHeight() const
 	//SDL_GetDesktopDisplayMode(&mode);
 	return mode.h;
 }
-
 
 } // end namespace

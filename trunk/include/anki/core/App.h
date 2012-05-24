@@ -5,15 +5,12 @@
 #include <boost/filesystem.hpp>
 #include "anki/core/Logger.h"
 
-
 namespace anki {
-
 
 class StdinListener;
 class Scene;
 class Camera;
 class Input;
-
 
 /// The core class of the engine.
 ///
@@ -23,6 +20,8 @@ class Input;
 class App
 {
 public:
+	ANKI_HAS_SLOTS(App)
+
 	App()
 	{}
 	~App()
@@ -115,16 +114,14 @@ private:
 	void parseCommandLineArgs(int argc, char* argv[]);
 
 	/// A slot to handle the messageHandler's signal
-	void handleMessageHanlderMsgs(const char* file, int line,
-		const char* func, Logger::MessageType, const char* msg);
+	void handleLoggerMessages(const Logger::Info& info);
+	ANKI_SLOT(handleLoggerMessages, const Logger::Info&)
 
 	void initWindow();
 	void initDirs();
 	void initRenderer();
 };
 
-
 } // end namespace
-
 
 #endif

@@ -9,6 +9,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <GL/glew.h>
 #include <vector>
+#include <string>
 
 namespace anki {
 

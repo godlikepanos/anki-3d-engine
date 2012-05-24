@@ -96,7 +96,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_SPOT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No radius for spot lights");
 			}
 		}
@@ -111,7 +111,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No distance for point lights");
 			}
 		}
@@ -126,7 +126,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No fovX for point lights");
 			}
 		}
@@ -141,7 +141,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No fovY for point lights");
 			}
 		}
@@ -156,7 +156,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No width for point lights");
 			}
 		}
@@ -171,7 +171,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No height for point lights");
 			}
 		}
@@ -187,7 +187,7 @@ void LightRsrc::load(const char* filename)
 
 			if(type == LT_POINT)
 			{
-				ANKI_WARNING("File \"" << filename <<
+				ANKI_LOGW("File \"" << filename <<
 					"\": No texture for point lights");
 			}
 		}

@@ -107,7 +107,7 @@ void UiPainter::drawText(const char* text)
 		}
 		else if(cc < ' ' || cc > '~') // out of range
 		{
-			ANKI_ERROR("Char out of range (" << cc << "). Ignoring");
+			ANKI_LOGE("Char out of range (" << cc << "). Ignoring");
 		}
 		else
 		{
