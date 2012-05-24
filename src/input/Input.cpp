@@ -11,11 +11,11 @@ namespace anki {
 //==============================================================================
 void Input::init()
 {
-	ANKI_INFO("Initializing input...");
+	ANKI_LOGI("Initializing input...");
 	warpMouseFlag = false;
 	hideCursor = true;
 	reset();
-	ANKI_INFO("Input initialized");
+	ANKI_LOGI("Input initialized");
 }
 
 

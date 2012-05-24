@@ -56,7 +56,7 @@ namespace anki {
 //==============================================================================
 void ScriptManager::init()
 {
-	ANKI_INFO("Initializing scripting engine...");
+	ANKI_LOGI("Initializing scripting engine...");
 
 	PyImport_AppendInittab((char*)("anki"), &initanki);
 	Py_Initialize();
@@ -64,7 +64,7 @@ void ScriptManager::init()
 	mainNamespace = mainModule.attr("__dict__");
 	ankiModule = object(handle<>(PyImport_ImportModule("anki")));
 
-	ANKI_INFO("Scripting engine initialized");
+	ANKI_LOGI("Scripting engine initialized");
 }
 
 

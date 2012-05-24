@@ -73,16 +73,16 @@ private:
 /// If a class has slots it should include this
 /// @code
 /// class Foo {
-/// 	ANKI_OBSERVING(Foo)
+/// 	ANKI_HAS_SLOTS(Foo)
 /// };
 /// @endcode
-#define ANKI_OBSERVING(_class) \
+#define ANKI_HAS_SLOTS(_class) \
 	typedef _class ObservingType;
 
 /// Define a slot. This should follow the method declaration
 /// @code
 /// class Foo {
-/// 	ANKI_OBSERVING(Foo)
+/// 	ANKI_HAS_SLOTS(Foo)
 ///
 /// 	void slot(const float&)
 /// 	{...}

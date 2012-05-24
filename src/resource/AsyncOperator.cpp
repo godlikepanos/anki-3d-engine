@@ -10,7 +10,7 @@ namespace anki {
 //==============================================================================
 void AsyncOperator::start()
 {
-	ANKI_INFO("Starting async operator thread...");
+	ANKI_LOGI("Starting async operator thread...");
 	thread = boost::thread(&AsyncOperator::workingFunc, this);
 }
 
@@ -18,7 +18,7 @@ void AsyncOperator::start()
 //==============================================================================
 void AsyncOperator::putBack(Request* newReq)
 {
-	ANKI_INFO("New request (" << newReq->getInfo() << ")");
+	ANKI_LOGI("New request (" << newReq->getInfo() << ")");
 	boost::mutex::scoped_lock lock(mutexReq);
 	requests.push_back(newReq);
 	lock.unlock();
@@ -39,7 +39,7 @@ void AsyncOperator::workingFunc()
 			boost::mutex::scoped_lock lock(mutexReq);
 			while(requests.empty())
 			{
-				ANKI_INFO("Waiting...");
+				ANKI_LOGI("Waiting...");
 				condVar.wait(lock);
 			}
 
@@ -57,11 +57,11 @@ void AsyncOperator::workingFunc()
 		try
 		{
 			req->exec();
-			ANKI_INFO("Request served (" << req->getInfo() << ")");
+			ANKI_LOGI("Request served (" << req->getInfo() << ")");
 		}
 		catch(const std::exception& e)
 		{
-			ANKI_ERROR("Request failed (" << req->getInfo() << "): " <<
+			ANKI_LOGE("Request failed (" << req->getInfo() << "): " <<
 				e.what());
 			ok = false;
 		}

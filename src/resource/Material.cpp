@@ -376,7 +376,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 			if(iit == allVarNames.end())
 			{
-				ANKI_WARNING("Input variable \"" <<
+				ANKI_LOGW("Input variable \"" <<
 					name << "\" not used in material \"" << fname << "\"");
 			}
 		}
@@ -446,7 +446,7 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		{
 			std::string value = it1->second;
 
-			ANKI_INFO("With value " << name << " " << value);
+			ANKI_LOGI("With value " << name << " " << value);
 
 			// Get the value
 			switch(dataType)

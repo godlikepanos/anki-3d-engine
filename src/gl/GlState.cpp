@@ -1,14 +1,11 @@
-#include "anki/gl/GlStateMachine.h"
-
+#include "anki/gl/GlState.h"
+#include "anki/util/Assert.h"
 
 namespace anki {
 
-
-//==============================================================================
-// Statics                                                                     =
 //==============================================================================
 
-GLenum GlStateMachine::flagEnums[] = {
+GLenum GlState::flagEnums[] = {
 	GL_DEPTH_TEST,
 	GL_BLEND,
 	GL_STENCIL_TEST,
@@ -18,9 +15,8 @@ GLenum GlStateMachine::flagEnums[] = {
 	0
 };
 
-
 //==============================================================================
-void GlStateMachine::enable(GLenum glFlag, bool enable)
+void GlState::enable(GLenum glFlag, bool enable)
 {
 	ANKI_ASSERT(flags.find(glFlag) != flags.end());
 	bool state = flags[glFlag];
@@ -40,9 +36,8 @@ void GlStateMachine::enable(GLenum glFlag, bool enable)
 	}
 }
 
-
 //==============================================================================
-bool GlStateMachine::isEnabled(GLenum glFlag)
+bool GlState::isEnabled(GLenum glFlag)
 {
 	ANKI_ASSERT(flags.find(glFlag) != flags.end());
 	bool state = flags[glFlag];
@@ -50,12 +45,9 @@ bool GlStateMachine::isEnabled(GLenum glFlag)
 	return state;
 }
 
-
 //==============================================================================
-void GlStateMachine::sync()
+void GlState::sync()
 {
-	sProgGlId = getCurrentProgramGlId();
-
 	// Set flags
 	GLenum* flagEnum = &flagEnums[0];
 	while(*flagEnum != 0)
@@ -73,9 +65,8 @@ void GlStateMachine::sync()
 	viewportH = viewport[3];
 }
 
-
 //==============================================================================
-void GlStateMachine::setViewport(uint x, uint y, uint w, uint h)
+void GlState::setViewport(uint x, uint y, uint w, uint h)
 {
 	if(x != (uint)viewportX || y != (uint)viewportY 
 		|| w != (uint)viewportW || h != (uint)viewportH)
@@ -87,28 +78,5 @@ void GlStateMachine::setViewport(uint x, uint y, uint w, uint h)
 		viewportH = h;
 	}
 }
-
-
-//==============================================================================
-void GlStateMachine::useShaderProg(GLuint id)
-{
-	ANKI_ASSERT(getCurrentProgramGlId() == sProgGlId);
-
-	if(sProgGlId != id)
-	{
-		glUseProgram(id);
-		sProgGlId = id;
-	}
-}
-
-
-//==============================================================================
-GLuint GlStateMachine::getCurrentProgramGlId()
-{
-	int i;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &i);
-	return i;
-}
-
 
 } // end namespace

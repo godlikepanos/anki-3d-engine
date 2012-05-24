@@ -127,7 +127,7 @@ void initPhysics()
 //==============================================================================
 void init()
 {
-	ANKI_INFO("Other init...");
+	ANKI_LOGI("Other init...");
 
 	Scene& scene = SceneSingleton::get();
 
@@ -143,13 +143,13 @@ void init()
 	// camera
 	PerspectiveCamera* cam = new PerspectiveCamera(scene, SceneNode::SNF_NONE, NULL);
 	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
-	ANKI_INFO(MainRendererSingleton::get().getAspectRatio());
+	ANKI_LOGI(MainRendererSingleton::get().getAspectRatio());
 	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(70.0), Math::toRad(70.0), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
 	AppSingleton::get().setActiveCam(cam);
-	ANKI_INFO(cam->getSceneNodeName());
+	ANKI_LOGI(cam->getSceneNodeName());
 
 	OrthographicCamera* ocam = new OrthographicCamera(scene, SceneNode::SNF_NONE, NULL);
 	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
@@ -264,7 +264,7 @@ void init()
 
 	initPhysics();
 
-	//ANKI_INFO("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
+	//ANKI_LOGI("Engine initialization ends (" << (App::getTicks() - ticks) << ")");
 }
 
 
@@ -340,21 +340,21 @@ void mainLoopExtra()
 
 	if(InputSingleton::get().getKey(SDL_SCANCODE_Y) == 1)
 	{
-		ANKI_INFO("Exec script");
+		ANKI_LOGI("Exec script");
 		ScriptManagerSingleton::get().execScript(Util::readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();
 
-	//ANKI_INFO(mover->getSceneNodeName())
+	//ANKI_LOGI(mover->getSceneNodeName())
 
 	/*if(spot_lights[0]->getCamera().insideFrustum(spot_lights[1]->getCamera()))
 	{
-		ANKI_INFO("in");
+		ANKI_LOGI("in");
 	}
 	else
 	{
-		ANKI_INFO("out");
+		ANKI_LOGI("out");
 	}*/
 }
 
@@ -364,7 +364,7 @@ void mainLoopExtra()
 //==============================================================================
 void mainLoop()
 {
-	ANKI_INFO("Entering main loop");
+	ANKI_LOGI("Entering main loop");
 
 	HighRezTimer mainLoopTimer;
 	mainLoopTimer.start();
@@ -458,7 +458,7 @@ void mainLoop()
 		}*/
 	}
 
-	ANKI_INFO("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");
+	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");
 }
 
 
@@ -556,7 +556,7 @@ void execStdinScpripts()
 		}
 		catch(Exception& e)
 		{
-			ANKI_ERROR(e.what());
+			ANKI_LOGE(e.what());
 		}
 	}
 }
@@ -582,7 +582,7 @@ int main(int argc, char* argv[])
 
 		mainLoop();
 
-		ANKI_INFO("Exiting...");
+		ANKI_LOGI("Exiting...");
 		AppSingleton::get().quit(EXIT_SUCCESS);
 		exitCode = 0;
 	}

@@ -12,7 +12,7 @@ namespace anki {
 //==============================================================================
 void AsyncLoader::start()
 {
-	ANKI_INFO("Starting async loader thread...");
+	ANKI_LOGI("Starting async loader thread...");
 	thread = boost::thread(&AsyncLoader::workingFunc, this);
 }
 
@@ -23,7 +23,7 @@ void AsyncLoader::start()
 void AsyncLoader::load(const char* filename, LoadCallback loadCallback,
 	void* storage)
 {
-	ANKI_INFO("New load request for \"" << filename << "\"");
+	ANKI_LOGI("New load request for \"" << filename << "\"");
 	boost::mutex::scoped_lock lock(mutexReq);
 	Request f = {filename, loadCallback, storage};
 	requests.push_back(f);
@@ -47,7 +47,7 @@ void AsyncLoader::workingFunc()
 			boost::mutex::scoped_lock lock(mutexReq);
 			while(requests.empty())
 			{
-				ANKI_INFO("Waiting...");
+				ANKI_LOGI("Waiting...");
 				condVar.wait(lock);
 			}
 
@@ -60,11 +60,11 @@ void AsyncLoader::workingFunc()
 		try
 		{
 			req.loadCallback(req.filename.c_str(), req.storage);
-			ANKI_INFO("File \"" << req.filename << "\" loaded");
+			ANKI_LOGI("File \"" << req.filename << "\" loaded");
 		}
 		catch(std::exception& e)
 		{
-			ANKI_ERROR("Loading \"" << req.filename <<
+			ANKI_LOGE("Loading \"" << req.filename <<
 				"\" failed: " << e.what());
 			ok = false;
 		}

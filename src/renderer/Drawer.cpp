@@ -390,7 +390,7 @@ void PhysicsDebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
 	const btVector3& /*normalOnB*/,
 	btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
 {
-	//ANKI_WARNING("Unimplemented");
+	//ANKI_LOGW("Unimplemented");
 }
 
 //==============================================================================
@@ -403,7 +403,7 @@ void PhysicsDebugDrawer::reportErrorWarning(const char* warningString)
 void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 	const char* /*textString*/)
 {
-	//ANKI_WARNING("Unimplemented");
+	//ANKI_LOGW("Unimplemented");
 }
 
 //==============================================================================

@@ -38,7 +38,7 @@ MainRenderer::~MainRenderer()
 //==============================================================================
 void MainRenderer::init(const RendererInitializer& initializer_)
 {
-	ANKI_INFO("Initializing main renderer...");
+	ANKI_LOGI("Initializing main renderer...");
 	initGl();
 
 	sProg.load("shaders/Final.glsl");
@@ -57,7 +57,7 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	deformer.reset(new Deformer(*this));
-	ANKI_INFO("Main renderer initialized");
+	ANKI_LOGI("Main renderer initialized");
 }
 
 
@@ -77,7 +77,7 @@ void MainRenderer::initGl()
 	glGetError();
 
 	// print GL info
-	ANKI_INFO("OpenGL info: OGL " <<
+	ANKI_LOGI("OpenGL info: OGL " <<
 		reinterpret_cast<const char*>(glGetString(GL_VERSION)) <<
 		", GLSL " << reinterpret_cast<const char*>(
 			glGetString(GL_SHADING_LANGUAGE_VERSION)));
@@ -266,7 +266,7 @@ void MainRenderer::takeScreenshot(const char* filename)
 		throw ANKI_EXCEPTION("File \"" + filename +
 			"\": Unsupported extension");
 	}
-	//ANKI_INFO("Screenshot \"" << filename << "\" saved");
+	//ANKI_LOGI("Screenshot \"" << filename << "\" saved");
 }
 
 

@@ -236,7 +236,7 @@ void MeshLoader::createVertTangents()
 			(uvedge01.x() * uvedge02.y());
 		if(Math::isZero(det))
 		{
-			//ANKI_WARNING(getRsrcName() << ": det == " << fixed << det);
+			//ANKI_LOGW(getRsrcName() << ": det == " << fixed << det);
 			det = 0.0001;
 		}
 		else

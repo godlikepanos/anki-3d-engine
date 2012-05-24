@@ -91,8 +91,10 @@ ENDIF()
 #
 # Freetype
 #
-SET(FREETYPE_INCLUDE_DIR "/usr/include/freetype2" CACHE PATH "The directory that contains the Freetype headers")
-SET(FREETYPE_LIBRARY_DIR "/usr/lib" CACHE PATH "The directory that contains the libfreetype.so")
+SET(FREETYPE_INCLUDE_DIR "/usr/include/freetype2" 
+	CACHE PATH "The directory that contains the Freetype headers")
+SET(FREETYPE_LIBRARY_DIR "/usr/lib" 
+	CACHE PATH "The directory that contains the libfreetype.so")
 
 ANKI_ADD_LIB(${FREETYPE_INCLUDE_DIR} ${FREETYPE_LIBRARY_DIR} ${FREETYPE_INCLUDE_DIR}/freetype/freetype.h)
 
@@ -108,27 +110,37 @@ ANKI_ADD_LIB(${PYTHON_INCLUDE_DIR} ${PYTHON_LIBRARY_DIR} ${PYTHON_INCLUDE_DIR}/P
 #
 # Bullet (Because FIND_PACKAGE(Bullet) sucks)
 #
-SET(BULLET_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include/" CACHE PATH "The directory that contains the bullet directory with the header files")
-SET(BULLET_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH "The directory that contains the Bullet (static) libraries")
+SET(BULLET_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include/" CACHE PATH 
+	"The directory that contains the bullet directory with the header files")
+SET(BULLET_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH 
+	"The directory that contains the Bullet (static) libraries")
 
-ANKI_ADD_LIB(${BULLET_INCLUDE_DIR}/bullet ${BULLET_LIBRARY_DIR} ${BULLET_INCLUDE_DIR}/bullet/btBulletCollisionCommon.h)
+ANKI_ADD_LIB(${BULLET_INCLUDE_DIR}/bullet ${BULLET_LIBRARY_DIR} 
+	${BULLET_INCLUDE_DIR}/bullet/btBulletCollisionCommon.h)
 
 #
 # GLEW
 #
-SET(GLEW_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include" CACHE PATH "The directory that contains the GL directory with the header files")
-SET(GLEW_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH "The directory that contains the GLEW (static) libraries")
+SET(GLEW_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include" CACHE PATH 
+	"The directory that contains the GL directory with the header files")
+SET(GLEW_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH 
+	"The directory that contains the GLEW (static) libraries")
 
-ANKI_ADD_LIB(${GLEW_INCLUDE_DIR} ${GLEW_LIBRARY_DIR} ${GLEW_INCLUDE_DIR}/GL/glew.h)
+ANKI_ADD_LIB(${GLEW_INCLUDE_DIR} ${GLEW_LIBRARY_DIR} 
+	${GLEW_INCLUDE_DIR}/GL/glew.h)
 
 #
 # Defines & flags
 #
-ADD_DEFINITIONS("-DANKI_MATH_INTEL_SIMD -DGLEW_MX -Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall -Winline -W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long -msse4 -std=c++0x")
+ADD_DEFINITIONS(-DANKI_MATH_INTEL_SIMD -DGLEW_MX 
+	-Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall -Winline 
+	-W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long 
+	-msse4 -std=c++0x)
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	
-	# Do nothing
+	INCLUDE_DIRECTORIES("/opt/libcxx/include/c++/v1")
+	LINK_DIRECTORIES("/opt/libcxx/lib")
 ELSE()
 	# Dont use it. It produces warnings with -std=c++0x
 	#ADD_DEFINITIONS("-fsingle-precision-constant")
