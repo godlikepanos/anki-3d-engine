@@ -6,12 +6,9 @@
 #include "anki/resource/Resource.h"
 #include "anki/gl/Fbo.h"
 
-
 namespace anki {
 
-
 class ShaderProgramResource;
-
 
 /// Blurring rendering pass
 class Bl: public SwitchableRenderingPass
@@ -72,8 +69,6 @@ private:
 	void runSideBlur();
 };
 
-
 } // end namespace
-
 
 #endif

@@ -1,19 +1,14 @@
 #include "anki/event/EventManager.h"
-#include <boost/foreach.hpp>
-
 
 namespace anki {
 
-
-//==============================================================================
-// updateAllEvents                                                             =
 //==============================================================================
 void EventManager::updateAllEvents(float prevUpdateTime_, float crntTime_)
 {
 	prevUpdateTime = prevUpdateTime_;
 	crntTime = crntTime_;
 
-	BOOST_FOREACH(Event& event, events)
+	for(Event& event : events)
 	{
 		if(!event.isDead(crntTime))
 		{
@@ -22,12 +17,9 @@ void EventManager::updateAllEvents(float prevUpdateTime_, float crntTime_)
 	}
 }
 
-
 //==============================================================================
-// findADeadEvent                                                              =
-//==============================================================================
-EventManager::EventsContainer::iterator EventManager::findADeadEvent(
-	EventType type)
+EventManager::EventsContainer::iterator EventManager::
+	findADeadEvent(Event::EventType type)
 {
 	EventsContainer::iterator it = events.begin();
 
@@ -42,6 +34,5 @@ EventManager::EventsContainer::iterator EventManager::findADeadEvent(
 
 	return it;
 }
-
 
 } // end namespace

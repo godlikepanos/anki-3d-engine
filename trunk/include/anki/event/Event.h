@@ -1,25 +1,21 @@
 #ifndef ANKI_EVENT_EVENT_H
 #define ANKI_EVENT_EVENT_H
 
-#include "anki/util/StdTypes.h"
-
-
 namespace anki {
 
-
-/// The event type enum
-enum EventType
-{
-	SCENE_COLOR,
-	MAIN_RENDERER_PPS_HDR,
-	EVENT_TYPES_NUM
-};
-
-
 /// Abstract class for all events. All Event derived classes should be copy-able
+/// In order to recycle the events and save the mallocs
 class Event
 {
 public:
+	/// The event type enum
+	enum EventType
+	{
+		ET_SCENE_COLOR,
+		ET_MAIN_RENDERER_PPS_HDR,
+		ET_COUNT
+	};
+
 	/// Constructor
 	Event(EventType type, float startTime, float duration);
 
@@ -80,8 +76,6 @@ private:
 	float duration; ///< The duration of the event
 };
 
-
 } // end namespace
-
 
 #endif

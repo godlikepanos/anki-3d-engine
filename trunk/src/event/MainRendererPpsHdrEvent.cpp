@@ -2,19 +2,15 @@
 #include "anki/renderer/MainRenderer.h"
 #include "anki/core/Globals.h"
 
-
 namespace anki {
 
-
-//==============================================================================
-// Constructor                                                                 =
 //==============================================================================
 MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	float duration,
 	float exposure_,
 	uint blurringIterationsNum_,
 	float blurringDist_)
-	: Event(MAIN_RENDERER_PPS_HDR, startTime, duration)
+	: Event(ET_MAIN_RENDERER_PPS_HDR, startTime, duration)
 {
 	finalData.exposure = exposure_;
 	finalData.blurringIterationsNum = blurringIterationsNum_;
@@ -27,20 +23,14 @@ MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	originalData.blurringDist = hdr.getBlurringDistance();
 }
 
-
-//==============================================================================
-// Copy constructor                                                            =
 //==============================================================================
 MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(
 	const MainRendererPpsHdrEvent& b)
-	: Event(MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
+	: Event(ET_MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
 {
 	*this = b;
 }
 
-
-//==============================================================================
-// operator=                                                                   =
 //==============================================================================
 MainRendererPpsHdrEvent& MainRendererPpsHdrEvent::operator=(
 	const MainRendererPpsHdrEvent& b)
@@ -51,9 +41,6 @@ MainRendererPpsHdrEvent& MainRendererPpsHdrEvent::operator=(
 	return *this;
 }
 
-
-//==============================================================================
-// updateSp                                                                    =
 //==============================================================================
 void MainRendererPpsHdrEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 {
@@ -71,6 +58,5 @@ void MainRendererPpsHdrEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 	hdr.setBlurringDistance(interpolate(originalData.blurringDist,
 		finalData.blurringDist, dp));
 }
-
 
 } // end namespace
