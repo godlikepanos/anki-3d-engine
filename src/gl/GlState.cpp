@@ -66,10 +66,10 @@ void GlState::sync()
 }
 
 //==============================================================================
-void GlState::setViewport(uint x, uint y, uint w, uint h)
+void GlState::setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
-	if(x != (uint)viewportX || y != (uint)viewportY 
-		|| w != (uint)viewportW || h != (uint)viewportH)
+	if(x != (uint32_t)viewportX || y != (uint32_t)viewportY 
+		|| w != (uint32_t)viewportW || h != (uint32_t)viewportH)
 	{
 		glViewport(x, y, w, h);
 		viewportX = x;

@@ -2,9 +2,7 @@
 #include "anki/scene/Property.h"
 #include <boost/foreach.hpp>
 
-
 namespace anki {
-
 
 //==============================================================================
 Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
@@ -16,7 +14,6 @@ Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
 		new ReadPointerProperty<Transform>("worldTransform", &wTrf));
 }
 
-
 //==============================================================================
 void Movable::update()
 {
@@ -25,7 +22,6 @@ void Movable::update()
 		updateWorldTransform();
 	}
 }
-
 
 //==============================================================================
 void Movable::updateWorldTransform()
@@ -65,6 +61,5 @@ void Movable::updateWorldTransform()
 		child->updateWorldTransform();
 	}
 }
-
 
 } // namespace anki

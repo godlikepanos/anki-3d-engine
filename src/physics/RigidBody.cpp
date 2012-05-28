@@ -3,34 +3,17 @@
 #include "anki/scene/Scene.h"
 #include "anki/physics/MotionState.h"
 
-
 namespace anki {
 
-
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-RigidBody::Initializer::Initializer():
-	mass(0.0),
-	startTrf(Transform::getIdentity()),
-	shape(NULL),
-	sceneNode(NULL),
-	group(-1),
-	mask(-1)
-{}
-
-
-//==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-RigidBody::RigidBody(PhysWorld& masterContainer_,
+RigidBody::RigidBody(PhysWorld* masterContainer_,
 	const Initializer& init)
-:	btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, NULL, NULL,
-		btVector3(0.0, 0.0, 0.0))), // dummy init
-	masterContainer(masterContainer_)
+	: btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
+		nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
+		masterContainer(masterContainer_)
 {
-	ANKI_ASSERT(init.shape != NULL &&
-		init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
+	ANKI_ASSERT(init.shape != nullptr 
+		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
 	bool isDynamic = (init.mass != 0.0);
 
@@ -44,7 +27,7 @@ RigidBody::RigidBody(PhysWorld& masterContainer_,
 		localInertia = btVector3(0.0, 0.0, 0.0);
 	}
 
-	motionState.reset(new MotionState(init.startTrf, init.sceneNode));
+	motionState.reset(new MotionState(init.startTrf, init.movable));
 
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass,
 		motionState.get(), init.shape, localInertia);
@@ -52,30 +35,26 @@ RigidBody::RigidBody(PhysWorld& masterContainer_,
 	setupRigidBody(cInfo);
 
 	setContactProcessingThreshold(
-		masterContainer.defaultContactProcessingThreshold);
+		masterContainer->defaultContactProcessingThreshold);
 
 	forceActivationState(ISLAND_SLEEPING);
 
 	// register
 	if(init.mask == -1 || init.group == -1)
 	{
-		masterContainer.dynamicsWorld->addRigidBody(this);
+		masterContainer->dynamicsWorld->addRigidBody(this);
 	}
 	else
 	{
-		masterContainer.dynamicsWorld->addRigidBody(this, init.group,
+		masterContainer->dynamicsWorld->addRigidBody(this, init.group,
 			init.mask);
 	}
 }
 
-
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 RigidBody::~RigidBody()
 {
-	masterContainer.dynamicsWorld->removeRigidBody(this);
+	masterContainer->dynamicsWorld->removeRigidBody(this);
 }
-
 
 } // end namespace

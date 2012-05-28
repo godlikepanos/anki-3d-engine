@@ -4,12 +4,9 @@
 #include "anki/util/Object.h"
 #include "anki/math/Math.h"
 
-
 namespace anki {
 
-
 class PropertyMap;
-
 
 /// @addtogroup Scene
 /// @{
@@ -40,6 +37,10 @@ public:
 	/// @name Accessors
 	/// @{
 	const Transform& getLocalTransform() const
+	{
+		return lTrf;
+	}
+	Transform& getLocalTransform()
 	{
 		return lTrf;
 	}
@@ -157,8 +158,6 @@ protected:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif

@@ -23,7 +23,7 @@ ShaderProgramVariable::ShaderProgramVariable(
 {
 	name.shrink_to_fit();
 	ANKI_ASSERT(loc == 
-		getUniformLocation(fatherSProg->getGlId(), name.c_str()));
+		glGetUniformLocation(fatherSProg->getGlId(), name.c_str()));
 }
 
 //==============================================================================
