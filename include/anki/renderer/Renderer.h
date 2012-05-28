@@ -14,7 +14,7 @@
 #include "anki/renderer/Bs.h"
 #include "anki/renderer/Dbg.h"
 #include "anki/gl/GlException.h"
-#include "anki/gl/GlStateMachine.h"
+#include "anki/gl/GlState.h"
 #include "anki/gl/Query.h"
 #include "anki/renderer/Drawer.h"
 #include <boost/scoped_ptr.hpp>

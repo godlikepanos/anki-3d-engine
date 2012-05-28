@@ -2,10 +2,9 @@
 #define ANKI_EVENT_MAIN_RENDERER_PPS_HDR_EVENT_H
 
 #include "anki/event/Event.h"
-
+#include <cstdint>
 
 namespace anki {
-
 
 /// Change the HDR properties
 class MainRendererPpsHdrEvent: public Event
@@ -13,7 +12,7 @@ class MainRendererPpsHdrEvent: public Event
 public:
 	/// Constructor
 	MainRendererPpsHdrEvent(float startTime, float duration,
-		float exposure, uint blurringIterationsNum, float blurringDist);
+		float exposure, uint32_t blurringIterationsNum, float blurringDist);
 
 	/// Copy constructor
 	MainRendererPpsHdrEvent(const MainRendererPpsHdrEvent& b);
@@ -25,7 +24,7 @@ private:
 	struct Data
 	{
 		float exposure; ///< @see Hdr::exposure
-		uint blurringIterationsNum; ///< @see Hdr::blurringIterationsNum
+		uint32_t blurringIterationsNum; ///< @see Hdr::blurringIterationsNum
 		float blurringDist; ///< @see Hdr::blurringDist
 	};
 
@@ -36,8 +35,6 @@ private:
 	void updateSp(float prevUpdateTime, float crntTime);
 };
 
-
 } // end namespace
-
 
 #endif

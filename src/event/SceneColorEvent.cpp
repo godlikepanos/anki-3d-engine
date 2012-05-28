@@ -3,33 +3,23 @@
 #include "anki/core/Globals.h"
 #include "anki/core/Logger.h"
 
-
 namespace anki {
 
-
-//==============================================================================
-// Constructor                                                                 =
 //==============================================================================
 SceneColorEvent::SceneColorEvent(float startTime, float duration,
 	const Vec3& finalColor_)
-	: Event(SCENE_COLOR, startTime, duration), finalColor(finalColor_)
+	: Event(ET_SCENE_COLOR, startTime, duration), finalColor(finalColor_)
 {
 	originalColor = SceneSingleton::get().getAmbientColor();
 }
 
-
-//==============================================================================
-// Constructor copy                                                            =
 //==============================================================================
 SceneColorEvent::SceneColorEvent(const SceneColorEvent& b)
-	: Event(SCENE_COLOR, 0.0, 0.0)
+	: Event(ET_SCENE_COLOR, 0.0, 0.0)
 {
 	*this = b;
 }
 
-
-//==============================================================================
-// operator=                                                                   =
 //==============================================================================
 SceneColorEvent& SceneColorEvent::operator=(const SceneColorEvent& b)
 {
@@ -39,9 +29,6 @@ SceneColorEvent& SceneColorEvent::operator=(const SceneColorEvent& b)
 	return *this;
 }
 
-
-//==============================================================================
-// updateSp                                                                    =
 //==============================================================================
 void SceneColorEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 {

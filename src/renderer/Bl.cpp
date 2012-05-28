@@ -3,9 +3,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 void Bl::init(const RendererInitializer& initializer)
@@ -77,7 +75,6 @@ void Bl::init(const RendererInitializer& initializer)
 	sideBlurSProg.load("shaders/PpsSideBlur.glsl");
 }
 
-
 //==============================================================================
 void Bl::runSideBlur()
 {
@@ -98,7 +95,6 @@ void Bl::runSideBlur()
 
 	r->drawQuad();
 }
-
 
 //==============================================================================
 void Bl::runBlur()
@@ -134,7 +130,6 @@ void Bl::runBlur()
 	}
 }
 
-
 //==============================================================================
 void Bl::run()
 {
@@ -146,6 +141,5 @@ void Bl::run()
 	runSideBlur();
 	runBlur();
 }
-
 
 } // end namespace

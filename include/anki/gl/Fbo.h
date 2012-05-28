@@ -14,10 +14,8 @@ class Texture;
 /// @addtogroup gl
 /// @{
 
-/// Frame buffer object
-///
-/// The class is actually a wrapper to avoid common mistakes. It only supports
-/// binding at both draw and read targets
+/// Frame buffer object. The class is actually a wrapper to avoid common 
+/// mistakes. It only supports binding at both draw and read targets
 class Fbo
 {
 public:

@@ -4,9 +4,7 @@
 #include "anki/event/Event.h"
 #include "anki/math/Math.h"
 
-
 namespace anki {
-
 
 /// Change the scene color
 class SceneColorEvent: public Event
@@ -30,8 +28,6 @@ private:
 	void updateSp(float prevUpdateTime, float crntTime);
 };
 
-
 } // end namespace
-
 
 #endif
