@@ -30,7 +30,7 @@ public:
 	}
 	bool isEnabled(GLenum flag);
 
-	void setViewport(uint x, uint y, uint w, uint h);
+	void setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 	/// @}
 
 private:

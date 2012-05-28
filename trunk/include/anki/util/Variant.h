@@ -6,11 +6,7 @@
 #include <iosfwd>
 #include <memory>
 
-#error "The file is experimental. Dont include"
-
-
 namespace anki {
-
 
 // Forwards
 template<typename Data, typename VariantBase>
@@ -19,17 +15,16 @@ class VariantDerived;
 template<typename... Types>
 class VariantBase;
 
-
 /// The variant base class
 template<typename... Types>
 class VariantBase:
 	public Visitable<VariantDerived<Types, VariantBase<Types...>>...>
 {
 public:
-	typedef Visitable<VariantDerived<Types, VariantBase<Types...>>...> BaseType;
-	typedef VariantBase<Types...> SelfType;
-	typedef typename BaseType::ConstVisitorType ConstVisitorType;
-	typedef typename BaseType::MutableVisitorType MutableVisitorType;
+	typedef Visitable<VariantDerived<Types, VariantBase<Types...>>...> Base;
+	typedef VariantBase<Types...> Self;
+	typedef typename BaseType::ConstVisitor ConstVisitor;
+	typedef typename BaseType::MutableVisitor MutableVisitor;
 
 	static const int TEMPLATE_PARAMETERS_NUM = sizeof...(Types);
 
@@ -77,7 +72,7 @@ public:
 	/// Print
 	friend std::ostream& operator<<(std::ostream& s, const SelfType& x)
 	{
-		PrintVisitorType v(s);
+		PrintVisitor v(s);
 		x.accept(v);
 		return s;
 	}
@@ -117,7 +112,7 @@ private:
 		}
 	};
 
-	typedef PrintVisitor<VariantDerived<Types, SelfType>...> PrintVisitorType;
+	using PrintVisitor = PrintVisitor<VariantDerived<Types, SelfType>...>;
 
 	uint typeId; ///< type ID
 
@@ -134,10 +129,8 @@ private:
 	}
 };
 
-
-/// VariantDerived template class
-///
-/// Using the @a TData and the @a TVariantBase it constructs a variant class
+/// VariantDerived template class. Using the @a TData and the @a TVariantBase 
+/// it constructs a variant class
 template<typename TData, typename TVariantBase>
 class VariantDerived: public TVariantBase
 {
@@ -227,7 +220,6 @@ public:
 private:
 	DataType data; ///< The data
 };
-
 
 /// XXX
 /// @note It is no possible to have default constructor because we cannot have
@@ -346,8 +338,6 @@ private:
 	std::unique_ptr<VariantBaseType> ptr;
 };
 
-
 } // end namespace
-
 
 #endif

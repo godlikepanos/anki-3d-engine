@@ -9,38 +9,39 @@
 #include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <bullet/BulletDynamics/Character/btKinematicCharacterController.h>
 
-
 namespace anki {
 
+//==============================================================================
+// Character::Initializer                                                      = 
+//==============================================================================
 
 //==============================================================================
-// Contructor                                                                  =
-//==============================================================================
-inline Character::Initializer::Initializer():
-	characterHeight(2.0),
-	characterWidth(0.75),
-	stepHeight(1.0),
-	jumpSpeed(10.0),
-	maxJumpHeight(0.0),
-	sceneNode(NULL),
-	startTrf(Transform::getIdentity())
+inline Character::Initializer::Initializer()
+	: characterHeight(2.0),
+		characterWidth(0.75),
+		stepHeight(1.0),
+		jumpSpeed(10.0),
+		maxJumpHeight(0.0),
+		movable(nullptr),
+		startTrf(Transform::getIdentity())
 {}
 
+//==============================================================================
+// Character                                                                   = 
+//==============================================================================
 
 //==============================================================================
-// Contructor                                                                  =
-//==============================================================================
-Character::Character(PhysWorld& masterContainer_,
+Character::Character(PhysWorld* masterContainer_,
 	const Initializer& init)
-:	masterContainer(masterContainer_)
+	: masterContainer(masterContainer_)
 {
 	ghostObject = new btPairCachingGhostObject();
 
-	motionState = new MotionState(init.startTrf, init.sceneNode);
+	motionState.reset(new MotionState(init.startTrf, init.movable));
 
 	btAxisSweep3* sweepBp =
-		dynamic_cast<btAxisSweep3*>(masterContainer.broadphase);
-	ANKI_ASSERT(sweepBp != NULL);
+		dynamic_cast<btAxisSweep3*>(masterContainer->broadphase);
+	ANKI_ASSERT(sweepBp != nullptr);
 
 	ghostPairCallback = new btGhostPairCallback();
 	sweepBp->getOverlappingPairCache()->setInternalGhostPairCallback(
@@ -61,26 +62,23 @@ Character::Character(PhysWorld& masterContainer_,
 	character->setMaxJumpHeight(init.maxJumpHeight);
 
 	// register
-	masterContainer.dynamicsWorld->addCollisionObject(ghostObject,
+	masterContainer->dynamicsWorld->addCollisionObject(ghostObject,
 		btBroadphaseProxy::CharacterFilter,
 		btBroadphaseProxy::StaticFilter|btBroadphaseProxy::DefaultFilter);
 
-	masterContainer.dynamicsWorld->addAction(character);
+	masterContainer->dynamicsWorld->addAction(character);
 
-	masterContainer.characters.push_back(this);
+	masterContainer->characters.push_back(this);
 }
 
-
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 Character::~Character()
 {
-	masterContainer.characters.erase(std::find(
-		masterContainer.characters.begin(),
-		masterContainer.characters.end(), this));
-	masterContainer.dynamicsWorld->removeAction(character);
-	masterContainer.dynamicsWorld->removeCollisionObject(ghostObject);
+	masterContainer->characters.erase(std::find(
+		masterContainer->characters.begin(),
+		masterContainer->characters.end(), this));
+	masterContainer->dynamicsWorld->removeAction(character);
+	masterContainer->dynamicsWorld->removeCollisionObject(ghostObject);
 
 	delete character;
 	delete convexShape;
@@ -88,9 +86,6 @@ Character::~Character()
 	delete ghostObject;
 }
 
-
-//==============================================================================
-// rotate                                                                      =
 //==============================================================================
 void Character::rotate(float angle)
 {
@@ -99,9 +94,6 @@ void Character::rotate(float angle)
 	ghostObject->getWorldTransform().setBasis(rot);
 }
 
-
-//==============================================================================
-// moveForward                                                                 =
 //==============================================================================
 void Character::moveForward(float distance)
 {
@@ -110,14 +102,10 @@ void Character::moveForward(float distance)
 	character->setWalkDirection(forward * distance);
 }
 
-
-//==============================================================================
-// jump                                                                        =
 //==============================================================================
 void Character::jump()
 {
 	character->jump();
 }
-
 
 } // end namespace

@@ -4,18 +4,18 @@
 #ifndef ANKI_UTIL_VISITOR_H
 #define ANKI_UTIL_VISITOR_H
 
-#error "The file is experimental. Dont include"
-
-
 namespace anki {
 
+/// @addtogroup util
+/// @{
 
+//==============================================================================
+// ConstVisitor                                                                =
 //==============================================================================
 
 // Forward declaration
 template<typename... Types>
 struct ConstVisitor;
-
 
 // Specialized for one and many
 template<typename First, typename... Types>
@@ -25,7 +25,6 @@ struct ConstVisitor<First, Types...>: ConstVisitor<Types...>
 	virtual void visit(const First&) = 0;
 };
 
-
 // Specialized for one
 template<typename First>
 struct ConstVisitor<First>
@@ -33,13 +32,13 @@ struct ConstVisitor<First>
 	virtual void visit(const First&) = 0;
 };
 
-
+//==============================================================================
+// MutableVisitor                                                              =
 //==============================================================================
 
 // Forward declaration
 template<typename... Types>
 struct MutableVisitor;
-
 
 // Specialized for one and many
 template<typename First, typename... Types>
@@ -49,7 +48,6 @@ struct MutableVisitor<First, Types...>: MutableVisitor<Types...>
 	virtual void visit(First&) = 0;
 };
 
-
 // Specialized for one
 template<typename First>
 struct MutableVisitor<First>
@@ -57,7 +55,8 @@ struct MutableVisitor<First>
 	virtual void visit(First&) = 0;
 };
 
-
+//==============================================================================
+// GetTypeIdVisitor                                                            =
 //==============================================================================
 
 /// Visitor for getting the type id
@@ -95,7 +94,8 @@ struct GetTypeIdVisitor
 	typedef Helper<Types...> Type;
 };
 
-
+//==============================================================================
+// DummyVisitor                                                                =
 //==============================================================================
 
 /// Implements the visit() function. The new visit() does nothing
@@ -125,13 +125,13 @@ struct DummyVisitor
 	typedef Helper<Types...> Type;
 };
 
-
+//==============================================================================
+// GetVisitableId                                                              =
 //==============================================================================
 
 // Forward
 template<typename Type, typename... Types>
 struct GetVisitableId;
-
 
 /// A smart struct that given a @a Type and a list of types defines a const
 /// integer indicating the @a Type's position from the back of the list. The
@@ -145,7 +145,6 @@ template<typename Type, typename First, typename... Types>
 struct GetVisitableId<Type, First, Types...>: GetVisitableId<Type, Types...>
 {};
 
-
 // Specialized
 template<typename Type, typename... Types>
 struct GetVisitableId<Type, Type, Types...>
@@ -153,22 +152,23 @@ struct GetVisitableId<Type, Type, Types...>
 	static const int ID = sizeof...(Types);
 };
 
-
+//==============================================================================
+// Visitable                                                                   =
 //==============================================================================
 
 /// Visitable class
 template<typename... Types>
 struct Visitable
 {
-	typedef MutableVisitor<Types...> MutableVisitorType;
-	typedef ConstVisitor<Types...> ConstVisitorType;
-	typedef typename GetTypeIdVisitor<Types...>::Type GetTypeIdVisitorType;
-	typedef typename DummyVisitor<Types...>::Type DummyVisitorType;
+	using MutableVisitor = MutableVisitor<Types...>;
+	using ConstVisitor = ConstVisitor<Types...>;
+	using GetTypeIdVisitor = typename GetTypeIdVisitor<Types...>::Type;
+	using DummyVisitor = typename DummyVisitor<Types...>::Type;
 
 	/// Visitor accept
-	virtual void accept(MutableVisitorType& v) = 0;
+	virtual void accept(MutableVisitor& v) = 0;
 	/// Visitor accept
-	virtual void accept(ConstVisitorType& v) const = 0;
+	virtual void accept(ConstVisitor& v) const = 0;
 
 	/// Using the GetVisitableId get the id of the @a T
 	template<typename T>
@@ -177,9 +177,8 @@ struct Visitable
 		return sizeof...(Types) - GetVisitableId<T, Types...>::ID - 1;
 	}
 };
-
+/// @}
 
 } // end namespace
-
 
 #endif
