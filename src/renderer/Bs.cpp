@@ -2,14 +2,11 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Bs::~Bs()
 {}
-
 
 //==============================================================================
 void Bs::createFbo()
@@ -31,7 +28,6 @@ void Bs::createFbo()
 		throw ANKI_EXCEPTION("Failed to create blending stage FBO") << e;
 	}
 }
-
 
 //==============================================================================
 void Bs::createRefractFbo()
@@ -55,7 +51,6 @@ void Bs::createRefractFbo()
 	}
 }
 
-
 //==============================================================================
 void Bs::init(const RendererInitializer& /*initializer*/)
 {
@@ -66,12 +61,10 @@ void Bs::init(const RendererInitializer& /*initializer*/)
 	refractSProg.load("shaders/BsRefract.glsl");
 }
 
-
 //==============================================================================
 void Bs::run()
 {
-	/// @todo
+	/// XXX
 }
-
 
 } // end namespace

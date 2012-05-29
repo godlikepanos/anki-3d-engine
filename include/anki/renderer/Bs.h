@@ -3,18 +3,12 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
+#include "anki/gl/Texture.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/TextureResource.h"
-
 
 namespace anki {
 
-
-class ShaderProgram;
-
-
-/// Blending stage.
-/// The objects that blend must be handled differently
+/// Blending stage. The objects that blend must be handled differently
 class Bs: public RenderingPass
 {
 public:
@@ -37,8 +31,6 @@ private:
 	void createRefractFbo();
 };
 
-
 } // end namespace
-
 
 #endif

@@ -19,17 +19,30 @@ namespace anki {
 class ShaderProgram;
 class ShaderProgramUniformVariable;
 
+/// XXX
+enum MaterialVariableDataType
+{
+	MVDT_FLOAT,
+	MVDT_VEC2,
+	MVDT_VEC3,
+	MVDT_VEC4,
+	MVDT_MAT3,
+	MVDT_MAT4,
+	MVDT_TEXTURE,
+	MVDT_COUNT
+};
+
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
-class MaterialVariable
+class MaterialVariable: public 
+	Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer>
 {
 public:
-	/// The data union (limited to a few types at the moment)
-	typedef boost::variant<float, Vec2, Vec3, Vec4, Mat3,
-		Mat4, TextureResourcePointer> Variant;
+	typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, 
+		TextureResourcePointer> Base;
 
 	/// Given a pair of pass and level it returns a pointer to a
-	/// shader program uniform variable. The pointer may be null
+	/// shader program uniform variable. The pointer may be nullptr
 	typedef PassLevelHashMap<ShaderProgramUniformVariable*>::Type
 		PassLevelToShaderProgramUniformVariableHashMap;
 
@@ -39,16 +52,14 @@ public:
 
 	/// @name Constructors & destructor
 	/// @{
-	template<typename Type>
 	MaterialVariable(
-		const char* shaderProgVarName,
+		char* shaderProgVarName,
 		const PassLevelToShaderProgramHashMap& sProgs,
-		const Type& val,
-		bool init_)
-		: initialized(init_)
+		bool init_,
+		MaterialVariableDataType type_)
+		: type(type_), initialized(init_)
 	{
 		init(shaderProgVarName, sProgs);
-		data = val;
 	}
 
 	~MaterialVariable();
@@ -67,21 +78,13 @@ public:
 		return boost::get<T>(data);
 	}
 
-	/// Given a key return the uniform
-	ShaderProgramUniformVariable& getShaderProgramUniformVariable(
+	/// Given a key return the uniform. If the uniform is not present in the
+	/// LOD pass key then returns nullptr
+	ShaderProgramUniformVariable* findShaderProgramUniformVariable(
 		const PassLevelKey& key)
 	{
-		ANKI_ASSERT(inPass(key));
 		ShaderProgramUniformVariable* var = sProgVars.at(key);
-		ANKI_ASSERT(var != nullptr);
-		return *var;
-	}
-
-	/// Check if the shader program of the given pass and level needs
-	/// contains this variable or not
-	bool inPass(const PassLevelKey& key) const
-	{
-		return sProgVars.find(key) != sProgVars.end();
+		return var;
 	}
 
 	/// Get the GL data type of all the shader program variables
@@ -97,10 +100,13 @@ public:
 	/// @}
 
 private:
-	/// If not initialized then the renderer should set the value
+	MaterialVariableDataType type;
+
+	/// If not initialized then there is no value given in the XML so it is
+	/// probably build in and the renderer should set the value on the shader
+	/// program setup
 	bool initialized;
 	PassLevelToShaderProgramUniformVariableHashMap sProgVars;
-	Variant data;
 
 	/// Keep one ShaderProgramVariable here for easy access of the common
 	/// variable stuff like name or GL data type etc
@@ -109,6 +115,26 @@ private:
 	/// Common constructor code
 	void init(const char* shaderProgVarName,
 		const PassLevelToShaderProgramHashMap& shaderProgsArr);
+};
+
+/// XXX
+template<typename Data>
+class MaterialVariableTemplate: public MaterialVariable
+{
+public:
+	MaterialVariableTemplate(
+		char* shaderProgVarName,
+		const PassLevelToShaderProgramHashMap& sProgs,
+		const Data& val,
+		bool init_)
+		: MaterialVariable(shaderProgVarName, sProgs, data, init_,
+			MaterialVariable::Base::getTypeId<Data>())
+	{
+		data = val;
+	}
+
+private:
+	Data data;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of
