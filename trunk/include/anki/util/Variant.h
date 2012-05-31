@@ -135,11 +135,11 @@ template<typename TData, typename TVariantBase>
 class VariantDerived: public TVariantBase
 {
 public:
-	typedef TData DataType;
-	typedef TVariantBase BaseType;
-	typedef VariantDerived<DataType, BaseType> SelfType;
-	typedef typename BaseType::ConstVisitorType ConstVisitorType;
-	typedef typename BaseType::MutableVisitorType MutableVisitorType;
+	typedef TData Data;
+	typedef TVariantBase Base;
+	typedef VariantDerived<DataType, BaseType> Self;
+	typedef typename BaseType::ConstVisitor ConstVisitor;
+	typedef typename BaseType::MutableVisitor MutableVisitor;
 
 	static const int TYPE_ID =
 		BaseType::BaseType::template getTypeId<SelfType>();

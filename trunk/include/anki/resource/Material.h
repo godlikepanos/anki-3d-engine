@@ -6,7 +6,8 @@
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/StringList.h"
 #include "anki/math/Math.h"
-#include <GL/glew.h>
+#include "anki/util/Visitor.h"
+#include "anki/gl/gl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -19,27 +20,20 @@ namespace anki {
 class ShaderProgram;
 class ShaderProgramUniformVariable;
 
-/// XXX
-enum MaterialVariableDataType
-{
-	MVDT_FLOAT,
-	MVDT_VEC2,
-	MVDT_VEC3,
-	MVDT_VEC4,
-	MVDT_MAT3,
-	MVDT_MAT4,
-	MVDT_TEXTURE,
-	MVDT_COUNT
-};
+/// Material variable base. Its a visitable
+typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
+	MateriaVariableBase;
+
+// Forward
+template<typename T>
+class MaterialVariableTemplate;
 
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
-class MaterialVariable: public 
-	Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer>
+class MaterialVariable: public MateriaVariableBase
 {
 public:
-	typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, 
-		TextureResourcePointer> Base;
+	typedef MateriaVariableBase Base;
 
 	/// Given a pair of pass and level it returns a pointer to a
 	/// shader program uniform variable. The pointer may be nullptr
@@ -53,29 +47,32 @@ public:
 	/// @name Constructors & destructor
 	/// @{
 	MaterialVariable(
-		char* shaderProgVarName,
+		const char* shaderProgVarName,
 		const PassLevelToShaderProgramHashMap& sProgs,
 		bool init_,
-		MaterialVariableDataType type_)
+		uint8_t type_)
 		: type(type_), initialized(init_)
 	{
 		init(shaderProgVarName, sProgs);
 	}
 
-	~MaterialVariable();
+	virtual ~MaterialVariable();
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	const Variant& getVariant() const
-	{
-		return data;
-	}
-
 	template<typename T>
 	const T& getValue() const
 	{
-		return boost::get<T>(data);
+		ANKI_ASSERT(Base::getTypeId<T>() == type);
+		return static_cast<const MaterialVariableTemplate<T>*>(this)->get();
+	}
+
+	template<typename T>
+	void setValue(const T& x)
+	{
+		ANKI_ASSERT(Base::getTypeId<T>() == type);
+		static_cast<MaterialVariableTemplate<T>*>(this)->set(x);
 	}
 
 	/// Given a key return the uniform. If the uniform is not present in the
@@ -100,7 +97,7 @@ public:
 	/// @}
 
 private:
-	MaterialVariableDataType type;
+	uint8_t type; ///< Type id
 
 	/// If not initialized then there is no value given in the XML so it is
 	/// probably build in and the renderer should set the value on the shader
@@ -122,16 +119,35 @@ template<typename Data>
 class MaterialVariableTemplate: public MaterialVariable
 {
 public:
+	/// @name Constructors/Destructor
+	/// @{
 	MaterialVariableTemplate(
-		char* shaderProgVarName,
+		const char* shaderProgVarName,
 		const PassLevelToShaderProgramHashMap& sProgs,
 		const Data& val,
 		bool init_)
-		: MaterialVariable(shaderProgVarName, sProgs, data, init_,
+		: MaterialVariable(shaderProgVarName, sProgs, init_,
 			MaterialVariable::Base::getTypeId<Data>())
 	{
 		data = val;
 	}
+
+	~MaterialVariableTemplate()
+	{}
+	/// @}
+
+	/// @name Accessors
+	/// @{
+	const Data& get() const;
+	{
+		return data;
+	}
+
+	void set(const Data& x)
+	{
+		data = x;
+	}
+	/// @}
 
 private:
 	Data data;
