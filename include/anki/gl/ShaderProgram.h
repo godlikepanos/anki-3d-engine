@@ -6,8 +6,8 @@
 #include "anki/math/Forward.h"
 #include "anki/core/Globals.h"
 #include "anki/util/Flags.h"
+#include "anki/gl/Gl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <GL/glew.h>
 #include <vector>
 #include <string>
 

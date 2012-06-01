@@ -1,8 +1,8 @@
 #ifndef ANKI_GL_QUERY_H
 #define ANKI_GL_QUERY_H
 
+#include "anki/gl/Gl.h"
 #include <cstdint>
-#include <GL/glew.h>
 
 namespace anki {
 

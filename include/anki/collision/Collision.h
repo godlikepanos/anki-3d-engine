@@ -9,5 +9,4 @@
 #include "anki/collision/Frustum.h"
 #include "anki/collision/Aabb.h"
 
-
 #endif
