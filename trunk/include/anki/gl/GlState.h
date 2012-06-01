@@ -2,7 +2,7 @@
 #define ANKI_GL_GL_STATE_H
 
 #include "anki/util/Singleton.h"
-#include <GL/glew.h>
+#include "anki/gl/Gl.h"
 #include <unordered_map>
 
 namespace anki {

@@ -3,8 +3,8 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Singleton.h"
+#include "anki/gl/Gl.h"
 #include <cstdlib>
-#include <GL/glew.h>
 #include <vector>
 #include <limits>
 #include <thread>

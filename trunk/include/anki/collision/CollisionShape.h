@@ -4,9 +4,7 @@
 #include "anki/collision/Forward.h"
 #include "anki/math/Forward.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Collision
 /// @{
@@ -98,8 +96,6 @@ private:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif

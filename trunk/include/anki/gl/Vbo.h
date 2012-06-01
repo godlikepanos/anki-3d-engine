@@ -3,9 +3,7 @@
 
 #include "anki/gl/BufferObject.h"
 
-
 namespace anki {
-
 
 /// This is a wrapper for Vertex Buffer Objects to prevent us from making
 /// idiotic errors
@@ -43,8 +41,6 @@ public:
 	}
 };
 
-
 } // end namespace
-
 
 #endif

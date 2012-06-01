@@ -35,6 +35,7 @@ void BufferObject::create(GLenum target_, uint32_t sizeInBytes_,
 	sizeInBytes = sizeInBytes_;
 
 	glGenBuffers(1, &glId);
+	// XXX Check if zero
 	bind();
 	glBufferData(target, sizeInBytes, dataPtr, usage);
 

@@ -3,7 +3,7 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
-#include <GL/glew.h>
+#include "anki/gl/Gl.h"
 #include <array>
 #include <initializer_list>
 
