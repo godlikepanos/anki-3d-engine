@@ -7,10 +7,7 @@
 #include "anki/resource/TextureResource.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/assign/list_of.hpp>
-#include <boost/functional/hash.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
+#include <functional>
 #include <algorithm>
 
 namespace anki {
@@ -37,12 +34,12 @@ const std::string& MaterialVariable::getName() const
 
 //==============================================================================
 void MaterialVariable::init(const char* shaderProgVarName,
-	const PassLevelToShaderProgramHashMap& sProgs)
+	PassLevelToShaderProgramHashMap& sProgs)
 {
 	oneSProgVar = NULL;
 
 	// For all programs
-	PassLevelToShaderProgramHashMap::const_iterator it = sProgs.begin();
+	PassLevelToShaderProgramHashMap::iterator it = sProgs.begin();
 	for(; it != sProgs.end(); ++it)
 	{
 		const ShaderProgram& sProg = *(it->second);
@@ -84,27 +81,6 @@ void MaterialVariable::init(const char* shaderProgVarName,
 //==============================================================================
 // Material                                                                    =
 //==============================================================================
-
-//==============================================================================
-
-// Dont make idiotic mistakes
-#define TXT_AND_ENUM(x) \
-	(#x, x)
-
-ConstCharPtrHashMap<GLenum>::Type Material::txtToBlengGlEnum =
-	boost::assign::map_list_of
-	TXT_AND_ENUM(GL_ZERO)
-	TXT_AND_ENUM(GL_ONE)
-	TXT_AND_ENUM(GL_DST_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
-	TXT_AND_ENUM(GL_SRC_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
-	TXT_AND_ENUM(GL_DST_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
-	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
-	TXT_AND_ENUM(GL_SRC_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
-
 
 //==============================================================================
 Material::Material()
@@ -186,32 +162,14 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		{
 			const std::string& tmp =
 				blendFuncsTree.get().get<std::string>("sFactor");
-
-			ConstCharPtrHashMap<GLenum>::Type::const_iterator it =
-				txtToBlengGlEnum.find(tmp.c_str());
-
-			if(it == txtToBlengGlEnum.end())
-			{
-				throw ANKI_EXCEPTION("Incorrect blend enum: " + tmp);
-			}
-
-			blendingSfactor = it->second;
+			blendingSfactor = blendToEnum(tmp.c_str());
 		}
 
 		// dFactor
 		{
 			const std::string& tmp =
 				blendFuncsTree.get().get<std::string>("dFactor");
-
-			ConstCharPtrHashMap<GLenum>::Type::const_iterator it =
-				txtToBlengGlEnum.find(tmp.c_str());
-
-			if(it == txtToBlengGlEnum.end())
-			{
-				throw ANKI_EXCEPTION("Incorrect blend enum: " + tmp);
-			}
-
-			blendingDfactor = it->second;
+			blendingDfactor = blendToEnum(tmp.c_str());
 		}
 	}
 
@@ -270,7 +228,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 std::string Material::createShaderProgSourceToCache(const std::string& source)
 {
 	// Create the hash
-	boost::hash<std::string> stringHash;
+	std::hash<std::string> stringHash;
 	std::size_t h = stringHash(source);
 	std::string prefix = boost::lexical_cast<std::string>(h);
 
@@ -286,8 +244,8 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 		std::ofstream f(newfPathName.string().c_str());
 		if(!f.is_open())
 		{
-			throw ANKI_EXCEPTION("Cannot open file for writing: " +
-				newfPathName.string());
+			throw ANKI_EXCEPTION("Cannot open file for writing: " 
+				+ newfPathName.string());
 		}
 
 		f.write(source.c_str(), source.length());
@@ -492,6 +450,32 @@ const MaterialVariable& Material::findVariableByName(const char* name) const
 			"with name \"" + name + '\"');
 	}
 	return *(it->second);
+}
+
+//==============================================================================
+GLenum Material::blendToEnum(const char* str)
+{
+// Dont make idiotic mistakes
+#define TXT_AND_ENUM(x) \
+	if(strcmp(str, #x) == 0) { \
+		return x; \
+	}
+
+	TXT_AND_ENUM(GL_ZERO)
+	TXT_AND_ENUM(GL_ONE)
+	TXT_AND_ENUM(GL_DST_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
+	TXT_AND_ENUM(GL_SRC_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
+	TXT_AND_ENUM(GL_DST_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
+	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
+	TXT_AND_ENUM(GL_SRC_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
+	ANKI_ASSERT(0);
+	throw ANKI_EXCEPTION("Incorrect blend enum: " + str);
+
+#undef TXT_AND_ENUM
 }
 
 } // end namespace

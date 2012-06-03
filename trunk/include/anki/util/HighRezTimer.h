@@ -1,7 +1,6 @@
 #ifndef ANKI_UTIL_HIGH_REZ_TIMER_H
 #define ANKI_UTIL_HIGH_REZ_TIMER_H
 
-
 namespace anki {
 
 /// High resolution timer. All time in seconds
@@ -22,7 +21,7 @@ public:
 	Scalar getElapsedTime() const;
 
 	/// Get the current date's seconds
-	static Scalar getCrntTime();
+	static Scalar getCurrentTime();
 
 private:
 	Scalar startTime = 0.0;

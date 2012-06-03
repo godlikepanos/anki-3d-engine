@@ -5,7 +5,7 @@
 WRAP(HighRezTimer)
 {
 	class_<HighRezTimer>("HighRezTimer")
-		.def("getCrntTime", &HighRezTimer::getCrntTime)
-		.staticmethod("getCrntTime")
+		.def("getCurrentTime", &HighRezTimer::getCurrentTime)
+		.staticmethod("getCurrentTime")
 	;
 }
