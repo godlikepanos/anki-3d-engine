@@ -9,7 +9,7 @@ void HighRezTimer::start()
 {
 	ANKI_ASSERT(startTime == 0);
 	ANKI_ASSERT(stopTime == 0);
-	startTime = getCrntTime();
+	startTime = getCurrentTime();
 	stopTime = 0.0;
 }
 
@@ -18,7 +18,7 @@ void HighRezTimer::stop()
 {
 	ANKI_ASSERT(startTime != 0.0);
 	ANKI_ASSERT(stopTime == 0.0);
-	stopTime = getCrntTime();
+	stopTime = getCurrentTime();
 }
 
 //==============================================================================
@@ -26,7 +26,7 @@ HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 {
 	if(stopTime == 0)
 	{
-		return getCrntTime() - startTime;
+		return getCurrentTime() - startTime;
 	}
 	else
 	{
@@ -35,7 +35,7 @@ HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 }
 
 //==============================================================================
-HighRezTimer::Scalar HighRezTimer::getCrntTime()
+HighRezTimer::Scalar HighRezTimer::getCurrentTime()
 {
 	/// XXX Remove the boost
 	using namespace boost::posix_time;

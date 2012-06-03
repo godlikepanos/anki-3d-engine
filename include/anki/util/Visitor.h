@@ -9,6 +9,8 @@ namespace anki {
 /// @addtogroup util
 /// @{
 
+namespace detail {
+
 //==============================================================================
 // ConstVisitor                                                                =
 //==============================================================================
@@ -152,6 +154,8 @@ struct GetVisitableId<Type, Type, Types...>
 	static const int ID = sizeof...(Types);
 };
 
+} // end namespace detail
+
 //==============================================================================
 // Visitable                                                                   =
 //==============================================================================
@@ -160,10 +164,10 @@ struct GetVisitableId<Type, Type, Types...>
 template<typename... Types>
 struct Visitable
 {
-	using MutableVisitor = MutableVisitor<Types...>;
-	using ConstVisitor = ConstVisitor<Types...>;
-	using GetTypeIdVisitor = typename GetTypeIdVisitor<Types...>::Type;
-	using DummyVisitor = typename DummyVisitor<Types...>::Type;
+	using MutableVisitor = detail::MutableVisitor<Types...>;
+	using ConstVisitor = detail::ConstVisitor<Types...>;
+	using GetTypeIdVisitor = typename detail::GetTypeIdVisitor<Types...>::Type;
+	using DummyVisitor = typename detail::DummyVisitor<Types...>::Type;
 
 	/// Visitor accept
 	virtual void accept(MutableVisitor& v) = 0;
@@ -174,7 +178,7 @@ struct Visitable
 	template<typename T>
 	static constexpr int getTypeId()
 	{
-		return sizeof...(Types) - GetVisitableId<T, Types...>::ID - 1;
+		return sizeof...(Types) - detail::GetVisitableId<T, Types...>::ID - 1;
 	}
 };
 /// @}

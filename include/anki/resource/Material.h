@@ -7,16 +7,14 @@
 #include "anki/util/StringList.h"
 #include "anki/math/Math.h"
 #include "anki/util/Visitor.h"
-#include "anki/gl/gl.h"
+#include "anki/util/NonCopyable.h"
+#include "anki/gl/Gl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/array.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <boost/variant.hpp>
 
 namespace anki {
 
+// Forward
 class ShaderProgram;
 class ShaderProgramUniformVariable;
 
@@ -30,7 +28,7 @@ class MaterialVariableTemplate;
 
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
-class MaterialVariable: public MateriaVariableBase
+class MaterialVariable: public MateriaVariableBase, public NonCopyable
 {
 public:
 	typedef MateriaVariableBase Base;
@@ -40,15 +38,11 @@ public:
 	typedef PassLevelHashMap<ShaderProgramUniformVariable*>::Type
 		PassLevelToShaderProgramUniformVariableHashMap;
 
-	// Non-copyable
-	MaterialVariable(const MaterialVariable&) = delete;
-	MaterialVariable& operator=(const MaterialVariable&) = delete;
-
 	/// @name Constructors & destructor
 	/// @{
 	MaterialVariable(
 		const char* shaderProgVarName,
-		const PassLevelToShaderProgramHashMap& sProgs,
+		PassLevelToShaderProgramHashMap& sProgs,
 		bool init_,
 		uint8_t type_)
 		: type(type_), initialized(init_)
@@ -111,7 +105,7 @@ private:
 
 	/// Common constructor code
 	void init(const char* shaderProgVarName,
-		const PassLevelToShaderProgramHashMap& shaderProgsArr);
+		PassLevelToShaderProgramHashMap& shaderProgsArr);
 };
 
 /// XXX
@@ -138,7 +132,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Data& get() const;
+	const Data& get() const
 	{
 		return data;
 	}
@@ -158,18 +152,6 @@ private:
 class MaterialProperties
 {
 public:
-	/// Initialize with default values
-	MaterialProperties()
-	{
-		renderingStage = 0;
-		levelsOfDetail = 1;
-		shadow = false;
-		blendingSfactor = GL_ONE;
-		blendingDfactor = GL_ZERO;
-		depthTesting = true;
-		wireframe = false;
-	}
-
 	/// @name Accessors
 	/// @{
 	uint getRenderingStage() const
@@ -219,20 +201,20 @@ public:
 		return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
 	}
 protected:
-	uint renderingStage;
+	uint renderingStage = 0;
 
 	StringList passes;
 
-	uint levelsOfDetail;
+	uint levelsOfDetail = 1;
 
-	bool shadow;
+	bool shadow = true;
 
-	int blendingSfactor; ///< Default GL_ONE
-	int blendingDfactor; ///< Default GL_ZERO
+	int blendingSfactor = GL_ONE; ///< Default GL_ONE
+	int blendingDfactor = GL_ZERO; ///< Default GL_ZERO
 
-	bool depthTesting;
+	bool depthTesting = true;
 
-	bool wireframe;
+	bool wireframe = false;
 };
 
 /// Material resource
@@ -312,7 +294,7 @@ protected:
 /// (4): AKA uniforms
 ///
 /// (5): The order of the shaders is crucial
-class Material: public MaterialProperties, public boost::noncopyable
+class Material: public MaterialProperties, public NonCopyable
 {
 public:
 	typedef boost::ptr_vector<MaterialVariable> VarsContainer;
@@ -414,6 +396,9 @@ private:
 	/// math type
 	template<typename Type, size_t n>
 	static Type setMathType(const char* str);
+
+	/// Given a string that defines blending return the GLenum
+	static GLenum blendToEnum(const char* str);
 };
 
 } // end namespace
