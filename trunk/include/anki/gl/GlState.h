@@ -7,6 +7,10 @@
 
 namespace anki {
 
+class Vao;
+class Fbo;
+class ShaderProgram;
+
 /// @addtogroup gl
 /// @{
 
@@ -36,6 +40,21 @@ public:
 	void setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 	/// @}
 
+	/// Set the current program
+	void setProgram(ShaderProgram* prog);
+
+	/// Set the current vao
+	void setVao(Vao* vao);
+
+	/// Set the current FBO
+	/// @param fbo If nullptr then bind the default FBO
+	void setFbo(Fbo* fbo);
+
+	/// @name Draw functions
+	/// @{
+	void drawElements(uint32_t count);
+	/// @}
+
 private:
 	/// @name The GL state
 	/// @{
@@ -47,6 +66,10 @@ private:
 	GLsizei viewportW;
 	GLsizei viewportH;
 	/// @}
+
+	ShaderProgram* prog;
+	Fbo* fbo;
+	Vao* vao;
 };
 
 typedef SingletonThreadSafe<GlState> GlStateSingleton;

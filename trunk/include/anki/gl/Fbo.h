@@ -22,7 +22,6 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	Fbo()
-		: glId(0)
 	{}
 
 	~Fbo();
@@ -48,9 +47,8 @@ public:
 	/// Unbinds both draw and read FBOs so the active is the default FBO
 	static void unbindAll();
 
-	/// Checks the status of an initialized FBO and if fails throws exception
-	/// @exception Exception
-	void checkIfGood() const;
+	/// Returns true if the FBO is ready for draw calls
+	bool isComplete() const;
 
 	/// Set the color attachments of this FBO
 	void setColorAttachments(const std::initializer_list<const Texture*>& 
@@ -68,19 +66,10 @@ public:
 	}
 
 	/// Destroy it
-	void destroy()
-	{
-		ANKI_ASSERT(isCreated());
-		unbind();
-		glDeleteFramebuffers(1, &glId);
-		glId = 0;
-	}
+	void destroy();
 
 private:
-	/// Current binded FBOs for draw/read
-	static thread_local const Fbo* currentFbo;
-
-	GLuint glId; ///< OpenGL identification
+	GLuint glId = 0; ///< OpenGL identification
 
 	bool isCreated() const
 	{

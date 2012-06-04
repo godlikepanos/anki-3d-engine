@@ -1,4 +1,7 @@
 #include "anki/gl/GlState.h"
+#include "anki/gl/ShaderProgram.h"
+#include "anki/gl/Fbo.h"
+#include "anki/gl/Vao.h"
 #include "anki/util/Assert.h"
 
 namespace anki {
@@ -63,6 +66,11 @@ void GlState::sync()
 	viewportY = viewport[1];
 	viewportW = viewport[2];
 	viewportH = viewport[3];
+
+	// pointers
+	prog = nullptr;
+	fbo = nullptr;
+	vao = nullptr;
 }
 
 //==============================================================================
@@ -76,6 +84,44 @@ void GlState::setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 		viewportY = y;
 		viewportW = w;
 		viewportH = h;
+	}
+}
+
+//==============================================================================
+void GlState::setProgram(ShaderProgram* prog_)
+{
+	if(prog != prog_)
+	{
+		prog->bind();
+		prog = prog_;
+	}
+}
+
+//==============================================================================
+void GlState::setFbo(Fbo* fbo_)
+{
+	if(fbo != fbo_)
+	{
+		if(fbo_ == nullptr)
+		{
+			Fbo::unbindAll();
+		}
+		else 
+		{
+			ANKI_ASSERT(fbo->isComplete());
+			fbo->bind();
+		}
+		fbo = fbo_;
+	}
+}
+
+//==============================================================================
+void GlState::setVao(Vao* vao_)
+{
+	if(vao != vao_)
+	{
+		vao->bind();
+		vao = vao_;
 	}
 }
 
