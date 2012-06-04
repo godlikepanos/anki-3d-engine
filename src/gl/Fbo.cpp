@@ -1,5 +1,6 @@
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Texture.h"
+#include "anki/gl/GlState.h"
 #include <array>
 
 namespace anki {
@@ -10,8 +11,6 @@ static const std::array<GLenum, 8> colorAttachments = {{
 	GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
 	GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
 	GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7}};
-
-thread_local const Fbo* Fbo::currentFbo = nullptr;
 
 //==============================================================================
 Fbo::~Fbo()
@@ -26,47 +25,40 @@ Fbo::~Fbo()
 void Fbo::bind() const
 {
 	ANKI_ASSERT(isCreated());
-
-	if(currentFbo != this)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, glId);
-		currentFbo = this;
-	}
+	glBindFramebuffer(GL_FRAMEBUFFER, glId);
 }
 
 //==============================================================================
 void Fbo::unbind() const
 {
 	ANKI_ASSERT(isCreated());
-
-	if(currentFbo == this)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		currentFbo = nullptr;
-	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 //==============================================================================
 void Fbo::unbindAll()
 {
-	if(currentFbo != nullptr)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		currentFbo = nullptr;
-	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 //==============================================================================
-void Fbo::checkIfGood() const
+void Fbo::destroy()
+{
+	ANKI_ASSERT(isCreated());
+	GlStateSingleton::get().setFbo(nullptr); // Invalidate
+	unbind();
+	glDeleteFramebuffers(1, &glId);
+	glId = 0;
+}
+
+//==============================================================================
+bool Fbo::isComplete() const
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if(status != GL_FRAMEBUFFER_COMPLETE)
-	{
-		throw ANKI_EXCEPTION("FBO is incomplete");
-	}
+	return status == GL_FRAMEBUFFER_COMPLETE;
 }
 
 //==============================================================================
