@@ -6,6 +6,7 @@
 #include "anki/math/Forward.h"
 #include "anki/core/Globals.h"
 #include "anki/util/Flags.h"
+#include "anki/util/NonCopyable.h"
 #include "anki/gl/Gl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
@@ -20,7 +21,7 @@ class Texture;
 /// @{
 
 /// Shader program variable. The type is attribute or uniform
-class ShaderProgramVariable
+class ShaderProgramVariable: public NonCopyable
 {
 public:
 	/// Shader var types
@@ -29,10 +30,6 @@ public:
 		SPVT_ATTRIBUTE,
 		SPVT_UNIFORM
 	};
-
-	// Non-copyable
-	ShaderProgramVariable(const ShaderProgramVariable&) = delete;
-	ShaderProgramVariable& operator=(const ShaderProgramVariable&) = delete;
 
 	ShaderProgramVariable(
 		GLint loc,
@@ -177,7 +174,7 @@ public:
 /// vector of uniform variables and a vector of attribute variables. Every 
 /// variable is a struct that contains the variable's name, location, OpenGL 
 /// data type and if it is a uniform or an attribute var.
-class ShaderProgram
+class ShaderProgram: public NonCopyable
 {
 public:
 	typedef boost::ptr_vector<ShaderProgramVariable> VariablesContainer;
@@ -185,10 +182,6 @@ public:
 		UniformVariablesContainer;
 	typedef std::vector<ShaderProgramAttributeVariable*>
 		AttributeVariablesContainer;
-
-	// Non-copyable
-	ShaderProgram(const ShaderProgram&) = delete;
-	ShaderProgram& operator=(const ShaderProgram&) = delete;
 
 	/// @name Constructors/Destructor
 	/// @{
