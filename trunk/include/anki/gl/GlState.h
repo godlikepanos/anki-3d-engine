@@ -7,6 +7,9 @@
 
 namespace anki {
 
+/// @addtogroup gl
+/// @{
+
 /// Access the GL state machine.
 /// This class saves us from calling the GL functions
 class GlState
@@ -47,6 +50,7 @@ private:
 };
 
 typedef SingletonThreadSafe<GlState> GlStateSingleton;
+/// @}
 
 } // end namespace
 
