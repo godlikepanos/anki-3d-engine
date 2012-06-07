@@ -3,6 +3,7 @@
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Vao.h"
 #include "anki/util/Assert.h"
+#include <limits>
 
 namespace anki {
 
@@ -68,9 +69,7 @@ void GlState::sync()
 	viewportH = viewport[3];
 
 	// pointers
-	prog = nullptr;
-	fbo = nullptr;
-	vao = nullptr;
+	prog = fbo = vao = std::numeric_limits<decltype(prog)>::max();
 }
 
 //==============================================================================
@@ -90,17 +89,18 @@ void GlState::setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 //==============================================================================
 void GlState::setProgram(ShaderProgram* prog_)
 {
-	if(prog != prog_)
+	ANKI_ASSERT(prog_);
+	if(prog != prog_->getUuid())
 	{
-		prog->bind();
-		prog = prog_;
+		prog_->bind();
+		prog = prog_->getUuid();
 	}
 }
 
 //==============================================================================
 void GlState::setFbo(Fbo* fbo_)
 {
-	if(fbo != fbo_)
+	if(fbo != fbo_->getUuid())
 	{
 		if(fbo_ == nullptr)
 		{
@@ -108,20 +108,21 @@ void GlState::setFbo(Fbo* fbo_)
 		}
 		else 
 		{
-			ANKI_ASSERT(fbo->isComplete());
-			fbo->bind();
+			ANKI_ASSERT(fbo_->isComplete());
+			fbo_->bind();
 		}
-		fbo = fbo_;
+		fbo = fbo_->getUuid();
 	}
 }
 
 //==============================================================================
 void GlState::setVao(Vao* vao_)
 {
-	if(vao != vao_)
+	ANKI_ASSERT(vao_);
+	if(vao != vao_->getUuid())
 	{
-		vao->bind();
-		vao = vao_;
+		vao_->bind();
+		vao = vao_->getUuid();
 	}
 }
 

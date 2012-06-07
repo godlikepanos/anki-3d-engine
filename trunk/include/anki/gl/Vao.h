@@ -4,6 +4,7 @@
 #include "anki/util/Assert.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/Gl.h"
+#include <atomic>
 
 namespace anki {
 
@@ -37,6 +38,11 @@ public:
 		ANKI_ASSERT(isCreated());
 		return glId;
 	}
+
+	uint32_t getUuid() const
+	{
+		return uuid;
+	}
 	/// @}
 
 	/// Create
@@ -45,6 +51,7 @@ public:
 		ANKI_ASSERT(!isCreated());
 		glGenVertexArrays(1, &glId);
 		ANKI_CHECK_GL_ERROR();
+		uuid = counter.fetch_add(1, std::memory_order_relaxed);
 	}
 
 	/// Destroy
@@ -116,7 +123,10 @@ public:
 	}
 
 private:
+	static std::atomic<uint32_t> counter;
+
 	GLuint glId; ///< The OpenGL id
+	uint32_t uuid;
 
 	bool isCreated() const
 	{

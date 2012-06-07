@@ -3,14 +3,14 @@
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/Assert.h"
-#include "anki/math/Forward.h"
-#include "anki/core/Globals.h"
 #include "anki/util/Flags.h"
+#include "anki/math/Forward.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Gl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
 #include <string>
+#include <atomic>
 
 namespace anki {
 
@@ -231,6 +231,11 @@ public:
 	{
 		return attribs;
 	}
+
+	uint32_t getUuid() const
+	{
+		return uuid;
+	}
 	/// @}
 
 	/// Create the program
@@ -249,21 +254,13 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		if(currentProgram != this)
-		{
-			glUseProgram(glId);
-			currentProgram = this;
-		}
+		glUseProgram(glId);
 	}
 
 	// Unbinds only @a this if its binded
 	void unbind() const
 	{
-		if(currentProgram == this)
-		{
-			glUseProgram(0);
-			currentProgram = nullptr;
-		}
+		glUseProgram(0);
 	}
 
 	/// @name Variable finders
@@ -304,11 +301,12 @@ private:
 	typedef ConstCharPtrHashMap<ShaderProgramAttributeVariable*>::Type
 		NameToAttribVarHashMap;
 
-	/// Is an optimization. it keeps the program that is now binded 
-	static const thread_local ShaderProgram* currentProgram;
+	static std::atomic<uint32_t> counter;
 
 	/// Shader source that is used in ALL shader programs
 	static const char* stdSourceCode;
+
+	uint32_t uuid;
 
 	GLuint glId; ///< The OpenGL ID of the shader program
 	GLuint vertShaderGlId; ///< Vertex shader OpenGL id

@@ -4,8 +4,9 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/Gl.h"
-#include <array>
 #include <initializer_list>
+#include <atomic>
+
 
 namespace anki {
 
@@ -34,6 +35,11 @@ public:
 		ANKI_ASSERT(isCreated());
 		return glId;
 	}
+
+	uint32_t getUuid() const
+	{
+		return uuid;
+	}
 	/// @}
 
 	/// Binds FBO
@@ -58,18 +64,15 @@ public:
 	void setOtherAttachment(GLenum attachment, const Texture& tex);
 
 	/// Creates a new FBO
-	void create()
-	{
-		ANKI_ASSERT(!isCreated());
-		glGenFramebuffers(1, &glId);
-		ANKI_ASSERT(glId != 0);
-	}
+	void create();
 
 	/// Destroy it
 	void destroy();
 
 private:
+	static std::atomic<uint32_t> counter;
 	GLuint glId = 0; ///< OpenGL identification
+	uint32_t uuid; ///< A unique unique identifier. It changes on create
 
 	bool isCreated() const
 	{
