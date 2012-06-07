@@ -143,7 +143,7 @@ const char* ShaderProgram::stdSourceCode =
 	"#pragma debug(on)\n";
 #endif
 
-const thread_local ShaderProgram* ShaderProgram::currentProgram = nullptr;
+std::atomic<uint32_t> ShaderProgram::counter(0);
 
 //==============================================================================
 void ShaderProgram::create(const char* vertSource, const char* tcSource, 
@@ -151,6 +151,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	const char* transformFeedbackVaryings[])
 {
 	ANKI_ASSERT(!isCreated());
+
+	uuid = counter.fetch_add(1, std::memory_order_relaxed);
 
 	// 1) create and compile the shaders
 	//

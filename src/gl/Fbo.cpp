@@ -1,11 +1,12 @@
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Texture.h"
-#include "anki/gl/GlState.h"
 #include <array>
 
 namespace anki {
 
 //==============================================================================
+
+std::atomic<uint32_t> Fbo::counter(0);
 
 static const std::array<GLenum, 8> colorAttachments = {{
 	GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
@@ -19,6 +20,24 @@ Fbo::~Fbo()
 	{
 		destroy();
 	}
+}
+
+//==============================================================================
+void Fbo::create()
+{
+	ANKI_ASSERT(!isCreated());
+	glGenFramebuffers(1, &glId);
+	ANKI_ASSERT(glId != 0);
+	uuid = counter.fetch_add(1, std::memory_order_relaxed);
+}
+
+//==============================================================================
+void Fbo::destroy()
+{
+	ANKI_ASSERT(isCreated());
+	unbind();
+	glDeleteFramebuffers(1, &glId);
+	glId = 0;
 }
 
 //==============================================================================
@@ -39,16 +58,6 @@ void Fbo::unbind() const
 void Fbo::unbindAll()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-//==============================================================================
-void Fbo::destroy()
-{
-	ANKI_ASSERT(isCreated());
-	GlStateSingleton::get().setFbo(nullptr); // Invalidate
-	unbind();
-	glDeleteFramebuffers(1, &glId);
-	glId = 0;
 }
 
 //==============================================================================

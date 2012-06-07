@@ -3,13 +3,17 @@
 
 #include "anki/util/Singleton.h"
 #include "anki/gl/Gl.h"
+#include "anki/util/Assert.h"
 #include <unordered_map>
+#include <mutex>
+#include <algorithm>
 
 namespace anki {
 
 class Vao;
 class Fbo;
 class ShaderProgram;
+class GlState;
 
 /// @addtogroup gl
 /// @{
@@ -23,6 +27,9 @@ public:
 	{
 		sync();
 	}
+
+	~GlState()
+	{}
 
 	/// Sync the local members with the opengl ones
 	void sync();
@@ -67,9 +74,9 @@ private:
 	GLsizei viewportH;
 	/// @}
 
-	ShaderProgram* prog;
-	Fbo* fbo;
-	Vao* vao;
+	uint32_t prog;
+	uint32_t fbo;
+	uint32_t vao;
 };
 
 typedef SingletonThreadSafe<GlState> GlStateSingleton;
