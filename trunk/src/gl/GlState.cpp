@@ -100,17 +100,15 @@ void GlState::setProgram(ShaderProgram* prog_)
 //==============================================================================
 void GlState::setFbo(Fbo* fbo_)
 {
-	if(fbo != fbo_->getUuid())
+	if(fbo_ == nullptr)
 	{
-		if(fbo_ == nullptr)
-		{
-			Fbo::unbindAll();
-		}
-		else 
-		{
-			ANKI_ASSERT(fbo_->isComplete());
-			fbo_->bind();
-		}
+		Fbo::unbindAll();
+		fbo = std::numeric_limits<decltype(fbo)>::max();
+	}
+	else if(fbo != fbo_->getUuid())
+	{
+		ANKI_ASSERT(fbo_->isComplete());
+		fbo_->bind();
 		fbo = fbo_->getUuid();
 	}
 }
