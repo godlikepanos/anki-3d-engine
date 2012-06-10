@@ -5,8 +5,6 @@
 #include "anki/util/Exception.h"
 #include "anki/gl/Gl.h"
 #include <initializer_list>
-#include <atomic>
-
 
 namespace anki {
 
@@ -34,11 +32,6 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		return glId;
-	}
-
-	uint32_t getUuid() const
-	{
-		return uuid;
 	}
 	/// @}
 
@@ -70,9 +63,8 @@ public:
 	void destroy();
 
 private:
-	static std::atomic<uint32_t> counter;
+	static thread_local const Fbo* current;
 	GLuint glId = 0; ///< OpenGL identification
-	uint32_t uuid; ///< A unique unique identifier. It changes on create
 
 	bool isCreated() const
 	{

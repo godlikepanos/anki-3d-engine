@@ -73,10 +73,6 @@ private:
 	GLsizei viewportW;
 	GLsizei viewportH;
 	/// @}
-
-	uint32_t prog;
-	uint32_t fbo;
-	uint32_t vao;
 };
 
 typedef SingletonThreadSafe<GlState> GlStateSingleton;

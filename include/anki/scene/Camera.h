@@ -170,7 +170,7 @@ private:
 class PerspectiveCamera: public Camera
 {
 public:
-	ANKI_OBSERVING(PerspectiveCamera)
+	ANKI_HAS_SLOTS(PerspectiveCamera)
 
 	/// @name Constructors
 	/// @{
@@ -223,7 +223,7 @@ private:
 class OrthographicCamera: public Camera
 {
 public:
-	ANKI_OBSERVING(OrthographicCamera)
+	ANKI_HAS_SLOTS(OrthographicCamera)
 
 	/// @name Constructors
 	/// @{

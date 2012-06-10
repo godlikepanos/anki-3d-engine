@@ -2,16 +2,13 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/SkinNode.h"
-#include "anki/gl/GlStateMachine.h"
-
+#include "anki/gl/GlState.h"
 
 namespace anki {
-
 
 //==============================================================================
 Deformer::~Deformer()
 {}
-
 
 //==============================================================================
 void Deformer::init()
@@ -22,29 +19,28 @@ void Deformer::init()
 	tfHwSkinningPosSProg.load("shaders/TfHwSkinningPos.glsl");
 }
 
-
 //==============================================================================
 void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 {
 	ANKI_ASSERT(node.getMovable()->getParent() != NULL
 		&& "The SkinPatchNode should always have parent");
 
-	GlStateMachineSingleton::get().enable(GL_RASTERIZER_DISCARD);
+	GlStateSingleton::get().enable(GL_RASTERIZER_DISCARD);
 
 	// Chose sProg
 	//
 	const ShaderProgram* sProg;
 	const Material& mtl = node.getMaterial();
 
-	if(mtl.variableExistsAndInKey("normal", PassLevelKey(0, 0))
+	/*if(mtl.variableExistsAndInKey("normal", PassLevelKey(0, 0))
 		&& mtl.variableExistsAndInKey("tangent", PassLevelKey(0, 0)))
-	{
+	{*/
 		sProg = tfHwSkinningAllSProg.get();
-	}
+	/*}
 	else
 	{
 		sProg = tfHwSkinningPosSProg.get();
-	}
+	}*/
 
 	sProg->bind();
 
@@ -81,8 +77,7 @@ void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 			smp.getSkinMesh().getVerticesNumber(0));
 	glEndTransformFeedback();
 
-	GlStateMachineSingleton::get().disable(GL_RASTERIZER_DISCARD);
+	GlStateSingleton::get().disable(GL_RASTERIZER_DISCARD);
 }
-
 
 } // end namespace

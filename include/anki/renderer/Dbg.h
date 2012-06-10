@@ -4,9 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 
-
 namespace anki {
-
 
 /// Debugging stage
 class Dbg: public SwitchableRenderingPass
@@ -23,8 +21,6 @@ private:
 	Fbo fbo;
 };
 
-
 } // end namespace
-
 
 #endif

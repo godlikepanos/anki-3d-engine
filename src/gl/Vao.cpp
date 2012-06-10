@@ -7,7 +7,7 @@ namespace anki {
 
 //==============================================================================
 
-std::atomic<uint32_t> Vao::counter(0);
+thread_local const Vao* Vao::current = nullptr;
 
 //==============================================================================
 Vao::~Vao()
@@ -27,8 +27,6 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ARRAY_BUFFER
 		&& "Only GL_ARRAY_BUFFER is accepted");
 
-	GLuint prevVao = getCurrentVertexArrayBinding();
-	
 	bind();
 	vbo.bind();
 	glVertexAttribPointer(attribVarLocation, size, type, normalized,
@@ -36,8 +34,6 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 	glEnableVertexAttribArray(attribVarLocation);
 	vbo.unbind();
 	unbind();
-
-	glBindVertexArray(prevVao);
 
 	ANKI_CHECK_GL_ERROR();
 }
@@ -59,11 +55,9 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
 		&& "Only GL_ELEMENT_ARRAY_BUFFER is accepted");
 
-	GLuint prevVao = getCurrentVertexArrayBinding();
 	bind();
 	vbo.bind();
 	unbind();
-	glBindVertexArray(prevVao);
 	ANKI_CHECK_GL_ERROR();
 }
 

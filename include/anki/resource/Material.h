@@ -20,7 +20,7 @@ class ShaderProgramUniformVariable;
 
 /// Material variable base. Its a visitable
 typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
-	MateriaVariableBase;
+	MateriaVariableVisitable;
 
 // Forward
 template<typename T>
@@ -28,10 +28,10 @@ class MaterialVariableTemplate;
 
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
-class MaterialVariable: public MateriaVariableBase, public NonCopyable
+class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
 {
 public:
-	typedef MateriaVariableBase Base;
+	typedef MateriaVariableVisitable Base;
 
 	/// Given a pair of pass and level it returns a pointer to a
 	/// shader program uniform variable. The pointer may be nullptr

@@ -478,16 +478,44 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 //==============================================================================
 
 /// Set the uniform using this visitor
-struct SetUniformVisitor: public boost::static_visitor<void>
+struct SetUniformVisitor: MateriaVariableVisitable::ConstVisitor
 {
 	ShaderProgramUniformVariable* uni;
 
-	template<typename Type>
-	void operator()(const Type& x) const
+	void visit(const float& x)
 	{
 		uni->set(x);
 	}
 
+	void visit(const Vec2& x)
+	{
+		uni->set(x);
+	}
+
+	void visit(const Vec3& x)
+	{
+		uni->set(x);
+	}
+
+	void visit(const Vec4& x)
+	{
+		uni->set(x);
+	}
+
+	void visit(const Mat3& x)
+	{
+		uni->set(x);
+	}
+
+	void visit(const Mat4& x)
+	{
+		uni->set(x);
+	}
+
+	void visit(const TextureResourcePointer& x)
+	{
+		uni->set(*x.get());
+	}
 };
 
 //==============================================================================
@@ -506,20 +534,17 @@ void RenderableDrawer::setupShaderProg(
 	
 	SetUniformVisitor vis;
 
-	for(auto it = mtl.getVariablesBegin(); it != mtl.getVariablesEnd(); ++it)
+	for(MaterialVariable& mv : mtl.getVariables())
 	{
-		MaterialVariable& mv = *it;
+		const ShaderProgramUniformVariable* uni = 
+			mv.findShaderProgramUniformVariable(key);
 
-		if(!mv.inPass(key))
+		if(!uni)
 		{
 			continue;
 		}
 
-		ShaderProgramUniformVariable& uni = 
-			mv.getShaderProgramUniformVariable(key);
-
-		vis.uni = &uni;
-		const std::string& name = uni.getName();
+		const std::string& name = uni->getName();
 
 		if(name == "modelViewProjectionMat")
 		{
@@ -527,11 +552,12 @@ void RenderableDrawer::setupShaderProg(
 				Mat4(*renderable.getRenderableWorldTransform())
 				* cam.getViewMatrix() * cam.getProjectionMatrix();
 
-			uni.set(mvp);
+			uni->set(mvp);
 		}
 		else
 		{
-			boost::apply_visitor(vis, mv.getVariant());
+			vis.uni = uni;
+			mv->accept(vis);
 		}
 	}
 }

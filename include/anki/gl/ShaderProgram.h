@@ -10,7 +10,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
 #include <string>
-#include <atomic>
 
 namespace anki {
 
@@ -231,11 +230,6 @@ public:
 	{
 		return attribs;
 	}
-
-	uint32_t getUuid() const
-	{
-		return uuid;
-	}
 	/// @}
 
 	/// Create the program
@@ -254,13 +248,22 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		glUseProgram(glId);
+		if(current != this)
+		{
+			glUseProgram(glId);
+			current = this;
+		}
 	}
 
 	// Unbinds only @a this if its binded
 	void unbind() const
 	{
-		glUseProgram(0);
+		ANKI_ASSERT(isCreated());
+		if(current == this)
+		{
+			glUseProgram(0);
+			current = nullptr;
+		}
 	}
 
 	/// @name Variable finders
@@ -298,12 +301,10 @@ private:
 	typedef ConstCharPtrHashMap<ShaderProgramAttributeVariable*>::Type
 		NameToAttribVarHashMap;
 
-	static std::atomic<uint32_t> counter;
+	static thread_local const ShaderProgram* current;
 
 	/// Shader source that is used in ALL shader programs
 	static const char* stdSourceCode;
-
-	uint32_t uuid;
 
 	GLuint glId; ///< The OpenGL ID of the shader program
 	GLuint vertShaderGlId; ///< Vertex shader OpenGL id

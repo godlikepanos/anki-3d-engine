@@ -3,14 +3,11 @@
 
 #include "anki/resource/Resource.h"
 
-
 namespace anki {
-
 
 class ShaderProgramResource;
 class SkinPatchNode;
 class SkinNode;
-
 
 /// SkinPatchNode deformer
 ///
@@ -37,8 +34,6 @@ private:
 	void init();
 };
 
-
 } // end namespace
-
 
 #endif

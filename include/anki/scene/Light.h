@@ -177,7 +177,7 @@ public:
 class SpotLight: public Light, public Frustumable
 {
 public:
-	ANKI_OBSERVING(SpotLight)
+	ANKI_HAS_SLOTS(SpotLight)
 
 	/// @name Constructors/Destructor
 	/// @{
