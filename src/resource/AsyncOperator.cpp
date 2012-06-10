@@ -1,6 +1,5 @@
 #include "anki/resource/AsyncOperator.h"
 #include "anki/core/Logger.h"
-#include "anki/core/Globals.h"
 #include "anki/util/HighRezTimer.h"
 
 

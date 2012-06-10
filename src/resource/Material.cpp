@@ -2,13 +2,13 @@
 #include "anki/misc/PropertyTree.h"
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
-#include "anki/core/Globals.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/TextureResource.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <functional>
 #include <algorithm>
+#include <map>
 
 namespace anki {
 
@@ -45,7 +45,7 @@ void MaterialVariable::init(const char* shaderProgVarName,
 		const ShaderProgram& sProg = *(it->second);
 		const PassLevelKey& key = it->first;
 
-		// Variable exists
+		// Variable exists put it the map
 		const ShaderProgramUniformVariable* uni = 
 			sProg.findUniformVariableByName(shaderProgVarName);
 		if(uni)
@@ -103,7 +103,7 @@ void Material::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\" failed") << e;
+		throw ANKI_EXCEPTION("Failed to load file: " + filename) << e;
 	}
 }
 
@@ -136,7 +136,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 	if(lod)
 	{
-		levelsOfDetail = lod.get();
+		levelsOfDetail = (lod.get() < 1) ? 1 : lod.get();
 	}
 	else
 	{
@@ -230,12 +230,11 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	// Create the hash
 	std::hash<std::string> stringHash;
 	std::size_t h = stringHash(source);
-	std::string prefix = boost::lexical_cast<std::string>(h);
+	std::string prefix = std::to_string(h);
 
 	// Create path
 	boost::filesystem::path newfPathName =
 		AppSingleton::get().getCachePath() / (prefix + ".glsl");
-
 
 	// If file not exists write it
 	if(!boost::filesystem::exists(newfPathName))
@@ -260,26 +259,24 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
-	//
 	// Get all names of all the uniforms. Dont duplicate
 	//
 	std::map<std::string, GLenum> allVarNames;
 
-	BOOST_FOREACH(const ShaderProgramResourcePointer& sProg, sProgs)
+	for(const ShaderProgramResourcePointer& sProg : sProgs)
 	{
-		BOOST_FOREACH(const ShaderProgramUniformVariable* v,
+		for(const ShaderProgramUniformVariable* v :
 			sProg->getUniformVariables())
 		{
 			allVarNames[v->getName()] = v->getGlDataType();
 		}
 	}
 
-	//
 	// Iterate all the <input> and get the value
 	//
 	std::map<std::string, std::string> nameToValue;
 
-	BOOST_FOREACH(const ptree::value_type& v, pt)
+	for(const ptree::value_type& v : pt)
 	{
 		if(v.first != "shader")
 		{
@@ -295,12 +292,12 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 			continue;
 		}
 
-		BOOST_FOREACH(const ptree::value_type& vv, insPt.get())
+		for(const ptree::value_type& vv : insPt.get())
 		{
 			if(vv.first != "input")
 			{
-				throw ANKI_EXCEPTION("Expected \"input\" tag and not: " +
-					vv.first);
+				throw ANKI_EXCEPTION("Expected \"input\" tag and not: " 
+					+ vv.first);
 			}
 
 			std::string name = vv.second.get<std::string>("name");
@@ -314,8 +311,8 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 			if(iit == allVarNames.end())
 			{
-				ANKI_LOGW("Input variable \"" <<
-					name << "\" not used in material \"" << fname << "\"");
+				ANKI_LOGW("Input variable \"" << name 
+					<< "\" not used in material \"" << fname << "\"");
 			}
 		}
 	}
@@ -331,47 +328,48 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		std::map<std::string, std::string>::const_iterator it1 =
 			nameToValue.find(name);
 
-		MaterialVariable* v = NULL;
+		MaterialVariable* v = nullptr;
 
 		// Not found
 		if(it1 == nameToValue.end())
 		{
+			const char* n = name.c_str(); // Var name
 			// Get the value
 			switch(dataType)
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					v = new MaterialVariable(name.c_str(), eSProgs,
-						TextureResourcePointer(), false);
+					v = new MaterialVariableTemplate<TextureResourcePointer>(
+						n, eSProgs, TextureResourcePointer(), false);
 					break;
 				// float
 				case GL_FLOAT:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<float>(n, eSProgs, 
 						float(), false);
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
 						Vec2(), false);
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
 						Vec3(), false);
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
 						Vec4(), false);
 					break;
 				// mat3
 				case GL_FLOAT_MAT3:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Mat3>(n, eSProgs,
 						Mat3(), false);
 					break;
 				// mat4
 				case GL_FLOAT_MAT4:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Mat4>(n, eSProgs,
 						Mat4(), false);
 					break;
 				// default is error
@@ -382,35 +380,36 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 		else
 		{
 			std::string value = it1->second;
-
-			ANKI_LOGI("With value " << name << " " << value);
+			//ANKI_LOGI("With value " << name << " " << value);
+			const char* n = name.c_str();
 
 			// Get the value
 			switch(dataType)
 			{
 				// sampler2D
 				case GL_SAMPLER_2D:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<TextureResourcePointer>(
+						n, eSProgs, 
 						TextureResourcePointer(value.c_str()), true);
 					break;
 				// float
 				case GL_FLOAT:
-					v = new MaterialVariable(name.c_str(), eSProgs,
-						boost::lexical_cast<float>(value), true);
+					v = new MaterialVariableTemplate<float>(n, eSProgs,
+						std::stof(value), true);
 					break;
 				// vec2
 				case GL_FLOAT_VEC2:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
 						setMathType<Vec2, 2>(value.c_str()), true);
 					break;
 				// vec3
 				case GL_FLOAT_VEC3:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
 						setMathType<Vec3, 3>(value.c_str()), true);
 					break;
 				// vec4
 				case GL_FLOAT_VEC4:
-					v = new MaterialVariable(name.c_str(), eSProgs,
+					v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
 						setMathType<Vec4, 4>(value.c_str()), true);
 					break;
 				// default is error
@@ -434,22 +433,10 @@ Type Material::setMathType(const char* str)
 
 	for(uint i = 0; i < n; ++i)
 	{
-		out[i] = boost::lexical_cast<float>(sl[i]);
+		out[i] = std::stof(sl[i]);
 	}
 
 	return out;
-}
-
-//==============================================================================
-const MaterialVariable& Material::findVariableByName(const char* name) const
-{
-	NameToVariableHashMap::const_iterator it = nameToVar.find(name);
-	if(it == nameToVar.end())
-	{
-		throw ANKI_EXCEPTION("Cannot get material variable "
-			"with name \"" + name + '\"');
-	}
-	return *(it->second);
 }
 
 //==============================================================================

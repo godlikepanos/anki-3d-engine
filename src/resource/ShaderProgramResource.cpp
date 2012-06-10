@@ -48,7 +48,7 @@ std::string ShaderProgramResource::createSrcCodeToCache(
 	// Create suffix
 	boost::hash<std::string> stringHash;
 	std::size_t h = stringHash(preAppendedSrcCode);
-	std::string suffix = boost::lexical_cast<std::string>(h);
+	std::string suffix = std::to_string(h);
 
 	//
 	path newfPathName = AppSingleton::get().getCachePath() 

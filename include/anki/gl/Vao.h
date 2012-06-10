@@ -2,7 +2,6 @@
 #define ANKI_GL_VAO_H
 
 #include "anki/util/Assert.h"
-#include "anki/util/NonCopyable.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/Gl.h"
 #include <atomic>
@@ -13,36 +12,19 @@ class ShaderProgramAttributeVariable;
 class Vbo;
 
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
-class Vao: public NonCopyable
+class Vao
 {
 public:
-	/// See @link
-	/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
-	/// @endlink
-	struct VaoDescriptor
-	{
-		const Vbo* vbo = nullptr;
-		const ShaderProgramAttributeVariable* attribVar = nullptr;
-		/// Specifies the number of components per generic vertex attribute. 
-		/// Must be 1, 2, 3, 4
-		GLint size = 0;
-		/// GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
-		GLenum type = 0;
-		/// Specifies whether fixed-point data values should be normalized
-		GLboolean normalized = GL_FALSE;
-		/// Specifies the byte offset between consecutive generic vertex 
-		/// attributes
-		GLsizei stride = 0;
-		/// Specifies a offset of the first component of the first generic 
-		/// vertex attribute in the array
-		const GLvoid* pointer = nullptr;
-	};
+	// Non-copyable
+	Vao(const Vao&) = delete;
+	Vao& operator=(const Vao&) = delete;
 
 	/// @name Constructors/Destructor
 	/// @{
 
 	/// Default
 	Vao()
+		: glId(0)
 	{}
 
 	/// Destroy VAO from the OpenGL context
@@ -79,8 +61,51 @@ public:
 		glDeleteVertexArrays(1, &glId);
 	}
 
-	/// Attach an array buffer VBO
-	void attachArrayBufferVbo(const VaoDescriptor& descr);
+	/// Attach an array buffer VBO. See @link
+	/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+	/// @endlink
+	/// @param vbo The VBO to attach
+	/// @param attribVar For the shader attribute location
+	/// @param size Specifies the number of components per generic vertex
+	///        attribute. Must be 1, 2, 3, 4
+	/// @param type GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
+	/// @param normalized Specifies whether fixed-point data values should
+	///        be normalized
+	/// @param stride Specifies the byte offset between consecutive generic
+	///        vertex attributes
+	/// @param pointer Specifies a offset of the first component of the
+	///        first generic vertex attribute in the array
+	void attachArrayBufferVbo(
+	    const Vbo& vbo,
+	    const ShaderProgramAttributeVariable& attribVar,
+	    GLint size,
+	    GLenum type,
+	    GLboolean normalized,
+	    GLsizei stride,
+	    const GLvoid* pointer);
+
+	/// Attach an array buffer VBO. See @link
+	/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
+	/// @endlink
+	/// @param vbo The VBO to attach
+	/// @param attribVarLocation Shader attribute location
+	/// @param size Specifies the number of components per generic vertex
+	///        attribute. Must be 1, 2, 3, 4
+	/// @param type GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT etc
+	/// @param normalized Specifies whether fixed-point data values should
+	///        be normalized
+	/// @param stride Specifies the byte offset between consecutive generic
+	///        vertex attributes
+	/// @param pointer Specifies a offset of the first component of the
+	///        first generic vertex attribute in the array
+	void attachArrayBufferVbo(
+	    const Vbo& vbo,
+	    GLuint attribVarLocation,
+	    GLint size,
+	    GLenum type,
+	    GLboolean normalized,
+	    GLsizei stride,
+	    const GLvoid* pointer);
 
 	/// Attach an element array buffer VBO
 	void attachElementArrayBufferVbo(const Vbo& vbo);
@@ -100,12 +125,19 @@ public:
 private:
 	static std::atomic<uint32_t> counter;
 
-	GLuint glId = 0; ///< The OpenGL id
+	GLuint glId; ///< The OpenGL id
 	uint32_t uuid;
 
 	bool isCreated() const
 	{
 		return glId != 0;
+	}
+
+	static GLuint getCurrentVertexArrayBinding()
+	{
+		GLint x;
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &x);
+		return (GLuint)x;
 	}
 };
 

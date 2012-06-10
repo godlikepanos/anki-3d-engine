@@ -112,37 +112,37 @@ public:
 
 	/// @name Set the var
 	/// @{
-	void set(const float x);
-	void set(const Vec2& x);
-	void set(const Vec3& x)
+	void set(const float x) const;
+	void set(const Vec2& x) const;
+	void set(const Vec3& x) const
 	{
 		set(&x, 1);
 	}
-	void set(const Vec4& x)
+	void set(const Vec4& x) const
 	{
 		set(&x, 1);
 	}
-	void set(const Mat3& x)
+	void set(const Mat3& x) const
 	{
 		set(&x, 1);
 	}
-	void set(const Mat4& x)
+	void set(const Mat4& x) const
 	{
 		set(&x, 1);
 	}
-	void set(const Texture& tex);
+	void set(const Texture& tex) const;
 
-	void set(const float x[], uint size);
-	void set(const Vec2 x[], uint size);
-	void set(const Vec3 x[], uint size);
-	void set(const Vec4 x[], uint size);
-	void set(const Mat3 x[], uint size);
-	void set(const Mat4 x[], uint size);
+	void set(const float x[], uint size) const;
+	void set(const Vec2 x[], uint size) const;
+	void set(const Vec3 x[], uint size) const;
+	void set(const Vec4 x[], uint size) const;
+	void set(const Mat3 x[], uint size) const;
+	void set(const Mat4 x[], uint size) const;
 
 	/// @tparam Container It could be something like array<float, X> or 
 	///         vector<Vec2> etc
 	template<typename Container>
-	void set(const Container& c)
+	void set(const Container& c) const
 	{
 		set(&c[0], c.size());
 	}
@@ -153,7 +153,7 @@ private:
 	/// - Check if initialized
 	/// - if the current shader program is the var's shader program
 	/// - if the GL driver gives the same location as the one the var has
-	void doCommonSetCode();
+	void doCommonSetCode() const;
 };
 
 /// Attribute shader program variable
@@ -270,9 +270,6 @@ public:
 	const ShaderProgramVariable* findVariableByName(const char* varName) const;
 	const ShaderProgramUniformVariable* findUniformVariableByName(
 		const char* varName) const;
-	/// Non-const version because of the class setters
-	ShaderProgramUniformVariable* findUniformVariableByName(
-		const char* varName);
 	const ShaderProgramAttributeVariable* findAttributeVariableByName(
 		const char* varName) const;
 	/// @}

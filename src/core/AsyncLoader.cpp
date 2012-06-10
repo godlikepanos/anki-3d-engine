@@ -1,7 +1,6 @@
 #include "anki/core/AsyncLoader.h"
 #include "anki/core/Logger.h"
 #include "anki/core/App.h"
-#include "anki/core/Globals.h"
 
 
 namespace anki {

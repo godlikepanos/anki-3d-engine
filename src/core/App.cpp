@@ -1,6 +1,5 @@
 #include "anki/core/App.h"
 #include "anki/core/Logger.h"
-#include "anki/core/Globals.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Platform.h"
 #include <GL/glew.h>

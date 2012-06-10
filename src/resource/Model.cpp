@@ -5,15 +5,10 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/assign.hpp>
-#include <boost/range/iterator_range.hpp>
-
 
 namespace anki {
-
 
 //==============================================================================
 // ModelPatchBase                                                              =
@@ -27,7 +22,8 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 	Vao* vao = new Vao;
 	vao->create();
 
-	if(mtl.getShaderProgram(key).findAttributeVariableByName("position"))
+	const ShaderProgram& prog = mtl.findShaderProgram(key);
+	if(prog.findAttributeVariableByName("position"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_POSITIONS);
 		ANKI_ASSERT(vbo != NULL);
@@ -35,7 +31,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 		vao->attachArrayBufferVbo(*vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).findAttributeVariableByName("normal"))
+	if(prog.findAttributeVariableByName("normal"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_NORMALS);
 		ANKI_ASSERT(vbo != NULL);
@@ -43,7 +39,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 		vao->attachArrayBufferVbo(*vbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).findAttributeVariableByName("tangent"))
+	if(prog.findAttributeVariableByName("tangent"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TANGENTS);
 		ANKI_ASSERT(vbo != NULL);
@@ -51,7 +47,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 		vao->attachArrayBufferVbo(*vbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
-	if(mtl.getShaderProgram(key).findAttributeVariableByName("texCoords"))
+	if(prog.findAttributeVariableByName("texCoords"))
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TEX_COORDS);
 		ANKI_ASSERT(vbo != NULL);
@@ -63,7 +59,6 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 
 	return vao;
 }
-
 
 //==============================================================================
 void ModelPatchBase::createVaos(const Material& mtl,
@@ -85,7 +80,6 @@ void ModelPatchBase::createVaos(const Material& mtl,
 	}
 }
 
-
 //==============================================================================
 // ModelPatch                                                                  =
 //==============================================================================
@@ -101,11 +95,9 @@ ModelPatch::ModelPatch(const char* meshFName, const char* mtlFName)
 	create();
 }
 
-
 //==============================================================================
 ModelPatch::~ModelPatch()
 {}
-
 
 //==============================================================================
 // Model                                                                       =
@@ -126,7 +118,7 @@ void Model::load(const char* filename)
 		const ptree& pt = pt_.get_child("model");
 
 		// modelPatches
-		BOOST_FOREACH(const ptree::value_type& v, pt.get_child("modelPatches"))
+		for(const ptree::value_type& v : pt.get_child("modelPatches"))
 		{
 			const std::string& mesh = v.second.get<std::string>("mesh");
 			const std::string& material = v.second.get<std::string>("material");
