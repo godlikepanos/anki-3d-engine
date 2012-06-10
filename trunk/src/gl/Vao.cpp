@@ -19,26 +19,37 @@ Vao::~Vao()
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const VaoDescriptor& descr)
+void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
+	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
+	const GLvoid* pointer)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(descr.vbo != nullptr);
-	ANKI_ASSERT(descr.attribVar != nullptr);
-	ANKI_ASSERT(descr.size != 0);
-	ANKI_ASSERT(descr.type != 0);
-
-	ANKI_ASSERT(descr.vbo->getBufferTarget() == GL_ARRAY_BUFFER
+	ANKI_ASSERT(vbo.getBufferTarget() == GL_ARRAY_BUFFER
 		&& "Only GL_ARRAY_BUFFER is accepted");
 
+	GLuint prevVao = getCurrentVertexArrayBinding();
+	
 	bind();
-	descr.vbo->bind();
-	glVertexAttribPointer(descr.attribVar->getLocation(), descr.size, 
-		descr.type, descr.normalized, descr.stride, descr.pointer);
-	glEnableVertexAttribArray(descr.attribVar->getLocation());
-	descr.vbo->unbind();
+	vbo.bind();
+	glVertexAttribPointer(attribVarLocation, size, type, normalized,
+		stride, pointer);
+	glEnableVertexAttribArray(attribVarLocation);
+	vbo.unbind();
 	unbind();
 
+	glBindVertexArray(prevVao);
+
 	ANKI_CHECK_GL_ERROR();
+}
+
+//==============================================================================
+void Vao::attachArrayBufferVbo(const Vbo& vbo,
+	const ShaderProgramAttributeVariable& attribVar,
+	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
+	const GLvoid* pointer)
+{
+	attachArrayBufferVbo(vbo, attribVar.getLocation(), size, type, normalized,
+		stride, pointer);
 }
 
 //==============================================================================
@@ -48,9 +59,11 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
 		&& "Only GL_ELEMENT_ARRAY_BUFFER is accepted");
 
+	GLuint prevVao = getCurrentVertexArrayBinding();
 	bind();
 	vbo.bind();
 	unbind();
+	glBindVertexArray(prevVao);
 	ANKI_CHECK_GL_ERROR();
 }
 

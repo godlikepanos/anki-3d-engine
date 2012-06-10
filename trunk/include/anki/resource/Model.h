@@ -8,9 +8,7 @@
 #include "anki/resource/Mesh.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 
-
 namespace anki {
-
 
 /// Model patch interface class
 ///
@@ -62,7 +60,6 @@ protected:
 		const PassLevelKey& key);
 };
 
-
 /// Its a chunk of a model. Its very important class and it binds the material
 /// with the mesh
 class ModelPatch: public ModelPatchBase
@@ -94,7 +91,6 @@ private:
 	MeshResourcePointer mesh; ///< The geometry
 	MaterialResourcePointer mtl; ///< Material
 };
-
 
 /// Model is an entity that acts as a container for other resources. Models are
 /// all the non static objects in a map.
@@ -143,8 +139,6 @@ private:
 	Obb visibilityShape;
 };
 
-
 } // end namespace
-
 
 #endif

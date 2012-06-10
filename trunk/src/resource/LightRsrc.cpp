@@ -2,7 +2,6 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/misc/PropertyTree.h"
 #include "anki/core/Logger.h"
-#include "anki/core/Globals.h"
 #include <cstring>
 #include <string>
 #include <boost/property_tree/ptree.hpp>

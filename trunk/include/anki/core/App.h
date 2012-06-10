@@ -1,9 +1,10 @@
 #ifndef ANKI_CORE_APP_H
 #define ANKI_CORE_APP_H
 
+#include "anki/core/Logger.h"
+#include "anki/util/Singleton.h"
 #include <SDL/SDL.h>
 #include <boost/filesystem.hpp>
-#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -121,6 +122,8 @@ private:
 	void initDirs();
 	void initRenderer();
 };
+
+typedef Singleton<App> AppSingleton;
 
 } // end namespace
 

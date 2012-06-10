@@ -35,7 +35,7 @@ public:
 
 	/// Given a pair of pass and level it returns a pointer to a
 	/// shader program uniform variable. The pointer may be nullptr
-	typedef PassLevelHashMap<ShaderProgramUniformVariable*>::Type
+	typedef PassLevelHashMap<const ShaderProgramUniformVariable*>::Type
 		PassLevelToShaderProgramUniformVariableHashMap;
 
 	/// @name Constructors & destructor
@@ -71,10 +71,10 @@ public:
 
 	/// Given a key return the uniform. If the uniform is not present in the
 	/// LOD pass key then returns nullptr
-	ShaderProgramUniformVariable* findShaderProgramUniformVariable(
-		const PassLevelKey& key)
+	const ShaderProgramUniformVariable* findShaderProgramUniformVariable(
+		const PassLevelKey& key) const
 	{
-		ShaderProgramUniformVariable* var = sProgVars.at(key);
+		const ShaderProgramUniformVariable* var = sProgVars.at(key);
 		return var;
 	}
 
@@ -117,7 +117,7 @@ public:
 	/// @{
 	MaterialVariableTemplate(
 		const char* shaderProgVarName,
-		const PassLevelToShaderProgramHashMap& sProgs,
+		PassLevelToShaderProgramHashMap& sProgs,
 		const Data& val,
 		bool init_)
 		: MaterialVariable(shaderProgVarName, sProgs, init_,
@@ -142,6 +142,15 @@ public:
 		data = x;
 	}
 	/// @}
+
+	void accept(MutableVisitor& v)
+	{
+		v.visit(data);
+	}
+	void accept(ConstVisitor& v) const
+	{
+		v.visit(data);
+	}
 
 private:
 	Data data;
@@ -311,41 +320,23 @@ public:
 		return *this;
 	}
 
-	const ShaderProgram& getShaderProgram(const PassLevelKey& key) const
-	{
-		return *eSProgs.at(key);
-	}
-
 	// Variable accessors
 	const VarsContainer& getVariables() const
 	{
 		return vars;
 	}
-
-	VarsContainer::iterator getVariablesBegin()
-	{
-		return vars.begin();
-	}
-	VarsContainer::iterator getVariablesEnd()
-	{
-		return vars.end();
-	}
 	/// @}
 
-	/// Get by name
-	const MaterialVariable& findVariableByName(const char* name) const;
-
-	bool variableExists(const char* name) const
+	const ShaderProgram& findShaderProgram(const PassLevelKey& key) const
 	{
-		return nameToVar.find(name) != nameToVar.end();
+		return *eSProgs.at(key);
 	}
 
-	/// Check if a variable exists in the shader program of the @a key
-	bool variableExistsAndInKey(const char* name,
-		const PassLevelKey& key) const
+	/// Get by name
+	const MaterialVariable* findVariableByName(const char* name) const
 	{
 		NameToVariableHashMap::const_iterator it = nameToVar.find(name);
-		return it != nameToVar.end() && it->second->inPass(key);
+		return (it == nameToVar.end()) ? nullptr : it->second;
 	}
 
 	/// Load a material file
