@@ -1,7 +1,6 @@
 #include "anki/scene/Octree.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
-#include "anki/core/Globals.h"
 #include "anki/collision/CollisionAlgorithmsMatrix.h"
 
 
@@ -9,7 +8,7 @@ namespace anki {
 
 
 //==============================================================================
-Octree::Octree(const Aabb& aabb, uchar maxDepth_, float looseness_)
+Octree::Octree(const Aabb& aabb, uint8_t maxDepth_, float looseness_)
 :	maxDepth(maxDepth_ < 1 ? 1 : maxDepth_),
  	looseness(looseness_)
 {

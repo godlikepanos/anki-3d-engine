@@ -25,9 +25,7 @@ void Bl::init(const RendererInitializer& initializer)
 			GL_FLOAT, blurFai);
 
 		hBlurFbo.create();
-		hBlurFbo.bind();
 		hBlurFbo.setColorAttachments({&blurFai});
-		hBlurFbo.checkIfGood();
 	}
 	catch(const std::exception& e)
 	{
@@ -43,9 +41,7 @@ void Bl::init(const RendererInitializer& initializer)
 	try
 	{
 		vBlurFbo.create();
-		vBlurFbo.bind();
 		vBlurFbo.setColorAttachments({&r->getPps().getPostPassFai()});
-		vBlurFbo.checkIfGood();
 	}
 	catch(std::exception& e)
 	{
@@ -61,9 +57,7 @@ void Bl::init(const RendererInitializer& initializer)
 	try
 	{
 		sideBlurFbo.create();
-		sideBlurFbo.bind();
 		sideBlurFbo.setColorAttachments({&r->getMs().getNormalFai()});
-		sideBlurFbo.checkIfGood();
 	}
 	catch(std::exception& e)
 	{
@@ -85,7 +79,7 @@ void Bl::runSideBlur()
 
 	sideBlurFbo.bind();
 
-	GlStateMachineSingleton::get().enable(GL_BLEND);
+	GlStateSingleton::get().enable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	sideBlurSProg->bind();
@@ -99,7 +93,7 @@ void Bl::runSideBlur()
 //==============================================================================
 void Bl::runBlur()
 {
-	GlStateMachineSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().disable(GL_BLEND);
 
 	for(uint i = 0; i < blurringIterationsNum; i++)
 	{

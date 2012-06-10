@@ -2,7 +2,6 @@
 #define ANKI_SCENE_OCTREE_H
 
 #include "anki/collision/Aabb.h"
-#include "anki/util/StdTypes.h"
 #include <boost/array.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -68,7 +67,7 @@ private:
 class Octree
 {
 public:
-	Octree(const Aabb& aabb, uchar maxDepth, float looseness = 1.5);
+	Octree(const Aabb& aabb, uint8_t maxDepth, float looseness = 1.5);
 
 	/// @name Accessors
 	/// @{

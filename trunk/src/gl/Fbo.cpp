@@ -6,7 +6,7 @@ namespace anki {
 
 //==============================================================================
 
-std::atomic<uint32_t> Fbo::counter(0);
+thread_local const Fbo* Fbo::current = nullptr;
 
 static const std::array<GLenum, 8> colorAttachments = {{
 	GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
@@ -28,7 +28,6 @@ void Fbo::create()
 	ANKI_ASSERT(!isCreated());
 	glGenFramebuffers(1, &glId);
 	ANKI_ASSERT(glId != 0);
-	uuid = counter.fetch_add(1, std::memory_order_relaxed);
 }
 
 //==============================================================================
@@ -44,20 +43,34 @@ void Fbo::destroy()
 void Fbo::bind() const
 {
 	ANKI_ASSERT(isCreated());
-	glBindFramebuffer(GL_FRAMEBUFFER, glId);
+
+	if(current != this)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, glId);
+		current = this;
+	}
 }
 
 //==============================================================================
 void Fbo::unbind() const
 {
 	ANKI_ASSERT(isCreated());
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	if(current == this)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		current = nullptr;
+	}
 }
 
 //==============================================================================
 void Fbo::unbindAll()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	if(current != nullptr)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		current = nullptr;
+	}
 }
 
 //==============================================================================
@@ -75,15 +88,14 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 	textures)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
 	ANKI_ASSERT(textures.size() > 0);
 
+	bind();
+
 	// Set number of color attachments
-	//
 	glDrawBuffers(textures.size(), &colorAttachments[0]);
 
 	// Set attachments
-	//
 	int i = 0;
 	for(const Texture* tex : textures)
 	{
@@ -97,8 +109,8 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
 
+	bind();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
 		GL_TEXTURE_2D, tex.getGlId(), 0);
 }

@@ -90,11 +90,7 @@ void GlState::setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 void GlState::setProgram(ShaderProgram* prog_)
 {
 	ANKI_ASSERT(prog_);
-	if(prog != prog_->getUuid())
-	{
-		prog_->bind();
-		prog = prog_->getUuid();
-	}
+	prog_->bind();
 }
 
 //==============================================================================
@@ -103,13 +99,11 @@ void GlState::setFbo(Fbo* fbo_)
 	if(fbo_ == nullptr)
 	{
 		Fbo::unbindAll();
-		fbo = std::numeric_limits<decltype(fbo)>::max();
 	}
-	else if(fbo != fbo_->getUuid())
+	else
 	{
 		ANKI_ASSERT(fbo_->isComplete());
 		fbo_->bind();
-		fbo = fbo_->getUuid();
 	}
 }
 
@@ -117,11 +111,7 @@ void GlState::setFbo(Fbo* fbo_)
 void GlState::setVao(Vao* vao_)
 {
 	ANKI_ASSERT(vao_);
-	if(vao != vao_->getUuid())
-	{
-		vao_->bind();
-		vao = vao_->getUuid();
-	}
+	vao_->bind();
 }
 
 } // end namespace
