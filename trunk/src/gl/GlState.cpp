@@ -67,9 +67,6 @@ void GlState::sync()
 	viewportY = viewport[1];
 	viewportW = viewport[2];
 	viewportH = viewport[3];
-
-	// pointers
-	prog = fbo = vao = std::numeric_limits<decltype(prog)>::max();
 }
 
 //==============================================================================
