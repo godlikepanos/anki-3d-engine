@@ -2,12 +2,8 @@
 #include "anki/core/Logger.h"
 #include "anki/core/App.h"
 
-
 namespace anki {
-
-
-//==============================================================================
-// start                                                                       =
+/*
 //==============================================================================
 void AsyncLoader::start()
 {
@@ -15,25 +11,19 @@ void AsyncLoader::start()
 	thread = boost::thread(&AsyncLoader::workingFunc, this);
 }
 
-
-//==============================================================================
-// load                                                                        =
 //==============================================================================
 void AsyncLoader::load(const char* filename, LoadCallback loadCallback,
 	void* storage)
 {
-	ANKI_LOGI("New load request for \"" << filename << "\"");
-	boost::mutex::scoped_lock lock(mutexReq);
+	ANKI_LOGI("New load request for: " << filename);
+	mutexReq.lock();
 	Request f = {filename, loadCallback, storage};
 	requests.push_back(f);
-	lock.unlock();
+	mutexReq.unlock();
 
 	condVar.notify_one();
 }
 
-
-//==============================================================================
-// workingFunc                                                                 =
 //==============================================================================
 void AsyncLoader::workingFunc()
 {
@@ -98,6 +88,6 @@ bool AsyncLoader::pollForFinished(std::string& filename, void* buff, bool& ok)
 	ok = resp.ok;
 	return true;
 }
-
+*/
 
 } // end namespace

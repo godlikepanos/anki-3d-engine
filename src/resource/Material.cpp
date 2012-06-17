@@ -2,6 +2,7 @@
 #include "anki/misc/PropertyTree.h"
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
+#include "anki/util/Filesystem.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/TextureResource.h"
 #include <boost/property_tree/ptree.hpp>
@@ -233,25 +234,26 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	std::string prefix = std::to_string(h);
 
 	// Create path
-	boost::filesystem::path newfPathName =
-		AppSingleton::get().getCachePath() / (prefix + ".glsl");
+	std::string newfPathName =
+		AppSingleton::get().getCachePath() + "/" + prefix + ".glsl";
+	toNativePath(newfPathName.c_str());
 
 	// If file not exists write it
-	if(!boost::filesystem::exists(newfPathName))
+	if(!fileExists(newfPathName.c_str()))
 	{
 		// If not create it
-		std::ofstream f(newfPathName.string().c_str());
+		std::ofstream f(newfPathName.c_str());
 		if(!f.is_open())
 		{
 			throw ANKI_EXCEPTION("Cannot open file for writing: " 
-				+ newfPathName.string());
+				+ newfPathName);
 		}
 
 		f.write(source.c_str(), source.length());
 		f.close();
 	}
 
-	return newfPathName.string();
+	return newfPathName;
 }
 
 //==============================================================================

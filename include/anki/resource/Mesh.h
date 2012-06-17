@@ -1,17 +1,14 @@
 #ifndef ANKI_RESOURCE_MESH_H
 #define ANKI_RESOURCE_MESH_H
 
-#include <boost/array.hpp>
+#include <array>
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/collision/Obb.h"
 
-
 namespace anki {
 
-
 class MeshLoader;
-
 
 /// This is the interface class for meshes. Its interface because the skin
 /// nodes override it
@@ -38,10 +35,10 @@ public:
 	/// Get a VBO. Its nullptr if it does not exist
 	virtual const Vbo* getVbo(VboId id) const = 0;
 
-	virtual uint getTextureChannelsNumber() const = 0;
-	virtual uint getLodsNumber() const = 0;
-	virtual uint getIndicesNumber(uint lod) const = 0;
-	virtual uint getVerticesNumber(uint lod) const = 0;
+	virtual uint32_t getTextureChannelsNumber() const = 0;
+	virtual uint32_t getLodsNumber() const = 0;
+	virtual uint32_t getIndicesNumber(uint32_t lod) const = 0;
+	virtual uint32_t getVerticesNumber(uint32_t lod) const = 0;
 
 	virtual const Obb& getBoundingShape() const = 0;
 	/// @}
@@ -65,12 +62,11 @@ public:
 	/// @}
 };
 
-
 /// Mesh Resource. It contains the geometry packed in VBOs
 class Mesh: public MeshBase
 {
 public:
-	typedef boost::array<Vbo, VBOS_NUMBER> VbosArray;
+	typedef std::array<Vbo, VBOS_NUMBER> VbosArray;
 
 	/// @name Constructors
 	/// @{
@@ -100,25 +96,25 @@ public:
 	}
 
 	/// Implements MeshBase::getTextureChannelsNumber
-	uint getTextureChannelsNumber() const
+	uint32_t getTextureChannelsNumber() const
 	{
 		return vbos[VBO_TEX_COORDS].isCreated() ? 1 : 0;
 	}
 
 	/// Implements MeshBase::getLodsNumber
-	uint getLodsNumber() const
+	uint32_t getLodsNumber() const
 	{
 		return 1;
 	}
 
 	/// Implements MeshBase::getIndicesNumber
-	uint getIndicesNumber(uint) const
+	uint32_t getIndicesNumber(uint32_t) const
 	{
 		return vertIdsNum;
 	}
 
 	/// Implements MeshBase::getVerticesNumber
-	uint getVerticesNumber(uint) const
+	uint32_t getVerticesNumber(uint32_t) const
 	{
 		return vertsNum;
 	}
@@ -135,16 +131,14 @@ public:
 
 private:
 	VbosArray vbos; ///< The vertex buffer objects
-	uint vertIdsNum; ///< The number of vertex IDs
+	uint32_t vertIdsNum; ///< The number of vertex IDs
 	Obb visibilityShape;
-	uint vertsNum;
+	uint32_t vertsNum;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& meshData);
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

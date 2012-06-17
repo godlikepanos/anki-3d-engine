@@ -9,7 +9,7 @@ namespace anki {
 
 
 /// Given a pair of pass and level it returns a pointer to a shader program
-typedef PassLevelHashMap<class ShaderProgram*>::Type
+typedef PassLevelHashMap<class ShaderProgram*>
 	PassLevelToShaderProgramHashMap;
 
 

@@ -3,16 +3,13 @@
 #include <fstream>
 
 #include "anki/input/Input.h"
-#include "anki/scene/PerspectiveCamera.h"
-#include "anki/scene/OrthographicCamera.h"
+#include "anki/scene/Camera.h"
 #include "anki/math/Math.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/ui/UiPainter.h"
 #include "anki/core/App.h"
 #include "anki/resource/Mesh.h"
 #include "anki/scene/Light.h"
-#include "anki/scene/PointLight.h"
-#include "anki/scene/SpotLight.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/Scene.h"
 #include "anki/resource/SkelAnim.h"
@@ -30,12 +27,10 @@
 #include "anki/scene/ModelNode.h"
 #include "anki/resource/Model.h"
 #include "anki/core/Logger.h"
-#include "anki/util/Util.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/resource/Skin.h"
-#include "anki/scene/MaterialRuntime.h"
-#include "anki/core/Globals.h"
 #include "anki/ui/UiFtFontLoader.h"
 #include "anki/ui/UiFont.h"
 #include "anki/event/EventManager.h"
@@ -44,7 +39,6 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/ParallelManager.h"
-#include "anki/renderer/PhysDbgDrawer.h"
 #include <boost/algorithm/string.hpp>
 
 
@@ -341,7 +335,7 @@ void mainLoopExtra()
 	if(InputSingleton::get().getKey(SDL_SCANCODE_Y) == 1)
 	{
 		ANKI_LOGI("Exec script");
-		ScriptManagerSingleton::get().execScript(Util::readFile("test.py").c_str());
+		ScriptManagerSingleton::get().execScript(readFile("test.py").c_str());
 	}
 
 	mover->getLocalTransform().getRotation().reorthogonalize();

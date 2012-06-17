@@ -2,12 +2,12 @@
 #include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Platform.h"
+#include "anki/util/Filesystem.h"
 #include <GL/glew.h>
 #include <sstream>
 #include <SDL/SDL.h>
 #include <iostream>
 #include <iomanip>
-#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
 namespace anki {
@@ -20,20 +20,20 @@ void App::handleLoggerMessages(const Logger::Info& info)
 
 	switch(info.type)
 	{
-		case Logger::LMT_NORMAL:
-			out = &std::cout;
-			x = "Info";
-			break;
+	case Logger::LMT_NORMAL:
+		out = &std::cout;
+		x = "Info";
+		break;
 
-		case Logger::LMT_ERROR:
-			out = &std::cerr;
-			x = "Error";
-			break;
+	case Logger::LMT_ERROR:
+		out = &std::cerr;
+		x = "Error";
+		break;
 
-		case Logger::LMT_WARNING:
-			out = &std::cerr;
-			x = "Warn";
-			break;
+	case Logger::LMT_WARNING:
+		out = &std::cerr;
+		x = "Warn";
+		break;
 	}
 
 	(*out) << "(" << info.file << ":" << info.line << " "<< info.func 
@@ -56,8 +56,8 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 		}
 		else
 		{
-			std::cerr << "Incorrect command line argument \"" << arg 
-				<< "\"" << std::endl;
+			std::cerr << "Incorrect command line argument: " << arg
+				<< std::endl;
 			abort();
 		}
 	}
@@ -142,22 +142,22 @@ void App::initWindow()
 //==============================================================================
 void App::initDirs()
 {
-	settingsPath = boost::filesystem::path(getenv("HOME")) / ".anki";
-	if(!boost::filesystem::exists(settingsPath))
+	settingsPath = std::string(getenv("HOME")) + "/.anki";
+	if(!directoryExists(settingsPath.c_str()))
 	{
-		ANKI_LOGI("Creating settings dir \"" << settingsPath.string() << "\"");
-		boost::filesystem::create_directory(settingsPath);
+		ANKI_LOGI("Creating settings dir: " << settingsPath);
+		createDirectory(settingsPath.c_str());
 	}
 
-	cachePath = settingsPath / "cache";
-	if(boost::filesystem::exists(cachePath))
+	cachePath = settingsPath + "/cache";
+	if(directoryExists(cachePath.c_str()))
 	{
-		ANKI_LOGI("Deleting dir \"" << cachePath.string() << "\"");
-		boost::filesystem::remove_all(cachePath);
+		ANKI_LOGI("Deleting dir \"" << cachePath << "\"");
+		removeDirectory(cachePath.c_str());
 	}
 
-	ANKI_LOGI("Creating cache dir \"" << cachePath.string() << "\"");
-	boost::filesystem::create_directory(cachePath);
+	ANKI_LOGI("Creating cache dir \"" << cachePath << "\"");
+	createDirectory(cachePath.c_str());
 }
 
 //==============================================================================

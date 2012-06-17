@@ -2,13 +2,10 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/MeshLoader.h"
 #include "anki/gl/Vbo.h"
-#include "anki/util/Util.h"
+#include "anki/util/Functions.h"
 #include <fstream>
-#include <boost/lexical_cast.hpp>
-
 
 namespace anki {
-
 
 //==============================================================================
 void Mesh::load(const char* filename)
@@ -20,7 +17,6 @@ void Mesh::load(const char* filename)
 
 	try
 	{
-		//
 		// Sanity checks
 		//
 		if(meshData.getVertIndeces().size() < 1
@@ -36,29 +32,28 @@ void Mesh::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Mesh \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Mesh loading failed: " + filename) << e;
 	}
 }
-
 
 //==============================================================================
 void Mesh::createVbos(const MeshLoader& meshData)
 {
 	vbos[VBO_INDICES].create(
 		GL_ELEMENT_ARRAY_BUFFER,
-		Util::getVectorSizeInBytes(meshData.getVertIndeces()),
+		getVectorSizeInBytes(meshData.getVertIndeces()),
 		&meshData.getVertIndeces()[0],
 		GL_STATIC_DRAW);
 
 	vbos[VBO_POSITIONS].create(
 		GL_ARRAY_BUFFER,
-		Util::getVectorSizeInBytes(meshData.getVertCoords()),
+		getVectorSizeInBytes(meshData.getVertCoords()),
 		&meshData.getVertCoords()[0],
 		GL_STATIC_DRAW);
 
 	vbos[VBO_NORMALS].create(
 		GL_ARRAY_BUFFER,
-		Util::getVectorSizeInBytes(meshData.getVertNormals()),
+		getVectorSizeInBytes(meshData.getVertNormals()),
 		&meshData.getVertNormals()[0],
 		GL_STATIC_DRAW);
 
@@ -66,7 +61,7 @@ void Mesh::createVbos(const MeshLoader& meshData)
 	{
 		vbos[VBO_TANGENTS].create(
 			GL_ARRAY_BUFFER,
-			Util::getVectorSizeInBytes(meshData.getVertTangents()),
+			getVectorSizeInBytes(meshData.getVertTangents()),
 			&meshData.getVertTangents()[0],
 			GL_STATIC_DRAW);
 	}
@@ -75,7 +70,7 @@ void Mesh::createVbos(const MeshLoader& meshData)
 	{
 		vbos[VBO_TEX_COORDS].create(
 			GL_ARRAY_BUFFER,
-			Util::getVectorSizeInBytes(meshData.getTexCoords()),
+			getVectorSizeInBytes(meshData.getTexCoords()),
 			&meshData.getTexCoords()[0],
 			GL_STATIC_DRAW);
 	}
@@ -84,11 +79,10 @@ void Mesh::createVbos(const MeshLoader& meshData)
 	{
 		vbos[VBO_WEIGHTS].create(
 			GL_ARRAY_BUFFER,
-			Util::getVectorSizeInBytes(meshData.getVertWeights()),
+			getVectorSizeInBytes(meshData.getVertWeights()),
 			&meshData.getVertWeights()[0],
 			GL_STATIC_DRAW);
 	}
 }
-
 
 } // end namespace

@@ -3,12 +3,9 @@
 
 #include "anki/util/Assert.h"
 #include <vector>
-#include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
 
-
 namespace anki {
-
 
 /// A hierarchical object
 template<typename T>
@@ -22,30 +19,30 @@ public:
 	typedef boost::iterator_range<typename Container::iterator>
 		MutableIteratorRange;
 
-	/// Calls addChild if parent is not NULL
-	/// @exception Exception
+	/// Calls addChild if parent is not nullptr
 	Object(Value* self_, Value* parent_)
-		: self(self_), parent(NULL)
+		: self(self_)
 	{
-		ANKI_ASSERT(self != NULL && "Self can't be nullptr");
-		if(parent_ != NULL)
+		ANKI_ASSERT(self != nullptr && "Self can't be nullptr");
+		parent = parent_;
+		if(parent != nullptr)
 		{
-			parent_->addChild(self);
+			parent->addChild(self);
 		}
 	}
 
-	/// Delete childs from the last entered to the first and update parent
+	/// Delete children from the last entered to the first and update parent
 	virtual ~Object()
 	{
-		if(parent != NULL)
+		if(parent != nullptr)
 		{
 			parent->removeChild(self);
 		}
 
-		// Remove all children
-		BOOST_FOREACH(Value* child, childs)
+		// Remove all children (fast version)
+		for(Value* child : childs)
 		{
-			child->parent = NULL;
+			child->parent = nullptr;
 		}
 	}
 
@@ -78,8 +75,8 @@ public:
 	/// Add a new child
 	void addChild(Value* child)
 	{
-		ANKI_ASSERT(child != NULL && "Null arg");
-		ANKI_ASSERT(child->parent ==  NULL && "Child already has parent");
+		ANKI_ASSERT(child != nullptr && "Null arg");
+		ANKI_ASSERT(child->parent ==  nullptr && "Child already has parent");
 
 		child->parent = self;
 		childs.push_back(child);
@@ -88,7 +85,8 @@ public:
 	/// Remove a child
 	void removeChild(Value* child)
 	{
-		ANKI_ASSERT(child != NULL && "Null arg");
+		ANKI_ASSERT(child != nullptr && "Null arg");
+		ANKI_ASSERT(child->parent == self);
 
 		typename Container::iterator it =
 			std::find(childs.begin(), childs.end(), child);
@@ -96,7 +94,7 @@ public:
 		ANKI_ASSERT(it != childs.end() && "Child not found");
 
 		childs.erase(it);
-		child->parent = NULL;
+		child->parent = nullptr;
 	}
 
 private:
@@ -105,8 +103,6 @@ private:
 	Container childs;
 };
 
-
 } // end namespace
-
 
 #endif

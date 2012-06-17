@@ -1,6 +1,6 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/misc/Parser.h"
-#include "anki/util/Util.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/Exception.h"
 #include <iomanip>
 #include <cstring>
@@ -52,10 +52,10 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
-	std::vector<std::string> lines = Util::getFileLines(filename.c_str());
+	StringList lines = readFileLines(filename.c_str());
 	if(lines.size() < 1)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\": Cannot open or empty");
+		throw ANKI_EXCEPTION("Cannot open file or empty: " + filename);
 	}
 
 	scanner::Scanner scanner(filename.c_str(), false);

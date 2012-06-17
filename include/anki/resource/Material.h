@@ -35,7 +35,7 @@ public:
 
 	/// Given a pair of pass and level it returns a pointer to a
 	/// shader program uniform variable. The pointer may be nullptr
-	typedef PassLevelHashMap<const ShaderProgramUniformVariable*>::Type
+	typedef PassLevelHashMap<const ShaderProgramUniformVariable*>
 		PassLevelToShaderProgramUniformVariableHashMap;
 
 	/// @name Constructors & destructor

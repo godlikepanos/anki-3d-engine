@@ -3,12 +3,13 @@
 
 #include <list>
 #include <string>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include <thread>
+#include <mutex>
 
 
 namespace anki {
 
+/*
 
 /// Asynchronous operator
 ///
@@ -81,6 +82,8 @@ private:
 
 	void start(); ///< Start thread
 };
+
+*/
 
 
 } // end namespace
