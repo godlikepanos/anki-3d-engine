@@ -1,9 +1,9 @@
 #include "anki/resource/Image.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
+#include "anki/util/Filesystem.h"
+#include "anki/util/Assert.h"
 #include <png.h>
-#include <boost/filesystem.hpp> // For file extensions
-#include <boost/algorithm/string.hpp> // For to_lower
 #include <fstream>
 
 namespace anki {
@@ -100,7 +100,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint32_t& bpp)
 					throw ANKI_EXCEPTION("Cannot read image data");
 				}
 
-				data[currentbyte		] = colorbuffer[2];
+				data[currentbyte] = colorbuffer[2];
 				data[currentbyte + 1] = colorbuffer[1];
 				data[currentbyte + 2] = colorbuffer[0];
 
@@ -130,8 +130,8 @@ void Image::loadCompressedTga(std::fstream& fs, uint32_t& bpp)
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
 				data[currentbyte] = colorbuffer[2];
-				data[currentbyte+1] = colorbuffer[1];
-				data[currentbyte+2] = colorbuffer[0];
+				data[currentbyte + 1] = colorbuffer[1];
+				data[currentbyte + 2] = colorbuffer[0];
 
 				if(bytesPerPxl == 4)
 				{
@@ -273,7 +273,6 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	// PNG lib knows that we already have read the header
 	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE);
 
-	//
 	// Read info and make conversions
 	// This loop reads info, if not acceptable it calls libpng funcs to change
 	// them and re-runs the loop
@@ -290,30 +289,30 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		// 1) Convert the color types
 		switch(colorType)
 		{
-			case PNG_COLOR_TYPE_PALETTE:
-				err = "Converting PNG_COLOR_TYPE_PALETTE to "
-					"PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA";
-				png_set_palette_to_rgb(pngPtr);
-				goto again;
-				break;
-			case PNG_COLOR_TYPE_GRAY:
-				// do nothing
-				break;
-			case PNG_COLOR_TYPE_GRAY_ALPHA:
-				err = "Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. "
-					"Converting to PNG_COLOR_TYPE_GRAY";
-				png_set_strip_alpha(pngPtr);
-				goto again;
-				break;
-			case PNG_COLOR_TYPE_RGB:
-				// do nothing
-				break;
-			case PNG_COLOR_TYPE_RGBA:
-				// do nothing
-				break;
-			default:
-				throw ANKI_EXCEPTION("Forgot to handle a color type");
-				break;
+		case PNG_COLOR_TYPE_PALETTE:
+			err = "Converting PNG_COLOR_TYPE_PALETTE to "
+				"PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA";
+			png_set_palette_to_rgb(pngPtr);
+			goto again;
+			break;
+		case PNG_COLOR_TYPE_GRAY:
+			// do nothing
+			break;
+		case PNG_COLOR_TYPE_GRAY_ALPHA:
+			err = "Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. "
+				"Converting to PNG_COLOR_TYPE_GRAY";
+			png_set_strip_alpha(pngPtr);
+			goto again;
+			break;
+		case PNG_COLOR_TYPE_RGB:
+			// do nothing
+			break;
+		case PNG_COLOR_TYPE_RGBA:
+			// do nothing
+			break;
+		default:
+			throw ANKI_EXCEPTION("Forgot to handle a color type");
+			break;
 		}
 
 		// 2) Convert the bit depths
@@ -337,16 +336,15 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	}
 
 	// Sanity checks
-	if((bitDepth != 8) ||
-		(colorType != PNG_COLOR_TYPE_GRAY &&
-			colorType != PNG_COLOR_TYPE_RGB &&
-			colorType != PNG_COLOR_TYPE_RGBA))
+	if((bitDepth != 8)
+		|| (colorType != PNG_COLOR_TYPE_GRAY
+			&& colorType != PNG_COLOR_TYPE_RGB
+			&& colorType != PNG_COLOR_TYPE_RGBA))
 	{
 		err = "Sanity checks failed";
 		goto cleanup;
 	}
 
-	//
 	// Read this sucker
 	//
 	rowbytes = png_get_rowbytes(pngPtr, infoPtr);
@@ -364,25 +362,25 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	//
 	switch(colorType)
 	{
-		case PNG_COLOR_TYPE_GRAY:
-			type = CT_R;
-			break;
-		case PNG_COLOR_TYPE_RGB:
-			type = CT_RGB;
-			break;
-		case PNG_COLOR_TYPE_RGBA:
-			type = CT_RGBA;
-			break;
-		default:
-			err = "See file";
-			goto cleanup;
+	case PNG_COLOR_TYPE_GRAY:
+		type = CT_R;
+		break;
+	case PNG_COLOR_TYPE_RGB:
+		type = CT_RGB;
+		break;
+	case PNG_COLOR_TYPE_RGBA:
+		type = CT_RGBA;
+		break;
+	default:
+		err = "See file";
+		goto cleanup;
 	}
 
 	ok = true;
 
 	// Cleanup
 	//
-	cleanup:
+cleanup:
 
 	if(pngPtr)
 	{
@@ -409,17 +407,17 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 void Image::load(const char* filename)
 {
 	// get the extension
-	std::string ext = boost::filesystem::path(filename).extension().string();
-	boost::to_lower(ext);
+	const char* ext = getFileExtension(filename);
+	ANKI_ASSERT(ext);
 
 	// load from this extension
 	try
 	{
-		if(ext == ".tga")
+		if(strcmp(ext, "tga") == 0)
 		{
 			loadTga(filename);
 		}
-		else if(ext == ".png")
+		else if(strcmp(ext, "png") == 0)
 		{
 			std::string err;
 			if(!loadPng(filename, err))
@@ -427,7 +425,7 @@ void Image::load(const char* filename)
 				throw ANKI_EXCEPTION(err);
 			}
 		}
-		else if(ext == ".dds")
+		else if(strcmp(ext, "dds") == 0)
 		{
 			loadDds(filename);
 		}
@@ -438,7 +436,7 @@ void Image::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("File " + filename) << e;
 	}
 }
 
@@ -614,9 +612,9 @@ void Image::loadDds(const char* filename)
 	DDS_header hdr;
 	in.read((char*)&hdr, sizeof(hdr));
 
-	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124 ||
-		!(hdr.data.dwFlags & DDSD_PIXELFORMAT) ||
-		!(hdr.data.dwFlags & DDSD_CAPS))
+	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124
+		|| !(hdr.data.dwFlags & DDSD_PIXELFORMAT)
+		|| !(hdr.data.dwFlags & DDSD_CAPS))
 	{
 		throw ANKI_EXCEPTION("Incorrect DDS header");
 	}
@@ -659,9 +657,9 @@ void Image::loadDds(const char* filename)
 
 	if(li->compressed)
 	{
-		size_t size = std::max(li->divSize, x) /
-			li->divSize * std::max(li->divSize, y) /
-			li->divSize * li->blockBytes;
+		size_t size = std::max(li->divSize, x)
+			/ li->divSize * std::max(li->divSize, y)
+			/ li->divSize * li->blockBytes;
 		//assert( size == hdr.dwPitchOrLinearSize );
 		//assert( hdr.dwFlags & DDSD_LINEARSIZE );
 		data.resize(size);

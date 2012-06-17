@@ -19,7 +19,7 @@ public:
 	/// For garbage collection
 	typedef boost::ptr_vector<Vao> VaosContainer;
 	/// Map to get the VAO given a PassLod key
-	typedef PassLevelHashMap<Vao*>::Type PassLevelToVaoMap;
+	typedef PassLevelHashMap<Vao*> PassLevelToVaoMap;
 
 	virtual ~ModelPatchBase()
 	{}
@@ -66,7 +66,7 @@ class ModelPatch: public ModelPatchBase
 {
 public:
 	/// Map to get the VAO given a PassLod key
-	typedef PassLevelHashMap<Vao>::Type PassLevelToVaoMap;
+	typedef PassLevelHashMap<Vao> PassLevelToVaoMap;
 
 	ModelPatch(const char* meshFName, const char* mtlFName);
 	~ModelPatch();

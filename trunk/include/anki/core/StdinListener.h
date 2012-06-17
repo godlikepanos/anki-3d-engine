@@ -1,14 +1,13 @@
 #ifndef ANKI_CORE_STDIN_LISTENER_H
 #define ANKI_CORE_STDIN_LISTENER_H
 
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include "anki/util/Singleton.h"
+#include <thread>
+#include <mutex>
 #include <string>
 #include <queue>
 
-
 namespace anki {
-
 
 /// The listener of the stdin.
 /// It initiates a thread that constantly reads the stdin and puts the results
@@ -24,14 +23,15 @@ public:
 
 private:
 	std::queue<std::string> q;
-	boost::mutex mtx; ///< Protect the queue
-	boost::thread thrd; ///< The thread
+	std::mutex mtx; ///< Protect the queue
+	std::thread thrd; ///< The thread
 
 	void workingFunc(); ///< The thread function
 };
 
+/// Singleton
+typedef Singleton<StdinListener> StdinListenerSingleton;
 
-} // end namespace
-
+} // end namespace anki
 
 #endif

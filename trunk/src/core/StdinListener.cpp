@@ -1,37 +1,32 @@
 #include "anki/core/StdinListener.h"
-
+#include <array>
+#include <unistd.h>
 
 namespace anki {
 
-
-//==============================================================================
-// workingFunc                                                                 =
 //==============================================================================
 void StdinListener::workingFunc()
 {
-	char buff[512];
+	std::array<char, 512> buff;
 
 	while(1)
 	{
-		int m = read(0, buff, sizeof(buff));
+		int m = read(0, &buff[0], sizeof(buff));
 		buff[m] = '\0';
 		//cout << "read: " << buff << endl;
 		{
-			boost::mutex::scoped_lock lock(mtx);
-			q.push(buff);
+			std::lock_guard<std::mutex> lock(mtx);
+			q.push(&buff[0]);
 			//cout << "size:" << q.size() << endl;
 		}
 	}
 }
 
-
-//==============================================================================
-// getLine                                                                     =
 //==============================================================================
 std::string StdinListener::getLine()
 {
 	std::string ret;
-	boost::mutex::scoped_lock lock(mtx);
+	std::lock_guard<std::mutex> lock(mtx);
 	//cout << "_size:" << q.size() << endl;
 	if(!q.empty())
 	{
@@ -41,14 +36,10 @@ std::string StdinListener::getLine()
 	return ret;
 }
 
-
-//==============================================================================
-// start                                                                       =
 //==============================================================================
 void StdinListener::start()
 {
-	thrd = boost::thread(&StdinListener::workingFunc, this);
+	thrd = std::thread(&StdinListener::workingFunc, this);
 }
-
 
 } // end namespace

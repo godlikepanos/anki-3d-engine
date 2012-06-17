@@ -1,12 +1,11 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/core/App.h" // To get cache dir
-#include "anki/util/Util.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/Exception.h"
-#include <boost/filesystem.hpp>
-#include <boost/unordered_map.hpp>
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 namespace anki {
 
@@ -15,7 +14,7 @@ void ShaderProgramResource::load(const char* filename)
 {
 	ShaderProgramPrePreprocessor pars(filename);
 
-	boost::array<const char*, 128> trfVarsArr = {{nullptr}};
+	std::array<const char*, 128> trfVarsArr = {{nullptr}};
 	if(pars.getTranformFeedbackVaryings().size() > 0)
 	{
 		uint i;
@@ -38,40 +37,38 @@ void ShaderProgramResource::load(const char* filename)
 std::string ShaderProgramResource::createSrcCodeToCache(
 	const char* sProgFPathName, const char* preAppendedSrcCode)
 {
-	using namespace boost::filesystem;
-
 	if(strlen(preAppendedSrcCode) < 1)
 	{
 		return sProgFPathName;
 	}
 
 	// Create suffix
-	boost::hash<std::string> stringHash;
+	std::hash<std::string> stringHash;
 	std::size_t h = stringHash(preAppendedSrcCode);
 	std::string suffix = std::to_string(h);
 
 	//
-	path newfPathName = AppSingleton::get().getCachePath() 
-		/ (path(sProgFPathName).filename().string() + "." + suffix);
+	std::string newfPathName = AppSingleton::get().getCachePath()
+		+ "/" + suffix + ".glsl";
 
-	if(exists(newfPathName))
+	if(fileExists(newfPathName.c_str()))
 	{
-		return newfPathName.string();
+		return newfPathName;
 	}
 
-	std::string src_ = Util::readFile(sProgFPathName);
+	std::string src_ = readFile(sProgFPathName);
 	std::string src = preAppendedSrcCode + src_;
 
-	std::ofstream f(newfPathName.string().c_str());
+	std::ofstream f(newfPathName.c_str());
 	if(!f.is_open())
 	{
-		throw ANKI_EXCEPTION("Cannot open file for writing \"" 
-			+ newfPathName.string() + "\"");
+		throw ANKI_EXCEPTION("Cannot open file for writing: "
+			+ newfPathName);
 	}
 
 	f.write(src.c_str(), src.length());
 
-	return newfPathName.string();
+	return newfPathName;
 }
 
 } // end namespace

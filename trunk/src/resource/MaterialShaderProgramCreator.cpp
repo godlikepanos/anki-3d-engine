@@ -1,14 +1,10 @@
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
-#include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
-
+#include <regex>
 
 namespace anki {
-
 
 //==============================================================================
 MaterialShaderProgramCreator::MaterialShaderProgramCreator(
@@ -17,11 +13,9 @@ MaterialShaderProgramCreator::MaterialShaderProgramCreator(
 	parseShaderProgramTag(pt);
 }
 
-
 //==============================================================================
 MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
 {}
-
 
 //==============================================================================
 void MaterialShaderProgramCreator::parseShaderProgramTag(
@@ -29,12 +23,12 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 {
 	using namespace boost::property_tree;
 
-	BOOST_FOREACH(const ptree::value_type& v, pt)
+	for(const ptree::value_type& v : pt)
 	{
 		if(v.first != "shader")
 		{
-			throw ANKI_EXCEPTION("Expected \"shader\" tag and not: " + 
-				v.first);
+			throw ANKI_EXCEPTION("Expected \"shader\" tag and not: "
+				+ v.first);
 		}
 		
 		parseShaderTag(v.second);
@@ -44,26 +38,23 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	//std::cout << source << std::endl;
 }
 
-
 //==============================================================================
 void MaterialShaderProgramCreator::parseShaderTag(
 	const boost::property_tree::ptree& pt)
 {
 	using namespace boost::property_tree;
 
-	//
 	// <type></type>
 	//
 	const std::string& type = pt.get<std::string>("type");
 	srcLines.push_back("#pragma anki start " + type + "Shader");
 
-	//
 	// <includes></includes>
 	//
 	std::vector<std::string> includeLines;
 
 	const ptree& includesPt = pt.get_child("includes");
-	BOOST_FOREACH(const ptree::value_type& v, includesPt)
+	for(const ptree::value_type& v : includesPt)
 	{
 		if(v.first != "include")
 		{
@@ -79,7 +70,6 @@ void MaterialShaderProgramCreator::parseShaderTag(
 	//std::sort(includeLines.begin(), includeLines.end(), compareStrings);
 	srcLines.insert(srcLines.end(), includeLines.begin(), includeLines.end());
 
-	//
 	// <inputs></inputs>
 	//
 	boost::optional<const ptree&> insPt = pt.get_child_optional("inputs");
@@ -88,12 +78,12 @@ void MaterialShaderProgramCreator::parseShaderTag(
 		// Store the source of the uniform vars
 		std::vector<std::string> uniformsLines;
 	
-		BOOST_FOREACH(const ptree::value_type& v, insPt.get())
+		for(const ptree::value_type& v : insPt.get())
 		{
 			if(v.first != "input")
 			{
-				throw ANKI_EXCEPTION("Expected \"input\" tag and not: " + 
-					v.first);
+				throw ANKI_EXCEPTION("Expected \"input\" tag and not: "
+					+  v.first);
 			}
 
 			const ptree& inPt = v.second;
@@ -108,19 +98,18 @@ void MaterialShaderProgramCreator::parseShaderTag(
 			uniformsLines.end());
 	}
 
-	//
 	// <operations></operations>
 	//
 	srcLines.push_back("\nvoid main()\n{");
 
 	const ptree& opsPt = pt.get_child("operations");
 
-	BOOST_FOREACH(const ptree::value_type& v, opsPt)
+	for(const ptree::value_type& v : opsPt)
 	{
 		if(v.first != "operation")
 		{
-			throw ANKI_EXCEPTION("Expected \"operation\" tag and not: " + 
-				v.first);
+			throw ANKI_EXCEPTION("Expected \"operation\" tag and not: "
+				+ v.first);
 		}
 
 		const ptree& opPt = v.second;
@@ -129,7 +118,6 @@ void MaterialShaderProgramCreator::parseShaderTag(
 
 	srcLines.push_back("}\n");
 }
-
 
 //==============================================================================
 void MaterialShaderProgramCreator::parseInputTag(
@@ -142,7 +130,6 @@ void MaterialShaderProgramCreator::parseInputTag(
 
 	line = "uniform " + type + " " + name + ";";
 }
-
 
 //==============================================================================
 void MaterialShaderProgramCreator::parseOperationTag(
@@ -160,7 +147,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	std::string operationOut;
 	if(retTypeOpt)
 	{
-		operationOut = "operationOut" + boost::lexical_cast<std::string>(id);
+		operationOut = "operationOut" + std::to_string(id);
 	}
 	
 	// <function>functionName</function>
@@ -180,9 +167,9 @@ void MaterialShaderProgramCreator::parseOperationTag(
 		
 			if(v.first != "argument")
 			{
-				throw ANKI_EXCEPTION("Operation " +
-					boost::lexical_cast<std::string>(id) + 
-					": Expected \"argument\" tag and not: " + v.first);
+				throw ANKI_EXCEPTION("Operation "
+					+ std::to_string(id)
+					+ ": Expected \"argument\" tag and not: " + v.first);
 			}
 
 			const std::string& argName = v.second.data();
@@ -194,10 +181,10 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	std::stringstream line;
 	line << "#if defined(" << funcName << "_DEFINED)";
 
-	boost::regex expr("^operationOut[0-9]*$");
-	BOOST_FOREACH(const std::string& arg, argsList)
+	std::regex expr("^operationOut[0-9]*$");
+	for(const std::string& arg : argsList)
 	{
-		if(boost::regex_match(arg, expr))
+		if(std::regex_match(arg, expr))
 		{
 			line << " && defined(" << arg << "_DEFINED)";
 		}
@@ -223,13 +210,11 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	srcLines.push_back(line.str());
 }
 
-
 //==============================================================================
 bool MaterialShaderProgramCreator::compareStrings(
 	const std::string& a, const std::string& b)
 {
 	return a < b;
 }
-
 
 } // end namespace

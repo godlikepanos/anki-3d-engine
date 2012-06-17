@@ -17,13 +17,11 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	BufferObject()
-		: glId(0)
 	{}
 
 	/// Default constructor @see create
 	BufferObject(GLenum target, uint32_t sizeInBytes,
 		const void* dataPtr, GLenum usage)
-		: glId(0)
 	{
 		create(target, sizeInBytes, dataPtr, usage);
 	}
@@ -122,7 +120,7 @@ private:
 	/// Opt to save a few glBindBuffer calls
 	static const thread_local BufferObject* lastBindedBo; 
 
-	GLuint glId; ///< The OpenGL id of the BO
+	GLuint glId = 0; ///< The OpenGL id of the BO
 
 	/// Used in glBindBuffer(target, glId) and its for easy access so we
 	/// wont have to query the GL driver. Its the type of the buffer eg

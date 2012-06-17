@@ -6,7 +6,7 @@
 #include "anki/physics/RigidBody.h"
 #include "anki/core/App.h"
 #include "anki/scene/Scene.h"
-#include "anki/util/Util.h"
+#include "anki/util/Functions.h"
 
 
 namespace anki {

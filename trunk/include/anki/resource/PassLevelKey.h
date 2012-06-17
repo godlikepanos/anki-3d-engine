@@ -1,27 +1,29 @@
 #ifndef ANKI_RESOURCE_PASS_LEVEL_KEY_H
 #define ANKI_RESOURCE_PASS_LEVEL_KEY_H
 
-#include <boost/unordered_map.hpp>
-
+#include <unordered_map>
+#include <cstdint>
+#include <cstdlib>
 
 namespace anki {
-
 
 /// XXX
 struct PassLevelKey
 {
-	uint pass;
-	uint level;
+	uint32_t pass = 0;
+	uint32_t level = 0;
 
 	PassLevelKey()
-		: pass(0), level(0)
 	{}
 
-	PassLevelKey(uint pass_, uint level_)
+	PassLevelKey(const PassLevelKey& b)
+		: pass(b.pass), level(b.level)
+	{}
+
+	PassLevelKey(uint32_t pass_, uint32_t level_)
 		: pass(pass_), level(level_)
 	{}
 };
-
 
 /// Create hash functor
 struct PassLevelKeyCreateHash
@@ -31,7 +33,6 @@ struct PassLevelKeyCreateHash
 		return b.pass * 1000 + b.level;
 	}
 };
-
 
 /// Values comparisons functor
 struct PassLevelKeyComparision
@@ -43,17 +44,12 @@ struct PassLevelKeyComparision
 	}
 };
 
-
-/// XXX
+/// Define an unorderer map with key the PassLevelKey and type given by a
+/// template parameter
 template<typename T>
-struct PassLevelHashMap
-{
-	typedef boost::unordered_map<PassLevelKey, T,
-		PassLevelKeyCreateHash, PassLevelKeyComparision> Type;
-};
-
+using PassLevelHashMap = std::unordered_map<
+	PassLevelKey, T, PassLevelKeyCreateHash, PassLevelKeyComparision>;
 
 } // end namespace
-
 
 #endif

@@ -4,7 +4,6 @@
 #include "anki/core/Logger.h"
 #include "anki/util/Singleton.h"
 #include <SDL/SDL.h>
-#include <boost/filesystem.hpp>
 
 namespace anki {
 
@@ -85,12 +84,12 @@ public:
 		return windowH;
 	}
 
-	const boost::filesystem::path& getSettingsPath() const
+	const std::string& getSettingsPath() const
 	{
 		return settingsPath;
 	}
 
-	const boost::filesystem::path& getCachePath() const
+	const std::string& getCachePath() const
 	{
 		return cachePath;
 	}
@@ -100,9 +99,9 @@ private:
 	uint windowW; ///< The main window width
 	uint windowH; ///< The main window height
 	/// The path that holds the configuration
-	boost::filesystem::path settingsPath;
+	std::string settingsPath;
 	/// This is used as a cache
-	boost::filesystem::path cachePath;
+	std::string cachePath;
 	float timerTick;
 	/// Terminal coloring for Unix terminals. Default on
 	bool terminalColoringEnabled;

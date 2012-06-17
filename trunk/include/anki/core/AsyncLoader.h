@@ -3,14 +3,13 @@
 
 #include <list>
 #include <string>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include <thread>
+#include <mutex>
 #include <SDL/SDL.h>
-
 
 namespace anki {
 
-
+/*
 /// Asynchronous loader
 ///
 /// It creates a thread that loads files on demand. It accepts requests (in the
@@ -71,19 +70,18 @@ private:
 
 	std::list<Request> requests;
 	std::list<Response> responses;
-	boost::mutex mutexReq; ///< Protect the requests container
-	boost::mutex mutexResp; ///< Protect the responses container
-	boost::thread thread;
-	boost::condition_variable condVar;
+	std::mutex mutexReq; ///< Protect the requests container
+	std::mutex mutexResp; ///< Protect the responses container
+	std::thread thread;
+	std::condition_variable condVar;
 
 	/// The thread function. It waits for something in the requests
 	/// container
 	void workingFunc();
 	void start(); ///< Start thread
 };
-
+*/
 
 } // end namespace
-
 
 #endif

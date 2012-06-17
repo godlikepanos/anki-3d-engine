@@ -4,7 +4,7 @@
 
 
 namespace anki {
-
+/*
 
 //==============================================================================
 void AsyncOperator::start()
@@ -108,6 +108,6 @@ uint AsyncOperator::execPostLoad(float maxTime)
 
 	return count;
 }
-
+*/
 
 } // end namespace

@@ -65,6 +65,6 @@ thread_local typename SingletonThreadSafe<T>::Value*
 
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

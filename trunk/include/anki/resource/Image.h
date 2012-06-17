@@ -1,8 +1,10 @@
 #ifndef ANKI_RESOURCE_IMAGE_H
 #define ANKI_RESOURCE_IMAGE_H
 
-#include "anki/util/Util.h"
+#include "anki/util/Functions.h"
 #include <vector>
+#include <iosfwd>
+#include <cstdint>
 
 namespace anki {
 
@@ -69,7 +71,7 @@ public:
 	/// Get image size in bytes
 	size_t getDataSize() const
 	{
-		return Util::getVectorSizeInBytes(data);
+		return getVectorSizeInBytes(data);
 	}
 
 	DataCompression getDataCompression() const
@@ -84,8 +86,8 @@ public:
 	void load(const char* filename);
 
 private:
-	uint32_t width; ///< Image width
-	uint32_t height; ///< Image height
+	uint32_t width = 0; ///< Image width
+	uint32_t height = 0; ///< Image height
 	ColorType type; ///< Image color type
 	std::vector<uint8_t> data; ///< Image data
 	DataCompression dataCompression;

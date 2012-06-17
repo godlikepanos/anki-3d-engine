@@ -4,9 +4,7 @@
 #include "anki/util/StringList.h"
 #include <boost/property_tree/ptree_fwd.hpp>
 
-
 namespace anki {
-
 
 /// Creator of shader programs. This class parses between
 /// <shaderProgam></shaderProgram> located inside a <material></material>
@@ -49,8 +47,6 @@ private:
 	void parseOperationTag(const boost::property_tree::ptree& pt);
 };
 
-
 } // end namespace
-
 
 #endif
