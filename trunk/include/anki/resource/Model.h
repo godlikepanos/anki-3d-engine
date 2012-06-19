@@ -10,9 +10,8 @@
 
 namespace anki {
 
-/// Model patch interface class
-///
-/// Its very important class and it binds the material with the mesh
+/// Model patch interface class. Its very important class and it binds the
+/// material with the mesh
 class ModelPatchBase
 {
 public:

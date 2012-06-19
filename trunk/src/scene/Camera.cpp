@@ -1,8 +1,6 @@
 #include "anki/scene/Camera.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // Camera                                                                      =
@@ -11,7 +9,6 @@ namespace anki {
 //==============================================================================
 Camera::~Camera()
 {}
-
 
 //==============================================================================
 void Camera::lookAtPoint(const Vec3& point)
@@ -25,7 +22,6 @@ void Camera::lookAtPoint(const Vec3& point)
 	rot.setColumns(vside, vup, -vdir);
 	setLocalRotation(rot);
 }
-
 
 //==============================================================================
 // PerspectiveCamera                                                           =
@@ -44,7 +40,6 @@ PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
 	ANKI_CONNECT(prop, valueChanged, this, updateFrustumSlot);
 }
 
-
 //==============================================================================
 // OrthographicCamera                                                          =
 //==============================================================================
@@ -61,6 +56,5 @@ OrthographicCamera::OrthographicCamera(const char* name, Scene* scene,
 
 	ANKI_CONNECT(prop, valueChanged, this, updateFrustumSlot);
 }
-
 
 } // end namespace

@@ -3,14 +3,10 @@
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/MeshLoader.h"
-#include <boost/lexical_cast.hpp>
-
 
 namespace anki {
 
-
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
-
 
 //==============================================================================
 // SkinMesh                                                                    =
@@ -21,17 +17,16 @@ const Vbo* SkinMesh::getVbo(VboId id) const
 {
 	switch(id)
 	{
-		case VBO_POSITIONS:
-			return &tfVbos[VBO_TF_POSITIONS];
-		case VBO_NORMALS:
-			return &tfVbos[VBO_TF_NORMALS];
-		case VBO_TANGENTS:
-			return &tfVbos[VBO_TF_TANGENTS];
-		default:
-			return mesh->getVbo(id);
+	case VBO_POSITIONS:
+		return &tfVbos[VBO_TF_POSITIONS];
+	case VBO_NORMALS:
+		return &tfVbos[VBO_TF_NORMALS];
+	case VBO_TANGENTS:
+		return &tfVbos[VBO_TF_TANGENTS];
+	default:
+		return mesh->getVbo(id);
 	}
 }
-
 
 //==============================================================================
 SkinMesh::SkinMesh(const MeshBase* mesh_)
@@ -46,7 +41,7 @@ SkinMesh::SkinMesh(const MeshBase* mesh_)
 		tfVbos[VBO_TF_POSITIONS].create(
 			GL_ARRAY_BUFFER,
 			vbo->getSizeInBytes(),
-			NULL,
+			nullptr,
 			GL_STATIC_DRAW);
 	}
 
@@ -57,7 +52,7 @@ SkinMesh::SkinMesh(const MeshBase* mesh_)
 		tfVbos[VBO_TF_NORMALS].create(
 			GL_ARRAY_BUFFER,
 			vbo->getSizeInBytes(),
-			NULL,
+			nullptr,
 			GL_STATIC_DRAW);
 	}
 
@@ -68,11 +63,10 @@ SkinMesh::SkinMesh(const MeshBase* mesh_)
 		tfVbos[VBO_TF_TANGENTS].create(
 			GL_ARRAY_BUFFER,
 			vbo->getSizeInBytes(),
-			NULL,
+			nullptr,
 			GL_STATIC_DRAW);
 	}
 }
-
 
 //==============================================================================
 // SkinModelPatch                                                              =
@@ -158,7 +152,6 @@ SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 		BUFFER_OFFSET(20));
 }
 
-
 //==============================================================================
 // SkinPatchNode                                                               =
 //==============================================================================
@@ -174,7 +167,6 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
 	Renderable::init(*this);
 }
-
 
 //==============================================================================
 // SkinNode                                                                    =
@@ -192,7 +184,7 @@ SkinNode::SkinNode(const char* skinFname,
 	for(const ModelPatch& patch : skin->getModel().getModelPatches())
 	{
 		std::string name = skin.getResourceName()
-			+ boost::lexical_cast<std::string>(i);
+			+ std::to_string(i);
 
 		patches.push_back(new SkinPatchNode(&patch,
 			name.c_str(), scene,
@@ -207,11 +199,9 @@ SkinNode::SkinNode(const char* skinFname,
 	boneTranslations.resize(bonesNum);
 }
 
-
 //==============================================================================
 SkinNode::~SkinNode()
 {}
-
 
 //==============================================================================
 void SkinNode::movableUpdate()
@@ -219,7 +209,6 @@ void SkinNode::movableUpdate()
 	visibilityShapeWSpace.set(tails);
 	visibilityShapeWSpace.transform(getWorldTransform());
 }
-
 
 //==============================================================================
 void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
@@ -248,7 +237,6 @@ void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
 	deformHeadsTails(getSkin().getSkeleton(), boneTranslations,
 	    boneRotations, heads, tails);
 }
-
 
 //==============================================================================
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
@@ -315,16 +303,15 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 	}
 }
 
-
 //==============================================================================
 void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 	std::vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
 {
-	boost::array<uint, 128> queue;
+	std::array<uint, 128> queue;
 	uint head = 0, tail = 0;
 
 	// put the roots
-	BOOST_FOREACH(const Bone& bone, skeleton.getBones())
+	for(const Bone& bone : skeleton.getBones())
 	{
 		if(bone.getParent() == NULL)
 		{
@@ -374,7 +361,6 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 	}
 }
 
-
 //==============================================================================
 void SkinNode::deformHeadsTails(const Skeleton& skeleton,
     const std::vector<Vec3>& boneTranslations,
@@ -390,6 +376,5 @@ void SkinNode::deformHeadsTails(const Skeleton& skeleton,
 		tails[i] = skeleton.getBones()[i].getTail().getTransformed(transl, rot);
 	}
 }
-
 
 } // end namespace

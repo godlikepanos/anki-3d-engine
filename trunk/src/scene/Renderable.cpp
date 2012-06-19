@@ -1,11 +1,9 @@
 #include "anki/scene/Renderable.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/TextureResource.h"
-#include <boost/foreach.hpp>
-
+#include <boost/variant.hpp>
 
 namespace anki {
-
 
 //==============================================================================
 // CreateNewPropertyVisitor                                                    =
@@ -31,7 +29,6 @@ struct CreateNewPropertyVisitor: boost::static_visitor<void>
 	}
 };
 
-
 //==============================================================================
 // Renderable                                                                  =
 //==============================================================================
@@ -51,6 +48,5 @@ void Renderable::init(PropertyMap& pmap)
 		boost::apply_visitor(vis, mv.getVariant());
 	}
 }
-
 
 }  // namespace anki
