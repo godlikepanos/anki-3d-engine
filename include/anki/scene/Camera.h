@@ -6,9 +6,7 @@
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Scene
 /// @{
@@ -165,7 +163,6 @@ private:
 	}
 };
 
-
 /// Perspective camera
 class PerspectiveCamera: public Camera
 {
@@ -217,7 +214,6 @@ private:
 	}
 	ANKI_SLOT(updateFrustumSlot, const PerspectiveFrustum&)
 };
-
 
 /// Orthographic camera
 class OrthographicCamera: public Camera
@@ -293,8 +289,6 @@ private:
 };
 /// @}
 
-
 } // end namespace
-
 
 #endif

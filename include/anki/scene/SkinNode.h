@@ -7,20 +7,14 @@
 #include "anki/scene/Spatial.h"
 #include "anki/resource/Model.h"
 #include "anki/math/Math.h"
-
-#include <boost/range/iterator_range.hpp>
 #include <vector>
-
+#include <array>
 
 namespace anki {
 
-
 class Skin;
 
-
-/// Skin specific mesh
-///
-/// It contains a number of VBOs for transform feedback
+/// Skin specific mesh. It contains a number of VBOs for transform feedback
 class SkinMesh: public MeshBase
 {
 public:
@@ -75,15 +69,13 @@ public:
 	/// @}
 
 private:
-	boost::array<Vbo, VBOS_TF_COUNT> tfVbos;
+	std::array<Vbo, VBOS_TF_COUNT> tfVbos;
 	const MeshBase* mesh; ///< The resource
 };
 
 
-/// Skin specific ModelPatch
-///
-/// It uses a SkinMesh to create the VAOs. It also creates a VAO for the
-/// transform feedback pass
+/// Skin specific ModelPatch. It uses a SkinMesh to create the VAOs. It also
+/// creates a VAO for the transform feedback pass
 class SkinModelPatch: public ModelPatchBase
 {
 public:
@@ -135,7 +127,7 @@ public:
 	/// @}
 
 private:
-	boost::scoped_ptr<SkinMesh> skinMesh;
+	std::unique_ptr<SkinMesh> skinMesh;
 	const ModelPatch* mpatch;
 	Vao tfVao; ///< Used as a source VAO in TFB
 };
@@ -211,30 +203,13 @@ public:
 	/// @}
 
 private:
-	boost::scoped_ptr<SkinModelPatch> skinModelPatch;
+	std::unique_ptr<SkinModelPatch> skinModelPatch;
 };
-
 
 /// A skin scene node
 class SkinNode: public SceneNode, public Movable
 {
 public:
-	template<typename T>
-	struct Types
-	{
-		typedef std::vector<T> Container;
-		typedef typename Container::iterator Iterator;
-		typedef typename Container::const_iterator ConstIterator;
-		typedef boost::iterator_range<Iterator> MutableRange;
-		typedef boost::iterator_range<ConstIterator> ConstRange;
-	};
-
-	typedef boost::ptr_vector<SkinPatchNode> PatchesContainer;
-	typedef boost::iterator_range<PatchesContainer::iterator>
-		PatchesMutableRange;
-	typedef boost::iterator_range<PatchesContainer::const_iterator>
-		PatchesConstRange;
-
 	/// @name Constructors/Destructor
 	/// @{
 	SkinNode(const char* skinFname,
@@ -267,53 +242,29 @@ public:
 
 	/// @name Accessors
 	/// @{
-	Types<Vec3>::ConstRange getHeads() const
+	const std::vector<Vec3>& getHeads() const
 	{
-		return Types<Vec3>::ConstRange(heads.begin(), heads.end());
-	}
-	Types<Vec3>::MutableRange getHeads()
-	{
-		return Types<Vec3>::MutableRange(heads.begin(), heads.end());
+		return heads;
 	}
 
-	Types<Vec3>::ConstRange getTails() const
+	const std::vector<Vec3>& getTails() const
 	{
-		return Types<Vec3>::ConstRange(tails.begin(), tails.end());
-	}
-	Types<Vec3>::MutableRange getTails()
-	{
-		return Types<Vec3>::MutableRange(tails.begin(), tails.end());
+		return tails;
 	}
 
-	Types<Mat3>::ConstRange getBoneRotations() const
+	const std::vector<Mat3>& getBoneRotations() const
 	{
-		return Types<Mat3>::ConstRange(boneRotations.begin(),
-			boneRotations.end());
-	}
-	Types<Mat3>::MutableRange getBoneRotations()
-	{
-		return Types<Mat3>::MutableRange(boneRotations.begin(),
-			boneRotations.end());
+		return boneRotations;
 	}
 
-	Types<Vec3>::ConstRange getBoneTranslations() const
+	const std::vector<Vec3>& getBoneTranslations() const
 	{
-		return Types<Vec3>::ConstRange(boneTranslations.begin(),
-			boneTranslations.end());
-	}
-	Types<Vec3>::MutableRange getBoneTranslations()
-	{
-		return Types<Vec3>::MutableRange(boneTranslations.begin(),
-			boneTranslations.end());
+		return boneTranslations;
 	}
 
-	PatchesConstRange getPatchNodes() const
+	const boost::ptr_vector<SkinPatchNode>& getPatchNodes() const
 	{
-		return PatchesConstRange(patches.begin(), patches.end());
-	}
-	PatchesMutableRange getPatchNodes()
-	{
-		return PatchesMutableRange(patches.begin(), patches.end());
+		return patches;
 	}
 
 	const Skin& getSkin() const
@@ -359,7 +310,7 @@ public:
 
 private:
 	SkinResourcePointer skin; ///< The resource
-	PatchesContainer patches;
+	boost::ptr_vector<SkinPatchNode> patches;
 	Obb visibilityShapeWSpace;
 
 	/// @name Animation stuff
@@ -396,8 +347,6 @@ private:
 		std::vector<Vec3>& heads, std::vector<Vec3>& tails);
 };
 
-
 } // end namespace
-
 
 #endif

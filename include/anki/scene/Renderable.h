@@ -3,18 +3,14 @@
 
 #include "anki/scene/Property.h"
 #include <vector>
-#include <boost/range/iterator_range.hpp>
-
 
 namespace anki {
-
 
 class ModelPatchBase;
 class Material;
 class MaterialVariable;
 class Light;
 class Transform;
-
 
 /// @addtogroup Scene
 /// @{
@@ -46,16 +42,11 @@ private:
 	bool buildin;
 };
 
-
-/// Renderable interface
-///
-/// Implemented by renderable scene nodes
+/// Renderable interface. Implemented by renderable scene nodes
 class Renderable
 {
 public:
 	typedef std::vector<PropertyBase*> Properties;
-	typedef boost::iterator_range<Properties::iterator> MutableRange;
-	typedef boost::iterator_range<Properties::const_iterator> ConstRange;
 
 	Renderable()
 	{}
@@ -75,14 +66,9 @@ public:
 		return nullptr;
 	}
 
-	MutableRange getProperties()
+	const Properties& getProperties() const
 	{
-		return MutableRange(props.begin(), props.end());
-	}
-
-	ConstRange getProperties() const
-	{
-		return ConstRange(props.begin(), props.end());
+		return props;
 	}
 
 protected:

@@ -56,7 +56,6 @@ public:
 		virtual void visit(const Aabb&) = 0;
 	};
 
-
 	/// @name Constructors & destructor
 	/// @{
 	CollisionShape(CollisionShapeType cid_)
