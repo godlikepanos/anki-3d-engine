@@ -1,7 +1,6 @@
 #include "anki/scene/Renderable.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/TextureResource.h"
-#include <boost/variant.hpp>
 
 namespace anki {
 
@@ -10,14 +9,14 @@ namespace anki {
 //==============================================================================
 
 /// Create a new property given a material variable
-struct CreateNewPropertyVisitor: boost::static_visitor<void>
+struct CreateNewPropertyVisitor
 {
 	const MaterialVariable* mvar;
 	PropertyMap* pmap;
 	Renderable::Properties* rprops;
 
 	template<typename T>
-	void operator()(const T&) const
+	void visit(const T&) const
 	{
 		MaterialVariableProperty<T>* prop = new MaterialVariableProperty<T>(
 			mvar->getName().c_str(),
@@ -45,7 +44,7 @@ void Renderable::init(PropertyMap& pmap)
 	for(const MaterialVariable& mv : mtl.getVariables())
 	{
 		vis.mvar = &mv;
-		boost::apply_visitor(vis, mv.getVariant());
+		mv.acceptVisitor(vis);
 	}
 }
 
