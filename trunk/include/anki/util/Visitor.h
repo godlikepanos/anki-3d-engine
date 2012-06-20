@@ -4,157 +4,135 @@
 #ifndef ANKI_UTIL_VISITOR_H
 #define ANKI_UTIL_VISITOR_H
 
+#include "anki/util/Assert.h"
+#include <array>
+
 namespace anki {
 
 /// @addtogroup util
 /// @{
 
-namespace detail {
+namespace visitor_detail {
 
-//==============================================================================
-// ConstVisitor                                                                =
-//==============================================================================
-
-// Forward declaration
-template<typename... Types>
-struct ConstVisitor;
-
-// Specialized for one and many
-template<typename First, typename... Types>
-struct ConstVisitor<First, Types...>: ConstVisitor<Types...>
-{
-	using ConstVisitor<Types...>::visit;
-	virtual void visit(const First&) = 0;
-};
-
-// Specialized for one
-template<typename First>
-struct ConstVisitor<First>
-{
-	virtual void visit(const First&) = 0;
-};
-
-//==============================================================================
-// MutableVisitor                                                              =
-//==============================================================================
-
-// Forward declaration
-template<typename... Types>
-struct MutableVisitor;
-
-// Specialized for one and many
-template<typename First, typename... Types>
-struct MutableVisitor<First, Types...>: MutableVisitor<Types...>
-{
-	using MutableVisitor<Types...>::visit;
-	virtual void visit(First&) = 0;
-};
-
-// Specialized for one
-template<typename First>
-struct MutableVisitor<First>
-{
-	virtual void visit(First&) = 0;
-};
-
-//==============================================================================
-// GetTypeIdVisitor                                                            =
-//==============================================================================
-
-/// Visitor for getting the type id
-template<typename... Types>
-struct GetTypeIdVisitor
-{
-	// Forward
-	template<typename... Types_>
-	struct Helper;
-
-	// Specialized for one and many
-	template<typename First, typename... Types_>
-	struct Helper<First, Types_...>: Helper<Types_...>
-	{
-		using Helper<Types_...>::visit;
-
-		void visit(const First& x)
-		{
-			Helper<Types_...>::id = sizeof...(Types_);
-		}
-	};
-
-	// Specialized for one
-	template<typename First>
-	struct Helper<First>: ConstVisitor<Types...>
-	{
-		int id;
-
-		void visit(const First&)
-		{
-			id = 0;
-		}
-	};
-
-	typedef Helper<Types...> Type;
-};
-
-//==============================================================================
-// DummyVisitor                                                                =
-//==============================================================================
-
-/// Implements the visit() function. The new visit() does nothing
-template<typename... Types>
-struct DummyVisitor
-{
-	// Forward
-	template<typename... Types_>
-	struct Helper;
-
-	// Declare
-	template<typename First, typename... Types_>
-	struct Helper<First, Types_...>: Helper<Types_...>
-	{
-		void visit(const First&)
-		{}
-	};
-
-	// Specialized for one
-	template<typename First>
-	struct Helper<First>: ConstVisitor<Types...>
-	{
-		void visit(const First&)
-		{}
-	};
-
-	typedef Helper<Types...> Type;
-};
-
-//==============================================================================
-// GetVisitableId                                                              =
-//==============================================================================
-
-// Forward
-template<typename Type, typename... Types>
-struct GetVisitableId;
-
-/// A smart struct that given a @a Type and a list of types defines a const
-/// integer indicating the @a Type's position from the back of the list. The
-/// integer is named ID
+/// A smart struct that given a type and a list of types finds a const integer
+/// indicating the type's position from the back of the list.
+///
+/// Example of usage:
 /// @code
-/// GetVisitableId<float, int, float, std::string>::ID == 1
-/// GetVisitableId<int, int, float, std::string>::ID == 2
-/// GetVisitableId<std::string, int, float, std::string>::ID == 0
+/// GetVariadicTypeId<int, float, std::string>::get<float> == 1
+/// GetVariadicTypeId<int, float, std::string>::get<int> == 0
+/// GetVariadicTypeId<int, float, std::string>::get<char> // Compiler error
 /// @endcode
-template<typename Type, typename First, typename... Types>
-struct GetVisitableId<Type, First, Types...>: GetVisitableId<Type, Types...>
-{};
-
-// Specialized
-template<typename Type, typename... Types>
-struct GetVisitableId<Type, Type, Types...>
+template<typename... Types>
+struct GetVariadicTypeId
 {
-	static const int ID = sizeof...(Types);
+	// Forward
+	template<typename Type, typename... Types_>
+	struct Helper;
+
+	// Declaration
+	template<typename Type, typename TFirst, typename... Types_>
+	struct Helper<Type, TFirst, Types_...>: Helper<Type, Types_...>
+	{};
+
+	// Specialized
+	template<typename Type, typename... Types_>
+	struct Helper<Type, Type, Types_...>
+	{
+		static const int ID = sizeof...(Types_);
+	};
+
+	/// Get the id
+	template<typename Type>
+	static constexpr int get()
+	{
+		return sizeof...(Types) - Helper<Type, Types...>::ID - 1;
+	}
 };
 
-} // end namespace detail
+/// A struct that from a variadic arguments list it returnes the type using an
+/// ID.
+/// Example of usage:
+/// @code GetTypeUsingId<double, int, float>::DataType<0> @endcode
+template<typename... Types>
+struct GetTypeUsingId
+{
+	// Forward declaration
+	template<int id, typename... Types_>
+	struct Helper;
+
+	// Declaration
+	template<int id, typename TFirst, typename... Types_>
+	struct Helper<id, TFirst, Types_...>: Helper<id - 1, Types_...>
+	{};
+
+	// Specialized
+	template<typename TFirst, typename... Types_>
+	struct Helper<0, TFirst, Types_...>
+	{
+		typedef TFirst DataType;
+	};
+
+	template<int id>
+	using DataType = typename Helper<id, Types...>::DataType;
+};
+
+/// A simple struct that creates an array of pointers to functions that have
+/// the same arguments but different body
+template<typename TVisitor, typename... Types>
+class JumpTable
+{
+public:
+	using FuncPtr = void (*)(TVisitor&, void*);
+
+	JumpTable()
+	{
+		init<Types...>();
+	}
+
+	/// Accessor
+	FuncPtr operator[](int i) const
+	{
+		return jumps[i];
+	}
+
+private:
+	/// Pointers to JumpPoint::visit static methods
+	std::array<FuncPtr, sizeof...(Types)> jumps;
+
+	template<typename T>
+	static void visit(TVisitor& v, void* address)
+	{
+		v.template visit(*reinterpret_cast<T*>(address));
+	}
+
+	template<typename TFirst>
+	void init()
+	{
+		jumps[0] = &visit<TFirst>;
+	}
+
+	template<typename TFirst, typename TSecond, typename... Types_>
+	void init()
+	{
+		constexpr int i = sizeof...(Types) - sizeof...(Types_) - 1;
+		jumps[i] = &visit<TSecond>;
+		init<TFirst, Types_...>();
+	}
+};
+
+/// A simple struct that contains a static field with jump points
+template<typename TDerived, typename... Types>
+struct VisitorWrapper
+{
+	static const JumpTable<TDerived, Types...> jumpTable;
+};
+
+template<typename TDerived, typename... Types>
+const JumpTable<TDerived, Types...>
+	VisitorWrapper<TDerived, Types...>::jumpTable;
+
+} // end namespace visitor_detail
 
 //==============================================================================
 // Visitable                                                                   =
@@ -162,27 +140,64 @@ struct GetVisitableId<Type, Type, Types...>
 
 /// Visitable class
 template<typename... Types>
-struct Visitable
+class Visitable
 {
-	using MutableVisitor = detail::MutableVisitor<Types...>;
-	using ConstVisitor = detail::ConstVisitor<Types...>;
-	using GetTypeIdVisitor = typename detail::GetTypeIdVisitor<Types...>::Type;
-	using DummyVisitor = typename detail::DummyVisitor<Types...>::Type;
+public:
+	Visitable()
+	{}
 
-	/// Visitor accept
-	virtual void accept(MutableVisitor& v) = 0;
-	/// Visitor accept
-	virtual void accept(ConstVisitor& v) const = 0;
-
-	/// Using the GetVisitableId get the id of the @a T
 	template<typename T>
-	static constexpr int getTypeId()
+	Visitable(T* t)
 	{
-		return sizeof...(Types) - detail::GetVisitableId<T, Types...>::ID - 1;
+		setupVisitable(t);
 	}
+
+	int getVisitableTypeId() const
+	{
+		return what;
+	}
+
+	template<typename T>
+	static constexpr int getVariadicTypeId()
+	{
+		return visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
+	}
+
+	/// Apply visitor
+	template<typename TVisitor>
+	void acceptVisitor(TVisitor& v)
+	{
+		ANKI_ASSERT(what != -1 && address != nullptr);
+		visitor_detail::VisitorWrapper<TVisitor, Types...>::
+			jumpTable[what](v, address);
+	}
+
+	/// Apply visitor (const version)
+	template<typename TVisitor>
+	void acceptVisitor(TVisitor& v) const
+	{
+		ANKI_ASSERT(what != -1 && address != nullptr);
+		visitor_detail::VisitorWrapper<TVisitor, Types...>::
+			jumpTable[what](v, address);
+	}
+
+	/// Setup the data
+	template<typename T>
+	void setupVisitable(T* t)
+	{
+		ANKI_ASSERT(t != nullptr); // Null arg
+		// Setting for second time? Now allowed
+		ANKI_ASSERT(address == nullptr && what == -1);
+		address = t;
+		what = visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
+	}
+
+private:
+	int what = -1; ///< The type ID
+	void* address = nullptr; ///< The address to the data
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

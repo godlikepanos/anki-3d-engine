@@ -43,9 +43,8 @@ public:
 	MaterialVariable(
 		const char* shaderProgVarName,
 		PassLevelToShaderProgramHashMap& sProgs,
-		bool init_,
-		uint8_t type_)
-		: type(type_), initialized(init_)
+		bool init_)
+		: initialized(init_)
 	{
 		init(shaderProgVarName, sProgs);
 	}
@@ -58,14 +57,14 @@ public:
 	template<typename T>
 	const T& getValue() const
 	{
-		ANKI_ASSERT(Base::getTypeId<T>() == type);
+		ANKI_ASSERT(Base::getVariadicTypeId<T>() == Base::getVisitableTypeId());
 		return static_cast<const MaterialVariableTemplate<T>*>(this)->get();
 	}
 
 	template<typename T>
 	void setValue(const T& x)
 	{
-		ANKI_ASSERT(Base::getTypeId<T>() == type);
+		ANKI_ASSERT(Base::getVariadicTypeId<T>() == Base::getVisitableTypeId());
 		static_cast<MaterialVariableTemplate<T>*>(this)->set(x);
 	}
 
@@ -91,8 +90,6 @@ public:
 	/// @}
 
 private:
-	uint8_t type; ///< Type id
-
 	/// If not initialized then there is no value given in the XML so it is
 	/// probably build in and the renderer should set the value on the shader
 	/// program setup
@@ -120,9 +117,9 @@ public:
 		PassLevelToShaderProgramHashMap& sProgs,
 		const Data& val,
 		bool init_)
-		: MaterialVariable(shaderProgVarName, sProgs, init_,
-			MaterialVariable::Base::getTypeId<Data>())
+		: MaterialVariable(shaderProgVarName, sProgs, init_)
 	{
+		setupVisitable(&data);
 		data = val;
 	}
 
@@ -142,15 +139,6 @@ public:
 		data = x;
 	}
 	/// @}
-
-	void accept(MutableVisitor& v)
-	{
-		v.visit(data);
-	}
-	void accept(ConstVisitor& v) const
-	{
-		v.visit(data);
-	}
 
 private:
 	Data data;
