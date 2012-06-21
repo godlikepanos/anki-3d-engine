@@ -115,7 +115,7 @@ public:
 	}
 
 	/// Unbind all VAOs
-	void unbind()
+	void unbind() const
 	{
 		if(current == this)
 		{

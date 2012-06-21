@@ -2,9 +2,7 @@
 #include "anki/resource/Image.h"
 #include "anki/util/Exception.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 void TextureResource::load(const char* filename)
@@ -18,7 +16,6 @@ void TextureResource::load(const char* filename)
 		throw ANKI_EXCEPTION("File \"" + filename + "\"") << e;
 	}
 }
-
 
 //==============================================================================
 void TextureResource::load(const Image& img)
@@ -84,6 +81,5 @@ void TextureResource::load(const Image& img)
 
 	create(init);
 }
-
 
 } // end namespace

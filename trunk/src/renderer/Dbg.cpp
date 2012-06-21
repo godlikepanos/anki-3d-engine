@@ -9,9 +9,6 @@ void Dbg::init(const RendererInitializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
 
-	//
-	// FBO
-	//
 	try
 	{
 		fbo.create();

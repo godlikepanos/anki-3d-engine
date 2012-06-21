@@ -8,6 +8,7 @@
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
+#include "anki/resource/TextureResource.h"
 
 namespace anki {
 
@@ -478,45 +479,24 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
 //==============================================================================
 
 /// Set the uniform using this visitor
-struct SetUniformVisitor: MateriaVariableVisitable::ConstVisitor
+struct SetUniformVisitor
 {
-	ShaderProgramUniformVariable* uni;
+	const ShaderProgramUniformVariable* uni;
 
-	void visit(const float& x)
+	template<typename T>
+	void visit(const T& x)
 	{
 		uni->set(x);
-	}
-
-	void visit(const Vec2& x)
-	{
-		uni->set(x);
-	}
-
-	void visit(const Vec3& x)
-	{
-		uni->set(x);
-	}
-
-	void visit(const Vec4& x)
-	{
-		uni->set(x);
-	}
-
-	void visit(const Mat3& x)
-	{
-		uni->set(x);
-	}
-
-	void visit(const Mat4& x)
-	{
-		uni->set(x);
-	}
-
-	void visit(const TextureResourcePointer& x)
-	{
-		uni->set(*x.get());
 	}
 };
+
+template<>
+void SetUniformVisitor::visit<TextureResourcePointer>(
+	const TextureResourcePointer& x)
+{
+	const Texture* tex = x.get();
+	uni->set(*tex);
+}
 
 //==============================================================================
 void RenderableDrawer::setupShaderProg(
@@ -525,16 +505,13 @@ void RenderableDrawer::setupShaderProg(
 	Renderable& renderable)
 {
 	const Material& mtl = renderable.getMaterial();
-	const ShaderProgram& sprog = mtl.getShaderProgram(key);
-#if !defined(NDEBUG)
-	int texturesCount = 0; // count the textures
-#endif
+	const ShaderProgram& sprog = mtl.findShaderProgram(key);
 
 	sprog.bind();
 	
 	SetUniformVisitor vis;
 
-	for(MaterialVariable& mv : mtl.getVariables())
+	for(const MaterialVariable& mv : mtl.getVariables())
 	{
 		const ShaderProgramUniformVariable* uni = 
 			mv.findShaderProgramUniformVariable(key);
@@ -557,7 +534,7 @@ void RenderableDrawer::setupShaderProg(
 		else
 		{
 			vis.uni = uni;
-			mv->accept(vis);
+			mv.acceptVisitor(vis);
 		}
 	}
 }

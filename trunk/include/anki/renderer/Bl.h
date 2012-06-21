@@ -36,15 +36,15 @@ public:
 		sideBlurFactor = x;
 	}
 
-	uint getBlurringIterationsNum() const
+	uint32_t getBlurringIterationsNum() const
 	{
 		return blurringIterationsNum;
 	}
-	uint& getBlurringIterationsNum()
+	uint32_t& getBlurringIterationsNum()
 	{
 		return blurringIterationsNum;
 	}
-	void setBlurringIterationsNum(const uint x)
+	void setBlurringIterationsNum(const uint32_t x)
 	{
 		blurringIterationsNum = x;
 	}
@@ -62,7 +62,7 @@ private:
 	Texture blurFai; ///< Temp FAI for blurring
 	TextureResourcePointer sideBlurMap;
 
-	uint blurringIterationsNum; ///< How many times the pass will run
+	uint32_t blurringIterationsNum; ///< How many times the pass will run
 	float sideBlurFactor;
 
 	void runBlur();
