@@ -3,8 +3,16 @@
 #include "anki/math/Math.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/Texture.h"
+#include "anki/util/StringList.h"
+#include <sstream>
+#include <iomanip>
 
 namespace anki {
+
+//==============================================================================
+
+static const char* padding = "======================================="
+                             "=======================================";
 
 //==============================================================================
 // ShaderProgramVariable                                                       =
@@ -292,7 +300,7 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 
 	if(!success)
 	{
-		// print info log
+		// Get info log
 		int infoLen = 0;
 		int charsWritten = 0;
 		std::vector<char> infoLog;
@@ -301,9 +309,23 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		infoLog.resize(infoLen + 1);
 		glGetShaderInfoLog(glId, infoLen, &charsWritten, &infoLog[0]);
 		infoLog[charsWritten] = '\0';
+
+		std::stringstream err;
+		err << "Shader compile failed:\n" << padding << "\n" << &infoLog[0]
+			<< "\n" << padding << "\nSource:\n" << padding << "\n";
+
+		// Prettyfy source
+		StringList lines = StringList::splitString(sourceCode, "\n");
+		for(const std::string& line : lines)
+		{
+			err << std::setw(4) << std::setfill('0') << ": " << line 
+				<< std::endl;
+		}
+
+		err << padding;
 		
-		throw ANKI_EXCEPTION("Shader failed. Log:\n" + &infoLog[0]
-			+ "\nSource:\n" + sourceCode);
+		// Throw
+		throw ANKI_EXCEPTION(err.str());
 	}
 
 	return glId;
