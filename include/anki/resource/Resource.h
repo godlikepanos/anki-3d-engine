@@ -5,9 +5,7 @@
 #include "anki/resource/ResourcePointer.h"
 #include "anki/util/Singleton.h"
 
-
 namespace anki {
-
 
 #define ANKI_RESOURCE_TYPEDEFS(rsrc, name) \
 	class rsrc; \
@@ -30,8 +28,6 @@ ANKI_RESOURCE_TYPEDEFS(Model, ModelResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Skin, SkinResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(DummyRsrc, DummyRsrcResourcePointer)
 
-
 } // end namespace
-
 
 #endif

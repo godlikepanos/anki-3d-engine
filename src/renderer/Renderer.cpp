@@ -122,8 +122,6 @@ void Renderer::drawQuad()
 {
 	quadVao.bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
-	quadVao.unbind();
-	ANKI_CHECK_GL_ERROR();
 }
 
 

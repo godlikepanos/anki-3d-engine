@@ -14,14 +14,10 @@ void Bs::createFbo()
 	try
 	{
 		fbo.create();
-		fbo.bind();
 
 		fbo.setColorAttachments({&r->getPps().getPrePassFai()});
 		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, 
 			r->getMs().getDepthFai());
-
-		fbo.checkIfGood();
-		fbo.unbind();
 	}
 	catch(std::exception& e)
 	{
@@ -35,14 +31,10 @@ void Bs::createRefractFbo()
 	try
 	{
 		refractFbo.create();
-		refractFbo.bind();
 
 		refractFbo.setColorAttachments({&refractFai});
 		refractFbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, 
 			r->getMs().getDepthFai());
-
-		refractFbo.checkIfGood();
-		refractFbo.unbind();
 	}
 	catch(std::exception& e)
 	{

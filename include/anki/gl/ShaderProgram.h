@@ -141,7 +141,7 @@ public:
 	/// @tparam Container It could be something like array<float, X> or 
 	///         vector<Vec2> etc
 	template<typename Container>
-	void set(const Container& c) const
+	void setContainer(const Container& c) const
 	{
 		set(&c[0], c.size());
 	}

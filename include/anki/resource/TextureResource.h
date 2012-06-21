@@ -3,12 +3,9 @@
 
 #include "anki/gl/Texture.h"
 
-
 namespace anki {
 
-
 class Image;
-
 
 /// Texture resource class
 ///
@@ -25,8 +22,6 @@ public:
 	void load(const Image& img);
 };
 
-
 } // end namespace
-
 
 #endif
