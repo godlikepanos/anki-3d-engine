@@ -3,11 +3,8 @@
 #include "anki/core/App.h"
 #include "anki/scene/Scene.h"
 #include "anki/renderer/RendererInitializer.h"
-#include <boost/foreach.hpp>
-
 
 namespace anki {
-
 
 //==============================================================================
 void Ez::init(const RendererInitializer& initializer)
@@ -19,29 +16,18 @@ void Ez::init(const RendererInitializer& initializer)
 		return;
 	}
 
-	//
 	// init FBO
-	//
 	try
 	{
 		fbo.create();
-		fbo.bind();
-
-		fbo.setNumOfColorAttachements(0);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-			GL_TEXTURE_2D, r.getMs().getDepthFai().getGlId(), 0);
-
-		fbo.checkIfGood();
-
-		fbo.unbind();
+		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, 
+			GL_TEXTURE_2D, r->getMs().getDepthFai().getGlId());
 	}
 	catch(std::exception& e)
 	{
 		throw ANKI_EXCEPTION("Cannot create EarlyZ FBO");
 	}
 }
-
 
 //==============================================================================
 void Ez::run()
@@ -51,7 +37,7 @@ void Ez::run()
 		return;
 	}
 
-	Camera& cam = r.getCamera();
+	/*Camera& cam = r.getCamera();
 
 	fbo.bind();
 
@@ -64,13 +50,12 @@ void Ez::run()
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	/*for(RenderableNode* node, cam.getVisibleMsRenderableNodes())
+	for(RenderableNode* node, cam.getVisibleMsRenderableNodes())
 	{
 		r.getSceneDrawer().renderRenderableNode(cam, 1, *node);
-	}*/
+	}
 
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);*/
 }
 
-
-} // end namespace
+} // end namespace anki
